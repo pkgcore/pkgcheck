@@ -1,4 +1,7 @@
 #!/usr/bin/python
+# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# License: GPL2
+
 
 from pkgcore.config import load_config
 from pkgcore.util.modules import load_module, FailedImport
@@ -14,7 +17,7 @@ if __name__ == "__main__":
 	if len(sys.argv) != 3:
 		print "need the location to dump the reports, and the arg of the repo to scan"
 		sys.exit(1)
-	location = sys.argv[1]
+	location = os.path.abspath(sys.argv[1])
 	repo_name = sys.argv[2]
                     
 	signal.signal(signal.SIGCHLD, signal.SIG_DFL)
