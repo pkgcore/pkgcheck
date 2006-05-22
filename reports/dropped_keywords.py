@@ -27,7 +27,7 @@ class StaleUnstableReport(template):
 		arches = set(self.arches)
 		dropped = []
 		for pkg in reversed(pkgset[:-1]):
-			oldstate = state=set(x.lstrip("~") for x in pkg.keywords)
+			oldstate = set(x.lstrip("~") for x in pkg.keywords)
 			for key in oldstate.difference(state):
 				if key.startswith("-"):
 					continue
