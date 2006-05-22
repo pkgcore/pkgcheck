@@ -1,4 +1,5 @@
-#!/usr/bin/python
+# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# License: GPL2
 
 from pkgcore.restrictions import packages, values
 from reports.base import template, package_feed

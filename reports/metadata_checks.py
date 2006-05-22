@@ -1,3 +1,6 @@
+# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# License: GPL2
+
 from pkgcore.package.metadata import MetadataException
 from reports.base import template, versioned_feed
 from operator import attrgetter

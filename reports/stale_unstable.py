@@ -1,3 +1,6 @@
+# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# License: GPL2
+
 import time, os
 from reports.base import template, versioned_feed
 from pkgcore.fs.util import ensure_dirs

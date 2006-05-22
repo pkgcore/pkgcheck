@@ -1,3 +1,6 @@
+# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# License: GPL2
+
 from reports.base import package_feed, template
 from pkgcore.pkgsets.glsa import GlsaDirSet
 from pkgcore.restrictions.util import collect_package_restrictions
