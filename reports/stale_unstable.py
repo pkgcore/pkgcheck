@@ -27,7 +27,7 @@ class StaleUnstableReport(template):
 		unstable = [x for x in pkg.keywords if x.startswith("~")]
 		if not unstable:
 			return
-		self.reportf.write("pkg %s hasn't changed in %i days: unstable keywords [ %s ]\n" % \
+		self.reportf.write("%s: no change in %i days: unstable keywords [ %s ]\n" % \
 			(pkg, unchanged_time/day, ", ".join(unstable)))
 
 	def finish(self):
