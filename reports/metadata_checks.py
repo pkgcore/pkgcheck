@@ -36,7 +36,11 @@ class MetadataSyntaxReport(template):
 				logging.error("unknown exception caught for pkg(%s) attr(%s): %s" % (pkg, attr_name, e))
 				self.write_entry(pkg, attr_name, e)
 				del e
-	
+		if not pkg.keywords:
+			self.write_entry(pkg, "keywords", "keywords is empty")
+		if "-*" in pkg.keywords:
+			self.write_entry(pkg, "keywords", "keywords contains '-*', should use package.mask instead")
+			
 	def write_entry(self, pkg, attr, error):
 		self.reportf.write("pkg %s: attr(%s)\n  error: %s\n\n" % (pkg, attr, error))
 
