@@ -17,7 +17,7 @@ class MetadataSyntaxReport(template):
 	def __init__(self, location, attrs=default_attrs):
 		self.location = location
 		self.reportf = None
-		force_expansion = set(x for x in attrs if x in ("depends", "rdepends"))
+		force_expansion = set(x for x in attrs if x in ("depends", "rdepends", "provides"))
 		self.attrs = [(a, attrgetter(a), a in force_expansion) for a in attrs]
 		
 	def start(self, repo):
