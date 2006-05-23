@@ -54,5 +54,7 @@ if __name__ == "__main__":
 	start_time = time.time()
 	print "checks: %i cat, %i pkg, %i version" % (len(runner.cat_checks), \
 		len(runner.pkg_checks), len(runner.cpv_checks))
-	nodes = runner.run()
+	nodes = 0
+	if runner.cat_checks or runner.pkg_checks or runner.cpv_checks:
+		nodes = runner.run()
 	print "finished in %.2f for %i pkgs" % (time.time() - start_time, nodes)
