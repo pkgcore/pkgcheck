@@ -8,6 +8,7 @@ from reports import base, util, arches
 from pkgcore.fs.util import ensure_dirs
 from pkgcore.util.iterables import caching_iter
 from pkgcore.util.lists import stable_unique
+from pkgcore.util.containers import ProtectedSet
 demandload(globals(), "pkgcore.restrictions:packages,values")
 demandload(globals(), "pkgcore.util.containers:InvertedContains")
 
@@ -48,18 +49,24 @@ class BrokenDepsReport(base.template):
 				virtuals = profile.virtuals
 				# force all use masks to negated, and all other arches but this
 				use_flags = InvertedContains(profile.use_mask + tuple(official_arches.difference([stable_key])))
-			
+
+				# used to interlink stable/unstable lookups so that if unstable says it's not visible, stable doesn't try
+				# if stable says something is visible, unstable doesn't try.
+				stable_cache = set()
+				unstable_insoluable = set()
+
 				# ensure keywords is last, else it triggers a metadata pull
 				# filter is thus- not masked, and keywords match
 
 				# virtual repo, flags, visibility filter, known_good, known_bad
 				profile_filters[stable_key][profile_name] = \
-					[virtuals, use_flags, packages.AndRestriction(mask, stable_r), set(), set()]
+					[virtuals, use_flags, packages.AndRestriction(mask, stable_r), stable_cache, ProtectedSet(unstable_insoluable)]
 				profile_filters[unstable_key][profile_name] = \
-					[virtuals, use_flags, packages.AndRestriction(mask, unstable_r), set(), set()]
+					[virtuals, use_flags, packages.AndRestriction(mask, unstable_r), ProtectedSet(stable_cache), unstable_insoluable]
 
 			self.keywords_filter[stable_key] = stable_r
-			self.keywords_filter[unstable_key] = unstable_r
+			self.keywords_filter[unstable_key] = packages.PackageRestriction("keywords", 
+				values.ContainmentMatch(unstable_key))
 
 		self.profile_filters = profile_filters
 		self.repo = repo
@@ -112,8 +119,9 @@ class BrokenDepsReport(base.template):
 		
 	def check_pkg(self, pkg, query_cache):
 		failures = {}
-		for key, key_r in self.keywords_filter.iteritems():
-			if not key_r.match(pkg):
+		# force it to be stable, then unstable ordering for an unstable optimization below
+		for key in sorted(self.keywords_filter):
+			if not self.keywords_filter[key].match(pkg):
 				continue
 			for profile, val in self.profile_filters[key].iteritems():
 				virtuals, flags, vfilter, cache, insoluable = val
@@ -126,7 +134,6 @@ class BrokenDepsReport(base.template):
 					virtuals, vfilter, cache, insoluable, query_cache)
 				if bad:
 					failures.setdefault(key, {})[profile] = ("rdepends", bad)
-
 		if failures:
 			self.reportf.write("%s:\n" % pkg)
 			for key, profile_dict in failures.iteritems():
