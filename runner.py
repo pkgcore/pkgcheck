@@ -57,4 +57,7 @@ if __name__ == "__main__":
 	nodes = 0
 	if runner.cat_checks or runner.pkg_checks or runner.cpv_checks:
 		nodes = runner.run()
-	print "finished in %.2f for %i pkgs" % (time.time() - start_time, nodes)
+	elapsed = time.time() - start_time
+	minutes = int(elapsed)/60
+	seconds = elapsed - (minutes * 60)
+	print "processed %i pkgs: %im%.2fs" % (nodes, minutes, seconds)
