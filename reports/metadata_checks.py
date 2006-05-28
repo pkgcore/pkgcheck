@@ -18,7 +18,7 @@ class MetadataSyntaxReport(template):
 	
 	def __init__(self, location, attrs=default_attrs):
 		self.location = location
-		self.reportf = None
+		self.reportf = self.keywordsf = None
 		force_expansion = set(x for x in attrs if x in ("depends", "rdepends", "provides"))
 		self.attrs = [(a, attrgetter(a), a in force_expansion) for a in attrs]
 	
@@ -57,6 +57,7 @@ class MetadataSyntaxReport(template):
 		if not ensure_dirs(self.location, mode=0755):
 			raise Exception("failed creating reports directory %s" % self.location)
 		self.reportf = open(os.path.join(self.location, "metadata_checks"), "w", 8096)
+		self.keywordsf = open(os.path.join(self.location, "stupid_keywords"), "w", 8096)
 		if any(x[0] == "license" for x in self.attrs):
 			lfp = os.path.join(repo.base, "licenses")
 			if not os.path.exists(lfp):
@@ -105,11 +106,14 @@ class MetadataSyntaxReport(template):
 		if not pkg.keywords:
 			self.write_entry(pkg, "keywords", "keywords is empty")
 		if "-*" in pkg.keywords:
-			self.write_entry(pkg, "keywords", "keywords contains '-*', should use package.mask instead")
+			self.write_entry(pkg, "keywords", "keywords contains '-*', should use package.mask instead", fd=self.keywordsf)
 						
-	def write_entry(self, pkg, attr, error):
-		self.reportf.write("%s: attr(%s)\n  error: %s\n\n" % (pkg, attr, error))
+	def write_entry(self, pkg, attr, error, fd=None):
+		if fd is None:
+			fd = self.reportf
+		fd.write("%s: attr(%s)\n  error: %s\n\n" % (pkg, attr, error))
 
 	def finish(self):
 		self.reportf.close()
-		self.reportf = None
+		self.keywordsf.close()
+		self.reportf = self.keywordsf = None
