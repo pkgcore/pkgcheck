@@ -30,6 +30,7 @@ if __name__ == "__main__":
 	import reports
 	import reports.base
 	runner = reports.base.Feeder(repo)
+	reporter = reports.base.Reporter()
 	for loc in map(str, reports.__path__):
 		for mod in [x for x in os.listdir(loc) if x.endswith(".py")]:
 			try:
@@ -56,7 +57,7 @@ if __name__ == "__main__":
 		len(runner.pkg_checks), len(runner.cpv_checks))
 	nodes = 0
 	if runner.cat_checks or runner.pkg_checks or runner.cpv_checks:
-		nodes = runner.run()
+		nodes = runner.run(reporter)
 	elapsed = time.time() - start_time
 	minutes = int(elapsed)/60
 	seconds = elapsed - (minutes * 60)

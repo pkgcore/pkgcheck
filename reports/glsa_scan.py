@@ -1,33 +1,52 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from reports.base import package_feed, template
+from reports.base import versioned_feed, template, Result
 from pkgcore.pkgsets.glsa import GlsaDirSet
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.restrictions import packages, values
-from pkgcore.fs.util import ensure_dirs
-import logging, os
+from pkgcore.util.xml import escape
 
-from reports.arches import default_arches
+
+class VulnerablePackage(Result):
+
+	description = "Packages marked as vulnerable by GLSAs"
+
+	__slots__ = ("category", "package", "version", "arch", "glsa")
+
+	def __init__(self, pkg, glsa, arch_override=None):
+		self.category = pkg.category
+		self.package = pkg.package
+		self.version = pkg.fullver
+		if arch_override is None:
+			self.arch = tuple(set(x.lstrip("~") for x in pkg.keywords))
+		else:
+			self.arch = arch
+		self.glsa = str(glsa)
+	
+	def to_str(self):
+		return "%s/%s-%s: vulnerable via %s, affects %s" % (self.category, self.package, self.version, self.glsa, self.arch)
+
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<arch>%s</arch>
+	<msg>vulnerable via %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
+"</arch>\n\t<arch>".join(self.arch), escape(self.glsa))
+
 
 class TreeVulnerabilitiesReport(template):
-	feed_type = package_feed
+	feed_type = versioned_feed
 	
-	def __init__(self, location, arches_we_care_about=default_arches):
+	def __init__(self, location):
 		self.location = location
-		self.per_arch_location = os.path.join(location, "arch-vulnerabilities")
 		self.reportf = None
-		self.arch_limiters = frozenset(default_arches)
-		self.vulnerabilities = []
-		self.arch_reports = dict((x, [packages.PackageRestriction("keywords", 
-			values.ContainmentMatch(x.lstrip("~"), "~%s" % x.lstrip("~"))), None])
-			for x in arches_we_care_about)
 	
 	def start(self, repo):
-		if not ensure_dirs(self.location, mode=0755):
-			raise Exception("failed creating reports directory: %s" % self.location)
-		if not ensure_dirs(self.per_arch_location, mode=0755):
-			raise Exception("failed creating per arch reports dir: %s" % self.per_arch)
 		self.vulns = {}
 		# this is a bit brittle
 		for r in GlsaDirSet(repo):
@@ -36,30 +55,7 @@ class TreeVulnerabilitiesReport(template):
 			else:
 				self.vulns.setdefault(r[0].key, []).append(r[1])
 			
-		self.reportf = open(os.path.join(self.location, "tree-vulnerabilities"), "w", 8096)
-		
-	def feed(self, pkgset):
-		for vuln in self.vulns.get(pkgset[0].key, []):
-			affected = filter(vuln.match, pkgset)
-			if affected:
-				self.write_entry(self.reportf, vuln, affected, pkgset)
-				for arch, v in self.arch_reports.iteritems():
-					arch_affected = filter(v[0].match, affected)
-					if arch_affected:
-						if v[1] is None:
-							v[1] = open(os.path.join(self.per_arch_location, arch), "w", 8096)
-						self.write_entry(v[1], vuln, arch_affected, filter(v[0].match, pkgset))
-
-	@staticmethod
-	def write_entry(fd, vuln, affected, available):
-		fd.write("%s\naffected:   %s\navailable:  %s\n\n" % \
-			(vuln, ", ".join(str(x) for x in affected), ", ".join(str(x) for x in available)))
-
-	def finish(self):
-		self.reportf.close()
-		self.reportf = None
-		self.vulns = None
-		for v in self.arch_reports.itervalues():
-			if v[1] is not None:
-				v[1].close()
-				v[1] = None
+	def feed(self, pkg, reporter):
+		for vuln in self.vulns.get(pkg.key, []):
+			if vuln.match(pkg):
+				reporter.add_report(VulnerablePackage(pkg, vuln))

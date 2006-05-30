@@ -10,17 +10,19 @@ __all__ = ("package_feed, versioned_feed", "category_feed", "Feeder")
 from pkgcore.restrictions import packages
 import logging, operator
 
+
 class template(object):
 	feed_type = None
 
-	def start(self):
+	def start(self, repo):
+		pass
+
+	def finish(self, reporter):
+		pass
+	
+	def process(self, chunk, reporter):
 		raise NotImplementedError
 
-	def finalize(self):
-		raise NotImplementedError
-
-	def process(self, chunk):
-		raise NotImplementedError
 
 class Feeder(object):
 	def __init__(self, repo, *checks):
@@ -43,13 +45,9 @@ class Feeder(object):
 			raise TypeError("check feed_type %s unknown for %s" % (feed_type, check))
 	
 	@staticmethod
-	def _generic_fire(check_type, checks, attr, repo=None):
+	def _generic_fire(attr, check_type, checks, *args):
 		if not checks:
 			return
-		if repo is not None:
-			args = [repo]
-		else:
-			args = []
 		actual = []
 		for check in checks:
 			try:
@@ -66,67 +64,93 @@ class Feeder(object):
 		checks.extend(actual)
 
 	def fire_starts(self, *a, **kwds):
-		return self._generic_fire(*(a + ("start",)), **kwds)
+		return self._generic_fire(*(("start",) + a), **kwds)
 
 	def fire_finishs(self, *a, **kwds):
-		return self._generic_fire(*(a + ("finish",)), **kwds)
+		return self._generic_fire(*(("finish",) + a), **kwds)
 	
-	def run(self):
-		self.fire_starts("cat", self.cat_checks, repo=self.repo)
-		self.fire_starts("key", self.pkg_checks, repo=self.repo)
-		self.fire_starts("cpv", self.cpv_checks, repo=self.repo)
+	def run(self, reporter):
+		self.fire_starts("cat", self.cat_checks, self.repo)
+		self.fire_starts("key", self.pkg_checks, self.repo)
+		self.fire_starts("cpv", self.cpv_checks, self.repo)
 		
 		# and... build 'er up.
 		i = self.repo.itermatch(packages.AlwaysTrue, sorter=sorted)
 		if self.cpv_checks:
-			i = self.trigger_cpv_checks(i)
+			i = self.trigger_cpv_checks(i, reporter)
 		if self.pkg_checks:
-			i = self.trigger_pkg_checks(i)
+			i = self.trigger_pkg_checks(i, reporter)
 		if self.cat_checks:
-			i = self.trigger_cat_checks(i)
+			i = self.trigger_cat_checks(i, reporter)
 		count = 0
 		for x in i:
 			count += 1
 
-		self.fire_finishs("cat", self.cat_checks)
-		self.fire_finishs("pkg", self.pkg_checks)
-		self.fire_finishs("cpv", self.cpv_checks)
+		self.fire_finishs("cat", self.cat_checks, reporter)
+		self.fire_finishs("pkg", self.pkg_checks, reporter)
+		self.fire_finishs("cpv", self.cpv_checks, reporter)
 		return count
 		
 	@staticmethod
-	def run_check(checks, payload, errmsg):
+	def run_check(checks, payload, reporter, errmsg):
 		for check in checks:
 			try:
-				check.feed(payload)
+				check.feed(payload, reporter)
 			except SystemExit:
 				raise
 			except Exception, e:
 				logging.error(errmsg % (check, e))
 				del e
 
-	def _generic_trigger_checks(self, checks, attr, iterable):
+	def _generic_trigger_checks(self, checks, attr, iterable, reporter):
 		afunc = operator.attrgetter(attr)
 		l = [iterable.next()]
 		yield l[0]
 		lattr = afunc(l[0])
 		for pkg in iterable:
 			if lattr != afunc(pkg):
-				self.run_check(checks, l, "check %s"+" "+attr+": '"+lattr+"' threw exception %s")
+				self.run_check(checks, l, reporter, "check %s"+" "+attr+": '"+lattr+"' threw exception %s")
 				l = [pkg]
 				lattr = afunc(pkg)
 			else:
 				l.append(pkg)
 			yield pkg
-		self.run_check(checks, l, "check %s"+" "+attr+": '"+lattr+"' threw exception %s")
+		self.run_check(checks, l, reporter, "check %s"+" "+attr+": '"+lattr+"' threw exception %s")
 
-	def trigger_cat_checks(self, iterable):
-		return self._generic_trigger_checks(self.cat_checks, "category", iterable)
+	def trigger_cat_checks(self, *args):
+		return self._generic_trigger_checks(self.cat_checks, "category", *args)
 	
-	def trigger_pkg_checks(self, iterable):
-		return self._generic_trigger_checks(self.pkg_checks, "package", iterable)
+	def trigger_pkg_checks(self, *args):
+		return self._generic_trigger_checks(self.pkg_checks, "package", *args)
 
-	def trigger_cpv_checks(self, iterable):
+	def trigger_cpv_checks(self, iterable, reporter):
 		for pkg in iterable:
-			self.run_check(self.cpv_checks, pkg, "check %s cpv: '"+str(pkg)+"' threw exception %s")
+			self.run_check(self.cpv_checks, pkg, reporter, "check %s cpv: '"+str(pkg)+"' threw exception %s")
 			yield pkg
 	
+
+class Result(object):
+	
+	description = None
+	
+	def __str__(self):
+		try:
+			return self.to_str()
+		except NotImplementedError:
+			return "result from %s" % self.__class__.__name__
+	
+	def to_str(self):
+		raise NotImplementedError
+	
+	def to_xml(self):
+		raise NotImplementedError
+
+
+class Reporter(object):
+	def __init__(self):
+		self.reports = []
+	
+	def add_report(self, result):
+#		print result.to_xml()
+		print result.to_str()
+#		self.reports.append(result)

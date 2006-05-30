@@ -2,9 +2,35 @@
 # License: GPL2
 
 import time, os
-from reports.base import template, package_feed
-from pkgcore.fs.util import ensure_dirs
+from reports.base import template, package_feed, Result
 from reports.arches import default_arches
+
+
+class DroppedKeywordWarning(Result):
+	description = "Arch keywords dropped during pkg version bumping"
+
+	__slots__ = ("arch", "category", "package",)
+
+	def __init__(self, arch, pkg):
+		self.arch = arch
+		self.category = pkg.category
+		self.package = pkg.package
+		self.version = pkg.fullver
+	
+	def to_str(self, **kwds):
+		return "%s/%s-%s: dropped keyword %s" % (self.category, self.package, self.version,
+			self.arch)
+
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<arch>%s</arch>
+	<msg>keyword was dropped</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.arch)
+
 
 class StaleUnstableReport(template):
 	feed_type = package_feed
@@ -13,13 +39,7 @@ class StaleUnstableReport(template):
 		self.location = os.path.join(location, "dropped-keywords")
 		self.arches = {}.fromkeys(default_arches)
 	
-	def start(self, repo):
-		if not ensure_dirs(self.location, mode=0755):
-			raise Exception("failed creating reports directory %s" % self.location)
-		for k in self.arches:
-			self.arches[k] = open(os.path.join(self.location, k), "w", 8096)
-		
-	def feed(self, pkgset):
+	def feed(self, pkgset, reporter):
 		if len(pkgset) == 1:
 			return
 			
@@ -38,11 +58,4 @@ class StaleUnstableReport(template):
 					arches.discard(key)
 			state = oldstate
 		for key, pkg in dropped:
-			self.arches[key].write("%s: dropped at %s\n" % (pkg.key, pkg))
-			
-			
-
-	def finish(self):
-		for k in self.arches:
-			self.arches[k].close()
-			self.arches[k] = None
+			reporter.add_report(DroppedKeywordWarning(key, pkg))

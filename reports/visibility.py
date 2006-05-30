@@ -5,12 +5,12 @@ import os
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
 from reports import base, util, arches
-from pkgcore.fs.util import ensure_dirs
 from pkgcore.util.iterables import caching_iter
 from pkgcore.util.lists import stable_unique
 from pkgcore.util.containers import ProtectedSet
 demandload(globals(), "pkgcore.restrictions:packages,values")
 demandload(globals(), "pkgcore.util.containers:InvertedContains")
+demandload(globals(), "pkgcore.util.xml:escape")
 
 
 class BrokenDepsReport(base.template):
@@ -18,15 +18,11 @@ class BrokenDepsReport(base.template):
 	feed_type = base.package_feed
 
 	def __init__(self, location, arches=arches.default_arches):
-		self.location = os.path.join(location, "broken-deps")
 		self.arches = frozenset(x.lstrip("~") for x in arches)
-		self.repo = self.reportf = self.profile_filters = None
+		self.repo = self.profile_filters = None
 		self.keywords_filter = None
 	
 	def start(self, repo):
-		if not ensure_dirs(os.path.dirname(self.location), mode=0775):
-			raise Exception("failed creating required dir %s" % os.path.dirname(self.location))
-		self.reportf = open(self.location, "w", 8096)
 		arches_dict = util.get_profiles_desc(repo)
 		official_arches = util.get_repo_known_arches(repo)
 		profile_filters = {}
@@ -108,17 +104,16 @@ class BrokenDepsReport(base.template):
 			return list(failures)
 		return ()
 
-	def feed(self, pkgset):
+	def feed(self, pkgset, reporter):
 		query_cache = {}
 		# query_cache gets caching_iter partial repo searches shoved into it- reason is simple,
 		# it's likely that versions of this pkg probably use similar deps- so we're forcing those
 		# packages that were accessed for atom matching to remain in memory.
 		# end result is less going to disk
 		for pkg in pkgset:			
-			self.check_pkg(pkg, query_cache)
+			self.check_pkg(pkg, query_cache, reporter)
 		
-	def check_pkg(self, pkg, query_cache):
-		failures = {}
+	def check_pkg(self, pkg, query_cache, reporter):
 		# force it to be stable, then unstable ordering for an unstable optimization below
 		for key in sorted(self.keywords_filter):
 			if not self.keywords_filter[key].match(pkg):
@@ -128,21 +123,48 @@ class BrokenDepsReport(base.template):
 				bad = self.process_depset(pkg.depends.evaluate_depset(flags), 
 					virtuals, vfilter, cache, insoluable, query_cache)
 				if bad:
-					failures.setdefault(key, {})[profile] = ("depends", bad)
+					reporter.add_report(NonsolvableDeps(pkg, "depends", key, profile, bad))
 				r = pkg.rdepends.evaluate_depset(flags)
 				bad = self.process_depset(r,
 					virtuals, vfilter, cache, insoluable, query_cache)
 				if bad:
-					failures.setdefault(key, {})[profile] = ("rdepends", bad)
-		if failures:
-			self.reportf.write("%s:\n" % pkg)
-			for key, profile_dict in failures.iteritems():
-				for profile_name, val in profile_dict.iteritems():
-					self.reportf.writelines("  %s, %s: %s [ %s ]\n" % (key, profile_name, val[0],
-						", ".join(str(x) for x in stable_unique(val[1]))))
-			self.reportf.write("\n")
+					reporter.add_report(NonsolvableDeps(pkg, "rdepends/pdepends", key, profile, bad))
 	
 					
 	def finish(self):
 		self.reportf.close()
 		self.repo = self.profile_filters = self.keywords_filter = None
+
+
+class NonsolvableDeps(base.Result):
+	description = "No potential solution for a depset attribute"
+	__slots__ = ("category", "package", "version", "attr", "profile", "keyword", "nonvisible")
+	
+	def __init__(self, pkg, attr, keyword, profile, horked):
+		self.category = pkg.category
+		self.package = pkg.package
+		self.version = pkg.fullver
+		self.attr = attr
+		self.profile = profile
+		self.keyword = keyword
+		self.nonvisible = tuple(str(x) for x in stable_unique(horked))
+		
+	def to_str(self):
+		s=' '
+		if self.keyword.startswith("~"):
+			s=''
+		return "%s/%s-%s: %s%s:%s: Solutions: [ %s ]" % \
+			(self.category, self.package, self.version, s, self.keyword, self.profile,
+			", ".join(self.nonvisible))
+
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<profile>%s</profile>
+	<keyword>%s</keyword>
+	<msg>not solvable for %s- potential solutions, %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version,
+self.profile, self.keyword, self.attr, escape(", ".join(self.nonvisible)))
