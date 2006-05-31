@@ -153,8 +153,8 @@ class NonsolvableDeps(base.Result):
 		s=' '
 		if self.keyword.startswith("~"):
 			s=''
-		return "%s/%s-%s: %s%s:%s: Solutions: [ %s ]" % \
-			(self.category, self.package, self.version, s, self.keyword, self.profile,
+		return "%s/%s-%s: %s%s:%s: unsolvable %s, solutions: [ %s ]" % \
+			(self.category, self.package, self.version, s, self.attr, self.keyword, self.profile,
 			", ".join(self.nonvisible))
 
 	def to_xml(self):
