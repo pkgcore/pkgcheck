@@ -8,13 +8,13 @@ from reports.arches import default_arches
 
 class LaggingStableInfo(Result):
 	description = "Arch that is behind another from a stabling standpoint"
-	__slots__ = ("category", "package", "version", "keyword", "existing_keywords")
+	__slots__ = ("category", "package", "version", "keywords", "existing_keywords")
 	
-	def __init__(self, pkg, keyword):
+	def __init__(self, pkg):
 		self.category = pkg.category
 		self.package = pkg.package
 		self.version = pkg.fullver
-		self.keyword = tuple(str(x) for x in pkg.keywords if x.startswith("~"))
+		self.keywords = tuple(str(x) for x in pkg.keywords if x.startswith("~"))
 		self.stable = tuple(str(x) for x in pkg.keywords if not x.startswith("~") and not x.startswith("-"))
 	
 	def to_str(self):
@@ -44,10 +44,6 @@ class ImlateReport(template):
 		self.any_stable = packages.PackageRestriction("keywords", 
 			values.ContainmentMatch(*default_arches))
 
-		self.arch_restricts = {}
-		for x in arches:
-			self.arch_restricts[x] = ["~" + x, "-" + x, None]
-
 	def feed(self, pkgset, reporter):
 		# stable, then unstable, then file
 		try:
@@ -56,16 +52,4 @@ class ImlateReport(template):
 			# none stable.
 			return
 		keys = frozenset(max_stable.keywords)
-		for k, v in self.arch_restricts.iteritems():
-			if k in max_stable.keywords:
-				continue
-			# if ~k is there, we flag it
-			if v[0] in keys and v[1] not in keys:
-				reporter.add_report(LaggingStableInfo(max_stable, v[0].lstrip()))
-#				self.write_entry(v[-1], max_stable)
-				
-#	@staticmethod
-#	def write_entry(fileobj, pkg):
-#		fileobj.write("%s: keywords: [ %s ]\n" % (str(pkg), 
-#			", ".join(str(x) for x in pkg.keywords)))
-#
+		reporter.add_report(LaggingStableInfo(max_stable, v[0].lstrip()))
