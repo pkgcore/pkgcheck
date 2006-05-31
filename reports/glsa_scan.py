@@ -14,14 +14,22 @@ class VulnerablePackage(Result):
 
 	__slots__ = ("category", "package", "version", "arch", "glsa")
 
-	def __init__(self, pkg, glsa, arch_override=None):
+	def __init__(self, pkg, glsa):
 		self.category = pkg.category
 		self.package = pkg.package
 		self.version = pkg.fullver
-		if arch_override is None:
-			self.arch = tuple(set(x.lstrip("~") for x in pkg.keywords))
+		arches = set()
+		for v in collect_package_restrictions(glsa, ["keywords"]):
+			if isinstance(v.restriction, values.ContainmentMatch):
+				arches.update(x.lstrip("~") for x in v.restriction.vals)
+			else:
+				raise Exception("unexpected restriction sequence- %s in %s" % (v.restriction, glsa))
+		keys = set(x.lstrip("~") for x in pkg.keywords)
+		if arches:
+			self.arch = tuple(sorted(arches.intersection(keys)))
+			assert self.arch
 		else:
-			self.arch = arch
+			self.arch = tuple(sorted(keys))
 		self.glsa = str(glsa)
 	
 	def to_str(self):
