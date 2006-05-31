@@ -26,7 +26,7 @@ class MetadataSyntaxReport(template):
 		force_expansion = ("depends", "rdepends", "provides")
 		self.attrs = [(a, attrgetter(a), a in force_expansion) for a in default_attrs]
 		self.iuse_users = dict((x, attrgetter(x)) for x in 
-			("fetchables", "depends", "rdepends", "provides", "license"))
+			("fetchables", "depends", "rdepends", "provides"))
 		self.valid_iuse = None
 	
 	def feed(self, pkg, reporter):
@@ -155,14 +155,6 @@ class SrcUriReport(template):
 			for x in lacks_uri:
 				reporter.add_report(MissingUri(pkg, x))
 
-
-class UnstatedIUSEReport(template):
-	feed_type = versioned_feed
-	
-	def __init__(self, location):
-	
-	def feed(self, pkg, reporter):
-		
 
 class UnstatedIUSE(Result):
 	description = "pkg is reliant on conditionals that aren't in IUSE"
