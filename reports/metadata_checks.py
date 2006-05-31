@@ -2,14 +2,19 @@
 # License: GPL2
 
 import logging, os, stat, errno
+from operator import attrgetter
+from reports.base import template, versioned_feed, Result
+from reports.arches import default_arches
+
+from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
 from pkgcore.util.file import read_dict
 from pkgcore.package.metadata import MetadataException
-from reports.base import template, versioned_feed, Result
-from operator import attrgetter
 from pkgcore.package.atom import MalformedAtom, atom
 from pkgcore.util.lists import iter_flatten
-from pkgcore.util.demandload import demandload
+from pkgcore.util.iterables import expandable_chain
+from pkgcore.fetch.fetchable import fetchable
+from pkgcore.restrictions import packages
 demandload(globals(), "pkgcore.util.xml:escape")
 
 default_attrs = ("depends", "rdepends", "provides", "license", "fetchables", "iuse")
@@ -17,9 +22,65 @@ default_attrs = ("depends", "rdepends", "provides", "license", "fetchables", "iu
 class MetadataSyntaxReport(template):
 	feed_type = versioned_feed
 	
-	def __init__(self, location, attrs=default_attrs):
-		force_expansion = set(x for x in attrs if x in ("depends", "rdepends", "provides"))
-		self.attrs = [(a, attrgetter(a), a in force_expansion) for a in attrs]
+	def __init__(self, location):
+		force_expansion = ("depends", "rdepends", "provides")
+		self.attrs = [(a, attrgetter(a), a in force_expansion) for a in default_attrs]
+		self.iuse_users = dict((x, attrgetter(x)) for x in 
+			("fetchables", "depends", "rdepends", "provides", "license"))
+		self.valid_iuse = None
+	
+	def feed(self, pkg, reporter):
+		for attr_name, getter, force_expansion in self.attrs:
+			try:
+				o = getter(pkg)
+				if force_expansion:
+					for d_atom in iter_flatten(o, atom):
+						d_atom.key
+						d_atom.category
+						d_atom.package
+				if attr_name == "license":
+					if self.licenses is not None:
+						licenses = set(iter_flatten(o, basestring)).difference(self.licenses)
+						if licenses:
+							reporter.add_report(MetadataError(pkg, "license",
+								"licenses don't exist- [ %s ]" % ", ".join(licenses)))
+					elif not o:
+						reporter.add_report(MetadataError(pkg, "license", "no license defined"))
+				elif attr_name == "iuse":
+					if self.valid_iuse is not None:
+						iuse = set(o).difference(self.valid_iuse)
+						if iuse:
+							reporter.add_report(MetadataError(pkg, "iuse", 
+								"iuse unknown flags- [ %s ]" % ", ".join(iuse)))
+			except SystemExit:
+				raise
+			except (MetadataException, MalformedAtom, ValueError), e:
+				reporter.add_report(MetadataError(pkg, attr_name, "error- %s" % e))
+				del e
+			except Exception, e:
+				logging.error("unknown exception caught for pkg(%s) attr(%s): type(%s), %s" % (pkg, attr_name, type(e), e))
+				reporter.add_report(MetadataError(pkg, attr_name, "exception- %s" % e))
+				del e
+		if not pkg.keywords:
+			reporter.add_report(EmptyKeywardsMinor(pkg))
+		if "-*" in pkg.keywords:
+			reporter.add_report(StupidKeywardsMinor(pkg))
+
+		if self.valid_iuse is not None:
+			used_iuse = set()
+			for attr_name, f in self.check_attrs.iteritems():
+				i = expandable_chain(iter_flatten(f(pkg), (packages.Conditional, atom, basestring, fetchable)))
+				for node in i:
+					if not isinstance(node, packages.Conditional):
+						continue
+					# it's always a values.ContainmentMatch
+					used_iuse.update(node.restriction.vals)
+					i.append(iter_flatten(node.payload, (packages.Conditional, atom, basestring, fetchable)))
+				unstated = used_iuse.difference(pkg.iuse).difference(default_arches)
+				if unstated:
+					# hack, see bug 134994.
+					if unstated.difference(["bootstrap"]):
+						reporter.add_report(UnstatedIUSE(pkg, attr_name, unstated))
 	
 	@staticmethod
 	def load_valid_iuse(repo):
@@ -67,44 +128,110 @@ class MetadataSyntaxReport(template):
 		else:
 			self.valid_iuse = None
 
-		
+
+class SrcUriReport(template):
+	feed_type = versioned_feed
+
+	def __init__(self, location):
+		self.valid_protos = frozenset(["http", "https", "ftp"])
+	
 	def feed(self, pkg, reporter):
-		for attr_name, getter, force_expansion in self.attrs:
-			try:
-				o = getter(pkg)
-				if force_expansion:
-					for d_atom in iter_flatten(o, atom):
-						d_atom.key
-						d_atom.category
-						d_atom.package
-				if attr_name == "license":
-					if self.licenses is not None:
-						licenses = set(iter_flatten(o, basestring)).difference(self.licenses)
-						if licenses:
-							reporter.add_report(MetadataError(pkg, "license",
-								"licenses don't exist- [ %s ]" % ", ".join(licenses)))
-					elif not o:
-						reporter.add_report(MetadataError(pkg, "license", "no license defined"))
-				elif attr_name == "iuse":
-					if self.valid_iuse is not None:
-						iuse = set(o).difference(self.valid_iuse)
-						if iuse:
-							reporter.add_report(MetadataError(pkg, "iuse", 
-								"iuse unknown flags- [ %s ]" % ", ".join(iuse)))
-			except SystemExit:
-				raise
-			except (MetadataException, MalformedAtom, ValueError), e:
-				reporter.add_report(MetadataError(pkg, attr_name, "error- %s" % e))
-				del e
-			except Exception, e:
-				logging.error("unknown exception caught for pkg(%s) attr(%s): type(%s), %s" % (pkg, attr_name, type(e), e))
-				reporter.add_report(MetadataError(pkg, attr_name, "exception- %s" % e))
-				del e
-		if not pkg.keywords:
-			reporter.add_report(EmptyKeywardsMinor(pkg))
-		if "-*" in pkg.keywords:
-			reporter.add_report(StupidKeywardsMinor(pkg))
-						
+		lacks_uri = set()
+		for f_inst in iter_flatten(pkg.fetchables, fetchable):
+			if f_inst.uri is None:
+				lacks_uri.add(f_inst.filename)
+			elif isinstance(f_inst.uri, list):
+				bad = set()
+				for x in f_inst.uri:
+					i = x.find("://")
+					if i == -1:
+						bad.add(x)
+					else:
+						if x[:i] not in self.valid_protos:
+							bad.add(x)
+				if bad:
+					reporter.add_report(BadProto(pkg, f_inst.filename, bad))
+		if not "fetch" in pkg.restrict:
+			for x in lacks_uri:
+				reporter.add_report(MissingUri(pkg, x))
+
+
+class UnstatedIUSEReport(template):
+	feed_type = versioned_feed
+	
+	def __init__(self, location):
+	
+	def feed(self, pkg, reporter):
+		
+
+class UnstatedIUSE(Result):
+	description = "pkg is reliant on conditionals that aren't in IUSE"
+	__slots__ = ("category", "package", "version", "attr", "flags")
+	
+	def __init__(self, pkg, attr, flags):
+		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+		self.attr, self.flags = attr, tuple(flags)
+	
+	def to_str(self):
+		return "%s/%s-%s: attr(%s) uses unstated flags [ %s ]" % \
+		(self.category, self.package, self.version, self.attr, ", ".join(self.flags))
+
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<msg>attr %s uses unstead flags: %s"</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
+	self.attr, ", ".join(self.flags))
+
+
+class MissingUri(Result):
+	description = "restrict=fetch isn't set, yet no full uri exists"
+	__slots__ = ("category", "package", "version", "filename")
+
+	def __init__(self, pkg, filename):
+		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+		self.filename = filename
+	
+	def to_str(self):
+		return "%s/%s-%s: no uri specified for %s and RESTRICT=fetch isn't on" % \
+			(self.category, self.package, self.version, self.filename)
+	
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<msg>no uri specified for %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, escape(self.filename))
+
+
+class BadProto(Result):
+	description = "bad protocol"
+	__slots__ = ("category", "package", "version", "filename", "bad_uri")
+
+	def __init__(self, pkg, filename, bad_uri):
+		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+		self.filename = filename
+		self.bad_uri = bad_uri
+	
+	def to_str(self):
+		return "%s/%s-%s: file %s, bad proto/uri- [ '%s' ]" % (self.category, self.package,
+			self.version, self.filename, "', '".join(self.bad_uri))
+	
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<msg>file %s has invalid uri- %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
+	escape(self.file), escape(", ".join(self.bad_uri)))
+
 
 class MetadataError(Result):
 	description = "problem detected with a packages metadata"
