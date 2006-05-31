@@ -20,7 +20,7 @@ class LaggingStableInfo(Result):
 	def to_str(self):
 		return "%s/%s-%s: stabled [ %s ], potentials: [ %s ], " % \
 			(self.category, self.package, self.version, 
-			", ".join(self.stable), ", ".join(self.keyword))
+			", ".join(self.stable), ", ".join(self.keywords))
 
 	def to_xml(self):
 		return \
@@ -52,4 +52,4 @@ class ImlateReport(template):
 			# none stable.
 			return
 		keys = frozenset(max_stable.keywords)
-		reporter.add_report(LaggingStableInfo(max_stable, v[0].lstrip()))
+		reporter.add_report(LaggingStableInfo(max_stable))

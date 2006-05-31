@@ -68,7 +68,7 @@ class MetadataSyntaxReport(template):
 
 		if self.valid_iuse is not None:
 			used_iuse = set()
-			for attr_name, f in self.check_attrs.iteritems():
+			for attr_name, f in self.iuse_users.iteritems():
 				i = expandable_chain(iter_flatten(f(pkg), (packages.Conditional, atom, basestring, fetchable)))
 				for node in i:
 					if not isinstance(node, packages.Conditional):
