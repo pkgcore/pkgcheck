@@ -19,7 +19,7 @@ demandload(globals(), "pkgcore.util.xml:escape")
 
 default_attrs = ("depends", "rdepends", "provides", "license", "fetchables", "iuse")
 
-class MetadataSyntaxReport(template):
+class MetadataReport(template):
 	feed_type = versioned_feed
 	
 	def __init__(self, location):
@@ -202,12 +202,17 @@ class BadRestricts(Result):
 		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
 		self.restricts = restricts
 		self.deprecated = deprecated
+		if not restricts and not deprecated:
+			raise TypeError("deprecated or restricts must not be empty")
 	
 	def to_str(self):
+		s = ''
 		if self.restricts:
 			s = "unknown restricts- [ %s ]" % ", ".join(self.restricts)
 		if self.deprecated:
-			s += ", deprecated (drop the 'no') [ %s ]" % ", ".join(self.deprecated)
+			if s:
+				s+=", "
+			s += "deprecated (drop the 'no') [ %s ]" % ", ".join(self.deprecated)
 		return "%s/%s-%s: %s" % (self.category, self.package, self.version, s)
 		
 	def to_xml(self):
@@ -215,7 +220,9 @@ class BadRestricts(Result):
 		if self.restricts:
 			s = "unknown restricts: %s" % ", ".join(self.restricts)
 		if self.deprecated:
-			s += ".  deprecated (drop the 'no')- %s" % ", ".join(self.deprecated)
+			if s:
+				s += ".  "
+			s += "deprecated (drop the 'no')- %s" % ", ".join(self.deprecated)
 
 		return \
 """<check name="%s">
