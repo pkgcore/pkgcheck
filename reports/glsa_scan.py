@@ -24,7 +24,7 @@ class VulnerablePackage(Result):
 				arches.update(x.lstrip("~") for x in v.restriction.vals)
 			else:
 				raise Exception("unexpected restriction sequence- %s in %s" % (v.restriction, glsa))
-		keys = set(x.lstrip("~") for x in pkg.keywords)
+		keys = set(x.lstrip("~") for x in pkg.keywords if not x.startswith("-"))
 		if arches:
 			self.arch = tuple(sorted(arches.intersection(keys)))
 			assert self.arch
