@@ -81,7 +81,7 @@ class MetadataSyntaxReport(template):
 					# hack, see bug 134994.
 					if unstated.difference(["bootstrap"]):
 						reporter.add_report(UnstatedIUSE(pkg, attr_name, unstated))
-	
+
 	@staticmethod
 	def load_valid_iuse(repo):
 		base = os.path.join(repo.base, "profiles")
@@ -154,6 +154,50 @@ class SrcUriReport(template):
 		if not "fetch" in pkg.restrict:
 			for x in lacks_uri:
 				reporter.add_report(MissingUri(pkg, x))
+
+
+class DescriptionReport(template):
+	feed_type = versioned_feed
+	
+	def __init__(self, location):
+		pass
+	
+	def feed(self, pkg, reporter):
+		s = pkg.description.lower()
+		if s.startswith("based on") and "eclass" in s:
+			reporter.add_report(CrappyDescription(pkg, "generic eclass defined description"))
+		elif pkg.package == s or pkg.key == s:
+			reporter.add_report(CrappyDescription(pkg, "using the pkg name as the description isn't very helpful"))
+		else:
+			l = len(pkg.description)
+			if not l:
+				reporter.add_report(CrappyDescription(pkg, "empty/unset"))
+			elif l > 250:
+				reporter.add_report(CrappyDescription(pkg, "over 250 chars in length, bit long"))
+			elif l < 5:
+				reporter.add_report(CrappyDescription(pkg, "under 10 chars in length- too short"))
+
+
+class CrappyDescription(Result):
+	description = "pkg's description sucks in some fashion"
+
+	__slots__ = ("category", "package", "version", "msg")
+
+	def __init__(self, pkg, msg):
+		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+		self.msg = msg
+	
+	def to_str(self):
+		return "%s/%s-%s: description: %s" % (self.category, self.package, self.version, self.msg)
+	
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<msg>%s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.msg)
 
 
 class UnstatedIUSE(Result):
