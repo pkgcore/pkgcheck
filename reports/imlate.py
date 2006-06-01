@@ -10,11 +10,11 @@ class LaggingStableInfo(Result):
 	description = "Arch that is behind another from a stabling standpoint"
 	__slots__ = ("category", "package", "version", "keywords", "existing_keywords")
 	
-	def __init__(self, pkg):
+	def __init__(self, pkg, keywords):
 		self.category = pkg.category
 		self.package = pkg.package
 		self.version = pkg.fullver
-		self.keywords = tuple(str(x) for x in pkg.keywords if x.startswith("~"))
+		self.keywords = keywords
 		self.stable = tuple(str(x) for x in pkg.keywords if not x.startswith("~") and not x.startswith("-"))
 	
 	def to_str(self):
@@ -51,5 +51,6 @@ class ImlateReport(template):
 		except ValueError:
 			# none stable.
 			return
-		keys = frozenset(max_stable.keywords)
-		reporter.add_report(LaggingStableInfo(max_stable))
+		unstable_keys = tuple(str(x) for x in max_stable.keywords if x.startswith("~"))
+		if unstable_keys:
+			reporter.add_report(LaggingStableInfo(max_stable, unstable_keys))
