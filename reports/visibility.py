@@ -42,7 +42,7 @@ class BrokenDepsReport(base.template):
 			for profile_name in arches_dict[k]:
 				profile = util.get_profile(repo, profile_name)
 				mask = util.get_profile_mask(profile)
-				virtuals = profile.virtuals
+				virtuals = profile.virtuals(repo)
 				# force all use masks to negated, and all other arches but this
 				use_flags = InvertedContains(profile.use_mask + tuple(official_arches.difference([stable_key])))
 
@@ -112,7 +112,7 @@ class BrokenDepsReport(base.template):
 		# end result is less going to disk
 		for pkg in pkgset:			
 			self.check_pkg(pkg, query_cache, reporter)
-		
+
 	def check_pkg(self, pkg, query_cache, reporter):
 		# force it to be stable, then unstable ordering for an unstable optimization below
 		for key in sorted(self.keywords_filter):
