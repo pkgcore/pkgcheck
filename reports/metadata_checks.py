@@ -178,6 +178,55 @@ class DescriptionReport(template):
 				reporter.add_report(CrappyDescription(pkg, "under 10 chars in length- too short"))
 
 
+class RestrictsReport(template):
+	feed_type = versioned_feed
+	known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", "test", 	
+		"sandbox", "userpriv", "primaryuri", "binchecks", "strip"))
+
+	def __init__(self, location):
+		pass
+	
+	def feed(self, pkg, reporter):
+		bad = set(pkg.restrict).difference(self.known_restricts)
+		if bad:
+			deprecated = set(x for x in bad if x.startswith("no") and x[2:] in self.known_restricts)
+			reporter.add_report(BadRestricts(pkg, bad.difference(deprecated), deprecated))
+
+
+class BadRestricts(Result):
+	description = "pkg's restrict metadata has unknown/deprecated entries"
+	
+	__slots__ = ("category", "package", "version", "restricts", "deprecated")
+	
+	def __init__(self, pkg, restricts, deprecated=None):
+		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+		self.restricts = restricts
+		self.deprecated = deprecated
+	
+	def to_str(self):
+		if self.restricts:
+			s = "unknown restricts- [ %s ]" % ", ".join(self.restricts)
+		if self.deprecated:
+			s += ", deprecated (drop the 'no') [ %s ]" % ", ".join(self.deprecated)
+		return "%s/%s-%s: %s" % (self.category, self.package, self.version, s)
+		
+	def to_xml(self):
+		s = ''
+		if self.restricts:
+			s = "unknown restricts: %s" % ", ".join(self.restricts)
+		if self.deprecated:
+			s += ".  deprecated (drop the 'no')- %s" % ", ".join(self.deprecated)
+
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<msg>%s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
+	"unknown restricts- %s" % s)
+
+
 class CrappyDescription(Result):
 	description = "pkg's description sucks in some fashion"
 
