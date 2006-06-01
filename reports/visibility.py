@@ -131,8 +131,7 @@ class BrokenDepsReport(base.template):
 					reporter.add_report(NonsolvableDeps(pkg, "rdepends/pdepends", key, profile, bad))
 	
 					
-	def finish(self):
-		self.reportf.close()
+	def finish(self, *a):
 		self.repo = self.profile_filters = self.keywords_filter = None
 
 

@@ -322,7 +322,7 @@ class BadProto(Result):
 	<version>%s</version>
 	<msg>file %s has invalid uri- %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
-	escape(self.file), escape(", ".join(self.bad_uri)))
+	escape(self.filename), escape(", ".join(self.bad_uri)))
 
 
 class MetadataError(Result):

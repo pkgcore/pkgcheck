@@ -31,7 +31,7 @@ class LaggingStableInfo(Result):
 	<keyword>%s</keyword>
 	<msg>%s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
-"</keyword>\n\t<keyword>".join(self.keyword), 
+"</keyword>\n\t<keyword>".join(self.keywords), 
 "potential for stabling, prexisting stable- %s" % ", ".join(self.stable))
 		
 
