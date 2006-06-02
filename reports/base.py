@@ -14,7 +14,7 @@ import logging, operator
 class template(object):
 	feed_type = None
 
-	def __init__(self, location):
+	def __init__(self):
 		pass
 
 	def start(self, repo):

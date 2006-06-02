@@ -44,9 +44,6 @@ class BadInheritsReport(template):
 	'unipatch-001',
 	'xfree'))
 	
-	def __init__(self, location):
-		pass
-	
 	def feed(self, pkg, reporter):
 		bad = self.blacklist.intersection(pkg.data["_eclasses_"].iterkeys())
 		if bad:

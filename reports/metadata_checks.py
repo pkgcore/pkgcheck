@@ -22,7 +22,7 @@ default_attrs = ("depends", "rdepends", "provides", "license", "fetchables", "iu
 class MetadataReport(template):
 	feed_type = versioned_feed
 	
-	def __init__(self, location):
+	def __init__(self):
 		force_expansion = ("depends", "rdepends", "provides")
 		self.attrs = [(a, attrgetter(a), a in force_expansion) for a in default_attrs]
 		self.iuse_users = dict((x, attrgetter(x)) for x in 
@@ -131,10 +131,8 @@ class MetadataReport(template):
 
 class SrcUriReport(template):
 	feed_type = versioned_feed
+	valid_protos = frozenset(["http", "https", "ftp"])
 
-	def __init__(self, location):
-		self.valid_protos = frozenset(["http", "https", "ftp"])
-	
 	def feed(self, pkg, reporter):
 		lacks_uri = set()
 		for f_inst in iter_flatten(pkg.fetchables, fetchable):
@@ -159,9 +157,6 @@ class SrcUriReport(template):
 class DescriptionReport(template):
 	feed_type = versioned_feed
 	
-	def __init__(self, location):
-		pass
-	
 	def feed(self, pkg, reporter):
 		s = pkg.description.lower()
 		if s.startswith("based on") and "eclass" in s:
@@ -182,9 +177,6 @@ class RestrictsReport(template):
 	feed_type = versioned_feed
 	known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", "test", 	
 		"sandbox", "userpriv", "primaryuri", "binchecks", "strip"))
-
-	def __init__(self, location):
-		pass
 	
 	def feed(self, pkg, reporter):
 		bad = set(pkg.restrict).difference(self.known_restricts)

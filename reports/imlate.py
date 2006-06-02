@@ -38,11 +38,14 @@ class LaggingStableInfo(Result):
 class ImlateReport(template):
 	feed_type = package_feed
 
-	def __init__(self, location, arches=default_arches):
+	def __init__(self, arches=default_arches):
 		arches = set(x.strip().lstrip("~") for x in arches)
 		# stable, then unstable, then file
 		self.any_stable = packages.PackageRestriction("keywords", 
 			values.ContainmentMatch(*default_arches))
+
+	def finish(self, reporter):
+		del self.any_stable
 
 	def feed(self, pkgset, reporter):
 		# stable, then unstable, then file

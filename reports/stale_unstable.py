@@ -39,7 +39,7 @@ class StaleUnstableKeyword(Result):
 class StaleUnstableReport(template):
 	feed_type = versioned_feed
 	
-	def __init__(self, location, arches=default_arches, staleness=long(day*30)):
+	def __init__(self, arches=default_arches, staleness=long(day*30)):
 		self.arches = default_arches
 		self.staleness = staleness
 	

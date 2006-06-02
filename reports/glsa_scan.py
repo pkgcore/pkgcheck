@@ -50,10 +50,6 @@ class VulnerablePackage(Result):
 class TreeVulnerabilitiesReport(template):
 	feed_type = versioned_feed
 	
-	def __init__(self, location):
-		self.location = location
-		self.reportf = None
-	
 	def start(self, repo):
 		self.vulns = {}
 		# this is a bit brittle
@@ -62,6 +58,9 @@ class TreeVulnerabilitiesReport(template):
 				self.vulns.setdefault(r[0].key, []).append(packages.AndRestriction(*r[1:]))
 			else:
 				self.vulns.setdefault(r[0].key, []).append(r[1])
+
+	def finish(self, reporter):
+		self.vulns.clear()
 			
 	def feed(self, pkg, reporter):
 		for vuln in self.vulns.get(pkg.key, []):

@@ -9,13 +9,16 @@ from reports.arches import default_arches
 class UnstableOnlyReport(template):
 	feed_type = package_feed
 
-	def __init__(self, location, arches=default_arches):
+	def __init__(self, arches=default_arches):
 		arches = set(x.strip().lstrip("~") for x in arches)
 		# stable, then unstable, then file
 		self.arch_restricts = {}
 		for x in arches:
 			self.arch_restricts[x] = [packages.PackageRestriction("keywords", values.ContainmentMatch(x)),
 				packages.PackageRestriction("keywords", values.ContainmentMatch("~%s" % x))]
+
+	def finish(self, reporter):
+		self.arch_restricts.clear()
 
 	def feed(self, pkgset, reporter):
 		# stable, then unstable, then file

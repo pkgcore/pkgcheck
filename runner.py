@@ -14,11 +14,10 @@ def exithandler(signum,frame):
 	sys.exit(1)
 
 if __name__ == "__main__":
-	if len(sys.argv) != 3:
-		print "need the location to dump the reports, and the arg of the repo to scan"
+	if len(sys.argv) != 2:
+		print "need the arg of the repo to scan"
 		sys.exit(1)
-	location = os.path.abspath(sys.argv[1])
-	repo_name = sys.argv[2]
+	repo_name = sys.argv[1]
                     
 	signal.signal(signal.SIGCHLD, signal.SIG_DFL)
 	signal.signal(signal.SIGINT, exithandler)
@@ -44,7 +43,7 @@ if __name__ == "__main__":
 				if not getattr(obj, "feed_type", False):
 					continue
 				try:
-					runner.add_check(obj(location))
+					runner.add_check(obj())
 				except SystemExit:
 					raise
 				except Exception, e:

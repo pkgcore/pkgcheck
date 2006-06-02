@@ -35,8 +35,7 @@ class DroppedKeywordWarning(Result):
 class StaleUnstableReport(template):
 	feed_type = package_feed
 	
-	def __init__(self, location, arches=default_arches):
-		self.location = os.path.join(location, "dropped-keywords")
+	def __init__(self, arches=default_arches):
 		self.arches = {}.fromkeys(default_arches)
 	
 	def feed(self, pkgset, reporter):

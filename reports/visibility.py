@@ -17,7 +17,7 @@ class BrokenDepsReport(base.template):
 
 	feed_type = base.package_feed
 
-	def __init__(self, location, arches=arches.default_arches):
+	def __init__(self, arches=arches.default_arches):
 		self.arches = frozenset(x.lstrip("~") for x in arches)
 		self.repo = self.profile_filters = None
 		self.keywords_filter = None
