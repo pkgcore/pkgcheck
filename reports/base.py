@@ -7,7 +7,7 @@ versioned_feed = "cat/pkg-ver"
 
 __all__ = ("package_feed, versioned_feed", "category_feed", "Feeder")
 
-from pkgcore.restrictions import packages
+from pkgcore.restrictions import packages, util
 import logging, operator
 
 
@@ -71,27 +71,52 @@ class Feeder(object):
 
 	def fire_finishs(self, *a, **kwds):
 		return self._generic_fire(*(("finish",) + a), **kwds)
-	
-	def run(self, reporter):
-		self.fire_starts("cat", self.cat_checks, self.repo)
-		self.fire_starts("key", self.pkg_checks, self.repo)
-		self.fire_starts("cpv", self.cpv_checks, self.repo)
+
+	def run(self, reporter, limiter=packages.AlwaysTrue):
+		enabled = {}.fromkeys(["cats", "pkgs", "vers"], False)
+		for var, attr in (("cats", ["category"]), ("pkgs", ["package"]), ("vers", ["fullver", "version", "rev"])):
+			enabled[var] = bool(list(util.collect_package_restrictions(limiter, attr)))
+
+		cats = enabled.pop("cats")
+		pkgs = enabled.pop("pkgs")
+		vers = enabled.pop("vers")
+
+		# take the most specific, and disable everything less
+		if vers:
+			cats = pkgs = False
+		elif pkgs:
+			vers = True
+			cats = False
+		elif cats:
+			pkgs = vers = True
+		else:
+			cats = pkgs = vers = True
+
+		if cats:
+			self.fire_starts("cat", self.cat_checks, self.repo)
+		if pkgs:
+			self.fire_starts("key", self.pkg_checks, self.repo)
+		if vers:
+			self.fire_starts("cpv", self.cpv_checks, self.repo)
 		
 		# and... build 'er up.
-		i = self.repo.itermatch(packages.AlwaysTrue, sorter=sorted)
-		if self.cpv_checks:
+		i = self.repo.itermatch(limiter, sorter=sorted)
+		if cats and self.cpv_checks:
 			i = self.trigger_cpv_checks(i, reporter)
-		if self.pkg_checks:
+		if pkgs and self.pkg_checks:
 			i = self.trigger_pkg_checks(i, reporter)
-		if self.cat_checks:
+		if vers and self.cat_checks:
 			i = self.trigger_cat_checks(i, reporter)
 		count = 0
 		for x in i:
 			count += 1
 
-		self.fire_finishs("cat", self.cat_checks, reporter)
-		self.fire_finishs("pkg", self.pkg_checks, reporter)
-		self.fire_finishs("cpv", self.cpv_checks, reporter)
+		if cats:
+			self.fire_finishs("cat", self.cat_checks, reporter)
+		if pkgs:
+			self.fire_finishs("pkg", self.pkg_checks, reporter)
+		if vers:
+			self.fire_finishs("cpv", self.cpv_checks, reporter)
 		return count
 		
 	@staticmethod
