@@ -32,6 +32,7 @@ class Feeder(object):
 		self.pkg_checks = []
 		self.cat_checks = []
 		self.cpv_checks = []
+		self.first_run = True
 		for x in checks:
 			self.add_check(x)
 		self.repo = repo
@@ -92,12 +93,14 @@ class Feeder(object):
 		else:
 			cats = pkgs = vers = True
 
-		if cats:
-			self.fire_starts("cat", self.cat_checks, self.repo)
-		if pkgs:
-			self.fire_starts("key", self.pkg_checks, self.repo)
-		if vers:
-			self.fire_starts("cpv", self.cpv_checks, self.repo)
+		if self.first_run:
+			if cats:
+				self.fire_starts("cat", self.cat_checks, self.repo)
+			if pkgs:
+				self.fire_starts("key", self.pkg_checks, self.repo)
+			if vers:
+				self.fire_starts("cpv", self.cpv_checks, self.repo)
+		self.first_run = False
 		
 		# and... build 'er up.
 		i = self.repo.itermatch(limiter, sorter=sorted)
@@ -111,13 +114,12 @@ class Feeder(object):
 		for x in i:
 			count += 1
 
-		if cats:
-			self.fire_finishs("cat", self.cat_checks, reporter)
-		if pkgs:
-			self.fire_finishs("pkg", self.pkg_checks, reporter)
-		if vers:
-			self.fire_finishs("cpv", self.cpv_checks, reporter)
 		return count
+	
+	def finish(self, reporter):
+		self.fire_finishs("cat", self.cat_checks, reporter)
+		self.fire_finishs("pkg", self.pkg_checks, reporter)
+		self.fire_finishs("cpv", self.cpv_checks, reporter)
 		
 	@staticmethod
 	def run_check(checks, payload, reporter, errmsg):
