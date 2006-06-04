@@ -13,9 +13,11 @@ demandload(globals(), "pkgcore.util.containers:InvertedContains")
 demandload(globals(), "pkgcore.util.xml:escape")
 
 
-class BrokenDepsReport(base.template):
+class VisibilityReport(base.template):
 
 	feed_type = base.package_feed
+
+	vcs_eclasses = ("subversion", "git", "cvs", "darcs")
 
 	def __init__(self, arches=arches.default_arches):
 		self.arches = frozenset(x.lstrip("~") for x in arches)
@@ -73,8 +75,20 @@ class BrokenDepsReport(base.template):
 		# it's likely that versions of this pkg probably use similar deps- so we're forcing those
 		# packages that were accessed for atom matching to remain in memory.
 		# end result is less going to disk
-		for pkg in pkgset:			
+		for pkg in pkgset:
+			if any(True for eclass in self.vcs_eclasses if eclass in pkg.data["_eclasses_"]):
+				# vcs ebuild that better not be visible
+				self.check_visibility_vcs(pkg, reporter)
 			self.check_pkg(pkg, query_cache, reporter)
+
+	def check_visibility_vcs(self, pkg, reporter):
+		for key, profile_dict in self.profile_filters.iteritems():
+			if not key.startswith("~"):
+				continue
+			for profile_name, vals in profile_dict.iteritems():
+				if vals[2].match(pkg):
+					reporter.add_report(VisibleVcsPkg(pkg, key, profile_name))
+	
 
 	def check_pkg(self, pkg, query_cache, reporter):
 		# force it to be stable, then unstable ordering for an unstable optimization below
@@ -133,6 +147,31 @@ class BrokenDepsReport(base.template):
 	def finish(self, *a):
 		self.repo = self.profile_filters = self.keywords_filter = None
 
+
+class VisibleVcsPkg(base.Result):
+	description = "pkg is vcs based, but visible"
+	__slots__ = ("category", "package", "version", "profile", "arch")
+
+	def __init__(self, pkg, arch, profile):
+		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+		self.arch = arch.lstrip("~")
+		self.profile = profile
+	
+	def to_str(self):
+		return "%s/%s-%s: vcs ebuild visible for arch %s, profile %s" % \
+			(self.category, self.package, self.version, self.arch, self.profile)
+	
+	def to_xml(self):
+		return \
+"""<check name="%s>
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<arch>%s</arch>
+	<profile>%s</profile>
+	<msg>vcs based ebuild user accessible</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version,
+	self.arch, self.profile)
 
 class NonsolvableDeps(base.Result):
 	description = "No potential solution for a depset attribute"
