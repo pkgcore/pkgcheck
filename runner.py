@@ -12,16 +12,31 @@ import sys, os, logging, time, signal
 def exithandler(signum,frame):
 	signal.signal(signal.SIGINT, signal.SIG_IGN)
 	signal.signal(signal.SIGTERM, signal.SIG_IGN)
-	print "caught signal %i, shutting down" % signum
+	sys.stderr.write("caught signal %i, shutting down\n" % signum)
 	sys.exit(1)
 
+def grab_arg(arg, args):
+	val = False
+	try:
+		while True:
+			args.remove(arg)
+			val = True
+	except ValueError:
+		pass
+	return val
+
 if __name__ == "__main__":
-	if len(sys.argv) < 2:
-		print "need the arg of the repo to scan"
+	args = sys.argv[1:]
+	help = grab_arg("-h", args) or grab_arg("--help", args)
+	to_xml = grab_arg("--xml", args)
+	if help or len(args) < 1:
+		sys.stderr.write("need the arg of the repo to scan, optional --xml to dump xml, and any args for filtering\n")
+		if help:
+			sys.exit(0)
 		sys.exit(1)
-	repo_name = sys.argv[1]
-	if len(sys.argv) > 2:
-		limiters = stable_unique(map(generate_restriction, sys.argv[2:]))
+	repo_name = args.pop(0)
+	if args:
+		limiters = stable_unique(map(generate_restriction, args))
 	else:
 		limiters = [packages.AlwaysTrue]
                     
@@ -34,11 +49,16 @@ if __name__ == "__main__":
 	repo = conf.repo[repo_name]
 	import reports
 	import reports.base
-	reporter = reports.base.Reporter()
+	if to_xml:
+		reporter = reports.base.XmlReporter(sys.stdout)
+	else:
+		reporter = reports.base.StrReporter(sys.stdout)
 	runner = reports.base.Feeder(repo)
 	checks = []
 	for loc in map(str, reports.__path__):
 		for mod in [x for x in os.listdir(loc) if x.endswith(".py")]:
+			if not mod.startswith("unstable"):
+				continue
 			try:
 				module = load_module("reports.%s" % mod[:-3])
 			except FailedImport:
@@ -60,15 +80,17 @@ if __name__ == "__main__":
 					continue
 	start_time = time.time()
 	nodes = 0
-	print "checks: %i cat, %i pkg, %i version" % (len(runner.cat_checks), \
-		len(runner.pkg_checks), len(runner.cpv_checks))
+	sys.stderr.write("checks: %i cat, %i pkg, %i version\n" % (len(runner.cat_checks), \
+		len(runner.pkg_checks), len(runner.cpv_checks)))
 	if not (runner.cat_checks or runner.pkg_checks or runner.cpv_checks):
-		print "no tests"
+		sys.stderr.write("no tests\n")
 		sys.exit(1)
+	reporter.start()
 	for filterer in limiters:
 		nodes += runner.run(reporter, filterer)
 	runner.finish(reporter)
+	reporter.finish()
 	elapsed = time.time() - start_time
 	minutes = int(elapsed)/60
 	seconds = elapsed - (minutes * 60)
-	print "processed %i pkgs: %im%.2fs" % (nodes, minutes, seconds)
+	sys.stderr.write("processed %i pkgs: %im%.2fs\n" % (nodes, minutes, seconds))

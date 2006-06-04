@@ -181,6 +181,30 @@ class Reporter(object):
 		self.reports = []
 	
 	def add_report(self, result):
-#		print result.to_xml()
-		print result.to_str()
-#		self.reports.append(result)
+		self.reports.append(result)
+
+	def start(self):
+		pass
+
+	def finish(self):
+		pass
+
+class StrReporter(Reporter):
+	def __init__(self, file_obj):
+		self.handle = file_obj
+	
+	def add_report(self, result):
+		self.handle.write("%s\n" % (result.to_str()))
+	
+class XmlReporter(Reporter):
+	def __init__(self, file_obj):
+		self.handle = file_obj
+
+	def start(self):
+		self.handle.write("<checks>\n")
+
+	def add_report(self, result):
+		self.handle.write("%s\n" % (result.to_xml()))
+
+	def finish(self):
+		self.handle.write("</checks>\n")
