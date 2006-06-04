@@ -45,7 +45,7 @@ class BadInheritsReport(template):
 	'xfree'))
 	
 	def feed(self, pkg, reporter):
-		bad = self.blacklist.intersection(pkg.data["_eclasses_"].iterkeys())
+		bad = self.blacklist.intersection(pkg.data["_eclasses_"])
 		if bad:
 			reporter.add_report(DeprecatedEclass(pkg, bad))
 
