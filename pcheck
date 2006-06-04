@@ -52,6 +52,10 @@ if __name__ == "__main__":
 		sys.stderr.write("Error: repo %s is not a valid reponames\nknown repos- [ %s ]\n" % 
 			(repr(repo_name), ", ".join(repr(x) for x in conf.repo.iterkeys())))
 		sys.exit(1)
+	if not getattr(repo, "base", False):
+		sys.stderr.write("\nWarning: repo %s appears to be combined trees, as such some checks will be disabled\n\n" % 
+			repo_name)
+
 	import pkgcore_checks
 	import pkgcore_checks.base
 	if to_xml:
