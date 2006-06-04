@@ -67,6 +67,32 @@ class BrokenDepsReport(base.template):
 		self.profile_filters = profile_filters
 		self.repo = repo
 
+	def feed(self, pkgset, reporter):
+		query_cache = {}
+		# query_cache gets caching_iter partial repo searches shoved into it- reason is simple,
+		# it's likely that versions of this pkg probably use similar deps- so we're forcing those
+		# packages that were accessed for atom matching to remain in memory.
+		# end result is less going to disk
+		for pkg in pkgset:			
+			self.check_pkg(pkg, query_cache, reporter)
+
+	def check_pkg(self, pkg, query_cache, reporter):
+		# force it to be stable, then unstable ordering for an unstable optimization below
+		for key in sorted(self.keywords_filter):
+			if not self.keywords_filter[key].match(pkg):
+				continue
+			for profile, val in self.profile_filters[key].iteritems():
+				virtuals, flags, vfilter, cache, insoluable = val
+				bad = self.process_depset(pkg.depends.evaluate_depset(flags), 
+					virtuals, vfilter, cache, insoluable, query_cache)
+				if bad:
+					reporter.add_report(NonsolvableDeps(pkg, "depends", key, profile, bad))
+				r = pkg.rdepends.evaluate_depset(flags)
+				bad = self.process_depset(r,
+					virtuals, vfilter, cache, insoluable, query_cache)
+				if bad:
+					reporter.add_report(NonsolvableDeps(pkg, "rdepends/pdepends", key, profile, bad))
+
 	def process_depset(self, depset, virtuals, vfilter, cache, insoluable, query_cache):
 		failures = set()
 		for potential in depset.solutions():
@@ -103,33 +129,6 @@ class BrokenDepsReport(base.template):
 			# no matches for any of the potentials.
 			return list(failures)
 		return ()
-
-	def feed(self, pkgset, reporter):
-		query_cache = {}
-		# query_cache gets caching_iter partial repo searches shoved into it- reason is simple,
-		# it's likely that versions of this pkg probably use similar deps- so we're forcing those
-		# packages that were accessed for atom matching to remain in memory.
-		# end result is less going to disk
-		for pkg in pkgset:			
-			self.check_pkg(pkg, query_cache, reporter)
-
-	def check_pkg(self, pkg, query_cache, reporter):
-		# force it to be stable, then unstable ordering for an unstable optimization below
-		for key in sorted(self.keywords_filter):
-			if not self.keywords_filter[key].match(pkg):
-				continue
-			for profile, val in self.profile_filters[key].iteritems():
-				virtuals, flags, vfilter, cache, insoluable = val
-				bad = self.process_depset(pkg.depends.evaluate_depset(flags), 
-					virtuals, vfilter, cache, insoluable, query_cache)
-				if bad:
-					reporter.add_report(NonsolvableDeps(pkg, "depends", key, profile, bad))
-				r = pkg.rdepends.evaluate_depset(flags)
-				bad = self.process_depset(r,
-					virtuals, vfilter, cache, insoluable, query_cache)
-				if bad:
-					reporter.add_report(NonsolvableDeps(pkg, "rdepends/pdepends", key, profile, bad))
-	
 					
 	def finish(self, *a):
 		self.repo = self.profile_filters = self.keywords_filter = None
