@@ -2,8 +2,8 @@
 # License: GPL2
 
 import time, os
-from reports.base import template, package_feed, Result
-from reports.arches import default_arches
+from pkgcore_checks.base import template, package_feed, Result
+from pkgcore_checks.arches import default_arches
 
 
 class DroppedKeywordWarning(Result):

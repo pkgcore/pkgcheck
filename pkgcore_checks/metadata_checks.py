@@ -3,8 +3,8 @@
 
 import logging, os, stat, errno
 from operator import attrgetter
-from reports.base import template, versioned_feed, Result
-from reports.arches import default_arches
+from pkgcore_checks.base import template, versioned_feed, Result
+from pkgcore_checks.arches import default_arches
 
 from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any

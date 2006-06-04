@@ -47,20 +47,18 @@ if __name__ == "__main__":
 	
 	conf = load_config()
 	repo = conf.repo[repo_name]
-	import reports
-	import reports.base
+	import pkgcore_checks
+	import pkgcore_checks.base
 	if to_xml:
-		reporter = reports.base.XmlReporter(sys.stdout)
+		reporter = pkgcore_checks.base.XmlReporter(sys.stdout)
 	else:
-		reporter = reports.base.StrReporter(sys.stdout)
-	runner = reports.base.Feeder(repo)
+		reporter = pkgcore_checks.base.StrReporter(sys.stdout)
+	runner = pkgcore_checks.base.Feeder(repo)
 	checks = []
-	for loc in map(str, reports.__path__):
+	for loc in map(str, pkgcore_checks.__path__):
 		for mod in [x for x in os.listdir(loc) if x.endswith(".py")]:
-			if not mod.startswith("unstable"):
-				continue
 			try:
-				module = load_module("reports.%s" % mod[:-3])
+				module = load_module("pkgcore_checks.%s" % mod[:-3])
 			except FailedImport:
 				continue
 			for name in dir(module):

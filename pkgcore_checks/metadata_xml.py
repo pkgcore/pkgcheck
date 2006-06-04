@@ -2,7 +2,7 @@
 # License: GPL2
 
 import os
-from reports.base import template, Result, package_feed
+from pkgcore_checks.base import template, Result, package_feed
 from pkgcore.util.demandload import demandload
 demandload(globals(), "urllib:urlopen")
 demandload(globals(), "tempfile:NamedTemporaryFile")

@@ -4,7 +4,7 @@
 import os
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
-from reports import base, util, arches
+from pkgcore_checks import base, util, arches
 from pkgcore.util.iterables import caching_iter
 from pkgcore.util.lists import stable_unique
 from pkgcore.util.containers import ProtectedSet

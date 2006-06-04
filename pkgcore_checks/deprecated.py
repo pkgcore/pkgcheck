@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from reports.base import template, versioned_feed, Result
+from pkgcore_checks.base import template, versioned_feed, Result
 
 class BadInheritsReport(template):
 	feed_type = versioned_feed
