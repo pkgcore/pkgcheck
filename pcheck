@@ -46,7 +46,12 @@ if __name__ == "__main__":
 	signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 	
 	conf = load_config()
-	repo = conf.repo[repo_name]
+	try:
+		repo = conf.repo[repo_name]
+	except KeyError:
+		sys.stderr.write("Error: repo %s is not a valid reponames\nknown repos- [ %s ]\n" % 
+			(repr(repo_name), ", ".join(repr(x) for x in conf.repo.iterkeys())))
+		sys.exit(1)
 	import pkgcore_checks
 	import pkgcore_checks.base
 	if to_xml:
