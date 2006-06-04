@@ -104,11 +104,11 @@ class Feeder(object):
 		
 		# and... build 'er up.
 		i = self.repo.itermatch(limiter, sorter=sorted)
-		if cats and self.cpv_checks:
+		if vers and self.cpv_checks:
 			i = self.trigger_cpv_checks(i, reporter)
 		if pkgs and self.pkg_checks:
 			i = self.trigger_pkg_checks(i, reporter)
-		if vers and self.cat_checks:
+		if cats and self.cat_checks:
 			i = self.trigger_cat_checks(i, reporter)
 		count = 0
 		for x in i:
