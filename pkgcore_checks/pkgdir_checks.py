@@ -34,6 +34,14 @@ class PkgDirReport(template):
 			# char, which adds up.
 			if any(True for x in filename if x not in allowed_filename_chars_set):
 				reporter.add_report(Glep31Violation(pkgset[0], filename))
+			if filename.endswith(".ebuild") or filename in ("Manifest", "ChangeLog", "metadata.xml"):
+				if os.stat(pjoin(base, filename)).st_mode & 0111:
+					reporter.add_report(ExecutableFile(pkgset[0], filename))
+			if filename.endswith(".ebuild"):
+				self.utf8_check(pkgset[0], base, filename, reporter)
+
+		self.utf8_check(pkgset[0], base, "ChangeLog", reporter)
+				
 		size = 0
 		unprocessed_dirs = deque(["files"])
 		while unprocessed_dirs:
@@ -53,11 +61,34 @@ class PkgDirReport(template):
 				# yes, we silently ignore others.
 		if size > 20480:
 			reporter.add_report(SizeViolation(pkgset[0], size))
+
+	def utf8_check(self, pkg, base, filename, reporter):
 		try:
-			codecs.open(pjoin(base, "ChangeLog"), mode="rb", encoding="utf8", buffering=8192).read()
+			codecs.open(pjoin(base, filename), mode="rb", encoding="utf8", buffering=8192).read()
 		except UnicodeDecodeError, e:
-			reporter.add_report(InvalidUtf8(pkgset[0], "ChangeLog", str(e)))
+			reporter.add_report(InvalidUtf8(pkgset[0], filename, str(e)))
 			del e
+		
+
+class ExecutableFile(Result):
+	description = "file has executable bit, but doesn't need it"
+	__slots__ = ("category", "package", "filename")
+	
+	def __init__(self, pkg, filename):
+		self.category, self.package = pkg.category, pkg.package
+		self.filename = filename
+	
+	def to_str(self):
+		return "%s/%s: %s doesn't need executable bit" % \
+			(self.category, self.package, self.filename)
+	
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<msg>file %s doesn't need executable bit</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.filename)
 
 class SizeViolation(Result):
 	description = "filesdir, excluding digest/cvs, is too large"
