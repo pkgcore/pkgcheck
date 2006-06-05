@@ -6,6 +6,7 @@ from pkgcore.config import load_config
 from pkgcore.util.modules import load_module, FailedImport
 from pkgcore.util.commandline import generate_restriction
 from pkgcore.util.lists import stable_unique
+from pkgcore.fs.util import normpath
 from pkgcore.restrictions import packages
 import sys, os, logging, time, signal
 
@@ -49,9 +50,12 @@ if __name__ == "__main__":
 	try:
 		repo = conf.repo[repo_name]
 	except KeyError:
-		sys.stderr.write("Error: repo %s is not a valid reponames\nknown repos- [ %s ]\n" % 
-			(repr(repo_name), ", ".join(repr(x) for x in conf.repo.iterkeys())))
-		sys.exit(1)
+		if normpath(repo_name) in conf.repo:
+			repo = conf.repo[normpath(repo_name)]
+		else:
+			sys.stderr.write("Error: repo %s is not a valid reponames\nknown repos- [ %s ]\n" % 
+				(repr(repo_name), ", ".join(repr(x) for x in conf.repo.iterkeys())))
+			sys.exit(1)
 	if not getattr(repo, "base", False):
 		sys.stderr.write("\nWarning: repo %s appears to be combined trees, as such some checks will be disabled\n\n" % 
 			repo_name)
