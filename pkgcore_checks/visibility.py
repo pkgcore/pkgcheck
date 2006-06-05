@@ -163,7 +163,7 @@ class VisibleVcsPkg(base.Result):
 	
 	def to_xml(self):
 		return \
-"""<check name="%s>
+"""<check name="%s">
 	<category>%s</category>
 	<package>%s</package>
 	<version>%s</version>
