@@ -110,15 +110,14 @@ class VisibilityReport(base.template):
 	def process_depset(self, depset, virtuals, vfilter, cache, insoluable, query_cache):
 		failures = set()
 		for potential in depset.solutions():
+			if any(True for atom in potential if not atom.blocks and hash(atom) in insoluable):
+				continue
 			for atom in potential:
 				if atom.blocks:
 					continue
 				h = hash(atom)
 				if h in cache:
 					continue
-				elif h in insoluable:
-					# non solution, we know this won't work.
-					break
 				if virtuals.match(atom):
 					cache.add(h)
 				else:
