@@ -109,7 +109,43 @@ class VisibilityReport(base.template):
 
 	def process_depset(self, depset, virtuals, vfilter, cache, insoluable, query_cache):
 		failures = set()
-		for potential in depset.solutions():
+		for required in depset.cnf_solutions():
+			if any(True for atom in required if atom.blocks):
+				continue
+			if any(True for atom in required if hash(atom) in cache):
+				continue
+			for atom in required:
+				h = hash(atom)
+				if h in insoluable:
+					continue
+				if virtuals.match(atom):
+					cache.add(h)
+					break
+				else:
+					add_it = h not in query_cache
+					if add_it:
+						matches = caching_iter(self.repo.itermatch(atom))
+					else:
+						matches = query_cache[h]
+					if any(vfilter.match(pkg) for pkg in matches):
+						cache.add(h)
+						if add_it:
+							query_cache[h] = matches
+						break
+					else:
+						insoluable.add(h)
+			else:
+				# no matches.  not great, should collect them all
+				failures.update(required)
+				break
+		else:
+			# all requireds where satisfied.
+			return ()
+		return list(failures)
+
+	def dcnf_process_depset(self, depset, virtuals, vfilter, cache, insoluable, query_cache):
+		failures = set()
+		for potential in depset.itersolutions():
 			if any(True for atom in potential if not atom.blocks and hash(atom) in insoluable):
 				continue
 			for atom in potential:
