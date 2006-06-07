@@ -143,42 +143,6 @@ class VisibilityReport(base.template):
 			return ()
 		return list(failures)
 
-	def dcnf_process_depset(self, depset, virtuals, vfilter, cache, insoluable, query_cache):
-		failures = set()
-		for potential in depset.itersolutions():
-			if any(True for atom in potential if not atom.blocks and hash(atom) in insoluable):
-				continue
-			for atom in potential:
-				if atom.blocks:
-					continue
-				h = hash(atom)
-				if h in cache:
-					continue
-				if virtuals.match(atom):
-					cache.add(h)
-				else:
-					add_it = h not in query_cache
-					if add_it:
-						matches = caching_iter(self.repo.itermatch(atom))
-					else:
-						matches = query_cache[h]
-					if any(vfilter.match(pkg) for pkg in matches):
-						cache.add(h)
-						if add_it:
-							query_cache[h] = matches
-					else:
-						# no matches.
-						insoluable.add(h)
-						failures.add(atom)
-						break
-			else:
-				# all nodes were visible.
-				break
-		else:
-			# no matches for any of the potentials.
-			return list(failures)
-		return ()
-					
 	def finish(self, *a):
 		self.repo = self.profile_filters = self.keywords_filter = None
 
