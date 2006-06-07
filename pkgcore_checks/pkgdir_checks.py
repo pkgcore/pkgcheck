@@ -5,7 +5,7 @@ from pkgcore.util.compatibility import any
 from collections import deque
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.xml:escape")
-import codecs
+import codecs, errno
 
 from pkgcore_checks.base import Result, template, package_feed
 
@@ -40,8 +40,18 @@ class PkgDirReport(template):
 			if filename.endswith(".ebuild"):
 				self.utf8_check(pkgset[0], base, filename, reporter)
 
-		self.utf8_check(pkgset[0], base, "ChangeLog", reporter)
+		try:
+			self.utf8_check(pkgset[0], base, "ChangeLog", reporter)
+		except IOError, e:
+			if e.errno != errno.ENOENT:
+				raise
+			del e
+			reporter.add_report(MissingFile(pkgset[0], "ChangeLog"))
 				
+		if not os.path.exists(pjoin(base, "files")):
+			reporter.add_report(MissingFile(Pkgset[0], "files"))
+			return
+							
 		size = 0
 		unprocessed_dirs = deque(["files"])
 		while unprocessed_dirs:
@@ -56,8 +66,7 @@ class PkgDirReport(template):
 					if not fn.startswith("digest-"):
 						size += st.st_size
 						if any(True for x in fn if x not in allowed_filename_chars_set):
-							reporter.add_report(Glep31Violation(pkgset[0], 
-								pjoin(cwd, fn)))
+							reporter.add_report(Glep31Violation(pkgset[0], pjoin(cwd, fn)))
 				# yes, we silently ignore others.
 		if size > 20480:
 			reporter.add_report(SizeViolation(pkgset[0], size))
@@ -68,6 +77,27 @@ class PkgDirReport(template):
 		except UnicodeDecodeError, e:
 			reporter.add_report(InvalidUtf8(pkgset[0], filename, str(e)))
 			del e
+
+
+class MissingFile(Result):
+	description = "pkg is missing an expected file entry"
+	__slots__ = ("category", "package", "filename")
+	
+	def __init__(self, pkg, filename):
+		self.category, self.package = pkg.category, pkg.package
+		self.filename = filename
+	
+	def to_str(self):
+		return "%s/%s: %s doesn't exist" % \
+			(self.category, self.package, self.filename)
+	
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<msg>file %s doesn't exist</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.filename)
 		
 
 class ExecutableFile(Result):
@@ -89,6 +119,7 @@ class ExecutableFile(Result):
 	<package>%s</package>
 	<msg>file %s doesn't need executable bit</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package, self.filename)
+
 
 class SizeViolation(Result):
 	description = "filesdir, excluding digest/cvs, is too large"
