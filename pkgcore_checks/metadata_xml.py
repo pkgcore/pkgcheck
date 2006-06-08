@@ -26,7 +26,7 @@ class MetadataXmlReport(template):
 		else:
 			dtd = urlopen(self.dtd_url).read()
 			self.dtd_file = NamedTemporaryFile()
-			self.dtd_loc = dtd_file.name
+			self.dtd_loc = self.dtd_file.name
 			os.chmod(self.dtd_loc, 0644)
 			self.dtd_file.write(dtd)
 			self.dtd_file.flush()
