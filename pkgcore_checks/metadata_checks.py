@@ -105,9 +105,14 @@ class MetadataReport(template):
 		use_expand_base = os.path.join(base, "desc")
 		try:
 			for entry in os.listdir(use_expand_base):
-				estr = entry.rsplit(".", 1)[0].lower()+ "_"
-				known_iuse.update(estr + usef.strip() for usef in 
-					read_dict(os.path.join(use_expand_base, entry), None).iterkeys())
+				try:
+					estr = entry.rsplit(".", 1)[0].lower()+ "_"
+					known_iuse.update(estr + usef.strip() for usef in 
+						read_dict(os.path.join(use_expand_base, entry), None).iterkeys())
+				except (IOError, OSError), ie:
+					if ie.errno != errno.EISDIR:
+						raise
+					del ie
 		except IOError, ie:
 			if ie.errno != errno.ENOENT:
 				raise
