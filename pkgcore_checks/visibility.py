@@ -115,7 +115,7 @@ class VisibilityReport(base.template):
 						self.global_insoluable.add(h)
 
 		if nonexistant:
-			reporter.add_report(NonExistantDeps(pkg, "ddepends", nonexistant))
+			reporter.add_report(NonExistantDeps(pkg, "depends", nonexistant))
 			nonexistant.clear()
 
 		# force it to be stable, then unstable ordering for an unstable optimization below
@@ -167,8 +167,9 @@ class VisibilityReport(base.template):
 				if virtuals.match(a):
 					cache.add(h)
 					break
-				elif a.category == "virtual":
+				elif a.category == "virtual" and h not in query_cache:
 					insoluable.add(h)
+					continue
 				else:
 					if any(True for pkg in query_cache[h] if vfilter.match(pkg)):
 						cache.add(h)
