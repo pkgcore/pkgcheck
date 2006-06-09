@@ -6,7 +6,7 @@ from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
 from pkgcore_checks import base, util, arches
 from pkgcore.util.iterables import caching_iter, expandable_chain
-from pkgcore.util.lists import stable_unique
+from pkgcore.util.lists import stable_unique, iter_flatten
 from pkgcore.util.containers import ProtectedSet
 from pkgcore.restrictions import packages, values
 from pkgcore.package.atom import atom
@@ -30,6 +30,7 @@ class VisibilityReport(base.template):
 		official_arches = util.get_repo_known_arches(repo)
 		profile_filters = {}
 		self.keywords_filter = {}
+		self.global_insoluable = set()
 		for k in arches_dict.keys():
 			if k.lstrip("~") not in self.arches:
 				del arches_dict[k]
@@ -53,16 +54,18 @@ class VisibilityReport(base.template):
 				# used to interlink stable/unstable lookups so that if unstable says it's not visible, stable doesn't try
 				# if stable says something is visible, unstable doesn't try.
 				stable_cache = set()
-				unstable_insoluable = set()
+				unstable_insoluable = ProtectedSet(self.global_insoluable)
 
 				# ensure keywords is last, else it triggers a metadata pull
 				# filter is thus- not masked, and keywords match
 
 				# virtual repo, flags, visibility filter, known_good, known_bad
 				profile_filters[stable_key][profile_name] = \
-					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, stable_r), stable_cache, ProtectedSet(unstable_insoluable)]
+					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, stable_r), 
+						stable_cache, ProtectedSet(unstable_insoluable)]
 				profile_filters[unstable_key][profile_name] = \
-					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, unstable_r), ProtectedSet(stable_cache), unstable_insoluable]
+					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, unstable_r), 
+						ProtectedSet(stable_cache), unstable_insoluable]
 
 			self.keywords_filter[stable_key] = stable_r
 			self.keywords_filter[unstable_key] = packages.PackageRestriction("keywords", 
@@ -93,7 +96,48 @@ class VisibilityReport(base.template):
 	
 
 	def check_pkg(self, pkg, query_cache, reporter):
+		nonexistant = set()
+		for node in iter_flatten(pkg.depends, atom):
+			h = hash(node)
+			if h not in query_cache:
+				if h in self.global_insoluable:
+					nonexistant.add(node)
+					# insert an empty tuple, so that tight loops further on don't have to
+					# use the slower get method
+					query_cache[h] = ()
+				else:
+					matches = caching_iter(self.repo.itermatch(node))
+					if matches:
+						query_cache[h] = matches
+					elif not node.blocks and not node.category == "virtual":
+						nonexistant.add(node)
+						query_cache[h] = ()
+						self.global_insoluable.add(h)
+
+		if nonexistant:
+			reporter.add_report(NonExistantDeps(pkg, "ddepends", nonexistant))
+			nonexistant.clear()
+
 		# force it to be stable, then unstable ordering for an unstable optimization below
+		for node in iter_flatten(pkg.rdepends, atom):
+			h = hash(node)
+			if h not in query_cache:
+				if h in self.global_insoluable:
+					nonexistant.add(node)
+					query_cache[h] = ()
+				else:
+					matches = caching_iter(self.repo.itermatch(node))
+					if matches:
+						query_cache[h] = matches
+					elif not node.blocks and not node.category == "virtual":
+						nonexistant.add(node)
+						query_cache[h] = ()
+						self.global_insoluable.add(h)
+
+		if nonexistant:
+			reporter.add_report(NonExistantDeps(pkg, "rdepends", nonexistant))
+		del nonexistant
+		
 		for key in sorted(self.keywords_filter):
 			if not self.keywords_filter[key].match(pkg):
 				continue
@@ -123,16 +167,11 @@ class VisibilityReport(base.template):
 				if virtuals.match(a):
 					cache.add(h)
 					break
+				elif a.category == "virtual":
+					insoluable.add(h)
 				else:
-					add_it = h not in query_cache
-					if add_it:
-						matches = caching_iter(self.repo.itermatch(a))
-					else:
-						matches = query_cache[h]
-					if any(vfilter.match(pkg) for pkg in matches):
+					if any(True for pkg in query_cache[h] if vfilter.match(pkg)):
 						cache.add(h)
-						if add_it:
-							query_cache[h] = matches
 						break
 					else:
 						insoluable.add(h)
@@ -173,6 +212,33 @@ class VisibleVcsPkg(base.Result):
 	<msg>vcs based ebuild user accessible</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version,
 	self.arch, self.profile)
+
+
+class NonExistantDeps(base.Result):
+	description = "No matches exist for a depset element"
+	__slots__ = ("category", "package", "version", "attr", "atoms")
+	
+	def __init__(self, pkg, attr, nonexistant_atoms):
+		self.category = pkg.category
+		self.package = pkg.package
+		self.version = pkg.fullver
+		self.attr = attr
+		self.atoms = tuple(str(x) for x in nonexistant_atoms)
+		
+	def to_str(self):
+		return "%s/%s-%s: attr(%s): nonexistant atoms [ %s ]" % \
+			(self.category, self.package, self.version, self.attr, ", ".join(self.atoms))
+
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<msg>nonexistant atoms [ %s ]</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version,
+self.attr, escape(", ".join(self.atoms)))
+
 
 class NonsolvableDeps(base.Result):
 	description = "No potential solution for a depset attribute"
