@@ -236,7 +236,7 @@ class NonExistantDeps(base.Result):
 	<category>%s</category>
 	<package>%s</package>
 	<version>%s</version>
-	<msg>nonexistant atoms [ %s ]</msg>
+	<msg>%s: nonexistant atoms [ %s ]</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version,
 self.attr, escape(", ".join(self.atoms)))
 
