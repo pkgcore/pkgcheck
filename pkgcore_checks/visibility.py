@@ -5,10 +5,11 @@ import os
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
 from pkgcore_checks import base, util, arches
-from pkgcore.util.iterables import caching_iter
+from pkgcore.util.iterables import caching_iter, expandable_chain
 from pkgcore.util.lists import stable_unique
 from pkgcore.util.containers import ProtectedSet
-demandload(globals(), "pkgcore.restrictions:packages,values")
+from pkgcore.restrictions import packages, values
+from pkgcore.package.atom import atom
 demandload(globals(), "pkgcore.util.containers:InvertedContains")
 demandload(globals(), "pkgcore.util.xml:escape")
 
@@ -46,8 +47,9 @@ class VisibilityReport(base.template):
 				mask = util.get_profile_mask(profile)
 				virtuals = profile.virtuals(repo)
 				# force all use masks to negated, and all other arches but this
-				use_flags = InvertedContains(profile.use_mask + tuple(official_arches.difference([stable_key])))
-
+#				use_flags = InvertedContains(profile.use_mask + tuple(official_arches.difference([stable_key])))
+				non_tristate = tuple(official_arches) + tuple(profile.use_mask)
+				use_flags = [stable_key]
 				# used to interlink stable/unstable lookups so that if unstable says it's not visible, stable doesn't try
 				# if stable says something is visible, unstable doesn't try.
 				stable_cache = set()
@@ -58,9 +60,9 @@ class VisibilityReport(base.template):
 
 				# virtual repo, flags, visibility filter, known_good, known_bad
 				profile_filters[stable_key][profile_name] = \
-					[virtuals, use_flags, packages.AndRestriction(mask, stable_r), stable_cache, ProtectedSet(unstable_insoluable)]
+					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, stable_r), stable_cache, ProtectedSet(unstable_insoluable)]
 				profile_filters[unstable_key][profile_name] = \
-					[virtuals, use_flags, packages.AndRestriction(mask, unstable_r), ProtectedSet(stable_cache), unstable_insoluable]
+					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, unstable_r), ProtectedSet(stable_cache), unstable_insoluable]
 
 			self.keywords_filter[stable_key] = stable_r
 			self.keywords_filter[unstable_key] = packages.PackageRestriction("keywords", 
@@ -96,12 +98,12 @@ class VisibilityReport(base.template):
 			if not self.keywords_filter[key].match(pkg):
 				continue
 			for profile, val in self.profile_filters[key].iteritems():
-				virtuals, flags, vfilter, cache, insoluable = val
-				bad = self.process_depset(pkg.depends.evaluate_depset(flags), 
+				virtuals, flags, non_tristate, vfilter, cache, insoluable = val
+				bad = self.process_depset(pkg.depends.evaluate_depset(flags, tristate_filter=non_tristate), 
 					virtuals, vfilter, cache, insoluable, query_cache)
 				if bad:
 					reporter.add_report(NonsolvableDeps(pkg, "depends", key, profile, bad))
-				r = pkg.rdepends.evaluate_depset(flags)
+				r = pkg.rdepends.evaluate_depset(flags, tristate_filter=non_tristate)
 				bad = self.process_depset(r,
 					virtuals, vfilter, cache, insoluable, query_cache)
 				if bad:
@@ -110,21 +112,21 @@ class VisibilityReport(base.template):
 	def process_depset(self, depset, virtuals, vfilter, cache, insoluable, query_cache):
 		failures = set()
 		for required in depset.cnf_solutions():
-			if any(True for atom in required if atom.blocks):
+			if any(True for a in required if a.blocks):
 				continue
-			if any(True for atom in required if hash(atom) in cache):
+			if any(True for a in required if hash(a) in cache):
 				continue
-			for atom in required:
-				h = hash(atom)
+			for a in required:
+				h = hash(a)
 				if h in insoluable:
 					continue
-				if virtuals.match(atom):
+				if virtuals.match(a):
 					cache.add(h)
 					break
 				else:
 					add_it = h not in query_cache
 					if add_it:
-						matches = caching_iter(self.repo.itermatch(atom))
+						matches = caching_iter(self.repo.itermatch(a))
 					else:
 						matches = query_cache[h]
 					if any(vfilter.match(pkg) for pkg in matches):
