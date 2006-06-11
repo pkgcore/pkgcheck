@@ -143,7 +143,8 @@ class VisibilityReport(base.template):
 				continue
 			for profile, val in self.profile_filters[key].iteritems():
 				virtuals, flags, non_tristate, vfilter, cache, insoluable = val
-				bad = self.process_depset(pkg.depends.evaluate_depset(flags, tristate_filter=non_tristate), 
+				r = pkg.depends.evaluate_depset(flags, tristate_filter=non_tristate)
+				bad = self.process_depset(r, 
 					virtuals, vfilter, cache, insoluable, query_cache)
 				if bad:
 					reporter.add_report(NonsolvableDeps(pkg, "depends", key, profile, bad))
