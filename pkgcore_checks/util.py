@@ -13,7 +13,7 @@ def get_profile(repo, profile_name):
 	return OnDiskProfile(profile_name, base_repo=repo)
 
 def get_profile_mask(profile):
-	return generate_masking_restrict(profile.visibility)
+	return generate_masking_restrict(profile.maskers)
 
 def get_profiles_desc(repo):
 	fp = os.path.join(repo.base, "profiles", "profiles.desc")
