@@ -269,6 +269,9 @@ class NonsolvableDeps(base.Result):
 			", ".join(self.potentials))
 
 	def to_xml(self):
+		s = ''
+		if self.masked:
+			s = "masked, "
 		return \
 """<check name="%s">
 	<category>%s</category>
@@ -276,6 +279,6 @@ class NonsolvableDeps(base.Result):
 	<version>%s</version>
 	<profile>%s</profile>
 	<keyword>%s</keyword>
-	<msg>not solvable for %s- potential solutions, %s</msg>
+	<msg>%snot solvable for %s- potential solutions, %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version,
-self.profile, self.keyword, self.attr, escape(", ".join(self.potentials)))
+self.profile, self.keyword, s, self.attr, escape(", ".join(self.potentials)))
