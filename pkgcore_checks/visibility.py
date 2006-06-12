@@ -143,16 +143,17 @@ class VisibilityReport(base.template):
 				continue
 			for profile, val in self.profile_filters[key].iteritems():
 				virtuals, flags, non_tristate, vfilter, cache, insoluable = val
+				masked_status = not vfilter.match(pkg)
 				r = pkg.depends.evaluate_depset(flags, tristate_filter=non_tristate)
 				bad = self.process_depset(r, 
 					virtuals, vfilter, cache, insoluable, query_cache)
 				if bad:
-					reporter.add_report(NonsolvableDeps(pkg, "depends", key, profile, bad))
+					reporter.add_report(NonsolvableDeps(pkg, "depends", key, profile, bad, masked=masked_status))
 				r = pkg.rdepends.evaluate_depset(flags, tristate_filter=non_tristate)
 				bad = self.process_depset(r,
 					virtuals, vfilter, cache, insoluable, query_cache)
 				if bad:
-					reporter.add_report(NonsolvableDeps(pkg, "rdepends/pdepends", key, profile, bad))
+					reporter.add_report(NonsolvableDeps(pkg, "rdepends/pdepends", key, profile, bad, masked=masked_status))
 
 	def process_depset(self, depset, virtuals, vfilter, cache, insoluable, query_cache):
 		failures = set()
@@ -244,24 +245,28 @@ self.attr, escape(", ".join(self.atoms)))
 
 class NonsolvableDeps(base.Result):
 	description = "No potential solution for a depset attribute"
-	__slots__ = ("category", "package", "version", "attr", "profile", "keyword", "nonvisible")
+	__slots__ = ("category", "package", "version", "attr", "profile", "keyword", 
+		"potentials", "masked")
 	
-	def __init__(self, pkg, attr, keyword, profile, horked):
+	def __init__(self, pkg, attr, keyword, profile, horked, masked=False):
 		self.category = pkg.category
 		self.package = pkg.package
 		self.version = pkg.fullver
 		self.attr = attr
 		self.profile = profile
 		self.keyword = keyword
-		self.nonvisible = tuple(str(x) for x in stable_unique(horked))
+		self.potentials = tuple(str(x) for x in stable_unique(horked))
+		self.masked = masked
 		
 	def to_str(self):
 		s=' '
 		if self.keyword.startswith("~"):
 			s=''
-		return "%s/%s-%s: %s%s:%s: unsolvable %s, solutions: [ %s ]" % \
-			(self.category, self.package, self.version, s, self.attr, self.keyword, self.profile,
-			", ".join(self.nonvisible))
+		if self.masked:
+			s = "masked "+s
+		return "%s/%s-%s: %s %s%s: unsolvable %s, solutions: [ %s ]" % \
+			(self.category, self.package, self.version, self.attr, s, self.keyword, self.profile,
+			", ".join(self.potentials))
 
 	def to_xml(self):
 		return \
@@ -273,4 +278,4 @@ class NonsolvableDeps(base.Result):
 	<keyword>%s</keyword>
 	<msg>not solvable for %s- potential solutions, %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version,
-self.profile, self.keyword, self.attr, escape(", ".join(self.nonvisible)))
+self.profile, self.keyword, self.attr, escape(", ".join(self.potentials)))
