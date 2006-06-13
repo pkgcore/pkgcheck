@@ -38,6 +38,8 @@ class MetadataReport(template):
 						d_atom.key
 						d_atom.category
 						d_atom.package
+						if isinstance(d_atom, atom):
+							d_atom.restrictions
 				if attr_name == "license":
 					if self.licenses is not None:
 						licenses = set(iter_flatten(o, basestring)).difference(self.licenses)
