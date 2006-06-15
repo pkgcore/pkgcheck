@@ -208,3 +208,22 @@ class XmlReporter(Reporter):
 
 	def finish(self):
 		self.handle.write("</checks>\n")
+
+
+class MultiplexReporter(Reporter):
+	def __init__(self, *reporters):
+		if len(reporters) < 2:
+			raise ValueError("need at least two reporters")
+		self.reporters = tuple(reporters)
+	
+	def start(self):
+		for x in self.reporters:
+			x.start()
+	
+	def add_report(self, result):
+		for x in self.reporters:
+			x.add_report(result)
+	
+	def finish(self):
+		for x in self.reporters:
+			x.finish()
