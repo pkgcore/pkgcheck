@@ -30,7 +30,7 @@ class UnstableOnlyReport(template):
 					break
 			if stable is not None:
 				continue
-			unstable = [x for x in pkgset if v[1].match]
+			unstable = [x for x in pkgset if v[1].match(x)]
 			if unstable:
 				reporter.add_report(UnstableOnly(unstable, k))
 				
