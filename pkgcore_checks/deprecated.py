@@ -42,6 +42,7 @@ class BadInheritsReport(template):
 	'php5-sapi-r2',
 	'php5-sapi-r3',
 	'tla',
+	'webapp-apache',
 	'xfree'))
 	
 	def feed(self, pkg, reporter):
