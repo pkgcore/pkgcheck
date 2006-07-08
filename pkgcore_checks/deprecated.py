@@ -39,6 +39,7 @@ class BadInheritsReport(template):
 	'php-sapi',
 	'php5-sapi',
 	'php5-sapi-r1',
+	'php5-sapi-r2',
 	'php5-sapi-r3',
 	'tla',
 	'xfree'))
