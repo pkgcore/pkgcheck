@@ -6,9 +6,10 @@ from pkgcore.config import load_config
 from pkgcore.util.modules import load_module, FailedImport
 from pkgcore.util.commandline import generate_restriction
 from pkgcore.util.lists import stable_unique
-from pkgcore.fs.util import normpath
 from pkgcore.restrictions import packages
-import sys, os, logging, time, signal
+from pkgcore.util.demandload import demandload
+demandload(globals(), "os logging time pkgcore.fs.util:normpath pkgcore.util.compatibility:any pkgcore.restrictions.values:StrRegexMatch")
+import sys, signal
 
 def exithandler(signum,frame):
 	signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -26,12 +27,34 @@ def grab_arg(arg, args):
 		pass
 	return val
 
+def pop_paired_args(args, arg, msg):
+	rets = []
+	if not isinstance(arg, (tuple, list)):
+		arg = [arg]
+	for a in arg:
+		try:
+			while True:
+				i = args.index(a)
+				args.pop(i)
+				if len(args) == i:
+					raise Exception("%s needs to be followed by an arg: %s" % (a, msg))
+				rets.append(args.pop(i))
+		except ValueError:
+			pass
+	return rets
+
+
 if __name__ == "__main__":
 	args = sys.argv[1:]
 	help = grab_arg("-h", args) or grab_arg("--help", args)
 	to_xml = grab_arg("--xml", args)
+	list_checks = grab_arg("--list-checks", args)
+	checks_to_run = [StrRegexMatch(x.lower(), CaseSensitive=False) for x in pop_paired_args(args, "-c", "must specify a report to run, use --list-checks to see what is available")]
+
 	if help or len(args) < 1:
-		sys.stderr.write("need the arg of the repo to scan, optional --xml to dump xml, and any args for filtering\n")
+		sys.stderr.write("need the arg of the repo to scan, optional --xml to dump xml, and any args for filtering\n"+
+		"--list-checks: dump to term what reports are available to run\n"+
+		"-c <report>: run this specific report- regex pattern of reports to match, case insensitive\n\n")
 		if help:
 			sys.exit(0)
 		sys.exit(1)
@@ -81,14 +104,27 @@ if __name__ == "__main__":
 				if not getattr(obj, "feed_type", False):
 					continue
 				checks.append(obj)
-				try:
-					runner.add_check(obj())
-				except SystemExit:
-					raise
-				except Exception, e:
-					logging.error("test %s failed to be added: %s" % (obj, e))
-					del e
-					continue
+	checks.sort()
+	if list_checks:
+		print "\n".join("%s.%s" % (x.__module__, x.__name__) for x in checks)
+		sys.exit(0)
+	if checks_to_run:
+		l = []
+		for x in checks:
+			s = "%s.%s" % (x.__module__, x.__name__)
+			if any(True for y in checks_to_run if y.match(s)):
+				l.append(x)
+		checks = l
+	for obj in checks:
+		try:
+			runner.add_check(obj())
+		except SystemExit:
+			raise
+		except Exception, e:
+			logging.error("test %s failed to be added: %s" % (obj, e))
+			del e
+
+
 	start_time = time.time()
 	nodes = 0
 	sys.stderr.write("checks: %i cat, %i pkg, %i version\n" % (len(runner.cat_checks), \
