@@ -14,7 +14,7 @@ demandload(globals(), "pkgcore.util.containers:InvertedContains")
 demandload(globals(), "pkgcore.util.xml:escape")
 demandload(globals(), "urllib:urlopen")
 
-class VisibilityReport(base.template):
+class ModularXPortingReport(base.template):
 
 	feed_type = base.package_feed
 
