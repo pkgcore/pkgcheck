@@ -116,10 +116,18 @@ class ModularXPortingReport(base.template):
 			bad = []
 			for block in r.dnf_solutions():
 				block = unstable_unique(block)
-				if len(block) == 1 and block[0].key == "virtual/x11":
+				if not any(True for x in block if x.key == "virtual/x11" and not x.blocks):
+					continue
+				# got ourselves a potential.
+				if not any(True for x in block if x.key in self.valid_modx_keys and not x.blocks):
 					bad = block
 					ported_status = True
 					break
+					
+#				if len(block) == 1 and block[0].key == "virtual/x11":
+#					bad = block
+#					ported_status = True
+#					break
 			if bad:
 				for or_block in r.cnf_solutions():
 					if not any(True for x in or_block if x.key == "virtual/x11" and not x.blocks):
@@ -130,8 +138,10 @@ class ModularXPortingReport(base.template):
 					# we've got a standalone virtual/x11
 					reporter.add_report(NotPorted(pkg, attr, bad))
 					failed.append(attr)
-					unported.append(pkg)
-					
+		
+		if failed:
+			unported.append(pkg)
+		
 		if len(failed) == 2:
 			# no point in trying it out, will fail anyways
 			return
