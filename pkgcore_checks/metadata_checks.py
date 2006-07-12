@@ -28,6 +28,7 @@ class MetadataReport(template):
 		self.iuse_users = dict((x, attrgetter(x)) for x in 
 			("fetchables", "depends", "rdepends", "provides"))
 		self.valid_iuse = None
+		self.valid_unstated_iuse = None
 	
 	def feed(self, pkg, reporter):
 		for attr_name, getter, force_expansion in self.attrs:
@@ -78,7 +79,9 @@ class MetadataReport(template):
 					# it's always a values.ContainmentMatch
 					used_iuse.update(node.restriction.vals)
 					i.append(iter_flatten(node.payload, (packages.Conditional, atom, basestring, fetchable)))
-				unstated = used_iuse.difference(pkg.iuse).difference(default_arches)
+
+				# the valid_unstated_iuse filters out USE_EXPAND as long as it's listed in a desc file
+				unstated = used_iuse.difference(pkg.iuse).difference(default_arches).difference(self.valid_unstated_iuse)
 				if unstated:
 					# hack, see bug 134994.
 					if unstated.difference(["bootstrap"]):
@@ -88,6 +91,7 @@ class MetadataReport(template):
 	def load_valid_iuse(repo):
 		base = os.path.join(repo.base, "profiles")
 		known_iuse = set()
+		unstated_iuse = set()
 		fp = os.path.join(base, "use.desc")
 		try:
 			known_iuse.update(usef.strip() for usef in 
@@ -109,7 +113,7 @@ class MetadataReport(template):
 			for entry in os.listdir(use_expand_base):
 				try:
 					estr = entry.rsplit(".", 1)[0].lower()+ "_"
-					known_iuse.update(estr + usef.strip() for usef in 
+					unstated_iuse.update(estr + usef.strip() for usef in 
 						read_dict(os.path.join(use_expand_base, entry), None).iterkeys())
 				except (IOError, OSError), ie:
 					if ie.errno != errno.EISDIR:
@@ -118,7 +122,8 @@ class MetadataReport(template):
 		except IOError, ie:
 			if ie.errno != errno.ENOENT:
 				raise
-		return frozenset(known_iuse)
+		known_iuse.update(unstated_iuse)
+		return frozenset(known_iuse), frozenset(unstated_iuse)
 			
 	def start(self, repo):
 		if any(x[0] == "license" for x in self.attrs):
@@ -131,9 +136,9 @@ class MetadataReport(template):
 		else:
 			self.licenses = None
 		if any(x[0] == "iuse" for x in self.attrs):
-			self.valid_iuse = self.load_valid_iuse(repo)
+			self.valid_iuse, self.valid_unstated_iuse = self.load_valid_iuse(repo)
 		else:
-			self.valid_iuse = None
+			self.valid_iuse = self.valid_unstated_iuse = None
 
 
 class SrcUriReport(template):
