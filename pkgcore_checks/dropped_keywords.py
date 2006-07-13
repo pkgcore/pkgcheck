@@ -41,8 +41,9 @@ class StaleUnstableReport(template):
 	def feed(self, pkgset, reporter):
 		if len(pkgset) == 1:
 			return
-			
-		state = set(x.lstrip("~") for x in pkgset[-1].keywords)
+		
+		lastpkg = pkgset[-1]
+		state = set(x.lstrip("~") for x in lastpkg.keywords)
 		arches = set(self.arches)
 		dropped = []
 		for pkg in reversed(pkgset[:-1]):
@@ -53,8 +54,9 @@ class StaleUnstableReport(template):
 				elif "-%s" % key in state:
 					continue
 				elif key in arches:
-					dropped.append((key, pkg))
+					dropped.append((key, lastpkg))
 					arches.discard(key)
 			state = oldstate
+			lastpkg = pkg
 		for key, pkg in dropped:
 			reporter.add_report(DroppedKeywordWarning(key, pkg))
