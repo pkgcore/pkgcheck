@@ -5,7 +5,7 @@ from pkgcore_checks.base import template, package_feed, Result
 from pkgcore.util.compatibility import any
 
 class RedundantVersionWarning(Result):
-	description = "Redundant version of a pkg; keyword appears in a later version"
+	description = "Redundant version of a pkg in a slotting; keyword appears in a later version"
 
 	__slots__ = ("category", "package", "slot", "later_versions")
 
@@ -14,11 +14,11 @@ class RedundantVersionWarning(Result):
 		self.package = pkg.package
 		self.version = pkg.fullver
 		self.slot = pkg.slot
-		self.later_versions = tuple((x.fullver, x.slot) for x in higher_pkgs)
+		self.later_versions = tuple(x.fullver for x in higher_pkgs)
 	
 	def to_str(self, **kwds):
 		return "%s/%s-%s: slot(%s) keywords are overshadowed by version %r" % (self.category, self.package, self.version,
-			self.slot, ", ".join("%s: slot(%s)" % (x[0], x[1]) for x in self.later_versions))
+			self.slot, ", ".join(self.later_versions))
 
 	def to_xml(self):
 		return \
@@ -28,7 +28,7 @@ class RedundantVersionWarning(Result):
 	<version>%s</version>
 	<slot>%s</slot>
 	<msg>keywords are overshadowed by version(s): %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.slot, ", ".join("%s: slot(%s)" % (x[0], x[1]) for x in self.later_versions))
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.slot, ", ".join(self.later_versions))
 
 
 class RedundantVersionReport(template):
@@ -54,12 +54,14 @@ class RedundantVersionReport(template):
 			if not curr_set:
 				continue
 			for ver, keys in stack:
-				if not curr_set.difference(keys):
-					matches.append(ver)
+				if ver.slot == pkg.slot:
+					if not curr_set.difference(keys):
+						matches.append(ver)
 			if unstable_set:
 				for ver, key in stack:
-					if not unstable_set.difference(keys):
-						matches.append(ver)
+					if ver.slot == pkg.slot:
+						if not unstable_set.difference(keys):
+							matches.append(ver)
 			stack.append([pkg, curr_set])
 			if matches:
 				reporter.add_report(RedundantVersionWarning(pkg, matches))
