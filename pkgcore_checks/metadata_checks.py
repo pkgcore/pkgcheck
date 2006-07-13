@@ -143,6 +143,8 @@ class MetadataReport(template):
 
 
 class SrcUriReport(template):
+	"""SRC_URI related checks.
+	verify that it's a valid/fetchable uri, port 80,443,23"""
 	feed_type = versioned_feed
 	valid_protos = frozenset(["http", "https", "ftp"])
 
@@ -168,6 +170,8 @@ class SrcUriReport(template):
 
 
 class DescriptionReport(template):
+	"""DESCRIPTION checks.
+	check on length (<=250), too short (<5), or generic (lifted from eclass or just using the pkgs name"""
 	feed_type = versioned_feed
 	
 	def feed(self, pkg, reporter):
@@ -188,8 +192,10 @@ class DescriptionReport(template):
 
 class RestrictsReport(template):
 	feed_type = versioned_feed
-	known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", "test", 	
+	known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", "test",
 		"sandbox", "userpriv", "primaryuri", "binchecks", "strip"))
+
+	__doc__ = "check over RESTRICT, looking for unknown restricts\nvalid restricts:%s" % ", ".join(sorted(known_restricts))
 	
 	def feed(self, pkg, reporter):
 		bad = set(pkg.restrict).difference(self.known_restricts)

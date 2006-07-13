@@ -45,6 +45,8 @@ class DeprecatedEclassReport(template):
 	'webapp-apache',
 	'xfree'))
 	
+	__doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses:%s\n" % ", ".join(sorted(blacklist))
+
 	def feed(self, pkg, reporter):
 		bad = self.blacklist.intersection(pkg.data["_eclasses_"])
 		if bad:
@@ -74,5 +76,4 @@ class DeprecatedEclass(Result):
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
 	", ".join(self.eclasses))
 
-DeprecatedEclassReport.__doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses:%s\n" % ", ".join(sorted(DeprecatedEclassReport.blacklist))
 
