@@ -16,6 +16,9 @@ demandload(globals(), "urllib:urlopen")
 
 class ModularXPortingReport(base.template):
 
+	"""modular X porting report.
+	Scans for dependencies that require monolithic X, or via visibility limiters from profiles, are forced to use monolithic X
+	"""
 	feed_type = base.package_feed
 
 	valid_modx_pkgs_url = "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"

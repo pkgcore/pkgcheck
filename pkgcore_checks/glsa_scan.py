@@ -48,6 +48,8 @@ class VulnerablePackage(Result):
 
 
 class TreeVulnerabilitiesReport(template):
+	"""Scan for vulnerabile ebuilds in the tree; requires a GLSA directory for vuln. info"""
+
 	feed_type = versioned_feed
 	
 	def start(self, repo):

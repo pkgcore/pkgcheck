@@ -70,7 +70,15 @@ if __name__ == "__main__":
 				checks.append(obj)
 	checks.sort()
 	if list_checks:
-		print "\n".join("%s.%s" % (x.__module__, x.__name__) for x in checks)
+		print "format\n<check_name>\n  <description\n\nknown checks-\n"
+		for x in checks:
+			print "%s.%s" % (x.__module__, x.__name__)
+			if x.__doc__ is not None:
+				s = "  %s\n" % "\n  ".join(x.strip() for x in x.__doc__.split("\n"))
+				print s.rstrip() + "\n"
+			else:
+				print "  No Documention\n"
+#		print "\n".join("%s.%s" % (x.__module__, x.__name__) for x in checks)
 		sys.exit(0)
 	if checks_to_run:
 		l = []

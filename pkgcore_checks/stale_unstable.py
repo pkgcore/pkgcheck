@@ -37,6 +37,8 @@ class StaleUnstableKeyword(Result):
 		
 
 class StaleUnstableReport(template):
+	"""Ebuilds that have sat unstable for over a month"""
+
 	feed_type = versioned_feed
 	
 	def __init__(self, arches=default_arches, staleness=long(day*30)):

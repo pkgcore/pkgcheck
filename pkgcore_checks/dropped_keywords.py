@@ -32,7 +32,9 @@ class DroppedKeywordWarning(Result):
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.arch)
 
 
-class StaleUnstableReport(template):
+class DroppedKeywordsReport(template):
+	"""scan pkgs for keyword dropping across versions"""
+
 	feed_type = package_feed
 	
 	def __init__(self, arches=default_arches):

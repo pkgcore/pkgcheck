@@ -11,7 +11,7 @@ demandload(globals(), "pkgcore.spawn:spawn,find_binary")
 
 
 class MetadataXmlReport(template):
-
+	"""metadata.xml scans"""
 	feed_type = package_feed
 	
 	dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"

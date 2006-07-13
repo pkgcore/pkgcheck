@@ -36,6 +36,9 @@ class LaggingStableInfo(Result):
 		
 
 class ImlateReport(template):
+
+	"""scan for ebuilds that can be stabled based upon stabling status for other arches"""
+
 	feed_type = package_feed
 
 	def __init__(self, arches=default_arches):

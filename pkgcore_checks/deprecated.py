@@ -3,7 +3,7 @@
 
 from pkgcore_checks.base import template, versioned_feed, Result
 
-class BadInheritsReport(template):
+class DeprecatedEclassReport(template):
 	feed_type = versioned_feed
 	blacklist = frozenset((
 	'64-bit',
@@ -73,3 +73,6 @@ class DeprecatedEclass(Result):
 	<msg>deprecated eclass usage- %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
 	", ".join(self.eclasses))
+
+DeprecatedEclassReport.__doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses:%s\n" % ", ".join(sorted(DeprecatedEclassReport.blacklist))
+

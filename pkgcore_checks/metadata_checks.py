@@ -20,6 +20,7 @@ demandload(globals(), "pkgcore.util.xml:escape")
 default_attrs = ("depends", "rdepends", "provides", "license", "fetchables", "iuse")
 
 class MetadataReport(template):
+	"""ebuild metadata reports.  DEPENDS, RDEPENDS, PROVIDES, SRC_URI, DESCRIPTION, LICENSE, etc."""
 	feed_type = versioned_feed
 	
 	def __init__(self):

@@ -16,6 +16,10 @@ demandload(globals(), "pkgcore.util.xml:escape")
 
 class VisibilityReport(base.template):
 
+	"""Visibility dependency scans.
+	Check that at least one solution is possible for a pkg, checking all profiles (defined by arch.list) visibility modifiers per stable/unstable keyword
+	"""
+
 	feed_type = base.package_feed
 
 	vcs_eclasses = ("subversion", "git", "cvs", "darcs")

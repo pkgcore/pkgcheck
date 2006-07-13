@@ -21,6 +21,8 @@ allowed_filename_chars_set.update(chr(x) for x in xrange(ord('0'), ord('9')+1))
 allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 
 class PkgDirReport(template):
+	"""actual ebuild directory scans; file size, glep31 rule enforcement."""
+
 	feed_type = package_feed
 	
 	ignore_dirs = set(["cvs", ".svn", ".bzr"])

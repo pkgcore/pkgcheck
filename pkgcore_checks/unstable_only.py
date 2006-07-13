@@ -7,6 +7,8 @@ from pkgcore_checks.base import template, package_feed, Result
 from pkgcore_checks.arches import default_arches
 
 class UnstableOnlyReport(template):
+	"""scan for pkgs that have just unstable keywords"""
+
 	feed_type = package_feed
 
 	def __init__(self, arches=default_arches):
