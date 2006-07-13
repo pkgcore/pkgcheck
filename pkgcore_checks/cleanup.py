@@ -48,7 +48,6 @@ class RedundantVersionReport(template):
 			if not curr_set:
 				continue
 			for ver, keys in stack:
-#				print pkg,ver,curr_set,curr_set.difference(keys)
 				if not curr_set.difference(keys):
 					matches.append(ver)
 			stack.append([pkg, curr_set])
