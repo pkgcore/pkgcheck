@@ -5,7 +5,7 @@ from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
 from pkgcore_checks import base, util, arches
 from pkgcore.util.iterables import caching_iter
-from pkgcore.util.lists import stable_unique, iter_flatten, unstable_unique
+from pkgcore.util.lists import stable_unique, iflatten_instance, unstable_unique
 from pkgcore.util.containers import ProtectedSet
 from pkgcore.restrictions import packages, values
 from pkgcore.package.atom import atom
@@ -105,7 +105,7 @@ class ModularXPortingReport(base.template):
 		ported_status = False
 		for attr, depset in (("depends", pkg.depends), ("rdepends/pdepends", pkg.rdepends)):
 			bad = set()
-			for a in iter_flatten(depset, atom):
+			for a in iflatten_instance(depset, atom):
 				if not a.key == "virtual/x11" or a.blocks:
 					continue
 				# if it depends on >=7, bad...

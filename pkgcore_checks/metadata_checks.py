@@ -11,7 +11,7 @@ from pkgcore.util.compatibility import any
 from pkgcore.util.file import read_dict
 from pkgcore.package.metadata import MetadataException
 from pkgcore.package.atom import MalformedAtom, atom
-from pkgcore.util.lists import iter_flatten
+from pkgcore.util.lists import iflatten_instance
 from pkgcore.util.iterables import expandable_chain
 from pkgcore.fetch.fetchable import fetchable
 from pkgcore.restrictions import packages
@@ -36,7 +36,7 @@ class MetadataReport(template):
 			try:
 				o = getter(pkg)
 				if force_expansion:
-					for d_atom in iter_flatten(o, atom):
+					for d_atom in iflatten_instance(o, atom):
 						d_atom.key
 						d_atom.category
 						d_atom.package
@@ -44,7 +44,7 @@ class MetadataReport(template):
 							d_atom.restrictions
 				if attr_name == "license":
 					if self.licenses is not None:
-						licenses = set(iter_flatten(o, basestring)).difference(self.licenses)
+						licenses = set(iflatten_instance(o, basestring)).difference(self.licenses)
 						if licenses:
 							reporter.add_report(MetadataError(pkg, "license",
 								"licenses don't exist- [ %s ]" % ", ".join(licenses)))
@@ -73,13 +73,13 @@ class MetadataReport(template):
 		if self.valid_iuse is not None:
 			used_iuse = set()
 			for attr_name, f in self.iuse_users.iteritems():
-				i = expandable_chain(iter_flatten(f(pkg), (packages.Conditional, atom, basestring, fetchable)))
+				i = expandable_chain(iflatten_instance(f(pkg), (packages.Conditional, atom, basestring, fetchable)))
 				for node in i:
 					if not isinstance(node, packages.Conditional):
 						continue
 					# it's always a values.ContainmentMatch
 					used_iuse.update(node.restriction.vals)
-					i.append(iter_flatten(node.payload, (packages.Conditional, atom, basestring, fetchable)))
+					i.append(iflatten_instance(node.payload, (packages.Conditional, atom, basestring, fetchable)))
 
 				# the valid_unstated_iuse filters out USE_EXPAND as long as it's listed in a desc file
 				unstated = used_iuse.difference(pkg.iuse).difference(default_arches).difference(self.valid_unstated_iuse)
@@ -150,7 +150,7 @@ class SrcUriReport(template):
 
 	def feed(self, pkg, reporter):
 		lacks_uri = set()
-		for f_inst in iter_flatten(pkg.fetchables, fetchable):
+		for f_inst in iflatten_instance(pkg.fetchables, fetchable):
 			if f_inst.uri is None:
 				lacks_uri.add(f_inst.filename)
 			elif isinstance(f_inst.uri, list):

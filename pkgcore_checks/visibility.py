@@ -6,7 +6,7 @@ from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
 from pkgcore_checks import base, util, arches
 from pkgcore.util.iterables import caching_iter, expandable_chain
-from pkgcore.util.lists import stable_unique, iter_flatten
+from pkgcore.util.lists import stable_unique, iflatten_instance
 from pkgcore.util.containers import ProtectedSet
 from pkgcore.restrictions import packages, values
 from pkgcore.package.atom import atom
@@ -101,7 +101,7 @@ class VisibilityReport(base.template):
 
 	def check_pkg(self, pkg, query_cache, reporter):
 		nonexistant = set()
-		for node in iter_flatten(pkg.depends, atom):
+		for node in iflatten_instance(pkg.depends, atom):
 			h = hash(node)
 			if h not in query_cache:
 				if h in self.global_insoluable:
@@ -123,7 +123,7 @@ class VisibilityReport(base.template):
 			nonexistant.clear()
 
 		# force it to be stable, then unstable ordering for an unstable optimization below
-		for node in iter_flatten(pkg.rdepends, atom):
+		for node in iflatten_instance(pkg.rdepends, atom):
 			h = hash(node)
 			if h not in query_cache:
 				if h in self.global_insoluable:
