@@ -18,6 +18,8 @@ class DeprecatedEclassReport(template):
 	'gtk-engines2',
 	'inherit',
 	'jakarta-commons',
+	'java-pkg',
+	'java-utils',
 	'kde-base',
 	'kde-i18n',
 	'kde-source',
