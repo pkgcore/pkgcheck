@@ -12,12 +12,15 @@ from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore_checks import util, arches
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.util.containers import ProtectedSet
+from pkgcore.util.compatibility import any
 from pkgcore.restrictions import values, packages
 import logging, operator
 
 
 class template(object):
 	feed_type = None
+	requires_profiles = False
+	uses_query_cache = False
 
 	def __init__(self):
 		pass
@@ -32,6 +35,14 @@ class template(object):
 		raise NotImplementedError
 
 
+class _WipeQueryCache(template):
+	uses_query_cache = True
+	feed_type = package_feed
+
+	def feed(self, pkgs, reporter, query_cache):
+		query_cache.clear()
+
+
 class Feeder(object):
 	def __init__(self, repo, desired_arches=arches.default_arches):
 		self.pkg_checks = []
@@ -42,6 +53,7 @@ class Feeder(object):
 		self.desired_arches = desired_arches
 		self.profiles = {}
 		self.profiles_inited = False
+		self.query_cache = {}
 
 	def clear_caches(self):
 		self.profiles = {}
@@ -170,11 +182,15 @@ class Feeder(object):
 		self.first_run = False
 		
 		# and... build 'er up.
+		if any(check.uses_query_cache for check in self.cpv_checks + self.pkg_checks + self.cat_checks):
+			pkg_checks = list(self.pkg_checks) + [_WipeQueryCache()]
+		else:
+			pkg_checks = self.pkg_checks
 		i = self.repo.itermatch(limiter, sorter=sorted)
 		if vers and self.cpv_checks:
 			i = self.trigger_cpv_checks(i, reporter)
-		if pkgs and self.pkg_checks:
-			i = self.trigger_pkg_checks(i, reporter)
+		if pkgs and pkg_checks:
+			i = self.trigger_pkg_checks(pkg_checks, i, reporter)
 		if cats and self.cat_checks:
 			i = self.trigger_cat_checks(i, reporter)
 		count = 0
@@ -183,16 +199,22 @@ class Feeder(object):
 
 		return count
 	
+	def wipe_query_cache(self, pkgs, reporter, query_cache):
+		query_cache.clear()
+	wipe_query_cache.uses_query_cache = True
+	
 	def finish(self, reporter):
 		self.fire_finishs("cat", self.cat_checks, reporter)
 		self.fire_finishs("pkg", self.pkg_checks, reporter)
 		self.fire_finishs("cpv", self.cpv_checks, reporter)
 		
-	@staticmethod
-	def run_check(checks, payload, reporter, errmsg):
+	def run_check(self, checks, payload, reporter, errmsg):
 		for check in checks:
 			try:
-				check.feed(payload, reporter)
+				if check.uses_query_cache:
+					check.feed(payload, reporter, self.query_cache)
+				else:
+					check.feed(payload, reporter)
 			except SystemExit:
 				raise
 			except Exception, e:
@@ -217,8 +239,8 @@ class Feeder(object):
 	def trigger_cat_checks(self, *args):
 		return self._generic_trigger_checks(self.cat_checks, "category", *args)
 	
-	def trigger_pkg_checks(self, *args):
-		return self._generic_trigger_checks(self.pkg_checks, "package", *args)
+	def trigger_pkg_checks(self, checks, *args):
+		return self._generic_trigger_checks(checks, "package", *args)
 
 	def trigger_cpv_checks(self, iterable, reporter):
 		for pkg in iterable:

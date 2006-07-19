@@ -21,6 +21,7 @@ class ModularXPortingReport(base.template):
 	"""
 	feed_type = base.package_feed
 	requires_profiles = True
+	uses_query_cache = True
 
 	valid_modx_pkgs_url = "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
 
@@ -38,8 +39,8 @@ class ModularXPortingReport(base.template):
 		self.global_insoluable = global_insoluable
 		self.keywords_filter = keywords_filter
 		self.profile_filters = profile_filters
-
-	def feed(self, pkgset, reporter):
+		
+	def feed(self, pkgset, reporter, query_cache):
 		query_cache = {}
 		# query_cache gets caching_iter partial repo searches shoved into it- reason is simple,
 		# it's likely that versions of this pkg probably use similar deps- so we're forcing those
