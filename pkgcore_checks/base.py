@@ -7,7 +7,12 @@ versioned_feed = "cat/pkg-ver"
 
 __all__ = ("package_feed, versioned_feed", "category_feed", "Feeder")
 
-from pkgcore.restrictions import packages, util
+from pkgcore.restrictions import packages
+from pkgcore.restrictions.util import collect_package_restrictions
+from pkgcore_checks import util, arches
+from pkgcore.util.mappings import OrderedDict
+from pkgcore.util.containers import ProtectedSet
+from pkgcore.restrictions import values, packages
 import logging, operator
 
 
@@ -28,15 +33,73 @@ class template(object):
 
 
 class Feeder(object):
-	def __init__(self, repo, *checks):
+	def __init__(self, repo, desired_arches=arches.default_arches):
 		self.pkg_checks = []
 		self.cat_checks = []
 		self.cpv_checks = []
 		self.first_run = True
-		for x in checks:
-			self.add_check(x)
 		self.repo = repo
-		
+		self.desired_arches = desired_arches
+		self.profiles = {}
+		self.profiles_inited = False
+
+	def clear_caches(self):
+		self.profiles = {}
+
+	def init_arch_profiles(self):
+		if self.profiles_inited:
+			return
+		self.arch_profiles = util.get_profiles_desc(self.repo)
+
+		if self.desired_arches is None:
+			self.desired_arches = util.get_repo_known_arches(self.repo)
+
+		self.global_insoluable = set()
+		profile_filters = {}
+		self.keywords_filter = {}
+		for k in self.desired_arches:
+			if k.lstrip("~") not in self.desired_arches:
+				continue
+			stable_key = k.lstrip("~")
+			unstable_key = "~"+ stable_key
+			stable_r = packages.PackageRestriction("keywords", 
+				values.ContainmentMatch(stable_key))
+			unstable_r = packages.PackageRestriction("keywords", 
+				values.ContainmentMatch(stable_key, unstable_key))
+			
+			profile_filters.update({stable_key:{}, unstable_key:{}})
+			for profile_name in self.arch_profiles[k]:
+				profile = util.get_profile(self.repo, profile_name)
+				mask = util.get_profile_mask(profile)
+				virtuals = profile.virtuals(self.repo)
+				# force all use masks to negated, and all other arches but this
+#				use_flags = InvertedContains(profile.use_mask + tuple(self.desired_arches.difference([stable_key])))
+				non_tristate = tuple(self.desired_arches) + tuple(profile.use_mask)
+				use_flags = [stable_key]
+				# used to interlink stable/unstable lookups so that if unstable says it's not visible, stable doesn't try
+				# if stable says something is visible, unstable doesn't try.
+				stable_cache = set()
+				unstable_insoluable = ProtectedSet(self.global_insoluable)
+
+				# ensure keywords is last, else it triggers a metadata pull
+				# filter is thus- not masked, and keywords match
+
+				# virtual repo, flags, visibility filter, known_good, known_bad
+				profile_filters[stable_key][profile_name] = \
+					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, stable_r), 
+						stable_cache, ProtectedSet(unstable_insoluable)]
+				profile_filters[unstable_key][profile_name] = \
+					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, unstable_r), 
+						ProtectedSet(stable_cache), unstable_insoluable]
+
+			self.keywords_filter[stable_key] = stable_r
+			self.keywords_filter[unstable_key] = packages.PackageRestriction("keywords", 
+				values.ContainmentMatch(unstable_key))
+
+		self.keywords_filter = OrderedDict((k, self.keywords_filter[k]) for k in sorted(self.keywords_filter))
+		self.profile_filters = profile_filters
+		self.profiles_inited = True
+
 	def add_check(self, check):
 		feed_type = getattr(check, "feed_type")
 		if feed_type == category_feed:
@@ -48,14 +111,17 @@ class Feeder(object):
 		else:
 			raise TypeError("check feed_type %s unknown for %s" % (feed_type, check))
 	
-	@staticmethod
-	def _generic_fire(attr, check_type, checks, *args):
+	def _generic_fire(self, attr, check_type, checks, *args):
 		if not checks:
 			return
 		actual = []
 		for check in checks:
+			if attr == "start" and getattr(check, "requires_profiles", False):
+				a = args + (self.global_insoluable, self.keywords_filter, self.profile_filters)
+			else:
+				a = args
 			try:
-				getattr(check, attr)(*args)
+				getattr(check, attr)(*a)
 				actual.append(check)
 			except SystemExit:
 				raise
@@ -76,7 +142,7 @@ class Feeder(object):
 	def run(self, reporter, limiter=packages.AlwaysTrue):
 		enabled = {}.fromkeys(["cats", "pkgs", "vers"], False)
 		for var, attr in (("cats", ["category"]), ("pkgs", ["package"]), ("vers", ["fullver", "version", "rev"])):
-			enabled[var] = bool(list(util.collect_package_restrictions(limiter, attr)))
+			enabled[var] = bool(list(collect_package_restrictions(limiter, attr)))
 
 		cats = enabled.pop("cats")
 		pkgs = enabled.pop("pkgs")
@@ -94,6 +160,7 @@ class Feeder(object):
 			cats = pkgs = vers = True
 
 		if self.first_run:
+			self.init_arch_profiles()
 			if cats:
 				self.fire_starts("cat", self.cat_checks, self.repo)
 			if pkgs:

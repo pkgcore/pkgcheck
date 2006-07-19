@@ -20,6 +20,7 @@ class ModularXPortingReport(base.template):
 	Scans for dependencies that require monolithic X, or via visibility limiters from profiles, are forced to use monolithic X
 	"""
 	feed_type = base.package_feed
+	requires_profiles = True
 
 	valid_modx_pkgs_url = "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
 
@@ -32,54 +33,11 @@ class ModularXPortingReport(base.template):
 		self.x6 = virtual.package("virtual/x11-6.9", None)
 		self.valid_modx_keys = frozenset(x for x in (y.strip() for y in urlopen(self.valid_modx_pkgs_url)) if x and x != "virtual/x11")
 	
-	def start(self, repo):
-		arches_dict = util.get_profiles_desc(repo)
-		official_arches = util.get_repo_known_arches(repo)
-		profile_filters = {}
-		self.keywords_filter = {}
-		self.global_insoluable = set()
-		for k in arches_dict.keys():
-			if k.lstrip("~") not in self.arches:
-				del arches_dict[k]
-				continue
-			stable_key = k.lstrip("~")
-			unstable_key = "~"+ stable_key
-			stable_r = packages.PackageRestriction("keywords", 
-				values.ContainmentMatch(stable_key))
-			unstable_r = packages.PackageRestriction("keywords", 
-				values.ContainmentMatch(stable_key, unstable_key))
-			
-			profile_filters.update({stable_key:{}, unstable_key:{}})
-			for profile_name in arches_dict[k]:
-				profile = util.get_profile(repo, profile_name)
-				mask = util.get_profile_mask(profile)
-				virtuals = profile.virtuals(repo)
-				# force all use masks to negated, and all other arches but this
-#				use_flags = InvertedContains(profile.use_mask + tuple(official_arches.difference([stable_key])))
-				non_tristate = tuple(official_arches) + tuple(profile.use_mask)
-				use_flags = [stable_key]
-				# used to interlink stable/unstable lookups so that if unstable says it's not visible, stable doesn't try
-				# if stable says something is visible, unstable doesn't try.
-				stable_cache = set()
-				unstable_insoluable = ProtectedSet(self.global_insoluable)
-
-				# ensure keywords is last, else it triggers a metadata pull
-				# filter is thus- not masked, and keywords match
-
-				# virtual repo, flags, visibility filter, known_good, known_bad
-				profile_filters[stable_key][profile_name] = \
-					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, stable_r), 
-						stable_cache, ProtectedSet(unstable_insoluable)]
-				profile_filters[unstable_key][profile_name] = \
-					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, unstable_r), 
-						ProtectedSet(stable_cache), unstable_insoluable]
-
-			self.keywords_filter[stable_key] = stable_r
-			self.keywords_filter[unstable_key] = packages.PackageRestriction("keywords", 
-				values.ContainmentMatch(unstable_key))
-
-		self.profile_filters = profile_filters
+	def start(self, repo, global_insoluable, keywords_filter, profile_filters):
 		self.repo = repo
+		self.global_insoluable = global_insoluable
+		self.keywords_filter = keywords_filter
+		self.profile_filters = profile_filters
 
 	def feed(self, pkgset, reporter):
 		query_cache = {}
