@@ -85,10 +85,8 @@ class Feeder(object):
 				mask = util.get_profile_mask(profile)
 				virtuals = profile.virtuals(self.repo)
 				# force all use masks to negated, and all other arches but this
-				non_tristate = list(self.desired_arches) + list(profile.use_mask)
-				non_tristate.sort()
-				non_tristate = tuple(non_tristate)
-				use_flags = (stable_key,)
+				non_tristate = frozenset(list(self.desired_arches) + list(profile.use_mask))
+				use_flags = frozenset([stable_key])
 				# used to interlink stable/unstable lookups so that if unstable says it's not visible, stable doesn't try
 				# if stable says something is visible, unstable doesn't try.
 				stable_cache = set()
