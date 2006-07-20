@@ -86,8 +86,10 @@ class Feeder(object):
 				virtuals = profile.virtuals(self.repo)
 				# force all use masks to negated, and all other arches but this
 #				use_flags = InvertedContains(profile.use_mask + tuple(self.desired_arches.difference([stable_key])))
-				non_tristate = tuple(self.desired_arches) + tuple(profile.use_mask)
-				use_flags = [stable_key]
+				non_tristate = list(self.desired_arches) + list(profile.use_mask)
+				non_tristate.sort()
+				non_tristate = tuple(non_tristate)
+				use_flags = (stable_key,)
 				# used to interlink stable/unstable lookups so that if unstable says it's not visible, stable doesn't try
 				# if stable says something is visible, unstable doesn't try.
 				stable_cache = set()
