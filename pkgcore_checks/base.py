@@ -85,7 +85,6 @@ class Feeder(object):
 				mask = util.get_profile_mask(profile)
 				virtuals = profile.virtuals(self.repo)
 				# force all use masks to negated, and all other arches but this
-#				use_flags = InvertedContains(profile.use_mask + tuple(self.desired_arches.difference([stable_key])))
 				non_tristate = list(self.desired_arches) + list(profile.use_mask)
 				non_tristate.sort()
 				non_tristate = tuple(non_tristate)
@@ -200,10 +199,6 @@ class Feeder(object):
 			count += 1
 
 		return count
-	
-	def wipe_query_cache(self, pkgs, reporter, query_cache):
-		query_cache.clear()
-	wipe_query_cache.uses_query_cache = True
 	
 	def finish(self, reporter):
 		self.fire_finishs("cat", self.cat_checks, reporter)
