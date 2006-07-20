@@ -22,7 +22,7 @@ class VisibilityReport(base.template):
 
 	feed_type = base.package_feed
 	requires_profiles = True
-	uses_query_cache = True
+	uses_caches = True
 
 	vcs_eclasses = ("subversion", "git", "cvs", "darcs")
 
@@ -37,7 +37,7 @@ class VisibilityReport(base.template):
 		self.keywords_filter = keywords_filter
 		self.profile_filters = profile_filters
 
-	def feed(self, pkgset, reporter, query_cache):
+	def feed(self, pkgset, reporter, feeder):
 		# query_cache gets caching_iter partial repo searches shoved into it- reason is simple,
 		# it's likely that versions of this pkg probably use similar deps- so we're forcing those
 		# packages that were accessed for atom matching to remain in memory.
@@ -46,7 +46,7 @@ class VisibilityReport(base.template):
 			if any(True for eclass in self.vcs_eclasses if eclass in pkg.data["_eclasses_"]):
 				# vcs ebuild that better not be visible
 				self.check_visibility_vcs(pkg, reporter)
-			self.check_pkg(pkg, query_cache, reporter)
+			self.check_pkg(pkg, feeder.query_cache, reporter)
 
 	def check_visibility_vcs(self, pkg, reporter):
 		for key, profile_dict in self.profile_filters.iteritems():

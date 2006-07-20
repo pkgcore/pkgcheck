@@ -20,7 +20,7 @@ import logging, operator
 class template(object):
 	feed_type = None
 	requires_profiles = False
-	uses_query_cache = False
+	uses_caches = False
 
 	def __init__(self):
 		pass
@@ -36,11 +36,11 @@ class template(object):
 
 
 class _WipeQueryCache(template):
-	uses_query_cache = True
+	uses_caches = True
 	feed_type = package_feed
 
-	def feed(self, pkgs, reporter, query_cache):
-		query_cache.clear()
+	def feed(self, pkgs, reporter, feeder):
+		feeder.query_cache.clear()
 
 
 class Feeder(object):
@@ -181,7 +181,7 @@ class Feeder(object):
 		self.first_run = False
 		
 		# and... build 'er up.
-		if any(check.uses_query_cache for check in self.cpv_checks + self.pkg_checks + self.cat_checks):
+		if any(check.uses_caches for check in self.cpv_checks + self.pkg_checks + self.cat_checks):
 			pkg_checks = list(self.pkg_checks) + [_WipeQueryCache()]
 		else:
 			pkg_checks = self.pkg_checks
@@ -206,8 +206,8 @@ class Feeder(object):
 	def run_check(self, checks, payload, reporter, errmsg):
 		for check in checks:
 			try:
-				if check.uses_query_cache:
-					check.feed(payload, reporter, self.query_cache)
+				if check.uses_caches:
+					check.feed(payload, reporter, self)
 				else:
 					check.feed(payload, reporter)
 			except SystemExit:
