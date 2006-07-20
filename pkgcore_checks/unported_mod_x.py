@@ -86,10 +86,6 @@ class ModularXPortingReport(base.template):
 					ported_status = True
 					break
 					
-#				if len(block) == 1 and block[0].key == "virtual/x11":
-#					bad = block
-#					ported_status = True
-#					break
 			if bad:
 				for or_block in r.cnf_solutions():
 					if not any(True for x in or_block if x.key == "virtual/x11" and not x.blocks):
@@ -119,22 +115,35 @@ class ModularXPortingReport(base.template):
 		# not valid: >=virtual/x11-7 anywhere, virtual/x11 floating
 		# not valid: x11-base/xorg-x11 floating
 		
-		for key in sorted(self.keywords_filter):
+		diuse = pkg.depends.known_conditionals
+		riuse = pkg.rdepends.known_conditionals
+		deval_cache = {}
+		reval_cache = {}
+
+		for key in self.keywords_filter:
 			if not self.keywords_filter[key].match(pkg):
 				continue
 			for profile, val in self.profile_filters[key].iteritems():
 				virtuals, flags, non_tristate, vfilter, cache, insoluable = val
 				masked_status = not vfilter.match(pkg)
 				if not skip_depends:
-					r = pkg.depends.evaluate_depset(flags, tristate_filter=non_tristate)
-					bad = self.process_depset(r,
+					tri_flags = diuse.difference(non_tristate)
+					set_flags = flags.intersection(diuse)
+					deps = deval_cache.get((tri_flags, set_flags), None)
+					if deps is None:
+						deps = deval_cache[(tri_flags, set_flags)] = pkg.depends.evaluate_depset(flags, tristate_filter=non_tristate)
+					bad = self.process_depset(deps,
 						vfilter, cache, insoluable, self.repo, query_cache)
 					if bad:
 						reporter.add_report(VisibilityCausedNotPorted(pkg, key, profile, "depends", bad))
 
 				if not skip_rdepends:
-					r = pkg.rdepends.evaluate_depset(flags, tristate_filter=non_tristate)
-					bad = self.process_depset(r,
+					tri_flags = riuse.difference(non_tristate)
+					set_flags = flags.intersection(diuse)
+					deps = reval_cache.get((tri_flags, set_flags), None)
+					if deps is None:
+						deps = reval_cache[(tri_flags, set_flags)] = pkg.rdepends.evaluate_depset(flags, tristate_filter=non_tristate)
+					bad = self.process_depset(deps,
 						vfilter, cache, insoluable, self.repo, query_cache)
 					if bad:
 						reporter.add_report(VisibilityCausedNotPorted(pkg, key, profile, "rdepends/pdepends", bad))
