@@ -101,9 +101,8 @@ class VisibilityReport(base.template):
 			reporter.add_report(NonExistantDeps(pkg, "rdepends", nonexistant))
 		del nonexistant
 
-		relevant_profiles = feeder.identify_profiles(pkg)
 		for attr, depset in (("depends", pkg.depends), ("rdepends/pdepends", pkg.rdepends)):
-			for edepset, profiles in feeder.collapse_evaluate_depset(relevant_profiles, depset):
+			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, attr, depset):
 				self.process_depset(pkg, attr, edepset, profiles, query_cache, reporter)
 
 	def process_depset(self, pkg, attr, depset, profiles, query_cache, reporter):

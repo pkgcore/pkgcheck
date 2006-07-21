@@ -48,9 +48,8 @@ class _WipeEvaluateDepSetCaches(template):
 	feed_type = package_feed
 
 	def feed(self, pkgs, reporter, feeder):
-		feeder.evaluate_depends_cache.clear()
-		feeder.evaluate_rdepends_cache.clear()
-
+		feeder.pkg_evaluate_depsets_cache.clear()
+		feeder.pkg_profiles_cache.clear()
 
 class Feeder(object):
 	def __init__(self, repo, desired_arches=arches.default_arches):
@@ -63,8 +62,8 @@ class Feeder(object):
 		self.profiles = {}
 		self.profiles_inited = False
 		self.query_cache = {}
-		self.evaluate_depends_cache = {}
-		self.evaluate_rdepends_cache = {}
+		self.pkg_evaluate_depsets_cache = {}
+		self.pkg_profiles_cache = {}
 
 	def clear_caches(self):
 		self.profiles = {}
@@ -131,20 +130,21 @@ class Feeder(object):
 	def identify_profiles(self, pkg):
 		return [(key, flags_dict) for key, flags_dict in self.profile_evaluate_dict.iteritems() if self.keywords_filter[key].match(pkg)]
 
-	def collapse_evaluate_depset(self, profiles, depset):
-		diuse = depset.known_conditionals
-		collapsed = {}
-		for key, flags_dict in profiles:
-			for flags, profile_names in flags_dict.iteritems():
-				tri_flags = diuse.difference(flags[0])
-				set_flags = diuse.intersection(flags[1])
-				collapsed.setdefault((tri_flags, set_flags), []).extend((key, profile, self.profile_filters[key][profile]) for profile in profile_names)
-
-#		for k,v in collapsed.iteritems():
-#			# lil reach in, and grab an original tristate.
-#			# virtuals, flags, non_tristate, vfilter, cache, insoluable = v[0][2]
-#			yield depset.evaluate_depset(k[1], tristate_filter=v[0][2][2]), v
-		return [(depset.evaluate_depset(k[1], tristate_filter=v[0][2][2]), v) for k,v in collapsed.iteritems()]
+	def collapse_evaluate_depset(self, pkg, attr, depset):
+		depset_profiles = self.pkg_evaluate_depsets_cache.get((pkg, attr), None)
+		if depset_profiles is None:
+			profiles = self.pkg_profiles_cache.get(pkg, None)
+			if profiles is None:
+				profiles = self.pkg_profiles_cache[pkg] = self.identify_profiles(pkg)
+			diuse = depset.known_conditionals
+			collapsed = {}
+			for key, flags_dict in profiles:
+				for flags, profile_names in flags_dict.iteritems():
+					tri_flags = diuse.difference(flags[0])
+					set_flags = diuse.intersection(flags[1])
+					collapsed.setdefault((tri_flags, set_flags), []).extend((key, profile, self.profile_filters[key][profile]) for profile in profile_names)
+			depset_profiles = self.pkg_evaluate_depsets_cache[(pkg, attr)] = [(depset.evaluate_depset(k[1], tristate_filter=v[0][2][2]), v) for k,v in collapsed.iteritems()]
+		return depset_profiles
 
 	def add_check(self, check):
 		feed_type = getattr(check, "feed_type")

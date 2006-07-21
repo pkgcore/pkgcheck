@@ -121,12 +121,11 @@ class ModularXPortingReport(base.template):
 		deval_cache = {}
 		reval_cache = {}
 
-		relevant_profiles = feeder.identify_profiles(pkg)
 		if not skip_depends:
-			for edepset, profiles in feeder.collapse_evaluate_depset(relevant_profiles, pkg.depends):
+			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, "depends", pkg.depends):
 				self.process_depset(pkg, "depends", edepset, profiles, query_cache, reporter)
 		if not skip_rdepends:
-			for edepset, profiles in feeder.collapse_evaluate_depset(relevant_profiles, pkg.rdepends):
+			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, "rdepends/pdepends", pkg.rdepends):
 				self.process_depset(pkg, "rdepends/pdepends", edepset, profiles, query_cache, reporter)
 				
 	def process_depset(self, pkg, attr, depset, profiles, query_cache, reporter):
