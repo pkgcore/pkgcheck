@@ -116,7 +116,8 @@ class Feeder(object):
 					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, unstable_r), 
 						ProtectedSet(stable_cache), unstable_insoluable]
 				
-				profile_evaluate_dict.setdefault((non_tristate, use_flags), []).extend((k, profile_name) for k in [stable_key, unstable_key])
+				for k in (stable_key, unstable_key):
+					profile_evaluate_dict.setdefault(k, {}).setdefault((non_tristate, use_flags), []).append(profile_name)
 
 			self.keywords_filter[stable_key] = stable_r
 			self.keywords_filter[unstable_key] = packages.PackageRestriction("keywords", 
@@ -127,22 +128,23 @@ class Feeder(object):
 		self.profile_evaluate_dict = profile_evaluate_dict
 		self.profiles_inited = True
 
-	def collapse_evaluate_depset(self, pkg, depset):
-		diuse = depset.known_conditionals
-		relevant_keys = set(k for k,v in self.keywords_filter.iteritems() if v.match(pkg))
-		collapsed = {}
-		for k, v in self.profile_evaluate_dict.iteritems():
-			# k == (non_tristate, use_flags)
-			l = [x for x in v if x[0] in relevant_keys]
-			if l:
-				tri_flags = diuse.difference(k[0])
-				set_flags = diuse.intersection(k[1])
-				collapsed.setdefault((tri_flags, set_flags), []).extend((key, profile, self.profile_filters[key][profile]) for key, profile in l)
+	def identify_profiles(self, pkg):
+		return [(key, flags_dict) for key, flags_dict in self.profile_evaluate_dict.iteritems() if self.keywords_filter[key].match(pkg)]
 
-		for k,v in collapsed.iteritems():
-			# lil reach in, and grab an original tristate.
-			# virtuals, flags, non_tristate, vfilter, cache, insoluable = v[0][2]
-			yield depset.evaluate_depset(k[1], tristate_filter=v[0][2][2]), v
+	def collapse_evaluate_depset(self, profiles, depset):
+		diuse = depset.known_conditionals
+		collapsed = {}
+		for key, flags_dict in profiles:
+			for flags, profile_names in flags_dict.iteritems():
+				tri_flags = diuse.difference(flags[0])
+				set_flags = diuse.intersection(flags[1])
+				collapsed.setdefault((tri_flags, set_flags), []).extend((key, profile, self.profile_filters[key][profile]) for profile in profile_names)
+
+#		for k,v in collapsed.iteritems():
+#			# lil reach in, and grab an original tristate.
+#			# virtuals, flags, non_tristate, vfilter, cache, insoluable = v[0][2]
+#			yield depset.evaluate_depset(k[1], tristate_filter=v[0][2][2]), v
+		return [(depset.evaluate_depset(k[1], tristate_filter=v[0][2][2]), v) for k,v in collapsed.iteritems()]
 
 	def add_check(self, check):
 		feed_type = getattr(check, "feed_type")

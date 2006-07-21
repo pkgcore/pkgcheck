@@ -121,42 +121,46 @@ class ModularXPortingReport(base.template):
 		deval_cache = {}
 		reval_cache = {}
 
-		for attr, depset, skip_it in (("depends", pkg.depends, skip_depends), ("rdepends/pdepends", pkg.rdepends, skip_rdepends)):
-			if skip_it:
-				continue
-			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, depset):
-				for key, profile_name, data in profiles:
-					virtuals, flags, non_tristate, vfilter, cache, insoluable = data
-					bad = self.process_depset(edepset, vfilter, cache, insoluable, self.repo, query_cache)
-					if bad:
-						reporter.add_report(VisibilityCausedNotPorted(pkg, key, profile_name, attr, bad))
-
-	def process_depset(self, depset, vfilter, cache, insoluable, repo, query_cache):
+		relevant_profiles = feeder.identify_profiles(pkg)
+		if not skip_depends:
+			for edepset, profiles in feeder.collapse_evaluate_depset(relevant_profiles, pkg.depends):
+				self.process_depset(pkg, "depends", edepset, profiles, query_cache, reporter)
+		if not skip_rdepends:
+			for edepset, profiles in feeder.collapse_evaluate_depset(relevant_profiles, pkg.rdepends):
+				self.process_depset(pkg, "rdepends/pdepends", edepset, profiles, query_cache, reporter)
+				
+	def process_depset(self, pkg, attr, depset, profiles, query_cache, reporter):
+		csolutions = depset.cnf_solutions()
+		repo = self.repo
 		failed = set()
-		for or_block in depset.cnf_solutions():
-			if not any(True for x in or_block if x.key == "virtual/x11"):
-				continue
+		for key, profile_name, data in profiles:
+			failed.clear()
+			virtuals, flags, non_tristate, vfilter, cache, insoluable = data
+			for or_block in csolutions:
+				if not any(True for x in or_block if x.key == "virtual/x11"):
+					continue
 			
-			# we know a virtual/x11 is in this options.
-			# better have a modx node in options, else it's bad.
-			modx_candidates = [x for x in or_block if x.key in self.valid_modx_keys]
-			for a in modx_candidates:
-				if a.blocks:
-					# weird.
-					continue
-				h = hash(a)
-				if h in insoluable:
-					continue
-				elif h in cache:
-					break
-				elif a not in query_cache:
-					query_cache[h] = caching_iter(repo.itermatch(a))
-				if any(True for pkg in query_cache[h] if vfilter.match(pkg)):
-					# one is visible.
-					break
-			else:
-				failed.update(modx_candidates)
-		return failed
+				# we know a virtual/x11 is in this options.
+				# better have a modx node in options, else it's bad.
+				modx_candidates = [x for x in or_block if x.key in self.valid_modx_keys]
+				for a in modx_candidates:
+					if a.blocks:
+						# weird.
+						continue
+					h = hash(a)
+					if h in insoluable:
+						pass
+					elif h in cache:
+						break
+					elif a not in query_cache:
+						query_cache[h] = caching_iter(repo.itermatch(a))
+					if any(True for pkg in query_cache[h] if vfilter.match(pkg)):
+						# one is visible.
+						break
+				else:
+					failed.update(modx_candidates)
+			if failed:
+				reporter.add_report(VisibilityCausedNotPorted(pkg, key, profile_name, attr, sorted(failed)))
 
 	def finish(self, *a):
 		self.repo = self.profile_filters = self.keywords_filter = None

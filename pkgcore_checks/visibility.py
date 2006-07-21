@@ -101,46 +101,46 @@ class VisibilityReport(base.template):
 			reporter.add_report(NonExistantDeps(pkg, "rdepends", nonexistant))
 		del nonexistant
 
+		relevant_profiles = feeder.identify_profiles(pkg)
 		for attr, depset in (("depends", pkg.depends), ("rdepends/pdepends", pkg.rdepends)):
-			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, depset):
-				for key, profile_name, data in profiles:
-					virtuals, flags, non_tristate, vfilter, cache, insoluable = data
-					masked_status = not vfilter.match(pkg)
-					bad = self.process_depset(edepset, virtuals, vfilter, cache, insoluable, query_cache)
-					if bad:
-						reporter.add_report(NonsolvableDeps(pkg, attr, key, profile_name, bad, masked=masked_status))
+			for edepset, profiles in feeder.collapse_evaluate_depset(relevant_profiles, depset):
+				self.process_depset(pkg, attr, edepset, profiles, query_cache, reporter)
 
-	def process_depset(self, depset, virtuals, vfilter, cache, insoluable, query_cache):
+	def process_depset(self, pkg, attr, depset, profiles, query_cache, reporter):
+		csolutions = depset.cnf_solutions()
 		failures = set()
-		for required in depset.cnf_solutions():
-			if any(True for a in required if a.blocks):
-				continue
-			if any(True for a in required if hash(a) in cache):
-				continue
-			for a in required:
-				h = hash(a)
-				if h in insoluable:
+		for key, profile_name, data in profiles:
+			failures.clear()
+			virtuals, flags, non_tristate, vfilter, cache, insoluable = data
+			masked_status = not vfilter.match(pkg)
+			for required in csolutions:
+				if any(True for a in required if a.blocks):
 					continue
-				if virtuals.match(a):
-					cache.add(h)
-					break
-				elif a.category == "virtual" and h not in query_cache:
-					insoluable.add(h)
+				elif any(True for a in required if hash(a) in cache):
 					continue
-				else:
-					if any(True for pkg in query_cache[h] if vfilter.match(pkg)):
+				for a in required:
+					h = hash(a)
+					if h in insoluable:
+						pass
+					elif virtuals.match(a):
 						cache.add(h)
 						break
-					else:
+					elif a.category == "virtual" and h not in query_cache:
 						insoluable.add(h)
+					else:
+						if any(True for pkg in query_cache[h] if vfilter.match(pkg)):
+							cache.add(h)
+							break
+						else:
+							insoluable.add(h)
+				else:
+					# no matches.  not great, should collect them all
+					failures.update(required)
+					break
 			else:
-				# no matches.  not great, should collect them all
-				failures.update(required)
-				break
-		else:
-			# all requireds where satisfied.
-			return ()
-		return list(failures)
+				# all requireds where satisfied.
+				continue
+			reporter.add_report(NonsolvableDeps(pkg, attr, key, profile_name, list(failures), masked=masked_status))
 
 	def finish(self, *a):
 		self.repo = self.profile_filters = self.keywords_filter = None
