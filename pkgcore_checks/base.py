@@ -43,6 +43,15 @@ class _WipeQueryCache(template):
 		feeder.query_cache.clear()
 
 
+class _WipeEvaluateDepSetCaches(template):
+	uses_caches = True
+	feed_type = package_feed
+
+	def feed(self, pkgs, reporter, feeder):
+		feeder.evaluate_depends_cache.clear()
+		feeder.evaluate_rdepends_cache.clear()
+
+
 class Feeder(object):
 	def __init__(self, repo, desired_arches=arches.default_arches):
 		self.pkg_checks = []
@@ -54,6 +63,8 @@ class Feeder(object):
 		self.profiles = {}
 		self.profiles_inited = False
 		self.query_cache = {}
+		self.evaluate_depends_cache = {}
+		self.evaluate_rdepends_cache = {}
 
 	def clear_caches(self):
 		self.profiles = {}
@@ -69,6 +80,8 @@ class Feeder(object):
 		self.global_insoluable = set()
 		profile_filters = {}
 		self.keywords_filter = {}
+		profile_evaluate_dict = {}
+		
 		for k in self.desired_arches:
 			if k.lstrip("~") not in self.desired_arches:
 				continue
@@ -102,6 +115,8 @@ class Feeder(object):
 				profile_filters[unstable_key][profile_name] = \
 					[virtuals, use_flags, non_tristate, packages.AndRestriction(mask, unstable_r), 
 						ProtectedSet(stable_cache), unstable_insoluable]
+				
+				profile_evaluate_dict.setdefault((non_tristate, use_flags), []).extend((k, profile_name) for k in [stable_key, unstable_key])
 
 			self.keywords_filter[stable_key] = stable_r
 			self.keywords_filter[unstable_key] = packages.PackageRestriction("keywords", 
@@ -109,7 +124,25 @@ class Feeder(object):
 
 		self.keywords_filter = OrderedDict((k, self.keywords_filter[k]) for k in sorted(self.keywords_filter))
 		self.profile_filters = profile_filters
+		self.profile_evaluate_dict = profile_evaluate_dict
 		self.profiles_inited = True
+
+	def collapse_evaluate_depset(self, pkg, depset):
+		diuse = depset.known_conditionals
+		relevant_keys = set(k for k,v in self.keywords_filter.iteritems() if v.match(pkg))
+		collapsed = {}
+		for k, v in self.profile_evaluate_dict.iteritems():
+			# k == (non_tristate, use_flags)
+			l = [x for x in v if x[0] in relevant_keys]
+			if l:
+				tri_flags = diuse.difference(k[0])
+				set_flags = diuse.intersection(k[1])
+				collapsed.setdefault((tri_flags, set_flags), []).extend((key, profile, self.profile_filters[key][profile]) for key, profile in l)
+
+		for k,v in collapsed.iteritems():
+			# lil reach in, and grab an original tristate.
+			# virtuals, flags, non_tristate, vfilter, cache, insoluable = v[0][2]
+			yield depset.evaluate_depset(k[1], tristate_filter=v[0][2][2]), v
 
 	def add_check(self, check):
 		feed_type = getattr(check, "feed_type")
@@ -182,7 +215,7 @@ class Feeder(object):
 		
 		# and... build 'er up.
 		if any(check.uses_caches for check in self.cpv_checks + self.pkg_checks + self.cat_checks):
-			pkg_checks = list(self.pkg_checks) + [_WipeQueryCache()]
+			pkg_checks = list(self.pkg_checks) + [_WipeQueryCache(), _WipeEvaluateDepSetCaches()]
 		else:
 			pkg_checks = self.pkg_checks
 		i = self.repo.itermatch(limiter, sorter=sorted)

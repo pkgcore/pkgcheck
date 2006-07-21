@@ -46,7 +46,7 @@ class VisibilityReport(base.template):
 			if any(True for eclass in self.vcs_eclasses if eclass in pkg.data["_eclasses_"]):
 				# vcs ebuild that better not be visible
 				self.check_visibility_vcs(pkg, reporter)
-			self.check_pkg(pkg, feeder.query_cache, reporter)
+			self.check_pkg(pkg, feeder, reporter)
 
 	def check_visibility_vcs(self, pkg, reporter):
 		for key, profile_dict in self.profile_filters.iteritems():
@@ -57,7 +57,8 @@ class VisibilityReport(base.template):
 					reporter.add_report(VisibleVcsPkg(pkg, key, profile_name))
 	
 
-	def check_pkg(self, pkg, query_cache, reporter):
+	def check_pkg(self, pkg, feeder, reporter):
+		query_cache = feeder.query_cache
 		nonexistant = set()
 		for node in iflatten_instance(pkg.depends, atom):
 			h = hash(node)
@@ -99,39 +100,15 @@ class VisibilityReport(base.template):
 		if nonexistant:
 			reporter.add_report(NonExistantDeps(pkg, "rdepends", nonexistant))
 		del nonexistant
-		diuse = pkg.depends.known_conditionals
-		riuse = pkg.rdepends.known_conditionals
-		deval_cache = {}
-		reval_cache = {}
-		for key in self.keywords_filter:
-			if not self.keywords_filter[key].match(pkg):
-				continue
-			for profile, val in self.profile_filters[key].iteritems():
-				virtuals, flags, non_tristate, vfilter, cache, insoluable = val
-				masked_status = not vfilter.match(pkg)
 
-				tri_flags = diuse.difference(non_tristate)
-				set_flags = diuse.intersection(flags)
-				deps = deval_cache.get((tri_flags, set_flags), None)
-				if deps is None:
-					deps = deval_cache[(tri_flags, set_flags)] = pkg.depends.evaluate_depset(flags, tristate_filter=non_tristate)
-
-				bad = self.process_depset(deps, 
-					virtuals, vfilter, cache, insoluable, query_cache)
-				if bad:
-					reporter.add_report(NonsolvableDeps(pkg, "depends", key, profile, bad, masked=masked_status))
-
-				tri_flags = riuse.difference(non_tristate)
-				set_flags = riuse.intersection(flags)
-				rdeps = reval_cache.get((tri_flags, set_flags), None)
-				if rdeps is None:
-					rdeps = reval_cache[(tri_flags, set_flags)] = pkg.rdepends.evaluate_depset(flags, tristate_filter=non_tristate)
-
-				bad = self.process_depset(rdeps,
-					virtuals, vfilter, cache, insoluable, query_cache)
-				if bad:
-					reporter.add_report(NonsolvableDeps(pkg, "rdepends/pdepends", key, profile, bad, masked=masked_status))
-
+		for attr, depset in (("depends", pkg.depends), ("rdepends/pdepends", pkg.rdepends)):
+			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, depset):
+				for key, profile_name, data in profiles:
+					virtuals, flags, non_tristate, vfilter, cache, insoluable = data
+					masked_status = not vfilter.match(pkg)
+					bad = self.process_depset(edepset, virtuals, vfilter, cache, insoluable, query_cache)
+					if bad:
+						reporter.add_report(NonsolvableDeps(pkg, attr, key, profile_name, bad, masked=masked_status))
 
 	def process_depset(self, depset, virtuals, vfilter, cache, insoluable, query_cache):
 		failures = set()

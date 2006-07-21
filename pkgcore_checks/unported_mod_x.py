@@ -49,7 +49,7 @@ class ModularXPortingReport(base.template):
 		unported = []
 		ported = []
 		for pkg in pkgset:
-			self.check_pkg(pkg, feeder.query_cache, reporter, unported, ported)
+			self.check_pkg(pkg, feeder, reporter, unported, ported)
 
 		if unported and ported:
 			for u in unported:
@@ -58,7 +58,8 @@ class ModularXPortingReport(base.template):
 	def invalid_virtual_x11(self, atom):
 		return atom.match(self.x7) and not atom.match(self.x6)
 
-	def check_pkg(self, pkg, query_cache, reporter, unported, ported):
+	def check_pkg(self, pkg, feeder, reporter, unported, ported):
+		query_cache = feeder.query_cache
 		failed = []
 		
 		ported_status = False
@@ -120,33 +121,15 @@ class ModularXPortingReport(base.template):
 		deval_cache = {}
 		reval_cache = {}
 
-		for key in self.keywords_filter:
-			if not self.keywords_filter[key].match(pkg):
+		for attr, depset, skip_it in (("depends", pkg.depends, skip_depends), ("rdepends/pdepends", pkg.rdepends, skip_rdepends)):
+			if skip_it:
 				continue
-			for profile, val in self.profile_filters[key].iteritems():
-				virtuals, flags, non_tristate, vfilter, cache, insoluable = val
-				masked_status = not vfilter.match(pkg)
-				if not skip_depends:
-					tri_flags = diuse.difference(non_tristate)
-					set_flags = flags.intersection(diuse)
-					deps = deval_cache.get((tri_flags, set_flags), None)
-					if deps is None:
-						deps = deval_cache[(tri_flags, set_flags)] = pkg.depends.evaluate_depset(flags, tristate_filter=non_tristate)
-					bad = self.process_depset(deps,
-						vfilter, cache, insoluable, self.repo, query_cache)
+			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, depset):
+				for key, profile_name, data in profiles:
+					virtuals, flags, non_tristate, vfilter, cache, insoluable = data
+					bad = self.process_depset(edepset, vfilter, cache, insoluable, self.repo, query_cache)
 					if bad:
-						reporter.add_report(VisibilityCausedNotPorted(pkg, key, profile, "depends", bad))
-
-				if not skip_rdepends:
-					tri_flags = riuse.difference(non_tristate)
-					set_flags = flags.intersection(diuse)
-					deps = reval_cache.get((tri_flags, set_flags), None)
-					if deps is None:
-						deps = reval_cache[(tri_flags, set_flags)] = pkg.rdepends.evaluate_depset(flags, tristate_filter=non_tristate)
-					bad = self.process_depset(deps,
-						vfilter, cache, insoluable, self.repo, query_cache)
-					if bad:
-						reporter.add_report(VisibilityCausedNotPorted(pkg, key, profile, "rdepends/pdepends", bad))
+						reporter.add_report(VisibilityCausedNotPorted(pkg, key, profile_name, attr, bad))
 
 	def process_depset(self, depset, vfilter, cache, insoluable, repo, query_cache):
 		failed = set()
