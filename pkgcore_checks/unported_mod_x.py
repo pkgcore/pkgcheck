@@ -183,7 +183,7 @@ class SuggestRemoval(base.Result):
 	<package>%s</package>
 	<version>%s</version>
 	<msg>unported, suggest replacing via: %s</msg>
-</check>""" % (self.__class__, self.category, self.package, self.version, escape(", ".join(self.ported)))
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, escape(", ".join(self.ported)))
 
 
 
@@ -206,7 +206,7 @@ class BadRange(base.Result):
 	<package>%s</package>
 	<version>%s</version>
 	<msg>attr %s has atoms %s, which do not match virtual/x11-6.9</msg>
-</check>""" % (self.__class__, self.category, self.package, self.version, self.attr, escape(", ".join(self.atoms)))
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.attr, escape(", ".join(self.atoms)))
 
 
 class NotPorted(base.Result):
@@ -228,7 +228,7 @@ class NotPorted(base.Result):
 	<package>%s</package>
 	<version>%s</version>
 	<msg>attr %s, standalone virtual/x11 atom detected in an or_block"</msg>
-</check>""" % (self.__class__, self.category, self.package, self.version, self.attr)
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.attr)
 
 
 class VisibilityCausedNotPorted(base.Result):
@@ -256,45 +256,4 @@ class VisibilityCausedNotPorted(base.Result):
 	<keyword>%s</keyword>
 	<profile>%s</profile>
 	<msg>attr %s, visibility limiters mean that the following atoms aren't accessible, resulting in non-modular x deps: %s</msg>
-</check>""" % (self.category, self.package, self.version, self.keyword, self.profile, self.attr, escape(", ".join(self.failed)))
-
-
-class NonsolvableDeps(base.Result):
-	description = "No potential solution for a depset attribute"
-	__slots__ = ("category", "package", "version", "attr", "profile", "keyword", 
-		"potentials", "masked")
-	
-	def __init__(self, pkg, attr, keyword, profile, horked, masked=False):
-		self.category = pkg.category
-		self.package = pkg.package
-		self.version = pkg.fullver
-		self.attr = attr
-		self.profile = profile
-		self.keyword = keyword
-		self.potentials = tuple(str(x) for x in stable_unique(horked))
-		self.masked = masked
-		
-	def to_str(self):
-		s=' '
-		if self.keyword.startswith("~"):
-			s=''
-		if self.masked:
-			s = "masked "+s
-		return "%s/%s-%s: %s %s%s: unsolvable %s, solutions: [ %s ]" % \
-			(self.category, self.package, self.version, self.attr, s, self.keyword, self.profile,
-			", ".join(self.potentials))
-
-	def to_xml(self):
-		s = ''
-		if self.masked:
-			s = "masked, "
-		return \
-"""<check name="%s">
-	<category>%s</category>
-	<package>%s</package>
-	<version>%s</version>
-	<profile>%s</profile>
-	<keyword>%s</keyword>
-	<msg>%snot solvable for %s- potential solutions, %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version,
-self.profile, self.keyword, s, self.attr, escape(", ".join(self.potentials)))
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.keyword, self.profile, self.attr, escape(", ".join(self.failed)))
