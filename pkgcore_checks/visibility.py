@@ -146,7 +146,7 @@ class VisibilityReport(base.template):
 
 
 class VisibleVcsPkg(base.Result):
-	description = "pkg is vcs based, but visible"
+	"""pkg is vcs based, but visible"""
 	__slots__ = ("category", "package", "version", "profile", "arch")
 
 	def __init__(self, pkg, arch, profile):
@@ -172,7 +172,7 @@ class VisibleVcsPkg(base.Result):
 
 
 class NonExistantDeps(base.Result):
-	description = "No matches exist for a depset element"
+	"""No matches exist for a depset element"""
 	__slots__ = ("category", "package", "version", "attr", "atoms")
 	
 	def __init__(self, pkg, attr, nonexistant_atoms):
@@ -198,7 +198,7 @@ self.attr, escape(", ".join(self.atoms)))
 
 
 class NonsolvableDeps(base.Result):
-	description = "No potential solution for a depset attribute"
+	"""No potential solution for a depset attribute"""
 	__slots__ = ("category", "package", "version", "attr", "profile", "keyword", 
 		"potentials", "masked")
 	

@@ -5,7 +5,7 @@ from pkgcore_checks.base import template, package_feed, Result
 from pkgcore.util.compatibility import any
 
 class RedundantVersionWarning(Result):
-	description = "Redundant version of a pkg in a slotting; keyword appears in a later version"
+	"""Redundant version of a pkg in a slotting; keyword appears in a later version"""
 
 	__slots__ = ("category", "package", "slot", "later_versions")
 

@@ -10,7 +10,7 @@ from pkgcore.util.xml import escape
 
 class VulnerablePackage(Result):
 
-	description = "Packages marked as vulnerable by GLSAs"
+	"""Packages marked as vulnerable by GLSAs"""
 
 	__slots__ = ("category", "package", "version", "arch", "glsa")
 

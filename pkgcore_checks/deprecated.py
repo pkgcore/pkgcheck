@@ -3,7 +3,7 @@
 
 from pkgcore_checks.base import template, versioned_feed, Result
 
-class DeprecatedEclassReport(template):
+class DeprecatedEclassReport(template):	
 	feed_type = versioned_feed
 	blacklist = frozenset((
 	'64-bit',
@@ -46,7 +46,7 @@ class DeprecatedEclassReport(template):
 	'tla',
 	'webapp-apache',
 	'xfree'))
-	
+
 	__doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses:%s\n" % ", ".join(sorted(blacklist))
 
 	def feed(self, pkg, reporter):
@@ -56,7 +56,7 @@ class DeprecatedEclassReport(template):
 
 
 class DeprecatedEclass(Result):
-	description = "pkg uses an eclass that is deprecated/abandoned"
+	"""pkg uses an eclass that is deprecated/abandoned"""
 	
 	__slots__ = ("category", "package", "version", "eclasses")
 	
@@ -77,5 +77,3 @@ class DeprecatedEclass(Result):
 	<msg>deprecated eclass usage- %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
 	", ".join(self.eclasses))
-
-

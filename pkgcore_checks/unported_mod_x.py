@@ -166,7 +166,9 @@ class ModularXPortingReport(base.template):
 
 
 class SuggestRemoval(base.Result):
-	description = "pkg isn't ported, stablize the targets and it can likely go away"
+	
+	"""pkg isn't ported, stablize the targets and it can likely go away"""
+	
 	__slots__ = ("category", "package", "version", "ported")
 	def __init__(self, pkg, ported):
 		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
@@ -188,7 +190,9 @@ class SuggestRemoval(base.Result):
 
 
 class BadRange(base.Result):
-	description = "check for virtual/x11 atoms that don't match 6.9, implying they require 7.x"
+	
+	"""check for virtual/x11 atoms that don't match 6.9, implying they require 7.x"""
+	
 	__slots__ = ("category", "package", "version", "attr", "atom")
 	def __init__(self, pkg, attr, atom):
 		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
@@ -210,7 +214,9 @@ class BadRange(base.Result):
 
 
 class NotPorted(base.Result):
-	description = "standalone virtual/x11 atom, not ported."
+	
+	"""standalone virtual/x11 atom, not ported."""
+	
 	__slots__ = ("category", "package", "version", "attr", "or_block")
 
 	def __init__(self, pkg, attr, or_block):
@@ -232,7 +238,9 @@ class NotPorted(base.Result):
 
 
 class VisibilityCausedNotPorted(base.Result):
-	description = "ported, but due to visibility (mask'ing/keywords), knocked back to effectively not ported"
+	
+	"""ported, but due to visibility (mask'ing/keywords), knocked back to effectively not ported"""
+	
 	__slots__ = ("category", "package", "version", "attr", "keyword", "profile", "failed")
 
 	def __init__(self, pkg, keyword, profile, attr, failed):

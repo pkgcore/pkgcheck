@@ -38,7 +38,9 @@ class UnstableOnlyReport(template):
 				
 
 class UnstableOnly(Result):
-	description = "package/keywords that are strictly unstable"
+
+	"""package/keywords that are strictly unstable"""
+
 	__slots__ = ("category", "package", "version", "arch")
 	
 	def __init__(self, pkgs, arch):

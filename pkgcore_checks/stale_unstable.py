@@ -9,7 +9,7 @@ day = 24*3600
 
 
 class StaleUnstableKeyword(Result):
-	description = "packages that have unstable keywords that have been unstable for over a month"
+	"""packages that have unstable keywords that have been unstable for over a month"""
 	
 	__slots__ = ("category", "package", "version", "keywords", "period")
 	

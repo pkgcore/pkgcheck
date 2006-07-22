@@ -7,7 +7,9 @@ from pkgcore_checks.base import template, package_feed, Result
 from pkgcore_checks.arches import default_arches
 
 class LaggingStableInfo(Result):
-	description = "Arch that is behind another from a stabling standpoint"
+
+	"""Arch that is behind another from a stabling standpoint"""
+	
 	__slots__ = ("category", "package", "version", "keywords", "existing_keywords")
 	
 	def __init__(self, pkg, keywords):

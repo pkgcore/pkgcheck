@@ -7,7 +7,7 @@ from pkgcore_checks.arches import default_arches
 
 
 class DroppedKeywordWarning(Result):
-	description = "Arch keywords dropped during pkg version bumping"
+	"""Arch keywords dropped during pkg version bumping"""
 
 	__slots__ = ("arch", "category", "package",)
 

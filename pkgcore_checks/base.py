@@ -279,9 +279,7 @@ class Feeder(object):
 	
 
 class Result(object):
-	
-	description = None
-	
+
 	def __str__(self):
 		try:
 			return self.to_str()
@@ -296,6 +294,7 @@ class Result(object):
 
 
 class Reporter(object):
+
 	def __init__(self):
 		self.reports = []
 	
@@ -308,14 +307,18 @@ class Reporter(object):
 	def finish(self):
 		pass
 
+
 class StrReporter(Reporter):
+
 	def __init__(self, file_obj):
 		self.handle = file_obj
 	
 	def add_report(self, result):
 		self.handle.write("%s\n" % (result.to_str()))
+
 	
 class XmlReporter(Reporter):
+
 	def __init__(self, file_obj):
 		self.handle = file_obj
 
@@ -330,6 +333,7 @@ class XmlReporter(Reporter):
 
 
 class MultiplexReporter(Reporter):
+
 	def __init__(self, *reporters):
 		if len(reporters) < 2:
 			raise ValueError("need at least two reporters")

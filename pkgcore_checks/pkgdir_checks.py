@@ -82,7 +82,7 @@ class PkgDirReport(template):
 
 
 class MissingFile(Result):
-	description = "pkg is missing an expected file entry"
+	"""pkg is missing an expected file entry"""
 	__slots__ = ("category", "package", "filename")
 	
 	def __init__(self, pkg, filename):
@@ -103,7 +103,7 @@ class MissingFile(Result):
 		
 
 class ExecutableFile(Result):
-	description = "file has executable bit, but doesn't need it"
+	"""file has executable bit, but doesn't need it"""
 	__slots__ = ("category", "package", "filename")
 	
 	def __init__(self, pkg, filename):
@@ -124,7 +124,7 @@ class ExecutableFile(Result):
 
 
 class SizeViolation(Result):
-	description = "filesdir, excluding digest/cvs, is too large"
+	"""filesdir, excluding digest/cvs, is too large"""
 	__slots__ = ("category", "package", "size")
 	
 	def __init__(self, pkg, size):
@@ -146,7 +146,8 @@ class SizeViolation(Result):
 
 class Glep31Violation(Result):
 
-	description = "file doesn't abide by glep31 requirements"
+	"""file doesn't abide by glep31 requirements"""
+	
 	__slots__ = ("category", "package", "filename")
 	
 	def __init__(self, pkg, filename):
@@ -169,7 +170,8 @@ class Glep31Violation(Result):
 
 class InvalidUtf8(Result):
 
-	description = "file isn't utf8 compliant"
+	"""file isn't utf8 compliant"""
+	
 	__slots__ = ("category", "package", "filename", "err")
 	
 	def __init__(self, pkg, filename, err):

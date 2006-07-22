@@ -20,7 +20,9 @@ demandload(globals(), "pkgcore.util.xml:escape")
 default_attrs = ("depends", "rdepends", "provides", "license", "fetchables", "iuse")
 
 class MetadataReport(template):
+
 	"""ebuild metadata reports.  DEPENDS, RDEPENDS, PROVIDES, SRC_URI, DESCRIPTION, LICENSE, etc."""
+
 	feed_type = versioned_feed
 	
 	def __init__(self):
@@ -205,7 +207,7 @@ class RestrictsReport(template):
 
 
 class BadRestricts(Result):
-	description = "pkg's restrict metadata has unknown/deprecated entries"
+	"""pkg's restrict metadata has unknown/deprecated entries"""
 	
 	__slots__ = ("category", "package", "version", "restricts", "deprecated")
 	
@@ -246,7 +248,8 @@ class BadRestricts(Result):
 
 
 class CrappyDescription(Result):
-	description = "pkg's description sucks in some fashion"
+	
+	"""pkg's description sucks in some fashion"""
 
 	__slots__ = ("category", "package", "version", "msg")
 
@@ -268,7 +271,7 @@ class CrappyDescription(Result):
 
 
 class UnstatedIUSE(Result):
-	description = "pkg is reliant on conditionals that aren't in IUSE"
+	"""pkg is reliant on conditionals that aren't in IUSE"""
 	__slots__ = ("category", "package", "version", "attr", "flags")
 	
 	def __init__(self, pkg, attr, flags):
@@ -291,7 +294,7 @@ class UnstatedIUSE(Result):
 
 
 class MissingUri(Result):
-	description = "restrict=fetch isn't set, yet no full uri exists"
+	"""restrict=fetch isn't set, yet no full uri exists"""
 	__slots__ = ("category", "package", "version", "filename")
 
 	def __init__(self, pkg, filename):
@@ -313,7 +316,7 @@ class MissingUri(Result):
 
 
 class BadProto(Result):
-	description = "bad protocol"
+	"""bad protocol"""
 	__slots__ = ("category", "package", "version", "filename", "bad_uri")
 
 	def __init__(self, pkg, filename, bad_uri):
@@ -337,7 +340,7 @@ class BadProto(Result):
 
 
 class MetadataError(Result):
-	description = "problem detected with a packages metadata"
+	"""problem detected with a packages metadata"""
 	__slots__ = ("category", "package", "version", "attr", "msg")
 	
 	def __init__(self, pkg, attr, msg):
@@ -360,7 +363,7 @@ class MetadataError(Result):
 
 
 class EmptyKeywardsMinor(Result):
-	description = "pkg has no set keywords"
+	"""pkg has no set keywords"""
 
 	def __init__(self, pkg):
 		self.category = pkg.category
@@ -381,7 +384,7 @@ class EmptyKeywardsMinor(Result):
 
 		
 class StupidKeywardsMinor(Result):
-	description = "pkg that is using -*; package.mask in profiles addresses this already"
+	"""pkg that is using -*; package.mask in profiles addresses this already"""
 	
 	def __init__(self, pkg):
 		self.category = pkg.category

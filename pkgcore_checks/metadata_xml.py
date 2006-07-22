@@ -75,7 +75,7 @@ class xmllint_parser(object):
 
 
 class BadlyFormedXml(Result):
-	description = "xml isn't well formed"
+	"""xml isn't well formed"""
 	__slots__ = ("category", "package", "version", "filename")
 	
 	def __init__(self, pkg, filename):
@@ -97,7 +97,7 @@ class BadlyFormedXml(Result):
 
 
 class InvalidXml(Result):
-	description = "xml fails dtd validation"
+	"""xml fails dtd validation"""
 	__slots__ = ("category", "package", "version", "file")
 	
 	def __init__(self, pkg, filename):
