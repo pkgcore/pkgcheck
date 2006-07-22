@@ -148,7 +148,7 @@ class ModularXPortingReport(base.template):
 						continue
 					h = hash(a)
 					if h in insoluable:
-						pass
+						continue
 					elif h in cache:
 						break
 					elif a not in query_cache:
