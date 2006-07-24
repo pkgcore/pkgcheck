@@ -169,7 +169,7 @@ class Feeder(object):
 			try:
 				getattr(check, attr)(*a)
 				actual.append(check)
-			except SystemExit:
+			except (SystemExit, KeyboardInterrupt):
 				raise
 			except Exception, e:
 				logging.error("type %s, check %s failed to running %s: %s" % (check_type, check, attr, e))
@@ -245,7 +245,7 @@ class Feeder(object):
 					check.feed(payload, reporter, self)
 				else:
 					check.feed(payload, reporter)
-			except SystemExit:
+			except (SystemExit, KeyboardInterrupt):
 				raise
 			except Exception, e:
 				logging.error(errmsg % (check, e))
