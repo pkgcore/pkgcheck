@@ -7,7 +7,7 @@ from pkgcore_checks import base, util, arches
 from pkgcore.util.iterables import caching_iter
 from pkgcore.util.lists import stable_unique, iflatten_instance
 from pkgcore.util.containers import ProtectedSet
-from pkgcore.restrictions import packages, values
+from pkgcore.restrictions import packages, values, boolean
 from pkgcore.package.atom import atom
 from pkgcore.package import virtual
 demandload(globals(), "pkgcore.util.containers:InvertedContains")
@@ -63,40 +63,43 @@ class ModularXPortingReport(base.template):
 		failed = []
 		
 		ported_status = False
+		bool_or = boolean.OrRestriction
 		for attr, depset in (("depends", pkg.depends), ("rdepends/pdepends", pkg.rdepends)):
-			bad = set()
-			for a in iflatten_instance(depset, atom):
-				if not a.key == "virtual/x11" or a.blocks:
-					continue
-				# if it depends on >=7, bad...
-				if not a.match(self.x6):
-					bad.add(a)
-			if bad:
-				reporter.add_report(BadRange(pkg, attr, sorted(bad)))
-			
-			# fun one.
-			r = depset.evaluate_depset([], tristate_filter=[])
-			bad = []
-			for block in r.iter_dnf_solutions():
-				if not any(True for x in block if x.key == "virtual/x11" and not x.blocks):
-					continue
-				# got ourselves a potential.
-				if not any(True for x in block if x.key in self.valid_modx_keys and not x.blocks):
-					bad = block
-					ported_status = True
-					break
-					
-			if bad:
-				for or_block in r.cnf_solutions():
-					if not any(True for x in or_block if x.key == "virtual/x11" and not x.blocks):
-						continue
-					if any(True for x in or_block if x.key in self.valid_modx_keys and not x.blocks):
-						break
-				else:
-					# we've got a standalone virtual/x11
+			stack = [depset.evaluate_depset([], tristate_filter=[]).restrictions]
+			bad_range = set()
+			bad_blocks = set()
+			while stack:
+				for a in stack.pop(-1):
+					if isinstance(a, atom):
+						if a.key == "virtual/x11" and not a.blocks:
+							if not a.match(self.x6):
+								bad_range.add(a)
+							bad_blocks.add((a,))
+					elif isinstance(a, bool_or):
+						for block in a.iter_dnf_solutions():
+							if not any(True for x in block if x.key == "virtual/x11" and not x.blocks):
+								continue
+							if not any(True for x in block if x.key in self.valid_modx_keys and not x.blocks):
+								for or_block in a.cnf_solutions():
+									if not any(True for x in or_block if x.key == "virtual/x11" and not x.blocks):
+										continue
+									if any(True for x in or_block if x.key in self.valid_modx_keys and not x.blocks):
+										ported_status = True
+										break
+								else:
+									# standalone virtual/x11
+									bad_blocks.add(tuple(block))
+								break
+					else:
+						stack.append(a.restrictions)
+			if bad_range:
+				reporter.add_report(BadRange(pkg, attr, sorted(bad_range)))
+			if bad_blocks:
+				for bad in sorted(bad_blocks):
 					reporter.add_report(NotPorted(pkg, attr, bad))
-					failed.append(attr)
-		
+			if bad_range or bad_blocks:
+				failed.append(attr)
+					
 		if failed:
 			unported.append(pkg)
 		
