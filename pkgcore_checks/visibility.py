@@ -135,11 +135,8 @@ class VisibilityReport(base.template):
 				else:
 					# no matches.  not great, should collect them all
 					failures.update(required)
-					break
-			else:
-				# all requireds where satisfied.
-				continue
-			reporter.add_report(NonsolvableDeps(pkg, attr, key, profile_name, list(failures), masked=masked_status))
+			if failures:
+				reporter.add_report(NonsolvableDeps(pkg, attr, key, profile_name, list(failures), masked=masked_status))
 
 	def finish(self, *a):
 		self.repo = self.profile_filters = self.keywords_filter = None
