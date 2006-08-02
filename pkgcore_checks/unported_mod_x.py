@@ -5,7 +5,7 @@ from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
 from pkgcore_checks import base, util, arches
 from pkgcore.util.iterables import caching_iter
-from pkgcore.util.lists import stable_unique, iflatten_instance, unstable_unique
+from pkgcore.util.lists import stable_unique, iflatten_instance
 from pkgcore.util.containers import ProtectedSet
 from pkgcore.restrictions import packages, values
 from pkgcore.package.atom import atom
@@ -78,20 +78,19 @@ class ModularXPortingReport(base.template):
 			r = depset.evaluate_depset([], tristate_filter=[])
 			bad = []
 			for block in r.dnf_solutions():
-				block = unstable_unique(block)
-				if not any(True for x in block if x.key == "virtual/x11" and not x.blocks):
+				if not any(True for x in block if not x.blocks and x.key == "virtual/x11"):
 					continue
 				# got ourselves a potential.
-				if not any(True for x in block if x.key in self.valid_modx_keys and not x.blocks):
+				if not any(True for x in block if not x.blocks and x.key in self.valid_modx_keys):
 					bad = block
 					ported_status = True
 					break
 					
 			if bad:
 				for or_block in r.cnf_solutions():
-					if not any(True for x in or_block if x.key == "virtual/x11" and not x.blocks):
+					if not any(True for x in or_block if not x.blocks and x.key == "virtual/x11"):
 						continue
-					if any(True for x in or_block if x.key in self.valid_modx_keys and not x.blocks):
+					if any(True for x in or_block if not x.blocks and x.key in self.valid_modx_keys):
 						break
 				else:
 					# we've got a standalone virtual/x11
