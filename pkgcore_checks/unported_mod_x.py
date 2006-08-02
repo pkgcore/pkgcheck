@@ -78,19 +78,19 @@ class ModularXPortingReport(base.template):
 			r = depset.evaluate_depset([], tristate_filter=[])
 			bad = []
 			for block in r.dnf_solutions():
-				if not any(True for x in block if not x.blocks and x.key == "virtual/x11"):
+				if not any(True for x in block if x.key == "virtual/x11" and not x.blocks):
 					continue
 				# got ourselves a potential.
-				if not any(True for x in block if not x.blocks and x.key in self.valid_modx_keys):
+				if not any(True for x in block if x.key in self.valid_modx_keys and not x.blocks):
 					bad = block
 					ported_status = True
 					break
 					
 			if bad:
 				for or_block in r.cnf_solutions():
-					if not any(True for x in or_block if not x.blocks and x.key == "virtual/x11"):
+					if not any(True for x in or_block if x.key == "virtual/x11" and not x.blocks):
 						continue
-					if any(True for x in or_block if not x.blocks and x.key in self.valid_modx_keys):
+					if any(True for x in or_block if x.key in self.valid_modx_keys and not x.blocks):
 						break
 				else:
 					# we've got a standalone virtual/x11
