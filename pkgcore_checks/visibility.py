@@ -115,12 +115,12 @@ class VisibilityReport(base.template):
 			for required in csolutions:
 				if any(True for a in required if a.blocks):
 					continue
-				elif any(True for a in required if hash(a) in cache):
-					continue
 				for a in required:
 					h = hash(a)
 					if h in insoluable:
 						pass
+					elif h in cache:
+						break
 					elif virtuals.match(a):
 						cache.add(h)
 						break
