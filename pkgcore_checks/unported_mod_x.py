@@ -77,7 +77,7 @@ class ModularXPortingReport(base.template):
 			# fun one.
 			r = depset.evaluate_depset([], tristate_filter=[])
 			bad = []
-			for block in r.dnf_solutions():
+			for block in r.iter_dnf_solutions():
 				if not any(True for x in block if x.key == "virtual/x11" and not x.blocks):
 					continue
 				# got ourselves a potential.
