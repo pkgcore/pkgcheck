@@ -148,7 +148,7 @@ class ModularXPortingReport(base.template):
 					if a.blocks:
 						# weird.
 						continue
-					h = hash(a)
+					h = str(a)
 					if h in insoluable:
 						continue
 					elif h in cache:

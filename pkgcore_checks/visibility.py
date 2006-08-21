@@ -61,7 +61,7 @@ class VisibilityReport(base.template):
 		query_cache = feeder.query_cache
 		nonexistant = set()
 		for node in iflatten_instance(pkg.depends, atom):
-			h = hash(node)
+			h = str(node)
 			if h not in query_cache:
 				if h in self.global_insoluable:
 					nonexistant.add(node)
@@ -83,7 +83,7 @@ class VisibilityReport(base.template):
 
 		# force it to be stable, then unstable ordering for an unstable optimization below
 		for node in iflatten_instance(pkg.rdepends, atom):
-			h = hash(node)
+			h = str(node)
 			if h not in query_cache:
 				if h in self.global_insoluable:
 					nonexistant.add(node)
@@ -116,7 +116,7 @@ class VisibilityReport(base.template):
 				if any(True for a in required if a.blocks):
 					continue
 				for a in required:
-					h = hash(a)
+					h = str(a)
 					if h in insoluable:
 						pass
 					elif h in cache:
