@@ -59,49 +59,31 @@ class VisibilityReport(base.template):
 
 	def check_pkg(self, pkg, feeder, reporter):
 		query_cache = feeder.query_cache
-		nonexistant = set()
-		for node in iflatten_instance(pkg.depends, atom):
-			h = str(node)
-			if h not in query_cache:
-				if h in self.global_insoluable:
-					nonexistant.add(node)
-					# insert an empty tuple, so that tight loops further on don't have to
-					# use the slower get method
-					query_cache[h] = ()
-				else:
-					matches = caching_iter(self.repo.itermatch(node))
-					if matches:
-						query_cache[h] = matches
-					elif not node.blocks and not node.category == "virtual":
+		for attr, depset in (("depends", pkg.depends), ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
+			nonexistant = set()
+			for node in iflatten_instance(depset, atom):
+				h = str(node)
+				if h not in query_cache:
+					if h in self.global_insoluable:
 						nonexistant.add(node)
+						# insert an empty tuple, so that tight loops further on don't have to
+						# use the slower get method
 						query_cache[h] = ()
-						self.global_insoluable.add(h)
+					else:
+						matches = caching_iter(self.repo.itermatch(node))
+						if matches:
+							query_cache[h] = matches
+						elif not node.blocks and not node.category == "virtual":
+							nonexistant.add(node)
+							query_cache[h] = ()
+							self.global_insoluable.add(h)
 
-		if nonexistant:
-			reporter.add_report(NonExistantDeps(pkg, "depends", nonexistant))
-			nonexistant.clear()
+			if nonexistant:
+				reporter.add_report(NonExistantDeps(pkg, attr, nonexistant))
 
-		# force it to be stable, then unstable ordering for an unstable optimization below
-		for node in iflatten_instance(pkg.rdepends, atom):
-			h = str(node)
-			if h not in query_cache:
-				if h in self.global_insoluable:
-					nonexistant.add(node)
-					query_cache[h] = ()
-				else:
-					matches = caching_iter(self.repo.itermatch(node))
-					if matches:
-						query_cache[h] = matches
-					elif not node.blocks and not node.category == "virtual":
-						nonexistant.add(node)
-						query_cache[h] = ()
-						self.global_insoluable.add(h)
-
-		if nonexistant:
-			reporter.add_report(NonExistantDeps(pkg, "rdepends", nonexistant))
 		del nonexistant
 
-		for attr, depset in (("depends", pkg.depends), ("rdepends/pdepends", pkg.rdepends)):
+		for attr, depset in (("depends", pkg.depends), ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
 			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, attr, depset):
 				self.process_depset(pkg, attr, edepset, profiles, query_cache, reporter)
 

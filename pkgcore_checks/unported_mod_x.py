@@ -64,7 +64,7 @@ class ModularXPortingReport(base.template):
 		
 		ported_status = False
 		bool_or = boolean.OrRestriction
-		for attr, depset in (("depends", pkg.depends), ("rdepends/pdepends", pkg.rdepends)):
+		for attr, depset in (("depends", pkg.depends), ("rdepends", pkg.rdepends), ("pdepends", pkg.post_rdepends)):
 			stack = [depset.evaluate_depset([], tristate_filter=[]).restrictions]
 			bad_range = set()
 			bad_blocks = set()
@@ -111,6 +111,7 @@ class ModularXPortingReport(base.template):
 				
 		skip_depends = "depends" in failed
 		skip_rdepends = "rdepends" in failed
+		skip_pdepends = "pdepends" in failed
 		del failed
 		
 		# ok heres the rules of the road.
@@ -120,15 +121,20 @@ class ModularXPortingReport(base.template):
 		
 		diuse = pkg.depends.known_conditionals
 		riuse = pkg.rdepends.known_conditionals
+		piuse = pkg.post_rdepends.known_conditionals
 		deval_cache = {}
 		reval_cache = {}
-
+		peval_cache = {}
+		
 		if not skip_depends:
 			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, "depends", pkg.depends):
 				self.process_depset(pkg, "depends", edepset, profiles, query_cache, reporter)
 		if not skip_rdepends:
-			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, "rdepends/pdepends", pkg.rdepends):
+			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, "rdepends", pkg.rdepends):
 				self.process_depset(pkg, "rdepends/pdepends", edepset, profiles, query_cache, reporter)
+		if not skip_pdepends:
+			for edepset, profiles in feeder.collapse_evaluate_depset(pkg, "post_rdepends", pkg.post_rdepends):
+				self.process_depset(pkg, "post_rdepends", edepset, profiles, query_cache, reporter)
 				
 	def process_depset(self, pkg, attr, depset, profiles, query_cache, reporter):
 		csolutions = depset.cnf_solutions()

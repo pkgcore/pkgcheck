@@ -17,19 +17,19 @@ from pkgcore.fetch.fetchable import fetchable
 from pkgcore.restrictions import packages
 demandload(globals(), "pkgcore.util.xml:escape")
 
-default_attrs = ("depends", "rdepends", "provides", "license", "fetchables", "iuse")
+default_attrs = ("depends", "rdepends", "post_rdepends", "provides", "license", "fetchables", "iuse")
 
 class MetadataReport(template):
 
-	"""ebuild metadata reports.  DEPENDS, RDEPENDS, PROVIDES, SRC_URI, DESCRIPTION, LICENSE, etc."""
+	"""ebuild metadata reports.  DEPENDS, PDEPENDS, RDEPENDS, PROVIDES, SRC_URI, DESCRIPTION, LICENSE, etc."""
 
 	feed_type = versioned_feed
 	
 	def __init__(self):
-		force_expansion = ("depends", "rdepends", "provides")
+		force_expansion = ("depends", "rdepends", "post_rdepends", "provides")
 		self.attrs = [(a, attrgetter(a), a in force_expansion) for a in default_attrs]
 		self.iuse_users = dict((x, attrgetter(x)) for x in 
-			("fetchables", "depends", "rdepends", "provides"))
+			("fetchables", "depends", "rdepends", "post_rdepends", "provides"))
 		self.valid_iuse = None
 		self.valid_unstated_iuse = None
 	
