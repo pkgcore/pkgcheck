@@ -95,7 +95,7 @@ if __name__ == "__main__":
 	checks = collect_available_checks()
 
 	if list_checks:
-		display_checks()
+		display_checks(checks)
 		sys.exit(0)
 
 	if checks_to_run:
