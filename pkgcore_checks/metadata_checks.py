@@ -195,7 +195,7 @@ class DescriptionReport(template):
 class RestrictsReport(template):
 	feed_type = versioned_feed
 	known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", "test",
-		"sandbox", "userpriv", "primaryuri", "binchecks", "strip"))
+		"sandbox", "userpriv", "primaryuri", "binchecks", "strip", "multilib-strict"))
 
 	__doc__ = "check over RESTRICT, looking for unknown restricts\nvalid restricts:%s" % ", ".join(sorted(known_restricts))
 	
