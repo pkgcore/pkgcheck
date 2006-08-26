@@ -6,6 +6,28 @@ from pkgcore_checks.base import template, versioned_feed, Result
 from pkgcore_checks.arches import default_arches
 
 day = 24*3600
+		
+
+class StaleUnstableReport(template):
+	"""Ebuilds that have sat unstable for over a month"""
+
+	feed_type = versioned_feed
+	
+	def __init__(self, arches=default_arches, staleness=long(day*30)):
+		self.arches = default_arches
+		self.staleness = staleness
+	
+	def start(self, repo):
+		self.start_time = time.time()
+		
+	def feed(self, pkg, reporter):
+		unchanged_time = self.start_time - pkg._mtime_
+		if unchanged_time < self.staleness:
+			return
+		unstable = [x for x in pkg.keywords if x.startswith("~")]
+		if not unstable:
+			return
+		reporter.add_report(StaleUnstableKeyword(pkg, int(unchanged_time/day)))
 
 
 class StaleUnstableKeyword(Result):
@@ -34,25 +56,3 @@ class StaleUnstableKeyword(Result):
 	<msg>left unstable for %i days</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version,
 "</arch>\n\t<arch>".join(x.lstrip("~") for x in self.keywords), self.period)
-		
-
-class StaleUnstableReport(template):
-	"""Ebuilds that have sat unstable for over a month"""
-
-	feed_type = versioned_feed
-	
-	def __init__(self, arches=default_arches, staleness=long(day*30)):
-		self.arches = default_arches
-		self.staleness = staleness
-	
-	def start(self, repo):
-		self.start_time = time.time()
-		
-	def feed(self, pkg, reporter):
-		unchanged_time = self.start_time - pkg._mtime_
-		if unchanged_time < self.staleness:
-			return
-		unstable = [x for x in pkg.keywords if x.startswith("~")]
-		if not unstable:
-			return
-		reporter.add_report(StaleUnstableKeyword(pkg, int(unchanged_time/day)))

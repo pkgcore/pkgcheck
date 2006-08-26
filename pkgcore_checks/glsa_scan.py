@@ -8,6 +8,29 @@ from pkgcore.restrictions import packages, values
 from pkgcore.util.xml import escape
 
 
+class TreeVulnerabilitiesReport(template):
+	"""Scan for vulnerabile ebuilds in the tree; requires a GLSA directory for vuln. info"""
+
+	feed_type = versioned_feed
+	
+	def start(self, repo):
+		self.vulns = {}
+		# this is a bit brittle
+		for r in GlsaDirSet(repo):
+			if len(r) > 2:
+				self.vulns.setdefault(r[0].key, []).append(packages.AndRestriction(*r[1:]))
+			else:
+				self.vulns.setdefault(r[0].key, []).append(r[1])
+
+	def finish(self, reporter):
+		self.vulns.clear()
+			
+	def feed(self, pkg, reporter):
+		for vuln in self.vulns.get(pkg.key, []):
+			if vuln.match(pkg):
+				reporter.add_report(VulnerablePackage(pkg, vuln))
+
+
 class VulnerablePackage(Result):
 
 	"""Packages marked as vulnerable by GLSAs"""
@@ -45,26 +68,3 @@ class VulnerablePackage(Result):
 	<msg>vulnerable via %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
 "</arch>\n\t<arch>".join(self.arch), escape(self.glsa))
-
-
-class TreeVulnerabilitiesReport(template):
-	"""Scan for vulnerabile ebuilds in the tree; requires a GLSA directory for vuln. info"""
-
-	feed_type = versioned_feed
-	
-	def start(self, repo):
-		self.vulns = {}
-		# this is a bit brittle
-		for r in GlsaDirSet(repo):
-			if len(r) > 2:
-				self.vulns.setdefault(r[0].key, []).append(packages.AndRestriction(*r[1:]))
-			else:
-				self.vulns.setdefault(r[0].key, []).append(r[1])
-
-	def finish(self, reporter):
-		self.vulns.clear()
-			
-	def feed(self, pkg, reporter):
-		for vuln in self.vulns.get(pkg.key, []):
-			if vuln.match(pkg):
-				reporter.add_report(VulnerablePackage(pkg, vuln))

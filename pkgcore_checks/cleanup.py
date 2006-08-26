@@ -4,32 +4,6 @@
 from pkgcore_checks.base import template, package_feed, Result
 from pkgcore.util.compatibility import any
 
-class RedundantVersionWarning(Result):
-	"""Redundant version of a pkg in a slotting; keyword appears in a later version"""
-
-	__slots__ = ("category", "package", "slot", "later_versions")
-
-	def __init__(self, pkg, higher_pkgs):
-		self.category = pkg.category
-		self.package = pkg.package
-		self.version = pkg.fullver
-		self.slot = pkg.slot
-		self.later_versions = tuple(x.fullver for x in higher_pkgs)
-	
-	def to_str(self, **kwds):
-		return "%s/%s-%s: slot(%s) keywords are overshadowed by version %r" % (self.category, self.package, self.version,
-			self.slot, ", ".join(self.later_versions))
-
-	def to_xml(self):
-		return \
-"""<check name="%s">
-	<category>%s</category>
-	<package>%s</package>
-	<version>%s</version>
-	<slot>%s</slot>
-	<msg>keywords are overshadowed by version(s): %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.slot, ", ".join(self.later_versions))
-
 
 class RedundantVersionReport(template):
 	"""scan for versions that are likely shadowed by later versions from a keywords standpoint
@@ -65,3 +39,32 @@ class RedundantVersionReport(template):
 			stack.append([pkg, curr_set])
 			if matches:
 				reporter.add_report(RedundantVersionWarning(pkg, matches))
+
+
+class RedundantVersionWarning(Result):
+	"""Redundant version of a pkg in a slotting; keyword appears in a later version"""
+
+	__slots__ = ("category", "package", "slot", "later_versions")
+
+	def __init__(self, pkg, higher_pkgs):
+		self.category = pkg.category
+		self.package = pkg.package
+		self.version = pkg.fullver
+		self.slot = pkg.slot
+		self.later_versions = tuple(x.fullver for x in higher_pkgs)
+	
+	def to_str(self, **kwds):
+		return "%s/%s-%s: slot(%s) keywords are overshadowed by version %r" % (self.category, self.package, self.version,
+			self.slot, ", ".join(self.later_versions))
+
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<slot>%s</slot>
+	<msg>keywords are overshadowed by version(s): %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.slot, ", ".join(self.later_versions))
+
+

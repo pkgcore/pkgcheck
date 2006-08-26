@@ -6,6 +6,34 @@ from pkgcore_checks.base import template, package_feed, Result
 
 from pkgcore_checks.arches import default_arches
 
+
+class ImlateReport(template):
+
+	"""scan for ebuilds that can be stabled based upon stabling status for other arches"""
+
+	feed_type = package_feed
+
+	def __init__(self, arches=default_arches):
+		arches = set(x.strip().lstrip("~") for x in arches)
+		# stable, then unstable, then file
+		self.any_stable = packages.PackageRestriction("keywords", 
+			values.ContainmentMatch(*default_arches))
+
+	def finish(self, reporter):
+		del self.any_stable
+
+	def feed(self, pkgset, reporter):
+		# stable, then unstable, then file
+		try:
+			max_stable = max(pkg for pkg in pkgset if self.any_stable.match(pkg))
+		except ValueError:
+			# none stable.
+			return
+		unstable_keys = tuple(str(x) for x in max_stable.keywords if x.startswith("~"))
+		if unstable_keys:
+			reporter.add_report(LaggingStableInfo(max_stable, unstable_keys))
+
+
 class LaggingStableInfo(Result):
 
 	"""Arch that is behind another from a stabling standpoint"""
@@ -37,28 +65,3 @@ class LaggingStableInfo(Result):
 "potential for stabling, prexisting stable- %s" % ", ".join(self.stable))
 		
 
-class ImlateReport(template):
-
-	"""scan for ebuilds that can be stabled based upon stabling status for other arches"""
-
-	feed_type = package_feed
-
-	def __init__(self, arches=default_arches):
-		arches = set(x.strip().lstrip("~") for x in arches)
-		# stable, then unstable, then file
-		self.any_stable = packages.PackageRestriction("keywords", 
-			values.ContainmentMatch(*default_arches))
-
-	def finish(self, reporter):
-		del self.any_stable
-
-	def feed(self, pkgset, reporter):
-		# stable, then unstable, then file
-		try:
-			max_stable = max(pkg for pkg in pkgset if self.any_stable.match(pkg))
-		except ValueError:
-			# none stable.
-			return
-		unstable_keys = tuple(str(x) for x in max_stable.keywords if x.startswith("~"))
-		if unstable_keys:
-			reporter.add_report(LaggingStableInfo(max_stable, unstable_keys))

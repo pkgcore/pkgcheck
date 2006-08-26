@@ -6,32 +6,6 @@ from pkgcore_checks.base import template, package_feed, Result
 from pkgcore_checks.arches import default_arches
 
 
-class DroppedKeywordWarning(Result):
-	"""Arch keywords dropped during pkg version bumping"""
-
-	__slots__ = ("arch", "category", "package",)
-
-	def __init__(self, arch, pkg):
-		self.arch = arch
-		self.category = pkg.category
-		self.package = pkg.package
-		self.version = pkg.fullver
-	
-	def to_str(self, **kwds):
-		return "%s/%s-%s: dropped keyword %s" % (self.category, self.package, self.version,
-			self.arch)
-
-	def to_xml(self):
-		return \
-"""<check name="%s">
-	<category>%s</category>
-	<package>%s</package>
-	<version>%s</version>
-	<arch>%s</arch>
-	<msg>keyword was dropped</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.arch)
-
-
 class DroppedKeywordsReport(template):
 	"""scan pkgs for keyword dropping across versions"""
 
@@ -62,3 +36,29 @@ class DroppedKeywordsReport(template):
 			lastpkg = pkg
 		for key, pkg in dropped:
 			reporter.add_report(DroppedKeywordWarning(key, pkg))
+
+
+class DroppedKeywordWarning(Result):
+	"""Arch keywords dropped during pkg version bumping"""
+
+	__slots__ = ("arch", "category", "package",)
+
+	def __init__(self, arch, pkg):
+		self.arch = arch
+		self.category = pkg.category
+		self.package = pkg.package
+		self.version = pkg.fullver
+	
+	def to_str(self, **kwds):
+		return "%s/%s-%s: dropped keyword %s" % (self.category, self.package, self.version,
+			self.arch)
+
+	def to_xml(self):
+		return \
+"""<check name="%s">
+	<category>%s</category>
+	<package>%s</package>
+	<version>%s</version>
+	<arch>%s</arch>
+	<msg>keyword was dropped</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.arch)
