@@ -162,7 +162,7 @@ class Feeder(object):
 			return
 		actual = []
 		for check in checks:
-			if attr == "start" and getattr(check, "requires_profiles", False):
+			if attr == "start" and "profiles" in check.requires:
 				a = args + (self.global_insoluable, self.keywords_filter, self.profile_filters)
 			else:
 				a = args
