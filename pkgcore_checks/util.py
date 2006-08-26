@@ -50,4 +50,4 @@ def get_cpvstr(pkg):
 	s = getattr(pkg, "cpvstr", None)
 	if s is not None:
 		return s
-	rerturn str(pkg)	
+	return str(pkg)	
