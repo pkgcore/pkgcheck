@@ -22,8 +22,7 @@ class VisibilityReport(base.template):
 	"""
 
 	feed_type = base.package_feed
-	requires_profiles = True
-	uses_caches = True
+	requires = ("profiles", "arches", "query_cache")
 
 	vcs_eclasses = ("subversion", "git", "cvs", "darcs")
 

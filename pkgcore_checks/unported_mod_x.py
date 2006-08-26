@@ -22,8 +22,7 @@ class ModularXPortingReport(base.template):
 	Scans for dependencies that require monolithic X, or via visibility limiters from profiles, are forced to use monolithic X
 	"""
 	feed_type = base.package_feed
-	requires_profiles = True
-	uses_caches = True
+	requires = ("profiles", "arches", "query_cache")
 
 	valid_modx_pkgs_url = "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
 

@@ -19,8 +19,7 @@ import logging, operator
 
 class template(object):
 	feed_type = None
-	requires_profiles = False
-	uses_caches = False
+	requires = ()
 
 	def __init__(self):
 		pass
@@ -36,7 +35,7 @@ class template(object):
 
 
 class _WipeQueryCache(template):
-	uses_caches = True
+	requires = ("query_cache",)
 	feed_type = package_feed
 
 	def feed(self, pkgs, reporter, feeder):
@@ -44,7 +43,7 @@ class _WipeQueryCache(template):
 
 
 class _WipeEvaluateDepSetCaches(template):
-	uses_caches = True
+	requires = ("query_cache",)
 	feed_type = package_feed
 
 	def feed(self, pkgs, reporter, feeder):
@@ -52,6 +51,7 @@ class _WipeEvaluateDepSetCaches(template):
 		feeder.pkg_profiles_cache.clear()
 
 class Feeder(object):
+
 	def __init__(self, repo, desired_arches=arches.default_arches):
 		self.pkg_checks = []
 		self.cat_checks = []
@@ -64,6 +64,17 @@ class Feeder(object):
 		self.query_cache = {}
 		self.pkg_evaluate_depsets_cache = {}
 		self.pkg_profiles_cache = {}
+
+	def add_check(self, check):
+		feed_type = getattr(check, "feed_type", None)
+		if feed_type == category_feed:
+			self.cat_checks.append(check)
+		elif feed_type == package_feed:
+			self.pkg_checks.append(check)
+		elif feed_type == versioned_feed:
+			self.cpv_checks.append(check)
+		else:
+			raise TypeError("check feed_type %s unknown for %s" % (feed_type, check))
 
 	def clear_caches(self):
 		self.profiles = {}
@@ -146,17 +157,6 @@ class Feeder(object):
 			depset_profiles = self.pkg_evaluate_depsets_cache[(pkg, attr)] = [(depset.evaluate_depset(k[1], tristate_filter=v[0][2][2]), v) for k,v in collapsed.iteritems()]
 		return depset_profiles
 
-	def add_check(self, check):
-		feed_type = getattr(check, "feed_type")
-		if feed_type == category_feed:
-			self.cat_checks.append(check)
-		elif feed_type == package_feed:
-			self.pkg_checks.append(check)
-		elif feed_type == versioned_feed:
-			self.cpv_checks.append(check)
-		else:
-			raise TypeError("check feed_type %s unknown for %s" % (feed_type, check))
-	
 	def _generic_fire(self, attr, check_type, checks, *args):
 		if not checks:
 			return
@@ -216,7 +216,7 @@ class Feeder(object):
 		self.first_run = False
 		
 		# and... build 'er up.
-		if any(check.uses_caches for check in self.cpv_checks + self.pkg_checks + self.cat_checks):
+		if any("query_cache" in check.requires for check in self.cpv_checks + self.pkg_checks + self.cat_checks):
 			pkg_checks = list(self.pkg_checks) + [_WipeQueryCache(), _WipeEvaluateDepSetCaches()]
 		else:
 			pkg_checks = self.pkg_checks
@@ -239,9 +239,9 @@ class Feeder(object):
 		self.fire_finishs("cpv", self.cpv_checks, reporter)
 		
 	def run_check(self, checks, payload, reporter, errmsg):
-		for check in checks:
+		for requires_cache, check in checks:
 			try:
-				if check.uses_caches:
+				if requires_cache:
 					check.feed(payload, reporter, self)
 				else:
 					check.feed(payload, reporter)
@@ -256,6 +256,7 @@ class Feeder(object):
 		l = [iterable.next()]
 		yield l[0]
 		lattr = afunc(l[0])
+		checks = tuple(("query_cache" in check.requires, check) for check in checks)
 		for pkg in iterable:
 			if lattr != afunc(pkg):
 				self.run_check(checks, l, reporter, "check %s"+" "+attr+": '"+lattr+"' threw exception %s")
@@ -273,8 +274,9 @@ class Feeder(object):
 		return self._generic_trigger_checks(checks, "package", *args)
 
 	def trigger_cpv_checks(self, iterable, reporter):
+		checks = tuple(("query_cache" in check.requires, check) for check in self.cpv_checks)
 		for pkg in iterable:
-			self.run_check(self.cpv_checks, pkg, reporter, "check %s cpv: '"+str(pkg)+"' threw exception %s")
+			self.run_check(checks, pkg, reporter, "check %s cpv: '"+str(pkg)+"' threw exception %s")
 			yield pkg
 	
 
