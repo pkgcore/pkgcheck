@@ -17,7 +17,7 @@ class LaggingStableInfo(Result):
 		self.package = pkg.package
 		self.version = pkg.fullver
 		self.keywords = keywords
-		self.stable = tuple(str(x) for x in pkg.keywords if not x.startswith("~") and not x.startswith("-"))
+		self.stable = tuple(str(x) for x in pkg.keywords if not x[0] in ("~", "-"))
 	
 	def to_str(self):
 		return "%s/%s-%s: stabled [ %s ], potentials: [ %s ]" % \

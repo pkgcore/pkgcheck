@@ -2,11 +2,13 @@
 # License: GPL2
 
 import os, errno
+from operator import attrgetter
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.ebuild.profiles:OnDiskProfile")
-demandload(globals(), "pkgcore.ebuild.domain:generate_masking_restrict")
-demandload(globals(), "pkgcore.util.mapping:LazyValDict")
-demandload(globals(), "logging")
+demandload(globals(), "pkgcore.ebuild.profiles:OnDiskProfile "+
+	"pkgcore.ebuild.domain:generate_masking_restrict "+
+	"pkgcore.util.mapping:LazyValDict "+
+	"pkgcore.util.packages:get_raw_pkg "+
+	"logging ")
 
 
 def get_profile(repo, profile_name):
@@ -41,3 +43,11 @@ def get_repo_known_arches(repo):
 		raise OSError(errno.ENOENT, fp)
 	
 	return set(open(fp, "r").read().split())
+
+
+def get_cpvstr(pkg):
+	pkg = get_raw_pkg(pkg)
+	s = getattr(pkg, "cpvstr", None)
+	if s is not None:
+		return s
+	rerturn str(pkg)	

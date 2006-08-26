@@ -10,9 +10,11 @@ from pkgcore.util.containers import ProtectedSet
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.package.atom import atom
 from pkgcore.package import virtual
+from pkgcore_checks.util import get_cpvstr
 demandload(globals(), "pkgcore.util.containers:InvertedContains")
 demandload(globals(), "pkgcore.util.xml:escape")
 demandload(globals(), "urllib:urlopen")
+
 
 class ModularXPortingReport(base.template):
 
@@ -180,7 +182,7 @@ class SuggestRemoval(base.Result):
 	__slots__ = ("category", "package", "version", "ported")
 	def __init__(self, pkg, ported):
 		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
-		self.ported = tuple(str(x) for x in ported)
+		self.ported = tuple(get_cpvstr(x) for x in ported)
 	
 	def to_str(self):
 		return "%s/%s-%s: is unported, potentially remove for [ %s ]" \
@@ -205,7 +207,7 @@ class BadRange(base.Result):
 	def __init__(self, pkg, attr, atom):
 		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
 		self.attr = attr
-		self.atoms = map(str, atom)
+		self.atoms = tuple(get_cpvstr(x) for x in atom)
 	
 	def to_str(self):
 		return "%s/%s-%s: attr(%s): atoms don't match 6.9: [ %s ]" % (self.category, self.package, self.version, self.attr, 
@@ -256,7 +258,7 @@ class VisibilityCausedNotPorted(base.Result):
 		self.attr = attr
 		self.keyword = keyword
 		self.profile = profile
-		self.failed = tuple(str(x) for x in failed)
+		self.failed = tuple(get_cpvstr(x) for x in failed)
 	
 	def to_str(self):
 		return "%s/%s-%s: %s %s %s: visibility induced unported: fix via making visible [ %s ]" % \
