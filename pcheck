@@ -2,13 +2,19 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+__version__ = "0.1"
+
 from pkgcore.config import load_config
 from pkgcore.util.modules import load_module, FailedImport
 from pkgcore.util.commandline import generate_restriction
 from pkgcore.util.lists import stable_unique
 from pkgcore.restrictions import packages
 from pkgcore.util.demandload import demandload
-demandload(globals(), "os logging time pkgcore.fs.util:normpath pkgcore.util.compatibility:any pkgcore.restrictions.values:StrRegexMatch")
+demandload(globals(), "os logging time optparse:OptionParser "
+	"pkgcore.fs.util:normpath "
+	"pkgcore.util.compatibility:any "
+	"pkgcore.restrictions.values:StrRegexMatch ")
+
 import sys, signal
 
 def exithandler(signum,frame):
@@ -16,6 +22,16 @@ def exithandler(signum,frame):
 	signal.signal(signal.SIGTERM, signal.SIG_IGN)
 	sys.stderr.write("caught signal %i, shutting down\n" % signum)
 	sys.exit(1)
+
+
+def get_option_parser():
+	parser = OptionParser(version=__version__, description="pkgcore based ebuild QA checks", 
+		usage="usage: %prog repository [options] [atom1...atom2]")
+	parser.add_option("-c", action="append", type="string", dest="check_to_run", help="limit checks to those matching this regex, or package/class matching; may be specified multiple times")
+	parser.add_option("--list-checks", action="store_true", default=False, dest="list_checks", help="print what checks are available to run and exit")
+	parser.add_option("-x", "--xml", action="store_true", default=False, dest="to_xml", help="dump xml formated result")
+	return parser
+
 
 def grab_arg(arg, args):
 	val = False
@@ -44,6 +60,13 @@ def pop_paired_args(args, arg, msg):
 	return rets
 
 
+def convert_check_filter(tok):
+	tok = tok.lower()
+	if not ('+' in tok or '*' in tok):
+		tok = "^(?:[^.]+\.)*%s(?:\.[^.]+)*$" % tok
+	return StrRegexMatch(tok, CaseSensitive=False)
+	
+
 def collect_available_checks():
 	import pkgcore_checks
 	checks = []
@@ -63,6 +86,7 @@ def collect_available_checks():
 	checks.sort()
 	return checks
 
+
 def display_checks(checks):
 	print "format\n<check_name>\n  <description\n\nknown checks-\n"
 	for x in checks:
@@ -74,9 +98,11 @@ def display_checks(checks):
 			print "  No Documention\n"
 
 def filter_checks(checks, filter_func):
+	l = []
 	for x in checks:
 		if filter_func("%s.%s" % (x.__module__, x.__name__)):
-			yield x
+			l.append(x)
+	return l
 
 def install_signal_handlers():
 	signal.signal(signal.SIGCHLD, signal.SIG_DFL)
@@ -85,45 +111,26 @@ def install_signal_handlers():
 	signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
-def usage():
-	sys.stderr.write("""example: pcheck '/usr/portage' [ --xml ] [ -c <report> ]+ [ atoms ]+
-
-need the arg of the repo to scan, optional --xml to dump xml, and any atoms for filtering
-
---list-checks: dump to stdout what reports are available to run
--c <report>: run this specific report- either regex pattern of the the reports to run, or a module/class name
-
-""")
-	
 
 if __name__ == "__main__":
 	args = sys.argv[1:]
-	help = grab_arg("-h", args) or grab_arg("--help", args)
-	to_xml = grab_arg("--xml", args)
-	list_checks = grab_arg("--list-checks", args)
+	parser = get_option_parser()
+	options, args = parser.parse_args()
 
-	checks_to_run = []
-	for x in pop_paired_args(args, "-c", "must specify a report to run, use --list-checks to see what is available"):
-		x = x.lower()
-		if not ('+' in x or '*' in x):
-			x = "^(?:[^.]+\.)*%s(?:\.[^.]+)*$" % x
-		checks_to_run.append(StrRegexMatch(x, CaseSensitive=False))
-					
 	import pkgcore_checks.base
 	checks = collect_available_checks()
 
-	if list_checks:
+	if options.list_checks:
 		display_checks(checks)
 		sys.exit(0)
 
-	if checks_to_run:
-		checks = list(filter_checks(checks, lambda x: any(True for y in checks_to_run if y.match(x))))
+	if options.check_to_run:
+		l = [convert_check_filter(x) for x in options.check_to_run]
+		checks = filter_checks(checks, lambda x:any(y.match(x) for y in l))
+		del l
 
-	if help or len(args) < 1:
-		usage()
-		if help:
-			sys.exit(0)
-		sys.exit(1)
+	if not args:
+		parser.error("repository name wasn't specified")
 
 	repo_name = args.pop(0)
 	if args:
@@ -143,11 +150,12 @@ if __name__ == "__main__":
 			sys.stderr.write("Error: repo %s is not a valid reponames\nknown repos- [ %s ]\n" % 
 				(repr(repo_name), ", ".join(repr(x) for x in conf.repo.iterkeys())))
 			sys.exit(1)
+
 	if not getattr(repo, "base", False):
 		sys.stderr.write("\nWarning: repo %s appears to be combined trees, as such some checks will be disabled\n\n" % 
 			repo_name)
 
-	if to_xml:
+	if options.to_xml:
 		reporter = pkgcore_checks.base.XmlReporter(sys.stdout)
 	else:
 		reporter = pkgcore_checks.base.StrReporter(sys.stdout)
