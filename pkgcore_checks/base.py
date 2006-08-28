@@ -7,21 +7,37 @@ versioned_feed = "cat/pkg-ver"
 
 __all__ = ("package_feed, versioned_feed", "category_feed", "Feeder")
 
+import optparse
+
 from pkgcore.restrictions import packages
 from pkgcore.restrictions.util import collect_package_restrictions
-from pkgcore_checks import util, arches
+from pkgcore_checks import util
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.util.containers import ProtectedSet
 from pkgcore.util.compatibility import any
 from pkgcore.restrictions import values, packages
-import logging, operator
+from pkgcore.util.demandload import demandload
+
+demandload(globals(), "logging "
+	"operator ")
+
+
+default_arches = ["x86", "x86-fbsd", "amd64", "ppc", "ppc-macos", "ppc64",
+	"sparc", "mips", "arm", "hppa", "m68k", "ia64", "s390", "sh", "alpha"]
+default_arches = tuple(sorted(default_arches))
+
+def _record_arches(option, opt_str, value, parser):
+	parser.arches = tuple(value.split(","))
+
+arches_option = optparse.Option("-a", "--arches", action='callback', callback=_record_arches, type='string',  
+	default=default_arches, help="comma seperated list of what arches to run, defaults to %r" % ",".join(default_arches))
 
 
 class template(object):
 	feed_type = None
 	requires = ()
 
-	def __init__(self):
+	def __init__(self, options):
 		pass
 
 	def start(self, repo):
@@ -52,27 +68,31 @@ class _WipeEvaluateDepSetCaches(template):
 
 class Feeder(object):
 
-	def __init__(self, repo, desired_arches=arches.default_arches):
+	def __init__(self, repo, options):
+		self.options = options
 		self.pkg_checks = []
 		self.cat_checks = []
 		self.cpv_checks = []
 		self.first_run = True
 		self.repo = repo
-		self.desired_arches = desired_arches
 		self.profiles = {}
 		self.profiles_inited = False
 		self.query_cache = {}
 		self.pkg_evaluate_depsets_cache = {}
 		self.pkg_profiles_cache = {}
 
+	@property
+	def desired_arches(self):
+		return self.options.arches
+
 	def add_check(self, check):
 		feed_type = getattr(check, "feed_type", None)
 		if feed_type == category_feed:
-			self.cat_checks.append(check)
+			self.cat_checks.append(check(self.options))
 		elif feed_type == package_feed:
-			self.pkg_checks.append(check)
+			self.pkg_checks.append(check(self.options))
 		elif feed_type == versioned_feed:
-			self.cpv_checks.append(check)
+			self.cpv_checks.append(check(self.options))
 		else:
 			raise TypeError("check feed_type %s unknown for %s" % (feed_type, check))
 
@@ -217,7 +237,7 @@ class Feeder(object):
 		
 		# and... build 'er up.
 		if any("query_cache" in check.requires for check in self.cpv_checks + self.pkg_checks + self.cat_checks):
-			pkg_checks = list(self.pkg_checks) + [_WipeQueryCache(), _WipeEvaluateDepSetCaches()]
+			pkg_checks = list(self.pkg_checks) + [_WipeQueryCache(self), _WipeEvaluateDepSetCaches(self)]
 		else:
 			pkg_checks = self.pkg_checks
 		i = self.repo.itermatch(limiter, sorter=sorted)

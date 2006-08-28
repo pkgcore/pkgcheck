@@ -3,8 +3,7 @@
 
 import logging, os, stat, errno
 from operator import attrgetter
-from pkgcore_checks.base import template, versioned_feed, Result
-from pkgcore_checks.arches import default_arches
+from pkgcore_checks.base import template, versioned_feed, Result, arches_option
 
 from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
@@ -24,14 +23,16 @@ class MetadataReport(template):
 	"""ebuild metadata reports.  DEPENDS, PDEPENDS, RDEPENDS, PROVIDES, SRC_URI, DESCRIPTION, LICENSE, etc."""
 
 	feed_type = versioned_feed
+	requires = (arches_option,)
 	
-	def __init__(self):
+	def __init__(self, options):
 		force_expansion = ("depends", "rdepends", "post_rdepends", "provides")
 		self.attrs = [(a, attrgetter(a), a in force_expansion) for a in default_attrs]
 		self.iuse_users = dict((x, attrgetter(x)) for x in 
 			("fetchables", "depends", "rdepends", "post_rdepends", "provides"))
 		self.valid_iuse = None
 		self.valid_unstated_iuse = None
+		self.arches = options.arches
 	
 	def feed(self, pkg, reporter):
 		for attr_name, getter, force_expansion in self.attrs:
@@ -84,7 +85,7 @@ class MetadataReport(template):
 					i.append(iflatten_instance(node.payload, (packages.Conditional, atom, basestring, fetchable)))
 
 				# the valid_unstated_iuse filters out USE_EXPAND as long as it's listed in a desc file
-				unstated = used_iuse.difference(pkg.iuse).difference(default_arches).difference(self.valid_unstated_iuse)
+				unstated = used_iuse.difference(pkg.iuse).difference(self.arches).difference(self.valid_unstated_iuse)
 				if unstated:
 					# hack, see bug 134994.
 					if unstated.difference(["bootstrap"]):

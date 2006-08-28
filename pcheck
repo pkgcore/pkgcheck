@@ -10,7 +10,7 @@ from pkgcore.util.commandline import generate_restriction
 from pkgcore.util.lists import stable_unique
 from pkgcore.restrictions import packages
 from pkgcore.util.demandload import demandload
-demandload(globals(), "os logging time optparse:OptionParser "
+demandload(globals(), "os logging time optparse "
 	"pkgcore.fs.util:normpath "
 	"pkgcore.util.compatibility:any "
 	"pkgcore.restrictions.values:StrRegexMatch ")
@@ -24,12 +24,21 @@ def exithandler(signum,frame):
 	sys.exit(1)
 
 
-def get_option_parser():
-	parser = OptionParser(version=__version__, description="pkgcore based ebuild QA checks", 
+def get_option_parser(checks=[]):
+	parser = optparse.OptionParser(version=__version__, description="pkgcore based ebuild QA checks", 
 		usage="usage: %prog repository [options] [atom1...atom2]")
 	parser.add_option("-c", action="append", type="string", dest="check_to_run", help="limit checks to those matching this regex, or package/class matching; may be specified multiple times")
 	parser.add_option("--list-checks", action="store_true", default=False, dest="list_checks", help="print what checks are available to run and exit")
 	parser.add_option("-x", "--xml", action="store_true", default=False, dest="to_xml", help="dump xml formated result")
+
+	# yes linear, but not a huge issue.
+	new_opts = []
+	for c in checks:
+		for opt in c.requires:
+			if isinstance(opt, optparse.Option) and opt not in new_opts:
+				new_opts.append(opt)
+	if new_opts:
+		parser.add_options(new_opts)
 	return parser
 
 
@@ -113,12 +122,11 @@ def install_signal_handlers():
 
 
 if __name__ == "__main__":
-	args = sys.argv[1:]
-	parser = get_option_parser()
-	options, args = parser.parse_args()
-
 	import pkgcore_checks.base
 	checks = collect_available_checks()
+	args = sys.argv[1:]
+	parser = get_option_parser(checks)
+	options, args = parser.parse_args()
 
 	if options.list_checks:
 		display_checks(checks)
@@ -159,11 +167,11 @@ if __name__ == "__main__":
 		reporter = pkgcore_checks.base.XmlReporter(sys.stdout)
 	else:
 		reporter = pkgcore_checks.base.StrReporter(sys.stdout)
-	runner = pkgcore_checks.base.Feeder(repo)
+	runner = pkgcore_checks.base.Feeder(repo, options)
 
 	for obj in checks:
 		try:
-			runner.add_check(obj())
+			runner.add_check(obj)
 		except SystemExit:
 			raise
 		except Exception, e:

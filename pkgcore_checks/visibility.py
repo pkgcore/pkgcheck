@@ -4,7 +4,7 @@
 import os
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
-from pkgcore_checks import base, util, arches
+from pkgcore_checks import base, util
 from pkgcore.util.iterables import caching_iter, expandable_chain
 from pkgcore.util.lists import stable_unique, iflatten_instance
 from pkgcore.util.containers import ProtectedSet
@@ -22,12 +22,12 @@ class VisibilityReport(base.template):
 	"""
 
 	feed_type = base.package_feed
-	requires = ("profiles", "arches", "query_cache")
+	requires = (base.arches_option, "profiles", "query_cache")
 
 	vcs_eclasses = ("subversion", "git", "cvs", "darcs")
 
-	def __init__(self, arches=arches.default_arches):
-		self.arches = frozenset(x.lstrip("~") for x in arches)
+	def __init__(self, options):
+		self.arches = frozenset(x.lstrip("~") for x in options.arches)
 		self.repo = self.profile_filters = None
 		self.keywords_filter = None
 	

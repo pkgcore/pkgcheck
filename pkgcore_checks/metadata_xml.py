@@ -16,7 +16,7 @@ class MetadataXmlReport(template):
 	
 	dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
 
-	def __init__(self):
+	def __init__(self, options):
 		self.dtd_file = None
 
 	def start(self, repo):

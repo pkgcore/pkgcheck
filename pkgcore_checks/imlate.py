@@ -2,9 +2,7 @@
 # License: GPL2
 
 from pkgcore.restrictions import packages, values
-from pkgcore_checks.base import template, package_feed, Result
-
-from pkgcore_checks.arches import default_arches
+from pkgcore_checks.base import template, package_feed, Result, arches_option
 
 
 class ImlateReport(template):
@@ -12,12 +10,13 @@ class ImlateReport(template):
 	"""scan for ebuilds that can be stabled based upon stabling status for other arches"""
 
 	feed_type = package_feed
+	requires = (arches_option,)
 
-	def __init__(self, arches=default_arches):
-		arches = set(x.strip().lstrip("~") for x in arches)
+	def __init__(self, options):
+		arches = set(x.strip().lstrip("~") for x in options.arches)
 		# stable, then unstable, then file
 		self.any_stable = packages.PackageRestriction("keywords", 
-			values.ContainmentMatch(*default_arches))
+			values.ContainmentMatch(options.arches))
 
 	def finish(self, reporter):
 		del self.any_stable

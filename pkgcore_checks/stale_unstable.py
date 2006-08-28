@@ -2,8 +2,7 @@
 # License: GPL2
 
 import time, os
-from pkgcore_checks.base import template, versioned_feed, Result
-from pkgcore_checks.arches import default_arches
+from pkgcore_checks.base import template, versioned_feed, Result, arches_option
 
 day = 24*3600
 		
@@ -12,9 +11,10 @@ class StaleUnstableReport(template):
 	"""Ebuilds that have sat unstable for over a month"""
 
 	feed_type = versioned_feed
+	requires = (arches_option,)
 	
-	def __init__(self, arches=default_arches, staleness=long(day*30)):
-		self.arches = default_arches
+	def __init__(self, options, staleness=long(day*30)):
+		self.arches = options.arches
 		self.staleness = staleness
 	
 	def start(self, repo):

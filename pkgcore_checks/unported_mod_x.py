@@ -3,7 +3,7 @@
 
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
-from pkgcore_checks import base, util, arches
+from pkgcore_checks import base, util
 from pkgcore.util.iterables import caching_iter
 from pkgcore.util.lists import stable_unique, iflatten_instance
 from pkgcore.util.containers import ProtectedSet
@@ -22,12 +22,12 @@ class ModularXPortingReport(base.template):
 	Scans for dependencies that require monolithic X, or via visibility limiters from profiles, are forced to use monolithic X
 	"""
 	feed_type = base.package_feed
-	requires = ("profiles", "arches", "query_cache")
+	requires = (base.arches_option, "profiles", "query_cache")
 
 	valid_modx_pkgs_url = "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
 
-	def __init__(self, arches=arches.default_arches):
-		self.arches = frozenset(x.lstrip("~") for x in arches)
+	def __init__(self, options):
+		self.arches = frozenset(x.lstrip("~") for x in options.arches)
 		self.repo = self.profile_filters = None
 		self.keywords_filter = None
 		# use 7.1 so it catches any >7.0

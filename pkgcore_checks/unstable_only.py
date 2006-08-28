@@ -2,17 +2,17 @@
 # License: GPL2
 
 from pkgcore.restrictions import packages, values
-from pkgcore_checks.base import template, package_feed, Result
+from pkgcore_checks.base import template, package_feed, Result, arches_option
 
-from pkgcore_checks.arches import default_arches
 
 class UnstableOnlyReport(template):
 	"""scan for pkgs that have just unstable keywords"""
 
 	feed_type = package_feed
+	requires = (arches_option,)
 
-	def __init__(self, arches=default_arches):
-		arches = set(x.strip().lstrip("~") for x in arches)
+	def __init__(self, options):
+		arches = set(x.strip().lstrip("~") for x in options.arches)
 		# stable, then unstable, then file
 		self.arch_restricts = {}
 		for x in arches:
