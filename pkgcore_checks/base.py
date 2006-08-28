@@ -43,6 +43,7 @@ def _record_arches(option, opt_str, value, parser):
 
 arches_option = optparse.Option("-a", "--arches", action='callback', callback=_record_arches, type='string',  
 	default=default_arches, help="comma seperated list of what arches to run, defaults to %r" % (default_arches,))
+arches_options = (arches_option,)
 
 
 def enable_query_caching(option_inst, options, runner):

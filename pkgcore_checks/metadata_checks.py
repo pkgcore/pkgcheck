@@ -3,7 +3,7 @@
 
 import logging, os, stat, errno
 from operator import attrgetter
-from pkgcore_checks.base import template, versioned_feed, Result, arches_option
+from pkgcore_checks.base import template, versioned_feed, Result, arches_options
 
 from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
@@ -23,7 +23,7 @@ class MetadataReport(template):
 	"""ebuild metadata reports.  DEPENDS, PDEPENDS, RDEPENDS, PROVIDES, SRC_URI, DESCRIPTION, LICENSE, etc."""
 
 	feed_type = versioned_feed
-	requires = (arches_option,)
+	requires = arches_options
 	
 	def __init__(self, options):
 		force_expansion = ("depends", "rdepends", "post_rdepends", "provides")

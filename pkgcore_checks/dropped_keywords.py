@@ -2,14 +2,14 @@
 # License: GPL2
 
 import time, os
-from pkgcore_checks.base import template, package_feed, Result, arches_option
+from pkgcore_checks.base import template, package_feed, Result, arches_options
 
 
 class DroppedKeywordsReport(template):
 	"""scan pkgs for keyword dropping across versions"""
 
 	feed_type = package_feed
-	requires = (arches_option,)
+	requires = arches_options
 	
 	def __init__(self, options):
 		self.arches = dict((k, None) for k in options.arches)
