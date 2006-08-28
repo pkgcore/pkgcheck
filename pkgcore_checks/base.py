@@ -39,7 +39,8 @@ default_arches = ["x86", "x86-fbsd", "amd64", "ppc", "ppc-macos", "ppc64",
 default_arches = tuple(sorted(default_arches))
 
 def _record_arches(option, opt_str, value, parser):
-	parser.arches = tuple(value.split(","))
+	parser.values.arches = tuple(value.split(","))
+
 
 arches_option = optparse.Option("-a", "--arches", action='callback', callback=_record_arches, type='string',  
 	default=default_arches, help="comma seperated list of what arches to run, defaults to %r" % (default_arches,))
