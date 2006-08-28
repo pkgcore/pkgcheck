@@ -2,38 +2,43 @@
 # License: GPL2
 
 from pkgcore.restrictions import packages, values
-from pkgcore_checks.base import template, package_feed, Result, arches_options
+from pkgcore.util.currying import pre_curry
+from pkgcore_checks import base
+import optparse
 
 
-class ImlateReport(template):
+class ImlateReport(base.template):
 
 	"""scan for ebuilds that can be stabled based upon stabling status for other arches"""
 
-	feed_type = package_feed
-	requires = arches_options
+	feed_type = base.package_feed
+	requires = (base.arches_option, optparse.Option("--source-arches", action='callback', 
+		callback=pre_curry(base._record_arches, "reference_arches"), type='string', dest='reference_arches',
+		default=base.default_arches, help="comma seperated list of what arches to compare against for imlate, defaults to %s" %
+		",".join(base.default_arches)))
 
 	def __init__(self, options):
-		arches = set(x.strip().lstrip("~") for x in options.arches)
-		# stable, then unstable, then file
-		self.any_stable = packages.PackageRestriction("keywords", 
-			values.ContainmentMatch(options.arches))
-
-	def finish(self, reporter):
-		del self.any_stable
+		arches = frozenset(x.strip().lstrip("~") for x in options.arches)
+		self.target_arches = frozenset("~%s" % x.strip().lstrip("~") for x in options.arches)
+		self.source_arches = frozenset(x.lstrip("~") for x in options.reference_arches)
+		self.source_filter = packages.PackageRestriction("keywords", values.ContainmentMatch(*self.source_arches))
 
 	def feed(self, pkgset, reporter):
-		# stable, then unstable, then file
-		try:
-			max_stable = max(pkg for pkg in pkgset if self.any_stable.match(pkg))
-		except ValueError:
-			# none stable.
-			return
-		unstable_keys = tuple(str(x) for x in max_stable.keywords if x.startswith("~"))
-		if unstable_keys:
-			reporter.add_report(LaggingStableInfo(max_stable, unstable_keys))
+		#candidates.
+		fmatch = self.source_filter.match
+		remaining = set(self.target_arches)
+		for pkg in reversed(pkgset):
+			if not fmatch(pkg):
+				continue
+			unstable_keys = remaining.intersection(pkg.keywords)
+			if unstable_keys:
+				reporter.add_report(LaggingStableInfo(pkg, sorted(unstable_keys)))
+				remaining.discard(unstable_keys)
+				if not remaining:
+					break
 
 
-class LaggingStableInfo(Result):
+class LaggingStableInfo(base.Result):
 
 	"""Arch that is behind another from a stabling standpoint"""
 	
@@ -62,5 +67,3 @@ class LaggingStableInfo(Result):
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
 "</keyword>\n\t<keyword>".join(self.keywords), 
 "potential for stabling, prexisting stable- %s" % ", ".join(self.stable))
-		
-
