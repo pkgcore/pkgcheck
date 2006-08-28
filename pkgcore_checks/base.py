@@ -8,6 +8,7 @@ versioned_feed = "cat/pkg-ver"
 __all__ = ("package_feed, versioned_feed", "category_feed", "Feeder")
 
 import optparse
+import itertools, operator
 
 from pkgcore.restrictions import packages
 from pkgcore.restrictions.util import collect_package_restrictions
@@ -15,11 +16,22 @@ from pkgcore_checks import util
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.util.containers import ProtectedSet
 from pkgcore.util.compatibility import any
+from pkgcore.util.currying import pre_curry
 from pkgcore.restrictions import values, packages
 from pkgcore.util.demandload import demandload
+demandload(globals(), "logging ")
 
-demandload(globals(), "logging "
-	"operator ")
+
+class FinalizingOption(optparse.Option):
+
+	def __init__(self, *args, **kwds):
+		f = kwds.pop("finalizer", None)
+		optparse.Option.__init__(self, *args, **kwds)
+		if f is not None:
+			self.finalize = pre_curry(f, self)
+
+	def finalize(self, options, runner):
+		raise NotImplementedError(self, "finalize")
 
 
 default_arches = ["x86", "x86-fbsd", "amd64", "ppc", "ppc-macos", "ppc64",
@@ -30,7 +42,26 @@ def _record_arches(option, opt_str, value, parser):
 	parser.arches = tuple(value.split(","))
 
 arches_option = optparse.Option("-a", "--arches", action='callback', callback=_record_arches, type='string',  
-	default=default_arches, help="comma seperated list of what arches to run, defaults to %r" % ",".join(default_arches))
+	default=default_arches, help="comma seperated list of what arches to run, defaults to %r" % (default_arches,))
+
+
+def enable_query_caching(option_inst, options, runner):
+	runner.enable_query_cache = True
+
+query_cache_options = \
+	(FinalizingOption("--reset-caching-per-category", action='store_const', dest='query_caching_freq', 
+		const='cat', finalizer=enable_query_caching,
+		help="clear query caching after every category (defaults to every package)"),
+	optparse.Option("--reset-caching-per-package", action='store_const', dest='query_caching_freq',
+		const='pkg', default='pkg',
+		help="clear query caching after ever package (this is the default)"),
+	optparse.Option("--reset-caching-per-version", action='store_const', dest='query_caching_freq',
+		const='ver',
+		help="clear query caching after ever version (defaults to every package)"))
+
+
+def check_uses_query_cache(check):
+	return any(x in query_cache_options for x in check.requires)
 
 
 class template(object):
@@ -51,7 +82,7 @@ class template(object):
 
 
 class _WipeQueryCache(template):
-	requires = ("query_cache",)
+	requires = query_cache_options
 	feed_type = package_feed
 
 	def feed(self, pkgs, reporter, feeder):
@@ -59,12 +90,22 @@ class _WipeQueryCache(template):
 
 
 class _WipeEvaluateDepSetCaches(template):
-	requires = ("query_cache",)
+	requires = query_cache_options
 	feed_type = package_feed
 
 	def feed(self, pkgs, reporter, feeder):
 		feeder.pkg_evaluate_depsets_cache.clear()
 		feeder.pkg_profiles_cache.clear()
+
+
+class ForgetfulDict(dict):
+
+	def __setitem__(self, key, attr):
+		return
+	
+	def update(self, other):
+		return
+
 
 class Feeder(object):
 
@@ -77,7 +118,6 @@ class Feeder(object):
 		self.repo = repo
 		self.profiles = {}
 		self.profiles_inited = False
-		self.query_cache = {}
 		self.pkg_evaluate_depsets_cache = {}
 		self.pkg_profiles_cache = {}
 
@@ -205,6 +245,10 @@ class Feeder(object):
 	def fire_finishs(self, *a, **kwds):
 		return self._generic_fire(*(("finish",) + a), **kwds)
 
+	@property
+	def query_cache_enabled(self):
+		return bool(getattr(self, "enable_query_cache", False))
+
 	def run(self, reporter, limiter=packages.AlwaysTrue):
 		enabled = {}.fromkeys(["cats", "pkgs", "vers"], False)
 		for var, attr in (("cats", ["category"]), ("pkgs", ["package"]), ("vers", ["fullver", "version", "rev"])):
@@ -235,18 +279,29 @@ class Feeder(object):
 				self.fire_starts("cpv", self.cpv_checks, self.repo)
 		self.first_run = False
 		
+		cat_checks = list(self.cat_checks)
+		pkg_checks = list(self.pkg_checks)
+		cpv_checks = list(self.cpv_checks)
+
 		# and... build 'er up.
-		if any("query_cache" in check.requires for check in self.cpv_checks + self.pkg_checks + self.cat_checks):
-			pkg_checks = list(self.pkg_checks) + [_WipeQueryCache(self), _WipeEvaluateDepSetCaches(self)]
-		else:
-			pkg_checks = self.pkg_checks
+		if self.query_cache_enabled:
+			self.query_cache = {}
+			l = [_WipeQueryCache(self), _WipeEvaluateDepSetCaches(self)]
+			if self.options.query_caching_freq == "cat":
+				cat_checks += l
+			elif self.options.query_caching_freq == "pkg":
+				pkg_checks += l
+			elif self.options.query_caching_freq == "ver":
+				cpv_checks += l
+			del l
+		
 		i = self.repo.itermatch(limiter, sorter=sorted)
-		if vers and self.cpv_checks:
-			i = self.trigger_cpv_checks(i, reporter)
+		if vers and cpv_checks:
+			i = self.trigger_ver_checks(cpv_checks, i, reporter)
 		if pkgs and pkg_checks:
 			i = self.trigger_pkg_checks(pkg_checks, i, reporter)
-		if cats and self.cat_checks:
-			i = self.trigger_cat_checks(i, reporter)
+		if cats and cat_checks:
+			i = self.trigger_cat_checks(cat_checks, i, reporter)
 		count = 0
 		for x in i:
 			count += 1
@@ -272,29 +327,24 @@ class Feeder(object):
 				del e
 
 	def _generic_trigger_checks(self, checks, attr, iterable, reporter):
-		afunc = operator.attrgetter(attr)
-		l = [iterable.next()]
-		yield l[0]
-		lattr = afunc(l[0])
-		checks = tuple(("query_cache" in check.requires, check) for check in checks)
-		for pkg in iterable:
-			if lattr != afunc(pkg):
-				self.run_check(checks, l, reporter, "check %s"+" "+attr+": '"+lattr+"' threw exception %s")
-				l = [pkg]
-				lattr = afunc(pkg)
-			else:
-				l.append(pkg)
-			yield pkg
-		self.run_check(checks, l, reporter, "check %s"+" "+attr+": '"+lattr+"' threw exception %s")
+		checks = tuple((check_uses_query_cache(c), c) for c in checks)
+		grouping_iter = itertools.groupby(iterable, operator.attrgetter(attr))
+		for key, pkgs in grouping_iter:
+			# convert the iter to a tuple; note that using a caching_iter may be better here,
+			# but need to evaluate performance affects before hand
+			pkgs = tuple(pkgs)
+			self.run_check(checks, pkgs, reporter, "check %s"+" "+attr+": '"+key+"' threw exception %s")
+			for pkg in pkgs:
+				yield pkg
 
-	def trigger_cat_checks(self, *args):
-		return self._generic_trigger_checks(self.cat_checks, "category", *args)
+	def trigger_cat_checks(self, checks, iterable, reporter):
+		return self._generic_trigger_checks(checks, "category", iterable, reporter)
 	
-	def trigger_pkg_checks(self, checks, *args):
-		return self._generic_trigger_checks(checks, "package", *args)
+	def trigger_pkg_checks(self, checks, iterable, reporter):
+		return self._generic_trigger_checks(checks, "package", iterable, reporter)
 
-	def trigger_cpv_checks(self, iterable, reporter):
-		checks = tuple(("query_cache" in check.requires, check) for check in self.cpv_checks)
+	def trigger_ver_checks(self, checks, iterable, reporter):
+		checks = tuple((check_uses_query_cache(check), check) for check in checks)
 		for pkg in iterable:
 			self.run_check(checks, pkg, reporter, "check %s cpv: '"+str(pkg)+"' threw exception %s")
 			yield pkg

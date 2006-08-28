@@ -22,7 +22,7 @@ class ModularXPortingReport(base.template):
 	Scans for dependencies that require monolithic X, or via visibility limiters from profiles, are forced to use monolithic X
 	"""
 	feed_type = base.package_feed
-	requires = (base.arches_option, "profiles", "query_cache")
+	requires = (base.arches_option, "profiles") + base.query_cache_options
 
 	valid_modx_pkgs_url = "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
 
@@ -42,7 +42,6 @@ class ModularXPortingReport(base.template):
 		self.profile_filters = profile_filters
 		
 	def feed(self, pkgset, reporter, feeder):
-		query_cache = {}
 		# query_cache gets caching_iter partial repo searches shoved into it- reason is simple,
 		# it's likely that versions of this pkg probably use similar deps- so we're forcing those
 		# packages that were accessed for atom matching to remain in memory.

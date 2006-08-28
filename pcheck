@@ -13,7 +13,8 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "os logging time optparse "
 	"pkgcore.fs.util:normpath "
 	"pkgcore.util.compatibility:any "
-	"pkgcore.restrictions.values:StrRegexMatch ")
+	"pkgcore.restrictions.values:StrRegexMatch "
+	"pkgcore_checks.base ")
 
 import sys, signal
 
@@ -40,6 +41,15 @@ def get_option_parser(checks=[]):
 	if new_opts:
 		parser.add_options(new_opts)
 	return parser
+
+
+def finalize_options(checks, options, runner):
+	seen = set()
+	for c in checks:
+		for opt in c.requires:
+			if isinstance(opt, pkgcore_checks.base.FinalizingOption) and opt not in seen:
+				opt.finalize(options, runner)
+				seen.add(opt)
 
 
 def grab_arg(arg, args):
@@ -122,7 +132,6 @@ def install_signal_handlers():
 
 
 if __name__ == "__main__":
-	import pkgcore_checks.base
 	checks = collect_available_checks()
 	args = sys.argv[1:]
 	parser = get_option_parser(checks)
@@ -168,6 +177,7 @@ if __name__ == "__main__":
 	else:
 		reporter = pkgcore_checks.base.StrReporter(sys.stdout)
 	runner = pkgcore_checks.base.Feeder(repo, options)
+	finalize_options(checks, options, runner)
 
 	for obj in checks:
 		try:
