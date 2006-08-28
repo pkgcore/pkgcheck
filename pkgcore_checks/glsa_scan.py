@@ -1,22 +1,59 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore_checks.base import versioned_feed, template, Result
+import os, optparse
+
+from pkgcore_checks import base
 from pkgcore.pkgsets.glsa import GlsaDirSet
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.restrictions import packages, values
 from pkgcore.util.xml import escape
 
 
-class TreeVulnerabilitiesReport(template):
+class GlsaLocationOption(base.FinalizingOption):
+
+	def __init__(self):
+		base.FinalizingOption.__init__(self, "--glsa-dir", action='store', type='string',
+			dest='glsa_location', default=None, 
+			help="source directoy for glsas; tries to autodetermine it, may be required if no glsa dirs are known")
+
+	def finalize(self, options, runner):
+		glsa_loc = options.glsa_location
+		if glsa_loc is not None:
+			return
+		pjoin = os.path.join
+		try:
+			repos = runner.repo.trees
+		except AttributeError:
+			repos = [runner.repo]
+		for repo in repos:
+			base = getattr(repo, "base", None)
+			if base is None:
+				continue
+			glsa_loc = pjoin(base, "metadata", "glsa")
+			if os.path.isdir(glsa_loc):
+				break
+		else:
+			raise optparse.OptionValueError("--glsa-dir must be specified, couldn't find a glsa source")
+		options.glsa_location = glsa_loc
+
+
+GlsaLocation_option = GlsaLocationOption()
+
+
+class TreeVulnerabilitiesReport(base.template):
 	"""Scan for vulnerabile ebuilds in the tree; requires a GLSA directory for vuln. info"""
 
-	feed_type = versioned_feed
+	feed_type = base.versioned_feed
+	requires = (GlsaLocation_option,)
+
+	def __init__(self, options):
+		self.glsa_dir = options.glsa_location	
 	
 	def start(self, repo):
 		self.vulns = {}
 		# this is a bit brittle
-		for r in GlsaDirSet(repo):
+		for r in GlsaDirSet(self.glsa_dir):
 			if len(r) > 2:
 				self.vulns.setdefault(r[0].key, []).append(packages.AndRestriction(*r[1:]))
 			else:
@@ -31,7 +68,7 @@ class TreeVulnerabilitiesReport(template):
 				reporter.add_report(VulnerablePackage(pkg, vuln))
 
 
-class VulnerablePackage(Result):
+class VulnerablePackage(base.Result):
 
 	"""Packages marked as vulnerable by GLSAs"""
 
