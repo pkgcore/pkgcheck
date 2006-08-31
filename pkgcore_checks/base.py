@@ -20,7 +20,8 @@ from pkgcore.util.currying import pre_curry
 from pkgcore.restrictions import values, packages
 from pkgcore.util.demandload import demandload
 demandload(globals(), "logging os "
-	"pkgcore.fs.util:abspath ")
+	"pkgcore.fs.util:abspath "
+	"pkgcore.ebuild:repository ")
 
 
 class FinalizingOption(optparse.Option):
@@ -66,41 +67,69 @@ def check_uses_query_cache(check):
 	return any(x in query_cache_options for x in check.requires)
 
 
+def overlay_finalize(option_inst, options, runner):
+	if options.metadata_src_repo is None:
+		options.repo_base = None
+		options.src_repo = options.target_repo
+		return
+
+	conf = options.pkgcore_conf
+	try:
+		repo = conf.repo[options.metadata_src_repo]
+	except KeyError:
+		raise optparse.OptionValueError("overlayed-repo %r isn't a known repo" % profile_src)
+
+	if not isinstance(repo, repository.UnconfiguredTree):
+		raise optparse.OptionValueError("profile-repo %r isn't an pkgcore.ebuild.repository.UnconfiguredTree instance; must specify a raw ebuild repo, not type %r: %r" %
+			(repo.__class__, repo))
+	options.src_repo = repo
+	options.repo_base = abspath(repo.base)
+
+
+overlay_options = (FinalizingOption("-r", "--overlayed-repo", action='store', type='string', dest='metadata_src_repo',
+	finalizer=overlay_finalize,
+	help="if the target repository is an overlay, specify the repository name to pull profiles/license from"),)
+	
+
+def get_repo_base(options, throw_error=True, repo=None):
+	if getattr(options, "repo_base", None) is not None:
+		return options.repo_base
+	if repo is None:
+		repo = options.target_repo
+	if throw_error:
+		if not isinstance(repo, repository.UnconfiguredTree):
+			raise optparse.OptionValueError("target repo %r isn't a pkgcore.ebuild.repository.UnconfiguredTree instance; "
+				"must specify the PORTDIR repo via --overlayed-repo" % repo)
+
+	return getattr(repo, "base", None)
+
+
 def profile_finalize(option_inst, options, runner):
 	runner.enable_profiles = True
 	profile_loc = getattr(options, "profile_dir", None)
+
 	if profile_loc is not None:
 		abs_profile_loc = abspath(profile_loc)
 		if not os.path.isdir(abs_profile_loc):
 			raise optparse.OptionValueError("profile-base location %r doesn't exist/isn't a dir" % profile_loc)
 		
 		options.profile_func = pre_curry(util.get_profile_from_path, abs_profile_loc)
-		options.profile_src = abs_profile_loc
-		return
-	
-	profile_src = getattr(options, "profile_repo", None)
-	if profile_src is not None:
-		conf = options.pkgcore_conf
-		try:
-			profile_src = conf.repo[profile_src]
-		except KeyError:
-			raise optparse.OptionValueError("profile-repo %r isn't a known repo" % profile_src)
-		options.profile_func = pre_curry(util.get_profile_from_repo, profile_src)
-		options.profile_src = profile_src
+		options.profile_base_dir = abs_profile_loc
 		return
 
-	options.profile_src = options.target_repo
+
+	profile_base = os.path.join(get_repo_base(options), "profiles")
+	if not os.path.isdir(profile_base):
+		raise optparse.OptionValueError("repo %r lacks a profiles directory" % options.src_repo)
+
 	options.profile_func = pre_curry(util.get_profile_from_repo, options.target_repo)
-
+	options.profile_base_dir = abspath(profile_base)
 
 
 profile_options = \
 	(FinalizingOption("--profile-base", action='store', type='string',
 		finalizer=profile_finalize, dest="profile_dir", default=None,
-		help="filepath to base profiles directory"),
-	optparse.Option("--profile-repo", action='store', type='string',
-		dest='profile_repo', default=None,
-		help="repository to pull profiles from"))
+		help="filepath to base profiles directory"),)
 
 
 def check_uses_profiles(check):
