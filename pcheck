@@ -168,6 +168,8 @@ if __name__ == "__main__":
 				(repr(repo_name), ", ".join(repr(x) for x in conf.repo.iterkeys())))
 			sys.exit(1)
 
+	options.pkgcore_conf = conf
+	options.target_repo = repo
 	if not getattr(repo, "base", False):
 		sys.stderr.write("\nWarning: repo %s appears to be combined trees, as such some checks will be disabled\n\n" % 
 			repo_name)

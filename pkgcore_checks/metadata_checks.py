@@ -3,7 +3,7 @@
 
 import logging, os, stat, errno
 from operator import attrgetter
-from pkgcore_checks.base import template, versioned_feed, Result, arches_options
+from pkgcore_checks import base
 
 from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
@@ -18,12 +18,12 @@ demandload(globals(), "pkgcore.util.xml:escape")
 
 default_attrs = ("depends", "rdepends", "post_rdepends", "provides", "license", "fetchables", "iuse")
 
-class MetadataReport(template):
+class MetadataReport(base.template):
 
 	"""ebuild metadata reports.  DEPENDS, PDEPENDS, RDEPENDS, PROVIDES, SRC_URI, DESCRIPTION, LICENSE, etc."""
 
-	feed_type = versioned_feed
-	requires = arches_options
+	feed_type = base.versioned_feed
+	requires = base.arches_options + base.profile_options
 	
 	def __init__(self, options):
 		force_expansion = ("depends", "rdepends", "post_rdepends", "provides")
@@ -129,7 +129,8 @@ class MetadataReport(template):
 		known_iuse.update(unstated_iuse)
 		return frozenset(known_iuse), frozenset(unstated_iuse)
 			
-	def start(self, repo):
+	def start(self, repo, *a):
+		# we are given extra args since we use profiles; don't care about it however
 		if any(x[0] == "license" for x in self.attrs):
 			lfp = os.path.join(repo.base, "licenses")
 			if not os.path.exists(lfp):
@@ -145,10 +146,10 @@ class MetadataReport(template):
 			self.valid_iuse = self.valid_unstated_iuse = None
 
 
-class SrcUriReport(template):
+class SrcUriReport(base.template):
 	"""SRC_URI related checks.
 	verify that it's a valid/fetchable uri, port 80,443,23"""
-	feed_type = versioned_feed
+	feed_type = base.versioned_feed
 	valid_protos = frozenset(["http", "https", "ftp"])
 
 	def feed(self, pkg, reporter):
@@ -172,10 +173,10 @@ class SrcUriReport(template):
 				reporter.add_report(MissingUri(pkg, x))
 
 
-class DescriptionReport(template):
+class DescriptionReport(base.template):
 	"""DESCRIPTION checks.
 	check on length (<=250), too short (<5), or generic (lifted from eclass or just using the pkgs name"""
-	feed_type = versioned_feed
+	feed_type = base.versioned_feed
 	
 	def feed(self, pkg, reporter):
 		s = pkg.description.lower()
@@ -193,8 +194,8 @@ class DescriptionReport(template):
 				reporter.add_report(CrappyDescription(pkg, "under 10 chars in length- too short"))
 
 
-class RestrictsReport(template):
-	feed_type = versioned_feed
+class RestrictsReport(base.template):
+	feed_type = base.versioned_feed
 	known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", "test",
 		"sandbox", "userpriv", "primaryuri", "binchecks", "strip", "multilib-strict"))
 
@@ -207,7 +208,7 @@ class RestrictsReport(template):
 			reporter.add_report(BadRestricts(pkg, bad.difference(deprecated), deprecated))
 
 
-class BadRestricts(Result):
+class BadRestricts(base.Result):
 	"""pkg's restrict metadata has unknown/deprecated entries"""
 	
 	__slots__ = ("category", "package", "version", "restricts", "deprecated")
@@ -248,7 +249,7 @@ class BadRestricts(Result):
 	"unknown restricts- %s" % s)
 
 
-class CrappyDescription(Result):
+class CrappyDescription(base.Result):
 	
 	"""pkg's description sucks in some fashion"""
 
@@ -271,7 +272,7 @@ class CrappyDescription(Result):
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.msg)
 
 
-class UnstatedIUSE(Result):
+class UnstatedIUSE(base.Result):
 	"""pkg is reliant on conditionals that aren't in IUSE"""
 	__slots__ = ("category", "package", "version", "attr", "flags")
 	
@@ -294,7 +295,7 @@ class UnstatedIUSE(Result):
 	self.attr, ", ".join(self.flags))
 
 
-class MissingUri(Result):
+class MissingUri(base.Result):
 	"""restrict=fetch isn't set, yet no full uri exists"""
 	__slots__ = ("category", "package", "version", "filename")
 
@@ -316,7 +317,7 @@ class MissingUri(Result):
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version, escape(self.filename))
 
 
-class BadProto(Result):
+class BadProto(base.Result):
 	"""bad protocol"""
 	__slots__ = ("category", "package", "version", "filename", "bad_uri")
 
@@ -340,7 +341,7 @@ class BadProto(Result):
 	escape(self.filename), escape(", ".join(self.bad_uri)))
 
 
-class MetadataError(Result):
+class MetadataError(base.Result):
 	"""problem detected with a packages metadata"""
 	__slots__ = ("category", "package", "version", "attr", "msg")
 	
@@ -363,7 +364,7 @@ class MetadataError(Result):
 	"attr '%s' threw an error- %s" % (self.attr, escape(self.msg)))
 
 
-class EmptyKeywardsMinor(Result):
+class EmptyKeywardsMinor(base.Result):
 	"""pkg has no set keywords"""
 
 	def __init__(self, pkg):
@@ -384,7 +385,7 @@ class EmptyKeywardsMinor(Result):
 </check>""" % (self.__class__.__name__, self.category, self.package, self.version)
 
 		
-class StupidKeywardsMinor(Result):
+class StupidKeywardsMinor(base.Result):
 	"""pkg that is using -*; package.mask in profiles addresses this already"""
 	
 	def __init__(self, pkg):

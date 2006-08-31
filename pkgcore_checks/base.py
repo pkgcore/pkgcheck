@@ -19,7 +19,8 @@ from pkgcore.util.compatibility import any
 from pkgcore.util.currying import pre_curry
 from pkgcore.restrictions import values, packages
 from pkgcore.util.demandload import demandload
-demandload(globals(), "logging ")
+demandload(globals(), "logging os "
+	"pkgcore.fs.util:abspath ")
 
 
 class FinalizingOption(optparse.Option):
@@ -63,6 +64,47 @@ query_cache_options = \
 
 def check_uses_query_cache(check):
 	return any(x in query_cache_options for x in check.requires)
+
+
+def profile_finalize(option_inst, options, runner):
+	runner.enable_profiles = True
+	profile_loc = getattr(options, "profile_dir", None)
+	if profile_loc is not None:
+		abs_profile_loc = abspath(profile_loc)
+		if not os.path.isdir(abs_profile_loc):
+			raise optparse.OptionValueError("profile-base location %r doesn't exist/isn't a dir" % profile_loc)
+		
+		options.profile_func = pre_curry(util.get_profile_from_path, abs_profile_loc)
+		options.profile_src = abs_profile_loc
+		return
+	
+	profile_src = getattr(options, "profile_repo", None)
+	if profile_src is not None:
+		conf = options.pkgcore_conf
+		try:
+			profile_src = conf.repo[profile_src]
+		except KeyError:
+			raise optparse.OptionValueError("profile-repo %r isn't a known repo" % profile_src)
+		options.profile_func = pre_curry(util.get_profile_from_repo, profile_src)
+		options.profile_src = profile_src
+		return
+
+	options.profile_src = options.target_repo
+	options.profile_func = pre_curry(util.get_profile_from_repo, options.target_repo)
+
+
+
+profile_options = \
+	(FinalizingOption("--profile-base", action='store', type='string',
+		finalizer=profile_finalize, dest="profile_dir", default=None,
+		help="filepath to base profiles directory"),
+	optparse.Option("--profile-repo", action='store', type='string',
+		dest='profile_repo', default=None,
+		help="repository to pull profiles from"))
+
+
+def check_uses_profiles(check):
+	return any(x in profile_options for x in check.requires)
 
 
 class template(object):
@@ -146,7 +188,7 @@ class Feeder(object):
 		self.arch_profiles = util.get_profiles_desc(self.repo)
 
 		if self.desired_arches is None:
-			self.desired_arches = util.get_repo_known_arches(self.repo)
+			self.desired_arches = util.get_repo_known_arches(self.options.profile_src)
 
 		self.global_insoluable = set()
 		profile_filters = {}
@@ -165,7 +207,7 @@ class Feeder(object):
 			
 			profile_filters.update({stable_key:{}, unstable_key:{}})
 			for profile_name in self.arch_profiles[k]:
-				profile = util.get_profile(self.repo, profile_name)
+				profile = self.options.profile_func(profile_name)
 				mask = util.get_profile_mask(profile)
 				virtuals = profile.virtuals(self.repo)
 				# force all use masks to negated, and all other arches but this
@@ -223,7 +265,7 @@ class Feeder(object):
 			return
 		actual = []
 		for check in checks:
-			if attr == "start" and "profiles" in check.requires:
+			if attr == "start" and check_uses_profiles(check):
 				a = args + (self.global_insoluable, self.keywords_filter, self.profile_filters)
 			else:
 				a = args

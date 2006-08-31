@@ -11,16 +11,24 @@ demandload(globals(), "pkgcore.ebuild.profiles:OnDiskProfile "+
 	"logging ")
 
 
-def get_profile(repo, profile_name):
+def get_profile_from_repo(repo, profile_name):
 	return OnDiskProfile(profile_name, base_repo=repo)
+
+def get_profile_from_path(path, profile_name):
+	return OnDiskProfile(profile_name, base_path=path)
 
 def get_profile_mask(profile):
 	return generate_masking_restrict(profile.maskers)
 
 def get_profiles_desc(repo):
-	fp = os.path.join(repo.base, "profiles", "profiles.desc")
+	base = repo
+	if not isinstance(base, basestring):
+		# repo instance.
+		base = os.path.join(repo.base, "profiles")
+	fp = os.path.join(base, "profiles.desc")
 	if not os.path.exists(fp):
 		raise OSError(errno.ENOENT, fp)
+
 	arches_dict = {}
 	for line_no, line in enumerate(open(fp, "r")):
 		l = line.split()
