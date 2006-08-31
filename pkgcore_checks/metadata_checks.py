@@ -23,7 +23,7 @@ class MetadataReport(base.template):
 	"""ebuild metadata reports.  DEPENDS, PDEPENDS, RDEPENDS, PROVIDES, SRC_URI, DESCRIPTION, LICENSE, etc."""
 
 	feed_type = base.versioned_feed
-	requires = base.arches_options + base.profile_options
+	requires = base.arches_options + base.profile_options + base.license_options
 	
 	def __init__(self, options):
 		force_expansion = ("depends", "rdepends", "post_rdepends", "provides")
@@ -33,6 +33,8 @@ class MetadataReport(base.template):
 		self.valid_iuse = None
 		self.valid_unstated_iuse = None
 		self.arches = options.arches
+		self.profile_base = options.profile_base_dir
+		self.licenses_dir = options.license_dir
 	
 	def feed(self, pkg, reporter):
 		for attr_name, getter, force_expansion in self.attrs:
@@ -92,11 +94,10 @@ class MetadataReport(base.template):
 						reporter.add_report(UnstatedIUSE(pkg, attr_name, unstated))
 
 	@staticmethod
-	def load_valid_iuse(repo):
-		base = os.path.join(repo.base, "profiles")
+	def load_valid_iuse(profile_base):
 		known_iuse = set()
 		unstated_iuse = set()
-		fp = os.path.join(base, "use.desc")
+		fp = os.path.join(profile_base, "use.desc")
 		try:
 			known_iuse.update(usef.strip() for usef in 
 				read_dict(fp, None).iterkeys())
@@ -104,7 +105,7 @@ class MetadataReport(base.template):
 			if ie.errno != errno.ENOENT:
 				raise
 
-		fp = os.path.join(base, "use.local.desc")
+		fp = os.path.join(profile_base, "use.local.desc")
 		try:
 			known_iuse.update(usef.rsplit(":", 1)[1].strip() for usef in 
 				read_dict(fp, None).iterkeys())
@@ -112,7 +113,7 @@ class MetadataReport(base.template):
 			if ie.errno != errno.ENOENT:
 				raise		
 
-		use_expand_base = os.path.join(base, "desc")
+		use_expand_base = os.path.join(profile_base, "desc")
 		try:
 			for entry in os.listdir(use_expand_base):
 				try:
@@ -132,7 +133,7 @@ class MetadataReport(base.template):
 	def start(self, repo, *a):
 		# we are given extra args since we use profiles; don't care about it however
 		if any(x[0] == "license" for x in self.attrs):
-			lfp = os.path.join(repo.base, "licenses")
+			lfp = self.licenses_dir
 			if not os.path.exists(lfp):
 				logging.warn("disabling license checks- %s doesn't exist" % lfp)
 				self.licenses = None
@@ -141,7 +142,7 @@ class MetadataReport(base.template):
 		else:
 			self.licenses = None
 		if any(x[0] == "iuse" for x in self.attrs):
-			self.valid_iuse, self.valid_unstated_iuse = self.load_valid_iuse(repo)
+			self.valid_iuse, self.valid_unstated_iuse = self.load_valid_iuse(self.profile_base)
 		else:
 			self.valid_iuse = self.valid_unstated_iuse = None
 
