@@ -99,10 +99,10 @@ class Feeder(object):
 	def init_arch_profiles(self):
 		if self.profiles_inited:
 			return
-		self.arch_profiles = util.get_profiles_desc(self.repo)
+		self.arch_profiles = util.get_profiles_desc(self.options.profile_base_dir)
 
 		if self.desired_arches is None:
-			self.desired_arches = util.get_repo_known_arches(self.options.profile_src)
+			self.desired_arches = util.get_repo_known_arches(self.options.profile_base_dir)
 
 		self.global_insoluable = set()
 		profile_filters = {}

@@ -102,21 +102,16 @@ def profile_finalize(option_inst, options, runner):
 	profile_loc = getattr(options, "profile_dir", None)
 
 	if profile_loc is not None:
-		abs_profile_loc = abspath(profile_loc)
-		if not os.path.isdir(abs_profile_loc):
+		if not os.path.isdir(profile_loc):
 			raise optparse.OptionValueError("profile-base location %r doesn't exist/isn't a dir" % profile_loc)
-		
-		options.profile_func = pre_curry(util.get_profile_from_path, abs_profile_loc)
-		options.profile_base_dir = abs_profile_loc
-		return
+	else:
+		profile_loc = os.path.join(get_repo_base(options), "profiles")
+		if not os.path.isdir(profile_loc):
+			raise optparse.OptionValueError("repo %r lacks a profiles directory" % options.src_repo)
 
-
-	profile_base = os.path.join(get_repo_base(options), "profiles")
-	if not os.path.isdir(profile_base):
-		raise optparse.OptionValueError("repo %r lacks a profiles directory" % options.src_repo)
-
-	options.profile_func = pre_curry(util.get_profile_from_repo, options.target_repo)
-	options.profile_base_dir = abspath(profile_base)
+	profile_loc = abspath(profile_loc)
+	options.profile_func = pre_curry(util.get_profile_from_path, profile_loc)
+	options.profile_base_dir = profile_loc
 
 
 profile_options = \
