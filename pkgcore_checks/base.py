@@ -77,6 +77,8 @@ class Feeder(object):
 		self.profiles_inited = False
 		self.pkg_evaluate_depsets_cache = {}
 		self.pkg_profiles_cache = {}
+		self.debug = options.debug
+
 
 	@property
 	def desired_arches(self):
@@ -280,6 +282,8 @@ class Feeder(object):
 			except (SystemExit, KeyboardInterrupt):
 				raise
 			except Exception, e:
+				if self.debug:
+					raise
 				logging.error(errmsg % (check, e))
 				del e
 

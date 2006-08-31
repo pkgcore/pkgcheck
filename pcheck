@@ -31,6 +31,7 @@ def get_option_parser(checks=[]):
 	parser.add_option("-c", action="append", type="string", dest="check_to_run", help="limit checks to those matching this regex, or package/class matching; may be specified multiple times")
 	parser.add_option("--list-checks", action="store_true", default=False, dest="list_checks", help="print what checks are available to run and exit")
 	parser.add_option("-x", "--xml", action="store_true", default=False, dest="to_xml", help="dump xml formated result")
+	parser.add_options(pkgcore_checks.base.debugging_options)
 	parser.add_options(pkgcore_checks.base.overlay_options)
 
 	# yes linear, but not a huge issue.

@@ -3,7 +3,7 @@
 
 __all__ = ("default_arches", "arches_option", "arches_options", "query_cache_options", "check_uses_query_cache", 
 	"overlay_options", "profile_options", "check_uses_profiles", "FinalizingOption", "_record_arches", 
-	"license_options", "abspath", "get_repo_base")
+	"license_options", "abspath", "get_repo_base", "debugging_options")
 
 import optparse
 
@@ -141,3 +141,7 @@ license_options = \
 	(FinalizingOption("--license-dir", action='store', type='string',
 		finalizer=license_finalize, dest='license_dir', default=None,
 		help="filepath to license directory"),)
+
+debugging_options = \
+	(optparse.Option("--debug", action='store_true', dest='debug', default=False,
+		help="disable exception wrapping, bail at first unexpected exception"),)
