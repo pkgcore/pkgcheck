@@ -46,6 +46,10 @@ def get_option_parser(checks=[]):
 
 def finalize_options(checks, options, runner):
 	seen = set()
+	for opt in pkgcore_checks.base.overlay_options:
+		if isinstance(opt, pkgcore_checks.base.FinalizingOption) and opt not in seen:
+			opt.finalize(options, runner)
+			seen.add(opt)
 	for c in checks:
 		for opt in c.requires:
 			if isinstance(opt, pkgcore_checks.base.FinalizingOption) and opt not in seen:
