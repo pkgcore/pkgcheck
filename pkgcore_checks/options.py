@@ -2,7 +2,8 @@
 # License: GPL2
 
 __all__ = ("default_arches", "arches_option", "arches_options", "query_cache_options", "check_uses_query_cache", 
-	"overlay_options", "profile_options", "check_uses_profiles", "FinalizingOption", "_record_arches")
+	"overlay_options", "profile_options", "check_uses_profiles", "FinalizingOption", "_record_arches", 
+	"license_options")
 
 import optparse
 
@@ -87,7 +88,7 @@ def get_repo_base(options, throw_error=True, repo=None):
 	if getattr(options, "repo_base", None) is not None:
 		return options.repo_base
 	if repo is None:
-		repo = options.target_repo
+		repo = options.src_repo
 	if throw_error:
 		if not isinstance(repo, repository.UnconfiguredTree):
 			raise optparse.OptionValueError("target repo %r isn't a pkgcore.ebuild.repository.UnconfiguredTree instance; "
@@ -126,3 +127,22 @@ profile_options = \
 
 def check_uses_profiles(check):
 	return any(x in profile_options for x in check.requires)
+
+
+def license_finalize(option_inst, options, runner):
+	if options.license_dir is None:
+		base = get_repo_base(options)
+		options.license_dir = os.path.join(base, "licenses")
+		if not os.path.isdir(options.license_dir):
+			raise optparse.OptionValueError("repo %r doesn't have a license directory, you must specify one "
+				"via --license-dir or a different overlayed repo via --overlayed-repo" % options.src_repo)
+	else:
+		if not os.path.isdir(options.license_dir):
+			raise optparse.OptionValueError("--license-dir %r isn't a directory" % options.license_dir)
+	options.license_dir = abspath(options.license_dir)
+		
+
+license_options = \
+	(FinalizingOption("--license-dir", action='store', type='string',
+		finalizer=license_finalize, dest='license_dir', default=None,
+		help="filepath to license directory"),)
