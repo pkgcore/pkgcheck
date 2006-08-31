@@ -3,7 +3,7 @@
 
 __all__ = ("default_arches", "arches_option", "arches_options", "query_cache_options", "check_uses_query_cache", 
 	"overlay_options", "profile_options", "check_uses_profiles", "FinalizingOption", "_record_arches", 
-	"license_options")
+	"license_options", "abspath", "get_repo_base")
 
 import optparse
 

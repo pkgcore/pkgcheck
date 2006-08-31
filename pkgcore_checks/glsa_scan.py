@@ -20,22 +20,14 @@ class GlsaLocationOption(base.FinalizingOption):
 	def finalize(self, options, runner):
 		glsa_loc = options.glsa_location
 		if glsa_loc is not None:
-			return
-		pjoin = os.path.join
-		try:
-			repos = runner.repo.trees
-		except AttributeError:
-			repos = [runner.repo]
-		for repo in repos:
-			base = getattr(repo, "base", None)
-			if base is None:
-				continue
-			glsa_loc = pjoin(base, "metadata", "glsa")
-			if os.path.isdir(glsa_loc):
-				break
+			if not os.path.isdir(glsa_loc):
+				raise optparse.OptionValueError("--glsa-dir '%r' doesn't exist" % glsa_loc)
 		else:
-			raise optparse.OptionValueError("--glsa-dir must be specified, couldn't find a glsa source")
-		options.glsa_location = glsa_loc
+			glsa_loc = os.path.join(base.get_repo_base(options), "metadata", "glsa")
+			if not os.path.isdir(glsa_loc):
+				raise optparse.OptionValueError("--glsa-dir must be specified, couldn't identify glsa src from %r" % options.src_repo)
+
+		options.glsa_location = base.abspath(glsa_loc)
 
 
 GlsaLocation_option = GlsaLocationOption()
