@@ -13,7 +13,7 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "os logging time optparse "
 	"pkgcore.fs.util:normpath "
 	"pkgcore.util.compatibility:any "
-	"pkgcore.restrictions.values:StrRegexMatch "
+	"pkgcore.restrictions.values:StrRegex "
 	"pkgcore_checks.base ")
 
 import sys, signal
@@ -89,7 +89,7 @@ def convert_check_filter(tok):
 	tok = tok.lower()
 	if not ('+' in tok or '*' in tok):
 		tok = "^(?:[^.]+\.)*%s(?:\.[^.]+)*$" % tok
-	return StrRegexMatch(tok, CaseSensitive=False)
+	return StrRegex(tok, CaseSensitive=False)
 	
 
 def collect_available_checks():
