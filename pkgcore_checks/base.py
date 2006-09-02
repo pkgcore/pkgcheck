@@ -182,6 +182,7 @@ class Feeder(object):
 		actual = []
 		for check in checks:
 			if attr == "start" and check_uses_profiles(check):
+				self.init_arch_profiles()
 				a = args + (self.global_insoluable, self.keywords_filter, self.profile_filters)
 			else:
 				a = args
@@ -229,7 +230,6 @@ class Feeder(object):
 			cats = pkgs = vers = True
 
 		if self.first_run:
-			self.init_arch_profiles()
 			if cats:
 				self.fire_starts("cat", self.cat_checks, self.repo)
 			if pkgs:
