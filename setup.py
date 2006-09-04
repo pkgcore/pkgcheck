@@ -21,8 +21,7 @@ for root, dirs, files in os.walk('pkgcore_checks'):
 		packages.append(package)
 
 try:
-	os.getcwd()
-	os.unlink("Manifest")
+	os.unlink("MANIFEST")
 except OSError:
 	pass
 
