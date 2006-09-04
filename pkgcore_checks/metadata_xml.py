@@ -17,11 +17,17 @@ class MetadataXmlReport(template):
 	dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
 
 	def __init__(self, options):
+		self.base = getattr(options.src_repo, "base", None)
 		self.dtd_file = None
 
 	def start(self, repo):
-		loc = os.path.join(repo.base, "metadata", "dtd", "metadata.dtd")
-		if os.path.exists(loc):
+		loc = self.base
+		if self.base is not None:
+			loc = os.path.join(self.base, "metadata", "dtd", "metadata.dtd")
+			if not os.path.exists(loc):
+				loc = None
+
+		if loc is not None:
 			self.dtd_loc = loc
 		else:
 			dtd = urlopen(self.dtd_url).read()
