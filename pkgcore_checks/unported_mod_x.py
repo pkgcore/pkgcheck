@@ -205,7 +205,7 @@ class BadRange(base.Result):
 	def __init__(self, pkg, attr, atom):
 		self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
 		self.attr = attr
-		self.atoms = tuple(get_cpvstr(x) for x in atom)
+		self.atoms = tuple(str(x) for x in atom)
 	
 	def to_str(self):
 		return "%s/%s-%s: attr(%s): atoms don't match 6.9: [ %s ]" % (self.category, self.package, self.version, self.attr, 
@@ -256,7 +256,7 @@ class VisibilityCausedNotPorted(base.Result):
 		self.attr = attr
 		self.keyword = keyword
 		self.profile = profile
-		self.failed = tuple(get_cpvstr(x) for x in failed)
+		self.failed = tuple(str(x) for x in failed)
 	
 	def to_str(self):
 		return "%s/%s-%s: %s %s %s: visibility induced unported: fix via making visible [ %s ]" % \

@@ -159,7 +159,7 @@ class NonExistantDeps(base.Result):
 		self.package = pkg.package
 		self.version = pkg.fullver
 		self.attr = attr
-		self.atoms = tuple(get_cpvstr(x) for x in nonexistant_atoms)
+		self.atoms = tuple(str(x) for x in nonexistant_atoms)
 		
 	def to_str(self):
 		return "%s/%s-%s: attr(%s): nonexistant atoms [ %s ]" % \
@@ -188,7 +188,7 @@ class NonsolvableDeps(base.Result):
 		self.attr = attr
 		self.profile = profile
 		self.keyword = keyword
-		self.potentials = tuple(get_cpvstr(x) for x in stable_unique(horked))
+		self.potentials = tuple(str(x) for x in stable_unique(horked))
 		self.masked = masked
 		
 	def to_str(self):
