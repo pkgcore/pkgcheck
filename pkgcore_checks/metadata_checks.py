@@ -156,7 +156,9 @@ class SrcUriReport(base.template):
 	def feed(self, pkg, reporter):
 		lacks_uri = set()
 		for f_inst in iflatten_instance(pkg.fetchables, fetchable):
-			if f_inst.uri is None:
+			if not isinstance(f_inst, fetchable):
+				continue
+			elif f_inst.uri is None:
 				lacks_uri.add(f_inst.filename)
 			elif isinstance(f_inst.uri, list):
 				bad = set()
