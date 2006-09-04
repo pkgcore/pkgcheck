@@ -14,7 +14,8 @@ from pkgcore.util.currying import pre_curry
 from pkgcore.util.demandload import demandload
 demandload(globals(), "os "
 	"pkgcore.fs.util:abspath "
-	"pkgcore.ebuild:repository ")
+	"pkgcore.ebuild:repository "
+	"pkgcore.repository:multiplex ")
 
 
 class FinalizingOption(optparse.Option):
@@ -77,6 +78,7 @@ def overlay_finalize(option_inst, options, runner):
 			(repo.__class__, repo))
 	options.src_repo = repo
 	options.repo_base = abspath(repo.base)
+	runner.search_repo = multiplex.tree(options.target_repo, options.src_repo)
 
 
 overlay_options = (FinalizingOption("-r", "--overlayed-repo", action='store', type='string', dest='metadata_src_repo',

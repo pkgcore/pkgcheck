@@ -73,6 +73,7 @@ class Feeder(object):
 		self.cpv_checks = []
 		self.first_run = True
 		self.repo = repo
+		self.search_repo = options.target_repo
 		self.profiles = {}
 		self.profiles_inited = False
 		self.pkg_evaluate_depsets_cache = {}
@@ -125,7 +126,7 @@ class Feeder(object):
 			for profile_name in self.arch_profiles[k]:
 				profile = self.options.profile_func(profile_name)
 				mask = util.get_profile_mask(profile)
-				virtuals = profile.virtuals(self.repo)
+				virtuals = profile.virtuals(self.search_repo)
 				# force all use masks to negated, and all other arches but this
 				non_tristate = frozenset(list(self.desired_arches) + list(profile.use_mask))
 				use_flags = frozenset([stable_key])
@@ -231,11 +232,11 @@ class Feeder(object):
 
 		if self.first_run:
 			if cats:
-				self.fire_starts("cat", self.cat_checks, self.repo)
+				self.fire_starts("cat", self.cat_checks, self.search_repo)
 			if pkgs:
-				self.fire_starts("key", self.pkg_checks, self.repo)
+				self.fire_starts("key", self.pkg_checks, self.search_repo)
 			if vers:
-				self.fire_starts("cpv", self.cpv_checks, self.repo)
+				self.fire_starts("cpv", self.cpv_checks, self.search_repo)
 		self.first_run = False
 		
 		cat_checks = list(self.cat_checks)
