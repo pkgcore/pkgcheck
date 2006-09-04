@@ -11,205 +11,205 @@ from pkgcore.util.lists import stable_unique
 from pkgcore.restrictions import packages
 from pkgcore.util.demandload import demandload
 demandload(globals(), "os logging time optparse "
-	"pkgcore.fs.util:normpath "
-	"pkgcore.util.compatibility:any "
-	"pkgcore.restrictions.values:StrRegex "
-	"pkgcore_checks.base ")
+    "pkgcore.fs.util:normpath "
+    "pkgcore.util.compatibility:any "
+    "pkgcore.restrictions.values:StrRegex "
+    "pkgcore_checks.base ")
 
 import sys, signal
 
 def exithandler(signum,frame):
-	signal.signal(signal.SIGINT, signal.SIG_IGN)
-	signal.signal(signal.SIGTERM, signal.SIG_IGN)
-	sys.stderr.write("caught signal %i, shutting down\n" % signum)
-	sys.exit(1)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    sys.stderr.write("caught signal %i, shutting down\n" % signum)
+    sys.exit(1)
 
 
 def get_option_parser(checks=[]):
-	parser = optparse.OptionParser(version=__version__, description="pkgcore based ebuild QA checks", 
-		usage="usage: %prog repository [options] [atom1...atom2]")
-	parser.add_option("-c", action="append", type="string", dest="check_to_run", help="limit checks to those matching this regex, or package/class matching; may be specified multiple times")
-	parser.add_option("--list-checks", action="store_true", default=False, dest="list_checks", help="print what checks are available to run and exit")
-	parser.add_option("-x", "--xml", action="store_true", default=False, dest="to_xml", help="dump xml formated result")
-	parser.add_options(pkgcore_checks.base.debugging_options)
-	parser.add_options(pkgcore_checks.base.overlay_options)
+    parser = optparse.OptionParser(version=__version__, description="pkgcore based ebuild QA checks", 
+        usage="usage: %prog repository [options] [atom1...atom2]")
+    parser.add_option("-c", action="append", type="string", dest="check_to_run", help="limit checks to those matching this regex, or package/class matching; may be specified multiple times")
+    parser.add_option("--list-checks", action="store_true", default=False, dest="list_checks", help="print what checks are available to run and exit")
+    parser.add_option("-x", "--xml", action="store_true", default=False, dest="to_xml", help="dump xml formated result")
+    parser.add_options(pkgcore_checks.base.debugging_options)
+    parser.add_options(pkgcore_checks.base.overlay_options)
 
-	# yes linear, but not a huge issue.
-	new_opts = []
-	for c in checks:
-		for opt in c.requires:
-			if isinstance(opt, optparse.Option) and opt not in new_opts:
-				new_opts.append(opt)
-	if new_opts:
-		parser.add_options(new_opts)
-	return parser
+    # yes linear, but not a huge issue.
+    new_opts = []
+    for c in checks:
+        for opt in c.requires:
+            if isinstance(opt, optparse.Option) and opt not in new_opts:
+                new_opts.append(opt)
+    if new_opts:
+        parser.add_options(new_opts)
+    return parser
 
 
 def finalize_options(checks, options, runner):
-	seen = set()
-	for opt in pkgcore_checks.base.overlay_options:
-		if isinstance(opt, pkgcore_checks.base.FinalizingOption) and opt not in seen:
-			opt.finalize(options, runner)
-			seen.add(opt)
-	for c in checks:
-		for opt in c.requires:
-			if isinstance(opt, pkgcore_checks.base.FinalizingOption) and opt not in seen:
-				opt.finalize(options, runner)
-				seen.add(opt)
+    seen = set()
+    for opt in pkgcore_checks.base.overlay_options:
+        if isinstance(opt, pkgcore_checks.base.FinalizingOption) and opt not in seen:
+            opt.finalize(options, runner)
+            seen.add(opt)
+    for c in checks:
+        for opt in c.requires:
+            if isinstance(opt, pkgcore_checks.base.FinalizingOption) and opt not in seen:
+                opt.finalize(options, runner)
+                seen.add(opt)
 
 
 def grab_arg(arg, args):
-	val = False
-	try:
-		while True:
-			args.remove(arg)
-			val = True
-	except ValueError:
-		pass
-	return val
+    val = False
+    try:
+        while True:
+            args.remove(arg)
+            val = True
+    except ValueError:
+        pass
+    return val
 
 def pop_paired_args(args, arg, msg):
-	rets = []
-	if not isinstance(arg, (tuple, list)):
-		arg = [arg]
-	for a in arg:
-		try:
-			while True:
-				i = args.index(a)
-				args.pop(i)
-				if len(args) == i:
-					raise Exception("%s needs to be followed by an arg: %s" % (a, msg))
-				rets.append(args.pop(i))
-		except ValueError:
-			pass
-	return rets
+    rets = []
+    if not isinstance(arg, (tuple, list)):
+        arg = [arg]
+    for a in arg:
+        try:
+            while True:
+                i = args.index(a)
+                args.pop(i)
+                if len(args) == i:
+                    raise Exception("%s needs to be followed by an arg: %s" % (a, msg))
+                rets.append(args.pop(i))
+        except ValueError:
+            pass
+    return rets
 
 
 def convert_check_filter(tok):
-	tok = tok.lower()
-	if not ('+' in tok or '*' in tok):
-		tok = "^(?:[^.]+\.)*%s(?:\.[^.]+)*$" % tok
-	return StrRegex(tok, CaseSensitive=False)
-	
+    tok = tok.lower()
+    if not ('+' in tok or '*' in tok):
+        tok = "^(?:[^.]+\.)*%s(?:\.[^.]+)*$" % tok
+    return StrRegex(tok, CaseSensitive=False)
+    
 
 def collect_available_checks():
-	import pkgcore_checks
-	checks = []
-	for loc in map(str, pkgcore_checks.__path__):
-		for mod in [x for x in os.listdir(loc) if x.endswith(".py")]:
-			try:
-				module = load_module("pkgcore_checks.%s" % mod[:-3])
-			except FailedImport:
-				continue
-			for name in dir(module):
-				if not "report" in name.lower():
-					continue
-				obj = getattr(module, name)
-				if not getattr(obj, "feed_type", False):
-					continue
-				checks.append(obj)
-	checks.sort()
-	return checks
+    import pkgcore_checks
+    checks = []
+    for loc in map(str, pkgcore_checks.__path__):
+        for mod in [x for x in os.listdir(loc) if x.endswith(".py")]:
+            try:
+                module = load_module("pkgcore_checks.%s" % mod[:-3])
+            except FailedImport:
+                continue
+            for name in dir(module):
+                if not "report" in name.lower():
+                    continue
+                obj = getattr(module, name)
+                if not getattr(obj, "feed_type", False):
+                    continue
+                checks.append(obj)
+    checks.sort()
+    return checks
 
 
 def display_checks(checks):
-	print "format\n<check_name>\n  <description\n\nknown checks-\n"
-	for x in checks:
-		print "%s.%s" % (x.__module__, x.__name__)
-		if x.__doc__ is not None:
-			s = "  %s\n" % "\n  ".join(x.strip() for x in x.__doc__.split("\n"))
-			print s.rstrip() + "\n"
-		else:
-			print "  No Documention\n"
+    print "format\n<check_name>\n  <description\n\nknown checks-\n"
+    for x in checks:
+        print "%s.%s" % (x.__module__, x.__name__)
+        if x.__doc__ is not None:
+            s = "  %s\n" % "\n  ".join(x.strip() for x in x.__doc__.split("\n"))
+            print s.rstrip() + "\n"
+        else:
+            print "  No Documention\n"
 
 def filter_checks(checks, filter_func):
-	l = []
-	for x in checks:
-		if filter_func("%s.%s" % (x.__module__, x.__name__)):
-			l.append(x)
-	return l
+    l = []
+    for x in checks:
+        if filter_func("%s.%s" % (x.__module__, x.__name__)):
+            l.append(x)
+    return l
 
 def install_signal_handlers():
-	signal.signal(signal.SIGCHLD, signal.SIG_DFL)
-	signal.signal(signal.SIGINT, exithandler)
-	signal.signal(signal.SIGTERM, exithandler)
-	signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+    signal.signal(signal.SIGINT, exithandler)
+    signal.signal(signal.SIGTERM, exithandler)
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
 
 if __name__ == "__main__":
-	checks = collect_available_checks()
-	args = sys.argv[1:]
-	parser = get_option_parser(checks)
-	options, args = parser.parse_args()
+    checks = collect_available_checks()
+    args = sys.argv[1:]
+    parser = get_option_parser(checks)
+    options, args = parser.parse_args()
 
-	if options.list_checks:
-		display_checks(checks)
-		sys.exit(0)
+    if options.list_checks:
+        display_checks(checks)
+        sys.exit(0)
 
-	if options.check_to_run:
-		l = [convert_check_filter(x) for x in options.check_to_run]
-		checks = filter_checks(checks, lambda x:any(y.match(x) for y in l))
-		del l
+    if options.check_to_run:
+        l = [convert_check_filter(x) for x in options.check_to_run]
+        checks = filter_checks(checks, lambda x:any(y.match(x) for y in l))
+        del l
 
-	if not args:
-		parser.error("repository name wasn't specified")
+    if not args:
+        parser.error("repository name wasn't specified")
 
-	repo_name = args.pop(0)
-	if args:
-		limiters = stable_unique(map(generate_restriction, args))
-	else:
-		limiters = [packages.AlwaysTrue]
+    repo_name = args.pop(0)
+    if args:
+        limiters = stable_unique(map(generate_restriction, args))
+    else:
+        limiters = [packages.AlwaysTrue]
                     
-	install_signal_handlers()
-	
-	conf = load_config()
-	try:
-		repo = conf.repo[repo_name]
-	except KeyError:
-		if normpath(repo_name) in conf.repo:
-			repo = conf.repo[normpath(repo_name)]
-		else:
-			sys.stderr.write("Error: repo %s is not a valid reponames\nknown repos- [ %s ]\n" % 
-				(repr(repo_name), ", ".join(repr(x) for x in conf.repo.iterkeys())))
-			sys.exit(1)
+    install_signal_handlers()
+    
+    conf = load_config()
+    try:
+        repo = conf.repo[repo_name]
+    except KeyError:
+        if normpath(repo_name) in conf.repo:
+            repo = conf.repo[normpath(repo_name)]
+        else:
+            sys.stderr.write("Error: repo %s is not a valid reponames\nknown repos- [ %s ]\n" % 
+                (repr(repo_name), ", ".join(repr(x) for x in conf.repo.iterkeys())))
+            sys.exit(1)
 
-	options.pkgcore_conf = conf
-	options.target_repo = repo
-	if not getattr(repo, "base", False):
-		sys.stderr.write("\nWarning: repo %s appears to be combined trees, as such some checks will be disabled\n\n" % 
-			repo_name)
+    options.pkgcore_conf = conf
+    options.target_repo = repo
+    if not getattr(repo, "base", False):
+        sys.stderr.write("\nWarning: repo %s appears to be combined trees, as such some checks will be disabled\n\n" % 
+            repo_name)
 
-	if options.to_xml:
-		reporter = pkgcore_checks.base.XmlReporter(sys.stdout)
-	else:
-		reporter = pkgcore_checks.base.StrReporter(sys.stdout)
-	runner = pkgcore_checks.base.Feeder(repo, options)
-	finalize_options(checks, options, runner)
+    if options.to_xml:
+        reporter = pkgcore_checks.base.XmlReporter(sys.stdout)
+    else:
+        reporter = pkgcore_checks.base.StrReporter(sys.stdout)
+    runner = pkgcore_checks.base.Feeder(repo, options)
+    finalize_options(checks, options, runner)
 
-	for obj in checks:
-		try:
-			runner.add_check(obj)
-		except SystemExit:
-			raise
-		except Exception, e:
-			logging.error("test %s failed to be added: %s" % (obj, e))
-			del e
+    for obj in checks:
+        try:
+            runner.add_check(obj)
+        except SystemExit:
+            raise
+        except Exception, e:
+            logging.error("test %s failed to be added: %s" % (obj, e))
+            del e
 
 
-	start_time = time.time()
-	nodes = 0
-	sys.stderr.write("checks: %i cat, %i pkg, %i version\n" % (len(runner.cat_checks), \
-		len(runner.pkg_checks), len(runner.cpv_checks)))
-	if not (runner.cat_checks or runner.pkg_checks or runner.cpv_checks):
-		sys.stderr.write("no tests\n")
-		sys.exit(1)
-	reporter.start()
-	for filterer in limiters:
-		nodes += runner.run(reporter, filterer)
-	runner.finish(reporter)
-	reporter.finish()
-	elapsed = time.time() - start_time
-	minutes = int(elapsed)/60
-	seconds = elapsed - (minutes * 60)
-	sys.stderr.write("processed %i pkgs: %im%.2fs\n" % (nodes, minutes, seconds))
+    start_time = time.time()
+    nodes = 0
+    sys.stderr.write("checks: %i cat, %i pkg, %i version\n" % (len(runner.cat_checks), \
+        len(runner.pkg_checks), len(runner.cpv_checks)))
+    if not (runner.cat_checks or runner.pkg_checks or runner.cpv_checks):
+        sys.stderr.write("no tests\n")
+        sys.exit(1)
+    reporter.start()
+    for filterer in limiters:
+        nodes += runner.run(reporter, filterer)
+    runner.finish(reporter)
+    reporter.finish()
+    elapsed = time.time() - start_time
+    minutes = int(elapsed)/60
+    seconds = elapsed - (minutes * 60)
+    sys.stderr.write("processed %i pkgs: %im%.2fs\n" % (nodes, minutes, seconds))
