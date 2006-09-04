@@ -20,6 +20,12 @@ for root, dirs, files in os.walk('pkgcore_checks'):
 		print 'adding package %r' % (package,)
 		packages.append(package)
 
+try:
+	os.getcwd()
+	os.unlink("Manifest")
+except OSError:
+	pass
+
 setup(
 	name="pkgcore-checks",
 	version="0",
