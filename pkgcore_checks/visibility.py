@@ -1,32 +1,32 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os
 from pkgcore.util.compatibility import any
-from pkgcore.util.demandload import demandload
-from pkgcore_checks import base, util
-from pkgcore.util.iterables import caching_iter, expandable_chain
+from pkgcore_checks import base
+from pkgcore.util.iterables import caching_iter
 from pkgcore.util.lists import stable_unique, iflatten_instance
-from pkgcore.util.containers import ProtectedSet
-from pkgcore.restrictions import packages, values
 from pkgcore.package.atom import atom
-from pkgcore_checks.util import get_cpvstr
-demandload(globals(), "pkgcore.util.containers:InvertedContains")
-demandload(globals(), "pkgcore.util.xml:escape")
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.util.containers:InvertedContains "
+    "pkgcore.util.xml:escape ")
 
 
 class VisibilityReport(base.template):
 
     """Visibility dependency scans.
-    Check that at least one solution is possible for a pkg, checking all profiles (defined by arch.list) visibility modifiers per stable/unstable keyword
+    Check that at least one solution is possible for a pkg, checking all
+    profiles (defined by arch.list) visibility modifiers per stable/unstable
+    keyword
     """
 
     feed_type = base.package_feed
-    requires = base.arches_options + base.query_cache_options + base.profile_options
+    requires = base.arches_options + base.query_cache_options + \
+        base.profile_options
 
     vcs_eclasses = ("subversion", "git", "cvs", "darcs")
 
     def __init__(self, options):
+        base.template.__init__(self, options)
         self.arches = frozenset(x.lstrip("~") for x in options.arches)
         self.repo = self.profile_filters = None
         self.keywords_filter = None
@@ -135,8 +135,9 @@ class VisibilityReport(base.template):
                 reporter.add_report(NonsolvableDeps(pkg, attr, key,
                     profile_name, list(failures), masked=masked_status))
 
-    def finish(self, *a):
+    def finish(self, reporter):
         self.repo = self.profile_filters = self.keywords_filter = None
+        base.template.finish(self, reporter)
 
 
 class VisibleVcsPkg(base.Result):
@@ -144,6 +145,7 @@ class VisibleVcsPkg(base.Result):
     __slots__ = ("category", "package", "version", "profile", "arch")
 
     def __init__(self, pkg, arch, profile):
+        base.Result.__init__(self)
         self._store_cpv(pkg)
         self.arch = arch.lstrip("~")
         self.profile = profile
@@ -170,9 +172,8 @@ class NonExistantDeps(base.Result):
     __slots__ = ("category", "package", "version", "attr", "atoms")
     
     def __init__(self, pkg, attr, nonexistant_atoms):
-        self.category = pkg.category
-        self.package = pkg.package
-        self.version = pkg.fullver
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
         self.attr = attr
         self.atoms = tuple(str(x) for x in nonexistant_atoms)
         
@@ -198,6 +199,7 @@ class NonsolvableDeps(base.Result):
         "keyword", "potentials", "masked")
     
     def __init__(self, pkg, attr, keyword, profile, horked, masked=False):
+        base.Result.__init__(self)
         self._store_cpv(pkg)
         self.attr = attr
         self.profile = profile
@@ -206,9 +208,9 @@ class NonsolvableDeps(base.Result):
         self.masked = masked
         
     def to_str(self):
-        s=' '
+        s = ' '
         if self.keyword.startswith("~"):
-            s=''
+            s = ''
         if self.masked:
             s = "masked "+s
         return "%s/%s-%s: %s %s%s: unsolvable %s, solutions: [ %s ]" % \

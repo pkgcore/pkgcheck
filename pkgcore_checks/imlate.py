@@ -23,9 +23,10 @@ class ImlateReport(base.template):
             "imlate, defaults to %s" % ",".join(base.default_arches)))
 
     def __init__(self, options):
+        base.template.__init__(self, options)
         arches = frozenset(x.strip().lstrip("~") for x in options.arches)
         self.target_arches = frozenset("~%s" % x.strip().lstrip("~") 
-            for x in options.arches)
+            for x in arches)
         self.source_arches = frozenset(x.lstrip("~") 
             for x in options.reference_arches)
         self.source_filter = packages.PackageRestriction("keywords",
@@ -55,6 +56,7 @@ class LaggingStableInfo(base.Result):
         "existing_keywords")
     
     def __init__(self, pkg, keywords):
+        base.Result.__init__(self)
         self.category = pkg.category
         self.package = pkg.package
         self.version = pkg.fullver

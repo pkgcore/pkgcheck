@@ -4,10 +4,10 @@
 import os
 from pkgcore_checks.base import template, Result, package_feed
 from pkgcore.util.demandload import demandload
-demandload(globals(), "urllib:urlopen")
-demandload(globals(), "tempfile:NamedTemporaryFile")
-demandload(globals(), "libxml2")
-demandload(globals(), "pkgcore.spawn:spawn,find_binary")
+demandload(globals(), "urllib:urlopen "
+    "tempfile:NamedTemporaryFile "
+    "libxml2 "
+    "pkgcore.spawn:spawn,find_binary ")
 
 
 class MetadataXmlReport(template):
@@ -17,9 +17,11 @@ class MetadataXmlReport(template):
     dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
 
     def __init__(self, options):
+        template.__init__(self, options)
         self.base = getattr(options.src_repo, "base", None)
         self.dtd_file = None
 
+    # protocol... pylint: disable-msg=W0613
     def start(self, repo):
         loc = self.base
         if self.base is not None:
@@ -89,6 +91,7 @@ class BadlyFormedXml(Result):
     __slots__ = ("category", "package", "version", "filename")
     
     def __init__(self, pkg, filename):
+        Result.__init__(self)
         self._store_cpv(pkg)
         self.filename = filename
     
@@ -112,6 +115,7 @@ class InvalidXml(Result):
     __slots__ = ("category", "package", "version", "file")
     
     def __init__(self, pkg, filename):
+        Result.__init__(self)
         self._store_cpv(pkg)
         self.filename = filename
     

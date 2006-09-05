@@ -9,7 +9,6 @@ __all__ = ("default_arches", "arches_option", "arches_options",
 
 import optparse
 
-from pkgcore.restrictions import packages
 from pkgcore_checks import util
 from pkgcore.util.compatibility import any
 from pkgcore.util.currying import pre_curry
@@ -28,6 +27,7 @@ class FinalizingOption(optparse.Option):
         if f is not None:
             self.finalize = pre_curry(f, self)
 
+    # we intentionally replace the method; pylint: disable-msg=E0202
     def finalize(self, options, runner):
         raise NotImplementedError(self, "finalize")
 
@@ -36,6 +36,7 @@ default_arches = ["x86", "x86-fbsd", "amd64", "ppc", "ppc-macos", "ppc64",
     "sparc", "mips", "arm", "hppa", "m68k", "ia64", "s390", "sh", "alpha"]
 default_arches = tuple(sorted(default_arches))
 
+# prototype requires it; pylint: disable-msg=W0613
 def _record_arches(attr, option, opt_str, value, parser):
     setattr(parser.values, attr, tuple(value.split(",")))
 
@@ -83,7 +84,7 @@ def overlay_finalize(option_inst, options, runner):
         repo = conf.repo[options.metadata_src_repo]
     except KeyError:
         raise optparse.OptionValueError("overlayed-repo %r isn't a known repo"
-            % profile_src)
+            % options.metadata_src_repo)
 
     if not isinstance(repo, repository.UnconfiguredTree):
         raise optparse.OptionValueError("profile-repo %r isn't a "

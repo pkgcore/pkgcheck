@@ -9,7 +9,6 @@ __all__ = ("package_feed, versioned_feed", "category_feed", "Feeder")
 
 import itertools, operator
 
-from pkgcore.restrictions import packages
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore_checks import util
 from pkgcore.util.mappings import OrderedDict
@@ -18,8 +17,8 @@ from pkgcore.restrictions import values, packages
 from pkgcore.util.demandload import demandload
 demandload(globals(), "logging ")
 
+# done as convience to checks. pylint: disable-msg=W0611,W0401
 from pkgcore_checks.options import *
-
 
 class template(object):
     feed_type = None
@@ -34,7 +33,7 @@ class template(object):
     def finish(self, reporter):
         pass
     
-    def process(self, chunk, reporter):
+    def feed(self, chunk, reporter):
         raise NotImplementedError
 
 
@@ -42,6 +41,7 @@ class _WipeQueryCache(template):
     requires = query_cache_options
     feed_type = package_feed
 
+    # protocol... pylint: disable-msg=W0613
     def feed(self, pkgs, reporter, feeder):
         feeder.query_cache.clear()
 
@@ -50,6 +50,7 @@ class _WipeEvaluateDepSetCaches(template):
     requires = query_cache_options
     feed_type = package_feed
 
+    # protocol... pylint: disable-msg=W0613
     def feed(self, pkgs, reporter, feeder):
         feeder.pkg_evaluate_depsets_cache.clear()
         feeder.pkg_profiles_cache.clear()
@@ -57,9 +58,11 @@ class _WipeEvaluateDepSetCaches(template):
 
 class ForgetfulDict(dict):
 
-    def __setitem__(self, key, attr):
+    # protocol... pylint: disable-msg=W0613
+    def __setitem__(self, key, val):
         return
     
+    # protocol... pylint: disable-msg=W0613
     def update(self, other):
         return
 
@@ -79,11 +82,7 @@ class Feeder(object):
         self.pkg_evaluate_depsets_cache = {}
         self.pkg_profiles_cache = {}
         self.debug = options.debug
-
-
-    @property
-    def desired_arches(self):
-        return self.options.arches
+        self.desired_arches = getattr(self.options, "arches", ())
 
     def add_check(self, check):
         feed_type = getattr(check, "feed_type", None)
@@ -94,7 +93,8 @@ class Feeder(object):
         elif feed_type == versioned_feed:
             self.cpv_checks.append(check(self.options))
         else:
-            raise TypeError("check feed_type %s unknown for %s" % (feed_type, check))
+            raise TypeError("check feed_type %s unknown for %s" % 
+                (feed_type, check))
 
     def clear_caches(self):
         self.profiles = {}
@@ -102,10 +102,12 @@ class Feeder(object):
     def init_arch_profiles(self):
         if self.profiles_inited:
             return
-        self.arch_profiles = util.get_profiles_desc(self.options.profile_base_dir)
+        self.arch_profiles = \
+            util.get_profiles_desc(self.options.profile_base_dir)
 
         if self.desired_arches is None:
-            self.desired_arches = util.get_repo_known_arches(self.options.profile_base_dir)
+            self.desired_arches = \
+                util.get_repo_known_arches(self.options.profile_base_dir)
 
         self.global_insoluable = set()
         profile_filters = {}
@@ -128,9 +130,11 @@ class Feeder(object):
                 mask = util.get_profile_mask(profile)
                 virtuals = profile.virtuals(self.search_repo)
                 # force all use masks to negated, and all other arches but this
-                non_tristate = frozenset(list(self.desired_arches) + list(profile.use_mask))
+                non_tristate = frozenset(list(self.desired_arches) +
+                    list(profile.use_mask))
                 use_flags = frozenset([stable_key])
-                # used to interlink stable/unstable lookups so that if unstable says it's not visible, stable doesn't try
+                # used to interlink stable/unstable lookups so that if 
+                # unstable says it's not visible, stable doesn't try
                 # if stable says something is visible, unstable doesn't try.
                 stable_cache = set()
                 unstable_insoluable = ProtectedSet(self.global_insoluable)
@@ -140,41 +144,54 @@ class Feeder(object):
 
                 # virtual repo, flags, visibility filter, known_good, known_bad
                 profile_filters[stable_key][profile_name] = \
-                    [virtuals, use_flags, non_tristate, packages.AndRestriction(mask, stable_r), 
+                    [virtuals, use_flags, non_tristate, 
+                        packages.AndRestriction(mask, stable_r), 
                         stable_cache, ProtectedSet(unstable_insoluable)]
                 profile_filters[unstable_key][profile_name] = \
-                    [virtuals, use_flags, non_tristate, packages.AndRestriction(mask, unstable_r), 
+                    [virtuals, use_flags, non_tristate,
+                        packages.AndRestriction(mask, unstable_r), 
                         ProtectedSet(stable_cache), unstable_insoluable]
                 
                 for k in (stable_key, unstable_key):
-                    profile_evaluate_dict.setdefault(k, {}).setdefault((non_tristate, use_flags), []).append(profile_name)
+                    profile_evaluate_dict.setdefault(k, {}).setdefault(
+                        (non_tristate, use_flags), []).append(profile_name)
 
             self.keywords_filter[stable_key] = stable_r
-            self.keywords_filter[unstable_key] = packages.PackageRestriction("keywords", 
+            self.keywords_filter[unstable_key] = packages.PackageRestriction(
+                "keywords", 
                 values.ContainmentMatch(unstable_key))
 
-        self.keywords_filter = OrderedDict((k, self.keywords_filter[k]) for k in sorted(self.keywords_filter))
+        self.keywords_filter = OrderedDict((k, self.keywords_filter[k]) 
+            for k in sorted(self.keywords_filter))
         self.profile_filters = profile_filters
         self.profile_evaluate_dict = profile_evaluate_dict
         self.profiles_inited = True
 
     def identify_profiles(self, pkg):
-        return [(key, flags_dict) for key, flags_dict in self.profile_evaluate_dict.iteritems() if self.keywords_filter[key].match(pkg)]
+        return [(key, flags_dict) for key, flags_dict in
+            self.profile_evaluate_dict.iteritems() if
+            self.keywords_filter[key].match(pkg)]
 
     def collapse_evaluate_depset(self, pkg, attr, depset):
         depset_profiles = self.pkg_evaluate_depsets_cache.get((pkg, attr), None)
         if depset_profiles is None:
             profiles = self.pkg_profiles_cache.get(pkg, None)
             if profiles is None:
-                profiles = self.pkg_profiles_cache[pkg] = self.identify_profiles(pkg)
+                profiles = self.identify_profiles(pkg)
+                self.pkg_profiles_cache[pkg] = profiles
             diuse = depset.known_conditionals
             collapsed = {}
             for key, flags_dict in profiles:
                 for flags, profile_names in flags_dict.iteritems():
                     tri_flags = diuse.difference(flags[0])
                     set_flags = diuse.intersection(flags[1])
-                    collapsed.setdefault((tri_flags, set_flags), []).extend((key, profile, self.profile_filters[key][profile]) for profile in profile_names)
-            depset_profiles = self.pkg_evaluate_depsets_cache[(pkg, attr)] = [(depset.evaluate_depset(k[1], tristate_filter=v[0][2][2]), v) for k,v in collapsed.iteritems()]
+                    collapsed.setdefault((tri_flags, set_flags), []).extend(
+                        (key, profile, self.profile_filters[key][profile])
+                            for profile in profile_names)
+            depset_profiles = [(depset.evaluate_depset(k[1], 
+                tristate_filter=v[0][2][2]), v) for k,v in 
+                collapsed.iteritems()]
+            self.pkg_evaluate_depsets_cache[(pkg, attr)] = depset_profiles
         return depset_profiles
 
     def _generic_fire(self, attr, check_type, checks, *args):
@@ -184,7 +201,8 @@ class Feeder(object):
         for check in checks:
             if attr == "start" and check_uses_profiles(check):
                 self.init_arch_profiles()
-                a = args + (self.global_insoluable, self.keywords_filter, self.profile_filters)
+                a = args + (self.global_insoluable, self.keywords_filter,
+                    self.profile_filters)
             else:
                 a = args
             try:
@@ -193,7 +211,8 @@ class Feeder(object):
             except (SystemExit, KeyboardInterrupt):
                 raise
             except Exception, e:
-                logging.error("type %s, check %s failed running %s: %s" % (check_type, check, attr, e))
+                logging.error("type %s, check %s failed running %s: %s" % 
+                    (check_type, check, attr, e))
                 del e
         # rebuild the checks should any have failed
         for x in xrange(len(checks)):
@@ -211,9 +230,14 @@ class Feeder(object):
         return bool(getattr(self, "enable_query_cache", False))
 
     def run(self, reporter, limiter=packages.AlwaysTrue):
+
         enabled = {}.fromkeys(["cats", "pkgs", "vers"], False)
-        for var, attr in (("cats", ["category"]), ("pkgs", ["package"]), ("vers", ["fullver", "version", "rev"])):
-            enabled[var] = bool(list(collect_package_restrictions(limiter, attr)))
+
+        for var, attr in (("cats", ["category"]), ("pkgs", ["package"]),
+            ("vers", ["fullver", "version", "rev"])):
+
+            enabled[var] = bool(list(collect_package_restrictions(limiter,
+                attr)))
 
         cats = enabled.pop("cats")
         pkgs = enabled.pop("pkgs")
@@ -292,23 +316,30 @@ class Feeder(object):
         checks = tuple((check_uses_query_cache(c), c) for c in checks)
         grouping_iter = itertools.groupby(iterable, operator.attrgetter(attr))
         for key, pkgs in grouping_iter:
-            # convert the iter to a tuple; note that using a caching_iter may be better here,
-            # but need to evaluate performance affects before hand
+            # convert the iter to a tuple; note that using a caching_iter
+            # may be better here, but need to evaluate performance affects
+            # before hand
             pkgs = tuple(pkgs)
-            self.run_check(checks, pkgs, reporter, "check %s"+" "+attr+": '"+key+"' threw exception %s")
+            # XXX string generation per call is inneficient here.
+            self.run_check(checks, pkgs, reporter,
+                "check %s"+" "+attr+": '"+key+"' threw exception %s")
             for pkg in pkgs:
                 yield pkg
 
     def trigger_cat_checks(self, checks, iterable, reporter):
-        return self._generic_trigger_checks(checks, "category", iterable, reporter)
+        return self._generic_trigger_checks(checks, "category", iterable,
+            reporter)
     
     def trigger_pkg_checks(self, checks, iterable, reporter):
-        return self._generic_trigger_checks(checks, "package", iterable, reporter)
+        return self._generic_trigger_checks(checks, "package", iterable,
+            reporter)
 
     def trigger_ver_checks(self, checks, iterable, reporter):
-        checks = tuple((check_uses_query_cache(check), check) for check in checks)
+        checks = tuple((check_uses_query_cache(check), check)
+            for check in checks)
         for pkg in iterable:
-            self.run_check(checks, pkg, reporter, "check %s cpv: '"+str(pkg)+"' threw exception %s")
+            self.run_check(checks, pkg, reporter,
+                "check %s cpv: '"+str(pkg)+"' threw exception %s")
             yield pkg
     
 

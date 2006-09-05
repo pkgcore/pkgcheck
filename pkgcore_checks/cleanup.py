@@ -11,7 +11,7 @@ class RedundantVersionReport(template):
     keywords standpoint
     
     Example: pkga-1 is keyworded amd64, pkga-2 is amd64.  
-    pkga-2 can potentially be removed.
+    pkga-1 can potentially be removed.
     """
 
     feed_type = package_feed
@@ -54,6 +54,7 @@ class RedundantVersionWarning(Result):
     __slots__ = ("category", "package", "slot", "later_versions")
 
     def __init__(self, pkg, higher_pkgs):
+        Result.__init__(self)
         self.category = pkg.category
         self.package = pkg.package
         self.version = pkg.fullver

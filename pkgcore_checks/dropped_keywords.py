@@ -12,6 +12,7 @@ class DroppedKeywordsReport(template):
     requires = arches_options
     
     def __init__(self, options):
+        template.__init__(self, options)
         self.arches = dict((k, None) for k in options.arches)
     
     def feed(self, pkgset, reporter):
@@ -44,6 +45,7 @@ class DroppedKeywordWarning(Result):
     __slots__ = ("arch", "category", "package",)
 
     def __init__(self, arch, pkg):
+        Result.__init__(self)
         self._store_cpv(pkg)
         self.arch = arch
     

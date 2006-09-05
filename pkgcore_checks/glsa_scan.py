@@ -6,7 +6,7 @@ import os, optparse
 from pkgcore_checks import base
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.pkgsets.glsa:GlsaDirSet "
-    "pkgcore.restrictions:packages.values "
+    "pkgcore.restrictions:packages,values "
     "pkgcore.util.xml:escape "
     "pkgcore.restrictions.util:collect_package_restrictions "
     "warnings ")
@@ -19,6 +19,7 @@ class GlsaLocationOption(base.FinalizingOption):
             help="source directoy for glsas; tries to autodetermine it, may "
                 "be required if no glsa dirs are known")
 
+    # protocol/attr trick in bas pylint: disable-msg=W0613,E0202
     def finalize(self, options, runner):
         options.glsa_enabled = True
         glsa_loc = options.glsa_location
@@ -59,12 +60,16 @@ class TreeVulnerabilitiesReport(base.template):
     requires = (GlsaLocation_option,)
 
     def __init__(self, options):
+        base.template.__init__(self, options)
         self.options = options
-        self.glsa_dir = options.glsa_location	
+        self.glsa_dir = options.glsa_location
+        self.enabled = False
+        self.vulns = {}
     
+    # protocol... pylint: disable-msg=W0613
     def start(self, repo):
         self.enabled = self.options.glsa_enabled
-        self.vulns = {}
+        self.vulns.clear()
         if not self.enabled:
             return
         # this is a bit brittle
@@ -77,6 +82,7 @@ class TreeVulnerabilitiesReport(base.template):
 
     def finish(self, reporter):
         self.vulns.clear()
+        base.template.finish(self, reporter)
             
     def feed(self, pkg, reporter):
         if self.enabled:
@@ -92,6 +98,7 @@ class VulnerablePackage(base.Result):
     __slots__ = ("category", "package", "version", "arch", "glsa")
 
     def __init__(self, pkg, glsa):
+        base.Result.__init__(self)
         self._store_cpv(pkg)
         arches = set()
         for v in collect_package_restrictions(glsa, ["keywords"]):

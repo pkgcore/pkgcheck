@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import logging, os, stat, errno
+import os
 from operator import attrgetter
 from pkgcore_checks import base
 
@@ -15,7 +15,8 @@ from pkgcore.util.iterables import expandable_chain
 from pkgcore.fetch import fetchable
 from pkgcore.restrictions import packages
 from pkgcore.util.osutils import listdir_files
-demandload(globals(), "pkgcore.util.xml:escape")
+demandload(globals(), "pkgcore.util.xml:escape "
+    "logging errno ")
 
 default_attrs = ("depends", "rdepends", "post_rdepends", "provides",
     "license", "fetchables", "iuse")
@@ -32,6 +33,7 @@ class MetadataReport(base.template):
         base.license_options
     
     def __init__(self, options):
+        base.template.__init__(self, options)
         force_expansion = ("depends", "rdepends", "post_rdepends", "provides")
         self.attrs = [(a, attrgetter(a), a in force_expansion)
             for a in default_attrs]
@@ -49,10 +51,8 @@ class MetadataReport(base.template):
                 o = getter(pkg)
                 if force_expansion:
                     for d_atom in iflatten_instance(o, atom):
-                        d_atom.key
-                        d_atom.category
-                        d_atom.package
                         if isinstance(d_atom, atom):
+                            # force expansion. pylint: disable-msg=W0104
                             d_atom.restrictions
                 if attr_name == "license":
                     if self.licenses is not None:
@@ -152,7 +152,8 @@ class MetadataReport(base.template):
         known_iuse.update(unstated_iuse)
         return frozenset(known_iuse), frozenset(unstated_iuse)
             
-    def start(self, repo, *a):
+    # protocol... pylint: disable-msg=W0613
+    def start(self, repo):
         # we are given extra args since we use profiles; don't care about it
         # however
         if any(x[0] == "license" for x in self.attrs):
@@ -255,6 +256,7 @@ class BadRestricts(base.Result):
     __slots__ = ("category", "package", "version", "restricts", "deprecated")
     
     def __init__(self, pkg, restricts, deprecated=None):
+        base.Result.__init__(self)
         self._store_cpv(pkg)
         self.restricts = restricts
         self.deprecated = deprecated
@@ -267,7 +269,7 @@ class BadRestricts(base.Result):
             s = "unknown restricts- [ %s ]" % ", ".join(self.restricts)
         if self.deprecated:
             if s:
-                s+=", "
+                s += ", "
             s += "deprecated (drop the 'no') [ %s ]" % ", ".join(
                 self.deprecated)
         return "%s/%s-%s: %s" % (self.category, self.package, self.version, s)
@@ -298,6 +300,7 @@ class CrappyDescription(base.Result):
     __slots__ = ("category", "package", "version", "msg")
 
     def __init__(self, pkg, msg):
+        base.Result.__init__(self)
         self._store_cpv(pkg)
         self.msg = msg
     
@@ -312,7 +315,8 @@ class CrappyDescription(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.msg)
+</check>""" % (self.__class__.__name__, self.category, self.package, 
+    self.version, self.msg)
 
 
 class UnstatedIUSE(base.Result):
@@ -320,7 +324,8 @@ class UnstatedIUSE(base.Result):
     __slots__ = ("category", "package", "version", "attr", "flags")
     
     def __init__(self, pkg, attr, flags):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
         self.attr, self.flags = attr, tuple(flags)
     
     def to_str(self):
@@ -344,6 +349,7 @@ class MissingUri(base.Result):
     __slots__ = ("category", "package", "version", "filename")
 
     def __init__(self, pkg, filename):
+        base.Result.__init__(self)
         self._store_cpv(pkg)
         self.filename = filename
     
@@ -367,13 +373,15 @@ class BadProto(base.Result):
     __slots__ = ("category", "package", "version", "filename", "bad_uri")
 
     def __init__(self, pkg, filename, bad_uri):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
         self.filename = filename
         self.bad_uri = bad_uri
     
     def to_str(self):
-        return "%s/%s-%s: file %s, bad proto/uri- [ '%s' ]" % (self.category, self.package,
-            self.version, self.filename, "', '".join(self.bad_uri))
+        return "%s/%s-%s: file %s, bad proto/uri- [ '%s' ]" % (self.category, 
+            self.package, self.version, self.filename, 
+                "', '".join(self.bad_uri))
     
     def to_xml(self):
         return \
@@ -382,8 +390,8 @@ class BadProto(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>file %s has invalid uri- %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
-    escape(self.filename), escape(", ".join(self.bad_uri)))
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, escape(self.filename), escape(", ".join(self.bad_uri)))
 
 
 class MetadataError(base.Result):
@@ -391,12 +399,13 @@ class MetadataError(base.Result):
     __slots__ = ("category", "package", "version", "attr", "msg")
     
     def __init__(self, pkg, attr, msg):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
         self.attr, self.msg = attr, str(msg)
     
     def to_str(self):
-        return "%s/%s-%s: attr(%s): %s" % (self.category, self.package, self.version, 
-            self.attr, self.msg)
+        return "%s/%s-%s: attr(%s): %s" % (self.category, self.package,
+            self.version, self.attr, self.msg)
 
     def to_xml(self):
         return \
@@ -405,7 +414,8 @@ class MetadataError(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version,
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version,
     "attr '%s' threw an error- %s" % (self.attr, escape(self.msg)))
 
 
@@ -413,12 +423,12 @@ class EmptyKeywardsMinor(base.Result):
     """pkg has no set keywords"""
 
     def __init__(self, pkg):
-        self.category = pkg.category
-        self.package = pkg.package
-        self.version = pkg.fullver
-    
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+
     def to_str(self):
-        return "%s/%s-%s: no keywords set" % (self.category, self.package, self.version)
+        return "%s/%s-%s: no keywords set" % (self.category, self.package,
+            self.version)
     
     def to_xml(self):
         return \
@@ -427,16 +437,16 @@ class EmptyKeywardsMinor(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>no keywords set</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version)
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version)
 
         
 class StupidKeywardsMinor(base.Result):
     """pkg that is using -*; package.mask in profiles addresses this already"""
     
     def __init__(self, pkg):
-        self.category = pkg.category
-        self.package = pkg.package
-        self.version = pkg.fullver
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
     
     def to_str(self):
         return "%s/%s-%s: keywords contains -*, use package.mask instead" % \
@@ -449,4 +459,5 @@ class StupidKeywardsMinor(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>keywords contains -*, should use package.mask</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version)
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version)

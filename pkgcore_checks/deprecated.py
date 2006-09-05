@@ -62,6 +62,7 @@ class DeprecatedEclass(Result):
     __slots__ = ("category", "package", "version", "eclasses")
     
     def __init__(self, pkg, eclasses):
+        Result.__init__(self)
         self._store_cpv(pkg)
         self.eclasses = tuple(sorted(eclasses))
 

@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import time, os
+import time
 from pkgcore_checks.base import (template, versioned_feed, Result,
     arches_options)
 
@@ -15,9 +15,12 @@ class StaleUnstableReport(template):
     requires = arches_options
     
     def __init__(self, options, staleness=long(day*30)):
+        template.__init__(self, options)
         self.arches = options.arches
         self.staleness = staleness
+        self.start_time = None
     
+    # protocol prototype... pylint: disable-msg=W0613
     def start(self, repo):
         self.start_time = time.time()
         
@@ -40,6 +43,7 @@ class StaleUnstableKeyword(Result):
     __slots__ = ("category", "package", "version", "keywords", "period")
     
     def __init__(self, pkg, period):
+        Result.__init__(self)
         self._store_cpv(pkg)
         self.keywords = tuple(x for x in pkg.keywords if x.startswith("~"))
         self.period = period

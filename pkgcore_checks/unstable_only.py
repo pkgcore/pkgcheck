@@ -12,6 +12,7 @@ class UnstableOnlyReport(template):
     requires = arches_options
 
     def __init__(self, options):
+        template.__init__(self, options)
         arches = set(x.strip().lstrip("~") for x in options.arches)
         # stable, then unstable, then file
         self.arch_restricts = {}
@@ -25,6 +26,7 @@ class UnstableOnlyReport(template):
 
     def finish(self, reporter):
         self.arch_restricts.clear()
+        template.finish(self, reporter)
 
     def feed(self, pkgset, reporter):
         # stable, then unstable, then file
@@ -48,6 +50,7 @@ class UnstableOnly(Result):
     __slots__ = ("category", "package", "version", "arch")
     
     def __init__(self, pkgs, arch):
+        Result.__init__(self)
         self._store_cp(pkgs[0])
         self.arch = arch
         self.version = tuple(x.fullver for x in pkgs)

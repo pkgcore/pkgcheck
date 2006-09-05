@@ -2,13 +2,11 @@
 # License: GPL2
 
 import os, errno
-from operator import attrgetter
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.ebuild.profiles:OnDiskProfile "
     "pkgcore.ebuild.domain:generate_masking_restrict "
     "pkgcore.util.mapping:LazyValDict "
-    "pkgcore.util.packages:get_raw_pkg "
-    "logging ")
+    "pkgcore.util.packages:get_raw_pkg ")
 
 
 def get_profile_from_repo(repo, profile_name):

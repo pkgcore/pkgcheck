@@ -13,12 +13,23 @@ import os, stat
 pjoin = os.path.join
 
 
-allowed_filename_chars="a-zA-Z0-9._-+:"
+allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()
 allowed_filename_chars_set.update(chr(x) for x in xrange(ord('a'), ord('z')+1))
 allowed_filename_chars_set.update(chr(x) for x in xrange(ord('A'), ord('Z')+1))
 allowed_filename_chars_set.update(chr(x) for x in xrange(ord('0'), ord('9')+1))
 allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
+
+
+def utf8_check(pkg, base, filename, reporter):
+    try:
+        # pylint is insane. pylint: disable-msg=C0322
+        codecs.open(pjoin(base, filename), mode="rb", 
+            encoding="utf8", buffering=8192).read()
+    except UnicodeDecodeError, e:
+        reporter.add_report(InvalidUtf8(pkg, filename, str(e)))
+        del e
+
 
 class PkgDirReport(template):
     """actual ebuild directory scans; file size, glep31 rule enforcement."""
@@ -46,10 +57,10 @@ class PkgDirReport(template):
                     reporter.add_report(ExecutableFile(pkgset[0], filename))
             
             if filename.endswith(".ebuild"):
-                self.utf8_check(pkgset[0], base, filename, reporter)
+                utf8_check(pkgset[0], base, filename, reporter)
 
         try:
-            self.utf8_check(pkgset[0], base, "ChangeLog", reporter)
+            utf8_check(pkgset[0], base, "ChangeLog", reporter)
         except IOError, e:
             if e.errno != errno.ENOENT:
                 raise
@@ -57,7 +68,7 @@ class PkgDirReport(template):
             reporter.add_report(MissingFile(pkgset[0], "ChangeLog"))
                 
         if not os.path.exists(pjoin(base, "files")):
-            reporter.add_report(MissingFile(Pkgset[0], "files"))
+            reporter.add_report(MissingFile(pkgset[0], "files"))
             return
                             
         size = 0
@@ -84,20 +95,13 @@ class PkgDirReport(template):
         if size > 20480:
             reporter.add_report(SizeViolation(pkgset[0], size))
 
-    def utf8_check(self, pkg, base, filename, reporter):
-        try:
-            codecs.open(pjoin(base, filename), mode="rb", encoding="utf8",
-                buffering=8192).read()
-        except UnicodeDecodeError, e:
-            reporter.add_report(InvalidUtf8(pkgset[0], filename, str(e)))
-            del e
-
 
 class MissingFile(Result):
     """pkg is missing an expected file entry"""
     __slots__ = ("category", "package", "filename")
     
     def __init__(self, pkg, filename):
+        Result.__init__(self)
         self._store_cp(pkg)
         self.filename = filename
     
@@ -120,7 +124,8 @@ class ExecutableFile(Result):
     __slots__ = ("category", "package", "filename")
     
     def __init__(self, pkg, filename):
-        self._store_(pkg)
+        Result.__init__(self)
+        self._store_cp(pkg)
         self.filename = filename
     
     def to_str(self):
@@ -142,7 +147,8 @@ class SizeViolation(Result):
     __slots__ = ("category", "package", "size")
     
     def __init__(self, pkg, size):
-        self.category, self.package = pkg.category, pkg.package
+        Result.__init__(self)
+        self._store_cp(pkg)
         self.size = size
     
     def to_str(self):
@@ -165,7 +171,8 @@ class Glep31Violation(Result):
     __slots__ = ("category", "package", "filename")
     
     def __init__(self, pkg, filename):
-        self.category, self.package = pkg.category, pkg.package
+        Result.__init__(self)
+        self._store_cp(pkg)
         self.filename = filename
     
     def to_str(self):
@@ -189,7 +196,8 @@ class InvalidUtf8(Result):
     __slots__ = ("category", "package", "filename", "err")
     
     def __init__(self, pkg, filename, err):
-        self.category, self.package = pkg.category, pkg.package
+        Result.__init__(self)
+        self._store_cp(pkg)
         self.filename = filename
         self.err = err
     

@@ -10,6 +10,8 @@ from pkgcore.util.commandline import generate_restriction
 from pkgcore.util.lists import stable_unique
 from pkgcore.restrictions import packages
 from pkgcore.util.demandload import demandload
+
+import pkgcore_checks.options
 demandload(globals(), "os logging time optparse "
     "pkgcore.fs.util:normpath "
     "pkgcore.util.compatibility:any "
@@ -39,8 +41,8 @@ def get_option_parser(checks=()):
         help="print what checks are available to run and exit")
     parser.add_option("-x", "--xml", action="store_true", default=False,
         dest="to_xml", help="dump xml formated result")
-    parser.add_options(pkgcore_checks.base.debugging_options)
-    parser.add_options(pkgcore_checks.base.overlay_options)
+    parser.add_options(pkgcore_checks.options.debugging_options)
+    parser.add_options(pkgcore_checks.options.overlay_options)
 
     # yes linear, but not a huge issue.
     new_opts = []
@@ -55,14 +57,14 @@ def get_option_parser(checks=()):
 
 def finalize_options(checks, options, runner):
     seen = set()
-    for opt in pkgcore_checks.base.overlay_options:
-        if isinstance(opt, pkgcore_checks.base.FinalizingOption) \
+    for opt in pkgcore_checks.options.overlay_options:
+        if isinstance(opt, pkgcore_checks.options.FinalizingOption) \
             and opt not in seen:
             opt.finalize(options, runner)
             seen.add(opt)
     for c in checks:
         for opt in c.requires:
-            if isinstance(opt, pkgcore_checks.base.FinalizingOption) \
+            if isinstance(opt, pkgcore_checks.options.FinalizingOption) \
                 and opt not in seen:
                 opt.finalize(options, runner)
                 seen.add(opt)

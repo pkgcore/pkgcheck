@@ -3,11 +3,9 @@
 
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
-from pkgcore_checks import base, util
+from pkgcore_checks import base
 from pkgcore.util.iterables import caching_iter
-from pkgcore.util.lists import stable_unique, iflatten_instance
-from pkgcore.util.containers import ProtectedSet
-from pkgcore.restrictions import packages, values, boolean
+from pkgcore.restrictions import boolean
 from pkgcore.package.atom import atom
 from pkgcore.package import virtual
 from pkgcore_checks.util import get_cpvstr
@@ -30,6 +28,7 @@ class ModularXPortingReport(base.template):
         "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
 
     def __init__(self, options):
+        base.template.__init__(self, options)
         self.arches = frozenset(x.lstrip("~") for x in options.arches)
         self.repo = self.profile_filters = None
         self.keywords_filter = None
@@ -61,9 +60,6 @@ class ModularXPortingReport(base.template):
         if unported and ported:
             for u in unported:
                 reporter.add_report(SuggestRemoval(u, ported))
-
-    def invalid_virtual_x11(self, atom):
-        return atom.match(self.x7) and not atom.match(self.x6)
 
     def check_pkg(self, pkg, feeder, reporter, unported, ported):
         query_cache = feeder.query_cache
@@ -200,8 +196,9 @@ class ModularXPortingReport(base.template):
                 reporter.add_report(VisibilityCausedNotPorted(pkg, key,
                     profile_name, attr, sorted(failed)))
 
-    def finish(self, *a):
+    def finish(self, reporter):
         self.repo = self.profile_filters = self.keywords_filter = None
+        base.template.finish(self, reporter)
 
 
 class SuggestRemoval(base.Result):
@@ -210,6 +207,7 @@ class SuggestRemoval(base.Result):
     
     __slots__ = ("category", "package", "version", "ported")
     def __init__(self, pkg, ported):
+        base.Result.__init__(self)
         self._store_cpv(pkg)
         self.ported = tuple(get_cpvstr(x) for x in ported)
     
@@ -237,6 +235,7 @@ class BadRange(base.Result):
     
     __slots__ = ("category", "package", "version", "attr", "atom")
     def __init__(self, pkg, attr, atom):
+        base.Result.__init__(self)
         self._store_cpv(pkg)
         self.attr = attr
         self.atoms = tuple(str(x) for x in atom)
@@ -264,6 +263,7 @@ class NotPorted(base.Result):
     __slots__ = ("category", "package", "version", "attr", "or_block")
 
     def __init__(self, pkg, attr, or_block):
+        base.Result.__init__(self)
         self._store_cpv(pkg)
         self.attr = attr
         self.or_block = or_block
@@ -295,6 +295,7 @@ class VisibilityCausedNotPorted(base.Result):
         "profile", "failed")
 
     def __init__(self, pkg, keyword, profile, attr, failed):
+        base.Result.__init__(self)
         self._store_cpv(pkg)
         self.attr = attr
         self.keyword = keyword
