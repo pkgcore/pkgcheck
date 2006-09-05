@@ -4,11 +4,12 @@
 import os, optparse
 
 from pkgcore_checks import base
-from pkgcore.pkgsets.glsa import GlsaDirSet
-from pkgcore.restrictions.util import collect_package_restrictions
-from pkgcore.restrictions import packages, values
-from pkgcore.util.xml import escape
-
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.pkgsets.glsa:GlsaDirSet "
+    "pkgcore.restrictions:packages.values "
+    "pkgcore.util.xml:escape "
+    "pkgcore.restrictions.util:collect_package_restrictions "
+    "warnings ")
 
 class GlsaLocationOption(base.FinalizingOption):
 
@@ -18,6 +19,7 @@ class GlsaLocationOption(base.FinalizingOption):
             help="source directoy for glsas; tries to autodetermine it, may be required if no glsa dirs are known")
 
     def finalize(self, options, runner):
+        options.glsa_enabled = True
         glsa_loc = options.glsa_location
         if glsa_loc is not None:
             if not os.path.isdir(glsa_loc):
@@ -25,8 +27,13 @@ class GlsaLocationOption(base.FinalizingOption):
         else:
             glsa_loc = os.path.join(base.get_repo_base(options), "metadata", "glsa")
             if not os.path.isdir(glsa_loc):
-                raise optparse.OptionValueError("--glsa-dir must be specified, couldn't identify glsa src from %r" % options.src_repo)
-
+                # form of 'optional' limiting; if they are using -c, force the error, else disable
+                if options.check_to_run:
+                    raise optparse.OptionValueError("--glsa-dir must be specified, couldn't identify glsa src from %r" % options.src_repo)
+                options.glsa_enabled = False
+                warnings.warn("disabling GLSA checks due to no glsa source being found, and the check not being explicitly enabled; this behaviour may change")
+                return
+        
         options.glsa_location = base.abspath(glsa_loc)
 
 
@@ -40,9 +47,13 @@ class TreeVulnerabilitiesReport(base.template):
     requires = (GlsaLocation_option,)
 
     def __init__(self, options):
+        self.options = options
         self.glsa_dir = options.glsa_location	
     
     def start(self, repo):
+        self.enabled = self.options.glsa_enabled
+        if not self.enabled:
+            return
         self.vulns = {}
         # this is a bit brittle
         for r in GlsaDirSet(self.glsa_dir):
@@ -55,9 +66,10 @@ class TreeVulnerabilitiesReport(base.template):
         self.vulns.clear()
             
     def feed(self, pkg, reporter):
-        for vuln in self.vulns.get(pkg.key, []):
-            if vuln.match(pkg):
-                reporter.add_report(VulnerablePackage(pkg, vuln))
+        if self.enabled:
+            for vuln in self.vulns.get(pkg.key, []):
+                if vuln.match(pkg):
+                    reporter.add_report(VulnerablePackage(pkg, vuln))
 
 
 class VulnerablePackage(base.Result):
