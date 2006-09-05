@@ -61,7 +61,7 @@ class MetadataReport(base.template):
                         if iuse:
                             reporter.add_report(MetadataError(pkg, "iuse", 
                                 "iuse unknown flags- [ %s ]" % ", ".join(iuse)))
-            except SystemExit:
+            except (KeyboardInterrupt, SystemExit):
                 raise
             except (MetadataException, MalformedAtom, ValueError), e:
                 reporter.add_report(MetadataError(pkg, attr_name, "error- %s" % e))

@@ -114,7 +114,11 @@ if __name__ == "__main__":
     checks = collect_available_checks()
     args = sys.argv[1:]
     parser = get_option_parser(checks)
-    options, args = parser.parse_args()
+    try:
+        options, args = parser.parse_args()
+    except optparse.OptionValueError, ov:
+        sys.stderr.write("arg processing failed: see --help\n%s\n" % str(ov))
+        sys.exit(-1)
 
     if options.list_checks:
         display_checks(checks)
@@ -158,7 +162,11 @@ if __name__ == "__main__":
     else:
         reporter = pkgcore_checks.base.StrReporter(sys.stdout)
     runner = pkgcore_checks.base.Feeder(repo, options)
-    finalize_options(checks, options, runner)
+    try:
+        finalize_options(checks, options, runner)
+    except optparse.OptionValueError, ov:
+        sys.stderr.write("arg processing failed: see --help\n%s\n" % str(ov))
+        sys.exit(-1)
 
     for obj in checks:
         try:
