@@ -47,7 +47,8 @@ class DeprecatedEclassReport(template):
     'webapp-apache',
     'xfree'))
 
-    __doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses:%s\n" % ", ".join(sorted(blacklist))
+    __doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses:%s\n" % \
+        ", ".join(sorted(blacklist))
 
     def feed(self, pkg, reporter):
         bad = self.blacklist.intersection(pkg.data["_eclasses_"])
@@ -61,12 +62,12 @@ class DeprecatedEclass(Result):
     __slots__ = ("category", "package", "version", "eclasses")
     
     def __init__(self, pkg, eclasses):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        self._store_cpv(pkg)
         self.eclasses = tuple(sorted(eclasses))
 
     def to_str(self):
-        return "%s/%s-%s: deprecated eclasses [ %s ]" % (self.category, self.package, self.version,
-            ", ".join(self.eclasses))
+        return "%s/%s-%s: deprecated eclasses [ %s ]" % (self.category, 
+            self.package, self.version, ", ".join(self.eclasses))
 
     def to_xml(self):
         return \
@@ -75,5 +76,5 @@ class DeprecatedEclass(Result):
     <package>%s</package>
     <version>%s</version>
     <msg>deprecated eclass usage- %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
-    ", ".join(self.eclasses))
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, ", ".join(self.eclasses))

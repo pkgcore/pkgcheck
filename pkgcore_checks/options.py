@@ -1,9 +1,11 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-__all__ = ("default_arches", "arches_option", "arches_options", "query_cache_options", "check_uses_query_cache", 
-    "overlay_options", "profile_options", "check_uses_profiles", "FinalizingOption", "_record_arches", 
-    "license_options", "abspath", "get_repo_base", "debugging_options")
+__all__ = ("default_arches", "arches_option", "arches_options",
+    "query_cache_options", "check_uses_query_cache", "overlay_options",
+    "profile_options", "check_uses_profiles", "FinalizingOption",
+    "_record_arches", "license_options", "abspath", "get_repo_base",
+    "debugging_options")
 
 import optparse
 
@@ -37,30 +39,39 @@ default_arches = tuple(sorted(default_arches))
 def _record_arches(attr, option, opt_str, value, parser):
     setattr(parser.values, attr, tuple(value.split(",")))
 
-arches_option = optparse.Option("-a", "--arches", action='callback', callback=pre_curry(_record_arches, "arches"), type='string',  
-    default=default_arches, help="comma seperated list of what arches to run, defaults to %s" % ",".join(default_arches))
+arches_option = optparse.Option("-a", "--arches", action='callback',
+    callback=pre_curry(_record_arches, "arches"), type='string',  
+    default=default_arches,
+    help="comma seperated list of what arches to run, defaults to %s" %
+        ",".join(default_arches))
 arches_options = (arches_option,)
 
 
+# protocol requires the unused args- pylint: disable-msg=W0613
 def enable_query_caching(option_inst, options, runner):
     runner.enable_query_cache = True
 
 query_cache_options = \
-    (FinalizingOption("--reset-caching-per-category", action='store_const', dest='query_caching_freq', 
-        const='cat', finalizer=enable_query_caching,
-        help="clear query caching after every category (defaults to every package)"),
-    optparse.Option("--reset-caching-per-package", action='store_const', dest='query_caching_freq',
-        const='pkg', default='pkg',
+    (FinalizingOption("--reset-caching-per-category", action='store_const',
+        dest='query_caching_freq', const='cat', finalizer=enable_query_caching,
+        help="clear query caching after every category (defaults to every "
+            "package)"),
+
+    optparse.Option("--reset-caching-per-package", action='store_const',
+        dest='query_caching_freq', const='pkg', default='pkg',
         help="clear query caching after ever package (this is the default)"),
-    optparse.Option("--reset-caching-per-version", action='store_const', dest='query_caching_freq',
-        const='ver',
-        help="clear query caching after ever version (defaults to every package)"))
+
+    optparse.Option("--reset-caching-per-version", action='store_const',
+        dest='query_caching_freq', const='ver',
+        help="clear query caching after ever version (defaults to every "
+            "package)")
+    )
 
 
 def check_uses_query_cache(check):
     return any(x in query_cache_options for x in check.requires)
 
-
+# protocol requires the unused args- pylint: disable-msg=W0613
 def overlay_finalize(option_inst, options, runner):
     if options.metadata_src_repo is None:
         options.repo_base = None
@@ -71,19 +82,22 @@ def overlay_finalize(option_inst, options, runner):
     try:
         repo = conf.repo[options.metadata_src_repo]
     except KeyError:
-        raise optparse.OptionValueError("overlayed-repo %r isn't a known repo" % profile_src)
+        raise optparse.OptionValueError("overlayed-repo %r isn't a known repo"
+            % profile_src)
 
     if not isinstance(repo, repository.UnconfiguredTree):
-        raise optparse.OptionValueError("profile-repo %r isn't an pkgcore.ebuild.repository.UnconfiguredTree instance; must specify a raw ebuild repo, not type %r: %r" %
-            (repo.__class__, repo))
+        raise optparse.OptionValueError("profile-repo %r isn't a "
+            "pkgcore.ebuild.repository.UnconfiguredTree instance; must specify "
+            "a raw ebuild repo, not type %r: %r" % (repo.__class__, repo))
     options.src_repo = repo
     options.repo_base = abspath(repo.base)
     runner.search_repo = multiplex.tree(options.target_repo, options.src_repo)
 
 
-overlay_options = (FinalizingOption("-r", "--overlayed-repo", action='store', type='string', dest='metadata_src_repo',
-    finalizer=overlay_finalize,
-    help="if the target repository is an overlay, specify the repository name to pull profiles/license from"),)
+overlay_options = (FinalizingOption("-r", "--overlayed-repo", action='store',
+    type='string', dest='metadata_src_repo', finalizer=overlay_finalize,
+    help="if the target repository is an overlay, specify the repository name "
+        "to pull profiles/license from"),)
     
 
 def get_repo_base(options, throw_error=True, repo=None):
@@ -93,23 +107,27 @@ def get_repo_base(options, throw_error=True, repo=None):
         repo = options.src_repo
     if throw_error:
         if not isinstance(repo, repository.UnconfiguredTree):
-            raise optparse.OptionValueError("target repo %r isn't a pkgcore.ebuild.repository.UnconfiguredTree instance; "
+            raise optparse.OptionValueError("target repo %r isn't a "
+                "pkgcore.ebuild.repository.UnconfiguredTree instance; "
                 "must specify the PORTDIR repo via --overlayed-repo" % repo)
 
     return getattr(repo, "base", None)
 
 
+# protocol requires the unused args- pylint: disable-msg=W0613
 def profile_finalize(option_inst, options, runner):
     runner.enable_profiles = True
     profile_loc = getattr(options, "profile_dir", None)
 
     if profile_loc is not None:
         if not os.path.isdir(profile_loc):
-            raise optparse.OptionValueError("profile-base location %r doesn't exist/isn't a dir" % profile_loc)
+            raise optparse.OptionValueError("profile-base location %r doesn't "
+                "exist/isn't a dir" % profile_loc)
     else:
         profile_loc = os.path.join(get_repo_base(options), "profiles")
         if not os.path.isdir(profile_loc):
-            raise optparse.OptionValueError("repo %r lacks a profiles directory" % options.src_repo)
+            raise optparse.OptionValueError("repo %r lacks a profiles "
+                "directory" % options.src_repo)
 
     profile_loc = abspath(profile_loc)
     options.profile_func = pre_curry(util.get_profile_from_path, profile_loc)
@@ -126,16 +144,20 @@ def check_uses_profiles(check):
     return any(x in profile_options for x in check.requires)
 
 
+# protocol requires the unused args- pylint: disable-msg=W0613
 def license_finalize(option_inst, options, runner):
     if options.license_dir is None:
         base = get_repo_base(options)
         options.license_dir = os.path.join(base, "licenses")
         if not os.path.isdir(options.license_dir):
-            raise optparse.OptionValueError("repo %r doesn't have a license directory, you must specify one "
-                "via --license-dir or a different overlayed repo via --overlayed-repo" % options.src_repo)
+            raise optparse.OptionValueError(
+                "repo %r doesn't have a license directory, you must specify "
+                "one via --license-dir or a different overlayed repo via "
+                "--overlayed-repo" % options.src_repo)
     else:
         if not os.path.isdir(options.license_dir):
-            raise optparse.OptionValueError("--license-dir %r isn't a directory" % options.license_dir)
+            raise optparse.OptionValueError(
+                "--license-dir %r isn't a directory" % options.license_dir)
     options.license_dir = abspath(options.license_dir)
         
 
@@ -145,5 +167,6 @@ license_options = \
         help="filepath to license directory"),)
 
 debugging_options = \
-    (optparse.Option("--debug", action='store_true', dest='debug', default=False,
+    (optparse.Option("--debug", action='store_true', dest='debug',
+        default=False,
         help="disable exception wrapping, bail at first unexpected exception"),)

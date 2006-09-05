@@ -2,7 +2,8 @@
 # License: GPL2
 
 import time, os
-from pkgcore_checks.base import template, versioned_feed, Result, arches_options
+from pkgcore_checks.base import (template, versioned_feed, Result,
+    arches_options)
 
 day = 24*3600
         
@@ -31,20 +32,22 @@ class StaleUnstableReport(template):
 
 
 class StaleUnstableKeyword(Result):
-    """packages that have unstable keywords that have been unstable for over a month"""
+    """
+    packages that have unstable keywords that have been unstable for over a
+    month
+    """
     
     __slots__ = ("category", "package", "version", "keywords", "period")
     
     def __init__(self, pkg, period):
-        self.category = pkg.category
-        self.package = pkg.package
-        self.version = pkg.fullver
+        self._store_cpv(pkg)
         self.keywords = tuple(x for x in pkg.keywords if x.startswith("~"))
         self.period = period
     
     def to_str(self):
         return "%s/%s-%s: no change in %i days, keywords [ %s ]" % \
-            (self.category, self.package, self.version, self.period, ", ".join(self.keywords))
+            (self.category, self.package, self.version, self.period, 
+                ", ".join(self.keywords))
 
     def to_xml(self):
         return \
@@ -54,5 +57,6 @@ class StaleUnstableKeyword(Result):
     <version>%s</version>
     <arch>%s</arch>
     <msg>left unstable for %i days</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version,
-"</arch>\n\t<arch>".join(x.lstrip("~") for x in self.keywords), self.period)
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, "</arch>\n\t<arch>".join(x.lstrip("~") 
+        for x in self.keywords), self.period)

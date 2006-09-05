@@ -44,14 +44,12 @@ class DroppedKeywordWarning(Result):
     __slots__ = ("arch", "category", "package",)
 
     def __init__(self, arch, pkg):
+        self._store_cpv(pkg)
         self.arch = arch
-        self.category = pkg.category
-        self.package = pkg.package
-        self.version = pkg.fullver
     
     def to_str(self, **kwds):
-        return "%s/%s-%s: dropped keyword %s" % (self.category, self.package, self.version,
-            self.arch)
+        return "%s/%s-%s: dropped keyword %s" % (self.category, self.package,
+            self.version, self.arch)
 
     def to_xml(self):
         return \
@@ -61,4 +59,5 @@ class DroppedKeywordWarning(Result):
     <version>%s</version>
     <arch>%s</arch>
     <msg>keyword was dropped</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.arch)
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.arch)

@@ -19,12 +19,15 @@ demandload(globals(), "urllib:urlopen")
 class ModularXPortingReport(base.template):
 
     """modular X porting report.
-    Scans for dependencies that require monolithic X, or via visibility limiters from profiles, are forced to use monolithic X
+    Scans for dependencies that require monolithic X, or via visibility 
+    limiters from profiles, are forced to use monolithic X
     """
     feed_type = base.package_feed
-    requires = base.arches_options + base.query_cache_options + base.profile_options
+    requires = base.arches_options + base.query_cache_options + \
+        base.profile_options
 
-    valid_modx_pkgs_url = "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
+    valid_modx_pkgs_url = \
+        "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
 
     def __init__(self, options):
         self.arches = frozenset(x.lstrip("~") for x in options.arches)
@@ -33,7 +36,9 @@ class ModularXPortingReport(base.template):
         # use 7.1 so it catches any >7.0
         self.x7 = virtual.package("virtual/x11-7.1", None)
         self.x6 = virtual.package("virtual/x11-6.9", None)
-        self.valid_modx_keys = frozenset(x for x in (y.strip() for y in urlopen(self.valid_modx_pkgs_url)) if x and x != "virtual/x11")
+        self.valid_modx_keys = frozenset(x for x in
+            (y.strip() for y in urlopen(self.valid_modx_pkgs_url)) if
+                x and x != "virtual/x11")
     
     def start(self, repo, global_insoluable, keywords_filter, profile_filters):
         self.repo = repo
@@ -42,10 +47,12 @@ class ModularXPortingReport(base.template):
         self.profile_filters = profile_filters
         
     def feed(self, pkgset, reporter, feeder):
-        # query_cache gets caching_iter partial repo searches shoved into it- reason is simple,
-        # it's likely that versions of this pkg probably use similar deps- so we're forcing those
-        # packages that were accessed for atom matching to remain in memory.
+        # query_cache gets caching_iter partial repo searches shoved into it-
+        # reason is simple, it's likely that versions of this pkg probably 
+        # use similar deps- so we're forcing those packages that were
+        # accessed for atom matching to remain in memory.
         # end result is less going to disk
+
         unported = []
         ported = []
         for pkg in pkgset:
@@ -64,8 +71,10 @@ class ModularXPortingReport(base.template):
         
         ported_status = False
         bool_or = boolean.OrRestriction
-        for attr, depset in (("depends", pkg.depends), ("rdepends", pkg.rdepends), ("pdepends", pkg.post_rdepends)):
-            stack = [depset.evaluate_depset([], tristate_filter=[]).restrictions]
+        for attr, depset in (("depends", pkg.depends),
+            ("rdepends", pkg.rdepends), ("pdepends", pkg.post_rdepends)):
+            stack = [depset.evaluate_depset([], tristate_filter=[]
+                ).restrictions]
             bad_range = set()
             bad_blocks = set()
             while stack:
@@ -77,13 +86,22 @@ class ModularXPortingReport(base.template):
                             bad_blocks.add((a,))
                     elif isinstance(a, bool_or):
                         for block in a.iter_dnf_solutions():
-                            if not any(True for x in block if x.key == "virtual/x11" and not x.blocks):
+                            if not any(True for x in block if
+                                x.key == "virtual/x11" and not x.blocks):
                                 continue
-                            if not any(True for x in block if x.key in self.valid_modx_keys and not x.blocks):
+                            if not any(True for x in block if
+                                x.key in self.valid_modx_keys
+                                and not x.blocks):
+                                
                                 for or_block in a.cnf_solutions():
-                                    if not any(True for x in or_block if x.key == "virtual/x11" and not x.blocks):
+                                    if not any(True for x in or_block if
+                                        x.key == "virtual/x11"
+                                        and not x.blocks):
                                         continue
-                                    if any(True for x in or_block if x.key in self.valid_modx_keys and not x.blocks):
+
+                                    if any(True for x in or_block if
+                                        x.key in self.valid_modx_keys
+                                        and not x.blocks):
                                         ported_status = True
                                         break
                                 else:
@@ -127,16 +145,26 @@ class ModularXPortingReport(base.template):
         peval_cache = {}
         
         if not skip_depends:
-            for edepset, profiles in feeder.collapse_evaluate_depset(pkg, "depends", pkg.depends):
-                self.process_depset(pkg, "depends", edepset, profiles, query_cache, reporter)
+            for edepset, profiles in feeder.collapse_evaluate_depset(pkg,
+                "depends", pkg.depends):
+                self.process_depset(pkg, "depends", edepset, profiles,
+                    query_cache, reporter)
+
         if not skip_rdepends:
-            for edepset, profiles in feeder.collapse_evaluate_depset(pkg, "rdepends", pkg.rdepends):
-                self.process_depset(pkg, "rdepends/pdepends", edepset, profiles, query_cache, reporter)
+            for edepset, profiles in feeder.collapse_evaluate_depset(pkg,
+                "rdepends", pkg.rdepends):
+                self.process_depset(pkg, "rdepends", edepset, profiles,
+                    query_cache, reporter)
+
         if not skip_pdepends:
-            for edepset, profiles in feeder.collapse_evaluate_depset(pkg, "post_rdepends", pkg.post_rdepends):
-                self.process_depset(pkg, "post_rdepends", edepset, profiles, query_cache, reporter)
+            for edepset, profiles in feeder.collapse_evaluate_depset(pkg,
+                "post_rdepends", pkg.post_rdepends):
+                self.process_depset(pkg, "post_rdepends", edepset, profiles,
+                    query_cache, reporter)
                 
-    def process_depset(self, pkg, attr, depset, profiles, query_cache, reporter):
+    def process_depset(self, pkg, attr, depset, profiles, query_cache,
+        reporter):
+
         csolutions = depset.cnf_solutions()
         repo = self.repo
         failed = set()
@@ -149,7 +177,8 @@ class ModularXPortingReport(base.template):
             
                 # we know a virtual/x11 is in this options.
                 # better have a modx node in options, else it's bad.
-                modx_candidates = [x for x in or_block if x.key in self.valid_modx_keys]
+                modx_candidates = [x for x in or_block if
+                    x.key in self.valid_modx_keys]
                 for a in modx_candidates:
                     if a.blocks:
                         # weird.
@@ -161,13 +190,15 @@ class ModularXPortingReport(base.template):
                         break
                     elif a not in query_cache:
                         query_cache[h] = caching_iter(repo.itermatch(a))
-                    if any(True for pkg in query_cache[h] if vfilter.match(pkg)):
+                    if any(True for pkg in query_cache[h] if
+                        vfilter.match(pkg)):
                         # one is visible.
                         break
                 else:
                     failed.update(modx_candidates)
             if failed:
-                reporter.add_report(VisibilityCausedNotPorted(pkg, key, profile_name, attr, sorted(failed)))
+                reporter.add_report(VisibilityCausedNotPorted(pkg, key,
+                    profile_name, attr, sorted(failed)))
 
     def finish(self, *a):
         self.repo = self.profile_filters = self.keywords_filter = None
@@ -179,12 +210,13 @@ class SuggestRemoval(base.Result):
     
     __slots__ = ("category", "package", "version", "ported")
     def __init__(self, pkg, ported):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        self._store_cpv(pkg)
         self.ported = tuple(get_cpvstr(x) for x in ported)
     
     def to_str(self):
         return "%s/%s-%s: is unported, potentially remove for [ %s ]" \
-            % (self.category, self.package, self.version, ", ".join(self.ported))
+            % (self.category, self.package, self.version,
+                ", ".join(self.ported))
     
     def to_xml(self):
         return \
@@ -193,23 +225,26 @@ class SuggestRemoval(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>unported, suggest replacing via: %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, escape(", ".join(self.ported)))
-
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, escape(", ".join(self.ported)))
 
 
 class BadRange(base.Result):
     
-    """check for virtual/x11 atoms that don't match 6.9, implying they require 7.x"""
+    """
+    look for virtual/x11 atoms that don't intersect =virtual/x11-6.9
+    """
     
     __slots__ = ("category", "package", "version", "attr", "atom")
     def __init__(self, pkg, attr, atom):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        self._store_cpv(pkg)
         self.attr = attr
         self.atoms = tuple(str(x) for x in atom)
     
     def to_str(self):
-        return "%s/%s-%s: attr(%s): atoms don't match 6.9: [ %s ]" % (self.category, self.package, self.version, self.attr, 
-            ", ".join(self.atoms))
+        return "%s/%s-%s: attr(%s): atoms don't match 6.9: [ %s ]" % \
+            (self.category, self.package, self.version, self.attr, 
+                ", ".join(self.atoms))
     
     def to_xml(self):
         return \
@@ -218,7 +253,8 @@ class BadRange(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>attr %s has atoms %s, which do not match virtual/x11-6.9</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.attr, escape(", ".join(self.atoms)))
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.attr, escape(", ".join(self.atoms)))
 
 
 class NotPorted(base.Result):
@@ -228,12 +264,14 @@ class NotPorted(base.Result):
     __slots__ = ("category", "package", "version", "attr", "or_block")
 
     def __init__(self, pkg, attr, or_block):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        self._store_cpv(pkg)
         self.attr = attr
         self.or_block = or_block
     
     def to_str(self):
-        return "%s/%s-%s: attr(%s): not ported, standalone virtual/x11 atom detected in an or_block" % (self.category, self.package, self.version, self.attr)
+        return "%s/%s-%s: attr(%s): not ported, standalone virtual/x11 atom " \
+            "detected in an or_block" % (self.category,
+                self.package, self.version, self.attr)
     
     def to_xml(self):
         return \
@@ -242,26 +280,32 @@ class NotPorted(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>attr %s, standalone virtual/x11 atom detected in an or_block"</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.attr)
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.attr)
 
 
 class VisibilityCausedNotPorted(base.Result):
     
-    """ported, but due to visibility (mask'ing/keywords), knocked back to effectively not ported"""
+    """
+    ported, but due to visibility (mask'ing/keywords), knocked back to
+    effectively not ported
+    """
     
-    __slots__ = ("category", "package", "version", "attr", "keyword", "profile", "failed")
+    __slots__ = ("category", "package", "version", "attr", "keyword",
+        "profile", "failed")
 
     def __init__(self, pkg, keyword, profile, attr, failed):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        self._store_cpv(pkg)
         self.attr = attr
         self.keyword = keyword
         self.profile = profile
         self.failed = tuple(str(x) for x in failed)
     
     def to_str(self):
-        return "%s/%s-%s: %s %s %s: visibility induced unported: fix via making visible [ %s ]" % \
-            (self.category, self.package, self.version, self.attr, self.keyword, self.profile,  
-            ", ".join(self.failed))
+        return "%s/%s-%s: %s %s %s: visibility induced unported: fix via " \
+            "making visible [ %s ]" % \
+            (self.category, self.package, self.version, self.attr,
+                self.keyword, self.profile, ", ".join(self.failed))
     
     def to_xml(self):
         return \
@@ -271,5 +315,8 @@ class VisibilityCausedNotPorted(base.Result):
     <version>%s</version>
     <keyword>%s</keyword>
     <profile>%s</profile>
-    <msg>attr %s, visibility limiters mean that the following atoms aren't accessible, resulting in non-modular x deps: %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.keyword, self.profile, self.attr, escape(", ".join(self.failed)))
+    <msg>attr %s, visibility limiters mean that the following atoms aren't
+        accessible, resulting in non-modular x deps: %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.keyword, self.profile, self.attr,
+    escape(", ".join(self.failed)))

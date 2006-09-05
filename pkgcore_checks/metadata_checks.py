@@ -14,20 +14,27 @@ from pkgcore.util.lists import iflatten_instance
 from pkgcore.util.iterables import expandable_chain
 from pkgcore.fetch import fetchable
 from pkgcore.restrictions import packages
+from pkgcore.util.osutils import listdir_files
 demandload(globals(), "pkgcore.util.xml:escape")
 
-default_attrs = ("depends", "rdepends", "post_rdepends", "provides", "license", "fetchables", "iuse")
+default_attrs = ("depends", "rdepends", "post_rdepends", "provides",
+    "license", "fetchables", "iuse")
 
 class MetadataReport(base.template):
 
-    """ebuild metadata reports.  DEPENDS, PDEPENDS, RDEPENDS, PROVIDES, SRC_URI, DESCRIPTION, LICENSE, etc."""
+    """ebuild metadata reports.
+    
+    DEPENDS, PDEPENDS, RDEPENDS, PROVIDES, SRC_URI, DESCRIPTION, LICENSE, etc.
+    """
 
     feed_type = base.versioned_feed
-    requires = base.arches_options + base.profile_options + base.license_options
+    requires = base.arches_options + base.profile_options + \
+        base.license_options
     
     def __init__(self, options):
         force_expansion = ("depends", "rdepends", "post_rdepends", "provides")
-        self.attrs = [(a, attrgetter(a), a in force_expansion) for a in default_attrs]
+        self.attrs = [(a, attrgetter(a), a in force_expansion)
+            for a in default_attrs]
         self.iuse_users = dict((x, attrgetter(x)) for x in 
             ("fetchables", "depends", "rdepends", "post_rdepends", "provides"))
         self.valid_iuse = None
@@ -49,12 +56,15 @@ class MetadataReport(base.template):
                             d_atom.restrictions
                 if attr_name == "license":
                     if self.licenses is not None:
-                        licenses = set(iflatten_instance(o, basestring)).difference(self.licenses)
+                        licenses = set(iflatten_instance(o, basestring)
+                            ).difference(self.licenses)
                         if licenses:
                             reporter.add_report(MetadataError(pkg, "license",
-                                "licenses don't exist- [ %s ]" % ", ".join(licenses)))
+                                "licenses don't exist- [ %s ]" %
+                                    ", ".join(licenses)))
                     elif not o:
-                        reporter.add_report(MetadataError(pkg, "license", "no license defined"))
+                        reporter.add_report(MetadataError(pkg, "license",
+                            "no license defined"))
                 elif attr_name == "iuse":
                     if self.valid_iuse is not None:
                         iuse = set(o).difference(self.valid_iuse)
@@ -64,40 +74,51 @@ class MetadataReport(base.template):
             except (KeyboardInterrupt, SystemExit):
                 raise
             except (MetadataException, MalformedAtom, ValueError), e:
-                reporter.add_report(MetadataError(pkg, attr_name, "error- %s" % e))
+                reporter.add_report(MetadataError(pkg, attr_name, 
+                    "error- %s" % e))
                 del e
             except Exception, e:
-                logging.error("unknown exception caught for pkg(%s) attr(%s): type(%s), %s" % (pkg, attr_name, type(e), e))
-                reporter.add_report(MetadataError(pkg, attr_name, "exception- %s" % e))
+                logging.error("unknown exception caught for pkg(%s) attr(%s): "
+                    "type(%s), %s" % (pkg, attr_name, type(e), e))
+                reporter.add_report(MetadataError(pkg, attr_name, 
+                    "exception- %s" % e))
                 del e
+
         if not pkg.keywords:
             reporter.add_report(EmptyKeywardsMinor(pkg))
+
         if "-*" in pkg.keywords:
             reporter.add_report(StupidKeywardsMinor(pkg))
 
         if self.valid_iuse is not None:
             used_iuse = set()
+            skip_filter = (packages.Conditional, atom, basestring, fetchable)
             for attr_name, f in self.iuse_users.iteritems():
-                i = expandable_chain(iflatten_instance(f(pkg), (packages.Conditional, atom, basestring, fetchable)))
+                i = expandable_chain(iflatten_instance(f(pkg), skip_filter))
+
                 for node in i:
                     if not isinstance(node, packages.Conditional):
                         continue
                     # it's always a values.ContainmentMatch
                     used_iuse.update(node.restriction.vals)
-                    i.append(iflatten_instance(node.payload, (packages.Conditional, atom, basestring, fetchable)))
+                    i.append(iflatten_instance(node.payload, skip_filter))
 
-                # the valid_unstated_iuse filters out USE_EXPAND as long as it's listed in a desc file
-                unstated = used_iuse.difference(pkg.iuse).difference(self.arches).difference(self.valid_unstated_iuse)
+                # the valid_unstated_iuse filters out USE_EXPAND as long as
+                # it's listed in a desc file
+                unstated = used_iuse.difference(pkg.iuse).difference(
+                    self.arches).difference(self.valid_unstated_iuse)
                 if unstated:
                     # hack, see bug 134994.
                     if unstated.difference(["bootstrap"]):
-                        reporter.add_report(UnstatedIUSE(pkg, attr_name, unstated))
+                        reporter.add_report(UnstatedIUSE(pkg, attr_name,
+                            unstated))
 
     @staticmethod
     def load_valid_iuse(profile_base):
         known_iuse = set()
         unstated_iuse = set()
-        fp = os.path.join(profile_base, "use.desc")
+        pjoin = os.path.join
+        fp = pjoin(profile_base, "use.desc")
         try:
             known_iuse.update(usef.strip() for usef in 
                 read_dict(fp, None).iterkeys())
@@ -105,7 +126,7 @@ class MetadataReport(base.template):
             if ie.errno != errno.ENOENT:
                 raise
 
-        fp = os.path.join(profile_base, "use.local.desc")
+        fp = pjoin(profile_base, "use.local.desc")
         try:
             known_iuse.update(usef.rsplit(":", 1)[1].strip() for usef in 
                 read_dict(fp, None).iterkeys())
@@ -113,13 +134,14 @@ class MetadataReport(base.template):
             if ie.errno != errno.ENOENT:
                 raise		
 
-        use_expand_base = os.path.join(profile_base, "desc")
+        use_expand_base = pjoin(profile_base, "desc")
         try:
             for entry in os.listdir(use_expand_base):
                 try:
                     estr = entry.rsplit(".", 1)[0].lower()+ "_"
                     unstated_iuse.update(estr + usef.strip() for usef in 
-                        read_dict(os.path.join(use_expand_base, entry), None).iterkeys())
+                        read_dict(pjoin(use_expand_base, entry),
+                            None).iterkeys())
                 except (IOError, OSError), ie:
                     if ie.errno != errno.EISDIR:
                         raise
@@ -131,18 +153,20 @@ class MetadataReport(base.template):
         return frozenset(known_iuse), frozenset(unstated_iuse)
             
     def start(self, repo, *a):
-        # we are given extra args since we use profiles; don't care about it however
+        # we are given extra args since we use profiles; don't care about it
+        # however
         if any(x[0] == "license" for x in self.attrs):
             lfp = self.licenses_dir
             if not os.path.exists(lfp):
                 logging.warn("disabling license checks- %s doesn't exist" % lfp)
                 self.licenses = None
             else:
-                self.licenses = frozenset(x for x in os.listdir(lfp) if stat.S_ISREG(os.stat(os.path.join(lfp, x)).st_mode))
+                self.licenses = frozenset(listdir_files(lfp))
         else:
             self.licenses = None
         if any(x[0] == "iuse" for x in self.attrs):
-            self.valid_iuse, self.valid_unstated_iuse = self.load_valid_iuse(self.profile_base)
+            self.valid_iuse, self.valid_unstated_iuse = \
+                self.load_valid_iuse(self.profile_base)
         else:
             self.valid_iuse = self.valid_unstated_iuse = None
 
@@ -178,37 +202,51 @@ class SrcUriReport(base.template):
 
 class DescriptionReport(base.template):
     """DESCRIPTION checks.
-    check on length (<=250), too short (<5), or generic (lifted from eclass or just using the pkgs name"""
+    check on length (<=250), too short (<5), or generic (lifted from eclass or
+    just using the pkgs name
+    """
     feed_type = base.versioned_feed
     
     def feed(self, pkg, reporter):
         s = pkg.description.lower()
+
         if s.startswith("based on") and "eclass" in s:
-            reporter.add_report(CrappyDescription(pkg, "generic eclass defined description"))
+            reporter.add_report(CrappyDescription(pkg,
+                "generic eclass defined description"))
+
         elif pkg.package == s or pkg.key == s:
-            reporter.add_report(CrappyDescription(pkg, "using the pkg name as the description isn't very helpful"))
+            reporter.add_report(CrappyDescription(pkg,
+                "using the pkg name as the description isn't very helpful"))
+
         else:
             l = len(pkg.description)
             if not l:
-                reporter.add_report(CrappyDescription(pkg, "empty/unset"))
+                reporter.add_report(CrappyDescription(pkg,
+                    "empty/unset"))
             elif l > 250:
-                reporter.add_report(CrappyDescription(pkg, "over 250 chars in length, bit long"))
+                reporter.add_report(CrappyDescription(pkg,
+                    "over 250 chars in length, bit long"))
             elif l < 5:
-                reporter.add_report(CrappyDescription(pkg, "under 10 chars in length- too short"))
+                reporter.add_report(CrappyDescription(pkg,
+                    "under 10 chars in length- too short"))
 
 
 class RestrictsReport(base.template):
     feed_type = base.versioned_feed
-    known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", "test",
-        "sandbox", "userpriv", "primaryuri", "binchecks", "strip", "multilib-strict"))
+    known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", 
+        "test", "sandbox", "userpriv", "primaryuri", "binchecks", "strip",
+        "multilib-strict"))
 
-    __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid restricts:%s" % ", ".join(sorted(known_restricts))
+    __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \
+        "restricts:%s" % ", ".join(sorted(known_restricts))
     
     def feed(self, pkg, reporter):
         bad = set(pkg.restrict).difference(self.known_restricts)
         if bad:
-            deprecated = set(x for x in bad if x.startswith("no") and x[2:] in self.known_restricts)
-            reporter.add_report(BadRestricts(pkg, bad.difference(deprecated), deprecated))
+            deprecated = set(x for x in bad if x.startswith("no")
+                and x[2:] in self.known_restricts)
+            reporter.add_report(BadRestricts(pkg, bad.difference(deprecated),
+                deprecated))
 
 
 class BadRestricts(base.Result):
@@ -217,7 +255,7 @@ class BadRestricts(base.Result):
     __slots__ = ("category", "package", "version", "restricts", "deprecated")
     
     def __init__(self, pkg, restricts, deprecated=None):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        self._store_cpv(pkg)
         self.restricts = restricts
         self.deprecated = deprecated
         if not restricts and not deprecated:
@@ -230,7 +268,8 @@ class BadRestricts(base.Result):
         if self.deprecated:
             if s:
                 s+=", "
-            s += "deprecated (drop the 'no') [ %s ]" % ", ".join(self.deprecated)
+            s += "deprecated (drop the 'no') [ %s ]" % ", ".join(
+                self.deprecated)
         return "%s/%s-%s: %s" % (self.category, self.package, self.version, s)
         
     def to_xml(self):
@@ -248,8 +287,8 @@ class BadRestricts(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
-    "unknown restricts- %s" % s)
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, "unknown restricts- %s" % s)
 
 
 class CrappyDescription(base.Result):
@@ -259,11 +298,12 @@ class CrappyDescription(base.Result):
     __slots__ = ("category", "package", "version", "msg")
 
     def __init__(self, pkg, msg):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        self._store_cpv(pkg)
         self.msg = msg
     
     def to_str(self):
-        return "%s/%s-%s: description: %s" % (self.category, self.package, self.version, self.msg)
+        return "%s/%s-%s: description: %s" % (self.category, self.package,
+            self.version, self.msg)
     
     def to_xml(self):
         return \
@@ -285,7 +325,8 @@ class UnstatedIUSE(base.Result):
     
     def to_str(self):
         return "%s/%s-%s: attr(%s) uses unstated flags [ %s ]" % \
-        (self.category, self.package, self.version, self.attr, ", ".join(self.flags))
+        (self.category, self.package, self.version, self.attr,
+            ", ".join(self.flags))
 
     def to_xml(self):
         return \
@@ -294,8 +335,8 @@ class UnstatedIUSE(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>attr %s uses unstead flags: %s"</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
-    self.attr, ", ".join(self.flags))
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.attr, ", ".join(self.flags))
 
 
 class MissingUri(base.Result):
@@ -303,12 +344,12 @@ class MissingUri(base.Result):
     __slots__ = ("category", "package", "version", "filename")
 
     def __init__(self, pkg, filename):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        self._store_cpv(pkg)
         self.filename = filename
     
     def to_str(self):
-        return "%s/%s-%s: no uri specified for %s and RESTRICT=fetch isn't on" % \
-            (self.category, self.package, self.version, self.filename)
+        return "%s/%s-%s: no uri specified for %s and RESTRICT=fetch isn't on" \
+            % (self.category, self.package, self.version, self.filename)
     
     def to_xml(self):
         return \
@@ -317,7 +358,8 @@ class MissingUri(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>no uri specified for %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, escape(self.filename))
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, escape(self.filename))
 
 
 class BadProto(base.Result):

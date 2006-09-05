@@ -31,14 +31,20 @@ class PkgDirReport(template):
         base = os.path.dirname(pkgset[0].path)
         # note we don't use os.walk, we need size info also
         for filename in os.listdir(base):
-            # while this may seem odd, written this way such that the filtering happens all in
-            # the genexp.  if the result was being handed to any, it's a frame switch each
+            # while this may seem odd, written this way such that the
+            # filtering happens all in the genexp.  if the result was being
+            # handed to any, it's a frame switch each
             # char, which adds up.
-            if any(True for x in filename if x not in allowed_filename_chars_set):
+            
+            if any(True for x in filename if 
+                x not in allowed_filename_chars_set):
                 reporter.add_report(Glep31Violation(pkgset[0], filename))
-            if filename.endswith(".ebuild") or filename in ("Manifest", "ChangeLog", "metadata.xml"):
+            
+            if filename.endswith(".ebuild") or filename in \
+                ("Manifest", "ChangeLog", "metadata.xml"):
                 if os.stat(pjoin(base, filename)).st_mode & 0111:
                     reporter.add_report(ExecutableFile(pkgset[0], filename))
+            
             if filename.endswith(".ebuild"):
                 self.utf8_check(pkgset[0], base, filename, reporter)
 
@@ -61,21 +67,27 @@ class PkgDirReport(template):
             for fn in os.listdir(pjoin(base, cwd)):
                 afn = pjoin(base, cwd, fn)
                 st = os.lstat(afn)
+
                 if stat.S_ISDIR(st.st_mode):
                     if fn not in self.ignore_dirs:
                         unprocessed_dirs.append(pjoin(cwd, fn))
+
                 elif stat.S_ISREG(st.st_mode):
                     if not fn.startswith("digest-"):
                         size += st.st_size
-                        if any(True for x in fn if x not in allowed_filename_chars_set):
-                            reporter.add_report(Glep31Violation(pkgset[0], pjoin(cwd, fn)))
+                        if any(True for x in fn if 
+                            x not in allowed_filename_chars_set):
+                            reporter.add_report(Glep31Violation(pkgset[0],
+                                pjoin(cwd, fn)))
+
                 # yes, we silently ignore others.
         if size > 20480:
             reporter.add_report(SizeViolation(pkgset[0], size))
 
     def utf8_check(self, pkg, base, filename, reporter):
         try:
-            codecs.open(pjoin(base, filename), mode="rb", encoding="utf8", buffering=8192).read()
+            codecs.open(pjoin(base, filename), mode="rb", encoding="utf8",
+                buffering=8192).read()
         except UnicodeDecodeError, e:
             reporter.add_report(InvalidUtf8(pkgset[0], filename, str(e)))
             del e
@@ -86,7 +98,7 @@ class MissingFile(Result):
     __slots__ = ("category", "package", "filename")
     
     def __init__(self, pkg, filename):
-        self.category, self.package = pkg.category, pkg.package
+        self._store_cp(pkg)
         self.filename = filename
     
     def to_str(self):
@@ -99,15 +111,16 @@ class MissingFile(Result):
     <category>%s</category>
     <package>%s</package>
     <msg>file %s doesn't exist</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.filename)
-        
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.filename)
+
 
 class ExecutableFile(Result):
     """file has executable bit, but doesn't need it"""
     __slots__ = ("category", "package", "filename")
     
     def __init__(self, pkg, filename):
-        self.category, self.package = pkg.category, pkg.package
+        self._store_(pkg)
         self.filename = filename
     
     def to_str(self):
@@ -120,7 +133,8 @@ class ExecutableFile(Result):
     <category>%s</category>
     <package>%s</package>
     <msg>file %s doesn't need executable bit</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.filename)
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.filename)
 
 
 class SizeViolation(Result):
@@ -164,8 +178,8 @@ class Glep31Violation(Result):
     <category>%s</category>
     <package>%s</package>
     <msg>%s has char outside allowed '%s' range</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.filename,
-    allowed_filename_chars)
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.filename, allowed_filename_chars)
 
 
 class InvalidUtf8(Result):
@@ -180,8 +194,8 @@ class InvalidUtf8(Result):
         self.err = err
     
     def to_str(self):
-        return "%s/%s: %s is not valid utf8: %s" % (self.category, self.package, 
-            self.filename, self.err)
+        return "%s/%s: %s is not valid utf8: %s" % (self.category,
+            self.package, self.filename, self.err)
 
     def to_xml(self):
         return \
@@ -189,5 +203,5 @@ class InvalidUtf8(Result):
     <category>%s</category>
     <package>%s</package>
     <msg>%s isn't valid utf8: %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.filename,
-    escape(self.err))
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.filename, escape(self.err))

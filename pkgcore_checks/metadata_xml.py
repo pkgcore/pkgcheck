@@ -72,11 +72,15 @@ class xmllint_parser(object):
         self.bin_loc = find_binary("xmllint")
     
     def validate(self, pkg, loc):
-        ret = spawn([self.bin_loc, "--nonet", "--noout", "--dtdvalid", self.dtd_loc, loc], fd_pipes={})
+        ret = spawn([self.bin_loc, "--nonet", "--noout", "--dtdvalid",
+            self.dtd_loc, loc], fd_pipes={})
+
         if ret == 1:
             return BadlyFormedXml(pkg, os.path.basename(loc))
+
         elif ret == 3:
             return InvalidXml(pkg, os.path.basename(loc))
+
         return None
 
 
@@ -85,12 +89,12 @@ class BadlyFormedXml(Result):
     __slots__ = ("category", "package", "version", "filename")
     
     def __init__(self, pkg, filename):
-        self.category, self.packiage, self.version = pkg.category, pkg.packge, pkg.fullver
+        self._store_cpv(pkg)
         self.filename = filename
     
     def to_str(self):
-        return "%s/%s-%s: %s is not well formed" % (self.category, self.package, 
-            self.version, self.filename)
+        return "%s/%s-%s: %s is not well formed" % (self.category,
+            self.package, self.version, self.filename)
     
     def to_xml(self):
         return \
@@ -99,7 +103,8 @@ class BadlyFormedXml(Result):
     <package>%s</package>
     <version>%s</version>
     <msg>%s is not well formed</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.filename)
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.filename)
 
 
 class InvalidXml(Result):
@@ -107,7 +112,7 @@ class InvalidXml(Result):
     __slots__ = ("category", "package", "version", "file")
     
     def __init__(self, pkg, filename):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.version
+        self._store_cpv(pkg)
         self.filename = filename
     
     def to_str(self):

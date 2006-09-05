@@ -14,24 +14,32 @@ demandload(globals(), "pkgcore.pkgsets.glsa:GlsaDirSet "
 class GlsaLocationOption(base.FinalizingOption):
 
     def __init__(self):
-        base.FinalizingOption.__init__(self, "--glsa-dir", action='store', type='string',
-            dest='glsa_location', default=None, 
-            help="source directoy for glsas; tries to autodetermine it, may be required if no glsa dirs are known")
+        base.FinalizingOption.__init__(self, "--glsa-dir", action='store',
+            type='string', dest='glsa_location', default=None, 
+            help="source directoy for glsas; tries to autodetermine it, may "
+                "be required if no glsa dirs are known")
 
     def finalize(self, options, runner):
         options.glsa_enabled = True
         glsa_loc = options.glsa_location
         if glsa_loc is not None:
             if not os.path.isdir(glsa_loc):
-                raise optparse.OptionValueError("--glsa-dir '%r' doesn't exist" % glsa_loc)
+                raise optparse.OptionValueError("--glsa-dir '%r' doesn't "
+                    "exist" % glsa_loc)
         else:
-            glsa_loc = os.path.join(base.get_repo_base(options), "metadata", "glsa")
+            glsa_loc = os.path.join(base.get_repo_base(options),
+                "metadata", "glsa")
             if not os.path.isdir(glsa_loc):
-                # form of 'optional' limiting; if they are using -c, force the error, else disable
+                # form of 'optional' limiting; if they are using -c, force the
+                # error, else disable
                 if options.check_to_run:
-                    raise optparse.OptionValueError("--glsa-dir must be specified, couldn't identify glsa src from %r" % options.src_repo)
+                    raise optparse.OptionValueError("--glsa-dir must be "
+                        "specified, couldn't identify glsa src from %r" %
+                            options.src_repo)
                 options.glsa_enabled = False
-                warnings.warn("disabling GLSA checks due to no glsa source being found, and the check not being explicitly enabled; this behaviour may change")
+                warnings.warn("disabling GLSA checks due to no glsa source "
+                    "being found, and the check not being explicitly enabled; "
+                    "this behaviour may change")
                 return
         
         options.glsa_location = base.abspath(glsa_loc)
@@ -41,7 +49,11 @@ GlsaLocation_option = GlsaLocationOption()
 
 
 class TreeVulnerabilitiesReport(base.template):
-    """Scan for vulnerabile ebuilds in the tree; requires a GLSA directory for vuln. info"""
+    """
+    Scan for vulnerabile ebuilds in the tree
+    
+    requires a GLSA directory for vuln. info
+    """
 
     feed_type = base.versioned_feed
     requires = (GlsaLocation_option,)
@@ -52,13 +64,14 @@ class TreeVulnerabilitiesReport(base.template):
     
     def start(self, repo):
         self.enabled = self.options.glsa_enabled
+        self.vulns = {}
         if not self.enabled:
             return
-        self.vulns = {}
         # this is a bit brittle
         for r in GlsaDirSet(self.glsa_dir):
             if len(r) > 2:
-                self.vulns.setdefault(r[0].key, []).append(packages.AndRestriction(*r[1:]))
+                self.vulns.setdefault(r[0].key, 
+                    []).append(packages.AndRestriction(*r[1:]))
             else:
                 self.vulns.setdefault(r[0].key, []).append(r[1])
 
@@ -79,15 +92,14 @@ class VulnerablePackage(base.Result):
     __slots__ = ("category", "package", "version", "arch", "glsa")
 
     def __init__(self, pkg, glsa):
-        self.category = pkg.category
-        self.package = pkg.package
-        self.version = pkg.fullver
+        self._store_cpv(pkg)
         arches = set()
         for v in collect_package_restrictions(glsa, ["keywords"]):
             if isinstance(v.restriction, values.ContainmentMatch):
                 arches.update(x.lstrip("~") for x in v.restriction.vals)
             else:
-                raise Exception("unexpected restriction sequence- %s in %s" % (v.restriction, glsa))
+                raise Exception("unexpected restriction sequence- %s in %s" % 
+                    (v.restriction, glsa))
         keys = set(x.lstrip("~") for x in pkg.keywords if not x.startswith("-"))
         if arches:
             self.arch = tuple(sorted(arches.intersection(keys)))
@@ -97,7 +109,8 @@ class VulnerablePackage(base.Result):
         self.glsa = str(glsa)
     
     def to_str(self):
-        return "%s/%s-%s: vulnerable via %s, affects %s" % (self.category, self.package, self.version, self.glsa, self.arch)
+        return "%s/%s-%s: vulnerable via %s, affects %s" % (self.category,
+            self.package, self.version, self.glsa, self.arch)
 
     def to_xml(self):
         return \
@@ -107,5 +120,5 @@ class VulnerablePackage(base.Result):
     <version>%s</version>
     <arch>%s</arch>
     <msg>vulnerable via %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, 
-"</arch>\n\t<arch>".join(self.arch), escape(self.glsa))
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, "</arch>\n\t<arch>".join(self.arch), escape(self.glsa))

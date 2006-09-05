@@ -4,10 +4,10 @@
 import os, errno
 from operator import attrgetter
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.ebuild.profiles:OnDiskProfile "+
-    "pkgcore.ebuild.domain:generate_masking_restrict "+
-    "pkgcore.util.mapping:LazyValDict "+
-    "pkgcore.util.packages:get_raw_pkg "+
+demandload(globals(), "pkgcore.ebuild.profiles:OnDiskProfile "
+    "pkgcore.ebuild.domain:generate_masking_restrict "
+    "pkgcore.util.mapping:LazyValDict "
+    "pkgcore.util.packages:get_raw_pkg "
     "logging ")
 
 
@@ -37,7 +37,8 @@ def get_profiles_desc(repo):
         try:
             key, profile, status = l
         except ValueError, v:
-            logging.error("%s: line number %i isn't of 'key profile status' form" % (fp, line_no))
+            logging.error("%s: line number %i isn't of 'key profile status' "
+                "form" % (fp, line_no))
             continue
         # yes, we're ignoring status.
         # it's a silly feature anyways.

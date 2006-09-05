@@ -18,19 +18,27 @@ demandload(globals(), "os logging time optparse "
 
 import sys, signal
 
-def exithandler(signum,frame):
+# prototype requires it pylint: disable-msg=W0613
+def exithandler(signum, frame):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
     sys.stderr.write("caught signal %i, shutting down\n" % signum)
     sys.exit(1)
 
 
-def get_option_parser(checks=[]):
-    parser = optparse.OptionParser(version=__version__, description="pkgcore based ebuild QA checks", 
+def get_option_parser(checks=()):
+    parser = optparse.OptionParser(version=__version__,
+        description="pkgcore based ebuild QA checks", 
         usage="usage: %prog repository [options] [atom1...atom2]")
-    parser.add_option("-c", action="append", type="string", dest="check_to_run", help="limit checks to those matching this regex, or package/class matching; may be specified multiple times")
-    parser.add_option("--list-checks", action="store_true", default=False, dest="list_checks", help="print what checks are available to run and exit")
-    parser.add_option("-x", "--xml", action="store_true", default=False, dest="to_xml", help="dump xml formated result")
+
+    parser.add_option("-c", action="append", type="string", dest="check_to_run",
+        help="limit checks to those matching this regex, or package/class "
+            "matching; may be specified multiple times")
+    parser.add_option("--list-checks", action="store_true", default=False,
+        dest="list_checks",
+        help="print what checks are available to run and exit")
+    parser.add_option("-x", "--xml", action="store_true", default=False,
+        dest="to_xml", help="dump xml formated result")
     parser.add_options(pkgcore_checks.base.debugging_options)
     parser.add_options(pkgcore_checks.base.overlay_options)
 
@@ -48,12 +56,14 @@ def get_option_parser(checks=[]):
 def finalize_options(checks, options, runner):
     seen = set()
     for opt in pkgcore_checks.base.overlay_options:
-        if isinstance(opt, pkgcore_checks.base.FinalizingOption) and opt not in seen:
+        if isinstance(opt, pkgcore_checks.base.FinalizingOption) \
+            and opt not in seen:
             opt.finalize(options, runner)
             seen.add(opt)
     for c in checks:
         for opt in c.requires:
-            if isinstance(opt, pkgcore_checks.base.FinalizingOption) and opt not in seen:
+            if isinstance(opt, pkgcore_checks.base.FinalizingOption) \
+                and opt not in seen:
                 opt.finalize(options, runner)
                 seen.add(opt)
 
@@ -147,15 +157,16 @@ if __name__ == "__main__":
         if normpath(repo_name) in conf.repo:
             repo = conf.repo[normpath(repo_name)]
         else:
-            sys.stderr.write("Error: repo %s is not a valid reponames\nknown repos- [ %s ]\n" % 
-                (repr(repo_name), ", ".join(repr(x) for x in conf.repo.iterkeys())))
+            sys.stderr.write("Error: repo %s is not a valid reponames\nknown "
+                "repos- [ %s ]\n" % (repr(repo_name),
+                    ", ".join(repr(x) for x in conf.repo.iterkeys())))
             sys.exit(1)
 
     options.pkgcore_conf = conf
     options.target_repo = repo
     if not getattr(repo, "base", False):
-        sys.stderr.write("\nWarning: repo %s appears to be combined trees, as such some checks will be disabled\n\n" % 
-            repo_name)
+        sys.stderr.write("\nWarning: repo %s appears to be combined trees, as "
+            "such some checks will be disabled\n\n" % repo_name)
 
     if options.to_xml:
         reporter = pkgcore_checks.base.XmlReporter(sys.stdout)
@@ -180,8 +191,9 @@ if __name__ == "__main__":
 
     start_time = time.time()
     nodes = 0
-    sys.stderr.write("checks: %i cat, %i pkg, %i version\n" % (len(runner.cat_checks), \
-        len(runner.pkg_checks), len(runner.cpv_checks)))
+    sys.stderr.write("checks: %i cat, %i pkg, %i version\n" % 
+        (len(runner.cat_checks), len(runner.pkg_checks),
+            len(runner.cpv_checks)))
     if not (runner.cat_checks or runner.pkg_checks or runner.cpv_checks):
         sys.stderr.write("no tests\n")
         sys.exit(1)
@@ -193,4 +205,5 @@ if __name__ == "__main__":
     elapsed = time.time() - start_time
     minutes = int(elapsed)/60
     seconds = elapsed - (minutes * 60)
-    sys.stderr.write("processed %i pkgs: %im%.2fs\n" % (nodes, minutes, seconds))
+    sys.stderr.write("processed %i pkgs: %im%.2fs\n" %
+        (nodes, minutes, seconds))

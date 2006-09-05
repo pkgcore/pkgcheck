@@ -16,8 +16,12 @@ class UnstableOnlyReport(template):
         # stable, then unstable, then file
         self.arch_restricts = {}
         for x in arches:
-            self.arch_restricts[x] = [packages.PackageRestriction("keywords", values.ContainmentMatch(x)),
-                packages.PackageRestriction("keywords", values.ContainmentMatch("~%s" % x))]
+            self.arch_restricts[x] = [
+                packages.PackageRestriction("keywords",
+                    values.ContainmentMatch(x)),
+                packages.PackageRestriction("keywords",
+                    values.ContainmentMatch("~%s" % x))
+                ]
 
     def finish(self, reporter):
         self.arch_restricts.clear()
@@ -44,7 +48,8 @@ class UnstableOnly(Result):
     __slots__ = ("category", "package", "version", "arch")
     
     def __init__(self, pkgs, arch):
-        self.category, self.package, self.arch = pkgs[0].category, pkgs[0].package, arch
+        self._store_cp(pkgs[0])
+        self.arch = arch
         self.version = tuple(x.fullver for x in pkgs)
     
     def to_str(self):

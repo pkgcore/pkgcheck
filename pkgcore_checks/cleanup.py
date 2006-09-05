@@ -6,9 +6,13 @@ from pkgcore.util.compatibility import any
 
 
 class RedundantVersionReport(template):
-    """scan for versions that are likely shadowed by later versions from a keywords standpoint
+    """
+    scan for versions that are likely shadowed by later versions from a 
+    keywords standpoint
+    
     Example: pkga-1 is keyworded amd64, pkga-2 is amd64.  
-    pkga-2 can potentially be removed."""
+    pkga-2 can potentially be removed.
+    """
 
     feed_type = package_feed
     
@@ -42,7 +46,10 @@ class RedundantVersionReport(template):
 
 
 class RedundantVersionWarning(Result):
-    """Redundant version of a pkg in a slotting; keyword appears in a later version"""
+    """
+    Redundant version of a pkg in a slotting; keyword appears in a later
+    version
+    """
 
     __slots__ = ("category", "package", "slot", "later_versions")
 
@@ -54,7 +61,8 @@ class RedundantVersionWarning(Result):
         self.later_versions = tuple(x.fullver for x in higher_pkgs)
     
     def to_str(self, **kwds):
-        return "%s/%s-%s: slot(%s) keywords are overshadowed by version %r" % (self.category, self.package, self.version,
+        return "%s/%s-%s: slot(%s) keywords are overshadowed by version %r" % \
+            (self.category, self.package, self.version,
             self.slot, ", ".join(self.later_versions))
 
     def to_xml(self):
@@ -65,6 +73,5 @@ class RedundantVersionWarning(Result):
     <version>%s</version>
     <slot>%s</slot>
     <msg>keywords are overshadowed by version(s): %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version, self.slot, ", ".join(self.later_versions))
-
-
+</check>""" % (self.__class__.__name__, self.category, self.package, 
+    self.version, self.slot, ", ".join(self.later_versions))

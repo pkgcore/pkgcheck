@@ -193,7 +193,7 @@ class Feeder(object):
             except (SystemExit, KeyboardInterrupt):
                 raise
             except Exception, e:
-                logging.error("type %s, check %s failed to running %s: %s" % (check_type, check, attr, e))
+                logging.error("type %s, check %s failed running %s: %s" % (check_type, check, attr, e))
                 del e
         # rebuild the checks should any have failed
         for x in xrange(len(checks)):
@@ -325,6 +325,14 @@ class Result(object):
     
     def to_xml(self):
         raise NotImplementedError
+
+    def _store_cp(self, pkg):
+        self.category = pkg.category
+        self.package = pkg.package
+    
+    def _store_cpv(self, pkg):
+        self._store_cp(pkg)
+        self.version = pkg.fullver
 
 
 class Reporter(object):

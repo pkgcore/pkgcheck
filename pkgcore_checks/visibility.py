@@ -38,14 +38,18 @@ class VisibilityReport(base.template):
         self.profile_filters = profile_filters
 
     def feed(self, pkgset, reporter, feeder):
-        # query_cache gets caching_iter partial repo searches shoved into it- reason is simple,
-        # it's likely that versions of this pkg probably use similar deps- so we're forcing those
-        # packages that were accessed for atom matching to remain in memory.
+        # query_cache gets caching_iter partial repo searches shoved into it-
+        # reason is simple, it's likely that versions of this pkg probably
+        # use similar deps- so we're forcing those packages that were
+        # accessed for atom matching to remain in memory.
         # end result is less going to disk
+
         for pkg in pkgset:
-            if any(True for eclass in self.vcs_eclasses if eclass in pkg.data["_eclasses_"]):
+            if any(True for eclass in self.vcs_eclasses if
+                eclass in pkg.data["_eclasses_"]):
                 # vcs ebuild that better not be visible
                 self.check_visibility_vcs(pkg, reporter)
+
             self.check_pkg(pkg, feeder, reporter)
 
     def check_visibility_vcs(self, pkg, reporter):
@@ -59,16 +63,19 @@ class VisibilityReport(base.template):
 
     def check_pkg(self, pkg, feeder, reporter):
         query_cache = feeder.query_cache
-        for attr, depset in (("depends", pkg.depends), ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
+        for attr, depset in (("depends", pkg.depends),
+            ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
             nonexistant = set()
             for node in iflatten_instance(depset, atom):
+
                 h = str(node)
                 if h not in query_cache:
                     if h in self.global_insoluable:
                         nonexistant.add(node)
-                        # insert an empty tuple, so that tight loops further on don't have to
-                        # use the slower get method
+                        # insert an empty tuple, so that tight loops further
+                        # on don't have to use the slower get method
                         query_cache[h] = ()
+
                     else:
                         matches = caching_iter(self.repo.itermatch(node))
                         if matches:
@@ -83,11 +90,17 @@ class VisibilityReport(base.template):
 
         del nonexistant
 
-        for attr, depset in (("depends", pkg.depends), ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
-            for edepset, profiles in feeder.collapse_evaluate_depset(pkg, attr, depset):
-                self.process_depset(pkg, attr, edepset, profiles, query_cache, reporter)
+        for attr, depset in (("depends", pkg.depends),
+            ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
 
-    def process_depset(self, pkg, attr, depset, profiles, query_cache, reporter):
+            for edepset, profiles in feeder.collapse_evaluate_depset(pkg,
+                attr, depset):
+
+                self.process_depset(pkg, attr, edepset, profiles, query_cache,
+                    reporter)
+
+    def process_depset(self, pkg, attr, depset, profiles, query_cache,
+        reporter):
         csolutions = depset.cnf_solutions()
         failures = set()
         for key, profile_name, data in profiles:
@@ -109,7 +122,8 @@ class VisibilityReport(base.template):
                     elif a.category == "virtual" and h not in query_cache:
                         insoluable.add(h)
                     else:
-                        if any(True for pkg in query_cache[h] if vfilter.match(pkg)):
+                        if any(True for pkg in query_cache[h] if
+                            vfilter.match(pkg)):
                             cache.add(h)
                             break
                         else:
@@ -118,7 +132,8 @@ class VisibilityReport(base.template):
                     # no matches.  not great, should collect them all
                     failures.update(required)
             if failures:
-                reporter.add_report(NonsolvableDeps(pkg, attr, key, profile_name, list(failures), masked=masked_status))
+                reporter.add_report(NonsolvableDeps(pkg, attr, key,
+                    profile_name, list(failures), masked=masked_status))
 
     def finish(self, *a):
         self.repo = self.profile_filters = self.keywords_filter = None
@@ -129,7 +144,7 @@ class VisibleVcsPkg(base.Result):
     __slots__ = ("category", "package", "version", "profile", "arch")
 
     def __init__(self, pkg, arch, profile):
-        self.category, self.package, self.version = pkg.category, pkg.package, pkg.fullver
+        self._store_cpv(pkg)
         self.arch = arch.lstrip("~")
         self.profile = profile
     
@@ -146,8 +161,8 @@ class VisibleVcsPkg(base.Result):
     <arch>%s</arch>
     <profile>%s</profile>
     <msg>vcs based ebuild user accessible</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version,
-    self.arch, self.profile)
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.arch, self.profile)
 
 
 class NonExistantDeps(base.Result):
@@ -163,7 +178,8 @@ class NonExistantDeps(base.Result):
         
     def to_str(self):
         return "%s/%s-%s: attr(%s): nonexistant atoms [ %s ]" % \
-            (self.category, self.package, self.version, self.attr, ", ".join(self.atoms))
+            (self.category, self.package, self.version, self.attr,
+                ", ".join(self.atoms))
 
     def to_xml(self):
         return \
@@ -172,19 +188,17 @@ class NonExistantDeps(base.Result):
     <package>%s</package>
     <version>%s</version>
     <msg>%s: nonexistant atoms [ %s ]</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version,
-self.attr, escape(", ".join(self.atoms)))
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.attr, escape(", ".join(self.atoms)))
 
 
 class NonsolvableDeps(base.Result):
     """No potential solution for a depset attribute"""
-    __slots__ = ("category", "package", "version", "attr", "profile", "keyword", 
-        "potentials", "masked")
+    __slots__ = ("category", "package", "version", "attr", "profile",
+        "keyword", "potentials", "masked")
     
     def __init__(self, pkg, attr, keyword, profile, horked, masked=False):
-        self.category = pkg.category
-        self.package = pkg.package
-        self.version = pkg.fullver
+        self._store_cpv(pkg)
         self.attr = attr
         self.profile = profile
         self.keyword = keyword
@@ -198,8 +212,8 @@ class NonsolvableDeps(base.Result):
         if self.masked:
             s = "masked "+s
         return "%s/%s-%s: %s %s%s: unsolvable %s, solutions: [ %s ]" % \
-            (self.category, self.package, self.version, self.attr, s, self.keyword, self.profile,
-            ", ".join(self.potentials))
+            (self.category, self.package, self.version, self.attr, s,
+                self.keyword, self.profile, ", ".join(self.potentials))
 
     def to_xml(self):
         s = ''
@@ -213,5 +227,6 @@ class NonsolvableDeps(base.Result):
     <profile>%s</profile>
     <keyword>%s</keyword>
     <msg>%snot solvable for %s- potential solutions, %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.version,
-self.profile, self.keyword, s, self.attr, escape(", ".join(self.potentials)))
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.profile, self.keyword, s, self.attr,
+    escape(", ".join(self.potentials)))
