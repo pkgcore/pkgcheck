@@ -25,7 +25,7 @@ class template(object):
     requires = ()
 
     def __init__(self, options):
-        pass
+        self.options = options
 
     def start(self, repo):
         pass
