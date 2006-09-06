@@ -44,7 +44,7 @@ class UnusedLocalFlags(Result):
             s = ''
         else:
             s = "atom(%s), " % self.atom
-        return "%s/%s: use.local.desc %s unused flag(s): %s" % \
+        return "%s/%s: use.local.desc%s unused flag(s): %s" % \
             (self.category, self.package, s,
 		', '.join(self.flags))
 
