@@ -44,7 +44,7 @@ class template(object):
     def __init__(self, options):
         self.options = options
 
-    def start(self, repo):
+    def start(self, repo, *a):
         pass
 
     def finish(self, reporter):
@@ -344,13 +344,13 @@ class Feeder(object):
             self.fire_finishes("repo", repo_checks, reporter)
 
         if cat_checks:
-            self.fire_finishes("repo", repo_checks, reporter)
+            self.fire_finishes("cat", cat_checks, reporter)
 
         if pkg_checks:
-            self.fire_finishes("repo", repo_checks, reporter)
+            self.fire_finishes("pkg", pkg_checks, reporter)
 
         if ver_checks:
-            self.fire_finishes("repo", repo_checks, reporter)
+            self.fire_finishes("ver", ver_checks, reporter)
 
         return count
 
