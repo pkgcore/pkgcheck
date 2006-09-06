@@ -213,6 +213,8 @@ class Feeder(object):
             except Exception, e:
                 logging.error("type %s, check %s failed running %s: %s" % 
                     (check_type, check, attr, e))
+                if self.debug:
+                    raise
                 del e
         # rebuild the checks should any have failed
         for x in xrange(len(checks)):

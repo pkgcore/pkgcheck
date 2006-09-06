@@ -9,7 +9,7 @@ from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
 from pkgcore.util.file import read_dict
 from pkgcore.package.errors import MetadataException
-from pkgcore.package.atom import MalformedAtom, atom
+from pkgcore.ebuild.atom import MalformedAtom, atom
 from pkgcore.util.lists import iflatten_instance
 from pkgcore.util.iterables import expandable_chain
 from pkgcore.fetch import fetchable

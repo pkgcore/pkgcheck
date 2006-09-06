@@ -5,7 +5,7 @@ from pkgcore.util.compatibility import any
 from pkgcore_checks import base
 from pkgcore.util.iterables import caching_iter
 from pkgcore.util.lists import stable_unique, iflatten_instance
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.containers:InvertedContains "
     "pkgcore.util.xml:escape ")

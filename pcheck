@@ -188,6 +188,8 @@ if __name__ == "__main__":
             raise
         except Exception, e:
             logging.error("test %s failed to be added: %s" % (obj, e))
+            if options.debug:
+                raise
             del e
 
 

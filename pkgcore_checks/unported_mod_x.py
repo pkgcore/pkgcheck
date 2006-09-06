@@ -6,7 +6,7 @@ from pkgcore.util.demandload import demandload
 from pkgcore_checks import base
 from pkgcore.util.iterables import caching_iter
 from pkgcore.restrictions import boolean
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 from pkgcore.package import virtual
 from pkgcore_checks.util import get_cpvstr
 demandload(globals(), "pkgcore.util.containers:InvertedContains")
@@ -33,8 +33,8 @@ class ModularXPortingReport(base.template):
         self.repo = self.profile_filters = None
         self.keywords_filter = None
         # use 7.1 so it catches any >7.0
-        self.x7 = virtual.package("virtual/x11-7.1", None)
-        self.x6 = virtual.package("virtual/x11-6.9", None)
+        self.x7 = virtual.package(None, "virtual/x11-7.1")
+        self.x6 = virtual.package(None, "virtual/x11-6.9")
         self.valid_modx_keys = frozenset(x for x in
             (y.strip() for y in urlopen(self.valid_modx_pkgs_url)) if
                 x and x != "virtual/x11")
