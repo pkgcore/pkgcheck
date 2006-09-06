@@ -58,6 +58,10 @@ class _WipeQueryCache(template):
     requires = query_cache_options
     feed_type = package_feed
 
+    def __init__(self, options, enabling_threshold):
+        template.__init__(self, options)
+        self.enabling_threshold = enabling_threshold
+
     # protocol... pylint: disable-msg=W0613
     def feed(self, pkgs, reporter, feeder):
         feeder.query_cache.clear()
@@ -66,6 +70,10 @@ class _WipeQueryCache(template):
 class _WipeEvaluateDepSetCaches(template):
     requires = query_cache_options
     feed_type = package_feed
+
+    def __init__(self, options, enabling_threshold):
+        template.__init__(self, options)
+        self.enabling_threshold = enabling_threshold
 
     # protocol... pylint: disable-msg=W0613
     def feed(self, pkgs, reporter, feeder):
@@ -103,26 +111,25 @@ class Feeder(object):
 
     def add_check(self, check):
         feed_type = getattr(check, "feed_type", None)
-        l = None
-        if feed_type == repository_feed:
-            l = self.repo_checks
-        elif feed_type == category_feed:
-            l = self.cat_checks
-        elif feed_type == package_feed:
-            l = self.pkg_checks
-        elif feed_type == versioned_feed:
-            l = self.ver_checks
-        else:
+        if feed_type not in known_feeds:
             raise TypeError("check(%s) feed_type %s unknown" % 
                 (check, feed_type))
-
-        # check the enabling_threshold next.
         threshold = getattr(check, "enabling_threshold", feed_type)
+        # check the enabling_threshold next.
         if threshold not in known_feeds:
             raise TypeError("check enabling_threshold %s %s unknown for %s" % 
                 (threshold, check))
-        l.append(check(self.options))
 
+        if threshold == repository_feed:
+            l = self.repo_checks
+        elif threshold == category_feed:
+            l = self.cat_checks
+        elif threshold == package_feed:
+            l = self.pkg_checks
+        elif threshold == versioned_feed:
+            l = self.ver_checks
+
+        l.append(check(self.options))
 
     def clear_caches(self):
         self.profiles = {}
@@ -285,34 +292,32 @@ class Feeder(object):
         else:
             repos = cats = pkgs = vers = True
         
-        repo_checks = []
+        checks = []
         if repos:
-            repo_checks = list(self.repo_checks)
-
-        cat_checks = []
+            checks.extend(self.repo_checks)
         if cats:
-            cat_checks = list(self.cat_checks)
-
-        pkg_checks = []
+            checks.extend(self.cat_checks)
         if pkgs:
-            pkg_checks = list(self.pkg_checks)
-
-        ver_checks = []
+            checks.extend(self.pkg_checks)
         if vers:
-            ver_checks = list(self.ver_checks)
+            checks.extend(self.ver_checks)
 
-        # and... build 'er up.
+        translate = {"cat":category_feed, "pkg":package_feed,
+            "ver":"version_feed"}
+
         if self.query_cache_enabled:
             self.query_cache = {}
-            l = [_WipeQueryCache(self), _WipeEvaluateDepSetCaches(self)]
-            if self.options.query_caching_freq == "cat":
-                cat_checks += l
-            elif self.options.query_caching_freq == "pkg":
-                pkg_checks += l
-            elif self.options.query_caching_freq == "ver":
-                ver_checks += l
-            del l
+            freq = translate[self.options.query_caching_freq]
+            checks.append(_WipeQueryCache(self, freq))
+            checks.append(_WipeEvaluateDepSetCaches(self, freq))
         
+        # split them apart now, since the checks were pulled in by enabling
+        # threshold
+        repo_checks = [c for c in checks if c.feed_type == repository_feed]
+        cat_checks =  [c for c in checks if c.feed_type == category_feed]
+        pkg_checks =  [c for c in checks if c.feed_type == package_feed]
+        ver_checks =  [c for c in checks if c.feed_type == versioned_feed]
+
         i = self.repo.itermatch(limiter, sorter=sorted)
         if ver_checks:
             self.fire_starts("ver", ver_checks, self.search_repo)
@@ -382,7 +387,7 @@ class Feeder(object):
         checks = tuple((check_uses_query_cache(check), check)
             for check in checks)
         repo_pkgs = list(iterable)
-        self.run_checks(checks, repo_pkgs, reporter,
+        self.run_check(checks, repo_pkgs, reporter,
             "check %s cpv: repo level check' threw exception %s")
         for pkg in repo_pkgs:
             yield pkg

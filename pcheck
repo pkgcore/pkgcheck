@@ -201,9 +201,10 @@ if __name__ == "__main__":
 
     start_time = time.time()
     nodes = 0
-    sys.stderr.write("checks: %i cat, %i pkg, %i version\n" % 
-        (len(runner.cat_checks), len(runner.pkg_checks),
-            len(runner.ver_checks)))
+    sys.stderr.write("checks: repo(%i), cat(%i), pkg(%i), version(%i)\n" % 
+        (len(runner.repo_checks), len(runner.cat_checks),
+        len(runner.pkg_checks), len(runner.ver_checks)))
+
     if not (runner.repo_checks or runner.cat_checks or runner.pkg_checks or 
         runner.ver_checks):
         sys.stderr.write("no tests\n")
