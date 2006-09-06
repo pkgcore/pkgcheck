@@ -96,7 +96,7 @@ class UnusedGlobalFlagsCheck(base.template):
 class UnusedGlobalFlags(base.Result):
     
     """
-    unused use.local.desc flag(s)
+    unused use.desc flag(s)
     """
     
     __slots__ = ("flags",)
