@@ -91,12 +91,12 @@ def collect_available_checks():
             for name in dir(module):
                 obj = getattr(module, name)
                 # is it a class?  is it a derivative of template?
-                # finally, is it disabled?
+                # finally, is it template?
                 if not isinstance(obj, type):
                     continue
                 elif not issubclass(obj, pkgcore_checks.base.template):
                     continue
-                elif getattr(obj, "disabled", False):
+                elif obj is pkgcore_checks.base.template:
                     continue
                 checks.append(obj)
     checks.sort()
@@ -203,8 +203,9 @@ if __name__ == "__main__":
     nodes = 0
     sys.stderr.write("checks: %i cat, %i pkg, %i version\n" % 
         (len(runner.cat_checks), len(runner.pkg_checks),
-            len(runner.cpv_checks)))
-    if not (runner.cat_checks or runner.pkg_checks or runner.cpv_checks):
+            len(runner.ver_checks)))
+    if not (runner.repo_checks or runner.cat_checks or runner.pkg_checks or 
+        runner.ver_checks):
         sys.stderr.write("no tests\n")
         sys.exit(1)
     reporter.start()
@@ -212,7 +213,6 @@ if __name__ == "__main__":
     sys.stdout.write("\n")
     for filterer in limiters:
         nodes += runner.run(reporter, filterer)
-    runner.finish(reporter)
     reporter.finish()
     elapsed = time.time() - start_time
     minutes = int(elapsed)/60
