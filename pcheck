@@ -208,6 +208,8 @@ if __name__ == "__main__":
         sys.stderr.write("no tests\n")
         sys.exit(1)
     reporter.start()
+    # insert a newline for prettyness.
+    sys.stdout.write("\n")
     for filterer in limiters:
         nodes += runner.run(reporter, filterer)
     runner.finish(reporter)
@@ -217,6 +219,7 @@ if __name__ == "__main__":
     seconds = elapsed - (minutes * 60)
     # flush stdout first; if they're directing it all to a file, this makes
     # results not get a time statement shoved in midway
+    sys.stdout.write("\n")
     sys.stdout.flush()
     sys.stderr.write("processed %i pkgs: %im%.2fs\n" %
         (nodes, minutes, seconds))
