@@ -19,7 +19,7 @@ class VisibilityReport(base.template):
     keyword
     """
 
-    feed_type = base.package_feed
+    feed_type = base.versioned_feed
     requires = base.arches_options + base.query_cache_options + \
         base.profile_options
 
@@ -37,31 +37,18 @@ class VisibilityReport(base.template):
         self.keywords_filter = keywords_filter
         self.profile_filters = profile_filters
 
-    def feed(self, pkgset, reporter, feeder):
+    def feed(self, pkg, reporter, feeder):
         # query_cache gets caching_iter partial repo searches shoved into it-
         # reason is simple, it's likely that versions of this pkg probably
         # use similar deps- so we're forcing those packages that were
         # accessed for atom matching to remain in memory.
         # end result is less going to disk
 
-        for pkg in pkgset:
-            if any(True for eclass in self.vcs_eclasses if
-                eclass in pkg.data["_eclasses_"]):
-                # vcs ebuild that better not be visible
-                self.check_visibility_vcs(pkg, reporter)
+        if any(True for eclass in self.vcs_eclasses if
+            eclass in pkg.data["_eclasses_"]):
+            # vcs ebuild that better not be visible
+            self.check_visibility_vcs(pkg, reporter)
 
-            self.check_pkg(pkg, feeder, reporter)
-
-    def check_visibility_vcs(self, pkg, reporter):
-        for key, profile_dict in self.profile_filters.iteritems():
-            if not key.startswith("~"):
-                continue
-            for profile_name, vals in profile_dict.iteritems():
-                if vals[3].match(pkg):
-                    reporter.add_report(VisibleVcsPkg(pkg, key, profile_name))
-    
-
-    def check_pkg(self, pkg, feeder, reporter):
         query_cache = feeder.query_cache
         for attr, depset in (("depends", pkg.depends),
             ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
@@ -98,6 +85,14 @@ class VisibilityReport(base.template):
 
                 self.process_depset(pkg, attr, edepset, profiles, query_cache,
                     reporter)
+
+    def check_visibility_vcs(self, pkg, reporter):
+        for key, profile_dict in self.profile_filters.iteritems():
+            if not key.startswith("~"):
+                continue
+            for profile_name, vals in profile_dict.iteritems():
+                if vals[3].match(pkg):
+                    reporter.add_report(VisibleVcsPkg(pkg, key, profile_name))
 
     def process_depset(self, pkg, attr, depset, profiles, query_cache,
         reporter):
