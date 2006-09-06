@@ -56,6 +56,16 @@ def get_cpvstr(pkg):
         return s
     return str(pkg)	
 
+def get_use_desc(repo):
+    fp = os.path.join(get_repo_path(repo), "use.desc")
+    l = []
+    for line in open(fp, "r"):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        l.append(line.split()[0])
+    return tuple(l)
+
 def get_use_local_desc(repo):
     fp = os.path.join(get_repo_path(repo), "use.local.desc")
     d = {}

@@ -118,10 +118,8 @@ class MetadataReport(base.template):
         known_iuse = set()
         unstated_iuse = set()
         pjoin = os.path.join
-        fp = pjoin(profile_base, "use.desc")
         try:
-            known_iuse.update(usef.strip() for usef in 
-                read_dict(fp, None).iterkeys())
+            known_iuse.update(util.get_use_desc(profile_base))
         except IOError, ie:
             if ie.errno != errno.ENOENT:
                 raise
