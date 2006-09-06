@@ -98,6 +98,8 @@ def collect_available_checks():
                     continue
                 elif obj is pkgcore_checks.base.template:
                     continue
+                elif getattr(obj, "disabled", False):
+                    continue
                 checks.append(obj)
     checks.sort()
     return checks

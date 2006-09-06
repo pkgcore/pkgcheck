@@ -37,6 +37,8 @@ class template(object):
         feed type for when this check can be ran; useful for if a check
         only makes sense ran at the repo level, but needs only to iterate
         over a versioned feed
+    @ivar disabled: either unset (thus enabled), or a boolean controlling
+        whether a derivative of template is usable
     """
     feed_type = None
     requires = ()
