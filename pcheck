@@ -215,5 +215,8 @@ if __name__ == "__main__":
     elapsed = time.time() - start_time
     minutes = int(elapsed)/60
     seconds = elapsed - (minutes * 60)
+    # flush stdout first; if they're directing it all to a file, this makes
+    # results not get a time statement shoved in midway
+    sys.stdout.flush()
     sys.stderr.write("processed %i pkgs: %im%.2fs\n" %
         (nodes, minutes, seconds))
