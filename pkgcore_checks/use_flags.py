@@ -9,6 +9,10 @@ demandload(globals(), "pkgcore.util.xml:escape ")
 
 class UnusedLocalFlagCheck(template):
 
+    """
+    check for unused use.local.desc entries
+    """
+
     feed_type = package_feed
     requires = profile_options
 
@@ -29,6 +33,10 @@ class UnusedLocalFlagCheck(template):
 
 
 class UnusedLocalFlags(Result):
+    
+    """
+    unused use.local.desc flag(s)
+    """
     
     __slots__ = ("category", "package", "atom", "flags")
 
