@@ -2,22 +2,23 @@
 # License: GPL2
 
 import os
-from pkgcore_checks.base import template, Result, package_feed
+from pkgcore_checks import base
 from pkgcore.util.demandload import demandload
 demandload(globals(), "urllib:urlopen "
     "tempfile:NamedTemporaryFile "
+    "errno "
     "libxml2 "
     "pkgcore.spawn:spawn,find_binary ")
 
 
-class MetadataXmlReport(template):
-    """metadata.xml scans"""
-    feed_type = package_feed
+class base_check(base.template):
+    """base class for metadata.xml scans"""
     
     dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
+    disabled = True
 
     def __init__(self, options):
-        template.__init__(self, options)
+        base.template.__init__(self, options)
         self.base = getattr(options.src_repo, "base", None)
         self.dtd_file = None
 
@@ -42,13 +43,52 @@ class MetadataXmlReport(template):
             self.validator = libxml_parser(self.dtd_loc).validate
         except ImportError:
             self.validator = xmllint_parser(self.dtd_loc).validate
+        self.last_seen = None
+
+    def check_file(self, loc):
+        if not os.path.exists(loc):
+            return False
+        return self.validator(loc)
     
-    def feed(self, pkgset, reporter):
-        loc = os.path.join(os.path.dirname(pkgset[0].path), "metadata.xml")
-        if os.path.exists(loc):
-            ret = self.validator(pkgset[0], loc)
-            if ret is not None:
-                reporter.add_report(ret)
+    def finish(self, reporter):
+        base.template.finish(self, reporter)
+        self.last_seen = None
+        
+
+class PackageMetadataXmlCheck(base_check):
+    """package level metadata.xml scans"""
+
+    feed_type = base.versioned_feed
+    enabling_threshold = base.package_feed
+    
+    disabled = False
+
+    def feed(self, pkg, reporter):
+        if self.last_seen == pkg.key:
+            return
+        self.last_seen = pkg.key
+        loc = os.path.join(os.path.dirname(pkg.path), "metadata.xml")
+        ret = self.check_file(loc)
+        if ret:
+            reporter.add_report(ret(loc, pkg.category, pkg.package))
+
+
+class CategoryMetadataXmlCheck(base_check):
+    """metadata.xml scans"""
+    feed_type = base.versioned_feed
+    enabling_threshold = base.category_feed
+    
+    dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
+    disabled = False
+
+    def feed(self, pkg, reporter):
+        if self.last_seen == pkg.category:
+            return
+        self.last_seen = pkg.category
+        loc = os.path.join(self.base, pkg.category, "metadata.xml")
+        ret = self.check_file(loc)
+        if ret:
+            reporter.add_report(ret(loc, pkg.category))
 
 
 class libxml_parser(object):
@@ -57,14 +97,14 @@ class libxml_parser(object):
         self.parsed_dtd = libxml2.parseDTD(None, loc)
         self.validator = libxml2.newValidCtxt()
     
-    def validate(self, pkg, loc):
+    def validate(self, loc):
         xml = libxml2.createFileParserCtxt(loc)
         xml.parseDocument()
         if not xml.isValid():
-            return BadlyFormedXml(pkg, os.path.basename(loc))
+            return BadlyFormedXml
         elif not xml.doc().validateDtd(self.validator, self.parsed_dtd):
-            return InvalidXml(pkg, os.path.basename(loc))
-        return None
+            return InvalidXml
+        return False
 
 
 class xmllint_parser(object):
@@ -73,62 +113,75 @@ class xmllint_parser(object):
         self.dtd_loc = loc
         self.bin_loc = find_binary("xmllint")
     
-    def validate(self, pkg, loc):
+    def validate(self, loc):
+        if not os.path.exists(loc):
+            return False
         ret = spawn([self.bin_loc, "--nonet", "--noout", "--dtdvalid",
             self.dtd_loc, loc], fd_pipes={})
 
         if ret == 1:
-            return BadlyFormedXml(pkg, os.path.basename(loc))
+            return BadlyFormedXml
 
         elif ret == 3:
-            return InvalidXml(pkg, os.path.basename(loc))
+            return InvalidXml
 
-        return None
+        return False
 
 
-class BadlyFormedXml(Result):
+class BadlyFormedXml(base.Result):
     """xml isn't well formed"""
-    __slots__ = ("category", "package", "version", "filename")
+    __slots__ = ("category", "package", "filename")
     
-    def __init__(self, pkg, filename):
-        Result.__init__(self)
-        self._store_cpv(pkg)
+    def __init__(self, filename, category, package=None):
+        base.Result.__init__(self)
+        self.category = category
+        self.package = package
         self.filename = filename
     
     def to_str(self):
-        return "%s/%s-%s: %s is not well formed" % (self.category,
-            self.package, self.version, self.filename)
+        s = ''
+        if self.package is not None:
+            s = '/' + self.package
+        return "%s%s: %s is not well formed" % (self.category, s,
+            self.filename)
     
     def to_xml(self):
+        s= ''
+        if self.package is not None:
+            s = "\n    <package>%s</package>" % self.package
+
         return \
 """<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
+    <category>%s</category>%s
     <msg>%s is not well formed</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.filename)
+</check>""" % (self.__class__.__name__, self.category, s, self.filename)
 
 
-class InvalidXml(Result):
+class InvalidXml(base.Result):
     """xml fails dtd validation"""
-    __slots__ = ("category", "package", "version", "file")
+    __slots__ = ("category", "package", "file")
     
-    def __init__(self, pkg, filename):
-        Result.__init__(self)
-        self._store_cpv(pkg)
+    def __init__(self, filename, category, package=None):
+        base.Result.__init__(self, filename, category, package=None)
+        self.category = category
+        self.package = package
         self.filename = filename
     
     def to_str(self):
-        return "%s/%s-%s: %s violates it's dtd" % (self.category, self.package, 
-            self.version, self.filename)
+        s=''
+        if self.package is not None:
+            s = '/' + self.package
+        
+        return "%s%s: %s violates it's dtd" % (self.category, s, 
+            self.filename)
     
     def to_xml(self):
+        s= ''
+        if self.package is not None:
+            s = "\n    <package>%s</package>" % self.package
+
         return \
 """<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
+    <category>%s</category>%s
     <msg>%s is not valid according to it's dtd</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, 
-    self.version, self.filename)
+</check>""" % (self.__class__.__name__, self.category, s, self.filename)
