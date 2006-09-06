@@ -3,7 +3,7 @@
 
 import os
 from operator import attrgetter
-from pkgcore_checks import base
+from pkgcore_checks import base, util
 
 from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
@@ -126,10 +126,11 @@ class MetadataReport(base.template):
             if ie.errno != errno.ENOENT:
                 raise
 
-        fp = pjoin(profile_base, "use.local.desc")
         try:
-            known_iuse.update(usef.rsplit(":", 1)[1].strip() for usef in 
-                read_dict(fp, None).iterkeys())
+            for restricts_dict in \
+                util.get_use_local_desc(profile_base).itervalues():
+                for flags in restricts_dict.itervalues():
+                    known_iuse.update(x.strip() for x in flags)
         except IOError, ie:
             if ie.errno != errno.ENOENT:
                 raise		
@@ -153,7 +154,7 @@ class MetadataReport(base.template):
         return frozenset(known_iuse), frozenset(unstated_iuse)
             
     # protocol... pylint: disable-msg=W0613
-    def start(self, repo):
+    def start(self, repo, *a):
         # we are given extra args since we use profiles; don't care about it
         # however
         if any(x[0] == "license" for x in self.attrs):
