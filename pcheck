@@ -78,19 +78,25 @@ def convert_check_filter(tok):
     
 
 def collect_available_checks():
-    import pkgcore_checks
     checks = []
     for loc in map(str, pkgcore_checks.__path__):
         for mod in [x for x in os.listdir(loc) if x.endswith(".py")]:
+            # skip trying to grab tests from the base module
+            if mod == "base.py":
+                continue
             try:
                 module = load_module("pkgcore_checks.%s" % mod[:-3])
             except FailedImport:
                 continue
             for name in dir(module):
-                if not "report" in name.lower():
-                    continue
                 obj = getattr(module, name)
-                if not getattr(obj, "feed_type", False):
+                # is it a class?  is it a derivative of template?
+                # finally, is it disabled?
+                if not isinstance(obj, type):
+                    continue
+                elif not issubclass(obj, pkgcore_checks.base.template):
+                    continue
+                elif getattr(obj, "disabled", False):
                     continue
                 checks.append(obj)
     checks.sort()
