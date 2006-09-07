@@ -151,6 +151,7 @@ class Feeder(object):
         profile_filters = {}
         self.keywords_filter = {}
         profile_evaluate_dict = {}
+        ignore_deprecated = self.options.profile_ignore_deprecated
         
         for k in self.desired_arches:
             if k.lstrip("~") not in self.desired_arches:
@@ -165,6 +166,8 @@ class Feeder(object):
             profile_filters.update({stable_key:{}, unstable_key:{}})
             for profile_name in self.arch_profiles.get(k, []):
                 profile = self.options.profile_func(profile_name)
+                if ignore_deprecated and profile.deprecated:
+                    continue
                 mask = util.get_profile_mask(profile)
                 virtuals = profile.virtuals(self.search_repo)
                 # force all use masks to negated, and all other arches but this

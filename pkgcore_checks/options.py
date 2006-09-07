@@ -139,9 +139,12 @@ profile_options = \
     (FinalizingOption("--profile-base", action='store', type='string',
         finalizer=profile_finalize, dest="profile_dir", default=None,
         help="filepath to base profiles directory"),
-    optparse.Option("--ignore-dev-profiles", action='store_true', default=False,
-        dest='profile_ignore_dev',
-        help="disable scanning of indev profiles"))
+    optparse.Option("--ignore-dev-profiles", action='store_true',
+        default=False, dest='profile_ignore_dev',
+        help="disable scanning of indev profiles"),
+    optparse.Option("--ignore-deprecated-profiles", action='store_true',
+        default=False, dest='profile_ignore_deprecated',
+        help="disable scanning of deprecated profiles"))
 
 
 def check_uses_profiles(check):
