@@ -118,6 +118,10 @@ def get_repo_base(options, throw_error=True, repo=None):
 # protocol requires the unused args- pylint: disable-msg=W0613
 def profile_finalize(option_inst, options, runner):
     runner.enable_profiles = True
+    if options.profiles_enabled is None:
+        options.profiles_enabled = []
+    if options.profiles_disabled is None:
+        options.profiles_disabled = []
     profile_loc = getattr(options, "profile_dir", None)
 
     if profile_loc is not None:
@@ -139,12 +143,27 @@ profile_options = \
     (FinalizingOption("--profile-base", action='store', type='string',
         finalizer=profile_finalize, dest="profile_dir", default=None,
         help="filepath to base profiles directory"),
-    optparse.Option("--ignore-dev-profiles", action='store_true',
+
+    optparse.Option("--profile-disable-dev", action='store_true',
         default=False, dest='profile_ignore_dev',
-        help="disable scanning of indev profiles"),
-    optparse.Option("--ignore-deprecated-profiles", action='store_true',
+        help="disable scanning of dev profiles"),
+
+    optparse.Option("--profile-disable-deprecated", action='store_true',
         default=False, dest='profile_ignore_deprecated',
-        help="disable scanning of deprecated profiles"))
+        help="disable scanning of deprecated profiles"),
+
+    optparse.Option("--profile-disable-profiles-desc", action='store_false',
+        default=False, dest='profiles_desc_enabled',
+        help="disable loading profiles to scan from profiles.desc, you "
+            "will want to enable profiles manually via --profile-enable"),
+
+    optparse.Option('--profile-enable', action='append', type='string',
+        dest='profiles_enabled',
+        help="specify a profile to scan"),
+
+    optparse.Option('--profile-disable', action='append', type='string',
+        dest='profiles_disabled',
+        help="specify a profile to ignore"))
 
 
 def check_uses_profiles(check):

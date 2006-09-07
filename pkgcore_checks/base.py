@@ -19,7 +19,8 @@ from pkgcore.util.mappings import OrderedDict
 from pkgcore.util.containers import ProtectedSet
 from pkgcore.restrictions import values, packages
 from pkgcore.util.demandload import demandload
-demandload(globals(), "logging ")
+demandload(globals(), "logging "
+    "pkgcore.config.profiles ")
 
 # done as convience to checks. pylint: disable-msg=W0611,W0401
 from pkgcore_checks.options import *
@@ -139,9 +140,42 @@ class Feeder(object):
     def init_arch_profiles(self):
         if self.profiles_inited:
             return
-        self.arch_profiles = \
-            util.get_profiles_desc(self.options.profile_base_dir,
-                ignore_dev=self.options.profile_ignore_dev)
+
+        def norm_name(x):
+            return '/'.join(y for y in x.split('/') if y)
+
+        disabled = set(norm_name(x) for x in self.options.profiles_disabled)
+        enabled = set(x for x in 
+            (norm_name(y) for y in self.options.profiles_enabled)
+            if x not in disabled)
+
+        arch_profiles = {}
+        if self.options.profiles_desc_enabled:
+            d = \
+                util.get_profiles_desc(self.options.profile_base_dir,
+                    ignore_dev=self.options.profile_ignore_dev)
+            
+            for k, v in d.iteritems():
+                l = [x for x in map(norm_name, v)
+                    if not x in disabled]
+                
+                # wipe any enableds that are here already so we don't 
+                # get a profile twice
+                enabled.difference_update(l)
+                if v:
+                    arch_profiles[k] = l
+
+        for x in enabled:
+            p = self.options.profile_func(x)
+            arch = p.arch
+            if arch is None:
+                raise pkgcore.config.profiles.ProfileException(
+                    "profile %s lacks arch settings, unable to use it" % x)
+            arch_profiles.setdefault(p.arch, []).append((x, p))
+            
+        # clean arch_profiles now
+        for x in self.options.profiles_enabled:
+            self.options.profile_func(x)
 
         if self.desired_arches is None:
             self.desired_arches = \
@@ -164,8 +198,11 @@ class Feeder(object):
                 values.ContainmentMatch(stable_key, unstable_key))
             
             profile_filters.update({stable_key:{}, unstable_key:{}})
-            for profile_name in self.arch_profiles.get(k, []):
-                profile = self.options.profile_func(profile_name)
+            for profile_name in arch_profiles.get(k, []):
+                if not isinstance(profile_name, basestring):
+                    profile_name, profile = profile_name
+                else:
+                    profile = self.options.profile_func(profile_name)
                 if ignore_deprecated and profile.deprecated:
                     continue
                 mask = util.get_profile_mask(profile)
@@ -202,6 +239,7 @@ class Feeder(object):
                 "keywords", 
                 values.ContainmentMatch(unstable_key))
 
+        self.arch_profiles = arch_profiles
         self.keywords_filter = OrderedDict((k, self.keywords_filter[k]) 
             for k in sorted(self.keywords_filter))
         self.profile_filters = profile_filters
