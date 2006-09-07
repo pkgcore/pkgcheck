@@ -91,7 +91,7 @@ class VisibilityReport(base.template):
             if not key.startswith("~"):
                 continue
             for profile_name, vals in profile_dict.iteritems():
-                if vals[3].match(pkg):
+                if vals[5].match(pkg):
                     reporter.add_report(VisibleVcsPkg(pkg, key, profile_name))
 
     def process_depset(self, pkg, attr, depset, profiles, query_cache,
