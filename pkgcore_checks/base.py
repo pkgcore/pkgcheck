@@ -140,7 +140,8 @@ class Feeder(object):
         if self.profiles_inited:
             return
         self.arch_profiles = \
-            util.get_profiles_desc(self.options.profile_base_dir)
+            util.get_profiles_desc(self.options.profile_base_dir,
+                ignore_dev=self.options.profile_ignore_dev)
 
         if self.desired_arches is None:
             self.desired_arches = \
@@ -162,7 +163,7 @@ class Feeder(object):
                 values.ContainmentMatch(stable_key, unstable_key))
             
             profile_filters.update({stable_key:{}, unstable_key:{}})
-            for profile_name in self.arch_profiles[k]:
+            for profile_name in self.arch_profiles.get(k, []):
                 profile = self.options.profile_func(profile_name)
                 mask = util.get_profile_mask(profile)
                 virtuals = profile.virtuals(self.search_repo)

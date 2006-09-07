@@ -25,7 +25,7 @@ def get_repo_path(repo):
         return os.path.join(repo.base, "profiles")
     return repo
 
-def get_profiles_desc(repo):
+def get_profiles_desc(repo, ignore_dev=False):
     fp = os.path.join(get_repo_path(repo), "profiles.desc")
 
     arches_dict = {}
@@ -38,6 +38,8 @@ def get_profiles_desc(repo):
         except ValueError, v:
             logging.error("%s: line number %i isn't of 'key profile status' "
                 "form" % (fp, line_no))
+            continue
+        if ignore_dev and status.lower().strip() == "dev":
             continue
         # yes, we're ignoring status.
         # it's a silly feature anyways.
