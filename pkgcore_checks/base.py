@@ -275,10 +275,10 @@ class Feeder(object):
                 for flags, profile_data in flags_dict.iteritems():
                     # XXX optimize this
                     for umd, ufd, profile_name in profile_data:
-                        tri_flags = diuse.difference(flags[0].difference(
-                            chain(*[v for restrict, v in 
+                        tri_flags = diuse.intersection(chain(flags[0],
+                            *[v for restrict, v in 
                                 umd.get(pkey, {}).iteritems()
-                                if restrict.match(pkg)])))
+                                if restrict.match(pkg)]))
 
                         set_flags = diuse.intersection(chain(flags[1],
                             *[v for restrict, v in ufd.get(pkey, {}).iteritems()
