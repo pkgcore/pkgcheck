@@ -48,7 +48,7 @@ def get_profiles_desc(repo, ignore_dev=False):
     return arches_dict
 
 def get_repo_known_arches(repo):
-    fp = os.path.join(get_repo_path(repo), "profiles", "arch.list")
+    fp = os.path.join(get_repo_path(repo), "arch.list")
     return set(open(fp, "r").read().split())
 
 def get_cpvstr(pkg):
