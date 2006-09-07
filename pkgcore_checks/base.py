@@ -516,9 +516,17 @@ class StrReporter(Reporter):
 
     def __init__(self, file_obj):
         self.handle = file_obj
+        self.first_report = True
     
     def add_report(self, result):
+        if self.first_report:
+            self.handle.write("\n")
+            self.first_report = False
         self.handle.write("%s\n" % (result.to_str()))
+
+    def finish(self):
+        if not self.first_report:
+            self.handle.write("\n")
 
     
 class XmlReporter(Reporter):
