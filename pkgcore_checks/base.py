@@ -110,7 +110,7 @@ class Feeder(object):
         self.pkg_evaluate_depsets_cache = {}
         self.pkg_profiles_cache = {}
         self.debug = options.debug
-        self.desired_arches = getattr(self.options, "arches", ())
+        self.desired_arches = getattr(self.options, "arches", None)
 
     def add_check(self, check):
         feed_type = getattr(check, "feed_type", None)
@@ -173,13 +173,15 @@ class Feeder(object):
                     "profile %s lacks arch settings, unable to use it" % x)
             arch_profiles.setdefault(p.arch, []).append((x, p))
             
-        # clean arch_profiles now
         for x in self.options.profiles_enabled:
             self.options.profile_func(x)
 
+        self.official_arches = \
+            util.get_repo_known_arches(self.options.profile_base_dir)
+
         if self.desired_arches is None:
-            self.desired_arches = \
-                util.get_repo_known_arches(self.options.profile_base_dir)
+            # copy it to be safe
+            self.desired_arches = set(self.official_arches)
 
         self.global_insoluable = set()
         profile_filters = {}
@@ -208,7 +210,7 @@ class Feeder(object):
                 mask = util.get_profile_mask(profile)
                 virtuals = profile.virtuals(self.search_repo)
                 # force all use masks to negated, and all other arches but this
-                non_tristate = frozenset(list(self.desired_arches) +
+                non_tristate = frozenset(list(self.official_arches) +
                     list(profile.use_mask))
                 use_flags = frozenset([stable_key])
                 # used to interlink stable/unstable lookups so that if 
