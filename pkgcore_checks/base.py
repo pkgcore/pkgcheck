@@ -19,6 +19,7 @@ from pkgcore.util.mappings import OrderedDict
 from pkgcore.util.containers import ProtectedSet
 from pkgcore.restrictions import values, packages
 from pkgcore.util.demandload import demandload
+from itertools import chain
 demandload(globals(), "logging "
     "pkgcore.config.profiles ")
 
@@ -213,6 +214,10 @@ class Feeder(object):
                 non_tristate = frozenset(list(self.official_arches) +
                     list(profile.use_mask))
                 use_flags = frozenset([stable_key])
+                
+                package_use_force = profile.package_use_force
+                package_use_mask  = profile.package_use_mask
+                                
                 # used to interlink stable/unstable lookups so that if 
                 # unstable says it's not visible, stable doesn't try
                 # if stable says something is visible, unstable doesn't try.
@@ -224,17 +229,20 @@ class Feeder(object):
 
                 # virtual repo, flags, visibility filter, known_good, known_bad
                 profile_filters[stable_key][profile_name] = \
-                    [virtuals, use_flags, non_tristate, 
+                    [virtuals, package_use_mask, package_use_force,
+                        use_flags, non_tristate, 
                         packages.AndRestriction(mask, stable_r), 
                         stable_cache, ProtectedSet(unstable_insoluable)]
                 profile_filters[unstable_key][profile_name] = \
-                    [virtuals, use_flags, non_tristate,
+                    [virtuals, package_use_mask, package_use_force,
+                        use_flags, non_tristate,
                         packages.AndRestriction(mask, unstable_r), 
                         ProtectedSet(stable_cache), unstable_insoluable]
                 
                 for k in (stable_key, unstable_key):
                     profile_evaluate_dict.setdefault(k, {}).setdefault(
-                        (non_tristate, use_flags), []).append(profile_name)
+                        (non_tristate, use_flags), []).append(
+                            (package_use_mask, package_use_force, profile_name))
 
             self.keywords_filter[stable_key] = stable_r
             self.keywords_filter[unstable_key] = packages.PackageRestriction(
@@ -256,6 +264,7 @@ class Feeder(object):
     def collapse_evaluate_depset(self, pkg, attr, depset):
         depset_profiles = self.pkg_evaluate_depsets_cache.get((pkg, attr), None)
         if depset_profiles is None:
+            pkey = pkg.key
             profiles = self.pkg_profiles_cache.get(pkg, None)
             if profiles is None:
                 profiles = self.identify_profiles(pkg)
@@ -263,14 +272,24 @@ class Feeder(object):
             diuse = depset.known_conditionals
             collapsed = {}
             for key, flags_dict in profiles:
-                for flags, profile_names in flags_dict.iteritems():
-                    tri_flags = diuse.difference(flags[0])
-                    set_flags = diuse.intersection(flags[1])
-                    collapsed.setdefault((tri_flags, set_flags), []).extend(
-                        (key, profile, self.profile_filters[key][profile])
-                            for profile in profile_names)
+                for flags, profile_data in flags_dict.iteritems():
+                    # XXX optimize this
+                    for umd, ufd, profile_name in profile_data:
+                        tri_flags = diuse.difference(flags[0].difference(
+                            chain(*[v for restrict, v in 
+                                umd.get(pkey, {}).iteritems()
+                                if restrict.match(pkg)])))
+
+                        set_flags = diuse.intersection(chain(flags[1],
+                            *[v for restrict, v in ufd.get(pkey, {}).iteritems()
+                                if restrict.match(pkg)]))
+
+                        collapsed.setdefault((tri_flags, 
+                            set_flags), []).append((key, profile_name, 
+                                    self.profile_filters[key][profile_name]))
+
             depset_profiles = [(depset.evaluate_depset(k[1], 
-                tristate_filter=v[0][2][2]), v) for k,v in 
+                tristate_filter=k[0]), v) for k,v in 
                 collapsed.iteritems()]
             self.pkg_evaluate_depsets_cache[(pkg, attr)] = depset_profiles
         return depset_profiles

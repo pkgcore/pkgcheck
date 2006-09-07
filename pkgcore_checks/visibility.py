@@ -100,7 +100,8 @@ class VisibilityReport(base.template):
         failures = set()
         for key, profile_name, data in profiles:
             failures.clear()
-            virtuals, flags, non_tristate, vfilter, cache, insoluable = data
+            virtuals, puse_mask, puse_flags, flags, non_tristate, vfilter, \
+                cache, insoluable = data
             masked_status = not vfilter.match(pkg)
             for required in csolutions:
                 if any(True for a in required if a.blocks):
