@@ -7,7 +7,8 @@ demandload(globals(), "pkgcore.ebuild.profiles:OnDiskProfile "
     "pkgcore.ebuild.domain:generate_masking_restrict "
     "pkgcore.util.mapping:LazyValDict "
     "pkgcore.util.packages:get_raw_pkg "
-    "pkgcore.ebuild.atom:atom ")
+    "pkgcore.ebuild.atom:atom "
+    "pkgcore.util.file:iter_read_bash ")
 
 
 def get_profile_from_repo(repo, profile_name):
@@ -29,10 +30,8 @@ def get_profiles_desc(repo, ignore_dev=False):
     fp = os.path.join(get_repo_path(repo), "profiles.desc")
 
     arches_dict = {}
-    for line_no, line in enumerate(open(fp, "r")):
+    for line_no, line in enumerate(iter_read_bash(fp)):
         l = line.split()
-        if not l or l[0].startswith("#"):
-            continue
         try:
             key, profile, status = l
         except ValueError, v:
@@ -61,20 +60,14 @@ def get_cpvstr(pkg):
 def get_use_desc(repo):
     fp = os.path.join(get_repo_path(repo), "use.desc")
     l = []
-    for line in open(fp, "r"):
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
+    for line in iter_read_bash(fp):
         l.append(line.split()[0])
     return tuple(l)
 
 def get_use_local_desc(repo):
     fp = os.path.join(get_repo_path(repo), "use.local.desc")
     d = {}
-    for line in open(fp, "r"):
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
+    for line in iter_read_bash(fp):
         key, val = line.split(":", 1)
         a = atom(key.strip())
         flag = val.split()[0]
