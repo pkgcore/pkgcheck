@@ -153,7 +153,7 @@ profile_options = \
         help="disable scanning of deprecated profiles"),
 
     optparse.Option("--profile-disable-profiles-desc", action='store_false',
-        default=False, dest='profiles_desc_enabled',
+        default=True, dest='profiles_desc_enabled',
         help="disable loading profiles to scan from profiles.desc, you "
             "will want to enable profiles manually via --profile-enable"),
 
