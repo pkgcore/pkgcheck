@@ -4,7 +4,9 @@
 from pkgcore_checks import base, util
 from pkgcore.util.lists import iflatten_instance
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.util.xml:escape ")
+demandload(globals(), "pkgcore.util.xml:escape "
+    "pkgcore.util.osutils:listdir_files "
+    "pkgcore.util.lists:iflatten_instance ")
 
 class UnusedLocalFlags(base.template):
 
@@ -29,7 +31,7 @@ class UnusedLocalFlags(base.template):
             unused = flags.difference(iflatten_instance(
                 pkg.iuse for pkg in pkgs if restrict.match(pkg)))
             if unused:
-                reporter.add_report(UnusedLocalFlags(restrict, unused))
+                reporter.add_report(UnusedLocalFlagsResult(restrict, unused))
 
 
 class UnusedLocalFlagsResult(base.Result):
@@ -89,11 +91,11 @@ class UnusedGlobalFlags(base.template):
     
     def finish(self, reporter):
         if self.flags:
-            reporter.add_report(UnusedGlobalFlags(self.flags))
+            reporter.add_report(UnusedGlobalFlagsResult(self.flags))
         self.flags.clear()
 
 
-class UnusedGlobalFlagsReport(base.Result):
+class UnusedGlobalFlagsResult(base.Result):
     
     """
     unused use.desc flag(s)
@@ -116,3 +118,52 @@ class UnusedGlobalFlagsReport(base.Result):
     <msg>%s</msg>
 </check>""" % (self.__class__.__name__, 
     escape("use.desc unused flags: %s" % ', '.join(self.flags)))
+
+
+class UnusedLicense(base.template):
+    """
+    unused license file(s) check
+    """
+    
+    feed_type = base.versioned_feed
+    enabling_threshold = base.repository_feed
+    requires = base.license_options
+    
+    def __init__(self, options):
+        base.template.__init__(self, options)
+        self.licenses = None
+    
+    def start(self, repo, *a):
+        base.template.start(self, repo, *a)
+        self.licenses = set(listdir_files(self.options.license_dir))
+    
+    def feed(self, pkg, reporter):
+        self.licenses.difference_update(iflatten_instance(pkg.license))
+    
+    def finish(self, reporter):
+        if self.licenses:
+            reporter.add_report(UnusedLicenseReport(self.licenses))
+        self.license = None
+
+
+class UnusedLicenseReport(base.Result):
+    """
+    unused license(s) detected
+    """
+    
+    __slots__ = ("licenses",)
+    
+    def __init__(self, licenses):
+        base.Result.__init__(self)
+        self.licenses = tuple(sorted(licenses))
+    
+    def to_str(self):
+        return "unused license(s): %s" % \
+            ', '.join(self.licenses)
+            
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <msg>%s</msg>
+</check>""" % (self.__class__.__name__, 
+    escape("use.desc unused licenses: %s" % ', '.join(self.licenses)))
