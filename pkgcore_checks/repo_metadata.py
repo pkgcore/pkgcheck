@@ -6,7 +6,7 @@ from pkgcore.util.lists import iflatten_instance
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.xml:escape ")
 
-class UnusedLocalFlagsCheck(base.template):
+class UnusedLocalFlags(base.template):
 
     """
     check for unused use.local.desc entries
@@ -32,7 +32,7 @@ class UnusedLocalFlagsCheck(base.template):
                 reporter.add_report(UnusedLocalFlags(restrict, unused))
 
 
-class UnusedLocalFlags(base.Result):
+class UnusedLocalFlagsResult(base.Result):
     
     """
     unused use.local.desc flag(s)
@@ -67,7 +67,7 @@ class UnusedLocalFlags(base.Result):
 	(self.atom, ', '.join(self.flags))))
 
 
-class UnusedGlobalFlagsCheck(base.template):
+class UnusedGlobalFlags(base.template):
     """
     check for unused use.desc entries
     """
@@ -93,7 +93,7 @@ class UnusedGlobalFlagsCheck(base.template):
         self.flags.clear()
 
 
-class UnusedGlobalFlags(base.Result):
+class UnusedGlobalFlagsReport(base.Result):
     
     """
     unused use.desc flag(s)
