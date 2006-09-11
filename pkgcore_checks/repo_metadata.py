@@ -4,9 +4,12 @@
 from pkgcore_checks import base, util
 from pkgcore.util.lists import iflatten_instance
 from pkgcore.util.demandload import demandload
+import operator
+
 demandload(globals(), "pkgcore.util.xml:escape "
     "pkgcore.util.osutils:listdir_files "
-    "pkgcore.util.lists:iflatten_instance ")
+    "pkgcore.util.lists:iflatten_instance "
+    "pkgcore.fetch:fetchable ")
 
 class UnusedLocalFlags(base.template):
 
@@ -167,3 +170,75 @@ class UnusedLicenseReport(base.Result):
     <msg>%s</msg>
 </check>""" % (self.__class__.__name__, 
     escape("use.desc unused licenses: %s" % ', '.join(self.licenses)))
+
+
+class ConflictingDigests(base.template):
+    """
+    scan for conflicting digest entries; since this requires
+    keeping all fetchables in memory, this can add up.
+    """
+    
+    enabling_threshold = base.package_feed
+    feed_type = base.versioned_feed
+    
+    def __init__(self, options):
+        base.template.__init__(self, options)
+        self._fetchables = {}
+    
+    def feed(self, pkg, reporter):
+        for uri in iflatten_instance(pkg.fetchables, fetchable):
+            existing = self._fetchables.get(uri.filename, None)
+            if existing is not None:
+                reqed_chksums = existing[0]
+                conflicts = []
+                for chf, val in uri.chksums.iteritems():
+                    oval = reqed_chksums.get(chf, None)
+                    if oval is not None:
+                        if oval != val:
+                            conflicts.append((chf, val, oval))
+
+                if conflicts:
+                    reporter.add_report(ConflictingChksums(
+                        pkg, uri.filename, conflicts, existing[1]))
+                elif len(uri.chksums) > len(existing):
+                    self._fetchables[uri.filename] = existing
+                existing[1].append(util.get_cpvstr(pkg))
+            else:
+                self._fetchables[uri.filename] = \
+                    (uri.chksums, [util.get_cpvstr(pkg)])
+        
+    def finish(self, reporter):
+        base.template.finish(self, reporter)
+        self._fetchables.clear()
+
+
+class ConflictingChksums(base.Result):
+
+    __slots__ = ("category", "package", "version", "owning_pkgs",
+        "filename", "chksums")
+    
+    _sorter = staticmethod(operator.itemgetter(0))
+    
+    def __init__(self, pkg, filename, chksums, others):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.filename = filename
+        self.chksums = tuple(sorted(chksums, key=self._sorter))
+        self.others = tuple(sorted(others))
+    
+    def to_str(self):
+        return "%s/%s-%s: conflicts with (%s) for file %r, chksums: %s" % \
+            (self.category, self.package, self.version, \
+            ', '.join(self.others), self.filename, self.chksums)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>%s</msg>
+</check>""" % (self.__class__.__name__,  self.category, self.package, 
+    self.version,
+    escape("file %r conflicts with %r, chksums: %r" % \
+        self.filename, self.others, self.chksums))
