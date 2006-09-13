@@ -261,36 +261,38 @@ class Feeder(object):
             self.profile_evaluate_dict.iteritems() if
             self.keywords_filter[key].match(pkg)]
 
+    def identify_common_depsets(self, pkg, depset):
+        pkey = pkg.key
+        profiles = self.pkg_profiles_cache.get(pkg, None)
+        if profiles is None:
+            profiles = self.identify_profiles(pkg)
+            self.pkg_profiles_cache[pkg] = profiles
+        diuse = depset.known_conditionals
+        collapsed = {}
+        for key, flags_dict in profiles:
+            for flags, profile_data in flags_dict.iteritems():
+                # XXX optimize this
+                for umd, ufd, profile_name in profile_data:
+                    tri_flags = diuse.intersection(chain(flags[0],
+                        *[v for restrict, v in 
+                            umd.get(pkey, {}).iteritems()
+                            if restrict.match(pkg)]))
+
+                    set_flags = diuse.intersection(chain(flags[1],
+                        *[v for restrict, v in ufd.get(pkey, {}).iteritems()
+                            if restrict.match(pkg)]))
+
+                    collapsed.setdefault((tri_flags, 
+                        set_flags), []).append((key, profile_name, 
+                            self.profile_filters[key][profile_name]))
+
+        return [(depset.evaluate_depset(k[1], tristate_filter=k[0]), v)
+            for k,v in collapsed.iteritems()]
+
     def collapse_evaluate_depset(self, pkg, attr, depset):
         depset_profiles = self.pkg_evaluate_depsets_cache.get((pkg, attr), None)
         if depset_profiles is None:
-            pkey = pkg.key
-            profiles = self.pkg_profiles_cache.get(pkg, None)
-            if profiles is None:
-                profiles = self.identify_profiles(pkg)
-                self.pkg_profiles_cache[pkg] = profiles
-            diuse = depset.known_conditionals
-            collapsed = {}
-            for key, flags_dict in profiles:
-                for flags, profile_data in flags_dict.iteritems():
-                    # XXX optimize this
-                    for umd, ufd, profile_name in profile_data:
-                        tri_flags = diuse.intersection(chain(flags[0],
-                            *[v for restrict, v in 
-                                umd.get(pkey, {}).iteritems()
-                                if restrict.match(pkg)]))
-
-                        set_flags = diuse.intersection(chain(flags[1],
-                            *[v for restrict, v in ufd.get(pkey, {}).iteritems()
-                                if restrict.match(pkg)]))
-
-                        collapsed.setdefault((tri_flags, 
-                            set_flags), []).append((key, profile_name, 
-                                    self.profile_filters[key][profile_name]))
-
-            depset_profiles = [(depset.evaluate_depset(k[1], 
-                tristate_filter=k[0]), v) for k,v in 
-                collapsed.iteritems()]
+            depset_profiles = self.identify_common_depsets(pkg, depset)
             self.pkg_evaluate_depsets_cache[(pkg, attr)] = depset_profiles
         return depset_profiles
 
