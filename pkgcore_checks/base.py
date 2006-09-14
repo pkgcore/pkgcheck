@@ -212,8 +212,8 @@ class Feeder(object):
                 virtuals = profile.virtuals(self.search_repo)
                 # force all use masks to negated, and all other arches but this
                 non_tristate = frozenset(list(self.official_arches) +
-                    list(profile.use_mask))
-                use_flags = frozenset([stable_key])
+                    list(profile.use_mask) + list(profile.use_force))
+                use_flags = frozenset([stable_key] + list(profile.use_force))
                 
                 package_use_force = profile.package_use_force
                 package_use_mask  = profile.package_use_mask
