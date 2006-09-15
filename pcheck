@@ -6,7 +6,7 @@ __version__ = "0.1"
 
 from pkgcore.config import load_config
 from pkgcore.util.modules import load_module, FailedImport
-from pkgcore.util.commandline import generate_restriction
+from pkgcore.util.parserestrict import parse_match
 from pkgcore.util.lists import stable_unique
 from pkgcore.restrictions import packages
 from pkgcore.util.demandload import demandload
@@ -154,7 +154,7 @@ if __name__ == "__main__":
 
     repo_name = args.pop(0)
     if args:
-        limiters = stable_unique(map(generate_restriction, args))
+        limiters = stable_unique(map(parse_match, args))
     else:
         limiters = [packages.AlwaysTrue]
                     
