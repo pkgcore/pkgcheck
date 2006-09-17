@@ -23,7 +23,7 @@ class VisibilityReport(base.template):
     requires = base.arches_options + base.query_cache_options + \
         base.profile_options
 
-    vcs_eclasses = ("subversion", "git", "cvs", "darcs")
+    vcs_eclasses = frozenset(["subversion", "git", "cvs", "darcs"])
 
     def __init__(self, options):
         base.template.__init__(self, options)
@@ -44,10 +44,12 @@ class VisibilityReport(base.template):
         # accessed for atom matching to remain in memory.
         # end result is less going to disk
 
-        if any(True for eclass in self.vcs_eclasses if
-            eclass in pkg.data["_eclasses_"]):
-            # vcs ebuild that better not be visible
-            self.check_visibility_vcs(pkg, reporter)
+        fvcs = self.vcs_eclasses
+        for eclass in pkg.data["_eclasses_"]:
+            if eclass in fvcs:
+                # vcs ebuild that better not be visible
+                self.check_visibility_vcs(pkg, reporter)
+                break
 
         query_cache = feeder.query_cache
         for attr, depset in (("depends", pkg.depends),
