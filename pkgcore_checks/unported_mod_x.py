@@ -82,13 +82,19 @@ class ModularXPortingReport(base.template):
                             bad_blocks.add((a,))
                     elif isinstance(a, bool_or):
                         for block in a.iter_dnf_solutions():
-                            if not any(True for x in block if
-                                x.key == "virtual/x11" and not x.blocks):
+                            i = iter(block)
+                            for x in i:
+                                if x.blocks:
+                                    continue
+                                if x.key == "virtual/x11":
+                                    break
+                            else:
                                 continue
-                            if not any(True for x in block if
-                                x.key in self.valid_modx_keys
-                                and not x.blocks):
-                                
+                            for x in i:
+                                if not x.blocks and \
+                                    x.key in self.valid_modx_keys:
+                                    break
+                            else:
                                 for or_block in a.cnf_solutions():
                                     if not any(True for x in or_block if
                                         x.key == "virtual/x11"
