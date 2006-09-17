@@ -272,15 +272,31 @@ class Feeder(object):
         for key, flags_dict in profiles:
             for flags, profile_data in flags_dict.iteritems():
                 # XXX optimize this
+                empty_umd = None
+                empty_ufd = None                
                 for umd, ufd, profile_name in profile_data:
-                    tri_flags = diuse.intersection(chain(flags[0],
-                        *[v for restrict, v in 
-                            umd.get(pkey, {}).iteritems()
-                            if restrict.match(pkg)]))
-
-                    set_flags = diuse.intersection(chain(flags[1],
-                        *[v for restrict, v in ufd.get(pkey, {}).iteritems()
-                            if restrict.match(pkg)]))
+                    ur = umd.get(pkey, None)
+                    if ur is None:
+                        if empty_umd is None:
+                            tri_flags = empty_umd = diuse.intersection(flags[0])
+                        else:
+                            tri_flags = empty_umd
+                    else:
+                        tri_flags = diuse.intersection(chain(flags[0],
+                            *[v for restrict, v in 
+                                ur.iteritems()
+                                if restrict.match(pkg)]))
+                    ur = ufd.get(pkey, None)
+                    if ur is None:
+                        if empty_ufd is None:
+                            set_flags = empty_ufd = diuse.intersection(flags[1])
+                        else:
+                            set_flags = empty_ufd
+                    else:
+                        set_flags = diuse.intersection(chain(flags[1],
+                            *[v for restrict, v in
+                                ur.iteritems()
+                                if restrict.match(pkg)]))
 
                     collapsed.setdefault((tri_flags, 
                         set_flags), []).append((key, profile_name, 
