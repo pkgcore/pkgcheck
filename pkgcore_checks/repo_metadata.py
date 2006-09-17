@@ -223,8 +223,16 @@ class ConflictingChksums(base.Result):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.filename = filename
-        self.chksums = tuple(sorted(chksums, key=self._sorter))
+        self.chksums = tuple(sorted(self.reformat_chksums(chksums), key=self._sorter))
         self.others = tuple(sorted(others))
+
+    @staticmethod
+    def reformat_chksums(iterable):
+        for chf, val1, val2 in iterable:
+            if chf == "size":
+                yield chf, val1, val2
+            else:
+                yield chf, "%x" % val1, "%x" % val2
     
     def to_str(self):
         return "%s/%s-%s: conflicts with (%s) for file %r, chksums: %s" % \
