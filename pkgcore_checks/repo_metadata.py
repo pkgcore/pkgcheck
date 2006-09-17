@@ -212,6 +212,15 @@ class ConflictingDigests(base.template):
         self._fetchables.clear()
 
 
+def reformat_chksums(iterable):
+    for chf, val1, val2 in iterable:
+        if chf == "size":
+            yield chf, val1, val2
+        else:
+            yield chf, "%x" % val1, "%x" % val2
+    
+
+
 class ConflictingChksums(base.Result):
 
     __slots__ = ("category", "package", "version", "owning_pkgs",
@@ -223,17 +232,10 @@ class ConflictingChksums(base.Result):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.filename = filename
-        self.chksums = tuple(sorted(self.reformat_chksums(chksums), key=self._sorter))
+        self.chksums = tuple(sorted(reformat_chksums(chksums),
+            key=self._sorter))
         self.others = tuple(sorted(others))
 
-    @staticmethod
-    def reformat_chksums(iterable):
-        for chf, val1, val2 in iterable:
-            if chf == "size":
-                yield chf, val1, val2
-            else:
-                yield chf, "%x" % val1, "%x" % val2
-    
     def to_str(self):
         return "%s/%s-%s: conflicts with (%s) for file %r, chksums: %s" % \
             (self.category, self.package, self.version, \
@@ -250,3 +252,60 @@ class ConflictingChksums(base.Result):
     self.version,
     escape("file %r conflicts with %r, chksums: %r" % \
         self.filename, self.others, self.chksums))
+
+
+class ConflictManifestDigest(base.template):
+
+    feed_type = base.versioned_feed
+    enabling_threshold = base.package_feed
+    
+    def feed(self, pkg, reporter):
+        manifest = pkg.manifest
+        if manifest.version == 1:
+            return
+        f = getattr(pkg.repo, "_get_digests", None)
+        if f is None:
+            return
+        digests = f(pkg, force_manifest1=True)
+        mdigests = manifest.distfiles
+
+        for fname, chksum in digests.iteritems():
+            mchksum = mdigests.get(fname, None)
+            if mchksum is None:
+                reporter.add_report(ManifestDigestConflict(pkg, fname,
+                    "missing in manifest"))
+                continue
+            conflicts = []
+            for chf in set(chksum).intersection(mchksum):
+                if mchksum[chf] != chksum[chf]:
+                    conflicts.append((chf, mchksum[chf], chksum[chf]))
+            if conflicts:
+                reporter.add_report(ManifestDigestConflict(pkg, fname,
+                    "chksum conflict- %r" % 
+                        tuple(sorted(reformat_chksums(conflicts)))
+                ))
+
+class ManifestDigestConflict(base.Result):
+    __slots__ = ("category", "package", "version", 
+        "msg", "filename")
+
+    def __init__(self, pkg, filename, msg):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.filename = filename
+        self.msg = msg
+    
+    def to_str(self):
+        return "%s/%s-%s: file %r: %s" % (self.category, self.package,
+            self.version, self.filename, self.msg)
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>%s</msg>
+</check>""" % (self.__class__.__name__,  self.category, self.package, 
+    self.version,
+    escape("file %s: %s" % (self.filename, self.msg)))
