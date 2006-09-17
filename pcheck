@@ -13,7 +13,7 @@ from pkgcore.util.demandload import demandload
 
 import pkgcore_checks.options
 demandload(globals(), "os logging time optparse "
-    "pkgcore.fs.util:normpath "
+    "pkgcore.util.osutils:normpath "
     "pkgcore.util.compatibility:any "
     "pkgcore.restrictions.values:StrRegex "
     "pkgcore_checks.base ")

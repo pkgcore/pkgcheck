@@ -14,7 +14,7 @@ from pkgcore.util.compatibility import any
 from pkgcore.util.currying import pre_curry
 from pkgcore.util.demandload import demandload
 demandload(globals(), "os "
-    "pkgcore.fs.util:abspath "
+    "pkgcore.util.osutils:abspath "
     "pkgcore.ebuild:repository "
     "pkgcore.repository:multiplex ")
 
