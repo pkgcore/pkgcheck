@@ -4,7 +4,7 @@
 from pkgcore_checks import base, util
 from pkgcore.util.lists import iflatten_instance
 from pkgcore.util.demandload import demandload
-import operator
+import operator, itertools
 
 demandload(globals(), "pkgcore.util.xml:escape "
     "pkgcore.util.osutils:listdir_files "
@@ -256,18 +256,31 @@ class ConflictingChksums(base.Result):
 
 class ConflictManifestDigest(base.template):
 
-    feed_type = base.versioned_feed
-    enabling_threshold = base.package_feed
+    feed_type = base.package_feed
     
-    def feed(self, pkg, reporter):
-        manifest = pkg.manifest
-        if manifest.version == 1:
-            return
-        f = getattr(pkg.repo, "_get_digests", None)
-        if f is None:
-            return
-        digests = f(pkg, force_manifest1=True)
-        mdigests = manifest.distfiles
+    repo_grabber = operator.attrgetter("repo")
+    
+    def feed(self, full_pkgset, reporter):
+        # sort it by repo.
+        for repo, pkgset in itertools.groupby(full_pkgset, self.repo_grabber):
+            pkgset = list(pkgset)
+            manifest = pkgset[0].manifest
+            if manifest.version == 1:
+                continue
+            f = getattr(repo, "_get_digests", None)
+            if f is None:
+                continue
+            mdigests = manifest.distfiles
+            old_digests = []
+            for pkg in pkgset:
+                digests = f(pkg, force_manifest1=True)
+                self.check_pkg(pkg, mdigests, digests, reporter)
+                old_digests += digests.keys()
+            orphaned = set(mdigests).difference(old_digests)
+            if orphaned:
+                reporter.add_report(OrphanedManifestDist(pkgset[0], orphaned))
+
+    def check_pkg(self, pkg, mdigests, digests, reporter):
 
         for fname, chksum in digests.iteritems():
             mchksum = mdigests.get(fname, None)
@@ -309,3 +322,26 @@ class ManifestDigestConflict(base.Result):
 </check>""" % (self.__class__.__name__,  self.category, self.package, 
     self.version,
     escape("file %s: %s" % (self.filename, self.msg)))
+
+
+class OrphanedManifestDist(base.Result):
+    __slots__ = ("category", "package", "version",
+        "files")
+
+    def __init__(self, pkg, files):
+        base.Result.__init__(self)
+        self._store_cp(pkg)
+        self.files = tuple(sorted(files))
+    
+    def to_str(self):
+        return "%s/%s: manifest2 knows of dists %r, but digest1 doesn't" % \
+            (self.category, self.package, self.files)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <msg>%s</msg>
+</check>""" % (self.__class__.__name__,  self.category, self.package, 
+    escape("manifest2 knows of %r, but they're not in digests" % self.files))
