@@ -53,15 +53,15 @@ class ModularXPortingReport(base.template):
         # end result is less going to disk
 
         unported = []
-        ported = []
         for pkg in pkgset:
-            self.check_pkg(pkg, feeder, reporter, unported, ported)
+            self.check_pkg(pkg, feeder, reporter, unported)
 
-        if unported and ported:
+        if unported:
             for u in unported:
-                reporter.add_report(SuggestRemoval(u, ported))
+                reporter.add_report(SuggestRemoval(u, 
+                    [pkg for pkg in pkgset if pkg not in unported]))
 
-    def check_pkg(self, pkg, feeder, reporter, unported, ported):
+    def check_pkg(self, pkg, feeder, reporter, unported):
         query_cache = feeder.query_cache
         failed = []
         
@@ -126,8 +126,6 @@ class ModularXPortingReport(base.template):
         if len(failed) == 2:
             # no point in trying it out, will fail anyways
             return
-        elif not failed and ported_status:
-            ported.append(pkg)
                 
         skip_depends = "depends" in failed
         skip_rdepends = "rdepends" in failed
