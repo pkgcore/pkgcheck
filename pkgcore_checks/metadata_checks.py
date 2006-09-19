@@ -265,7 +265,7 @@ class BadRestricts(base.Result):
     def to_str(self):
         s = ''
         if self.restricts:
-            s = "unknown restricts- [ %s ]" % ", ".join(self.restricts)
+            s = "unknown restricts [ %s ]" % ", ".join(self.restricts)
         if self.deprecated:
             if s:
                 s += ", "
