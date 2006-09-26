@@ -90,7 +90,7 @@ class VisibilityReport(base.template):
 
     def check_visibility_vcs(self, pkg, reporter):
         for key, profile_dict in self.profile_filters.iteritems():
-            if not key.startswith("~"):
+            if key.startswith("~"):
                 continue
             for profile_name, vals in profile_dict.iteritems():
                 if vals[5].match(pkg):
