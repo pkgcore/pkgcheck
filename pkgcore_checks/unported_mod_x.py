@@ -58,8 +58,9 @@ class ModularXPortingReport(base.template):
 
         if unported:
             for u in unported:
-                reporter.add_report(SuggestRemoval(u, 
-                    [pkg for pkg in pkgset if pkg not in unported]))
+                l = [pkg for pkg in pkgset if pkg not in unported]
+                if l:
+                    reporter.add_report(SuggestRemoval(u, l))
 
     def check_pkg(self, pkg, feeder, reporter, unported):
         query_cache = feeder.query_cache
