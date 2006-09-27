@@ -171,7 +171,7 @@ class ModularXPortingReport(base.template):
         for key, profile_name, data in profiles:
             failed.clear()
             virtuals, puse_mask, puse_flags, flags, non_tristate, vfilter, \
-                cache, insoluable = data
+                cache, insoluable, pprovided = data
             for or_block in csolutions:
                 if not any(True for x in or_block if x.key == "virtual/x11"):
                     continue

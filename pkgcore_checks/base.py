@@ -232,12 +232,14 @@ class Feeder(object):
                     [virtuals, package_use_mask, package_use_force,
                         use_flags, non_tristate, 
                         packages.AndRestriction(mask, stable_r), 
-                        stable_cache, ProtectedSet(unstable_insoluable)]
+                        stable_cache, ProtectedSet(unstable_insoluable),
+                        profile.package_provided_repo]
                 profile_filters[unstable_key][profile_name] = \
                     [virtuals, package_use_mask, package_use_force,
                         use_flags, non_tristate,
                         packages.AndRestriction(mask, unstable_r), 
-                        ProtectedSet(stable_cache), unstable_insoluable]
+                        ProtectedSet(stable_cache), unstable_insoluable,
+                        profile.package_provided_repo]
                 
                 for k in (stable_key, unstable_key):
                     profile_evaluate_dict.setdefault(k, {}).setdefault(

@@ -1,3 +1,4 @@
+- back out package.provided hack in visibility, fix start prototype
 - tests (dar)
 - expand config options so that --disable is supported for checks.
 - add reports profile; basically, pre configured checks stored in user

@@ -104,7 +104,7 @@ class VisibilityReport(base.template):
         for key, profile_name, data in profiles:
             failures.clear()
             virtuals, puse_mask, puse_flags, flags, non_tristate, vfilter, \
-                cache, insoluable = data
+                cache, insoluable, pprovided = data
 
             masked_status = not vfilter.match(pkg)
             for required in csolutions:
@@ -115,6 +115,8 @@ class VisibilityReport(base.template):
                     if h in insoluable:
                         pass
                     elif h in cache:
+                        break
+                    elif pprovided is not None and pprovided.match(a):
                         break
                     elif virtuals.match(a):
                         cache.add(h)
