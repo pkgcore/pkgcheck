@@ -33,9 +33,12 @@ def get_option_parser(checks=()):
         description="pkgcore based ebuild QA checks", 
         usage="usage: %prog repository [options] [atom1...atom2]")
 
-    parser.add_option("-c", action="append", type="string", dest="check_to_run",
+    parser.add_option("-c", action="append", type="string", dest="checks_to_run",
         help="limit checks to those matching this regex, or package/class "
             "matching; may be specified multiple times")
+    parser.add_option("-d", action="append", type="string",
+        dest="checks_to_disable", help="specific checks to disable: "
+            "may be specified multiple times")
     parser.add_option("--list-checks", action="store_true", default=False,
         dest="list_checks",
         help="print what checks are available to run and exit")
@@ -144,11 +147,14 @@ if __name__ == "__main__":
         display_checks(checks)
         sys.exit(0)
 
-    if options.check_to_run:
-        l = [convert_check_filter(x) for x in options.check_to_run]
+    if options.checks_to_run:
+        l = [convert_check_filter(x) for x in options.checks_to_run]
         checks = filter_checks(checks, lambda x:any(y.match(x) for y in l))
         del l
-
+    if options.checks_to_disable:
+        l = [convert_check_filter(x) for x in options.checks_to_disable]
+        checks = filter_checks(checks, lambda x:not any(y.match(x) for y in l))
+        del l
     if not args:
         parser.error("repository name wasn't specified")
 
