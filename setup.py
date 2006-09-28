@@ -27,7 +27,7 @@ except OSError:
 
 setup(
     name="pkgcore-checks",
-    version="0",
+    version="0.1",
     license="GPL2",
     author="Brian Harring",
     author_email="ferringb@gmail.com",
