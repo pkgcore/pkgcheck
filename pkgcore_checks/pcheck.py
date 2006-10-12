@@ -15,7 +15,7 @@ from pkgcore.plugin import get_plugins
 from pkgcore_checks import plugins
 
 import pkgcore_checks.options
-demandload(globals(), "logging time optparse textwrap "
+demandload(globals(), "logging optparse textwrap "
     "pkgcore.util.osutils:normpath "
     "pkgcore.util.compatibility:any "
     "pkgcore.restrictions.values:StrRegex "
@@ -191,8 +191,6 @@ def main(config, options, out, err):
             if options.debug:
                 raise
 
-
-    start_time = time.time()
     nodes = 0
     err.write("checks: repo(%i), cat(%i), pkg(%i), version(%i)\n" %
               (len(runner.repo_checks), len(runner.cat_checks),
@@ -206,12 +204,8 @@ def main(config, options, out, err):
     for filterer in options.limiters:
         nodes += runner.run(reporter, filterer)
     reporter.finish()
-    elapsed = time.time() - start_time
-    minutes = int(elapsed)/60
-    seconds = elapsed - (minutes * 60)
     # flush stdout first; if they're directing it all to a file, this makes
-    # results not get a time statement shoved in midway
+    # results not get the final message shoved in midway
     out.stream.flush()
-    err.write("processed %i pkgs: %im%.2fs\n" %
-              (nodes, minutes, seconds))
+    err.write("processed %i pkgs\n" % (nodes,))
     return 0
