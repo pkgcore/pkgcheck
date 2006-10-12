@@ -13,9 +13,8 @@ demandload(globals(), "urllib:urlopen "
 
 class base_check(base.template):
     """base class for metadata.xml scans"""
-    
+
     dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
-    disabled = True
 
     def __init__(self, options):
         base.template.__init__(self, options)
@@ -60,8 +59,6 @@ class PackageMetadataXmlCheck(base_check):
 
     feed_type = base.versioned_feed
     enabling_threshold = base.package_feed
-    
-    disabled = False
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.key:
@@ -77,9 +74,8 @@ class CategoryMetadataXmlCheck(base_check):
     """metadata.xml scans"""
     feed_type = base.versioned_feed
     enabling_threshold = base.category_feed
-    
+
     dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
-    disabled = False
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.category:

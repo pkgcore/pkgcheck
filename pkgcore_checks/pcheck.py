@@ -7,14 +7,15 @@
 
 
 from pkgcore.util import commandline
-from pkgcore.util.modules import load_module, FailedImport
 from pkgcore.util.parserestrict import parse_match
 from pkgcore.util.lists import stable_unique
 from pkgcore.restrictions import packages
 from pkgcore.util.demandload import demandload
+from pkgcore.plugin import get_plugins
+from pkgcore_checks import plugins
 
 import pkgcore_checks.options
-demandload(globals(), "os logging time optparse textwrap "
+demandload(globals(), "logging time optparse textwrap "
     "pkgcore.util.osutils:normpath "
     "pkgcore.util.compatibility:any "
     "pkgcore.restrictions.values:StrRegex "
@@ -48,9 +49,7 @@ class OptionParser(commandline.OptionParser):
 
         # yes linear, but not a huge issue.
         new_opts = []
-        # XXX this is rather messy, find a better way to do this.
-        self.checks = collect_available_checks()
-        for c in self.checks:
+        for c in get_plugins('check', plugins):
             for opt in c.requires:
                 if isinstance(opt, optparse.Option) and opt not in new_opts:
                     new_opts.append(opt)
@@ -61,7 +60,7 @@ class OptionParser(commandline.OptionParser):
         values, args = commandline.OptionParser.check_values(
             self, values, args)
         # XXX hack...
-        values.checks = self.checks
+        values.checks = sorted(get_plugins('check', plugins))
         if values.list_checks:
             return values, ()
 
@@ -108,34 +107,6 @@ def convert_check_filter(tok):
     if not ('+' in tok or '*' in tok):
         tok = "^(?:[^.]+\.)*%s(?:\.[^.]+)*$" % tok
     return StrRegex(tok, case_sensitive=False)
-    
-
-def collect_available_checks():
-    checks = []
-    for loc in map(str, pkgcore_checks.__path__):
-        for mod in [x for x in os.listdir(loc) if x.endswith(".py")]:
-            # skip trying to grab tests from the base module
-            if mod == "base.py":
-                continue
-            try:
-                module = load_module("pkgcore_checks.%s" % mod[:-3])
-            except FailedImport:
-                continue
-            for name in dir(module):
-                obj = getattr(module, name)
-                # is it a class?  is it a derivative of template?
-                # finally, is it template?
-                if not isinstance(obj, type):
-                    continue
-                elif not issubclass(obj, pkgcore_checks.base.template):
-                    continue
-                elif obj is pkgcore_checks.base.template:
-                    continue
-                elif getattr(obj, "disabled", False):
-                    continue
-                checks.append(obj)
-    checks.sort()
-    return checks
 
 
 def display_checks(out, checks):
