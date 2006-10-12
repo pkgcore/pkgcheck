@@ -45,7 +45,9 @@ class OptionParser(commandline.OptionParser):
         self.add_option(
             "-x", "--xml", action="store_true", default=False,
             dest="to_xml", help="dump xml formated result")
-        self.add_options(pkgcore_checks.options.overlay_options)
+
+        self.add_option_group('Overlay').add_options(
+            pkgcore_checks.options.overlay_options)
 
         # yes linear, but not a huge issue.
         new_opts = []
