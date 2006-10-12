@@ -329,14 +329,13 @@ class Feeder(object):
             try:
                 getattr(check, attr)(*a)
                 actual.append(check)
-            except (SystemExit, KeyboardInterrupt):
+            except (SystemExit, KeyboardInterrupt, formatters.StreamClosed):
                 raise
-            except Exception, e:
-                logging.error("type %s, check %s failed running %s: %s" % 
-                    (check_type, check, attr, e))
+            except Exception:
+                logging.exception("type %s, check %s failed running %s" %
+                                  (check_type, check, attr))
                 if self.debug:
                     raise
-                del e
         # rebuild the checks should any have failed
         for x in xrange(len(checks)):
             checks.pop()
@@ -452,7 +451,7 @@ class Feeder(object):
             except Exception, e:
                 if self.debug:
                     raise
-                logging.error(errmsg % (check, e))
+                logging.exception(errmsg % (check,))
                 del e
 
     def _generic_trigger_checks(self, checks, attr, iterable, reporter):
@@ -465,7 +464,7 @@ class Feeder(object):
             pkgs = tuple(pkgs)
             # XXX string generation per call is inneficient here.
             self.run_check(checks, pkgs, reporter,
-                "check %s"+" "+attr+": '"+key+"' threw exception %s")
+                           "check %s "+attr+": '"+key+"' threw exception")
             for pkg in pkgs:
                 yield pkg
 
@@ -474,7 +473,7 @@ class Feeder(object):
             for check in checks)
         repo_pkgs = list(iterable)
         self.run_check(checks, repo_pkgs, reporter,
-            "check %s cpv: repo level check' threw exception %s")
+            "check %s cpv: repo level check' threw exception")
         for pkg in repo_pkgs:
             yield pkg
 
@@ -491,7 +490,7 @@ class Feeder(object):
             for check in checks)
         for pkg in iterable:
             self.run_check(checks, pkg, reporter,
-                "check %s cpv: '"+str(pkg)+"' threw exception %s")
+                "check %s cpv: '"+str(pkg)+"' threw exception")
             yield pkg
     
 
