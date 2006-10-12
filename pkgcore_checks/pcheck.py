@@ -20,15 +20,6 @@ demandload(globals(), "os logging time optparse textwrap "
     "pkgcore.restrictions.values:StrRegex "
     "pkgcore_checks.base ")
 
-import sys, signal
-
-# prototype requires it pylint: disable-msg=W0613
-def exithandler(signum, frame):
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    signal.signal(signal.SIGTERM, signal.SIG_IGN)
-    sys.stderr.write("caught signal %i, shutting down\n" % signum)
-    sys.exit(1)
-
 
 class OptionParser(commandline.OptionParser):
 
@@ -179,12 +170,6 @@ def filter_checks(checks, filter_func):
             l.append(x)
     return l
 
-def install_signal_handlers():
-    signal.signal(signal.SIGCHLD, signal.SIG_DFL)
-    signal.signal(signal.SIGINT, exithandler)
-    signal.signal(signal.SIGTERM, exithandler)
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-
 
 def main(config, options, out, err):
     """Do stuff."""
@@ -192,8 +177,6 @@ def main(config, options, out, err):
     if options.list_checks:
         display_checks(out, options.checks)
         return 0
-
-    install_signal_handlers()
 
     try:
         repo = config.repo[options.repo_name]

@@ -21,6 +21,7 @@ from pkgcore.restrictions import values, packages
 from pkgcore.util.demandload import demandload
 from itertools import chain
 demandload(globals(), "logging "
+    "pkgcore.util:formatters "
     "pkgcore.config.profiles ")
 
 # done as convience to checks. pylint: disable-msg=W0611,W0401
@@ -446,7 +447,7 @@ class Feeder(object):
                     check.feed(payload, reporter, self)
                 else:
                     check.feed(payload, reporter)
-            except (SystemExit, KeyboardInterrupt):
+            except (SystemExit, KeyboardInterrupt, formatters.StreamClosed):
                 raise
             except Exception, e:
                 if self.debug:
