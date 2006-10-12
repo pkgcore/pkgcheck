@@ -534,34 +534,42 @@ class Reporter(object):
 
 class StrReporter(Reporter):
 
-    def __init__(self, file_obj):
-        self.handle = file_obj
+    def __init__(self, out):
+        """Initialize.
+
+        @type out: L{pkgcore.util.formatters.Formatter}.
+        """
+        self.out = out
         self.first_report = True
-    
+
     def add_report(self, result):
         if self.first_report:
-            self.handle.write("\n")
+            self.out.write()
             self.first_report = False
-        self.handle.write("%s\n" % (result.to_str()))
+        self.out.write(result.to_str())
 
     def finish(self):
         if not self.first_report:
-            self.handle.write("\n")
+            self.out.write()
 
-    
+
 class XmlReporter(Reporter):
 
-    def __init__(self, file_obj):
-        self.handle = file_obj
+    def __init__(self, out):
+        """Initialize.
+
+        @type out: L{pkgcore.util.formatters.Formatter}.
+        """
+        self.out = out
 
     def start(self):
-        self.handle.write("<checks>\n")
+        self.out.write('<checks>')
 
     def add_report(self, result):
-        self.handle.write("%s\n" % (result.to_xml()))
+        self.out.write(result.to_xml())
 
     def finish(self):
-        self.handle.write("</checks>\n")
+        self.out.write('</checks>')
 
 
 class MultiplexReporter(Reporter):
