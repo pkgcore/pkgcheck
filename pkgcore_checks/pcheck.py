@@ -6,21 +6,17 @@
 """Commandline frontend (for use with L{pkgcore.util.commandline.main}."""
 
 
-from pkgcore.util import commandline
-from pkgcore.util.parserestrict import parse_match
-from pkgcore.util.lists import stable_unique
+from pkgcore.util import commandline, parserestrict, lists, demandload
+from pkgcore.util.compatibility import any
 from pkgcore.restrictions import packages
-from pkgcore.util.demandload import demandload
 from pkgcore.plugin import get_plugins
 from pkgcore_checks import (
     plugins, base, options as pcheck_options, __version__)
 
-demandload(globals(), "logging optparse textwrap "
-    "pkgcore.util.osutils:normpath "
-    "pkgcore.util.osutils:abspath "
+demandload.demandload(globals(), "logging optparse textwrap "
+    "pkgcore.util:osutils "
     "pkgcore.repository:multiplex "
     "pkgcore.ebuild:repository "
-    "pkgcore.util.compatibility:any "
     "pkgcore.restrictions.values:StrRegex ")
 
 
@@ -76,7 +72,8 @@ class OptionParser(commandline.OptionParser):
 
         values.repo_name = args.pop(0)
         if args:
-            values.limiters = stable_unique(map(parse_match, args))
+            values.limiters = lists.stable_unique(map(
+                    parserestrict.parse_match, args))
         else:
             values.limiters = [packages.AlwaysTrue]
 
@@ -155,7 +152,7 @@ def main(config, options, out, err):
         repo = config.repo[options.repo_name]
     except KeyError:
         try:
-            repo = config.repo[normpath(options.repo_name)]
+            repo = config.repo[osutils.normpath(options.repo_name)]
         except KeyError:
             err.write(
                 "Error: repo %r is not a valid reponames\n "
@@ -203,7 +200,7 @@ def main(config, options, out, err):
             return -1
 
         options.src_repo = repo
-        options.repo_base = abspath(repo.base)
+        options.repo_base = osutils.abspath(repo.base)
         runner.search_repo = multiplex.tree(options.target_repo,
                                             options.src_repo)
 
