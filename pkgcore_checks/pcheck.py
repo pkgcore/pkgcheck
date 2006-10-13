@@ -91,16 +91,6 @@ class OptionParser(commandline.OptionParser):
         return values, ()
 
 
-def finalize_options(checks, options, runner):
-    seen = set()
-    for c in checks:
-        for opt in c.requires:
-            if isinstance(opt, pcheck_options.FinalizingOption) \
-                and opt not in seen:
-                opt.finalize(options, runner)
-                seen.add(opt)
-
-
 def convert_check_filter(tok):
     tok = tok.lower()
     if not ('+' in tok or '*' in tok):
@@ -199,8 +189,14 @@ def main(config, options, out, err):
         runner.search_repo = multiplex.tree(options.target_repo,
                                             options.src_repo)
 
+    seen = set()
     try:
-        finalize_options(options.checks, options, runner)
+        for c in options.checks:
+            for opt in c.requires:
+                if (isinstance(opt, pcheck_options.FinalizingOption)
+                    and opt not in seen):
+                    opt.finalize(options, runner)
+                    seen.add(opt)
     except optparse.OptionValueError, ov:
         err.write("arg processing failed: see --help\n%s\n" % str(ov))
         return -1
