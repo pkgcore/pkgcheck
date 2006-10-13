@@ -7,7 +7,7 @@ from pkgcore_checks import base
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.pkgsets.glsa:GlsaDirSet "
     "pkgcore.restrictions:packages,values "
-    "pkgcore.util.xml:escape "
+    "pkgcore.util:xml,osutils "
     "pkgcore.restrictions.util:collect_package_restrictions "
     "warnings ")
 
@@ -43,7 +43,7 @@ class GlsaLocationOption(base.FinalizingOption):
                     "this behaviour may change")
                 return
         
-        options.glsa_location = base.abspath(glsa_loc)
+        options.glsa_location = osutils.abspath(glsa_loc)
 
 
 GlsaLocation_option = GlsaLocationOption()
@@ -127,4 +127,4 @@ class VulnerablePackage(base.Result):
     <arch>%s</arch>
     <msg>vulnerable via %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, "</arch>\n\t<arch>".join(self.arch), escape(self.glsa))
+    self.version, "</arch>\n\t<arch>".join(self.arch), xml.escape(self.glsa))

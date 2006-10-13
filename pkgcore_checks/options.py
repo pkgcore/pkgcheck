@@ -4,7 +4,7 @@
 __all__ = ("default_arches", "arches_option", "arches_options",
     "query_cache_options", "check_uses_query_cache",
     "profile_options", "check_uses_profiles", "FinalizingOption",
-    "_record_arches", "license_options", "abspath", "get_repo_base")
+    "_record_arches", "license_options", "get_repo_base")
 
 import optparse
 
@@ -13,7 +13,7 @@ from pkgcore.util.compatibility import any
 from pkgcore.util.currying import pre_curry
 from pkgcore.util.demandload import demandload
 demandload(globals(), "os "
-    "pkgcore.util.osutils:abspath "
+    "pkgcore.util:osutils "
     "pkgcore.ebuild:repository ")
 
 
@@ -100,7 +100,7 @@ def profile_finalize(option_inst, options, runner):
             raise optparse.OptionValueError("repo %r lacks a profiles "
                 "directory" % options.src_repo)
 
-    profile_loc = abspath(profile_loc)
+    profile_loc = osutils.abspath(profile_loc)
     options.profile_func = pre_curry(util.get_profile_from_path, profile_loc)
     options.profile_base_dir = profile_loc
 
@@ -149,7 +149,7 @@ def license_finalize(option_inst, options, runner):
         if not os.path.isdir(options.license_dir):
             raise optparse.OptionValueError(
                 "--license-dir %r isn't a directory" % options.license_dir)
-    options.license_dir = abspath(options.license_dir)
+    options.license_dir = osutils.abspath(options.license_dir)
         
 
 license_options = \
