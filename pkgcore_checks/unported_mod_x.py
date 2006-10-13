@@ -9,7 +9,6 @@ from pkgcore.restrictions import boolean
 from pkgcore.ebuild.atom import atom
 from pkgcore.package import virtual
 from pkgcore_checks.util import get_cpvstr
-demandload(globals(), "pkgcore.util.containers:InvertedContains")
 demandload(globals(), "pkgcore.util.xml:escape")
 demandload(globals(), "urllib:urlopen")
 
@@ -132,19 +131,12 @@ class ModularXPortingReport(base.template):
         skip_rdepends = "rdepends" in failed
         skip_pdepends = "pdepends" in failed
         del failed
-        
+
         # ok heres the rules of the road.
         # valid: || ( modx <virtual/x11-7 ), || ( modx virtual/x11 )
         # not valid: >=virtual/x11-7 anywhere, virtual/x11 floating
         # not valid: x11-base/xorg-x11 floating
-        
-        diuse = pkg.depends.known_conditionals
-        riuse = pkg.rdepends.known_conditionals
-        piuse = pkg.post_rdepends.known_conditionals
-        deval_cache = {}
-        reval_cache = {}
-        peval_cache = {}
-        
+
         if not skip_depends:
             for edepset, profiles in feeder.collapse_evaluate_depset(pkg,
                 "depends", pkg.depends):
@@ -240,11 +232,11 @@ class BadRange(base.Result):
     """
     
     __slots__ = ("category", "package", "version", "attr", "atom")
-    def __init__(self, pkg, attr, atom):
+    def __init__(self, pkg, attr, atom_inst):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.attr = attr
-        self.atoms = tuple(str(x) for x in atom)
+        self.atoms = tuple(str(x) for x in atom_inst)
     
     def to_str(self):
         return "%s/%s-%s: attr(%s): atoms don't match 6.9: [ %s ]" % \

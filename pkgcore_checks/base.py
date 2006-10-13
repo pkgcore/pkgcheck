@@ -337,8 +337,7 @@ class Feeder(object):
                 if self.debug:
                     raise
         # rebuild the checks should any have failed
-        for x in xrange(len(checks)):
-            checks.pop()
+        checks[:] = []
         checks.extend(actual)
 
     def fire_starts(self, *a, **kwds):

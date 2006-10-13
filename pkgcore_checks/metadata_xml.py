@@ -6,7 +6,6 @@ from pkgcore_checks import base
 from pkgcore.util.demandload import demandload
 demandload(globals(), "urllib:urlopen "
     "tempfile:NamedTemporaryFile "
-    "errno "
     "libxml2 "
     "pkgcore.spawn:spawn,find_binary ")
 
@@ -64,7 +63,8 @@ class PackageMetadataXmlCheck(base_check):
         if self.last_seen == pkg.key:
             return
         self.last_seen = pkg.key
-        loc = os.path.join(os.path.dirname(pkg.ebuild.get_path()), "metadata.xml")
+        loc = os.path.join(os.path.dirname(pkg.ebuild.get_path()),
+                           "metadata.xml")
         ret = self.check_file(loc)
         if ret:
             reporter.add_report(ret(loc, pkg.category, pkg.package))
@@ -142,7 +142,7 @@ class BadlyFormedXml(base.Result):
             self.filename)
     
     def to_xml(self):
-        s= ''
+        s = ''
         if self.package is not None:
             s = "\n    <package>%s</package>" % self.package
 
@@ -162,17 +162,17 @@ class InvalidXml(base.Result):
         self.category = category
         self.package = package
         self.filename = filename
-    
+
     def to_str(self):
-        s=''
+        s = ''
         if self.package is not None:
             s = '/' + self.package
-        
+
         return "%s%s: %s violates it's dtd" % (self.category, s, 
             self.filename)
-    
+
     def to_xml(self):
-        s= ''
+        s = ''
         if self.package is not None:
             s = "\n    <package>%s</package>" % self.package
 

@@ -12,24 +12,23 @@ from pkgcore.util.lists import stable_unique
 from pkgcore.restrictions import packages
 from pkgcore.util.demandload import demandload
 from pkgcore.plugin import get_plugins
-from pkgcore_checks import plugins
+from pkgcore_checks import (
+    plugins, base, options as pcheck_options, __version__)
 
-import pkgcore_checks.options
 demandload(globals(), "logging optparse textwrap "
     "pkgcore.util.osutils:normpath "
     "pkgcore.util.osutils:abspath "
     "pkgcore.repository:multiplex "
     "pkgcore.ebuild:repository "
     "pkgcore.util.compatibility:any "
-    "pkgcore.restrictions.values:StrRegex "
-    "pkgcore_checks.base ")
+    "pkgcore.restrictions.values:StrRegex ")
 
 
 class OptionParser(commandline.OptionParser):
 
     def __init__(self):
         commandline.OptionParser.__init__(
-            self, version=pkgcore_checks.__version__,
+            self, version=__version__,
             description="pkgcore based ebuild QA checks",
             usage="usage: %prog repository [options] [atom1...atom2]")
 
@@ -99,7 +98,7 @@ def finalize_options(checks, options, runner):
     seen = set()
     for c in checks:
         for opt in c.requires:
-            if isinstance(opt, pkgcore_checks.options.FinalizingOption) \
+            if isinstance(opt, pcheck_options.FinalizingOption) \
                 and opt not in seen:
                 opt.finalize(options, runner)
                 seen.add(opt)
@@ -172,10 +171,10 @@ def main(config, options, out, err):
                 options.repo_name,))
 
     if options.to_xml:
-        reporter = pkgcore_checks.base.XmlReporter(out)
+        reporter = base.XmlReporter(out)
     else:
-        reporter = pkgcore_checks.base.StrReporter(out)
-    runner = pkgcore_checks.base.Feeder(repo, options)
+        reporter = base.StrReporter(out)
+    runner = base.Feeder(repo, options)
     try:
         finalize_options(options.checks, options, runner)
     except optparse.OptionValueError, ov:

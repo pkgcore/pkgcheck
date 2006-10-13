@@ -2,7 +2,6 @@
 # License: GPL2
 
 from pkgcore_checks import base, util
-from pkgcore.util.lists import iflatten_instance
 from pkgcore.util.demandload import demandload
 import operator, itertools
 
@@ -146,7 +145,7 @@ class UnusedLicense(base.template):
     def finish(self, reporter):
         if self.licenses:
             reporter.add_report(UnusedLicenseReport(self.licenses))
-        self.license = None
+        self.licenses = None
 
 
 class UnusedLicenseReport(base.Result):

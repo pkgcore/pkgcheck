@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import time, os
+
 from pkgcore_checks.base import template, package_feed, Result, arches_options
 
 
@@ -48,8 +48,8 @@ class DroppedKeywordWarning(Result):
         Result.__init__(self)
         self._store_cpv(pkg)
         self.arch = arch
-    
-    def to_str(self, **kwds):
+
+    def to_str(self):
         return "%s/%s-%s: dropped keyword %s" % (self.category, self.package,
             self.version, self.arch)
 

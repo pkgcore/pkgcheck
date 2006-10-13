@@ -38,7 +38,7 @@ class RedundantVersionReport(template):
             if unstable_set:
                 for ver, key in stack:
                     if ver.slot == pkg.slot:
-                        if not unstable_set.difference(keys):
+                        if not unstable_set.difference(key):
                             matches.append(ver)
             stack.append([pkg, curr_set])
             if matches:
@@ -60,8 +60,8 @@ class RedundantVersionWarning(Result):
         self.version = pkg.fullver
         self.slot = pkg.slot
         self.later_versions = tuple(x.fullver for x in higher_pkgs)
-    
-    def to_str(self, **kwds):
+
+    def to_str(self):
         return "%s/%s-%s: slot(%s) keywords are overshadowed by version %r" % \
             (self.category, self.package, self.version,
             self.slot, ", ".join(self.later_versions))

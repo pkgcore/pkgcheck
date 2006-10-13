@@ -1,11 +1,11 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, errno
+import os
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.ebuild.profiles:OnDiskProfile "
+    "logging "
     "pkgcore.ebuild.domain:generate_masking_restrict "
-    "pkgcore.util.mapping:LazyValDict "
     "pkgcore.util.packages:get_raw_pkg "
     "pkgcore.ebuild.atom:atom "
     "pkgcore.util.file:iter_read_bash ")
@@ -34,7 +34,7 @@ def get_profiles_desc(repo, ignore_dev=False):
         l = line.split()
         try:
             key, profile, status = l
-        except ValueError, v:
+        except ValueError:
             logging.error("%s: line number %i isn't of 'key profile status' "
                 "form" % (fp, line_no))
             continue
@@ -74,6 +74,5 @@ def get_use_local_desc(repo):
         d.setdefault(a.key, {}).setdefault(a, []).append(flag)
 
     for v in d.itervalues():
-        v.update((k, frozenset(v)) for k,v in v.items())
+        v.update((k, frozenset(v)) for k, v in v.items())
     return d
-        
