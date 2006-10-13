@@ -19,7 +19,7 @@ class GlsaLocationOption(base.FinalizingOption):
             help="source directoy for glsas; tries to autodetermine it, may "
                 "be required if no glsa dirs are known")
 
-    # protocol/attr trick in bas pylint: disable-msg=W0613,E0202
+    # protocol/attr trick in bas pylint: disable-msg=E0202
     def finalize(self, options, runner):
         options.glsa_enabled = True
         glsa_loc = options.glsa_location
@@ -65,8 +65,7 @@ class TreeVulnerabilitiesReport(base.template):
         self.glsa_dir = options.glsa_location
         self.enabled = False
         self.vulns = {}
-    
-    # protocol... pylint: disable-msg=W0613
+
     def start(self, repo):
         self.enabled = self.options.glsa_enabled
         self.vulns.clear()

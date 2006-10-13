@@ -20,7 +20,6 @@ class base_check(base.template):
         self.base = getattr(options.src_repo, "base", None)
         self.dtd_file = None
 
-    # protocol... pylint: disable-msg=W0613
     def start(self, repo):
         loc = self.base
         if self.base is not None:

@@ -19,11 +19,10 @@ class StaleUnstableReport(template):
         self.arches = options.arches
         self.staleness = staleness
         self.start_time = None
-    
-    # protocol prototype... pylint: disable-msg=W0613
+
     def start(self, repo):
         self.start_time = time.time()
-        
+
     def feed(self, pkg, reporter):
         unchanged_time = self.start_time - pkg._mtime_
         if unchanged_time < self.staleness:

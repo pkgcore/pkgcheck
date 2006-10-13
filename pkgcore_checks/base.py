@@ -67,7 +67,6 @@ class _WipeQueryCache(template):
         template.__init__(self, options)
         self.enabling_threshold = enabling_threshold
 
-    # protocol... pylint: disable-msg=W0613
     def feed(self, pkgs, reporter, feeder):
         feeder.query_cache.clear()
 
@@ -80,7 +79,6 @@ class _WipeEvaluateDepSetCaches(template):
         template.__init__(self, options)
         self.enabling_threshold = enabling_threshold
 
-    # protocol... pylint: disable-msg=W0613
     def feed(self, pkgs, reporter, feeder):
         feeder.pkg_evaluate_depsets_cache.clear()
         feeder.pkg_profiles_cache.clear()
@@ -88,11 +86,9 @@ class _WipeEvaluateDepSetCaches(template):
 
 class ForgetfulDict(dict):
 
-    # protocol... pylint: disable-msg=W0613
     def __setitem__(self, key, val):
         return
-    
-    # protocol... pylint: disable-msg=W0613
+
     def update(self, other):
         return
 

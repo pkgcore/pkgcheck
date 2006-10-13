@@ -34,7 +34,6 @@ default_arches = ["x86", "x86-fbsd", "amd64", "ppc", "ppc-macos", "ppc64",
     "sparc", "mips", "arm", "hppa", "m68k", "ia64", "s390", "sh", "alpha"]
 default_arches = tuple(sorted(default_arches))
 
-# prototype requires it; pylint: disable-msg=W0613
 def _record_arches(attr, option, opt_str, value, parser):
     setattr(parser.values, attr, tuple(value.split(",")))
 
@@ -46,7 +45,6 @@ arches_option = optparse.Option("-a", "--arches", action='callback',
 arches_options = (arches_option,)
 
 
-# protocol requires the unused args- pylint: disable-msg=W0613
 def enable_query_caching(option_inst, options, runner):
     runner.enable_query_cache = True
 
@@ -84,7 +82,6 @@ def get_repo_base(options, throw_error=True, repo=None):
     return getattr(repo, "base", None)
 
 
-# protocol requires the unused args- pylint: disable-msg=W0613
 def profile_finalize(option_inst, options, runner):
     runner.enable_profiles = True
     if options.profiles_enabled is None:
@@ -139,7 +136,6 @@ def check_uses_profiles(check):
     return any(x in profile_options for x in check.requires)
 
 
-# protocol requires the unused args- pylint: disable-msg=W0613
 def license_finalize(option_inst, options, runner):
     if options.license_dir is None:
         base = get_repo_base(options)

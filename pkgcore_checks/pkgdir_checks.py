@@ -23,7 +23,6 @@ allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 
 def utf8_check(pkg, base, filename, reporter):
     try:
-        # pylint is insane. pylint: disable-msg=C0322
         codecs.open(pjoin(base, filename), mode="rb", 
             encoding="utf8", buffering=8192).read()
     except UnicodeDecodeError, e:

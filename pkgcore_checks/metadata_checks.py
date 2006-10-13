@@ -150,8 +150,7 @@ class MetadataReport(base.template):
                 raise
         known_iuse.update(unstated_iuse)
         return frozenset(known_iuse), frozenset(unstated_iuse)
-            
-    # protocol... pylint: disable-msg=W0613
+
     def start(self, repo, *a):
         # we are given extra args since we use profiles; don't care about it
         # however
