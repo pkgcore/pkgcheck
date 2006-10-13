@@ -172,11 +172,6 @@ def main(config, options, out, err):
     else:
         reporter = base.StrReporter(out)
     runner = base.Feeder(repo, options)
-    try:
-        finalize_options(options.checks, options, runner)
-    except optparse.OptionValueError, ov:
-        err.write("arg processing failed: see --help\n%s\n" % str(ov))
-        return -1
 
     # Finalize overlay stuff.
     if options.metadata_src_repo is None:
@@ -203,6 +198,12 @@ def main(config, options, out, err):
         options.repo_base = osutils.abspath(repo.base)
         runner.search_repo = multiplex.tree(options.target_repo,
                                             options.src_repo)
+
+    try:
+        finalize_options(options.checks, options, runner)
+    except optparse.OptionValueError, ov:
+        err.write("arg processing failed: see --help\n%s\n" % str(ov))
+        return -1
 
     for obj in options.checks:
         try:
