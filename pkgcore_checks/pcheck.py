@@ -17,6 +17,9 @@ from pkgcore_checks import plugins
 import pkgcore_checks.options
 demandload(globals(), "logging optparse textwrap "
     "pkgcore.util.osutils:normpath "
+    "pkgcore.util.osutils:abspath "
+    "pkgcore.repository:multiplex "
+    "pkgcore.ebuild:repository "
     "pkgcore.util.compatibility:any "
     "pkgcore.restrictions.values:StrRegex "
     "pkgcore_checks.base ")
@@ -46,8 +49,11 @@ class OptionParser(commandline.OptionParser):
             "-x", "--xml", action="store_true", default=False,
             dest="to_xml", help="dump xml formated result")
 
-        self.add_option_group('Overlay').add_options(
-            pkgcore_checks.options.overlay_options)
+        overlay = self.add_option_group('Overlay')
+        overlay.add_option(
+            "-r", "--overlayed-repo", action='store', dest='metadata_src_repo',
+            help="if the target repository is an overlay, specify the "
+            "repository name to pull profiles/license from")
 
         # yes linear, but not a huge issue.
         new_opts = []
@@ -91,11 +97,6 @@ class OptionParser(commandline.OptionParser):
 
 def finalize_options(checks, options, runner):
     seen = set()
-    for opt in pkgcore_checks.options.overlay_options:
-        if isinstance(opt, pkgcore_checks.options.FinalizingOption) \
-            and opt not in seen:
-            opt.finalize(options, runner)
-            seen.add(opt)
     for c in checks:
         for opt in c.requires:
             if isinstance(opt, pkgcore_checks.options.FinalizingOption) \
@@ -164,8 +165,6 @@ def main(config, options, out, err):
                     ", ".join(repr(x) for x in config.repo)))
             return 1
 
-    # XXX see if this can be eliminated
-    options.pkgcore_conf = config
     options.target_repo = repo
     if not getattr(repo, "base", False):
         err.write("\nWarning: repo %s appears to be combined trees, as "
@@ -182,6 +181,32 @@ def main(config, options, out, err):
     except optparse.OptionValueError, ov:
         err.write("arg processing failed: see --help\n%s\n" % str(ov))
         return -1
+
+    # Finalize overlay stuff.
+    if options.metadata_src_repo is None:
+        options.repo_base = None
+        options.src_repo = options.target_repo
+    else:
+        try:
+            repo = config.repo[options.metadata_src_repo]
+        except KeyError:
+            err.write(
+                "Error: overlayed-repo %r isn't a known repo\n" % (
+                    options.metadata_src_repo,))
+            return -1
+
+        if not isinstance(repo, repository.UnconfiguredTree):
+            err.write(
+                "overlayed-repo %r isn't a "
+                "pkgcore.ebuild.repository.UnconfiguredTree instance; "
+                "must specify a raw ebuild repo, not type %r: %r" % (
+                    options.metadata_src.repo, repo.__class__, repo))
+            return -1
+
+        options.src_repo = repo
+        options.repo_base = abspath(repo.base)
+        runner.search_repo = multiplex.tree(options.target_repo,
+                                            options.src_repo)
 
     for obj in options.checks:
         try:
