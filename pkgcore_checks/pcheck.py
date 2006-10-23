@@ -6,6 +6,8 @@
 """Commandline frontend (for use with L{pkgcore.util.commandline.main}."""
 
 
+import optparse
+
 from pkgcore.util import commandline, parserestrict, lists, demandload
 from pkgcore.util.compatibility import any
 from pkgcore.restrictions import packages
@@ -20,6 +22,22 @@ demandload.demandload(globals(), "logging optparse textwrap "
     "pkgcore.restrictions.values:StrRegex ")
 
 
+def metadata_src_callback(option, opt_str, value, parser):
+    try:
+        repo = parser.values.src_repo = parser.values.config.repo[value]
+    except KeyError:
+        raise optparse.OptionValueError(
+            "overlayed repo %r is not a known repo" % (value,))
+    if not isinstance(repo, repository.UnconfiguredTree):
+        raise optparse.OptionValueError(
+            'overlayed-repo %r is not a '
+            'pkgcore.ebuild.repository.UnconfiguredTree instance; '
+            'must specify a raw ebuild repo, not type %r: %r' % (
+                value, repo.__class__, repo))
+
+    parser.values.repo_base = osutils.abspath(repo.base)
+
+
 class OptionParser(commandline.OptionParser):
 
     def __init__(self):
@@ -27,6 +45,9 @@ class OptionParser(commandline.OptionParser):
             self, version=__version__,
             description="pkgcore based ebuild QA checks",
             usage="usage: %prog repository [options] [atom1...atom2]")
+
+        self.set_default('repo_base', None)
+        self.set_default('src_repo', None)
 
         self.add_option(
             "-c", action="append", type="string", dest="checks_to_run",
@@ -46,7 +67,8 @@ class OptionParser(commandline.OptionParser):
 
         overlay = self.add_option_group('Overlay')
         overlay.add_option(
-            "-r", "--overlayed-repo", action='store', dest='metadata_src_repo',
+            "-r", "--overlayed-repo", action='callback', type='string',
+            callback=metadata_src_callback,
             help="if the target repository is an overlay, specify the "
             "repository name to pull profiles/license from")
 
@@ -70,7 +92,25 @@ class OptionParser(commandline.OptionParser):
         if not args:
             self.error('repository name was not specified')
 
-        values.repo_name = args.pop(0)
+        repo_name = args.pop(0)
+        try:
+            values.target_repo = values.config.repo[repo_name]
+        except KeyError:
+            try:
+                values.target_repo = values.config.repo[
+                    osutils.normpath(repo_name)]
+            except KeyError:
+                self.error('repo %r is not a valid reponame (known repos: %s)'
+                           % (repo_name, ', '.join(repr(x) for x in
+                                                   values.config.repo)))
+
+        if values.src_repo is None:
+            values.src_repo = values.target_repo
+            values.search_repo = values.target_repo
+        else:
+            values.search_repo = multiplex.tree(values.target_repo,
+                                                values.src_repo)
+
         if args:
             values.limiters = lists.stable_unique(map(
                     parserestrict.parse_match, args))
@@ -131,63 +171,23 @@ def filter_checks(checks, filter_func):
     return l
 
 
-def main(config, options, out, err):
+def main(options, out, err):
     """Do stuff."""
 
     if options.list_checks:
         display_checks(out, options.checks)
         return 0
 
-    try:
-        repo = config.repo[options.repo_name]
-    except KeyError:
-        try:
-            repo = config.repo[osutils.normpath(options.repo_name)]
-        except KeyError:
-            err.write(
-                "Error: repo %r is not a valid reponames\n "
-                "known repos- [ %s ]\n" % (
-                    options.repo_name,
-                    ", ".join(repr(x) for x in config.repo)))
-            return 1
-
-    options.target_repo = repo
-    if not getattr(repo, "base", False):
-        err.write("\nWarning: repo %s appears to be combined trees, as "
-                  "such some checks will be disabled\n\n" % (
-                options.repo_name,))
+    if not getattr(options.target_repo, "base", False):
+        err.write(
+            'Warning: target repo appears to be combined trees, as '
+            'such some checks will be disabled\n\n')
 
     if options.to_xml:
         reporter = base.XmlReporter(out)
     else:
         reporter = base.StrReporter(out)
-    runner = base.Feeder(repo, options)
-
-    # Finalize overlay stuff.
-    if options.metadata_src_repo is None:
-        options.repo_base = None
-        options.src_repo = options.target_repo
-    else:
-        try:
-            repo = config.repo[options.metadata_src_repo]
-        except KeyError:
-            err.write(
-                "Error: overlayed-repo %r isn't a known repo\n" % (
-                    options.metadata_src_repo,))
-            return -1
-
-        if not isinstance(repo, repository.UnconfiguredTree):
-            err.write(
-                "overlayed-repo %r isn't a "
-                "pkgcore.ebuild.repository.UnconfiguredTree instance; "
-                "must specify a raw ebuild repo, not type %r: %r" % (
-                    options.metadata_src.repo, repo.__class__, repo))
-            return -1
-
-        options.src_repo = repo
-        options.repo_base = osutils.abspath(repo.base)
-        runner.search_repo = multiplex.tree(options.target_repo,
-                                            options.src_repo)
+    runner = base.Feeder(options.target_repo, options)
 
     seen = set()
     try:

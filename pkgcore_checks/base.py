@@ -102,7 +102,7 @@ class Feeder(object):
         self.pkg_checks = []
         self.ver_checks = []
         self.repo = repo
-        self.search_repo = options.target_repo
+        self.search_repo = options.search_repo
         self.profiles = {}
         self.profiles_inited = False
         self.pkg_evaluate_depsets_cache = {}
