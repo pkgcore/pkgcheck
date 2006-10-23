@@ -29,6 +29,7 @@ class DeprecatedEclassReport(template):
     'mozilla',
     'myth',
     'pax-utils',
+    'pcmcia',
     'perl-post',
     'php',
     'php-2',

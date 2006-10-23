@@ -33,7 +33,7 @@ class GlsaLocationOption(base.FinalizingOption):
             if not os.path.isdir(glsa_loc):
                 # form of 'optional' limiting; if they are using -c, force the
                 # error, else disable
-                if options.check_to_run:
+                if options.checks_to_run:
                     raise optparse.OptionValueError("--glsa-dir must be "
                         "specified, couldn't identify glsa src from %r" %
                             options.src_repo)
