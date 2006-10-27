@@ -40,11 +40,12 @@ def metadata_src_callback(option, opt_str, value, parser):
 
 class OptionParser(commandline.OptionParser):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         commandline.OptionParser.__init__(
             self, version=__version__,
             description="pkgcore based ebuild QA checks",
-            usage="usage: %prog repository [options] [atom1...atom2]")
+            usage="usage: %prog repository [options] [atom1...atom2]",
+            **kwargs)
 
         self.set_default('repo_base', None)
         self.set_default('src_repo', None)

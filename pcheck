@@ -11,4 +11,4 @@ from pkgcore_checks import pcheck
 
 
 if __name__ == '__main__':
-    commandline.main(pcheck.OptionParser(), pcheck.main)
+    commandline.main({None: (pcheck.OptionParser, pcheck.main)})
