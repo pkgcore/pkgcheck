@@ -42,7 +42,7 @@ class OptionParser(commandline.OptionParser):
 
     def __init__(self, **kwargs):
         commandline.OptionParser.__init__(
-            self, version=__version__,
+            self, version='pcheck %s' % (__version__,),
             description="pkgcore based ebuild QA checks",
             usage="usage: %prog repository [options] [atom1...atom2]",
             **kwargs)
