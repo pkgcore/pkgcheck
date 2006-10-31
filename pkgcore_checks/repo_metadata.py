@@ -255,6 +255,8 @@ class ConflictingChksums(base.Result):
 
 class ConflictManifestDigest(base.template):
 
+    """Scan for conflicts between the Manifest file and digest files."""
+
     feed_type = base.package_feed
     
     repo_grabber = operator.attrgetter("repo")

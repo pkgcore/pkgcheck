@@ -193,7 +193,7 @@ def display_checks(out, checks):
                     if line:
                         out.write(line)
         else:
-            out.write("No Documentation")
+            out.write(out.fg('red'), "No Documentation")
         out.first_prefix.pop()
         out.later_prefix.pop()
         out.wrap = oldwrap
