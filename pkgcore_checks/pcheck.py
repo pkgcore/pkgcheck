@@ -15,11 +15,11 @@ from pkgcore.plugin import get_plugins
 from pkgcore_checks import (
     plugins, base, options as pcheck_options, __version__)
 
-demandload.demandload(globals(), "logging optparse textwrap "
+demandload.demandload(globals(), "logging optparse textwrap re "
     "pkgcore.util:osutils "
     "pkgcore.repository:multiplex "
     "pkgcore.ebuild:repository "
-    "pkgcore.restrictions.values:StrRegex ")
+    )
 
 
 def metadata_src_callback(option, opt_str, value, parser):
@@ -42,7 +42,7 @@ class OptionParser(commandline.OptionParser):
 
     def __init__(self, **kwargs):
         commandline.OptionParser.__init__(
-            self, version='pcheck %s' % (__version__,),
+            self, version='pkgcore-checks %s' % (__version__,),
             description="pkgcore based ebuild QA checks",
             usage="usage: %prog repository [options] [atom1...atom2]",
             **kwargs)
@@ -119,15 +119,16 @@ class OptionParser(commandline.OptionParser):
             values.limiters = [packages.AlwaysTrue]
 
         if values.checks_to_run:
-            l = [convert_check_filter(x) for x in values.checks_to_run]
-            values.checks = filter_checks(values.checks,
-                                          lambda x:any(y.match(x) for y in l))
+            l = [convert_check_filter(x) for x in values.checks_to_enable]
+            values.checks = list(
+                check for check in values.checks
+                if any(f(qual(check)) for f in l))
 
         if values.checks_to_disable:
             l = [convert_check_filter(x) for x in values.checks_to_disable]
-            values.checks = filter_checks(values.checks,
-                                          lambda x: not any(y.match(x)
-                                                            for y in l))
+            values.checks = list(
+                check for check in values.checks
+                if not any(f(qual(check)) for f in l))
 
         values.runner = base.Feeder(values.target_repo, values)
         seen = set()
@@ -145,10 +146,31 @@ class OptionParser(commandline.OptionParser):
 
 
 def convert_check_filter(tok):
+    """Convert an input string into a filter function.
+
+    The filter function accepts a qualified python identifier string
+    and returns a bool.
+
+    The input can be a regexp or a simple string. A simple string must
+    match a component of the qualified name exactly. A regexp is
+    matched against the entire qualified name.
+
+    Matches are case-insensitive.
+
+    Examples::
+
+      convert_check_filter('foo')('a.foo.b') == True
+      convert_check_filter('foo')('a.foobar') == False
+      convert_check_filter('foo.*')('a.foobar') == False
+      convert_check_filter('foo.*')('foobar') == True
+    """
     tok = tok.lower()
-    if not ('+' in tok or '*' in tok):
-        tok = "^(?:[^.]+\.)*%s(?:\.[^.]+)*$" % tok
-    return StrRegex(tok, case_sensitive=False)
+    if '+' in tok or '*' in tok:
+        return re.compile(tok, re.I).match
+    else:
+        def func(name):
+            return tok in name.lower().split('.')
+        return func
 
 
 def display_checks(out, checks):
@@ -176,12 +198,9 @@ def display_checks(out, checks):
         out.wrap = oldwrap
         out.write()
 
-def filter_checks(checks, filter_func):
-    l = []
-    for x in checks:
-        if filter_func("%s.%s" % (x.__module__, x.__name__)):
-            l.append(x)
-    return l
+
+def qual(obj):
+    return '%s.%s' % (obj.__module__, obj.__name__)
 
 
 def main(options, out, err):
