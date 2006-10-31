@@ -220,11 +220,9 @@ def main(options, out, err):
     else:
         reporter = base.StrReporter(out)
 
-    runner = options.runner
-
     for obj in options.checks:
         try:
-            runner.add_check(obj)
+            options.runner.add_check(obj)
         except (SystemExit, KeyboardInterrupt):
             raise
         except Exception:
@@ -234,16 +232,16 @@ def main(options, out, err):
 
     nodes = 0
     err.write("checks: repo(%i), cat(%i), pkg(%i), version(%i)" %
-              (len(runner.repo_checks), len(runner.cat_checks),
-               len(runner.pkg_checks), len(runner.ver_checks)))
+              (len(options.runner.repo_checks), len(options.runner.cat_checks),
+               len(options.runner.pkg_checks), len(options.runner.ver_checks)))
 
-    if not (runner.repo_checks or runner.cat_checks or runner.pkg_checks or
-            runner.ver_checks):
+    if not (options.runner.repo_checks or options.runner.cat_checks or
+            options.runner.pkg_checks or options.runner.ver_checks):
         err.write("no tests")
         return 1
     reporter.start()
     for filterer in options.limiters:
-        nodes += runner.run(reporter, filterer)
+        nodes += options.runner.run(reporter, filterer)
     reporter.finish()
     # flush stdout first; if they're directing it all to a file, this makes
     # results not get the final message shoved in midway
