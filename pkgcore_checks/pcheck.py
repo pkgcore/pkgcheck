@@ -190,7 +190,8 @@ def display_checks(out, checks):
                 out.write(firstline)
             if len(lines) > 1:
                 for line in textwrap.dedent('\n'.join(lines[1:])).split('\n'):
-                    out.write(line)
+                    if line:
+                        out.write(line)
         else:
             out.write("No Documentation")
         out.first_prefix.pop()
