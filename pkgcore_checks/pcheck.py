@@ -206,7 +206,7 @@ def main(options, out, err):
     for obj in options.checks:
         try:
             runner.add_check(obj)
-        except SystemExit:
+        except (SystemExit, KeyboardInterrupt):
             raise
         except Exception:
             logging.exception("test %s failed to be added" % (obj,))
