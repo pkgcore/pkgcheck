@@ -182,7 +182,7 @@ def main(options, out, err):
     if not getattr(options.target_repo, "base", False):
         err.write(
             'Warning: target repo appears to be combined trees, as '
-            'such some checks will be disabled\n\n')
+            'such some checks will be disabled\n')
 
     if options.to_xml:
         reporter = base.XmlReporter(out)
@@ -213,13 +213,13 @@ def main(options, out, err):
                 raise
 
     nodes = 0
-    err.write("checks: repo(%i), cat(%i), pkg(%i), version(%i)\n" %
+    err.write("checks: repo(%i), cat(%i), pkg(%i), version(%i)" %
               (len(runner.repo_checks), len(runner.cat_checks),
                len(runner.pkg_checks), len(runner.ver_checks)))
 
     if not (runner.repo_checks or runner.cat_checks or runner.pkg_checks or
             runner.ver_checks):
-        err.write("no tests\n")
+        err.write("no tests")
         return 1
     reporter.start()
     for filterer in options.limiters:
@@ -228,5 +228,5 @@ def main(options, out, err):
     # flush stdout first; if they're directing it all to a file, this makes
     # results not get the final message shoved in midway
     out.stream.flush()
-    err.write("processed %i pkgs\n" % (nodes,))
+    err.write("processed %i pkgs" % (nodes,))
     return 0
