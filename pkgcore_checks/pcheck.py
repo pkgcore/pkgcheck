@@ -129,6 +129,18 @@ class OptionParser(commandline.OptionParser):
                                           lambda x: not any(y.match(x)
                                                             for y in l))
 
+        values.runner = base.Feeder(values.target_repo, values)
+        seen = set()
+        try:
+            for c in values.checks:
+                for opt in c.requires:
+                    if (isinstance(opt, pcheck_options.FinalizingOption)
+                        and opt not in seen):
+                        opt.finalize(values, values.runner)
+                        seen.add(opt)
+        except optparse.OptionValueError, e:
+            self.error(str(e))
+
         return values, ()
 
 
@@ -188,19 +200,8 @@ def main(options, out, err):
         reporter = base.XmlReporter(out)
     else:
         reporter = base.StrReporter(out)
-    runner = base.Feeder(options.target_repo, options)
 
-    seen = set()
-    try:
-        for c in options.checks:
-            for opt in c.requires:
-                if (isinstance(opt, pcheck_options.FinalizingOption)
-                    and opt not in seen):
-                    opt.finalize(options, runner)
-                    seen.add(opt)
-    except optparse.OptionValueError, ov:
-        err.write("arg processing failed: see --help\n%s\n" % str(ov))
-        return -1
+    runner = options.runner
 
     for obj in options.checks:
         try:
