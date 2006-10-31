@@ -40,6 +40,20 @@ def metadata_src_callback(option, opt_str, value, parser):
 
 class OptionParser(commandline.OptionParser):
 
+    """Option parser that is automagically extended by the checks.
+
+    Some comments on the resulting values object:
+
+    - target_repo is passed in as first argument and used as source for
+      packages to check.
+    - src_repo is specified with -r or defaults to target_repo. It is used
+      to get the profiles directory and other non-package repository data.
+    - repo_base is the path to src_repo (or None).
+    - search_repo is a multiplex of target_repo and src_repo if they are
+      different or just target_repo if they are the same. This is used for
+      things like visibility checks (it is passed to the checkers in "start").
+    """
+
     def __init__(self, **kwargs):
         commandline.OptionParser.__init__(
             self, version='pkgcore-checks %s' % (__version__,),
