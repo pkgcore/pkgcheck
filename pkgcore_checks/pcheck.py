@@ -35,8 +35,6 @@ def metadata_src_callback(option, opt_str, value, parser):
             'must specify a raw ebuild repo, not type %r: %r' % (
                 value, repo.__class__, repo))
 
-    parser.values.repo_base = osutils.abspath(repo.base)
-
 
 class OptionParser(commandline.OptionParser):
 
@@ -126,6 +124,9 @@ class OptionParser(commandline.OptionParser):
             values.search_repo = multiplex.tree(values.target_repo,
                                                 values.src_repo)
 
+        if isinstance(values.src_repo, repository.UnconfiguredTree):
+            values.repo_base = osutils.abspath(values.src_repo.base)
+
         if args:
             values.limiters = lists.stable_unique(map(
                     parserestrict.parse_match, args))
@@ -154,6 +155,8 @@ class OptionParser(commandline.OptionParser):
                         opt.finalize(values, values.runner)
                         seen.add(opt)
         except optparse.OptionValueError, e:
+            if values.debug:
+                raise
             self.error(str(e))
 
         return values, ()
@@ -225,10 +228,13 @@ def main(options, out, err):
         display_checks(out, options.checks)
         return 0
 
-    if not getattr(options.target_repo, "base", False):
+    if options.repo_base is None:
         err.write(
-            'Warning: target repo appears to be combined trees, as '
-            'such some checks will be disabled\n')
+            'Warning: could not determine repository base for profiles. '
+            'Some checks will not work. Either specify a plain target repo '
+            '(not combined trees) or specify a PORTDIR repo '
+            'with --overlayed-repo.', wrap=True)
+        err.write()
 
     if options.to_xml:
         reporter = base.XmlReporter(out)
