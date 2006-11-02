@@ -84,8 +84,8 @@ class UnusedGlobalFlags(base.template):
         base.template.__init__(self, options)
         self.flags = None
     
-    def start(self, repo, *a):
-        base.template.start(self, repo, *a)
+    def start(self, repo, global_insoluable, keywords_filter, profile_filters):
+        base.template.start(self, repo)
         self.flags = set(util.get_use_desc(self.options.profile_base_dir))
 
     def feed(self, pkg, reporter):
