@@ -229,7 +229,6 @@ def main(options, out, err):
             'with --overlayed-repo.', wrap=True)
         err.write()
 
-    # XXX nasty, obviously.
     addons_map = {}
     def init_addon(klass):
         res = addons_map.get(klass)
@@ -238,9 +237,12 @@ def main(options, out, err):
         deps = list(init_addon(dep) for dep in klass.required_addons)
         res = addons_map[klass] = klass(options, *deps)
         return res
-    options.addons = list(init_addon(addon) for addon in options.addons)
 
-    feeder = base.Feeder(options.target_repo, options)
+    for addon in options.addons:
+        # Ignore the return value, we just need to populate addons_map.
+        init_addon(addon)
+
+    feeder = base.Feeder(options.target_repo, options, addons_map)
 
     if options.to_xml:
         reporter = base.XmlReporter(out)

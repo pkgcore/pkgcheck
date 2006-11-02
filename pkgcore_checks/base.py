@@ -142,7 +142,13 @@ class template(object):
 
 class Feeder(object):
 
-    def __init__(self, repo, options):
+    def __init__(self, repo, options, addons):
+        """Initialize.
+
+        @param repo: the repository to scan.
+        @param options: optparse option values.
+        @param addons: map from addon class to addon instance.
+        """
         self.options = options
         self.repo_checks = []
         self.cat_checks = []
@@ -151,6 +157,7 @@ class Feeder(object):
         self.repo = repo
         self.search_repo = options.search_repo
         self.debug = options.debug
+        self.addons = addons
 
     def add_check(self, check):
         feed_type = getattr(check, "feed_type", None)
@@ -181,9 +188,8 @@ class Feeder(object):
         hook_name = 'extra_%s_kwargs' % (attr,)
         for check in checks:
             kwargs = {}
-            for addon in self.options.addons:
-                if addon.__class__ in check.required_addons:
-                    kwargs.update(getattr(addon, hook_name)())
+            for addon_class in check.required_addons:
+                kwargs.update(getattr(self.addons[addon_class], hook_name)())
             try:
                 getattr(check, attr)(*args, **kwargs)
                 actual.append(check)
@@ -240,7 +246,7 @@ class Feeder(object):
         if vers:
             checks.extend(self.ver_checks)
 
-        for addon in self.options.addons:
+        for addon in self.addons.itervalues():
             extras = addon.start()
             if extras:
                 checks.extend(extras)
@@ -301,9 +307,8 @@ class Feeder(object):
 
     def _curry_addon_args(self, check):
         extra_kwargs = dict()
-        for addon in self.options.addons:
-            if addon.__class__ in check.required_addons:
-                extra_kwargs.update(addon.extra_feed_kwargs())
+        for addon_class in check.required_addons:
+            extra_kwargs.update(self.addons[addon_class].extra_feed_kwargs())
         if extra_kwargs:
             return currying.partial(check.feed, **extra_kwargs)
         else:
