@@ -43,13 +43,12 @@ class Addon(object):
 
     required_addons = ()
 
-    def __init__(self, options, feeder, *args):
+    def __init__(self, options, *args):
         """Initialize.
 
         An instance of every addon in required_addons is passed as extra arg.
 
         @param options: the optparse values.
-        @param feeder: L{base.Feeder} instance.
         """
         self.options = options
 

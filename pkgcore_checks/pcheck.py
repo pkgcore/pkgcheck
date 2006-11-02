@@ -237,7 +237,7 @@ def main(options, out, err):
         if res is not None:
             return res
         deps = list(init_addon(dep) for dep in klass.required_addons)
-        res = addons_map[klass] = klass(options, options.runner, *deps)
+        res = addons_map[klass] = klass(options, *deps)
         return res
     options.addons = list(init_addon(addon) for addon in options.addons)
 

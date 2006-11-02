@@ -41,8 +41,8 @@ class ArchesAddon(base.Addon):
 
 class QueryCacheAddon(base.Addon):
 
-    def __init__(self, options, feeder):
-        base.Addon.__init__(self, options, feeder)
+    def __init__(self, options):
+        base.Addon.__init__(self, options)
 
     @staticmethod
     def mangle_option_parser(parser):
@@ -87,8 +87,8 @@ class _WipeQueryCache(base.template):
 
 class ProfileAddon(base.Addon):
 
-    def __init__(self, options, feeder):
-        base.Addon.__init__(self, options, feeder)
+    def __init__(self, options):
+        base.Addon.__init__(self, options)
 
         def norm_name(x):
             return '/'.join(y for y in x.split('/') if y)
@@ -158,7 +158,7 @@ class ProfileAddon(base.Addon):
                 if ignore_deprecated and profile.deprecated:
                     continue
                 mask = util.get_profile_mask(profile)
-                virtuals = profile.virtuals(feeder.search_repo)
+                virtuals = profile.virtuals(options.search_repo)
                 # force all use masks to negated, and all other arches but this
                 non_tristate = frozenset(list(self.official_arches) +
                     list(profile.use_mask) + list(profile.use_force))
@@ -280,8 +280,8 @@ class EvaluateDepSetAddon(base.Addon):
     # XXX QueryCache just for the query_caching_freq option, separate?
     required_addons = (ProfileAddon, QueryCacheAddon)
 
-    def __init__(self, options, feeder, profiles, query_cache):
-        base.Addon.__init__(self, options, feeder)
+    def __init__(self, options, profiles, query_cache):
+        base.Addon.__init__(self, options)
         self.pkg_evaluate_depsets_cache = {}
         self.pkg_profiles_cache = {}
         self.profiles = profiles
