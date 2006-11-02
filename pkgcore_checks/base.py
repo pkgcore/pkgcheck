@@ -169,8 +169,6 @@ class Feeder(object):
             if extras:
                 checks.extend(extras)
 
-        for check in checks:
-            print check
         # split them apart now, since the checks were pulled in by enabling
         # threshold
         repo_checks = [c for c in checks if c.feed_type == repository_feed]
