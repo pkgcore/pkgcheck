@@ -55,15 +55,6 @@ class template(object):
         raise NotImplementedError
 
 
-class ForgetfulDict(dict):
-
-    def __setitem__(self, key, val):
-        return
-
-    def update(self, other):
-        return
-
-
 class Feeder(object):
 
     def __init__(self, repo, options):
