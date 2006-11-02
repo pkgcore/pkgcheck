@@ -12,7 +12,7 @@ demandload(globals(), "pkgcore.pkgsets.glsa:GlsaDirSet "
     "warnings ")
 
 
-class GlsaLocationAddon(addons.Addon):
+class GlsaLocationAddon(base.Addon):
 
     @staticmethod
     def mangle_option_parser(parser):

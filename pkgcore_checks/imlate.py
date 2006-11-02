@@ -6,7 +6,7 @@ from pkgcore.util.currying import pre_curry
 from pkgcore_checks import base, addons
 
 
-class SourceArchesAddon(addons.Addon):
+class SourceArchesAddon(base.Addon):
 
     @staticmethod
     def mangle_option_parser(parser):

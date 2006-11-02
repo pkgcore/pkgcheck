@@ -15,13 +15,99 @@ import itertools, operator
 
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore_checks import util
-from pkgcore.util.mappings import OrderedDict
-from pkgcore.util.containers import ProtectedSet
-from pkgcore.restrictions import values, packages
+from pkgcore.restrictions import packages
 from pkgcore.util.demandload import demandload
 demandload(globals(), "logging "
     "pkgcore.util:currying "
     "pkgcore.config.profiles ")
+
+
+class Addon(object):
+
+    """Base class for extra functionality for pcheck other than a check.
+
+    The checkers can depend on one or more of these. They will get
+    called at various points where they can extend pcheck (if any
+    active checks depend on the addon).
+
+    These methods are not part of the checker interface because that
+    would mean addon functionality shared by checkers would run twice.
+    They are not plugins because they do not do anything useful if no
+    checker depending on them is active.
+
+    This interface is not finished. Expect it to grow more methods
+    (but if not overridden they will be no-ops).
+
+    @cvar required_addons: sequence of addons this one depends on.
+    """
+
+    required_addons = ()
+
+    def __init__(self, options, feeder, *args):
+        """Initialize.
+
+        An instance of every addon in required_addons is passed as extra arg.
+
+        @param options: the optparse values.
+        @param feeder: L{base.Feeder} instance.
+        """
+        self.options = options
+
+    @staticmethod
+    def mangle_option_parser(parser):
+        """Add extra options and/or groups to the option parser.
+
+        This hook is always triggered, even if the checker is not
+        activated (because it runs before the commandline is parsed).
+
+        @param parser: an C{OptionParser} instance.
+        """
+
+    @staticmethod
+    def check_values(values):
+        """Postprocess the optparse values.
+
+        Should raise C{optparse.OptionValueError} on failure.
+
+        This is only called for addons that are enabled, but before
+        they are instantiated.
+        """
+
+    def start(self):
+        """Called before a feeder run.
+
+        Always called paired with stop.
+
+        @returns: optionally a sequence of extra checks. This behaviour
+            may go away in the future.
+        """
+
+    def extra_start_kwargs(self):
+        """Returns a dict of extra kwargs for the check's start method.
+
+        May be called any number of times after the start call.
+        """
+        return {}
+
+    def extra_feed_kwargs(self):
+        """Returns a dict of extra kwargs for the check's feed method.
+
+        May be called any number of times between the start and stop call.
+        """
+        return {}
+
+    def extra_finish_kwargs(self):
+        """Returns a dict of extra kwargs for the check's start method.
+
+        May be called any number of times before the stop call.
+        """
+        return {}
+
+    def stop(self):
+        """Called after a feeder run finishes.
+
+        Do cleanup of things done in start here.
+        """
 
 
 class template(object):
