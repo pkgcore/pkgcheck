@@ -141,7 +141,6 @@ class OptionParser(commandline.OptionParser):
                 check for check in values.checks
                 if not any(f(qual(check)) for f in l))
 
-        values.runner = base.Feeder(values.target_repo, values)
         values.addons = set()
         for c in values.checks:
             values.addons.update(c.required_addons)
@@ -241,6 +240,8 @@ def main(options, out, err):
         return res
     options.addons = list(init_addon(addon) for addon in options.addons)
 
+    feeder = base.Feeder(options.target_repo, options)
+
     if options.to_xml:
         reporter = base.XmlReporter(out)
     else:
@@ -248,7 +249,7 @@ def main(options, out, err):
 
     for obj in options.checks:
         try:
-            options.runner.add_check(obj(options))
+            feeder.add_check(obj(options))
         except (SystemExit, KeyboardInterrupt):
             raise
         except Exception:
@@ -258,16 +259,16 @@ def main(options, out, err):
 
     nodes = 0
     err.write("checks: repo(%i), cat(%i), pkg(%i), version(%i)" %
-              (len(options.runner.repo_checks), len(options.runner.cat_checks),
-               len(options.runner.pkg_checks), len(options.runner.ver_checks)))
+              (len(feeder.repo_checks), len(feeder.cat_checks),
+               len(feeder.pkg_checks), len(feeder.ver_checks)))
 
-    if not (options.runner.repo_checks or options.runner.cat_checks or
-            options.runner.pkg_checks or options.runner.ver_checks):
+    if not (feeder.repo_checks or feeder.cat_checks or
+            feeder.pkg_checks or feeder.ver_checks):
         err.write("no tests")
         return 1
     reporter.start()
     for filterer in options.limiters:
-        nodes += options.runner.run(reporter, filterer)
+        nodes += feeder.run(reporter, filterer)
     reporter.finish()
     # flush stdout first; if they're directing it all to a file, this makes
     # results not get the final message shoved in midway
