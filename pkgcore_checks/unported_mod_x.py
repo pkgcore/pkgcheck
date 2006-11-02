@@ -3,7 +3,7 @@
 
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
-from pkgcore_checks import base
+from pkgcore_checks import base, addons
 from pkgcore.util.iterables import caching_iter
 from pkgcore.restrictions import boolean
 from pkgcore.ebuild.atom import atom
@@ -20,8 +20,9 @@ class ModularXPortingReport(base.template):
     limiters from profiles, are forced to use monolithic X
     """
     feed_type = base.package_feed
-    requires = base.arches_options + base.query_cache_options + \
-        base.profile_options
+    required_addons = (
+        addons.ArchesAddon, addons.QueryCacheAddon, addons.ProfileAddon,
+        addons.EvaluateDepSetAddon)
 
     valid_modx_pkgs_url = \
         "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
@@ -44,7 +45,7 @@ class ModularXPortingReport(base.template):
         self.keywords_filter = keywords_filter
         self.profile_filters = profile_filters
         
-    def feed(self, pkgset, reporter, feeder):
+    def feed(self, pkgset, reporter, query_cache, depset_cache):
         # query_cache gets caching_iter partial repo searches shoved into it-
         # reason is simple, it's likely that versions of this pkg probably 
         # use similar deps- so we're forcing those packages that were
@@ -53,7 +54,7 @@ class ModularXPortingReport(base.template):
 
         unported = []
         for pkg in pkgset:
-            self.check_pkg(pkg, feeder, reporter, unported)
+            self.check_pkg(pkg, query_cache, depset_cache, reporter, unported)
 
         if unported:
             for u in unported:
@@ -61,8 +62,7 @@ class ModularXPortingReport(base.template):
                 if l:
                     reporter.add_report(SuggestRemoval(u, l))
 
-    def check_pkg(self, pkg, feeder, reporter, unported):
-        query_cache = feeder.query_cache
+    def check_pkg(self, pkg, query_cache, depset_cache, reporter, unported):
         failed = []
         
         ported_status = False
@@ -138,20 +138,20 @@ class ModularXPortingReport(base.template):
         # not valid: x11-base/xorg-x11 floating
 
         if not skip_depends:
-            for edepset, profiles in feeder.collapse_evaluate_depset(pkg,
-                "depends", pkg.depends):
+            for edepset, profiles in depset_cache.collapse_evaluate_depset(
+                pkg, "depends", pkg.depends):
                 self.process_depset(pkg, "depends", edepset, profiles,
-                    query_cache, reporter)
+                                    query_cache, reporter)
 
         if not skip_rdepends:
-            for edepset, profiles in feeder.collapse_evaluate_depset(pkg,
-                "rdepends", pkg.rdepends):
+            for edepset, profiles in depset_cache.collapse_evaluate_depset(
+                pkg, "rdepends", pkg.rdepends):
                 self.process_depset(pkg, "rdepends", edepset, profiles,
                     query_cache, reporter)
 
         if not skip_pdepends:
-            for edepset, profiles in feeder.collapse_evaluate_depset(pkg,
-                "post_rdepends", pkg.post_rdepends):
+            for edepset, profiles in depset_cache.collapse_evaluate_depset(
+                pkg, "post_rdepends", pkg.post_rdepends):
                 self.process_depset(pkg, "post_rdepends", edepset, profiles,
                     query_cache, reporter)
                 

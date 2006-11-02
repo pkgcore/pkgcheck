@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore_checks import base, util
+from pkgcore_checks import base, util, addons
 from pkgcore.util.demandload import demandload
 import operator, itertools
 
@@ -17,15 +17,15 @@ class UnusedLocalFlags(base.template):
     """
 
     feed_type = base.package_feed
-    requires = base.profile_options
+    required_addons = (addons.ProfileAddon,)
 
     def __init__(self, options):
         base.template.__init__(self, options)
         self.flags = {}
 
     # we're a profile based option, thus we get extra crap we don't need
-    def start(self, repo, *a):
-        base.template.start(self, repo, *a)
+    def start(self, repo, global_insoluable, keywords_filter, profile_filters):
+        base.template.start(self, repo)
         self.flags = util.get_use_local_desc(self.options.profile_base_dir)
     
     def feed(self, pkgs, reporter):
@@ -78,7 +78,7 @@ class UnusedGlobalFlags(base.template):
     
     feed_type = base.versioned_feed
     enabling_threshold = base.repository_feed
-    requires = base.profile_options
+    required_addons = (addons.ProfileAddon,)
 
     def __init__(self, options):
         base.template.__init__(self, options)
@@ -129,7 +129,7 @@ class UnusedLicense(base.template):
     
     feed_type = base.versioned_feed
     enabling_threshold = base.repository_feed
-    requires = base.license_options
+    required_addons = (addons.LicenseAddon,)
     
     def __init__(self, options):
         base.template.__init__(self, options)

@@ -3,7 +3,7 @@
 
 import os, optparse
 
-from pkgcore_checks import base
+from pkgcore_checks import base, addons
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.pkgsets.glsa:GlsaDirSet "
     "pkgcore.restrictions:packages,values "
@@ -11,42 +11,44 @@ demandload(globals(), "pkgcore.pkgsets.glsa:GlsaDirSet "
     "pkgcore.restrictions.util:collect_package_restrictions "
     "warnings ")
 
-class GlsaLocationOption(base.FinalizingOption):
 
-    def __init__(self):
-        base.FinalizingOption.__init__(self, "--glsa-dir", action='store',
-            type='string', dest='glsa_location', default=None, 
+class GlsaLocationAddon(addons.Addon):
+
+    @staticmethod
+    def mangle_option_parser(parser):
+        parser.add_option(
+            "--glsa-dir", action='store', type='string', dest='glsa_location',
             help="source directoy for glsas; tries to autodetermine it, may "
-                "be required if no glsa dirs are known")
+            "be required if no glsa dirs are known")
 
-    # protocol/attr trick in bas pylint: disable-msg=E0202
-    def finalize(self, options, runner):
-        options.glsa_enabled = True
-        glsa_loc = options.glsa_location
+    @staticmethod
+    def check_values(values):
+        values.glsa_enabled = True
+        glsa_loc = values.glsa_location
         if glsa_loc is not None:
             if not os.path.isdir(glsa_loc):
                 raise optparse.OptionValueError("--glsa-dir '%r' doesn't "
                     "exist" % glsa_loc)
         else:
-            glsa_loc = os.path.join(base.get_repo_base(options),
-                "metadata", "glsa")
+            if values.repo_base is None:
+                raise optparse.OptionValueError(
+                    'Need a target repo or --overlayed-repo that is a single '
+                    'UnconfiguredTree for license checks')
+            glsa_loc = os.path.join(values.repo_base, "metadata", "glsa")
             if not os.path.isdir(glsa_loc):
                 # form of 'optional' limiting; if they are using -c, force the
                 # error, else disable
-                if options.checks_to_run:
+                if values.checks_to_run:
                     raise optparse.OptionValueError("--glsa-dir must be "
                         "specified, couldn't identify glsa src from %r" %
-                            options.src_repo)
-                options.glsa_enabled = False
+                            values.src_repo)
+                values.glsa_enabled = False
                 warnings.warn("disabling GLSA checks due to no glsa source "
                     "being found, and the check not being explicitly enabled; "
                     "this behaviour may change")
                 return
-        
-        options.glsa_location = osutils.abspath(glsa_loc)
 
-
-GlsaLocation_option = GlsaLocationOption()
+        values.glsa_location = osutils.abspath(glsa_loc)
 
 
 class TreeVulnerabilitiesReport(base.template):
@@ -57,7 +59,7 @@ class TreeVulnerabilitiesReport(base.template):
     """
 
     feed_type = base.versioned_feed
-    requires = (GlsaLocation_option,)
+    required_addons = (GlsaLocationAddon,)
 
     def __init__(self, options):
         base.template.__init__(self, options)

@@ -2,7 +2,7 @@
 # License: GPL2
 
 from pkgcore.util.compatibility import any
-from pkgcore_checks import base
+from pkgcore_checks import base, addons
 from pkgcore.util.iterables import caching_iter
 from pkgcore.util.lists import stable_unique, iflatten_instance
 from pkgcore.ebuild.atom import atom
@@ -19,8 +19,9 @@ class VisibilityReport(base.template):
     """
 
     feed_type = base.versioned_feed
-    requires = base.arches_options + base.query_cache_options + \
-        base.profile_options
+    required_addons = (
+        addons.ArchesAddon, addons.QueryCacheAddon, addons.ProfileAddon,
+        addons.EvaluateDepSetAddon)
 
     vcs_eclasses = frozenset(["subversion", "git", "cvs", "darcs"])
 
@@ -36,7 +37,7 @@ class VisibilityReport(base.template):
         self.keywords_filter = keywords_filter
         self.profile_filters = profile_filters
 
-    def feed(self, pkg, reporter, feeder):
+    def feed(self, pkg, reporter, query_cache, depset_cache):
         # query_cache gets caching_iter partial repo searches shoved into it-
         # reason is simple, it's likely that versions of this pkg probably
         # use similar deps- so we're forcing those packages that were
@@ -50,7 +51,6 @@ class VisibilityReport(base.template):
                 self.check_visibility_vcs(pkg, reporter)
                 break
 
-        query_cache = feeder.query_cache
         for attr, depset in (("depends", pkg.depends),
             ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
             nonexistant = set()
@@ -81,8 +81,8 @@ class VisibilityReport(base.template):
         for attr, depset in (("depends", pkg.depends),
             ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
 
-            for edepset, profiles in feeder.collapse_evaluate_depset(pkg,
-                attr, depset):
+            for edepset, profiles in depset_cache.collapse_evaluate_depset(
+                pkg, attr, depset):
 
                 self.process_depset(pkg, attr, edepset, profiles, query_cache,
                     reporter)

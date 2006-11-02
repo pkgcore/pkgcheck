@@ -2,8 +2,8 @@
 # License: GPL2
 
 import time
-from pkgcore_checks.base import (template, versioned_feed, Result,
-    arches_options)
+from pkgcore_checks.base import template, versioned_feed, Result
+from pkgcore_checks import addons
 
 day = 24*3600
         
@@ -12,7 +12,7 @@ class StaleUnstableReport(template):
     """Ebuilds that have sat unstable for over a month"""
 
     feed_type = versioned_feed
-    requires = arches_options
+    required_addons = (addons.ArchesAddon,)
     
     def __init__(self, options, staleness=long(day*30)):
         template.__init__(self, options)

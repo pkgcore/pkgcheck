@@ -3,8 +3,20 @@
 
 from pkgcore.restrictions import packages, values
 from pkgcore.util.currying import pre_curry
-from pkgcore_checks import base
-import optparse
+from pkgcore_checks import base, addons
+
+
+class SourceArchesAddon(addons.Addon):
+
+    @staticmethod
+    def mangle_option_parser(parser):
+        parser.add_option(
+            "--source-arches", action='callback', dest='reference_arches',
+            default=addons.ArchesAddon.default_arches,
+            type='string', callback=addons.ArchesAddon._record_arches,
+            help="comma seperated list of what arches to compare against for "
+            "imlate, defaults to %s" % (
+                ",".join(addons.ArchesAddon.default_arches),))
 
 
 class ImlateReport(base.template):
@@ -15,12 +27,7 @@ class ImlateReport(base.template):
     """
 
     feed_type = base.package_feed
-    requires = (base.arches_option, optparse.Option("--source-arches",
-        action='callback', default=base.default_arches, type='string',
-        callback=pre_curry(base._record_arches, "reference_arches"), 
-        dest='reference_arches',
-        help="comma seperated list of what arches to compare against for "
-            "imlate, defaults to %s" % ",".join(base.default_arches)))
+    required_addons = (addons.ArchesAddon, SourceArchesAddon)
 
     def __init__(self, options):
         base.template.__init__(self, options)

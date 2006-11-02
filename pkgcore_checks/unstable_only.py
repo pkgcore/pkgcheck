@@ -2,14 +2,15 @@
 # License: GPL2
 
 from pkgcore.restrictions import packages, values
-from pkgcore_checks.base import template, package_feed, Result, arches_options
+from pkgcore_checks.base import template, package_feed, Result
+from pkgcore_checks import addons
 
 
 class UnstableOnlyReport(template):
     """scan for pkgs that have just unstable keywords"""
 
     feed_type = package_feed
-    requires = arches_options
+    required_addons = (addons.ArchesAddon,)
 
     def __init__(self, options):
         template.__init__(self, options)

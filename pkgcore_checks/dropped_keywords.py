@@ -2,14 +2,15 @@
 # License: GPL2
 
 
-from pkgcore_checks.base import template, package_feed, Result, arches_options
+from pkgcore_checks.base import template, package_feed, Result
+from pkgcore_checks import addons
 
 
 class DroppedKeywordsReport(template):
     """scan pkgs for keyword dropping across versions"""
 
     feed_type = package_feed
-    requires = arches_options
+    required_addons = (addons.ArchesAddon,)
     
     def __init__(self, options):
         template.__init__(self, options)

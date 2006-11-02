@@ -3,7 +3,7 @@
 
 import os
 from operator import attrgetter
-from pkgcore_checks import base, util
+from pkgcore_checks import base, util, addons
 
 from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
@@ -29,8 +29,8 @@ class MetadataReport(base.template):
     """
 
     feed_type = base.versioned_feed
-    requires = base.arches_options + base.profile_options + \
-        base.license_options
+    required_addons = (
+        addons.ArchesAddon, addons.ProfileAddon, addons.LicenseAddon)
     
     def __init__(self, options):
         base.template.__init__(self, options)
@@ -151,7 +151,7 @@ class MetadataReport(base.template):
         known_iuse.update(unstated_iuse)
         return frozenset(known_iuse), frozenset(unstated_iuse)
 
-    def start(self, repo, *a):
+    def start(self, repo, keywords_filter, global_insoluable, profile_filters):
         # we are given extra args since we use profiles; don't care about it
         # however
         if any(x[0] == "license" for x in self.attrs):

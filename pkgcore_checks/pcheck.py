@@ -12,8 +12,7 @@ from pkgcore.util import commandline, parserestrict, lists, demandload
 from pkgcore.util.compatibility import any
 from pkgcore.restrictions import packages
 from pkgcore.plugin import get_plugins
-from pkgcore_checks import (
-    plugins, base, options as pcheck_options, __version__)
+from pkgcore_checks import plugins, base, __version__
 
 demandload.demandload(globals(), "logging optparse textwrap re "
     "pkgcore.util:osutils "
@@ -85,14 +84,11 @@ class OptionParser(commandline.OptionParser):
             help="if the target repository is an overlay, specify the "
             "repository name to pull profiles/license from")
 
-        # yes linear, but not a huge issue.
-        new_opts = []
+        all_addons = set()
         for c in get_plugins('check', plugins):
-            for opt in c.requires:
-                if isinstance(opt, optparse.Option) and opt not in new_opts:
-                    new_opts.append(opt)
-        if new_opts:
-            self.add_options(new_opts)
+            all_addons.update(c.required_addons)
+        for addon in all_addons:
+            addon.mangle_option_parser(self)
 
     def check_values(self, values, args):
         values, args = commandline.OptionParser.check_values(
@@ -146,14 +142,12 @@ class OptionParser(commandline.OptionParser):
                 if not any(f(qual(check)) for f in l))
 
         values.runner = base.Feeder(values.target_repo, values)
-        seen = set()
+        values.addons = set()
+        for c in values.checks:
+            values.addons.update(c.required_addons)
         try:
-            for c in values.checks:
-                for opt in c.requires:
-                    if (isinstance(opt, pcheck_options.FinalizingOption)
-                        and opt not in seen):
-                        opt.finalize(values, values.runner)
-                        seen.add(opt)
+            for addon in values.addons:
+                addon.check_values(values)
         except optparse.OptionValueError, e:
             if values.debug:
                 raise
@@ -236,6 +230,17 @@ def main(options, out, err):
             'with --overlayed-repo.', wrap=True)
         err.write()
 
+    # XXX nasty, obviously.
+    addons_map = {}
+    def init_addon(klass):
+        res = addons_map.get(klass)
+        if res is not None:
+            return res
+        deps = list(init_addon(dep) for dep in klass.required_addons)
+        res = addons_map[klass] = klass(options, options.runner, *deps)
+        return res
+    options.addons = list(init_addon(addon) for addon in options.addons)
+
     if options.to_xml:
         reporter = base.XmlReporter(out)
     else:
@@ -243,7 +248,7 @@ def main(options, out, err):
 
     for obj in options.checks:
         try:
-            options.runner.add_check(obj)
+            options.runner.add_check(obj(options))
         except (SystemExit, KeyboardInterrupt):
             raise
         except Exception:
