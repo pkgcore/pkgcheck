@@ -2,18 +2,18 @@
 # License: GPL2
 
 from pkgcore.restrictions import packages, values
-from pkgcore_checks.base import template, package_feed, Result
+from pkgcore_checks.base import Template, package_feed, Result
 from pkgcore_checks import addons
 
 
-class UnstableOnlyReport(template):
+class UnstableOnlyReport(Template):
     """scan for pkgs that have just unstable keywords"""
 
     feed_type = package_feed
     required_addons = (addons.ArchesAddon,)
 
-    def __init__(self, options):
-        template.__init__(self, options)
+    def __init__(self, options, arches):
+        Template.__init__(self, options)
         arches = set(x.strip().lstrip("~") for x in options.arches)
         # stable, then unstable, then file
         self.arch_restricts = {}
@@ -25,24 +25,23 @@ class UnstableOnlyReport(template):
                     values.ContainmentMatch("~%s" % x))
                 ]
 
-    def finish(self, reporter):
+    def feed(self, pkgsets, reporter):
+        for pkgset in pkgsets:
+            yield pkgset
+            # stable, then unstable, then file
+            for k, v in self.arch_restricts.iteritems():
+                stable = unstable = None
+                for x in pkgset:
+                    if v[0].match(x):
+                        stable = x
+                        break
+                if stable is not None:
+                    continue
+                unstable = [x for x in pkgset if v[1].match(x)]
+                if unstable:
+                    reporter.add_report(UnstableOnly(unstable, k))
         self.arch_restricts.clear()
-        template.finish(self, reporter)
 
-    def feed(self, pkgset, reporter):
-        # stable, then unstable, then file
-        for k, v in self.arch_restricts.iteritems():
-            stable = unstable = None
-            for x in pkgset:
-                if v[0].match(x):
-                    stable = x
-                    break
-            if stable is not None:
-                continue
-            unstable = [x for x in pkgset if v[1].match(x)]
-            if unstable:
-                reporter.add_report(UnstableOnly(unstable, k))
-                
 
 class UnstableOnly(Result):
 

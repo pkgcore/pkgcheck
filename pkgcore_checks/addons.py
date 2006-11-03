@@ -41,8 +41,7 @@ class ArchesAddon(base.Addon):
 
 class QueryCacheAddon(base.Addon):
 
-    def __init__(self, options):
-        base.Addon.__init__(self, options)
+    feed_type = base.package_feed
 
     @staticmethod
     def mangle_option_parser(parser):
@@ -64,30 +63,20 @@ class QueryCacheAddon(base.Addon):
             "package)")
         parser.set_default('query_caching_freq', base.package_feed)
 
-    def start(self):
+    def __init__(self, options):
+        base.Addon.__init__(self, options)
         self.query_cache = {}
-        return [_WipeQueryCache(self.options, self.options.query_caching_freq)]
+        self.enabling_threshold = self.options.query_caching_freq
 
-    def extra_feed_kwargs(self):
-        return dict(query_cache=self.query_cache)
-
-
-class _WipeQueryCache(base.template):
-
-    required_addons = (QueryCacheAddon,)
-    feed_type = base.package_feed
-
-    def __init__(self, options, enabling_threshold):
-        base.template.__init__(self, options)
-        self.enabling_threshold = enabling_threshold
-
-    def feed(self, pkgs, reporter, query_cache):
-        query_cache.clear()
+    def feed(self, pkgs, reporter):
+        for pkgset in pkgs:
+            yield pkgset
+            self.query_cache.clear()
 
 
 class ProfileAddon(base.Addon):
 
-    def __init__(self, options):
+    def __init__(self, options, *args):
         base.Addon.__init__(self, options)
 
         def norm_name(x):
@@ -269,29 +258,26 @@ class ProfileAddon(base.Addon):
             self.profile_evaluate_dict.iteritems() if
             self.keywords_filter[key].match(pkg)]
 
-    def extra_start_kwargs(self):
-        return dict(global_insoluable=self.global_insoluable,
-                    keywords_filter=self.keywords_filter,
-                    profile_filters=self.profile_filters)
-
 
 class EvaluateDepSetAddon(base.Addon):
 
     # XXX QueryCache just for the query_caching_freq option, separate?
     required_addons = (ProfileAddon, QueryCacheAddon)
 
-    def __init__(self, options, profiles, query_cache):
+    feed_type = base.package_feed
+
+    def __init__(self, options, profiles, query_cache, *args):
         base.Addon.__init__(self, options)
         self.pkg_evaluate_depsets_cache = {}
         self.pkg_profiles_cache = {}
         self.profiles = profiles
+        self.enabling_threshold = self.options.query_caching_freq
 
-    def start(self):
-        return [_WipeEvaluateDepSetCaches(self.options,
-                                          self.options.query_caching_freq)]
-
-    def extra_feed_kwargs(self):
-        return dict(depset_cache=self)
+    def feed(self, pkgs, reporter):
+        for pkgset in pkgs:
+            yield pkgset
+            self.pkg_evaluate_depsets_cache.clear()
+            self.pkg_profiles_cache.clear()
 
     def collapse_evaluate_depset(self, pkg, attr, depset):
         depset_profiles = self.pkg_evaluate_depsets_cache.get((pkg, attr))
@@ -344,19 +330,6 @@ class EvaluateDepSetAddon(base.Addon):
         return [(depset.evaluate_depset(k[1], tristate_filter=k[0]), v)
             for k,v in collapsed.iteritems()]
 
-
-class _WipeEvaluateDepSetCaches(base.template):
-
-    required_addons = (EvaluateDepSetAddon,)
-    feed_type = base.package_feed
-
-    def __init__(self, options, enabling_threshold):
-        base.template.__init__(self, options)
-        self.enabling_threshold = enabling_threshold
-
-    def feed(self, pkgs, reporter, depset_cache):
-        depset_cache.pkg_evaluate_depsets_cache.clear()
-        depset_cache.pkg_profiles_cache.clear()
 
 
 class LicenseAddon(base.Addon):

@@ -21,7 +21,7 @@ demandload(globals(), "pkgcore.util.xml:escape "
 default_attrs = ("depends", "rdepends", "post_rdepends", "provides",
     "license", "fetchables", "iuse")
 
-class MetadataReport(base.template):
+class MetadataReport(base.Template):
 
     """ebuild metadata reports.
     
@@ -32,8 +32,8 @@ class MetadataReport(base.template):
     required_addons = (
         addons.ArchesAddon, addons.ProfileAddon, addons.LicenseAddon)
     
-    def __init__(self, options):
-        base.template.__init__(self, options)
+    def __init__(self, options, *args):
+        base.Template.__init__(self, options)
         force_expansion = ("depends", "rdepends", "post_rdepends", "provides")
         self.attrs = [(a, attrgetter(a), a in force_expansion)
             for a in default_attrs]
@@ -44,8 +44,29 @@ class MetadataReport(base.template):
         self.arches = options.arches
         self.profile_base = options.profile_base_dir
         self.licenses_dir = options.license_dir
-    
-    def feed(self, pkg, reporter):
+
+    def feed(self, pkgs, reporter):
+        if any(x[0] == "license" for x in self.attrs):
+            lfp = self.licenses_dir
+            if not os.path.exists(lfp):
+                logging.warn(
+                    "disabling license checks- %s doesn't exist" % (lfp,))
+                self.licenses = None
+            else:
+                self.licenses = frozenset(listdir_files(lfp))
+        else:
+            self.licenses = None
+        if any(x[0] == "iuse" for x in self.attrs):
+            self.valid_iuse, self.valid_unstated_iuse = \
+                self.load_valid_iuse(self.profile_base)
+        else:
+            self.valid_iuse = self.valid_unstated_iuse = None
+
+        for pkg in pkgs:
+            yield pkg
+            self._feed(pkg, reporter)
+
+    def _feed(self, pkg, reporter):
         for attr_name, getter, force_expansion in self.attrs:
             try:
                 o = getter(pkg)
@@ -151,86 +172,73 @@ class MetadataReport(base.template):
         known_iuse.update(unstated_iuse)
         return frozenset(known_iuse), frozenset(unstated_iuse)
 
-    def start(self, repo, keywords_filter, global_insoluable, profile_filters):
-        # we are given extra args since we use profiles; don't care about it
-        # however
-        if any(x[0] == "license" for x in self.attrs):
-            lfp = self.licenses_dir
-            if not os.path.exists(lfp):
-                logging.warn("disabling license checks- %s doesn't exist" % lfp)
-                self.licenses = None
-            else:
-                self.licenses = frozenset(listdir_files(lfp))
-        else:
-            self.licenses = None
-        if any(x[0] == "iuse" for x in self.attrs):
-            self.valid_iuse, self.valid_unstated_iuse = \
-                self.load_valid_iuse(self.profile_base)
-        else:
-            self.valid_iuse = self.valid_unstated_iuse = None
 
-
-class SrcUriReport(base.template):
+class SrcUriReport(base.Template):
     """SRC_URI related checks.
     verify that it's a valid/fetchable uri, port 80,443,23"""
     feed_type = base.versioned_feed
     valid_protos = frozenset(["http", "https", "ftp"])
 
-    def feed(self, pkg, reporter):
-        lacks_uri = set()
-        for f_inst in iflatten_instance(pkg.fetchables, fetchable):
-            if not isinstance(f_inst, fetchable):
-                continue
-            elif f_inst.uri is None:
-                lacks_uri.add(f_inst.filename)
-            elif isinstance(f_inst.uri, list):
-                bad = set()
-                for x in f_inst.uri:
-                    i = x.find("://")
-                    if i == -1:
-                        bad.add(x)
-                    else:
-                        if x[:i] not in self.valid_protos:
+    def feed(self, pkgs, reporter):
+        for pkg in pkgs:
+            yield pkg
+            lacks_uri = set()
+            for f_inst in iflatten_instance(pkg.fetchables, fetchable):
+                if not isinstance(f_inst, fetchable):
+                    continue
+                elif f_inst.uri is None:
+                    lacks_uri.add(f_inst.filename)
+                elif isinstance(f_inst.uri, list):
+                    bad = set()
+                    for x in f_inst.uri:
+                        i = x.find("://")
+                        if i == -1:
                             bad.add(x)
-                if bad:
-                    reporter.add_report(BadProto(pkg, f_inst.filename, bad))
-        if not "fetch" in pkg.restrict:
-            for x in lacks_uri:
-                reporter.add_report(MissingUri(pkg, x))
+                        else:
+                            if x[:i] not in self.valid_protos:
+                                bad.add(x)
+                    if bad:
+                        reporter.add_report(
+                            BadProto(pkg, f_inst.filename, bad))
+            if not "fetch" in pkg.restrict:
+                for x in lacks_uri:
+                    reporter.add_report(MissingUri(pkg, x))
 
 
-class DescriptionReport(base.template):
+class DescriptionReport(base.Template):
     """DESCRIPTION checks.
     check on length (<=250), too short (<5), or generic (lifted from eclass or
     just using the pkgs name
     """
     feed_type = base.versioned_feed
-    
-    def feed(self, pkg, reporter):
-        s = pkg.description.lower()
 
-        if s.startswith("based on") and "eclass" in s:
-            reporter.add_report(CrappyDescription(pkg,
-                "generic eclass defined description"))
+    def feed(self, pkgs, reporter):
+        for pkg in pkgs:
+            yield pkg
+            s = pkg.description.lower()
 
-        elif pkg.package == s or pkg.key == s:
-            reporter.add_report(CrappyDescription(pkg,
-                "using the pkg name as the description isn't very helpful"))
-
-        else:
-            l = len(pkg.description)
-            if not l:
+            if s.startswith("based on") and "eclass" in s:
                 reporter.add_report(CrappyDescription(pkg,
-                    "empty/unset"))
-            elif l > 250:
+                    "generic eclass defined description"))
+
+            elif pkg.package == s or pkg.key == s:
                 reporter.add_report(CrappyDescription(pkg,
-                    "over 250 chars in length, bit long"))
-            elif l < 5:
-                reporter.add_report(CrappyDescription(pkg,
-                    "under 10 chars in length- too short"))
+                    "using the pkg name as the description isn't very helpful"))
+
+            else:
+                l = len(pkg.description)
+                if not l:
+                    reporter.add_report(CrappyDescription(pkg,
+                        "empty/unset"))
+                elif l > 250:
+                    reporter.add_report(CrappyDescription(pkg,
+                        "over 250 chars in length, bit long"))
+                elif l < 5:
+                    reporter.add_report(CrappyDescription(pkg,
+                        "under 10 chars in length- too short"))
 
 
-class RestrictsReport(base.template):
+class RestrictsReport(base.Template):
     feed_type = base.versioned_feed
     known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", 
         "test", "sandbox", "userpriv", "primaryuri", "binchecks", "strip",
@@ -239,13 +247,15 @@ class RestrictsReport(base.template):
     __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \
         "restricts:%s" % ", ".join(sorted(known_restricts))
     
-    def feed(self, pkg, reporter):
-        bad = set(pkg.restrict).difference(self.known_restricts)
-        if bad:
-            deprecated = set(x for x in bad if x.startswith("no")
-                and x[2:] in self.known_restricts)
-            reporter.add_report(BadRestricts(pkg, bad.difference(deprecated),
-                deprecated))
+    def feed(self, pkgs, reporter):
+        for pkg in pkgs:
+            yield pkg
+            bad = set(pkg.restrict).difference(self.known_restricts)
+            if bad:
+                deprecated = set(x for x in bad if x.startswith("no")
+                    and x[2:] in self.known_restricts)
+                reporter.add_report(BadRestricts(pkg, bad.difference(deprecated),
+                    deprecated))
 
 
 class BadRestricts(base.Result):

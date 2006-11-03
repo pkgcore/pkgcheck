@@ -3,7 +3,7 @@
 
 import os, optparse
 
-from pkgcore_checks import base, addons
+from pkgcore_checks import base
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.pkgsets.glsa:GlsaDirSet "
     "pkgcore.restrictions:packages,values "
@@ -12,7 +12,14 @@ demandload(globals(), "pkgcore.pkgsets.glsa:GlsaDirSet "
     "warnings ")
 
 
-class GlsaLocationAddon(base.Addon):
+class TreeVulnerabilitiesReport(base.Template):
+    """
+    Scan for vulnerabile ebuilds in the tree
+    
+    requires a GLSA directory for vuln. info
+    """
+
+    feed_type = base.versioned_feed
 
     @staticmethod
     def mangle_option_parser(parser):
@@ -50,25 +57,14 @@ class GlsaLocationAddon(base.Addon):
 
         values.glsa_location = osutils.abspath(glsa_loc)
 
-
-class TreeVulnerabilitiesReport(base.template):
-    """
-    Scan for vulnerabile ebuilds in the tree
-    
-    requires a GLSA directory for vuln. info
-    """
-
-    feed_type = base.versioned_feed
-    required_addons = (GlsaLocationAddon,)
-
     def __init__(self, options):
-        base.template.__init__(self, options)
+        base.Template.__init__(self, options)
         self.options = options
         self.glsa_dir = options.glsa_location
         self.enabled = False
         self.vulns = {}
 
-    def start(self, repo):
+    def feed(self, pkgs, reporter):
         self.enabled = self.options.glsa_enabled
         self.vulns.clear()
         if not self.enabled:
@@ -80,16 +76,13 @@ class TreeVulnerabilitiesReport(base.template):
                     []).append(packages.AndRestriction(*r[1:]))
             else:
                 self.vulns.setdefault(r[0].key, []).append(r[1])
-
-    def finish(self, reporter):
+        for pkg in pkgs:
+            yield pkg
+            if self.enabled:
+                for vuln in self.vulns.get(pkg.key, []):
+                    if vuln.match(pkg):
+                        reporter.add_report(VulnerablePackage(pkg, vuln))
         self.vulns.clear()
-        base.template.finish(self, reporter)
-            
-    def feed(self, pkg, reporter):
-        if self.enabled:
-            for vuln in self.vulns.get(pkg.key, []):
-                if vuln.match(pkg):
-                    reporter.add_report(VulnerablePackage(pkg, vuln))
 
 
 class VulnerablePackage(base.Result):

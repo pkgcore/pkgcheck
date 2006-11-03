@@ -10,7 +10,7 @@ demandload(globals(), "pkgcore.util.xml:escape "
     "pkgcore.util.lists:iflatten_instance "
     "pkgcore.fetch:fetchable ")
 
-class UnusedLocalFlags(base.template):
+class UnusedLocalFlags(base.Template):
 
     """
     check for unused use.local.desc entries
@@ -19,21 +19,19 @@ class UnusedLocalFlags(base.template):
     feed_type = base.package_feed
     required_addons = (addons.ProfileAddon,)
 
-    def __init__(self, options):
-        base.template.__init__(self, options)
+    def __init__(self, options, profiles):
+        base.Template.__init__(self, options)
         self.flags = {}
 
-    # we're a profile based option, thus we get extra crap we don't need
-    def start(self, repo, global_insoluable, keywords_filter, profile_filters):
-        base.template.start(self, repo)
+    def feed(self, pkgsets, reporter):
         self.flags = util.get_use_local_desc(self.options.profile_base_dir)
-    
-    def feed(self, pkgs, reporter):
-        for restrict, flags in self.flags.get(pkgs[0].key, {}).iteritems():
-            unused = flags.difference(iflatten_instance(
-                pkg.iuse for pkg in pkgs if restrict.match(pkg)))
-            if unused:
-                reporter.add_report(UnusedLocalFlagsResult(restrict, unused))
+        for pkgs in pkgsets:
+            yield pkgs
+            for restrict, flags in self.flags.get(pkgs[0].key, {}).iteritems():
+                unused = flags.difference(iflatten_instance(
+                    pkg.iuse for pkg in pkgs if restrict.match(pkg)))
+                if unused:
+                    reporter.add_report(UnusedLocalFlagsResult(restrict, unused))
 
 
 class UnusedLocalFlagsResult(base.Result):
@@ -71,7 +69,7 @@ class UnusedLocalFlagsResult(base.Result):
 	(self.atom, ', '.join(self.flags))))
 
 
-class UnusedGlobalFlags(base.template):
+class UnusedGlobalFlags(base.Template):
     """
     check for unused use.desc entries
     """
@@ -80,18 +78,15 @@ class UnusedGlobalFlags(base.template):
     enabling_threshold = base.repository_feed
     required_addons = (addons.ProfileAddon,)
 
-    def __init__(self, options):
-        base.template.__init__(self, options)
+    def __init__(self, options, profiles):
+        base.Template.__init__(self, options)
         self.flags = None
-    
-    def start(self, repo, global_insoluable, keywords_filter, profile_filters):
-        base.template.start(self, repo)
-        self.flags = set(util.get_use_desc(self.options.profile_base_dir))
 
-    def feed(self, pkg, reporter):
-        self.flags.difference_update(pkg.iuse)
-    
-    def finish(self, reporter):
+    def feed(self, pkgs, reporter):
+        self.flags = set(util.get_use_desc(self.options.profile_base_dir))
+        for pkg in pkgs:
+            yield pkg
+            self.flags.difference_update(pkg.iuse)
         if self.flags:
             reporter.add_report(UnusedGlobalFlagsResult(self.flags))
         self.flags.clear()
@@ -122,7 +117,7 @@ class UnusedGlobalFlagsResult(base.Result):
     escape("use.desc unused flags: %s" % ', '.join(self.flags)))
 
 
-class UnusedLicense(base.template):
+class UnusedLicense(base.Template):
     """
     unused license file(s) check
     """
@@ -131,18 +126,15 @@ class UnusedLicense(base.template):
     enabling_threshold = base.repository_feed
     required_addons = (addons.LicenseAddon,)
     
-    def __init__(self, options):
-        base.template.__init__(self, options)
+    def __init__(self, options, licenses):
+        base.Template.__init__(self, options)
         self.licenses = None
-    
-    def start(self, repo, *a):
-        base.template.start(self, repo, *a)
+
+    def feed(self, pkgs, reporter):
         self.licenses = set(listdir_files(self.options.license_dir))
-    
-    def feed(self, pkg, reporter):
-        self.licenses.difference_update(iflatten_instance(pkg.license))
-    
-    def finish(self, reporter):
+        for pkg in pkgs:
+            yield pkg
+            self.licenses.difference_update(iflatten_instance(pkg.license))
         if self.licenses:
             reporter.add_report(UnusedLicenseReport(self.licenses))
         self.licenses = None
@@ -171,7 +163,7 @@ class UnusedLicenseReport(base.Result):
     escape("use.desc unused licenses: %s" % ', '.join(self.licenses)))
 
 
-class ConflictingDigests(base.template):
+class ConflictingDigests(base.Template):
     """
     scan for conflicting digest entries; since this requires
     keeping all fetchables in memory, this can add up.
@@ -181,10 +173,16 @@ class ConflictingDigests(base.template):
     feed_type = base.versioned_feed
     
     def __init__(self, options):
-        base.template.__init__(self, options)
+        base.Template.__init__(self, options)
         self._fetchables = {}
-    
-    def feed(self, pkg, reporter):
+
+    def feed(self, pkgs, reporter):
+        for pkg in pkgs:
+            yield pkg
+            self._feed(pkg, reporter)
+        self._fetchables.clear()
+
+    def _feed(self, pkg, reporter):
         for uri in iflatten_instance(pkg.fetchables, fetchable):
             existing = self._fetchables.get(uri.filename, None)
             if existing is not None:
@@ -205,10 +203,6 @@ class ConflictingDigests(base.template):
             else:
                 self._fetchables[uri.filename] = \
                     (uri.chksums, [util.get_cpvstr(pkg)])
-        
-    def finish(self, reporter):
-        base.template.finish(self, reporter)
-        self._fetchables.clear()
 
 
 def reformat_chksums(iterable):
@@ -253,15 +247,20 @@ class ConflictingChksums(base.Result):
         self.filename, self.others, self.chksums))
 
 
-class ConflictManifestDigest(base.template):
+class ConflictManifestDigest(base.Template):
 
     """Scan for conflicts between the Manifest file and digest files."""
 
     feed_type = base.package_feed
     
     repo_grabber = operator.attrgetter("repo")
-    
-    def feed(self, full_pkgset, reporter):
+
+    def feed(self, pkgsets, reporter):
+        for pkgset in pkgsets:
+            yield pkgset
+            self._feed(pkgset, reporter)
+
+    def _feed(self, full_pkgset, reporter):
         # sort it by repo.
         for repo, pkgset in itertools.groupby(full_pkgset, self.repo_grabber):
             pkgset = list(pkgset)

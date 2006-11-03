@@ -12,7 +12,8 @@ from pkgcore.util import commandline, parserestrict, lists, demandload
 from pkgcore.util.compatibility import any
 from pkgcore.restrictions import packages
 from pkgcore.plugin import get_plugins
-from pkgcore_checks import plugins, base, __version__
+
+from pkgcore_checks import plugins, base, __version__, feeds
 
 demandload.demandload(globals(), "logging optparse textwrap re "
     "pkgcore.util:osutils "
@@ -85,8 +86,13 @@ class OptionParser(commandline.OptionParser):
             "repository name to pull profiles/license from")
 
         all_addons = set()
-        for c in get_plugins('check', plugins):
-            all_addons.update(c.required_addons)
+        def add_addon(addon):
+            if addon not in all_addons:
+                all_addons.add(addon)
+                for dep in addon.required_addons:
+                    add_addon(dep)
+        for check in get_plugins('check', plugins):
+            add_addon(check)
         for addon in all_addons:
             addon.mangle_option_parser(self)
 
@@ -142,8 +148,13 @@ class OptionParser(commandline.OptionParser):
                 if not any(f(qual(check)) for f in l))
 
         values.addons = set()
-        for c in values.checks:
-            values.addons.update(c.required_addons)
+        def add_addon(addon):
+            if addon not in values.addons:
+                values.addons.add(addon)
+                for dep in addon.required_addons:
+                    add_addon(dep)
+        for check in values.checks:
+            add_addon(check)
         try:
             for addon in values.addons:
                 addon.check_values(values)
@@ -235,45 +246,38 @@ def main(options, out, err):
         if res is not None:
             return res
         deps = list(init_addon(dep) for dep in klass.required_addons)
-        res = addons_map[klass] = klass(options, *deps)
+        try:
+            res = addons_map[klass] = klass(options, *deps)
+        except KeyboardInterrupt:
+            raise
+        except Exception:
+            err.write('instantiating %s' % (klass,))
+            raise
         return res
 
     for addon in options.addons:
         # Ignore the return value, we just need to populate addons_map.
         init_addon(addon)
 
-    feeder = base.Feeder(options.target_repo, options, addons_map)
-
     if options.to_xml:
         reporter = base.XmlReporter(out)
     else:
         reporter = base.StrReporter(out)
 
-    for obj in options.checks:
-        try:
-            feeder.add_check(obj(options))
-        except (SystemExit, KeyboardInterrupt):
-            raise
-        except Exception:
-            logging.exception("test %s failed to be added" % (obj,))
-            if options.debug:
-                raise
+    transforms = list(transform(options)
+                      for transform in get_plugins('transform', plugins))
+    sinks = list(addon for addon in addons_map.itervalues()
+                 if getattr(addon, 'feed_type', False))
 
-    nodes = 0
-    err.write("checks: repo(%i), cat(%i), pkg(%i), version(%i)" %
-              (len(feeder.repo_checks), len(feeder.cat_checks),
-               len(feeder.pkg_checks), len(feeder.ver_checks)))
-
-    if not (feeder.repo_checks or feeder.cat_checks or
-            feeder.pkg_checks or feeder.ver_checks):
-        err.write("no tests")
-        return 1
     reporter.start()
     for filterer in options.limiters:
-        nodes += feeder.run(reporter, filterer)
+        sources = [feeds.RestrictedRepoSource(options.target_repo, filterer)]
+        for pipe in base.plug(sinks, transforms, sources, reporter,
+                              options.debug):
+            for thing in pipe:
+                pass
     reporter.finish()
     # flush stdout first; if they're directing it all to a file, this makes
     # results not get the final message shoved in midway
     out.stream.flush()
-    err.write("processed %i pkgs" % (nodes,))
     return 0

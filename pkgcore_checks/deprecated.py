@@ -1,10 +1,12 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore_checks.base import template, versioned_feed, Result
+from pkgcore_checks.base import Template, versioned_feed, Result
 
-class DeprecatedEclassReport(template):	
+class DeprecatedEclassReport(Template):
+
     feed_type = versioned_feed
+
     blacklist = frozenset((
     '64-bit',
     'darcs',
@@ -51,10 +53,12 @@ class DeprecatedEclassReport(template):
     __doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses:%s\n" % \
         ", ".join(sorted(blacklist))
 
-    def feed(self, pkg, reporter):
-        bad = self.blacklist.intersection(pkg.data["_eclasses_"])
-        if bad:
-            reporter.add_report(DeprecatedEclass(pkg, bad))
+    def feed(self, pkgs, reporter):
+        for pkg in pkgs:
+            yield pkg
+            bad = self.blacklist.intersection(pkg.data["_eclasses_"])
+            if bad:
+                reporter.add_report(DeprecatedEclass(pkg, bad))
 
 
 class DeprecatedEclass(Result):

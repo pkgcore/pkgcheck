@@ -10,7 +10,7 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.xml:escape ")
 
 
-class VisibilityReport(base.template):
+class VisibilityReport(base.Template):
 
     """Visibility dependency scans.
     Check that at least one solution is possible for a pkg, checking all
@@ -25,19 +25,19 @@ class VisibilityReport(base.template):
 
     vcs_eclasses = frozenset(["subversion", "git", "cvs", "darcs"])
 
-    def __init__(self, options):
-        base.template.__init__(self, options)
+    def __init__(self, options, arches, query_cache, profiles, depset_cache):
+        base.Template.__init__(self, options)
+        self.query_cache = query_cache.query_cache
+        self.depset_cache = depset_cache
+        self.profiles = profiles
         self.arches = frozenset(x.lstrip("~") for x in options.arches)
-        self.repo = self.profile_filters = None
-        self.keywords_filter = None
-    
-    def start(self, repo, global_insoluable, keywords_filter, profile_filters):
-        self.repo = repo
-        self.global_insoluable = global_insoluable
-        self.keywords_filter = keywords_filter
-        self.profile_filters = profile_filters
 
-    def feed(self, pkg, reporter, query_cache, depset_cache):
+    def feed(self, pkgs, reporter):
+        for pkg in pkgs:
+            yield pkg
+            self._feed(pkg, reporter)
+
+    def _feed(self, pkg, reporter):
         # query_cache gets caching_iter partial repo searches shoved into it-
         # reason is simple, it's likely that versions of this pkg probably
         # use similar deps- so we're forcing those packages that were
@@ -57,21 +57,22 @@ class VisibilityReport(base.template):
             for node in iflatten_instance(depset, atom):
 
                 h = str(node)
-                if h not in query_cache:
-                    if h in self.global_insoluable:
+                if h not in self.query_cache:
+                    if h in self.profiles.global_insoluable:
                         nonexistant.add(node)
                         # insert an empty tuple, so that tight loops further
                         # on don't have to use the slower get method
-                        query_cache[h] = ()
+                        self.query_cache[h] = ()
 
                     else:
-                        matches = caching_iter(self.repo.itermatch(node))
+                        matches = caching_iter(
+                            self.options.target_repo.itermatch(node))
                         if matches:
-                            query_cache[h] = matches
+                            self.query_cache[h] = matches
                         elif not node.blocks and not node.category == "virtual":
                             nonexistant.add(node)
-                            query_cache[h] = ()
-                            self.global_insoluable.add(h)
+                            self.query_cache[h] = ()
+                            self.profiles.global_insoluable.add(h)
 
             if nonexistant:
                 reporter.add_report(NonExistantDeps(pkg, attr, nonexistant))
@@ -81,22 +82,20 @@ class VisibilityReport(base.template):
         for attr, depset in (("depends", pkg.depends),
             ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
 
-            for edepset, profiles in depset_cache.collapse_evaluate_depset(
+            for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
                 pkg, attr, depset):
 
-                self.process_depset(pkg, attr, edepset, profiles, query_cache,
-                    reporter)
+                self.process_depset(pkg, attr, edepset, profiles, reporter)
 
     def check_visibility_vcs(self, pkg, reporter):
-        for key, profile_dict in self.profile_filters.iteritems():
+        for key, profile_dict in self.profiles.profile_filters.iteritems():
             if key.startswith("~") or key.startswith("-"):
                 continue
             for profile_name, vals in profile_dict.iteritems():
                 if vals[5].match(pkg):
                     reporter.add_report(VisibleVcsPkg(pkg, key, profile_name))
 
-    def process_depset(self, pkg, attr, depset, profiles, query_cache,
-        reporter):
+    def process_depset(self, pkg, attr, depset, profiles, reporter):
         csolutions = depset.cnf_solutions()
         failures = set()
 
@@ -120,10 +119,10 @@ class VisibilityReport(base.template):
                     elif virtuals.match(a):
                         cache.add(h)
                         break
-                    elif a.category == "virtual" and h not in query_cache:
+                    elif a.category == "virtual" and h not in self.query_cache:
                         insoluable.add(h)
                     else:
-                        if any(True for pkg in query_cache[h] if
+                        if any(True for pkg in self.query_cache[h] if
                             vfilter.match(pkg)):
                             cache.add(h)
                             break
@@ -135,10 +134,6 @@ class VisibilityReport(base.template):
             if failures:
                 reporter.add_report(NonsolvableDeps(pkg, attr, key,
                     profile_name, list(failures), masked=masked_status))
-
-    def finish(self, reporter):
-        self.repo = self.profile_filters = self.keywords_filter = None
-        base.template.finish(self, reporter)
 
 
 class VisibleVcsPkg(base.Result):

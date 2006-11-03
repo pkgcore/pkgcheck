@@ -10,17 +10,17 @@ demandload(globals(), "urllib:urlopen "
     "pkgcore.spawn:spawn,find_binary ")
 
 
-class base_check(base.template):
+class base_check(base.Template):
     """base class for metadata.xml scans"""
 
     dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
 
     def __init__(self, options):
-        base.template.__init__(self, options)
+        base.Template.__init__(self, options)
         self.base = getattr(options.src_repo, "base", None)
         self.dtd_file = None
 
-    def start(self, repo):
+    def feed(self, data, reporter):
         loc = self.base
         if self.base is not None:
             loc = os.path.join(self.base, "metadata", "dtd", "metadata.dtd")
@@ -42,15 +42,19 @@ class base_check(base.template):
             self.validator = xmllint_parser(self.dtd_loc).validate
         self.last_seen = None
 
+        for thing in data:
+            yield thing
+            self._feed(thing, reporter)
+        self.last_seen = None
+
+    def _feed(self, thing, reporter):
+        raise NotImplementedError(self._feed)
+
     def check_file(self, loc):
         if not os.path.exists(loc):
             return False
         return self.validator(loc)
-    
-    def finish(self, reporter):
-        base.template.finish(self, reporter)
-        self.last_seen = None
-        
+
 
 class PackageMetadataXmlCheck(base_check):
     """package level metadata.xml scans"""
@@ -58,7 +62,7 @@ class PackageMetadataXmlCheck(base_check):
     feed_type = base.versioned_feed
     enabling_threshold = base.package_feed
 
-    def feed(self, pkg, reporter):
+    def _feed(self, pkg, reporter):
         if self.last_seen == pkg.key:
             return
         self.last_seen = pkg.key
@@ -76,7 +80,7 @@ class CategoryMetadataXmlCheck(base_check):
 
     dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
 
-    def feed(self, pkg, reporter):
+    def _feed(self, pkg, reporter):
         if self.last_seen == pkg.category:
             return
         self.last_seen = pkg.category

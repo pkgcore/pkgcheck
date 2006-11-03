@@ -7,7 +7,7 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.xml:escape")
 import codecs, errno
 
-from pkgcore_checks.base import Result, template, package_feed
+from pkgcore_checks.base import Result, Template, package_feed
 
 import os, stat
 pjoin = os.path.join
@@ -30,14 +30,19 @@ def utf8_check(pkg, base, filename, reporter):
         del e
 
 
-class PkgDirReport(template):
+class PkgDirReport(Template):
     """actual ebuild directory scans; file size, glep31 rule enforcement."""
 
     feed_type = package_feed
     
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
-    
-    def feed(self, pkgset, reporter):
+
+    def feed(self, pkgsets, reporter):
+        for pkgset in pkgsets:
+            yield pkgset
+            self._feed(pkgset, reporter)
+
+    def _feed(self, pkgset, reporter):
         base = os.path.dirname(pkgset[0].ebuild.get_path())
         # note we don't use os.walk, we need size info also
         for filename in os.listdir(base):

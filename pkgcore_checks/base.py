@@ -11,6 +11,7 @@ known_feeds = (repository_feed, category_feed, package_feed,
 
 __all__ = ("package_feed, versioned_feed", "category_feed", "Feeder")
 
+import sys
 import itertools, operator
 
 from pkgcore.restrictions.util import collect_package_restrictions
@@ -75,282 +76,23 @@ class Addon(object):
     def start(self):
         """Called before a feeder run.
 
-        Always called paired with stop.
-
-        @returns: optionally a sequence of extra checks. This behaviour
-            may go away in the future.
+        Always called paired with finish.
         """
 
-    def extra_start_kwargs(self):
-        """Returns a dict of extra kwargs for the check's start method.
-
-        May be called any number of times after the start call.
-        """
-        return {}
-
-    def extra_feed_kwargs(self):
-        """Returns a dict of extra kwargs for the check's feed method.
-
-        May be called any number of times between the start and stop call.
-        """
-        return {}
-
-    def extra_finish_kwargs(self):
-        """Returns a dict of extra kwargs for the check's start method.
-
-        May be called any number of times before the stop call.
-        """
-        return {}
-
-    def stop(self):
+    def finish(self, reporter):
         """Called after a feeder run finishes.
 
         Do cleanup of things done in start here.
         """
 
 
-class template(object):
-    """
-    base template for a check
-    
-    @ivar feed_type: type of 'chunks' it should received, either repo_feed
-        category_feed, package_feed, or versioned_feed
-    @ivar required_addons: sequence of addons.Addon derivatives required
-        to run the check
-    @ivar enabling_threshold: either unset (defaults to feed_type), or a
-        feed type for when this check can be ran; useful for if a check
-        only makes sense ran at the repo level, but needs only to iterate
-        over a versioned feed
-    @ivar disabled: either unset (thus enabled), or a boolean controlling
-        whether a derivative of template is usable
-    """
-    feed_type = None
-    required_addons = ()
+class Template(Addon):
 
-    def __init__(self, options):
-        self.options = options
+    """Base template for a check."""
 
-    def start(self, repo, **kwargs):
-        pass
-
-    def finish(self, reporter, **kwargs):
-        pass
-
-    def feed(self, chunk, reporter, **kwargs):
+    def feed(self, chunk, reporter):
         raise NotImplementedError
 
-
-class Feeder(object):
-
-    def __init__(self, repo, options, addons):
-        """Initialize.
-
-        @param repo: the repository to scan.
-        @param options: optparse option values.
-        @param addons: map from addon class to addon instance.
-        """
-        self.options = options
-        self.repo_checks = []
-        self.cat_checks = []
-        self.pkg_checks = []
-        self.ver_checks = []
-        self.repo = repo
-        self.search_repo = options.search_repo
-        self.debug = options.debug
-        self.addons = addons
-
-    def add_check(self, check):
-        feed_type = getattr(check, "feed_type", None)
-        if feed_type not in known_feeds:
-            raise TypeError("check(%s) feed_type %s unknown" % 
-                (check, feed_type))
-        threshold = getattr(check, "enabling_threshold", feed_type)
-        # check the enabling_threshold next.
-        if threshold not in known_feeds:
-            raise TypeError("check enabling_threshold %s %s unknown for %s" % 
-                (threshold, check))
-
-        if threshold == repository_feed:
-            l = self.repo_checks
-        elif threshold == category_feed:
-            l = self.cat_checks
-        elif threshold == package_feed:
-            l = self.pkg_checks
-        elif threshold == versioned_feed:
-            l = self.ver_checks
-
-        l.append(check)
-
-    def _generic_fire(self, attr, check_type, checks, *args):
-        if not checks:
-            return
-        actual = []
-        hook_name = 'extra_%s_kwargs' % (attr,)
-        for check in checks:
-            kwargs = {}
-            for addon_class in check.required_addons:
-                kwargs.update(getattr(self.addons[addon_class], hook_name)())
-            try:
-                getattr(check, attr)(*args, **kwargs)
-                actual.append(check)
-            except (SystemExit, KeyboardInterrupt):
-                raise
-            except Exception:
-                logging.exception("type %s, check %s failed running %s" %
-                                  (check_type, check, attr))
-                if self.debug:
-                    raise
-        # rebuild the checks should any have failed
-        checks[:] = []
-        checks.extend(actual)
-
-    def fire_starts(self, *a, **kwds):
-        return self._generic_fire(*(("start",) + a), **kwds)
-
-    def fire_finishes(self, *a, **kwds):
-        return self._generic_fire(*(("finish",) + a), **kwds)
-
-    def run(self, reporter, limiter=packages.AlwaysTrue):
-
-        enabled = {}.fromkeys(["cats", "pkgs", "vers"], False)
-
-        for var, attr in (("cats", ["category"]), ("pkgs", ["package"]),
-            ("vers", ["fullver", "version", "rev"])):
-
-            enabled[var] = bool(list(collect_package_restrictions(limiter,
-                attr)))
-
-        cats = enabled.pop("cats")
-        pkgs = enabled.pop("pkgs")
-        vers = enabled.pop("vers")
-
-        # take the most specific, and disable everything less
-        repos = False
-        if vers:
-            cats = pkgs = False
-        elif pkgs:
-            vers = True
-            cats = False
-        elif cats:
-            pkgs = vers = True
-        else:
-            repos = cats = pkgs = vers = True
-        
-        checks = []
-        if repos:
-            checks.extend(self.repo_checks)
-        if cats:
-            checks.extend(self.cat_checks)
-        if pkgs:
-            checks.extend(self.pkg_checks)
-        if vers:
-            checks.extend(self.ver_checks)
-
-        for addon in self.addons.itervalues():
-            extras = addon.start()
-            if extras:
-                checks.extend(extras)
-
-        # split them apart now, since the checks were pulled in by enabling
-        # threshold
-        repo_checks = [c for c in checks if c.feed_type == repository_feed]
-        cat_checks =  [c for c in checks if c.feed_type == category_feed]
-        pkg_checks =  [c for c in checks if c.feed_type == package_feed]
-        ver_checks =  [c for c in checks if c.feed_type == versioned_feed]
-
-        i = self.repo.itermatch(limiter, sorter=sorted)
-        if ver_checks:
-            self.fire_starts("ver", ver_checks, self.search_repo)
-            i = self.trigger_ver_checks(ver_checks, i, reporter)
-
-        if pkg_checks:
-            self.fire_starts("key", pkg_checks, self.search_repo)
-            i = self.trigger_pkg_checks(pkg_checks, i, reporter)
-
-        if cat_checks:
-            self.fire_starts("cat", cat_checks, self.search_repo)
-            i = self.trigger_cat_checks(cat_checks, i, reporter)
-
-        if repo_checks:
-            self.fire_starts("repo", repo_checks, self.search_repo)
-            i = self.trigger_repo_checks(repo_checks, i, reporter)
-
-        count = 0
-        for x in i:
-            count += 1
-        
-        #and... unwind.
-        if repo_checks:
-            self.fire_finishes("repo", repo_checks, reporter)
-
-        if cat_checks:
-            self.fire_finishes("cat", cat_checks, reporter)
-
-        if pkg_checks:
-            self.fire_finishes("pkg", pkg_checks, reporter)
-
-        if ver_checks:
-            self.fire_finishes("ver", ver_checks, reporter)
-
-        return count
-
-    def run_check(self, checks, payload, reporter, errmsg):
-        for check, func in checks:
-            try:
-                func(payload, reporter)
-            except (SystemExit, KeyboardInterrupt):
-                raise
-            except Exception:
-                if self.debug:
-                    raise
-                logging.exception(errmsg % (check,))
-
-    def _curry_addon_args(self, check):
-        extra_kwargs = dict()
-        for addon_class in check.required_addons:
-            extra_kwargs.update(self.addons[addon_class].extra_feed_kwargs())
-        if extra_kwargs:
-            return currying.partial(check.feed, **extra_kwargs)
-        else:
-            return check.feed
-
-    def _generic_trigger_checks(self, checks, attr, iterable, reporter):
-        checks = tuple((c, self._curry_addon_args(c)) for c in checks)
-        grouping_iter = itertools.groupby(iterable, operator.attrgetter(attr))
-        for key, pkgs in grouping_iter:
-            # convert the iter to a tuple; note that using a caching_iter
-            # may be better here, but need to evaluate performance affects
-            # before hand
-            pkgs = tuple(pkgs)
-            # XXX string generation per call is inneficient here.
-            self.run_check(checks, pkgs, reporter,
-                           "check %s "+attr+": '"+key+"' threw exception")
-            for pkg in pkgs:
-                yield pkg
-
-    def trigger_repo_checks(self, checks, iterable, reporter):
-        checks = tuple((c, self._curry_addon_args(c)) for c in checks)
-        repo_pkgs = list(iterable)
-        self.run_check(checks, repo_pkgs, reporter,
-            "check %s cpv: repo level check' threw exception")
-        for pkg in repo_pkgs:
-            yield pkg
-
-    def trigger_cat_checks(self, checks, iterable, reporter):
-        return self._generic_trigger_checks(checks, "category", iterable,
-            reporter)
-    
-    def trigger_pkg_checks(self, checks, iterable, reporter):
-        return self._generic_trigger_checks(checks, "package", iterable,
-            reporter)
-
-    def trigger_ver_checks(self, checks, iterable, reporter):
-        checks = tuple((c, self._curry_addon_args(c)) for c in checks)
-        for pkg in iterable:
-            self.run_check(checks, pkg, reporter,
-                "check %s cpv: '"+str(pkg)+"' threw exception")
-            yield pkg
-    
 
 class Result(object):
 
@@ -448,3 +190,106 @@ class MultiplexReporter(Reporter):
     def finish(self):
         for x in self.reporters:
             x.finish()
+
+
+def plug(sinks, transforms, sources, reporter, debug=False):
+    """Plug together a pipeline.
+
+    sinks are check instances, transforms are transform instances,
+    sources are source instances. For now at least.
+    """
+    required_types = frozenset(sink.feed_type for sink in sinks)
+    assert required_types, 'no sources?'
+
+    # The general idea is we will usually not have a large number of
+    # sources/transforms, so we can simply bruteforce all possible
+    # combinations (that are not loopy). This code is ridiculously
+    # expensive from a complexity pov but since the loop lengths
+    # involved are small I do not care.
+
+    # This is a mapping of pipeline to (dest type, cost, types in it).
+    pipelines = dict(
+        ((source,),
+         (source.feed_type, source.cost, frozenset((source.feed_type,))))
+        for source in sources)
+    # Add all possible transform combos.
+    while True:
+        progress = False
+        for transform in transforms:
+            for trans_source, trans_dest, trans_cost in transform.transforms:
+                for pipe, (tail_type, cost, types) in pipelines.items():
+                    if tail_type == trans_source and trans_dest not in types:
+                        pipe = pipe + (transform,)
+                        if pipe not in pipelines:
+                            progress = True
+                            pipelines[pipe] = (
+                                trans_dest, cost + trans_cost, frozenset(
+                                    tuple(types) + (trans_dest,)))
+        if not progress:
+            break
+
+    # Now we look up the cheapest possible chain (or chains) that can
+    # drive our sinks.
+
+    # XXX this is naive, perhaps too naive.
+
+    # We look up two things: the cheapest single pipeline that drives
+    # all our sinks and the set of cheapest pipelines that each drive
+    # at least one sink.
+
+    # First try to find a single all-driving pipeline:
+    best_single = None
+    single_cost = sys.maxint
+    for pipeline, (tail_type, cost, types) in pipelines.iteritems():
+        if types >= required_types and cost < single_cost:
+            best_single = pipeline
+            single_cost = cost
+
+    # Now find the set of (cheapest_pipeline, cost) tuples:
+    multi_pipes = set()
+    for required_type in required_types:
+        best_cost = sys.maxint
+        best_pipeline = None
+        for pipeline, (tail_type, cost, types) in pipelines.iteritems():
+            if tail_type == required_type and cost < best_cost:
+                best_cost = cost
+                best_pipeline = pipeline
+        if best_pipeline is None:
+            raise ValueError('No solution')
+        multi_pipes.add((best_pipeline, best_cost))
+
+    pipes, multi_cost = zip(*multi_pipes)
+    multi_cost = sum(multi_cost)
+
+    if debug:
+        logging.warn('cost %s for %r' % (single_cost, best_single))
+        logging.warn('cost %s for %r' % (multi_cost, pipes))
+
+    if single_cost <= multi_cost:
+        pipes = [best_single]
+
+    # Plug the whole lot together.
+    sink_map = {}
+    for sink in sinks:
+        sink_map.setdefault(sink.feed_type, []).append(sink)
+    for pipe in pipes:
+        pipe = list(reversed(pipe))
+        source = pipe.pop()
+        current_type = source.feed_type
+        tail = source.feed()
+        while True:
+            sinks = sink_map.pop(current_type, ())
+            for sink in sinks:
+                tail = sink.feed(tail, reporter)
+                assert tail is not None, '%r is not generating' % (sink,)
+            if not pipe:
+                break
+            transform = pipe.pop()
+            for source_type, target_type, cost in transform.transforms:
+                if source_type == current_type:
+                    current_type = target_type
+                    break
+            else:
+                assert False, 'unreachable'
+            tail = transform.transform(tail)
+        yield tail

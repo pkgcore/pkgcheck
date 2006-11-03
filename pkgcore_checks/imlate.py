@@ -6,7 +6,15 @@ from pkgcore.util.currying import pre_curry
 from pkgcore_checks import base, addons
 
 
-class SourceArchesAddon(base.Addon):
+class ImlateReport(base.Template):
+
+    """
+    scan for ebuilds that can be stabled based upon stabling status for 
+    other arches
+    """
+
+    feed_type = base.package_feed
+    required_addons = (addons.ArchesAddon,)
 
     @staticmethod
     def mangle_option_parser(parser):
@@ -18,19 +26,8 @@ class SourceArchesAddon(base.Addon):
             "imlate, defaults to %s" % (
                 ",".join(addons.ArchesAddon.default_arches),))
 
-
-class ImlateReport(base.template):
-
-    """
-    scan for ebuilds that can be stabled based upon stabling status for 
-    other arches
-    """
-
-    feed_type = base.package_feed
-    required_addons = (addons.ArchesAddon, SourceArchesAddon)
-
-    def __init__(self, options):
-        base.template.__init__(self, options)
+    def __init__(self, options, arches):
+        base.Template.__init__(self, options)
         arches = frozenset(x.strip().lstrip("~") for x in options.arches)
         self.target_arches = frozenset("~%s" % x.strip().lstrip("~") 
             for x in arches)
@@ -39,20 +36,22 @@ class ImlateReport(base.template):
         self.source_filter = packages.PackageRestriction("keywords",
             values.ContainmentMatch(*self.source_arches))
 
-    def feed(self, pkgset, reporter):
+    def feed(self, pkgsets, reporter):
         #candidates.
         fmatch = self.source_filter.match
-        remaining = set(self.target_arches)
-        for pkg in reversed(pkgset):
-            if not fmatch(pkg):
-                continue
-            unstable_keys = remaining.intersection(pkg.keywords)
-            if unstable_keys:
-                reporter.add_report(LaggingStableInfo(pkg,
-                    sorted(unstable_keys)))
-                remaining.discard(unstable_keys)
-                if not remaining:
-                    break
+        for pkgset in pkgsets:
+            yield pkgset
+            remaining = set(self.target_arches)
+            for pkg in reversed(pkgset):
+                if not fmatch(pkg):
+                    continue
+                unstable_keys = remaining.intersection(pkg.keywords)
+                if unstable_keys:
+                    reporter.add_report(LaggingStableInfo(pkg,
+                        sorted(unstable_keys)))
+                    remaining.discard(unstable_keys)
+                    if not remaining:
+                        break
 
 
 class LaggingStableInfo(base.Result):

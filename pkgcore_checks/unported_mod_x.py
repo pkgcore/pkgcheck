@@ -13,7 +13,7 @@ demandload(globals(), "pkgcore.util.xml:escape")
 demandload(globals(), "urllib:urlopen")
 
 
-class ModularXPortingReport(base.template):
+class ModularXPortingReport(base.Template):
 
     """modular X porting report.
     Scans for dependencies that require monolithic X, or via visibility 
@@ -21,48 +21,43 @@ class ModularXPortingReport(base.template):
     """
     feed_type = base.package_feed
     required_addons = (
-        addons.ArchesAddon, addons.QueryCacheAddon, addons.ProfileAddon,
-        addons.EvaluateDepSetAddon)
+        addons.ArchesAddon, addons.QueryCacheAddon, addons.EvaluateDepSetAddon)
 
     valid_modx_pkgs_url = \
         "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
 
-    def __init__(self, options):
-        base.template.__init__(self, options)
+    def __init__(self, options, arches, query_cache, depset_cache):
+        base.Template.__init__(self, options)
+        self.query_cache = query_cache.query_cache
+        self.depset_cache = depset_cache
         self.arches = frozenset(x.lstrip("~") for x in options.arches)
-        self.repo = self.profile_filters = None
-        self.keywords_filter = None
         # use 7.1 so it catches any >7.0
         self.x7 = virtual.package(None, "virtual/x11-7.1")
         self.x6 = virtual.package(None, "virtual/x11-6.9")
         self.valid_modx_keys = frozenset(x for x in
             (y.strip() for y in urlopen(self.valid_modx_pkgs_url)) if
                 x and x != "virtual/x11")
-    
-    def start(self, repo, global_insoluable, keywords_filter, profile_filters):
-        self.repo = repo
-        self.global_insoluable = global_insoluable
-        self.keywords_filter = keywords_filter
-        self.profile_filters = profile_filters
-        
-    def feed(self, pkgset, reporter, query_cache, depset_cache):
+
+    def feed(self, pkgsets, reporter):
         # query_cache gets caching_iter partial repo searches shoved into it-
         # reason is simple, it's likely that versions of this pkg probably 
         # use similar deps- so we're forcing those packages that were
         # accessed for atom matching to remain in memory.
         # end result is less going to disk
+        for pkgset in pkgsets:
+            yield pkgset
 
-        unported = []
-        for pkg in pkgset:
-            self.check_pkg(pkg, query_cache, depset_cache, reporter, unported)
+            unported = []
+            for pkg in pkgset:
+                self.check_pkg(pkg, reporter, unported)
 
-        if unported:
-            for u in unported:
-                l = [pkg for pkg in pkgset if pkg not in unported]
-                if l:
-                    reporter.add_report(SuggestRemoval(u, l))
+            if unported:
+                for u in unported:
+                    l = [pkg for pkg in pkgset if pkg not in unported]
+                    if l:
+                        reporter.add_report(SuggestRemoval(u, l))
 
-    def check_pkg(self, pkg, query_cache, depset_cache, reporter, unported):
+    def check_pkg(self, pkg, reporter, unported):
         failed = []
         
         ported_status = False
@@ -138,28 +133,26 @@ class ModularXPortingReport(base.template):
         # not valid: x11-base/xorg-x11 floating
 
         if not skip_depends:
-            for edepset, profiles in depset_cache.collapse_evaluate_depset(
+            for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
                 pkg, "depends", pkg.depends):
                 self.process_depset(pkg, "depends", edepset, profiles,
-                                    query_cache, reporter)
+                                    reporter)
 
         if not skip_rdepends:
-            for edepset, profiles in depset_cache.collapse_evaluate_depset(
+            for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
                 pkg, "rdepends", pkg.rdepends):
                 self.process_depset(pkg, "rdepends", edepset, profiles,
-                    query_cache, reporter)
+                                    reporter)
 
         if not skip_pdepends:
-            for edepset, profiles in depset_cache.collapse_evaluate_depset(
+            for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
                 pkg, "post_rdepends", pkg.post_rdepends):
                 self.process_depset(pkg, "post_rdepends", edepset, profiles,
-                    query_cache, reporter)
+                                    reporter)
                 
-    def process_depset(self, pkg, attr, depset, profiles, query_cache,
-        reporter):
+    def process_depset(self, pkg, attr, depset, profiles, reporter):
 
         csolutions = depset.cnf_solutions()
-        repo = self.repo
         failed = set()
         for key, profile_name, data in profiles:
             failed.clear()
@@ -182,9 +175,10 @@ class ModularXPortingReport(base.template):
                         continue
                     elif h in cache:
                         break
-                    elif a not in query_cache:
-                        query_cache[h] = caching_iter(repo.itermatch(a))
-                    if any(True for pkg in query_cache[h] if
+                    elif h not in self.query_cache:
+                        self.query_cache[h] = caching_iter(
+                            self.options.target_repo.itermatch(a))
+                    if any(True for pkg in self.query_cache[h] if
                         vfilter.match(pkg)):
                         # one is visible.
                         break
@@ -193,10 +187,6 @@ class ModularXPortingReport(base.template):
             if failed:
                 reporter.add_report(VisibilityCausedNotPorted(pkg, key,
                     profile_name, attr, sorted(failed)))
-
-    def finish(self, reporter):
-        self.repo = self.profile_filters = self.keywords_filter = None
-        base.template.finish(self, reporter)
 
 
 class SuggestRemoval(base.Result):

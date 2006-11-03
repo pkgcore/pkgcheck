@@ -1,11 +1,11 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore_checks.base import template, package_feed, Result
+from pkgcore_checks.base import Template, package_feed, Result
 from pkgcore.util.compatibility import any
 
 
-class RedundantVersionReport(template):
+class RedundantVersionReport(Template):
     """
     scan for versions that are likely shadowed by later versions from a 
     keywords standpoint
@@ -15,34 +15,36 @@ class RedundantVersionReport(template):
     """
 
     feed_type = package_feed
-    
-    def feed(self, pkgset, reporter):
-        if len(pkgset) == 1:
-            return
 
-        stack = []
-        for pkg in reversed(pkgset):
-            matches = []
-            curr_set = set(x for x in pkg.keywords if not x.startswith("-"))
-            if any(True for x in pkg.keywords if x.startswith("~")):
-                unstable_set = set(x.lstrip("~") for x in curr_set)
-            else:
-                unstable_set = []
-            # reduce false positives for idiot keywords/ebuilds
-            if not curr_set:
+    def feed(self, pkgsets, reporter):
+        for pkgset in pkgsets:
+            yield pkgset
+            if len(pkgset) == 1:
                 continue
-            for ver, keys in stack:
-                if ver.slot == pkg.slot:
-                    if not curr_set.difference(keys):
-                        matches.append(ver)
-            if unstable_set:
-                for ver, key in stack:
+
+            stack = []
+            for pkg in reversed(pkgset):
+                matches = []
+                curr_set = set(x for x in pkg.keywords if not x.startswith("-"))
+                if any(True for x in pkg.keywords if x.startswith("~")):
+                    unstable_set = set(x.lstrip("~") for x in curr_set)
+                else:
+                    unstable_set = []
+                # reduce false positives for idiot keywords/ebuilds
+                if not curr_set:
+                    continue
+                for ver, keys in stack:
                     if ver.slot == pkg.slot:
-                        if not unstable_set.difference(key):
+                        if not curr_set.difference(keys):
                             matches.append(ver)
-            stack.append([pkg, curr_set])
-            if matches:
-                reporter.add_report(RedundantVersionWarning(pkg, matches))
+                if unstable_set:
+                    for ver, key in stack:
+                        if ver.slot == pkg.slot:
+                            if not unstable_set.difference(key):
+                                matches.append(ver)
+                stack.append([pkg, curr_set])
+                if matches:
+                    reporter.add_report(RedundantVersionWarning(pkg, matches))
 
 
 class RedundantVersionWarning(Result):
