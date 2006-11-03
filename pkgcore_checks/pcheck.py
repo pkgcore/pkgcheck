@@ -130,7 +130,7 @@ class OptionParser(commandline.OptionParser):
             values.limiters = [packages.AlwaysTrue]
 
         if values.checks_to_run:
-            l = [convert_check_filter(x) for x in values.checks_to_enable]
+            l = [convert_check_filter(x) for x in values.checks_to_run]
             values.checks = list(
                 check for check in values.checks
                 if any(f(qual(check)) for f in l))
