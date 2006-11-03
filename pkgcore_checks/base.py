@@ -73,18 +73,6 @@ class Addon(object):
         they are instantiated.
         """
 
-    def start(self):
-        """Called before a feeder run.
-
-        Always called paired with finish.
-        """
-
-    def finish(self, reporter):
-        """Called after a feeder run finishes.
-
-        Do cleanup of things done in start here.
-        """
-
 
 class Template(Addon):
 
