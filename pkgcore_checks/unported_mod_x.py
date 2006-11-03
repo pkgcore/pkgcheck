@@ -181,7 +181,10 @@ class ModularXPortingReport(base.Template):
                     if any(True for pkg in self.query_cache[h] if
                         vfilter.match(pkg)):
                         # one is visible.
+                        cache.add(h)
                         break
+                    else:
+                        insoluable.add(h)
                 else:
                     failed.update(modx_candidates)
             if failed:
