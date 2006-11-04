@@ -15,6 +15,7 @@ import sys
 import itertools, operator
 
 from pkgcore.restrictions.util import collect_package_restrictions
+from pkgcore.config import configurable
 from pkgcore_checks import util
 from pkgcore.restrictions import packages
 from pkgcore.util.demandload import demandload
@@ -178,6 +179,21 @@ class MultiplexReporter(Reporter):
     def finish(self):
         for x in self.reporters:
             x.finish()
+
+
+@configurable(typename='pcheck_reporter_factory')
+def plain_reporter():
+    return StrReporter
+
+@configurable(typename='pcheck_reporter_factory')
+def xml_reporter():
+    return XmlReporter
+
+@configurable({'reporters': 'refs:pcheck_reporter_factory'},
+              typename='pcheck_reporter_factory')
+def multiplex_reporter(reporters):
+    def make_multiplex_reporter(out):
+        return MultiplexReporter(*list(factory(out) for factory in reporters))
 
 
 def plug(sinks, transforms, sources, reporter, debug=False):

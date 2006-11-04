@@ -75,8 +75,8 @@ class OptionParser(commandline.OptionParser):
             dest="list_checks",
             help="print what checks are available to run and exit")
         self.add_option(
-            "-x", "--xml", action="store_true", default=False,
-            dest="to_xml", help="dump xml formated result")
+            '--reporter', action='store',
+            help="Use a non-default reporter (defined in pkgcore's config).")
 
         overlay = self.add_option_group('Overlay')
         overlay.add_option(
@@ -118,6 +118,21 @@ class OptionParser(commandline.OptionParser):
                 self.error('repo %r is not a valid reponame (known repos: %s)'
                            % (repo_name, ', '.join(repr(x) for x in
                                                    values.config.repo)))
+
+        if values.reporter is None:
+            values.reporter = values.config.get_default(
+                'pcheck_reporter_factory')
+            if values.reporter is None:
+                values.reporter = base.StrReporter
+        else:
+            try:
+                values.reporter = values.config.pcheck_reporter_factory[
+                    values.reporter]
+            except KeyError:
+                self.error('reporter %r is not valid (known reporters: %s' % (
+                        values.reporter, ', '.join(
+                            repr(x)
+                            for x in values.config.pcheck_reporter_factory)))
 
         if values.src_repo is None:
             values.src_repo = values.target_repo
@@ -259,10 +274,7 @@ def main(options, out, err):
         # Ignore the return value, we just need to populate addons_map.
         init_addon(addon)
 
-    if options.to_xml:
-        reporter = base.XmlReporter(out)
-    else:
-        reporter = base.StrReporter(out)
+    reporter = options.reporter(out)
 
     transforms = list(transform(options)
                       for transform in get_plugins('transform', plugins))
