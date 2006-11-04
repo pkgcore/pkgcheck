@@ -255,6 +255,13 @@ def main(options, out, err):
             'with --overlayed-repo.', wrap=True)
         err.write()
 
+    try:
+        reporter = options.reporter(out)
+    except base.ReporterInitError, e:
+        err.write(err.fg('red'), err.bold, '!!! ', err.reset,
+                  'Error initializing reporter: ', e)
+        return 1
+
     addons_map = {}
     def init_addon(klass):
         res = addons_map.get(klass)
@@ -273,8 +280,6 @@ def main(options, out, err):
     for addon in options.addons:
         # Ignore the return value, we just need to populate addons_map.
         init_addon(addon)
-
-    reporter = options.reporter(out)
 
     transforms = list(transform(options)
                       for transform in get_plugins('transform', plugins))

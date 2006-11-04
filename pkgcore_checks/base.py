@@ -16,6 +16,7 @@ import itertools, operator
 
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.config import configurable
+from pkgcore.util import formatters
 from pkgcore_checks import util
 from pkgcore.restrictions import packages
 from pkgcore.util.demandload import demandload
@@ -106,6 +107,10 @@ class Result(object):
         self.version = pkg.fullver
 
 
+class ReporterInitError(Exception):
+    """Raise this if a reporter factory fails."""
+
+
 class Reporter(object):
 
     def __init__(self):
@@ -181,19 +186,29 @@ class MultiplexReporter(Reporter):
             x.finish()
 
 
-@configurable(typename='pcheck_reporter_factory')
-def plain_reporter():
-    return StrReporter
+def configurable_reporter_factory_factory(klass):
+    @configurable({'dest': 'str'}, typename='pcheck_reporter_factory')
+    def configurable_reporter_factory(dest=None):
+        if dest is None:
+            return klass
+        def reporter_factory(out):
+            try:
+                f = open(dest, 'w')
+            except (IOError, OSError), e:
+                raise ReporterInitError('Cannot write to %r' % (dest,))
+            return klass(formatters.PlainTextFormatter(f))
+        return reporter_factory
+    return configurable_reporter_factory
 
-@configurable(typename='pcheck_reporter_factory')
-def xml_reporter():
-    return XmlReporter
+xml_reporter = configurable_reporter_factory_factory(XmlReporter)
+plain_reporter = configurable_reporter_factory_factory(StrReporter)
 
 @configurable({'reporters': 'refs:pcheck_reporter_factory'},
               typename='pcheck_reporter_factory')
 def multiplex_reporter(reporters):
     def make_multiplex_reporter(out):
         return MultiplexReporter(*list(factory(out) for factory in reporters))
+    return make_multiplex_reporter
 
 
 def plug(sinks, transforms, sources, reporter, debug=False):
