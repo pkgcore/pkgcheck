@@ -200,7 +200,7 @@ class ProfileAddon(base.Addon):
 
     @staticmethod
     def mangle_option_parser(parser):
-        group = parser.add_option_group('profiles')
+        group = parser.add_option_group('Profiles')
         group.add_option(
             "--profile-base", action='store', type='string',
             dest='profile_dir', default=None,

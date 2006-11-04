@@ -95,15 +95,16 @@ class OptionParser(commandline.OptionParser):
         self.set_default('repo_base', None)
         self.set_default('src_repo', None)
 
-        self.add_option(
+        group = self.add_option_group('Check selection')
+        group.add_option(
             "-c", action="append", type="string", dest="checks_to_run",
             help="limit checks to those matching this regex, or package/class "
             "matching; may be specified multiple times")
-        self.add_option(
+        group.add_option(
             "--disable", action="append", type="string",
             dest="checks_to_disable", help="specific checks to disable: "
             "may be specified multiple times")
-        self.add_option(
+        group.add_option(
             '--checkset', action='callback', type='string',
             callback=commandline.config_callback,
             callback_args=('pcheck_checkset', 'checkset'),
