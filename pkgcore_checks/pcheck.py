@@ -11,6 +11,7 @@ import optparse
 from pkgcore.util import commandline, parserestrict, lists, demandload
 from pkgcore.util.compatibility import any
 from pkgcore.restrictions import packages
+from pkgcore.config import ConfigHint
 from pkgcore.plugin import get_plugins
 
 from pkgcore_checks import plugins, base, __version__, feeds
@@ -34,6 +35,38 @@ def metadata_src_callback(option, opt_str, value, parser):
             'pkgcore.ebuild.repository.UnconfiguredTree instance; '
             'must specify a raw ebuild repo, not type %r: %r' % (
                 value, repo.__class__, repo))
+
+
+class _CheckSet(object):
+
+    """Run only listed checks."""
+
+    # No config hint here since this one is abstract.
+
+    def __init__(self, patterns):
+        self.patterns = list(convert_check_filter(pat) for pat in patterns)
+
+class Whitelist(_CheckSet):
+
+    pkgcore_config_type = ConfigHint(
+        {'patterns': 'list'}, typename='pcheck_checkset')
+
+    def filter(self, checks):
+        return list(
+            c for c in checks
+            if any(f('%s.%s' % (c.__module__, c.__name__))
+                   for f in self.patterns))
+
+class Blacklist(_CheckSet):
+
+    pkgcore_config_type = ConfigHint(
+        {'patterns': 'list'}, typename='pcheck_checkset')
+
+    def filter(self, checks):
+        return list(
+            c for c in checks
+            if not any(f('%s.%s' % (c.__module__, c.__name__))
+                       for f in self.patterns))
 
 
 class OptionParser(commandline.OptionParser):
@@ -70,6 +103,9 @@ class OptionParser(commandline.OptionParser):
             "--disable", action="append", type="string",
             dest="checks_to_disable", help="specific checks to disable: "
             "may be specified multiple times")
+        self.add_option(
+            '--checkset',
+            help='Pick a preconfigured set of checks to run.')
         self.add_option(
             "--list-checks", action="store_true", default=False,
             dest="list_checks",
@@ -150,17 +186,25 @@ class OptionParser(commandline.OptionParser):
         else:
             values.limiters = [packages.AlwaysTrue]
 
+        if values.checkset is None:
+            checkset = values.config.get_default('pcheck_checkset')
+        else:
+            try:
+                checkset = values.config.pcheck_checkset[values.checkset]
+            except KeyError:
+                self.error('checkset %r is not valid (known checksets: %r' % (
+                        values.reporter, ', '.join(
+                            repr(x) for x in values.config.pcheck_checkset)))
+        if checkset is not None:
+            values.checks = list(checkset.filter(values.checks))
+
         if values.checks_to_run:
-            l = [convert_check_filter(x) for x in values.checks_to_run]
-            values.checks = list(
-                check for check in values.checks
-                if any(f(qual(check)) for f in l))
+            whitelist = Whitelist(values.checks_to_run)
+            values.checks = list(whitelist.filter(values.checks))
 
         if values.checks_to_disable:
-            l = [convert_check_filter(x) for x in values.checks_to_disable]
-            values.checks = list(
-                check for check in values.checks
-                if not any(f(qual(check)) for f in l))
+            blacklist = Blacklist(values.checks_to_disable)
+            values.checks = list(blacklist.filter(values.checks))
 
         values.addons = set()
         def add_addon(addon):
@@ -234,10 +278,6 @@ def display_checks(out, checks):
         out.later_prefix.pop()
         out.wrap = oldwrap
         out.write()
-
-
-def qual(obj):
-    return '%s.%s' % (obj.__module__, obj.__name__)
 
 
 def main(options, out, err):
