@@ -123,7 +123,7 @@ class OptionParser(commandline.OptionParser):
             values.reporter = values.config.get_default(
                 'pcheck_reporter_factory')
             if values.reporter is None:
-                values.reporter = base.StrReporter
+                values.reporter = base.FancyReporter
         else:
             try:
                 values.reporter = values.config.pcheck_reporter_factory[

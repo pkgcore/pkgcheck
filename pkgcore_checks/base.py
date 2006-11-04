@@ -147,6 +147,36 @@ class StrReporter(Reporter):
             self.out.write()
 
 
+class FancyReporter(Reporter):
+
+    def __init__(self, out):
+        """Initialize.
+
+        @type out: L{pkgcore.util.formatters.Formatter}.
+        """
+        self.out = out
+        self.key = None
+
+    def add_report(self, result):
+        cat = getattr(result, 'category', None)
+        pkg = getattr(result, 'package', None)
+        if cat is None or pkg is None:
+            key = 'unknown'
+        else:
+            key = '%s/%s' % (cat, pkg)
+        if key != self.key:
+            self.out.write()
+            self.out.write(self.out.bold, key)
+            self.key = key
+        self.out.first_prefix.append('  ')
+        self.out.later_prefix.append('    ')
+        self.out.write(
+            self.out.fg('yellow'), result.__class__.__name__, self.out.reset,
+            ': ', result.to_str())
+        self.out.first_prefix.pop()
+        self.out.later_prefix.pop()
+
+
 class XmlReporter(Reporter):
 
     def __init__(self, out):
@@ -202,6 +232,7 @@ def configurable_reporter_factory_factory(klass):
 
 xml_reporter = configurable_reporter_factory_factory(XmlReporter)
 plain_reporter = configurable_reporter_factory_factory(StrReporter)
+fancy_reporter = configurable_reporter_factory_factory(FancyReporter)
 
 @configurable({'reporters': 'refs:pcheck_reporter_factory'},
               typename='pcheck_reporter_factory')
