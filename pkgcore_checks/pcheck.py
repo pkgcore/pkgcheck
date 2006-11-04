@@ -104,14 +104,18 @@ class OptionParser(commandline.OptionParser):
             dest="checks_to_disable", help="specific checks to disable: "
             "may be specified multiple times")
         self.add_option(
-            '--checkset',
+            '--checkset', action='callback', type='string',
+            callback=commandline.config_callback,
+            callback_args=('pcheck_checkset', 'checkset'),
             help='Pick a preconfigured set of checks to run.')
         self.add_option(
             "--list-checks", action="store_true", default=False,
             dest="list_checks",
             help="print what checks are available to run and exit")
         self.add_option(
-            '--reporter', action='store',
+            '--reporter', action='callback', type='string',
+            callback=commandline.config_callback,
+            callback_args=('pcheck_reporter_factory', 'reporter'),
             help="Use a non-default reporter (defined in pkgcore's config).")
 
         overlay = self.add_option_group('Overlay')
@@ -160,15 +164,6 @@ class OptionParser(commandline.OptionParser):
                 'pcheck_reporter_factory')
             if values.reporter is None:
                 values.reporter = base.FancyReporter
-        else:
-            try:
-                values.reporter = values.config.pcheck_reporter_factory[
-                    values.reporter]
-            except KeyError:
-                self.error('reporter %r is not valid (known reporters: %s' % (
-                        values.reporter, ', '.join(
-                            repr(x)
-                            for x in values.config.pcheck_reporter_factory)))
 
         if values.src_repo is None:
             values.src_repo = values.target_repo
@@ -187,16 +182,9 @@ class OptionParser(commandline.OptionParser):
             values.limiters = [packages.AlwaysTrue]
 
         if values.checkset is None:
-            checkset = values.config.get_default('pcheck_checkset')
-        else:
-            try:
-                checkset = values.config.pcheck_checkset[values.checkset]
-            except KeyError:
-                self.error('checkset %r is not valid (known checksets: %r' % (
-                        values.reporter, ', '.join(
-                            repr(x) for x in values.config.pcheck_checkset)))
-        if checkset is not None:
-            values.checks = list(checkset.filter(values.checks))
+            values.checkset = values.config.get_default('pcheck_checkset')
+        if values.checkset is not None:
+            values.checks = list(values.checkset.filter(values.checks))
 
         if values.checks_to_run:
             whitelist = Whitelist(values.checks_to_run)
