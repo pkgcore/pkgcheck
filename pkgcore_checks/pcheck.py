@@ -10,14 +10,15 @@ import optparse
 
 from pkgcore.util import commandline, parserestrict, lists, demandload
 from pkgcore.util.compatibility import any
-from pkgcore.restrictions import packages
 from pkgcore.config import ConfigHint
 from pkgcore.plugin import get_plugins
 
 from pkgcore_checks import plugins, base, __version__, feeds
 
-demandload.demandload(globals(), "logging optparse textwrap re "
+demandload.demandload(globals(), "logging optparse textwrap re os "
     "pkgcore.util:osutils "
+    "pkgcore.restrictions:packages "
+    "pkgcore.restrictions.values:StrExactMatch "
     "pkgcore.repository:multiplex "
     "pkgcore.ebuild:repository "
     )
@@ -180,7 +181,31 @@ class OptionParser(commandline.OptionParser):
             values.limiters = lists.stable_unique(map(
                     parserestrict.parse_match, args))
         else:
-            values.limiters = [packages.AlwaysTrue]
+            base = getattr(values.target_repo, 'base', None)
+            if not base:
+                self.error(
+                    'Either specify a target repo that is not multi-tree or '
+                    'one or more extended atoms to scan '
+                    '("*" for the entire repo).')
+            cwd = osutils.abspath(os.getcwd())
+            base = osutils.abspath(base)
+            if not cwd.startswith(base):
+                self.error(
+                    'Working dir (%s) is not inside target repo (%s). Fix '
+                    'that or specify one or more extended atoms to scan.' % (
+                        cwd, base))
+            bits = list(bit for bit in cwd[len(base):].split(os.sep) if bit)
+            if not bits:
+                values.limiters = [packages.AlwaysTrue]
+            elif len(bits) == 1:
+                values.limiters = [packages.PackageRestriction(
+                        'category', StrExactMatch(bits[0]))]
+            else:
+                values.limiters = [packages.AndRestriction(
+                        packages.PackageRestriction(
+                            'category', StrExactMatch(bits[0])),
+                        packages.PackageRestriction(
+                            'package', StrExactMatch(bits[1])))]
 
         if values.checkset is None:
             values.checkset = values.config.get_default('pcheck_checkset')
