@@ -181,20 +181,20 @@ class OptionParser(commandline.OptionParser):
             values.limiters = lists.stable_unique(map(
                     parserestrict.parse_match, args))
         else:
-            base = getattr(values.target_repo, 'base', None)
-            if not base:
+            repo_base = getattr(values.target_repo, 'base', None)
+            if not repo_base:
                 self.error(
                     'Either specify a target repo that is not multi-tree or '
                     'one or more extended atoms to scan '
                     '("*" for the entire repo).')
             cwd = osutils.abspath(os.getcwd())
-            base = osutils.abspath(base)
-            if not cwd.startswith(base):
+            repo_base = osutils.abspath(repo_base)
+            if not cwd.startswith(repo_base):
                 self.error(
                     'Working dir (%s) is not inside target repo (%s). Fix '
                     'that or specify one or more extended atoms to scan.' % (
-                        cwd, base))
-            bits = list(bit for bit in cwd[len(base):].split(os.sep) if bit)
+                        cwd, repo_base))
+            bits = list(p for p in cwd[len(repo_base):].split(os.sep) if p)
             if not bits:
                 values.limiters = [packages.AlwaysTrue]
             elif len(bits) == 1:
