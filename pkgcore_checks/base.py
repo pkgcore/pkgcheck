@@ -1,15 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-repository_feed = "repo"
-category_feed = "cat"
-package_feed = "cat/pkg"
-versioned_feed = "cat/pkg-ver"
 
-known_feeds = (repository_feed, category_feed, package_feed,
-    versioned_feed)
+"""Core classes and interfaces."""
 
-__all__ = ("package_feed, versioned_feed", "category_feed", "Feeder")
 
 import sys
 
@@ -17,6 +11,15 @@ from pkgcore.config import configurable
 from pkgcore.util import formatters
 from pkgcore.util.demandload import demandload
 demandload(globals(), "logging ")
+
+
+repository_feed = "repo"
+category_feed = "cat"
+package_feed = "cat/pkg"
+versioned_feed = "cat/pkg-ver"
+
+known_feeds = (repository_feed, category_feed, package_feed,
+    versioned_feed)
 
 
 class Addon(object):
