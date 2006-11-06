@@ -2,7 +2,6 @@
 # License: GPL2
 
 from pkgcore.restrictions import packages, values
-from pkgcore.util.currying import pre_curry
 from pkgcore_checks import base, addons
 
 

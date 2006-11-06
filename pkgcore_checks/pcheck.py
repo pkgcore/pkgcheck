@@ -6,8 +6,6 @@
 """Commandline frontend (for use with L{pkgcore.util.commandline.main}."""
 
 
-import optparse
-
 from pkgcore.util import commandline, parserestrict, lists, demandload
 from pkgcore.util.compatibility import any
 from pkgcore.config import ConfigHint
@@ -15,7 +13,7 @@ from pkgcore.plugin import get_plugins
 
 from pkgcore_checks import plugins, base, __version__, feeds
 
-demandload.demandload(globals(), "logging optparse textwrap re os "
+demandload.demandload(globals(), "optparse textwrap re os "
     "pkgcore.util:osutils "
     "pkgcore.restrictions:packages "
     "pkgcore.restrictions.values:StrExactMatch "

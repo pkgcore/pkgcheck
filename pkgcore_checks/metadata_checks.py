@@ -44,6 +44,7 @@ class MetadataReport(base.Template):
         self.arches = options.arches
         self.profile_base = options.profile_base_dir
         self.licenses_dir = options.license_dir
+        self.licenses = None
 
     def feed(self, pkgs, reporter):
         if any(x[0] == "license" for x in self.attrs):
@@ -254,8 +255,8 @@ class RestrictsReport(base.Template):
             if bad:
                 deprecated = set(x for x in bad if x.startswith("no")
                     and x[2:] in self.known_restricts)
-                reporter.add_report(BadRestricts(pkg, bad.difference(deprecated),
-                    deprecated))
+                reporter.add_report(BadRestricts(
+                        pkg, bad.difference(deprecated), deprecated))
 
 
 class BadRestricts(base.Result):

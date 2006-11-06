@@ -12,17 +12,11 @@ known_feeds = (repository_feed, category_feed, package_feed,
 __all__ = ("package_feed, versioned_feed", "category_feed", "Feeder")
 
 import sys
-import itertools, operator
 
-from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.config import configurable
 from pkgcore.util import formatters
-from pkgcore_checks import util
-from pkgcore.restrictions import packages
 from pkgcore.util.demandload import demandload
-demandload(globals(), "logging "
-    "pkgcore.util:currying "
-    "pkgcore.config.profiles ")
+demandload(globals(), "logging ")
 
 
 class Addon(object):
@@ -113,11 +107,8 @@ class ReporterInitError(Exception):
 
 class Reporter(object):
 
-    def __init__(self):
-        self.reports = []
-    
     def add_report(self, result):
-        self.reports.append(result)
+        raise NotImplementedError(self.add_report)
 
     def start(self):
         pass
@@ -133,6 +124,7 @@ class StrReporter(Reporter):
 
         @type out: L{pkgcore.util.formatters.Formatter}.
         """
+        Reporter.__init__(self)
         self.out = out
         self.first_report = True
 
@@ -154,6 +146,7 @@ class FancyReporter(Reporter):
 
         @type out: L{pkgcore.util.formatters.Formatter}.
         """
+        Reporter.__init__(self)
         self.out = out
         self.key = None
 
@@ -184,6 +177,7 @@ class XmlReporter(Reporter):
 
         @type out: L{pkgcore.util.formatters.Formatter}.
         """
+        Reporter.__init__(self)
         self.out = out
 
     def start(self):
@@ -201,22 +195,23 @@ class MultiplexReporter(Reporter):
     def __init__(self, *reporters):
         if len(reporters) < 2:
             raise ValueError("need at least two reporters")
+        Reporter.__init__(self)
         self.reporters = tuple(reporters)
-    
+
     def start(self):
         for x in self.reporters:
             x.start()
-    
+
     def add_report(self, result):
         for x in self.reporters:
             x.add_report(result)
-    
+
     def finish(self):
         for x in self.reporters:
             x.finish()
 
 
-def configurable_reporter_factory_factory(klass):
+def make_configurable_reporter_factory(klass):
     @configurable({'dest': 'str'}, typename='pcheck_reporter_factory')
     def configurable_reporter_factory(dest=None):
         if dest is None:
@@ -225,14 +220,14 @@ def configurable_reporter_factory_factory(klass):
             try:
                 f = open(dest, 'w')
             except (IOError, OSError), e:
-                raise ReporterInitError('Cannot write to %r' % (dest,))
+                raise ReporterInitError('Cannot write to %r (%s)' % (dest, e))
             return klass(formatters.PlainTextFormatter(f))
         return reporter_factory
     return configurable_reporter_factory
 
-xml_reporter = configurable_reporter_factory_factory(XmlReporter)
-plain_reporter = configurable_reporter_factory_factory(StrReporter)
-fancy_reporter = configurable_reporter_factory_factory(FancyReporter)
+xml_reporter = make_configurable_reporter_factory(XmlReporter)
+plain_reporter = make_configurable_reporter_factory(StrReporter)
+fancy_reporter = make_configurable_reporter_factory(FancyReporter)
 
 @configurable({'reporters': 'refs:pcheck_reporter_factory'},
               typename='pcheck_reporter_factory')

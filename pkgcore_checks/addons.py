@@ -16,6 +16,7 @@ demandload.demandload(
     'os '
     'pkgcore.util:osutils '
     'pkgcore.restrictions:packages,values '
+    'pkgcore.config:profiles '
     )
 
 
@@ -79,8 +80,8 @@ class ProfileAddon(base.Addon):
     def __init__(self, options, *args):
         base.Addon.__init__(self, options)
 
-        def norm_name(x):
-            return '/'.join(y for y in x.split('/') if y)
+        def norm_name(name):
+            return '/'.join(y for y in name.split('/') if y)
 
         disabled = set(norm_name(x) for x in options.profiles_disabled)
         enabled = set(x for x in 
@@ -107,7 +108,7 @@ class ProfileAddon(base.Addon):
             p = options.profile_func(x)
             arch = p.arch
             if arch is None:
-                raise pkgcore.config.profiles.ProfileException(
+                raise profiles.ProfileException(
                     "profile %s lacks arch settings, unable to use it" % x)
             arch_profiles.setdefault(p.arch, []).append((x, p))
             
@@ -350,9 +351,9 @@ class LicenseAddon(base.Addon):
             values.license_dir = os.path.join(values.repo_base, "licenses")
             if not os.path.isdir(values.license_dir):
                 raise optparse.OptionValueError(
-                    "repo %r doesn't have a license directory, you must specify "
-                    "one via --license-dir or a different overlayed repo via "
-                    "--overlayed-repo" % (values.src_repo,))
+                    "repo %r doesn't have a license directory, you must "
+                    "specify one via --license-dir or a different overlayed "
+                    "repo via --overlayed-repo" % (values.src_repo,))
         else:
             if not os.path.isdir(values.license_dir):
                 raise optparse.OptionValueError(

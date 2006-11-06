@@ -31,7 +31,8 @@ class UnusedLocalFlags(base.Template):
                 unused = flags.difference(iflatten_instance(
                     pkg.iuse for pkg in pkgs if restrict.match(pkg)))
                 if unused:
-                    reporter.add_report(UnusedLocalFlagsResult(restrict, unused))
+                    reporter.add_report(UnusedLocalFlagsResult(restrict,
+                                                               unused))
 
 
 class UnusedLocalFlagsResult(base.Result):

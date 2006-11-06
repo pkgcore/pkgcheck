@@ -10,8 +10,6 @@ import itertools
 
 from pkgcore_checks import base
 
-from pkgcore.restrictions import packages
-
 
 class VersionToPackage(base.Addon):
 
@@ -85,7 +83,7 @@ class PackageOrCategoryToRepo(base.Addon):
             cats.add(cat)
         # Figure out if we saw the entire repo.
         if len(self.options.target_repo.categories) == len(cats):
-            yield repo
+            yield packages
 
 
 class RestrictedRepoSource(object):

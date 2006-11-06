@@ -59,8 +59,7 @@ class ModularXPortingReport(base.Template):
 
     def check_pkg(self, pkg, reporter, unported):
         failed = []
-        
-        ported_status = False
+
         bool_or = boolean.OrRestriction
         for attr, depset in (("depends", pkg.depends),
             ("rdepends", pkg.rdepends), ("pdepends", pkg.post_rdepends)):
@@ -99,7 +98,6 @@ class ModularXPortingReport(base.Template):
                                     if any(True for x in or_block if
                                         x.key in self.valid_modx_keys
                                         and not x.blocks):
-                                        ported_status = True
                                         break
                                 else:
                                     # standalone virtual/x11
