@@ -263,71 +263,6 @@ class _HalfPipe(object):
             self.passed_types)
 
 
-class _Pipe(object):
-
-    """Internal helper."""
-
-    def __init__(self, source, transforms, cost, end_type, passed_types):
-        self.source = source
-        self.transforms = transforms
-        self.cost = cost
-        self.end_type = end_type
-        self.passed_types = passed_types
-
-    @classmethod
-    def from_source(cls, source):
-        return cls(
-            source, (), source.cost, source.feed_type,
-            frozenset((source.feed_type,)))
-
-    @classmethod
-    def from_halfpipe(cls, source, halfpipe):
-        return cls(
-            source, halfpipe.transforms, source.cost + halfpipe.cost,
-            halfpipe.end_type, halfpipe.passed_types.union([source.feed_type]))
-
-    def extend(self, halfpipe):
-        return self.__class__(self.source,
-                              self.transforms + halfpipe.transforms,
-                              self.cost + halfpipe.cost, halfpipe.end_type,
-                              self.passed_types | halfpipe.passed_types)
-
-    def plug(self, sink_map, reporter):
-        tail = self.source.feed()
-        current_type = self.source.feed_type
-        for sink in sink_map.pop(current_type, ()):
-            tail = sink.feed(tail, reporter)
-            assert tail is not None, '%r is not generating' % (sink,)
-        for transform in self.transforms:
-            for source_type, target_type, cost in transform.transforms:
-                if source_type == current_type:
-                    current_type = target_type
-                    break
-            else:
-                assert False, 'unreachable'
-            tail = transform.transform(tail)
-            for sink in sink_map.pop(current_type, ()):
-                tail = sink.feed(tail, reporter)
-                assert tail is not None, '%r is not generating' % (sink,)
-        return tail
-
-    def __eq__(self, other):
-        return (self.__class__ is other.__class__ and
-                self.source == other.source and
-                self.transforms == other.transforms and
-                self.end_type == other.end_type)
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __hash__(self):
-        return hash((self.source, self.transforms, self.end_type))
-
-    def __repr__(self):
-        return '%s(%r, %r, %r, %r, %s)' % (
-            self.__class__.__name__, self.source, self.transforms, self.cost,
-            self.end_type, '|'.join(repr(r) for r in self.passed_types))
-
 def plug(sinks, transforms, sources, reporter, debug=False):
     """Plug together a pipeline.
 
@@ -387,9 +322,10 @@ def plug(sinks, transforms, sources, reporter, debug=False):
     # Keep trying to build cheaper transforms.
     while True:
         progress = False
-        # items, not iteritems, we manipulate in-place.
         for source in types:
             for dest in types:
+                if source == dest:
+                    continue
                 current_pipe = type_matrix.get((source, dest))
                 for halfway in types:
                     first_half_pipe = type_matrix.get((source, halfway))
@@ -403,6 +339,8 @@ def plug(sinks, transforms, sources, reporter, debug=False):
                         progress = True
                         current_pipe = first_half_pipe.extend(second_half_pipe)
                         type_matrix[source, dest] = current_pipe
+                        # Do not break out of the loop: we may hit a
+                        # combination that is even cheaper.
         if not progress:
             break
 
@@ -410,90 +348,99 @@ def plug(sinks, transforms, sources, reporter, debug=False):
         for (source, dest), transform in type_matrix.iteritems():
             logging.warn('%s -> %s : %s', source, dest, transform)
 
-    # _Pipe objects
-    pipes = set()
-    # Initialize for direct source-sink links and source-trans-sink:
-    for source_type, source in source_map.iteritems():
-        for sink_type in sink_map:
-            if source_type == sink_type:
-                # Initialize for direct source-sink link:
-                pipes.add(_Pipe.from_source(source))
-            else:
-                halfpipe = type_matrix.get((source_type, sink_type))
-                if halfpipe is not None:
-                    # Add a source-transform-sink pipe:
-                    pipes.add(_Pipe.from_halfpipe(source, halfpipe))
-
+    # Tuples of price followed by tuple of visited types.
+    # Includes sources with no "direct" sinks for simplicity.
+    pipes = []
+    unprocessed = list((source.cost, (source_type,))
+                       for source_type, source in source_map.iteritems())
     if debug:
-        for pipe in pipes:
+        for pipe in unprocessed:
             logging.warn('initial: %r', pipe)
-
-    # Try to grow longer pipes:
-    while True:
-        # Python does not like it if you change the set during iteration.
-        new_pipes = []
-        for pipe in pipes:
-            for sink_type in sink_map:
-                if sink_type in pipe.passed_types:
-                    continue
-                trans_pipe = type_matrix.get((pipe.end_type, sink_type))
-                if trans_pipe is None:
-                    continue
-                new_pipe = pipe.extend(trans_pipe)
-                if new_pipe not in pipes:
-                    new_pipes.append(new_pipe)
-        if not new_pipes:
-            break
-        pipes.update(new_pipes)
-
-        if debug:
-            for pipe in new_pipes:
-                logging.warn('adding: %r', pipe)
+    # Try to grow longer pipes.
+    while unprocessed:
+        cost, pipe = unprocessed.pop(0)
+        pipes.append((cost, pipe))
+        for sink_type in sink_map:
+            if sink_type in pipe:
+                continue
+            halfpipe = type_matrix.get((pipe[-1], sink_type))
+            if halfpipe is not None:
+                unprocessed.append((cost + halfpipe.cost, pipe + (sink_type,)))
+                if debug:
+                    logging.warn('adding: %r', pipe)
 
     # Check if we have unreachable types:
     all_passed = set()
-    for pipe in pipes:
-        all_passed |= pipe.passed_types
+    for cost, pipe in pipes:
+        all_passed.update(pipe)
     unreachables = set(sink_map) - all_passed
     # TODO report these
     for unreachable in unreachables:
         logging.warning('%r unreachable', unreachable)
         del sink_map[unreachable]
 
-    # Try to find a single pipeline that drives everything.
-    everything = frozenset(sink_map)
+    # Try to find a single pipeline that drives everything we can drive.
+    all_sink_types = frozenset(sink_map)
     best_pipe = None
-    # And simultaneously build up the map from sink type to pipes.
-    sink_pipes = {}
-    for pipe in pipes:
-        if pipe.passed_types == everything:
-            if best_pipe is None or best_pipe.cost > pipe.cost:
-                best_pipe = pipe
-        for passed_type in pipe.passed_types:
-            sink_pipes.setdefault(passed_type, []).append(pipe)
-    if best_pipe is not None:
-        # Done!
-        return [best_pipe.plug(sink_map, reporter)]
-
-    def generate_pipes(pipes, todo):
-        if todo:
-            for sink_type in todo:
-                for pipe in sink_pipes[sink_type]:
-                    for res in generate_pipes(pipes + [pipe],
-                                              todo - pipe.passed_types):
-                        yield res
-        else:
-            yield pipes
-
-    best_pipes = None
     best_cost = 0
-    for pipelist in generate_pipes([], everything):
-        cost = sum(pipe.cost for pipe in pipelist)
-        if best_pipes is None or best_cost > cost:
-            best_pipes = pipelist
-            best_cost = cost
+    # And build up the map from sink type to (cost, pipe) tuples
+    sink_pipes = {}
+    for cost, pipe in pipes:
+        # Why ">="? Because we include the source we start from in the pipe.
+        if frozenset(pipe) >= all_sink_types:
+            if best_pipe is None or best_cost > cost:
+                best_pipe = pipe
+                best_cost = cost
+        for passed_type in pipe:
+            sink_pipes.setdefault(passed_type, []).append((cost, pipe))
 
-    # Just an assert, since all types in everything are reachable.
-    assert best_pipes is not None
+    if best_pipe is not None:
+        to_run = [best_pipe]
+    else:
+        def generate_pipes(pipes, todo):
+            if todo:
+                for sink_type in todo:
+                    for cost, pipe in sink_pipes[sink_type]:
+                        for res in generate_pipes(pipes + [(cost, pipe)],
+                                                  todo.difference(pipe)):
+                            yield res
+            else:
+                yield pipes
 
-    return list(pipe.plug(sink_map, reporter) for pipe in best_pipes)
+        best_pipes = None
+        best_cost = 0
+        for pipelist in generate_pipes([], all_sink_types):
+            cost = sum(cost for cost, pipe in pipelist)
+            if best_pipes is None or best_cost > cost:
+                best_pipes = pipelist
+                best_cost = cost
+
+        # Just an assert, since all types in all_sink_types are reachable.
+        assert best_pipes is not None
+        to_run = list(pipe for cost, pipe in best_pipes)
+
+    #return list(pipe.plug(sink_map, reporter) for pipe in best_pipes)
+    for pipe in to_run:
+        current_type = pipe[0]
+        source = source_map[current_type]
+        tail = source.feed()
+        # Everything except for the source, reversed.
+        types_left = list(pipe[-1:0:-1])
+        while True:
+            # The default value here *should* only be triggered for the source.
+            for sink in sink_map.pop(current_type, ()):
+                tail = sink.feed(tail, reporter)
+                assert tail is not None, '%r is not generating' % (sink,)
+            if not types_left:
+                break
+            new_type = types_left.pop()
+            for transform in type_matrix[current_type, new_type].transforms:
+                for source_type, target_type, cost in transform.transforms:
+                    if source_type == current_type:
+                        current_type = target_type
+                        break
+                else:
+                    assert False, 'unreachable'
+                tail = transform.transform(tail)
+                current_type = target_type
+        yield tail
