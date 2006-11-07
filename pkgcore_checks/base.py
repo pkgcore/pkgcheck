@@ -240,34 +240,17 @@ def multiplex_reporter(reporters):
     return make_multiplex_reporter
 
 
-class _HalfPipe(object):
-
-    """Internal helper."""
-
-    def __init__(self, transforms, cost, end_type, passed_types=None):
-        self.transforms = transforms
-        self.cost = cost
-        self.end_type = end_type
-        if passed_types is None:
-            passed_types = frozenset((end_type,))
-        self.passed_types = passed_types
-
-    def extend(self, halfpipe):
-        return self.__class__(self.transforms + halfpipe.transforms,
-                              self.cost + halfpipe.cost, halfpipe.end_type,
-                              self.passed_types | halfpipe.passed_types)
-
-    def __repr__(self):
-        return '%s(%r, %r, %r, %r)' % (
-            self.__class__.__name__, self.transforms, self.cost, self.end_type,
-            self.passed_types)
-
-
-def plug(sinks, transforms, sources, reporter, debug=False):
+def plug(sinks, transforms, sources, reporter, debug=None):
     """Plug together a pipeline.
 
     sinks are check instances, transforms are transform instances,
     sources are source instances. For now at least.
+
+    @param sinks: Sequence of check instances.
+    @param transforms: Sequence of transform instances.
+    @param sources: Sequence of source instances.
+    @param reporter: reporter instance.
+    @param debug: A logging function or C{None}.
     """
     # The general idea is we will usually not have a large number of
     # types, so we can use a reasonably straightforward bruteforce
@@ -307,7 +290,7 @@ def plug(sinks, transforms, sources, reporter, debug=False):
             types.add(source)
             types.add(dest)
 
-    # type_matrix[source, dest] -> HalfPipe
+    # type_matrix[source, dest] -> (cost, transforms)
     type_matrix = {}
 
     # Initialize with basic transforms.
@@ -316,8 +299,8 @@ def plug(sinks, transforms, sources, reporter, debug=False):
             # Pick the cheapest option if more than one basic
             # transform handles this.
             current_pipe = type_matrix.get((source, dest))
-            if current_pipe is None or current_pipe.cost > cost:
-                type_matrix[source, dest] = _HalfPipe((transform,), cost, dest)
+            if current_pipe is None or current_pipe[0] > cost:
+                type_matrix[source, dest] = (cost, (transform,))
 
     # Keep trying to build cheaper transforms.
     while True:
@@ -334,28 +317,30 @@ def plug(sinks, transforms, sources, reporter, debug=False):
                     second_half_pipe = type_matrix.get((halfway, dest))
                     if second_half_pipe is None:
                         continue
-                    new_cost = first_half_pipe.cost + second_half_pipe.cost
-                    if current_pipe is None or new_cost < current_pipe.cost:
+                    new_cost = first_half_pipe[0] + second_half_pipe[0]
+                    if current_pipe is None or new_cost < current_pipe[0]:
                         progress = True
-                        current_pipe = first_half_pipe.extend(second_half_pipe)
+                        current_cost = new_cost
+                        current_pipe = (
+                            new_cost, first_half_pipe[1] + second_half_pipe[1])
                         type_matrix[source, dest] = current_pipe
                         # Do not break out of the loop: we may hit a
                         # combination that is even cheaper.
         if not progress:
             break
 
-    if debug:
-        for (source, dest), transform in type_matrix.iteritems():
-            logging.warn('%s -> %s : %s', source, dest, transform)
+    if debug is not None:
+        for (source, dest), (cost, pipe) in type_matrix.iteritems():
+            debug('%s -> %s : %s (%s)', source, dest, pipe, cost)
 
     # Tuples of price followed by tuple of visited types.
     # Includes sources with no "direct" sinks for simplicity.
     pipes = []
     unprocessed = list((source.cost, (source_type,))
                        for source_type, source in source_map.iteritems())
-    if debug:
+    if debug is not None:
         for pipe in unprocessed:
-            logging.warn('initial: %r', pipe)
+            debug('initial: %r', pipe)
     # Try to grow longer pipes.
     while unprocessed:
         cost, pipe = unprocessed.pop(0)
@@ -365,9 +350,9 @@ def plug(sinks, transforms, sources, reporter, debug=False):
                 continue
             halfpipe = type_matrix.get((pipe[-1], sink_type))
             if halfpipe is not None:
-                unprocessed.append((cost + halfpipe.cost, pipe + (sink_type,)))
-                if debug:
-                    logging.warn('adding: %r', pipe)
+                unprocessed.append((cost + halfpipe[0], pipe + (sink_type,)))
+                if debug is not None:
+                    debug('growing %r with %r', pipe, sink_type)
 
     # Check if we have unreachable types:
     all_passed = set()
@@ -434,7 +419,7 @@ def plug(sinks, transforms, sources, reporter, debug=False):
             if not types_left:
                 break
             new_type = types_left.pop()
-            for transform in type_matrix[current_type, new_type].transforms:
+            for transform in type_matrix[current_type, new_type][1]:
                 for source_type, target_type, cost in transform.transforms:
                     if source_type == current_type:
                         current_type = target_type

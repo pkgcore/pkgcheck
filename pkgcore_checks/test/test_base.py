@@ -107,22 +107,32 @@ class PlugTest(TestCase):
         They are interpreted as a set (since the return order from plug
         is unspecified).
         """
-        expected_pipes = set(expected_pipes)
-        actual_pipes = set(
-            tuple(t) for t in base.plug(sinks, transforms, sources, None))
-        good = expected_pipes & actual_pipes
-        expected_pipes -= good
-        actual_pipes -= good
-        if expected_pipes or actual_pipes:
-            # Failure. Rerun in debug mode (tuple to drive the generator).
-            tuple(base.plug(sinks, transforms, sources, None, True))
-            message = ['', '', 'Expected:']
-            for pipe in expected_pipes:
-                message.extend(str(p) for p in pipe)
-            message.extend(['', 'Got:'])
-            for pipe in actual_pipes:
-                message.extend(str(p) for p in pipe)
-            self.fail('\n'.join(message))
+        try:
+            expected_pipes = set(expected_pipes)
+            actual_pipes = set(
+                tuple(t) for t in base.plug(sinks, transforms, sources, None))
+            good = expected_pipes & actual_pipes
+            expected_pipes -= good
+            actual_pipes -= good
+            if expected_pipes or actual_pipes:
+                # Failure. Build message.
+                message = ['', '', 'Expected:']
+                for pipe in expected_pipes:
+                    message.extend(str(p) for p in pipe)
+                message.extend(['', 'Got:'])
+                for pipe in actual_pipes:
+                    message.extend(str(p) for p in pipe)
+                self.fail('\n'.join(message))
+        except KeyboardInterrupt:
+            raise
+        except Exception:
+            print
+            print 'Test failing or erroring, rerunning in debug mode'
+            # Rerun in debug mode (tuple to drive the generator).
+            def _debug(message, *args):
+                print message % args
+            tuple(base.plug(sinks, transforms, sources, None, _debug))
+            raise
 
     def test_plug(self):
         self.assertPipes(
