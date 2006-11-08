@@ -246,3 +246,14 @@ class PlugTest(TestCase):
             [sources[1]],
             (sources[1], sinks[1], trans(1, 2), sinks[2], trans(2, 1),
              trans(1, 0), sinks[0]))
+
+    def test_scope(self):
+        sink1 = DummySink(dummies[1], 1)
+        sink2 = DummySink(dummies[2], 2)
+        sink3 = DummySink(dummies[3], 3)
+        source = DummySource(dummies[1], 3)
+        self.assertPipes(
+            [sink1, sink2, sink3],
+            [trans(1, 2), trans(2, 3)],
+            [source],
+            (source, sink1, trans(1, 2), sink2, trans(2, 3), sink3))

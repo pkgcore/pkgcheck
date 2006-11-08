@@ -379,16 +379,16 @@ def plug(sinks, transforms, sources, reporter, debug=None):
                 current_pipe = None
                 for scope in xrange(lowest_sink_scope, best_source_scope + 1):
                     new_current = type_matrix.get((scope, source, dest))
-                    if new_current is not None:
-                        if (current_pipe is None or
-                            current_pipe[0] >= new_current[0]):
-                            # The new pipe is better, use it as "current".
-                            current_pipe = new_current
-                        else:
-                            # A pipe we hit earlier with lower
-                            # requirements is better than this one.
-                            progress = True
-                            type_matrix[scope, source, dest] = current_pipe
+                    if new_current is not None and (
+                        current_pipe is None or
+                        current_pipe[0] >= new_current[0]):
+                        # The new pipe is better, use it as "current".
+                        current_pipe = new_current
+                    elif current_pipe is not None:
+                        # A pipe we hit earlier with lower
+                        # requirements is better than this one.
+                        progress = True
+                        type_matrix[scope, source, dest] = current_pipe
                     for halfway in types:
                         first_half_pipe = type_matrix.get(
                             (scope, source, halfway))
