@@ -94,7 +94,7 @@ trans_everything = tuple(DummyTransform(source, target)
                          for source in dummies for target in dummies)
 trans_up = tuple(DummyTransform(dummies[i], dummies[i + 1])
                  for i in xrange(len(dummies) - 1))
-trans_down = tuple(DummyTransform(dummies[i + 1], dummies[i], 1)
+trans_down = tuple(DummyTransform(dummies[i + 1], dummies[i])
                    for i in xrange(len(dummies) - 1))
 sinks = tuple(DummySink(dummy) for dummy in dummies)
 
@@ -238,3 +238,11 @@ class PlugTest(TestCase):
                                 trans(1, 3), sinks[3]),
                                (sources[0], trans(0, 1), trans(1, 2),
                                 sinks[2])])]))
+
+    def test_pass_twice(self):
+        self.assertPipes(
+            [sinks[0], sinks[1], sinks[2]],
+            (trans(1, 2),) + trans_down,
+            [sources[1]],
+            (sources[1], sinks[1], trans(1, 2), sinks[2], trans(2, 1),
+             trans(1, 0), sinks[0]))
