@@ -265,6 +265,9 @@ def plug(sinks, transforms, sources, reporter, debug=None):
     @param sources: Sequence of source instances.
     @param reporter: reporter instance.
     @param debug: A logging function or C{None}.
+    @returns: a sequence of sinks that are out of scope, a sequence of sinks
+        that cannot be reached through transforms, a sequence of running sinks,
+        a sequence of pipes.
     """
     # The general idea is we will usually not have a large number of
     # types, so we can use a reasonably straightforward bruteforce
@@ -296,19 +299,24 @@ def plug(sinks, transforms, sources, reporter, debug=None):
     # Throw away any checks that we definitely cannot drive.
     lowest_sink_scope = sinks[0].scope
     good_sinks = []
+    out_of_scope_sinks = []
     for sink in sinks:
         if sink.scope > best_source_scope:
-            # TODO report this nicely.
-            logging.warning('Throwing away %r because it is out of scope' % (
-                    sink,))
+            out_of_scope_sinks.append(sink)
         else:
             good_sinks.append(sink)
-        lowest_sink_scope = min(lowest_sink_scope, sink.scope)
+            lowest_sink_scope = min(lowest_sink_scope, sink.scope)
+    if not good_sinks:
+        # No point in continuing.
+        return out_of_scope_sinks, (), (), ()
     sinks = good_sinks
     # We cannot do the same for sources lower than the *highest* sink,
     # since we may end up driving the sinks using multiple sources.
     # But we can throw away the sinks lower than all sources.
     sources = list(s for s in sources if s.scope >= lowest_sink_scope)
+    if not sources:
+        # No usable sources, abort.
+        return out_of_scope_sinks, sinks, (), ()
 
     # Map from (scope, sink typename) to sequence of sinks.
     sink_map = {}
@@ -430,14 +438,17 @@ def plug(sinks, transforms, sources, reporter, debug=None):
 
     # Check if we have unreachable types:
     reachables = {}
+    unreachables = []
     for (sink_scope, sink_type), sinks in sink_map.iteritems():
         for cost, pipe_scope, pipe in pipes:
             if pipe_scope >= sink_scope and sink_type in pipe:
                 reachables[sink_scope, sink_type] = sinks
                 break
         else:
-            # TODO report these
-            logging.warning('%r unreachable', sinks)
+            unreachables.extend(sinks)
+    if not reachables:
+        # No reachable sinks, abort.
+        return out_of_scope_sinks, unreachables, (), ()
     sink_map = reachables
 
     # Try to find a single pipeline that drives everything we can drive.
@@ -497,9 +508,8 @@ def plug(sinks, transforms, sources, reporter, debug=None):
     sinks = []
     for sinks_chunk in sink_map.itervalues():
         sinks.extend(sinks_chunk)
-
-    if debug is not None:
-        debug('Reached checkpoint in %s seconds ', time.time() - starttime)
+    good_sinks = sinks[:]
+    actual_pipes = []
     for scope, pipe in to_run:
         if debug is not None:
             debug('running %r (%s)', pipe, scope)
@@ -537,5 +547,8 @@ def plug(sinks, transforms, sources, reporter, debug=None):
                     assert False, 'unreachable'
                 assert scope >= trans_scope
                 tail = transform.transform(tail)
-        yield tail
+        actual_pipes.append(tail)
     assert not sinks, '%r left' % (sinks,)
+    if debug is not None:
+        debug('Plugged in %s seconds ', time.time() - starttime)
+    return out_of_scope_sinks, unreachables, good_sinks, actual_pipes

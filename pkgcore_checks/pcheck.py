@@ -346,9 +346,34 @@ def main(options, out, err):
         debug = None
     for filterer in options.limiters:
         sources = [feeds.RestrictedRepoSource(options.target_repo, filterer)]
-        for pipe in base.plug(sinks, transforms, sources, reporter, debug):
-            for thing in pipe:
-                pass
+        out_of_scope, unreachables, good_sinks, pipes = base.plug(
+            sinks, transforms, sources, reporter, debug)
+        # TODO the reporting of out of scope/unreachable needs further thought.
+
+        # The trick is we want to distinguish between things that are
+        # simply out of scope and things that are unreachable because
+        # the set of transforms is really incomplete, and this does
+        # not quite match the two things plug returns. Specifically
+        # the checks that want a non-version feed are relying on their
+        # transform being out of scope, and that triggers an
+        # "unreachable" from the plugger. Need to figure out if that
+        # can be fixed by making the plugger smarter about error
+        # reporting or if those checks should grow a more specific
+        # scope attr.
+        for sink in out_of_scope + unreachables:
+            # Skip (addon) sinks that are not checks.
+            if sink.__class__ in options.checks:
+                out.write(
+                    out.fg('yellow'), ' * ', out.reset,
+                    '%s is out of scope or unreachable, skipped.' % (
+                        sink.__class__.__name__,))
+        if not good_sinks or not pipes:
+            out.write(out.fg('red'), ' * ', out.reset, 'No checks!')
+        else:
+            out.write('Running %s tests' % (len(good_sinks),))
+            for pipe in pipes:
+                for thing in pipe:
+                    pass
     reporter.finish()
     # flush stdout first; if they're directing it all to a file, this makes
     # results not get the final message shoved in midway

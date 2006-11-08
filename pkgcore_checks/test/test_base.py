@@ -101,28 +101,37 @@ sinks = tuple(DummySink(dummy) for dummy in dummies)
 
 class PlugTest(TestCase):
 
-    def assertPipes(self, sinks, transforms, sources, *expected_pipes):
+    def assertPipes(self, sinks, transforms, sources, *expected_pipes, **kw):
         """Check if the plug function yields the expected pipelines.
 
         The first three arguments are passed through to plug.
         Further arguments are the pipes that should be returned.
         They are interpreted as a set (since the return order from plug
         is unspecified).
+        out_of_scope and unreachable are accepted as keyword args, defaulting
+        to the empty list.
         """
+        # Writing this the "normal" way interprets the first two
+        # optional positional args incorrectly.
+        out_of_scope = kw.pop('out_of_scope', [])
+        unreachable = kw.pop('unreachable', [])
+        if kw:
+            raise TypeError('unsupported kwargs %r' % (kw.keys(),))
+        expected_pipes = set(expected_pipes)
         try:
-            expected_pipes = set(expected_pipes)
+            act_scope, act_unreachable, act_sinks, actual_pipes = base.plug(
+                sinks, transforms, sources, None)
+            actual_pipes = set(tuple(t) for t in actual_pipes)
         except KeyboardInterrupt:
             raise
         except Exception:
             print
             print 'Test erroring, rerunning in debug mode'
-            # Rerun in debug mode (tuple to drive the generator).
+            # Rerun in debug mode.
             def _debug(message, *args):
                 print message % args
-            tuple(base.plug(sinks, transforms, sources, None, _debug))
+            base.plug(sinks, transforms, sources, None, _debug)
             raise
-        actual_pipes = set(
-            tuple(t) for t in base.plug(sinks, transforms, sources, None))
         good = expected_pipes & actual_pipes
         expected_pipes -= good
         actual_pipes -= good
@@ -139,6 +148,8 @@ class PlugTest(TestCase):
             for pipe in actual_pipes:
                 message.extend(str(p) for p in pipe)
             self.fail('\n'.join(message))
+        self.assertEquals(out_of_scope, act_scope)
+        self.assertEquals(unreachable, act_unreachable)
 
     def test_plug(self):
         self.assertPipes(
@@ -207,7 +218,7 @@ class PlugTest(TestCase):
                 [sinks[1], sinks[2], sinks[3]],
                 [trans(1, 2), trans(1, 3)],
                 [sources[1]],
-                None))
+                None)[3])
         self.assertIn(pipes, set([
                     frozenset([(sources[1], sinks[1], trans(1, 2), sinks[2]),
                                (sources[1], trans(1, 3), sinks[3])]),
@@ -217,7 +228,7 @@ class PlugTest(TestCase):
                 [sinks[1], sinks[2], sinks[3]],
                 [trans(0, 1), trans(1, 2), trans(1, 3)],
                 [sources[0]],
-                None))
+                None)[3])
         self.assertIn(pipes, set([
                     frozenset([(sources[0], trans(0, 1), sinks[1],
                                 trans(1, 2), sinks[2]),
