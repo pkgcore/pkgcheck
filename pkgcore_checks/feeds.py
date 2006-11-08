@@ -9,7 +9,9 @@ import operator
 import itertools
 
 from pkgcore_checks import base
+
 from pkgcore.restrictions import util
+from pkgcore.util.compatibility import any
 
 
 class VersionToPackage(base.Addon):
