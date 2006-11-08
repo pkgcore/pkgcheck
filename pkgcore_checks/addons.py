@@ -43,6 +43,7 @@ class ArchesAddon(base.Addon):
 class QueryCacheAddon(base.Addon):
 
     feed_type = base.package_feed
+    scope = base.version_scope
 
     @staticmethod
     def mangle_option_parser(parser):
@@ -266,6 +267,7 @@ class EvaluateDepSetAddon(base.Addon):
     required_addons = (ProfileAddon, QueryCacheAddon)
 
     feed_type = base.package_feed
+    scope = base.version_scope
 
     def __init__(self, options, profiles, query_cache, *args):
         base.Addon.__init__(self, options)

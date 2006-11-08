@@ -74,9 +74,9 @@ class UnusedGlobalFlags(base.Template):
     """
     check for unused use.desc entries
     """
-    
+
     feed_type = base.versioned_feed
-    enabling_threshold = base.repository_feed
+    scope = base.repository_scope
     required_addons = (addons.ProfileAddon,)
 
     def __init__(self, options, profiles):
@@ -122,11 +122,11 @@ class UnusedLicense(base.Template):
     """
     unused license file(s) check
     """
-    
+
     feed_type = base.versioned_feed
-    enabling_threshold = base.repository_feed
+    scope = base.repository_scope
     required_addons = (addons.LicenseAddon,)
-    
+
     def __init__(self, options, licenses):
         base.Template.__init__(self, options)
         self.licenses = None
@@ -169,10 +169,10 @@ class ConflictingDigests(base.Template):
     scan for conflicting digest entries; since this requires
     keeping all fetchables in memory, this can add up.
     """
-    
-    enabling_threshold = base.package_feed
+
+    scope = base.package_scope
     feed_type = base.versioned_feed
-    
+
     def __init__(self, options):
         base.Template.__init__(self, options)
         self._fetchables = {}

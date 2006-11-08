@@ -60,7 +60,7 @@ class PackageMetadataXmlCheck(base_check):
     """package level metadata.xml scans"""
 
     feed_type = base.versioned_feed
-    enabling_threshold = base.package_feed
+    scope = base.package_scope
 
     def _feed(self, pkg, reporter):
         if self.last_seen == pkg.key:
@@ -76,7 +76,7 @@ class PackageMetadataXmlCheck(base_check):
 class CategoryMetadataXmlCheck(base_check):
     """metadata.xml scans"""
     feed_type = base.versioned_feed
-    enabling_threshold = base.category_feed
+    scope = base.category_scope
 
     dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
 

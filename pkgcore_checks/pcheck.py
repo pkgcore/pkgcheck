@@ -339,10 +339,14 @@ def main(options, out, err):
                  if getattr(addon, 'feed_type', False))
 
     reporter.start()
+    if options.debug:
+        import logging
+        debug = logging.warning
+    else:
+        debug = None
     for filterer in options.limiters:
         sources = [feeds.RestrictedRepoSource(options.target_repo, filterer)]
-        for pipe in base.plug(sinks, transforms, sources, reporter,
-                              options.debug):
+        for pipe in base.plug(sinks, transforms, sources, reporter, debug):
             for thing in pipe:
                 pass
     reporter.finish()

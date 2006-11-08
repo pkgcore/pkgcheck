@@ -20,8 +20,8 @@ class DummyTransform(object):
     sequences works.
     """
 
-    def __init__(self, source, target, cost=10):
-        self.transforms = [(source, target, cost)]
+    def __init__(self, source, target, cost=10, scope=1):
+        self.transforms = [(source, target, scope, cost)]
 
     def transform(self, chunks):
         for chunk in chunks:
@@ -29,7 +29,7 @@ class DummyTransform(object):
         yield self
 
     def __repr__(self):
-        return '%s(%s, %s, %s)' % ((
+        return '%s(%s, %s, %s, %s)' % ((
                 self.__class__.__name__,) + self.transforms[0])
 
     def __eq__(self, other):
@@ -53,8 +53,9 @@ class DummySource(object):
 
     cost = 10
 
-    def __init__(self, dummy):
+    def __init__(self, dummy, scope=1):
         self.feed_type = dummy
+        self.scope = scope
 
     def feed(self):
         yield self
@@ -71,8 +72,9 @@ class DummySink(object):
     creating your own.
     """
 
-    def __init__(self, dummy):
+    def __init__(self, dummy, scope=1):
         self.feed_type = dummy
+        self.scope = scope
 
     def feed(self, chunks, reporter):
         for chunk in chunks:
@@ -109,30 +111,34 @@ class PlugTest(TestCase):
         """
         try:
             expected_pipes = set(expected_pipes)
-            actual_pipes = set(
-                tuple(t) for t in base.plug(sinks, transforms, sources, None))
-            good = expected_pipes & actual_pipes
-            expected_pipes -= good
-            actual_pipes -= good
-            if expected_pipes or actual_pipes:
-                # Failure. Build message.
-                message = ['', '', 'Expected:']
-                for pipe in expected_pipes:
-                    message.extend(str(p) for p in pipe)
-                message.extend(['', 'Got:'])
-                for pipe in actual_pipes:
-                    message.extend(str(p) for p in pipe)
-                self.fail('\n'.join(message))
         except KeyboardInterrupt:
             raise
         except Exception:
             print
-            print 'Test failing or erroring, rerunning in debug mode'
+            print 'Test erroring, rerunning in debug mode'
             # Rerun in debug mode (tuple to drive the generator).
             def _debug(message, *args):
                 print message % args
             tuple(base.plug(sinks, transforms, sources, None, _debug))
             raise
+        actual_pipes = set(
+            tuple(t) for t in base.plug(sinks, transforms, sources, None))
+        good = expected_pipes & actual_pipes
+        expected_pipes -= good
+        actual_pipes -= good
+        if expected_pipes or actual_pipes:
+            # Failure. Build message.
+            message = ['', '']
+            def _debug(format, *args):
+                message.append(format % args)
+            tuple(base.plug(sinks, transforms, sources, None, _debug))
+            message.extend(['', 'Expected:'])
+            for pipe in expected_pipes:
+                message.extend(str(p) for p in pipe)
+            message.extend(['', 'Got:'])
+            for pipe in actual_pipes:
+                message.extend(str(p) for p in pipe)
+            self.fail('\n'.join(message))
 
     def test_plug(self):
         self.assertPipes(
@@ -192,3 +198,32 @@ class PlugTest(TestCase):
             trans_up,
             [sources[0]],
             (sources[0], trans(0, 1), sinks[1], trans(1, 2), sinks[2]))
+
+    def test_two_ways(self):
+        # There are two valid solutions to each of these so
+        # assertPipes does not work. The thing this checks for is
+        # mainly that sinks[1] is not run twice.
+        pipes = frozenset(tuple(p) for p in base.plug(
+                [sinks[1], sinks[2], sinks[3]],
+                [trans(1, 2), trans(1, 3)],
+                [sources[1]],
+                None))
+        self.assertIn(pipes, set([
+                    frozenset([(sources[1], sinks[1], trans(1, 2), sinks[2]),
+                               (sources[1], trans(1, 3), sinks[3])]),
+                    frozenset([(sources[1], sinks[1], trans(1, 3), sinks[3]),
+                               (sources[1], trans(1, 2), sinks[2])])]))
+        pipes = frozenset(tuple(p) for p in base.plug(
+                [sinks[1], sinks[2], sinks[3]],
+                [trans(0, 1), trans(1, 2), trans(1, 3)],
+                [sources[0]],
+                None))
+        self.assertIn(pipes, set([
+                    frozenset([(sources[0], trans(0, 1), sinks[1],
+                                trans(1, 2), sinks[2]),
+                               (sources[0], trans(0, 1), trans(1, 3),
+                                sinks[3])]),
+                    frozenset([(sources[0], trans(0, 1), sinks[1],
+                                trans(1, 3), sinks[3]),
+                               (sources[0], trans(0, 1), trans(1, 2),
+                                sinks[2])])]))
