@@ -70,10 +70,9 @@ class RestrictedRepoSource(object):
             (base.package_scope, ['package']),
             (base.category_scope, ['category']),
             ]:
-            for attr in attrs:
-                if any(util.collect_package_restrictions(limiter, attr)):
-                    self.scope = scope
-                    return
+            if any(util.collect_package_restrictions(limiter, attrs)):
+                self.scope = scope
+                return
         self.scope = base.repository_scope
 
     def feed(self):
