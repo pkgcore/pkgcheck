@@ -178,4 +178,8 @@ Autoplugger
 The autoplugger gets handed a bunch of "sink", transform and source
 instances and builds pipelines from them. It is a hack that relies on
 a fair amount of brute force to do its job, but so far it has been
-sufficient.
+sufficient. It is still a moving target, so its design (if it has one)
+is not documented here. Use the source and do not forget about the
+tests (it does not have as many as it should but there are a bunch,
+and running the tests with debug mode forced (hacked) on should give
+some idea of what's what).
