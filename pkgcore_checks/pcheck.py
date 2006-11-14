@@ -296,6 +296,9 @@ class OptionParser(commandline.OptionParser):
             blacklist = Blacklist(values.checks_to_disable)
             values.checks = list(blacklist.filter(values.checks))
 
+        if not values.checks:
+            self.error('No active checks')
+
         values.addons = set()
         def add_addon(addon):
             if addon not in values.addons:
