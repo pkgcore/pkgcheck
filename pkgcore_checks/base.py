@@ -294,6 +294,8 @@ def plug(sinks, transforms, sources, reporter, debug=None):
     if debug is not None:
         starttime = time.time()
 
+    assert sinks
+
     # Figure out the best available scope.
     best_source_scope = max(source.scope for source in sources)
     # Throw away any checks that we definitely cannot drive.
