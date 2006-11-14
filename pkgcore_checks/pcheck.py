@@ -22,18 +22,19 @@ demandload.demandload(globals(), "optparse textwrap re os "
     )
 
 
-def metadata_src_callback(option, opt_str, value, parser):
+def repo_callback(option, opt_str, value, parser):
     try:
-        repo = parser.values.src_repo = parser.values.config.repo[value]
+        repo = parser.values.config.repo[value]
     except KeyError:
         raise optparse.OptionValueError(
-            "overlayed repo %r is not a known repo" % (value,))
+            'repo %r is not a known repo (known repos: %s)' % (
+                value, ', '.join(repr(n) for n in parser.values.config.repo)))
     if not isinstance(repo, repository.UnconfiguredTree):
         raise optparse.OptionValueError(
-            'overlayed-repo %r is not a '
-            'pkgcore.ebuild.repository.UnconfiguredTree instance; '
-            'must specify a raw ebuild repo, not type %r: %r' % (
+            'repo %r is not a pkgcore.ebuild.repository.UnconfiguredTree '
+            'instance; must specify a raw ebuild repo, not type %r: %r' % (
                 value, repo.__class__, repo))
+    setattr(parser.values, option.dest, repo)
 
 
 class _CheckSet(object):
@@ -68,6 +69,18 @@ class Blacklist(_CheckSet):
                        for f in self.patterns))
 
 
+class Suite(object):
+
+    pkgcore_config_type = ConfigHint({
+            'target_repo': 'ref:repo', 'src_repo': 'ref:repo',
+            'checkset': 'ref:pcheck_checkset'}, typename='pcheck_suite')
+
+    def __init__(self, target_repo, checkset=None, src_repo=None):
+        self.target_repo = target_repo
+        self.checkset = checkset
+        self.src_repo = src_repo
+
+
 class OptionParser(commandline.OptionParser):
 
     """Option parser that is automagically extended by the checks.
@@ -88,11 +101,15 @@ class OptionParser(commandline.OptionParser):
         commandline.OptionParser.__init__(
             self, version='pkgcore-checks %s' % (__version__,),
             description="pkgcore based ebuild QA checks",
-            usage="usage: %prog repository [options] [atom1...atom2]",
+            usage="usage: %prog [options] [atom1...atom2]",
             **kwargs)
 
+        # These are all set in check_values based on other options, so have
+        # no default set through add_option.
         self.set_default('repo_base', None)
-        self.set_default('src_repo', None)
+        self.set_default('guessed_target_repo', False)
+        self.set_default('guessed_suite', False)
+        self.set_default('default_suite', False)
 
         group = self.add_option_group('Check selection')
         group.add_option(
@@ -108,6 +125,16 @@ class OptionParser(commandline.OptionParser):
             callback=commandline.config_callback,
             callback_args=('pcheck_checkset', 'checkset'),
             help='Pick a preconfigured set of checks to run.')
+
+        self.add_option(
+            '--repo', '-r', action='callback', type='string',
+            callback=repo_callback, dest='target_repo',
+            help='Set the target repo')
+        self.add_option(
+            '--suite', '-s', action='callback', type='string',
+            callback=commandline.config_callback,
+            callback_args=('pcheck_suite', 'suite'),
+            help='Specify the configuration suite to use')
         self.add_option(
             "--list-checks", action="store_true", default=False,
             dest="list_checks",
@@ -120,8 +147,8 @@ class OptionParser(commandline.OptionParser):
 
         overlay = self.add_option_group('Overlay')
         overlay.add_option(
-            "-r", "--overlayed-repo", action='callback', type='string',
-            callback=metadata_src_callback,
+            '--overlayed-repo', '-o', action='callback', type='string',
+            callback=repo_callback, dest='src_repo',
             help="if the target repository is an overlay, specify the "
             "repository name to pull profiles/license from")
 
@@ -143,21 +170,72 @@ class OptionParser(commandline.OptionParser):
         values.checks = sorted(get_plugins('check', plugins))
         if values.list_checks:
             return values, ()
-
-        if not args:
-            self.error('repository name was not specified')
-
-        repo_name = args.pop(0)
-        try:
-            values.target_repo = values.config.repo[repo_name]
-        except KeyError:
-            try:
-                values.target_repo = values.config.repo[
-                    osutils.normpath(repo_name)]
-            except KeyError:
-                self.error('repo %r is not a valid reponame (known repos: %s)'
-                           % (repo_name, ', '.join(repr(x) for x in
-                                                   values.config.repo)))
+        cwd = None
+        if values.suite is None:
+            # No suite explicitly specified. Use the repo to guess the suite.
+            if values.target_repo is None:
+                # Not specified either. Try to find a repo our cwd is in.
+                cwd = os.getcwd()
+                # The use of a dict here is a hack to deal with one
+                # repo having multiple names in the configuration.
+                candidates = {}
+                for name, suite in values.config.pcheck_suite.iteritems():
+                    repo = suite.target_repo
+                    if repo is None:
+                        continue
+                    repo_base = getattr(repo, 'base', None)
+                    if repo_base is not None and cwd.startswith(repo_base):
+                        candidates[repo] = name
+                if len(candidates) == 1:
+                    values.guessed_suite = True
+                    values.suite = tuple(candidates)[0]
+            else:
+                # We have a repo, now find a suite matching it.
+                candidates = list(
+                    suite for suite in values.config.pcheck_suites.itervalues()
+                    if suite.target_repo is values.target_repo)
+                if len(candidates) == 1:
+                    values.guessed_suite = True
+                    values.suite = candidates[0]
+            if values.suite is None:
+                # If we have multiple candidates or no candidates we
+                # fall back to the default suite.
+                values.suite = values.config.get_default('pcheck_suite')
+                values.default_suite = values.suite is not None
+        if values.suite is not None:
+            # We have a suite. Lift defaults from it for values that
+            # were not set explicitly:
+            if values.checkset is None:
+                values.checkset = values.suite.checkset
+            if values.src_repo is None:
+                values.src_repo = values.suite.src_repo
+            # If we were called with no atoms we want to force
+            # cwd-based detection.
+            if values.target_repo is None and args:
+                values.checkset = values.suite.target_repo
+        if values.target_repo is None:
+            # We have no target repo (not explicitly passed, not from
+            # a suite, not from an earlier guess at the target_repo).
+            # Try to guess one from cwd:
+            if cwd is None:
+                cwd = os.getcwd()
+            candidates = {}
+            for name, repo in values.config.repo.iteritems():
+                repo_base = getattr(repo, 'base', None)
+                if repo_base is not None and cwd.startswith(repo_base):
+                    candidates[repo] = name
+            if not candidates:
+                self.error(
+                    'No target repo specified on commandline or suite and '
+                    'current directory is not inside a known repo.')
+            elif len(candidates) > 1:
+                self.error(
+                    'Found multiple matches when guessing repo based on '
+                    'current directory (%s). Specify a repo on the '
+                    'commandline or suite or remove some repos from your '
+                    'configuration.' % (
+                        ', '.join(str(repo) for repo in candidates),))
+            values.target_repo = tuple(candidates)[0]
 
         if values.reporter is None:
             values.reporter = values.config.get_default(
@@ -306,6 +384,16 @@ def main(options, out, err):
             '(not combined trees) or specify a PORTDIR repo '
             'with --overlayed-repo.', wrap=True)
         err.write()
+
+    if options.guessed_suite:
+        if options.default_suite:
+            err.write('Tried to guess a suite to use but got multiple matches')
+            err.write('and fell back to the default.')
+        else:
+            err.write('using suite guessed from working directory')
+
+    if options.guessed_target_repo:
+        err.write('using repository guessed from working directory')
 
     try:
         reporter = options.reporter(out)
