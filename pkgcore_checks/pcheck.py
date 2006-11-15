@@ -188,11 +188,11 @@ class OptionParser(commandline.OptionParser):
                         candidates[repo] = name
                 if len(candidates) == 1:
                     values.guessed_suite = True
-                    values.suite = tuple(candidates)[0]
-            else:
+                    values.target_repo = tuple(candidates)[0]
+            if values.target_repo is not None:
                 # We have a repo, now find a suite matching it.
                 candidates = list(
-                    suite for suite in values.config.pcheck_suites.itervalues()
+                    suite for suite in values.config.pcheck_suite.itervalues()
                     if suite.target_repo is values.target_repo)
                 if len(candidates) == 1:
                     values.guessed_suite = True
