@@ -243,8 +243,11 @@ def make_configurable_reporter_factory(klass):
     return configurable_reporter_factory
 
 xml_reporter = make_configurable_reporter_factory(XmlReporter)
+xml_reporter.__name__ = 'xml_reporter'
 plain_reporter = make_configurable_reporter_factory(StrReporter)
+plain_reporter.__name__ = 'plain_reporter'
 fancy_reporter = make_configurable_reporter_factory(FancyReporter)
+fancy_reporter.__name__ = 'fancy_reporter'
 
 @configurable({'reporters': 'refs:pcheck_reporter_factory'},
               typename='pcheck_reporter_factory')
