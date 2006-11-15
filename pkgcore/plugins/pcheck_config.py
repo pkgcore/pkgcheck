@@ -12,5 +12,9 @@ pkgcore_plugins = {
                     'class': 'pkgcore_checks.pcheck.Blacklist',
                     'patterns': 'unstable_only stale_unstable imlate',
                     }),
+            'all-checks': basics.ConfigSectionFromStringDict({
+                    'class': 'pkgcore_checks.pcheck.Blacklist',
+                    'patterns': '',
+                    }),
             }],
     }
