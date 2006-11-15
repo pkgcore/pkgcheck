@@ -1,3 +1,5 @@
+# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
+# License: GPL2
 
 
 """Extra default config sections from pkgcore-checks."""
