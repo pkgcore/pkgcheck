@@ -241,7 +241,7 @@ class OptionParser(commandline.OptionParser):
             values.reporter = values.config.get_default(
                 'pcheck_reporter_factory')
             if values.reporter is None:
-                values.reporter = base.FancyReporter
+                self.error('no default reporter')
 
         if values.src_repo is None:
             values.src_repo = values.target_repo

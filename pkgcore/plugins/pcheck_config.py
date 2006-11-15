@@ -18,5 +18,9 @@ pkgcore_plugins = {
                     'class': 'pkgcore_checks.pcheck.Blacklist',
                     'patterns': '',
                     }),
+            'pcheck-fancy-reporter': basics.ConfigSectionFromStringDict({
+                    'class': 'pkgcore_checks.base.fancy_reporter',
+                    'default': 'true',
+                    }),
             }],
     }
