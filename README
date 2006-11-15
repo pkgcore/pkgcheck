@@ -121,4 +121,21 @@ in the configuration file as part of a suite__ definition.
 
 __ Suites_
 
+Reporters
+---------
+
+By default the output is in a colorful human-readable format. For full
+tree checks this format may not be optimal since it is a bit hard to
+grep. To use an output format that prints everything on one line, put
+this in your configuration::
+
+  [pcheck-plain-reporter]
+  class=pkgcore_checks.base.plain_reporter
+  default=true
+
+To use a non-default reporter use ``pcheck --reporter``. To see the
+reporters available use ``pconfig configurables
+pcheck_reporter_factory``.
+
+
 .. _`Installing python modules`: http://docs.python.org/inst/
