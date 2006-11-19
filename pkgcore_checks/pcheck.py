@@ -48,6 +48,8 @@ class _CheckSet(object):
 
 class Whitelist(_CheckSet):
 
+    """Only run checks matching one of the provided patterns."""
+
     pkgcore_config_type = ConfigHint(
         {'patterns': 'list'}, typename='pcheck_checkset')
 
@@ -58,6 +60,8 @@ class Whitelist(_CheckSet):
                    for f in self.patterns))
 
 class Blacklist(_CheckSet):
+
+    """Only run checks not matching any of the provided patterns."""
 
     pkgcore_config_type = ConfigHint(
         {'patterns': 'list'}, typename='pcheck_checkset')
