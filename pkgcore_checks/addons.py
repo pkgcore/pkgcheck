@@ -17,6 +17,7 @@ demandload.demandload(
     'pkgcore.util:osutils '
     'pkgcore.restrictions:packages,values '
     'pkgcore.config:profiles '
+    'pkgcore.ebuild:domain '
     )
 
 
@@ -148,7 +149,9 @@ class ProfileAddon(base.Addon):
                     profile = options.profile_func(profile_name)
                 if ignore_deprecated and profile.deprecated:
                     continue
-                mask = util.get_profile_mask(profile)
+                s = set(profile.maskers)
+                s.update(self.options.search_repo.default_visibility_limiters)
+                mask = domain.generate_masking_restrict(s)
                 virtuals = profile.virtuals(options.search_repo)
                 # force all use masks to negated, and all other arches but this
                 non_tristate = frozenset(list(self.official_arches) +
