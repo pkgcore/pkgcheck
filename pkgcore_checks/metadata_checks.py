@@ -157,7 +157,7 @@ class MetadataReport(base.Template):
 
         use_expand_base = pjoin(profile_base, "desc")
         try:
-            for entry in os.listdir(use_expand_base):
+            for entry in listdir_files(use_expand_base):
                 try:
                     estr = entry.rsplit(".", 1)[0].lower()+ "_"
                     unstated_iuse.update(estr + usef.strip() for usef in 
