@@ -43,7 +43,7 @@ class DroppedKeywordsReport(Template):
 class DroppedKeywordWarning(Result):
     """Arch keywords dropped during pkg version bumping"""
 
-    __slots__ = ("arch", "category", "package",)
+    __slots__ = ("arch", "category", "package", "version")
 
     def __init__(self, arch, pkg):
         Result.__init__(self)

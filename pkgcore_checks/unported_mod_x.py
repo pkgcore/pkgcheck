@@ -222,7 +222,7 @@ class BadRange(base.Result):
     look for virtual/x11 atoms that don't intersect =virtual/x11-6.9
     """
     
-    __slots__ = ("category", "package", "version", "attr", "atom")
+    __slots__ = ("category", "package", "version", "attr", "atoms")
     def __init__(self, pkg, attr, atom_inst):
         base.Result.__init__(self)
         self._store_cpv(pkg)

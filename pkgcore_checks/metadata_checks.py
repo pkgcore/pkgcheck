@@ -430,6 +430,8 @@ class MetadataError(base.Result):
 class EmptyKeywardsMinor(base.Result):
     """pkg has no set keywords"""
 
+    __slots__ = ('category', 'package', 'version')
+
     def __init__(self, pkg):
         base.Result.__init__(self)
         self._store_cpv(pkg)
@@ -451,7 +453,9 @@ class EmptyKeywardsMinor(base.Result):
         
 class StupidKeywardsMinor(base.Result):
     """pkg that is using -*; package.mask in profiles addresses this already"""
-    
+
+    __slots__ = ('category', 'package', 'version')
+
     def __init__(self, pkg):
         base.Result.__init__(self)
         self._store_cpv(pkg)

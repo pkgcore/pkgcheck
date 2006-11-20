@@ -58,7 +58,7 @@ class LaggingStableInfo(base.Result):
     """Arch that is behind another from a stabling standpoint"""
     
     __slots__ = ("category", "package", "version", "keywords",
-        "existing_keywords")
+        "existing_keywords", "stable")
     
     def __init__(self, pkg, keywords):
         base.Result.__init__(self)

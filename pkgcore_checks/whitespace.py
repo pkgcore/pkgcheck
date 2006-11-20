@@ -40,7 +40,7 @@ class WhitespaceFound(base.Result):
 
     """leading or trailing whitespaces are found"""
 
-    __slots__ = ("category", "package", "filename")
+    __slots__ = ("category", "package", "version", "linenumber", "leadtrail")
 
     def __init__(self, pkg, linenumber, leadtrail):
         base.Result.__init__(self)
@@ -68,7 +68,7 @@ class DoubleEmptyLine(base.Result):
 
     """unneeded blank lines are found"""
 
-    __slots__ = ("category", "package", "filename")
+    __slots__ = ("category", "package", "version", "linenumber")
 
     def __init__(self, pkg, linenumber):
         base.Result.__init__(self)
@@ -94,7 +94,7 @@ class TrailingEmptyLine(base.Result):
 
     """unneeded blank lines are found"""
 
-    __slots__ = ("category", "package", "filename")
+    __slots__ = ("category", "package", "version")
 
     def __init__(self, pkg):
         base.Result.__init__(self)
@@ -119,7 +119,7 @@ class NoFinalNewline(base.Result):
 
     """Ebuild's last line does not have a final newline."""
 
-    __slots__ = ("category", "package", "filename")
+    __slots__ = ("category", "package", "version")
 
     def __init__(self, pkg):
         base.Result.__init__(self)

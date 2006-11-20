@@ -158,7 +158,7 @@ class BadlyFormedXml(base.Result):
 
 class InvalidXml(base.Result):
     """xml fails dtd validation"""
-    __slots__ = ("category", "package", "file")
+    __slots__ = ("category", "package", "filename")
     
     def __init__(self, filename, category, package=None):
         base.Result.__init__(self, filename, category, package=None)

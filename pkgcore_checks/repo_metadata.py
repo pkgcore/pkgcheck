@@ -219,8 +219,8 @@ def reformat_chksums(iterable):
 
 class ConflictingChksums(base.Result):
 
-    __slots__ = ("category", "package", "version", "owning_pkgs",
-        "filename", "chksums")
+    __slots__ = ("category", "package", "version",
+        "filename", "chksums", "others")
     
     _sorter = staticmethod(operator.itemgetter(0))
     

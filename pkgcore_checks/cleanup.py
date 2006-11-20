@@ -53,7 +53,7 @@ class RedundantVersionWarning(Result):
     version
     """
 
-    __slots__ = ("category", "package", "slot", "later_versions")
+    __slots__ = ("category", "package", "version", "slot", "later_versions")
 
     def __init__(self, pkg, higher_pkgs):
         Result.__init__(self)

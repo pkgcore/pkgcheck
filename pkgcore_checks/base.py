@@ -98,6 +98,8 @@ class Template(Addon):
 
 class Result(object):
 
+    __slots__ = ()
+
     def __str__(self):
         try:
             return self.to_str()
