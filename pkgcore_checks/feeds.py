@@ -14,6 +14,30 @@ from pkgcore.restrictions import util
 from pkgcore.util.compatibility import any
 
 
+class VersionToEbuild(base.Addon):
+
+    """Convert from just a package to a (package, list_of_lines) tuple."""
+
+    transforms = [
+        (base.versioned_feed, base.ebuild_feed, base.version_scope, 20)]
+
+    def transform(self, feed):
+        for pkg in feed:
+            yield pkg, list(pkg.ebuild.get_fileobj())
+
+
+class EbuildToVersion(base.Addon):
+
+    """Convert (package, list_of_lines) to just package."""
+
+    transforms = [
+        (base.ebuild_feed, base.versioned_feed, base.version_scope, 5)]
+
+    def transform(self, feed):
+        for pkg, lines in feed:
+            yield pkg
+
+
 class VersionToPackage(base.Addon):
 
     transforms = [

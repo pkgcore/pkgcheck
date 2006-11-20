@@ -8,7 +8,7 @@
 from pkgcore_checks import (
     cleanup, deprecated, dropped_keywords, glsa_scan, imlate, metadata_checks,
     metadata_xml, pkgdir_checks, repo_metadata, stale_unstable, unported_mod_x,
-    unstable_only, visibility, feeds)
+    unstable_only, visibility, whitespace, feeds)
 
 
 pkgcore_plugins = {
@@ -33,8 +33,13 @@ pkgcore_plugins = {
               unported_mod_x.ModularXPortingReport,
               unstable_only.UnstableOnlyReport,
               visibility.VisibilityReport,
+              whitespace.WhitespaceCheck,
              ],
-    'transform': [feeds.VersionToPackage, feeds.PackageToCategory,
-                  feeds.PackageOrCategoryToRepo,
-                  ]
+    'transform': [
+        feeds.VersionToEbuild,
+        feeds.EbuildToVersion,
+        feeds.VersionToPackage,
+        feeds.PackageToCategory,
+        feeds.PackageOrCategoryToRepo,
+        ]
     }

@@ -28,6 +28,7 @@ repository_feed = "repo"
 category_feed = "cat"
 package_feed = "cat/pkg"
 versioned_feed = "cat/pkg-ver"
+ebuild_feed = "cat/pkg-ver+text"
 
 # Currently "plug" probably relies on these being valid list indices
 # (and on there not being a lot of them).
