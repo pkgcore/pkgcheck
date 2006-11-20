@@ -23,8 +23,11 @@ class CommandlineTest(TestCase, helpers.MainMixin):
     main = staticmethod(pcheck.main)
 
     def test_parser(self):
-        self.assertError('repository name was not specified')
         self.assertError(
-            "repo 'spork' is not a valid reponame (known repos: )", 'spork')
+            'No target repo specified on commandline or suite and current '
+            'directory is not inside a known repo.')
+        self.assertError(
+            "repo 'spork' is not a known repo (known repos: )",
+            '-r', 'spork')
         options = self.parse('spork', '--list-checks')
         self.assertTrue(options.list_checks)
