@@ -202,7 +202,7 @@ class ModularXPortingReport(base.Template):
                         break
                     elif h not in self.query_cache:
                         self.query_cache[h] = caching_iter(
-                            self.options.target_repo.itermatch(a))
+                            self.options.search_repo.itermatch(a))
                     if any(True for pkg in self.query_cache[h] if
                         vfilter.match(pkg)):
                         # one is visible.

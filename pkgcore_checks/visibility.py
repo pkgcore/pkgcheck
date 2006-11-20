@@ -66,7 +66,7 @@ class VisibilityReport(base.Template):
 
                     else:
                         matches = caching_iter(
-                            self.options.target_repo.itermatch(node))
+                            self.options.search_repo.itermatch(node))
                         if matches:
                             self.query_cache[h] = matches
                         elif not node.blocks and not node.category == "virtual":
