@@ -244,11 +244,13 @@ class ProfileAddon(base.Addon):
                     "profile-base location %r doesn't exist/isn't a dir" % (
                         profile_loc,))
         else:
-            if values.repo_base is None:
+            # TODO improve this to handle multiple profiles dirs.
+            repo_base = getattr(values.src_repo, 'base', None)
+            if repo_base is None:
                 raise optparse.OptionValueError(
                     'Need a target repo or --overlayed-repo that is a single '
                     'UnconfiguredTree for profile checks')
-            profile_loc = os.path.join(values.repo_base, "profiles")
+            profile_loc = os.path.join(repo_base, "profiles")
             if not os.path.isdir(profile_loc):
                 raise optparse.OptionValueError(
                     "repo %r lacks a profiles directory" % (values.src_repo,))
@@ -348,19 +350,18 @@ class LicenseAddon(base.Addon):
 
     @staticmethod
     def check_values(values):
+        values.license_dirs = []
         if values.license_dir is None:
-            if values.repo_base is None:
+            for repo_base in values.repo_bases:
+                candidate = os.path.join(repo_base, 'licenses')
+                if os.path.isdir(candidate):
+                    values.license_dirs.append(candidate)
+            if not values.license_dirs:
                 raise optparse.OptionValueError(
-                    'Need a target repo or --overlayed-repo that is a single '
-                    'UnconfiguredTree for license checks')
-            values.license_dir = os.path.join(values.repo_base, "licenses")
-            if not os.path.isdir(values.license_dir):
-                raise optparse.OptionValueError(
-                    "repo %r doesn't have a license directory, you must "
-                    "specify one via --license-dir or a different overlayed "
-                    "repo via --overlayed-repo" % (values.src_repo,))
+                    'No license dir detected, pick a target or overlayed repo '
+                    'with a license dir or specify one with --license-dir.')
         else:
             if not os.path.isdir(values.license_dir):
                 raise optparse.OptionValueError(
                     "--license-dir %r isn't a directory" % values.license_dir)
-        values.license_dir = osutils.abspath(values.license_dir)
+            values.license_dirs.append(osutils.abspath(values.license_dir))

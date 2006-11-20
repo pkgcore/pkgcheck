@@ -43,23 +43,22 @@ class MetadataReport(base.Template):
         self.valid_unstated_iuse = None
         self.arches = options.arches
         self.profile_base = options.profile_base_dir
-        self.licenses_dir = options.license_dir
         self.licenses = None
 
     def feed(self, pkgs, reporter):
         if any(x[0] == "license" for x in self.attrs):
-            lfp = self.licenses_dir
-            if not os.path.exists(lfp):
-                logging.warn(
-                    "disabling license checks- %s doesn't exist" % (lfp,))
-                self.licenses = None
-            else:
-                self.licenses = frozenset(listdir_files(lfp))
+            self.licenses = set()
+            for license_dir in self.options.license_dirs:
+                self.licenses.update(listdir_files(license_dir))
         else:
             self.licenses = None
         if any(x[0] == "iuse" for x in self.attrs):
-            self.valid_iuse, self.valid_unstated_iuse = \
-                self.load_valid_iuse(self.profile_base)
+            self.valid_iuse = set()
+            self.valid_unstated_iuse = set()
+            for repo_base in self.options.repo_bases:
+                new_iuse, new_unstated = self.load_valid_iuse(repo_base)
+                self.valid_iuse.update(new_iuse)
+                self.valid_unstated_iuse.update(new_unstated)
         else:
             self.valid_iuse = self.valid_unstated_iuse = None
 
@@ -167,7 +166,7 @@ class MetadataReport(base.Template):
                     if ie.errno != errno.EISDIR:
                         raise
                     del ie
-        except IOError, ie:
+        except (OSError, IOError), ie:
             if ie.errno != errno.ENOENT:
                 raise
         known_iuse.update(unstated_iuse)

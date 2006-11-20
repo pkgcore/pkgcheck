@@ -132,7 +132,9 @@ class UnusedLicense(base.Template):
         self.licenses = None
 
     def feed(self, pkgs, reporter):
-        self.licenses = set(listdir_files(self.options.license_dir))
+        self.licenses = set()
+        for license_dirs in self.options.license_dirs:
+            self.licenses.update(listdir_files(license_dir))
         for pkg in pkgs:
             yield pkg
             self.licenses.difference_update(iflatten_instance(pkg.license))

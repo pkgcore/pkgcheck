@@ -95,7 +95,7 @@ class OptionParser(commandline.OptionParser):
       packages to check.
     - src_repo is specified with -r or defaults to target_repo. It is used
       to get the profiles directory and other non-package repository data.
-    - repo_base is the path to src_repo (or None).
+    - repo_bases are the path(s) to selected repo(s).
     - search_repo is a multiplex of target_repo and src_repo if they are
       different or just target_repo if they are the same. This is used for
       things like visibility checks (it is passed to the checkers in "start").
@@ -110,7 +110,7 @@ class OptionParser(commandline.OptionParser):
 
         # These are all set in check_values based on other options, so have
         # no default set through add_option.
-        self.set_default('repo_base', None)
+        self.set_default('repo_bases', [])
         self.set_default('guessed_target_repo', False)
         self.set_default('guessed_suite', False)
         self.set_default('default_suite', False)
@@ -254,8 +254,10 @@ class OptionParser(commandline.OptionParser):
             values.search_repo = multiplex.tree(values.target_repo,
                                                 values.src_repo)
 
-        if isinstance(values.src_repo, repository.UnconfiguredTree):
-            values.repo_base = osutils.abspath(values.src_repo.base)
+        # TODO improve this to deal with a multiplex repo.
+        for repo in set((values.src_repo, values.target_repo)):
+            if isinstance(repo, repository.UnconfiguredTree):
+                values.repo_bases.append(osutils.abspath(repo.base))
 
         if args:
             values.limiters = lists.stable_unique(map(
@@ -384,7 +386,7 @@ def main(options, out, err):
         display_checks(out, options.checks)
         return 0
 
-    if options.repo_base is None:
+    if not options.repo_bases:
         err.write(
             'Warning: could not determine repository base for profiles. '
             'Some checks will not work. Either specify a plain target repo '

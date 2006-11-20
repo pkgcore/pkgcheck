@@ -37,12 +37,21 @@ class TreeVulnerabilitiesReport(base.Template):
                 raise optparse.OptionValueError("--glsa-dir '%r' doesn't "
                     "exist" % glsa_loc)
         else:
-            if values.repo_base is None:
+            if not values.repo_bases:
                 raise optparse.OptionValueError(
                     'Need a target repo or --overlayed-repo that is a single '
                     'UnconfiguredTree for license checks')
-            glsa_loc = os.path.join(values.repo_base, "metadata", "glsa")
-            if not os.path.isdir(glsa_loc):
+            for repo_base in values.repo_bases:
+                candidate = os.path.join(repo_base, "metadata", "glsa")
+                if os.path.isdir(candidate):
+                    if glsa_loc is None:
+                        glsa_loc = candidate
+                    else:
+                        raise optparse.OptionValueError(
+                            'multiple glsa sources is unsupported (detected '
+                            '%s and %s). Pick one with --glsa-dir.' % (
+                                glsa_loc, candidate))
+            if glsa_loc is None:
                 # form of 'optional' limiting; if they are using -c, force the
                 # error, else disable
                 if values.checks_to_run:
