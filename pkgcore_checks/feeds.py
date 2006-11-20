@@ -18,8 +18,8 @@ class VersionToEbuild(base.Addon):
 
     """Convert from just a package to a (package, list_of_lines) tuple."""
 
-    transforms = [
-        (base.versioned_feed, base.ebuild_feed, base.version_scope, 20)]
+    transforms = {
+        base.versioned_feed: (base.ebuild_feed, base.version_scope, 20)}
 
     def transform(self, feed):
         for pkg in feed:
@@ -30,8 +30,8 @@ class EbuildToVersion(base.Addon):
 
     """Convert (package, list_of_lines) to just package."""
 
-    transforms = [
-        (base.ebuild_feed, base.versioned_feed, base.version_scope, 5)]
+    transforms = {
+        base.ebuild_feed: (base.versioned_feed, base.version_scope, 5)}
 
     def transform(self, feed):
         for pkg, lines in feed:
@@ -40,8 +40,8 @@ class EbuildToVersion(base.Addon):
 
 class VersionToPackage(base.Addon):
 
-    transforms = [
-        (base.versioned_feed, base.package_feed, base.package_scope, 10)]
+    transforms = {
+        base.versioned_feed: (base.package_feed, base.package_scope, 10)}
 
     def transform(self, versions):
         for package, pkg_vers in itertools.groupby(versions,
@@ -52,8 +52,8 @@ class VersionToPackage(base.Addon):
 
 class PackageToCategory(base.Addon):
 
-    transforms = [
-        (base.package_feed, base.category_feed, base.category_scope, 10)]
+    transforms = {
+        base.package_feed: (base.category_feed, base.category_scope, 10)}
 
     @staticmethod
     def _filter(packages):
@@ -69,10 +69,10 @@ class PackageToCategory(base.Addon):
 
 class PackageOrCategoryToRepo(base.Addon):
 
-    transforms = [
-        (base.package_feed, base.repository_feed, base.repository_scope, 10),
-        (base.category_feed, base.repository_feed, base.repository_scope, 10),
-        ]
+    transforms = {
+        base.package_feed: (base.repository_feed, base.repository_scope, 10),
+        base.category_feed: (base.repository_feed, base.repository_scope, 10),
+        }
 
     def transform(self, input):
         all_packages = []

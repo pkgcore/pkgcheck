@@ -21,7 +21,7 @@ class DummyTransform(object):
     """
 
     def __init__(self, source, target, cost=10, scope=1):
-        self.transforms = [(source, target, scope, cost)]
+        self.transforms = {source: (target, scope, cost)}
 
     def transform(self, chunks):
         for chunk in chunks:
@@ -29,8 +29,13 @@ class DummyTransform(object):
         yield self
 
     def __repr__(self):
-        return '%s(%s, %s, %s, %s)' % ((
-                self.__class__.__name__,) + self.transforms[0])
+        return '%(class)s(%(source)s, %(target)s, %(cost)s, %(scope)s)' % {
+            'class': self.__class__.__name__,
+            'source': self.transforms.keys()[0],
+            'target': self.transforms.values()[0][0],
+            'cost': self.transforms.values()[0][1],
+            'scope': self.transforms.values()[0][2],
+            }
 
     def __eq__(self, other):
         return (self.__class__ is other.__class__ and

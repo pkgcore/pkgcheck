@@ -290,9 +290,9 @@ def make_transform_matrix(transforms, debug=None):
     """
     # Set of all types.
     source_types = frozenset(
-        t[0] for trans in transforms for t in trans.transforms)
+        t for trans in transforms for t in trans.transforms)
     dest_types = frozenset(
-        t[1] for trans in transforms for t in trans.transforms)
+        t[0] for trans in transforms for t in trans.transforms.itervalues())
 
     # type_matrix[scope, source, dest] -> (cost, transforms)
     type_matrix = {}
@@ -302,7 +302,7 @@ def make_transform_matrix(transforms, debug=None):
 
     # Initialize with basic transforms.
     for transform in transforms:
-        for source, dest, scope, cost in transform.transforms:
+        for source, (dest, scope, cost) in transform.transforms.iteritems():
             # Pick the cheapest option if more than one basic
             # transform handles this.
             current_pipe = type_matrix.get((scope, source, dest))
@@ -548,16 +548,11 @@ def plug(sinks, transforms, sources, reporter, debug=None):
                 break
             new_type = types_left.pop()
             for transform in transforms[scope, current_type, new_type][1]:
-                for (source_type, target_type, trans_scope,
-                     cost) in transform.transforms:
-                    if source_type == current_type:
-                        if debug is not None:
-                            debug('going from %s to %s',
-                                  current_type, target_type)
-                        current_type = target_type
-                        break
-                else:
-                    assert False, 'unreachable'
+                target_type, trans_scope, cost = transform.transforms[
+                    current_type]
+                if debug is not None:
+                    debug('going from %s to %s', current_type, target_type)
+                current_type = target_type
                 assert scope >= trans_scope
                 tail = transform.transform(tail)
         actual_pipes.append(tail)
