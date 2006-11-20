@@ -21,7 +21,7 @@ import sys
 from pkgcore.config import configurable
 from pkgcore.util import formatters
 from pkgcore.util.demandload import demandload
-demandload(globals(), "logging time ")
+demandload(globals(), "logging")
 
 
 repository_feed = "repo"
@@ -295,9 +295,6 @@ def plug(sinks, transforms, sources, reporter, debug=None):
     # TODO maybe optimize scope handling.
     # This was bolted on as an afterthought, and it shows.
 
-    if debug is not None:
-        starttime = time.time()
-
     assert sinks
 
     # Figure out the best available scope.
@@ -555,6 +552,4 @@ def plug(sinks, transforms, sources, reporter, debug=None):
                 tail = transform.transform(tail)
         actual_pipes.append(tail)
     assert not sinks, '%r left' % (sinks,)
-    if debug is not None:
-        debug('Plugged in %s seconds ', time.time() - starttime)
     return out_of_scope_sinks, unreachables, good_sinks, actual_pipes
