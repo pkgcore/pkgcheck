@@ -133,7 +133,7 @@ class UnusedLicense(base.Template):
 
     def feed(self, pkgs, reporter):
         self.licenses = set()
-        for license_dirs in self.options.license_dirs:
+        for license_dir in self.options.license_dirs:
             self.licenses.update(listdir_files(license_dir))
         for pkg in pkgs:
             yield pkg
