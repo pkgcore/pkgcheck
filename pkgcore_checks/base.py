@@ -289,14 +289,16 @@ def make_transform_matrix(transforms, debug=None):
     @returns: a dict to pass in as the transforms argument to L{plug}.
     """
     # Set of all types.
-    types = set()
-    for transform in transforms:
-        for source, dest, min_scope, cost in transform.transforms:
-            types.add(source)
-            types.add(dest)
+    source_types = frozenset(
+        t[0] for trans in transforms for t in trans.transforms)
+    dest_types = frozenset(
+        t[1] for trans in transforms for t in trans.transforms)
 
     # type_matrix[scope, source, dest] -> (cost, transforms)
     type_matrix = {}
+
+    # (source, dest) -> lowest scope of transforms that were improved.
+    to_try = {}
 
     # Initialize with basic transforms.
     for transform in transforms:
@@ -306,50 +308,62 @@ def make_transform_matrix(transforms, debug=None):
             current_pipe = type_matrix.get((scope, source, dest))
             if current_pipe is None or current_pipe[0] > cost:
                 type_matrix[scope, source, dest] = (cost, (transform,))
+                old_scope = to_try.get((source, dest))
+                if old_scope is None or old_scope > scope:
+                    to_try[source, dest] = scope
 
     if debug is not None:
         debug('base type matrix:')
         for (scope, source, dest), (cost, pipe) in type_matrix.iteritems():
             debug('%s: %s -> %s : %s (%s)', scope, source, dest, pipe, cost)
     # Keep trying to build cheaper transforms.
-    while True:
-        progress = False
-        for source in types:
-            for dest in types:
-                if source == dest:
-                    continue
-                current_pipe = None
-                for scope in scopes:
-                    new_current = type_matrix.get((scope, source, dest))
-                    if new_current is not None and (
-                        current_pipe is None or
-                        current_pipe[0] >= new_current[0]):
-                        # The new pipe is better, use it as "current".
-                        current_pipe = new_current
-                    elif current_pipe is not None:
-                        # A pipe we hit earlier with lower
-                        # requirements is better than this one.
-                        progress = True
-                        type_matrix[scope, source, dest] = current_pipe
-                    for halfway in types:
-                        first_half_pipe = type_matrix.get(
-                            (scope, source, halfway))
-                        if first_half_pipe is None:
-                            continue
-                        second_half_pipe = type_matrix.get(
-                            (scope, halfway, dest))
-                        if second_half_pipe is None:
-                            continue
-                        new_cost = first_half_pipe[0] + second_half_pipe[0]
-                        if current_pipe is None or new_cost < current_pipe[0]:
-                            progress = True
-                            type_matrix[scope, source, dest] = current_pipe = (
-                                new_cost,
-                                first_half_pipe[1] + second_half_pipe[1])
-                            # Do not break out of the loop: we may hit a
-                            # combination that is even cheaper.
-        if not progress:
-            break
+    while to_try:
+        current_to_try = to_try
+        to_try = {}
+        for (source, dest), lowest_scope in current_to_try.iteritems():
+            improved_cost, improved_pipe = type_matrix[
+                lowest_scope, source, dest]
+            for scope in xrange(lowest_scope, max(scopes) + 1):
+                # Check if our current pipe is better than one with a
+                # higher scope requirement.
+                current = type_matrix.get((scope, source, dest))
+                if current is None or current[0] > improved_cost:
+                    # Our lower requirements pipe wins.
+                    type_matrix[scope, source, dest] = (improved_cost,
+                                                        improved_pipe)
+                elif current is not None:
+                    # The higher-requirements one is cheaper.
+                    improved_cost, improved_pipe = current
+                # Build new pipes using this "improved" pipe as first
+                # component.
+                for final_dest in dest_types:
+                    halfpipe = type_matrix.get((scope, dest, final_dest))
+                    if halfpipe is None:
+                        continue
+                    new_cost = improved_cost + halfpipe[0]
+                    current = type_matrix.get((scope, source, final_dest))
+                    if current is None or new_cost < current[0]:
+                        # We found a better one.
+                        type_matrix[scope, source, final_dest] = (
+                            new_cost, improved_pipe + halfpipe[1])
+                        old_scope = to_try.get((source, final_dest))
+                        if old_scope is None or old_scope > scope:
+                            to_try[source, final_dest] = scope
+                # Build new pipes using this "improved" pipe as second
+                # component.
+                for initial_source in source_types:
+                    halfpipe = type_matrix.get((scope, initial_source, dest))
+                    if halfpipe is None:
+                        continue
+                    new_cost = improved_cost + halfpipe[0]
+                    current = type_matrix.get((scope, initial_source, dest))
+                    if current is None or new_cost < current[0]:
+                        # We found a better one.
+                        type_matrix[scope, initial_source, dest] = (
+                            new_cost, halfpipe[1] + improved_pipe)
+                        old_scope = to_try.get((initial_source, dest))
+                        if old_scope is None or old_scope > scope:
+                            to_try[initial_source, dest] = scope
 
     if debug is not None:
         debug('full type matrix:')
