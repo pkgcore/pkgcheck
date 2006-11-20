@@ -1,4 +1,5 @@
 # Copyright: 2006 Markus Ullmann <jokey@gentoo.org>
+# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
 import os
@@ -28,6 +29,11 @@ class WhitespaceCheck(base.Template):
                         reporter.add_report(DoubleEmptyLine(pkg, lineno + 1))
                     else:
                         lastlineempty = True
+            if lastlineempty:
+                reporter.add_report(TrailingEmptyLine(pkg))
+            # Dealing with empty ebuilds is just paranoia
+            if lines and not lines[-1].endswith('\n'):
+                reporter.add_report(NoFinalNewline(pkg))
 
 
 class WhitespaceFound(base.Result):
@@ -82,3 +88,53 @@ class DoubleEmptyLine(base.Result):
     <msg>ebuild has unneeded empty line %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package,
     self.version, self.linenumber)
+
+
+class TrailingEmptyLine(base.Result):
+
+    """unneeded blank lines are found"""
+
+    __slots__ = ("category", "package", "filename")
+
+    def __init__(self, pkg):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+
+    def to_str(self):
+        return "%s/%s-%s.ebuild has trailing blank line(s)" % (
+            self.category, self.package, self.version)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>ebuild has trailing blank line(s)</msg>
+</check>""" % (
+            self.__class__.__name__, self.category, self.package, self.version)
+
+
+class NoFinalNewline(base.Result):
+
+    """Ebuild's last line does not have a final newline."""
+
+    __slots__ = ("category", "package", "filename")
+
+    def __init__(self, pkg):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+
+    def to_str(self):
+        return "%s/%s-%s.ebuild does not end in a newline" % (
+            self.category, self.package, self.version)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>ebuild does not end in a newline</msg>
+</check>""" % (
+            self.__class__.__name__, self.category, self.package, self.version)
