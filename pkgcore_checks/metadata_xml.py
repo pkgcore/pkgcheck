@@ -4,9 +4,12 @@
 import os
 from pkgcore_checks import base
 from pkgcore.util.demandload import demandload
-demandload(globals(), "urllib:urlopen "
+demandload(
+    globals(),
+    "urllib:urlopen "
     "tempfile:NamedTemporaryFile "
     "libxml2 "
+    "pkgcore.log:logger "
     "pkgcore.spawn:spawn,find_binary ")
 
 
@@ -14,6 +17,12 @@ class base_check(base.Template):
     """base class for metadata.xml scans"""
 
     dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
+
+    @classmethod
+    def mangle_option_parser(cls, parser):
+        if not parser.has_option('--metadata-dtd'):
+            parser.add_option(
+                '--metadata-dtd', help='location to cache %s' % (cls.dtd_url,))
 
     def __init__(self, options):
         base.Template.__init__(self, options)
@@ -30,12 +39,24 @@ class base_check(base.Template):
         if loc is not None:
             self.dtd_loc = loc
         else:
-            dtd = urlopen(self.dtd_url).read()
-            self.dtd_file = NamedTemporaryFile()
-            self.dtd_loc = self.dtd_file.name
-            os.chmod(self.dtd_loc, 0644)
-            self.dtd_file.write(dtd)
-            self.dtd_file.flush()
+            self.dtd_loc = self.options.metadata_dtd
+            if self.dtd_loc is not None:
+                if not os.path.exists(self.dtd_loc):
+                    logger.warn('metadata.dtd cannot be opened, refetching')
+                    dtd = urlopen(self.dtd_url).read()
+                    try:
+                        open(self.dtd_loc, 'w').write(dtd)
+                    except (IOError, OSError), e:
+                        logger.warn(
+                            'metadata.dtd could not be written (%s)', e)
+                        self.dtd_loc = None
+            if self.dtd_loc is None:
+                dtd = urlopen(self.dtd_url).read()
+                self.dtd_file = NamedTemporaryFile()
+                self.dtd_loc = self.dtd_file.name
+                os.chmod(self.dtd_loc, 0644)
+                self.dtd_file.write(dtd)
+                self.dtd_file.flush()
         try:
             self.validator = libxml_parser(self.dtd_loc).validate
         except ImportError:

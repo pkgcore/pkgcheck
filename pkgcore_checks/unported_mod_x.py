@@ -9,8 +9,12 @@ from pkgcore.restrictions import boolean
 from pkgcore.ebuild.atom import atom
 from pkgcore.package import virtual
 from pkgcore_checks.util import get_cpvstr
-demandload(globals(), "pkgcore.util.xml:escape")
-demandload(globals(), "urllib:urlopen")
+demandload(
+    globals(),
+    "urllib:urlopen "
+    "pkgcore.util.xml:escape "
+    "pkgcore.log:logger "
+    )
 
 
 class ModularXPortingReport(base.Template):
@@ -26,6 +30,12 @@ class ModularXPortingReport(base.Template):
     valid_modx_pkgs_url = \
         "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
 
+    @classmethod
+    def mangle_option_parser(cls, parser):
+        parser.add_option(
+            '--mod-x-packages',
+            help='location to cache %s' % (cls.valid_modx_pkgs_url,))
+
     def __init__(self, options, arches, query_cache, depset_cache):
         base.Template.__init__(self, options)
         self.query_cache = query_cache.query_cache
@@ -34,8 +44,25 @@ class ModularXPortingReport(base.Template):
         # use 7.1 so it catches any >7.0
         self.x7 = virtual.package(None, "virtual/x11-7.1")
         self.x6 = virtual.package(None, "virtual/x11-6.9")
+        if self.options.mod_x_packages is not None:
+            try:
+                package_list = open(self.options.mod_x_packages, 'r')
+            except (IOError, OSError), e:
+                logger.warn(
+                    'modular X package file cannot be opened (%s), refetching',
+                    e)
+                package_list = list(urlopen(self.valid_modx_pkgs_url))
+                try:
+                    f = open(self.options.mod_x_packages, 'w')
+                    for line in package_list:
+                        f.write(line)
+                except (IOError, OSError), e:
+                    logger.warn(
+                        'modular X package file could not be written (%s)', e)
+        else:
+            package_list = urlopen(self.valid_modx_pkgs_url)
         self.valid_modx_keys = frozenset(x for x in
-            (y.strip() for y in urlopen(self.valid_modx_pkgs_url)) if
+            (y.strip() for y in package_list) if
                 x and x != "virtual/x11")
 
     def feed(self, pkgsets, reporter):
