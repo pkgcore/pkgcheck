@@ -13,7 +13,7 @@ from pkgcore.plugin import get_plugins
 
 from pkgcore_checks import plugins, base, __version__, feeds
 
-demandload.demandload(globals(), "optparse textwrap re os "
+demandload.demandload(globals(), "optparse textwrap re os logging "
     "pkgcore.util:osutils "
     "pkgcore.restrictions:packages "
     "pkgcore.restrictions.values:StrExactMatch "
@@ -431,8 +431,7 @@ def main(options, out, err):
         init_addon(addon)
 
     if options.debug:
-        import logging
-        debug = logging.warning
+        debug = logging.debug
     else:
         debug = None
 
