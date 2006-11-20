@@ -30,10 +30,9 @@ package_feed = "cat/pkg"
 versioned_feed = "cat/pkg-ver"
 ebuild_feed = "cat/pkg-ver+text"
 
-# Currently "plug" probably relies on these being valid list indices
-# (and on there not being a lot of them).
-scopes = range(4)
-version_scope, package_scope, category_scope, repository_scope = scopes
+# The plugger needs to be able to compare those and know the highest one.
+version_scope, package_scope, category_scope, repository_scope = range(4)
+max_scope = repository_scope
 
 
 class Addon(object):
@@ -323,7 +322,7 @@ def make_transform_matrix(transforms, debug=None):
         for (source, dest), lowest_scope in current_to_try.iteritems():
             improved_cost, improved_pipe = type_matrix[
                 lowest_scope, source, dest]
-            for scope in xrange(lowest_scope, max(scopes) + 1):
+            for scope in xrange(lowest_scope, max_scope + 1):
                 # Check if our current pipe is better than one with a
                 # higher scope requirement.
                 current = type_matrix.get((scope, source, dest))

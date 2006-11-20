@@ -20,7 +20,7 @@ class DummyTransform(object):
     sequences works.
     """
 
-    def __init__(self, source, target, cost=10, scope=1):
+    def __init__(self, source, target, cost=10, scope=base.package_scope):
         self.transforms = {source: (target, scope, cost)}
 
     def transform(self, chunks):
@@ -58,7 +58,7 @@ class DummySource(object):
 
     cost = 10
 
-    def __init__(self, dummy, scope=1):
+    def __init__(self, dummy, scope=base.package_scope):
         self.feed_type = dummy
         self.scope = scope
 
@@ -77,7 +77,7 @@ class DummySink(object):
     creating your own.
     """
 
-    def __init__(self, dummy, scope=1):
+    def __init__(self, dummy, scope=base.package_scope):
         self.feed_type = dummy
         self.scope = scope
 
@@ -90,7 +90,7 @@ class DummySink(object):
         return '%s(%s)' % (self.__class__.__name__, self.feed_type)
 
 
-def trans(source, target, cost=10, scope=1):
+def trans(source, target, cost=10, scope=base.package_scope):
     return DummyTransform(dummies[source], dummies[target], cost, scope)
 
 
@@ -269,14 +269,14 @@ class PlugTest(TestCase):
             (source, sink1, trans(1, 2), sink2, trans(2, 3), sink3))
 
     def test_scope_affects_transform_cost(self):
-        trans_fast = trans(1, 2, scope=2, cost=1)
-        trans_slow = trans(1, 2, scope=1, cost=10)
+        trans_fast = trans(1, 2, scope=base.repository_scope, cost=1)
+        trans_slow = trans(1, 2, scope=base.package_scope, cost=10)
         self.assertPipes(
             [sinks[2]],
             [trans_slow, trans_fast],
             [sources[1]],
             (sources[1], trans_slow, sinks[2]))
-        source = DummySource(dummies[1], scope=2)
+        source = DummySource(dummies[1], scope=base.repository_scope)
         self.assertPipes(
             [sinks[2]],
             [trans_slow, trans_fast],
