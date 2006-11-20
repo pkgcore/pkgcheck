@@ -32,7 +32,8 @@ ebuild_feed = "cat/pkg-ver+text"
 
 # Currently "plug" probably relies on these being valid list indices
 # (and on there not being a lot of them).
-version_scope, package_scope, category_scope, repository_scope = range(4)
+scopes = range(4)
+version_scope, package_scope, category_scope, repository_scope = scopes
 
 
 class Addon(object):
@@ -258,6 +259,115 @@ def multiplex_reporter(reporters):
     return make_multiplex_reporter
 
 
+# The general idea is we will usually not have a large number of
+# types, so we can use a reasonably straightforward bruteforce
+# approach. We may have quite a bunch of sources, transforms or
+# sinks, but we only care about the cheapest of those for a type.
+
+# The plan:
+# - Build a matrix with the cheapest sequence of
+#   transforms for every source and target type.
+# - Use this matrix to build all runnable pipes: pipes that start at one
+#   of our sources and include at least one of our sinks.
+# - Report any sinks we cannot drive and throw those away.
+# - If we have one, return the cheapest single pipe driving all
+#   (remaining) sinks.
+# - Find the cheapest combination of pipes that drives all sinks
+#   and return that.
+
+# We prefer a single pipeline because this increases the
+# readability of our output.
+
+# TODO maybe optimize scope handling.
+# This was bolted on as an afterthought, and it shows.
+
+def make_transform_matrix(transforms, debug=None):
+    """Convert a sequence of transforms to a dict for L{plug}.
+
+    @param sinks: sequence of transform instances.
+    @param debug: A logging function or C{None}.
+    @returns: a dict to pass in as the transforms argument to L{plug}.
+    """
+    # Set of all types.
+    types = set()
+    for transform in transforms:
+        for source, dest, min_scope, cost in transform.transforms:
+            types.add(source)
+            types.add(dest)
+
+    # type_matrix[scope, source, dest] -> (cost, transforms)
+    type_matrix = {}
+
+    # Initialize with basic transforms.
+    for transform in transforms:
+        for source, dest, scope, cost in transform.transforms:
+            # Pick the cheapest option if more than one basic
+            # transform handles this.
+            current_pipe = type_matrix.get((scope, source, dest))
+            if current_pipe is None or current_pipe[0] > cost:
+                type_matrix[scope, source, dest] = (cost, (transform,))
+                # Throw away anything with stricter scope requirements
+                # that we can stand in for.
+                for compat_scope in scopes:
+                    current_pipe = type_matrix.get((scope, source, dest))
+                    if current_pipe is not None and current_pipe[0] < cost:
+                        # The existing entry is better.
+                        break
+                    # We are at least as good as the existing entry.
+                    type_matrix[scope, source, dest] = (cost, (transform,))
+
+    if debug is not None:
+        debug('base type matrix:')
+        for (scope, source, dest), (cost, pipe) in type_matrix.iteritems():
+            debug('%s: %s -> %s : %s (%s)', scope, source, dest, pipe, cost)
+    # Keep trying to build cheaper transforms.
+    while True:
+        progress = False
+        for source in types:
+            for dest in types:
+                if source == dest:
+                    continue
+                current_pipe = None
+                for scope in scopes:
+                    new_current = type_matrix.get((scope, source, dest))
+                    if new_current is not None and (
+                        current_pipe is None or
+                        current_pipe[0] >= new_current[0]):
+                        # The new pipe is better, use it as "current".
+                        current_pipe = new_current
+                    elif current_pipe is not None:
+                        # A pipe we hit earlier with lower
+                        # requirements is better than this one.
+                        progress = True
+                        type_matrix[scope, source, dest] = current_pipe
+                    for halfway in types:
+                        first_half_pipe = type_matrix.get(
+                            (scope, source, halfway))
+                        if first_half_pipe is None:
+                            continue
+                        second_half_pipe = type_matrix.get(
+                            (scope, halfway, dest))
+                        if second_half_pipe is None:
+                            continue
+                        new_cost = first_half_pipe[0] + second_half_pipe[0]
+                        if current_pipe is None or new_cost < current_pipe[0]:
+                            progress = True
+                            type_matrix[scope, source, dest] = current_pipe = (
+                                new_cost,
+                                first_half_pipe[1] + second_half_pipe[1])
+                            # Do not break out of the loop: we may hit a
+                            # combination that is even cheaper.
+        if not progress:
+            break
+
+    if debug is not None:
+        debug('full type matrix:')
+        for (scope, source, dest), (cost, pipe) in type_matrix.iteritems():
+            debug('%s: %s -> %s : %s (%s)', scope, source, dest, pipe, cost)
+
+    return type_matrix
+
+
 def plug(sinks, transforms, sources, reporter, debug=None):
     """Plug together a pipeline.
 
@@ -265,7 +375,7 @@ def plug(sinks, transforms, sources, reporter, debug=None):
     sources are source instances. For now at least.
 
     @param sinks: Sequence of check instances.
-    @param transforms: Sequence of transform instances.
+    @param transforms: A dict returned from L{make_transform_matrix}.
     @param sources: Sequence of source instances.
     @param reporter: reporter instance.
     @param debug: A logging function or C{None}.
@@ -273,28 +383,6 @@ def plug(sinks, transforms, sources, reporter, debug=None):
         that cannot be reached through transforms, a sequence of running sinks,
         a sequence of pipes.
     """
-    # The general idea is we will usually not have a large number of
-    # types, so we can use a reasonably straightforward bruteforce
-    # approach. We may have quite a bunch of sources, transforms or
-    # sinks, but we only care about the cheapest of those for a type.
-
-    # The plan:
-    # - Build a matrix with the cheapest sequence of
-    #   transforms for every source and target type.
-    # - Use this matrix to build all runnable pipes: pipes that start at one
-    #   of our sources and include at least one of our sinks.
-    # - Report any sinks we cannot drive and throw those away.
-    # - If we have one, return the cheapest single pipe driving all
-    #   (remaining) sinks.
-    # - Find the cheapest combination of pipes that drives all sinks
-    #   and return that.
-
-    # We prefer a single pipeline because this increases the
-    # readability of our output.
-
-    # TODO maybe optimize scope handling.
-    # This was bolted on as an afterthought, and it shows.
-
     assert sinks
 
     # Figure out the best available scope.
@@ -334,89 +422,6 @@ def plug(sinks, transforms, sources, reporter, debug=None):
         if current_source is None or current_source.cost > new_source.cost:
             source_map[new_source.scope, new_source.feed_type] = new_source
 
-    # Set of all types.
-    types = set(typename for scope, typename in source_map).union(
-        typename for scope, typename in sink_map)
-    for transform in transforms:
-        for source, dest, min_scope, cost in transform.transforms:
-            types.add(source)
-            types.add(dest)
-
-    # type_matrix[scope, source, dest] -> (cost, transforms)
-    type_matrix = {}
-
-    # Initialize with basic transforms.
-    for transform in transforms:
-        for source, dest, scope, cost in transform.transforms:
-            # Skip if out of scope, bump to lowest sink scope.
-            if scope > best_source_scope:
-                continue
-            if scope < lowest_sink_scope:
-                scope = lowest_sink_scope
-            # Pick the cheapest option if more than one basic
-            # transform handles this.
-            current_pipe = type_matrix.get((scope, source, dest))
-            if current_pipe is None or current_pipe[0] > cost:
-                type_matrix[scope, source, dest] = (cost, (transform,))
-                # Throw away anything with stricter scope requirements
-                # that we can stand in for.
-                for compat_scope in xrange(scope + 1, best_source_scope + 1):
-                    current_pipe = type_matrix.get((scope, source, dest))
-                    if current_pipe is not None and current_pipe[0] < cost:
-                        # The existing entry is better.
-                        break
-                    # We are at least as good as the existing entry.
-                    type_matrix[scope, source, dest] = (cost, (transform,))
-
-    if debug is not None:
-        debug('base type matrix:')
-        for (scope, source, dest), (cost, pipe) in type_matrix.iteritems():
-            debug('%s: %s -> %s : %s (%s)', scope, source, dest, pipe, cost)
-    # Keep trying to build cheaper transforms.
-    while True:
-        progress = False
-        for source in types:
-            for dest in types:
-                if source == dest:
-                    continue
-                current_pipe = None
-                for scope in xrange(lowest_sink_scope, best_source_scope + 1):
-                    new_current = type_matrix.get((scope, source, dest))
-                    if new_current is not None and (
-                        current_pipe is None or
-                        current_pipe[0] >= new_current[0]):
-                        # The new pipe is better, use it as "current".
-                        current_pipe = new_current
-                    elif current_pipe is not None:
-                        # A pipe we hit earlier with lower
-                        # requirements is better than this one.
-                        progress = True
-                        type_matrix[scope, source, dest] = current_pipe
-                    for halfway in types:
-                        first_half_pipe = type_matrix.get(
-                            (scope, source, halfway))
-                        if first_half_pipe is None:
-                            continue
-                        second_half_pipe = type_matrix.get(
-                            (scope, halfway, dest))
-                        if second_half_pipe is None:
-                            continue
-                        new_cost = first_half_pipe[0] + second_half_pipe[0]
-                        if current_pipe is None or new_cost < current_pipe[0]:
-                            progress = True
-                            type_matrix[scope, source, dest] = current_pipe = (
-                                new_cost,
-                                first_half_pipe[1] + second_half_pipe[1])
-                            # Do not break out of the loop: we may hit a
-                            # combination that is even cheaper.
-        if not progress:
-            break
-
-    if debug is not None:
-        debug('full type matrix:')
-        for (scope, source, dest), (cost, pipe) in type_matrix.iteritems():
-            debug('%s: %s -> %s : %s (%s)', scope, source, dest, pipe, cost)
-
     # Tuples of (price, scope, (visited, types))
     # Includes sources with no "direct" sinks for simplicity.
     pipes = []
@@ -432,7 +437,7 @@ def plug(sinks, transforms, sources, reporter, debug=None):
         for sink_scope, sink_type in sink_map:
             if sink_type in pipe or sink_scope > scope:
                 continue
-            halfpipe = type_matrix.get((scope, pipe[-1], sink_type))
+            halfpipe = transforms.get((scope, pipe[-1], sink_type))
             if halfpipe is not None:
                 unprocessed.append((
                         cost + halfpipe[0], scope, pipe + (sink_type,)))
@@ -537,7 +542,7 @@ def plug(sinks, transforms, sources, reporter, debug=None):
             if not types_left:
                 break
             new_type = types_left.pop()
-            for transform in type_matrix[scope, current_type, new_type][1]:
+            for transform in transforms[scope, current_type, new_type][1]:
                 for (source_type, target_type, trans_scope,
                      cost) in transform.transforms:
                     if source_type == current_type:

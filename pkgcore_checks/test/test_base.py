@@ -120,7 +120,7 @@ class PlugTest(TestCase):
         expected_pipes = set(expected_pipes)
         try:
             act_scope, act_unreachable, act_sinks, actual_pipes = base.plug(
-                sinks, transforms, sources, None)
+                sinks, base.make_transform_matrix(transforms), sources, None)
             actual_pipes = set(tuple(t) for t in actual_pipes)
         except KeyboardInterrupt:
             raise
@@ -130,7 +130,9 @@ class PlugTest(TestCase):
             # Rerun in debug mode.
             def _debug(message, *args):
                 print message % args
-            base.plug(sinks, transforms, sources, None, _debug)
+            base.plug(
+                sinks, base.make_transform_matrix(transforms), sources, None,
+                _debug)
             raise
         good = expected_pipes & actual_pipes
         expected_pipes -= good
@@ -140,7 +142,9 @@ class PlugTest(TestCase):
             message = ['', '']
             def _debug(format, *args):
                 message.append(format % args)
-            tuple(base.plug(sinks, transforms, sources, None, _debug))
+            tuple(base.plug(
+                    sinks, base.make_transform_matrix(transforms), sources,
+                    None, _debug))
             message.extend(['', 'Expected:'])
             for pipe in expected_pipes:
                 message.extend(str(p) for p in pipe)
@@ -216,7 +220,7 @@ class PlugTest(TestCase):
         # mainly that sinks[1] is not run twice.
         pipes = frozenset(tuple(p) for p in base.plug(
                 [sinks[1], sinks[2], sinks[3]],
-                [trans(1, 2), trans(1, 3)],
+                base.make_transform_matrix([trans(1, 2), trans(1, 3)]),
                 [sources[1]],
                 None)[3])
         self.assertIn(pipes, set([
@@ -226,7 +230,8 @@ class PlugTest(TestCase):
                                (sources[1], trans(1, 2), sinks[2])])]))
         pipes = frozenset(tuple(p) for p in base.plug(
                 [sinks[1], sinks[2], sinks[3]],
-                [trans(0, 1), trans(1, 2), trans(1, 3)],
+                base.make_transform_matrix(
+                    [trans(0, 1), trans(1, 2), trans(1, 3)]),
                 [sources[0]],
                 None)[3])
         self.assertIn(pipes, set([

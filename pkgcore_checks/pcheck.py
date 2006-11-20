@@ -430,21 +430,24 @@ def main(options, out, err):
         # Ignore the return value, we just need to populate addons_map.
         init_addon(addon)
 
-    transforms = list(transform(options)
-                      for transform in get_plugins('transform', plugins))
-    sinks = list(addon for addon in addons_map.itervalues()
-                 if getattr(addon, 'feed_type', False))
-
-    reporter.start()
     if options.debug:
         import logging
         debug = logging.warning
     else:
         debug = None
+
+    transforms = list(transform(options)
+                      for transform in get_plugins('transform', plugins))
+    transform_matrix = base.make_transform_matrix(transforms, debug=debug)
+    sinks = list(addon for addon in addons_map.itervalues()
+                 if getattr(addon, 'feed_type', False))
+
+    reporter.start()
+
     for filterer in options.limiters:
         sources = [feeds.RestrictedRepoSource(options.target_repo, filterer)]
         out_of_scope, unreachables, good_sinks, pipes = base.plug(
-            sinks, transforms, sources, reporter, debug)
+            sinks, transform_matrix, sources, reporter, debug)
         # TODO the reporting of out of scope/unreachable needs further thought.
 
         # The trick is we want to distinguish between things that are
