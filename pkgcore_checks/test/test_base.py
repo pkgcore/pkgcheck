@@ -85,8 +85,8 @@ class DummySink(object):
         return '%s(%s)' % (self.__class__.__name__, self.feed_type)
 
 
-def trans(source, target, cost=10):
-    return DummyTransform(dummies[source], dummies[target], cost)
+def trans(source, target, cost=10, scope=1):
+    return DummyTransform(dummies[source], dummies[target], cost, scope)
 
 
 sources = tuple(DummySource(dummy) for dummy in dummies)
@@ -131,8 +131,8 @@ class PlugTest(TestCase):
             def _debug(message, *args):
                 print message % args
             base.plug(
-                sinks, base.make_transform_matrix(transforms), sources, None,
-                _debug)
+                sinks, base.make_transform_matrix(transforms, _debug),
+                sources, None, _debug)
             raise
         good = expected_pipes & actual_pipes
         expected_pipes -= good
@@ -143,8 +143,8 @@ class PlugTest(TestCase):
             def _debug(format, *args):
                 message.append(format % args)
             tuple(base.plug(
-                    sinks, base.make_transform_matrix(transforms), sources,
-                    None, _debug))
+                    sinks, base.make_transform_matrix(transforms, _debug),
+                    sources, None, _debug))
             message.extend(['', 'Expected:'])
             for pipe in expected_pipes:
                 message.extend(str(p) for p in pipe)
@@ -262,3 +262,18 @@ class PlugTest(TestCase):
             [trans(1, 2), trans(2, 3)],
             [source],
             (source, sink1, trans(1, 2), sink2, trans(2, 3), sink3))
+
+    def test_scope_affects_transform_cost(self):
+        trans_fast = trans(1, 2, scope=2, cost=1)
+        trans_slow = trans(1, 2, scope=1, cost=10)
+        self.assertPipes(
+            [sinks[2]],
+            [trans_slow, trans_fast],
+            [sources[1]],
+            (sources[1], trans_slow, sinks[2]))
+        source = DummySource(dummies[1], scope=2)
+        self.assertPipes(
+            [sinks[2]],
+            [trans_slow, trans_fast],
+            [source],
+            (source, trans_fast, sinks[2]))

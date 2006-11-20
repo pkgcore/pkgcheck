@@ -306,15 +306,6 @@ def make_transform_matrix(transforms, debug=None):
             current_pipe = type_matrix.get((scope, source, dest))
             if current_pipe is None or current_pipe[0] > cost:
                 type_matrix[scope, source, dest] = (cost, (transform,))
-                # Throw away anything with stricter scope requirements
-                # that we can stand in for.
-                for compat_scope in scopes:
-                    current_pipe = type_matrix.get((scope, source, dest))
-                    if current_pipe is not None and current_pipe[0] < cost:
-                        # The existing entry is better.
-                        break
-                    # We are at least as good as the existing entry.
-                    type_matrix[scope, source, dest] = (cost, (transform,))
 
     if debug is not None:
         debug('base type matrix:')
