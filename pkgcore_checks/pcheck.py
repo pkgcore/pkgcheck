@@ -7,13 +7,11 @@
 
 
 from pkgcore.util import commandline, parserestrict, lists, demandload
-from pkgcore.util.compatibility import any
-from pkgcore.config import ConfigHint
 from pkgcore.plugin import get_plugins
 
 from pkgcore_checks import plugins, base, __version__, feeds
 
-demandload.demandload(globals(), "optparse textwrap re os logging "
+demandload.demandload(globals(), "optparse textwrap os logging "
     "pkgcore.util:osutils "
     "pkgcore.restrictions:packages "
     "pkgcore.restrictions.values:StrExactMatch "
@@ -36,54 +34,6 @@ def repo_callback(option, opt_str, value, parser):
             'instance; must specify a raw ebuild repo, not type %r: %r' % (
                 value, repo.__class__, repo))
     setattr(parser.values, option.dest, repo)
-
-
-class _CheckSet(object):
-
-    """Run only listed checks."""
-
-    # No config hint here since this one is abstract.
-
-    def __init__(self, patterns):
-        self.patterns = list(convert_check_filter(pat) for pat in patterns)
-
-class Whitelist(_CheckSet):
-
-    """Only run checks matching one of the provided patterns."""
-
-    pkgcore_config_type = ConfigHint(
-        {'patterns': 'list'}, typename='pcheck_checkset')
-
-    def filter(self, checks):
-        return list(
-            c for c in checks
-            if any(f('%s.%s' % (c.__module__, c.__name__))
-                   for f in self.patterns))
-
-class Blacklist(_CheckSet):
-
-    """Only run checks not matching any of the provided patterns."""
-
-    pkgcore_config_type = ConfigHint(
-        {'patterns': 'list'}, typename='pcheck_checkset')
-
-    def filter(self, checks):
-        return list(
-            c for c in checks
-            if not any(f('%s.%s' % (c.__module__, c.__name__))
-                       for f in self.patterns))
-
-
-class Suite(object):
-
-    pkgcore_config_type = ConfigHint({
-            'target_repo': 'ref:repo', 'src_repo': 'ref:repo',
-            'checkset': 'ref:pcheck_checkset'}, typename='pcheck_suite')
-
-    def __init__(self, target_repo, checkset=None, src_repo=None):
-        self.target_repo = target_repo
-        self.checkset = checkset
-        self.src_repo = src_repo
 
 
 class OptionParser(commandline.OptionParser):
@@ -323,34 +273,6 @@ class OptionParser(commandline.OptionParser):
             self.error(str(e))
 
         return values, ()
-
-
-def convert_check_filter(tok):
-    """Convert an input string into a filter function.
-
-    The filter function accepts a qualified python identifier string
-    and returns a bool.
-
-    The input can be a regexp or a simple string. A simple string must
-    match a component of the qualified name exactly. A regexp is
-    matched against the entire qualified name.
-
-    Matches are case-insensitive.
-
-    Examples::
-
-      convert_check_filter('foo')('a.foo.b') == True
-      convert_check_filter('foo')('a.foobar') == False
-      convert_check_filter('foo.*')('a.foobar') == False
-      convert_check_filter('foo.*')('foobar') == True
-    """
-    tok = tok.lower()
-    if '+' in tok or '*' in tok:
-        return re.compile(tok, re.I).match
-    else:
-        def func(name):
-            return tok in name.lower().split('.')
-        return func
 
 
 def display_checks(out, checks):

@@ -10,6 +10,15 @@ from pkgcore_checks import base
 dummies = list('dummy-%s' % (i,) for i in xrange(0, 10))
 
 
+class UtilitiesTest(TestCase):
+
+    def test_convert_check_filter(self):
+        self.assertTrue(base.convert_check_filter('foo')('a.foO.b'))
+        self.assertFalse(base.convert_check_filter('foo')('a.foObaR'))
+        self.assertFalse(base.convert_check_filter('foo.*')('a.fOoBar'))
+        self.assertTrue(base.convert_check_filter('foo.*')('fOoBar'))
+
+
 class DummyTransform(object):
 
     """Dummy transform object just yielding its source with itself appended.
