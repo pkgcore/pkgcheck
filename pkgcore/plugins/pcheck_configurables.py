@@ -2,14 +2,14 @@
 # License: GPL2
 
 
-from pkgcore_checks import base, pcheck
+from pkgcore_checks import reporters, pcheck
 
 pkgcore_plugins = {
     'configurable': [
-        base.xml_reporter,
-        base.plain_reporter,
-        base.fancy_reporter,
-        base.multiplex_reporter,
+        reporters.xml_reporter,
+        reporters.plain_reporter,
+        reporters.fancy_reporter,
+        reporters.multiplex_reporter,
         pcheck.Whitelist,
         pcheck.Blacklist,
         pcheck.Suite,

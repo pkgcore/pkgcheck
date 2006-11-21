@@ -17,10 +17,6 @@ identical to the input scope.
 """
 
 
-import sys
-
-from pkgcore.config import configurable
-from pkgcore.util import formatters
 from pkgcore.util.demandload import demandload
 demandload(globals(), "logging")
 
@@ -122,10 +118,6 @@ class Result(object):
         self.version = pkg.fullver
 
 
-class ReporterInitError(Exception):
-    """Raise this if a reporter factory fails."""
-
-
 class Reporter(object):
 
     def add_report(self, result):
@@ -136,129 +128,6 @@ class Reporter(object):
 
     def finish(self):
         pass
-
-
-class StrReporter(Reporter):
-
-    def __init__(self, out):
-        """Initialize.
-
-        @type out: L{pkgcore.util.formatters.Formatter}.
-        """
-        Reporter.__init__(self)
-        self.out = out
-        self.first_report = True
-
-    def add_report(self, result):
-        if self.first_report:
-            self.out.write()
-            self.first_report = False
-        self.out.write(result.to_str())
-
-    def finish(self):
-        if not self.first_report:
-            self.out.write()
-
-
-class FancyReporter(Reporter):
-
-    def __init__(self, out):
-        """Initialize.
-
-        @type out: L{pkgcore.util.formatters.Formatter}.
-        """
-        Reporter.__init__(self)
-        self.out = out
-        self.key = None
-
-    def add_report(self, result):
-        cat = getattr(result, 'category', None)
-        pkg = getattr(result, 'package', None)
-        if cat is None or pkg is None:
-            key = 'unknown'
-        else:
-            key = '%s/%s' % (cat, pkg)
-        if key != self.key:
-            self.out.write()
-            self.out.write(self.out.bold, key)
-            self.key = key
-        self.out.first_prefix.append('  ')
-        self.out.later_prefix.append('    ')
-        self.out.write(
-            self.out.fg('yellow'), result.__class__.__name__, self.out.reset,
-            ': ', result.to_str())
-        self.out.first_prefix.pop()
-        self.out.later_prefix.pop()
-
-
-class XmlReporter(Reporter):
-
-    def __init__(self, out):
-        """Initialize.
-
-        @type out: L{pkgcore.util.formatters.Formatter}.
-        """
-        Reporter.__init__(self)
-        self.out = out
-
-    def start(self):
-        self.out.write('<checks>')
-
-    def add_report(self, result):
-        self.out.write(result.to_xml())
-
-    def finish(self):
-        self.out.write('</checks>')
-
-
-class MultiplexReporter(Reporter):
-
-    def __init__(self, *reporters):
-        if len(reporters) < 2:
-            raise ValueError("need at least two reporters")
-        Reporter.__init__(self)
-        self.reporters = tuple(reporters)
-
-    def start(self):
-        for x in self.reporters:
-            x.start()
-
-    def add_report(self, result):
-        for x in self.reporters:
-            x.add_report(result)
-
-    def finish(self):
-        for x in self.reporters:
-            x.finish()
-
-
-def make_configurable_reporter_factory(klass):
-    @configurable({'dest': 'str'}, typename='pcheck_reporter_factory')
-    def configurable_reporter_factory(dest=None):
-        if dest is None:
-            return klass
-        def reporter_factory(out):
-            try:
-                f = open(dest, 'w')
-            except (IOError, OSError), e:
-                raise ReporterInitError('Cannot write to %r (%s)' % (dest, e))
-            return klass(formatters.PlainTextFormatter(f))
-        return reporter_factory
-    return configurable_reporter_factory
-
-xml_reporter = make_configurable_reporter_factory(XmlReporter)
-xml_reporter.__name__ = 'xml_reporter'
-plain_reporter = make_configurable_reporter_factory(StrReporter)
-plain_reporter.__name__ = 'plain_reporter'
-fancy_reporter = make_configurable_reporter_factory(FancyReporter)
-fancy_reporter.__name__ = 'fancy_reporter'
-
-@configurable({'reporters': 'refs:pcheck_reporter_factory'},
-              typename='pcheck_reporter_factory')
-def multiplex_reporter(reporters):
-    def make_multiplex_reporter(out):
-        return MultiplexReporter(*list(factory(out) for factory in reporters))
-    return make_multiplex_reporter
 
 
 # The general idea is we will usually not have a large number of

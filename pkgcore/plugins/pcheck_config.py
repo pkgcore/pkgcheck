@@ -19,7 +19,7 @@ pkgcore_plugins = {
                     'patterns': '',
                     }),
             'pcheck-fancy-reporter': basics.ConfigSectionFromStringDict({
-                    'class': 'pkgcore_checks.base.fancy_reporter',
+                    'class': 'pkgcore_checks.reporters.fancy_reporter',
                     'default': 'true',
                     }),
             }],

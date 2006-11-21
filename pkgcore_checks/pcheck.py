@@ -19,6 +19,7 @@ demandload.demandload(globals(), "optparse textwrap re os logging "
     "pkgcore.restrictions.values:StrExactMatch "
     "pkgcore.repository:multiplex "
     "pkgcore.ebuild:repository "
+    "pkgcore_checks:errors "
     )
 
 
@@ -406,7 +407,7 @@ def main(options, out, err):
 
     try:
         reporter = options.reporter(out)
-    except base.ReporterInitError, e:
+    except errors.ReporterInitError, e:
         err.write(err.fg('red'), err.bold, '!!! ', err.reset,
                   'Error initializing reporter: ', e)
         return 1
