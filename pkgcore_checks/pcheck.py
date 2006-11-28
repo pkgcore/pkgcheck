@@ -166,8 +166,21 @@ class OptionParser(commandline.OptionParser):
                 values.src_repo = values.suite.src_repo
             # If we were called with no atoms we want to force
             # cwd-based detection.
-            if values.target_repo is None and args:
-                values.checkset = values.suite.target_repo
+            if values.target_repo is None:
+                if args:
+                    values.target_repo = values.suite.target_repo
+                elif values.suite.target_repo is not None:
+                    # No atoms were passed in, so we want to guess
+                    # what to scan based on cwd below. That only makes
+                    # sense if we are inside the target repo. We still
+                    # want to pick the suite's target repo if we are
+                    # inside it, in case there is more than one repo
+                    # definition with a base that contains our dir.
+                    if cwd is None:
+                        cwd = os.getcwd()
+                    repo_base = getattr(values.suite.target_repo, 'base', None)
+                    if repo_base is not None and cwd.startswith(repo_base):
+                        values.target_repo = values.suite.target_repo
         if values.target_repo is None:
             # We have no target repo (not explicitly passed, not from
             # a suite, not from an earlier guess at the target_repo).
