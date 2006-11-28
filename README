@@ -68,7 +68,7 @@ Finally, you can define a different checkset per suite::
   [pcheck-portdir-suite]
   class=pkgcore_checks.base.Suite
   target_repo=portdir
-  checkset=no-arch-checkset
+  checkset=no-arch-checks
 
 This disables checks that are not interesting unless you can set
 stable keywords for this suite. See Checksets_ for more information.
@@ -91,7 +91,7 @@ ones. Examples::
   patterns=unstable_only stale_unstable imlate
 
   [only-arch-checks]
-  class=pkgcore_checks.base.Blacklist
+  class=pkgcore_checks.base.Whitelist
   patterns=unstable_only stale_unstable imlate
 
 The first disables the three specified checks, the second enables only
@@ -102,8 +102,8 @@ they need to match a component of the name in ``--list-checks``
 exactly. If it looks like a regexp (currently defined as "contains a +
 or \*") this needs to match the entire name.
 
-Checksets called ``only-arch-checks`` and ``all-checks`` are defined
-by default.
+Checksets called ``no-arch-checks`` and ``all-checks`` are defined by
+default.
 
 There are various ways to pick the checkset to use: ``pquery
 --checkset``, the checkset setting of a suite and setting
