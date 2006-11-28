@@ -68,7 +68,7 @@ Finally, you can define a different checkset per suite::
   [pcheck-portdir-suite]
   class=pkgcore_checks.base.Suite
   target_repo=portdir
-  inherit=no-arch-checkset
+  checkset=no-arch-checkset
 
 This disables checks that are not interesting unless you can set
 stable keywords for this suite. See Checksets_ for more information.
