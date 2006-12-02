@@ -74,9 +74,10 @@ class TreeVulnerabilitiesReport(base.Template):
         self.vulns = {}
 
     def feed(self, pkgs, reporter):
-        self.enabled = self.options.glsa_enabled
         self.vulns.clear()
-        if not self.enabled:
+        if not self.options.glsa_enabled:
+            for pkg in pkgs:
+                yield pkg
             return
         # this is a bit brittle
         for r in GlsaDirSet(self.glsa_dir):
@@ -87,10 +88,9 @@ class TreeVulnerabilitiesReport(base.Template):
                 self.vulns.setdefault(r[0].key, []).append(r[1])
         for pkg in pkgs:
             yield pkg
-            if self.enabled:
-                for vuln in self.vulns.get(pkg.key, []):
-                    if vuln.match(pkg):
-                        reporter.add_report(VulnerablePackage(pkg, vuln))
+            for vuln in self.vulns.get(pkg.key, []):
+                if vuln.match(pkg):
+                    reporter.add_report(VulnerablePackage(pkg, vuln))
         self.vulns.clear()
 
 

@@ -259,11 +259,11 @@ class OptionParser(commandline.OptionParser):
             values.checks = list(values.checkset.filter(values.checks))
 
         if values.checks_to_run:
-            whitelist = Whitelist(values.checks_to_run)
+            whitelist = base.Whitelist(values.checks_to_run)
             values.checks = list(whitelist.filter(values.checks))
 
         if values.checks_to_disable:
-            blacklist = Blacklist(values.checks_to_disable)
+            blacklist = base.Blacklist(values.checks_to_disable)
             values.checks = list(blacklist.filter(values.checks))
 
         if not values.checks:
@@ -367,6 +367,11 @@ def main(options, out, err):
         init_addon(addon)
 
     if options.debug:
+        err.write('target repo: ', repr(options.target_repo))
+        err.write('source repo: ', repr(options.src_repo))
+        err.write('base dirs: ', repr(options.repo_bases))
+        for filterer in options.limiters:
+            err.write('limiter: ', repr(filterer))
         debug = logging.debug
     else:
         debug = None

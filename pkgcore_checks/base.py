@@ -155,8 +155,15 @@ def convert_check_filter(tok):
     if '+' in tok or '*' in tok:
         return re.compile(tok, re.I).match
     else:
+        toklist = tok.split('.')
         def func(name):
-            return tok in name.lower().split('.')
+            chunks = name.lower().split('.')
+            if len(toklist) > len(chunks):
+                return False
+            for i in xrange(len(chunks)):
+                if chunks[i:i+len(toklist)] == toklist:
+                    return True
+            return False
         return func
 
 

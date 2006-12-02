@@ -17,6 +17,10 @@ class UtilitiesTest(TestCase):
         self.assertFalse(base.convert_check_filter('foo')('a.foObaR'))
         self.assertFalse(base.convert_check_filter('foo.*')('a.fOoBar'))
         self.assertTrue(base.convert_check_filter('foo.*')('fOoBar'))
+        self.assertTrue(base.convert_check_filter('foo.bar')('foo.bar.baz'))
+        self.assertTrue(base.convert_check_filter('bar.baz')('foo.bar.baz'))
+        self.assertFalse(base.convert_check_filter('baz.spork')('foo.bar.baz'))
+        self.assertFalse(base.convert_check_filter('bar.foo')('foo.bar.baz'))
 
 
 class DummyTransform(object):
