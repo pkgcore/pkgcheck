@@ -16,8 +16,7 @@ demandload.demandload(
     'os '
     'pkgcore.util:osutils '
     'pkgcore.restrictions:packages,values '
-    'pkgcore.config:profiles '
-    'pkgcore.ebuild:domain '
+    'pkgcore.ebuild:domain,profiles '
     )
 
 
@@ -110,7 +109,7 @@ class ProfileAddon(base.Addon):
             p = options.profile_func(x)
             arch = p.arch
             if arch is None:
-                raise profiles.ProfileException(
+                raise profiles.ProfileError(p.path, 'make.defaults',
                     "profile %s lacks arch settings, unable to use it" % x)
             arch_profiles.setdefault(p.arch, []).append((x, p))
             

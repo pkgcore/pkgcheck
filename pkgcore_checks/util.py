@@ -12,13 +12,13 @@ demandload(globals(), "pkgcore.ebuild.profiles:OnDiskProfile "
 
 
 def get_profile_from_repo(repo, profile_name):
-    return OnDiskProfile(profile_name, base_repo=repo)
+    return OnDiskProfile(get_repo_path(repo), profile_name)
 
 def get_profile_from_path(path, profile_name):
-    return OnDiskProfile(profile_name, base_path=path)
+    return OnDiskProfile(path, profile_name)
 
 def get_profile_mask(profile):
-    return generate_masking_restrict(profile.maskers)
+    return generate_masking_restrict(profile.masks)
 
 def get_repo_path(repo):
     if not isinstance(repo, basestring):
