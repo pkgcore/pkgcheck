@@ -6,7 +6,7 @@
 
 
 import optparse
-from itertools import chain
+from itertools import chain, ifilter
 
 from pkgcore_checks import base, util
 
@@ -76,7 +76,91 @@ class QueryCacheAddon(base.Addon):
             self.query_cache.clear()
 
 
+class profile_data(object):
+
+    def __init__(self, profile_name, key, virtuals, provides, vfilter,
+        masked_use, forced_use, lookup_cache, insoluable):
+        self.key = key
+        self.name = profile_name
+        self.virtuals = virtuals
+        self.provides_repo = provides
+        self.masked_use = masked_use
+        self.forced_use = forced_use
+        self.cache = lookup_cache
+        self.insoluable = insoluable
+        self.visible = vfilter.match
+
+    def identify_use(self, pkg, known_flags):
+        # note we're trying to be *really* careful about not creating
+        # pointless intermediate sets unless required
+        # kindly don't change that in any modifications, it adds up.
+        enabled = known_flags.intersection(
+            domain.generic_collapse_data(self.forced_use, pkg))
+        immutable = frozenset(chain(enabled,
+            ifilter(known_flags.__contains__,
+            domain.generic_collapse_data(self.masked_use, pkg))
+            ))
+        return immutable, enabled
+
+
 class ProfileAddon(base.Addon):
+
+    @staticmethod
+    def check_values(values):
+        if values.profiles_enabled is None:
+            values.profiles_enabled = []
+        if values.profiles_disabled is None:
+            values.profiles_disabled = []
+        profile_loc = getattr(values, "profile_dir", None)
+
+        if profile_loc is not None:
+            if not os.path.isdir(profile_loc):
+                raise optparse.OptionValueError(
+                    "profile-base location %r doesn't exist/isn't a dir" % (
+                        profile_loc,))
+        else:
+            # TODO improve this to handle multiple profiles dirs.
+            repo_base = getattr(values.src_repo, 'base', None)
+            if repo_base is None:
+                raise optparse.OptionValueError(
+                    'Need a target repo or --overlayed-repo that is a single '
+                    'UnconfiguredTree for profile checks')
+            profile_loc = os.path.join(repo_base, "profiles")
+            if not os.path.isdir(profile_loc):
+                raise optparse.OptionValueError(
+                    "repo %r lacks a profiles directory" % (values.src_repo,))
+
+        profile_loc = osutils.abspath(profile_loc)
+        values.profile_func = currying.pre_curry(util.get_profile_from_path,
+                                                 profile_loc)
+        values.profile_base_dir = profile_loc
+
+    @staticmethod
+    def mangle_option_parser(parser):
+        group = parser.add_option_group('Profiles')
+        group.add_option(
+            "--profile-base", action='store', type='string',
+            dest='profile_dir', default=None,
+            help="filepath to base profiles directory")
+        group.add_option(
+            "--profile-disable-dev", action='store_true',
+            default=False, dest='profile_ignore_dev',
+            help="disable scanning of dev profiles")
+        group.add_option(
+            "--profile-disable-deprecated", action='store_true',
+            default=False, dest='profile_ignore_deprecated',
+            help="disable scanning of deprecated profiles")
+        group.add_option(
+            "--profile-disable-profiles-desc", action='store_false',
+            default=True, dest='profiles_desc_enabled',
+            help="disable loading profiles to scan from profiles.desc, you "
+            "will want to enable profiles manually via --profile-enable")
+        group.add_option(
+            '--profile-enable', action='append', type='string',
+            dest='profiles_enabled', help="specify a profile to scan")
+        group.add_option(
+            '--profile-disable', action='append', type='string',
+            dest='profiles_disabled', help="specify a profile to ignore")
 
     def __init__(self, options, *args):
         base.Addon.__init__(self, options)
@@ -127,7 +211,7 @@ class ProfileAddon(base.Addon):
         self.global_insoluable = set()
         profile_filters = {}
         self.keywords_filter = {}
-        profile_evaluate_dict = {}
+#        profile_evaluate_dict = {}
         ignore_deprecated = self.options.profile_ignore_deprecated
         
         for k in self.desired_arches:
@@ -140,7 +224,10 @@ class ProfileAddon(base.Addon):
             unstable_r = packages.PackageRestriction("keywords", 
                 values.ContainmentMatch(stable_key, unstable_key))
             
-            profile_filters.update({stable_key:{}, unstable_key:{}})
+            default_masked_use = [(packages.AlwaysTrue, (x,)) for x in
+                self.official_arches if x != stable_key]
+            
+            profile_filters.update({stable_key:[], unstable_key:[]})
             for profile_name in arch_profiles.get(k, []):
                 if not isinstance(profile_name, basestring):
                     profile_name, profile = profile_name
@@ -148,18 +235,17 @@ class ProfileAddon(base.Addon):
                     profile = options.profile_func(profile_name)
                 if ignore_deprecated and profile.deprecated:
                     continue
-                s = set(profile.maskers)
-                s.update(self.options.search_repo.default_visibility_limiters)
-                mask = domain.generate_masking_restrict(s)
-                virtuals = profile.virtuals(options.search_repo)
-                # force all use masks to negated, and all other arches but this
-                non_tristate = frozenset(list(self.official_arches) +
-                    list(profile.use_mask) + list(profile.use_force))
-                use_flags = frozenset([stable_key] + list(profile.use_force))
+
+                mask = domain.generate_masking_restrict(profile.masks)
+                virtuals = profile.make_virtuals_repo(options.search_repo)
+
+                immutable_flags = domain.make_data_dict(
+                    default_masked_use,
+                    profile.masked_use.iteritems())
+                enabled_flags = domain.make_data_dict(
+                    [(packages.AlwaysTrue, (stable_key,))],
+                    profile.forced_use.iteritems())
                 
-                package_use_force = profile.package_use_force
-                package_use_mask  = profile.package_use_mask
-                                
                 # used to interlink stable/unstable lookups so that if 
                 # unstable says it's not visible, stable doesn't try
                 # if stable says something is visible, unstable doesn't try.
@@ -167,28 +253,32 @@ class ProfileAddon(base.Addon):
                 unstable_insoluable = containers.ProtectedSet(
                     self.global_insoluable)
 
-                # ensure keywords is last, else it triggers a metadata pull
-                # filter is thus- not masked, and keywords match
+                # few notes.  for filter, ensure keywords is last, on the
+                # offchance a non-metadata based restrict foregos having to
+                # access the metadata.
+                # note that the cache/insoluable are inversly paired;
+                # stable cache is usable for unstable, but not vice versa.
+                # unstable insoluable is usable for stable, but not vice versa
 
-                # virtual repo, flags, visibility filter, known_good, known_bad
-                profile_filters[stable_key][profile_name] = [
-                    virtuals, package_use_mask, package_use_force,
-                    use_flags, non_tristate,
+                profile_filters[stable_key].append(profile_data(
+                    profile_name, stable_key,
+                    virtuals, profile.provides_repo,
                     packages.AndRestriction(mask, stable_r),
-                    stable_cache,
-                    containers.ProtectedSet(unstable_insoluable),
-                    profile.package_provided_repo]
-                profile_filters[unstable_key][profile_name] = [
-                    virtuals, package_use_mask, package_use_force,
-                    use_flags, non_tristate,
-                    packages.AndRestriction(mask, unstable_r), 
-                    containers.ProtectedSet(stable_cache), unstable_insoluable,
-                    profile.package_provided_repo]
-                
-                for k in (stable_key, unstable_key):
-                    profile_evaluate_dict.setdefault(k, {}).setdefault(
-                        (non_tristate, use_flags), []).append(
-                            (package_use_mask, package_use_force, profile_name))
+                    immutable_flags, enabled_flags, stable_cache,
+                    containers.ProtectedSet(unstable_insoluable)))
+
+                profile_filters[unstable_key].append(profile_data(
+                    profile_name, unstable_key,
+                    virtuals, profile.provides_repo,
+                    packages.AndRestriction(mask, unstable_r),
+                    immutable_flags, enabled_flags,
+                    containers.ProtectedSet(stable_cache),
+                    unstable_insoluable))
+
+#                for k in (stable_key, unstable_key):
+#                    profile_evaluate_dict.setdefault(k, {}).setdefault(
+#                        (non_tristate, use_flags), []).append(
+#                            (package_use_mask, package_use_force, profile_name))
 
             self.keywords_filter[stable_key] = stable_r
             self.keywords_filter[unstable_key] = packages.PackageRestriction(
@@ -200,69 +290,16 @@ class ProfileAddon(base.Addon):
             (k, self.keywords_filter[k])
             for k in sorted(self.keywords_filter))
         self.profile_filters = profile_filters
-        self.profile_evaluate_dict = profile_evaluate_dict
-
-    @staticmethod
-    def mangle_option_parser(parser):
-        group = parser.add_option_group('Profiles')
-        group.add_option(
-            "--profile-base", action='store', type='string',
-            dest='profile_dir', default=None,
-            help="filepath to base profiles directory")
-        group.add_option(
-            "--profile-disable-dev", action='store_true',
-            default=False, dest='profile_ignore_dev',
-            help="disable scanning of dev profiles")
-        group.add_option(
-            "--profile-disable-deprecated", action='store_true',
-            default=False, dest='profile_ignore_deprecated',
-            help="disable scanning of deprecated profiles")
-        group.add_option(
-            "--profile-disable-profiles-desc", action='store_false',
-            default=True, dest='profiles_desc_enabled',
-            help="disable loading profiles to scan from profiles.desc, you "
-            "will want to enable profiles manually via --profile-enable")
-        group.add_option(
-            '--profile-enable', action='append', type='string',
-            dest='profiles_enabled', help="specify a profile to scan")
-        group.add_option(
-            '--profile-disable', action='append', type='string',
-            dest='profiles_disabled', help="specify a profile to ignore")
-
-    @staticmethod
-    def check_values(values):
-        if values.profiles_enabled is None:
-            values.profiles_enabled = []
-        if values.profiles_disabled is None:
-            values.profiles_disabled = []
-        profile_loc = getattr(values, "profile_dir", None)
-
-        if profile_loc is not None:
-            if not os.path.isdir(profile_loc):
-                raise optparse.OptionValueError(
-                    "profile-base location %r doesn't exist/isn't a dir" % (
-                        profile_loc,))
-        else:
-            # TODO improve this to handle multiple profiles dirs.
-            repo_base = getattr(values.src_repo, 'base', None)
-            if repo_base is None:
-                raise optparse.OptionValueError(
-                    'Need a target repo or --overlayed-repo that is a single '
-                    'UnconfiguredTree for profile checks')
-            profile_loc = os.path.join(repo_base, "profiles")
-            if not os.path.isdir(profile_loc):
-                raise optparse.OptionValueError(
-                    "repo %r lacks a profiles directory" % (values.src_repo,))
-
-        profile_loc = osutils.abspath(profile_loc)
-        values.profile_func = currying.pre_curry(util.get_profile_from_path,
-                                                 profile_loc)
-        values.profile_base_dir = profile_loc
+#        self.profile_evaluate_dict = profile_evaluate_dict
 
     def identify_profiles(self, pkg):
-        return [(key, flags_dict) for key, flags_dict in
-            self.profile_evaluate_dict.iteritems() if
-            self.keywords_filter[key].match(pkg)]
+        l = []
+        for key in set(pkg.keywords):
+            for profile in self.profile_filters.get(key, ()):
+                if not profile.visible(pkg):
+                    continue
+                l.append(profile)
+        return l
 
 
 class EvaluateDepSetAddon(base.Addon):
@@ -301,38 +338,9 @@ class EvaluateDepSetAddon(base.Addon):
             self.pkg_profiles_cache[pkg] = profiles
         diuse = depset.known_conditionals
         collapsed = {}
-        for key, flags_dict in profiles:
-            for flags, profile_data in flags_dict.iteritems():
-                # XXX optimize this
-                empty_umd = None
-                empty_ufd = None
-                for umd, ufd, profile_name in profile_data:
-                    ur = umd.get(pkey, None)
-                    if ur is None:
-                        if empty_umd is None:
-                            tri_flags = empty_umd = diuse.intersection(flags[0])
-                        else:
-                            tri_flags = empty_umd
-                    else:
-                        tri_flags = diuse.intersection(chain(flags[0],
-                            *[v for restrict, v in 
-                                ur.iteritems()
-                                if restrict.match(pkg)]))
-                    ur = ufd.get(pkey, None)
-                    if ur is None:
-                        if empty_ufd is None:
-                            set_flags = empty_ufd = diuse.intersection(flags[1])
-                        else:
-                            set_flags = empty_ufd
-                    else:
-                        set_flags = diuse.intersection(chain(flags[1],
-                            *[v for restrict, v in
-                                ur.iteritems()
-                                if restrict.match(pkg)]))
-
-                    collapsed.setdefault((tri_flags, 
-                        set_flags), []).append((key, profile_name, 
-                            self.profiles.profile_filters[key][profile_name]))
+        for profile in profiles:
+            immutables, enabled = profile.identify_use(pkg, diuse)
+            collapsed.setdefault((immutables, enabled), []).append(profile)
 
         return [(depset.evaluate_depset(k[1], tristate_filter=k[0]), v)
             for k,v in collapsed.iteritems()]

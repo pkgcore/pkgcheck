@@ -88,23 +88,28 @@ class VisibilityReport(base.Template):
                 self.process_depset(pkg, attr, edepset, profiles, reporter)
 
     def check_visibility_vcs(self, pkg, reporter):
-        for key, profile_dict in self.profiles.profile_filters.iteritems():
+        for key, profiles in self.profiles.profile_filters.iteritems():
             if key.startswith("~") or key.startswith("-"):
                 continue
-            for profile_name, vals in profile_dict.iteritems():
-                if vals[5].match(pkg):
-                    reporter.add_report(VisibleVcsPkg(pkg, key, profile_name))
+            for profile in profiles:
+                if profile.visible(pkg):
+                    reporter.add_report(VisibleVcsPkg(pkg,
+                        profile.key, profile.name))
 
     def process_depset(self, pkg, attr, depset, profiles, reporter):
         csolutions = depset.cnf_solutions()
-        failures = set()
 
-        for key, profile_name, data in profiles:
-            failures.clear()
-            virtuals, puse_mask, puse_flags, flags, non_tristate, vfilter, \
-                cache, insoluable, pprovided = data
-
-            masked_status = not vfilter.match(pkg)
+        for profile in profiles:
+            failures = set()
+            # is it visible?  ie, is it masked?
+            # if so, skip it.
+            # long term, probably should do testing in the same respect we do
+            # for other visibility tiers
+            cache = profile.cache
+            provided = profile.provides_repo.match
+            is_virtual = profile.virtuals.match
+            insoluable = profile.insoluable
+            visible = profile.visible
             for required in csolutions:
                 if any(True for a in required if a.blocks):
                     continue
@@ -114,16 +119,16 @@ class VisibilityReport(base.Template):
                         pass
                     elif h in cache:
                         break
-                    elif pprovided is not None and pprovided.match(a):
+                    elif provided(a):
                         break
-                    elif virtuals.match(a):
+                    elif is_virtual(a):
                         cache.add(h)
                         break
                     elif a.category == "virtual" and h not in self.query_cache:
                         insoluable.add(h)
                     else:
                         if any(True for pkg in self.query_cache[h] if
-                            vfilter.match(pkg)):
+                            visible(pkg)):
                             cache.add(h)
                             break
                         else:
@@ -132,8 +137,8 @@ class VisibilityReport(base.Template):
                     # no matches.  not great, should collect them all
                     failures.update(required)
             if failures:
-                reporter.add_report(NonsolvableDeps(pkg, attr, key,
-                    profile_name, list(failures), masked=masked_status))
+                reporter.add_report(NonsolvableDeps(pkg, attr, profile.key,
+                    profile.name, list(failures)))
 
 
 class VisibleVcsPkg(base.Result):

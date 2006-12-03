@@ -158,14 +158,16 @@ class ModularXPortingReport(base.Template):
         # not valid: x11-base/xorg-x11 floating
 
         if not skip_depends:
-            for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
-                pkg, "depends", pkg.depends):
+            for edepset, profiles in \
+                self.depset_cache.collapse_evaluate_depset(pkg, "depends",
+                pkg.depends):
                 self.process_depset(pkg, "depends", edepset, profiles,
                                     reporter)
 
         if not skip_rdepends:
-            for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
-                pkg, "rdepends", pkg.rdepends):
+            for edepset, profiles in \
+                self.depset_cache.collapse_evaluate_depset(pkg, "rdepends",
+                pkg.rdepends):
                 self.process_depset(pkg, "rdepends", edepset, profiles,
                                     reporter)
 
@@ -179,10 +181,11 @@ class ModularXPortingReport(base.Template):
 
         csolutions = depset.cnf_solutions()
         failed = set()
-        for key, profile_name, data in profiles:
+        for profile in profiles:
             failed.clear()
-            virtuals, puse_mask, puse_flags, flags, non_tristate, vfilter, \
-                cache, insoluable, pprovided = data
+            cache = profile.cache
+            insoluable = profile.insoluable
+            visible = profile.visible
             for or_block in csolutions:
                 if not any(True for x in or_block if x.key == "virtual/x11"):
                     continue
@@ -203,9 +206,8 @@ class ModularXPortingReport(base.Template):
                     elif h not in self.query_cache:
                         self.query_cache[h] = caching_iter(
                             self.options.search_repo.itermatch(a))
-                    if any(True for pkg in self.query_cache[h] if
-                        vfilter.match(pkg)):
-                        # one is visible.
+                    # if a provider is visible, good to go.
+                    if any(True for pkg in self.query_cache[h] if visible(pkg)):
                         cache.add(h)
                         break
                     else:
@@ -213,8 +215,8 @@ class ModularXPortingReport(base.Template):
                 else:
                     failed.update(modx_candidates)
             if failed:
-                reporter.add_report(VisibilityCausedNotPorted(pkg, key,
-                    profile_name, attr, sorted(failed)))
+                reporter.add_report(VisibilityCausedNotPorted(pkg,
+                    profile.key, profile.name, attr, sorted(failed)))
 
 
 class SuggestRemoval(base.Result):
