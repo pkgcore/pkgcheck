@@ -44,6 +44,7 @@ class QueryCacheAddon(base.Addon):
 
     feed_type = base.package_feed
     scope = base.version_scope
+    priority = 1
 
     @staticmethod
     def mangle_option_parser(parser):
@@ -309,6 +310,7 @@ class EvaluateDepSetAddon(base.Addon):
 
     feed_type = base.package_feed
     scope = base.version_scope
+    priority = 1
 
     def __init__(self, options, profiles, query_cache, *args):
         base.Addon.__init__(self, options)
