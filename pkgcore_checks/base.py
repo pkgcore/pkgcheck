@@ -483,7 +483,7 @@ def plug(sinks, transforms, sources, reporter, debug=None):
     for sinks_chunk in sink_map.itervalues():
         sinks.extend(sinks_chunk)
     sinks.sort(key=operator.attrgetter('priority'))
-    good_sinks = sinks[:]
+    good_sinks = sinks
     actual_pipes = []
     for scope, pipe in to_run:
         if debug is not None:
