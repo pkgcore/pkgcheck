@@ -17,6 +17,8 @@ identical to the input scope.
 """
 
 
+import operator
+
 from pkgcore.config import ConfigHint
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
@@ -90,6 +92,9 @@ class Template(Addon):
     """Base template for a check."""
 
     scope = 0
+    # The plugger sorts based on this. Should be left alone except for
+    # weird pseudo-checks like the cache wiper that influence other checks.
+    priority = 0
 
     def feed(self, chunk, reporter):
         raise NotImplementedError
@@ -477,6 +482,7 @@ def plug(sinks, transforms, sources, reporter, debug=None):
     sinks = []
     for sinks_chunk in sink_map.itervalues():
         sinks.extend(sinks_chunk)
+    sinks.sort(key=operator.attrgetter('priority'))
     good_sinks = sinks[:]
     actual_pipes = []
     for scope, pipe in to_run:

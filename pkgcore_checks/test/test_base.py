@@ -82,7 +82,7 @@ class DummySource(object):
         return '%s(%s)' % (self.__class__.__name__, self.feed_type)
 
 
-class DummySink(object):
+class DummySink(base.Template):
 
     """Dummy sink object just yielding every fed to it with itself appended.
 
