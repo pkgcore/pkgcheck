@@ -32,12 +32,7 @@ class VisibilityReport(base.Template):
         self.profiles = profiles
         self.arches = frozenset(x.lstrip("~") for x in options.arches)
 
-    def feed(self, pkgs, reporter):
-        for pkg in pkgs:
-            yield pkg
-            self._feed(pkg, reporter)
-
-    def _feed(self, pkg, reporter):
+    def feed(self, pkg, reporter):
         # query_cache gets caching_iter partial repo searches shoved into it-
         # reason is simple, it's likely that versions of this pkg probably
         # use similar deps- so we're forcing those packages that were

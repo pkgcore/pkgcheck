@@ -37,12 +37,7 @@ class PkgDirReport(Template):
     
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
 
-    def feed(self, pkgsets, reporter):
-        for pkgset in pkgsets:
-            yield pkgset
-            self._feed(pkgset, reporter)
-
-    def _feed(self, pkgset, reporter):
+    def feed(self, pkgset, reporter):
         base = os.path.dirname(pkgset[0].ebuild.get_path())
         # note we don't use os.walk, we need size info also
         for filename in os.listdir(base):

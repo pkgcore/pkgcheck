@@ -11,29 +11,28 @@ class WhitespaceCheck(base.Template):
 
     feed_type = base.ebuild_feed
 
-    def feed(self, feed, reporter):
-        for pkg, lines in feed:
-            yield pkg, lines
-            lastlineempty = False
-            for lineno, line in enumerate(lines):
-                if line != '\n':
-                    lastlineempty = False
-                    if line[-2:-1] == ' ' or line[-2:-1] == '\t':
-                        reporter.add_report(
-                            WhitespaceFound(pkg, lineno + 1, "trailing"))
-                    elif line[0] == ' ':
-                        reporter.add_report(
-                            WhitespaceFound(pkg, lineno + 1, "leading"))
+    def feed(self, entry, reporter):
+        pkg, lines = entry
+        lastlineempty = False
+        for lineno, line in enumerate(lines):
+            if line != '\n':
+                lastlineempty = False
+                if line[-2:-1] == ' ' or line[-2:-1] == '\t':
+                    reporter.add_report(
+                        WhitespaceFound(pkg, lineno + 1, "trailing"))
+                elif line[0] == ' ':
+                    reporter.add_report(
+                        WhitespaceFound(pkg, lineno + 1, "leading"))
+            else:
+                if lastlineempty:
+                    reporter.add_report(DoubleEmptyLine(pkg, lineno + 1))
                 else:
-                    if lastlineempty:
-                        reporter.add_report(DoubleEmptyLine(pkg, lineno + 1))
-                    else:
-                        lastlineempty = True
-            if lastlineempty:
-                reporter.add_report(TrailingEmptyLine(pkg))
-            # Dealing with empty ebuilds is just paranoia
-            if lines and not lines[-1].endswith('\n'):
-                reporter.add_report(NoFinalNewline(pkg))
+                    lastlineempty = True
+        if lastlineempty:
+            reporter.add_report(TrailingEmptyLine(pkg))
+        # Dealing with empty ebuilds is just paranoia
+        if lines and not lines[-1].endswith('\n'):
+            reporter.add_report(NoFinalNewline(pkg))
 
 
 class WhitespaceFound(base.Result):

@@ -58,8 +58,9 @@ def get_cpvstr(pkg):
         return s
     return str(pkg)	
 
-def get_use_desc(base_path):
-    fp = os.path.join(base_path, "profiles", "use.desc")
+def get_use_desc(profiles_path):
+    """Takes the path to the dir with use*desc in it (repo/profiles)."""
+    fp = os.path.join(profiles_path, "use.desc")
     l = []
     for line in iter_read_bash(fp):
         l.append(line.split()[0])

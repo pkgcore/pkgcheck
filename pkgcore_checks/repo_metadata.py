@@ -23,16 +23,15 @@ class UnusedLocalFlags(base.Template):
         base.Template.__init__(self, options)
         self.flags = {}
 
-    def feed(self, pkgsets, reporter):
+    def start(self):
         self.flags = util.get_use_local_desc(self.options.profile_base_dir)
-        for pkgs in pkgsets:
-            yield pkgs
-            for restrict, flags in self.flags.get(pkgs[0].key, {}).iteritems():
-                unused = flags.difference(iflatten_instance(
-                    pkg.iuse for pkg in pkgs if restrict.match(pkg)))
-                if unused:
-                    reporter.add_report(UnusedLocalFlagsResult(restrict,
-                                                               unused))
+
+    def feed(self, pkgs, reporter):
+        for restrict, flags in self.flags.get(pkgs[0].key, {}).iteritems():
+            unused = flags.difference(iflatten_instance(
+                pkg.iuse for pkg in pkgs if restrict.match(pkg)))
+            if unused:
+                reporter.add_report(UnusedLocalFlagsResult(restrict, unused))
 
 
 class UnusedLocalFlagsResult(base.Result):
@@ -83,11 +82,13 @@ class UnusedGlobalFlags(base.Template):
         base.Template.__init__(self, options)
         self.flags = None
 
-    def feed(self, pkgs, reporter):
+    def start(self):
         self.flags = set(util.get_use_desc(self.options.profile_base_dir))
-        for pkg in pkgs:
-            yield pkg
-            self.flags.difference_update(pkg.iuse)
+
+    def feed(self, pkg, reporter):
+        self.flags.difference_update(pkg.iuse)
+
+    def finish(self, reporter):
         if self.flags:
             reporter.add_report(UnusedGlobalFlagsResult(self.flags))
         self.flags.clear()
@@ -131,13 +132,15 @@ class UnusedLicense(base.Template):
         base.Template.__init__(self, options)
         self.licenses = None
 
-    def feed(self, pkgs, reporter):
+    def start(self):
         self.licenses = set()
         for license_dir in self.options.license_dirs:
             self.licenses.update(listdir_files(license_dir))
-        for pkg in pkgs:
-            yield pkg
-            self.licenses.difference_update(iflatten_instance(pkg.license))
+
+    def feed(self, pkg, reporter):
+        self.licenses.difference_update(iflatten_instance(pkg.license))
+
+    def finish(self, reporter):
         if self.licenses:
             reporter.add_report(UnusedLicenseReport(self.licenses))
         self.licenses = None
@@ -179,13 +182,7 @@ class ConflictingDigests(base.Template):
         base.Template.__init__(self, options)
         self._fetchables = {}
 
-    def feed(self, pkgs, reporter):
-        for pkg in pkgs:
-            yield pkg
-            self._feed(pkg, reporter)
-        self._fetchables.clear()
-
-    def _feed(self, pkg, reporter):
+    def feed(self, pkg, reporter):
         for uri in iflatten_instance(pkg.fetchables, fetchable):
             existing = self._fetchables.get(uri.filename, None)
             if existing is not None:
@@ -207,6 +204,8 @@ class ConflictingDigests(base.Template):
                 self._fetchables[uri.filename] = \
                     (uri.chksums, [util.get_cpvstr(pkg)])
 
+    def finish(self, reporter):
+        self._fetchables.clear()
 
 def reformat_chksums(iterable):
     for chf, val1, val2 in iterable:
@@ -258,12 +257,7 @@ class ConflictManifestDigest(base.Template):
     
     repo_grabber = operator.attrgetter("repo")
 
-    def feed(self, pkgsets, reporter):
-        for pkgset in pkgsets:
-            yield pkgset
-            self._feed(pkgset, reporter)
-
-    def _feed(self, full_pkgset, reporter):
+    def feed(self, full_pkgset, reporter):
         # sort it by repo.
         for repo, pkgset in itertools.groupby(full_pkgset, self.repo_grabber):
             pkgset = list(pkgset)

@@ -65,24 +65,21 @@ class ModularXPortingReport(base.Template):
             (y.strip() for y in package_list) if
                 x and x != "virtual/x11")
 
-    def feed(self, pkgsets, reporter):
+    def feed(self, pkgset, reporter):
         # query_cache gets caching_iter partial repo searches shoved into it-
         # reason is simple, it's likely that versions of this pkg probably 
         # use similar deps- so we're forcing those packages that were
         # accessed for atom matching to remain in memory.
         # end result is less going to disk
-        for pkgset in pkgsets:
-            yield pkgset
+        unported = []
+        for pkg in pkgset:
+            self.check_pkg(pkg, reporter, unported)
 
-            unported = []
-            for pkg in pkgset:
-                self.check_pkg(pkg, reporter, unported)
-
-            if unported:
-                for u in unported:
-                    l = [pkg for pkg in pkgset if pkg not in unported]
-                    if l:
-                        reporter.add_report(SuggestRemoval(u, l))
+        if unported:
+            for u in unported:
+                l = [pkg for pkg in pkgset if pkg not in unported]
+                if l:
+                    reporter.add_report(SuggestRemoval(u, l))
 
     def check_pkg(self, pkg, reporter, unported):
         failed = []

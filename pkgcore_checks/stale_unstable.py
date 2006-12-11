@@ -20,18 +20,18 @@ class StaleUnstableReport(Template):
         self.staleness = staleness
         self.start_time = None
 
-    def feed(self, pkgs, reporter):
+    def start(self):
         self.start_time = time.time()
-        for pkg in pkgs:
-            yield pkg
-            unchanged_time = self.start_time - pkg._mtime_
-            if unchanged_time < self.staleness:
-                continue
-            unstable = [x for x in pkg.keywords if x.startswith("~")]
-            if not unstable:
-                continue
-            reporter.add_report(
-                StaleUnstableKeyword(pkg, int(unchanged_time/day)))
+
+    def feed(self, pkg, reporter):
+        unchanged_time = self.start_time - pkg._mtime_
+        if unchanged_time < self.staleness:
+            return
+        unstable = [x for x in pkg.keywords if x.startswith("~")]
+        if not unstable:
+            return
+        reporter.add_report(
+            StaleUnstableKeyword(pkg, int(unchanged_time/day)))
 
 
 class StaleUnstableKeyword(Result):

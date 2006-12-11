@@ -25,21 +25,21 @@ class UnstableOnlyReport(Template):
                     values.ContainmentMatch("~%s" % x))
                 ]
 
-    def feed(self, pkgsets, reporter):
-        for pkgset in pkgsets:
-            yield pkgset
-            # stable, then unstable, then file
-            for k, v in self.arch_restricts.iteritems():
-                stable = unstable = None
-                for x in pkgset:
-                    if v[0].match(x):
-                        stable = x
-                        break
-                if stable is not None:
-                    continue
-                unstable = [x for x in pkgset if v[1].match(x)]
-                if unstable:
-                    reporter.add_report(UnstableOnly(unstable, k))
+    def feed(self, pkgset, reporter):
+        # stable, then unstable, then file
+        for k, v in self.arch_restricts.iteritems():
+            stable = unstable = None
+            for x in pkgset:
+                if v[0].match(x):
+                    stable = x
+                    break
+            if stable is not None:
+                continue
+            unstable = [x for x in pkgset if v[1].match(x)]
+            if unstable:
+                reporter.add_report(UnstableOnly(unstable, k))
+
+    def finish(self, reporter):
         self.arch_restricts.clear()
 
 
