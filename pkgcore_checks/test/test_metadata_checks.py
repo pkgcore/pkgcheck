@@ -85,4 +85,15 @@ class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertEqual(r.attr, "iuse")
         # arch flags must _not_ be in IUSE
         self.assertReport(check, self.mk_pkg("x86"))
-        
+
+
+class TestRestrictsReport(misc.ReportTestCase):
+
+    def mk_pkg(self, restrict=''):
+        return misc.FakePkg(
+            'dev-util/diffball-2.7.1', data={'RESTRICT':restrict})
+
+    def test_it(self):
+        check = metadata_checks.RestrictsReport(None)
+        self.assertNoReport(check, self.mk_pkg('primaryuri userpriv'))
+        self.assertReport(check, self.mk_pkg('pkgcore'))

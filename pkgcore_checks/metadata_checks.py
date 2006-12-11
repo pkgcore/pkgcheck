@@ -231,16 +231,14 @@ class RestrictsReport(base.Template):
 
     __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \
         "restricts:%s" % ", ".join(sorted(known_restricts))
-    
-    def feed(self, pkgs, reporter):
-        for pkg in pkgs:
-            yield pkg
-            bad = set(pkg.restrict).difference(self.known_restricts)
-            if bad:
-                deprecated = set(x for x in bad if x.startswith("no")
-                    and x[2:] in self.known_restricts)
-                reporter.add_report(BadRestricts(
-                        pkg, bad.difference(deprecated), deprecated))
+
+    def feed(self, pkg, reporter):
+        bad = set(pkg.restrict).difference(self.known_restricts)
+        if bad:
+            deprecated = set(x for x in bad if x.startswith("no")
+                and x[2:] in self.known_restricts)
+            reporter.add_report(BadRestricts(
+                    pkg, bad.difference(deprecated), deprecated))
 
 
 class BadRestricts(base.Result):
