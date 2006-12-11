@@ -46,8 +46,9 @@ def get_profiles_desc(repo, ignore_dev=False):
 
     return arches_dict
 
-def get_repo_known_arches(repo):
-    fp = os.path.join(get_repo_path(repo), "arch.list")
+def get_repo_known_arches(profiles_path):
+    """Takes the path to the dir with arch.list in it (repo/profiles)."""
+    fp = os.path.join(profiles_path, "arch.list")
     return set(open(fp, "r").read().split())
 
 def get_cpvstr(pkg):
@@ -57,8 +58,8 @@ def get_cpvstr(pkg):
         return s
     return str(pkg)	
 
-def get_use_desc(repo):
-    fp = os.path.join(get_repo_path(repo), "use.desc")
+def get_use_desc(base_path):
+    fp = os.path.join(base_path, "profiles", "use.desc")
     l = []
     for line in iter_read_bash(fp):
         l.append(line.split()[0])

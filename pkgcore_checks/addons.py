@@ -14,6 +14,7 @@ from pkgcore.util import demandload, currying, containers, mappings
 demandload.demandload(
     globals(),
     'os '
+    'errno '
     'pkgcore.util:osutils '
     'pkgcore.restrictions:packages,values '
     'pkgcore.ebuild:misc '
@@ -387,3 +388,83 @@ class LicenseAddon(base.Addon):
                 raise optparse.OptionValueError(
                     "--license-dir %r isn't a directory" % values.license_dir)
             values.license_dirs.append(osutils.abspath(values.license_dir))
+
+
+class UseAddon(base.Addon):
+
+    def __init__(self, options):
+        base.Addon.__init__(self, options)
+        known_iuse = set()
+        unstated_iuse = set()
+        for profile_base in options.repo_bases:
+            try:
+                known_iuse.update(util.get_use_desc(profile_base))
+            except IOError, ie:
+                if ie.errno != errno.ENOENT:
+                    raise
+
+            try:
+                for restricts_dict in \
+                    util.get_use_local_desc(profile_base).itervalues():
+                    for flags in restricts_dict.itervalues():
+                        known_iuse.update(x.strip() for x in flags)
+            except IOError, ie:
+                if ie.errno != errno.ENOENT:
+                    raise		
+
+            use_expand_base = osutils.join(profile_base, "desc")
+            try:
+                for entry in osutils.listdir_files(use_expand_base):
+                    try:
+                        estr = entry.rsplit(".", 1)[0].lower()+ "_"
+                        unstated_iuse.update(estr + usef.strip() for usef in 
+                            read_dict(osutils.join(use_expand_base, entry),
+                                None).iterkeys())
+                    except (IOError, OSError), ie:
+                        if ie.errno != errno.EISDIR:
+                            raise
+                        del ie
+            except (OSError, IOError), ie:
+                if ie.errno != errno.ENOENT:
+                    raise
+
+        known_iuse.update(unstated_iuse)
+        self.known_iuse = frozenset(known_iuse)
+        unstated_iuse.update(util.get_repo_known_arches(osutils.join(
+                    profile_base, 'profiles')))
+        self.unstated_iuse = frozenset(unstated_iuse)
+        self.profile_bases = profile_base
+        self.ignore = not (unstated_iuse or known_iuse)
+
+    def get_filter(self):
+        if self.ignore:
+            return self.fake_iuse_validate
+        return self.iuse_validate
+        
+    @staticmethod
+    def fake_iuse_validate(klasses, pkg, seq, reporter):
+        return iflatten_instance(seq, klasses)
+
+    def iuse_validate(self, klasses, pkg, seq, reporter):
+        skip_filter = (packages.Conditional,) + klasses
+        unstated = set()
+    
+        stated = pkg.iuse
+        i = expandable_chain(iflatten_instance(seq, skip_filter))
+        for node in i:
+            if isinstance(node, packages.Conditional):
+                # invert it; get only whats not in pkg.iuse
+                unstated.update(ifilterfalse(stated.__contains__,
+                    node.restriction.values))
+                i.append(iflatten_instance(node.payload, skip_filter))
+                continue
+            yield node
+
+        # the valid_unstated_iuse filters out USE_EXPAND as long as
+        # it's listed in a desc file
+        unstated.difference_update(self.valid_unstated_iuse)
+        # hack, see bugs.gentoo.org 134994.
+        unstated.difference_update(["bootstrap"])
+        if unstated:
+            reporter.add_report(UnstatedIUSE(pkg, attr_name,
+                unstated))

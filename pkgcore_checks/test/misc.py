@@ -18,7 +18,7 @@ class ReportTestCase(TestCase):
         l = []
         r = fake_reporter(lambda r:l.append(r))
         check.feed(data, r)
-        self.assertEqual(l, [])
+        self.assertEqual(l, [], list(report.to_str() for report in l))
 
     def assertReports(self, check, data):
         l = []

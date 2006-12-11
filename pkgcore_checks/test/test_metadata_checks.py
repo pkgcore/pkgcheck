@@ -1,10 +1,11 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+import os
 import tempfile
 from pkgcore.test.mixins import TempDirMixin
 from pkgcore_checks.test import misc
-from pkgcore_checks import metadata_checks
+from pkgcore_checks import metadata_checks, addons
 from pkgcore.util.osutils import join as pjoin
 
 
@@ -52,13 +53,14 @@ class iuse_options(TempDirMixin):
 
     def get_options(self, **kwds):
         repo_base = tempfile.mkdtemp(dir=self.dir)
-        open(pjoin(repo_base, "arch.list"), "w").write(
+        os.mkdir(os.path.join(repo_base, 'profiles'))
+        open(pjoin(repo_base, "profiles", "arch.list"), "w").write(
             "\n".join(kwds.pop("arches", ("x86", "ppc", "amd64"))))
         
-        open(pjoin(repo_base, "use.desc"), "w").write(
-            "\n".join(kwds.pop("use_local_desc", ("foo", "bar"))))
+        open(pjoin(repo_base, "profiles", "use.desc"), "w").write(
+            "\n".join(kwds.pop("use_desc", ("foo", "bar"))))
 
-        open(pjoin(repo_base, "use.local.desc"), "w").write(
+        open(pjoin(repo_base, "profiles", "use.local.desc"), "w").write(
             "\n".join("dev-util/diffball:%s - blah" % x for x in 
                 kwds.pop("use_local_desc", ("lfoo", "lbar"))))
         
@@ -74,8 +76,9 @@ class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
     def test_it(self):
         # verify behaviour when use.* data isn't available
+        options = self.get_options()
         check = metadata_checks.IUSEMetadataReport(
-            self.get_options(), None)
+            options, addons.UseAddon(options))
         check.start()
         self.assertNoReport(check, self.mk_pkg("foo bar"))
         r = self.assertReport(check, self.mk_pkg("foo dar"))

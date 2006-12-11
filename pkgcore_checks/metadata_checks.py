@@ -5,7 +5,6 @@ import os
 from operator import attrgetter
 from pkgcore_checks import base, util, addons
 from itertools import ifilterfalse
-from pkgcore.util.caching import WeakInstMeta
 
 from pkgcore.util.compatibility import any
 from pkgcore.util.file import read_dict
@@ -15,116 +14,22 @@ from pkgcore.util.lists import iflatten_instance
 from pkgcore.util.iterables import expandable_chain
 from pkgcore.fetch import fetchable
 from pkgcore.restrictions import packages
-from pkgcore.util.osutils import listdir_files, join as pjoin
+from pkgcore.util.osutils import listdir_files
 
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.util.xml:escape "
-    "logging errno ")
+demandload(globals(), "pkgcore.util.xml:escape logging")
 
 
-class iuse_checking(object):
-
-    __metaclass__ = WeakInstMeta
-    __inst_caching__ = True
-
-    def __init__(self, profile_bases):
-        known_iuse = set()
-        unstated_iuse = set()
-        for profile_base in profile_bases:
-            try:
-                known_iuse.update(util.get_use_desc(profile_base))
-            except IOError, ie:
-                if ie.errno != errno.ENOENT:
-                    raise
-
-            try:
-                for restricts_dict in \
-                    util.get_use_local_desc(profile_base).itervalues():
-                    for flags in restricts_dict.itervalues():
-                        known_iuse.update(x.strip() for x in flags)
-            except IOError, ie:
-                if ie.errno != errno.ENOENT:
-                    raise		
-
-            use_expand_base = pjoin(profile_base, "desc")
-            try:
-                for entry in listdir_files(use_expand_base):
-                    try:
-                        estr = entry.rsplit(".", 1)[0].lower()+ "_"
-                        unstated_iuse.update(estr + usef.strip() for usef in 
-                            read_dict(pjoin(use_expand_base, entry),
-                                None).iterkeys())
-                    except (IOError, OSError), ie:
-                        if ie.errno != errno.EISDIR:
-                            raise
-                        del ie
-            except (OSError, IOError), ie:
-                if ie.errno != errno.ENOENT:
-                    raise
-
-        known_iuse.update(unstated_iuse)
-        self.known_iuse = frozenset(known_iuse)
-        unstated_iuse.update(util.get_repo_known_arches(profile_base))
-        self.unstated_iuse = frozenset(unstated_iuse)
-        self.profile_bases = profile_base
-        self.ignore = not (unstated_iuse or known_iuse)
-
-    def get_filter(self):
-        if self.ignore:
-            return self.fake_iuse_validate
-        return self.iuse_validate
-        
-    @staticmethod
-    def fake_iuse_validate(klasses, pkg, seq, reporter):
-        return iflatten_instance(seq, klasses)
-
-    def iuse_validate(self, klasses, pkg, seq, reporter):
-        skip_filter = (packages.Conditional,) + klasses
-        unstated = set()
-    
-        stated = pkg.iuse
-        i = expandable_chain(iflatten_instance(seq, skip_filter))
-        for node in i:
-            if isinstance(node, packages.Conditional):
-                # invert it; get only whats not in pkg.iuse
-                unstated.update(ifilterfalse(stated.__contains__,
-                    node.restriction.values))
-                i.append(iflatten_instance(node.payload, skip_filter))
-                continue
-            yield node
-
-        # the valid_unstated_iuse filters out USE_EXPAND as long as
-        # it's listed in a desc file
-        unstated.difference_update(self.valid_unstated_iuse)
-        # hack, see bugs.gentoo.org 134994.
-        unstated.difference_update(["bootstrap"])
-        if unstated:
-            reporter.add_report(UnstatedIUSE(pkg, attr_name,
-                unstated))
-
-
-class use_consumer(base.Template):
-
-    enabled = False
-    feed_type = base.versioned_feed
-    required_addons = (addons.ProfileAddon,)
-
-    def start(self):
-        self.iuse_handler = iuse_checking(self.options.repo_bases)
-        self.iuse_filter = self.iuse_handler.get_filter()
-        base.Template.start(self)
-
-    def finish(self, reporter):
-        self.iuse_handler = self.iuse_filter = None
-        base.Template.finish(self, reporter)
-
-
-class LicenseMetadataReport(use_consumer):
+class LicenseMetadataReport(base.Template):
 
     """LICENSE metadata key validity checks"""
-    
-    enabled = True
-    required_addons = (addons.ProfileAddon, addons.LicenseAddon)
+
+    required_addons = (
+        addons.UseAddon, addons.ProfileAddon, addons.LicenseAddon)
+
+    def __init__(self, options, iuse_handler, profiles, licenses):
+        base.Template.__init__(self, options)
+        self.iuse_filter = iuse_handler.get_filter()
 
     def start(self):
         use_consumer.start(self)
@@ -170,12 +75,16 @@ class LicenseMetadataReport(use_consumer):
                             ", ".join(licenses)))
 
 
-class IUSEMetadataReport(use_consumer):
-    
+class IUSEMetadataReport(base.Template):
+
     """Check IUSE for valid use flags"""
-    
-    enabled = True
-    
+
+    required_addons = (addons.UseAddon,)
+
+    def __init__(self, options, iuse_handler):
+        base.Template.__init__(self, options)
+        self.iuse_handler = iuse_handler
+
     def feed(self, pkg, reporter):
         if not self.iuse_handler.ignore:
             iuse = set(pkg.iuse).difference(self.iuse_handler.known_iuse)
@@ -184,13 +93,18 @@ class IUSEMetadataReport(use_consumer):
                     "iuse unknown flags- [ %s ]" % ", ".join(iuse)))
 
 
-class DependencyReport(use_consumer):
+class DependencyReport(base.Template):
 
     """check DEPEND, PDEPEND, RDEPEND, and PROVIDES"""
 
-    enabled = True
+    required_addons = (addons.UseAddon,)
+
     attrs = tuple((x, attrgetter(x)) for x in
         ("depends", "rdepends", "post_rdepends"))
+
+    def __init__(self, options, iuse_handler):
+        base.Template.__init__(self, options)
+        self.iuse_filter = iuse_handler.get_filter()
 
     def feed(self, pkg, reporter):
         for attr_name, getter in self.attrs:
@@ -224,12 +138,20 @@ class KeywordsReport(base.Template):
 
 
 
-class SrcUriReport(use_consumer):
+class SrcUriReport(base.Template):
+
     """SRC_URI related checks.
+
     verify that it's a valid/fetchable uri, port 80,443,23
     """
-    enabled = True
+
+    required_addons = (addons.UseAddon,)
+
     valid_protos = frozenset(["http", "https", "ftp"])
+
+    def __init__(self, options, iuse_handler):
+        base.Template.__init__(self, options)
+        self.iuse_filter = iuse_handler.get_filter()
 
     def feed(self, pkg, reporter):
         try:
