@@ -415,7 +415,7 @@ class UseAddon(base.Addon):
                 if ie.errno != errno.ENOENT:
                     raise		
 
-            use_expand_base = osutils.join(profile_base, "desc")
+            use_expand_base = osutils.join(profile_base, "profiles", "desc")
             try:
                 for entry in osutils.listdir_files(use_expand_base):
                     try:
