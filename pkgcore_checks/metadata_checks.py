@@ -4,14 +4,11 @@
 import os
 from operator import attrgetter
 from pkgcore_checks import base, util, addons
-from itertools import ifilterfalse
 
 from pkgcore.util.compatibility import any
 from pkgcore.util.file import read_dict
 from pkgcore.package.errors import MetadataException
 from pkgcore.ebuild.atom import MalformedAtom, atom
-from pkgcore.util.lists import iflatten_instance
-from pkgcore.util.iterables import expandable_chain
 from pkgcore.fetch import fetchable
 from pkgcore.restrictions import packages
 from pkgcore.util.osutils import listdir_files
@@ -27,20 +24,20 @@ class LicenseMetadataReport(base.Template):
     required_addons = (
         addons.UseAddon, addons.ProfileAddon, addons.LicenseAddon)
 
+    feed_type = base.versioned_feed
+
     def __init__(self, options, iuse_handler, profiles, licenses):
         base.Template.__init__(self, options)
         self.iuse_filter = iuse_handler.get_filter()
 
     def start(self):
-        use_consumer.start(self)
         self.licenses = set()
         for license_dir in self.options.license_dirs:
             self.licenses.update(listdir_files(license_dir))
 
     def finish(self, reporter):
         self.licenses = None
-        use_consumer.finish(self, reporter)
-    
+
     def feed(self, pkg, reporter):
         try:
             licenses = pkg.license
@@ -51,7 +48,7 @@ class LicenseMetadataReport(base.Template):
                 "error- %s" % e))
             del e
         except Exception, e:
-            logging.error("unknown exception caught for pkg(%s) attr(%s): "
+            logging.exception("unknown exception caught for pkg(%s) attr(%s): "
                 "type(%s), %s" % (pkg, attr_name, type(e), e))
             reporter.add_report(MetadataError(pkg, attr_name, 
                 "exception- %s" % e))
@@ -81,6 +78,8 @@ class IUSEMetadataReport(base.Template):
 
     required_addons = (addons.UseAddon,)
 
+    feed_type = base.versioned_feed
+
     def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
         self.iuse_handler = iuse_handler
@@ -98,6 +97,8 @@ class DependencyReport(base.Template):
     """check DEPEND, PDEPEND, RDEPEND, and PROVIDES"""
 
     required_addons = (addons.UseAddon,)
+
+    feed_type = base.versioned_feed
 
     attrs = tuple((x, attrgetter(x)) for x in
         ("depends", "rdepends", "post_rdepends"))
@@ -118,7 +119,8 @@ class DependencyReport(base.Template):
                     "error- %s" % e))
                 del e
             except Exception, e:
-                logging.error("unknown exception caught for pkg(%s) attr(%s): "
+                logging.exception(
+                    "unknown exception caught for pkg(%s) attr(%s): "
                     "type(%s), %s" % (pkg, attr_name, type(e), e))
                 reporter.add_report(MetadataError(pkg, attr_name, 
                     "exception- %s" % e))
@@ -146,6 +148,8 @@ class SrcUriReport(base.Template):
     """
 
     required_addons = (addons.UseAddon,)
+
+    feed_type = base.versioned_feed
 
     valid_protos = frozenset(["http", "https", "ftp"])
 
@@ -179,13 +183,13 @@ class SrcUriReport(base.Template):
         except (KeyboardInterrupt, SystemExit):
             raise
         except (MetadataException, MalformedAtom, ValueError), e:
-            reporter.add_report(MetadataError(pkg, attr_name, 
+            reporter.add_report(MetadataError(pkg, 'fetchables',
                 "error- %s" % e))
             del e
         except Exception, e:
-            logging.error("unknown exception caught for pkg(%s) attr(%s): "
-                "type(%s), %s" % (pkg, attr_name, type(e), e))
-            reporter.add_report(MetadataError(pkg, attr_name, 
+            logging.exception("unknown exception caught for pkg(%s): "
+                "type(%s), %s" % (pkg, type(e), e))
+            reporter.add_report(MetadataError(pkg, 'fetchables',
                 "exception- %s" % e))
             del e
 

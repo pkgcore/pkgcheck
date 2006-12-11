@@ -6,11 +6,12 @@
 
 
 import optparse
-from itertools import ifilter
+from itertools import ifilter, ifilterfalse
 
 from pkgcore_checks import base, util
 
-from pkgcore.util import demandload, currying, containers, mappings
+from pkgcore.util import (
+    demandload, currying, containers, mappings, iterables, lists)
 demandload.demandload(
     globals(),
     'os '
@@ -398,7 +399,8 @@ class UseAddon(base.Addon):
         unstated_iuse = set()
         for profile_base in options.repo_bases:
             try:
-                known_iuse.update(util.get_use_desc(profile_base))
+                known_iuse.update(util.get_use_desc(osutils.join(
+                            profile_base, 'profiles')))
             except IOError, ie:
                 if ie.errno != errno.ENOENT:
                     raise
@@ -450,19 +452,20 @@ class UseAddon(base.Addon):
         unstated = set()
     
         stated = pkg.iuse
-        i = expandable_chain(iflatten_instance(seq, skip_filter))
+        i = iterables.expandable_chain(lists.iflatten_instance(seq,
+                                                               skip_filter))
         for node in i:
             if isinstance(node, packages.Conditional):
                 # invert it; get only whats not in pkg.iuse
                 unstated.update(ifilterfalse(stated.__contains__,
-                    node.restriction.values))
-                i.append(iflatten_instance(node.payload, skip_filter))
+                    node.restriction.vals))
+                i.append(lists.iflatten_instance(node.payload, skip_filter))
                 continue
             yield node
 
         # the valid_unstated_iuse filters out USE_EXPAND as long as
         # it's listed in a desc file
-        unstated.difference_update(self.valid_unstated_iuse)
+        unstated.difference_update(self.unstated_iuse)
         # hack, see bugs.gentoo.org 134994.
         unstated.difference_update(["bootstrap"])
         if unstated:
