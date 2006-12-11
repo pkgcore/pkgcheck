@@ -407,7 +407,8 @@ class UseAddon(base.Addon):
 
             try:
                 for restricts_dict in \
-                    util.get_use_local_desc(profile_base).itervalues():
+                    util.get_use_local_desc(osutils.join(
+                        profile_base, 'profiles')).itervalues():
                     for flags in restricts_dict.itervalues():
                         known_iuse.update(x.strip() for x in flags)
             except IOError, ie:

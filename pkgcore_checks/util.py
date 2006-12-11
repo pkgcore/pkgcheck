@@ -66,8 +66,9 @@ def get_use_desc(profiles_path):
         l.append(line.split()[0])
     return tuple(l)
 
-def get_use_local_desc(repo):
-    fp = os.path.join(get_repo_path(repo), "use.local.desc")
+def get_use_local_desc(profiles_path):
+    """Takes the path to the dir with use*desc in it (repo/profiles)."""
+    fp = os.path.join(profiles_path, "use.local.desc")
     d = {}
     for line in iter_read_bash(fp):
         key, val = line.split(":", 1)
