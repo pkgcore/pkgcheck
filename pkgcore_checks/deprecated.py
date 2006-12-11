@@ -53,12 +53,10 @@ class DeprecatedEclassReport(Template):
     __doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses:%s\n" % \
         ", ".join(sorted(blacklist))
 
-    def feed(self, pkgs, reporter):
-        for pkg in pkgs:
-            yield pkg
-            bad = self.blacklist.intersection(pkg.data["_eclasses_"])
-            if bad:
-                reporter.add_report(DeprecatedEclass(pkg, bad))
+    def feed(self, pkg, reporter):
+        bad = self.blacklist.intersection(pkg.data["_eclasses_"])
+        if bad:
+            reporter.add_report(DeprecatedEclass(pkg, bad))
 
 
 class DeprecatedEclass(Result):

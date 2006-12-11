@@ -16,35 +16,37 @@ class RedundantVersionReport(Template):
 
     feed_type = package_feed
 
-    def feed(self, pkgsets, reporter):
-        for pkgset in pkgsets:
-            yield pkgset
-            if len(pkgset) == 1:
+    def feed(self, pkgset, reporter):
+        if len(pkgset) == 1:
+            return
+        
+        # algo is roughly thus; spot stable versions, hunt for subset
+        # keyworded pkgs that are less then the max version;
+        # repeats this for every overshadowing detected
+        # finally, does version comparison down slot lines
+        stack = []
+        for pkg in reversed(pkgset):
+            matches = []
+            curr_set = set(x for x in pkg.keywords if not x.startswith("-"))
+            if any(True for x in pkg.keywords if x.startswith("~")):
+                unstable_set = set(x.lstrip("~") for x in curr_set)
+            else:
+                unstable_set = []
+            # reduce false positives for idiot keywords/ebuilds
+            if not curr_set:
                 continue
-
-            stack = []
-            for pkg in reversed(pkgset):
-                matches = []
-                curr_set = set(x for x in pkg.keywords if not x.startswith("-"))
-                if any(True for x in pkg.keywords if x.startswith("~")):
-                    unstable_set = set(x.lstrip("~") for x in curr_set)
-                else:
-                    unstable_set = []
-                # reduce false positives for idiot keywords/ebuilds
-                if not curr_set:
-                    continue
-                for ver, keys in stack:
+            for ver, keys in stack:
+                if ver.slot == pkg.slot:
+                    if not curr_set.difference(keys):
+                        matches.append(ver)
+            if unstable_set:
+                for ver, key in stack:
                     if ver.slot == pkg.slot:
-                        if not curr_set.difference(keys):
+                        if not unstable_set.difference(key):
                             matches.append(ver)
-                if unstable_set:
-                    for ver, key in stack:
-                        if ver.slot == pkg.slot:
-                            if not unstable_set.difference(key):
-                                matches.append(ver)
-                stack.append([pkg, curr_set])
-                if matches:
-                    reporter.add_report(RedundantVersionWarning(pkg, matches))
+            stack.append([pkg, curr_set])
+            if matches:
+                reporter.add_report(RedundantVersionWarning(pkg, matches))
 
 
 class RedundantVersionWarning(Result):

@@ -35,22 +35,19 @@ class ImlateReport(base.Template):
         self.source_filter = packages.PackageRestriction("keywords",
             values.ContainmentMatch(*self.source_arches))
 
-    def feed(self, pkgsets, reporter):
-        #candidates.
+    def feed(self, pkgset, reporter):
         fmatch = self.source_filter.match
-        for pkgset in pkgsets:
-            yield pkgset
-            remaining = set(self.target_arches)
-            for pkg in reversed(pkgset):
-                if not fmatch(pkg):
-                    continue
-                unstable_keys = remaining.intersection(pkg.keywords)
-                if unstable_keys:
-                    reporter.add_report(LaggingStableInfo(pkg,
-                        sorted(unstable_keys)))
-                    remaining.discard(unstable_keys)
-                    if not remaining:
-                        break
+        remaining = set(self.target_arches)
+        for pkg in reversed(pkgset):
+            if not fmatch(pkg):
+                continue
+            unstable_keys = remaining.intersection(pkg.keywords)
+            if unstable_keys:
+                reporter.add_report(LaggingStableInfo(pkg,
+                    sorted(unstable_keys)))
+                remaining.difference_update(unstable_keys)
+                if not remaining:
+                    break
 
 
 class LaggingStableInfo(base.Result):

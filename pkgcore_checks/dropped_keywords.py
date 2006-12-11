@@ -14,30 +14,32 @@ class DroppedKeywordsReport(Template):
         Template.__init__(self, options)
         self.arches = dict((k, None) for k in options.arches)
 
-    def feed(self, pkgsets, reporter):
-        for pkgset in pkgsets:
-            yield pkgset
-            if len(pkgset) == 1:
-                continue
+    def feed(self, pkgset, reporter):
+        if len(pkgset) == 1:
+            return
 
-            lastpkg = pkgset[-1]
-            state = set(x.lstrip("~") for x in lastpkg.keywords)
-            arches = set(self.arches)
-            dropped = []
-            for pkg in reversed(pkgset[:-1]):
-                oldstate = set(x.lstrip("~") for x in pkg.keywords)
-                for key in oldstate.difference(state):
-                    if key.startswith("-"):
-                        continue
-                    elif "-%s" % key in state:
-                        continue
-                    elif key in arches:
-                        dropped.append((key, lastpkg))
-                        arches.discard(key)
-                state = oldstate
-                lastpkg = pkg
-            for key, pkg in dropped:
-                reporter.add_report(DroppedKeywordWarning(key, pkg))
+        lastpkg = pkgset[-1]
+        state = set(x.lstrip("~") for x in lastpkg.keywords)
+        arches = set(self.arches)
+        dropped = []
+        # pretty simple; pull the last keywords, walk backwards
+        # the difference (ignoring unstable/stable) should be empty;
+        # if it is, report; meanwhile, add the new arch in, and continue
+        for pkg in reversed(pkgset[:-1]):
+            oldstate = set(x.lstrip("~") for x in pkg.keywords)
+            for key in oldstate.difference(state):
+                if key.startswith("-"):
+                    continue
+                elif "-%s" % key in state:
+                    continue
+                elif key in arches:
+                    dropped.append((key, lastpkg))
+                    arches.discard(key)
+            state = oldstate
+            lastpkg = pkg
+ 
+        for key, pkg in dropped:
+            reporter.add_report(DroppedKeywordWarning(key, pkg))
 
 
 class DroppedKeywordWarning(Result):
