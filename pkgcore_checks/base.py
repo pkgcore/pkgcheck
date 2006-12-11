@@ -96,8 +96,42 @@ class Template(Addon):
     # weird pseudo-checks like the cache wiper that influence other checks.
     priority = 0
 
-    def feed(self, chunk, reporter):
+    def start(self):
+        """Do startup here."""
+
+    def feed(self, item, reporter):
         raise NotImplementedError
+
+    def finish(self, reporter):
+        """Do cleanup and omit final results here."""
+
+
+class Transform(object):
+
+    """Base class for a feed type transformer.
+
+    @cvar source: start type
+    @cvar dest: destination type
+    @cvar scope: minimun scope
+    @cvar cost: cost
+    """
+
+    def __init__(self, child):
+        self.child = child
+
+    def start(self):
+        """Startup."""
+        self.child.start()
+
+    def feed(self, item, reporter):
+        raise NotImplementedError
+
+    def finish(self, reporter):
+        """Clean up."""
+        self.child.finish(reporter)
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, self.child)
 
 
 class Result(object):
@@ -220,165 +254,120 @@ class Suite(object):
         self.src_repo = src_repo
 
 
-# The general idea is we will usually not have a large number of
-# types, so we can use a reasonably straightforward bruteforce
-# approach. We may have quite a bunch of sources, transforms or
-# sinks, but we only care about the cheapest of those for a type.
+class CheckRunner(object):
 
-# The plan:
-# - Build a matrix with the cheapest sequence of
-#   transforms for every source and target type.
-# - Use this matrix to build all runnable pipes: pipes that start at one
-#   of our sources and include at least one of our sinks.
-# - Report any sinks we cannot drive and throw those away.
-# - If we have one, return the cheapest single pipe driving all
-#   (remaining) sinks.
-# - Find the cheapest combination of pipes that drives all sinks
-#   and return that.
+    def __init__(self, checks):
+        self.checks = checks
 
-# We prefer a single pipeline because this increases the
-# readability of our output.
+    def start(self):
+        for check in self.checks:
+            # Intentionally not catching and logging exceptions:
+            # if we fail this early we may as well abort.
+            check.start()
 
-# TODO maybe optimize scope handling.
-# This was bolted on as an afterthought, and it shows.
+    def feed(self, item, reporter):
+        for check in self.checks:
+            try:
+                check.feed(item, reporter)
+            except Exception:
+                logging.exception('check %r raised', check)
 
-def make_transform_matrix(transforms, debug=None):
-    """Convert a sequence of transforms to a dict for L{plug}.
+    def finish(self, reporter):
+        for check in self.checks:
+            try:
+                check.finish(reporter)
+            except Exception:
+                logging.exception('finishing check %r failed', check)
 
-    @param sinks: sequence of transform instances.
-    @param debug: A logging function or C{None}.
-    @returns: a dict to pass in as the transforms argument to L{plug}.
-    """
-    # Set of all types.
-    source_types = frozenset(
-        t for trans in transforms for t in trans.transforms)
-    dest_types = frozenset(
-        t[0] for trans in transforms for t in trans.transforms.itervalues())
+    # The plugger tests use these.
+    def __eq__(self, other):
+        return self.__class__ is other.__class__ and \
+            frozenset(self.checks) == frozenset(other.checks)
 
-    # type_matrix[scope, source, dest] -> (cost, transforms)
-    type_matrix = {}
+    def __ne__(self, other):
+        return not self == other
 
-    # (source, dest) -> lowest scope of transforms that were improved.
-    to_try = {}
+    def __hash__(self):
+        return hash(frozenset(self.checks))
 
-    # Initialize with basic transforms.
-    for transform in transforms:
-        for source, (dest, scope, cost) in transform.transforms.iteritems():
-            # Pick the cheapest option if more than one basic
-            # transform handles this.
-            current_pipe = type_matrix.get((scope, source, dest))
-            if current_pipe is None or current_pipe[0] > cost:
-                type_matrix[scope, source, dest] = (cost, (transform,))
-                old_scope = to_try.get((source, dest))
-                if old_scope is None or old_scope > scope:
-                    to_try[source, dest] = scope
-
-    if debug is not None:
-        debug('base type matrix:')
-        for (scope, source, dest), (cost, pipe) in type_matrix.iteritems():
-            debug('%s: %s -> %s : %s (%s)', scope, source, dest, pipe, cost)
-    # Keep trying to build cheaper transforms.
-    while to_try:
-        current_to_try = to_try
-        to_try = {}
-        for (source, dest), lowest_scope in current_to_try.iteritems():
-            improved_cost, improved_pipe = type_matrix[
-                lowest_scope, source, dest]
-            for scope in xrange(lowest_scope, max_scope + 1):
-                # Check if our current pipe is better than one with a
-                # higher scope requirement.
-                current = type_matrix.get((scope, source, dest))
-                if current is None or current[0] > improved_cost:
-                    # Our lower requirements pipe wins.
-                    type_matrix[scope, source, dest] = (improved_cost,
-                                                        improved_pipe)
-                elif current is not None:
-                    # The higher-requirements one is cheaper.
-                    improved_cost, improved_pipe = current
-                # Build new pipes using this "improved" pipe as first
-                # component.
-                for final_dest in dest_types:
-                    halfpipe = type_matrix.get((scope, dest, final_dest))
-                    if halfpipe is None:
-                        continue
-                    new_cost = improved_cost + halfpipe[0]
-                    current = type_matrix.get((scope, source, final_dest))
-                    if current is None or new_cost < current[0]:
-                        # We found a better one.
-                        type_matrix[scope, source, final_dest] = (
-                            new_cost, improved_pipe + halfpipe[1])
-                        old_scope = to_try.get((source, final_dest))
-                        if old_scope is None or old_scope > scope:
-                            to_try[source, final_dest] = scope
-                # Build new pipes using this "improved" pipe as second
-                # component.
-                for initial_source in source_types:
-                    halfpipe = type_matrix.get((scope, initial_source, dest))
-                    if halfpipe is None:
-                        continue
-                    new_cost = improved_cost + halfpipe[0]
-                    current = type_matrix.get((scope, initial_source, dest))
-                    if current is None or new_cost < current[0]:
-                        # We found a better one.
-                        type_matrix[scope, initial_source, dest] = (
-                            new_cost, halfpipe[1] + improved_pipe)
-                        old_scope = to_try.get((initial_source, dest))
-                        if old_scope is None or old_scope > scope:
-                            to_try[initial_source, dest] = scope
-
-    if debug is not None:
-        debug('full type matrix:')
-        for (scope, source, dest), (cost, pipe) in type_matrix.iteritems():
-            debug('%s: %s -> %s : %s (%s)', scope, source, dest, pipe, cost)
-
-    return type_matrix
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(sorted(
+                    str(check) for check in self.checks)))
 
 
-def plug(sinks, transforms, sources, reporter, debug=None):
+def plug(sinks, transforms, sources, debug=None):
     """Plug together a pipeline.
 
-    sinks are check instances, transforms are transform instances,
-    sources are source instances. For now at least.
+    This tries to return a single pipeline if possible (even if it is
+    more "expensive" than using separate pipelines). If more than one
+    pipeline is needed it does not try to minimize the number.
 
     @param sinks: Sequence of check instances.
-    @param transforms: A dict returned from L{make_transform_matrix}.
+    @param transforms: Sequence of transform classes.
     @param sources: Sequence of source instances.
-    @param reporter: reporter instance.
     @param debug: A logging function or C{None}.
-    @returns: a sequence of sinks that are out of scope, a sequence of sinks
-        that cannot be reached through transforms, a sequence of running sinks,
-        a sequence of pipes.
+    @returns: a sequence of sinks that are unreachable (out of scope or
+        missing sources/transforms of the right type),
+        a sequence of (source, consumer) tuples.
     """
+
+    # This is not optimized to deal with huge numbers of sinks,
+    # sources and transforms, but that should not matter (although it
+    # may be necessary to handle a lot of sinks a bit better at some
+    # point, which should be fairly easy since we only care about
+    # their type and scope).
+
     assert sinks
 
-    # Figure out the best available scope.
-    best_source_scope = max(source.scope for source in sources)
-    # Throw away any checks that we definitely cannot drive.
-    lowest_sink_scope = sinks[0].scope
+    feed_to_transforms = {}
+    for transform in transforms:
+        feed_to_transforms.setdefault(transform.source, []).append(transform)
+
+    # Map from typename to best scope
+    best_scope = {}
+    for source in sources:
+        # (not particularly clever, if we get a ton of sources this
+        # should be optimized to do less duplicate work).
+        local_best_scope = {}
+        reachable = set()
+        todo = set([source.feed_type])
+        while todo:
+            feed_type = todo.pop()
+            reachable.add(feed_type)
+            for transform in feed_to_transforms.get(feed_type, ()):
+                if transform.scope <= source.scope and \
+                        transform.dest not in reachable:
+                    todo.add(transform.dest)
+        for feed_type in reachable:
+            scope = best_scope.get(feed_type)
+            if scope is None or scope < source.scope:
+                best_scope[feed_type] = source.scope
+
+    # Throw out unreachable sinks.
     good_sinks = []
-    out_of_scope_sinks = []
+    bad_sinks = []
     for sink in sinks:
-        if sink.scope > best_source_scope:
-            out_of_scope_sinks.append(sink)
+        scope = best_scope.get(sink.feed_type)
+        if scope is None or sink.scope > scope:
+            bad_sinks.append(sink)
         else:
             good_sinks.append(sink)
-            lowest_sink_scope = min(lowest_sink_scope, sink.scope)
+
     if not good_sinks:
         # No point in continuing.
-        return out_of_scope_sinks, (), (), ()
-    sinks = good_sinks
-    # We cannot do the same for sources lower than the *highest* sink,
-    # since we may end up driving the sinks using multiple sources.
-    # But we can throw away the sinks lower than all sources.
-    sources = list(s for s in sources if s.scope >= lowest_sink_scope)
+        return bad_sinks, ()
+
+    # Throw out all sources with a scope lower than the least required scope.
+    # Does not check transform requirements, may not be very useful.
+    lowest_required_scope = min(sink.scope for sink in good_sinks)
+    highest_required_scope = max(sink.scope for sink in good_sinks)
+    sources = list(s for s in sources if s.scope >= lowest_required_scope)
     if not sources:
         # No usable sources, abort.
-        return out_of_scope_sinks, sinks, (), ()
+        return bad_sinks + good_sinks, ()
 
-    # Map from (scope, sink typename) to sequence of sinks.
-    sink_map = {}
-    for sink in sinks:
-        sink_map.setdefault((sink.scope, sink.feed_type), []).append(sink)
+    # All types we need to reach.
+    sink_types = set(sink.feed_type for sink in good_sinks)
 
     # Map from scope, source typename to cheapest source.
     source_map = {}
@@ -388,135 +377,108 @@ def plug(sinks, transforms, sources, reporter, debug=None):
         if current_source is None or current_source.cost > new_source.cost:
             source_map[new_source.scope, new_source.feed_type] = new_source
 
-    # Tuples of (price, scope, (visited, types))
-    # Includes sources with no "direct" sinks for simplicity.
-    pipes = []
-    unprocessed = list((source.cost, source.scope, (source.feed_type,))
-                       for source in source_map.itervalues())
+    # Tuples of (visited_types, source, transforms, price)
+    pipes = set()
+    unprocessed = set(
+        (frozenset((source.feed_type,)), source, frozenset(), source.cost)
+        for source in source_map.itervalues())
     if debug is not None:
         for pipe in unprocessed:
             debug('initial: %r', pipe)
-    # Try to grow longer pipes.
+
+    # If we find a single pipeline driving all sinks we want to use it.
+    # List of tuples of source, transforms.
+    pipes_to_run = None
+    best_cost = None
     while unprocessed:
-        cost, scope, pipe = unprocessed.pop(0)
-        pipes.append((cost, scope, pipe))
-        for sink_scope, sink_type in sink_map:
-            if sink_type in pipe or sink_scope > scope:
+        next = unprocessed.pop()
+        if next in pipes:
+            continue
+        pipes.add(next)
+        visited, source, trans, cost = next
+        if visited >= sink_types:
+            # Already reaches all sink types. Check if it is usable as
+            # single pipeline:
+            if best_cost is None or cost < best_cost:
+                pipes_to_run = [(source, trans)]
+                best_cost = cost
+            # No point in growing this further: it already reaches everything.
+            continue
+        if best_cost is not None and best_cost <= cost:
+            # No point in growing this further.
+            continue
+        for transform in transforms:
+            if source.scope >= transform.scope and \
+                    transform.source in visited and \
+                    transform.dest not in visited:
+                unprocessed.add((
+                        visited.union((transform.dest,)), source,
+                        trans.union((transform,)), cost + transform.cost))
+                if debug is not None:
+                    debug(
+                        'growing %r for %r with %r', trans, source, transform)
+
+    if pipes_to_run is None:
+        # No single pipe will drive everything, try combining pipes.
+        # This is pretty stupid but effective. Map sources to
+        # pipelines they drive, try combinations of sources (using a
+        # source more than once in a combination makes no sense since
+        # we also have the "combined" pipeline in pipes).
+        source_to_pipes = {}
+        for visited, source, trans, cost in pipes:
+            source_to_pipes.setdefault(source, []).append(
+                (visited, trans, cost))
+        unprocessed = set(
+            (visited, frozenset([source]), ((source, trans),), cost)
+            for visited, source, trans, cost in pipes)
+        done = set()
+        while unprocessed:
+            next = unprocessed.pop()
+            if next in done:
                 continue
-            halfpipe = transforms.get((scope, pipe[-1], sink_type))
-            if halfpipe is not None:
-                unprocessed.append((
-                        cost + halfpipe[0], scope, pipe + (sink_type,)))
-                if debug is not None:
-                    debug('growing %r with %r', pipe, sink_type)
+            done.add(next)
+            visited, sources, seq, cost = next
+            if visited >= sink_types:
+                # This combination reaches everything.
+                if best_cost is None or cost < best_cost:
+                    pipes_to_run = seq
+                    best_cost = cost
+                # No point in growing this further.
+            if best_cost is not None and best_cost <= cost:
+                # No point in growing this further.
+                continue
+            for source, source_pipes in source_to_pipes.iteritems():
+                if source not in sources:
+                    for new_visited, trans, new_cost in source_pipes:
+                        unprocessed.add((
+                                visited.union(new_visited),
+                                sources.union([source]),
+                                seq + ((source, trans),),
+                                cost + new_cost))
 
-    # Check if we have unreachable types:
-    reachables = {}
-    unreachables = []
-    for (sink_scope, sink_type), sinks in sink_map.iteritems():
-        for cost, pipe_scope, pipe in pipes:
-            if pipe_scope >= sink_scope and sink_type in pipe:
-                reachables[sink_scope, sink_type] = sinks
-                break
-        else:
-            unreachables.extend(sinks)
-    if not reachables:
-        # No reachable sinks, abort.
-        return out_of_scope_sinks, unreachables, (), ()
-    sink_map = reachables
+    # Just an assert since unreachable sinks should have been thrown away.
+    assert pipes_to_run, 'did not find a solution?'
 
-    # Try to find a single pipeline that drives everything we can drive.
-    best_pipe = None
-    best_cost = 0
-    best_scope = 0
-    # And build up the map from (scope, sink_type) to (cost, pipe) tuples
-    sink_pipes = {}
-    for cost, scope, pipe in pipes:
-        for sink_scope, sink_type in sink_map:
-            if sink_scope > scope or sink_type not in pipe:
-                # Found sinks that don't run with this pipe.
-                break
-        else:
-            if best_pipe is None or best_cost > cost:
-                best_pipe = pipe
-                best_cost = cost
-                best_scope = scope
-        for passed_type in pipe:
-            for sink_scope in xrange(lowest_sink_scope, scope + 1):
-                sink_pipes.setdefault((sink_scope, passed_type), []).append(
-                    (cost, scope, pipe))
+    good_sinks.sort(key=operator.attrgetter('priority'))
 
-    if best_pipe is not None:
-        to_run = [(best_scope, best_pipe)]
-    else:
-        def generate_pipes(pipes, todo):
-            if not todo:
-                yield pipes
-                return
-            for scope, sink_type in todo:
-                for cost, pipe_scope, pipe in sink_pipes[scope, sink_type]:
-                    new_todo = set(todo)
-                    new_todo.difference_update(
-                        (sink_scope, sink_type)
-                        for sink_scope in xrange(
-                            lowest_sink_scope, pipe_scope + 1)
-                        for sink_type in pipe)
-                    for res in generate_pipes(pipes + [(cost, scope, pipe)],
-                                              new_todo):
-                        yield res
+    def build_transform(scope, feed_type, transforms):
+        children = list(
+            # Note this relies on the cheapest pipe not having
+            # any "loops" in its transforms.
+            trans(build_transform(scope, trans.dest, transforms))
+            for trans in transforms
+            if trans.source == feed_type and trans.scope <= scope)
+        # Hacky: we modify this in place.
+        for i in reversed(xrange(len(good_sinks))):
+            sink = good_sinks[i]
+            if sink.feed_type == feed_type and sink.scope <= source.scope:
+                children.append(sink)
+                del good_sinks[i]
+        return CheckRunner(children)
 
-        best_pipes = None
-        best_cost = 0
-        best_scope = None
-        for pipelist in generate_pipes([], set(sink_map)):
-            cost = sum(cost for cost, scope, pipe in pipelist)
-            if best_pipes is None or best_cost > cost:
-                best_pipes = pipelist
-                best_cost = cost
-                best_scope = scope
+    result = list(
+        (source, build_transform(source.scope, source.feed_type, transforms))
+        for source, transforms in pipes_to_run)
 
-        # Just an assert, since all types in all_sink_types are reachable.
-        assert best_pipes is not None
-        to_run = list((scope, pipe) for cost, scope, pipe in best_pipes)
-
-    sinks = []
-    for sinks_chunk in sink_map.itervalues():
-        sinks.extend(sinks_chunk)
-    sinks.sort(key=operator.attrgetter('priority'))
-    good_sinks = sinks
-    actual_pipes = []
-    for scope, pipe in to_run:
-        if debug is not None:
-            debug('running %r (%s)', pipe, scope)
-        current_type = pipe[0]
-        source = source_map[scope, current_type]
-        tail = source.feed()
-        # Everything except for the source, reversed.
-        types_left = list(pipe[-1:0:-1])
-        while True:
-            todo = []
-            if debug is not None:
-                debug('current sinks: %r', sinks)
-            for sink in sinks:
-                if sink.feed_type != current_type or sink.scope > scope:
-                    todo.append(sink)
-                else:
-                    if debug is not None:
-                        debug('plugging %r', sink)
-                    tail = sink.feed(tail, reporter)
-                    assert tail is not None, '%r is not generating' % (sink,)
-            sinks = todo
-            if not types_left:
-                break
-            new_type = types_left.pop()
-            for transform in transforms[scope, current_type, new_type][1]:
-                target_type, trans_scope, cost = transform.transforms[
-                    current_type]
-                if debug is not None:
-                    debug('going from %s to %s', current_type, target_type)
-                current_type = target_type
-                assert scope >= trans_scope
-                tail = transform.transform(tail)
-        actual_pipes.append(tail)
-    assert not sinks, '%r left' % (sinks,)
-    return out_of_scope_sinks, unreachables, good_sinks, actual_pipes
+    assert not good_sinks, 'sinks left: %r' % (good_sinks,)
+    return bad_sinks, result

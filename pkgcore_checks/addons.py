@@ -41,7 +41,7 @@ class ArchesAddon(base.Addon):
             ",".join(cls.default_arches))
 
 
-class QueryCacheAddon(base.Addon):
+class QueryCacheAddon(base.Template):
 
     feed_type = base.package_feed
     scope = base.version_scope
@@ -72,10 +72,8 @@ class QueryCacheAddon(base.Addon):
         self.query_cache = {}
         self.enabling_threshold = self.options.query_caching_freq
 
-    def feed(self, pkgs, reporter):
-        for pkgset in pkgs:
-            yield pkgset
-            self.query_cache.clear()
+    def feed(self, item, reporter):
+        self.query_cache.clear()
 
 
 class profile_data(object):
@@ -320,7 +318,7 @@ class ProfileAddon(base.Addon):
         return l
 
 
-class EvaluateDepSetAddon(base.Addon):
+class EvaluateDepSetAddon(base.Template):
 
     # XXX QueryCache just for the query_caching_freq option, separate?
     required_addons = (ProfileAddon, QueryCacheAddon)
@@ -336,11 +334,9 @@ class EvaluateDepSetAddon(base.Addon):
         self.profiles = profiles
         self.enabling_threshold = self.options.query_caching_freq
 
-    def feed(self, pkgs, reporter):
-        for pkgset in pkgs:
-            yield pkgset
-            self.pkg_evaluate_depsets_cache.clear()
-            self.pkg_profiles_cache.clear()
+    def feed(self, item, reporter):
+        self.pkg_evaluate_depsets_cache.clear()
+        self.pkg_profiles_cache.clear()
 
     def collapse_evaluate_depset(self, pkg, attr, depset):
         depset_profiles = self.pkg_evaluate_depsets_cache.get((pkg, attr))

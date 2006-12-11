@@ -23,44 +23,6 @@ class UtilitiesTest(TestCase):
         self.assertFalse(base.convert_check_filter('bar.foo')('foo.bar.baz'))
 
 
-class DummyTransform(object):
-
-    """Dummy transform object just yielding its source with itself appended.
-
-    Instances can be sensibly compared to each other, so comparing
-    instances from the L{trans} helper function to instances in the
-    predefined L{trans_up}, L{trans_down} and L{trans_everything}
-    sequences works.
-    """
-
-    def __init__(self, source, target, cost=10, scope=base.package_scope):
-        self.transforms = {source: (target, scope, cost)}
-
-    def transform(self, chunks):
-        for chunk in chunks:
-            yield chunk
-        yield self
-
-    def __repr__(self):
-        return '%(class)s(%(source)s, %(target)s, %(cost)s, %(scope)s)' % {
-            'class': self.__class__.__name__,
-            'source': self.transforms.keys()[0],
-            'target': self.transforms.values()[0][0],
-            'cost': self.transforms.values()[0][1],
-            'scope': self.transforms.values()[0][2],
-            }
-
-    def __eq__(self, other):
-        return (self.__class__ is other.__class__ and
-                self.transforms == other.transforms)
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __hash__(self):
-        return 0
-
-
 class DummySource(object):
 
     """Dummy source object just "producing" itself.
@@ -74,9 +36,6 @@ class DummySource(object):
     def __init__(self, dummy, scope=base.package_scope):
         self.feed_type = dummy
         self.scope = scope
-
-    def feed(self):
-        yield self
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, self.feed_type)
@@ -94,26 +53,59 @@ class DummySink(base.Template):
         self.feed_type = dummy
         self.scope = scope
 
-    def feed(self, chunks, reporter):
-        for chunk in chunks:
-            yield chunk
-        yield self
-
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, self.feed_type)
 
 
-def trans(source, target, cost=10, scope=base.package_scope):
-    return DummyTransform(dummies[source], dummies[target], cost, scope)
+def trans(source, dest, cost=10, scope=base.package_scope):
+    """Builds dummy transform classes.
+
+    The classes can be sensibly compared to each other, so comparing
+    the return value from a manual call to this function to classe in
+    the predefined L{trans_up}, L{trans_down} and L{trans_everything}
+    sequences works.
+    """
+
+    class DummyTransform(base.Transform):
+
+        """Dummy transform object."""
+
+        def __repr__(self):
+            return ('%(class)s(%(source)s, %(dest)s, cost=%(cost)s, '
+                    'scope=%(scope)s, child=%(child)s)') % {
+                'class': self.__class__.__name__,
+                'source': self.source,
+                'dest': self.dest,
+                'cost': self.cost,
+                'scope': self.scope,
+                'child': self.child,
+                }
+
+        def __eq__(self, other):
+            return (self.source == other.source and
+                    self.dest == other.dest and
+                    self.scope == other.scope and
+                    self.cost == other.cost and
+                    self.child == other.child)
+
+        def __ne__(self, other):
+            return not self == other
+
+        def __hash__(self):
+            return hash((self.source, self.dest, self.scope, self.cost))
+    DummyTransform.source = dummies[source]
+    DummyTransform.dest = dummies[dest]
+    DummyTransform.cost = cost
+    DummyTransform.scope = scope
+    return DummyTransform
 
 
 sources = tuple(DummySource(dummy) for dummy in dummies)
-trans_everything = tuple(DummyTransform(source, target)
-                         for source in dummies for target in dummies)
-trans_up = tuple(DummyTransform(dummies[i], dummies[i + 1])
-                 for i in xrange(len(dummies) - 1))
-trans_down = tuple(DummyTransform(dummies[i + 1], dummies[i])
-                   for i in xrange(len(dummies) - 1))
+trans_everything = tuple(trans(source, target)
+                         for source in xrange(len(dummies))
+                         for target in xrange(len(dummies)))
+trans_up = tuple(trans(i, i + 1) for i in xrange(len(dummies) - 1))
+trans_down = tuple(trans(i + 1, i) for i in xrange(len(dummies) - 1))
 sinks = tuple(DummySink(dummy) for dummy in dummies)
 
 
@@ -126,20 +118,16 @@ class PlugTest(TestCase):
         Further arguments are the pipes that should be returned.
         They are interpreted as a set (since the return order from plug
         is unspecified).
-        out_of_scope and unreachable are accepted as keyword args, defaulting
-        to the empty list.
+        bad_sinks is accepted as keyword args, defaulting to the empty list.
         """
-        # Writing this the "normal" way interprets the first two
-        # optional positional args incorrectly.
-        out_of_scope = kw.pop('out_of_scope', [])
-        unreachable = kw.pop('unreachable', [])
+        # Writing this the "normal" way interprets the first optional
+        # positional arg incorrectly.
+        bad_sinks = kw.pop('bad_sinks', [])
+        expected_pipes = set(expected_pipes)
         if kw:
             raise TypeError('unsupported kwargs %r' % (kw.keys(),))
-        expected_pipes = set(expected_pipes)
         try:
-            act_scope, act_unreachable, act_sinks, actual_pipes = base.plug(
-                sinks, base.make_transform_matrix(transforms), sources, None)
-            actual_pipes = set(tuple(t) for t in actual_pipes)
+            actual_bad_sinks, pipes = base.plug(sinks, transforms, sources)
         except KeyboardInterrupt:
             raise
         except Exception:
@@ -148,10 +136,10 @@ class PlugTest(TestCase):
             # Rerun in debug mode.
             def _debug(message, *args):
                 print message % args
-            base.plug(
-                sinks, base.make_transform_matrix(transforms, _debug),
-                sources, None, _debug)
+            base.plug(sinks, transforms, sources, _debug)
+            # Should not reach this since base.plug should raise again.
             raise
+        actual_pipes = set(pipes)
         good = expected_pipes & actual_pipes
         expected_pipes -= good
         actual_pipes -= good
@@ -160,115 +148,121 @@ class PlugTest(TestCase):
             message = ['', '']
             def _debug(format, *args):
                 message.append(format % args)
-            tuple(base.plug(
-                    sinks, base.make_transform_matrix(transforms, _debug),
-                    sources, None, _debug))
+            base.plug(sinks, transforms, sources, _debug)
             message.extend(['', 'Expected:'])
             for pipe in expected_pipes:
-                message.extend(str(p) for p in pipe)
+                message.append(str(pipe))
             message.extend(['', 'Got:'])
             for pipe in actual_pipes:
-                message.extend(str(p) for p in pipe)
+                message.append(str(pipe))
             self.fail('\n'.join(message))
-        self.assertEquals(out_of_scope, act_scope)
-        self.assertEquals(unreachable, act_unreachable)
+        self.assertEquals(bad_sinks, actual_bad_sinks)
 
     def test_plug(self):
         self.assertPipes(
             [sinks[2]],
             trans_everything,
             [sources[0]],
-            (sources[0], trans(0, 2), sinks[2]))
+            (sources[0], base.CheckRunner([
+                        trans(0, 2)(base.CheckRunner([sinks[2]]))])))
         self.assertPipes(
             [sinks[2]],
             trans_up,
             [sources[0]],
-            (sources[0], trans(0, 1), trans(1, 2), sinks[2]))
+            (sources[0], base.CheckRunner([
+                        trans(0, 1)(base.CheckRunner([
+                                    trans(1, 2)(base.CheckRunner([sinks[2]])),
+                                    ]))])))
 
     def test_no_transform(self):
         self.assertPipes(
             [sinks[0]],
             trans_everything,
             [sources[0]],
-            (sources[0], sinks[0]))
+            (sources[0], base.CheckRunner([sinks[0]])))
         self.assertPipes(
             [sinks[0]],
             [],
             [sources[0]],
-            (sources[0], sinks[0]))
+            (sources[0], base.CheckRunner([sinks[0]])))
 
     def test_too_many_sources(self):
         self.assertPipes(
             [sinks[3]],
             trans_everything,
             sources,
-            (sources[3], sinks[3]))
+            (sources[3], base.CheckRunner([sinks[3]])))
         self.assertPipes(
             [sinks[2], sinks[4]],
             [trans(1, 2), trans(3, 4), trans(4, 5)],
             [sources[1], sources[3]],
-            (sources[1], trans(1, 2), sinks[2]),
-            (sources[3], trans(3, 4), sinks[4]))
+            (sources[1], base.CheckRunner([trans(1, 2)(base.CheckRunner([
+                                    sinks[2]]))])),
+            (sources[3], base.CheckRunner([trans(3, 4)(base.CheckRunner([
+                                    sinks[4]]))])))
 
     def test_grow(self):
         self.assertPipes(
             [sinks[1], sinks[0]],
             trans_up,
             [sources[0]],
-            (sources[0], sinks[0], trans(0, 1), sinks[1]))
+            (sources[0], base.CheckRunner([
+                        sinks[0],
+                        trans(0, 1)(base.CheckRunner([sinks[1]]))])))
         self.assertPipes(
             [sinks[1], sinks[0]],
             trans_everything,
             [sources[0]],
-            (sources[0], sinks[0], trans(0, 1), sinks[1]))
+            (sources[0], base.CheckRunner([
+                        sinks[0],
+                        trans(0, 1)(base.CheckRunner([sinks[1]]))])))
         self.assertPipes(
             [sinks[2], sinks[0]],
             trans_up,
             [sources[0]],
-            (sources[0], sinks[0], trans(0, 1), trans(1, 2), sinks[2]))
+            (sources[0], base.CheckRunner([
+                        sinks[0],
+                        trans(0, 1)(base.CheckRunner([
+                                    trans(1, 2)(base.CheckRunner([sinks[2]])),
+                                    ]))])))
         self.assertPipes(
             [sinks[2], sinks[1]],
             trans_up,
             [sources[0]],
-            (sources[0], trans(0, 1), sinks[1], trans(1, 2), sinks[2]))
+            (sources[0], base.CheckRunner([trans(0, 1)(base.CheckRunner([
+                                    sinks[1],
+                                    trans(1, 2)(base.CheckRunner([sinks[2]])),
+                                    ]))])))
 
-    def test_two_ways(self):
-        # There are two valid solutions to each of these so
-        # assertPipes does not work. The thing this checks for is
-        # mainly that sinks[1] is not run twice.
-        pipes = frozenset(tuple(p) for p in base.plug(
-                [sinks[1], sinks[2], sinks[3]],
-                base.make_transform_matrix([trans(1, 2), trans(1, 3)]),
-                [sources[1]],
-                None)[3])
-        self.assertIn(pipes, set([
-                    frozenset([(sources[1], sinks[1], trans(1, 2), sinks[2]),
-                               (sources[1], trans(1, 3), sinks[3])]),
-                    frozenset([(sources[1], sinks[1], trans(1, 3), sinks[3]),
-                               (sources[1], trans(1, 2), sinks[2])])]))
-        pipes = frozenset(tuple(p) for p in base.plug(
-                [sinks[1], sinks[2], sinks[3]],
-                base.make_transform_matrix(
-                    [trans(0, 1), trans(1, 2), trans(1, 3)]),
-                [sources[0]],
-                None)[3])
-        self.assertIn(pipes, set([
-                    frozenset([(sources[0], trans(0, 1), sinks[1],
-                                trans(1, 2), sinks[2]),
-                               (sources[0], trans(0, 1), trans(1, 3),
-                                sinks[3])]),
-                    frozenset([(sources[0], trans(0, 1), sinks[1],
-                                trans(1, 3), sinks[3]),
-                               (sources[0], trans(0, 1), trans(1, 2),
-                                sinks[2])])]))
-
-    def test_pass_twice(self):
+    def test_forks(self):
+        self.assertPipes(
+            [sinks[1], sinks[2], sinks[3]],
+            [trans(1, 2), trans(1, 3)],
+            [sources[1]],
+            (sources[1], base.CheckRunner([
+                        sinks[1],
+                        trans(1, 2)(base.CheckRunner([sinks[2]])),
+                        trans(1, 3)(base.CheckRunner([sinks[3]])),
+                        ])))
+        self.assertPipes(
+            [sinks[1], sinks[2], sinks[3]],
+            [trans(0, 1), trans(1, 2), trans(1, 3)],
+            [sources[0]],
+            (sources[0], base.CheckRunner([
+                        trans(0, 1)(base.CheckRunner([
+                                    sinks[1],
+                                    trans(1, 2)(base.CheckRunner([sinks[2]])),
+                                    trans(1, 3)(base.CheckRunner([sinks[3]])),
+                                    ]))])))
         self.assertPipes(
             [sinks[0], sinks[1], sinks[2]],
             (trans(1, 2),) + trans_down,
             [sources[1]],
-            (sources[1], sinks[1], trans(1, 2), sinks[2], trans(2, 1),
-             trans(1, 0), sinks[0]))
+            (sources[1], base.CheckRunner([
+                        sinks[1],
+                        trans(1, 2)(base.CheckRunner([sinks[2]])),
+                        trans(1, 0)(base.CheckRunner([sinks[0]])),
+                        ])))
 
     def test_scope(self):
         sink1 = DummySink(dummies[1], 1)
@@ -279,7 +273,12 @@ class PlugTest(TestCase):
             [sink1, sink2, sink3],
             [trans(1, 2), trans(2, 3)],
             [source],
-            (source, sink1, trans(1, 2), sink2, trans(2, 3), sink3))
+            (source, base.CheckRunner([
+                        sink1,
+                        trans(1, 2)(base.CheckRunner([
+                                    sink2,
+                                    trans(2, 3)(base.CheckRunner([sink3])),
+                                    ]))])))
 
     def test_scope_affects_transform_cost(self):
         trans_fast = trans(1, 2, scope=base.repository_scope, cost=1)
@@ -288,10 +287,22 @@ class PlugTest(TestCase):
             [sinks[2]],
             [trans_slow, trans_fast],
             [sources[1]],
-            (sources[1], trans_slow, sinks[2]))
+            (sources[1], base.CheckRunner([
+                        trans_slow(base.CheckRunner([sinks[2]]))])))
         source = DummySource(dummies[1], scope=base.repository_scope)
         self.assertPipes(
             [sinks[2]],
             [trans_slow, trans_fast],
             [source],
-            (source, trans_fast, sinks[2]))
+            (source, base.CheckRunner([
+                        trans_fast(base.CheckRunner([sinks[2]]))])))
+
+    def test_regression(self):
+        # Fairly random test for a specific typo.
+        high_scope_source = DummySource(dummies[5], base.versioned_feed)
+        high_scope_sink = DummySink(dummies[0], base.versioned_feed)
+        self.assertPipes(
+            [high_scope_sink],
+            [],
+            [sources[0], high_scope_source],
+            bad_sinks=[high_scope_sink])

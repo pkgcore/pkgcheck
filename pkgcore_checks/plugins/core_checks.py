@@ -39,7 +39,9 @@ pkgcore_plugins = {
         feeds.VersionToEbuild,
         feeds.EbuildToVersion,
         feeds.VersionToPackage,
+        feeds.VersionToCategory,
+        feeds.PackageToRepo,
+        feeds.CategoryToRepo,
         feeds.PackageToCategory,
-        feeds.PackageOrCategoryToRepo,
         ]
     }

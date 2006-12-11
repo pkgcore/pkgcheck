@@ -376,9 +376,8 @@ def main(options, out, err):
     else:
         debug = None
 
-    transforms = list(transform(options)
-                      for transform in get_plugins('transform', plugins))
-    transform_matrix = base.make_transform_matrix(transforms, debug=debug)
+    transforms = list(get_plugins('transform', plugins))
+    # XXX this is pretty horrible.
     sinks = list(addon for addon in addons_map.itervalues()
                  if getattr(addon, 'feed_type', False))
 
@@ -386,34 +385,36 @@ def main(options, out, err):
 
     for filterer in options.limiters:
         sources = [feeds.RestrictedRepoSource(options.target_repo, filterer)]
-        out_of_scope, unreachables, good_sinks, pipes = base.plug(
-            sinks, transform_matrix, sources, reporter, debug)
-        # TODO the reporting of out of scope/unreachable needs further thought.
-
-        # The trick is we want to distinguish between things that are
-        # simply out of scope and things that are unreachable because
-        # the set of transforms is really incomplete, and this does
-        # not quite match the two things plug returns. Specifically
-        # the checks that want a non-version feed are relying on their
-        # transform being out of scope, and that triggers an
-        # "unreachable" from the plugger. Need to figure out if that
-        # can be fixed by making the plugger smarter about error
-        # reporting or if those checks should grow a more specific
-        # scope attr.
-        for sink in out_of_scope + unreachables:
-            # Skip (addon) sinks that are not checks.
-            if sink.__class__ in options.checks:
-                out.write(
-                    out.fg('yellow'), ' * ', out.reset,
-                    '%s is out of scope or unreachable, skipped.' % (
+        bad_sinks, pipes = base.plug(sinks, transforms, sources, debug)
+        if bad_sinks:
+            # We want to report the ones that would work if this was a
+            # full repo scan separately from the ones that are
+            # actually missing transforms.
+            bad_sinks = set(bad_sinks)
+            full_scope = feeds.RestrictedRepoSource(options.target_repo,
+                                                    packages.AlwaysTrue)
+            really_bad, ignored = base.plug(sinks, transforms, [full_scope])
+            really_bad = set(really_bad)
+            assert bad_sinks >= really_bad, \
+                '%r unreachable with no limiters but reachable with?' % (
+                really_bad - bad_sinks,)
+            out_of_scope = bad_sinks - really_bad
+            for sink in really_bad:
+                err.error(
+                    'sink %s could not be connected (missing transforms?)' % (
+                        sink,))
+            for sink in bad_sinks - really_bad:
+                err.warn('not running %s (not a full repo scan)' % (
                         sink.__class__.__name__,))
-        if not good_sinks or not pipes:
+        if not pipes:
             out.write(out.fg('red'), ' * ', out.reset, 'No checks!')
         else:
-            out.write('Running %s tests' % (len(good_sinks),))
-            for pipe in pipes:
-                for thing in pipe:
-                    pass
+            out.write('Running %s tests' % (len(sinks) - len(bad_sinks),))
+            for source, pipe in pipes:
+                pipe.start()
+                for thing in source.feed():
+                    pipe.feed(thing, reporter)
+                pipe.finish(reporter)
     reporter.finish()
     # flush stdout first; if they're directing it all to a file, this makes
     # results not get the final message shoved in midway

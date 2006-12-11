@@ -14,71 +14,147 @@ from pkgcore.restrictions import util
 from pkgcore.util.compatibility import any
 
 
-class VersionToEbuild(base.Addon):
+class VersionToEbuild(base.Transform):
 
     """Convert from just a package to a (package, list_of_lines) tuple."""
 
-    transforms = {
-        base.versioned_feed: (base.ebuild_feed, base.version_scope, 20)}
+    source = base.versioned_feed
+    dest = base.ebuild_feed
+    scope = base.version_scope
+    cost = 20
 
-    def transform(self, feed):
-        for pkg in feed:
-            yield pkg, list(pkg.ebuild.get_fileobj())
+    def feed(self, pkg, reporter):
+        self.child.feed((pkg, list(pkg.ebuild.get_fileobj())), reporter)
 
 
-class EbuildToVersion(base.Addon):
+class EbuildToVersion(base.Transform):
 
     """Convert (package, list_of_lines) to just package."""
 
-    transforms = {
-        base.ebuild_feed: (base.versioned_feed, base.version_scope, 5)}
+    source = base.ebuild_feed
+    dest = base.versioned_feed
+    scope = base.version_scope
+    cost = 5
 
-    def transform(self, feed):
-        for pkg, lines in feed:
-            yield pkg
-
-
-class VersionToPackage(base.Addon):
-
-    transforms = {
-        base.versioned_feed: (base.package_feed, base.package_scope, 10)}
-
-    def transform(self, versions):
-        for package, pkg_vers in itertools.groupby(versions,
-                                                   operator.attrgetter('key')):
-            # groupby returns an iterator.
-            yield tuple(pkg_vers)
+    def feed(self, pair, reporter):
+        self.child.feed(pair[0], reporter)
 
 
-class PackageToCategory(base.Addon):
+class _Collapse(base.Transform):
 
-    transforms = {
-        base.package_feed: (base.category_feed, base.category_scope, 10)}
+    """Collapse the input into tuples with a function returning the same val.
 
-    @staticmethod
-    def _filter(packages):
-        return packages[0].category
+    Override keyfunc in a subclass and set the C{transforms} attribute.
+    """
 
-    def transform(self, packages):
-        for cat, cat_pkgs in itertools.groupby(packages, self._filter):
-            chunk = []
-            for subchunk in cat_pkgs:
-                chunk.extend(subchunk)
-            yield tuple(chunk)
+    def start(self):
+        base.Transform.start(self)
+        self.chunk = None
+        self.key = None
+
+    def keyfunc(self, pkg):
+        raise NotImplementedError(self.keyfunc)
+
+    def feed(self, pkg, reporter):
+        key = self.keyfunc(pkg)
+        if key == self.key:
+            # New version for our current package.
+            self.chunk.append(pkg)
+        else:
+            # Package change.
+            if self.chunk is not None:
+                self.child.feed(tuple(self.chunk), reporter)
+            self.chunk = [pkg]
+            self.key = key
+
+    def finish(self, reporter):
+        # Deal with empty runs.
+        if self.chunk is not None:
+            self.child.feed(tuple(self.chunk), reporter)
+        base.Transform.finish(self, reporter)
+        self.chunk = None
+        self.key = None
 
 
-class PackageOrCategoryToRepo(base.Addon):
+class VersionToPackage(_Collapse):
 
-    transforms = {
-        base.package_feed: (base.repository_feed, base.repository_scope, 10),
-        base.category_feed: (base.repository_feed, base.repository_scope, 10),
-        }
+    source = base.versioned_feed
+    dest = base.package_feed
+    scope = base.package_scope
+    cost = 10
 
-    def transform(self, input):
-        all_packages = []
-        for packages in input:
-            all_packages.extend(packages)
-        yield packages
+    keyfunc = operator.attrgetter('key')
+
+
+class VersionToCategory(_Collapse):
+
+    source = base.versioned_feed
+    dest = base.category_feed
+    scope = base.category_scope
+    cost = 10
+
+    keyfunc = operator.attrgetter('category')
+
+
+class _PackageOrCategoryToRepo(base.Transform):
+
+    def start(self):
+        base.Transform.start(self)
+        self.repo = []
+
+    def feed(self, item, reporter):
+        self.repo.append(item)
+
+    def finish(self, reporter):
+        self.child.feed(repo, reporter)
+        base.Transform.finish(self, reporter)
+        self.repo = None
+
+
+class PackageToRepo(_PackageOrCategoryToRepo):
+
+    source = base.package_feed
+    dest = base.repository_feed
+    scope = base.repository_scope
+    cost = 10
+
+
+class CategoryToRepo(_PackageOrCategoryToRepo):
+
+    source = base.category_feed
+    dest = base.repository_feed
+    scope = base.repository_scope
+    cost = 10
+
+
+class PackageToCategory(base.Transform):
+
+    source = base.package_feed
+    dest = base.category_feed
+    scope = base.category_scope
+    cost = 10
+
+    def start(self):
+        base.Transform.start(self)
+        self.chunk = None
+        self.category = None
+
+    def feed(self, item, reporter):
+        category = item[0].category
+        if category == self.category:
+            self.chunk.extend(item)
+        else:
+            if self.chunk is not None:
+                self.child.feed(tuple(self.chunk), reporter)
+            self.chunk = list(item)
+            self.category = category
+
+    def finish(self, reporter):
+        if self.chunk is not None:
+            self.child.feed(tuple(self.chunk), reporter)
+        base.Transform.finish(self, reporter)
+        self.category = None
+        self.chunk = None
 
 
 class RestrictedRepoSource(object):
