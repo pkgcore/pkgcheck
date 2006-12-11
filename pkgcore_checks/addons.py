@@ -6,7 +6,7 @@
 
 
 import optparse
-from itertools import chain, ifilter
+from itertools import ifilter
 
 from pkgcore_checks import base, util
 
@@ -16,7 +16,8 @@ demandload.demandload(
     'os '
     'pkgcore.util:osutils '
     'pkgcore.restrictions:packages,values '
-    'pkgcore.ebuild:domain,profiles '
+    'pkgcore.ebuild:misc '
+    'pkgcore.ebuild:domain '
     )
 
 
@@ -95,12 +96,9 @@ class profile_data(object):
         # note we're trying to be *really* careful about not creating
         # pointless intermediate sets unless required
         # kindly don't change that in any modifications, it adds up.
-        enabled = known_flags.intersection(
-            domain.generic_collapse_data(self.forced_use, pkg))
-        immutable = frozenset(chain(enabled,
-            ifilter(known_flags.__contains__,
-            domain.generic_collapse_data(self.masked_use, pkg))
-            ))
+        enabled = known_flags.intersection(self.forced_use.pull_data(pkg))
+        immutable = enabled.union(ifilter(known_flags.__contains__,
+            self.masked_use.pull_data(pkg)))
         return immutable, enabled
 
 
@@ -240,10 +238,10 @@ class ProfileAddon(base.Addon):
                 mask = domain.generate_masking_restrict(profile.masks)
                 virtuals = profile.make_virtuals_repo(options.search_repo)
 
-                immutable_flags = domain.make_data_dict(
+                immutable_flags = misc.collapsed_restrict_to_data(
                     default_masked_use,
                     profile.masked_use.iteritems())
-                enabled_flags = domain.make_data_dict(
+                enabled_flags = misc.collapsed_restrict_to_data(
                     [(packages.AlwaysTrue, (stable_key,))],
                     profile.forced_use.iteritems())
                 
@@ -286,6 +284,19 @@ class ProfileAddon(base.Addon):
                 "keywords", 
                 values.ContainmentMatch(unstable_key))
 
+        profile_evaluate_dict = {}
+        for key, profiles in profile_filters.iteritems():
+            similar = profile_evaluate_dict[key] = []
+            for profile in profiles:
+                for existing in similar:
+                    if existing[0].masked_use == profile.masked_use and \
+                        existing[0].forced_use == profile.forced_use:
+                        existing.append(profile)
+                        break
+                else:
+                    similar.append([profile])
+
+        self.profile_evaluate_dict = profile_evaluate_dict
         self.arch_profiles = arch_profiles
         self.keywords_filter = mappings.OrderedDict(
             (k, self.keywords_filter[k])
@@ -294,12 +305,18 @@ class ProfileAddon(base.Addon):
 #        self.profile_evaluate_dict = profile_evaluate_dict
 
     def identify_profiles(self, pkg):
+        # yields groups of profiles; the 'groups' are grouped by the ability to share
+        # the use processing across each of 'em.
         l = []
         for key in set(pkg.keywords):
-            for profile in self.profile_filters.get(key, ()):
-                if not profile.visible(pkg):
+            profile_grps = self.profile_evaluate_dict.get(key)
+            if profile_grps is None:
+                continue
+            for profiles in profile_grps:
+                l2 = [x for x in profiles if x.visible(pkg)]
+                if not l2:
                     continue
-                l.append(profile)
+                l.append(l2)
         return l
 
 
@@ -334,15 +351,15 @@ class EvaluateDepSetAddon(base.Addon):
 
     def identify_common_depsets(self, pkg, depset):
         pkey = pkg.key
-        profiles = self.pkg_profiles_cache.get(pkg, None)
-        if profiles is None:
-            profiles = self.profiles.identify_profiles(pkg)
-            self.pkg_profiles_cache[pkg] = profiles
+        profile_grps = self.pkg_profiles_cache.get(pkg, None)
+        if profile_grps is None:
+            profile_grps = self.profiles.identify_profiles(pkg)
+            self.pkg_profiles_cache[pkg] = profile_grps
         diuse = depset.known_conditionals
         collapsed = {}
-        for profile in profiles:
-            immutables, enabled = profile.identify_use(pkg, diuse)
-            collapsed.setdefault((immutables, enabled), []).append(profile)
+        for profiles in profile_grps:
+            immutables, enabled = profiles[0].identify_use(pkg, diuse)
+            collapsed.setdefault((immutables, enabled), []).extend(profiles)
 
         return [(depset.evaluate_depset(k[1], tristate_filter=k[0]), v)
             for k,v in collapsed.iteritems()]
