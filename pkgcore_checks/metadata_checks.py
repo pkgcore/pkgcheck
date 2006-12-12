@@ -6,7 +6,6 @@ from operator import attrgetter
 from pkgcore_checks import base, util, addons
 
 from pkgcore.util.compatibility import any
-from pkgcore.util.file import read_dict
 from pkgcore.package.errors import MetadataException
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from pkgcore.fetch import fetchable

@@ -18,8 +18,7 @@ demandload.demandload(
     'errno '
     'pkgcore.util:osutils '
     'pkgcore.restrictions:packages,values '
-    'pkgcore.ebuild:misc '
-    'pkgcore.ebuild:domain '
+    'pkgcore.ebuild:misc,domain,profiles '
     'pkgcore.util.file:read_dict '
     )
 
@@ -131,7 +130,7 @@ class ProfileAddon(base.Addon):
                     "repo %r lacks a profiles directory" % (values.src_repo,))
 
         profile_loc = osutils.abspath(profile_loc)
-        values.profile_func = currying.pre_curry(util.get_profile_from_path,
+        values.profile_func = currying.pre_curry(profiles.OnDiskProfile,
                                                  profile_loc)
         values.profile_base_dir = profile_loc
 

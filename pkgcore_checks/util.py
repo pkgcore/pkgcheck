@@ -3,31 +3,15 @@
 
 import os
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.ebuild.profiles:OnDiskProfile "
+demandload(globals(),
     "logging "
-    "pkgcore.ebuild.domain:generate_masking_restrict "
     "pkgcore.util.packages:get_raw_pkg "
     "pkgcore.ebuild.atom:atom "
     "pkgcore.util.file:iter_read_bash ")
 
 
-def get_profile_from_repo(repo, profile_name):
-    return OnDiskProfile(get_repo_path(repo), profile_name)
-
-def get_profile_from_path(path, profile_name):
-    return OnDiskProfile(path, profile_name)
-
-def get_profile_mask(profile):
-    return generate_masking_restrict(profile.masks)
-
-def get_repo_path(repo):
-    if not isinstance(repo, basestring):
-        # repo instance.
-        return os.path.join(repo.base, "profiles")
-    return repo
-
 def get_profiles_desc(repo, ignore_dev=False):
-    fp = os.path.join(get_repo_path(repo), "profiles.desc")
+    fp = os.path.join(repo, "profiles.desc")
 
     arches_dict = {}
     for line_no, line in enumerate(iter_read_bash(fp)):
