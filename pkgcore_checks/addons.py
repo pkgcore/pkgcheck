@@ -20,6 +20,7 @@ demandload.demandload(
     'pkgcore.restrictions:packages,values '
     'pkgcore.ebuild:misc '
     'pkgcore.ebuild:domain '
+    'pkgcore.util.file:read_dict '
     )
 
 
