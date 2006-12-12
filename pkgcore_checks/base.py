@@ -269,6 +269,8 @@ class CheckRunner(object):
         for check in self.checks:
             try:
                 check.feed(item, reporter)
+            except (KeyboardInterrupt, SystemExit):
+                raise
             except Exception:
                 logging.exception('check %r raised', check)
 
