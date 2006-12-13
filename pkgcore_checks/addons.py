@@ -45,34 +45,31 @@ class ArchesAddon(base.Addon):
 
 class QueryCacheAddon(base.Template):
 
-    feed_type = base.package_feed
-    scope = base.version_scope
     priority = 1
 
     @staticmethod
     def mangle_option_parser(parser):
         group = parser.add_option_group('Query caching')
         group.add_option(
-            "--reset-caching-per-category", action='store_const',
-            dest='query_caching_freq', const=base.category_feed,
-            help="clear query caching after every category (defaults to every "
-            "package)")
-        group.add_option(
-            "--reset-caching-per-package", action='store_const',
-            dest='query_caching_freq', const=base.package_feed,
-            help="clear query caching after ever package (the default)")
-        # XXX does this const work?
-        group.add_option(
-            "--reset-caching-per-version", action='store_const',
-            dest='query_caching_freq', const='version_feed',
-            help="clear query caching after ever version (defaults to every "
-            "package)")
-        parser.set_default('query_caching_freq', base.package_feed)
+            '--reset-caching-per', action='store', type='choice',
+            choices=('version', 'package', 'category'),
+            dest='query_caching_freq', default='package',
+            help='control how often the cache is cleared '
+            '(version, package or category)')
+
+    @staticmethod
+    def check_values(values):
+        values.query_caching_freq = {
+            'version': base.versioned_feed,
+            'package': base.package_feed,
+            'category': base.repository_feed,
+            }[values.query_caching_freq]
+        print values.query_caching_freq
 
     def __init__(self, options):
         base.Addon.__init__(self, options)
         self.query_cache = {}
-        self.enabling_threshold = self.options.query_caching_freq
+        self.feed_type = self.options.query_caching_freq
 
     def feed(self, item, reporter):
         self.query_cache.clear()
@@ -325,8 +322,6 @@ class EvaluateDepSetAddon(base.Template):
     # XXX QueryCache just for the query_caching_freq option, separate?
     required_addons = (ProfileAddon, QueryCacheAddon)
 
-    feed_type = base.package_feed
-    scope = base.version_scope
     priority = 1
 
     def __init__(self, options, profiles, query_cache, *args):
@@ -334,7 +329,7 @@ class EvaluateDepSetAddon(base.Template):
         self.pkg_evaluate_depsets_cache = {}
         self.pkg_profiles_cache = {}
         self.profiles = profiles
-        self.enabling_threshold = self.options.query_caching_freq
+        self.feed_type = self.options.query_caching_freq
 
     def feed(self, item, reporter):
         self.pkg_evaluate_depsets_cache.clear()
