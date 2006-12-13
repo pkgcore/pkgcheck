@@ -83,6 +83,9 @@ class PkgDirReport(Template):
                         unprocessed_dirs.append(pjoin(cwd, fn))
 
                 elif stat.S_ISREG(st.st_mode):
+                    if st.st_mode & 0111:
+                        reporter.add_report(ExecutableFile(pkgset[0],
+                                                           pjoin(cwd, fn)))
                     if not fn.startswith("digest-"):
                         size += st.st_size
                         if any(True for x in fn if 
