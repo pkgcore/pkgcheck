@@ -2,6 +2,9 @@
 # License: GPL2
 
 from pkgcore_checks import base, util, addons
+from pkgcore.ebuild.repository import SlavedTree
+from pkgcore.util.osutils import listdir_dirs
+import os.path
 from pkgcore.util.demandload import demandload
 import operator, itertools
 
@@ -9,6 +12,8 @@ demandload(globals(), "pkgcore.util.xml:escape "
     "pkgcore.util.osutils:listdir_files "
     "pkgcore.util.lists:iflatten_instance "
     "pkgcore.fetch:fetchable ")
+
+pjoin = os.path.join
 
 class UnusedLocalFlags(base.Template):
 
@@ -24,6 +29,12 @@ class UnusedLocalFlags(base.Template):
         self.flags = {}
 
     def start(self):
+        if isinstance(self.options.target_repo,SlavedTree):
+            if 'profiles' in listdir_dirs(self.options.target_repo.location):
+                self.flags = util.get_use_local_desc(pjoin(self.options.target_repo.location,"profiles"))
+        else:
+            self.flags = None
+	else:
         self.flags = util.get_use_local_desc(self.options.profile_base_dir)
 
     def feed(self, pkgs, reporter):
@@ -83,15 +94,17 @@ class UnusedGlobalFlags(base.Template):
         self.flags = None
 
     def start(self):
-        self.flags = set(util.get_use_desc(self.options.profile_base_dir))
+	if not isinstance(self.options.target_repo,SlavedTree):
+    	    self.flags = set(util.get_use_desc(self.options.profile_base_dir))
 
     def feed(self, pkg, reporter):
-        self.flags.difference_update(pkg.iuse)
+        if self.flags:
+            self.flags.difference_update(pkg.iuse)
 
     def finish(self, reporter):
         if self.flags:
             reporter.add_report(UnusedGlobalFlagsResult(self.flags))
-        self.flags.clear()
+            self.flags.clear()
 
 
 class UnusedGlobalFlagsResult(base.Result):
@@ -134,8 +147,12 @@ class UnusedLicense(base.Template):
 
     def start(self):
         self.licenses = set()
-        for license_dir in self.options.license_dirs:
-            self.licenses.update(listdir_files(license_dir))
+        if isinstance(self.options.target_repo,SlavedTree):
+            if 'licenses' in listdir_dirs(self.options.target_repo.location):
+                self.licenses.update(listdir_files(pjoin(self.options.target_repo.location,"licenses")))
+        else:
+            for license_dir in self.options.license_dirs:
+                self.licenses.update(listdir_files(license_dir))
 
     def feed(self, pkg, reporter):
         self.licenses.difference_update(iflatten_instance(pkg.license))
