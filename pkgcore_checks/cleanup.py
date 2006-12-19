@@ -8,7 +8,7 @@ from pkgcore.util.compatibility import any
 class RedundantVersionReport(Template):
     """
     scan for versions that are likely shadowed by later versions from a 
-    keywords standpoint
+    keywords standpoint (ignoring -9999 versioned packages)
     
     Example: pkga-1 is keyworded amd64, pkga-2 is amd64.  
     pkga-1 can potentially be removed.
@@ -34,6 +34,8 @@ class RedundantVersionReport(Template):
                 unstable_set = []
             # reduce false positives for idiot keywords/ebuilds
             if not curr_set:
+                continue
+            if pkg.version == '9999':
                 continue
             for ver, keys in stack:
                 if ver.slot == pkg.slot:
