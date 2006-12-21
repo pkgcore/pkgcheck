@@ -32,10 +32,10 @@ class UnusedLocalFlags(base.Template):
         if isinstance(self.options.target_repo,SlavedTree):
             if 'profiles' in listdir_dirs(self.options.target_repo.location):
                 self.flags = util.get_use_local_desc(pjoin(self.options.target_repo.location,"profiles"))
+            else:
+                self.flags = None
         else:
-            self.flags = None
-	else:
-        self.flags = util.get_use_local_desc(self.options.profile_base_dir)
+            self.flags = util.get_use_local_desc(self.options.profile_base_dir)
 
     def feed(self, pkgs, reporter):
         for restrict, flags in self.flags.get(pkgs[0].key, {}).iteritems():
@@ -94,8 +94,8 @@ class UnusedGlobalFlags(base.Template):
         self.flags = None
 
     def start(self):
-	if not isinstance(self.options.target_repo,SlavedTree):
-    	    self.flags = set(util.get_use_desc(self.options.profile_base_dir))
+        if not isinstance(self.options.target_repo,SlavedTree):
+            self.flags = set(util.get_use_desc(self.options.profile_base_dir))
 
     def feed(self, pkg, reporter):
         if self.flags:
