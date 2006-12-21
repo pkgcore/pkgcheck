@@ -74,6 +74,8 @@ class TreeVulnerabilitiesReport(base.Template):
         self.vulns = {}
 
     def start(self):
+        if not self.options.glsa_enabled:
+            return
         # this is a bit brittle
         for r in GlsaDirSet(self.glsa_dir):
             if len(r) > 2:
