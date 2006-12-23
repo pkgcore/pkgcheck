@@ -465,6 +465,14 @@ class UseAddon(base.Addon):
         # hack, see bugs.gentoo.org 134994.
         unstated.difference_update(["bootstrap"])
         if unstated:
+            if seq == pkg.depends:
+                attr_name = "depends"
+            elif seq == pkg.rdepends:
+                attr_name = "rdepends"
+            elif seq == pkg.post_rdepends:
+                attr_name = "post_rdepends"
+            elif seq == pkg.provides:
+                attr_name = "provide"
             reporter.add_report(UnstatedIUSE(pkg, attr_name,
                 unstated))
 

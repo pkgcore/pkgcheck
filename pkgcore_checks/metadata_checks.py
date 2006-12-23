@@ -93,14 +93,14 @@ class IUSEMetadataReport(base.Template):
 
 class DependencyReport(base.Template):
 
-    """check DEPEND, PDEPEND, RDEPEND, and PROVIDES"""
+    """check DEPEND, PDEPEND, RDEPEND and PROVIDES"""
 
     required_addons = (addons.UseAddon,)
 
     feed_type = base.versioned_feed
 
     attrs = tuple((x, attrgetter(x)) for x in
-        ("depends", "rdepends", "post_rdepends"))
+        ("depends", "rdepends", "post_rdepends", "provides"))
 
     def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
