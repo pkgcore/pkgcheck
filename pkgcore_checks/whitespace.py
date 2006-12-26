@@ -23,6 +23,9 @@ class WhitespaceCheck(base.Template):
                 elif line[0] == ' ':
                     reporter.add_report(
                         WhitespaceFound(pkg, lineno + 1, "leading"))
+                if line.find("\t ") >= 0:
+                    reporter.add_report(
+                        WrongIndentFound(pkg, lineno +1))
             else:
                 if lastlineempty:
                     reporter.add_report(DoubleEmptyLine(pkg, lineno + 1))
@@ -61,6 +64,31 @@ class WhitespaceFound(base.Result):
     <msg>ebuild has %s whitespace on line %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package,
                self.version, self.leadtrail, self.linenumber)
+
+class WrongIndentFound(base.Result):
+
+    """leading or trailing whitespaces are found"""
+
+    __slots__ = ("category", "package", "version", "linenumber")
+
+    def __init__(self, pkg, linenumber):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.linenumber = linenumber
+
+    def to_str(self):
+        return "%s/%s-%s.ebuild has whitespace in indentation on line %s" % (
+            self.category, self.package, self.version, self.linenumber)
+
+    def to_xml(self):
+        return """\
+<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>ebuild has whitespace in indentation on line %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+               self.version, self.linenumber)
 
 
 class DoubleEmptyLine(base.Result):
