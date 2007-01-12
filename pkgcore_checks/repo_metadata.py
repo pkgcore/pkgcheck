@@ -7,6 +7,7 @@ from pkgcore.util.osutils import listdir_dirs
 import os.path
 from pkgcore.util.demandload import demandload
 import operator, itertools
+from pkgcore.chksum.errors import MissingChksum
 
 demandload(globals(), "pkgcore.util.xml:escape "
     "pkgcore.util.osutils:listdir_files "
@@ -287,9 +288,12 @@ class ConflictManifestDigest(base.Template):
             mdigests = manifest.distfiles
             old_digests = []
             for pkg in pkgset:
-                digests = f(pkg, force_manifest1=True)
-                self.check_pkg(pkg, mdigests, digests, reporter)
-                old_digests += digests.keys()
+                try:
+                    digests = f(pkg, force_manifest1=True)
+                    self.check_pkg(pkg, mdigests, digests, reporter)
+                    old_digests += digests.keys()
+                except MissingChksum, e:
+                    reporter.add_report(MissingDigest(pkg,e))
             orphaned = set(mdigests).difference(old_digests)
             if orphaned:
                 reporter.add_report(OrphanedManifestDist(pkgset[0], orphaned))
@@ -359,3 +363,24 @@ class OrphanedManifestDist(base.Result):
     <msg>%s</msg>
 </check>""" % (self.__class__.__name__,  self.category, self.package, 
     escape("manifest2 knows of %r, but they're not in digests" % self.files))
+
+class MissingDigest(base.Result):
+    __slots__ = ("category", "package", "version", "filename")
+
+    def __init__(self, pkg, filename):
+        base.Result.__init__(self)
+        self._store_cp(pkg)
+        self.filename = filename
+    
+    def to_str(self):
+        return "%s" % \
+            (self.filename)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <msg>%s</msg>
+</check>""" % (self.__class__.__name__,  self.category, self.package,
+    escape("%s" % self.filename))

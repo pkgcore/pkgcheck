@@ -133,6 +133,8 @@ class Transform(object):
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.child)
 
+    def finish(self, reporter):
+        pass
 
 class Result(object):
 

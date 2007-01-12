@@ -71,10 +71,12 @@ class OptionParser(commandline.OptionParser):
             "-c", action="append", type="string", dest="checks_to_run",
             help="limit checks to those matching this regex, or package/class "
             "matching; may be specified multiple times")
-        group.add_option(
+        group.set_conflict_handler("resolve")
+        group.add_option("-d",
             "--disable", action="append", type="string",
             dest="checks_to_disable", help="specific checks to disable: "
             "may be specified multiple times")
+        group.set_conflict_handler("error")
         group.add_option(
             '--checkset', action='callback', type='string',
             callback=commandline.config_callback,
