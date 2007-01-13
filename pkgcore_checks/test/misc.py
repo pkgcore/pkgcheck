@@ -15,6 +15,19 @@ class FakePkg(package):
         object.__setattr__(self, "data", data)
 
 
+class FakeTimedPkg(package):
+    __slots__ = "_mtime_"
+    
+    def __init__(self, cpvstr, mtime, data=None, shared=None, repo=None):
+        if data is None:
+            data = {}
+        cpv = CPV(cpvstr)
+        package.__init__(self, shared, repo, cpv.category, cpv.package,
+            cpv.fullver)
+        object.__setattr__(self, "data", data)
+        object.__setattr__(self, "_mtime_", mtime)
+
+
 class ReportTestCase(TestCase):
 
     def assertNoReport(self, check, data):
