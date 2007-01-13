@@ -16,8 +16,8 @@ class TestStaleUnstableReport(misc.ReportTestCase):
         now = time.time()
         mk_pkg = self.mk_pkg
         check  = StaleUnstableReport(misc.Options(arches=("x86", "ppc", "amd64"),
-            reference_arches=("x86", "ppc", "amd64")
-        target_arches=("x86", "ppc")),  None)
+            reference_arches=("x86", "ppc", "amd64"),
+            target_arches=("x86", "ppc")),  None)
 	
         check.start()
         
