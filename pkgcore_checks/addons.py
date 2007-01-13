@@ -1,4 +1,5 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
+# Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
 
@@ -207,7 +208,6 @@ class ProfileAddon(base.Addon):
         self.global_insoluable = set()
         profile_filters = {}
         self.keywords_filter = {}
-#        profile_evaluate_dict = {}
         ignore_deprecated = self.options.profile_ignore_deprecated
         
         for k in self.desired_arches:
@@ -271,20 +271,15 @@ class ProfileAddon(base.Addon):
                     containers.ProtectedSet(stable_cache),
                     unstable_insoluable))
 
-#                for k in (stable_key, unstable_key):
-#                    profile_evaluate_dict.setdefault(k, {}).setdefault(
-#                        (non_tristate, use_flags), []).append(
-#                            (package_use_mask, package_use_force, profile_name))
-
             self.keywords_filter[stable_key] = stable_r
             self.keywords_filter[unstable_key] = packages.PackageRestriction(
                 "keywords", 
                 values.ContainmentMatch(unstable_key))
 
         profile_evaluate_dict = {}
-        for key, profiles in profile_filters.iteritems():
+        for key, profile_list in profile_filters.iteritems():
             similar = profile_evaluate_dict[key] = []
-            for profile in profiles:
+            for profile in profile_list:
                 for existing in similar:
                     if existing[0].masked_use == profile.masked_use and \
                         existing[0].forced_use == profile.forced_use:
@@ -299,7 +294,6 @@ class ProfileAddon(base.Addon):
             (k, self.keywords_filter[k])
             for k in sorted(self.keywords_filter))
         self.profile_filters = profile_filters
-#        self.profile_evaluate_dict = profile_evaluate_dict
 
     def identify_profiles(self, pkg):
         # yields groups of profiles; the 'groups' are grouped by the ability to share
