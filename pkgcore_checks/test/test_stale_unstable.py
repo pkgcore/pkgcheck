@@ -13,24 +13,24 @@ class TestStaleUnstableReport(misc.ReportTestCase):
             mtime,data={"KEYWORDS":keywords})
 
     def test_it(self):
-	now = time.time()
+        now = time.time()
         mk_pkg = self.mk_pkg
         check  = StaleUnstableReport(misc.Options(arches=("x86", "ppc", "amd64"),
-            reference_arches=("x86", "ppc", "amd64"),
-            target_arches=("x86", "ppc")),  None)
+            reference_arches=("x86", "ppc", "amd64")
+        target_arches=("x86", "ppc")),  None)
 	
-	check.start()
+        check.start()
         
-	# a current one
+        # a current one
         self.assertNoReport(check, mk_pkg("1.0", "x86",now))
 
-	# an outdated, but stable one
+        # an outdated, but stable one
         self.assertNoReport(check, mk_pkg("1.0", "x86",(now-30*24*3600-1)))
 
-	# an outdated, partly unstable one
+        # an outdated, partly unstable one
         report = self.assertReports(check, mk_pkg("1.0", "~amd64 x86",(now-30*24*3600-1)))
         self.assertEqual(len(report), 1)
 
-	# an outdated, fully unstable one
+        # an outdated, fully unstable one
         report = self.assertReports(check, mk_pkg("1.0", "~amd64 ~x86",(now-30*24*3600-1)))
         self.assertEqual(len(report), 1)
