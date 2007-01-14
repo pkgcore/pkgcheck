@@ -1,4 +1,4 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
 from pkgcore.test import TestCase
@@ -17,6 +17,10 @@ class FakePkg(package):
     def __init__(self, cpvstr, data=None, shared=None, repo=None):
         if data is None:
             data = {}
+
+        for x in ("DEPEND", "RDEPEND", "PDEPEND", "IUSE", "LICENSE"):
+            data.setdefault(x, "")
+        
         cpv = CPV(cpvstr)
         package.__init__(self, shared, repo, cpv.category, cpv.package,
             cpv.fullver)
@@ -75,13 +79,14 @@ class Options(dict):
 class FakeProfile(object):
 
     def __init__(self, masked_use={}, forced_use={},
-        provides={}, masks=[], virtuals={}, arch='x86'):
+        provides={}, masks=[], virtuals={}, arch='x86', name='none'):
         self.provides_repo = SimpleTree(provides)
         self.masked_use = dict((atom(k), v) for k,v in masked_use.iteritems())
         self.forced_use = dict((atom(k), v) for k,v in forced_use.iteritems())
         self.masks = tuple(map(atom, masks))
         self.virtuals = SimpleTree(virtuals)
         self.arch = arch
+        self.name = name
 
         self.forced_data = collapsed_restrict_to_data(
             [(AlwaysTrue, (self.arch,))],
