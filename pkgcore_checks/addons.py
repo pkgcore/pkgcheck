@@ -21,6 +21,7 @@ demandload.demandload(
     'pkgcore.restrictions:packages,values '
     'pkgcore.ebuild:misc,domain,profiles '
     'pkgcore.util.file:read_dict '
+    'pkgcore.log:logger '
     )
 
 
@@ -313,17 +314,15 @@ class ProfileAddon(base.Addon):
 
 class EvaluateDepSetAddon(base.Template):
 
-    # XXX QueryCache just for the query_caching_freq option, separate?
-    required_addons = (ProfileAddon, QueryCacheAddon)
-
+    required_addons = (ProfileAddon,)
+    feed_type = base.versioned_feed
     priority = 1
 
-    def __init__(self, options, profiles, query_cache, *args):
+    def __init__(self, options, profiles):
         base.Addon.__init__(self, options)
         self.pkg_evaluate_depsets_cache = {}
         self.pkg_profiles_cache = {}
         self.profiles = profiles
-        self.feed_type = self.options.query_caching_freq
 
     def feed(self, item, reporter):
         self.pkg_evaluate_depsets_cache.clear()
@@ -337,7 +336,6 @@ class EvaluateDepSetAddon(base.Template):
         return depset_profiles
 
     def identify_common_depsets(self, pkg, depset):
-        pkey = pkg.key
         profile_grps = self.pkg_profiles_cache.get(pkg, None)
         if profile_grps is None:
             profile_grps = self.profiles.identify_profiles(pkg)
@@ -350,7 +348,6 @@ class EvaluateDepSetAddon(base.Template):
 
         return [(depset.evaluate_depset(k[1], tristate_filter=k[0]), v)
             for k,v in collapsed.iteritems()]
-
 
 
 class LicenseAddon(base.Addon):
@@ -427,6 +424,9 @@ class UseAddon(base.Addon):
         self.unstated_iuse = frozenset(unstated_iuse)
         self.profile_bases = profile_base
         self.ignore = not (unstated_iuse or known_iuse)
+        if self.ignore:
+            logger.warn('disabling use/iuse validity checks since no usable '
+                'use.desc, use.local.desc were found ')
 
     def get_filter(self):
         if self.ignore:

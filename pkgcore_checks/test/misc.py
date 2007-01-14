@@ -4,6 +4,14 @@
 from pkgcore.test import TestCase
 from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild.atom import atom
+from pkgcore.repository.util import SimpleTree
+from pkgcore.ebuild.misc import collapsed_restrict_to_data
+from pkgcore.restrictions.packages import AlwaysTrue
+from pkgcore_checks.addons import ArchesAddon
+
+default_arches = ArchesAddon.default_arches
+
 
 class FakePkg(package):
     def __init__(self, cpvstr, data=None, shared=None, repo=None):
@@ -52,6 +60,7 @@ class ReportTestCase(TestCase):
         self.assertEqual(len(r), 1)
         return r[0]
 
+
 class fake_reporter(object):
     def __init__(self, callback):
         self.add_report = callback
@@ -61,3 +70,26 @@ class Options(dict):
     __setattr__ = dict.__setitem__
     __getattr__ = dict.__getitem__
     __delattr__ = dict.__delitem__
+
+
+class FakeProfile(object):
+
+    def __init__(self, masked_use={}, forced_use={},
+        provides={}, masks=[], virtuals={}, arch='x86'):
+        self.provides_repo = SimpleTree(provides)
+        self.masked_use = dict((atom(k), v) for k,v in masked_use.iteritems())
+        self.forced_use = dict((atom(k), v) for k,v in forced_use.iteritems())
+        self.masks = tuple(map(atom, masks))
+        self.virtuals = SimpleTree(virtuals)
+        self.arch = arch
+
+        self.forced_data = collapsed_restrict_to_data(
+            [(AlwaysTrue, (self.arch,))],
+            self.forced_use.iteritems())
+
+        self.masked_data = collapsed_restrict_to_data(
+            [(AlwaysTrue, default_arches)],
+            self.masked_use.iteritems())
+            
+    def make_virtuals_repo(self, repo):
+        return self.virtuals
