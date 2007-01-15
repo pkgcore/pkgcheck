@@ -12,7 +12,8 @@ from pkgcore.chksum.errors import MissingChksum
 demandload(globals(), "pkgcore.util.xml:escape "
     "pkgcore.util.osutils:listdir_files "
     "pkgcore.util.lists:iflatten_instance "
-    "pkgcore.fetch:fetchable ")
+    "pkgcore.fetch:fetchable "
+    "pkgcore.ebuild:misc ")
 
 pjoin = os.path.join
 
@@ -23,27 +24,24 @@ class UnusedLocalFlags(base.Template):
     """
 
     feed_type = base.package_feed
-    required_addons = (addons.ProfileAddon,)
+    required_addons = (addons.UseAddon,)
 
-    def __init__(self, options, profiles):
+    def __init__(self, options, use_handler):
         base.Template.__init__(self, options)
-        self.flags = {}
+        self.iuse_handler = use_handler
 
     def start(self):
-        if isinstance(self.options.target_repo,SlavedTree):
-            if 'profiles' in listdir_dirs(self.options.target_repo.location):
-                self.flags = util.get_use_local_desc(pjoin(self.options.target_repo.location,"profiles"))
-            else:
-                self.flags = None
-        else:
-            self.flags = util.get_use_local_desc(self.options.profile_base_dir)
+        self.collapsed = misc.non_incremental_collapsed_restrict_to_data(
+            self.iuse_handler.specific_iuse)
 
     def feed(self, pkgs, reporter):
-        for restrict, flags in self.flags.get(pkgs[0].key, {}).iteritems():
-            unused = flags.difference(iflatten_instance(
-                pkg.iuse for pkg in pkgs if restrict.match(pkg)))
-            if unused:
-                reporter.add_report(UnusedLocalFlagsResult(restrict, unused))
+        unused = set()
+        for pkg in pkgs:
+            unused.update(self.collapsed.iter_pull_data(pkg))
+        for pkg in pkgs:
+            unused.difference_update(pkg.iuse)
+        if unused:
+            reporter.add_report(UnusedLocalFlagsResult(pkg, unused))
 
 
 class UnusedLocalFlagsResult(base.Result):
@@ -52,22 +50,17 @@ class UnusedLocalFlagsResult(base.Result):
     unused use.local.desc flag(s)
     """
     
-    __slots__ = ("category", "package", "atom", "flags")
+    __slots__ = ("category", "package", "flags")
 
-    def __init__(self, restrict, flags):
+    def __init__(self, pkg, flags):
         base.Result.__init__(self)
         # tricky, but it works; atoms have the same attrs
-        self._store_cp(restrict)
-        self.atom = str(restrict)
+        self._store_cp(pkg)
         self.flags = tuple(sorted(flags))
     
     def to_str(self):
-        if self.atom == "%s/%s" % (self.category, self.package):
-            s = ''
-        else:
-            s = "atom(%s), " % self.atom
-        return "%s/%s: use.local.desc%s unused flag(s): %s" % \
-            (self.category, self.package, s,
+        return "%s/%s: use.local.desc unused flag(s) %s"  % \
+            (self.category, self.package,
 		', '.join(self.flags))
 
     def to_xml(self):
@@ -88,15 +81,16 @@ class UnusedGlobalFlags(base.Template):
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    required_addons = (addons.ProfileAddon,)
+    required_addons = (addons.UseAddon,)
 
-    def __init__(self, options, profiles):
+    def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
         self.flags = None
+        self.iuse_handler = iuse_handler
 
     def start(self):
         if not isinstance(self.options.target_repo,SlavedTree):
-            self.flags = set(util.get_use_desc(self.options.profile_base_dir))
+            self.flags = set(self.iuse_handler.global_iuse)
 
     def feed(self, pkg, reporter):
         if self.flags:

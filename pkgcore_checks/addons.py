@@ -8,6 +8,7 @@
 
 import optparse
 from itertools import ifilter, ifilterfalse
+from pkgcore.util.lists import iflatten_instance
 
 from pkgcore_checks import base, util
 
@@ -384,6 +385,8 @@ class UseAddon(base.Addon):
         known_iuse = set()
         specific_iuse = []
         unstated_iuse = set()
+        known_arches = set()
+        unstated_iuse = set()
         
         for profile_base in options.repo_bases:
             try:
@@ -392,7 +395,12 @@ class UseAddon(base.Addon):
             except IOError, ie:
                 if ie.errno != errno.ENOENT:
                     raise
-
+            try:
+                unstated_iuse.update(util.get_repo_known_arches(
+                    osutils.join(profile_base, 'profiles')))
+            except IOError, ie:
+                if ie.errno != errno.ENOENT:
+                    raise
             try:
                 for restricts_dict in \
                     util.get_use_local_desc(
@@ -419,13 +427,10 @@ class UseAddon(base.Addon):
                 if ie.errno != errno.ENOENT:
                     raise
 
-        self.specific_iuse = misc.non_incremental_collapsed_restrict_to_data(
-            ((packages.AlwaysTrue, known_iuse),), specific_iuse)
-        known_iuse.update(x for y in specific_iuse for x in y[1])
-        known_iuse.update(unstated_iuse)
-        self.known_iuse = frozenset(known_iuse)
-        unstated_iuse.update(util.get_repo_known_arches(
-            osutils.join(profile_base, 'profiles')))
+        self.specific_iuse = tuple((x[0], tuple(x[1])) for x in specific_iuse)
+        self.collapsed_iuse = misc.non_incremental_collapsed_restrict_to_data(
+            ((packages.AlwaysTrue, known_iuse),), self.specific_iuse)
+        self.global_iuse = frozenset(known_iuse)
         self.unstated_iuse = frozenset(unstated_iuse)
         self.profile_bases = profile_base
         self.ignore = not (unstated_iuse or known_iuse)
@@ -434,7 +439,7 @@ class UseAddon(base.Addon):
                 'use.desc, use.local.desc were found ')
 
     def allowed_iuse(self, pkg):
-        return self.specific_iuse.pull_data(pkg)
+        return self.collapsed_iuse.pull_data(pkg)
 
     def get_filter(self):
         if self.ignore:
