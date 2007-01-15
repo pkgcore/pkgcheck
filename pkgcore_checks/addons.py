@@ -382,21 +382,23 @@ class UseAddon(base.Addon):
     def __init__(self, options):
         base.Addon.__init__(self, options)
         known_iuse = set()
+        specific_iuse = []
         unstated_iuse = set()
+        
         for profile_base in options.repo_bases:
             try:
-                known_iuse.update(util.get_use_desc(osutils.join(
-                            profile_base, 'profiles')))
+                known_iuse.update(util.get_use_desc(
+                    osutils.join(profile_base, 'profiles')))
             except IOError, ie:
                 if ie.errno != errno.ENOENT:
                     raise
 
             try:
                 for restricts_dict in \
-                    util.get_use_local_desc(osutils.join(
-                        profile_base, 'profiles')).itervalues():
-                    for flags in restricts_dict.itervalues():
-                        known_iuse.update(x.strip() for x in flags)
+                    util.get_use_local_desc(
+                        osutils.join(profile_base, 'profiles')).itervalues():
+                    specific_iuse.extend(restricts_dict.iteritems())
+
             except IOError, ie:
                 if ie.errno != errno.ENOENT:
                     raise		
@@ -417,16 +419,22 @@ class UseAddon(base.Addon):
                 if ie.errno != errno.ENOENT:
                     raise
 
+        self.specific_iuse = misc.non_incremental_collapsed_restrict_to_data(
+            ((packages.AlwaysTrue, known_iuse),), specific_iuse)
+        known_iuse.update(x for y in specific_iuse for x in y[1])
         known_iuse.update(unstated_iuse)
         self.known_iuse = frozenset(known_iuse)
-        unstated_iuse.update(util.get_repo_known_arches(osutils.join(
-                    profile_base, 'profiles')))
+        unstated_iuse.update(util.get_repo_known_arches(
+            osutils.join(profile_base, 'profiles')))
         self.unstated_iuse = frozenset(unstated_iuse)
         self.profile_bases = profile_base
         self.ignore = not (unstated_iuse or known_iuse)
         if self.ignore:
             logger.warn('disabling use/iuse validity checks since no usable '
                 'use.desc, use.local.desc were found ')
+
+    def allowed_iuse(self, pkg):
+        return self.specific_iuse.pull_data(pkg)
 
     def get_filter(self):
         if self.ignore:
