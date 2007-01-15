@@ -429,7 +429,9 @@ class UseAddon(base.Addon):
 
         self.specific_iuse = tuple((x[0], tuple(x[1])) for x in specific_iuse)
         self.collapsed_iuse = misc.non_incremental_collapsed_restrict_to_data(
-            ((packages.AlwaysTrue, known_iuse),), self.specific_iuse)
+            ((packages.AlwaysTrue, known_iuse),), 
+            ((packages.AlwaysTrue, unstated_iuse),),
+            self.specific_iuse)
         self.global_iuse = frozenset(known_iuse)
         self.unstated_iuse = frozenset(unstated_iuse)
         self.profile_bases = profile_base
