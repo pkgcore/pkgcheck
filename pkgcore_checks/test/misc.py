@@ -52,7 +52,8 @@ class ReportTestCase(TestCase):
         l = []
         r = fake_reporter(lambda r:l.append(r))
         check.feed(data, r)
-        self.assertTrue(l)
+        self.assertTrue(l, msg="must get a report from %r %r, got none" % 
+            (check, data))
         return l
 
     def assertIsInstance(self, obj, kls):

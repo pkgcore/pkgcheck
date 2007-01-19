@@ -127,8 +127,8 @@ class OptionParser(commandline.OptionParser):
             self, values, args)
         # XXX hack...
         values.checks = sorted(get_plugins('check', plugins))
-        if values.describe_checks or values.describe_reporters:
-            if values.describe_reporters == values.describe_checks:
+        if values.list_checks or values.list_reporters:
+            if values.list_reporters == values.list_checks:
                 raise optparse.OptionValueError("--list-checks and "
                     "--list-reporters are mutually exclusive options- "
                     "one or the other.")
@@ -410,11 +410,11 @@ def display_reporters(out, config, config_reporters, plugin_reporters):
 def main(options, out, err):
     """Do stuff."""
 
-    if options.describe_checks:
+    if options.list_checks:
         display_checks(out, options.checks)
         return 0
 
-    if options.describe_reporters:
+    if options.list_reporters:
         display_reporters(out, options.config,
             options.config.pcheck_reporter_factory.values(),
             list(get_plugins('reporter', plugins)))

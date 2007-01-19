@@ -25,6 +25,9 @@ class StrReporter(base.Reporter):
     sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86-fbsd ]
     """
 
+    # simple reporter; fallback default
+    priority = 0
+
     def __init__(self, out):
         """Initialize.
         @type out: L{pkgcore.util.formatters.Formatter}.
@@ -54,6 +57,9 @@ class FancyReporter(base.Reporter):
       NonsolvableDeps: sys-apps/portage-2.1-r2: rdepends  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ >=app-misc/pax-utils-0.1.13 ]
       StaleUnstableKeyword: sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86-fbsd ]
     """
+
+    # default report, akin to repoman
+    priority = 1
 
     def __init__(self, out):
         """Initialize.
@@ -89,6 +95,9 @@ class XmlReporter(base.Reporter):
     """
     dump an xml feed of reports
     """
+
+    # xml report, shouldn't be used but in worst case.
+    priority = -1000
 
     def __init__(self, out):
         """Initialize.

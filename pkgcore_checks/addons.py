@@ -388,6 +388,7 @@ class UseAddon(base.Addon):
         known_arches = set()
         unstated_iuse = set()
         
+        arches = set()
         for profile_base in options.repo_bases:
             try:
                 known_iuse.update(util.get_use_desc(
@@ -396,7 +397,7 @@ class UseAddon(base.Addon):
                 if ie.errno != errno.ENOENT:
                     raise
             try:
-                unstated_iuse.update(util.get_repo_known_arches(
+                arches.update(util.get_repo_known_arches(
                     osutils.join(profile_base, 'profiles')))
             except IOError, ie:
                 if ie.errno != errno.ENOENT:
@@ -433,6 +434,7 @@ class UseAddon(base.Addon):
             ((packages.AlwaysTrue, unstated_iuse),),
             self.specific_iuse)
         self.global_iuse = frozenset(known_iuse)
+        unstated_iuse.update(arches)
         self.unstated_iuse = frozenset(unstated_iuse)
         self.profile_bases = profile_base
         self.ignore = not (unstated_iuse or known_iuse)
@@ -445,14 +447,14 @@ class UseAddon(base.Addon):
 
     def get_filter(self):
         if self.ignore:
-            return self.fake_iuse_validate
-        return self.iuse_validate
+            return self.fake_use_validate
+        return self.use_validate
         
     @staticmethod
-    def fake_iuse_validate(klasses, pkg, seq, reporter):
+    def fake_use_validate(klasses, pkg, seq, reporter):
         return iflatten_instance(seq, klasses)
 
-    def iuse_validate(self, klasses, pkg, seq, reporter):
+    def use_validate(self, klasses, pkg, seq, reporter):
         skip_filter = (packages.Conditional,) + klasses
         unstated = set()
     
