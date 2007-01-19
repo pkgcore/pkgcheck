@@ -8,14 +8,14 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 * invocation args have changed- please see readme for details of how to
   use pcheck.
 * test suite added; not yet complete coverage, but 90% of the way there.
-* --list-checks was renamed to --describe-checks, and the output format 
-  changed to be less terse.
+* --list-checks output format is fair bit more human-readable now.
 * better support for overlays (should work fine with appropriate commandline
   options supplied)
 * optimizations, and performance regression fixes; fair bit faster then .1.
 * new checks can be added via pkgcore 0.2 plugins cache.
 * UI improvements; color, and human readable output.
-* --xml option was dropped, use --reporter=
+* --xml option was dropped, use --reporter to specify the desired reporter,
+  and --list-reporters to see what reporters are available
 * added --enable, --disable options to prune add/remove specific checks from
   the run.
 * add config based 'suites' that can be ran; basically, sets of tests/targets

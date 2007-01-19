@@ -95,13 +95,13 @@ class OptionParser(commandline.OptionParser):
             callback_args=('pcheck_suite', 'suite'),
             help='Specify the configuration suite to use')
         self.add_option(
-            "--describe-checks", action="store_true", default=False,
+            "--list-checks", action="store_true", default=False,
             help="print what checks are available to run and exit")
         self.add_option(
             '--reporter', type='string', action='store', default=None,
             help="Use a non-default reporter (defined in pkgcore's config).")
         self.add_option(
-            '--describe-reporters', action='store_true', default=False,
+            '--list-reporters', action='store_true', default=False,
             help="print known reporters")
 
         overlay = self.add_option_group('Overlay')
@@ -129,8 +129,8 @@ class OptionParser(commandline.OptionParser):
         values.checks = sorted(get_plugins('check', plugins))
         if values.describe_checks or values.describe_reporters:
             if values.describe_reporters == values.describe_checks:
-                raise optparse.OptionValueError("--describe-checks and "
-                    "--describe-reporters are mutually exclusive options- "
+                raise optparse.OptionValueError("--list-checks and "
+                    "--list-reporters are mutually exclusive options- "
                     "one or the other.")
             return values, ()
         cwd = None
@@ -228,7 +228,7 @@ class OptionParser(commandline.OptionParser):
                     get_plugins('reporter', plugins)))
                 if not func:
                     self.error("no reporter matches %r\n"
-                        "please see --describe-reporter for a list of "
+                        "please see --list-reporter for a list of "
                         "valid reporters" % values.reporter)
                 elif len(func) > 1:
                     self.error("--reporter %r matched multiple reporters, "
