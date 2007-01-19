@@ -128,6 +128,10 @@ class DependencyReport(base.Template):
 
 class KeywordsReport(base.Template):
     
+    """
+    check pkgs keywords for sanity; empty keywords, and -* are flagged
+    """
+    
     feed_type = base.versioned_feed
     
     def feed(self, pkg, reporter):

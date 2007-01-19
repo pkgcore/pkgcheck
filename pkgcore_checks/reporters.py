@@ -18,9 +18,15 @@ demandload.demandload(
 
 class StrReporter(base.Reporter):
 
+    """
+    Simple string reporter, pcheck-0.1 behaviour. example:
+    sys-apps/portage-2.1-r2: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
+    sys-apps/portage-2.1-r2: rdepends  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ >=app-misc/pax-utils-0.1.13 ]
+    sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86-fbsd ]
+    """
+
     def __init__(self, out):
         """Initialize.
-
         @type out: L{pkgcore.util.formatters.Formatter}.
         """
         base.Reporter.__init__(self)
@@ -39,6 +45,15 @@ class StrReporter(base.Reporter):
 
 
 class FancyReporter(base.Reporter):
+
+    """
+    groupped colored output, example:
+    
+    sys-apps/portage
+      WrongIndentFound: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
+      NonsolvableDeps: sys-apps/portage-2.1-r2: rdepends  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ >=app-misc/pax-utils-0.1.13 ]
+      StaleUnstableKeyword: sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86-fbsd ]
+    """
 
     def __init__(self, out):
         """Initialize.
@@ -70,6 +85,10 @@ class FancyReporter(base.Reporter):
 
 
 class XmlReporter(base.Reporter):
+
+    """
+    dump an xml feed of reports
+    """
 
     def __init__(self, out):
         """Initialize.

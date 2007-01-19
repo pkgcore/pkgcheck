@@ -7,7 +7,9 @@
 
 
 from pkgcore.util import commandline, parserestrict, lists, demandload
-from pkgcore.plugin import get_plugins
+from pkgcore.plugin import get_plugins, get_plugin
+from pkgcore_checks import plugins
+from pkgcore.util.formatters import decorate_forced_wrapping
 
 from pkgcore_checks import plugins, base, __version__, feeds
 
@@ -93,14 +95,14 @@ class OptionParser(commandline.OptionParser):
             callback_args=('pcheck_suite', 'suite'),
             help='Specify the configuration suite to use')
         self.add_option(
-            "--list-checks", action="store_true", default=False,
-            dest="list_checks",
+            "--describe-checks", action="store_true", default=False,
             help="print what checks are available to run and exit")
         self.add_option(
-            '--reporter', action='callback', type='string',
-            callback=commandline.config_callback,
-            callback_args=('pcheck_reporter_factory', 'reporter'),
+            '--reporter', type='string', action='store', default=None,
             help="Use a non-default reporter (defined in pkgcore's config).")
+        self.add_option(
+            '--describe-reporters', action='store_true', default=False,
+            help="print known reporters")
 
         overlay = self.add_option_group('Overlay')
         overlay.add_option(
@@ -125,7 +127,11 @@ class OptionParser(commandline.OptionParser):
             self, values, args)
         # XXX hack...
         values.checks = sorted(get_plugins('check', plugins))
-        if values.list_checks:
+        if values.describe_checks or values.describe_reporters:
+            if values.describe_reporters == values.describe_checks:
+                raise optparse.OptionValueError("--describe-checks and "
+                    "--describe-reporters are mutually exclusive options- "
+                    "one or the other.")
             return values, ()
         cwd = None
         if values.suite is None:
@@ -211,8 +217,30 @@ class OptionParser(commandline.OptionParser):
             values.reporter = values.config.get_default(
                 'pcheck_reporter_factory')
             if values.reporter is None:
-                self.error('no default reporter')
-
+                values.reporter = get_plugin('reporter', plugins)
+            if values.reporter is None:
+                self.error('no config defined reporter found, nor any default '
+                    'plugin based reporters')
+        else:
+            func = values.config.pcheck_reporter_factory.get(values.reporter)
+            if func is None:
+                func = list(base.Whitelist([values.reporter]).filter(
+                    get_plugins('reporter', plugins)))
+                if not func:
+                    self.error("no reporter matches %r\n"
+                        "please see --describe-reporter for a list of "
+                        "valid reporters" % values.reporter)
+                elif len(func) > 1:
+                    self.error("--reporter %r matched multiple reporters, "
+                        "must match one. %r" %
+                            (values.reporter,
+                                tuple(sorted("%s.%s" %
+                                    (x.__module__, x.__name__)
+                                    for x in func))
+                            )
+                    )
+                func = func[0]
+            values.reporter = func
         if values.src_repo is None:
             values.src_repo = values.target_repo
             values.search_repo = values.target_repo
@@ -290,39 +318,107 @@ class OptionParser(commandline.OptionParser):
         return values, ()
 
 
+def dump_docstring(out, obj, prefix=None):
+    if prefix is not None:
+        out.first_prefix.append(prefix)
+        out.later_prefix.append(prefix)
+    try:
+        if obj.__doc__ is None:
+            out.write("no documentation")
+            return
+
+        # Docstrings start with an unindented line. Everything
+        # else is consistently indented.
+        lines = obj.__doc__.split('\n')
+        firstline = lines[0].strip()
+        # Some docstrings actually start on the second line.
+        if firstline:
+            out.write(firstline)
+        if len(lines) > 1:
+            for line in textwrap.dedent('\n'.join(lines[1:])).split('\n'):
+                if line:
+                    out.write(line)
+    finally:
+        if prefix is not None:
+            out.first_prefix.pop()
+            out.later_prefix.pop()
+    
+@decorate_forced_wrapping()
 def display_checks(out, checks):
+    d = {}
     for x in checks:
-        out.write(out.bold, "%s.%s" % (x.__module__, x.__name__))
-        out.first_prefix.append('  ')
-        out.later_prefix.append('  ')
-        oldwrap = out.wrap
-        out.wrap = True
-        if x.__doc__ is not None:
-            # Docstrings start with an unindented line. Everything
-            # else is consistently indented.
-            lines = x.__doc__.split('\n')
-            firstline = lines[0].strip()
-            # Some docstrings actually start on the second line.
-            if firstline:
-                out.write(firstline)
-            if len(lines) > 1:
-                for line in textwrap.dedent('\n'.join(lines[1:])).split('\n'):
-                    if line:
-                        out.write(line)
-        else:
-            out.write(out.fg('red'), "No Documentation")
-        out.first_prefix.pop()
-        out.later_prefix.pop()
-        out.wrap = oldwrap
+        d.setdefault(x.__module__, []).append(x)
+
+    if not d:
+        out.write(out.fg('red'), "No Documentation")
+        out.write()
+        return
+        
+    for module_name in sorted(d):
+        out.write(out.bold, "%s:" % module_name)
+        l = d[module_name]
+        l.sort(key=lambda x:x.__name__)
+
+        for check in l:
+            out.write("%s:" % check.__name__)
+            dump_docstring(out, check, prefix='  ')
         out.write()
 
+
+@decorate_forced_wrapping()
+def display_reporters(out, config, config_reporters, plugin_reporters):
+    out.write("known reporters:")
+    out.write()
+    if config_reporters:
+        out.write("configured reporters:")
+        out.first_prefix.append(' ')
+        out.later_prefix.append(' ')
+        try:
+            # sorting here is random
+            for reporter in sorted(config_reporters, key=lambda x:x.__name__):
+                key = config.get_section_name(reporter)
+                if not key:
+                    continue
+                out.write(out.bold, key)
+                dump_docstring(out, reporter, prefix=' ')
+                out.write()
+        finally:
+            out.first_prefix.pop()
+            out.later_prefix.pop()
+    
+    if plugin_reporters:
+        if config_reporters:
+            out.write()
+        out.write("plugin reporters:")
+        out.first_prefix.append(' ')
+        out.later_prefix.append(' ')
+        try:
+            for reporter in sorted(plugin_reporters, key=lambda x:x.__name__):
+                out.write(out.bold, reporter.__name__)
+                dump_docstring(out, reporter, prefix=' ')
+                out.write()
+        finally:
+            out.first_prefix.pop()
+            out.later_prefix.pop()
+
+    if not plugin_reporters and not config_reporters:
+        out.write(out.fg("red"), "Warning", out.fg(""),
+            " no reporters detected; pcheck won't "
+            "run correctly without a reporter to use!")
+        out.write()
 
 def main(options, out, err):
     """Do stuff."""
 
-    if options.list_checks:
+    if options.describe_checks:
         display_checks(out, options.checks)
         return 0
+
+    if options.describe_reporters:
+        display_reporters(out, options.config,
+            options.config.pcheck_reporter_factory.values(),
+            list(get_plugins('reporter', plugins)))
+        return 0    
 
     if not options.repo_bases:
         err.write(
