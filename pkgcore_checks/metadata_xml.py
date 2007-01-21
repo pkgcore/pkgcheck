@@ -190,7 +190,7 @@ class InvalidXml(base.Result):
         if self.package is not None:
             s = '/' + self.package
 
-        return "%s%s: %s violates it's dtd" % (self.category, s, 
+        return "%s%s: %s violates metadata.dtd" % (self.category, s, 
             self.filename)
 
     def to_xml(self):
@@ -201,5 +201,5 @@ class InvalidXml(base.Result):
         return \
 """<check name="%s">
     <category>%s</category>%s
-    <msg>%s is not valid according to it's dtd</msg>
+    <msg>%s is not valid according to metadata.dtd</msg>
 </check>""" % (self.__class__.__name__, self.category, s, self.filename)
