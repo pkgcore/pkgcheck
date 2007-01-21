@@ -25,9 +25,10 @@ try:
 except OSError:
     pass
 
+from pkgcore_checks import __version__
 setup(
     name="pkgcore-checks",
-    version="0.1",
+    version=__version__,
     license="GPL2",
     author="Brian Harring",
     author_email="ferringb@gmail.com",
