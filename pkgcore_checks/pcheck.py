@@ -359,10 +359,16 @@ def display_checks(out, checks):
         l = d[module_name]
         l.sort(key=lambda x:x.__name__)
 
-        for check in l:
-            out.write("%s:" % check.__name__)
-            dump_docstring(out, check, prefix='  ')
-        out.write()
+        try:
+            out.first_prefix.append('  ')
+            out.later_prefix.append('  ')
+            for check in l:
+                out.write("%s:" % check.__name__)
+                dump_docstring(out, check, prefix='  ')
+            out.write()
+        finally:
+            out.first_prefix.pop()
+            out.later_prefix.pop()
 
 
 @decorate_forced_wrapping()
