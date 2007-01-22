@@ -1,9 +1,67 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from distutils.core import setup
+from distutils.core import setup, Command
 from distutils.command.sdist import sdist
-import os
+import os, unittest
+
+class TestLoader(unittest.TestLoader):
+
+    """Test loader that knows how to recurse packages."""
+
+    def loadTestsFromModule(self, module):
+        """Recurses if module is actually a package."""
+        paths = getattr(module, '__path__', None)
+        tests = [unittest.TestLoader.loadTestsFromModule(self, module)]
+        if paths is None:
+            # Not a package.
+            return tests[0]
+        for path in paths:
+            for child in os.listdir(path):
+                if (child != '__init__.py' and child.endswith('.py') and
+                    child.startswith('test')):
+                    # Child module.
+                    childname = '%s.%s' % (module.__name__, child[:-3])
+                else:
+                    childpath = os.path.join(path, child)
+                    if not os.path.isdir(childpath):
+                        continue
+                    if not os.path.exists(os.path.join(childpath,
+                                                       '__init__.py')):
+                        continue
+                    # Subpackage.
+                    childname = '%s.%s' % (module.__name__, child)
+                tests.append(self.loadTestsFromName(childname))
+        return self.suiteClass(tests)
+
+
+testLoader = TestLoader()
+
+
+class test(Command):
+
+    """Run our unit tests in a built copy.
+
+    Based on code from setuptools.
+    """
+
+    user_options = []
+
+    def initialize_options(self):
+        # Options? What options?
+        pass
+
+    def finalize_options(self):
+        # Options? What options?
+        pass
+
+    def run(self):
+        build_ext = self.reinitialize_command('build_ext')
+        build_ext.inplace = True
+        self.run_command('build_ext')
+        # Somewhat hackish: this calls sys.exit.
+        unittest.main('pkgcore_checks.test', argv=['setup.py'], testLoader=testLoader)
+
 
 class mysdist(sdist):
     default_format = dict(sdist.default_format)
@@ -39,5 +97,5 @@ setup(
         'pkgcore.plugins.pcheck_configurables',
         ],
     scripts=["pcheck"],
-    cmdclass={"sdist":mysdist}
+    cmdclass={"sdist":mysdist, "test":test}
 )
