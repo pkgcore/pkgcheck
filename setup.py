@@ -60,7 +60,8 @@ class test(Command):
         build_ext.inplace = True
         self.run_command('build_ext')
         # Somewhat hackish: this calls sys.exit.
-        unittest.main('pkgcore_checks.test', argv=['setup.py'], testLoader=testLoader)
+        unittest.main('pkgcore_checks.test', argv=['setup.py', '-v'],
+            testLoader=testLoader)
 
 
 class mysdist(sdist):
