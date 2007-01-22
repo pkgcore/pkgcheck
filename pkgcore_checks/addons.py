@@ -67,7 +67,6 @@ class QueryCacheAddon(base.Template):
             'package': base.package_feed,
             'category': base.repository_feed,
             }[values.query_caching_freq]
-        print values.query_caching_freq
 
     def __init__(self, options):
         base.Addon.__init__(self, options)
