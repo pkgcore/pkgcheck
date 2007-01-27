@@ -123,7 +123,7 @@ class ProfileAddon(base.Addon):
                 raise optparse.OptionValueError(
                     'Need a target repo or --overlayed-repo that is a single '
                     'UnconfiguredTree for profile checks')
-            profile_loc = os.path.join(repo_base, "profiles")
+            profile_loc = osutils.pjoin(repo_base, "profiles")
             if not os.path.isdir(profile_loc):
                 raise optparse.OptionValueError(
                     "repo %r lacks a profiles directory" % (values.src_repo,))
@@ -363,7 +363,7 @@ class LicenseAddon(base.Addon):
         values.license_dirs = []
         if values.license_dir is None:
             for repo_base in values.repo_bases:
-                candidate = os.path.join(repo_base, 'licenses')
+                candidate = osutils.pjoin(repo_base, 'licenses')
                 if os.path.isdir(candidate):
                     values.license_dirs.append(candidate)
             if not values.license_dirs:

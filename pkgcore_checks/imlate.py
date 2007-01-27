@@ -59,9 +59,7 @@ class LaggingStableInfo(base.Result):
     
     def __init__(self, pkg, keywords):
         base.Result.__init__(self)
-        self.category = pkg.category
-        self.package = pkg.package
-        self.version = pkg.fullver
+        self._store_cpv(pkg)
         self.keywords = keywords
         self.stable = tuple(str(x) for x in pkg.keywords
             if not x[0] in ("~", "-"))

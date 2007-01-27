@@ -10,12 +10,11 @@ import operator, itertools
 from pkgcore.chksum.errors import MissingChksum
 
 demandload(globals(), "pkgcore.util.xml:escape "
-    "pkgcore.util.osutils:listdir_files "
+    "pkgcore.util.osutils:listdir_files,pjoin "
     "pkgcore.util.lists:iflatten_instance "
     "pkgcore.fetch:fetchable "
     "pkgcore.ebuild:misc ")
 
-pjoin = os.path.join
 
 class UnusedLocalFlags(base.Template):
 

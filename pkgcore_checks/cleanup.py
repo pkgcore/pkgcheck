@@ -61,9 +61,7 @@ class RedundantVersionWarning(Result):
 
     def __init__(self, pkg, higher_pkgs):
         Result.__init__(self)
-        self.category = pkg.category
-        self.package = pkg.package
-        self.version = pkg.fullver
+        self._store_cpv(pkg)
         self.slot = pkg.slot
         self.later_versions = tuple(x.fullver for x in higher_pkgs)
 

@@ -1,17 +1,17 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os
 from pkgcore.util.demandload import demandload
 demandload(globals(),
     "logging "
     "pkgcore.util.packages:get_raw_pkg "
     "pkgcore.ebuild.atom:atom "
-    "pkgcore.util.file:iter_read_bash ")
+    "pkgcore.util.file:iter_read_bash "
+    "pkgcore.util.osutils:pjoin ")
 
 
 def get_profiles_desc(repo, ignore_dev=False):
-    fp = os.path.join(repo, "profiles.desc")
+    fp = pjoin(repo, "profiles.desc")
 
     arches_dict = {}
     for line_no, line in enumerate(iter_read_bash(fp)):
@@ -32,7 +32,7 @@ def get_profiles_desc(repo, ignore_dev=False):
 
 def get_repo_known_arches(profiles_path):
     """Takes the path to the dir with arch.list in it (repo/profiles)."""
-    fp = os.path.join(profiles_path, "arch.list")
+    fp = pjoin(profiles_path, "arch.list")
     return set(open(fp, "r").read().split())
 
 def get_cpvstr(pkg):
@@ -44,7 +44,7 @@ def get_cpvstr(pkg):
 
 def get_use_desc(profiles_path):
     """Takes the path to the dir with use*desc in it (repo/profiles)."""
-    fp = os.path.join(profiles_path, "use.desc")
+    fp = pjoin(profiles_path, "use.desc")
     l = []
     for line in iter_read_bash(fp):
         l.append(line.split()[0])
@@ -52,7 +52,7 @@ def get_use_desc(profiles_path):
 
 def get_use_local_desc(profiles_path):
     """Takes the path to the dir with use*desc in it (repo/profiles)."""
-    fp = os.path.join(profiles_path, "use.local.desc")
+    fp = pjoin(profiles_path, "use.local.desc")
     d = {}
     for line in iter_read_bash(fp):
         key, val = line.split(":", 1)
