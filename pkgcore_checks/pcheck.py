@@ -513,7 +513,7 @@ def main(options, out, err):
         if not pipes:
             out.write(out.fg('red'), ' * ', out.reset, 'No checks!')
         else:
-            out.write('Running %s tests' % (len(sinks) - len(bad_sinks),))
+            err.write('Running %i tests' % (len(sinks) - len(bad_sinks),))
             for source, pipe in pipes:
                 pipe.start()
                 for thing in source.feed():
