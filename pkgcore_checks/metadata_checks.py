@@ -252,6 +252,7 @@ class BadRestricts(base.Result):
     """pkg's restrict metadata has unknown/deprecated entries"""
     
     __slots__ = ("category", "package", "version", "restricts", "deprecated")
+    threshold = base.versioned_feed
     
     def __init__(self, pkg, restricts, deprecated=None):
         base.Result.__init__(self)
@@ -296,6 +297,7 @@ class CrappyDescription(base.Result):
     """pkg's description sucks in some fashion"""
 
     __slots__ = ("category", "package", "version", "msg")
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, msg):
         base.Result.__init__(self)
@@ -320,6 +322,7 @@ class CrappyDescription(base.Result):
 class MissingUri(base.Result):
     """restrict=fetch isn't set, yet no full uri exists"""
     __slots__ = ("category", "package", "version", "filename")
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, filename):
         base.Result.__init__(self)
@@ -370,6 +373,7 @@ class BadProto(base.Result):
 class MetadataError(base.Result):
     """problem detected with a packages metadata"""
     __slots__ = ("category", "package", "version", "attr", "msg")
+    threshold = base.versioned_feed
     
     def __init__(self, pkg, attr, msg):
         base.Result.__init__(self)
@@ -396,6 +400,7 @@ class EmptyKeywords(base.Result):
     """pkg has no set keywords"""
 
     __slots__ = ('category', 'package', 'version')
+    threshold = base.versioned_feed
 
     def __init__(self, pkg):
         base.Result.__init__(self)
@@ -420,6 +425,7 @@ class StupidKeywords(base.Result):
     """pkg that is using -*; package.mask in profiles addresses this already"""
 
     __slots__ = ('category', 'package', 'version')
+    threshold = base.versioned_feed
 
     def __init__(self, pkg):
         base.Result.__init__(self)

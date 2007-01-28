@@ -44,6 +44,8 @@ class WhitespaceFound(base.Result):
 
     __slots__ = ("category", "package", "version", "linenumber", "leadtrail")
 
+    threshold = base.versioned_feed
+
     def __init__(self, pkg, linenumber, leadtrail):
         base.Result.__init__(self)
         self._store_cpv(pkg)
@@ -65,11 +67,14 @@ class WhitespaceFound(base.Result):
 </check>""" % (self.__class__.__name__, self.category, self.package,
                self.version, self.leadtrail, self.linenumber)
 
+
 class WrongIndentFound(base.Result):
 
     """leading or trailing whitespaces are found"""
 
     __slots__ = ("category", "package", "version", "linenumber")
+
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, linenumber):
         base.Result.__init__(self)
@@ -97,6 +102,8 @@ class DoubleEmptyLine(base.Result):
 
     __slots__ = ("category", "package", "version", "linenumber")
 
+    threshold = base.versioned_feed
+
     def __init__(self, pkg, linenumber):
         base.Result.__init__(self)
         self._store_cpv(pkg)
@@ -123,6 +130,8 @@ class TrailingEmptyLine(base.Result):
 
     __slots__ = ("category", "package", "version")
 
+    threshold = base.versioned_feed
+
     def __init__(self, pkg):
         base.Result.__init__(self)
         self._store_cpv(pkg)
@@ -147,6 +156,8 @@ class NoFinalNewline(base.Result):
     """Ebuild's last line does not have a final newline."""
 
     __slots__ = ("category", "package", "version")
+
+    threshold = base.versioned_feed
 
     def __init__(self, pkg):
         base.Result.__init__(self)

@@ -58,6 +58,7 @@ class RedundantVersionWarning(Result):
     """
 
     __slots__ = ("category", "package", "version", "slot", "later_versions")
+    threshold = package_feed
 
     def __init__(self, pkg, higher_pkgs):
         Result.__init__(self)

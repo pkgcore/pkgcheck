@@ -490,6 +490,8 @@ class UseAddon(base.Addon):
 class UnstatedIUSE(base.Result):
     """pkg is reliant on conditionals that aren't in IUSE"""
     __slots__ = ("category", "package", "version", "attr", "flags")
+
+    threshold = base.versioned_feed
     
     def __init__(self, pkg, attr, flags):
         base.Result.__init__(self)

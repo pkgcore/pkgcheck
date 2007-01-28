@@ -221,6 +221,9 @@ class SuggestRemoval(base.Result):
     """pkg isn't ported, stablize the targets and it can likely go away"""
     
     __slots__ = ("category", "package", "version", "ported")
+
+    threshold = base.versioned_feed
+
     def __init__(self, pkg, ported):
         base.Result.__init__(self)
         self._store_cpv(pkg)
@@ -249,6 +252,9 @@ class BadRange(base.Result):
     """
     
     __slots__ = ("category", "package", "version", "attr", "atoms")
+
+    threshold = base.versioned_feed
+
     def __init__(self, pkg, attr, atom_inst):
         base.Result.__init__(self)
         self._store_cpv(pkg)
@@ -276,6 +282,8 @@ class NotPorted(base.Result):
     """standalone virtual/x11 atom, not ported."""
     
     __slots__ = ("category", "package", "version", "attr", "or_block")
+
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, attr, or_block):
         base.Result.__init__(self)
@@ -308,6 +316,8 @@ class VisibilityCausedNotPorted(base.Result):
     
     __slots__ = ("category", "package", "version", "attr", "keyword",
         "profile", "failed")
+
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, keyword, profile, attr, failed):
         base.Result.__init__(self)

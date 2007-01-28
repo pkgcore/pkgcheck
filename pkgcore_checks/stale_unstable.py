@@ -41,6 +41,8 @@ class StaleUnstableKeyword(Result):
     """
     
     __slots__ = ("category", "package", "version", "keywords", "period")
+
+    threshold = versioned_feed
     
     def __init__(self, pkg, period):
         Result.__init__(self)

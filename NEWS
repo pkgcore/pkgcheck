@@ -3,6 +3,15 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
+0.2.1:
+
+* all remaining 'info' statements are pushed to stderr now.
+* new PickleStream reporter; used to serialize check results, and flush the
+  stream out stdout.  If you need to get at the data generated, this is the
+  sanest way to do it (alternatives require trying to deserialize what a 
+  reporter does, thus losing data).
+
+
 0.2:
 
 * invocation args have changed- please see readme for details of how to

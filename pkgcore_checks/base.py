@@ -136,6 +136,7 @@ class Transform(object):
     def finish(self, reporter):
         pass
 
+
 class Result(object):
 
     __slots__ = ()
@@ -159,6 +160,19 @@ class Result(object):
     def _store_cpv(self, pkg):
         self._store_cp(pkg)
         self.version = pkg.fullver
+
+    def __getstate__(self):
+        if hasattr(self, "__slots__"):
+            try:
+                return dict((k, getattr(self, k)) for k in self.__slots__)
+            except AttributeError, a:
+                # rethrow so we at least know the class
+                raise AttributeError(self.__class__, str(a))
+        return object.__getstate__(self)
+    
+    def __setstate__(self, data):
+        for k, v in data.iteritems():
+            setattr(self, k, v)
 
 
 class Reporter(object):

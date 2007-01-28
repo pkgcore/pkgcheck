@@ -5,7 +5,6 @@
 
 """Basic reporters and reporter factories."""
 
-
 from pkgcore_checks import base
 from pkgcore.config import configurable
 from pkgcore.util import formatters, demandload
@@ -13,6 +12,7 @@ from pkgcore.util import formatters, demandload
 demandload.demandload(
     globals(),
     'pkgcore_checks:errors '
+    'pkgcore.util:currying '
     )
 
 
@@ -116,6 +116,35 @@ class XmlReporter(base.Reporter):
     def finish(self):
         self.out.write('</checks>')
 
+
+class PickleStream(base.Reporter):
+    """
+    Pickle each Result, and flush it
+    
+    """
+    priority = -1001
+    
+    def __init__(self, out):
+        """Initialize.
+
+        @type out: L{pkgcore.util.formatters.Formatter}.
+        """
+        base.Reporter.__init__(self)
+        self.out = out
+        try:
+            from cPickle import dump
+        except ImportError:
+            from Pickle import dump
+        self.out.autoline = False
+        self.out.wrap = False
+        self.dump = dump
+
+    def add_report(self, result):
+        try:
+            self.dump(result, self.out)
+        except TypeError, t:
+            raise TypeError(result, str(t))
+    
 
 class MultiplexReporter(base.Reporter):
 

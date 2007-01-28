@@ -138,7 +138,10 @@ class VisibilityReport(base.Template):
 
 class VisibleVcsPkg(base.Result):
     """pkg is vcs based, but visible"""
+
     __slots__ = ("category", "package", "version", "profile", "arch")
+
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, arch, profile):
         base.Result.__init__(self)
@@ -165,7 +168,10 @@ class VisibleVcsPkg(base.Result):
 
 class NonExistantDeps(base.Result):
     """No matches exist for a depset element"""
+
     __slots__ = ("category", "package", "version", "attr", "atoms")
+
+    threshold = base.versioned_feed
     
     def __init__(self, pkg, attr, nonexistant_atoms):
         base.Result.__init__(self)
@@ -191,8 +197,11 @@ class NonExistantDeps(base.Result):
 
 class NonsolvableDeps(base.Result):
     """No potential solution for a depset attribute"""
+
     __slots__ = ("category", "package", "version", "attr", "profile",
         "keyword", "potentials", "masked")
+
+    threshold = base.versioned_feed
     
     def __init__(self, pkg, attr, keyword, profile, horked, masked=False):
         base.Result.__init__(self)

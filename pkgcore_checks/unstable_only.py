@@ -49,6 +49,8 @@ class UnstableOnly(Result):
 
     __slots__ = ("category", "package", "version", "arch")
     
+    threshold = package_feed
+
     def __init__(self, pkgs, arch):
         Result.__init__(self)
         self._store_cp(pkgs[0])

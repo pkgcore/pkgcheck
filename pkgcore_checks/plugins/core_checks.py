@@ -52,5 +52,6 @@ pkgcore_plugins = {
         reporters.StrReporter,
         reporters.FancyReporter,
         reporters.XmlReporter,
+        reporters.PickleStream,
         ]
     }

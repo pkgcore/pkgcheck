@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from pkgcore_checks.base import Template, package_feed, Result
+from pkgcore_checks.base import Template, package_feed, versioned_feed, Result
 
 
 class DroppedKeywordsReport(Template):
@@ -46,6 +46,7 @@ class DroppedKeywordWarning(Result):
     """Arch keywords dropped during pkg version bumping"""
 
     __slots__ = ("arch", "category", "package", "version")
+    threshold = versioned_feed
 
     def __init__(self, arch, pkg):
         Result.__init__(self)

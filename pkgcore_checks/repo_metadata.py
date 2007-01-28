@@ -51,6 +51,8 @@ class UnusedLocalFlagsResult(base.Result):
     
     __slots__ = ("category", "package", "flags")
 
+    threshold = base.package_feed
+
     def __init__(self, pkg, flags):
         base.Result.__init__(self)
         # tricky, but it works; atoms have the same attrs
@@ -109,6 +111,8 @@ class UnusedGlobalFlagsResult(base.Result):
     
     __slots__ = ("flags",)
 
+    threshold = base.repository_feed
+
     def __init__(self, flags):
         base.Result.__init__(self)
         # tricky, but it works; atoms have the same attrs
@@ -163,6 +167,8 @@ class UnusedLicenseReport(base.Result):
     """
     
     __slots__ = ("licenses",)
+    
+    threshold = base.repository_feed
     
     def __init__(self, licenses):
         base.Result.__init__(self)
@@ -231,6 +237,8 @@ class ConflictingChksums(base.Result):
 
     __slots__ = ("category", "package", "version",
         "filename", "chksums", "others")
+    
+    threshold = base.versioned_feed
     
     _sorter = staticmethod(operator.itemgetter(0))
     
@@ -313,6 +321,8 @@ class ManifestDigestConflict(base.Result):
     __slots__ = ("category", "package", "version", 
         "msg", "filename")
 
+    threshold = base.versioned_feed
+
     def __init__(self, pkg, filename, msg):
         base.Result.__init__(self)
         self._store_cpv(pkg)
@@ -339,6 +349,8 @@ class OrphanedManifestDist(base.Result):
     __slots__ = ("category", "package", "version",
         "files")
 
+    threshold = base.versioned_feed
+
     def __init__(self, pkg, files):
         base.Result.__init__(self)
         self._store_cp(pkg)
@@ -359,6 +371,8 @@ class OrphanedManifestDist(base.Result):
 
 class MissingDigest(base.Result):
     __slots__ = ("category", "package", "version", "filename")
+
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, filename):
         base.Result.__init__(self)

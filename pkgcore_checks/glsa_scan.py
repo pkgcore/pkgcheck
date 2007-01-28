@@ -100,6 +100,7 @@ class VulnerablePackage(base.Result):
     """Packages marked as vulnerable by GLSAs"""
 
     __slots__ = ("category", "package", "version", "arch", "glsa")
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, glsa):
         base.Result.__init__(self)
