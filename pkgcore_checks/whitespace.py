@@ -53,8 +53,8 @@ class WhitespaceFound(base.Result):
         self.leadtrail = leadtrail
 
     def to_str(self):
-        return "%s/%s-%s.ebuild has %s whitespace on line %s" % (
-            self.category, self.package, self.version, self.leadtrail,
+        return "%s/%s/%s-%s.ebuild has %s whitespace on line %s" % (
+            self.category, self.package, self.package, self.version, self.leadtrail,
             self.linenumber)
 
     def to_xml(self):
@@ -82,8 +82,8 @@ class WrongIndentFound(base.Result):
         self.linenumber = linenumber
 
     def to_str(self):
-        return "%s/%s-%s.ebuild has whitespace in indentation on line %s" % (
-            self.category, self.package, self.version, self.linenumber)
+        return "%s/%s/%s-%s.ebuild has whitespace in indentation on line %s" % (
+            self.category, self.package, self.package, self.version, self.linenumber)
 
     def to_xml(self):
         return """\
@@ -110,8 +110,8 @@ class DoubleEmptyLine(base.Result):
         self.linenumber = linenumber
 
     def to_str(self):
-        return "%s/%s-%s.ebuild has unneeded empty line %s" % (
-            self.category, self.package, self.version, self.linenumber)
+        return "%s/%s/%s-%s.ebuild has unneeded empty line %s" % (
+            self.category, self.package, self.package, self.version, self.linenumber)
 
     def to_xml(self):
         return \
@@ -137,8 +137,8 @@ class TrailingEmptyLine(base.Result):
         self._store_cpv(pkg)
 
     def to_str(self):
-        return "%s/%s-%s.ebuild has trailing blank line(s)" % (
-            self.category, self.package, self.version)
+        return "%s/%s/%s-%s.ebuild has trailing blank line(s)" % (
+            self.category, self.package, self.package, self.version)
 
     def to_xml(self):
         return \
@@ -164,8 +164,8 @@ class NoFinalNewline(base.Result):
         self._store_cpv(pkg)
 
     def to_str(self):
-        return "%s/%s-%s.ebuild does not end in a newline" % (
-            self.category, self.package, self.version)
+        return "%s/%s/%s-%s.ebuild does not end in a newline" % (
+            self.category, self.package, self.package, self.version)
 
     def to_xml(self):
         return \
