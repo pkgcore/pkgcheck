@@ -377,7 +377,41 @@ class LicenseAddon(base.Addon):
             values.license_dirs.append(osutils.abspath(values.license_dir))
 
 
+class UnstatedIUSE(base.Result):
+    """pkg is reliant on conditionals that aren't in IUSE"""
+    __slots__ = ("category", "package", "version", "attr", "flags")
+
+    threshold = base.versioned_feed
+    
+    def __init__(self, pkg, attr, flags):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.attr, self.flags = attr, tuple(flags)
+
+    def to_str(self):
+        return "%s/%s-%s: attr(%s) uses unstated flags [ %s ]" % \
+            (self.category, self.package, self.version, self.attr,
+            ", ".join(self.flags))
+    
+    @property
+    def short_desc(self):
+        return "attr(%s) uses unstated flags [ %s ]" % \
+            (self.attr, ', '.join(self.flags))
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>attr %s uses unstead flags: %s"</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.attr, ", ".join(self.flags))
+
+
 class UseAddon(base.Addon):
+
+    known_results = (UnstatedIUSE,)
 
     def __init__(self, options):
         base.Addon.__init__(self, options)
@@ -485,30 +519,3 @@ class UseAddon(base.Addon):
                 attr_name = "provide"
             reporter.add_report(UnstatedIUSE(pkg, attr_name,
                 unstated))
-
-
-class UnstatedIUSE(base.Result):
-    """pkg is reliant on conditionals that aren't in IUSE"""
-    __slots__ = ("category", "package", "version", "attr", "flags")
-
-    threshold = base.versioned_feed
-    
-    def __init__(self, pkg, attr, flags):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.attr, self.flags = attr, tuple(flags)
-    
-    def to_str(self):
-        return "%s/%s-%s: attr(%s) uses unstated flags [ %s ]" % \
-        (self.category, self.package, self.version, self.attr,
-            ", ".join(self.flags))
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>attr %s uses unstead flags: %s"</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.attr, ", ".join(self.flags))

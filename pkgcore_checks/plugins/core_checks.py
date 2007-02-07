@@ -8,7 +8,7 @@
 from pkgcore_checks import (
     cleanup, deprecated, dropped_keywords, glsa_scan, imlate, metadata_checks,
     metadata_xml, pkgdir_checks, repo_metadata, stale_unstable, unported_mod_x,
-    unstable_only, visibility, whitespace, feeds, reporters)
+    unstable_only, visibility, whitespace, feeds, reporters, report_stream)
 
 
 pkgcore_plugins = {
@@ -52,6 +52,7 @@ pkgcore_plugins = {
         reporters.StrReporter,
         reporters.FancyReporter,
         reporters.XmlReporter,
-        reporters.PickleStream,
+        report_stream.PickleStream,
+        report_stream.BinaryPickleStream,
         ]
     }

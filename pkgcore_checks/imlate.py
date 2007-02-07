@@ -5,6 +5,44 @@ from pkgcore.restrictions import packages, values
 from pkgcore_checks import base, addons
 
 
+class LaggingStableInfo(base.Result):
+
+    """Arch that is behind another from a stabling standpoint"""
+    
+    __slots__ = ("category", "package", "version", "keywords",
+        "stable")
+    threshold = base.versioned_feed
+    
+    def __init__(self, pkg, keywords):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.keywords = keywords
+        self.stable = tuple(str(x) for x in pkg.keywords
+            if not x[0] in ("~", "-"))
+    
+    @property
+    def short_desc(self):
+        return "stabled arches [ %s ], potentials [ %s ]" % \
+            (', '.join(self.stable), ', '.join(self.keywords))
+
+    def to_str(self):
+        return "%s/%s-%s: stabled [ %s ], potentials: [ %s ]" % \
+            (self.category, self.package, self.version, 
+            ", ".join(self.stable), ", ".join(self.keywords))
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <keyword>%s</keyword>
+    <msg>%s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, "</keyword>\n\t<keyword>".join(self.keywords), 
+    "potential for stabling, prexisting stable- %s" % ", ".join(self.stable))
+
+
 class ImlateReport(base.Template):
 
     """
@@ -14,6 +52,7 @@ class ImlateReport(base.Template):
 
     feed_type = base.package_feed
     required_addons = (addons.ArchesAddon,)
+    known_results = (LaggingStableInfo,)
 
     @staticmethod
     def mangle_option_parser(parser):
@@ -48,36 +87,3 @@ class ImlateReport(base.Template):
                 remaining.difference_update(unstable_keys)
                 if not remaining:
                     break
-
-
-class LaggingStableInfo(base.Result):
-
-    """Arch that is behind another from a stabling standpoint"""
-    
-    __slots__ = ("category", "package", "version", "keywords",
-        "stable")
-    threshold = base.versioned_feed
-    
-    def __init__(self, pkg, keywords):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.keywords = keywords
-        self.stable = tuple(str(x) for x in pkg.keywords
-            if not x[0] in ("~", "-"))
-    
-    def to_str(self):
-        return "%s/%s-%s: stabled [ %s ], potentials: [ %s ]" % \
-            (self.category, self.package, self.version, 
-            ", ".join(self.stable), ", ".join(self.keywords))
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <keyword>%s</keyword>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, "</keyword>\n\t<keyword>".join(self.keywords), 
-    "potential for stabling, prexisting stable- %s" % ", ".join(self.stable))

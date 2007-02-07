@@ -21,7 +21,7 @@ class TestStandardWhitespaces(misc.ReportTestCase):
         check = WhitespaceCheck(None, None)
 
         report = self.assertReports(check,[fake_pkg,fake_src])
-        self.assertEqual(len(report), 4)
+        self.assertEqual(len(report), 3)
 
 
 class TestNoNewLineOnEnd(misc.ReportTestCase):

@@ -5,12 +5,19 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 
 0.2.1:
 
+* heavy refactoring of reporter subsystem, and clean up of check results.
+  Better messages, better output for normal usage.  to_xml() methods were
+  dropped (XmlReporter handles it on it's own), same for to_str() in favor
+  of short_desc and long_desc attributes.
+* whitespace checks now output one result for each classification for an
+  ebuild, instead of emitting reports for each line.
 * all remaining 'info' statements are pushed to stderr now.
 * new PickleStream reporter; used to serialize check results, and flush the
   stream out stdout.  If you need to get at the data generated, this is the
   sanest way to do it (alternatives require trying to deserialize what a 
   reporter does, thus losing data).
-
+* added new tool replay-pcheck-stream; used to replay a pickle stream through
+  alternative reporters.
 
 0.2:
 

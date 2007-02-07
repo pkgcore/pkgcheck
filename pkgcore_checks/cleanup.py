@@ -1,8 +1,45 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore_checks.base import Template, package_feed, Result
+from pkgcore_checks.base import Template, package_feed, Result, versioned_feed
 from pkgcore.util.compatibility import any
+
+
+class RedundantVersionWarning(Result):
+    """
+    Redundant version of a pkg in a slotting; keyword appears in a later
+    version
+    """
+
+    __slots__ = ("category", "package", "version", "slot", "later_versions")
+    threshold = versioned_feed
+
+    def __init__(self, pkg, higher_pkgs):
+        Result.__init__(self)
+        self._store_cpv(pkg)
+        self.slot = pkg.slot
+        self.later_versions = tuple(x.fullver for x in higher_pkgs)
+
+    @property
+    def short_desc(self):
+        return "slot(%s) keywords are overshadowed by version %r" % \
+            (self.slot, ', '.join(self.later_versions))
+
+    def to_str(self):
+        return "%s/%s-%s: slot(%s) keywords are overshadowed by version %r" % \
+            (self.category, self.package, self.version,
+            self.slot, ", ".join(self.later_versions))
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <slot>%s</slot>
+    <msg>keywords are overshadowed by version(s): %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, 
+    self.version, self.slot, ", ".join(self.later_versions))
 
 
 class RedundantVersionReport(Template):
@@ -15,6 +52,7 @@ class RedundantVersionReport(Template):
     """
 
     feed_type = package_feed
+    known_results = (RedundantVersionWarning,)
 
     def feed(self, pkgset, reporter):
         if len(pkgset) == 1:
@@ -25,6 +63,7 @@ class RedundantVersionReport(Template):
         # repeats this for every overshadowing detected
         # finally, does version comparison down slot lines
         stack = []
+        bad = []
         for pkg in reversed(pkgset):
             matches = []
             curr_set = set(x for x in pkg.keywords if not x.startswith("-"))
@@ -48,36 +87,6 @@ class RedundantVersionReport(Template):
                             matches.append(ver)
             stack.append([pkg, curr_set])
             if matches:
-                reporter.add_report(RedundantVersionWarning(pkg, matches))
-
-
-class RedundantVersionWarning(Result):
-    """
-    Redundant version of a pkg in a slotting; keyword appears in a later
-    version
-    """
-
-    __slots__ = ("category", "package", "version", "slot", "later_versions")
-    threshold = package_feed
-
-    def __init__(self, pkg, higher_pkgs):
-        Result.__init__(self)
-        self._store_cpv(pkg)
-        self.slot = pkg.slot
-        self.later_versions = tuple(x.fullver for x in higher_pkgs)
-
-    def to_str(self):
-        return "%s/%s-%s: slot(%s) keywords are overshadowed by version %r" % \
-            (self.category, self.package, self.version,
-            self.slot, ", ".join(self.later_versions))
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <slot>%s</slot>
-    <msg>keywords are overshadowed by version(s): %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, 
-    self.version, self.slot, ", ".join(self.later_versions))
+                bad.append((pkg, matches))
+        for pkg, matches in reversed(bad):
+            reporter.add_report(RedundantVersionWarning(pkg, matches))

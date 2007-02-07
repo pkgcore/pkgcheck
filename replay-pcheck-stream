@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
+# License: GPL2
+
+
+"""Minimal wrapper to launch report stream replaying."""
+
+
+from pkgcore.util import commandline
+from pkgcore_checks import report_stream
+
+
+if __name__ == '__main__':
+    commandline.main({None: (report_stream.OptionParser, report_stream.main)})

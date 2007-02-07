@@ -10,6 +10,119 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.xml:escape ")
 
 
+class VisibleVcsPkg(base.Result):
+    """pkg is vcs based, but visible"""
+
+    __slots__ = ("category", "package", "version", "profile", "arch")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, arch, profile):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.arch = arch.lstrip("~")
+        self.profile = profile
+    
+    @property
+    def short_desc(self):
+        return "VCS version visible for arch %s, profile %s" % (
+            self.arch, self.profile)
+
+    def to_str(self):
+        return "%s/%s-%s: vcs ebuild visible for arch %s, profile %s" % \
+            (self.category, self.package, self.version, self.arch, self.profile)
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <arch>%s</arch>
+    <profile>%s</profile>
+    <msg>vcs based ebuild user accessible</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.arch, self.profile)
+
+
+class NonExistantDeps(base.Result):
+    """No matches exist for a depset element"""
+
+    __slots__ = ("category", "package", "version", "attr", "atoms")
+
+    threshold = base.versioned_feed
+    
+    def __init__(self, pkg, attr, nonexistant_atoms):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.attr = attr
+        self.atoms = tuple(str(x) for x in nonexistant_atoms)
+    
+    @property
+    def short_desc(self):
+        return "depset %s: nonexistant atoms [ %s ]" % (
+            self.attr, ', '.join(self.atoms))
+    
+    def to_str(self):
+        return "%s/%s-%s: attr(%s): nonexistant atoms [ %s ]" % \
+            (self.category, self.package, self.version, self.attr,
+                ", ".join(self.atoms))
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>%s: nonexistant atoms [ %s ]</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.attr, escape(", ".join(self.atoms)))
+
+
+class NonsolvableDeps(base.Result):
+    """No potential solution for a depset attribute"""
+
+    __slots__ = ("category", "package", "version", "attr", "profile",
+        "keyword", "potentials")
+
+    threshold = base.versioned_feed
+    
+    def __init__(self, pkg, attr, keyword, profile, horked):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.attr = attr
+        self.profile = profile
+        self.keyword = keyword
+        self.potentials = tuple(str(x) for x in stable_unique(horked))
+        
+    @property
+    def short_desc(self):
+        return "nonsolvable depset(%s) keyword(%s) profile (%s): " \
+            "solutions: [ %s ]" % (self.attr, self.keyword, self.profile,
+            ', '.join(self.potentials))
+
+    def to_str(self):
+        s = ' '
+        if self.keyword.startswith("~"):
+            s = ''
+        return "%s/%s-%s: %s %s%s: unsolvable %s, solutions: [ %s ]" % \
+            (self.category, self.package, self.version, self.attr, s,
+                self.keyword, self.profile, ", ".join(self.potentials))
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <profile>%s</profile>
+    <keyword>%s</keyword>
+    <msg>not solvable for %s- potential solutions, %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.profile, self.keyword, self.attr,
+    escape(", ".join(self.potentials)))
+
+
 class VisibilityReport(base.Template):
 
     """Visibility dependency scans.
@@ -22,6 +135,7 @@ class VisibilityReport(base.Template):
     required_addons = (
         addons.ArchesAddon, addons.QueryCacheAddon, addons.ProfileAddon,
         addons.EvaluateDepSetAddon)
+    known_results = (VisibleVcsPkg, NonExistantDeps, NonsolvableDeps)
 
     vcs_eclasses = frozenset(["subversion", "git", "cvs", "darcs"])
 
@@ -134,106 +248,3 @@ class VisibilityReport(base.Template):
             if failures:
                 reporter.add_report(NonsolvableDeps(pkg, attr, profile.key,
                     profile.name, list(failures)))
-
-
-class VisibleVcsPkg(base.Result):
-    """pkg is vcs based, but visible"""
-
-    __slots__ = ("category", "package", "version", "profile", "arch")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, arch, profile):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.arch = arch.lstrip("~")
-        self.profile = profile
-    
-    def to_str(self):
-        return "%s/%s-%s: vcs ebuild visible for arch %s, profile %s" % \
-            (self.category, self.package, self.version, self.arch, self.profile)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <arch>%s</arch>
-    <profile>%s</profile>
-    <msg>vcs based ebuild user accessible</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.arch, self.profile)
-
-
-class NonExistantDeps(base.Result):
-    """No matches exist for a depset element"""
-
-    __slots__ = ("category", "package", "version", "attr", "atoms")
-
-    threshold = base.versioned_feed
-    
-    def __init__(self, pkg, attr, nonexistant_atoms):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.attr = attr
-        self.atoms = tuple(str(x) for x in nonexistant_atoms)
-        
-    def to_str(self):
-        return "%s/%s-%s: attr(%s): nonexistant atoms [ %s ]" % \
-            (self.category, self.package, self.version, self.attr,
-                ", ".join(self.atoms))
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>%s: nonexistant atoms [ %s ]</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.attr, escape(", ".join(self.atoms)))
-
-
-class NonsolvableDeps(base.Result):
-    """No potential solution for a depset attribute"""
-
-    __slots__ = ("category", "package", "version", "attr", "profile",
-        "keyword", "potentials", "masked")
-
-    threshold = base.versioned_feed
-    
-    def __init__(self, pkg, attr, keyword, profile, horked, masked=False):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.attr = attr
-        self.profile = profile
-        self.keyword = keyword
-        self.potentials = tuple(str(x) for x in stable_unique(horked))
-        self.masked = masked
-        
-    def to_str(self):
-        s = ' '
-        if self.keyword.startswith("~"):
-            s = ''
-        if self.masked:
-            s = "masked "+s
-        return "%s/%s-%s: %s %s%s: unsolvable %s, solutions: [ %s ]" % \
-            (self.category, self.package, self.version, self.attr, s,
-                self.keyword, self.profile, ", ".join(self.potentials))
-
-    def to_xml(self):
-        s = ''
-        if self.masked:
-            s = "masked, "
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <profile>%s</profile>
-    <keyword>%s</keyword>
-    <msg>%snot solvable for %s- potential solutions, %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.profile, self.keyword, s, self.attr,
-    escape(", ".join(self.potentials)))

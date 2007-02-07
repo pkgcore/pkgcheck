@@ -12,6 +12,51 @@ demandload(globals(), "pkgcore.pkgsets.glsa:GlsaDirSet "
     "warnings ")
 
 
+class VulnerablePackage(base.Result):
+
+    """Packages marked as vulnerable by GLSAs"""
+
+    __slots__ = ("category", "package", "version", "arch", "glsa")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, glsa):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        arches = set()
+        for v in collect_package_restrictions(glsa, ["keywords"]):
+            if isinstance(v.restriction, values.ContainmentMatch):
+                arches.update(x.lstrip("~") for x in v.restriction.vals)
+            else:
+                raise Exception("unexpected restriction sequence- %s in %s" % 
+                    (v.restriction, glsa))
+        keys = set(x.lstrip("~") for x in pkg.keywords if not x.startswith("-"))
+        if arches:
+            self.arch = tuple(sorted(arches.intersection(keys)))
+            assert self.arch
+        else:
+            self.arch = tuple(sorted(keys))
+        self.glsa = str(glsa)
+    
+    @property
+    def short_desc(self):
+        return "vulnerable via %s, keywords %s" % (self.glsa, self.arch)
+
+    def to_str(self):
+        return "%s/%s-%s: vulnerable via %s, affects %s" % (self.category,
+            self.package, self.version, self.glsa, self.arch)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <arch>%s</arch>
+    <msg>vulnerable via %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, "</arch>\n\t<arch>".join(self.arch), xml.escape(self.glsa))
+
+
 class TreeVulnerabilitiesReport(base.Template):
     """
     Scan for vulnerabile ebuilds in the tree
@@ -20,6 +65,7 @@ class TreeVulnerabilitiesReport(base.Template):
     """
 
     feed_type = base.versioned_feed
+    known_results = (VulnerablePackage,)
 
     @staticmethod
     def mangle_option_parser(parser):
@@ -93,44 +139,3 @@ class TreeVulnerabilitiesReport(base.Template):
         for vuln in self.vulns.get(pkg.key, []):
             if vuln.match(pkg):
                 reporter.add_report(VulnerablePackage(pkg, vuln))
-
-
-class VulnerablePackage(base.Result):
-
-    """Packages marked as vulnerable by GLSAs"""
-
-    __slots__ = ("category", "package", "version", "arch", "glsa")
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, glsa):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        arches = set()
-        for v in collect_package_restrictions(glsa, ["keywords"]):
-            if isinstance(v.restriction, values.ContainmentMatch):
-                arches.update(x.lstrip("~") for x in v.restriction.vals)
-            else:
-                raise Exception("unexpected restriction sequence- %s in %s" % 
-                    (v.restriction, glsa))
-        keys = set(x.lstrip("~") for x in pkg.keywords if not x.startswith("-"))
-        if arches:
-            self.arch = tuple(sorted(arches.intersection(keys)))
-            assert self.arch
-        else:
-            self.arch = tuple(sorted(keys))
-        self.glsa = str(glsa)
-    
-    def to_str(self):
-        return "%s/%s-%s: vulnerable via %s, affects %s" % (self.category,
-            self.package, self.version, self.glsa, self.arch)
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <arch>%s</arch>
-    <msg>vulnerable via %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, "</arch>\n\t<arch>".join(self.arch), xml.escape(self.glsa))

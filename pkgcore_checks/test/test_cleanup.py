@@ -17,7 +17,7 @@ class TestRedundantVersion(misc.ReportTestCase):
         reports = self.assertReports(check, 
                 [self.mk_pkg(x) for x in "0.7", "0.8", "0.9"])
         self.assertEqual([list(x.later_versions) for x in  reports], 
-            [["0.9"], ["0.9", "0.8"]])
+            [["0.9", "0.8"], ["0.9"]])
         
         # check slots.
         l = [self.mk_pkg("0.7"), self.mk_pkg("0.8", slot="1"), 

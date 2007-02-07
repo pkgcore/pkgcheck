@@ -13,6 +13,7 @@ demandload.demandload(
     globals(),
     'pkgcore_checks:errors '
     'pkgcore.util:currying '
+    'pkgcore.util:pickling '
     )
 
 
@@ -40,7 +41,16 @@ class StrReporter(base.Reporter):
         if self.first_report:
             self.out.write()
             self.first_report = False
-        self.out.write(result.to_str())
+        if result.threshold == base.versioned_feed:
+            self.out.write("%s/%s-%s: %s" % (result.category, result.package, 
+                result.version, result.short_desc))
+        elif result.threshold == base.package_feed:
+            self.out.write("%s/%s: %s" % (result.category, result.package,
+                result.short_desc))
+        elif result.threshold == base.category_feed:
+            self.out.write("%s: %s" % (result.category, result.short_desc))
+        else:
+            self.out.write(result.short_desc)
 
     def finish(self):
         if not self.first_report:
@@ -83,9 +93,12 @@ class FancyReporter(base.Reporter):
             self.key = key
         self.out.first_prefix.append('  ')
         self.out.later_prefix.append('    ')
+        s = ''
+        if result.threshold == base.versioned_feed:
+            s = "version %s: " % result.version
         self.out.write(
             self.out.fg('yellow'), result.__class__.__name__, self.out.reset,
-            ': ', result.to_str())
+            ': ', s, result.short_desc)
         self.out.first_prefix.pop()
         self.out.later_prefix.pop()
 
@@ -116,35 +129,6 @@ class XmlReporter(base.Reporter):
     def finish(self):
         self.out.write('</checks>')
 
-
-class PickleStream(base.Reporter):
-    """
-    Pickle each Result, and flush it
-    
-    """
-    priority = -1001
-    
-    def __init__(self, out):
-        """Initialize.
-
-        @type out: L{pkgcore.util.formatters.Formatter}.
-        """
-        base.Reporter.__init__(self)
-        self.out = out
-        try:
-            from cPickle import dump
-        except ImportError:
-            from Pickle import dump
-        self.out.autoline = False
-        self.out.wrap = False
-        self.dump = dump
-
-    def add_report(self, result):
-        try:
-            self.dump(result, self.out)
-        except TypeError, t:
-            raise TypeError(result, str(t))
-    
 
 class MultiplexReporter(base.Reporter):
 

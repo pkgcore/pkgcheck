@@ -22,8 +22,7 @@ import operator
 from pkgcore.config import ConfigHint
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
-demandload(globals(), "logging re")
-
+demandload(globals(), "logging re itertools")
 
 repository_feed = "repo"
 category_feed = "cat"
@@ -56,6 +55,7 @@ class Addon(object):
     """
 
     required_addons = ()
+    known_results = []
 
     def __init__(self, options, *args):
         """Initialize.
@@ -87,9 +87,17 @@ class Addon(object):
         """
 
 
+class set_documentation(type):
+    def __new__(cls, name, bases, d):
+        if "__doc__" in d:
+            d.setdefault("documentation", d["__doc__"])
+        return type.__new__(cls, name, bases, d)
+
 class Template(Addon):
 
     """Base template for a check."""
+
+    __metaclass__ = set_documentation
 
     scope = 0
     # The plugger sorts based on this. Should be left alone except for
@@ -137,7 +145,27 @@ class Transform(object):
         pass
 
 
+def _collect_checks(obj):
+    if isinstance(obj, Transform):
+        i = collect_checks(obj.child)
+    elif isinstance(obj, CheckRunner):
+        i = itertools.chain(*map(collect_checks, obj.checks))
+    elif isinstance(obj, Addon):
+        i = [obj]
+    else:
+        i = itertools.chain(*map(collect_checks, i))
+    for x in i:
+        yield x
+
+def collect_checks(obj):
+    return set(_collect_checks(obj))
+
+def collect_checks_classes(obj):
+    return set(x.__class__ for x in collect_checks(obj))
+
 class Result(object):
+
+    __metaclass__ = set_documentation
 
     __slots__ = ()
 
@@ -147,6 +175,14 @@ class Result(object):
         except NotImplementedError:
             return "result from %s" % self.__class__.__name__
     
+    @property
+    def short_desc(self):
+        raise NotImplementedError
+
+    @property
+    def long_desc(self):
+        return self.short_desc
+
     def to_str(self):
         raise NotImplementedError
     
@@ -181,6 +217,12 @@ class Reporter(object):
         raise NotImplementedError(self.add_report)
 
     def start(self):
+        pass
+
+    def start_check(self, source, target):
+        pass
+    
+    def end_check(self):
         pass
 
     def finish(self):

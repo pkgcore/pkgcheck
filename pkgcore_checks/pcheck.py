@@ -516,10 +516,15 @@ def main(options, out, err):
             err.write('Running %i tests' % (len(sinks) - len(bad_sinks),))
             for source, pipe in pipes:
                 pipe.start()
+                reporter.start_check(list(base.collect_checks_classes(pipe)),
+                    filterer)
                 for thing in source.feed():
                     pipe.feed(thing, reporter)
                 pipe.finish(reporter)
+                reporter.end_check()
+
     reporter.finish()
+
     # flush stdout first; if they're directing it all to a file, this makes
     # results not get the final message shoved in midway
     out.stream.flush()

@@ -16,6 +16,42 @@ demandload(globals(), "pkgcore.util.xml:escape "
     "pkgcore.ebuild:misc ")
 
 
+class UnusedLocalFlagsResult(base.Result):
+    
+    """
+    unused use.local.desc flag(s)
+    """
+    
+    __slots__ = ("category", "package", "flags")
+
+    threshold = base.package_feed
+
+    def __init__(self, pkg, flags):
+        base.Result.__init__(self)
+        # tricky, but it works; atoms have the same attrs
+        self._store_cp(pkg)
+        self.flags = tuple(sorted(flags))
+    
+    @property
+    def short_desc(self):
+        return "use.local.desc unused flag(s) %s" % ', '.join(self.flags)
+    
+    def to_str(self):
+        return "%s/%s: use.local.desc unused flag(s) %s"  % \
+            (self.category, self.package,
+		', '.join(self.flags))
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <msg>%s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    escape("unused use.local.desc flags: %s" % 
+	', '.join(self.flags)))
+
+
 class UnusedLocalFlags(base.Template):
 
     """
@@ -24,6 +60,7 @@ class UnusedLocalFlags(base.Template):
 
     feed_type = base.package_feed
     required_addons = (addons.UseAddon,)
+    known_results = (UnusedLocalFlagsResult,) + addons.UseAddon.known_results
 
     def __init__(self, options, use_handler):
         base.Template.__init__(self, options)
@@ -43,36 +80,35 @@ class UnusedLocalFlags(base.Template):
             reporter.add_report(UnusedLocalFlagsResult(pkg, unused))
 
 
-class UnusedLocalFlagsResult(base.Result):
+class UnusedGlobalFlagsResult(base.Result):
     
     """
-    unused use.local.desc flag(s)
+    unused use.desc flag(s)
     """
     
-    __slots__ = ("category", "package", "flags")
+    __slots__ = ("flags",)
 
-    threshold = base.package_feed
+    threshold = base.repository_feed
 
-    def __init__(self, pkg, flags):
+    def __init__(self, flags):
         base.Result.__init__(self)
         # tricky, but it works; atoms have the same attrs
-        self._store_cp(pkg)
         self.flags = tuple(sorted(flags))
     
+    @property
+    def short_desc(self):
+        return "use.desc unused flag(s): %s" % ', '.join(self.flags)
+
     def to_str(self):
-        return "%s/%s: use.local.desc unused flag(s) %s"  % \
-            (self.category, self.package,
-		', '.join(self.flags))
+        return "use.desc unused flag(s): %s" % \
+    		', '.join(self.flags)
 
     def to_xml(self):
         return \
 """<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
     <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    escape("atom %s unused use.local.desc flags: %s" % 
-	(self.atom, ', '.join(self.flags))))
+</check>""" % (self.__class__.__name__, 
+    escape("use.desc unused flags: %s" % ', '.join(self.flags)))
 
 
 class UnusedGlobalFlags(base.Template):
@@ -83,6 +119,7 @@ class UnusedGlobalFlags(base.Template):
     feed_type = base.versioned_feed
     scope = base.repository_scope
     required_addons = (addons.UseAddon,)
+    known_results = (UnusedGlobalFlagsResult,) + addons.UseAddon.known_results
 
     def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
@@ -103,31 +140,33 @@ class UnusedGlobalFlags(base.Template):
             self.flags.clear()
 
 
-class UnusedGlobalFlagsResult(base.Result):
-    
+class UnusedLicenseReport(base.Result):
     """
-    unused use.desc flag(s)
+    unused license(s) detected
     """
     
-    __slots__ = ("flags",)
-
+    __slots__ = ("licenses",)
+    
     threshold = base.repository_feed
-
-    def __init__(self, flags):
+    
+    def __init__(self, licenses):
         base.Result.__init__(self)
-        # tricky, but it works; atoms have the same attrs
-        self.flags = tuple(sorted(flags))
+        self.licenses = tuple(sorted(licenses))
+
+    @property
+    def short_desc(self):
+        return "unused license(s): %s" % ', '.join(self.licenses)
     
     def to_str(self):
-        return "use.desc unused flag(s): %s" % \
-    		', '.join(self.flags)
-
+        return "unused license(s): %s" % \
+            ', '.join(self.licenses)
+            
     def to_xml(self):
         return \
 """<check name="%s">
     <msg>%s</msg>
 </check>""" % (self.__class__.__name__, 
-    escape("use.desc unused flags: %s" % ', '.join(self.flags)))
+    escape("use.desc unused licenses: %s" % ', '.join(self.licenses)))
 
 
 class UnusedLicense(base.Template):
@@ -138,6 +177,7 @@ class UnusedLicense(base.Template):
     feed_type = base.versioned_feed
     scope = base.repository_scope
     required_addons = (addons.LicenseAddon,)
+    known_results = (UnusedLicenseReport,)
 
     def __init__(self, options, licenses):
         base.Template.__init__(self, options)
@@ -161,29 +201,56 @@ class UnusedLicense(base.Template):
         self.licenses = None
 
 
-class UnusedLicenseReport(base.Result):
+def reformat_chksums(iterable):
+    for chf, val1, val2 in iterable:
+        if chf == "size":
+            yield chf, val1, val2
+        else:
+            yield chf, "%x" % val1, "%x" % val2
+    
+
+class ConflictingChksums(base.Result):
+
     """
-    unused license(s) detected
+    checksum conflict detected between two files
     """
+
+    __slots__ = ("category", "package", "version",
+        "filename", "chksums", "others")
     
-    __slots__ = ("licenses",)
+    threshold = base.versioned_feed
     
-    threshold = base.repository_feed
+    _sorter = staticmethod(operator.itemgetter(0))
     
-    def __init__(self, licenses):
+    def __init__(self, pkg, filename, chksums, others):
         base.Result.__init__(self)
-        self.licenses = tuple(sorted(licenses))
-    
+        self._store_cpv(pkg)
+        self.filename = filename
+        self.chksums = tuple(sorted(reformat_chksums(chksums),
+            key=self._sorter))
+        self.others = tuple(sorted(others))
+
+    @property
+    def short_desc(self):
+        return "conflicts with (%s) for file %s chksums %s" % (
+            ', '.join(self.others), self.filename, self.chksums)
+
     def to_str(self):
-        return "unused license(s): %s" % \
-            ', '.join(self.licenses)
-            
+        return "%s/%s-%s: conflicts with (%s) for file %r, chksums: %s" % \
+            (self.category, self.package, self.version, \
+            ', '.join(self.others), self.filename, self.chksums)
+
     def to_xml(self):
         return \
 """<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
     <msg>%s</msg>
-</check>""" % (self.__class__.__name__, 
-    escape("use.desc unused licenses: %s" % ', '.join(self.licenses)))
+</check>""" % (self.__class__.__name__,  self.category, self.package, 
+    self.version,
+    escape("file %r conflicts with %r, chksums: %r" % (\
+        self.filename, self.others, self.chksums)))
 
 
 class ConflictingDigests(base.Template):
@@ -194,6 +261,7 @@ class ConflictingDigests(base.Template):
 
     scope = base.package_scope
     feed_type = base.versioned_feed
+    known_results = (ConflictingChksums,)
 
     def __init__(self, options):
         base.Template.__init__(self, options)
@@ -224,37 +292,32 @@ class ConflictingDigests(base.Template):
     def finish(self, reporter):
         self._fetchables.clear()
 
-def reformat_chksums(iterable):
-    for chf, val1, val2 in iterable:
-        if chf == "size":
-            yield chf, val1, val2
-        else:
-            yield chf, "%x" % val1, "%x" % val2
-    
+
+class ManifestDigestConflict(base.Result):
+    """
+    Manifest2 and digest file disagree
+    """
+
+    __slots__ = ("category", "package", "version", 
+        "msg", "filename")
 
 
-class ConflictingChksums(base.Result):
-
-    __slots__ = ("category", "package", "version",
-        "filename", "chksums", "others")
-    
     threshold = base.versioned_feed
-    
-    _sorter = staticmethod(operator.itemgetter(0))
-    
-    def __init__(self, pkg, filename, chksums, others):
+
+    def __init__(self, pkg, filename, msg):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.filename = filename
-        self.chksums = tuple(sorted(reformat_chksums(chksums),
-            key=self._sorter))
-        self.others = tuple(sorted(others))
-
+        self.msg = msg
+    
+    @property
+    def short_desc(self):
+        return "Manifest/digest conflict for file %s: %s" % (self.filename, self.msg)
+    
     def to_str(self):
-        return "%s/%s-%s: conflicts with (%s) for file %r, chksums: %s" % \
-            (self.category, self.package, self.version, \
-            ', '.join(self.others), self.filename, self.chksums)
-
+        return "%s/%s-%s: file %r: %s" % (self.category, self.package,
+            self.version, self.filename, self.msg)
+    
     def to_xml(self):
         return \
 """<check name="%s">
@@ -264,8 +327,72 @@ class ConflictingChksums(base.Result):
     <msg>%s</msg>
 </check>""" % (self.__class__.__name__,  self.category, self.package, 
     self.version,
-    escape("file %r conflicts with %r, chksums: %r" % \
-        self.filename, self.others, self.chksums))
+    escape("file %s: %s" % (self.filename, self.msg)))
+
+
+class OrphanedManifestDist(base.Result):
+    """
+    manifest2 has a checksum entry digest lacks
+    """
+    
+    __slots__ = ("category", "package", "version",
+        "files")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, files):
+        base.Result.__init__(self)
+        self._store_cp(pkg)
+        self.files = tuple(sorted(files))
+    
+    @property
+    def short_desc(self):
+        return "manifest2 knows of files %r, but digest1 doesn't" % (self.files,)
+    
+    def to_str(self):
+        return "%s/%s: manifest2 knows of dists %r, but digest1 doesn't" % \
+            (self.category, self.package, self.files)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <msg>%s</msg>
+</check>""" % (self.__class__.__name__,  self.category, self.package, 
+    escape("manifest2 knows of %r, but they're not in digests" % self.files))
+
+
+class MissingDigest(base.Result):
+    """
+    file lacks checksum data
+    """
+    
+    __slots__ = ("category", "package", "version", "filename")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, filename):
+        base.Result.__init__(self)
+        self._store_cp(pkg)
+        self.filename = filename
+    
+    @property
+    def short_desc(self):
+        return "file %s has no checksum info" % self.filename
+    
+    def to_str(self):
+        return "%s" % \
+            (self.filename)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <msg>%s</msg>
+</check>""" % (self.__class__.__name__,  self.category, self.package,
+    escape("%s" % self.filename))
 
 
 class ConflictManifestDigest(base.Template):
@@ -273,7 +400,9 @@ class ConflictManifestDigest(base.Template):
     """Scan for conflicts between the Manifest file and digest files."""
 
     feed_type = base.package_feed
-    
+    known_results = (ManifestDigestConflict, OrphanedManifestDist,
+        MissingDigest)
+
     repo_grabber = operator.attrgetter("repo")
 
     def feed(self, full_pkgset, reporter):
@@ -316,78 +445,3 @@ class ConflictManifestDigest(base.Template):
                     "chksum conflict- %r" % 
                         tuple(sorted(reformat_chksums(conflicts)))
                 ))
-
-class ManifestDigestConflict(base.Result):
-    __slots__ = ("category", "package", "version", 
-        "msg", "filename")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, filename, msg):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.filename = filename
-        self.msg = msg
-    
-    def to_str(self):
-        return "%s/%s-%s: file %r: %s" % (self.category, self.package,
-            self.version, self.filename, self.msg)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__,  self.category, self.package, 
-    self.version,
-    escape("file %s: %s" % (self.filename, self.msg)))
-
-
-class OrphanedManifestDist(base.Result):
-    __slots__ = ("category", "package", "version",
-        "files")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, files):
-        base.Result.__init__(self)
-        self._store_cp(pkg)
-        self.files = tuple(sorted(files))
-    
-    def to_str(self):
-        return "%s/%s: manifest2 knows of dists %r, but digest1 doesn't" % \
-            (self.category, self.package, self.files)
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__,  self.category, self.package, 
-    escape("manifest2 knows of %r, but they're not in digests" % self.files))
-
-class MissingDigest(base.Result):
-    __slots__ = ("category", "package", "version", "filename")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, filename):
-        base.Result.__init__(self)
-        self._store_cp(pkg)
-        self.filename = filename
-    
-    def to_str(self):
-        return "%s" % \
-            (self.filename)
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__,  self.category, self.package,
-    escape("%s" % self.filename))

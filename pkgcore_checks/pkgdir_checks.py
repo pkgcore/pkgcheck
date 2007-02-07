@@ -21,6 +21,159 @@ allowed_filename_chars_set.update(chr(x) for x in xrange(ord('0'), ord('9')+1))
 allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 
 
+class MissingFile(Result):
+    """pkg is missing an expected file entry"""
+
+    __slots__ = ("category", "package", "filename")
+
+    threshold = package_feed
+    
+    def __init__(self, pkg, filename):
+        Result.__init__(self)
+        self._store_cp(pkg)
+        self.filename = filename
+
+    @property
+    def short_desc(self):
+        return "required file %s doesn't exist" % self.filename
+    
+    def to_str(self):
+        return "%s/%s: %s doesn't exist" % \
+            (self.category, self.package, self.filename)
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <msg>file %s doesn't exist</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.filename)
+
+
+class ExecutableFile(Result):
+    """file has executable bit, but doesn't need it"""
+
+    __slots__ = ("category", "package", "filename")
+
+    threshold = package_feed
+    
+    def __init__(self, pkg, filename):
+        Result.__init__(self)
+        self._store_cp(pkg)
+        self.filename = filename
+    
+    @property
+    def short_desc(self):
+        return "file %s has unecessary executable bit" % self.filename
+    
+    def to_str(self):
+        return "%s/%s: %s doesn't need executable bit" % \
+            (self.category, self.package, self.filename)
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <msg>file %s doesn't need executable bit</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.filename)
+
+
+class SizeViolation(Result):
+    """filesdir, excluding digest/cvs, is too large"""
+
+    __slots__ = ("category", "package", "size")
+
+    threshold = package_feed
+    
+    def __init__(self, pkg, size):
+        Result.__init__(self)
+        self._store_cp(pkg)
+        self.size = size
+    
+    @property
+    def short_desc(self):
+        return "files directory exceeds 20k; %i bytes total" % self.size
+
+    def to_str(self):
+        return "%s/%s: files/ exceeds 20k- %i bytes" % \
+            (self.category, self.package, self.size)
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <msg>files/ exceeds 20k; %i bytes</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, self.size)
+
+
+class Glep31Violation(Result):
+
+    """file doesn't abide by glep31 requirements"""
+    
+    __slots__ = ("category", "package", "filename")
+
+    threshold = package_feed
+    
+    def __init__(self, pkg, filename):
+        Result.__init__(self)
+        self._store_cp(pkg)
+        self.filename = filename
+    
+    @property
+    def short_desc(self):
+        return "file %s has char outside the allowed char ranges defined by " \
+            "glep31" % self.filename
+    
+    def to_str(self):
+        return "%s/%s: file %s has char outside the allowed '%s' range" % \
+            (self.category, self.package, self.filename, allowed_filename_chars)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <msg>%s has char outside allowed '%s' range</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.filename, allowed_filename_chars)
+
+
+class InvalidUtf8(Result):
+
+    """file isn't utf8 compliant"""
+    
+    __slots__ = ("category", "package", "filename", "err")
+
+    threshold = package_feed
+    
+    def __init__(self, pkg, filename, err):
+        Result.__init__(self)
+        self._store_cp(pkg)
+        self.filename = filename
+        self.err = err
+    
+    @property
+    def short_desc(self):
+        return "file %s is not valid utf8- %s" % (self.filename, self.err)
+    
+    def to_str(self):
+        return "%s/%s: %s is not valid utf8: %s" % (self.category,
+            self.package, self.filename, self.err)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <msg>%s isn't valid utf8: %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.filename, escape(self.err))
+
+
 def utf8_check(pkg, base, filename, reporter):
     try:
         codecs.open(pjoin(base, filename), mode="rb", 
@@ -36,6 +189,8 @@ class PkgDirReport(Template):
     feed_type = package_feed
     
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
+    known_results = (MissingFile, ExecutableFile, SizeViolation,
+        Glep31Violation, InvalidUtf8)
 
     def feed(self, pkgset, reporter):
         base = os.path.dirname(pkgset[0].ebuild.get_path())
@@ -96,135 +251,3 @@ class PkgDirReport(Template):
                 # yes, we silently ignore others.
         if size > 20480:
             reporter.add_report(SizeViolation(pkgset[0], size))
-
-
-class MissingFile(Result):
-    """pkg is missing an expected file entry"""
-
-    __slots__ = ("category", "package", "filename")
-
-    threshold = package_feed
-    
-    def __init__(self, pkg, filename):
-        Result.__init__(self)
-        self._store_cp(pkg)
-        self.filename = filename
-    
-    def to_str(self):
-        return "%s/%s: %s doesn't exist" % \
-            (self.category, self.package, self.filename)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>file %s doesn't exist</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.filename)
-
-
-class ExecutableFile(Result):
-    """file has executable bit, but doesn't need it"""
-
-    __slots__ = ("category", "package", "filename")
-
-    threshold = package_feed
-    
-    def __init__(self, pkg, filename):
-        Result.__init__(self)
-        self._store_cp(pkg)
-        self.filename = filename
-    
-    def to_str(self):
-        return "%s/%s: %s doesn't need executable bit" % \
-            (self.category, self.package, self.filename)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>file %s doesn't need executable bit</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.filename)
-
-
-class SizeViolation(Result):
-    """filesdir, excluding digest/cvs, is too large"""
-
-    __slots__ = ("category", "package", "size")
-
-    threshold = package_feed
-    
-    def __init__(self, pkg, size):
-        Result.__init__(self)
-        self._store_cp(pkg)
-        self.size = size
-    
-    def to_str(self):
-        return "%s/%s: files/ exceeds 20k- %i bytes" % \
-            (self.category, self.package, self.size)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>files/ exceeds 20k; %i bytes</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.size)
-
-
-class Glep31Violation(Result):
-
-    """file doesn't abide by glep31 requirements"""
-    
-    __slots__ = ("category", "package", "filename")
-
-    threshold = package_feed
-    
-    def __init__(self, pkg, filename):
-        Result.__init__(self)
-        self._store_cp(pkg)
-        self.filename = filename
-    
-    def to_str(self):
-        return "%s/%s: file %s has char outside the allowed '%s' range" % \
-            (self.category, self.package, self.filename, allowed_filename_chars)
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>%s has char outside allowed '%s' range</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.filename, allowed_filename_chars)
-
-
-class InvalidUtf8(Result):
-
-    """file isn't utf8 compliant"""
-    
-    __slots__ = ("category", "package", "filename", "err")
-
-    threshold = package_feed
-    
-    def __init__(self, pkg, filename, err):
-        Result.__init__(self)
-        self._store_cp(pkg)
-        self.filename = filename
-        self.err = err
-    
-    def to_str(self):
-        return "%s/%s: %s is not valid utf8: %s" % (self.category,
-            self.package, self.filename, self.err)
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>%s isn't valid utf8: %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.filename, escape(self.err))

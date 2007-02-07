@@ -5,10 +5,42 @@
 from pkgcore_checks.base import Template, package_feed, versioned_feed, Result
 
 
+class DroppedKeywordWarning(Result):
+    """Arch keywords dropped during pkg version bumping"""
+
+    __slots__ = ("arch", "category", "package", "version")
+    threshold = versioned_feed
+
+    def __init__(self, arch, pkg):
+        Result.__init__(self)
+        self._store_cpv(pkg)
+        self.arch = arch
+
+    @property
+    def short_desc(self):
+        return "keyword %s dropped" % self.arch
+
+    def to_str(self):
+        return "%s/%s-%s: dropped keyword %s" % (self.category, self.package,
+            self.version, self.arch)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <arch>%s</arch>
+    <msg>keyword was dropped</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.arch)
+
+
 class DroppedKeywordsReport(Template):
     """scan pkgs for keyword dropping across versions"""
 
     feed_type = package_feed
+    known_results = (DroppedKeywordWarning,)
 
     def __init__(self, options):
         Template.__init__(self, options)
@@ -40,30 +72,3 @@ class DroppedKeywordsReport(Template):
  
         for key, pkg in dropped:
             reporter.add_report(DroppedKeywordWarning(key, pkg))
-
-
-class DroppedKeywordWarning(Result):
-    """Arch keywords dropped during pkg version bumping"""
-
-    __slots__ = ("arch", "category", "package", "version")
-    threshold = versioned_feed
-
-    def __init__(self, arch, pkg):
-        Result.__init__(self)
-        self._store_cpv(pkg)
-        self.arch = arch
-
-    def to_str(self):
-        return "%s/%s-%s: dropped keyword %s" % (self.category, self.package,
-            self.version, self.arch)
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <arch>%s</arch>
-    <msg>keyword was dropped</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.arch)

@@ -6,6 +6,45 @@ from pkgcore_checks.base import Template, versioned_feed, Result
 from pkgcore_checks import addons
 
 day = 24*3600
+
+
+class StaleUnstableKeyword(Result):
+    """
+    packages that have unstable keywords that have been unstable for over a
+    month
+    """
+    
+    __slots__ = ("category", "package", "version", "keywords", "period")
+
+    threshold = versioned_feed
+    
+    def __init__(self, pkg, period):
+        Result.__init__(self)
+        self._store_cpv(pkg)
+        self.keywords = tuple(x for x in pkg.keywords if x.startswith("~"))
+        self.period = period
+
+    @property
+    def short_desc(self):
+        return "no change in %i days for unstable keywords [ %s ]" % (
+            self.period, ', '.join(self.keywords))
+    
+    def to_str(self):
+        return "%s/%s-%s: no change in %i days, keywords [ %s ]" % \
+            (self.category, self.package, self.version, self.period, 
+                ", ".join(self.keywords))
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <arch>%s</arch>
+    <msg>left unstable for %i days</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, "</arch>\n\t<arch>".join(x.lstrip("~") 
+        for x in self.keywords), self.period)
         
 
 class StaleUnstableReport(Template):
@@ -13,6 +52,7 @@ class StaleUnstableReport(Template):
 
     feed_type = versioned_feed
     required_addons = (addons.ArchesAddon,)
+    known_results = (StaleUnstableKeyword,)
 
     def __init__(self, options, arches, staleness=long(day*30)):
         Template.__init__(self, options)
@@ -32,37 +72,3 @@ class StaleUnstableReport(Template):
             return
         reporter.add_report(
             StaleUnstableKeyword(pkg, int(unchanged_time/day)))
-
-
-class StaleUnstableKeyword(Result):
-    """
-    packages that have unstable keywords that have been unstable for over a
-    month
-    """
-    
-    __slots__ = ("category", "package", "version", "keywords", "period")
-
-    threshold = versioned_feed
-    
-    def __init__(self, pkg, period):
-        Result.__init__(self)
-        self._store_cpv(pkg)
-        self.keywords = tuple(x for x in pkg.keywords if x.startswith("~"))
-        self.period = period
-    
-    def to_str(self):
-        return "%s/%s-%s: no change in %i days, keywords [ %s ]" % \
-            (self.category, self.package, self.version, self.period, 
-                ", ".join(self.keywords))
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <arch>%s</arch>
-    <msg>left unstable for %i days</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, "</arch>\n\t<arch>".join(x.lstrip("~") 
-        for x in self.keywords), self.period)

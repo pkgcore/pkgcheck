@@ -5,57 +5,40 @@
 import os
 from pkgcore_checks import base
 
-class WhitespaceCheck(base.Template):
-
-    """checking ebuild for (useless) whitespaces"""
-
-    feed_type = base.ebuild_feed
-
-    def feed(self, entry, reporter):
-        pkg, lines = entry
-        lastlineempty = False
-        for lineno, line in enumerate(lines):
-            if line != '\n':
-                lastlineempty = False
-                if line[-2:-1] == ' ' or line[-2:-1] == '\t':
-                    reporter.add_report(
-                        WhitespaceFound(pkg, lineno + 1, "trailing"))
-                elif line[0] == ' ':
-                    reporter.add_report(
-                        WhitespaceFound(pkg, lineno + 1, "leading"))
-                if line.find("\t ") >= 0:
-                    reporter.add_report(
-                        WrongIndentFound(pkg, lineno +1))
-            else:
-                if lastlineempty:
-                    reporter.add_report(DoubleEmptyLine(pkg, lineno + 1))
-                else:
-                    lastlineempty = True
-        if lastlineempty:
-            reporter.add_report(TrailingEmptyLine(pkg))
-        # Dealing with empty ebuilds is just paranoia
-        if lines and not lines[-1].endswith('\n'):
-            reporter.add_report(NoFinalNewline(pkg))
-
-
-class WhitespaceFound(base.Result):
-
-    """leading or trailing whitespaces are found"""
-
-    __slots__ = ("category", "package", "version", "linenumber", "leadtrail")
+class base_whitespace(base.Result):
 
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, linenumber, leadtrail):
+    __slots__ = ()
+
+    @property
+    def lines_str(self):
+        if len(self.lines) == 1:
+            return "line %i" % self.lines[0]
+        return "lines %s" % ', '.join(str(x) for x in self.lines)
+
+
+class WhitespaceFound(base_whitespace):
+
+    """leading or trailing whitespaces are found"""
+
+    __slots__ = ("category", "package", "version", "lines", "leadtrail")
+
+    def __init__(self, pkg, leadtrail, lines):
         base.Result.__init__(self)
         self._store_cpv(pkg)
-        self.linenumber = linenumber
+        self.lines = lines
         self.leadtrail = leadtrail
 
+    @property
+    def short_desc(self):
+        return "ebuild has %s whitespace on %s" % (self.leadtrail,
+            self.lines_str)
+
     def to_str(self):
-        return "%s/%s/%s-%s.ebuild has %s whitespace on line %s" % (
-            self.category, self.package, self.package, self.version, self.leadtrail,
-            self.linenumber)
+        return "%s/%s/%s-%s.ebuild has %s whitespace on %s" % (
+            self.category, self.package, self.package, self.version,
+            self.leadtrail, self.lines_str)
 
     def to_xml(self):
         return """\
@@ -65,25 +48,28 @@ class WhitespaceFound(base.Result):
     <version>%s</version>
     <msg>ebuild has %s whitespace on line %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package,
-               self.version, self.leadtrail, self.linenumber)
+               self.version, self.leadtrail, self.lines_str)
 
 
-class WrongIndentFound(base.Result):
+class WrongIndentFound(base_whitespace):
 
     """leading or trailing whitespaces are found"""
 
-    __slots__ = ("category", "package", "version", "linenumber")
+    __slots__ = ("category", "package", "version", "lines")
 
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, linenumber):
+    def __init__(self, pkg, lines):
         base.Result.__init__(self)
         self._store_cpv(pkg)
-        self.linenumber = linenumber
+        self.lines = lines
+
+    @property
+    def short_desc(self):
+        return "ebuild has whitespace in indentation on %s" % self.lines_str
 
     def to_str(self):
-        return "%s/%s/%s-%s.ebuild has whitespace in indentation on line %s" % (
-            self.category, self.package, self.package, self.version, self.linenumber)
+        return "%s/%s/%s-%s.ebuild has whitespace in indentation on %s" % (
+            self.category, self.package, self.package, self.version,
+            self.lines_str)
 
     def to_xml(self):
         return """\
@@ -91,27 +77,30 @@ class WrongIndentFound(base.Result):
     <category>%s</category>
     <package>%s</package>
     <version>%s</version>
-    <msg>ebuild has whitespace in indentation on line %s</msg>
+    <msg>ebuild has whitespace in indentation on %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package,
-               self.version, self.linenumber)
+               self.version, self.lines_str)
 
 
-class DoubleEmptyLine(base.Result):
+class DoubleEmptyLine(base_whitespace):
 
     """unneeded blank lines are found"""
 
-    __slots__ = ("category", "package", "version", "linenumber")
+    __slots__ = ("category", "package", "version", "lines")
 
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, linenumber):
+    def __init__(self, pkg, lines):
         base.Result.__init__(self)
         self._store_cpv(pkg)
-        self.linenumber = linenumber
+        self.lines = lines
+
+    @property
+    def short_desc(self):
+        return "ebuild has unneeded empty %s" % self.lines_str
 
     def to_str(self):
         return "%s/%s/%s-%s.ebuild has unneeded empty line %s" % (
-            self.category, self.package, self.package, self.version, self.linenumber)
+            self.category, self.package, self.package, self.version,
+            self.lines_str)
 
     def to_xml(self):
         return \
@@ -121,7 +110,7 @@ class DoubleEmptyLine(base.Result):
     <version>%s</version>
     <msg>ebuild has unneeded empty line %s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.linenumber)
+    self.version, self.lines_str)
 
 
 class TrailingEmptyLine(base.Result):
@@ -135,6 +124,8 @@ class TrailingEmptyLine(base.Result):
     def __init__(self, pkg):
         base.Result.__init__(self)
         self._store_cpv(pkg)
+
+    short_desc = "ebuild has trailing blank line(s)"
 
     def to_str(self):
         return "%s/%s/%s-%s.ebuild has trailing blank line(s)" % (
@@ -163,6 +154,8 @@ class NoFinalNewline(base.Result):
         base.Result.__init__(self)
         self._store_cpv(pkg)
 
+    short_desc = "ebuild lacks an ending newline"
+
     def to_str(self):
         return "%s/%s/%s-%s.ebuild does not end in a newline" % (
             self.category, self.package, self.package, self.version)
@@ -176,3 +169,50 @@ class NoFinalNewline(base.Result):
     <msg>ebuild does not end in a newline</msg>
 </check>""" % (
             self.__class__.__name__, self.category, self.package, self.version)
+
+
+class WhitespaceCheck(base.Template):
+
+    """checking ebuild for (useless) whitespaces"""
+
+    feed_type = base.ebuild_feed
+    known_results = (WhitespaceFound, WrongIndentFound, DoubleEmptyLine,
+        TrailingEmptyLine, NoFinalNewline)
+
+    def feed(self, entry, reporter):
+        pkg, lines = entry
+        lastlineempty = False
+        trailing = []
+        leading = []
+        indent = []
+        double_empty = []
+        
+        for lineno, line in enumerate(lines):
+            if line != '\n':
+                lastlineempty = False
+                if line[-2:-1] == ' ' or line[-2:-1] == '\t':
+                    trailing.append(lineno + 1)
+                elif line[0] == ' ':
+                    leading.append(lineno + 1)
+                if line.find("\t ") >= 0:
+                    indent.append(lineno + 1)
+            elif lastlineempty:
+                double_empty.append(lineno + 1)
+            else:
+                lastlineempty = True
+        if trailing:
+            reporter.add_report(
+                WhitespaceFound(pkg, "trailing", trailing))
+        if leading:
+            reporter.add_report(
+                WhitespaceFound(pkg, "leading", leading))
+        if indent:
+            reporter.add_report(WrongIndentFound(pkg, indent))
+        if double_empty:
+            reporter.add_report(DoubleEmptyLine(pkg, double_empty))
+        if lastlineempty:
+            reporter.add_report(TrailingEmptyLine(pkg))
+
+        # Dealing with empty ebuilds is just paranoia
+        if lines and not lines[-1].endswith('\n'):
+            reporter.add_report(NoFinalNewline(pkg))

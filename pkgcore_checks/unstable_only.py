@@ -6,11 +6,47 @@ from pkgcore_checks.base import Template, package_feed, Result
 from pkgcore_checks import addons
 
 
+class UnstableOnly(Result):
+
+    """package/keywords that are strictly unstable"""
+
+    __slots__ = ("category", "package", "version", "arch")
+    
+    threshold = package_feed
+
+    def __init__(self, pkgs, arch):
+        Result.__init__(self)
+        self._store_cp(pkgs[0])
+        self.arch = arch
+        self.version = tuple(x.fullver for x in pkgs)
+
+    @property
+    def short_desc(self):
+        return "for arch %s, all versions are unstable: [ %s ]" % (
+            self.arch, ', '.join(self.version))
+    
+    def to_str(self):
+        return "%s/%s: arch %s, all unstable: [ %s ]" % \
+            (self.category, self.package, self.arch, ", ".join(self.version))
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <arch>%s</arch>
+    <msg>all versions are unstable</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, 
+"</version>\n\t<version>".join(self.version), self.arch)
+
+
 class UnstableOnlyReport(Template):
     """scan for pkgs that have just unstable keywords"""
 
     feed_type = package_feed
     required_addons = (addons.ArchesAddon,)
+    known_results = (UnstableOnly,)
 
     def __init__(self, options, arches):
         Template.__init__(self, options)
@@ -41,33 +77,3 @@ class UnstableOnlyReport(Template):
 
     def finish(self, reporter):
         self.arch_restricts.clear()
-
-
-class UnstableOnly(Result):
-
-    """package/keywords that are strictly unstable"""
-
-    __slots__ = ("category", "package", "version", "arch")
-    
-    threshold = package_feed
-
-    def __init__(self, pkgs, arch):
-        Result.__init__(self)
-        self._store_cp(pkgs[0])
-        self.arch = arch
-        self.version = tuple(x.fullver for x in pkgs)
-    
-    def to_str(self):
-        return "%s/%s: arch %s, all unstable: [ %s ]" % \
-            (self.category, self.package, self.arch, ", ".join(self.version))
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <arch>%s</arch>
-    <msg>all versions are unstable</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, 
-"</version>\n\t<version>".join(self.version), self.arch)

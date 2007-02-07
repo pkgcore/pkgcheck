@@ -23,6 +23,10 @@ class base_BadlyFormedXml(base.Result):
         self.package = package
         self.filename = filename
     
+    @property
+    def short_desc(self):
+        return "%s is not well formed xml" % self.filename
+    
     def to_str(self):
         s = ''
         if self.package is not None:
@@ -51,6 +55,10 @@ class base_InvalidXml(base.Result):
         self.category = category
         self.package = package
         self.filename = filename
+
+    @property
+    def short_desc(self):
+        return "%s violates metadata.dtd" % self.filename
 
     def to_str(self):
         s = ''
@@ -161,6 +169,8 @@ class PackageMetadataXmlCheck(base_check):
     misformed_error = PkgBadlyFormedXml
     invalid_error = PkgInvalidXml
 
+    known_results = (PkgBadlyFormedXml, PkgInvalidXml)
+
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.key:
             return
@@ -185,6 +195,8 @@ class CategoryMetadataXmlCheck(base_check):
     scope = base.category_scope
     misformed_error = CatBadlyFormedXml
     invalid_error = CatInvalidXml
+
+    known_results = (CatBadlyFormedXml, CatInvalidXml)
 
     dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
 

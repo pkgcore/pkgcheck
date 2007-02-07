@@ -3,9 +3,41 @@
 
 from pkgcore_checks.base import Template, versioned_feed, Result
 
+
+class DeprecatedEclass(Result):
+    """pkg uses an eclass that is deprecated/abandoned"""
+    
+    __slots__ = ("category", "package", "version", "eclasses")
+    threshold = versioned_feed
+    
+    def __init__(self, pkg, eclasses):
+        Result.__init__(self)
+        self._store_cpv(pkg)
+        self.eclasses = tuple(sorted(eclasses))
+
+    @property
+    def short_desc(self):
+        return "uses deprecated eclasses [ %s ]" % ', '.join(self.eclasses)
+
+    def to_str(self):
+        return "%s/%s-%s: deprecated eclasses [ %s ]" % (self.category, 
+            self.package, self.version, ", ".join(self.eclasses))
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>deprecated eclass usage- %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, ", ".join(self.eclasses))
+
+
 class DeprecatedEclassReport(Template):
 
     feed_type = versioned_feed
+    known_results = (DeprecatedEclass,)
 
     blacklist = frozenset((
     '64-bit',
@@ -57,29 +89,3 @@ class DeprecatedEclassReport(Template):
         bad = self.blacklist.intersection(pkg.data["_eclasses_"])
         if bad:
             reporter.add_report(DeprecatedEclass(pkg, bad))
-
-
-class DeprecatedEclass(Result):
-    """pkg uses an eclass that is deprecated/abandoned"""
-    
-    __slots__ = ("category", "package", "version", "eclasses")
-    threshold = versioned_feed
-    
-    def __init__(self, pkg, eclasses):
-        Result.__init__(self)
-        self._store_cpv(pkg)
-        self.eclasses = tuple(sorted(eclasses))
-
-    def to_str(self):
-        return "%s/%s-%s: deprecated eclasses [ %s ]" % (self.category, 
-            self.package, self.version, ", ".join(self.eclasses))
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>deprecated eclass usage- %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, ", ".join(self.eclasses))

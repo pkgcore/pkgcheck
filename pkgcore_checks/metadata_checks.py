@@ -16,14 +16,45 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.xml:escape logging")
 
 
+class MetadataError(base.Result):
+    """problem detected with a packages metadata"""
+    __slots__ = ("category", "package", "version", "attr", "msg")
+    threshold = base.versioned_feed
+    
+    def __init__(self, pkg, attr, msg):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.attr, self.msg = attr, str(msg)
+    
+    @property
+    def short_desc(self):
+        return "attr(%s): %s" % (self.attr, self.msg)
+
+    def to_str(self):
+        return "%s/%s-%s: attr(%s): %s" % (self.category, self.package,
+            self.version, self.attr, self.msg)
+
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>%s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version,
+    "attr '%s' threw an error- %s" % (self.attr, escape(self.msg)))
+
+
 class LicenseMetadataReport(base.Template):
 
     """LICENSE metadata key validity checks"""
 
-    required_addons = (
-        addons.UseAddon, addons.ProfileAddon, addons.LicenseAddon)
-
+    known_results = (MetadataError,) + addons.UseAddon.known_results
     feed_type = base.versioned_feed
+
+    required_addons = (addons.UseAddon, addons.ProfileAddon,
+        addons.LicenseAddon) 
 
     def __init__(self, options, iuse_handler, profiles, licenses):
         base.Template.__init__(self, options)
@@ -76,6 +107,7 @@ class IUSEMetadataReport(base.Template):
     """Check IUSE for valid use flags"""
 
     required_addons = (addons.UseAddon,)
+    known_results = (MetadataError,) + addons.UseAddon.known_results
 
     feed_type = base.versioned_feed
 
@@ -96,6 +128,7 @@ class DependencyReport(base.Template):
     """check DEPEND, PDEPEND, RDEPEND and PROVIDES"""
 
     required_addons = (addons.UseAddon,)
+    known_results = (MetadataError,) + addons.UseAddon.known_results
 
     feed_type = base.versioned_feed
 
@@ -126,6 +159,60 @@ class DependencyReport(base.Template):
                 del e
 
 
+class EmptyKeywords(base.Result):
+    """pkg has no set keywords"""
+
+    __slots__ = ('category', 'package', 'version')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+
+    short_desc = "no keywords defined"
+
+    def to_str(self):
+        return "%s/%s-%s: no keywords set" % (self.category, self.package,
+            self.version)
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>no keywords set</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version)
+
+        
+class StupidKeywords(base.Result):
+    """pkg that is using -*; package.mask in profiles addresses this already"""
+
+    __slots__ = ('category', 'package', 'version')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+    
+    short_desc = "keywords contain -*, use package.mask instead"
+    
+    def to_str(self):
+        return "%s/%s-%s: keywords contains -*, use package.mask instead" % \
+            (self.category, self.package, self.version)
+        
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>keywords contains -*, should use package.mask</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version)
+
+
 class KeywordsReport(base.Template):
     
     """
@@ -133,6 +220,7 @@ class KeywordsReport(base.Template):
     """
     
     feed_type = base.versioned_feed
+    known_results = (EmptyKeywords, StupidKeywords, MetadataError)
     
     def feed(self, pkg, reporter):
         if not pkg.keywords:
@@ -141,6 +229,65 @@ class KeywordsReport(base.Template):
         if "-*" in pkg.keywords:
             reporter.add_report(StupidKeywords(pkg))
 
+
+class MissingUri(base.Result):
+    """restrict=fetch isn't set, yet no full uri exists"""
+    __slots__ = ("category", "package", "version", "filename")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, filename):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.filename = filename
+    
+    @property
+    def short_desc(self):
+        return "file %s is unfetchable- no URI available, and RESTRICT=fetch " \
+            "isn't set" % self.filename
+    
+    def to_str(self):
+        return "%s/%s-%s: no uri specified for %s and RESTRICT=fetch isn't on" \
+            % (self.category, self.package, self.version, self.filename)
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>no uri specified for %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, escape(self.filename))
+
+
+class BadProto(base.Result):
+    """bad protocol"""
+    __slots__ = ("category", "package", "version", "filename", "bad_uri")
+
+    def __init__(self, pkg, filename, bad_uri):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.filename = filename
+        self.bad_uri = bad_uri
+    
+    @property
+    def short_desc(self):
+        return "file %s: bad protocol/uri: %r " % (self.filename, self.bad_uri)
+    
+    def to_str(self):
+        return "%s/%s-%s: file %s, bad proto/uri- [ '%s' ]" % (self.category, 
+            self.package, self.version, self.filename, 
+                "', '".join(self.bad_uri))
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>file %s has invalid uri- %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, escape(self.filename), escape(", ".join(self.bad_uri)))
 
 
 class SrcUriReport(base.Template):
@@ -151,8 +298,8 @@ class SrcUriReport(base.Template):
     """
 
     required_addons = (addons.UseAddon,)
-
     feed_type = base.versioned_feed
+    known_reports = (BadProto, KeywordsReport) + addons.UseAddon.known_results
 
     valid_protos = frozenset(["http", "https", "ftp"])
 
@@ -197,6 +344,37 @@ class SrcUriReport(base.Template):
             del e
 
 
+class CrappyDescription(base.Result):
+    
+    """pkg's description sucks in some fashion"""
+
+    __slots__ = ("category", "package", "version", "msg")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, msg):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.msg = msg
+    
+    @property
+    def short_desc(self):
+        return "description needs improvement: %s" % self.msg
+    
+    def to_str(self):
+        return "%s/%s-%s: description: %s" % (self.category, self.package,
+            self.version, self.msg)
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>%s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package, 
+    self.version, self.msg)
+
+
 class DescriptionReport(base.Template):
     """
     DESCRIPTION checks.
@@ -205,6 +383,7 @@ class DescriptionReport(base.Template):
     """
     
     feed_type = base.versioned_feed
+    known_results = (CrappyDescription,)
 
     def feed(self, pkg, reporter):
         s = pkg.description.lower()
@@ -230,24 +409,6 @@ class DescriptionReport(base.Template):
                     "under 10 chars in length- too short"))
 
 
-class RestrictsReport(base.Template):
-    feed_type = base.versioned_feed
-    known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", 
-        "test", "sandbox", "userpriv", "primaryuri", "binchecks", "strip",
-        "multilib-strict"))
-
-    __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \
-        "restricts:%s" % ", ".join(sorted(known_restricts))
-
-    def feed(self, pkg, reporter):
-        bad = set(pkg.restrict).difference(self.known_restricts)
-        if bad:
-            deprecated = set(x for x in bad if x.startswith("no")
-                and x[2:] in self.known_restricts)
-            reporter.add_report(BadRestricts(
-                    pkg, bad.difference(deprecated), deprecated))
-
-
 class BadRestricts(base.Result):
     """pkg's restrict metadata has unknown/deprecated entries"""
     
@@ -262,178 +423,21 @@ class BadRestricts(base.Result):
         if not restricts and not deprecated:
             raise TypeError("deprecated or restricts must not be empty")
     
-    def to_str(self):
-        s = ''
-        if self.restricts:
-            s = "unknown restricts [ %s ]" % ", ".join(self.restricts)
-        if self.deprecated:
-            if s:
-                s += ", "
-            s += "deprecated (drop the 'no') [ %s ]" % ", ".join(
-                self.deprecated)
-        return "%s/%s-%s: %s" % (self.category, self.package, self.version, s)
-        
-    def to_xml(self):
+    @property
+    def short_desc(self):
         s = ''
         if self.restricts:
             s = "unknown restricts: %s" % ", ".join(self.restricts)
         if self.deprecated:
             if s:
-                s += ".  "
-            s += "deprecated (drop the 'no')- %s" % ", ".join(self.deprecated)
-
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, "unknown restricts- %s" % s)
-
-
-class CrappyDescription(base.Result):
-    
-    """pkg's description sucks in some fashion"""
-
-    __slots__ = ("category", "package", "version", "msg")
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, msg):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.msg = msg
+                s += "; "
+            s += "deprecated (drop the 'no') [ %s ]" % ", ".join(
+                self.deprecated)
+        return s
     
     def to_str(self):
-        return "%s/%s-%s: description: %s" % (self.category, self.package,
-            self.version, self.msg)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, 
-    self.version, self.msg)
-
-
-class MissingUri(base.Result):
-    """restrict=fetch isn't set, yet no full uri exists"""
-    __slots__ = ("category", "package", "version", "filename")
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, filename):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.filename = filename
-    
-    def to_str(self):
-        return "%s/%s-%s: no uri specified for %s and RESTRICT=fetch isn't on" \
-            % (self.category, self.package, self.version, self.filename)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>no uri specified for %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, escape(self.filename))
-
-
-class BadProto(base.Result):
-    """bad protocol"""
-    __slots__ = ("category", "package", "version", "filename", "bad_uri")
-
-    def __init__(self, pkg, filename, bad_uri):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.filename = filename
-        self.bad_uri = bad_uri
-    
-    def to_str(self):
-        return "%s/%s-%s: file %s, bad proto/uri- [ '%s' ]" % (self.category, 
-            self.package, self.version, self.filename, 
-                "', '".join(self.bad_uri))
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>file %s has invalid uri- %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, escape(self.filename), escape(", ".join(self.bad_uri)))
-
-
-class MetadataError(base.Result):
-    """problem detected with a packages metadata"""
-    __slots__ = ("category", "package", "version", "attr", "msg")
-    threshold = base.versioned_feed
-    
-    def __init__(self, pkg, attr, msg):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.attr, self.msg = attr, str(msg)
-    
-    def to_str(self):
-        return "%s/%s-%s: attr(%s): %s" % (self.category, self.package,
-            self.version, self.attr, self.msg)
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version,
-    "attr '%s' threw an error- %s" % (self.attr, escape(self.msg)))
-
-
-class EmptyKeywords(base.Result):
-    """pkg has no set keywords"""
-
-    __slots__ = ('category', 'package', 'version')
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-
-    def to_str(self):
-        return "%s/%s-%s: no keywords set" % (self.category, self.package,
-            self.version)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>no keywords set</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version)
-
-        
-class StupidKeywords(base.Result):
-    """pkg that is using -*; package.mask in profiles addresses this already"""
-
-    __slots__ = ('category', 'package', 'version')
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-    
-    def to_str(self):
-        return "%s/%s-%s: keywords contains -*, use package.mask instead" % \
-            (self.category, self.package, self.version)
+        return "%s/%s-%s: %s" % (self.category, self.package, self.version,
+            self.short_desc)
         
     def to_xml(self):
         return \
@@ -441,6 +445,26 @@ class StupidKeywords(base.Result):
     <category>%s</category>
     <package>%s</package>
     <version>%s</version>
-    <msg>keywords contains -*, should use package.mask</msg>
+    <msg>%s</msg>
 </check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version)
+    self.version, escape(self.short_desc))
+
+
+class RestrictsReport(base.Template):
+    feed_type = base.versioned_feed
+    known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", 
+        "test", "sandbox", "userpriv", "primaryuri", "binchecks", "strip",
+        "multilib-strict"))
+
+    known_results = (BadRestricts,)
+
+    __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \
+        "restricts:%s" % ", ".join(sorted(known_restricts))
+
+    def feed(self, pkg, reporter):
+        bad = set(pkg.restrict).difference(self.known_restricts)
+        if bad:
+            deprecated = set(x for x in bad if x.startswith("no")
+                and x[2:] in self.known_restricts)
+            reporter.add_report(BadRestricts(
+                    pkg, bad.difference(deprecated), deprecated))

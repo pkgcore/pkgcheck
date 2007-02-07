@@ -17,6 +17,158 @@ demandload(
     )
 
 
+class SuggestRemoval(base.Result):
+    
+    """pkg isn't ported, stablize the targets and it can likely go away"""
+    
+    __slots__ = ("category", "package", "version", "ported")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, ported):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.ported = tuple(get_cpvstr(x) for x in ported)
+
+    @property
+    def short_desc(self):
+        return "version is unported, suggest removal for one of the ported " \
+            "versions: [ %s ]" % ', '.join(self.ported)
+    
+    def to_str(self):
+        return "%s/%s-%s: is unported, potentially remove for [ %s ]" \
+            % (self.category, self.package, self.version,
+                ", ".join(self.ported))
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>unported, suggest replacing via: %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, escape(", ".join(self.ported)))
+
+
+class BadRange(base.Result):
+    
+    """
+    look for virtual/x11 atoms that don't intersect =virtual/x11-6.9
+    """
+    
+    __slots__ = ("category", "package", "version", "attr", "atoms")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, attr, atom_inst):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.attr = attr
+        self.atoms = tuple(str(x) for x in atom_inst)
+    
+    @property
+    def short_desc(self):
+        return "%s: virtual/x11 atoms must match version 6.9: %s" % (
+            self.attr, ', '.join(self.atoms))
+    
+    def to_str(self):
+        return "%s/%s-%s: attr(%s): atoms don't match 6.9: [ %s ]" % \
+            (self.category, self.package, self.version, self.attr, 
+                ", ".join(self.atoms))
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>attr %s has atoms %s, which do not match virtual/x11-6.9</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.attr, escape(", ".join(self.atoms)))
+
+
+class NotPorted(base.Result):
+    
+    """standalone virtual/x11 atom, not ported."""
+    
+    __slots__ = ("category", "package", "version", "attr", "or_block")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, attr, or_block):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.attr = attr
+        self.or_block = or_block
+    
+    @property
+    def short_desc(self):
+        return "%s: has standalone virtual/x11 in an OR block" % self.attr
+    
+    def to_str(self):
+        return "%s/%s-%s: attr(%s): not ported, standalone virtual/x11 atom " \
+            "detected in an or_block" % (self.category,
+                self.package, self.version, self.attr)
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <msg>attr %s, standalone virtual/x11 atom detected in an or_block"</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.attr)
+
+
+class VisibilityCausedNotPorted(base.Result):
+    
+    """
+    ported, but due to visibility (mask'ing/keywords), knocked back to
+    effectively not ported
+    """
+    
+    __slots__ = ("category", "package", "version", "attr", "keyword",
+        "profile", "failed")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, keyword, profile, attr, failed):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.attr = attr
+        self.keyword = keyword
+        self.profile = profile
+        self.failed = tuple(str(x) for x in failed)
+    
+    @property
+    def short_desc(self):
+        return "attr(%s): keyword(%s): profile(%s): visibility induced " \
+            " unported, fix via [ %s ]" % (self.attr, self.keyword, 
+            self.profile, ', '.join(self.failed))
+    
+    def to_str(self):
+        return "%s/%s-%s: %s %s %s: visibility induced unported: fix via " \
+            "making visible [ %s ]" % \
+            (self.category, self.package, self.version, self.attr,
+                self.keyword, self.profile, ", ".join(self.failed))
+    
+    def to_xml(self):
+        return \
+"""<check name="%s">
+    <category>%s</category>
+    <package>%s</package>
+    <version>%s</version>
+    <keyword>%s</keyword>
+    <profile>%s</profile>
+    <msg>attr %s, visibility limiters mean that the following atoms aren't
+        accessible, resulting in non-modular x deps: %s</msg>
+</check>""" % (self.__class__.__name__, self.category, self.package,
+    self.version, self.keyword, self.profile, self.attr,
+    escape(", ".join(self.failed)))
+
+
 class ModularXPortingReport(base.Template):
 
     """modular X porting report.
@@ -26,6 +178,8 @@ class ModularXPortingReport(base.Template):
     feed_type = base.package_feed
     required_addons = (
         addons.ArchesAddon, addons.QueryCacheAddon, addons.EvaluateDepSetAddon)
+    known_results = (SuggestRemoval, BadRange, NotPorted,
+        VisibilityCausedNotPorted)
 
     valid_modx_pkgs_url = \
         "http://www.gentoo.org/proj/en/desktop/x/x11/modular-x-packages.txt"
@@ -214,135 +368,3 @@ class ModularXPortingReport(base.Template):
             if failed:
                 reporter.add_report(VisibilityCausedNotPorted(pkg,
                     profile.key, profile.name, attr, sorted(failed)))
-
-
-class SuggestRemoval(base.Result):
-    
-    """pkg isn't ported, stablize the targets and it can likely go away"""
-    
-    __slots__ = ("category", "package", "version", "ported")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, ported):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.ported = tuple(get_cpvstr(x) for x in ported)
-    
-    def to_str(self):
-        return "%s/%s-%s: is unported, potentially remove for [ %s ]" \
-            % (self.category, self.package, self.version,
-                ", ".join(self.ported))
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>unported, suggest replacing via: %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, escape(", ".join(self.ported)))
-
-
-class BadRange(base.Result):
-    
-    """
-    look for virtual/x11 atoms that don't intersect =virtual/x11-6.9
-    """
-    
-    __slots__ = ("category", "package", "version", "attr", "atoms")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, attr, atom_inst):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.attr = attr
-        self.atoms = tuple(str(x) for x in atom_inst)
-    
-    def to_str(self):
-        return "%s/%s-%s: attr(%s): atoms don't match 6.9: [ %s ]" % \
-            (self.category, self.package, self.version, self.attr, 
-                ", ".join(self.atoms))
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>attr %s has atoms %s, which do not match virtual/x11-6.9</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.attr, escape(", ".join(self.atoms)))
-
-
-class NotPorted(base.Result):
-    
-    """standalone virtual/x11 atom, not ported."""
-    
-    __slots__ = ("category", "package", "version", "attr", "or_block")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, attr, or_block):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.attr = attr
-        self.or_block = or_block
-    
-    def to_str(self):
-        return "%s/%s-%s: attr(%s): not ported, standalone virtual/x11 atom " \
-            "detected in an or_block" % (self.category,
-                self.package, self.version, self.attr)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>attr %s, standalone virtual/x11 atom detected in an or_block"</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.attr)
-
-
-class VisibilityCausedNotPorted(base.Result):
-    
-    """
-    ported, but due to visibility (mask'ing/keywords), knocked back to
-    effectively not ported
-    """
-    
-    __slots__ = ("category", "package", "version", "attr", "keyword",
-        "profile", "failed")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, keyword, profile, attr, failed):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.attr = attr
-        self.keyword = keyword
-        self.profile = profile
-        self.failed = tuple(str(x) for x in failed)
-    
-    def to_str(self):
-        return "%s/%s-%s: %s %s %s: visibility induced unported: fix via " \
-            "making visible [ %s ]" % \
-            (self.category, self.package, self.version, self.attr,
-                self.keyword, self.profile, ", ".join(self.failed))
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <keyword>%s</keyword>
-    <profile>%s</profile>
-    <msg>attr %s, visibility limiters mean that the following atoms aren't
-        accessible, resulting in non-modular x deps: %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.keyword, self.profile, self.attr,
-    escape(", ".join(self.failed)))
