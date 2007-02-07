@@ -387,11 +387,6 @@ class UnstatedIUSE(base.Result):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.attr, self.flags = attr, tuple(flags)
-
-    def to_str(self):
-        return "%s/%s-%s: attr(%s) uses unstated flags [ %s ]" % \
-            (self.category, self.package, self.version, self.attr,
-            ", ".join(self.flags))
     
     @property
     def short_desc(self):

@@ -37,10 +37,6 @@ class MissingFile(Result):
     def short_desc(self):
         return "required file %s doesn't exist" % self.filename
     
-    def to_str(self):
-        return "%s/%s: %s doesn't exist" % \
-            (self.category, self.package, self.filename)
-    
 
 class ExecutableFile(Result):
     """file has executable bit, but doesn't need it"""
@@ -57,10 +53,6 @@ class ExecutableFile(Result):
     @property
     def short_desc(self):
         return "file %s has unecessary executable bit" % self.filename
-    
-    def to_str(self):
-        return "%s/%s: %s doesn't need executable bit" % \
-            (self.category, self.package, self.filename)
     
 
 class SizeViolation(Result):
@@ -79,10 +71,6 @@ class SizeViolation(Result):
     def short_desc(self):
         return "files directory exceeds 20k; %i bytes total" % self.size
 
-    def to_str(self):
-        return "%s/%s: files/ exceeds 20k- %i bytes" % \
-            (self.category, self.package, self.size)
-    
 
 class Glep31Violation(Result):
 
@@ -101,10 +89,6 @@ class Glep31Violation(Result):
     def short_desc(self):
         return "file %s has char outside the allowed char ranges defined by " \
             "glep31" % self.filename
-    
-    def to_str(self):
-        return "%s/%s: file %s has char outside the allowed '%s' range" % \
-            (self.category, self.package, self.filename, allowed_filename_chars)
 
 
 class InvalidUtf8(Result):
@@ -124,10 +108,6 @@ class InvalidUtf8(Result):
     @property
     def short_desc(self):
         return "file %s is not valid utf8- %s" % (self.filename, self.err)
-    
-    def to_str(self):
-        return "%s/%s: %s is not valid utf8: %s" % (self.category,
-            self.package, self.filename, self.err)
 
 
 def utf8_check(pkg, base, filename, reporter):

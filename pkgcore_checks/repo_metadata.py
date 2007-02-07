@@ -35,11 +35,6 @@ class UnusedLocalFlagsResult(base.Result):
     @property
     def short_desc(self):
         return "use.local.desc unused flag(s) %s" % ', '.join(self.flags)
-    
-    def to_str(self):
-        return "%s/%s: use.local.desc unused flag(s) %s"  % \
-            (self.category, self.package,
-		', '.join(self.flags))
 
 
 class UnusedLocalFlags(base.Template):
@@ -89,10 +84,6 @@ class UnusedGlobalFlagsResult(base.Result):
     def short_desc(self):
         return "use.desc unused flag(s): %s" % ', '.join(self.flags)
 
-    def to_str(self):
-        return "use.desc unused flag(s): %s" % \
-    		', '.join(self.flags)
-
 
 class UnusedGlobalFlags(base.Template):
     """
@@ -139,10 +130,6 @@ class UnusedLicenseReport(base.Result):
     @property
     def short_desc(self):
         return "unused license(s): %s" % ', '.join(self.licenses)
-    
-    def to_str(self):
-        return "unused license(s): %s" % \
-            ', '.join(self.licenses)
 
 
 class UnusedLicense(base.Template):
@@ -211,11 +198,6 @@ class ConflictingChksums(base.Result):
         return "conflicts with (%s) for file %s chksums %s" % (
             ', '.join(self.others), self.filename, self.chksums)
 
-    def to_str(self):
-        return "%s/%s-%s: conflicts with (%s) for file %r, chksums: %s" % \
-            (self.category, self.package, self.version, \
-            ', '.join(self.others), self.filename, self.chksums)
-
 
 class ConflictingDigests(base.Template):
     """
@@ -277,10 +259,6 @@ class ManifestDigestConflict(base.Result):
     @property
     def short_desc(self):
         return "Manifest/digest conflict for file %s: %s" % (self.filename, self.msg)
-    
-    def to_str(self):
-        return "%s/%s-%s: file %r: %s" % (self.category, self.package,
-            self.version, self.filename, self.msg)
 
 
 class OrphanedManifestDist(base.Result):
@@ -301,10 +279,6 @@ class OrphanedManifestDist(base.Result):
     @property
     def short_desc(self):
         return "manifest2 knows of files %r, but digest1 doesn't" % (self.files,)
-    
-    def to_str(self):
-        return "%s/%s: manifest2 knows of dists %r, but digest1 doesn't" % \
-            (self.category, self.package, self.files)
 
 
 class MissingDigest(base.Result):
@@ -324,10 +298,6 @@ class MissingDigest(base.Result):
     @property
     def short_desc(self):
         return "file %s has no checksum info" % self.filename
-    
-    def to_str(self):
-        return "%s" % \
-            (self.filename)
 
 
 class ConflictManifestDigest(base.Template):

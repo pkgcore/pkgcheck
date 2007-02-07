@@ -19,10 +19,6 @@ class DeprecatedEclass(Result):
     def short_desc(self):
         return "uses deprecated eclasses [ %s ]" % ', '.join(self.eclasses)
 
-    def to_str(self):
-        return "%s/%s-%s: deprecated eclasses [ %s ]" % (self.category, 
-            self.package, self.version, ", ".join(self.eclasses))
-
 
 class DeprecatedEclassReport(Template):
 

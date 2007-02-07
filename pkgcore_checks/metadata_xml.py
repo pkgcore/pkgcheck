@@ -27,13 +27,6 @@ class base_BadlyFormedXml(base.Result):
     def short_desc(self):
         return "%s is not well formed xml" % self.filename
     
-    def to_str(self):
-        s = ''
-        if self.package is not None:
-            s = '/' + self.package
-        return "%s%s: %s is not well formed" % (self.category, s,
-            self.filename)
-    
 
 class base_InvalidXml(base.Result):
     """xml fails dtd validation"""
@@ -48,14 +41,6 @@ class base_InvalidXml(base.Result):
     @property
     def short_desc(self):
         return "%s violates metadata.dtd" % self.filename
-
-    def to_str(self):
-        s = ''
-        if self.package is not None:
-            s = '/' + self.package
-
-        return "%s%s: %s violates metadata.dtd" % (self.category, s, 
-            self.filename)
 
 
 class PkgInvalidXml(base_InvalidXml):

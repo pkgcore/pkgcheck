@@ -171,7 +171,7 @@ class Result(object):
 
     def __str__(self):
         try:
-            return self.to_str()
+            return self.short_desc
         except NotImplementedError:
             return "result from %s" % self.__class__.__name__
     
@@ -182,9 +182,6 @@ class Result(object):
     @property
     def long_desc(self):
         return self.short_desc
-
-    def to_str(self):
-        raise NotImplementedError
     
     def _store_cp(self, pkg):
         self.category = pkg.category

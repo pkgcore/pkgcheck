@@ -25,11 +25,6 @@ class RedundantVersionWarning(Result):
         return "slot(%s) keywords are overshadowed by version %r" % \
             (self.slot, ', '.join(self.later_versions))
 
-    def to_str(self):
-        return "%s/%s-%s: slot(%s) keywords are overshadowed by version %r" % \
-            (self.category, self.package, self.version,
-            self.slot, ", ".join(self.later_versions))
-
 
 class RedundantVersionReport(Template):
     """

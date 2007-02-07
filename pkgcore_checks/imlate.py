@@ -25,11 +25,6 @@ class LaggingStableInfo(base.Result):
         return "stabled arches [ %s ], potentials [ %s ]" % \
             (', '.join(self.stable), ', '.join(self.keywords))
 
-    def to_str(self):
-        return "%s/%s-%s: stabled [ %s ], potentials: [ %s ]" % \
-            (self.category, self.package, self.version, 
-            ", ".join(self.stable), ", ".join(self.keywords))
-
 
 class ImlateReport(base.Template):
 

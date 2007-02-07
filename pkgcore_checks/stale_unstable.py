@@ -29,11 +29,6 @@ class StaleUnstableKeyword(Result):
         return "no change in %i days for unstable keywords [ %s ]" % (
             self.period, ', '.join(self.keywords))
     
-    def to_str(self):
-        return "%s/%s-%s: no change in %i days, keywords [ %s ]" % \
-            (self.category, self.package, self.version, self.period, 
-                ", ".join(self.keywords))
-        
 
 class StaleUnstableReport(Template):
     """Ebuilds that have sat unstable for over a month"""

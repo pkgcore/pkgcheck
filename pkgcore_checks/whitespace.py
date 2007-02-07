@@ -35,11 +35,6 @@ class WhitespaceFound(base_whitespace):
         return "ebuild has %s whitespace on %s" % (self.leadtrail,
             self.lines_str)
 
-    def to_str(self):
-        return "%s/%s/%s-%s.ebuild has %s whitespace on %s" % (
-            self.category, self.package, self.package, self.version,
-            self.leadtrail, self.lines_str)
-
 
 class WrongIndentFound(base_whitespace):
 
@@ -55,11 +50,6 @@ class WrongIndentFound(base_whitespace):
     @property
     def short_desc(self):
         return "ebuild has whitespace in indentation on %s" % self.lines_str
-
-    def to_str(self):
-        return "%s/%s/%s-%s.ebuild has whitespace in indentation on %s" % (
-            self.category, self.package, self.package, self.version,
-            self.lines_str)
 
 
 class DoubleEmptyLine(base_whitespace):
@@ -77,11 +67,6 @@ class DoubleEmptyLine(base_whitespace):
     def short_desc(self):
         return "ebuild has unneeded empty %s" % self.lines_str
 
-    def to_str(self):
-        return "%s/%s/%s-%s.ebuild has unneeded empty line %s" % (
-            self.category, self.package, self.package, self.version,
-            self.lines_str)
-
 
 class TrailingEmptyLine(base.Result):
 
@@ -97,10 +82,6 @@ class TrailingEmptyLine(base.Result):
 
     short_desc = "ebuild has trailing blank line(s)"
 
-    def to_str(self):
-        return "%s/%s/%s-%s.ebuild has trailing blank line(s)" % (
-            self.category, self.package, self.package, self.version)
-
 
 class NoFinalNewline(base.Result):
 
@@ -115,10 +96,6 @@ class NoFinalNewline(base.Result):
         self._store_cpv(pkg)
 
     short_desc = "ebuild lacks an ending newline"
-
-    def to_str(self):
-        return "%s/%s/%s-%s.ebuild does not end in a newline" % (
-            self.category, self.package, self.package, self.version)
 
 
 class WhitespaceCheck(base.Template):

@@ -20,10 +20,6 @@ class DroppedKeywordWarning(Result):
     def short_desc(self):
         return "keyword %s dropped" % self.arch
 
-    def to_str(self):
-        return "%s/%s-%s: dropped keyword %s" % (self.category, self.package,
-            self.version, self.arch)
-
 
 class DroppedKeywordsReport(Template):
     """scan pkgs for keyword dropping across versions"""

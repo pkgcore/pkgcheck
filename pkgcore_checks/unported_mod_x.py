@@ -35,11 +35,6 @@ class SuggestRemoval(base.Result):
         return "version is unported, suggest removal for one of the ported " \
             "versions: [ %s ]" % ', '.join(self.ported)
     
-    def to_str(self):
-        return "%s/%s-%s: is unported, potentially remove for [ %s ]" \
-            % (self.category, self.package, self.version,
-                ", ".join(self.ported))
-
 
 class BadRange(base.Result):
     
@@ -61,11 +56,6 @@ class BadRange(base.Result):
     def short_desc(self):
         return "%s: virtual/x11 atoms must match version 6.9: %s" % (
             self.attr, ', '.join(self.atoms))
-    
-    def to_str(self):
-        return "%s/%s-%s: attr(%s): atoms don't match 6.9: [ %s ]" % \
-            (self.category, self.package, self.version, self.attr, 
-                ", ".join(self.atoms))
 
 
 class NotPorted(base.Result):
@@ -85,11 +75,6 @@ class NotPorted(base.Result):
     @property
     def short_desc(self):
         return "%s: has standalone virtual/x11 in an OR block" % self.attr
-    
-    def to_str(self):
-        return "%s/%s-%s: attr(%s): not ported, standalone virtual/x11 atom " \
-            "detected in an or_block" % (self.category,
-                self.package, self.version, self.attr)
 
 
 class VisibilityCausedNotPorted(base.Result):
@@ -117,12 +102,6 @@ class VisibilityCausedNotPorted(base.Result):
         return "attr(%s): keyword(%s): profile(%s): visibility induced " \
             " unported, fix via [ %s ]" % (self.attr, self.keyword, 
             self.profile, ', '.join(self.failed))
-    
-    def to_str(self):
-        return "%s/%s-%s: %s %s %s: visibility induced unported: fix via " \
-            "making visible [ %s ]" % \
-            (self.category, self.package, self.version, self.attr,
-                self.keyword, self.profile, ", ".join(self.failed))
 
 
 class ModularXPortingReport(base.Template):

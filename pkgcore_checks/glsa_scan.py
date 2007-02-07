@@ -41,10 +41,6 @@ class VulnerablePackage(base.Result):
     def short_desc(self):
         return "vulnerable via %s, keywords %s" % (self.glsa, self.arch)
 
-    def to_str(self):
-        return "%s/%s-%s: vulnerable via %s, affects %s" % (self.category,
-            self.package, self.version, self.glsa, self.arch)
-
 
 class TreeVulnerabilitiesReport(base.Template):
     """

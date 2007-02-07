@@ -25,10 +25,6 @@ class UnstableOnly(Result):
         return "for arch %s, all versions are unstable: [ %s ]" % (
             self.arch, ', '.join(self.version))
     
-    def to_str(self):
-        return "%s/%s: arch %s, all unstable: [ %s ]" % \
-            (self.category, self.package, self.arch, ", ".join(self.version))
-
 
 class UnstableOnlyReport(Template):
     """scan for pkgs that have just unstable keywords"""

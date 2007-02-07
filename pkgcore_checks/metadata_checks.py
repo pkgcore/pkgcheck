@@ -30,10 +30,6 @@ class MetadataError(base.Result):
     def short_desc(self):
         return "attr(%s): %s" % (self.attr, self.msg)
 
-    def to_str(self):
-        return "%s/%s-%s: attr(%s): %s" % (self.category, self.package,
-            self.version, self.attr, self.msg)
-
 
 class LicenseMetadataReport(base.Template):
 
@@ -159,10 +155,6 @@ class EmptyKeywords(base.Result):
         self._store_cpv(pkg)
 
     short_desc = "no keywords defined"
-
-    def to_str(self):
-        return "%s/%s-%s: no keywords set" % (self.category, self.package,
-            self.version)
     
         
 class StupidKeywords(base.Result):
@@ -176,10 +168,6 @@ class StupidKeywords(base.Result):
         self._store_cpv(pkg)
     
     short_desc = "keywords contain -*, use package.mask instead"
-    
-    def to_str(self):
-        return "%s/%s-%s: keywords contains -*, use package.mask instead" % \
-            (self.category, self.package, self.version)
         
 
 class KeywordsReport(base.Template):
@@ -214,10 +202,6 @@ class MissingUri(base.Result):
         return "file %s is unfetchable- no URI available, and RESTRICT=fetch " \
             "isn't set" % self.filename
     
-    def to_str(self):
-        return "%s/%s-%s: no uri specified for %s and RESTRICT=fetch isn't on" \
-            % (self.category, self.package, self.version, self.filename)
-    
 
 class BadProto(base.Result):
     """bad protocol"""
@@ -232,11 +216,6 @@ class BadProto(base.Result):
     @property
     def short_desc(self):
         return "file %s: bad protocol/uri: %r " % (self.filename, self.bad_uri)
-    
-    def to_str(self):
-        return "%s/%s-%s: file %s, bad proto/uri- [ '%s' ]" % (self.category, 
-            self.package, self.version, self.filename, 
-                "', '".join(self.bad_uri))
     
 
 class SrcUriReport(base.Template):
@@ -309,10 +288,6 @@ class CrappyDescription(base.Result):
     def short_desc(self):
         return "description needs improvement: %s" % self.msg
     
-    def to_str(self):
-        return "%s/%s-%s: description: %s" % (self.category, self.package,
-            self.version, self.msg)
-    
 
 class DescriptionReport(base.Template):
     """
@@ -373,10 +348,6 @@ class BadRestricts(base.Result):
             s += "deprecated (drop the 'no') [ %s ]" % ", ".join(
                 self.deprecated)
         return s
-    
-    def to_str(self):
-        return "%s/%s-%s: %s" % (self.category, self.package, self.version,
-            self.short_desc)
         
 
 class RestrictsReport(base.Template):

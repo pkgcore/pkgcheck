@@ -28,10 +28,6 @@ class VisibleVcsPkg(base.Result):
         return "VCS version visible for arch %s, profile %s" % (
             self.arch, self.profile)
 
-    def to_str(self):
-        return "%s/%s-%s: vcs ebuild visible for arch %s, profile %s" % \
-            (self.category, self.package, self.version, self.arch, self.profile)
-
 
 class NonExistantDeps(base.Result):
     """No matches exist for a depset element"""
@@ -51,11 +47,6 @@ class NonExistantDeps(base.Result):
         return "depset %s: nonexistant atoms [ %s ]" % (
             self.attr, ', '.join(self.atoms))
     
-    def to_str(self):
-        return "%s/%s-%s: attr(%s): nonexistant atoms [ %s ]" % \
-            (self.category, self.package, self.version, self.attr,
-                ", ".join(self.atoms))
-
 
 class NonsolvableDeps(base.Result):
     """No potential solution for a depset attribute"""
@@ -78,14 +69,6 @@ class NonsolvableDeps(base.Result):
         return "nonsolvable depset(%s) keyword(%s) profile (%s): " \
             "solutions: [ %s ]" % (self.attr, self.keyword, self.profile,
             ', '.join(self.potentials))
-
-    def to_str(self):
-        s = ' '
-        if self.keyword.startswith("~"):
-            s = ''
-        return "%s/%s-%s: %s %s%s: unsolvable %s, solutions: [ %s ]" % \
-            (self.category, self.package, self.version, self.attr, s,
-                self.keyword, self.profile, ", ".join(self.potentials))
 
 
 class VisibilityReport(base.Template):
