@@ -30,17 +30,6 @@ class RedundantVersionWarning(Result):
             (self.category, self.package, self.version,
             self.slot, ", ".join(self.later_versions))
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <slot>%s</slot>
-    <msg>keywords are overshadowed by version(s): %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, 
-    self.version, self.slot, ", ".join(self.later_versions))
-
 
 class RedundantVersionReport(Template):
     """

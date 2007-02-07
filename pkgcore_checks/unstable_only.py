@@ -29,17 +29,6 @@ class UnstableOnly(Result):
         return "%s/%s: arch %s, all unstable: [ %s ]" % \
             (self.category, self.package, self.arch, ", ".join(self.version))
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <arch>%s</arch>
-    <msg>all versions are unstable</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, 
-"</version>\n\t<version>".join(self.version), self.arch)
-
 
 class UnstableOnlyReport(Template):
     """scan for pkgs that have just unstable keywords"""

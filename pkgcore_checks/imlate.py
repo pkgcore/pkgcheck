@@ -30,18 +30,6 @@ class LaggingStableInfo(base.Result):
             (self.category, self.package, self.version, 
             ", ".join(self.stable), ", ".join(self.keywords))
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <keyword>%s</keyword>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, "</keyword>\n\t<keyword>".join(self.keywords), 
-    "potential for stabling, prexisting stable- %s" % ", ".join(self.stable))
-
 
 class ImlateReport(base.Template):
 

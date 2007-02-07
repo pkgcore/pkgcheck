@@ -23,16 +23,6 @@ class DeprecatedEclass(Result):
         return "%s/%s-%s: deprecated eclasses [ %s ]" % (self.category, 
             self.package, self.version, ", ".join(self.eclasses))
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>deprecated eclass usage- %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, ", ".join(self.eclasses))
-
 
 class DeprecatedEclassReport(Template):
 

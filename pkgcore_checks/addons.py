@@ -398,16 +398,6 @@ class UnstatedIUSE(base.Result):
         return "attr(%s) uses unstated flags [ %s ]" % \
             (self.attr, ', '.join(self.flags))
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>attr %s uses unstead flags: %s"</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.attr, ", ".join(self.flags))
-
 
 class UseAddon(base.Addon):
 

@@ -31,18 +31,6 @@ class VisibleVcsPkg(base.Result):
     def to_str(self):
         return "%s/%s-%s: vcs ebuild visible for arch %s, profile %s" % \
             (self.category, self.package, self.version, self.arch, self.profile)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <arch>%s</arch>
-    <profile>%s</profile>
-    <msg>vcs based ebuild user accessible</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.arch, self.profile)
 
 
 class NonExistantDeps(base.Result):
@@ -67,16 +55,6 @@ class NonExistantDeps(base.Result):
         return "%s/%s-%s: attr(%s): nonexistant atoms [ %s ]" % \
             (self.category, self.package, self.version, self.attr,
                 ", ".join(self.atoms))
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>%s: nonexistant atoms [ %s ]</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.attr, escape(", ".join(self.atoms)))
 
 
 class NonsolvableDeps(base.Result):
@@ -108,19 +86,6 @@ class NonsolvableDeps(base.Result):
         return "%s/%s-%s: %s %s%s: unsolvable %s, solutions: [ %s ]" % \
             (self.category, self.package, self.version, self.attr, s,
                 self.keyword, self.profile, ", ".join(self.potentials))
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <profile>%s</profile>
-    <keyword>%s</keyword>
-    <msg>not solvable for %s- potential solutions, %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.profile, self.keyword, self.attr,
-    escape(", ".join(self.potentials)))
 
 
 class VisibilityReport(base.Template):

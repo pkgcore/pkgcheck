@@ -39,16 +39,6 @@ class SuggestRemoval(base.Result):
         return "%s/%s-%s: is unported, potentially remove for [ %s ]" \
             % (self.category, self.package, self.version,
                 ", ".join(self.ported))
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>unported, suggest replacing via: %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, escape(", ".join(self.ported)))
 
 
 class BadRange(base.Result):
@@ -76,16 +66,6 @@ class BadRange(base.Result):
         return "%s/%s-%s: attr(%s): atoms don't match 6.9: [ %s ]" % \
             (self.category, self.package, self.version, self.attr, 
                 ", ".join(self.atoms))
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>attr %s has atoms %s, which do not match virtual/x11-6.9</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.attr, escape(", ".join(self.atoms)))
 
 
 class NotPorted(base.Result):
@@ -110,16 +90,6 @@ class NotPorted(base.Result):
         return "%s/%s-%s: attr(%s): not ported, standalone virtual/x11 atom " \
             "detected in an or_block" % (self.category,
                 self.package, self.version, self.attr)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>attr %s, standalone virtual/x11 atom detected in an or_block"</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.attr)
 
 
 class VisibilityCausedNotPorted(base.Result):
@@ -153,20 +123,6 @@ class VisibilityCausedNotPorted(base.Result):
             "making visible [ %s ]" % \
             (self.category, self.package, self.version, self.attr,
                 self.keyword, self.profile, ", ".join(self.failed))
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <keyword>%s</keyword>
-    <profile>%s</profile>
-    <msg>attr %s, visibility limiters mean that the following atoms aren't
-        accessible, resulting in non-modular x deps: %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.keyword, self.profile, self.attr,
-    escape(", ".join(self.failed)))
 
 
 class ModularXPortingReport(base.Template):

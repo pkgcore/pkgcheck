@@ -40,16 +40,6 @@ class WhitespaceFound(base_whitespace):
             self.category, self.package, self.package, self.version,
             self.leadtrail, self.lines_str)
 
-    def to_xml(self):
-        return """\
-<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>ebuild has %s whitespace on line %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-               self.version, self.leadtrail, self.lines_str)
-
 
 class WrongIndentFound(base_whitespace):
 
@@ -70,16 +60,6 @@ class WrongIndentFound(base_whitespace):
         return "%s/%s/%s-%s.ebuild has whitespace in indentation on %s" % (
             self.category, self.package, self.package, self.version,
             self.lines_str)
-
-    def to_xml(self):
-        return """\
-<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>ebuild has whitespace in indentation on %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-               self.version, self.lines_str)
 
 
 class DoubleEmptyLine(base_whitespace):
@@ -102,16 +82,6 @@ class DoubleEmptyLine(base_whitespace):
             self.category, self.package, self.package, self.version,
             self.lines_str)
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>ebuild has unneeded empty line %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.lines_str)
-
 
 class TrailingEmptyLine(base.Result):
 
@@ -131,16 +101,6 @@ class TrailingEmptyLine(base.Result):
         return "%s/%s/%s-%s.ebuild has trailing blank line(s)" % (
             self.category, self.package, self.package, self.version)
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>ebuild has trailing blank line(s)</msg>
-</check>""" % (
-            self.__class__.__name__, self.category, self.package, self.version)
-
 
 class NoFinalNewline(base.Result):
 
@@ -159,16 +119,6 @@ class NoFinalNewline(base.Result):
     def to_str(self):
         return "%s/%s/%s-%s.ebuild does not end in a newline" % (
             self.category, self.package, self.package, self.version)
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>ebuild does not end in a newline</msg>
-</check>""" % (
-            self.__class__.__name__, self.category, self.package, self.version)
 
 
 class WhitespaceCheck(base.Template):

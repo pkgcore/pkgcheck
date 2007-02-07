@@ -24,17 +24,6 @@ class DroppedKeywordWarning(Result):
         return "%s/%s-%s: dropped keyword %s" % (self.category, self.package,
             self.version, self.arch)
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <arch>%s</arch>
-    <msg>keyword was dropped</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, self.arch)
-
 
 class DroppedKeywordsReport(Template):
     """scan pkgs for keyword dropping across versions"""

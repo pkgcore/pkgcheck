@@ -14,6 +14,7 @@ demandload.demandload(
     'pkgcore_checks:errors '
     'pkgcore.util:currying '
     'pkgcore.util:pickling '
+    'pkgcore.util:xml '
     )
 
 
@@ -112,6 +113,21 @@ class XmlReporter(base.Reporter):
     # xml report, shouldn't be used but in worst case.
     priority = -1000
 
+    repo_template = "<result><msg>%s</msg></result>"
+    cat_template = "<result><category>%(category)s</category><msg>%(msg)s</msg></result>"
+    pkg_template = ("<result><category>%(category)s</category>"
+        "<package>%(package)s</package><msg>%(msg)s</msg></result>")
+    ver_template = ("<result><category>%(category)s</category>"
+        "<package>%(package)s</package><version>%(version)s</version>"
+        "<msg>%(msg)s</msg></result>")
+
+    threshold_map = {base.repository_feed:repo_template,
+        base.category_feed:cat_template,
+        base.package_feed:pkg_template,
+        base.versioned_feed:ver_template,
+        base.ebuild_feed:ver_template
+    }
+
     def __init__(self, out):
         """Initialize.
 
@@ -124,7 +140,10 @@ class XmlReporter(base.Reporter):
         self.out.write('<checks>')
 
     def add_report(self, result):
-        self.out.write(result.to_xml())
+        d = dict((k, getattr(result, k, '')) for k in 
+            ("category", "package", "version"))
+        d["msg"] = xml.escape(result.short_desc)
+        self.out.write(self.threshold_map[result.threshold] % d)
 
     def finish(self):
         self.out.write('</checks>')

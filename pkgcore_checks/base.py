@@ -186,9 +186,6 @@ class Result(object):
     def to_str(self):
         raise NotImplementedError
     
-    def to_xml(self):
-        raise NotImplementedError
-
     def _store_cp(self, pkg):
         self.category = pkg.category
         self.package = pkg.package

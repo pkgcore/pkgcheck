@@ -41,16 +41,6 @@ class UnusedLocalFlagsResult(base.Result):
             (self.category, self.package,
 		', '.join(self.flags))
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    escape("unused use.local.desc flags: %s" % 
-	', '.join(self.flags)))
-
 
 class UnusedLocalFlags(base.Template):
 
@@ -103,13 +93,6 @@ class UnusedGlobalFlagsResult(base.Result):
         return "use.desc unused flag(s): %s" % \
     		', '.join(self.flags)
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__, 
-    escape("use.desc unused flags: %s" % ', '.join(self.flags)))
-
 
 class UnusedGlobalFlags(base.Template):
     """
@@ -160,13 +143,6 @@ class UnusedLicenseReport(base.Result):
     def to_str(self):
         return "unused license(s): %s" % \
             ', '.join(self.licenses)
-            
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__, 
-    escape("use.desc unused licenses: %s" % ', '.join(self.licenses)))
 
 
 class UnusedLicense(base.Template):
@@ -240,18 +216,6 @@ class ConflictingChksums(base.Result):
             (self.category, self.package, self.version, \
             ', '.join(self.others), self.filename, self.chksums)
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__,  self.category, self.package, 
-    self.version,
-    escape("file %r conflicts with %r, chksums: %r" % (\
-        self.filename, self.others, self.chksums)))
-
 
 class ConflictingDigests(base.Template):
     """
@@ -317,17 +281,6 @@ class ManifestDigestConflict(base.Result):
     def to_str(self):
         return "%s/%s-%s: file %r: %s" % (self.category, self.package,
             self.version, self.filename, self.msg)
-    
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__,  self.category, self.package, 
-    self.version,
-    escape("file %s: %s" % (self.filename, self.msg)))
 
 
 class OrphanedManifestDist(base.Result):
@@ -353,15 +306,6 @@ class OrphanedManifestDist(base.Result):
         return "%s/%s: manifest2 knows of dists %r, but digest1 doesn't" % \
             (self.category, self.package, self.files)
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__,  self.category, self.package, 
-    escape("manifest2 knows of %r, but they're not in digests" % self.files))
-
 
 class MissingDigest(base.Result):
     """
@@ -384,15 +328,6 @@ class MissingDigest(base.Result):
     def to_str(self):
         return "%s" % \
             (self.filename)
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__,  self.category, self.package,
-    escape("%s" % self.filename))
 
 
 class ConflictManifestDigest(base.Template):

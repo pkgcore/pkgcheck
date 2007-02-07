@@ -34,17 +34,6 @@ class MetadataError(base.Result):
         return "%s/%s-%s: attr(%s): %s" % (self.category, self.package,
             self.version, self.attr, self.msg)
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version,
-    "attr '%s' threw an error- %s" % (self.attr, escape(self.msg)))
-
 
 class LicenseMetadataReport(base.Template):
 
@@ -175,16 +164,6 @@ class EmptyKeywords(base.Result):
         return "%s/%s-%s: no keywords set" % (self.category, self.package,
             self.version)
     
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>no keywords set</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version)
-
         
 class StupidKeywords(base.Result):
     """pkg that is using -*; package.mask in profiles addresses this already"""
@@ -202,16 +181,6 @@ class StupidKeywords(base.Result):
         return "%s/%s-%s: keywords contains -*, use package.mask instead" % \
             (self.category, self.package, self.version)
         
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>keywords contains -*, should use package.mask</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version)
-
 
 class KeywordsReport(base.Template):
     
@@ -249,16 +218,6 @@ class MissingUri(base.Result):
         return "%s/%s-%s: no uri specified for %s and RESTRICT=fetch isn't on" \
             % (self.category, self.package, self.version, self.filename)
     
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>no uri specified for %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, escape(self.filename))
-
 
 class BadProto(base.Result):
     """bad protocol"""
@@ -279,16 +238,6 @@ class BadProto(base.Result):
             self.package, self.version, self.filename, 
                 "', '".join(self.bad_uri))
     
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>file %s has invalid uri- %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, escape(self.filename), escape(", ".join(self.bad_uri)))
-
 
 class SrcUriReport(base.Template):
 
@@ -364,16 +313,6 @@ class CrappyDescription(base.Result):
         return "%s/%s-%s: description: %s" % (self.category, self.package,
             self.version, self.msg)
     
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, 
-    self.version, self.msg)
-
 
 class DescriptionReport(base.Template):
     """
@@ -439,16 +378,6 @@ class BadRestricts(base.Result):
         return "%s/%s-%s: %s" % (self.category, self.package, self.version,
             self.short_desc)
         
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <msg>%s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, escape(self.short_desc))
-
 
 class RestrictsReport(base.Template):
     feed_type = base.versioned_feed

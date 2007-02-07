@@ -45,17 +45,6 @@ class VulnerablePackage(base.Result):
         return "%s/%s-%s: vulnerable via %s, affects %s" % (self.category,
             self.package, self.version, self.glsa, self.arch)
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <arch>%s</arch>
-    <msg>vulnerable via %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, "</arch>\n\t<arch>".join(self.arch), xml.escape(self.glsa))
-
 
 class TreeVulnerabilitiesReport(base.Template):
     """

@@ -41,15 +41,6 @@ class MissingFile(Result):
         return "%s/%s: %s doesn't exist" % \
             (self.category, self.package, self.filename)
     
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>file %s doesn't exist</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.filename)
-
 
 class ExecutableFile(Result):
     """file has executable bit, but doesn't need it"""
@@ -71,15 +62,6 @@ class ExecutableFile(Result):
         return "%s/%s: %s doesn't need executable bit" % \
             (self.category, self.package, self.filename)
     
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>file %s doesn't need executable bit</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.filename)
-
 
 class SizeViolation(Result):
     """filesdir, excluding digest/cvs, is too large"""
@@ -101,14 +83,6 @@ class SizeViolation(Result):
         return "%s/%s: files/ exceeds 20k- %i bytes" % \
             (self.category, self.package, self.size)
     
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>files/ exceeds 20k; %i bytes</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package, self.size)
-
 
 class Glep31Violation(Result):
 
@@ -132,15 +106,6 @@ class Glep31Violation(Result):
         return "%s/%s: file %s has char outside the allowed '%s' range" % \
             (self.category, self.package, self.filename, allowed_filename_chars)
 
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>%s has char outside allowed '%s' range</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.filename, allowed_filename_chars)
-
 
 class InvalidUtf8(Result):
 
@@ -163,15 +128,6 @@ class InvalidUtf8(Result):
     def to_str(self):
         return "%s/%s: %s is not valid utf8: %s" % (self.category,
             self.package, self.filename, self.err)
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <msg>%s isn't valid utf8: %s</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.filename, escape(self.err))
 
 
 def utf8_check(pkg, base, filename, reporter):

@@ -34,17 +34,6 @@ class base_BadlyFormedXml(base.Result):
         return "%s%s: %s is not well formed" % (self.category, s,
             self.filename)
     
-    def to_xml(self):
-        s = ''
-        if self.package is not None:
-            s = "\n    <package>%s</package>" % self.package
-
-        return \
-"""<check name="%s">
-    <category>%s</category>%s
-    <msg>%s is not well formed</msg>
-</check>""" % (self.__class__.__name__, self.category, s, self.filename)
-
 
 class base_InvalidXml(base.Result):
     """xml fails dtd validation"""
@@ -67,17 +56,6 @@ class base_InvalidXml(base.Result):
 
         return "%s%s: %s violates metadata.dtd" % (self.category, s, 
             self.filename)
-
-    def to_xml(self):
-        s = ''
-        if self.package is not None:
-            s = "\n    <package>%s</package>" % self.package
-
-        return \
-"""<check name="%s">
-    <category>%s</category>%s
-    <msg>%s is not valid according to metadata.dtd</msg>
-</check>""" % (self.__class__.__name__, self.category, s, self.filename)
 
 
 class PkgInvalidXml(base_InvalidXml):

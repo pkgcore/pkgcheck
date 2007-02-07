@@ -33,18 +33,6 @@ class StaleUnstableKeyword(Result):
         return "%s/%s-%s: no change in %i days, keywords [ %s ]" % \
             (self.category, self.package, self.version, self.period, 
                 ", ".join(self.keywords))
-
-    def to_xml(self):
-        return \
-"""<check name="%s">
-    <category>%s</category>
-    <package>%s</package>
-    <version>%s</version>
-    <arch>%s</arch>
-    <msg>left unstable for %i days</msg>
-</check>""" % (self.__class__.__name__, self.category, self.package,
-    self.version, "</arch>\n\t<arch>".join(x.lstrip("~") 
-        for x in self.keywords), self.period)
         
 
 class StaleUnstableReport(Template):
