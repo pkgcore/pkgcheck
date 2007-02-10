@@ -33,6 +33,7 @@ pkgcore_plugins = {
         repo_metadata.UnusedLicense,
         repo_metadata.ConflictingDigests,
         repo_metadata.ConflictManifestDigest,
+        repo_metadata.Manifest2Transition,
         stale_unstable.StaleUnstableReport,
         unported_mod_x.ModularXPortingReport,
         unstable_only.UnstableOnlyReport,

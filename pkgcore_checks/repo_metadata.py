@@ -4,16 +4,17 @@
 from pkgcore_checks import base, util, addons
 from pkgcore.ebuild.repository import SlavedTree
 from pkgcore.util.osutils import listdir_dirs
-import os.path
 from pkgcore.util.demandload import demandload
-import operator, itertools
 from pkgcore.chksum.errors import MissingChksum
+import operator, itertools
+import os.path
 
 demandload(globals(), "pkgcore.util.xml:escape "
     "pkgcore.util.osutils:listdir_files,pjoin "
     "pkgcore.util.lists:iflatten_instance "
-    "pkgcore.fetch:fetchable "
-    "pkgcore.ebuild:misc ")
+    "pkgcore:fetch "
+    "pkgcore.ebuild:misc "
+)
 
 
 class UnusedLocalFlagsResult(base.Result):
@@ -214,7 +215,7 @@ class ConflictingDigests(base.Template):
         self._fetchables = {}
 
     def feed(self, pkg, reporter):
-        for uri in iflatten_instance(pkg.fetchables, fetchable):
+        for uri in iflatten_instance(pkg.fetchables, fetch.fetchable):
             existing = self._fetchables.get(uri.filename, None)
             if existing is not None:
                 reqed_chksums = existing[0]
@@ -350,3 +351,73 @@ class ConflictManifestDigest(base.Template):
                     "chksum conflict- %r" % 
                         tuple(sorted(reformat_chksums(conflicts)))
                 ))
+
+
+class MissingChksum(base.Result):
+    """
+    a file in the manifest/digest data lacks required checksums
+    """
+    threshold = base.versioned_feed
+    __slots__ = ('category', 'package', 'version', 'filename', 'missing',
+        'existing')
+
+    def __init__(self, pkg, filename, missing, existing):
+        self._store_cpv(pkg)
+        self.filename, self.missing = filename, tuple(sorted(missing))
+        self.existing = tuple(sorted(existing))
+
+    @property
+    def short_desc(self):
+        return "file %s is missing required chksums: %s; has chksums: %s" % \
+            (self.filename, ', '.join(self.missing), ', '.join(self.existing))
+
+
+class DeprecatedManifest1(base.Result):
+    """
+    a package's checksum data still is manifest1, instead of manifest2
+    """
+    
+    threshold = base.package_feed
+    __slots__ = ("category", "package")
+    
+    def __init__(self, pkg):
+        self._store_cp(pkg)
+    
+    short_desc = "still is using manifest1 format, should be using manifest2"
+
+
+class Manifest2Transition(base.Template):
+
+    """
+    various checks for Manifest1/digest transition to Manifest2;
+    check for packages not converted, check for manifest2 packages lacking
+    required checksums
+    """
+
+    feed_type = base.package_feed
+    known_results = (MissingChksum, DeprecatedManifest1)
+    required_checksums = frozenset(("sha1", "sha256", "rmd160", "size"))
+
+    repo_grabber = operator.attrgetter("repo")
+
+    def feed(self, full_pkgset, reporter):
+        # sort it by repo.
+        for repo, pkgset in itertools.groupby(full_pkgset, self.repo_grabber):
+            pkgset = list(pkgset)
+            manifest = pkgset[0].manifest
+            if manifest.version == 1:
+                reporter.add_report(DeprecatedManifest1(pkgset[0]))
+                continue
+            
+            seen = set()
+            for pkg in pkgset:
+                for f_inst in (iflatten_instance(pkg.fetchables,
+                    fetch.fetchable)):
+                    if f_inst.filename in seen:
+                        continue
+                    missing = self.required_checksums.difference(f_inst.chksums)
+                    if missing:
+                        reporter.add_report(
+                            MissingChksum(pkg, f_inst.filename, missing,
+                                f_inst.chksums))
+                    seen.add(f_inst.filename)
