@@ -6,6 +6,8 @@ from pkgcore_checks.deprecated import DeprecatedEclassReport as dep_eclass
 
 class TestDeprecatedEclass(misc.ReportTestCase):
 
+    check_kls = dep_eclass
+
     def mk_pkg(self, ver, eclasses):
         return misc.FakePkg("dev-util/diffball-%s" % ver,
             data={"_eclasses_":{}.fromkeys(eclasses)})

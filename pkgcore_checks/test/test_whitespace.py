@@ -7,6 +7,8 @@ from pkgcore.interfaces.data_source import read_StringIO
 
 class TestStandardWhitespaces(misc.ReportTestCase):
 
+    check_kls = WhitespaceCheck
+
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
         fake_src = []
@@ -26,6 +28,8 @@ class TestStandardWhitespaces(misc.ReportTestCase):
 
 class TestNoNewLineOnEnd(misc.ReportTestCase):
 
+    check_kls = WhitespaceCheck
+
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
         fake_src = []
@@ -39,6 +43,8 @@ class TestNoNewLineOnEnd(misc.ReportTestCase):
 
 
 class TestTrailingNewLineOnEnd(misc.ReportTestCase):
+
+    check_kls = WhitespaceCheck
 
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")

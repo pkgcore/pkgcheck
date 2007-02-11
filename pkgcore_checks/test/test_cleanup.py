@@ -6,6 +6,8 @@ from pkgcore_checks.cleanup import RedundantVersionReport as redundant_ver
 
 class TestRedundantVersion(misc.ReportTestCase):
 
+    check_kls = redundant_ver
+
     def mk_pkg(self, ver, keywords=("x86", "amd64"), slot="0"):
         return misc.FakePkg("dev-util/diffball-%s" % ver,
             data={"KEYWORDS":' '.join(keywords), "SLOT":slot})

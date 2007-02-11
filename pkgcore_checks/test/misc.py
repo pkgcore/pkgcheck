@@ -14,7 +14,7 @@ default_arches = ArchesAddon.default_arches
 
 
 class FakePkg(package):
-    def __init__(self, cpvstr, data=None, shared=None, repo=None):
+    def __init__(self, cpvstr, data=None, shared=None, parent=None):
         if data is None:
             data = {}
 
@@ -22,7 +22,7 @@ class FakePkg(package):
             data.setdefault(x, "")
         
         cpv = CPV(cpvstr)
-        package.__init__(self, shared, repo, cpv.category, cpv.package,
+        package.__init__(self, shared, parent, cpv.category, cpv.package,
             cpv.fullver)
         object.__setattr__(self, "data", data)
 
@@ -42,16 +42,25 @@ class FakeTimedPkg(package):
 
 class ReportTestCase(TestCase):
 
-    def assertNoReport(self, check, data):
+    def assert_known_results(self, *reports):
+        for report in reports:
+            self.assertIn(report.__class__, self.check_kls.known_results)
+
+    def assertNoReport(self, check, data, msg=""):
         l = []
+        if msg:
+            msg = "%s: " % msg
         r = fake_reporter(lambda r:l.append(r))
         check.feed(data, r)
-        self.assertEqual(l, [], list(report.to_str() for report in l))
+        self.assert_known_results(*l)
+        self.assertEqual(l, [], msg="%s%s" %
+            (msg, list(report.short_desc for report in l)))
 
     def assertReports(self, check, data):
         l = []
         r = fake_reporter(lambda r:l.append(r))
         check.feed(data, r)
+        self.assert_known_results(*l)
         self.assertTrue(l, msg="must get a report from %r %r, got none" % 
             (check, data))
         return l
@@ -59,10 +68,13 @@ class ReportTestCase(TestCase):
     def assertIsInstance(self, obj, kls):
         self.assertTrue(isinstance(obj, kls), 
             msg="%r must be %r" % (obj, kls))
+        return obj
 
     def assertReport(self, check, data):
         r = self.assertReports(check, data)
-        self.assertEqual(len(r), 1)
+        self.assert_known_results(*r)
+        self.assertEqual(len(r), 1, msg="expected one report, got %i: %r" %
+            (len(r), r))
         return r[0]
 
 

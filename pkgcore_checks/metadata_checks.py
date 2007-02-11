@@ -31,11 +31,27 @@ class MetadataError(base.Result):
         return "attr(%s): %s" % (self.attr, self.msg)
 
 
+class MissingLicense(base.Result):
+    """used license(s) have no matching license file(s)"""
+
+    __slots__ = ("category", "package", "version", "licenses")
+    threshold = base.versioned_feed
+    
+    def __init__(self, pkg, licenses):
+        self._store_cpv(pkg)
+        self.licenses = tuple(sorted(licenses))
+    
+    @property
+    def short_desc(self):
+        return "no license files: %s" % ', '.join(self.licenses)
+
+
 class LicenseMetadataReport(base.Template):
 
     """LICENSE metadata key validity checks"""
 
-    known_results = (MetadataError,) + addons.UseAddon.known_results
+    known_results = (MetadataError, MissingLicense) + \
+        addons.UseAddon.known_results
     feed_type = base.versioned_feed
 
     required_addons = (addons.UseAddon, addons.ProfileAddon,
@@ -44,11 +60,10 @@ class LicenseMetadataReport(base.Template):
     def __init__(self, options, iuse_handler, profiles, licenses):
         base.Template.__init__(self, options)
         self.iuse_filter = iuse_handler.get_filter()
+        self.license_handler = licenses
 
     def start(self):
-        self.licenses = set()
-        for license_dir in self.options.license_dirs:
-            self.licenses.update(listdir_files(license_dir))
+        self.licenses = self.license_handler.licenses
 
     def finish(self, reporter):
         self.licenses = None
@@ -59,13 +74,13 @@ class LicenseMetadataReport(base.Template):
         except (KeyboardInterrupt, SystemExit):
             raise
         except (MetadataException, MalformedAtom, ValueError), e:
-            reporter.add_report(MetadataError(pkg, attr_name, 
+            reporter.add_report(MetadataError(pkg, 'license', 
                 "error- %s" % e))
             del e
         except Exception, e:
             logging.exception("unknown exception caught for pkg(%s) attr(%s): "
-                "type(%s), %s" % (pkg, attr_name, type(e), e))
-            reporter.add_report(MetadataError(pkg, attr_name, 
+                "type(%s), %s" % (pkg, 'license', type(e), e))
+            reporter.add_report(MetadataError(pkg, 'license', 
                 "exception- %s" % e))
             del e
         else:
@@ -82,9 +97,7 @@ class LicenseMetadataReport(base.Template):
                 else:
                     licenses.difference_update(self.licenses)
                     if licenses:
-                        reporter.add_report(MetadataError(pkg, "license",
-                            "licenses don't exist- [ %s ]" %
-                            ", ".join(licenses)))
+                        reporter.add_report(MissingLicense(pkg, licenses))
 
 
 class IUSEMetadataReport(base.Template):
@@ -211,7 +224,7 @@ class BadProto(base.Result):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.filename = filename
-        self.bad_uri = bad_uri
+        self.bad_uri = tuple(sorted(bad_uri))
     
     @property
     def short_desc(self):
@@ -227,7 +240,8 @@ class SrcUriReport(base.Template):
 
     required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
-    known_reports = (BadProto, KeywordsReport) + addons.UseAddon.known_results
+    known_results = (BadProto, MissingUri, MetadataError) + \
+        addons.UseAddon.known_results
 
     valid_protos = frozenset(["http", "https", "ftp"])
 
@@ -238,16 +252,18 @@ class SrcUriReport(base.Template):
     def feed(self, pkg, reporter):
         try:
             lacks_uri = set()
-            for f_inst in self.iuse_filter((fetchable,), pkg, pkg.fetchables,
-                reporter):
-                if f_inst.uri is None:
+            # set is required here, due to the fact fetchables can
+            # have duplicate entries.
+            for f_inst in set(self.iuse_filter((fetchable,), pkg,
+                pkg.fetchables, reporter)):
+                if not f_inst.uri:
                     lacks_uri.add(f_inst.filename)
-                elif isinstance(f_inst.uri, list):
+                else:
                     bad = set()
                     for x in f_inst.uri:
                         i = x.find("://")
                         if i == -1:
-                            bad.add(x)
+                            lacks_uri.add(x)
                         else:
                             if x[:i] not in self.valid_protos:
                                 bad.add(x)
@@ -255,7 +271,7 @@ class SrcUriReport(base.Template):
                         reporter.add_report(
                             BadProto(pkg, f_inst.filename, bad))
             if not "fetch" in pkg.restrict:
-                for x in lacks_uri:
+                for x in sorted(lacks_uri):
                     reporter.add_report(MissingUri(pkg, x))
 
         except (KeyboardInterrupt, SystemExit):

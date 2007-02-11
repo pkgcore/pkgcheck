@@ -97,6 +97,6 @@ setup(
         'pkgcore.plugins.pcheck_config',
         'pkgcore.plugins.pcheck_configurables',
         ],
-    scripts=["pcheck"],
+    scripts=["pcheck", "replay-pcheck-stream"],
     cmdclass={"sdist":mysdist, "test":test}
 )

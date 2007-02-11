@@ -7,6 +7,8 @@ from pkgcore_checks.imlate import ImlateReport
 
 class TestImlateReport(misc.ReportTestCase):
 
+    check_kls = ImlateReport
+
     def mk_pkg(self, ver, keywords=""):
         return misc.FakePkg("dev-util/diffball-%s" % ver,
             data={"KEYWORDS":keywords})

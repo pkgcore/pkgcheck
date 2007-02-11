@@ -445,11 +445,15 @@ class TestLicenseAddon(mixins.TempDirMixin, base_test):
             license_dirs=[pjoin(r1, 'licenses')])
 
     def test_it(self):
-        self.process_check(['--license-dir', self.dir],
+        opts = self.process_check(['--license-dir', self.dir],
             license_dirs=[self.dir])
         open(pjoin(self.dir, 'foo'), 'w')
+        open(pjoin(self.dir, 'foo2'), 'w')
         self.assertRaises(optparse.OptionValueError, self.process_check,
             ['--license-dir', pjoin(self.dir, 'foo')])
+        addon = self.addon_kls(opts)
+        self.assertEqual(frozenset(['foo', 'foo2']),
+            addon.licenses)
 
 
 class TestUseAddon(mixins.TempDirMixin, base_test):

@@ -18,7 +18,7 @@ class DroppedKeywordWarning(Result):
 
     @property
     def short_desc(self):
-        return "keyword %s dropped" % self.arch
+        return "keyword %s was dropped" % self.arch
 
 
 class DroppedKeywordsReport(Template):

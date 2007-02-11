@@ -376,6 +376,15 @@ class LicenseAddon(base.Addon):
                     "--license-dir %r isn't a directory" % values.license_dir)
             values.license_dirs.append(osutils.abspath(values.license_dir))
 
+    @property
+    def licenses(self):
+        o = getattr(self, "_licenses", None)
+        if o is None:
+            o = frozenset(iflatten_instance(
+                osutils.listdir_files(x) for x in self.options.license_dirs))
+            setattr(self, "_licenses", o)
+        return o
+
 
 class UnstatedIUSE(base.Result):
     """pkg is reliant on conditionals that aren't in IUSE"""
@@ -398,7 +407,7 @@ class UseAddon(base.Addon):
 
     known_results = (UnstatedIUSE,)
 
-    def __init__(self, options):
+    def __init__(self, options, silence_warnings=False):
         base.Addon.__init__(self, options)
         known_iuse = set()
         specific_iuse = []
@@ -456,7 +465,7 @@ class UseAddon(base.Addon):
         self.unstated_iuse = frozenset(unstated_iuse)
         self.profile_bases = profile_base
         self.ignore = not (unstated_iuse or known_iuse)
-        if self.ignore:
+        if self.ignore and not silence_warnings:
             logger.warn('disabling use/iuse validity checks since no usable '
                 'use.desc, use.local.desc were found ')
 

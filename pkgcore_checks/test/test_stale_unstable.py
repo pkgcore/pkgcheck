@@ -8,6 +8,8 @@ import time
 
 class TestStaleUnstableReport(misc.ReportTestCase):
 
+    check_kls = StaleUnstableReport
+
     def mk_pkg(self, ver, keywords ,mtime):
         return misc.FakeTimedPkg("dev-util/diffball-%s" % ver,
             mtime,data={"KEYWORDS":keywords})
