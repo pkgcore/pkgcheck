@@ -3,7 +3,7 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
-0.2.1:
+0.3:
 
 * heavy refactoring of reporter subsystem, and clean up of check results.
   Better messages, better output for normal usage.  to_xml() methods were
