@@ -157,19 +157,6 @@ class DependencyReport(base.Template):
                 del e
 
 
-class EmptyKeywords(base.Result):
-    """pkg has no set keywords"""
-
-    __slots__ = ('category', 'package', 'version')
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-
-    short_desc = "no keywords defined"
-    
-        
 class StupidKeywords(base.Result):
     """pkg that is using -*; package.mask in profiles addresses this already"""
 
@@ -180,7 +167,8 @@ class StupidKeywords(base.Result):
         base.Result.__init__(self)
         self._store_cpv(pkg)
     
-    short_desc = "keywords contain -*, use package.mask instead"
+    short_desc = ("keywords contain -*; use package.mask or empty keywords "
+        "instead")
         
 
 class KeywordsReport(base.Template):
@@ -190,12 +178,9 @@ class KeywordsReport(base.Template):
     """
     
     feed_type = base.versioned_feed
-    known_results = (EmptyKeywords, StupidKeywords, MetadataError)
+    known_results = (StupidKeywords, MetadataError)
     
     def feed(self, pkg, reporter):
-        if not pkg.keywords:
-            reporter.add_report(EmptyKeywords(pkg))
-
         if "-*" in pkg.keywords:
             reporter.add_report(StupidKeywords(pkg))
 

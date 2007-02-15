@@ -48,7 +48,6 @@ class DeprecatedEclassReport(Template):
     'motif',
     'mozilla',
     'myth',
-    'pax-utils',
     'pcmcia',
     'perl-post',
     'php',

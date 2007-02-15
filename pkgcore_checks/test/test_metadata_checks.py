@@ -49,8 +49,6 @@ class TestKeywordsReport(misc.ReportTestCase):
 
     def test_it(self):
         check = metadata_checks.KeywordsReport(None, None)
-        self.assertIsInstance(self.assertReport(check, self.mk_pkg()),
-            metadata_checks.EmptyKeywords)
         self.assertIsInstance(self.assertReport(check, self.mk_pkg("-*")),
             metadata_checks.StupidKeywords)
 
