@@ -3,6 +3,14 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
+0.3.1:
+
+* metadata_checks no longer complains about empty keywords; see portages recent
+  addition of ** support to package.keywords for details.
+
+* stale_unstable now honors --arches; ticket 59.
+
+
 0.3:
 
 * heavy refactoring of reporter subsystem, and clean up of check results.
@@ -18,6 +26,7 @@ See ChangeLog for full commit logs; this is summarized and major changes.
   reporter does, thus losing data).
 * added new tool replay-pcheck-stream; used to replay a pickle stream through
   alternative reporters.
+
 
 0.2:
 
