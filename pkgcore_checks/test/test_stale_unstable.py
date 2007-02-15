@@ -22,17 +22,22 @@ class TestStaleUnstableReport(misc.ReportTestCase):
             target_arches=("x86", "ppc")),  None)
 	
         check.start()
-        
+
+        old = now - (30 * 24 * 3600)        
+
         # a current one
-        self.assertNoReport(check, mk_pkg("1.0", "x86",now))
+        self.assertNoReport(check, mk_pkg("1.0", "x86", now))
 
         # an outdated, but stable one
-        self.assertNoReport(check, mk_pkg("1.0", "x86",(now-30*24*3600-1)))
+        self.assertNoReport(check, mk_pkg("1.0", "x86", old))
 
         # an outdated, partly unstable one
-        report = self.assertReports(check, mk_pkg("1.0", "~amd64 x86",(now-30*24*3600-1)))
-        self.assertEqual(len(report), 1)
+        self.assertReport(check, mk_pkg("1.0", "~amd64 x86", old))
 
         # an outdated, fully unstable one
-        report = self.assertReports(check, mk_pkg("1.0", "~amd64 ~x86",(now-30*24*3600-1)))
-        self.assertEqual(len(report), 1)
+        self.assertReport(check, mk_pkg("1.0", "~amd64 ~x86", old))
+
+        # ensure it reports only specified arches.
+        report = self.assertReport(check, 
+            mk_pkg("1.0", "~amd64 ~x86 ~asdfasdfasdf", old))
+        self.assertEqual(report.keywords, tuple(sorted(["~amd64", "~x86"])))

@@ -18,10 +18,10 @@ class StaleUnstableKeyword(Result):
 
     threshold = versioned_feed
     
-    def __init__(self, pkg, period):
+    def __init__(self, pkg, keywords, period):
         Result.__init__(self)
         self._store_cpv(pkg)
-        self.keywords = tuple(x for x in pkg.keywords if x.startswith("~"))
+        self.keywords = tuple(sorted(keywords))
         self.period = period
 
     @property
@@ -39,9 +39,9 @@ class StaleUnstableReport(Template):
 
     def __init__(self, options, arches, staleness=long(day*30)):
         Template.__init__(self, options)
-        self.arches = options.arches
         self.staleness = staleness
         self.start_time = None
+        self.targets = frozenset("~%s" % x.lstrip("~") for x in options.arches)
 
     def start(self):
         self.start_time = time.time()
@@ -50,8 +50,8 @@ class StaleUnstableReport(Template):
         unchanged_time = self.start_time - pkg._mtime_
         if unchanged_time < self.staleness:
             return
-        unstable = [x for x in pkg.keywords if x.startswith("~")]
+        unstable = [x for x in pkg.keywords if x in self.targets]
         if not unstable:
             return
         reporter.add_report(
-            StaleUnstableKeyword(pkg, int(unchanged_time/day)))
+            StaleUnstableKeyword(pkg, unstable, int(unchanged_time/day)))
