@@ -5,11 +5,9 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 
 0.3.1:
 
-* metadata_checks no longer complains about empty keywords; see portages recent
-  addition of ** support to package.keywords for details.
-
-* stale_unstable now honors --arches; ticket 59.
-
+* makes StaleUnstable abide by --arches; ticket 59 (thanks leio).
+* stop complaining about empty keywords, since they're now allowed instead of
+  using -*.
 
 0.3:
 
@@ -26,7 +24,6 @@ See ChangeLog for full commit logs; this is summarized and major changes.
   reporter does, thus losing data).
 * added new tool replay-pcheck-stream; used to replay a pickle stream through
   alternative reporters.
-
 
 0.2:
 
