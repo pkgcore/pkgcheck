@@ -267,10 +267,9 @@ class OrphanedManifestDist(base.Result):
     manifest2 has a checksum entry digest lacks
     """
     
-    __slots__ = ("category", "package", "version",
-        "files")
+    __slots__ = ("category", "package", "files")
 
-    threshold = base.versioned_feed
+    threshold = base.package_feed
 
     def __init__(self, pkg, files):
         base.Result.__init__(self)

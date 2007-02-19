@@ -67,6 +67,13 @@ class test(Command):
 class mysdist(sdist):
     default_format = dict(sdist.default_format)
     default_format["posix"] = "bztar"
+
+    def get_file_list(self):
+        sdist.get_file_list(self)
+        self.filelist.append("NEWS")
+        self.filelist.append("AUTHORS")
+        self.filelist.append("COPYING")
+
     def run(self):
         print "regenning ChangeLog"
         os.system("bzr log > ChangeLog")
