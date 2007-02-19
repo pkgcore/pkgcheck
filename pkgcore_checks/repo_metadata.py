@@ -292,7 +292,7 @@ class MissingDigest(base.Result):
 
     def __init__(self, pkg, filename):
         base.Result.__init__(self)
-        self._store_cp(pkg)
+        self._store_cpv(pkg)
         self.filename = filename
     
     @property

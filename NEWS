@@ -1,13 +1,19 @@
 pkgcore-checks Release Notes
-=====================
+============================
 
 See ChangeLog for full commit logs; this is summarized and major changes.
+
+0.3.2:
+
+* correct tracebacks when dealing with a few result objects from repo_metadata
+
 
 0.3.1:
 
 * makes StaleUnstable abide by --arches; ticket 59 (thanks leio).
 * stop complaining about empty keywords, since they're now allowed instead of
   using -*.
+
 
 0.3:
 
@@ -24,6 +30,7 @@ See ChangeLog for full commit logs; this is summarized and major changes.
   reporter does, thus losing data).
 * added new tool replay-pcheck-stream; used to replay a pickle stream through
   alternative reporters.
+
 
 0.2:
 
@@ -44,5 +51,6 @@ See ChangeLog for full commit logs; this is summarized and major changes.
   to run via pcheck.  See README for details.
 * whitespace checks.
 
-pkgcore-checks 0.1:
+
+0.1:
 * inital release
