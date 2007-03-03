@@ -200,68 +200,6 @@ class ConflictingChksums(base.Result):
             ', '.join(self.others), self.filename, self.chksums)
 
 
-class ConflictingDigests(base.Template):
-    """
-    scan for conflicting digest entries; since this requires
-    keeping all fetchables in memory, this can add up.
-    """
-
-    scope = base.package_scope
-    feed_type = base.versioned_feed
-    known_results = (ConflictingChksums,)
-
-    def __init__(self, options):
-        base.Template.__init__(self, options)
-        self._fetchables = {}
-
-    def feed(self, pkg, reporter):
-        for uri in iflatten_instance(pkg.fetchables, fetch.fetchable):
-            existing = self._fetchables.get(uri.filename, None)
-            if existing is not None:
-                reqed_chksums = existing[0]
-                conflicts = []
-                for chf, val in uri.chksums.iteritems():
-                    oval = reqed_chksums.get(chf, None)
-                    if oval is not None:
-                        if oval != val:
-                            conflicts.append((chf, val, oval))
-
-                if conflicts:
-                    reporter.add_report(ConflictingChksums(
-                        pkg, uri.filename, conflicts, existing[1]))
-                elif len(uri.chksums) > len(existing):
-                    self._fetchables[uri.filename] = existing
-                existing[1].append(util.get_cpvstr(pkg))
-            else:
-                self._fetchables[uri.filename] = \
-                    (uri.chksums, [util.get_cpvstr(pkg)])
-
-    def finish(self, reporter):
-        self._fetchables.clear()
-
-
-class ManifestDigestConflict(base.Result):
-    """
-    Manifest2 and digest file disagree
-    """
-
-    __slots__ = ("category", "package", "version", 
-        "msg", "filename")
-
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, filename, msg):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.filename = filename
-        self.msg = msg
-    
-    @property
-    def short_desc(self):
-        return "Manifest/digest conflict for file %s: %s" % (self.filename, self.msg)
-
-
 class OrphanedManifestDist(base.Result):
     """
     manifest2 has a checksum entry digest lacks
@@ -281,80 +219,9 @@ class OrphanedManifestDist(base.Result):
         return "manifest2 knows of files %r, but digest1 doesn't" % (self.files,)
 
 
-class MissingDigest(base.Result):
-    """
-    file lacks checksum data
-    """
-    
-    __slots__ = ("category", "package", "version", "filename")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, filename):
-        base.Result.__init__(self)
-        self._store_cpv(pkg)
-        self.filename = filename
-    
-    @property
-    def short_desc(self):
-        return "file %s has no checksum info" % self.filename
-
-
-class ConflictManifestDigest(base.Template):
-
-    """Scan for conflicts between the Manifest file and digest files."""
-
-    feed_type = base.package_feed
-    known_results = (ManifestDigestConflict, OrphanedManifestDist,
-        MissingDigest)
-
-    repo_grabber = operator.attrgetter("repo")
-
-    def feed(self, full_pkgset, reporter):
-        # sort it by repo.
-        for repo, pkgset in itertools.groupby(full_pkgset, self.repo_grabber):
-            pkgset = list(pkgset)
-            manifest = pkgset[0].manifest
-            if manifest.version == 1:
-                continue
-            f = getattr(repo, "_get_digests", None)
-            if f is None:
-                continue
-            mdigests = manifest.distfiles
-            old_digests = []
-            for pkg in pkgset:
-                try:
-                    digests = f(pkg, force_manifest1=True)
-                    self.check_pkg(pkg, mdigests, digests, reporter)
-                    old_digests += digests.keys()
-                except MissingChksum, e:
-                    reporter.add_report(MissingDigest(pkg,e))
-            orphaned = set(mdigests).difference(old_digests)
-            if orphaned:
-                reporter.add_report(OrphanedManifestDist(pkgset[0], orphaned))
-
-    def check_pkg(self, pkg, mdigests, digests, reporter):
-
-        for fname, chksum in digests.iteritems():
-            mchksum = mdigests.get(fname, None)
-            if mchksum is None:
-                reporter.add_report(ManifestDigestConflict(pkg, fname,
-                    "missing in manifest"))
-                continue
-            conflicts = []
-            for chf in set(chksum).intersection(mchksum):
-                if mchksum[chf] != chksum[chf]:
-                    conflicts.append((chf, mchksum[chf], chksum[chf]))
-            if conflicts:
-                reporter.add_report(ManifestDigestConflict(pkg, fname,
-                    "chksum conflict- %r" % 
-                        tuple(sorted(reformat_chksums(conflicts)))
-                ))
-
-
 class MissingChksum(base.Result):
     """
-    a file in the manifest/digest data lacks required checksums
+    a file in the chksum data lacks required checksums
     """
     threshold = base.versioned_feed
     __slots__ = ('category', 'package', 'version', 'filename', 'missing',

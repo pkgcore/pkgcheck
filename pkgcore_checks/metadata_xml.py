@@ -13,6 +13,21 @@ demandload(
     "pkgcore.spawn:spawn,find_binary ")
 
 
+class base_MissingXml(base.Result):
+    """required xml file is missing"""
+    __slots__ = ('category', 'package', 'filename')
+    
+    def __init__(self, filename, category, package=None):
+        base.Result.__init__(self)
+        self.category = category
+        self.package = package
+        self.filename = filename
+
+    @property
+    def short_desc(self):
+        return "%s is missing" % self.filename
+
+
 class base_BadlyFormedXml(base.Result):
     """xml isn't well formed"""
     __slots__ = ("category", "package", "filename")
@@ -43,9 +58,17 @@ class base_InvalidXml(base.Result):
         return "%s violates metadata.dtd" % self.filename
 
 
+class PkgMissingMetadataXml(base_MissingXml):
+    __slots__ = ()
+    threshold = base.package_feed
+
+class CatMissingMetadataXml(base_MissingXml):
+    __slots__ = ()
+    threshold = base.category_feed
+
 class PkgInvalidXml(base_InvalidXml):
     __slots__ = ()
-    threshold = base.versioned_feed
+    threshold = base.package_feed
 
 class CatInvalidXml(base_InvalidXml):
     __slots__ = ()
@@ -53,7 +76,7 @@ class CatInvalidXml(base_InvalidXml):
 
 class PkgBadlyFormedXml(base_BadlyFormedXml):
     __slots__ = ()
-    threshold = base.versioned_feed
+    threshold = base.package_feed
 
 class CatBadlyFormedXml(base_BadlyFormedXml):
     __slots__ = ()
@@ -66,6 +89,7 @@ class base_check(base.Template):
     dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
     misformed_error = None
     invalid_error = None
+    missing_error = None
 
     @classmethod
     def mangle_option_parser(cls, parser):
@@ -120,8 +144,16 @@ class base_check(base.Template):
 
     def check_file(self, loc):
         if not os.path.exists(loc):
-            return False
-        return self.validator(loc)
+            return self.missing_error
+        ret = self.validator(loc)
+        if ret == 0:
+            return None
+        elif ret == 1:
+            return self.misformed_error
+        elif ret == 2:
+            return self.invalid_error
+        raise AssertionError("got %r from validator, which isn't "
+            "valid" % ret)
 
 
 class PackageMetadataXmlCheck(base_check):
@@ -131,6 +163,7 @@ class PackageMetadataXmlCheck(base_check):
     scope = base.package_scope
     misformed_error = PkgBadlyFormedXml
     invalid_error = PkgInvalidXml
+    missing_error = PkgMissingMetadataXml
 
     known_results = (PkgBadlyFormedXml, PkgInvalidXml)
 
@@ -141,14 +174,7 @@ class PackageMetadataXmlCheck(base_check):
         loc = os.path.join(os.path.dirname(pkg.ebuild.get_path()),
                            "metadata.xml")
         ret = self.check_file(loc)
-        if ret:
-            if ret == 1:
-                ret = self.misformed_error
-            elif ret == 2:
-                self.invalid_error
-            else:
-                raise AssertionError("got %r from validator, which isn't "
-                    "valid" % ret)
+        if ret is not None:
             reporter.add_report(ret(loc, pkg.category, pkg.package))
 
 
@@ -158,6 +184,7 @@ class CategoryMetadataXmlCheck(base_check):
     scope = base.category_scope
     misformed_error = CatBadlyFormedXml
     invalid_error = CatInvalidXml
+    missing_error = CatMissingMetadataXml
 
     known_results = (CatBadlyFormedXml, CatInvalidXml)
 
@@ -169,7 +196,7 @@ class CategoryMetadataXmlCheck(base_check):
         self.last_seen = pkg.category
         loc = os.path.join(self.base, pkg.category, "metadata.xml")
         ret = self.check_file(loc)
-        if ret:
+        if ret is not None:
             reporter.add_report(ret(loc, pkg.category))
 
 
@@ -208,8 +235,6 @@ class xmllint_parser(object):
                  1 badly formed
                  2 invalid xml
         """
-        if not os.path.exists(loc):
-            return False
         ret = spawn([self.bin_loc, "--nonet", "--noout", "--dtdvalid",
             self.dtd_loc, loc], fd_pipes={})
 

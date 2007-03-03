@@ -3,6 +3,23 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
+0.3.3:
+
+* drop digest specific checks; portage now prunes digests on sync regardless 
+  of whether or not the repo is m2 pure; thus, no way to detect if a missing
+  digest is actually a screwup in the repo, or if it's portage being 'special'.
+  May re-add the checks down the line, currently however removing them for
+  the common case.
+
+* back down check for files directory if manifest2; manifest2 glep didn't
+  specify that files directory could be dropped, but portage has deviated there.
+  Since been backed down, but getting ahead so we don't need an intermediate
+  release when they try it again.
+
+* added check for missing metadata.xml; refactored common error class selection
+  logic into base class.
+
+
 0.3.2:
 
 * correct tracebacks when dealing with a few result objects from repo_metadata

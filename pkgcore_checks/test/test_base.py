@@ -156,7 +156,7 @@ class PlugTest(TestCase):
             for pipe in actual_pipes:
                 message.append(str(pipe))
             self.fail('\n'.join(message))
-        self.assertEquals(bad_sinks, actual_bad_sinks)
+        self.assertEqual(bad_sinks, actual_bad_sinks)
 
     def test_plug(self):
         self.assertPipes(
