@@ -1,13 +1,13 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.util.demandload import demandload
+from snakeoil.demandload import demandload
 demandload(globals(),
     "logging "
     "pkgcore.util.packages:get_raw_pkg "
     "pkgcore.ebuild.atom:atom "
-    "pkgcore.util.file:iter_read_bash "
-    "pkgcore.util.osutils:pjoin ")
+    "snakeoil.fileutils:iter_read_bash "
+    "snakeoil.osutils:pjoin ")
 
 
 def get_profiles_desc(repo, ignore_dev=False):

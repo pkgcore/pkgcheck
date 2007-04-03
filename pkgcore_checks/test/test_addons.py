@@ -2,7 +2,7 @@
 # License: GPL2
 
 import os, sys, optparse
-from pkgcore.util.osutils import pjoin, ensure_dirs
+from snakeoil.osutils import pjoin, ensure_dirs
 from pkgcore.test import TestCase, mixins
 from pkgcore_checks import addons, base
 from pkgcore_checks.test.misc import FakePkg, FakeProfile

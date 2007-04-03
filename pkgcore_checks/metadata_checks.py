@@ -5,15 +5,15 @@ import os
 from operator import attrgetter
 from pkgcore_checks import base, util, addons
 
-from pkgcore.util.compatibility import any
+from snakeoil.compatibility import any
 from pkgcore.package.errors import MetadataException
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from pkgcore.fetch import fetchable
 from pkgcore.restrictions import packages
-from pkgcore.util.osutils import listdir_files
+from snakeoil.osutils import listdir_files
 
-from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.util.xml:escape logging")
+from snakeoil.demandload import demandload
+demandload(globals(), "snakeoil.xml:escape logging")
 
 
 class MetadataError(base.Result):

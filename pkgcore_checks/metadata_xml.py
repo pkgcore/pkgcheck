@@ -3,7 +3,7 @@
 
 import os
 from pkgcore_checks import base
-from pkgcore.util.demandload import demandload
+from snakeoil.demandload import demandload
 demandload(
     globals(),
     "urllib:urlopen "

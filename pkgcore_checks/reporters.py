@@ -7,14 +7,15 @@
 
 from pkgcore_checks import base
 from pkgcore.config import configurable
-from pkgcore.util import formatters, demandload
+from snakeoil import formatters
+from snakeoil.demandload import demandload
 
-demandload.demandload(
+demandload(
     globals(),
     'pkgcore_checks:errors '
-    'pkgcore.util:currying '
-    'pkgcore.util:pickling '
-    'pkgcore.util:xml '
+    'snakeoil:currying '
+    'snakeoil:pickling '
+    'snakeoil:xml '
     )
 
 
@@ -32,7 +33,7 @@ class StrReporter(base.Reporter):
 
     def __init__(self, out):
         """Initialize.
-        @type out: L{pkgcore.util.formatters.Formatter}.
+        @type out: L{snakeoil.formatters.Formatter}.
         """
         base.Reporter.__init__(self)
         self.out = out
@@ -75,7 +76,7 @@ class FancyReporter(base.Reporter):
     def __init__(self, out):
         """Initialize.
 
-        @type out: L{pkgcore.util.formatters.Formatter}.
+        @type out: L{snakeoil.formatters.Formatter}.
         """
         base.Reporter.__init__(self)
         self.out = out
@@ -131,7 +132,7 @@ class XmlReporter(base.Reporter):
     def __init__(self, out):
         """Initialize.
 
-        @type out: L{pkgcore.util.formatters.Formatter}.
+        @type out: L{snakeoil.formatters.Formatter}.
         """
         base.Reporter.__init__(self)
         self.out = out

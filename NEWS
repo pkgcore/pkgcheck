@@ -3,6 +3,11 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
+0.x.x:
+
+* update to use snakeoil api.
+
+
 0.3.3:
 
 * drop digest specific checks; portage now prunes digests on sync regardless 

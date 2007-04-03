@@ -4,7 +4,7 @@
 from pkgcore_checks.test import misc
 from pkgcore.test.mixins import TempDirMixin
 from pkgcore.test.pkgsets.test_glsa import mk_glsa
-from pkgcore.util.osutils import join as pjoin
+from snakeoil.osutils import join as pjoin
 from pkgcore_checks.glsa_scan import TreeVulnerabilitiesReport as vuln_report
 
 

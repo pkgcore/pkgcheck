@@ -3,15 +3,15 @@
 
 from pkgcore_checks import base, util, addons
 from pkgcore.ebuild.repository import SlavedTree
-from pkgcore.util.osutils import listdir_dirs
-from pkgcore.util.demandload import demandload
+from snakeoil.osutils import listdir_dirs
+from snakeoil.demandload import demandload
 from pkgcore.chksum.errors import MissingChksum
 import operator, itertools
 import os.path
 
-demandload(globals(), "pkgcore.util.xml:escape "
-    "pkgcore.util.osutils:listdir_files,pjoin "
-    "pkgcore.util.lists:iflatten_instance "
+demandload(globals(), "snakeoil.xml:escape "
+    "snakeoil.osutils:listdir_files,pjoin "
+    "snakeoil.lists:iflatten_instance "
     "pkgcore:fetch "
     "pkgcore.ebuild:misc "
 )

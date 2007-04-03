@@ -1,10 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.util.compatibility import any
-from pkgcore.util.demandload import demandload
+from snakeoil.compatibility import any
+from snakeoil.demandload import demandload
 from pkgcore_checks import base, addons
-from pkgcore.util.iterables import caching_iter
+from snakeoil.iterables import caching_iter
 from pkgcore.restrictions import boolean
 from pkgcore.ebuild.atom import atom
 from pkgcore.package import virtual
@@ -12,7 +12,7 @@ from pkgcore_checks.util import get_cpvstr
 demandload(
     globals(),
     "urllib:urlopen "
-    "pkgcore.util.xml:escape "
+    "snakeoil.xml:escape "
     "pkgcore.log:logger "
     )
 

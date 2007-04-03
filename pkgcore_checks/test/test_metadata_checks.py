@@ -6,8 +6,8 @@ import tempfile
 from pkgcore.test.mixins import TempDirMixin
 from pkgcore_checks.test import misc
 from pkgcore_checks import metadata_checks, addons
-from pkgcore.util.osutils import join as pjoin
-from pkgcore.util.currying import post_curry, partial
+from snakeoil.osutils import join as pjoin
+from snakeoil.currying import post_curry, partial
 
 
 class TestDescriptionReport(misc.ReportTestCase):

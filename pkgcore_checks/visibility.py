@@ -1,13 +1,13 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.util.compatibility import any
+from snakeoil.compatibility import any
 from pkgcore_checks import base, addons
-from pkgcore.util.iterables import caching_iter
-from pkgcore.util.lists import stable_unique, iflatten_instance
+from snakeoil.iterables import caching_iter
+from snakeoil.lists import stable_unique, iflatten_instance
 from pkgcore.ebuild.atom import atom
-from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.util.xml:escape ")
+from snakeoil.demandload import demandload
+demandload(globals(), "snakeoil.xml:escape ")
 
 
 class VisibleVcsPkg(base.Result):

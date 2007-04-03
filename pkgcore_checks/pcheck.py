@@ -6,15 +6,16 @@
 """Commandline frontend (for use with L{pkgcore.util.commandline.main}."""
 
 
-from pkgcore.util import commandline, parserestrict, lists, demandload
+from pkgcore.util import commandline, parserestrict
+from snakeoil import lists, demandload
 from pkgcore.plugin import get_plugins, get_plugin
 from pkgcore_checks import plugins
-from pkgcore.util.formatters import decorate_forced_wrapping
+from snakeoil.formatters import decorate_forced_wrapping
 
 from pkgcore_checks import plugins, base, __version__, feeds
 
 demandload.demandload(globals(), "optparse textwrap os logging "
-    "pkgcore.util:osutils "
+    "snakeoil:osutils "
     "pkgcore.restrictions:packages "
     "pkgcore.restrictions.values:StrExactMatch "
     "pkgcore.repository:multiplex "

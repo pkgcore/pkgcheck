@@ -11,7 +11,7 @@ import itertools
 from pkgcore_checks import base
 
 from pkgcore.restrictions import util
-from pkgcore.util.compatibility import any
+from snakeoil.compatibility import any
 
 
 class VersionToEbuild(base.Transform):

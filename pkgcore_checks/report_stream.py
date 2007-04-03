@@ -11,10 +11,11 @@ several different reports without using a config defined multiplex reporter.
 
 from pkgcore_checks import base
 
-from pkgcore.util import commandline, demandload
+from pkgcore.util import commandline
+from snakeoil import demandload
 demandload.demandload(globals(),
-    "pkgcore.util:pickling,formatters "
-    "pkgcore.util.modules:load_attribute "
+    "snakeoil:pickling,formatters "
+    "snakeoil.modules:load_attribute "
     "pkgcore_checks:reporters "
     "os "
     )
@@ -47,7 +48,7 @@ class PickleStream(base.Reporter):
     def __init__(self, out):
         """Initialize.
 
-        @type out: L{pkgcore.util.formatters.Formatter}.
+        @type out: L{snakeoil.formatters.Formatter}.
         """
         base.Reporter.__init__(self)
         self.out = out
