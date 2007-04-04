@@ -59,7 +59,7 @@ class LicenseMetadataReport(base.Template):
 
     def __init__(self, options, iuse_handler, profiles, licenses):
         base.Template.__init__(self, options)
-        self.iuse_filter = iuse_handler.get_filter()
+        self.iuse_filter = iuse_handler.get_filter('license')
         self.license_handler = licenses
 
     def start(self):
@@ -140,7 +140,8 @@ class DependencyReport(base.Template):
     def feed(self, pkg, reporter):
         for attr_name, getter in self.attrs:
             try:
-                for x in self.iuse_filter((atom,), pkg, getter(pkg), reporter):
+                for x in self.iuse_filter((atom,), pkg, getter(pkg), reporter,
+                    attr=attr_name):
                     pass
             except (KeyboardInterrupt, SystemExit):
                 raise
@@ -232,7 +233,7 @@ class SrcUriReport(base.Template):
 
     def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
-        self.iuse_filter = iuse_handler.get_filter()
+        self.iuse_filter = iuse_handler.get_filter('fetchables')
 
     def feed(self, pkg, reporter):
         try:
@@ -357,13 +358,20 @@ class RestrictsReport(base.Template):
         "test", "sandbox", "userpriv", "primaryuri", "binchecks", "strip",
         "multilib-strict"))
 
-    known_results = (BadRestricts,)
+    known_results = (BadRestricts, addons.UseAddon.known_results)
+    required_addons = (addons.UseAddon,) 
 
     __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \
         "restricts:%s" % ", ".join(sorted(known_restricts))
 
+    def __init__(self, options, iuse_handler):
+        base.Template.__init__(self, options)
+        self.iuse_filter = iuse_handler.get_filter('restrict')
+
     def feed(self, pkg, reporter):
-        bad = set(pkg.restrict).difference(self.known_restricts)
+        # ignore conditionals
+        i = self.iuse_filter((basestring,), pkg, pkg.restrict, reporter)
+        bad = set(i).difference(self.known_restricts)
         if bad:
             deprecated = set(x for x in bad if x.startswith("no")
                 and x[2:] in self.known_restricts)

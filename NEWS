@@ -3,9 +3,14 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
-0.x.x:
+* 0.x.x
 
 * update to use snakeoil api.
+
+
+0.3.4:
+
+* treat pkg.restrict as a depset.
 
 
 0.3.3:

@@ -472,16 +472,18 @@ class UseAddon(base.Addon):
     def allowed_iuse(self, pkg):
         return self.collapsed_iuse.pull_data(pkg)
 
-    def get_filter(self):
+    def get_filter(self, attr_name=None):
         if self.ignore:
             return self.fake_use_validate
+        if attr_name is not None:
+            return currying.partial(self.use_validate, attr=attr_name)
         return self.use_validate
         
     @staticmethod
-    def fake_use_validate(klasses, pkg, seq, reporter):
+    def fake_use_validate(klasses, pkg, seq, reporter, attr=None):
         return iflatten_instance(seq, klasses)
 
-    def use_validate(self, klasses, pkg, seq, reporter):
+    def use_validate(self, klasses, pkg, seq, reporter, attr=None):
         skip_filter = (packages.Conditional,) + klasses
         unstated = set()
     
@@ -503,13 +505,4 @@ class UseAddon(base.Addon):
         # hack, see bugs.gentoo.org 134994.
         unstated.difference_update(["bootstrap"])
         if unstated:
-            if seq == pkg.depends:
-                attr_name = "depends"
-            elif seq == pkg.rdepends:
-                attr_name = "rdepends"
-            elif seq == pkg.post_rdepends:
-                attr_name = "post_rdepends"
-            elif seq == pkg.provides:
-                attr_name = "provide"
-            reporter.add_report(UnstatedIUSE(pkg, attr_name,
-                unstated))
+            reporter.add_report(UnstatedIUSE(pkg, attr, unstated))

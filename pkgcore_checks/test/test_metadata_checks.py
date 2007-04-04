@@ -93,20 +93,6 @@ class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertReport(check, self.mk_pkg("x86"))
 
 
-class TestRestrictsReport(misc.ReportTestCase):
-
-    check_kls = metadata_checks.RestrictsReport
-
-    def mk_pkg(self, restrict=''):
-        return misc.FakePkg(
-            'dev-util/diffball-2.7.1', data={'RESTRICT':restrict})
-
-    def test_it(self):
-        check = metadata_checks.RestrictsReport(None)
-        self.assertNoReport(check, self.mk_pkg('primaryuri userpriv'))
-        self.assertReport(check, self.mk_pkg('pkgcore'))
-
-
 def use_based():
     # hidden to keep the test runner from finding it.
     class use_based(iuse_options):
@@ -122,6 +108,22 @@ def use_based():
             return check
 
     return use_based
+
+
+class TestRestrictsReport(use_based(), misc.ReportTestCase):
+
+    check_kls = metadata_checks.RestrictsReport
+
+    def mk_pkg(self, restrict=''):
+        return misc.FakePkg(
+            'dev-util/diffball-2.7.1', data={'RESTRICT':restrict})
+
+    def test_it(self):
+        check = self.mk_check()
+        self.assertNoReport(check, self.mk_pkg('primaryuri userpriv'))
+        self.assertNoReport(check, self.mk_pkg('primaryuri x86? ( userpriv )'))
+        self.assertReport(check, self.mk_pkg('pkgcore'))
+        self.assertReport(check, self.mk_pkg('x86? ( pkgcore )'))
 
 
 class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
