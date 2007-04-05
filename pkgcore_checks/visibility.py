@@ -7,7 +7,7 @@ from snakeoil.iterables import caching_iter
 from snakeoil.lists import stable_unique, iflatten_instance
 from pkgcore.ebuild.atom import atom
 from snakeoil.demandload import demandload
-demandload(globals(), "snakeoil.xml:escape ")
+demandload(globals(), "snakeoil.xml:escape")
 
 
 class VisibleVcsPkg(base.Result):

@@ -3,11 +3,12 @@
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "logging "
-    "pkgcore.util.packages:get_raw_pkg "
-    "pkgcore.ebuild.atom:atom "
-    "snakeoil.fileutils:iter_read_bash "
-    "snakeoil.osutils:pjoin ")
+    'logging',
+    'pkgcore.util.packages:get_raw_pkg',
+    'pkgcore.ebuild.atom:atom',
+    'snakeoil.fileutils:iter_read_bash',
+    'snakeoil.osutils:pjoin',
+)
 
 
 def get_profiles_desc(repo, ignore_dev=False):

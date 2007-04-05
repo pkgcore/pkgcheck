@@ -14,16 +14,15 @@ from pkgcore_checks import base, util
 
 from snakeoil import (demandload, currying, containers, mappings, iterables, 
     lists)
-demandload.demandload(
-    globals(),
-    'os '
-    'errno '
-    'snakeoil:osutils '
-    'pkgcore.restrictions:packages,values '
-    'pkgcore.ebuild:misc,domain,profiles '
-    'snakeoil.fileutils:read_dict '
-    'pkgcore.log:logger '
-    )
+demandload.demandload(globals(),
+    'os',
+    'errno',
+    'snakeoil:osutils',
+    'pkgcore.restrictions:packages,values',
+    'pkgcore.ebuild:misc,domain,profiles',
+    'snakeoil.fileutils:read_dict',
+    'pkgcore.log:logger',
+)
 
 
 class ArchesAddon(base.Addon):

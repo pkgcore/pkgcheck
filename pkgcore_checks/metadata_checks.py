@@ -13,7 +13,7 @@ from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files
 
 from snakeoil.demandload import demandload
-demandload(globals(), "snakeoil.xml:escape logging")
+demandload(globals(), 'snakeoil.xml:escape', 'logging')
 
 
 class MetadataError(base.Result):

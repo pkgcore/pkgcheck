@@ -2,19 +2,19 @@
 # License: GPL2
 
 from snakeoil.compatibility import any
-from snakeoil.demandload import demandload
 from pkgcore_checks import base, addons
 from snakeoil.iterables import caching_iter
 from pkgcore.restrictions import boolean
 from pkgcore.ebuild.atom import atom
 from pkgcore.package import virtual
 from pkgcore_checks.util import get_cpvstr
-demandload(
-    globals(),
-    "urllib:urlopen "
-    "snakeoil.xml:escape "
-    "pkgcore.log:logger "
-    )
+
+from snakeoil.demandload import demandload
+demandload(globals(),
+    'urllib:urlopen',
+    'snakeoil.xml:escape',
+    'pkgcore.log:logger',
+)
 
 
 class SuggestRemoval(base.Result):

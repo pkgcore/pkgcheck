@@ -22,7 +22,7 @@ import operator
 from pkgcore.config import ConfigHint
 from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
-demandload(globals(), "logging re itertools")
+demandload(globals(), 'logging', 're', 'itertools')
 
 repository_feed = "repo"
 category_feed = "cat"

@@ -1,11 +1,11 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from snakeoil.compatibility import any
+import codecs, errno
 from collections import deque
+from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
 demandload(globals(), "snakeoil.xml:escape")
-import codecs, errno
 
 from pkgcore_checks.base import Result, Template, package_feed
 

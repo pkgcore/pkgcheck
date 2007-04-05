@@ -5,11 +5,13 @@ import os, optparse
 
 from pkgcore_checks import base
 from snakeoil.demandload import demandload
-demandload(globals(), "pkgcore.pkgsets.glsa:GlsaDirSet "
-    "pkgcore.restrictions:packages,values "
-    "snakeoil:xml,osutils "
-    "pkgcore.restrictions.util:collect_package_restrictions "
-    "warnings ")
+demandload(globals(), 
+    'pkgcore.pkgsets.glsa:GlsaDirSet',
+    'pkgcore.restrictions:packages,values',
+    'snakeoil:xml,osutils',
+    'pkgcore.restrictions.util:collect_package_restrictions',
+    'warnings'
+)
 
 
 class VulnerablePackage(base.Result):

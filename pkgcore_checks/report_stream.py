@@ -14,11 +14,11 @@ from pkgcore_checks import base
 from pkgcore.util import commandline
 from snakeoil import demandload
 demandload.demandload(globals(),
-    "snakeoil:pickling,formatters "
-    "snakeoil.modules:load_attribute "
-    "pkgcore_checks:reporters "
-    "os "
-    )
+    'snakeoil:pickling,formatters',
+    'snakeoil.modules:load_attribute',
+    'pkgcore_checks:reporters',
+    'os',
+)
 
 
 class StreamHeader(object):

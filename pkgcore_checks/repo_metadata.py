@@ -1,19 +1,20 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+import os.path
+import operator, itertools
 from pkgcore_checks import base, util, addons
 from pkgcore.ebuild.repository import SlavedTree
 from snakeoil.osutils import listdir_dirs
-from snakeoil.demandload import demandload
 from pkgcore.chksum.errors import MissingChksum
-import operator, itertools
-import os.path
 
-demandload(globals(), "snakeoil.xml:escape "
-    "snakeoil.osutils:listdir_files,pjoin "
-    "snakeoil.lists:iflatten_instance "
-    "pkgcore:fetch "
-    "pkgcore.ebuild:misc "
+from snakeoil.demandload import demandload
+demandload(globals(),
+    'snakeoil.xml:escape',
+    'snakeoil.osutils:listdir_files,pjoin',
+    'snakeoil.lists:iflatten_instance',
+    'pkgcore:fetch',
+    'pkgcore.ebuild:misc',
 )
 
 

@@ -4,13 +4,13 @@
 import os
 from pkgcore_checks import base
 from snakeoil.demandload import demandload
-demandload(
-    globals(),
-    "urllib:urlopen "
-    "tempfile:NamedTemporaryFile "
-    "libxml2 "
-    "pkgcore.log:logger "
-    "pkgcore.spawn:spawn,find_binary ")
+demandload(globals(),
+    'urllib:urlopen',
+    'tempfile:NamedTemporaryFile',
+    'libxml2',
+    'pkgcore.log:logger',
+    'pkgcore.spawn:spawn,find_binary',
+)
 
 
 class base_MissingXml(base.Result):

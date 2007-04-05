@@ -10,13 +10,12 @@ from pkgcore.config import configurable
 from snakeoil import formatters
 from snakeoil.demandload import demandload
 
-demandload(
-    globals(),
-    'pkgcore_checks:errors '
-    'snakeoil:currying '
-    'snakeoil:pickling '
-    'snakeoil:xml '
-    )
+demandload(globals(),
+    'pkgcore_checks:errors',
+    'snakeoil:currying',
+    'snakeoil:pickling',
+    'snakeoil:xml',
+)
 
 
 class StrReporter(base.Reporter):
