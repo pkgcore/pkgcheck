@@ -192,15 +192,20 @@ class Result(object):
         self.version = pkg.fullver
 
     def __getstate__(self):
-        if hasattr(self, "__slots__"):
+        attrs = getattr(self, '__attrs__', getattr(self, '__slots__', None))
+        if attrs:
             try:
-                return dict((k, getattr(self, k)) for k in self.__slots__)
+                return dict((k, getattr(self, k)) for k in attrs)
             except AttributeError, a:
                 # rethrow so we at least know the class
                 raise AttributeError(self.__class__, str(a))
         return object.__getstate__(self)
     
     def __setstate__(self, data):
+        attrs = set(getattr(self, '__attrs__', getattr(self, '__slots__', [])))
+        if attrs.difference(data) or len(attrs) != len(data):
+            raise TypeError("can't restore %s due to data %r not being complete" %
+                (self.__class__, data))
         for k, v in data.iteritems():
             setattr(self, k, v)
 

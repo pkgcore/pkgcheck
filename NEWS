@@ -7,6 +7,9 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 
 * update to use snakeoil api.
 
+* addition of __attrs__ to base.Result classes; use this if __slots__ doesn't
+  suffice for listing the attrs to pickle.
+
 
 0.3.4:
 

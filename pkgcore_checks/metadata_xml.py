@@ -15,7 +15,9 @@ demandload(globals(),
 
 class base_MissingXml(base.Result):
     """required xml file is missing"""
+
     __slots__ = ('category', 'package', 'filename')
+    __attrs__ = __slots__
     
     def __init__(self, filename, category, package=None):
         base.Result.__init__(self)
@@ -30,7 +32,9 @@ class base_MissingXml(base.Result):
 
 class base_BadlyFormedXml(base.Result):
     """xml isn't well formed"""
+
     __slots__ = ("category", "package", "filename")
+    __attrs__ = __slots__
     
     def __init__(self, filename, category, package=None):
         base.Result.__init__(self)
@@ -45,7 +49,9 @@ class base_BadlyFormedXml(base.Result):
 
 class base_InvalidXml(base.Result):
     """xml fails dtd validation"""
+
     __slots__ = ("category", "package", "filename")
+    __attrs__ = __slots__
     
     def __init__(self, filename, category, package=None):
         base.Result.__init__(self, filename, category, package=None)
