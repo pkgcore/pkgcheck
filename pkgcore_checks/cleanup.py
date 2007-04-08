@@ -49,28 +49,27 @@ class RedundantVersionReport(Template):
         stack = []
         bad = []
         for pkg in reversed(pkgset):
-            matches = []
-            curr_set = set(x for x in pkg.keywords if not x.startswith("-"))
-            if any(True for x in pkg.keywords if x.startswith("~")):
-                unstable_set = set(x.lstrip("~") for x in curr_set)
-            else:
-                unstable_set = []
             # reduce false positives for idiot keywords/ebuilds
+            if pkg.version == '9999' or pkg.version.startswith("cvs."):
+                continue
+            curr_set = set(x for x in pkg.keywords if not x.startswith("-"))
             if not curr_set:
                 continue
-            if pkg.version == '9999':
-                continue
-            for ver, keys in stack:
-                if ver.slot == pkg.slot:
-                    if not curr_set.difference(keys):
-                        matches.append(ver)
-            if unstable_set:
-                for ver, key in stack:
-                    if ver.slot == pkg.slot:
-                        if not unstable_set.difference(key):
-                            matches.append(ver)
+
+            matches = [ver for ver, keys in stack if ver.slot == pkg.slot
+                and not curr_set.difference(keys)]
+
+            # we've done our checks; now we inject unstable for any stable
+            # via this, earlier versions that are unstable only get flagged
+            # as "not needed" since their unstable flag is a subset of the
+            # stable.
+
+            # also, yes, have to use list comp here- we're adding as we go
+            curr_set.update(["~"+x for x in curr_set if not x.startswith("~")])
+
             stack.append([pkg, curr_set])
             if matches:
                 bad.append((pkg, matches))
+
         for pkg, matches in reversed(bad):
             reporter.add_report(RedundantVersionWarning(pkg, matches))

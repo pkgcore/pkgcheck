@@ -3,12 +3,19 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
-* 0.x.x
-
 * update to use snakeoil api.
+
+
+0.3.5:
 
 * addition of __attrs__ to base.Result classes; use this if __slots__ doesn't
   suffice for listing the attrs to pickle.
+
+* Thanks to Michael Sterret for pointing it out; tweak cleanup scan so that it
+  notes 1.12 overshadows 1.11 (stable keywords overshadow earlier unstable
+  versions): for example-
+  1.11: ~x86 ~amd64
+  1.12: x86 ~amd64
 
 
 0.3.4:
