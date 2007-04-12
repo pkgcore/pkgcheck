@@ -6,14 +6,16 @@
 
 # Please keep the imports and plugins sorted.
 from pkgcore_checks import (
-    cleanup, deprecated, dropped_keywords, glsa_scan, imlate, metadata_checks,
-    metadata_xml, pkgdir_checks, repo_metadata, stale_unstable, unported_mod_x,
-    unstable_only, visibility, whitespace, feeds, reporters, report_stream)
+    cleanup, codingstyle, deprecated, dropped_keywords, glsa_scan, imlate,
+    metadata_checks, metadata_xml, pkgdir_checks, repo_metadata, stale_unstable,
+    unported_mod_x, unstable_only, visibility, whitespace, feeds, reporters,
+    report_stream)
 
 
 pkgcore_plugins = {
     'check': [
         cleanup.RedundantVersionReport,
+	codingstyle.BadInsIntoDotDirCheck,
         deprecated.DeprecatedEclassReport,
         dropped_keywords.DroppedKeywordsReport,
         glsa_scan.TreeVulnerabilitiesReport,
