@@ -7,7 +7,6 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     'urllib:urlopen',
     'tempfile:NamedTemporaryFile',
-    'libxml2',
     'pkgcore.log:logger',
     'pkgcore.spawn:spawn,find_binary',
 )
@@ -136,10 +135,8 @@ class base_check(base.Template):
                 os.chmod(self.dtd_loc, 0644)
                 self.dtd_file.write(dtd)
                 self.dtd_file.flush()
-        try:
-            self.validator = libxml_parser(self.dtd_loc).validate
-        except ImportError:
-            self.validator = xmllint_parser(self.dtd_loc).validate
+
+        self.validator = get_validator(self.dtd_loc)
         self.last_seen = None
 
     def feed(self, thing, reporter):
@@ -206,11 +203,27 @@ class CategoryMetadataXmlCheck(base_check):
             reporter.add_report(ret(loc, pkg.category))
 
 
+_libxml2_module = None
+def get_validator(loc):
+    global _libxml2_module
+    if _libxml2_module is None:
+        try:
+            import libxml2
+            _libxml2_module = libxml2
+        except ImportError:
+            _libxml2_module = False
+
+    if _libxml2_module:
+        return libxml_parser(_libxml2_module, loc).validate
+    return xmllint_parser(loc).validate
+
+
 class libxml_parser(object):
 
-    def __init__(self, loc):
-        self.parsed_dtd = libxml2.parseDTD(None, loc)
-        self.validator = libxml2.newValidCtxt()
+    def __init__(self, module, loc):
+        self.libxml2 = module
+        self.parsed_dtd = self.libxml2.parseDTD(None, loc)
+        self.validator = self.libxml2.newValidCtxt()
     
     def validate(self, loc):
         """
@@ -219,7 +232,7 @@ class libxml_parser(object):
                  1 badly formed
                  2 invalid xml
         """
-        xml = libxml2.createFileParserCtxt(loc)
+        xml = self.libxml2.createFileParserCtxt(loc)
         xml.parseDocument()
         if not xml.isValid():
             return 2
