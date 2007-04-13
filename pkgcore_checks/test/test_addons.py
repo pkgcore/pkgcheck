@@ -3,7 +3,8 @@
 
 import os, sys, optparse
 from snakeoil.osutils import pjoin, ensure_dirs
-from pkgcore.test import TestCase, mixins
+from pkgcore.test import TestCase
+from snakeoil.test import mixins
 from pkgcore_checks import addons, base
 from pkgcore_checks.test.misc import FakePkg, FakeProfile
 from pkgcore.ebuild.misc import collapsed_restrict_to_data

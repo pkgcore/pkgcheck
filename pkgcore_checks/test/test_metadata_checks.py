@@ -3,7 +3,7 @@
 
 import os
 import tempfile
-from pkgcore.test.mixins import TempDirMixin
+from snakeoil.test.mixins import TempDirMixin
 from pkgcore_checks.test import misc
 from pkgcore_checks import metadata_checks, addons
 from snakeoil.osutils import join as pjoin
