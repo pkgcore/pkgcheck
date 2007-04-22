@@ -15,7 +15,7 @@ from pkgcore_checks import (
 pkgcore_plugins = {
     'check': [
         cleanup.RedundantVersionReport,
-	codingstyle.BadInsIntoDotDirCheck,
+	codingstyle.BadInsIntoCheck,
         deprecated.DeprecatedEclassReport,
         dropped_keywords.DroppedKeywordsReport,
         glsa_scan.TreeVulnerabilitiesReport,

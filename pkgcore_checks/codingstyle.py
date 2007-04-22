@@ -5,41 +5,47 @@
 
 from pkgcore_checks import base
 
-class BadInsIntoDotDir(base.Result):
+class BadInsIntoDir(base.Result):
 
-    """ebuild uses insinto (conf|init|env).d"""
+    """ebuild uses insinto where compact commands exist"""
 
     threshold = base.versioned_feed
 
-    __slots__ = ("category", "package", "version", "line", "dotdir")
+    __slots__ = ("category", "package", "version", "line", "insintodir")
 
-    def __init__(self, pkg, dotdir, line):
+    def __init__(self, pkg, insintodir, line):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.line = line
-        self.dotdir = dotdir
+        self.insintodir = insintodir
 
     @property
     def short_desc(self):
-        return "ebuild uses insinto /etc/%s.d on line %s" % (self.dotdir,
+        return "ebuild uses insinto %s on line %s" % (self.insintodir,
 	    self.line)
 
 
-class BadInsIntoDotDirCheck(base.Template):
+class BadInsIntoCheck(base.Template):
 
-    """checking ebuild for bad insinto (conf|env|init).d usage"""
+    """checking ebuild for bad insinto usage"""
 
     feed_type = base.ebuild_feed
 
-    known_results = (BadInsIntoDotDir,)
+    known_results = (BadInsIntoDir,)
 
     def feed(self, entry, reporter):
         pkg, lines = entry
 
         for lineno, line in enumerate(lines):
             if line != '\n':
-                for dotdir in ("conf", "env", "init"):
-                    if line.find("insinto /etc/%s.d" % dotdir) >= 0:
+                if line.find("insinto"):
+                    for dotdir in ("conf", "env", "init", "pam"):
+                        if line.find("insinto /etc/%s.d" % dotdir) >= 0:
+                            reporter.add_report(
+                                BadInsIntoDir(pkg, "/etc/%s.d/" % dotdir,
+                                    lineno + 1))
+                            break
+                    if line.find("insinto /usr/share/applications") >= 0:
                         reporter.add_report(
-                            BadInsIntoDotDir(pkg, dotdir, lineno + 1))
-                        break
+                            BadInsIntoDir(pkg, "/usr/share/applications",
+                                lineno + 1))
