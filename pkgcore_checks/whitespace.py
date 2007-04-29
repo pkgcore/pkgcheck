@@ -121,7 +121,7 @@ class WhitespaceCheck(base.Template):
                     trailing.append(lineno + 1)
                 elif line[0] == ' ':
                     leading.append(lineno + 1)
-                if line.find("\t ") >= 0:
+                if line.find(" \t") >= 0:
                     indent.append(lineno + 1)
             elif lastlineempty:
                 double_empty.append(lineno + 1)
