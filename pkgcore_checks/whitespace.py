@@ -113,7 +113,7 @@ class WhitespaceCheck(base.Template):
         leading = []
         indent = []
         double_empty = []
-        
+
         for lineno, line in enumerate(lines):
             if line != '\n':
                 lastlineempty = False
