@@ -9,6 +9,7 @@ from pkgcore.repository.util import SimpleTree
 from pkgcore.ebuild.misc import collapsed_restrict_to_data
 from pkgcore.restrictions.packages import AlwaysTrue
 from pkgcore_checks.addons import ArchesAddon
+from pkgcore_checks import base
 
 default_arches = ArchesAddon.default_arches
 
@@ -40,7 +41,17 @@ class FakeTimedPkg(package):
         object.__setattr__(self, "_mtime_", mtime)
 
 
+default_threshold_attrs = {base.repository_feed:(),
+    base.category_feed:('category',),
+    base.package_feed:('category', 'package'),
+    base.versioned_feed:('category', 'package', 'version')
+}
+default_threshold_attrs[base.ebuild_feed] = \
+    default_threshold_attrs[base.versioned_feed]
+
 class ReportTestCase(TestCase):
+
+    _threshold_attrs = default_threshold_attrs.copy()
 
     def assert_known_results(self, *reports):
         for report in reports:
@@ -56,6 +67,14 @@ class ReportTestCase(TestCase):
         self.assertEqual(l, [], msg="%s%s" %
             (msg, list(report.short_desc for report in l)))
 
+    def assertReportSanity(self, *reports):
+        for report in reports:
+            attrs = self._threshold_attrs.get(report.threshold)
+            self.assertTrue(attrs, msg="unknown threshold on %r" % (report.__class__,))
+            for x in attrs:
+                self.assertTrue(hasattr(report, x), msg="threshold %s, missing attr %s: %r %s" % 
+                    (report.threshold, x, report.__class__, report))
+
     def assertReports(self, check, data):
         l = []
         r = fake_reporter(lambda r:l.append(r))
@@ -63,6 +82,7 @@ class ReportTestCase(TestCase):
         self.assert_known_results(*l)
         self.assertTrue(l, msg="must get a report from %r %r, got none" % 
             (check, data))
+        self.assertReportSanity(*l)
         return l
 
     def assertIsInstance(self, obj, kls):
@@ -75,6 +95,7 @@ class ReportTestCase(TestCase):
         self.assert_known_results(*r)
         self.assertEqual(len(r), 1, msg="expected one report, got %i: %r" %
             (len(r), r))
+        self.assertReportSanity(r[0])
         return r[0]
 
 

@@ -131,8 +131,7 @@ class ModularXPortingReport(base.Template):
         self.depset_cache = depset_cache
         self.arches = frozenset(x.lstrip("~") for x in options.arches)
         # use 7.1 so it catches any >7.0
-        self.x7 = virtual.package(None, "virtual/x11-7.1")
-        self.x6 = virtual.package(None, "virtual/x11-6.9")
+        self.x6 = virtual.package(None, None, "virtual/x11-6.9")
         if self.options.mod_x_packages is not None:
             try:
                 package_list = open(self.options.mod_x_packages, 'r')

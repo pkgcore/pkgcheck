@@ -5,6 +5,11 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 
 * update to use snakeoil api.
 
+* Add check to metadata_check.DependencyReport for self-blocking atoms; for
+  example, if dev-util/diffball RDEPEND has !dev-util/diffball.
+
+* ticket 82; Fix BadProto result object so it has proper threshold.
+
 
 0.3.5:
 

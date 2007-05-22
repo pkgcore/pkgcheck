@@ -13,7 +13,8 @@ from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files
 
 from snakeoil.demandload import demandload
-demandload(globals(), 'snakeoil.xml:escape', 'logging')
+demandload(globals(), 'snakeoil.xml:escape', 'logging',
+    'itertools:ifilter')
 
 
 class MetadataError(base.Result):
@@ -127,6 +128,7 @@ class DependencyReport(base.Template):
 
     required_addons = (addons.UseAddon,)
     known_results = (MetadataError,) + addons.UseAddon.known_results
+    blocks_getter = attrgetter('blocks')
 
     feed_type = base.versioned_feed
 
@@ -140,9 +142,15 @@ class DependencyReport(base.Template):
     def feed(self, pkg, reporter):
         for attr_name, getter in self.attrs:
             try:
-                for x in self.iuse_filter((atom,), pkg, getter(pkg), reporter,
-                    attr=attr_name):
-                    pass
+                i = self.iuse_filter((atom,), pkg, getter(pkg), reporter,
+                    attr=attr_name)
+                if attr_name == 'provides':
+                    for x in i:
+                        pass
+                else:
+                    for x in ifilter(self.blocks_getter, i):
+                        if x.match(pkg):
+                            reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
             except (KeyboardInterrupt, SystemExit):
                 raise
             except (MetadataException, MalformedAtom, ValueError), e:
@@ -205,6 +213,7 @@ class MissingUri(base.Result):
 class BadProto(base.Result):
     """bad protocol"""
     __slots__ = ("category", "package", "version", "filename", "bad_uri")
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, filename, bad_uri):
         base.Result.__init__(self)
@@ -250,9 +259,8 @@ class SrcUriReport(base.Template):
                         i = x.find("://")
                         if i == -1:
                             lacks_uri.add(x)
-                        else:
-                            if x[:i] not in self.valid_protos:
-                                bad.add(x)
+                        elif x[:i] not in self.valid_protos:
+                            bad.add(x)
                     if bad:
                         reporter.add_report(
                             BadProto(pkg, f_inst.filename, bad))

@@ -190,6 +190,13 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
             self.assertReport(self.mk_check(), mk_pkg("|| (")),
             metadata_checks.MetadataError)
         self.assertEqual(r.attr, attr)
+        if 'depend' not in attr:
+            return
+        self.assertNoReport(chk, mk_pkg("!dev-util/blah"))
+        r = self.assertIsInstance(self.assertReport(self.mk_check(),
+            mk_pkg("!dev-util/diffball")),
+            metadata_checks.MetadataError)
+        self.assertIn(r.msg, "blocks itself")
 
     for x in attr_map:
         locals()["test_%s" % x] = post_curry(generic_check, x)
