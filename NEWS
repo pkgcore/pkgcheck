@@ -10,6 +10,13 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 
 * ticket 82; Fix BadProto result object so it has proper threshold.
 
+* Fix class serialization bug in RestrictsReport.
+
+* profile loadup optimization; pkgcore weakly caches the intermediate nodes,
+  pcheck's profile loadup however specifically released the profiles every
+  looping; now it temporarily holds onto it, thus allowing the caching to kick
+  in.  Among other things, cuts file reads down from 1800 to around around 146.
+
 
 0.3.5:
 

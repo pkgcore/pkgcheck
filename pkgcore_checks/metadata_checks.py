@@ -366,7 +366,7 @@ class RestrictsReport(base.Template):
         "test", "sandbox", "userpriv", "primaryuri", "binchecks", "strip",
         "multilib-strict"))
 
-    known_results = (BadRestricts, addons.UseAddon.known_results)
+    known_results = (BadRestricts,) + addons.UseAddon.known_results
     required_addons = (addons.UseAddon,) 
 
     __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \

@@ -210,6 +210,12 @@ class ProfileAddon(base.Addon):
         self.keywords_filter = {}
         ignore_deprecated = self.options.profile_ignore_deprecated
         
+        # we hold onto the profiles as we're going, due to the fact
+        # profilenodes are weakly cached; hold onto all for this loop,
+        # avoids a lot of reparsing at the expense of slightly more memory
+        # temporarily.
+        cached_profiles = []
+
         for k in self.desired_arches:
             if k.lstrip("~") not in self.desired_arches:
                 continue
@@ -229,6 +235,7 @@ class ProfileAddon(base.Addon):
                     profile_name, profile = profile_name
                 else:
                     profile = options.profile_func(profile_name)
+                    cached_profiles.append(profile)
                 if ignore_deprecated and profile.deprecated:
                     continue
 

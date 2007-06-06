@@ -4,6 +4,8 @@
 """check for some bad coding styles like insinto's, old variables etc"""
 
 from pkgcore_checks import base
+from snakeoil.demandload import demandload
+demandload(globals(), "re")
 
 class BadInsIntoDir(base.Result):
 
@@ -30,22 +32,36 @@ class BadInsIntoCheck(base.Template):
     """checking ebuild for bad insinto usage"""
 
     feed_type = base.ebuild_feed
+    _bad_insinto = None
+    _bad_etc = ("conf", "env", "init", "pam")
+    _bad_paths = ("/usr/share/applications",)
 
     known_results = (BadInsIntoDir,)
+
+    def __init__(self, *args, **kwds):
+        base.Template.__init__(self, *args, **kwds)
+        if self._bad_insinto is None:
+            self._load_class_regex()
+
+    @classmethod
+    def _load_class_regex(cls):
+        patterns = []
+        if cls._bad_etc:
+            patterns.append("etc/(?:%s).d" % "|".join(cls._bad_etc))
+        if cls._bad_paths:
+            patterns.extend(x.strip("/") for x in cls._bad_paths)
+        s = "|".join(patterns)
+        s = s.replace("/", "/+")
+        cls._bad_insinto = re.compile("insinto[ \t]+(/+(?:%s))(?:$|[/ \t])" % s)
 
     def feed(self, entry, reporter):
         pkg, lines = entry
 
+        badf = self._bad_insinto.search
         for lineno, line in enumerate(lines):
-            if line != '\n':
-                if line.find("insinto"):
-                    for dotdir in ("conf", "env", "init", "pam"):
-                        if line.find("insinto /etc/%s.d" % dotdir) >= 0:
-                            reporter.add_report(
-                                BadInsIntoDir(pkg, "/etc/%s.d/" % dotdir,
-                                    lineno + 1))
-                            break
-                    if line.find("insinto /usr/share/applications") >= 0:
-                        reporter.add_report(
-                            BadInsIntoDir(pkg, "/usr/share/applications",
-                                lineno + 1))
+            if not line:
+                continue
+            matches = badf(line)
+            if matches is not None:
+                reporter.add_report(BadInsIntoDir(pkg,
+                    matches.groups()[0], lineno + 1))

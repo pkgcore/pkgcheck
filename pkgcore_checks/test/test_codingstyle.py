@@ -16,12 +16,18 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
         fake_src.append("\tinsinto /usr/bin\n")
         fake_src.append("\tinsinto /etc/env.d\n")
         fake_src.append("\tinsinto /etc/conf.d\n")
-        fake_src.append("\tinsinto /etc/init.d\n")
+        fake_src.append("\tinsinto /etc/init.d/\n")
         fake_src.append("\tinsinto /etc/pam.d\n")
         fake_src.append("\tinsinto /usr/share/applications\n")
+        fake_src.append("\tinsinto /usr/share/applications/\n")
+        fake_src.append("\tinsinto //usr/share//applications//\n")
         fake_src.append("# That's it for now\n")
-	
+
+        bad = ("/etc/env.d", "/etc/conf.d", "/etc/init.d", "/etc/pam.d",
+            "/usr/share/applications", "/usr/share/applications", 
+            "//usr/share//applications")	
         check = BadInsIntoCheck(None, None)
 
-        report = self.assertReports(check,[fake_pkg, fake_src])
-        self.assertEqual(len(report), 5)
+        reports = self.assertReports(check,[fake_pkg, fake_src])
+        dirs = [x.insintodir for x in reports]
+        self.assertEqual(dirs, list(bad))

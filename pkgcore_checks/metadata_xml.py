@@ -168,7 +168,7 @@ class PackageMetadataXmlCheck(base_check):
     invalid_error = PkgInvalidXml
     missing_error = PkgMissingMetadataXml
 
-    known_results = (PkgBadlyFormedXml, PkgInvalidXml)
+    known_results = (PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml)
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.key:
@@ -189,7 +189,7 @@ class CategoryMetadataXmlCheck(base_check):
     invalid_error = CatInvalidXml
     missing_error = CatMissingMetadataXml
 
-    known_results = (CatBadlyFormedXml, CatInvalidXml)
+    known_results = (CatBadlyFormedXml, CatInvalidXml, CatMissingMetadataXml)
 
     dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
 
