@@ -3,6 +3,8 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
+0.4:
+
 * update to use snakeoil api.
 
 * Add check to metadata_check.DependencyReport for self-blocking atoms; for
