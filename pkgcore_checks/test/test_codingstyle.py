@@ -21,11 +21,16 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
         fake_src.append("\tinsinto /usr/share/applications\n")
         fake_src.append("\tinsinto /usr/share/applications/\n")
         fake_src.append("\tinsinto //usr/share//applications//\n")
+        fake_src.append("\tinsinto /etc/cron.d\n")
+        fake_src.append("\tinsinto /etc/cron.hourly\n")
+        fake_src.append("\tinsinto /etc/cron.daily\n")
+        fake_src.append("\tinsinto /etc/cron.weekly\n")
         fake_src.append("# That's it for now\n")
 
         bad = ("/etc/env.d", "/etc/conf.d", "/etc/init.d", "/etc/pam.d",
             "/usr/share/applications", "/usr/share/applications", 
-            "//usr/share//applications")	
+            "//usr/share//applications", "/etc/cron.d", "/etc/cron.hourly",
+            "/etc/cron.daily", "/etc/cron.weekly")
         check = BadInsIntoCheck(None, None)
 
         reports = self.assertReports(check,[fake_pkg, fake_src])
