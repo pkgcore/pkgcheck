@@ -130,6 +130,8 @@ class VisibilityReport(base.Template):
                             nonexistant.add(node)
                             self.query_cache[h] = ()
                             self.profiles.global_insoluable.add(h)
+                elif not self.query_cache[h]:
+                    nonexistant.add(node)
 
             if nonexistant:
                 reporter.add_report(NonExistantDeps(pkg, attr, nonexistant))

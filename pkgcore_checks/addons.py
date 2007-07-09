@@ -37,12 +37,21 @@ class ArchesAddon(base.Addon):
         setattr(parser.values, option.dest, tuple(value.split(",")))
 
     @classmethod
+    def _disable_arches(cls, option, opt_str, value, parser):
+        s = set(getattr(parser.values, 'arches', cls.default_arches))
+        parser.values.arches = tuple(s.difference(value.split(",")))
+
+    @classmethod
     def mangle_option_parser(cls, parser):
         parser.add_option(
             '-a', '--arches', action='callback', callback=cls._record_arches,
             type='string', default=cls.default_arches,
             help="comma seperated list of what arches to run, defaults to %s" %
             ",".join(cls.default_arches))
+        parser.add_option(
+            '--disable-arches', action='callback', callback=cls._disable_arches,
+            type='string',
+            help="comma seperated list of arches to disable from the defaults")
 
 
 class QueryCacheAddon(base.Template):
