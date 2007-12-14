@@ -47,8 +47,8 @@ class DroppedKeywordsReport(Template):
             for key in oldstate.difference(state):
                 if key.startswith("-"):
                     continue
-		if pkg.version == "9999":
-		    continue
+                if pkg.version == "9999":
+                    continue
                 elif "-%s" % key in state:
                     continue
                 elif key in arches:
