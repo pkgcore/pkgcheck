@@ -428,9 +428,8 @@ class UseAddon(base.Addon):
         specific_iuse = []
         unstated_iuse = set()
         known_arches = set()
-        unstated_iuse = set()
-        
         arches = set()
+
         for profile_base in options.repo_bases:
             try:
                 known_iuse.update(util.get_use_desc(
@@ -498,11 +497,18 @@ class UseAddon(base.Addon):
     def fake_use_validate(klasses, pkg, seq, reporter, attr=None):
         return iflatten_instance(seq, klasses)
 
+    def iuse_strip(self, iuse):
+        ret_val = set()
+        for flag in iuse:
+            flag = flag.lstrip("+-")
+            ret_val.add(flag)
+        return ret_val
+
     def use_validate(self, klasses, pkg, seq, reporter, attr=None):
         skip_filter = (packages.Conditional,) + klasses
         unstated = set()
     
-        stated = pkg.iuse
+        stated = self.iuse_strip(pkg.iuse)
         i = iterables.expandable_chain(lists.iflatten_instance(seq,
                                                                skip_filter))
         for node in i:

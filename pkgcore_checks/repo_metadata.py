@@ -62,7 +62,7 @@ class UnusedLocalFlags(base.Template):
         for pkg in pkgs:
             unused.update(self.collapsed.iter_pull_data(pkg))
         for pkg in pkgs:
-            unused.difference_update(pkg.iuse)
+            unused.difference_update(self.iuse_handler.iuse_strip(pkg.iuse))
         if unused:
             reporter.add_report(UnusedLocalFlagsResult(pkg, unused))
 
