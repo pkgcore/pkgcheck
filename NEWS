@@ -3,6 +3,10 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
+0.4.2:
+
+* minor release to be EAPI=1 compatible wrt IUSE defaults
+
 0.4.1:
 
 * fixed ticket 90; NonExistantDeps occasionally wouldn't report later versions
