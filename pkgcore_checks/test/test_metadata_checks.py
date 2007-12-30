@@ -51,6 +51,8 @@ class TestKeywordsReport(misc.ReportTestCase):
         check = metadata_checks.KeywordsReport(None, None)
         self.assertIsInstance(self.assertReport(check, self.mk_pkg("-*")),
             metadata_checks.StupidKeywords)
+        self.assertNoReport(check, self.mk_pkg("-* ~arch"),
+            metadata_checks.StupidKeywords)
 
 
 class iuse_options(TempDirMixin):
