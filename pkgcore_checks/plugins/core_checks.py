@@ -8,8 +8,7 @@
 from pkgcore_checks import (
     cleanup, codingstyle, deprecated, dropped_keywords, glsa_scan, imlate,
     metadata_checks, metadata_xml, pkgdir_checks, repo_metadata, stale_unstable,
-    unported_mod_x, unstable_only, visibility, whitespace, feeds, reporters,
-    report_stream)
+    unstable_only, visibility, whitespace, feeds, reporters, report_stream)
 
 
 pkgcore_plugins = {
@@ -35,7 +34,6 @@ pkgcore_plugins = {
         repo_metadata.UnusedLicense,
         repo_metadata.Manifest2Transition,
         stale_unstable.StaleUnstableReport,
-        unported_mod_x.ModularXPortingReport,
         unstable_only.UnstableOnlyReport,
         visibility.VisibilityReport,
         whitespace.WhitespaceCheck,
