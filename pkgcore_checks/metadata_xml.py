@@ -25,8 +25,14 @@ class base_MissingXml(base.Result):
         self.filename = filename
 
     @property
+    def _label(self):
+        if self.package is not None:
+            return "%s/%s" % (self.category, self.package)
+        return self.category
+
+    @property
     def short_desc(self):
-        return "%s is missing" % self.filename
+        return "%s is missing %s" % (self._label, os.path.basename(self.filename))
 
 
 class base_BadlyFormedXml(base.Result):
@@ -42,8 +48,14 @@ class base_BadlyFormedXml(base.Result):
         self.filename = filename
     
     @property
+    def _label(self):
+        if self.package is not None:
+            return "%s/%s" % (self.category, self.package)
+        return self.category
+
+    @property
     def short_desc(self):
-        return "%s is not well formed xml" % self.filename
+        return "%s %s is not well formed xml" % (self._label, os.path.basename(self.filename))
     
 
 class base_InvalidXml(base.Result):
@@ -59,8 +71,14 @@ class base_InvalidXml(base.Result):
         self.filename = filename
 
     @property
+    def _label(self):
+        if self.package is not None:
+            return "%s/%s" % (self.category, self.package)
+        return self.category
+
+    @property
     def short_desc(self):
-        return "%s violates metadata.dtd" % self.filename
+        return "%s %s violates metadata.dtd" % (self._label, os.path.basename(self.filename))
 
 
 class PkgMissingMetadataXml(base_MissingXml):

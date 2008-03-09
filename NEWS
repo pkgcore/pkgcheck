@@ -3,9 +3,13 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
+* dropped ModularXPortingReport; no longer needed.
+
+
 0.4.2:
 
 * minor release to be EAPI=1 compatible wrt IUSE defaults
+
 
 0.4.1:
 
