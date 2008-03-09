@@ -3,6 +3,8 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
+* metadata xml checks output was changed to be less noisy.
+
 * dropped ModularXPortingReport; no longer needed.
 
 
