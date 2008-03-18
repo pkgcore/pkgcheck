@@ -108,7 +108,7 @@ class UnusedGlobalFlags(base.Template):
 
     def feed(self, pkg, reporter):
         if self.flags:
-            self.flags.difference_update(pkg.iuse)
+            self.flags.difference_update(self.iuse_handler.iuse_strip(pkg.iuse))
 
     def finish(self, reporter):
         if self.flags:

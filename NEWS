@@ -5,7 +5,10 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 
 0.4.3:
 
-* metadata xml checks output was changed to be less noisy.
+* ticket 8; false positive unused global USE flags due to not stripping '+-'
+  from iuse defaults.
+
+* ticket 7: tune down metadata xml checks verbosity.
 
 * dropped ModularXPortingReport; no longer needed.
 
