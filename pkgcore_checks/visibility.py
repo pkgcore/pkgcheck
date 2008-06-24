@@ -22,7 +22,7 @@ class VisibleVcsPkg(base.Result):
         self._store_cpv(pkg)
         self.arch = arch.lstrip("~")
         self.profile = profile
-    
+
     @property
     def short_desc(self):
         return "VCS version visible for arch %s, profile %s" % (
@@ -35,18 +35,18 @@ class NonExistantDeps(base.Result):
     __slots__ = ("category", "package", "version", "attr", "atoms")
 
     threshold = base.versioned_feed
-    
+
     def __init__(self, pkg, attr, nonexistant_atoms):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.attr = attr
         self.atoms = tuple(str(x) for x in nonexistant_atoms)
-    
+
     @property
     def short_desc(self):
         return "depset %s: nonexistant atoms [ %s ]" % (
             self.attr, ', '.join(self.atoms))
-    
+
 
 class NonsolvableDeps(base.Result):
     """No potential solution for a depset attribute"""
@@ -55,7 +55,7 @@ class NonsolvableDeps(base.Result):
         "keyword", "potentials")
 
     threshold = base.versioned_feed
-    
+
     def __init__(self, pkg, attr, keyword, profile, horked):
         base.Result.__init__(self)
         self._store_cpv(pkg)
@@ -63,7 +63,7 @@ class NonsolvableDeps(base.Result):
         self.profile = profile
         self.keyword = keyword
         self.potentials = tuple(str(x) for x in stable_unique(horked))
-        
+
     @property
     def short_desc(self):
         return "nonsolvable depset(%s) keyword(%s) profile (%s): " \

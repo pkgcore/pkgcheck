@@ -17,7 +17,7 @@ class base_MissingXml(base.Result):
 
     __slots__ = ('category', 'package', 'filename')
     __attrs__ = __slots__
-    
+
     def __init__(self, filename, category, package=None):
         base.Result.__init__(self)
         self.category = category
@@ -40,13 +40,13 @@ class base_BadlyFormedXml(base.Result):
 
     __slots__ = ("category", "package", "filename")
     __attrs__ = __slots__
-    
+
     def __init__(self, filename, category, package=None):
         base.Result.__init__(self)
         self.category = category
         self.package = package
         self.filename = filename
-    
+
     @property
     def _label(self):
         if self.package is not None:
@@ -56,14 +56,14 @@ class base_BadlyFormedXml(base.Result):
     @property
     def short_desc(self):
         return "%s %s is not well formed xml" % (self._label, os.path.basename(self.filename))
-    
+
 
 class base_InvalidXml(base.Result):
     """xml fails dtd validation"""
 
     __slots__ = ("category", "package", "filename")
     __attrs__ = __slots__
-    
+
     def __init__(self, filename, category, package=None):
         base.Result.__init__(self, filename, category, package=None)
         self.category = category
@@ -242,7 +242,7 @@ class libxml_parser(object):
         self.libxml2 = module
         self.parsed_dtd = self.libxml2.parseDTD(None, loc)
         self.validator = self.libxml2.newValidCtxt()
-    
+
     def validate(self, loc):
         """
         @param loc: location to verify
@@ -264,7 +264,7 @@ class xmllint_parser(object):
     def __init__(self, loc):
         self.dtd_loc = loc
         self.bin_loc = find_binary("xmllint")
-    
+
     def validate(self, loc):
         """
         @param loc: location to verify

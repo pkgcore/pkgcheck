@@ -19,11 +19,11 @@ demandload(globals(),
 
 
 class UnusedLocalFlagsResult(base.Result):
-    
+
     """
     unused use.local.desc flag(s)
     """
-    
+
     __slots__ = ("category", "package", "flags")
 
     threshold = base.package_feed
@@ -33,7 +33,7 @@ class UnusedLocalFlagsResult(base.Result):
         # tricky, but it works; atoms have the same attrs
         self._store_cp(pkg)
         self.flags = tuple(sorted(flags))
-    
+
     @property
     def short_desc(self):
         return "use.local.desc unused flag(s) %s" % ', '.join(self.flags)
@@ -68,11 +68,11 @@ class UnusedLocalFlags(base.Template):
 
 
 class UnusedGlobalFlagsResult(base.Result):
-    
+
     """
     unused use.desc flag(s)
     """
-    
+
     __slots__ = ("flags",)
 
     threshold = base.repository_feed
@@ -81,7 +81,7 @@ class UnusedGlobalFlagsResult(base.Result):
         base.Result.__init__(self)
         # tricky, but it works; atoms have the same attrs
         self.flags = tuple(sorted(flags))
-    
+
     @property
     def short_desc(self):
         return "use.desc unused flag(s): %s" % ', '.join(self.flags)
@@ -120,11 +120,11 @@ class UnusedLicenseReport(base.Result):
     """
     unused license(s) detected
     """
-    
+
     __slots__ = ("licenses",)
-    
+
     threshold = base.repository_feed
-    
+
     def __init__(self, licenses):
         base.Result.__init__(self)
         self.licenses = tuple(sorted(licenses))
@@ -172,7 +172,7 @@ def reformat_chksums(iterable):
             yield chf, val1, val2
         else:
             yield chf, "%x" % val1, "%x" % val2
-    
+
 
 class ConflictingChksums(base.Result):
 
@@ -182,11 +182,11 @@ class ConflictingChksums(base.Result):
 
     __slots__ = ("category", "package", "version",
         "filename", "chksums", "others")
-    
+
     threshold = base.versioned_feed
-    
+
     _sorter = staticmethod(operator.itemgetter(0))
-    
+
     def __init__(self, pkg, filename, chksums, others):
         base.Result.__init__(self)
         self._store_cpv(pkg)
@@ -205,7 +205,7 @@ class OrphanedManifestDist(base.Result):
     """
     manifest2 has a checksum entry digest lacks
     """
-    
+
     __slots__ = ("category", "package", "files")
 
     threshold = base.package_feed
@@ -214,7 +214,7 @@ class OrphanedManifestDist(base.Result):
         base.Result.__init__(self)
         self._store_cp(pkg)
         self.files = tuple(sorted(files))
-    
+
     @property
     def short_desc(self):
         return "manifest2 knows of files %r, but digest1 doesn't" % (self.files,)
@@ -243,13 +243,13 @@ class DeprecatedManifest1(base.Result):
     """
     a package's checksum data still is manifest1, instead of manifest2
     """
-    
+
     threshold = base.package_feed
     __slots__ = ("category", "package")
-    
+
     def __init__(self, pkg):
         self._store_cp(pkg)
-    
+
     short_desc = "still is using manifest1 format, should be using manifest2"
 
 
@@ -275,7 +275,7 @@ class Manifest2Transition(base.Template):
             if manifest.version == 1:
                 reporter.add_report(DeprecatedManifest1(pkgset[0]))
                 continue
-            
+
             seen = set()
             for pkg in pkgset:
                 for f_inst in (iflatten_instance(pkg.fetchables,

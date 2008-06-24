@@ -346,7 +346,7 @@ def dump_docstring(out, obj, prefix=None):
         if prefix is not None:
             out.first_prefix.pop()
             out.later_prefix.pop()
-    
+
 @decorate_forced_wrapping()
 def display_checks(out, checks):
     d = {}
@@ -357,7 +357,7 @@ def display_checks(out, checks):
         out.write(out.fg('red'), "No Documentation")
         out.write()
         return
-        
+
     for module_name in sorted(d):
         out.write(out.bold, "%s:" % module_name)
         l = d[module_name]
@@ -395,7 +395,7 @@ def display_reporters(out, config, config_reporters, plugin_reporters):
         finally:
             out.first_prefix.pop()
             out.later_prefix.pop()
-    
+
     if plugin_reporters:
         if config_reporters:
             out.write()
@@ -428,7 +428,7 @@ def main(options, out, err):
         display_reporters(out, options.config,
             options.config.pcheck_reporter_factory.values(),
             list(get_plugins('reporter', plugins)))
-        return 0    
+        return 0
 
     if not options.repo_bases:
         err.write(

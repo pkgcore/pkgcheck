@@ -41,7 +41,7 @@ def get_cpvstr(pkg):
     s = getattr(pkg, "cpvstr", None)
     if s is not None:
         return s
-    return str(pkg)	
+    return str(pkg)
 
 def get_use_desc(profiles_path):
     """Takes the path to the dir with use*desc in it (repo/profiles)."""

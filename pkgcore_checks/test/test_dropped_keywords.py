@@ -16,7 +16,7 @@ class TestDroppedKeywords(misc.ReportTestCase):
         # single version, shouldn't yield.
         check = drop_keys(misc.Options((("arches", ["x86", "amd64"]),)))
         self.assertNoReport(check, [self.mk_pkg('1')])
-        reports = self.assertReports(check, 
+        reports = self.assertReports(check,
             [self.mk_pkg("1", "x86 amd64"), self.mk_pkg("2")])
         self.assertEqual(set(x.arch for x in reports), set(["x86", "amd64"]))
 
@@ -27,4 +27,4 @@ class TestDroppedKeywords(misc.ReportTestCase):
             [self.mk_pkg("1", "x86 ~amd64 ppc"),
                 self.mk_pkg("2", "~amd64 x86"),
                 self.mk_pkg("3", "-amd64 x86")])
-        
+

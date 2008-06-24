@@ -21,12 +21,12 @@ class MetadataError(base.Result):
     """problem detected with a packages metadata"""
     __slots__ = ("category", "package", "version", "attr", "msg")
     threshold = base.versioned_feed
-    
+
     def __init__(self, pkg, attr, msg):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.attr, self.msg = attr, str(msg)
-    
+
     @property
     def short_desc(self):
         return "attr(%s): %s" % (self.attr, self.msg)
@@ -37,11 +37,11 @@ class MissingLicense(base.Result):
 
     __slots__ = ("category", "package", "version", "licenses")
     threshold = base.versioned_feed
-    
+
     def __init__(self, pkg, licenses):
         self._store_cpv(pkg)
         self.licenses = tuple(sorted(licenses))
-    
+
     @property
     def short_desc(self):
         return "no license files: %s" % ', '.join(self.licenses)
@@ -56,7 +56,7 @@ class LicenseMetadataReport(base.Template):
     feed_type = base.versioned_feed
 
     required_addons = (addons.UseAddon, addons.ProfileAddon,
-        addons.LicenseAddon) 
+        addons.LicenseAddon)
 
     def __init__(self, options, iuse_handler, profiles, licenses):
         base.Template.__init__(self, options)
@@ -75,13 +75,13 @@ class LicenseMetadataReport(base.Template):
         except (KeyboardInterrupt, SystemExit):
             raise
         except (MetadataException, MalformedAtom, ValueError), e:
-            reporter.add_report(MetadataError(pkg, 'license', 
+            reporter.add_report(MetadataError(pkg, 'license',
                 "error- %s" % e))
             del e
         except Exception, e:
             logging.exception("unknown exception caught for pkg(%s) attr(%s): "
                 "type(%s), %s" % (pkg, 'license', type(e), e))
-            reporter.add_report(MetadataError(pkg, 'license', 
+            reporter.add_report(MetadataError(pkg, 'license',
                 "exception- %s" % e))
             del e
         else:
@@ -119,7 +119,7 @@ class IUSEMetadataReport(base.Template):
             iuse = set(self.iuse_handler.iuse_strip(pkg.iuse)).difference(
                 self.iuse_handler.allowed_iuse(pkg))
             if iuse:
-                reporter.add_report(MetadataError(pkg, "iuse", 
+                reporter.add_report(MetadataError(pkg, "iuse",
                     "iuse unknown flags- [ %s ]" % ", ".join(iuse)))
 
 
@@ -155,14 +155,14 @@ class DependencyReport(base.Template):
             except (KeyboardInterrupt, SystemExit):
                 raise
             except (MetadataException, MalformedAtom, ValueError), e:
-                reporter.add_report(MetadataError(pkg, attr_name, 
+                reporter.add_report(MetadataError(pkg, attr_name,
                     "error- %s" % e))
                 del e
             except Exception, e:
                 logging.exception(
                     "unknown exception caught for pkg(%s) attr(%s): "
                     "type(%s), %s" % (pkg, attr_name, type(e), e))
-                reporter.add_report(MetadataError(pkg, attr_name, 
+                reporter.add_report(MetadataError(pkg, attr_name,
                     "exception- %s" % e))
                 del e
 
@@ -176,20 +176,20 @@ class StupidKeywords(base.Result):
     def __init__(self, pkg):
         base.Result.__init__(self)
         self._store_cpv(pkg)
-    
+
     short_desc = ("keywords contain -*; use package.mask or empty keywords "
         "instead")
-        
+
 
 class KeywordsReport(base.Template):
-    
+
     """
     check pkgs keywords for sanity; empty keywords, and -* are flagged
     """
-    
+
     feed_type = base.versioned_feed
     known_results = (StupidKeywords, MetadataError)
-    
+
     def feed(self, pkg, reporter):
         if "-*" in pkg.keywords and len(pkg.keywords) == 1:
             reporter.add_report(StupidKeywords(pkg))
@@ -204,12 +204,12 @@ class MissingUri(base.Result):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.filename = filename
-    
+
     @property
     def short_desc(self):
         return "file %s is unfetchable- no URI available, and RESTRICT=fetch " \
             "isn't set" % self.filename
-    
+
 
 class BadProto(base.Result):
     """bad protocol"""
@@ -221,11 +221,11 @@ class BadProto(base.Result):
         self._store_cpv(pkg)
         self.filename = filename
         self.bad_uri = tuple(sorted(bad_uri))
-    
+
     @property
     def short_desc(self):
         return "file %s: bad protocol/uri: %r " % (self.filename, self.bad_uri)
-    
+
 
 class SrcUriReport(base.Template):
 
@@ -284,7 +284,7 @@ class SrcUriReport(base.Template):
 
 
 class CrappyDescription(base.Result):
-    
+
     """pkg's description sucks in some fashion"""
 
     __slots__ = ("category", "package", "version", "msg")
@@ -294,11 +294,11 @@ class CrappyDescription(base.Result):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.msg = msg
-    
+
     @property
     def short_desc(self):
         return "description needs improvement: %s" % self.msg
-    
+
 
 class DescriptionReport(base.Template):
     """
@@ -306,7 +306,7 @@ class DescriptionReport(base.Template):
     check on length (<=250), too short (<5), or generic (lifted from eclass or
     just using the pkgs name
     """
-    
+
     feed_type = base.versioned_feed
     known_results = (CrappyDescription,)
 
@@ -336,10 +336,10 @@ class DescriptionReport(base.Template):
 
 class BadRestricts(base.Result):
     """pkg's restrict metadata has unknown/deprecated entries"""
-    
+
     __slots__ = ("category", "package", "version", "restricts", "deprecated")
     threshold = base.versioned_feed
-    
+
     def __init__(self, pkg, restricts, deprecated=None):
         base.Result.__init__(self)
         self._store_cpv(pkg)
@@ -347,7 +347,7 @@ class BadRestricts(base.Result):
         self.deprecated = deprecated
         if not restricts and not deprecated:
             raise TypeError("deprecated or restricts must not be empty")
-    
+
     @property
     def short_desc(self):
         s = ''
@@ -359,16 +359,16 @@ class BadRestricts(base.Result):
             s += "deprecated (drop the 'no') [ %s ]" % ", ".join(
                 self.deprecated)
         return s
-        
+
 
 class RestrictsReport(base.Template):
     feed_type = base.versioned_feed
-    known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch", 
+    known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch",
         "test", "sandbox", "userpriv", "primaryuri", "binchecks", "strip",
         "multilib-strict"))
 
     known_results = (BadRestricts,) + addons.UseAddon.known_results
-    required_addons = (addons.UseAddon,) 
+    required_addons = (addons.UseAddon,)
 
     __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \
         "restricts:%s" % ", ".join(sorted(known_restricts))

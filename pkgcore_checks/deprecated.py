@@ -6,10 +6,10 @@ from pkgcore_checks.base import Template, versioned_feed, Result
 
 class DeprecatedEclass(Result):
     """pkg uses an eclass that is deprecated/abandoned"""
-    
+
     __slots__ = ("category", "package", "version", "eclasses")
     threshold = versioned_feed
-    
+
     def __init__(self, pkg, eclasses):
         Result.__init__(self)
         self._store_cpv(pkg)

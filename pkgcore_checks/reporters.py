@@ -43,7 +43,7 @@ class StrReporter(base.Reporter):
             self.out.write()
             self.first_report = False
         if result.threshold == base.versioned_feed:
-            self.out.write("%s/%s-%s: %s" % (result.category, result.package, 
+            self.out.write("%s/%s-%s: %s" % (result.category, result.package,
                 result.version, result.short_desc))
         elif result.threshold == base.package_feed:
             self.out.write("%s/%s: %s" % (result.category, result.package,
@@ -62,7 +62,7 @@ class FancyReporter(base.Reporter):
 
     """
     groupped colored output, example:
-    
+
     sys-apps/portage
       WrongIndentFound: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
       NonsolvableDeps: sys-apps/portage-2.1-r2: rdepends  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ >=app-misc/pax-utils-0.1.13 ]
@@ -140,7 +140,7 @@ class XmlReporter(base.Reporter):
         self.out.write('<checks>')
 
     def add_report(self, result):
-        d = dict((k, getattr(result, k, '')) for k in 
+        d = dict((k, getattr(result, k, '')) for k in
             ("category", "package", "version"))
         d["msg"] = xml.escape(result.short_desc)
         self.out.write(self.threshold_map[result.threshold] % d)

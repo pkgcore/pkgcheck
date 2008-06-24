@@ -21,7 +21,7 @@ class FakePkg(package):
 
         for x in ("DEPEND", "RDEPEND", "PDEPEND", "IUSE", "LICENSE"):
             data.setdefault(x, "")
-        
+
         cpv = CPV(cpvstr)
         package.__init__(self, shared, parent, cpv.category, cpv.package,
             cpv.fullver)
@@ -30,7 +30,7 @@ class FakePkg(package):
 
 class FakeTimedPkg(package):
     __slots__ = "_mtime_"
-    
+
     def __init__(self, cpvstr, mtime, data=None, shared=None, repo=None):
         if data is None:
             data = {}
@@ -72,7 +72,7 @@ class ReportTestCase(TestCase):
             attrs = self._threshold_attrs.get(report.threshold)
             self.assertTrue(attrs, msg="unknown threshold on %r" % (report.__class__,))
             for x in attrs:
-                self.assertTrue(hasattr(report, x), msg="threshold %s, missing attr %s: %r %s" % 
+                self.assertTrue(hasattr(report, x), msg="threshold %s, missing attr %s: %r %s" %
                     (report.threshold, x, report.__class__, report))
 
     def assertReports(self, check, data):
@@ -80,13 +80,13 @@ class ReportTestCase(TestCase):
         r = fake_reporter(lambda r:l.append(r))
         check.feed(data, r)
         self.assert_known_results(*l)
-        self.assertTrue(l, msg="must get a report from %r %r, got none" % 
+        self.assertTrue(l, msg="must get a report from %r %r, got none" %
             (check, data))
         self.assertReportSanity(*l)
         return l
 
     def assertIsInstance(self, obj, kls):
-        self.assertTrue(isinstance(obj, kls), 
+        self.assertTrue(isinstance(obj, kls),
             msg="%r must be %r" % (obj, kls))
         return obj
 
@@ -129,6 +129,6 @@ class FakeProfile(object):
         self.masked_data = collapsed_restrict_to_data(
             [(AlwaysTrue, default_arches)],
             self.masked_use.iteritems())
-            
+
     def make_virtuals_repo(self, repo):
         return self.virtuals

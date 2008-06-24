@@ -5,7 +5,7 @@ import os, optparse
 
 from pkgcore_checks import base
 from snakeoil.demandload import demandload
-demandload(globals(), 
+demandload(globals(),
     'pkgcore.pkgsets.glsa:GlsaDirSet',
     'pkgcore.restrictions:packages,values',
     'snakeoil:xml,osutils',
@@ -29,7 +29,7 @@ class VulnerablePackage(base.Result):
             if isinstance(v.restriction, values.ContainmentMatch):
                 arches.update(x.lstrip("~") for x in v.restriction.vals)
             else:
-                raise Exception("unexpected restriction sequence- %s in %s" % 
+                raise Exception("unexpected restriction sequence- %s in %s" %
                     (v.restriction, glsa))
         keys = set(x.lstrip("~") for x in pkg.keywords if not x.startswith("-"))
         if arches:
@@ -38,7 +38,7 @@ class VulnerablePackage(base.Result):
         else:
             self.arch = tuple(sorted(keys))
         self.glsa = str(glsa)
-    
+
     @property
     def short_desc(self):
         return "vulnerable via %s, keywords %s" % (self.glsa, self.arch)
@@ -47,7 +47,7 @@ class VulnerablePackage(base.Result):
 class TreeVulnerabilitiesReport(base.Template):
     """
     Scan for vulnerabile ebuilds in the tree
-    
+
     requires a GLSA directory for vuln. info
     """
 
@@ -112,7 +112,7 @@ class TreeVulnerabilitiesReport(base.Template):
         # this is a bit brittle
         for r in GlsaDirSet(self.glsa_dir):
             if len(r) > 2:
-                self.vulns.setdefault(r[0].key, 
+                self.vulns.setdefault(r[0].key,
                     []).append(packages.AndRestriction(*r[1:]))
             else:
                 self.vulns.setdefault(r[0].key, []).append(r[1])

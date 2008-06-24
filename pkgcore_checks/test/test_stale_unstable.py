@@ -20,10 +20,10 @@ class TestStaleUnstableReport(misc.ReportTestCase):
         check  = StaleUnstableReport(misc.Options(arches=("x86", "ppc", "amd64"),
             reference_arches=("x86", "ppc", "amd64"),
             target_arches=("x86", "ppc")),  None)
-	
+
         check.start()
 
-        old = now - (30 * 24 * 3600)        
+        old = now - (30 * 24 * 3600)
 
         # a current one
         self.assertNoReport(check, mk_pkg("1.0", "x86", now))
@@ -38,6 +38,6 @@ class TestStaleUnstableReport(misc.ReportTestCase):
         self.assertReport(check, mk_pkg("1.0", "~amd64 ~x86", old))
 
         # ensure it reports only specified arches.
-        report = self.assertReport(check, 
+        report = self.assertReport(check,
             mk_pkg("1.0", "~amd64 ~x86 ~asdfasdfasdf", old))
         self.assertEqual(report.keywords, tuple(sorted(["~amd64", "~x86"])))

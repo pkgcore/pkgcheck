@@ -27,7 +27,7 @@ class MissingFile(Result):
     __slots__ = ("category", "package", "filename")
 
     threshold = package_feed
-    
+
     def __init__(self, pkg, filename):
         Result.__init__(self)
         self._store_cp(pkg)
@@ -36,7 +36,7 @@ class MissingFile(Result):
     @property
     def short_desc(self):
         return "required file %s doesn't exist" % self.filename
-    
+
 
 class ExecutableFile(Result):
     """file has executable bit, but doesn't need it"""
@@ -44,16 +44,16 @@ class ExecutableFile(Result):
     __slots__ = ("category", "package", "filename")
 
     threshold = package_feed
-    
+
     def __init__(self, pkg, filename):
         Result.__init__(self)
         self._store_cp(pkg)
         self.filename = filename
-    
+
     @property
     def short_desc(self):
         return "file %s has unecessary executable bit" % self.filename
-    
+
 
 class SizeViolation(Result):
     """filesdir, excluding digest/cvs, is too large"""
@@ -61,12 +61,12 @@ class SizeViolation(Result):
     __slots__ = ("category", "package", "size")
 
     threshold = package_feed
-    
+
     def __init__(self, pkg, size):
         Result.__init__(self)
         self._store_cp(pkg)
         self.size = size
-    
+
     @property
     def short_desc(self):
         return "files directory exceeds 20k; %i bytes total" % self.size
@@ -75,16 +75,16 @@ class SizeViolation(Result):
 class Glep31Violation(Result):
 
     """file doesn't abide by glep31 requirements"""
-    
+
     __slots__ = ("category", "package", "filename")
 
     threshold = package_feed
-    
+
     def __init__(self, pkg, filename):
         Result.__init__(self)
         self._store_cp(pkg)
         self.filename = filename
-    
+
     @property
     def short_desc(self):
         return "file %s has char outside the allowed char ranges defined by " \
@@ -94,17 +94,17 @@ class Glep31Violation(Result):
 class InvalidUtf8(Result):
 
     """file isn't utf8 compliant"""
-    
+
     __slots__ = ("category", "package", "filename", "err")
 
     threshold = package_feed
-    
+
     def __init__(self, pkg, filename, err):
         Result.__init__(self)
         self._store_cp(pkg)
         self.filename = filename
         self.err = err
-    
+
     @property
     def short_desc(self):
         return "file %s is not valid utf8- %s" % (self.filename, self.err)
@@ -112,7 +112,7 @@ class InvalidUtf8(Result):
 
 def utf8_check(pkg, base, filename, reporter):
     try:
-        codecs.open(pjoin(base, filename), mode="rb", 
+        codecs.open(pjoin(base, filename), mode="rb",
             encoding="utf8", buffering=8192).read()
     except UnicodeDecodeError, e:
         reporter.add_report(InvalidUtf8(pkg, filename, str(e)))
@@ -123,7 +123,7 @@ class PkgDirReport(Template):
     """actual ebuild directory scans; file size, glep31 rule enforcement."""
 
     feed_type = package_feed
-    
+
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
     known_results = (MissingFile, ExecutableFile, SizeViolation,
         Glep31Violation, InvalidUtf8)
@@ -136,16 +136,16 @@ class PkgDirReport(Template):
             # filtering happens all in the genexp.  if the result was being
             # handed to any, it's a frame switch each
             # char, which adds up.
-            
-            if any(True for x in filename if 
+
+            if any(True for x in filename if
                 x not in allowed_filename_chars_set):
                 reporter.add_report(Glep31Violation(pkgset[0], filename))
-            
+
             if filename.endswith(".ebuild") or filename in \
                 ("Manifest", "ChangeLog", "metadata.xml"):
                 if os.stat(pjoin(base, filename)).st_mode & 0111:
                     reporter.add_report(ExecutableFile(pkgset[0], filename))
-            
+
             if filename.endswith(".ebuild"):
                 utf8_check(pkgset[0], base, filename, reporter)
 
@@ -156,12 +156,12 @@ class PkgDirReport(Template):
                 raise
             del e
             reporter.add_report(MissingFile(pkgset[0], "ChangeLog"))
-                
+
         if not os.path.exists(pjoin(base, "files")):
             if pkgset[0].manifest.version == 1:
                 reporter.add_report(MissingFile(pkgset[0], "files"))
             return
-                            
+
         size = 0
         unprocessed_dirs = deque(["files"])
         while unprocessed_dirs:
@@ -180,7 +180,7 @@ class PkgDirReport(Template):
                                                            pjoin(cwd, fn)))
                     if not fn.startswith("digest-"):
                         size += st.st_size
-                        if any(True for x in fn if 
+                        if any(True for x in fn if
                             x not in allowed_filename_chars_set):
                             reporter.add_report(Glep31Violation(pkgset[0],
                                 pjoin(cwd, fn)))

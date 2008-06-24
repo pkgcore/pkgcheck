@@ -12,7 +12,7 @@ from snakeoil.lists import iflatten_instance
 
 from pkgcore_checks import base, util
 
-from snakeoil import (demandload, currying, containers, mappings, iterables, 
+from snakeoil import (demandload, currying, containers, mappings, iterables,
     lists)
 demandload.demandload(globals(),
     'os',
@@ -175,7 +175,7 @@ class ProfileAddon(base.Addon):
             return '/'.join(y for y in name.split('/') if y)
 
         disabled = set(norm_name(x) for x in options.profiles_disabled)
-        enabled = set(x for x in 
+        enabled = set(x for x in
             (norm_name(y) for y in options.profiles_enabled)
             if x not in disabled)
 
@@ -184,12 +184,12 @@ class ProfileAddon(base.Addon):
             d = \
                 util.get_profiles_desc(options.profile_base_dir,
                     ignore_dev=options.profile_ignore_dev)
-            
+
             for k, v in d.iteritems():
                 l = [x for x in map(norm_name, v)
                     if not x in disabled]
-                
-                # wipe any enableds that are here already so we don't 
+
+                # wipe any enableds that are here already so we don't
                 # get a profile twice
                 enabled.difference_update(l)
                 if v:
@@ -202,7 +202,7 @@ class ProfileAddon(base.Addon):
                 raise profiles.ProfileError(p.path, 'make.defaults',
                     "profile %s lacks arch settings, unable to use it" % x)
             arch_profiles.setdefault(p.arch, []).append((x, p))
-            
+
         for x in options.profiles_enabled:
             options.profile_func(x)
 
@@ -218,7 +218,7 @@ class ProfileAddon(base.Addon):
         profile_filters = {}
         self.keywords_filter = {}
         ignore_deprecated = self.options.profile_ignore_deprecated
-        
+
         # we hold onto the profiles as we're going, due to the fact
         # profilenodes are weakly cached; hold onto all for this loop,
         # avoids a lot of reparsing at the expense of slightly more memory
@@ -230,14 +230,14 @@ class ProfileAddon(base.Addon):
                 continue
             stable_key = k.lstrip("~")
             unstable_key = "~"+ stable_key
-            stable_r = packages.PackageRestriction("keywords", 
+            stable_r = packages.PackageRestriction("keywords",
                 values.ContainmentMatch(stable_key))
-            unstable_r = packages.PackageRestriction("keywords", 
+            unstable_r = packages.PackageRestriction("keywords",
                 values.ContainmentMatch(stable_key, unstable_key))
-            
+
             default_masked_use = [(packages.AlwaysTrue, (x,)) for x in
                 self.official_arches if x != stable_key]
-            
+
             profile_filters.update({stable_key:[], unstable_key:[]})
             for profile_name in arch_profiles.get(k, []):
                 if not isinstance(profile_name, basestring):
@@ -257,8 +257,8 @@ class ProfileAddon(base.Addon):
                 enabled_flags = misc.collapsed_restrict_to_data(
                     [(packages.AlwaysTrue, (stable_key,))],
                     profile.forced_use.iteritems())
-                
-                # used to interlink stable/unstable lookups so that if 
+
+                # used to interlink stable/unstable lookups so that if
                 # unstable says it's not visible, stable doesn't try
                 # if stable says something is visible, unstable doesn't try.
                 stable_cache = set()
@@ -289,7 +289,7 @@ class ProfileAddon(base.Addon):
 
             self.keywords_filter[stable_key] = stable_r
             self.keywords_filter[unstable_key] = packages.PackageRestriction(
-                "keywords", 
+                "keywords",
                 values.ContainmentMatch(unstable_key))
 
         profile_evaluate_dict = {}
@@ -406,12 +406,12 @@ class UnstatedIUSE(base.Result):
     __slots__ = ("category", "package", "version", "attr", "flags")
 
     threshold = base.versioned_feed
-    
+
     def __init__(self, pkg, attr, flags):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.attr, self.flags = attr, tuple(flags)
-    
+
     @property
     def short_desc(self):
         return "attr(%s) uses unstated flags [ %s ]" % \
@@ -451,14 +451,14 @@ class UseAddon(base.Addon):
 
             except IOError, ie:
                 if ie.errno != errno.ENOENT:
-                    raise		
+                    raise
 
             use_expand_base = osutils.join(profile_base, "profiles", "desc")
             try:
                 for entry in osutils.listdir_files(use_expand_base):
                     try:
                         estr = entry.rsplit(".", 1)[0].lower()+ "_"
-                        unstated_iuse.update(estr + usef.strip() for usef in 
+                        unstated_iuse.update(estr + usef.strip() for usef in
                             read_dict(osutils.join(use_expand_base, entry),
                                 None).iterkeys())
                     except (IOError, OSError), ie:
@@ -471,7 +471,7 @@ class UseAddon(base.Addon):
 
         self.specific_iuse = tuple((x[0], tuple(x[1])) for x in specific_iuse)
         self.collapsed_iuse = misc.non_incremental_collapsed_restrict_to_data(
-            ((packages.AlwaysTrue, known_iuse),), 
+            ((packages.AlwaysTrue, known_iuse),),
             ((packages.AlwaysTrue, unstated_iuse),),
             self.specific_iuse)
         self.global_iuse = frozenset(known_iuse)
@@ -492,7 +492,7 @@ class UseAddon(base.Addon):
         if attr_name is not None:
             return currying.partial(self.use_validate, attr=attr_name)
         return self.use_validate
-        
+
     @staticmethod
     def fake_use_validate(klasses, pkg, seq, reporter, attr=None):
         return iflatten_instance(seq, klasses)
@@ -507,7 +507,7 @@ class UseAddon(base.Addon):
     def use_validate(self, klasses, pkg, seq, reporter, attr=None):
         skip_filter = (packages.Conditional,) + klasses
         unstated = set()
-    
+
         stated = self.iuse_strip(pkg.iuse)
         i = iterables.expandable_chain(lists.iflatten_instance(seq,
                                                                skip_filter))

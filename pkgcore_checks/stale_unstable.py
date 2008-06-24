@@ -13,11 +13,11 @@ class StaleUnstableKeyword(Result):
     packages that have unstable keywords that have been unstable for over a
     month
     """
-    
+
     __slots__ = ("category", "package", "version", "keywords", "period")
 
     threshold = versioned_feed
-    
+
     def __init__(self, pkg, keywords, period):
         Result.__init__(self)
         self._store_cpv(pkg)
@@ -28,7 +28,7 @@ class StaleUnstableKeyword(Result):
     def short_desc(self):
         return "no change in %i days for unstable keywords [ %s ]" % (
             self.period, ', '.join(self.keywords))
-    
+
 
 class StaleUnstableReport(Template):
     """Ebuilds that have sat unstable for over a month"""

@@ -8,18 +8,18 @@ from pkgcore_checks import base, addons
 class LaggingStableInfo(base.Result):
 
     """Arch that is behind another from a stabling standpoint"""
-    
+
     __slots__ = ("category", "package", "version", "keywords",
         "stable")
     threshold = base.versioned_feed
-    
+
     def __init__(self, pkg, keywords):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.keywords = keywords
         self.stable = tuple(str(x) for x in pkg.keywords
             if not x[0] in ("~", "-"))
-    
+
     @property
     def short_desc(self):
         return "stabled arches [ %s ], potentials [ %s ]" % \
@@ -29,7 +29,7 @@ class LaggingStableInfo(base.Result):
 class ImlateReport(base.Template):
 
     """
-    scan for ebuilds that can be stabled based upon stabling status for 
+    scan for ebuilds that can be stabled based upon stabling status for
     other arches
     """
 
@@ -50,9 +50,9 @@ class ImlateReport(base.Template):
     def __init__(self, options, arches):
         base.Template.__init__(self, options)
         arches = frozenset(x.strip().lstrip("~") for x in options.arches)
-        self.target_arches = frozenset("~%s" % x.strip().lstrip("~") 
+        self.target_arches = frozenset("~%s" % x.strip().lstrip("~")
             for x in arches)
-        self.source_arches = frozenset(x.lstrip("~") 
+        self.source_arches = frozenset(x.lstrip("~")
             for x in options.reference_arches)
         self.source_filter = packages.PackageRestriction("keywords",
             values.ContainmentMatch(*self.source_arches))

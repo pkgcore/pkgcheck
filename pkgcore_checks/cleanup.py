@@ -28,10 +28,10 @@ class RedundantVersionWarning(Result):
 
 class RedundantVersionReport(Template):
     """
-    scan for versions that are likely shadowed by later versions from a 
+    scan for versions that are likely shadowed by later versions from a
     keywords standpoint (ignoring -9999 versioned packages)
-    
-    Example: pkga-1 is keyworded amd64, pkga-2 is amd64.  
+
+    Example: pkga-1 is keyworded amd64, pkga-2 is amd64.
     pkga-1 can potentially be removed.
     """
 
@@ -41,7 +41,7 @@ class RedundantVersionReport(Template):
     def feed(self, pkgset, reporter):
         if len(pkgset) == 1:
             return
-        
+
         # algo is roughly thus; spot stable versions, hunt for subset
         # keyworded pkgs that are less then the max version;
         # repeats this for every overshadowing detected

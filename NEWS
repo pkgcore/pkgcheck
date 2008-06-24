@@ -63,7 +63,7 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 
 0.3.3:
 
-* drop digest specific checks; portage now prunes digests on sync regardless 
+* drop digest specific checks; portage now prunes digests on sync regardless
   of whether or not the repo is m2 pure; thus, no way to detect if a missing
   digest is actually a screwup in the repo, or if it's portage being 'special'.
   May re-add the checks down the line, currently however removing them for
@@ -101,7 +101,7 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 * all remaining 'info' statements are pushed to stderr now.
 * new PickleStream reporter; used to serialize check results, and flush the
   stream out stdout.  If you need to get at the data generated, this is the
-  sanest way to do it (alternatives require trying to deserialize what a 
+  sanest way to do it (alternatives require trying to deserialize what a
   reporter does, thus losing data).
 * added new tool replay-pcheck-stream; used to replay a pickle stream through
   alternative reporters.

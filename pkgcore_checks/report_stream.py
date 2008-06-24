@@ -4,7 +4,7 @@
 Replay a pickled results stream from pcheck, feeding the results into a
 reporter.
 
-Useful if you need to delay acting on results until it can be done in 
+Useful if you need to delay acting on results until it can be done in
 one minimal window (say updating a database), or want to generate
 several different reports without using a config defined multiplex reporter.
 """
@@ -29,22 +29,22 @@ class StreamHeader(object):
         self.known_results = set()
         for x in checks:
             self.known_results.update(x.known_results)
-        
+
         self.known_results = tuple(sorted(self.known_results))
         self.criteria = str(criteria)
-        
+
 
 class PickleStream(base.Reporter):
     """
     Generate a stream of pickled objects.
     For each specific target for checks, a header is pickled
-    detailing the checks used, possible results, and search 
+    detailing the checks used, possible results, and search
     criteria.
-    
+
     """
     priority = -1001
     protocol = 0
-    
+
     def __init__(self, out):
         """Initialize.
 
@@ -66,7 +66,7 @@ class PickleStream(base.Reporter):
             self.dump(result, self.out, self.protocol)
         except TypeError, t:
             raise TypeError(result, str(t))
-    
+
 
 class BinaryPickleStream(PickleStream):
     """
@@ -80,7 +80,7 @@ class BinaryPickleStream(PickleStream):
 class OptionParser(commandline.OptionParser):
 
     def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(self, description=__doc__, 
+        commandline.OptionParser.__init__(self, description=__doc__,
             usage="replay_report_stream <pickle-file> <python namespace path"
             "reporter to replay it into>",
             **kwargs)
@@ -91,7 +91,7 @@ class OptionParser(commandline.OptionParser):
 
     def check_values(self, values, args):
         vals, args = commandline.OptionParser.check_values(self, values, args)
-        
+
         if len(args) < 2:
             self.error("need at least two args, pickle file, and reporter")
         elif len(args) > 2:
@@ -101,7 +101,7 @@ class OptionParser(commandline.OptionParser):
             self.error("pickle file %r doesn't exist" % args[0])
         values.reporter = load_attribute(args[1])
         values.stream_path = args[0]
-        
+
         return values, []
 
 
@@ -112,7 +112,7 @@ def replay_stream(stream_handle, reporter, debug=None):
         if isinstance(item, StreamHeader):
             if debug:
                 if headers:
-                    debug.write("finished processing %i results for %s" % 
+                    debug.write("finished processing %i results for %s" %
                         (count - last_count, headers[-1].criteria))
                 last_count = count
                 debug.write("encountered new stream header for %s" %
@@ -126,7 +126,7 @@ def replay_stream(stream_handle, reporter, debug=None):
     if headers:
         reporter.end_check()
         if debug:
-            debug.write("finished processing %i results for %s" % 
+            debug.write("finished processing %i results for %s" %
                 (count - last_count, headers[-1].criteria))
 
 

@@ -42,7 +42,7 @@ class TestDescriptionReport(misc.ReportTestCase):
 class TestKeywordsReport(misc.ReportTestCase):
 
     check_kls = metadata_checks.KeywordsReport
-    
+
     def mk_pkg(self, keywords=""):
         return misc.FakePkg("dev-util/diffball-0.7.1",
             data={"KEYWORDS":keywords})
@@ -62,16 +62,16 @@ class iuse_options(TempDirMixin):
         os.mkdir(os.path.join(repo_base, 'profiles'))
         open(pjoin(repo_base, "profiles", "arch.list"), "w").write(
             "\n".join(kwds.pop("arches", ("x86", "ppc", "amd64"))))
-        
+
         open(pjoin(repo_base, "profiles", "use.desc"), "w").write(
             "\n".join(kwds.pop("use_desc", ("foo", "bar"))))
 
         open(pjoin(repo_base, "profiles", "use.local.desc"), "w").write(
-            "\n".join("dev-util/diffball:%s - blah" % x for x in 
+            "\n".join("dev-util/diffball:%s - blah" % x for x in
                 kwds.pop("use_local_desc", ("lfoo", "lbar"))))
-        
+
         kwds["repo_bases"] = (repo_base,)
-        return misc.Options(**kwds)        
+        return misc.Options(**kwds)
 
 
 class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
@@ -219,7 +219,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
                     self.chksums = {}.fromkeys(
                         set(os.path.basename(x) for x in src_uri.split()),
                         default_chksums)
-            
+
             def _get_digests(self, pkg):
                 return self.chksums
 
@@ -241,7 +241,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         # should puke a metadata error for empty license
         chk = self.mk_check()
         # ensure it pukes about RESTRICT!=fetch, and no uri
-        
+
         r = self.assertIsInstance(self.assertReport(chk,
             self.mk_pkg("foon")),
             metadata_checks.MissingUri)
@@ -254,23 +254,23 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         for x in self.check_kls.valid_protos:
             self.assertNoReport(chk, self.mk_pkg("%s://dar.com/foon" % x),
                 msg="testing valid proto %s" % x)
-        
+
         # grab a proto, and mangle it.
         bad_proto = list(self.check_kls.valid_protos)[0]
         while bad_proto in self.check_kls.valid_protos:
             bad_proto += "s"
-        
+
         r = self.assertIsInstance(self.assertReport(chk,
             self.mk_pkg("%s://foon.com/foon" % bad_proto)),
             metadata_checks.BadProto)
 
         self.assertEqual(r.filename, 'foon');
         self.assertEqual(list(r.bad_uri), ['%s://foon.com/foon' % bad_proto])
-        
+
         # check collapsing.
 
         r = self.assertIsInstance(self.assertReport(chk,
-            self.mk_pkg("%s://foon.com/foon %s://dar.com/foon" % 
+            self.mk_pkg("%s://foon.com/foon %s://dar.com/foon" %
                 (bad_proto, bad_proto))),
             metadata_checks.BadProto)
 

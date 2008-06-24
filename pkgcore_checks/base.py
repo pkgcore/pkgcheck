@@ -174,7 +174,7 @@ class Result(object):
             return self.short_desc
         except NotImplementedError:
             return "result from %s" % self.__class__.__name__
-    
+
     @property
     def short_desc(self):
         raise NotImplementedError
@@ -182,11 +182,11 @@ class Result(object):
     @property
     def long_desc(self):
         return self.short_desc
-    
+
     def _store_cp(self, pkg):
         self.category = pkg.category
         self.package = pkg.package
-    
+
     def _store_cpv(self, pkg):
         self._store_cp(pkg)
         self.version = pkg.fullver
@@ -200,7 +200,7 @@ class Result(object):
                 # rethrow so we at least know the class
                 raise AttributeError(self.__class__, str(a))
         return object.__getstate__(self)
-    
+
     def __setstate__(self, data):
         attrs = set(getattr(self, '__attrs__', getattr(self, '__slots__', [])))
         if attrs.difference(data) or len(attrs) != len(data):
@@ -220,7 +220,7 @@ class Reporter(object):
 
     def start_check(self, source, target):
         pass
-    
+
     def end_check(self):
         pass
 

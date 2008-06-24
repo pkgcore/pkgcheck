@@ -17,7 +17,7 @@ class TestVulnerabilitiesReport(TempDirMixin, misc.ReportTestCase):
 
     def test_it(self):
         # single version, shouldn't yield.
-        check = vuln_report(misc.Options(glsa_location=self.dir, 
+        check = vuln_report(misc.Options(glsa_location=self.dir,
             glsa_enabled=True))
         open(pjoin(self.dir, "glsa-200611-01.xml"), "w").write(
             mk_glsa(("dev-util/diffball", ([], [">0.7"]))))

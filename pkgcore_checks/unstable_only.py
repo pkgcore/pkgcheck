@@ -11,7 +11,7 @@ class UnstableOnly(Result):
     """package/keywords that are strictly unstable"""
 
     __slots__ = ("category", "package", "version", "arch")
-    
+
     threshold = package_feed
 
     def __init__(self, pkgs, arch):
@@ -24,7 +24,7 @@ class UnstableOnly(Result):
     def short_desc(self):
         return "for arch %s, all versions are unstable: [ %s ]" % (
             self.arch, ', '.join(self.version))
-    
+
 
 class UnstableOnlyReport(Template):
     """scan for pkgs that have just unstable keywords"""

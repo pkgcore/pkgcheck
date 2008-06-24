@@ -28,7 +28,7 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
         fake_src.append("# That's it for now\n")
 
         bad = ("/etc/env.d", "/etc/conf.d", "/etc/init.d", "/etc/pam.d",
-            "/usr/share/applications", "/usr/share/applications", 
+            "/usr/share/applications", "/usr/share/applications",
             "//usr/share//applications", "/etc/cron.d", "/etc/cron.hourly",
             "/etc/cron.daily", "/etc/cron.weekly")
         check = BadInsIntoCheck(None, None)

@@ -56,6 +56,6 @@ class DroppedKeywordsReport(Template):
                     arches.discard(key)
             state = oldstate
             lastpkg = pkg
- 
+
         for key, pkg in dropped:
             reporter.add_report(DroppedKeywordWarning(key, pkg))
