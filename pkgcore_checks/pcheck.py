@@ -517,7 +517,8 @@ def main(options, out, err):
         if not pipes:
             out.write(out.fg('red'), ' * ', out.reset, 'No checks!')
         else:
-            err.write('Running %i tests' % (len(sinks) - len(bad_sinks),))
+            if options.debug:
+                err.write('Running %i tests' % (len(sinks) - len(bad_sinks),))
             for source, pipe in pipes:
                 pipe.start()
                 reporter.start_check(list(base.collect_checks_classes(pipe)),

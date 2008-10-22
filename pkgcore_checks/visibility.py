@@ -4,10 +4,56 @@
 from snakeoil.compatibility import any
 from pkgcore_checks import base, addons
 from snakeoil.iterables import caching_iter
-from snakeoil.lists import stable_unique, iflatten_instance
+from snakeoil.lists import stable_unique, iflatten_instance, iflatten_func
 from pkgcore.ebuild.atom import atom
 from snakeoil.demandload import demandload
+from pkgcore.package.mutated import MutatedPkg
 demandload(globals(), "snakeoil.xml:escape")
+
+class FakeConfigurable(object):
+    configurable = True
+    use = ()
+    __slots__ = ('_raw_pkg',)
+
+    def __init__(self, pkg):
+        object.__setattr__(self, '_raw_pkg', pkg)
+
+    def request_enable(self, attr, *vals):
+        if attr != 'use':
+            return False
+        return not set(vals).difference(x.lstrip('-+') for x in self.iuse)
+
+    def request_disable(self, attr, *vals):
+        import pdb;pdb.set_trace()
+
+    def rollback(self, point=0):
+        return True
+
+    def changes_count(self):
+        return 0
+
+    def __getattr__(self, attr):
+        return getattr(self._raw_pkg, attr)
+
+    def __setattr__(self, attr, val):
+        raise AttributeError(self, 'is imutable')
+
+
+
+if hasattr(atom, '_transitive_use_atom'):
+
+    def _eapi2_flatten(val, atom_kls=atom,
+        transitive_use_atom=atom._transitive_use_atom):
+        return isinstance(val, atom_kls) and \
+            not isinstance(val, transitive_use_atom)
+
+    def visit_atoms(pkg, stream):
+        if pkg.eapi < 2:
+            return iflatten_instance(stream, atom)
+        return iflatten_func(stream, _eapi2_flatten)
+else:
+    def visit_atoms(pkg, stream):
+        return iflatten_instance(stream, atom)
 
 
 class VisibleVcsPkg(base.Result):
@@ -102,7 +148,7 @@ class VisibilityReport(base.Template):
         # end result is less going to disk
 
         fvcs = self.vcs_eclasses
-        for eclass in pkg.data["_eclasses_"]:
+        for eclass in pkg.data.get("_eclasses_", ()):
             if eclass in fvcs:
                 # vcs ebuild that better not be visible
                 self.check_visibility_vcs(pkg, reporter)
@@ -111,7 +157,7 @@ class VisibilityReport(base.Template):
         for attr, depset in (("depends", pkg.depends),
             ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
             nonexistant = set()
-            for node in iflatten_instance(depset, atom):
+            for node in visit_atoms(pkg, depset):
 
                 h = str(node)
                 if h not in self.query_cache:
@@ -122,8 +168,14 @@ class VisibilityReport(base.Template):
                         self.query_cache[h] = ()
 
                     else:
-                        matches = caching_iter(
-                            self.options.search_repo.itermatch(node))
+                        if node.use:
+                            matches = caching_iter(
+                                self.options.search_repo.itermatch(node,
+                                    force=True,
+                                    pkg_klass_override=FakeConfigurable))
+                        else:
+                            matches = caching_iter(
+                                self.options.search_repo.itermatch(node))
                         if matches:
                             self.query_cache[h] = matches
                         elif not node.blocks and not node.category == "virtual":

@@ -3,6 +3,17 @@ pkgcore-checks Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
+
+* EAPI2 support for checking use/transitive use deps.
+
+* ticket 216; basically portage doesn't always write out _eclasses_ entries
+  in the cache- if they're empty, it won't.  pkgcore-checks visibility vcs
+  eclass tests assumed otherwise- this is now fixed.
+
+* pcheck now only outputs the number of tests it's running if --debug is
+  enabled.
+
+
 0.4.3:
 
 * ticket 8; false positive unused global USE flags due to not stripping '+-'
