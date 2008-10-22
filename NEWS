@@ -4,6 +4,8 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+0.4.4: Oct 21, 2008
+
 * EAPI2 support for checking use/transitive use deps.
 
 * ticket 216; basically portage doesn't always write out _eclasses_ entries
