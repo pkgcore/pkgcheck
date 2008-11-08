@@ -8,23 +8,40 @@ from snakeoil.lists import stable_unique, iflatten_instance, iflatten_func
 from pkgcore.ebuild.atom import atom
 from snakeoil.demandload import demandload
 from pkgcore.package.mutated import MutatedPkg
+from itertools import imap
 demandload(globals(), "snakeoil.xml:escape")
+
 
 class FakeConfigurable(object):
     configurable = True
     use = ()
-    __slots__ = ('_raw_pkg',)
+    __slots__ = ('_raw_pkg', '_profile')
 
-    def __init__(self, pkg):
+    def __init__(self, pkg, profile):
         object.__setattr__(self, '_raw_pkg', pkg)
+        object.__setattr__(self, '_profile', profile)
 
     def request_enable(self, attr, *vals):
         if attr != 'use':
             return False
-        return not set(vals).difference(x.lstrip('-+') for x in self.iuse)
+        set_vals = frozenset(vals)
+        if set_vals.difference(x.lstrip('-+') for x in self.iuse):
+            # requested a flag that doesn't exist in iuse
+            return False
+        # if any of the flags are in masked_use, it's a no go.
+        return not set_vals.intersection(self._profile.masked_use.
+            iter_pull_data(self._raw_pkg))
 
     def request_disable(self, attr, *vals):
-        import pdb;pdb.set_trace()
+        if attr != 'use':
+            return False
+        set_vals = frozenset(vals)
+        if set_vals.difference(x.lstrip('-+') for x in self.iuse):
+            # requested a flag that doesn't exist in iuse
+            return False
+        # if any of the flags are forced_use, it's a no go.
+        return not set_vals.intersection(self._profile.forced_use.
+            iter_pull_data(self._raw_pkg))
 
     def rollback(self, point=0):
         return True
@@ -54,6 +71,23 @@ if hasattr(atom, '_transitive_use_atom'):
 else:
     def visit_atoms(pkg, stream):
         return iflatten_instance(stream, atom)
+
+if hasattr(atom, 'reduce_atom'):
+    def strip_atom_use(inst):
+        return inst.reduce_atom('use', invert=True)
+else:
+    def strip_atom_use(inst):
+        if '=*' == inst.op:
+            s = '=%s*' % inst.cpvstr
+        else:
+            s = inst.op + inst.cpvstr
+        if inst.blocks:
+            s = '!' + s
+            if not inst.blocks_temp_ignorable:
+                s = '!' + s
+        if inst.slot:
+            s += ':%s' % ','.join(inst.slot)
+        return atom(s)
 
 
 class VisibleVcsPkg(base.Result):
@@ -157,8 +191,9 @@ class VisibilityReport(base.Template):
         for attr, depset in (("depends", pkg.depends),
             ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
             nonexistant = set()
-            for node in visit_atoms(pkg, depset):
+            for orig_node in visit_atoms(pkg, depset):
 
+                node = strip_atom_use(orig_node)
                 h = str(node)
                 if h not in self.query_cache:
                     if h in self.profiles.global_insoluable:
@@ -168,16 +203,12 @@ class VisibilityReport(base.Template):
                         self.query_cache[h] = ()
 
                     else:
-                        if node.use:
-                            matches = caching_iter(
-                                self.options.search_repo.itermatch(node,
-                                    force=True,
-                                    pkg_klass_override=FakeConfigurable))
-                        else:
-                            matches = caching_iter(
-                                self.options.search_repo.itermatch(node))
+                        matches = caching_iter(
+                            self.options.search_repo.itermatch(node))
                         if matches:
                             self.query_cache[h] = matches
+                            if orig_node is not node:
+                                self.query_cache[str(orig_node)] = matches
                         elif not node.blocks and not node.category == "virtual":
                             nonexistant.add(node)
                             self.query_cache[h] = ()
@@ -224,21 +255,26 @@ class VisibilityReport(base.Template):
             for required in csolutions:
                 if any(True for a in required if a.blocks):
                     continue
-                for a in required:
-                    h = str(a)
+                for node in required:
+                    h = str(node)
+
                     if h in insoluable:
                         pass
                     elif h in cache:
                         break
-                    elif provided(a):
+                    elif provided(node):
                         break
-                    elif is_virtual(a):
+                    elif is_virtual(node):
                         cache.add(h)
                         break
-                    elif a.category == "virtual" and h not in self.query_cache:
+                    elif node.category == "virtual" and h not in self.query_cache:
                         insoluable.add(h)
                     else:
-                        if any(True for pkg in self.query_cache[h] if
+                        src = self.query_cache[str(strip_atom_use(node))]
+                        if node.use:
+                            src = (pkg for pkg in src if node.force_True(
+                                FakeConfigurable(pkg, profile)))
+                        if any(True for pkg in src if
                             visible(pkg)):
                             cache.add(h)
                             break

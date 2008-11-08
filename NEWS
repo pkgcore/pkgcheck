@@ -4,7 +4,13 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
-0.4.4: Oct 21, 2008
+0.4.5: November 7, 2008
+
+* verify whether or not a requested use state is actually viable when profile
+  masking/forcing is taken into account.
+
+
+0.4.4: October 21, 2008
 
 * EAPI2 support for checking use/transitive use deps.
 
@@ -16,7 +22,7 @@ See ChangeLog for full commit logs; this is summarized and major changes.
   enabled.
 
 
-0.4.3:
+0.4.3: March 18, 2008
 
 * ticket 8; false positive unused global USE flags due to not stripping '+-'
   from iuse defaults.
@@ -26,12 +32,12 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 * dropped ModularXPortingReport; no longer needed.
 
 
-0.4.2:
+0.4.2: December 15, 2007
 
 * minor release to be EAPI=1 compatible wrt IUSE defaults
 
 
-0.4.1:
+0.4.1: July 16, 2007
 
 * fixed ticket 90; NonExistantDeps occasionally wouldn't report later versions
   of an offender.
@@ -40,7 +46,7 @@ See ChangeLog for full commit logs; this is summarized and major changes.
   instead of having to specify all arches.
 
 
-0.4:
+0.4: June 6, 2007
 
 * update to use snakeoil api.
 
