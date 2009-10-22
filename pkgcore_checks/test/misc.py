@@ -7,7 +7,7 @@ from pkgcore.ebuild import cpv
 # compatibility hack for unversioned/versioned split upcoming
 versioned_CPV = getattr(cpv, "versioned_CPV", None)
 if versioned_CPV is None:
-    versioned_cpv = cpv.CPV
+    versioned_CPV = cpv.CPV
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository.util import SimpleTree
 from pkgcore.ebuild.misc import collapsed_restrict_to_data
