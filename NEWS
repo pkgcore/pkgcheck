@@ -4,6 +4,8 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+0.4.6: October 22, 2009
+
 * fix a bug in tristate use evaluation of potential USE combinations.
   Roughly, if a flag is masked *and* forced, the result is it's masked.
 
