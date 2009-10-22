@@ -4,6 +4,12 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+* fix a bug in tristate use evaluation of potential USE combinations.
+  Roughly, if a flag is masked *and* forced, the result is it's masked.
+
+* compatibility fixes for pkgcore 0.5; 0.5 isn't required, but advised.
+
+
 0.4.5: November 7, 2008
 
 * verify whether or not a requested use state is actually viable when profile

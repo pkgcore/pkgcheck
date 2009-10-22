@@ -97,14 +97,15 @@ class TestQueryCacheAddon(base_test):
 class Test_profile_data(TestCase):
 
     def assertResults(self, profile, known_flags, required_immutable,
-        required_forced, cpv="dev-util/diffball-0.1", key_override=None):
+        required_forced, cpv="dev-util/diffball-0.1", key_override=None,
+        data_override=None):
         if key_override is None:
             key = profile.arch
         profile_data = addons.profile_data("test-profile", key_override,
             profile.make_virtuals_repo(None), profile.provides_repo,
             packages.AlwaysFalse, profile.masked_data, profile.forced_data,
             {}, set())
-        pkg = FakePkg(cpv)
+        pkg = FakePkg(cpv, data=data_override)
         immutable, enabled = profile_data.identify_use(pkg, set(known_flags))
         self.assertEqual(immutable, set(required_immutable))
         self.assertEqual(enabled, set(required_forced))
@@ -132,6 +133,19 @@ class Test_profile_data(TestCase):
         profile = FakeProfile(forced_use={"dev-util/diffball":["lib"]})
         self.assertResults(profile, [], [], [])
         self.assertResults(profile, ["lib", "bar"], ["lib"], ["lib"])
+
+        profile = FakeProfile(forced_use={"dev-util/diffball":["lib"]},
+            masked_use={"dev-util/diffball":["lib"]})
+        self.assertResults(profile, [], [], [])
+        # check that masked use wins out over forced.
+        self.assertResults(profile, ["lib", "bar"], ["lib"], [])
+
+        profile = FakeProfile(forced_use={"dev-util/diffball":["lib"]},
+            masked_use={"dev-util/diffball":["lib"]})
+        self.assertResults(profile, [], [], [])
+        # check that masked use wins out over forced.
+        self.assertResults(profile, ["lib", "bar"], ["lib"], [])
+
 
 
 class profile_mixin(base_test):

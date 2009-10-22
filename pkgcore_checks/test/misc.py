@@ -3,7 +3,9 @@
 
 from pkgcore.test import TestCase
 from pkgcore.ebuild.ebuild_src import package
-from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild import cpv
+# compatibility hack for unversioned/versioned split upcoming
+versioned_CPV = getattr(cpv, "versioned_CPV", "CPV")
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository.util import SimpleTree
 from pkgcore.ebuild.misc import collapsed_restrict_to_data
@@ -22,7 +24,7 @@ class FakePkg(package):
         for x in ("DEPEND", "RDEPEND", "PDEPEND", "IUSE", "LICENSE"):
             data.setdefault(x, "")
 
-        cpv = CPV(cpvstr)
+        cpv = versioned_CPV(cpvstr)
         package.__init__(self, shared, parent, cpv.category, cpv.package,
             cpv.fullver)
         object.__setattr__(self, "data", data)
@@ -34,7 +36,7 @@ class FakeTimedPkg(package):
     def __init__(self, cpvstr, mtime, data=None, shared=None, repo=None):
         if data is None:
             data = {}
-        cpv = CPV(cpvstr)
+        cpv = versioned_CPV(cpvstr)
         package.__init__(self, shared, repo, cpv.category, cpv.package,
             cpv.fullver)
         object.__setattr__(self, "data", data)
@@ -127,7 +129,7 @@ class FakeProfile(object):
             self.forced_use.iteritems())
 
         self.masked_data = collapsed_restrict_to_data(
-            [(AlwaysTrue, default_arches)],
+            [(AlwaysTrue, tuple(set(default_arches).difference((self.arch,))))],
             self.masked_use.iteritems())
 
     def make_virtuals_repo(self, repo):

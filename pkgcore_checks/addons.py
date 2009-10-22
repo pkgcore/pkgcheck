@@ -106,6 +106,9 @@ class profile_data(object):
         enabled = known_flags.intersection(self.forced_use.pull_data(pkg))
         immutable = enabled.union(ifilter(known_flags.__contains__,
             self.masked_use.pull_data(pkg)))
+        force_disabled = self.masked_use.pull_data(pkg)
+        if force_disabled:
+            enabled = enabled.difference(force_disabled)
         return immutable, enabled
 
 
