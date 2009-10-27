@@ -4,6 +4,8 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+0.4.7: October 26, 2009
+
 * fix invalid flagging of use deps on PyQt4 for ia64; basically PyQt4[webkit]
   is valid due to a pkg level masked use reversal... the checking code however
   wasn't doing incremental expansion itself..  Same could occur for forced use.
