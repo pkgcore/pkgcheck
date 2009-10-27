@@ -29,8 +29,8 @@ class FakeConfigurable(object):
             # requested a flag that doesn't exist in iuse
             return False
         # if any of the flags are in masked_use, it's a no go.
-        return not set_vals.intersection(self._profile.masked_use.
-            iter_pull_data(self._raw_pkg))
+        return not set_vals.issubset(self._profile.masked_use.
+            pull_data(self._raw_pkg))
 
     def request_disable(self, attr, *vals):
         if attr != 'use':
@@ -40,8 +40,8 @@ class FakeConfigurable(object):
             # requested a flag that doesn't exist in iuse
             return False
         # if any of the flags are forced_use, it's a no go.
-        return not set_vals.intersection(self._profile.forced_use.
-            iter_pull_data(self._raw_pkg))
+        return not set_vals.issubset(self._profile.forced_use.
+            pull_data(self._raw_pkg))
 
     def rollback(self, point=0):
         return True
