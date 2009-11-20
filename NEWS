@@ -4,6 +4,11 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+* experimental py3k support.
+
+* test runner improvements via depending on snakeoil.distutils_extensions.
+
+
 0.4.7: October 26, 2009
 
 * fix invalid flagging of use deps on PyQt4 for ia64; basically PyQt4[webkit]
