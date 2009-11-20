@@ -153,7 +153,7 @@ def _collect_checks(obj):
     elif isinstance(obj, Addon):
         i = [obj]
     else:
-        i = itertools.chain(*map(collect_checks, i))
+        i = itertools.chain(*map(collect_checks, obj))
     for x in i:
         yield x
 

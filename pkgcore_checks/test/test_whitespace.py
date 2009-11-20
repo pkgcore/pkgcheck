@@ -3,7 +3,6 @@
 
 from pkgcore_checks.test import misc
 from pkgcore_checks.whitespace import WhitespaceCheck
-from pkgcore.interfaces.data_source import read_StringIO
 
 class TestStandardWhitespaces(misc.ReportTestCase):
 

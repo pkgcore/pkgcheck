@@ -248,10 +248,13 @@ class SrcUriReport(base.Template):
     def feed(self, pkg, reporter):
         try:
             lacks_uri = set()
-            # set is required here, due to the fact fetchables can
-            # have duplicate entries.
-            for f_inst in set(self.iuse_filter((fetchable,), pkg,
-                pkg.fetchables, reporter)):
+            # duplicate entries are possible.
+            seen = set()
+            for f_inst in self.iuse_filter((fetchable,), pkg,
+                pkg.fetchables, reporter):
+                if f_inst.filename in seen:
+                    continue
+                seen.add(f_inst.filename)
                 if not f_inst.uri:
                     lacks_uri.add(f_inst.filename)
                 else:

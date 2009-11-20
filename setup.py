@@ -3,65 +3,8 @@
 
 from distutils.core import setup, Command
 from distutils.command.sdist import sdist
-import os, unittest
-
-class TestLoader(unittest.TestLoader):
-
-    """Test loader that knows how to recurse packages."""
-
-    def loadTestsFromModule(self, module):
-        """Recurses if module is actually a package."""
-        paths = getattr(module, '__path__', None)
-        tests = [unittest.TestLoader.loadTestsFromModule(self, module)]
-        if paths is None:
-            # Not a package.
-            return tests[0]
-        for path in paths:
-            for child in os.listdir(path):
-                if (child != '__init__.py' and child.endswith('.py') and
-                    child.startswith('test')):
-                    # Child module.
-                    childname = '%s.%s' % (module.__name__, child[:-3])
-                else:
-                    childpath = os.path.join(path, child)
-                    if not os.path.isdir(childpath):
-                        continue
-                    if not os.path.exists(os.path.join(childpath,
-                                                       '__init__.py')):
-                        continue
-                    # Subpackage.
-                    childname = '%s.%s' % (module.__name__, child)
-                tests.append(self.loadTestsFromName(childname))
-        return self.suiteClass(tests)
-
-
-testLoader = TestLoader()
-
-
-class test(Command):
-
-    """Run our unit tests in a built copy.
-
-    Based on code from setuptools.
-    """
-
-    user_options = []
-
-    def initialize_options(self):
-        # Options? What options?
-        pass
-
-    def finalize_options(self):
-        # Options? What options?
-        pass
-
-    def run(self):
-        build_ext = self.reinitialize_command('build_ext')
-        build_ext.inplace = True
-        self.run_command('build_ext')
-        # Somewhat hackish: this calls sys.exit.
-        unittest.main('pkgcore_checks.test', argv=['setup.py', '-v'],
-            testLoader=testLoader)
+from snakeoil import distutils_extensions as snk_distutils
+import os
 
 
 class mysdist(sdist):
@@ -75,7 +18,7 @@ class mysdist(sdist):
         self.filelist.append("COPYING")
 
     def run(self):
-        print "regenning ChangeLog"
+        sys.stdout.write("regenning ChangeLog")
         os.system("bzr log > ChangeLog")
         sdist.run(self)
 
@@ -83,13 +26,22 @@ packages = []
 for root, dirs, files in os.walk('pkgcore_checks'):
     if '__init__.py' in files:
         package = root.replace(os.path.sep, '.')
-        print 'adding package %r' % (package,)
         packages.append(package)
 
 try:
     os.unlink("MANIFEST")
 except OSError:
     pass
+
+class test(snk_distutils.test):
+
+    default_test_namespace = 'pkgcore_checks'
+    blacklist = frozenset(['pkgcore_checks.plugins'])
+
+class pchecks_build_py(snk_distutils.snk_build_py):
+
+    package_namespace = 'pkgcore_checks'
+
 
 from pkgcore_checks import __version__
 setup(
@@ -105,5 +57,8 @@ setup(
         'pkgcore.plugins.pcheck_configurables',
         ],
     scripts=["pcheck", "replay-pcheck-stream"],
-    cmdclass={"sdist":mysdist, "test":test}
+    cmdclass={"sdist":mysdist,
+        "test":test,
+        "build_py":pchecks_build_py,
+        }
 )

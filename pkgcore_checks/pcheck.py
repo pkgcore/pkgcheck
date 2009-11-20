@@ -130,7 +130,9 @@ class OptionParser(commandline.OptionParser):
         values, args = commandline.OptionParser.check_values(
             self, values, args)
         # XXX hack...
-        values.checks = sorted(get_plugins('check', plugins))
+        values.checks = sorted(lists.unstable_unique(
+            get_plugins('check', plugins)),
+            key=lambda x:x.__name__)
         if values.list_checks or values.list_reporters:
             if values.list_reporters == values.list_checks:
                 raise optparse.OptionValueError("--list-checks and "
