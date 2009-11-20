@@ -296,13 +296,3 @@ class PlugTest(TestCase):
             [source],
             (source, base.CheckRunner([
                         trans_fast(base.CheckRunner([sinks[2]]))])))
-
-    def test_regression(self):
-        # Fairly random test for a specific typo.
-        high_scope_source = DummySource(dummies[5], base.versioned_feed)
-        high_scope_sink = DummySink(dummies[0], base.versioned_feed)
-        self.assertPipes(
-            [high_scope_sink],
-            [],
-            [sources[0], high_scope_source],
-            bad_sinks=[high_scope_sink])
