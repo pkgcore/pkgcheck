@@ -38,7 +38,7 @@ class test(snk_distutils.test):
     default_test_namespace = 'pkgcore_checks'
     blacklist = frozenset(['pkgcore_checks.plugins'])
 
-class pchecks_build_py(snk_distutils.snk_build_py):
+class pchecks_build_py(snk_distutils.build_py):
 
     package_namespace = 'pkgcore_checks'
 
