@@ -4,7 +4,7 @@
 from distutils.core import setup, Command
 from distutils.command.sdist import sdist
 from snakeoil import distutils_extensions as snk_distutils
-import os
+import os, sys
 
 
 class mysdist(sdist):
