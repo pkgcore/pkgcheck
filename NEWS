@@ -4,6 +4,13 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+0.4.9: November 26th, 2009
+
+* fix a bug in test running- bzr_verinfo isn't generated for pkgcore-checks
+  in sdist (no need), yet build_py was trying to regenerate it.  Basically
+  broke installation on machines that lacked bzr.
+
+
 0.4.8: November 26th, 2009
 
 * experimental py3k support.
