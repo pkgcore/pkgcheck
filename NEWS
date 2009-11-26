@@ -4,6 +4,8 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+0.4.8: November 26th, 2009
+
 * experimental py3k support.
 
 * test runner improvements via depending on snakeoil.distutils_extensions.
