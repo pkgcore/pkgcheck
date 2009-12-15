@@ -165,7 +165,7 @@ class VisibilityReport(base.Template):
         addons.EvaluateDepSetAddon)
     known_results = (VisibleVcsPkg, NonExistantDeps, NonsolvableDeps)
 
-    vcs_eclasses = frozenset(["subversion", "git", "cvs", "darcs"])
+    vcs_eclasses = frozenset(["subversion", "git", "cvs", "darcs", "tla", "bzr", "mercurial"])
 
     def __init__(self, options, arches, query_cache, profiles, depset_cache):
         base.Template.__init__(self, options)
@@ -267,8 +267,6 @@ class VisibilityReport(base.Template):
                     elif is_virtual(node):
                         cache.add(h)
                         break
-                    elif node.category == "virtual" and h not in self.query_cache:
-                        insoluable.add(h)
                     else:
                         src = self.query_cache[str(strip_atom_use(node))]
                         if node.use:

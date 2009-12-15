@@ -4,6 +4,11 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+0.4.10: December 14th, 2009
+
+* fix a bug where use deps on metapkgs was invalidly being flagged.
+
+
 0.4.9: November 26th, 2009
 
 * fix a bug in test running- bzr_verinfo isn't generated for pkgcore-checks
