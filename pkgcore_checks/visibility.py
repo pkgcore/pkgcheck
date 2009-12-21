@@ -77,6 +77,8 @@ if hasattr(atom, 'reduce_atom'):
         return inst.reduce_atom('use', invert=True)
 else:
     def strip_atom_use(inst):
+        if not inst.use:
+            return inst
         if '=*' == inst.op:
             s = '=%s*' % inst.cpvstr
         else:
@@ -240,6 +242,7 @@ class VisibilityReport(base.Template):
 
     def process_depset(self, pkg, attr, depset, profiles, reporter):
         csolutions = depset.cnf_solutions()
+        get_cached_query = self.query_cache.get
 
         for profile in profiles:
             failures = set()
@@ -268,7 +271,10 @@ class VisibilityReport(base.Template):
                         cache.add(h)
                         break
                     else:
-                        src = self.query_cache[str(strip_atom_use(node))]
+                        # get is required since there is an intermix between old style
+                        # virtuals and new style- thus the cache priming doesn't get
+                        # all of it.
+                        src = get_cached_query(str(strip_atom_use(node)), ())
                         if node.use:
                             src = (pkg for pkg in src if node.force_True(
                                 FakeConfigurable(pkg, profile)))

@@ -4,6 +4,17 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+0.4.11: December 20th, 2009
+
+* minor speedup in visibility scans- about 3% faster now.
+
+* fix a traceback in deprecated from when portage writes the ebuild cache out
+  w/out any _eclasses_ entry.
+
+* fix a rare traceback in visibility scans where a virtual metapkg has zero
+  matches.
+
+
 0.4.10: December 14th, 2009
 
 * fix a bug where use deps on metapkgs was invalidly being flagged.
