@@ -10,11 +10,12 @@ from pkgcore.package.errors import MetadataException
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from pkgcore.fetch import fetchable
 from pkgcore.restrictions import packages
+from itertools import ifilter
 from snakeoil.osutils import listdir_files
 
 from snakeoil.demandload import demandload
 demandload(globals(), 'snakeoil.xml:escape', 'logging',
-    'itertools:ifilter')
+    )
 
 
 class MetadataError(base.Result):

@@ -3,9 +3,13 @@
 
 import os
 from pkgcore_checks import base
+from snakeoil import compatibility
+urllib_path = 'urllib:urlopen'
+if compatibility.is_py3k:
+    urllib_path = 'urllib.request:urlopen'
 from snakeoil.demandload import demandload
 demandload(globals(),
-    'urllib:urlopen',
+    urllib_path,
     'tempfile:NamedTemporaryFile',
     'pkgcore.log:logger',
     'pkgcore.spawn:spawn,find_binary',
@@ -142,7 +146,7 @@ class base_check(base.Template):
                     dtd = urlopen(self.dtd_url).read()
                     try:
                         open(self.dtd_loc, 'w').write(dtd)
-                    except (IOError, OSError), e:
+                    except EnvironmentError, e:
                         logger.warn(
                             'metadata.dtd could not be written (%s)', e)
                         self.dtd_loc = None

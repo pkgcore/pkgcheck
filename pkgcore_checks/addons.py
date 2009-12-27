@@ -79,9 +79,11 @@ class QueryCacheAddon(base.Template):
     def __init__(self, options):
         base.Addon.__init__(self, options)
         self.query_cache = {}
+        # XXX this should be logging debug info
         self.feed_type = self.options.query_caching_freq
 
     def feed(self, item, reporter):
+        # XXX as should this.
         self.query_cache.clear()
 
 
@@ -464,11 +466,11 @@ class UseAddon(base.Addon):
                         unstated_iuse.update(estr + usef.strip() for usef in
                             read_dict(osutils.join(use_expand_base, entry),
                                 None).iterkeys())
-                    except (IOError, OSError), ie:
+                    except EnvironmentError, ie:
                         if ie.errno != errno.EISDIR:
                             raise
                         del ie
-            except (OSError, IOError), ie:
+            except EnvironmentError, ie:
                 if ie.errno != errno.ENOENT:
                     raise
 

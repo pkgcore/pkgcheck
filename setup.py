@@ -6,21 +6,11 @@ from distutils.command.sdist import sdist
 from snakeoil import distutils_extensions as snk_distutils
 import os, sys
 
+class mysdist(snk_distutils.sdist):
 
-class mysdist(sdist):
-    default_format = dict(sdist.default_format)
-    default_format["posix"] = "bztar"
+    def generate_bzr_verinfo(self, base_dir):
+        pass
 
-    def get_file_list(self):
-        sdist.get_file_list(self)
-        self.filelist.append("NEWS")
-        self.filelist.append("AUTHORS")
-        self.filelist.append("COPYING")
-
-    def run(self):
-        sys.stdout.write("regenning ChangeLog")
-        os.system("bzr log > ChangeLog")
-        sdist.run(self)
 
 packages = []
 for root, dirs, files in os.walk('pkgcore_checks'):

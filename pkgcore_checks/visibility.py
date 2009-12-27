@@ -196,26 +196,25 @@ class VisibilityReport(base.Template):
             for orig_node in visit_atoms(pkg, depset):
 
                 node = strip_atom_use(orig_node)
-                h = str(node)
-                if h not in self.query_cache:
-                    if h in self.profiles.global_insoluable:
+                if node not in self.query_cache:
+                    if node in self.profiles.global_insoluable:
                         nonexistant.add(node)
                         # insert an empty tuple, so that tight loops further
                         # on don't have to use the slower get method
-                        self.query_cache[h] = ()
+                        self.query_cache[node] = ()
 
                     else:
                         matches = caching_iter(
                             self.options.search_repo.itermatch(node))
                         if matches:
-                            self.query_cache[h] = matches
+                            self.query_cache[node] = matches
                             if orig_node is not node:
                                 self.query_cache[str(orig_node)] = matches
                         elif not node.blocks and not node.category == "virtual":
                             nonexistant.add(node)
-                            self.query_cache[h] = ()
-                            self.profiles.global_insoluable.add(h)
-                elif not self.query_cache[h]:
+                            self.query_cache[node] = ()
+                            self.profiles.global_insoluable.add(node)
+                elif not self.query_cache[node]:
                     nonexistant.add(node)
 
             if nonexistant:
@@ -259,31 +258,30 @@ class VisibilityReport(base.Template):
                 if any(True for a in required if a.blocks):
                     continue
                 for node in required:
-                    h = str(node)
 
-                    if h in insoluable:
+                    if node in insoluable:
                         pass
-                    elif h in cache:
+                    elif node in cache:
                         break
                     elif provided(node):
                         break
                     elif is_virtual(node):
-                        cache.add(h)
+                        cache.add(node)
                         break
                     else:
                         # get is required since there is an intermix between old style
                         # virtuals and new style- thus the cache priming doesn't get
                         # all of it.
-                        src = get_cached_query(str(strip_atom_use(node)), ())
+                        src = get_cached_query(strip_atom_use(node), ())
                         if node.use:
                             src = (pkg for pkg in src if node.force_True(
                                 FakeConfigurable(pkg, profile)))
                         if any(True for pkg in src if
                             visible(pkg)):
-                            cache.add(h)
+                            cache.add(node)
                             break
                         else:
-                            insoluable.add(h)
+                            insoluable.add(node)
                 else:
                     # no matches.  not great, should collect them all
                     failures.update(required)
