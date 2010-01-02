@@ -4,6 +4,12 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+* added a null reporter for performance testing.
+
+* more visibility optimizations; an additional 9% chopped off of full repo
+  runs in comparison to 0.4.12.
+
+
 * 0.4.12: December 27th, 2009
 
 * corner case import error in metadata_xml scan for py3k is now fixed; if

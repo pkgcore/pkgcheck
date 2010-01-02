@@ -51,6 +51,7 @@ pkgcore_plugins = {
         reporters.StrReporter,
         reporters.FancyReporter,
         reporters.XmlReporter,
+        reporters.NullReporter,
         report_stream.PickleStream,
         report_stream.BinaryPickleStream,
         ]

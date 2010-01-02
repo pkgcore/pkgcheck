@@ -104,6 +104,21 @@ class FancyReporter(base.Reporter):
         self.out.later_prefix.pop()
 
 
+class NullReporter(base.Reporter):
+
+    """
+    reporter used for timing tests; no output
+    """
+
+    priority = -10000000
+
+    def __init__(self, out):
+        pass
+
+    def add_report(self, result):
+        pass
+
+
 class XmlReporter(base.Reporter):
 
     """
@@ -191,6 +206,8 @@ plain_reporter = make_configurable_reporter_factory(StrReporter)
 plain_reporter.__name__ = 'plain_reporter'
 fancy_reporter = make_configurable_reporter_factory(FancyReporter)
 fancy_reporter.__name__ = 'fancy_reporter'
+null_reporter = make_configurable_reporter_factory(NullReporter)
+null_reporter.__name__ = 'null'
 
 @configurable({'reporters': 'refs:pcheck_reporter_factory'},
               typename='pcheck_reporter_factory')

@@ -255,12 +255,10 @@ class VisibilityReport(base.Template):
             insoluable = profile.insoluable
             visible = profile.visible
             for required in csolutions:
-                if any(True for a in required if a.blocks):
-                    continue
+                # scan all of the quickies, the caches...
                 for node in required:
-
-                    if node in insoluable:
-                        pass
+                    if node.blocks:
+                        break
                     elif node in cache:
                         break
                     elif provided(node):
@@ -268,7 +266,11 @@ class VisibilityReport(base.Template):
                     elif is_virtual(node):
                         cache.add(node)
                         break
-                    else:
+                else:
+                    for node in required:
+                        if node in insoluable:
+                            pass
+
                         # get is required since there is an intermix between old style
                         # virtuals and new style- thus the cache priming doesn't get
                         # all of it.
@@ -282,9 +284,9 @@ class VisibilityReport(base.Template):
                             break
                         else:
                             insoluable.add(node)
-                else:
-                    # no matches.  not great, should collect them all
-                    failures.update(required)
+                    else:
+                        # no matches.  not great, should collect them all
+                        failures.update(required)
             if failures:
                 reporter.add_report(NonsolvableDeps(pkg, attr, profile.key,
                     profile.name, list(failures)))
