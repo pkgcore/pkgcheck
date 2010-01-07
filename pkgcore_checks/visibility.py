@@ -28,15 +28,15 @@ class FakeConfigurable(object):
 
         set_vals = frozenset(vals)
         if self.eapi == 0:
-            if not self.iuse.issuperset(set_vals):
+            if not set_vals.issubset(self.iuse):
                 return False
         else:
-            if set_vals.difference(x.lstrip('-+') for x in self.iuse):
+            if not set_vals.issubset(x.lstrip('-+') for x in self.iuse):
                 # requested a flag that doesn't exist in iuse
                 return False
 
         # if any of the flags are in masked_use, it's a no go.
-        return not set_vals.issubset(self._profile.masked_use.
+        return set_vals.isdisjoint(self._profile.masked_use.
             pull_data(self._raw_pkg))
 
     def request_disable(self, attr, *vals):
@@ -44,15 +44,15 @@ class FakeConfigurable(object):
             return False
         set_vals = frozenset(vals)
         if self.eapi == 0:
-            if not self.iuse.issuperset(set_vals):
+            if not set_vals.issubset(self.iuse):
                 return False
         else:
-            if set_vals.difference(x.lstrip('-+') for x in self.iuse):
+            if set_vals.issubset(x.lstrip('-+') for x in self.iuse):
                 # requested a flag that doesn't exist in iuse
                 return False
 
         # if any of the flags are forced_use, it's a no go.
-        return not set_vals.issubset(self._profile.forced_use.
+        return not set_vals.isdisjoint(self._profile.forced_use.
             pull_data(self._raw_pkg))
 
     def rollback(self, point=0):

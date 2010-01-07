@@ -4,6 +4,9 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+* fix to use dep scanning in visibility where it was missing use deps that
+  can never be satisfied for a specific profile due to use masking/forcing.
+
 * more visibility optimizations; Grand total in combination w/ optimziations
   leveled in snakeoil/pkgcore since pkgcore-checks 0.4.12 released, 58%
   faster now.
