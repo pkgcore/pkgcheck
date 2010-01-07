@@ -94,7 +94,9 @@ class profile_data(object):
         self.key = key
         self.name = profile_name
         self.virtuals = virtuals
+        self.virtuals_has_match = getattr(virtuals, 'has_match', virtuals.match)
         self.provides_repo = provides
+        self.provides_has_match = getattr(provides, 'has_match', provides.match)
         self.masked_use = masked_use
         self.forced_use = forced_use
         self.cache = lookup_cache

@@ -268,8 +268,8 @@ class VisibilityReport(base.Template):
             # long term, probably should do testing in the same respect we do
             # for other visibility tiers
             cache = profile.cache
-            provided = profile.provides_repo.match
-            is_virtual = profile.virtuals.match
+            provided = profile.provides_has_match
+            is_virtual = profile.virtuals_has_match
             insoluable = profile.insoluable
             visible = profile.visible
             for required in csolutions:
@@ -279,7 +279,7 @@ class VisibilityReport(base.Template):
                         break
                     elif provided(node):
                         break
-                    elif is_virtual(node):
+                    elif node.category == 'virtual' and is_virtual(node):
                         cache.add(node)
                         break
                 else:
