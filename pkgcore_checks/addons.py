@@ -528,7 +528,7 @@ class UseAddon(base.Addon):
         # the valid_unstated_iuse filters out USE_EXPAND as long as
         # it's listed in a desc file
         unstated.difference_update(self.unstated_iuse)
-        # hack, see bugs.gentoo.org 134994.
-        unstated.difference_update(["bootstrap"])
+        # hack, see bugs.gentoo.org 134994; same goes for prefix
+        unstated.difference_update(["bootstrap", "prefix"])
         if unstated:
             reporter.add_report(UnstatedIUSE(pkg, attr, unstated))

@@ -2,9 +2,10 @@
 # License: GPL2
 
 from snakeoil.compatibility import any
-from pkgcore_checks import base, addons
 from snakeoil.iterables import caching_iter
 from snakeoil.lists import stable_unique, iflatten_instance, iflatten_func
+from snakeoil import klass
+from pkgcore_checks import base, addons
 from pkgcore.ebuild.atom import atom
 from snakeoil.demandload import demandload
 from pkgcore.package.mutated import MutatedPkg
@@ -24,10 +25,16 @@ class FakeConfigurable(object):
     def request_enable(self, attr, *vals):
         if attr != 'use':
             return False
+
         set_vals = frozenset(vals)
-        if set_vals.difference(x.lstrip('-+') for x in self.iuse):
-            # requested a flag that doesn't exist in iuse
-            return False
+        if self.eapi == 0:
+            if not self.iuse.issuperset(set_vals):
+                return False
+        else:
+            if set_vals.difference(x.lstrip('-+') for x in self.iuse):
+                # requested a flag that doesn't exist in iuse
+                return False
+
         # if any of the flags are in masked_use, it's a no go.
         return not set_vals.issubset(self._profile.masked_use.
             pull_data(self._raw_pkg))
@@ -36,9 +43,14 @@ class FakeConfigurable(object):
         if attr != 'use':
             return False
         set_vals = frozenset(vals)
-        if set_vals.difference(x.lstrip('-+') for x in self.iuse):
-            # requested a flag that doesn't exist in iuse
-            return False
+        if self.eapi == 0:
+            if not self.iuse.issuperset(set_vals):
+                return False
+        else:
+            if set_vals.difference(x.lstrip('-+') for x in self.iuse):
+                # requested a flag that doesn't exist in iuse
+                return False
+
         # if any of the flags are forced_use, it's a no go.
         return not set_vals.issubset(self._profile.forced_use.
             pull_data(self._raw_pkg))
@@ -49,8 +61,7 @@ class FakeConfigurable(object):
     def changes_count(self):
         return 0
 
-    def __getattr__(self, attr):
-        return getattr(self._raw_pkg, attr)
+    __getattr__ = klass.GetAttrProxy("_raw_pkg")
 
     def __setattr__(self, attr, val):
         raise AttributeError(self, 'is imutable')
@@ -240,8 +251,15 @@ class VisibilityReport(base.Template):
                         profile.key, profile.name))
 
     def process_depset(self, pkg, attr, depset, profiles, reporter):
-        csolutions = depset.cnf_solutions()
         get_cached_query = self.query_cache.get
+
+        csolutions = []
+        for required in depset.iter_cnf_solutions():
+            for node in required:
+                if node.blocks:
+                    break
+            else:
+                csolutions.append(required)
 
         for profile in profiles:
             failures = set()
@@ -257,9 +275,7 @@ class VisibilityReport(base.Template):
             for required in csolutions:
                 # scan all of the quickies, the caches...
                 for node in required:
-                    if node.blocks:
-                        break
-                    elif node in cache:
+                    if node in cache:
                         break
                     elif provided(node):
                         break

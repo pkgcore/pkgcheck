@@ -4,10 +4,15 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+* ignore unstated 'prefix' flag in conditionals- much like bootstrap, its'
+  the latest unstated.
+
 * added a null reporter for performance testing.
 
 * more visibility optimizations; an additional 9% chopped off of full repo
-  runs in comparison to 0.4.12.
+  runs in comparison to 0.4.12.  Grand total when in combination w/ other
+  pkgcore/snakeoil optimizations since the last release, 30% faster
+  visibility scans.
 
 
 * 0.4.12: December 27th, 2009
