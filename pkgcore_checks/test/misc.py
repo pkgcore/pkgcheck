@@ -1,5 +1,5 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: BSD/GPL2
 
 from pkgcore.test import TestCase
 from pkgcore.ebuild.ebuild_src import package

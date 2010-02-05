@@ -1,5 +1,5 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: BSD/GPL2
 
 import os, sys, optparse
 from snakeoil.osutils import pjoin, ensure_dirs

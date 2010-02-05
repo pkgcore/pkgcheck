@@ -1,5 +1,5 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: BSD/GPL2
 
 from pkgcore_checks.test import misc
 from pkgcore_checks.cleanup import RedundantVersionReport as redundant_ver

@@ -1,4 +1,4 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: BSD/GPL2
 
 __version__ = "0.4.13"

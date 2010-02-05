@@ -1,5 +1,5 @@
 # Copyright: 2007 Markus Ullmann <jokey@gentoo.org>
-# License: GPL2
+# License: BSD/GPL2
 
 """check for some bad coding styles like insinto's, old variables etc"""
 

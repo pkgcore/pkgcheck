@@ -1,6 +1,6 @@
 # Copyright: 2006 Markus Ullmann <jokey@gentoo.org>
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: GPL2
+# License: BSD/GPL2
 
 import os
 from pkgcore_checks import base

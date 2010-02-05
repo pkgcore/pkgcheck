@@ -1,5 +1,5 @@
 # Copyright: 2007 Markus Ullmann <jokey@gentoo.org>
-# License: GPL2
+# License: BSD/GPL2
 
 from pkgcore_checks.test import misc
 from pkgcore_checks.stale_unstable import StaleUnstableReport

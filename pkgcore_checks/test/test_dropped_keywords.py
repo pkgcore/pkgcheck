@@ -1,5 +1,5 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: BSD/GPL2
 
 from pkgcore_checks.test import misc
 from pkgcore_checks.dropped_keywords import DroppedKeywordsReport as drop_keys
