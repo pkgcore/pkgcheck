@@ -1,0 +1,7 @@
+pkgcore_checks/plugins/plugincache2
+_trial_temp
+pkgcore/plugins/plugincache2
+*.pyc
+*.pyo
+build/
+dist/
