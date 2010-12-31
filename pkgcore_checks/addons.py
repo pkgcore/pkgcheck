@@ -242,8 +242,8 @@ class ProfileAddon(base.Addon):
             unstable_r = packages.PackageRestriction("keywords",
                 values.ContainmentMatch(stable_key, unstable_key))
 
-            default_masked_use = [(packages.AlwaysTrue, (x,)) for x in
-                self.official_arches if x != stable_key]
+            default_masked_use = tuple(set(x for x in self.official_arches
+                if x != stable_key))
 
             profile_filters.update({stable_key:[], unstable_key:[]})
             for profile_name in arch_profiles.get(k, []):
@@ -258,12 +258,17 @@ class ProfileAddon(base.Addon):
                 mask = domain.generate_masking_restrict(profile.masks)
                 virtuals = profile.make_virtuals_repo(options.search_repo)
 
-                immutable_flags = misc.collapsed_restrict_to_data(
-                    default_masked_use,
-                    profile.masked_use.iteritems())
-                enabled_flags = misc.collapsed_restrict_to_data(
-                    [(packages.AlwaysTrue, (stable_key,))],
-                    profile.forced_use.iteritems())
+                immutable_flags = misc.ChunkedDataDict()
+                immutable_flags.merge(profile.masked_use)
+                immutable_flags.add_bare_global((), default_masked_use)
+                immutable_flags.optimize()
+                immutable_flags.freeze()
+
+                enabled_flags = misc.ChunkedDataDict()
+                enabled_flags.merge(profile.forced_use)
+                enabled_flags.add_bare_global((), (stable_key,))
+                enabled_flags.optimize()
+                enabled_flags.freeze
 
                 # used to interlink stable/unstable lookups so that if
                 # unstable says it's not visible, stable doesn't try
