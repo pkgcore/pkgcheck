@@ -220,7 +220,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
                         set(os.path.basename(x) for x in src_uri.split()),
                         default_chksums)
 
-            def _get_digests(self, pkg):
+            def _get_digests(self, pkg, allow_missing=False):
                 return self.chksums
 
         class fake_parent:
