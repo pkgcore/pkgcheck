@@ -10,7 +10,7 @@ if versioned_CPV is None:
     versioned_CPV = cpv.CPV
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository.util import SimpleTree
-from pkgcore.ebuild.misc import collapsed_restrict_to_data
+from pkgcore.ebuild.misc import ChunkedDataDict, split_negations, chunked_data
 from pkgcore.restrictions.packages import AlwaysTrue
 from pkgcore_checks.addons import ArchesAddon
 from pkgcore_checks import base
@@ -119,20 +119,23 @@ class FakeProfile(object):
     def __init__(self, masked_use={}, forced_use={},
         provides={}, masks=[], virtuals={}, arch='x86', name='none'):
         self.provides_repo = SimpleTree(provides)
-        self.masked_use = dict((atom(k), v) for k,v in masked_use.iteritems())
-        self.forced_use = dict((atom(k), v) for k,v in forced_use.iteritems())
+        self.masked_use = ChunkedDataDict()
+        self.masked_use.update_from_stream(
+            chunked_data(atom(k), *split_negations(v))
+            for k,v in masked_use.iteritems())
+        self.masked_use.freeze()
+
+        self.forced_use = ChunkedDataDict()
+        self.forced_use.update_from_stream(
+            chunked_data(atom(k), *split_negations(v))
+            for k,v in forced_use.iteritems())
+        self.forced_use.freeze()
+
         self.masks = tuple(map(atom, masks))
         self.virtuals = SimpleTree(virtuals)
         self.arch = arch
         self.name = name
 
-        self.forced_data = collapsed_restrict_to_data(
-            [(AlwaysTrue, (self.arch,))],
-            self.forced_use.iteritems())
-
-        self.masked_data = collapsed_restrict_to_data(
-            [(AlwaysTrue, tuple(set(default_arches).difference((self.arch,))))],
-            self.masked_use.iteritems())
 
     def make_virtuals_repo(self, repo):
         return self.virtuals

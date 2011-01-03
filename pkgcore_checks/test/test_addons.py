@@ -103,7 +103,7 @@ class Test_profile_data(TestCase):
             key = profile.arch
         profile_data = addons.profile_data("test-profile", key_override,
             profile.make_virtuals_repo(None), profile.provides_repo,
-            packages.AlwaysFalse, profile.masked_data, profile.forced_data,
+            packages.AlwaysFalse, profile.masked_use, profile.forced_use,
             {}, set())
         pkg = FakePkg(cpv, data=data_override)
         immutable, enabled = profile_data.identify_use(pkg, set(known_flags))
@@ -113,12 +113,6 @@ class Test_profile_data(TestCase):
     def test_identify_use(self):
         profile = FakeProfile()
         self.assertResults(profile, [], [], [])
-        # ensure profile.arch comes through immutable and forced
-        self.assertResults(profile, [profile.arch], [profile.arch],
-            [profile.arch])
-        # same, but ensure other known arches are forced off and immutable
-        self.assertResults(profile, list(addons.ArchesAddon.default_arches),
-            list(addons.ArchesAddon.default_arches), [profile.arch])
 
         profile = FakeProfile(masked_use={"dev-util/diffball":["lib"]})
         self.assertResults(profile, [], [], [])
