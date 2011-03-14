@@ -1,9 +1,10 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
 from snakeoil.compatibility import any
 from snakeoil.iterables import caching_iter
 from snakeoil.lists import stable_unique, iflatten_instance, iflatten_func
+from snakeoil.compatibility import is_disjoint
 from snakeoil import klass
 from pkgcore_checks import base, addons
 from pkgcore.ebuild.atom import atom
@@ -36,7 +37,7 @@ class FakeConfigurable(object):
                 return False
 
         # if any of the flags are in masked_use, it's a no go.
-        return set_vals.isdisjoint(self._profile.masked_use.
+        return is_disjoint(set_vals, self._profile.masked_use.
             pull_data(self._raw_pkg))
 
     def request_disable(self, attr, *vals):
@@ -52,7 +53,7 @@ class FakeConfigurable(object):
                 return False
 
         # if any of the flags are forced_use, it's a no go.
-        return not set_vals.isdisjoint(self._profile.forced_use.
+        return not is_disjoint(set_vals, self._profile.forced_use.
             pull_data(self._raw_pkg))
 
     def rollback(self, point=0):
