@@ -4,6 +4,9 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+* LICENSE checks for virtual/* are now suppressed.
+
+
 pkgcore-checks 0.4.13: January 8th, 2010
 
 * fix to use dep scanning in visibility where it was missing use deps that

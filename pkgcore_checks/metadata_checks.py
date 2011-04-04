@@ -94,8 +94,9 @@ class LicenseMetadataReport(base.Template):
             else:
                 licenses = set(i)
                 if not licenses:
-                    reporter.add_report(MetadataError(pkg, "license",
-                        "no license defined"))
+                    if pkg.category != 'virtual':
+                        reporter.add_report(MetadataError(pkg, "license",
+                            "no license defined"))
                 else:
                     licenses.difference_update(self.licenses)
                     if licenses:
