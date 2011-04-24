@@ -4,6 +4,12 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+pkgcore-checks 0.4.14: April 24th, 2011
+
+* Updated compatibility w/ recent snakeoil/pkgcore changes.
+
+* deprecated eclasses list was updated.
+
 * LICENSE checks for virtual/* are now suppressed.
 
 
