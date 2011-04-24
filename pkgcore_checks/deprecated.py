@@ -1,4 +1,4 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
 from pkgcore_checks.base import Template, versioned_feed, Result
@@ -32,6 +32,8 @@ class DeprecatedEclassReport(Template):
     'debian',
     'embassy-2.10',
     'embassy-2.9',
+    'gems',
+    'git',
     'gcc',
     'gnustep-old',
     'gtk-engines',
@@ -45,6 +47,8 @@ class DeprecatedEclassReport(Template):
     'kde-source',
     'kmod',
     'koffice-i18n',
+    'mozconfig', 'mozconfig-2',
+    'mozcoreconf',
     'motif',
     'mozilla',
     'myth',
@@ -54,8 +58,8 @@ class DeprecatedEclassReport(Template):
     'php-2',
     'php-ext',
     'php-ext-base',
-    'php-ext-pecl',
-    'php-ext-source',
+    'php-ext-pecl', 'php-ext-pecl-r1',
+    'php-ext-source', 'php-ext-source-r1',
     'php-lib',
     'php-pear',
     'php-sapi',
@@ -63,8 +67,12 @@ class DeprecatedEclassReport(Template):
     'php5-sapi-r1',
     'php5-sapi-r2',
     'php5-sapi-r3',
+    'qt3', 'qt4',
+    'ruby',
+    'ruby-gnome2',
     'tla',
     'webapp-apache',
+    'x-modular',
     'xfree'))
 
     __doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses:%s\n" % \
