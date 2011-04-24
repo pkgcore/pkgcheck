@@ -8,6 +8,8 @@ import os, sys
 
 class mysdist(snk_distutils.sdist):
 
+    package_namespace = 'pkgcore_checks'
+
     def generate_bzr_verinfo(self, base_dir):
         pass
 
