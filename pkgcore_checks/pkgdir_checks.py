@@ -129,7 +129,7 @@ class PkgDirReport(Template):
         Glep31Violation, InvalidUtf8)
 
     def feed(self, pkgset, reporter):
-        base = os.path.dirname(pkgset[0].ebuild.get_path())
+        base = os.path.dirname(pkgset[0].ebuild.path)
         # note we don't use os.walk, we need size info also
         for filename in os.listdir(base):
             # while this may seem odd, written this way such that the

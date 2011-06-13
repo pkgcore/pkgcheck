@@ -196,7 +196,7 @@ class PackageMetadataXmlCheck(base_check):
         if self.last_seen == pkg.key:
             return
         self.last_seen = pkg.key
-        loc = os.path.join(os.path.dirname(pkg.ebuild.get_path()),
+        loc = os.path.join(os.path.dirname(pkg.ebuild.path),
                            "metadata.xml")
         ret = self.check_file(loc)
         if ret is not None:
