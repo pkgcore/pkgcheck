@@ -24,7 +24,7 @@ class VersionToEbuild(base.Transform):
     cost = 20
 
     def feed(self, pkg, reporter):
-        self.child.feed((pkg, tuple(pkg.ebuild.get_fileobj())), reporter)
+        self.child.feed((pkg, tuple(pkg.ebuild.text_fileobj())), reporter)
 
 
 class EbuildToVersion(base.Transform):
