@@ -6,7 +6,7 @@ demandload(globals(),
     'logging',
     'pkgcore.util.packages:get_raw_pkg',
     'pkgcore.ebuild.atom:atom',
-    'snakeoil.fileutils:iter_read_bash',
+    'snakeoil.bash:iter_read_bash',
     'snakeoil.osutils:pjoin',
 )
 
