@@ -157,11 +157,6 @@ class PkgDirReport(Template):
             del e
             reporter.add_report(MissingFile(pkgset[0], "ChangeLog"))
 
-        if not os.path.exists(pjoin(base, "files")):
-            if pkgset[0].manifest.version == 1:
-                reporter.add_report(MissingFile(pkgset[0], "files"))
-            return
-
         size = 0
         unprocessed_dirs = deque(["files"])
         while unprocessed_dirs:

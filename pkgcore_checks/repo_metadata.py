@@ -239,20 +239,6 @@ class MissingChksum(base.Result):
             (self.filename, ', '.join(self.missing), ', '.join(self.existing))
 
 
-class DeprecatedManifest1(base.Result):
-    """
-    a package's checksum data still is manifest1, instead of manifest2
-    """
-
-    threshold = base.package_feed
-    __slots__ = ("category", "package")
-
-    def __init__(self, pkg):
-        self._store_cp(pkg)
-
-    short_desc = "still is using manifest1 format, should be using manifest2"
-
-
 class Manifest2Transition(base.Template):
 
     """
@@ -262,7 +248,7 @@ class Manifest2Transition(base.Template):
     """
 
     feed_type = base.package_feed
-    known_results = (MissingChksum, DeprecatedManifest1)
+    known_results = (MissingChksum,)
     required_checksums = frozenset(("sha1", "sha256", "rmd160", "size"))
 
     repo_grabber = operator.attrgetter("repo")
@@ -272,9 +258,6 @@ class Manifest2Transition(base.Template):
         for repo, pkgset in itertools.groupby(full_pkgset, self.repo_grabber):
             pkgset = list(pkgset)
             manifest = pkgset[0].manifest
-            if manifest.version == 1:
-                reporter.add_report(DeprecatedManifest1(pkgset[0]))
-                continue
 
             seen = set()
             for pkg in pkgset:
