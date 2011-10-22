@@ -9,6 +9,7 @@
 import optparse
 from itertools import ifilter, ifilterfalse
 from snakeoil.lists import iflatten_instance
+from snakeoil.osutils import pjoin
 
 from pkgcore_checks import base, util
 
@@ -460,10 +461,13 @@ class UseAddon(base.Addon):
                     util.get_use_local_desc(
                         osutils.join(profile_base, 'profiles')).itervalues():
                     specific_iuse.extend(restricts_dict.iteritems())
-
+                logger.debug("using use.local.desc from %s",
+                    pjoin(profile_base, 'profiles', 'use.local.desc'))
             except IOError, ie:
                 if ie.errno != errno.ENOENT:
                     raise
+                logger.debug("no use.local.desc at %s; using metadata.xml parsing instead",
+                    pjoin(profile_base, 'profiles', 'use.local.desc'))
 
             use_expand_base = osutils.join(profile_base, "profiles", "desc")
             try:
