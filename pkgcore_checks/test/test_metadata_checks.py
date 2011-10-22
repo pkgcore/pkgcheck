@@ -221,7 +221,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
                         default_chksums)
 
             def _get_digests(self, pkg, allow_missing=False):
-                return self.chksums
+                return False, self.chksums
 
         class fake_parent:
             _parent_repo = fake_repo(default_chksums)
@@ -238,7 +238,6 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         self.assertEqual(r.attr, 'fetchables')
 
     def test_it(self):
-        # should puke a metadata error for empty license
         chk = self.mk_check()
         # ensure it pukes about RESTRICT!=fetch, and no uri
 
