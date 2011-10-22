@@ -34,7 +34,7 @@ def get_profiles_desc(repo, ignore_dev=False):
 def get_repo_known_arches(profiles_path):
     """Takes the path to the dir with arch.list in it (repo/profiles)."""
     fp = pjoin(profiles_path, "arch.list")
-    return set(open(fp, "r").read().split())
+    return set(iter_read_bash(open(fp, "r").read().split()))
 
 def get_cpvstr(pkg):
     pkg = get_raw_pkg(pkg)
