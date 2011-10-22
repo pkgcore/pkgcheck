@@ -4,6 +4,8 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+* fix racey test failure in test_addons due to ProfileNode instance caching.
+
 * fix exception in pkg directory checks for when files directory
   doesn't exist.
 

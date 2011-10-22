@@ -1,7 +1,7 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-import os, sys, optparse
+import os, sys, optparse, itertools, shutil
 from snakeoil.osutils import pjoin, ensure_dirs
 from pkgcore.test import TestCase
 from snakeoil.test import mixins
@@ -253,7 +253,17 @@ class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
         self.mk_profiles({'default-linux':['x86'],
             'default-linux/x86':["x86"], 'default-linux/ppc':['ppc']},
             base='foo')
-        options = self.process_check(['--profile-base', pjoin(self.dir, 'foo')])
+
+        counter = itertools.count()
+        def run_check(*args):
+            # create a fresh tree for the profile work everytime.
+            # do this, so that it's always a unique pathway- this sidesteps
+            # any potential issues of ProfileNode instance caching.
+            path = pjoin(self.dir, 'foo', str(counter.next()))
+            shutil.copytree(pjoin(self.dir, 'foo'), path, symlinks=True)
+            return self.process_check(['--profile-base', path] + list(args))
+
+        options = run_check()
         check = self.addon_kls(options)
         # assert they're collapsed properly.
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
@@ -285,14 +295,14 @@ class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
         # test collapsing reusing existing profile layout
         open(pjoin(self.dir, 'foo', 'default-linux', 'use.mask'), 'w').write(
             "lib")
-        options = self.process_check(['--profile-base', pjoin(self.dir, 'foo')])
+        options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
         self.assertEqual(len(check.profile_evaluate_dict['x86']), 2)
 
         open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.mask'),
             'w').write("lib")
-        options = self.process_check(['--profile-base', pjoin(self.dir, 'foo')])
+        options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
         self.assertEqual(len(check.profile_evaluate_dict['x86']), 1)
@@ -300,14 +310,14 @@ class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
         # test collapsing reusing existing profile layout
         open(pjoin(self.dir, 'foo', 'default-linux', 'use.force'), 'w').write(
             "foo")
-        options = self.process_check(['--profile-base', pjoin(self.dir, 'foo')])
+        options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
         self.assertEqual(len(check.profile_evaluate_dict['x86']), 2)
 
         open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.force'),
             'w').write("foo")
-        options = self.process_check(['--profile-base', pjoin(self.dir, 'foo')])
+        options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
         self.assertEqual(len(check.profile_evaluate_dict['x86']), 1)
