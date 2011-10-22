@@ -232,6 +232,8 @@ class ProfileAddon(base.Addon):
         # temporarily.
         cached_profiles = []
 
+        chunked_data_cache = {}
+
         for k in self.desired_arches:
             if k.lstrip("~") not in self.desired_arches:
                 continue
@@ -258,16 +260,14 @@ class ProfileAddon(base.Addon):
                 mask = domain.generate_masking_restrict(profile.masks)
                 virtuals = profile.make_virtuals_repo(options.search_repo)
 
-                immutable_flags = misc.ChunkedDataDict()
-                immutable_flags.merge(profile.masked_use)
+                immutable_flags = profile.masked_use.clone(unfreeze=True)
                 immutable_flags.add_bare_global((), default_masked_use)
-                immutable_flags.optimize()
+                immutable_flags.optimize(cache=chunked_data_cache)
                 immutable_flags.freeze()
 
-                enabled_flags = misc.ChunkedDataDict()
-                enabled_flags.merge(profile.forced_use)
+                enabled_flags = profile.forced_use.clone(unfreeze=True)
                 enabled_flags.add_bare_global((), (stable_key,))
-                enabled_flags.optimize()
+                enabled_flags.optimize(cache=chunked_data_cache)
                 enabled_flags.freeze
 
                 # used to interlink stable/unstable lookups so that if
