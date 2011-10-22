@@ -4,6 +4,9 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+* fix exception in pkg directory checks for when files directory
+  doesn't exist.
+
 * cleanup of deprecated api usage.
 
 

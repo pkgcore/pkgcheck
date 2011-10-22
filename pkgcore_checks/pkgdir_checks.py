@@ -158,6 +158,8 @@ class PkgDirReport(Template):
             reporter.add_report(MissingFile(pkgset[0], "ChangeLog"))
 
         size = 0
+        if not os.path.exists(pjoin(base, 'files')):
+            return
         unprocessed_dirs = deque(["files"])
         while unprocessed_dirs:
             cwd = unprocessed_dirs.pop()
