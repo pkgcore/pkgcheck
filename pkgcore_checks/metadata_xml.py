@@ -4,15 +4,26 @@
 import os
 from pkgcore_checks import base
 from snakeoil import compatibility
-urllib_path = 'urllib:urlopen'
+
+from snakeoil.demandload import demandload
 if compatibility.is_py3k:
     urllib_path = 'urllib.request:urlopen'
-from snakeoil.demandload import demandload
+    demandload(globals(),
+        'urllib.request:urlopen',
+        'urllib:error@urllib_error')
+else:
+    # yes, this is a bit special.  We do this
+    # since the two parts we want, exist
+    # in different modules dependant on py2k/py3k.
+    demandload(globals(),
+        'urllib2@urllib_error',
+        'urllib2:urlopen')
 demandload(globals(),
-    urllib_path,
     'tempfile:NamedTemporaryFile',
     'pkgcore.log:logger',
     'pkgcore.spawn:spawn,find_binary',
+    'snakeoil.osutils:pjoin',
+    'snakeoil:fileutils',
 )
 
 
@@ -121,8 +132,11 @@ class base_check(base.Template):
     @classmethod
     def mangle_option_parser(cls, parser):
         if not parser.has_option('--metadata-dtd'):
-            parser.add_option(
-                '--metadata-dtd', help='location to cache %s' % (cls.dtd_url,))
+            parser.add_option('--metadata-dtd',
+                help='location to cache %s' % (cls.dtd_url,))
+            parser.add_option('--metadata-dtd-required',
+                help="if %r cannot be fetched (no connection for example),"
+                    " treat it as a failure rather than warning and ignoring.")
 
     def __init__(self, options):
         base.Template.__init__(self, options)
@@ -130,36 +144,44 @@ class base_check(base.Template):
         self.dtd_file = None
 
     def start(self):
-        loc = self.base
-        if self.base is not None:
-            loc = os.path.join(self.base, "metadata", "dtd", "metadata.dtd")
-            if not os.path.exists(loc):
-                loc = None
-
-        if loc is not None:
-            self.dtd_loc = loc
-        else:
-            self.dtd_loc = self.options.metadata_dtd
-            if self.dtd_loc is not None:
-                if not os.path.exists(self.dtd_loc):
-                    logger.warn('metadata.dtd cannot be opened, refetching')
-                    dtd = urlopen(self.dtd_url).read()
-                    try:
-                        open(self.dtd_loc, 'w').write(dtd)
-                    except EnvironmentError, e:
-                        logger.warn(
-                            'metadata.dtd could not be written (%s)', e)
-                        self.dtd_loc = None
-            if self.dtd_loc is None:
-                dtd = urlopen(self.dtd_url).read()
-                self.dtd_file = NamedTemporaryFile()
-                self.dtd_loc = self.dtd_file.name
-                os.chmod(self.dtd_loc, 0644)
-                self.dtd_file.write(dtd)
-                self.dtd_file.flush()
-
-        self.validator = get_validator(self.dtd_loc)
         self.last_seen = None
+        refetch = False
+        write_path = read_path = self.options.metadata_dtd
+        if write_path is None:
+            read_path = pjoin(self.base, 'metadata', 'dtd', 'metadata.dtd')
+        refetch = not os.path.isfile(read_path)
+
+        if refetch:
+            logger.warn('metadata.dtd cannot be opened from %s, will refetch', read_path)
+            logger.info("fetching metdata.dtd from %s", self.dtd_url)
+            try:
+                dtd_data = urlopen(self.dtd_url).read()
+            except urllib_error.URLError, e:
+                if self.options.metadata_dtd_required:
+                    raise Exception("failed fetching dtd from %s: reason %s"
+                        ".  Due to --metadata-dtd-required in use, bailing" %
+                        (self.dtd_url, e.reason))
+                logger.warn("failed fetching dtd from %s: reason %s",
+                    self.dtd_url, e.reason)
+                self.validator = noop_validator
+                return
+            if write_path is None:
+                self.dtd_file = NamedTemporaryFile()
+                write_path = read_path = self.dtd_file.name
+            try:
+                fileutils.write_file(write_path, 'wb', dtd_data)
+            except EnvironmentError, e:
+                if self.options.metadata_dtd_required:
+                    raise Exception("failed saving dtd to %s: reason %s"
+                        ".  Due to --metadata-dtd-required in use, bailing" %
+                        (write_path, e))
+                logger.warn("failed writing dtd to %s: reason %s.  Disabling check." %
+                    (write_path, e))
+                self.validator = noop_validator
+                return
+
+        self.dtd_loc = read_path
+        self.validator = get_validator(self.dtd_loc)
 
     def feed(self, thing, reporter):
         raise NotImplementedError(self.feed)
@@ -285,4 +307,8 @@ class xmllint_parser(object):
         elif ret == 3:
             return 2
 
+        return 0
+
+
+def noop_validator(loc):
         return 0

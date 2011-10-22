@@ -4,6 +4,10 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+* pkgcore-checks issue #2; if metadata.dtd is required but can't be fetched,
+  suppress metadata_xml check.  If the check must be ran (thus unfetchable
+  metadata.dtd should be a failure), pass --metadata-dtd-required.
+
 * pkgcore-checks now requires pkgcore 0.7.3.
 
 * fix racey test failure in test_addons due to ProfileNode instance caching.
