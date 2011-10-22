@@ -9,8 +9,8 @@ demandload(globals(), "snakeoil.xml:escape")
 
 from pkgcore_checks.base import Result, Template, package_feed
 
+from snakeoil.osutils import listdir, pjoin
 import os, stat
-pjoin = os.path.join
 
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
@@ -131,7 +131,7 @@ class PkgDirReport(Template):
     def feed(self, pkgset, reporter):
         base = os.path.dirname(pkgset[0].ebuild.path)
         # note we don't use os.walk, we need size info also
-        for filename in os.listdir(base):
+        for filename in listdir(base):
             # while this may seem odd, written this way such that the
             # filtering happens all in the genexp.  if the result was being
             # handed to any, it's a frame switch each
@@ -161,7 +161,7 @@ class PkgDirReport(Template):
         unprocessed_dirs = deque(["files"])
         while unprocessed_dirs:
             cwd = unprocessed_dirs.pop()
-            for fn in os.listdir(pjoin(base, cwd)):
+            for fn in listdir(pjoin(base, cwd)):
                 afn = pjoin(base, cwd, fn)
                 st = os.lstat(afn)
 
