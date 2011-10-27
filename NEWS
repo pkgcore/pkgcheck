@@ -4,6 +4,8 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+pkgcore-checks 0.4.15: Oct 27th, 2011
+
 * pkgcore-checks issue #2; if metadata.dtd is required but can't be fetched,
   suppress metadata_xml check.  If the check must be ran (thus unfetchable
   metadata.dtd should be a failure), pass --metadata-dtd-required.
