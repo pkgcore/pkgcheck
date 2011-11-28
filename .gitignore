@@ -1,6 +1,6 @@
-pkgcore_checks/plugins/plugincache2
+pkgcore_checks/plugins/plugincache
+pkgcore/plugins/plugincache
 _trial_temp
-pkgcore/plugins/plugincache2
 *.pyc
 *.pyo
 build/
