@@ -196,7 +196,7 @@ class VisibilityReport(base.Template):
         # end result is less going to disk
 
         fvcs = self.vcs_eclasses
-        for eclass in pkg.data.get("_eclasses_", ()):
+        for eclass in pkg.inherited:
             if eclass in fvcs:
                 # vcs ebuild that better not be visible
                 self.check_visibility_vcs(pkg, reporter)
