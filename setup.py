@@ -9,6 +9,7 @@ import os, sys
 class mysdist(snk_distutils.sdist):
 
     package_namespace = 'pkgcore_checks'
+    old_verinfo = False
 
     def generate_bzr_verinfo(self, base_dir):
         pass
@@ -34,7 +35,7 @@ class test(snk_distutils.test):
 class pchecks_build_py(snk_distutils.build_py):
 
     package_namespace = 'pkgcore_checks'
-    generate_bzr_ver = False
+    generate_verinfo = True
 
 
 from pkgcore_checks import __version__
