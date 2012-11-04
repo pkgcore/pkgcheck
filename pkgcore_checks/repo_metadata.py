@@ -6,6 +6,7 @@ import operator, itertools
 from pkgcore_checks import base, util, addons
 from pkgcore.ebuild.repository import SlavedTree
 from snakeoil.osutils import listdir_dirs
+from snakeoil import mappings
 from pkgcore.chksum.errors import MissingChksum
 
 from snakeoil.demandload import demandload
@@ -197,27 +198,8 @@ class ConflictingChksums(base.Result):
 
     @property
     def short_desc(self):
-        return "conflicts with (%s) for file %s chksums %s" % (
+        return "conflicts with (%s) for file %s chksum %s" % (
             ', '.join(self.others), self.filename, self.chksums)
-
-
-class OrphanedManifestDist(base.Result):
-    """
-    manifest2 has a checksum entry digest lacks
-    """
-
-    __slots__ = ("category", "package", "files")
-
-    threshold = base.package_feed
-
-    def __init__(self, pkg, files):
-        base.Result.__init__(self)
-        self._store_cp(pkg)
-        self.files = tuple(sorted(files))
-
-    @property
-    def short_desc(self):
-        return "manifest2 knows of files %r, but digest1 doesn't" % (self.files,)
 
 
 class MissingChksum(base.Result):
@@ -239,35 +221,52 @@ class MissingChksum(base.Result):
             (self.filename, ', '.join(self.missing), ', '.join(self.existing))
 
 
-class Manifest2Transition(base.Template):
+class RequiredChksums(base.Template):
 
     """
-    various checks for Manifest1/digest transition to Manifest2;
-    check for packages not converted, check for manifest2 packages lacking
-    required checksums
+    Check to ensure that the required manifest hashes are in use.
     """
 
     feed_type = base.package_feed
     known_results = (MissingChksum,)
-    required_checksums = frozenset(("sha1", "sha256", "rmd160", "size"))
 
     repo_grabber = operator.attrgetter("repo")
+
+    def __init__(self, options):
+        base.Template.__init__(self, options)
+        self.required_checksums = mappings.defaultdictkey(
+            lambda repo: frozenset(repo.config.manifests.hashes if hasattr(repo, 'config') else ()))
+        self.seen_checksums = {}
 
     def feed(self, full_pkgset, reporter):
         # sort it by repo.
         for repo, pkgset in itertools.groupby(full_pkgset, self.repo_grabber):
+            required_checksums = self.required_checksums[repo]
             pkgset = list(pkgset)
             manifest = pkgset[0].manifest
 
             seen = set()
             for pkg in pkgset:
-                for f_inst in (iflatten_instance(pkg.fetchables,
-                    fetch.fetchable)):
+                for f_inst in (iflatten_instance(pkg.fetchables, fetch.fetchable)):
                     if f_inst.filename in seen:
                         continue
-                    missing = self.required_checksums.difference(f_inst.chksums)
+                    missing = required_checksums.difference(f_inst.chksums)
                     if missing:
                         reporter.add_report(
                             MissingChksum(pkg, f_inst.filename, missing,
                                 f_inst.chksums))
                     seen.add(f_inst.filename)
+                    existing = self.seen_checksums.get(f_inst.filename)
+                    if existing is None:
+                        existing = ([pkg], dict(f_inst.chksums.iteritems()))
+                        continue
+                    seen_pkgs, seen_chksums = existing
+                    for chf_type, value in seen_chksums.iteritems():
+                        our_value = f_inst.chksums.get(chf_type)
+                        if our_value is not None and our_value != value:
+                            reporter.add_result(ConflictingChksums(
+                                pkg, f_inst.filename, f_inst.chksums, seen_chksums))
+                            break
+                    else:
+                        seen_chksums.update(f_inst.chksums)
+                        seen_pkgs.append(pkg)

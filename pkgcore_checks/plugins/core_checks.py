@@ -32,7 +32,7 @@ pkgcore_plugins = {
         repo_metadata.UnusedLocalFlags,
         repo_metadata.UnusedGlobalFlags,
         repo_metadata.UnusedLicense,
-        repo_metadata.Manifest2Transition,
+        repo_metadata.RequiredChksums,
         stale_unstable.StaleUnstableReport,
         unstable_only.UnstableOnlyReport,
         visibility.VisibilityReport,

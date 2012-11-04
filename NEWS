@@ -4,6 +4,14 @@ pkgcore-checks Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 
+* Conflicting manifests chksums scanning was added.
+
+* Removed hardcoded manifest hashes list, use layout.conf defined list of
+  required hashes (didn't exist till ~5 years after the check was written).
+
+* Update pkgcore API usage to move away from deprecated functionality.
+
+
 pkgcore-checks 0.4.15: Oct 27th, 2011
 
 * pkgcore-checks issue #2; if metadata.dtd is required but can't be fetched,

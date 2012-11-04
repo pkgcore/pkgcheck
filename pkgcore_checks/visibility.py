@@ -28,7 +28,7 @@ class FakeConfigurable(object):
             return False
 
         set_vals = frozenset(vals)
-        if self.eapi == 0:
+        if str(self.eapi) == '0':
             if not set_vals.issubset(self.iuse):
                 return False
         else:
@@ -44,7 +44,7 @@ class FakeConfigurable(object):
         if attr != 'use':
             return False
         set_vals = frozenset(vals)
-        if self.eapi == 0:
+        if str(self.eapi) == '0':
             if not set_vals.issubset(self.iuse):
                 return False
         else:
@@ -69,39 +69,30 @@ class FakeConfigurable(object):
 
 
 
-if hasattr(atom, '_transitive_use_atom'):
+def _eapi2_flatten(val, atom_kls=atom,
+    transitive_use_atom=atom._transitive_use_atom):
+    return isinstance(val, atom_kls) and \
+        not isinstance(val, transitive_use_atom)
 
-    def _eapi2_flatten(val, atom_kls=atom,
-        transitive_use_atom=atom._transitive_use_atom):
-        return isinstance(val, atom_kls) and \
-            not isinstance(val, transitive_use_atom)
-
-    def visit_atoms(pkg, stream):
-        if pkg.eapi < 2:
-            return iflatten_instance(stream, atom)
-        return iflatten_func(stream, _eapi2_flatten)
-else:
-    def visit_atoms(pkg, stream):
+def visit_atoms(pkg, stream):
+    if pkg.eapi < 2:
         return iflatten_instance(stream, atom)
+    return iflatten_func(stream, _eapi2_flatten)
 
-if hasattr(atom, 'reduce_atom'):
-    def strip_atom_use(inst):
-        return inst.reduce_atom('use', invert=True)
-else:
-    def strip_atom_use(inst):
-        if not inst.use:
-            return inst
-        if '=*' == inst.op:
-            s = '=%s*' % inst.cpvstr
-        else:
-            s = inst.op + inst.cpvstr
-        if inst.blocks:
+def strip_atom_use(inst):
+    if not inst.use:
+        return inst
+    if '=*' == inst.op:
+        s = '=%s*' % inst.cpvstr
+    else:
+        s = inst.op + inst.cpvstr
+    if inst.blocks:
+        s = '!' + s
+        if not inst.blocks_temp_ignorable:
             s = '!' + s
-            if not inst.blocks_temp_ignorable:
-                s = '!' + s
-        if inst.slot:
-            s += ':%s' % ','.join(inst.slot)
-        return atom(s)
+    if inst.slot:
+        s += ':%s' % ','.join(inst.slot)
+    return atom(s)
 
 
 class VisibleVcsPkg(base.Result):
