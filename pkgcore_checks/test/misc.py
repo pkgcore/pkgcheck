@@ -3,7 +3,7 @@
 
 from pkgcore.test import TestCase
 from pkgcore.ebuild.ebuild_src import package
-from pkgcore.ebuild import cpv
+from pkgcore.ebuild import cpv, eapi
 # compatibility hack for unversioned/versioned split upcoming
 versioned_CPV = getattr(cpv, "versioned_CPV", None)
 if versioned_CPV is None:
@@ -30,6 +30,10 @@ class FakePkg(package):
         package.__init__(self, shared, parent, cpv.category, cpv.package,
             cpv.fullver)
         object.__setattr__(self, "data", data)
+
+    @property
+    def eapi_obj(self):
+        return eapi.get_eapi(self.data.get('EAPI', '0'))
 
 
 class FakeTimedPkg(package):

@@ -28,7 +28,7 @@ class FakeConfigurable(object):
             return False
 
         set_vals = frozenset(vals)
-        if str(self.eapi) == '0':
+        if self.eapi_obj.magic == '0':
             if not set_vals.issubset(self.iuse):
                 return False
         else:
@@ -44,7 +44,7 @@ class FakeConfigurable(object):
         if attr != 'use':
             return False
         set_vals = frozenset(vals)
-        if str(self.eapi) == '0':
+        if self.eapi_obj.magic == '0':
             if not set_vals.issubset(self.iuse):
                 return False
         else:
@@ -75,7 +75,7 @@ def _eapi2_flatten(val, atom_kls=atom,
         not isinstance(val, transitive_use_atom)
 
 def visit_atoms(pkg, stream):
-    if pkg.eapi < 2:
+    if not pkg.eapi_obj.options.transitive_use_atoms:
         return iflatten_instance(stream, atom)
     return iflatten_func(stream, _eapi2_flatten)
 
