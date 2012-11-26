@@ -3,11 +3,13 @@
 
 import os, sys, optparse, itertools, shutil
 from snakeoil.osutils import pjoin, ensure_dirs
+from snakeoil.fileutils import write_file
 from pkgcore.test import TestCase
 from snakeoil.test import mixins
 from pkgcore_checks import addons, base
-from pkgcore_checks.test.misc import FakePkg, FakeProfile
+from pkgcore_checks.test.misc import FakePkg, FakeProfile, Options
 from pkgcore.ebuild.misc import collapsed_restrict_to_data
+from pkgcore.ebuild import repo_objs
 from pkgcore.restrictions import packages
 from pkgcore.ebuild.atom import atom
 
@@ -141,19 +143,32 @@ class Test_profile_data(TestCase):
         self.assertResults(profile, ["lib", "bar"], ["lib"], [])
 
 
+class QuietRepoConfig(repo_objs.RepoConfig):
 
-class profile_mixin(base_test):
+    def load_config(self):
+        return {'masters': ''}
+
+
+class profile_mixin(mixins.TempDirMixin, base_test):
 
     addon_kls = addons.ProfileAddon
 
-    def process_check(self, *args, **kwds):
+    def setUp(self):
+        mixins.TempDirMixin.setUp(self)
+        base_test.setUp(self)
+
+    def process_check(self, profile_base, *args, **kwds):
         options = base_test.process_check(self, *args, **kwds)
-        class c:pass
-        options.search_repo = c()
+        options.search_repo = Options()
+        if profile_base is None:
+            repo = QuietRepoConfig(self.dir)
+        else:
+            repo = QuietRepoConfig(profile_base, profiles_base='.')
+        options.target_repo = Options(config=repo)
         return options
 
 
-class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
+class TestProfileAddon(profile_mixin):
 
     def mk_profiles(self, profiles, base='default', arches=None):
         loc = pjoin(self.dir, base)
@@ -163,7 +178,8 @@ class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
                 msg="failed creating profile %r" % profile)
         if arches is None:
             arches = set(val[0] for val in profiles.itervalues())
-        open(pjoin(loc, 'arch.list'), 'w').write("\n".join(arches))
+        write_file(pjoin(loc, 'arch.list'), 'w', "\n".join(arches))
+        write_file(pjoin(loc, 'repo_name'), 'w', 'testing')
         fd = open(pjoin(loc, 'profiles.desc'), 'w')
         for profile, vals in profiles.iteritems():
             l = len(vals)
@@ -184,15 +200,14 @@ class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
 
     def test_defaults(self):
         self.mk_profiles({"profile1":["x86"], "profile1/2":["x86"]}, base='profiles')
-        class fake_repo:
-            base = self.dir
-        options = self.process_check([],
-            preset_values={"src_repo":fake_repo()},
+        os.mkdir(pjoin(self.dir, 'metadata'))
+        # write masters= to suppress logging complaints.
+        write_file(pjoin(self.dir, 'metadata', 'layout.conf'), 'w', 'masters=')
+        options = self.process_check(None, [],
             profiles_enabled=[], profiles_disabled=[],
             profile_ignore_deprecated=False, profiles_desc_enabled=True,
             profile_ignore_dev=False)
         # override the default
-        options.search_repo = options.src_repo
         check = self.addon_kls(options)
         self.assertEqual(sorted(check.official_arches), ['x86'])
         self.assertEqual(sorted(check.desired_arches), ['x86'])
@@ -202,15 +217,14 @@ class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
     def test_profile_base(self):
         self.mk_profiles({"default-linux":["x86", True],
             "default-linux/x86":["x86"]}, base='foo')
-        options = self.process_check(['--profile-base', pjoin(self.dir, 'foo')])
+        options = self.process_check(pjoin(self.dir, 'foo'), [])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
 
     def test_disable_dev(self):
         self.mk_profiles({"default-linux":["x86", True],
             "default-linux/x86":["x86"]}, base='foo')
-        options = self.process_check(['--profile-base', pjoin(self.dir, 'foo'),
-            '--profile-disable-dev'],
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-dev'],
             profile_ignore_dev=True)
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
@@ -218,8 +232,7 @@ class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
     def test_disable_deprecated(self):
         self.mk_profiles({"default-linux":["x86", False, True],
             "default-linux/x86":["x86"]}, base='foo')
-        options = self.process_check(['--profile-base', pjoin(self.dir, 'foo'),
-            '--profile-disable-deprecated'],
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-deprecated'],
             profile_ignore_deprecated=True)
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
@@ -227,16 +240,14 @@ class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
     def test_disable_profiles_desc(self):
         self.mk_profiles({"default-linux":["x86"],
             "default-linux/x86":["x86"]}, base='foo')
-        options = self.process_check(['--profile-base', pjoin(self.dir, 'foo'),
-            '--profile-disable-profiles-desc'])
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-profiles-desc'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86')
 
     def test_profile_enable(self):
         self.mk_profiles({"default-linux":["x86"],
             "default-linux/x86":["x86"]}, base='foo')
-        options = self.process_check(['--profile-base', pjoin(self.dir, 'foo'),
-            '--profile-disable-profiles-desc',
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-profiles-desc',
             '--profile-enable', 'default-linux/x86'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
@@ -244,8 +255,7 @@ class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
     def test_profile_disable(self):
         self.mk_profiles({"default-linux":["x86"],
             "default-linux/x86":["x86"]}, base='foo')
-        options = self.process_check(['--profile-base', pjoin(self.dir, 'foo'),
-            '--profile-disable', 'default-linux/x86'])
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable', 'default-linux/x86'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux')
 
@@ -261,7 +271,7 @@ class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
             # any potential issues of ProfileNode instance caching.
             path = pjoin(self.dir, 'foo', str(counter.next()))
             shutil.copytree(pjoin(self.dir, 'foo'), path, symlinks=True)
-            return self.process_check(['--profile-base', path] + list(args))
+            return self.process_check(path, list(args))
 
         options = run_check()
         check = self.addon_kls(options)
@@ -323,13 +333,13 @@ class TestProfileAddon(mixins.TempDirMixin, profile_mixin):
         self.assertEqual(len(check.profile_evaluate_dict['x86']), 1)
 
 
-class TestEvaluateDepSetAddon(mixins.TempDirMixin, profile_mixin):
+class TestEvaluateDepSetAddon(profile_mixin):
 
     addon_kls = addons.EvaluateDepSetAddon
     orig_addon_kls = addon_kls
 
     def setUp(self):
-        mixins.TempDirMixin.setUp(self)
+        profile_mixin.setUp(self)
         open(pjoin(self.dir, "arch.list"), "w").write(
             "\n".join(addons.ArchesAddon.default_arches))
         self.addon_kls = self.orig_addon_kls
@@ -345,11 +355,14 @@ class TestEvaluateDepSetAddon(mixins.TempDirMixin, profile_mixin):
             enabled.append("--profile-enable")
             enabled.append(x.name)
         profile_options = profile_mixin.process_check(self,
-            ['--profile-base', self.dir, '--profile-disable-profiles-desc'] +
+            self.dir, ['--profile-disable-profiles-desc'] +
             enabled)
         self.addon_kls = self.orig_addon_kls
         profiles = dict((x.name, x) for x in profiles)
-        profile_options.profile_func = lambda x: profiles[x]
+        profiles_obj = Options(create_profile=lambda x: profiles[x])
+        # XXX: Cheat.
+        object.__setattr__(profile_options.target_repo.config, '_profiles',
+                           profiles_obj)
         profile_check = addons.ProfileAddon(profile_options)
 
         # now we're good to go.

@@ -11,7 +11,7 @@ from itertools import ifilter, ifilterfalse
 from snakeoil.lists import iflatten_instance
 from snakeoil.osutils import pjoin
 
-from pkgcore_checks import base, util
+from pkgcore_checks import base
 
 from snakeoil import (demandload, currying, containers, mappings, iterables,
     lists)
@@ -20,7 +20,7 @@ demandload.demandload(globals(),
     'errno',
     'snakeoil:osutils',
     'pkgcore.restrictions:packages,values',
-    'pkgcore.ebuild:misc,domain,profiles',
+    'pkgcore.ebuild:misc,domain,profiles,repo_objs',
     'snakeoil.fileutils:read_dict',
     'pkgcore.log:logger',
 )
@@ -125,37 +125,25 @@ class ProfileAddon(base.Addon):
             values.profiles_enabled = []
         if values.profiles_disabled is None:
             values.profiles_disabled = []
-        profile_loc = getattr(values, "profile_dir", None)
+        profiles_dir = getattr(values, "profiles_dir", None)
 
-        if profile_loc is not None:
-            if not os.path.isdir(profile_loc):
+        if profiles_dir is not None:
+            profiles_dir = os.path.abspath(profiles_dir)
+            if not os.path.isdir(profiles_dir):
                 raise optparse.OptionValueError(
                     "profile-base location %r doesn't exist/isn't a dir" % (
-                        profile_loc,))
-        else:
-            # TODO improve this to handle multiple profiles dirs.
-            repo_base = getattr(values.src_repo, 'base', None)
-            if repo_base is None:
-                raise optparse.OptionValueError(
-                    'Need a target repo or --overlayed-repo that is a single '
-                    'UnconfiguredTree for profile checks')
-            profile_loc = osutils.pjoin(repo_base, "profiles")
-            if not os.path.isdir(profile_loc):
-                raise optparse.OptionValueError(
-                    "repo %r lacks a profiles directory" % (values.src_repo,))
-
-        profile_loc = osutils.abspath(profile_loc)
-        values.profile_func = currying.pre_curry(profiles.OnDiskProfile,
-                                                 profile_loc)
-        values.profile_base_dir = profile_loc
+                        profiles_dir,))
+        values.profiles_dir = profiles_dir
 
     @staticmethod
     def mangle_option_parser(parser):
         group = parser.add_option_group('Profiles')
         group.add_option(
             "--profile-base", action='store', type='string',
-            dest='profile_dir', default=None,
-            help="filepath to base profiles directory")
+            dest='profiles_dir', default=None,
+            help="filepath to base profiles directory.  This will override the "
+            "default usage of profiles bundled in the target repository; primarily "
+            "for testing.")
         group.add_option(
             "--profile-disable-dev", action='store_true',
             default=False, dest='profile_ignore_dev',
@@ -179,9 +167,13 @@ class ProfileAddon(base.Addon):
     def __init__(self, options, *args):
         base.Addon.__init__(self, options)
 
-        def norm_name(name):
-            return '/'.join(y for y in name.split('/') if y)
+        norm_name = lambda s: '/'.join(filter(None, s.split('/')))
 
+        if options.profiles_dir:
+            profiles_obj = repo_objs.BundledProfiles(options.profiles_dir)
+        else:
+            profiles_obj = options.target_repo.config.profiles
+        options.profiles_obj = profiles_obj
         disabled = set(norm_name(x) for x in options.profiles_disabled)
         enabled = set(x for x in
             (norm_name(y) for y in options.profiles_enabled)
@@ -189,33 +181,26 @@ class ProfileAddon(base.Addon):
 
         arch_profiles = {}
         if options.profiles_desc_enabled:
-            d = \
-                util.get_profiles_desc(options.profile_base_dir,
-                    ignore_dev=options.profile_ignore_dev)
-
-            for k, v in d.iteritems():
-                l = [x for x in map(norm_name, v)
-                    if not x in disabled]
+            for arch, profiles in options.profiles_obj.arch_profiles.iteritems():
+                if options.profile_ignore_dev:
+                    profiles = (x for x in profiles if x.status != 'dev')
+                l = [x.profile for x in profiles if x.profile not in disabled]
 
                 # wipe any enableds that are here already so we don't
                 # get a profile twice
                 enabled.difference_update(l)
-                if v:
-                    arch_profiles[k] = l
+                if l:
+                    arch_profiles[arch] = l
 
         for x in enabled:
-            p = options.profile_func(x)
+            p = options.profiles_obj.create_profile(x)
             arch = p.arch
             if arch is None:
                 raise profiles.ProfileError(p.path, 'make.defaults',
                     "profile %s lacks arch settings, unable to use it" % x)
             arch_profiles.setdefault(p.arch, []).append((x, p))
 
-        for x in options.profiles_enabled:
-            options.profile_func(x)
-
-        self.official_arches = util.get_repo_known_arches(
-            options.profile_base_dir)
+        self.official_arches = options.target_repo.config.known_arches
 
         self.desired_arches = getattr(self.options, 'arches', None)
         if self.desired_arches is None:
@@ -253,7 +238,7 @@ class ProfileAddon(base.Addon):
                 if not isinstance(profile_name, basestring):
                     profile_name, profile = profile_name
                 else:
-                    profile = options.profile_func(profile_name)
+                    profile = options.profiles_obj.create_profile(profile_name)
                     cached_profiles.append(profile)
                 if ignore_deprecated and profile.deprecated:
                     continue
@@ -438,54 +423,16 @@ class UseAddon(base.Addon):
     def __init__(self, options, silence_warnings=False):
         base.Addon.__init__(self, options)
         known_iuse = set()
-        specific_iuse = []
         unstated_iuse = set()
         known_arches = set()
         arches = set()
 
-        for profile_base in options.repo_bases:
-            try:
-                known_iuse.update(util.get_use_desc(
-                    osutils.join(profile_base, 'profiles')))
-            except IOError, ie:
-                if ie.errno != errno.ENOENT:
-                    raise
-            try:
-                arches.update(util.get_repo_known_arches(
-                    osutils.join(profile_base, 'profiles')))
-            except IOError, ie:
-                if ie.errno != errno.ENOENT:
-                    raise
-            try:
-                for restricts_dict in \
-                    util.get_use_local_desc(
-                        osutils.join(profile_base, 'profiles')).itervalues():
-                    specific_iuse.extend(restricts_dict.iteritems())
-                logger.debug("using use.local.desc from %s",
-                    pjoin(profile_base, 'profiles', 'use.local.desc'))
-            except IOError, ie:
-                if ie.errno != errno.ENOENT:
-                    raise
-                logger.debug("no use.local.desc at %s; using metadata.xml parsing instead",
-                    pjoin(profile_base, 'profiles', 'use.local.desc'))
+        known_iuse.update(x[1][0] for x in options.target_repo.config.use_desc)
+        arches.update(options.target_repo.config.known_arches)
+        self.specific_iuse = tuple(
+            (x[0], (x[1][0],)) for x in options.target_repo.config.use_local_desc)
+        unstated_iuse.update(x[1][0] for x in options.target_repo.config.use_expand_desc)
 
-            use_expand_base = osutils.join(profile_base, "profiles", "desc")
-            try:
-                for entry in osutils.listdir_files(use_expand_base):
-                    try:
-                        estr = entry.rsplit(".", 1)[0].lower()+ "_"
-                        unstated_iuse.update(estr + usef.strip() for usef in
-                            read_dict(osutils.join(use_expand_base, entry),
-                                None).iterkeys())
-                    except EnvironmentError, ie:
-                        if ie.errno != errno.EISDIR:
-                            raise
-                        del ie
-            except EnvironmentError, ie:
-                if ie.errno != errno.ENOENT:
-                    raise
-
-        self.specific_iuse = tuple((x[0], tuple(x[1])) for x in specific_iuse)
         self.collapsed_iuse = misc.non_incremental_collapsed_restrict_to_data(
             ((packages.AlwaysTrue, known_iuse),),
             ((packages.AlwaysTrue, unstated_iuse),),
@@ -493,7 +440,6 @@ class UseAddon(base.Addon):
         self.global_iuse = frozenset(known_iuse)
         unstated_iuse.update(arches)
         self.unstated_iuse = frozenset(unstated_iuse)
-        self.profile_bases = profile_base
         self.ignore = not (unstated_iuse or known_iuse)
         if self.ignore and not silence_warnings:
             logger.warn('disabling use/iuse validity checks since no usable '

@@ -3,7 +3,7 @@
 
 import os
 from operator import attrgetter
-from pkgcore_checks import base, util, addons
+from pkgcore_checks import base, addons
 
 from snakeoil.compatibility import any
 from pkgcore.package.errors import MetadataException

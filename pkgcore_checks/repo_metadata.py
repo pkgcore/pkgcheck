@@ -3,7 +3,7 @@
 
 import os.path
 import operator, itertools
-from pkgcore_checks import base, util, addons
+from pkgcore_checks import base, addons
 from pkgcore.ebuild.repository import SlavedTree
 from snakeoil.osutils import listdir_dirs
 from snakeoil import mappings

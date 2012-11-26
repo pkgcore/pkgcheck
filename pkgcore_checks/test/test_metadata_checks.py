@@ -4,9 +4,11 @@
 import os
 import tempfile
 from snakeoil.test.mixins import TempDirMixin
+from pkgcore.ebuild import repo_objs
 from pkgcore_checks.test import misc
 from pkgcore_checks import metadata_checks, addons
-from snakeoil.osutils import join as pjoin
+from snakeoil.osutils import pjoin
+from snakeoil import fileutils
 from snakeoil.currying import post_curry, partial
 
 
@@ -59,18 +61,28 @@ class iuse_options(TempDirMixin):
 
     def get_options(self, **kwds):
         repo_base = tempfile.mkdtemp(dir=self.dir)
-        os.mkdir(os.path.join(repo_base, 'profiles'))
-        open(pjoin(repo_base, "profiles", "arch.list"), "w").write(
+        base = pjoin(repo_base, 'profiles')
+        os.mkdir(base)
+        fileutils.write_file(
+            pjoin(base, "arch.list"), 'w',
             "\n".join(kwds.pop("arches", ("x86", "ppc", "amd64"))))
 
-        open(pjoin(repo_base, "profiles", "use.desc"), "w").write(
-            "\n".join(kwds.pop("use_desc", ("foo", "bar"))))
+        fileutils.write_file(
+            pjoin(base, "use.desc"), "w",
+            "\n".join("%s - %s" % (x, x)
+                      for x in kwds.pop("use_desc", ("foo", "bar"))))
 
-        open(pjoin(repo_base, "profiles", "use.local.desc"), "w").write(
+        fileutils.write_file(
+            pjoin(base, "use.local.desc"), "w",
             "\n".join("dev-util/diffball:%s - blah" % x for x in
                 kwds.pop("use_local_desc", ("lfoo", "lbar"))))
 
-        kwds["repo_bases"] = (repo_base,)
+        fileutils.write_file(pjoin(base, 'repo_name'), 'w', 'monkeys')
+        os.mkdir(pjoin(repo_base, 'metadata'))
+        fileutils.write_file(pjoin(repo_base, 'metadata', 'layout.conf'), 'w',
+            "masters = ")
+        kwds['target_repo'] = misc.Options(
+            config=repo_objs.RepoConfig(repo_base))
         return misc.Options(**kwds)
 
 
