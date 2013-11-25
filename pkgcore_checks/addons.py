@@ -21,7 +21,6 @@ demandload.demandload(globals(),
     'snakeoil:osutils',
     'pkgcore.restrictions:packages,values',
     'pkgcore.ebuild:misc,domain,profiles,repo_objs',
-    'snakeoil.fileutils:read_dict',
     'pkgcore.log:logger',
 )
 
