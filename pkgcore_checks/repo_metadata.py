@@ -7,7 +7,7 @@ from pkgcore_checks import base, addons
 from pkgcore.ebuild.repository import SlavedTree
 from snakeoil.osutils import listdir_dirs
 from snakeoil import mappings
-from pkgcore.chksum.errors import MissingChksum
+from pkgcore.package.errors import MissingChksum
 
 from snakeoil.demandload import demandload
 demandload(globals(),
