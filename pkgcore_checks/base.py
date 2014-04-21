@@ -20,7 +20,6 @@ identical to the input scope.
 import operator
 
 from pkgcore.config import ConfigHint
-from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
 demandload(globals(), 'logging', 're', 'itertools')
 

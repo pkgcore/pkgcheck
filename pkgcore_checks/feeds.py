@@ -8,10 +8,9 @@
 import operator
 import itertools
 
-from pkgcore_checks import base
-
 from pkgcore.restrictions import util
-from snakeoil.compatibility import any
+
+from pkgcore_checks import base
 
 
 class VersionToEbuild(base.Transform):

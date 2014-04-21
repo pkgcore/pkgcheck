@@ -3,7 +3,6 @@
 
 import codecs, errno
 from collections import deque
-from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
 demandload(globals(), "snakeoil.xml:escape")
 

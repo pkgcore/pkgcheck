@@ -104,7 +104,7 @@ class UnusedGlobalFlags(base.Template):
         self.iuse_handler = iuse_handler
 
     def start(self):
-        if not isinstance(self.options.target_repo,SlavedTree):
+        if not isinstance(self.options.target_repo, SlavedTree):
             self.flags = set(self.iuse_handler.global_iuse)
 
     def feed(self, pkg, reporter):
@@ -151,9 +151,9 @@ class UnusedLicense(base.Template):
 
     def start(self):
         self.licenses = set()
-        if isinstance(self.options.target_repo,SlavedTree):
+        if isinstance(self.options.target_repo, SlavedTree):
             if 'licenses' in listdir_dirs(self.options.target_repo.location):
-                self.licenses.update(listdir_files(pjoin(self.options.target_repo.location,"licenses")))
+                self.licenses.update(listdir_files(pjoin(self.options.target_repo.location, "licenses")))
         else:
             for license_dir in self.options.license_dirs:
                 self.licenses.update(listdir_files(license_dir))

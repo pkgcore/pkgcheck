@@ -2,7 +2,6 @@
 # License: BSD/GPL2
 
 from pkgcore_checks.base import Template, package_feed, Result, versioned_feed
-from snakeoil.compatibility import any
 
 
 class RedundantVersionWarning(Result):
