@@ -5,11 +5,13 @@ python:
     - 3.3
 install:
     - git clone git://github.com/pkgcore/snakeoil.git
-    - git clone git://github.com/pkgcore/pkgcore.git pkgcore-lib
-    - cd "${VIRTUAL_ENV}"/snakeoil
+    - pushd snakeoil
     - python setup.py install --install-headers "${VIRTUAL_ENV}"/include/snakeoil
-    - cd "${VIRTUAL_ENV}"/pkgcore-lib
+    - popd
+    - git clone git://github.com/pkgcore/pkgcore.git pkgcore-lib
+    - pushd pkgcore-lib
     - python setup.py build_ext -I "${VIRTUAL_ENV}"/include
     - python setup.py install
+    - popd
 script:
     - python setup.py test
