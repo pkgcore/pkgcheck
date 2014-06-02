@@ -2,5 +2,6 @@ Author(s)
 Brian Harring <ferringb@gmail.com>
 Marien Zwart <marienz@gentoo.org>
 Markus Ullmann <jokey@gentoo.org>
+Tim Harder <radhermit@gentoo.org>
 
-bzr annotate/log if you're curious about the gory details of who did what
+git log if you're curious about the gory details of who did what
