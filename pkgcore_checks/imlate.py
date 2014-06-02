@@ -43,7 +43,7 @@ class ImlateReport(base.Template):
             "--source-arches", action='callback', dest='reference_arches',
             default=addons.ArchesAddon.default_arches,
             type='string', callback=addons.ArchesAddon._record_arches,
-            help="comma seperated list of what arches to compare against for "
+            help="comma separated list of what arches to compare against for "
             "imlate, defaults to %s" % (
                 ",".join(addons.ArchesAddon.default_arches),))
 

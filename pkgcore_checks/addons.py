@@ -46,12 +46,12 @@ class ArchesAddon(base.Addon):
         parser.add_option(
             '-a', '--arches', action='callback', callback=cls._record_arches,
             type='string', default=cls.default_arches,
-            help="comma seperated list of what arches to run, defaults to %s" %
+            help="comma separated list of what arches to run, defaults to %s" %
             ",".join(cls.default_arches))
         parser.add_option(
             '--disable-arches', action='callback', callback=cls._disable_arches,
             type='string',
-            help="comma seperated list of arches to disable from the defaults")
+            help="comma separated list of arches to disable from the defaults")
 
 
 class QueryCacheAddon(base.Template):
@@ -90,7 +90,7 @@ class QueryCacheAddon(base.Template):
 class profile_data(object):
 
     def __init__(self, profile_name, key, virtuals, provides, vfilter,
-        masked_use, forced_use, lookup_cache, insoluable):
+                 masked_use, forced_use, lookup_cache, insoluble):
         self.key = key
         self.name = profile_name
         self.virtuals = virtuals
@@ -100,7 +100,7 @@ class profile_data(object):
         self.masked_use = masked_use
         self.forced_use = forced_use
         self.cache = lookup_cache
-        self.insoluable = insoluable
+        self.insoluble = insoluble
         self.visible = vfilter.match
 
     def identify_use(self, pkg, known_flags):
@@ -206,7 +206,7 @@ class ProfileAddon(base.Addon):
             # copy it to be safe
             self.desired_arches = set(self.official_arches)
 
-        self.global_insoluable = set()
+        self.global_insoluble = set()
         profile_filters = {}
         self.keywords_filter = {}
         ignore_deprecated = self.options.profile_ignore_deprecated
@@ -259,22 +259,22 @@ class ProfileAddon(base.Addon):
                 # unstable says it's not visible, stable doesn't try
                 # if stable says something is visible, unstable doesn't try.
                 stable_cache = set()
-                unstable_insoluable = containers.ProtectedSet(
-                    self.global_insoluable)
+                unstable_insoluble = containers.ProtectedSet(
+                    self.global_insoluble)
 
                 # few notes.  for filter, ensure keywords is last, on the
                 # offchance a non-metadata based restrict foregos having to
                 # access the metadata.
-                # note that the cache/insoluable are inversly paired;
+                # note that the cache/insoluble are inversly paired;
                 # stable cache is usable for unstable, but not vice versa.
-                # unstable insoluable is usable for stable, but not vice versa
+                # unstable insoluble is usable for stable, but not vice versa
 
                 profile_filters[stable_key].append(profile_data(
                     profile_name, stable_key,
                     virtuals, profile.provides_repo,
                     packages.AndRestriction(mask, stable_r),
                     immutable_flags, enabled_flags, stable_cache,
-                    containers.ProtectedSet(unstable_insoluable)))
+                    containers.ProtectedSet(unstable_insoluble)))
 
                 profile_filters[unstable_key].append(profile_data(
                     profile_name, unstable_key,
@@ -282,7 +282,7 @@ class ProfileAddon(base.Addon):
                     packages.AndRestriction(mask, unstable_r),
                     immutable_flags, enabled_flags,
                     containers.ProtectedSet(stable_cache),
-                    unstable_insoluable))
+                    unstable_insoluble))
 
             self.keywords_filter[stable_key] = stable_r
             self.keywords_filter[unstable_key] = packages.PackageRestriction(

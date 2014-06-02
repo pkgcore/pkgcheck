@@ -63,7 +63,7 @@ class FakeConfigurable(object):
     __getattr__ = klass.GetAttrProxy("_raw_pkg")
 
     def __setattr__(self, attr, val):
-        raise AttributeError(self, 'is imutable')
+        raise AttributeError(self, 'is immutable')
 
 
 
@@ -112,22 +112,22 @@ class VisibleVcsPkg(base.Result):
             self.arch, self.profile)
 
 
-class NonExistantDeps(base.Result):
+class NonExistentDeps(base.Result):
     """No matches exist for a depset element"""
 
     __slots__ = ("category", "package", "version", "attr", "atoms")
 
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, attr, nonexistant_atoms):
+    def __init__(self, pkg, attr, nonexistent_atoms):
         base.Result.__init__(self)
         self._store_cpv(pkg)
         self.attr = attr
-        self.atoms = tuple(str(x) for x in nonexistant_atoms)
+        self.atoms = tuple(str(x) for x in nonexistent_atoms)
 
     @property
     def short_desc(self):
-        return "depset %s: nonexistant atoms [ %s ]" % (
+        return "depset %s: nonexistent atoms [ %s ]" % (
             self.attr, ', '.join(self.atoms))
 
 
@@ -166,7 +166,7 @@ class VisibilityReport(base.Template):
     required_addons = (
         addons.ArchesAddon, addons.QueryCacheAddon, addons.ProfileAddon,
         addons.EvaluateDepSetAddon)
-    known_results = (VisibleVcsPkg, NonExistantDeps, NonsolvableDeps)
+    known_results = (VisibleVcsPkg, NonExistentDeps, NonsolvableDeps)
 
     vcs_eclasses = frozenset(["subversion", "git", "cvs", "darcs", "tla", "bzr", "mercurial"])
 
@@ -193,13 +193,13 @@ class VisibilityReport(base.Template):
 
         for attr, depset in (("depends", pkg.depends),
             ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
-            nonexistant = set()
+            nonexistent = set()
             for orig_node in visit_atoms(pkg, depset):
 
                 node = strip_atom_use(orig_node)
                 if node not in self.query_cache:
-                    if node in self.profiles.global_insoluable:
-                        nonexistant.add(node)
+                    if node in self.profiles.global_insoluble:
+                        nonexistent.add(node)
                         # insert an empty tuple, so that tight loops further
                         # on don't have to use the slower get method
                         self.query_cache[node] = ()
@@ -212,16 +212,16 @@ class VisibilityReport(base.Template):
                             if orig_node is not node:
                                 self.query_cache[str(orig_node)] = matches
                         elif not node.blocks and not node.category == "virtual":
-                            nonexistant.add(node)
+                            nonexistent.add(node)
                             self.query_cache[node] = ()
-                            self.profiles.global_insoluable.add(node)
+                            self.profiles.global_insoluble.add(node)
                 elif not self.query_cache[node]:
-                    nonexistant.add(node)
+                    nonexistent.add(node)
 
-            if nonexistant:
-                reporter.add_report(NonExistantDeps(pkg, attr, nonexistant))
+            if nonexistent:
+                reporter.add_report(NonExistentDeps(pkg, attr, nonexistent))
 
-        del nonexistant
+        del nonexistent
 
         for attr, depset in (("depends", pkg.depends),
             ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
@@ -260,7 +260,7 @@ class VisibilityReport(base.Template):
             cache = profile.cache
             provided = profile.provides_has_match
             is_virtual = profile.virtuals_has_match
-            insoluable = profile.insoluable
+            insoluble = profile.insoluble
             visible = profile.visible
             for required in csolutions:
                 # scan all of the quickies, the caches...
@@ -274,7 +274,7 @@ class VisibilityReport(base.Template):
                         break
                 else:
                     for node in required:
-                        if node in insoluable:
+                        if node in insoluble:
                             pass
 
                         # get is required since there is an intermix between old style
@@ -289,7 +289,7 @@ class VisibilityReport(base.Template):
                             cache.add(node)
                             break
                         else:
-                            insoluable.add(node)
+                            insoluble.add(node)
                     else:
                         # no matches.  not great, should collect them all
                         failures.update(required)
