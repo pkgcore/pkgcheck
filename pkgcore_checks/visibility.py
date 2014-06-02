@@ -89,7 +89,7 @@ def strip_atom_use(inst):
         if not inst.blocks_temp_ignorable:
             s = '!' + s
     if inst.slot:
-        s += ':%s' % ','.join(inst.slot)
+        s += ':%s' % inst.slot
     return atom(s)
 
 
