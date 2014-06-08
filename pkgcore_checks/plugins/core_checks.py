@@ -15,6 +15,7 @@ pkgcore_plugins = {
     'check': [
         cleanup.RedundantVersionReport,
         codingstyle.BadInsIntoCheck,
+        deprecated.DeprecatedEAPIReport,
         deprecated.DeprecatedEclassReport,
         dropped_keywords.DroppedKeywordsReport,
         glsa_scan.TreeVulnerabilitiesReport,

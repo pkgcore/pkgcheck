@@ -4,6 +4,34 @@
 from pkgcore_checks.base import Template, versioned_feed, Result
 
 
+class DeprecatedEAPI(Result):
+    """pkg's EAPI is deprecated according to repo metadata"""
+
+    __slots__ = ("category", "package", "version", "eapi")
+    threshold = versioned_feed
+
+    def __init__(self, pkg):
+        Result.__init__(self)
+        self._store_cpv(pkg)
+        self.eapi = pkg.eapi
+
+    @property
+    def short_desc(self):
+        return "uses deprecated EAPI: %s" % (self.eapi,)
+
+
+class DeprecatedEAPIReport(Template):
+
+    feed_type = versioned_feed
+    known_results = (DeprecatedEAPI,)
+
+    __doc__ = "scan for deprecated EAPIS"
+
+    def feed(self, pkg, reporter):
+        if str(pkg.eapi) in pkg.repo.config.eapis_deprecated:
+            reporter.add_report(DeprecatedEAPI(pkg))
+
+
 class DeprecatedEclass(Result):
     """pkg uses an eclass that is deprecated/abandoned"""
 
