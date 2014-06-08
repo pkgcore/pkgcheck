@@ -21,7 +21,7 @@ class RedundantVersionWarning(Result):
 
     @property
     def short_desc(self):
-        return "slot(%s) keywords are overshadowed by version %r" % \
+        return "slot(%s) keywords are overshadowed by version(s): %s" % \
             (self.slot, ', '.join(self.later_versions))
 
 
@@ -56,7 +56,7 @@ class RedundantVersionReport(Template):
                 continue
 
             matches = [ver for ver, keys in stack if ver.slot == pkg.slot
-                and not curr_set.difference(keys)]
+                       and not curr_set.difference(keys)]
 
             # we've done our checks; now we inject unstable for any stable
             # via this, earlier versions that are unstable only get flagged

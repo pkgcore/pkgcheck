@@ -55,7 +55,7 @@ class DeprecatedEclass(Result):
                 update_path = 'no replacement'
             eclass_migration.append('%s (%s)' % (old_eclass, update_path))
 
-        return "uses deprecated eclasses [ %s ]" % ', '.join(eclass_migration)
+        return "uses deprecated eclass(es): [ %s ]" % ', '.join(eclass_migration)
 
 
 class DeprecatedEclassReport(Template):
