@@ -35,6 +35,10 @@ class DroppedKeywordsReport(Template):
         if len(pkgset) == 1:
             return
 
+        # We need to skip live ebuilds otherwise they're flagged. Currently, we
+        # assume live ebuilds have versions matching *9999*.
+        pkgset = [pkg for pkg in pkgset if not "9999" in pkg.version]
+
         lastpkg = pkgset[-1]
         state = set(x.lstrip("~") for x in lastpkg.keywords)
         arches = set(self.arches)
@@ -42,12 +46,10 @@ class DroppedKeywordsReport(Template):
         # pretty simple; pull the last keywords, walk backwards
         # the difference (ignoring unstable/stable) should be empty;
         # if it is, report; meanwhile, add the new arch in, and continue
-        for pkg in reversed(pkgset[:-1]):
+        for pkg in reversed(pkgset):
             oldstate = set(x.lstrip("~") for x in pkg.keywords)
             for key in oldstate.difference(state):
                 if key.startswith("-"):
-                    continue
-                if pkg.version == "9999":
                     continue
                 elif "-%s" % key in state:
                     continue
