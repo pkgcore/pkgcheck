@@ -25,7 +25,7 @@ class DeprecatedEAPIReport(Template):
     feed_type = versioned_feed
     known_results = (DeprecatedEAPI,)
 
-    __doc__ = "scan for deprecated EAPIS"
+    __doc__ = "scan for deprecated EAPIs"
 
     def feed(self, pkg, reporter):
         if str(pkg.eapi) in pkg.repo.config.eapis_deprecated:
