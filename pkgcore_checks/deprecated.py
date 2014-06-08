@@ -1,6 +1,8 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+from snakeoil.mappings import ImmutableDict
+
 from pkgcore_checks.base import Template, versioned_feed, Result
 
 
@@ -41,11 +43,19 @@ class DeprecatedEclass(Result):
     def __init__(self, pkg, eclasses):
         Result.__init__(self)
         self._store_cpv(pkg)
-        self.eclasses = tuple(sorted(eclasses))
+        self.eclasses = eclasses
 
     @property
     def short_desc(self):
-        return "uses deprecated eclasses [ %s ]" % ', '.join(self.eclasses)
+        eclass_migration = []
+        for old_eclass, new_eclass in sorted(self.eclasses.iteritems()):
+            if new_eclass:
+                update_path = 'migrate to %s' % (new_eclass,)
+            else:
+                update_path = 'no replacement'
+            eclass_migration.append('%s (%s)' % (old_eclass, update_path))
+
+        return "uses deprecated eclasses [ %s ]" % ', '.join(eclass_migration)
 
 
 class DeprecatedEclassReport(Template):
@@ -53,62 +63,72 @@ class DeprecatedEclassReport(Template):
     feed_type = versioned_feed
     known_results = (DeprecatedEclass,)
 
-    blacklist = frozenset((
-        '64-bit',
-        'bash-completion',
-        'darcs',
-        'db4-fix',
-        'debian',
-        'embassy-2.10',
-        'embassy-2.9',
-        'gems',
-        'git',
-        'gcc',
-        'gnustep-old',
-        'gtk-engines',
-        'gtk-engines2',
-        'inherit',
-        'jakarta-commons',
-        'java-pkg',
-        'java-utils',
-        'kde-base',
-        'kde-i18n',
-        'kde-source',
-        'kmod',
-        'koffice-i18n',
-        'mozconfig', 'mozconfig-2',
-        'mozcoreconf',
-        'motif',
-        'mozilla',
-        'myth',
-        'pcmcia',
-        'perl-post',
-        'php',
-        'php-2',
-        'php-ext',
-        'php-ext-base',
-        'php-ext-pecl', 'php-ext-pecl-r1',
-        'php-ext-source', 'php-ext-source-r1',
-        'php-lib',
-        'php-pear',
-        'php-sapi',
-        'php5-sapi',
-        'php5-sapi-r1',
-        'php5-sapi-r2',
-        'php5-sapi-r3',
-        'qt3', 'qt4',
-        'ruby',
-        'ruby-gnome2',
-        'tla',
-        'webapp-apache',
-        'x-modular',
-        'xfree',
-    ))
+    blacklist = ImmutableDict({
+        '64-bit': None,
+        'bash-completion': 'bash-completion-r1',
+        'boost-utils': None,
+        'darcs': None,
+        'distutils': 'distutils-r1',
+        'db4-fix': None,
+        'debian': None,
+        'embassy-2.10': None,
+        'embassy-2.9': None,
+        'gems': 'ruby-fakegem',
+        'git': 'git-r3',
+        'gcc': None,
+        'gnustep-old': None,
+        'gtk-engines': None,
+        'gtk-engines2': None,
+        'inherit': None,
+        'jakarta-commons': None,
+        'java-pkg': None,
+        'java-utils': None,
+        'kde-base': None,
+        'kde-i18n': None,
+        'kde-source': None,
+        'kmod': None,
+        'koffice-i18n': None,
+        'mono': 'mono-env',
+        'mozconfig': None,
+        'mozconfig-2': 'mozconfig-3',
+        'mozcoreconf': 'mozcoreconf-2',
+        'motif': None,
+        'mozilla': None,
+        'myth': None,
+        'pcmcia': None,
+        'perl-post': None,
+        'php': None,
+        'php-2': None,
+        'php-ext': None,
+        'php-ext-base': None,
+        'php-ext-pecl': None,
+        'php-ext-pecl-r1': 'php-ext-pecl-r2',
+        'php-ext-source': None,
+        'php-ext-source-r1': 'php-ext-source-r2',
+        'php-lib': None,
+        'php-pear': 'php-pear-r1',
+        'php-sapi': None,
+        'php5-sapi': None,
+        'php5-sapi-r1': None,
+        'php5-sapi-r2': None,
+        'php5-sapi-r3': None,
+        'python': 'python-r1 / python-single-r1 / python-any-r1',
+        'python-distutils-ng': 'python-r1 + distutils-r1',
+        'qt3': None,
+        'qt4': 'qt4-r2',
+        'ruby': 'ruby-ng',
+        'ruby-gnome2': 'ruby-ng-gnome2',
+        'tla': None,
+        'webapp-apache': None,
+        'x-modular': 'xorg-2',
+        'xfree': None,
+    })
 
     __doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses:%s\n" % \
         ", ".join(sorted(blacklist))
 
     def feed(self, pkg, reporter):
-        bad = self.blacklist.intersection(pkg.inherited)
+        bad = set(self.blacklist.keys()).intersection(pkg.inherited)
         if bad:
-            reporter.add_report(DeprecatedEclass(pkg, bad))
+            eclasses = ImmutableDict({old: new for old, new in self.blacklist.iteritems() if old in bad})
+            reporter.add_report(DeprecatedEclass(pkg, eclasses))
