@@ -4,6 +4,7 @@
 from pkgcore_checks.test import misc
 from pkgcore_checks.deprecated import DeprecatedEclassReport as dep_eclass
 
+
 class TestDeprecatedEclass(misc.ReportTestCase):
 
     check_kls = dep_eclass

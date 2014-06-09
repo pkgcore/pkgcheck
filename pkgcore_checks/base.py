@@ -17,11 +17,16 @@ identical to the input scope.
 """
 
 
-import operator
+from operator import attrgetter
 
 from pkgcore.config import ConfigHint
+
 from snakeoil.demandload import demandload
-demandload(globals(), 'logging', 're', 'itertools')
+demandload(globals(),
+    'itertools',
+    'logging',
+    're',
+)
 
 repository_feed = "repo"
 category_feed = "cat"
@@ -517,7 +522,7 @@ def plug(sinks, transforms, sources, debug=None):
     # Just an assert since unreachable sinks should have been thrown away.
     assert pipes_to_run, 'did not find a solution?'
 
-    good_sinks.sort(key=operator.attrgetter('priority'))
+    good_sinks.sort(key=attrgetter('priority'))
 
     def build_transform(scope, feed_type, transforms):
         children = list(

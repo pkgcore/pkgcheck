@@ -2,16 +2,18 @@
 # License: BSD/GPL2
 
 import os, sys, optparse, itertools, shutil
-from snakeoil.osutils import pjoin, ensure_dirs
-from snakeoil.fileutils import write_file
+
+from pkgcore.ebuild import repo_objs
+from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.misc import collapsed_restrict_to_data
+from pkgcore.restrictions import packages
 from pkgcore.test import TestCase
+from snakeoil.fileutils import write_file
+from snakeoil.osutils import pjoin, ensure_dirs
 from snakeoil.test import mixins
+
 from pkgcore_checks import addons, base
 from pkgcore_checks.test.misc import FakePkg, FakeProfile, Options
-from pkgcore.ebuild.misc import collapsed_restrict_to_data
-from pkgcore.ebuild import repo_objs
-from pkgcore.restrictions import packages
-from pkgcore.ebuild.atom import atom
 
 
 class exit_exception(Exception):

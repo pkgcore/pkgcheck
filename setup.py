@@ -1,10 +1,13 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+import os
 from distutils.core import setup, Command
 from distutils.command.sdist import sdist
+
 from snakeoil import distutils_extensions as snk_distutils
-import os, sys
+
+from pkgcore_checks import __version__
 
 class mysdist(snk_distutils.sdist):
 
@@ -38,7 +41,6 @@ class pchecks_build_py(snk_distutils.build_py):
     generate_verinfo = True
 
 
-from pkgcore_checks import __version__
 setup(
     name="pkgcore-checks",
     version=__version__,

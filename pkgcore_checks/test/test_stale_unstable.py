@@ -1,9 +1,10 @@
 # Copyright: 2007 Markus Ullmann <jokey@gentoo.org>
 # License: BSD/GPL2
 
-from pkgcore_checks.test import misc
-from pkgcore_checks.stale_unstable import StaleUnstableReport
 import time
+
+from pkgcore_checks.stale_unstable import StaleUnstableReport
+from pkgcore_checks.test import misc
 
 
 class TestStaleUnstableReport(misc.ReportTestCase):

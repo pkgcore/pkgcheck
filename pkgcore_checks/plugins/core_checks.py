@@ -6,10 +6,10 @@
 
 # Please keep the imports and plugins sorted.
 from pkgcore_checks import (
-    cleanup, codingstyle, deprecated, dropped_keywords, glsa_scan, imlate,
-    metadata_checks, metadata_xml, pkgdir_checks, repo_metadata, stale_unstable,
-    unstable_only, visibility, whitespace, feeds, reporters, report_stream)
-
+    cleanup, codingstyle, deprecated, dropped_keywords, feeds, glsa_scan, imlate,
+    metadata_checks, metadata_xml, pkgdir_checks, repo_metadata, report_stream,
+    reporters, stale_unstable, unstable_only, visibility, whitespace,
+)
 
 pkgcore_plugins = {
     'check': [

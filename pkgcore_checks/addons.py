@@ -5,20 +5,21 @@
 
 """Addon functionality shared by multiple checkers."""
 
-
 import optparse
 from itertools import ifilter, ifilterfalse
+
+from snakeoil.containers import ProtectedSet
+from snakeoil.currying import partial
+from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
-from snakeoil.osutils import pjoin
+from snakeoil.mappings import OrderedDict
+from snakeoil.osutils import abspath, listdir_files, pjoin
 
 from pkgcore_checks import base
 
-from snakeoil import (demandload, currying, containers, mappings, iterables,
-    lists)
-demandload.demandload(globals(),
+from snakeoil.demandload import demandload
+demandload(globals(),
     'os',
-    'errno',
-    'snakeoil:osutils',
     'pkgcore.restrictions:packages,values',
     'pkgcore.ebuild:misc,domain,profiles,repo_objs',
     'pkgcore.log:logger',
@@ -127,7 +128,7 @@ class ProfileAddon(base.Addon):
         profiles_dir = getattr(values, "profiles_dir", None)
 
         if profiles_dir is not None:
-            profiles_dir = os.path.abspath(profiles_dir)
+            profiles_dir = abspath(profiles_dir)
             if not os.path.isdir(profiles_dir):
                 raise optparse.OptionValueError(
                     "profile-base location %r doesn't exist/isn't a dir" % (
@@ -259,8 +260,7 @@ class ProfileAddon(base.Addon):
                 # unstable says it's not visible, stable doesn't try
                 # if stable says something is visible, unstable doesn't try.
                 stable_cache = set()
-                unstable_insoluble = containers.ProtectedSet(
-                    self.global_insoluble)
+                unstable_insoluble = ProtectedSet(self.global_insoluble)
 
                 # few notes.  for filter, ensure keywords is last, on the
                 # offchance a non-metadata based restrict foregos having to
@@ -274,14 +274,14 @@ class ProfileAddon(base.Addon):
                     virtuals, profile.provides_repo,
                     packages.AndRestriction(mask, stable_r),
                     immutable_flags, enabled_flags, stable_cache,
-                    containers.ProtectedSet(unstable_insoluble)))
+                    ProtectedSet(unstable_insoluble)))
 
                 profile_filters[unstable_key].append(profile_data(
                     profile_name, unstable_key,
                     virtuals, profile.provides_repo,
                     packages.AndRestriction(mask, unstable_r),
                     immutable_flags, enabled_flags,
-                    containers.ProtectedSet(stable_cache),
+                    ProtectedSet(stable_cache),
                     unstable_insoluble))
 
             self.keywords_filter[stable_key] = stable_r
@@ -303,7 +303,7 @@ class ProfileAddon(base.Addon):
 
         self.profile_evaluate_dict = profile_evaluate_dict
         self.arch_profiles = arch_profiles
-        self.keywords_filter = mappings.OrderedDict(
+        self.keywords_filter = OrderedDict(
             (k, self.keywords_filter[k])
             for k in sorted(self.keywords_filter))
         self.profile_filters = profile_filters
@@ -375,7 +375,7 @@ class LicenseAddon(base.Addon):
         values.license_dirs = []
         if values.license_dir is None:
             for repo_base in values.repo_bases:
-                candidate = osutils.pjoin(repo_base, 'licenses')
+                candidate = pjoin(repo_base, 'licenses')
                 if os.path.isdir(candidate):
                     values.license_dirs.append(candidate)
             if not values.license_dirs:
@@ -386,14 +386,14 @@ class LicenseAddon(base.Addon):
             if not os.path.isdir(values.license_dir):
                 raise optparse.OptionValueError(
                     "--license-dir %r isn't a directory" % values.license_dir)
-            values.license_dirs.append(osutils.abspath(values.license_dir))
+            values.license_dirs.append(abspath(values.license_dir))
 
     @property
     def licenses(self):
         o = getattr(self, "_licenses", None)
         if o is None:
             o = frozenset(iflatten_instance(
-                osutils.listdir_files(x) for x in self.options.license_dirs))
+                listdir_files(x) for x in self.options.license_dirs))
             setattr(self, "_licenses", o)
         return o
 
@@ -451,7 +451,7 @@ class UseAddon(base.Addon):
         if self.ignore:
             return self.fake_use_validate
         if attr_name is not None:
-            return currying.partial(self.use_validate, attr=attr_name)
+            return partial(self.use_validate, attr=attr_name)
         return self.use_validate
 
     @staticmethod
@@ -470,14 +470,13 @@ class UseAddon(base.Addon):
         unstated = set()
 
         stated = self.iuse_strip(pkg.iuse)
-        i = iterables.expandable_chain(lists.iflatten_instance(seq,
-                                                               skip_filter))
+        i = expandable_chain(iflatten_instance(seq, skip_filter))
         for node in i:
             if isinstance(node, packages.Conditional):
                 # invert it; get only whats not in pkg.iuse
                 unstated.update(ifilterfalse(stated.__contains__,
                     node.restriction.vals))
-                i.append(lists.iflatten_instance(node.payload, skip_filter))
+                i.append(iflatten_instance(node.payload, skip_filter))
                 continue
             yield node
 

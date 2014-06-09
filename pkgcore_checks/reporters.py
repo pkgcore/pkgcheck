@@ -5,11 +5,12 @@
 
 """Basic reporters and reporter factories."""
 
-from pkgcore_checks import base
 from pkgcore.config import configurable
 from snakeoil import formatters
-from snakeoil.demandload import demandload
 
+from pkgcore_checks import base
+
+from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore_checks:errors',
     'snakeoil:currying',

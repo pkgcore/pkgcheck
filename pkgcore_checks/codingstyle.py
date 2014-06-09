@@ -4,8 +4,10 @@
 """check for some bad coding styles like insinto's, old variables etc"""
 
 from pkgcore_checks import base
+
 from snakeoil.demandload import demandload
 demandload(globals(), "re")
+
 
 class BadInsIntoDir(base.Result):
 
@@ -24,7 +26,7 @@ class BadInsIntoDir(base.Result):
     @property
     def short_desc(self):
         return "ebuild uses insinto %s on line %s" % (self.insintodir,
-	    self.line)
+            self.line)
 
 
 class BadInsIntoCheck(base.Template):

@@ -4,9 +4,7 @@
 
 """Feed classes: pass groups of packages to other addons."""
 
-
-import operator
-import itertools
+from operator import attrgetter
 
 from pkgcore.restrictions import util
 
@@ -82,7 +80,7 @@ class VersionToPackage(_Collapse):
     scope = base.package_scope
     cost = 10
 
-    keyfunc = operator.attrgetter('key')
+    keyfunc = attrgetter('key')
 
 
 class VersionToCategory(_Collapse):
@@ -92,7 +90,7 @@ class VersionToCategory(_Collapse):
     scope = base.category_scope
     cost = 10
 
-    keyfunc = operator.attrgetter('category')
+    keyfunc = attrgetter('category')
 
 
 class _PackageOrCategoryToRepo(base.Transform):

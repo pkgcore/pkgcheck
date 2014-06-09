@@ -4,12 +4,13 @@
 import os, optparse
 
 from pkgcore_checks import base
+
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.pkgsets.glsa:GlsaDirSet',
     'pkgcore.restrictions:packages,values',
-    'snakeoil:xml,osutils',
     'pkgcore.restrictions.util:collect_package_restrictions',
+    'snakeoil.osutils:abspath,pjoin',
     'warnings'
 )
 
@@ -75,7 +76,7 @@ class TreeVulnerabilitiesReport(base.Template):
                     'Need a target repo or --overlayed-repo that is a single '
                     'UnconfiguredTree for license checks')
             for repo_base in values.repo_bases:
-                candidate = os.path.join(repo_base, "metadata", "glsa")
+                candidate = pjoin(repo_base, "metadata", "glsa")
                 if os.path.isdir(candidate):
                     if glsa_loc is None:
                         glsa_loc = candidate
@@ -97,7 +98,7 @@ class TreeVulnerabilitiesReport(base.Template):
                     "this behaviour may change")
                 return
 
-        values.glsa_location = osutils.abspath(glsa_loc)
+        values.glsa_location = abspath(glsa_loc)
 
     def __init__(self, options):
         base.Template.__init__(self, options)

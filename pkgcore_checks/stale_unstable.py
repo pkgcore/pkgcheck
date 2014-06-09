@@ -2,8 +2,9 @@
 # License: BSD/GPL2
 
 import time
-from pkgcore_checks.base import Template, versioned_feed, Result
+
 from pkgcore_checks import addons
+from pkgcore_checks.base import Template, versioned_feed, Result
 
 day = 24*3600
 

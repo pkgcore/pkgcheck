@@ -1,16 +1,17 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-from pkgcore.test import TestCase
-from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild import eapi
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
-from pkgcore.repository.util import SimpleTree
+from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.misc import ChunkedDataDict, split_negations, chunked_data
+from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions.packages import AlwaysTrue
-from pkgcore_checks.addons import ArchesAddon
+from pkgcore.test import TestCase
+
 from pkgcore_checks import base
+from pkgcore_checks.addons import ArchesAddon
 
 default_arches = ArchesAddon.default_arches
 

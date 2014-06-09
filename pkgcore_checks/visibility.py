@@ -1,15 +1,12 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+from pkgcore.ebuild.atom import atom
 from snakeoil.iterables import caching_iter
 from snakeoil.lists import stable_unique, iflatten_instance, iflatten_func
 from snakeoil import klass
+
 from pkgcore_checks import base, addons
-from pkgcore.ebuild.atom import atom
-from snakeoil.demandload import demandload
-from pkgcore.package.mutated import MutatedPkg
-from itertools import imap
-demandload(globals(), "snakeoil.xml:escape")
 
 
 class FakeConfigurable(object):

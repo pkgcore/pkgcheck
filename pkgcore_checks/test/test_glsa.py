@@ -1,11 +1,12 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-from pkgcore_checks.test import misc
-from snakeoil.test.mixins import TempDirMixin
 from pkgcore.test.pkgsets.test_glsa import mk_glsa
-from snakeoil.osutils import join as pjoin
+from snakeoil.osutils import pjoin
+from snakeoil.test.mixins import TempDirMixin
+
 from pkgcore_checks.glsa_scan import TreeVulnerabilitiesReport as vuln_report
+from pkgcore_checks.test import misc
 
 
 class TestVulnerabilitiesReport(TempDirMixin, misc.ReportTestCase):

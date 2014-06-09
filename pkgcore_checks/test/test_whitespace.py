@@ -4,6 +4,7 @@
 from pkgcore_checks.test import misc
 from pkgcore_checks.whitespace import WhitespaceCheck
 
+
 class TestStandardWhitespaces(misc.ReportTestCase):
 
     check_kls = WhitespaceCheck

@@ -3,13 +3,15 @@
 
 import os
 import tempfile
-from snakeoil.test.mixins import TempDirMixin
+
 from pkgcore.ebuild import repo_objs
-from pkgcore_checks.test import misc
-from pkgcore_checks import metadata_checks, addons
-from snakeoil.osutils import pjoin
 from snakeoil import fileutils
 from snakeoil.currying import post_curry, partial
+from snakeoil.osutils import pjoin
+from snakeoil.test.mixins import TempDirMixin
+
+from pkgcore_checks import metadata_checks, addons
+from pkgcore_checks.test import misc
 
 
 class TestDescriptionReport(misc.ReportTestCase):

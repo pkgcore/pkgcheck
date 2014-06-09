@@ -9,15 +9,16 @@ one minimal window (say updating a database), or want to generate
 several different reports without using a config defined multiplex reporter.
 """
 
+from pkgcore.util import commandline
+
 from pkgcore_checks import base
 
-from pkgcore.util import commandline
-from snakeoil import demandload
-demandload.demandload(globals(),
+from snakeoil.demandload import demandload
+demandload(globals(),
+    'os',
     'snakeoil:pickling,formatters',
     'snakeoil.modules:load_attribute',
     'pkgcore_checks:reporters',
-    'os',
 )
 
 

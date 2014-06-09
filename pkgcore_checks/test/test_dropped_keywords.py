@@ -4,6 +4,7 @@
 from pkgcore_checks.test import misc
 from pkgcore_checks.dropped_keywords import DroppedKeywordsReport as drop_keys
 
+
 class TestDroppedKeywords(misc.ReportTestCase):
 
     check_kls = drop_keys

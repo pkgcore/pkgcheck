@@ -2,8 +2,9 @@
 # License: BSD/GPL2
 
 from pkgcore.restrictions import packages, values
-from pkgcore_checks.base import Template, package_feed, Result
+
 from pkgcore_checks import addons
+from pkgcore_checks.base import Template, package_feed, Result
 
 
 class UnstableOnly(Result):

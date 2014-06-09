@@ -5,24 +5,25 @@
 
 """Commandline frontend (for use with L{pkgcore.util.commandline.main}."""
 
-
 from pkgcore.util import commandline, parserestrict
 from pkgcore.plugin import get_plugins, get_plugin
-from pkgcore_checks import plugins
-from pkgcore_checks import plugins, base, __version__, feeds
-from snakeoil import lists, demandload
+from snakeoil import lists
 from snakeoil.formatters import decorate_forced_wrapping
 
-demandload.demandload(globals(),
-    'optparse',
-    'textwrap',
-    'os',
+from pkgcore_checks import plugins
+from pkgcore_checks import plugins, base, __version__, feeds
+
+from snakeoil.demandload import demandload
+demandload(globals(),
     'logging',
-    'snakeoil:osutils',
+    'optparse',
+    'os',
+    'textwrap',
+    'pkgcore.ebuild:repository',
     'pkgcore.restrictions:packages',
     'pkgcore.restrictions.values:StrExactMatch',
     'pkgcore.repository:multiplex',
-    'pkgcore.ebuild:repository',
+    'snakeoil.osutils:abspath',
     'pkgcore_checks:errors',
 )
 
@@ -257,7 +258,7 @@ class OptionParser(commandline.OptionParser):
         # TODO improve this to deal with a multiplex repo.
         for repo in set((values.src_repo, values.target_repo)):
             if isinstance(repo, repository.UnconfiguredTree):
-                values.repo_bases.append(osutils.abspath(repo.base))
+                values.repo_bases.append(abspath(repo.base))
 
         if args:
             values.limiters = lists.stable_unique(map(
@@ -269,8 +270,8 @@ class OptionParser(commandline.OptionParser):
                     'Either specify a target repo that is not multi-tree or '
                     'one or more extended atoms to scan '
                     '("*" for the entire repo).')
-            cwd = osutils.abspath(os.getcwd())
-            repo_base = osutils.abspath(repo_base)
+            cwd = abspath(os.getcwd())
+            repo_base = abspath(repo_base)
             if not cwd.startswith(repo_base):
                 self.error(
                     'Working dir (%s) is not inside target repo (%s). Fix '

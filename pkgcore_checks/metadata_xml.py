@@ -2,8 +2,10 @@
 # License: BSD/GPL2
 
 import os
-from pkgcore_checks import base
+
 from snakeoil import compatibility
+
+from pkgcore_checks import base
 
 from snakeoil.demandload import demandload
 if compatibility.is_py3k:
@@ -19,11 +21,11 @@ else:
         'urllib2@urllib_error',
         'urllib2:urlopen')
 demandload(globals(),
-    'tempfile:NamedTemporaryFile',
     'pkgcore.log:logger',
     'pkgcore.spawn:spawn,find_binary',
     'snakeoil.osutils:pjoin',
     'snakeoil:fileutils',
+    'tempfile:NamedTemporaryFile',
 )
 
 
@@ -218,7 +220,7 @@ class PackageMetadataXmlCheck(base_check):
         if self.last_seen == pkg.key:
             return
         self.last_seen = pkg.key
-        loc = os.path.join(os.path.dirname(pkg.ebuild.path),
+        loc = pjoin(os.path.dirname(pkg.ebuild.path),
                            "metadata.xml")
         ret = self.check_file(loc)
         if ret is not None:

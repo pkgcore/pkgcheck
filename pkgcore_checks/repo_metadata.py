@@ -1,17 +1,17 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-import os.path
-import operator, itertools
-from pkgcore_checks import base, addons
+import itertools
+from operator import attrgetter, itemgetter
+
 from pkgcore.ebuild.repository import SlavedTree
-from snakeoil.osutils import listdir_dirs
-from snakeoil import mappings
 from pkgcore.package.errors import MissingChksum
+from snakeoil import mappings
+
+from pkgcore_checks import base, addons
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    'snakeoil.xml:escape',
     'snakeoil.osutils:listdir_files,pjoin',
     'snakeoil.lists:iflatten_instance',
     'pkgcore:fetch',
@@ -186,7 +186,7 @@ class ConflictingChksums(base.Result):
 
     threshold = base.versioned_feed
 
-    _sorter = staticmethod(operator.itemgetter(0))
+    _sorter = staticmethod(itemgetter(0))
 
     def __init__(self, pkg, filename, chksums, others):
         base.Result.__init__(self)
@@ -230,7 +230,7 @@ class RequiredChksums(base.Template):
     feed_type = base.package_feed
     known_results = (MissingChksum,)
 
-    repo_grabber = operator.attrgetter("repo")
+    repo_grabber = attrgetter("repo")
 
     def __init__(self, options):
         base.Template.__init__(self, options)

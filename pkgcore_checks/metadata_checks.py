@@ -1,20 +1,19 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-import os
 from operator import attrgetter
-from pkgcore_checks import base, addons
+from itertools import ifilter
 
-from pkgcore.package.errors import MetadataException
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from pkgcore.fetch import fetchable
-from pkgcore.restrictions import packages
-from itertools import ifilter
-from snakeoil.osutils import listdir_files
+from pkgcore.package.errors import MetadataException
+
+from pkgcore_checks import base, addons
 
 from snakeoil.demandload import demandload
-demandload(globals(), 'snakeoil.xml:escape', 'logging',
-    )
+demandload(globals(),
+    'logging',
+)
 
 
 class MetadataError(base.Result):

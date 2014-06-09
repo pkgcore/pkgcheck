@@ -2,8 +2,8 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-import os
 from pkgcore_checks import base
+
 
 class base_whitespace(base.Result):
 

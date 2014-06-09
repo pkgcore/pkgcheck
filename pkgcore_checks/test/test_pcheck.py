@@ -1,7 +1,6 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 from pkgcore.test import TestCase
 from pkgcore.test.scripts import helpers
 

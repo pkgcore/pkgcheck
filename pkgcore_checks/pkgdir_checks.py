@@ -1,16 +1,19 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-import codecs, errno
+import codecs
 from collections import deque
-from snakeoil.demandload import demandload
-demandload(globals(), "snakeoil.xml:escape")
+import os
+import stat
+
+from snakeoil.osutils import listdir, pjoin
 
 from pkgcore_checks.base import Result, Template, package_feed
 
-from snakeoil.osutils import listdir, pjoin
-import os, stat
-
+from snakeoil.demandload import demandload
+demandload(globals(),
+    'errno',
+)
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()
