@@ -3,12 +3,9 @@
 
 from pkgcore.test import TestCase
 from pkgcore.ebuild.ebuild_src import package
-from pkgcore.ebuild import cpv, eapi
-# compatibility hack for unversioned/versioned split upcoming
-versioned_CPV = getattr(cpv, "versioned_CPV", None)
-if versioned_CPV is None:
-    versioned_CPV = cpv.CPV
+from pkgcore.ebuild import eapi
 from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.repository.util import SimpleTree
 from pkgcore.ebuild.misc import ChunkedDataDict, split_negations, chunked_data
 from pkgcore.restrictions.packages import AlwaysTrue
