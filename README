@@ -5,10 +5,9 @@
 Dependencies
 ============
 
-pkgcore-checks is developed alongside pkgcore. To run the development
-version of pkgcore-checks you will need the development version of
-pkgcore.
-Otherwise the 0.x version numbers need to match.
+pkgcore-checks is developed alongside pkgcore. To run the development version
+of pkgcore-checks you will need the development version of pkgcore. Otherwise
+the 0.x version numbers need to match.
 
 The metadata.xml checks require either xmllint (installed as part of
 libxml2) or the python bindings to libxml2 (installed as part of
