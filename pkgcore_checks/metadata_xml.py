@@ -273,8 +273,8 @@ class libxml_parser(object):
 
     def validate(self, loc):
         """
-        @param loc: location to verify
-        @return: 0 no issue
+        :param loc: location to verify
+        :return: 0 no issue
                  1 badly formed
                  2 invalid xml
         """
@@ -295,8 +295,8 @@ class xmllint_parser(object):
 
     def validate(self, loc):
         """
-        @param loc: location to verify
-        @return: 0 no issue
+        :param loc: location to verify
+        :return: 0 no issue
                  1 badly formed
                  2 invalid xml
         """

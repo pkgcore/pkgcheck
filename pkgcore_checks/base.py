@@ -55,7 +55,7 @@ class Addon(object):
     This interface is not finished. Expect it to grow more methods
     (but if not overridden they will be no-ops).
 
-    @cvar required_addons: sequence of addons this one depends on.
+    :cvar required_addons: sequence of addons this one depends on.
     """
 
     required_addons = ()
@@ -66,7 +66,7 @@ class Addon(object):
 
         An instance of every addon in required_addons is passed as extra arg.
 
-        @param options: the optparse values.
+        :param options: the optparse values.
         """
         self.options = options
 
@@ -77,7 +77,7 @@ class Addon(object):
         This hook is always triggered, even if the checker is not
         activated (because it runs before the commandline is parsed).
 
-        @param parser: an C{OptionParser} instance.
+        :param parser: an C{OptionParser} instance.
         """
 
     @staticmethod
@@ -122,10 +122,10 @@ class Transform(object):
 
     """Base class for a feed type transformer.
 
-    @cvar source: start type
-    @cvar dest: destination type
-    @cvar scope: minimun scope
-    @cvar cost: cost
+    :cvar source: start type
+    :cvar dest: destination type
+    :cvar scope: minimun scope
+    :cvar cost: cost
     """
 
     def __init__(self, child):
@@ -365,11 +365,11 @@ def plug(sinks, transforms, sources, debug=None):
     more "expensive" than using separate pipelines). If more than one
     pipeline is needed it does not try to minimize the number.
 
-    @param sinks: Sequence of check instances.
-    @param transforms: Sequence of transform classes.
-    @param sources: Sequence of source instances.
-    @param debug: A logging function or C{None}.
-    @returns: a sequence of sinks that are unreachable (out of scope or
+    :param sinks: Sequence of check instances.
+    :param transforms: Sequence of transform classes.
+    :param sources: Sequence of source instances.
+    :param debug: A logging function or C{None}.
+    :return: a sequence of sinks that are unreachable (out of scope or
         missing sources/transforms of the right type),
         a sequence of (source, consumer) tuples.
     """

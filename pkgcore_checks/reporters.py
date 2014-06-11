@@ -33,7 +33,7 @@ class StrReporter(base.Reporter):
 
     def __init__(self, out):
         """Initialize.
-        @type out: L{snakeoil.formatters.Formatter}.
+        :type out: L{snakeoil.formatters.Formatter}.
         """
         base.Reporter.__init__(self)
         self.out = out
@@ -76,7 +76,7 @@ class FancyReporter(base.Reporter):
     def __init__(self, out):
         """Initialize.
 
-        @type out: L{snakeoil.formatters.Formatter}.
+        :type out: L{snakeoil.formatters.Formatter}.
         """
         base.Reporter.__init__(self)
         self.out = out
@@ -147,7 +147,7 @@ class XmlReporter(base.Reporter):
     def __init__(self, out):
         """Initialize.
 
-        @type out: L{snakeoil.formatters.Formatter}.
+        :type out: L{snakeoil.formatters.Formatter}.
         """
         base.Reporter.__init__(self)
         self.out = out
