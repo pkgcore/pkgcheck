@@ -280,9 +280,8 @@ class VisibilityReport(base.Template):
                         src = get_cached_query(strip_atom_use(node), ())
                         if node.use:
                             src = (pkg for pkg in src if node.force_True(
-                                FakeConfigurable(pkg, profile)))
-                        if any(True for pkg in src if
-                            visible(pkg)):
+                                   FakeConfigurable(pkg, profile)))
+                        if any(True for pkg in src if visible(pkg)):
                             cache.add(node)
                             break
                         else:

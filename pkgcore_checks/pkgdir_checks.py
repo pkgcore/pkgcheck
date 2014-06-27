@@ -139,12 +139,11 @@ class PkgDirReport(Template):
             # handed to any, it's a frame switch each
             # char, which adds up.
 
-            if any(True for x in filename if
-                x not in allowed_filename_chars_set):
+            if any(True for x in filename if x not in allowed_filename_chars_set):
                 reporter.add_report(Glep31Violation(pkgset[0], filename))
 
             if filename.endswith(".ebuild") or filename in \
-                ("Manifest", "ChangeLog", "metadata.xml"):
+                    ("Manifest", "ChangeLog", "metadata.xml"):
                 if os.stat(pjoin(base, filename)).st_mode & 0111:
                     reporter.add_report(ExecutableFile(pkgset[0], filename))
 
@@ -179,10 +178,8 @@ class PkgDirReport(Template):
                                                            pjoin(cwd, fn)))
                     if not fn.startswith("digest-"):
                         size += st.st_size
-                        if any(True for x in fn if
-                            x not in allowed_filename_chars_set):
-                            reporter.add_report(Glep31Violation(pkgset[0],
-                                pjoin(cwd, fn)))
+                        if any(True for x in fn if x not in allowed_filename_chars_set):
+                            reporter.add_report(Glep31Violation(pkgset[0], pjoin(cwd, fn)))
 
                 # yes, we silently ignore others.
         if size > 20480:

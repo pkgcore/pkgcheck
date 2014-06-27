@@ -29,9 +29,9 @@ demandload(globals(),
 class ArchesAddon(base.Addon):
 
     default_arches = tuple(sorted([
-                    "x86", "x86-fbsd", "amd64", "ppc", "ppc-macos", "ppc64",
-                    "sparc", "mips", "arm", "hppa", "m68k", "ia64", "s390",
-                    "sh", "alpha"]))
+        "x86", "x86-fbsd", "amd64", "ppc", "ppc-macos", "ppc64",
+        "sparc", "mips", "arm", "hppa", "m68k", "ia64", "s390",
+        "sh", "alpha"]))
 
     @staticmethod
     def _record_arches(option, opt_str, value, parser):
@@ -231,7 +231,7 @@ class ProfileAddon(base.Addon):
                 values.ContainmentMatch(stable_key, unstable_key))
 
             default_masked_use = tuple(set(x for x in self.official_arches
-                if x != stable_key))
+                                           if x != stable_key))
 
             profile_filters.update({stable_key:[], unstable_key:[]})
             for profile_name in arch_profiles.get(k, []):
@@ -295,7 +295,7 @@ class ProfileAddon(base.Addon):
             for profile in profile_list:
                 for existing in similar:
                     if existing[0].masked_use == profile.masked_use and \
-                        existing[0].forced_use == profile.forced_use:
+                            existing[0].forced_use == profile.forced_use:
                         existing.append(profile)
                         break
                 else:
