@@ -2,8 +2,7 @@
 # License: BSD/GPL2
 
 import os
-from distutils.core import setup, Command
-from distutils.command.sdist import sdist
+from distutils.core import setup
 
 from snakeoil import distutils_extensions as snk_distutils
 
@@ -13,9 +12,6 @@ class mysdist(snk_distutils.sdist):
 
     package_namespace = 'pkgcore_checks'
     old_verinfo = False
-
-    def generate_bzr_verinfo(self, base_dir):
-        pass
 
 
 packages = []
