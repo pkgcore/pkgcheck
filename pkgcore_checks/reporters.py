@@ -62,7 +62,7 @@ class StrReporter(base.Reporter):
 class FancyReporter(base.Reporter):
 
     """
-    groupped colored output, example:
+    grouped colored output, example:
 
     sys-apps/portage
       WrongIndentFound: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
