@@ -75,6 +75,7 @@ class DeprecatedEclassReport(Template):
         'embassy-2.9': None,
         'gems': 'ruby-fakegem',
         'git': 'git-r3',
+        'git-2': 'git-r3',
         'gcc': None,
         'gnustep-old': None,
         'gtk-engines': None,
