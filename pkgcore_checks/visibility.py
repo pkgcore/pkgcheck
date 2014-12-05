@@ -63,16 +63,17 @@ class FakeConfigurable(object):
         raise AttributeError(self, 'is immutable')
 
 
-
 def _eapi2_flatten(val, atom_kls=atom,
-    transitive_use_atom=atom._transitive_use_atom):
+                   transitive_use_atom=atom._transitive_use_atom):
     return isinstance(val, atom_kls) and \
         not isinstance(val, transitive_use_atom)
+
 
 def visit_atoms(pkg, stream):
     if not pkg.eapi_obj.options.transitive_use_atoms:
         return iflatten_instance(stream, atom)
     return iflatten_func(stream, _eapi2_flatten)
+
 
 def strip_atom_use(inst):
     if not inst.use:
@@ -132,7 +133,7 @@ class NonsolvableDeps(base.Result):
     """No potential solution for a depset attribute"""
 
     __slots__ = ("category", "package", "version", "attr", "profile",
-        "keyword", "potentials")
+                 "keyword", "potentials")
 
     threshold = base.versioned_feed
 
@@ -189,7 +190,8 @@ class VisibilityReport(base.Template):
                 break
 
         for attr, depset in (("depends", pkg.depends),
-            ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
+                             ("rdepends", pkg.rdepends),
+                             ("post_rdepends", pkg.post_rdepends)):
             nonexistent = set()
             for orig_node in visit_atoms(pkg, depset):
 
@@ -221,7 +223,8 @@ class VisibilityReport(base.Template):
         del nonexistent
 
         for attr, depset in (("depends", pkg.depends),
-            ("rdepends", pkg.rdepends), ("post_rdepends", pkg.post_rdepends)):
+                             ("rdepends", pkg.rdepends),
+                             ("post_rdepends", pkg.post_rdepends)):
 
             for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
                 pkg, attr, depset):
@@ -234,8 +237,8 @@ class VisibilityReport(base.Template):
                 continue
             for profile in profiles:
                 if profile.visible(pkg):
-                    reporter.add_report(VisibleVcsPkg(pkg,
-                        profile.key, profile.name))
+                    reporter.add_report(VisibleVcsPkg(
+                        pkg, profile.key, profile.name))
 
     def process_depset(self, pkg, attr, depset, profiles, reporter):
         get_cached_query = self.query_cache.get
@@ -290,5 +293,5 @@ class VisibilityReport(base.Template):
                         # no matches.  not great, should collect them all
                         failures.update(required)
             if failures:
-                reporter.add_report(NonsolvableDeps(pkg, attr, profile.key,
-                    profile.name, list(failures)))
+                reporter.add_report(NonsolvableDeps(
+                    pkg, attr, profile.key, profile.name, list(failures)))

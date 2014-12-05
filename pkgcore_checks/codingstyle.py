@@ -25,8 +25,7 @@ class BadInsIntoDir(base.Result):
 
     @property
     def short_desc(self):
-        return "ebuild uses insinto %s on line %s" % (self.insintodir,
-            self.line)
+        return "ebuild uses insinto %s on line %s" % (self.insintodir, self.line)
 
 
 class BadInsIntoCheck(base.Template):
@@ -68,5 +67,5 @@ class BadInsIntoCheck(base.Template):
                 continue
             matches = badf(line)
             if matches is not None:
-                reporter.add_report(BadInsIntoDir(pkg,
-                    matches.groups()[0], lineno + 1))
+                reporter.add_report(
+                    BadInsIntoDir(pkg, matches.groups()[0], lineno + 1))

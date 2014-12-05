@@ -97,6 +97,7 @@ class set_documentation(type):
             d.setdefault("documentation", d["__doc__"])
         return type.__new__(cls, name, bases, d)
 
+
 class Template(Addon):
 
     """Base template for a check."""
@@ -161,11 +162,14 @@ def _collect_checks(obj):
     for x in i:
         yield x
 
+
 def collect_checks(obj):
     return set(_collect_checks(obj))
 
+
 def collect_checks_classes(obj):
     return set(x.__class__ for x in collect_checks(obj))
+
 
 class Result(object):
 
@@ -209,7 +213,7 @@ class Result(object):
         attrs = set(getattr(self, '__attrs__', getattr(self, '__slots__', [])))
         if attrs.difference(data) or len(attrs) != len(data):
             raise TypeError("can't restore %s due to data %r not being complete" %
-                (self.__class__, data))
+                            (self.__class__, data))
         for k, v in data.iteritems():
             setattr(self, k, v)
 
@@ -276,6 +280,7 @@ class _CheckSet(object):
     def __init__(self, patterns):
         self.patterns = list(convert_check_filter(pat) for pat in patterns)
 
+
 class Whitelist(_CheckSet):
 
     """Only run checks matching one of the provided patterns."""
@@ -288,6 +293,7 @@ class Whitelist(_CheckSet):
             c for c in checks
             if any(f('%s.%s' % (c.__module__, c.__name__))
                    for f in self.patterns))
+
 
 class Blacklist(_CheckSet):
 
@@ -306,8 +312,9 @@ class Blacklist(_CheckSet):
 class Suite(object):
 
     pkgcore_config_type = ConfigHint({
-            'target_repo': 'ref:repo', 'src_repo': 'ref:repo',
-            'checkset': 'ref:pcheck_checkset'}, typename='pcheck_suite')
+        'target_repo': 'ref:repo', 'src_repo': 'ref:repo',
+        'checkset': 'ref:pcheck_checkset'}, typename='pcheck_suite'
+    )
 
     def __init__(self, target_repo, checkset=None, src_repo=None):
         self.target_repo = target_repo
@@ -354,8 +361,8 @@ class CheckRunner(object):
         return hash(frozenset(self.checks))
 
     def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(sorted(
-                    str(check) for check in self.checks)))
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(
+            sorted(str(check) for check in self.checks)))
 
 
 def plug(sinks, transforms, sources, debug=None):
@@ -475,8 +482,8 @@ def plug(sinks, transforms, sources, debug=None):
                     transform.source in visited and \
                     transform.dest not in visited:
                 unprocessed.add((
-                        visited.union((transform.dest,)), source,
-                        trans.union((transform,)), cost + transform.cost))
+                    visited.union((transform.dest,)), source,
+                    trans.union((transform,)), cost + transform.cost))
                 if debug is not None:
                     debug(
                         'growing %r for %r with %r', trans, source, transform)
@@ -514,10 +521,10 @@ def plug(sinks, transforms, sources, debug=None):
                 if source not in sources:
                     for new_visited, trans, new_cost in source_pipes:
                         unprocessed.add((
-                                visited.union(new_visited),
-                                sources.union([source]),
-                                seq + ((source, trans),),
-                                cost + new_cost))
+                            visited.union(new_visited),
+                            sources.union([source]),
+                            seq + ((source, trans),),
+                            cost + new_cost))
 
     # Just an assert since unreachable sinks should have been thrown away.
     assert pipes_to_run, 'did not find a solution?'

@@ -137,11 +137,12 @@ class XmlReporter(base.Reporter):
         "<package>%(package)s</package><version>%(version)s</version>"
         "<msg>%(msg)s</msg></result>")
 
-    threshold_map = {base.repository_feed:repo_template,
-        base.category_feed:cat_template,
-        base.package_feed:pkg_template,
-        base.versioned_feed:ver_template,
-        base.ebuild_feed:ver_template
+    threshold_map = {
+        base.repository_feed: repo_template,
+        base.category_feed: cat_template,
+        base.package_feed: pkg_template,
+        base.versioned_feed: ver_template,
+        base.ebuild_feed: ver_template,
     }
 
     def __init__(self, out):
@@ -157,7 +158,7 @@ class XmlReporter(base.Reporter):
 
     def add_report(self, result):
         d = dict((k, getattr(result, k, '')) for k in
-            ("category", "package", "version"))
+                 ("category", "package", "version"))
         d["msg"] = xml.escape(result.short_desc)
         self.out.write(self.threshold_map[result.threshold] % d)
 
@@ -209,6 +210,7 @@ fancy_reporter = make_configurable_reporter_factory(FancyReporter)
 fancy_reporter.__name__ = 'fancy_reporter'
 null_reporter = make_configurable_reporter_factory(NullReporter)
 null_reporter.__name__ = 'null'
+
 
 @configurable({'reporters': 'refs:pcheck_reporter_factory'},
               typename='pcheck_reporter_factory')

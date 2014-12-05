@@ -26,7 +26,7 @@ class StreamHeader(object):
 
     def __init__(self, checks, criteria):
         self.checks = sorted((x for x in checks if x.known_results),
-            key=lambda x:x.__name__)
+                             key=lambda x: x.__name__)
         self.known_results = set()
         for x in checks:
             self.known_results.update(x.known_results)
@@ -114,10 +114,10 @@ def replay_stream(stream_handle, reporter, debug=None):
             if debug:
                 if headers:
                     debug.write("finished processing %i results for %s" %
-                        (count - last_count, headers[-1].criteria))
+                                (count - last_count, headers[-1].criteria))
                 last_count = count
                 debug.write("encountered new stream header for %s" %
-                    item.criteria)
+                            item.criteria)
             if headers:
                 reporter.end_check()
             reporter.start_check(item.checks, item.criteria)

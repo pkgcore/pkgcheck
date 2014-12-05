@@ -37,7 +37,7 @@ class DroppedKeywordsReport(Template):
 
         # We need to skip live ebuilds otherwise they're flagged. Currently, we
         # assume live ebuilds have versions matching *9999*.
-        pkgset = [pkg for pkg in pkgset if not "9999" in pkg.version]
+        pkgset = [pkg for pkg in pkgset if "9999" not in pkg.version]
 
         lastpkg = pkgset[-1]
         state = set(x.lstrip("~") for x in lastpkg.keywords)

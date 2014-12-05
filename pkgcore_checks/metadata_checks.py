@@ -251,7 +251,7 @@ class SrcUriReport(base.Template):
             # duplicate entries are possible.
             seen = set()
             for f_inst in self.iuse_filter((fetchable,), pkg,
-                pkg.fetchables, reporter):
+                                           pkg.fetchables, reporter):
                 if f_inst.filename in seen:
                     continue
                 seen.add(f_inst.filename)
@@ -268,7 +268,7 @@ class SrcUriReport(base.Template):
                     if bad:
                         reporter.add_report(
                             BadProto(pkg, f_inst.filename, bad))
-            if not "fetch" in pkg.restrict:
+            if "fetch" not in pkg.restrict:
                 for x in sorted(lacks_uri):
                     reporter.add_report(MissingUri(pkg, x))
 
@@ -366,9 +366,10 @@ class BadRestricts(base.Result):
 
 class RestrictsReport(base.Template):
     feed_type = base.versioned_feed
-    known_restricts = frozenset(("confcache", "stricter", "mirror", "fetch",
-        "test", "sandbox", "userpriv", "primaryuri", "binchecks", "strip",
-        "multilib-strict"))
+    known_restricts = frozenset((
+        "binchecks", "confcache", "fetch", "mirror", "multilib-strict",
+        "primaryuri", "sandbox", "stricter", "strip", "test", "userpriv",
+    ))
 
     known_results = (BadRestricts,) + addons.UseAddon.known_results
     required_addons = (addons.UseAddon,)
@@ -386,6 +387,6 @@ class RestrictsReport(base.Template):
         bad = set(i).difference(self.known_restricts)
         if bad:
             deprecated = set(x for x in bad if x.startswith("no")
-                and x[2:] in self.known_restricts)
+                             and x[2:] in self.known_restricts)
             reporter.add_report(BadRestricts(
-                    pkg, bad.difference(deprecated), deprecated))
+                pkg, bad.difference(deprecated), deprecated))

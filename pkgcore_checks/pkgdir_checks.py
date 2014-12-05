@@ -115,7 +115,7 @@ class InvalidUtf8(Result):
 def utf8_check(pkg, base, filename, reporter):
     try:
         codecs.open(pjoin(base, filename), mode="rb",
-            encoding="utf8", buffering=8192).read()
+                    encoding="utf8", buffering=8192).read()
     except UnicodeDecodeError, e:
         reporter.add_report(InvalidUtf8(pkg, filename, str(e)))
         del e
@@ -128,7 +128,7 @@ class PkgDirReport(Template):
 
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
     known_results = (MissingFile, ExecutableFile, SizeViolation,
-        Glep31Violation, InvalidUtf8)
+                     Glep31Violation, InvalidUtf8)
 
     def feed(self, pkgset, reporter):
         base = os.path.dirname(pkgset[0].ebuild.path)

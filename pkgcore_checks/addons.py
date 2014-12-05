@@ -224,7 +224,7 @@ class ProfileAddon(base.Addon):
             if k.lstrip("~") not in self.desired_arches:
                 continue
             stable_key = k.lstrip("~")
-            unstable_key = "~"+ stable_key
+            unstable_key = "~" + stable_key
             stable_r = packages.PackageRestriction("keywords",
                 values.ContainmentMatch(stable_key))
             unstable_r = packages.PackageRestriction("keywords",
@@ -233,7 +233,7 @@ class ProfileAddon(base.Addon):
             default_masked_use = tuple(set(x for x in self.official_arches
                                            if x != stable_key))
 
-            profile_filters.update({stable_key:[], unstable_key:[]})
+            profile_filters.update({stable_key: [], unstable_key: []})
             for profile_name in arch_profiles.get(k, []):
                 if not isinstance(profile_name, basestring):
                     profile_name, profile = profile_name
@@ -359,7 +359,7 @@ class EvaluateDepSetAddon(base.Template):
             collapsed.setdefault((immutables, enabled), []).extend(profiles)
 
         return [(depset.evaluate_depset(k[1], tristate_filter=k[0]), v)
-            for k,v in collapsed.iteritems()]
+                for k, v in collapsed.iteritems()]
 
 
 class LicenseAddon(base.Addon):
@@ -423,7 +423,6 @@ class UseAddon(base.Addon):
         base.Addon.__init__(self, options)
         known_iuse = set()
         unstated_iuse = set()
-        known_arches = set()
         arches = set()
 
         known_iuse.update(x[1][0] for x in options.target_repo.config.use_desc)
@@ -442,7 +441,7 @@ class UseAddon(base.Addon):
         self.ignore = not (unstated_iuse or known_iuse)
         if self.ignore and not silence_warnings:
             logger.warn('disabling use/iuse validity checks since no usable '
-                'use.desc, use.local.desc were found ')
+                        'use.desc, use.local.desc were found ')
 
     def allowed_iuse(self, pkg):
         return self.collapsed_iuse.pull_data(pkg)
@@ -474,8 +473,7 @@ class UseAddon(base.Addon):
         for node in i:
             if isinstance(node, packages.Conditional):
                 # invert it; get only whats not in pkg.iuse
-                unstated.update(ifilterfalse(stated.__contains__,
-                    node.restriction.vals))
+                unstated.update(ifilterfalse(stated.__contains__, node.restriction.vals))
                 i.append(iflatten_instance(node.payload, skip_filter))
                 continue
             yield node

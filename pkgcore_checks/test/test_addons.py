@@ -4,8 +4,6 @@
 import os, sys, optparse, itertools, shutil
 
 from pkgcore.ebuild import repo_objs
-from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.misc import collapsed_restrict_to_data
 from pkgcore.restrictions import packages
 from pkgcore.test import TestCase
 from snakeoil.fileutils import write_file
@@ -19,6 +17,7 @@ from pkgcore_checks.test.misc import FakePkg, FakeProfile, Options
 class exit_exception(Exception):
     def __init__(self, *args):
         self.args = args
+
 
 class parser(optparse.OptionParser):
 
@@ -79,9 +78,10 @@ class TestQueryCacheAddon(base_test):
 
     def test_opts(self):
         for val, ret in (('version', base.versioned_feed),
-            ('package', base.package_feed),
-            ('category', base.repository_feed)):
-            self.process_check(['--reset-caching-per', val],
+                         ('package', base.package_feed),
+                         ('category', base.repository_feed)):
+            self.process_check(
+                ['--reset-caching-per', val],
                 query_caching_freq=ret, silence=True)
 
     def test_default(self):
@@ -118,28 +118,30 @@ class Test_profile_data(TestCase):
         profile = FakeProfile()
         self.assertResults(profile, [], [], [])
 
-        profile = FakeProfile(masked_use={"dev-util/diffball":["lib"]})
+        profile = FakeProfile(masked_use={"dev-util/diffball": ["lib"]})
         self.assertResults(profile, [], [], [])
         self.assertResults(profile, ["lib"], ["lib"], [])
 
-        profile = FakeProfile(masked_use={"=dev-util/diffball-0.2":["lib"]})
+        profile = FakeProfile(masked_use={"=dev-util/diffball-0.2": ["lib"]})
         self.assertResults(profile, ["lib"], [], [])
 
-        profile = FakeProfile(masked_use={"dev-util/foon":["lib"]})
+        profile = FakeProfile(masked_use={"dev-util/foon": ["lib"]})
         self.assertResults(profile, ["lib"], [], [])
 
-        profile = FakeProfile(forced_use={"dev-util/diffball":["lib"]})
+        profile = FakeProfile(forced_use={"dev-util/diffball": ["lib"]})
         self.assertResults(profile, [], [], [])
         self.assertResults(profile, ["lib", "bar"], ["lib"], ["lib"])
 
-        profile = FakeProfile(forced_use={"dev-util/diffball":["lib"]},
-            masked_use={"dev-util/diffball":["lib"]})
+        profile = FakeProfile(
+            forced_use={"dev-util/diffball": ["lib"]},
+            masked_use={"dev-util/diffball": ["lib"]})
         self.assertResults(profile, [], [], [])
         # check that masked use wins out over forced.
         self.assertResults(profile, ["lib", "bar"], ["lib"], [])
 
-        profile = FakeProfile(forced_use={"dev-util/diffball":["lib"]},
-            masked_use={"dev-util/diffball":["lib"]})
+        profile = FakeProfile(
+            forced_use={"dev-util/diffball": ["lib"]},
+            masked_use={"dev-util/diffball": ["lib"]})
         self.assertResults(profile, [], [], [])
         # check that masked use wins out over forced.
         self.assertResults(profile, ["lib", "bar"], ["lib"], [])
@@ -177,7 +179,7 @@ class TestProfileAddon(profile_mixin):
         os.mkdir(loc)
         for profile in profiles:
             self.assertTrue(ensure_dirs(pjoin(loc, profile)),
-                msg="failed creating profile %r" % profile)
+                            msg="failed creating profile %r" % profile)
         if arches is None:
             arches = set(val[0] for val in profiles.itervalues())
         write_file(pjoin(loc, 'arch.list'), 'w', "\n".join(arches))
@@ -191,8 +193,7 @@ class TestProfileAddon(profile_mixin):
                 fd.write("%s\t%s\tdev\n" % (vals[0], profile))
             if l == 3 and vals[2]:
                 open(pjoin(loc, profile, 'deprecated'), 'w').write("foon\n#dar\n")
-            open(pjoin(loc, profile, 'make.defaults'), 'w').write(
-                "ARCH=%s\n" % vals[0])
+            open(pjoin(loc, profile, 'make.defaults'), 'w').write("ARCH=%s\n" % vals[0])
         fd.close()
 
     def assertProfiles(self, check, key, *profile_names):
@@ -201,7 +202,10 @@ class TestProfileAddon(profile_mixin):
             sorted(profile_names))
 
     def test_defaults(self):
-        self.mk_profiles({"profile1":["x86"], "profile1/2":["x86"]}, base='profiles')
+        self.mk_profiles({
+            "profile1": ["x86"],
+            "profile1/2": ["x86"]},
+            base='profiles')
         os.mkdir(pjoin(self.dir, 'metadata'))
         # write masters= to suppress logging complaints.
         write_file(pjoin(self.dir, 'metadata', 'layout.conf'), 'w', 'masters=')
@@ -217,53 +221,67 @@ class TestProfileAddon(profile_mixin):
         self.assertProfiles(check, 'x86', 'profile1', 'profile1/2')
 
     def test_profile_base(self):
-        self.mk_profiles({"default-linux":["x86", True],
-            "default-linux/x86":["x86"]}, base='foo')
+        self.mk_profiles({
+            "default-linux": ["x86", True],
+            "default-linux/x86": ["x86"]},
+            base='foo')
         options = self.process_check(pjoin(self.dir, 'foo'), [])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
 
     def test_disable_dev(self):
-        self.mk_profiles({"default-linux":["x86", True],
-            "default-linux/x86":["x86"]}, base='foo')
+        self.mk_profiles({
+            "default-linux": ["x86", True],
+            "default-linux/x86": ["x86"]},
+            base='foo')
         options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-dev'],
             profile_ignore_dev=True)
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
     def test_disable_deprecated(self):
-        self.mk_profiles({"default-linux":["x86", False, True],
-            "default-linux/x86":["x86"]}, base='foo')
+        self.mk_profiles({
+            "default-linux": ["x86", False, True],
+            "default-linux/x86": ["x86"]},
+            base='foo')
         options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-deprecated'],
             profile_ignore_deprecated=True)
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
     def test_disable_profiles_desc(self):
-        self.mk_profiles({"default-linux":["x86"],
-            "default-linux/x86":["x86"]}, base='foo')
+        self.mk_profiles({
+            "default-linux": ["x86"],
+            "default-linux/x86": ["x86"]},
+            base='foo')
         options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-profiles-desc'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86')
 
     def test_profile_enable(self):
-        self.mk_profiles({"default-linux":["x86"],
-            "default-linux/x86":["x86"]}, base='foo')
+        self.mk_profiles({
+            "default-linux": ["x86"],
+            "default-linux/x86": ["x86"]},
+            base='foo')
         options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-profiles-desc',
             '--profile-enable', 'default-linux/x86'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
     def test_profile_disable(self):
-        self.mk_profiles({"default-linux":["x86"],
-            "default-linux/x86":["x86"]}, base='foo')
+        self.mk_profiles({
+            "default-linux": ["x86"],
+            "default-linux/x86": ["x86"]},
+            base='foo')
         options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable', 'default-linux/x86'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux')
 
     def test_identify_profiles(self):
-        self.mk_profiles({'default-linux':['x86'],
-            'default-linux/x86':["x86"], 'default-linux/ppc':['ppc']},
+        self.mk_profiles({
+            'default-linux': ['x86'],
+            'default-linux/x86': ["x86"],
+            'default-linux/ppc': ['ppc']},
             base='foo')
 
         counter = itertools.count()
@@ -283,25 +301,20 @@ class TestProfileAddon(profile_mixin):
         self.assertEqual(len(check.profile_evaluate_dict['x86'][0]), 2)
         self.assertProfiles(check, 'ppc', 'default-linux/ppc')
 
-        l = check.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS':'x86'}))
-        self.assertEqual(len(l), 1, msg="checking for profile collapsing: %r" %
-            l)
-        self.assertEqual(len(l[0]), 2, msg="checking for proper # of profiles: "
-            "%r" % l[0])
+        l = check.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': 'x86'}))
+        self.assertEqual(len(l), 1, msg="checking for profile collapsing: %r" % l)
+        self.assertEqual(len(l[0]), 2, msg="checking for proper # of profiles: %r" % l[0])
         self.assertEqual(sorted(x.name for x in l[0]),
-            sorted(['default-linux', 'default-linux/x86']))
+                         sorted(['default-linux', 'default-linux/x86']))
 
         # check keyword collapsing
-        l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS':'ppc'}))
-        self.assertEqual(len(l), 1, msg="checking for profile collapsing: %r" %
-            l)
-        self.assertEqual(len(l[0]), 1, msg="checking for proper # of profiles: "
-            "%r" % l[0])
+        l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'ppc'}))
+        self.assertEqual(len(l), 1, msg="checking for profile collapsing: %r" % l)
+        self.assertEqual(len(l[0]), 1, msg="checking for proper # of profiles: " "%r" % l[0])
         self.assertEqual(l[0][0].name, 'default-linux/ppc')
 
-        l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS':'foon'}))
-        self.assertEqual(len(l), 0, msg="checking for profile collapsing: %r" %
-            l)
+        l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'foon'}))
+        self.assertEqual(len(l), 0, msg="checking for profile collapsing: %r" % l)
 
 
         # test collapsing reusing existing profile layout
@@ -312,23 +325,20 @@ class TestProfileAddon(profile_mixin):
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
         self.assertEqual(len(check.profile_evaluate_dict['x86']), 2)
 
-        open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.mask'),
-            'w').write("lib")
+        open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.mask'), 'w').write("lib")
         options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
         self.assertEqual(len(check.profile_evaluate_dict['x86']), 1)
 
         # test collapsing reusing existing profile layout
-        open(pjoin(self.dir, 'foo', 'default-linux', 'use.force'), 'w').write(
-            "foo")
+        open(pjoin(self.dir, 'foo', 'default-linux', 'use.force'), 'w').write("foo")
         options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
         self.assertEqual(len(check.profile_evaluate_dict['x86']), 2)
 
-        open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.force'),
-            'w').write("foo")
+        open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.force'), 'w').write("foo")
         options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
@@ -473,9 +483,9 @@ class TestLicenseAddon(mixins.TempDirMixin, base_test):
         os.mkdir(r2)
 
         self.assertRaises(optparse.OptionValueError, self.process_check, [],
-            preset_values={'repo_bases':[r2]})
+            preset_values={'repo_bases': [r2]})
 
-        self.process_check([], preset_values={'repo_bases':[r1, r2]},
+        self.process_check([], preset_values={'repo_bases': [r1, r2]},
             license_dirs=[pjoin(r1, 'licenses')])
 
     def test_it(self):

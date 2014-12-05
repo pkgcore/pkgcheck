@@ -182,7 +182,7 @@ class ConflictingChksums(base.Result):
     """
 
     __slots__ = ("category", "package", "version",
-        "filename", "chksums", "others")
+                 "filename", "chksums", "others")
 
     threshold = base.versioned_feed
 
@@ -193,7 +193,7 @@ class ConflictingChksums(base.Result):
         self._store_cpv(pkg)
         self.filename = filename
         self.chksums = tuple(sorted(reformat_chksums(chksums),
-            key=self._sorter))
+                                    key=self._sorter))
         self.others = tuple(sorted(others))
 
     @property
@@ -208,7 +208,7 @@ class MissingChksum(base.Result):
     """
     threshold = base.versioned_feed
     __slots__ = ('category', 'package', 'version', 'filename', 'missing',
-        'existing')
+                 'existing')
 
     def __init__(self, pkg, filename, missing, existing):
         self._store_cpv(pkg)
@@ -254,7 +254,7 @@ class RequiredChksums(base.Template):
                     if missing:
                         reporter.add_report(
                             MissingChksum(pkg, f_inst.filename, missing,
-                                f_inst.chksums))
+                                          f_inst.chksums))
                     seen.add(f_inst.filename)
                     existing = self.seen_checksums.get(f_inst.filename)
                     if existing is None:

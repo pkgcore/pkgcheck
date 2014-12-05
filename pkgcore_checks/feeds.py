@@ -162,11 +162,9 @@ class RestrictedRepoSource(object):
     def __init__(self, repo, limiter):
         self.repo = repo
         self.limiter = limiter
-        for scope, attrs in [
-            (base.version_scope, ['fullver', 'version', 'rev']),
-            (base.package_scope, ['package']),
-            (base.category_scope, ['category']),
-            ]:
+        for scope, attrs in ((base.version_scope, ['fullver', 'version', 'rev']),
+                             (base.package_scope, ['package']),
+                             (base.category_scope, ['category'])):
             if any(util.collect_package_restrictions(limiter, attrs)):
                 self.scope = scope
                 return

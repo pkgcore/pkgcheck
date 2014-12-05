@@ -133,7 +133,7 @@ class OptionParser(commandline.OptionParser):
         # XXX hack...
         values.checks = sorted(lists.unstable_unique(
             get_plugins('check', plugins)),
-            key=lambda x:x.__name__)
+            key=lambda x: x.__name__)
         if values.list_checks or values.list_reporters:
             if values.list_reporters == values.list_checks:
                 raise optparse.OptionValueError("--list-checks and "
@@ -364,7 +364,7 @@ def display_checks(out, checks):
     for module_name in sorted(d):
         out.write(out.bold, "%s:" % module_name)
         l = d[module_name]
-        l.sort(key=lambda x:x.__name__)
+        l.sort(key=lambda x: x.__name__)
 
         try:
             out.first_prefix.append('  ')
@@ -388,7 +388,7 @@ def display_reporters(out, config, config_reporters, plugin_reporters):
         out.later_prefix.append(' ')
         try:
             # sorting here is random
-            for reporter in sorted(config_reporters, key=lambda x:x.__name__):
+            for reporter in sorted(config_reporters, key=lambda x: x.__name__):
                 key = config.get_section_name(reporter)
                 if not key:
                     continue
@@ -406,7 +406,7 @@ def display_reporters(out, config, config_reporters, plugin_reporters):
         out.first_prefix.append(' ')
         out.later_prefix.append(' ')
         try:
-            for reporter in sorted(plugin_reporters, key=lambda x:x.__name__):
+            for reporter in sorted(plugin_reporters, key=lambda x: x.__name__):
                 out.write(out.bold, reporter.__name__)
                 dump_docstring(out, reporter, prefix=' ')
                 out.write()
