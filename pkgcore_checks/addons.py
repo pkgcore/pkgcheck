@@ -29,9 +29,9 @@ demandload(globals(),
 class ArchesAddon(base.Addon):
 
     default_arches = tuple(sorted([
-        "x86", "x86-fbsd", "amd64", "ppc", "ppc-macos", "ppc64",
-        "sparc", "mips", "arm", "hppa", "m68k", "ia64", "s390",
-        "sh", "alpha"]))
+        "alpha", "amd64", "arm", "arm64", "hppa", "ia64", "m68k", "mips",
+        "ppc", "ppc64", "s390", "sh", "sparc", "x86",
+    ]))
 
     @staticmethod
     def _record_arches(option, opt_str, value, parser):
