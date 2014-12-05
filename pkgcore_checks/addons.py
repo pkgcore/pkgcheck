@@ -251,10 +251,20 @@ class ProfileAddon(base.Addon):
                 immutable_flags.optimize(cache=chunked_data_cache)
                 immutable_flags.freeze()
 
+                stable_immutable_flags = profile.stable_masked_use.clone(unfreeze=True)
+                stable_immutable_flags.add_bare_global((), default_masked_use)
+                stable_immutable_flags.optimize(cache=chunked_data_cache)
+                stable_immutable_flags.freeze()
+
                 enabled_flags = profile.forced_use.clone(unfreeze=True)
                 enabled_flags.add_bare_global((), (stable_key,))
                 enabled_flags.optimize(cache=chunked_data_cache)
                 enabled_flags.freeze
+
+                stable_enabled_flags = profile.stable_forced_use.clone(unfreeze=True)
+                stable_enabled_flags.add_bare_global((), (stable_key,))
+                stable_enabled_flags.optimize(cache=chunked_data_cache)
+                stable_enabled_flags.freeze
 
                 # used to interlink stable/unstable lookups so that if
                 # unstable says it's not visible, stable doesn't try
@@ -273,7 +283,8 @@ class ProfileAddon(base.Addon):
                     profile_name, stable_key,
                     virtuals, profile.provides_repo,
                     packages.AndRestriction(mask, stable_r),
-                    immutable_flags, enabled_flags, stable_cache,
+                    stable_immutable_flags, stable_enabled_flags,
+                    stable_cache,
                     ProtectedSet(unstable_insoluble)))
 
                 profile_filters[unstable_key].append(profile_data(

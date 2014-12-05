@@ -382,11 +382,11 @@ class TestEvaluateDepSetAddon(profile_mixin):
 
     def test_it(self):
         check = self.get_check(
-            FakeProfile(masked_use={"dev-util/diffball":['foo']},
+            FakeProfile(stable_masked_use={"dev-util/diffball": ['foo']},
                 arch='x86', name='1'),
-            FakeProfile(forced_use={"=dev-util/diffball-0.1":['bar', 'foo']},
+            FakeProfile(stable_forced_use={"=dev-util/diffball-0.1": ['bar', 'foo']},
                 arch='x86', name='2'),
-            FakeProfile(forced_use={"dev-util/diffball":['bar', 'foo']},
+            FakeProfile(stable_forced_use={"dev-util/diffball": ['bar', 'foo']},
                 arch='ppc', name='3')
             )
         def get_rets(ver, attr, KEYWORDS="x86", **data):

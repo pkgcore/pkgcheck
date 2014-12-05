@@ -119,20 +119,34 @@ class Options(dict):
 
 class FakeProfile(object):
 
-    def __init__(self, masked_use={}, forced_use={},
-        provides={}, masks=[], virtuals={}, arch='x86', name='none'):
+    def __init__(self, masked_use={}, stable_masked_use={}, forced_use={},
+                 stable_forced_use={}, provides={}, masks=[], virtuals={},
+                 arch='x86', name='none'):
         self.provides_repo = SimpleTree(provides)
+
         self.masked_use = ChunkedDataDict()
         self.masked_use.update_from_stream(
             chunked_data(atom(k), *split_negations(v))
             for k, v in masked_use.iteritems())
         self.masked_use.freeze()
 
+        self.stable_masked_use = ChunkedDataDict()
+        self.stable_masked_use.update_from_stream(
+            chunked_data(atom(k), *split_negations(v))
+            for k, v in stable_masked_use.iteritems())
+        self.stable_masked_use.freeze()
+
         self.forced_use = ChunkedDataDict()
         self.forced_use.update_from_stream(
             chunked_data(atom(k), *split_negations(v))
             for k, v in forced_use.iteritems())
         self.forced_use.freeze()
+
+        self.stable_forced_use = ChunkedDataDict()
+        self.stable_forced_use.update_from_stream(
+            chunked_data(atom(k), *split_negations(v))
+            for k, v in stable_forced_use.iteritems())
+        self.stable_forced_use.freeze()
 
         self.masks = tuple(map(atom, masks))
         self.virtuals = SimpleTree(virtuals)
