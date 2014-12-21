@@ -45,10 +45,6 @@ setup(
     author_email="ferringb@gmail.com",
     description="pkgcore based ebuild checks- repoman replacement",
     packages=packages,
-    py_modules=[
-        'pkgcore.plugins.pcheck_config',
-        'pkgcore.plugins.pcheck_configurables',
-        ],
     scripts=["pcheck", "replay-pcheck-stream"],
     cmdclass={"sdist":mysdist,
         "test":test,
