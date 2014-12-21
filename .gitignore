@@ -1,5 +1,4 @@
 pkgcore_checks/plugins/plugincache
-pkgcore/plugins/plugincache
 _trial_temp
 *.pyc
 *.pyo
