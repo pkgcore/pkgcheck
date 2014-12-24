@@ -47,8 +47,10 @@ class ArchesAddon(base.Addon):
         parser.add_option(
             '-a', '--arches', action='callback', callback=cls._record_arches,
             type='string', default=cls.default_arches,
-            help="comma separated list of what arches to run, defaults to %s" %
-            ",".join(cls.default_arches))
+            help="comma separated list of what arches to run, defaults to %s "
+            "-- note that stable-related checks (e.g. UnstableOnly) default "
+            "to the set of arches having stable profiles in the target repo)"
+            % ", ".join(cls.default_arches))
         parser.add_option(
             '--disable-arches', action='callback', callback=cls._disable_arches,
             type='string',
@@ -374,6 +376,18 @@ class EvaluateDepSetAddon(base.Template):
 
         return [(depset.evaluate_depset(k[1], tristate_filter=k[0]), v)
                 for k, v in collapsed.iteritems()]
+
+
+class StableCheckAddon(base.Template):
+
+    """Check relating to stable arches by default."""
+
+    def __init__(self, options, arches, *args):
+        super(StableCheckAddon, self).__init__(self, options)
+
+        # use known stable arches if a custom arch set isn't specified
+        if options.arches == arches.default_arches:
+            options.arches = options.src_repo.config.stable_arches
 
 
 class LicenseAddon(base.Addon):

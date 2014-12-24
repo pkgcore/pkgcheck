@@ -3,8 +3,8 @@
 
 import time
 
-from pkgcore_checks import addons
-from pkgcore_checks.base import Template, versioned_feed, Result
+from pkgcore_checks.addons import ArchesAddon, StableCheckAddon
+from pkgcore_checks.base import versioned_feed, Result
 
 day = 24*3600
 
@@ -31,18 +31,18 @@ class StaleUnstableKeyword(Result):
             self.period, ', '.join(self.keywords))
 
 
-class StaleUnstableReport(Template):
+class StaleUnstableReport(StableCheckAddon):
     """Ebuilds that have sat unstable for over a month"""
 
     feed_type = versioned_feed
-    required_addons = (addons.ArchesAddon,)
+    required_addons = (ArchesAddon,)
     known_results = (StaleUnstableKeyword,)
 
     def __init__(self, options, arches, staleness=long(day*30)):
-        Template.__init__(self, options)
+        super(StaleUnstableReport, self).__init__(options, arches)
         self.staleness = staleness
         self.start_time = None
-        self.targets = frozenset("~%s" % x.lstrip("~") for x in options.arches)
+        self.arches = frozenset("~%s" % x.lstrip("~") for x in options.arches)
 
     def start(self):
         self.start_time = time.time()
@@ -51,7 +51,7 @@ class StaleUnstableReport(Template):
         unchanged_time = self.start_time - pkg._mtime_
         if unchanged_time < self.staleness:
             return
-        unstable = [x for x in pkg.keywords if x in self.targets]
+        unstable = [arch for arch in pkg.keywords if arch in self.arches]
         if not unstable:
             return
         reporter.add_report(

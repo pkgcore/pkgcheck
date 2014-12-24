@@ -3,8 +3,8 @@
 
 from pkgcore.restrictions import packages, values
 
-from pkgcore_checks import addons
-from pkgcore_checks.base import Template, package_feed, Result
+from pkgcore_checks.addons import ArchesAddon, StableCheckAddon
+from pkgcore_checks.base import package_feed, Result
 
 
 class UnstableOnly(Result):
@@ -27,24 +27,25 @@ class UnstableOnly(Result):
             self.arch, ', '.join(self.version))
 
 
-class UnstableOnlyReport(Template):
+class UnstableOnlyReport(StableCheckAddon):
     """scan for pkgs that have just unstable keywords"""
 
     feed_type = package_feed
-    required_addons = (addons.ArchesAddon,)
+    required_addons = (ArchesAddon,)
     known_results = (UnstableOnly,)
 
-    def __init__(self, options, arches):
-        Template.__init__(self, options)
+    def __init__(self, options, arches, *args):
+        super(UnstableOnlyReport, self).__init__(options, arches)
         arches = set(x.strip().lstrip("~") for x in options.arches)
+
         # stable, then unstable, then file
         self.arch_restricts = {}
-        for x in arches:
-            self.arch_restricts[x] = [
-                packages.PackageRestriction("keywords",
-                    values.ContainmentMatch(x)),
-                packages.PackageRestriction("keywords",
-                    values.ContainmentMatch("~%s" % x))
+        for arch in arches:
+            self.arch_restricts[arch] = [
+                packages.PackageRestriction(
+                    "keywords", values.ContainmentMatch(arch)),
+                packages.PackageRestriction(
+                    "keywords", values.ContainmentMatch("~%s" % arch))
                 ]
 
     def feed(self, pkgset, reporter):
