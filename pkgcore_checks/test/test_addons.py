@@ -184,17 +184,18 @@ class TestProfileAddon(profile_mixin):
             arches = set(val[0] for val in profiles.itervalues())
         write_file(pjoin(loc, 'arch.list'), 'w', "\n".join(arches))
         write_file(pjoin(loc, 'repo_name'), 'w', 'testing')
-        fd = open(pjoin(loc, 'profiles.desc'), 'w')
-        for profile, vals in profiles.iteritems():
-            l = len(vals)
-            if l == 1 or not vals[1]:
-                fd.write("%s\t%s\tstable\n" % (vals[0], profile))
-            else:
-                fd.write("%s\t%s\tdev\n" % (vals[0], profile))
-            if l == 3 and vals[2]:
-                open(pjoin(loc, profile, 'deprecated'), 'w').write("foon\n#dar\n")
-            open(pjoin(loc, profile, 'make.defaults'), 'w').write("ARCH=%s\n" % vals[0])
-        fd.close()
+        with open(pjoin(loc, 'profiles.desc'), 'w') as fd:
+            for profile, vals in profiles.iteritems():
+                l = len(vals)
+                if l == 1 or not vals[1]:
+                    fd.write("%s\t%s\tstable\n" % (vals[0], profile))
+                else:
+                    fd.write("%s\t%s\tdev\n" % (vals[0], profile))
+                if l == 3 and vals[2]:
+                    with open(pjoin(loc, profile, 'deprecated'), 'w') as f:
+                        f.write("foon\n#dar\n")
+                with open(pjoin(loc, profile, 'make.defaults'), 'w') as f:
+                    f.write("ARCH=%s\n" % vals[0])
 
     def assertProfiles(self, check, key, *profile_names):
         self.assertEqual(
@@ -316,29 +317,31 @@ class TestProfileAddon(profile_mixin):
         l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'foon'}))
         self.assertEqual(len(l), 0, msg="checking for profile collapsing: %r" % l)
 
-
         # test collapsing reusing existing profile layout
-        open(pjoin(self.dir, 'foo', 'default-linux', 'use.mask'), 'w').write(
-            "lib")
+        with open(pjoin(self.dir, 'foo', 'default-linux', 'use.mask'), 'w') as f:
+            f.write("lib")
         options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
         self.assertEqual(len(check.profile_evaluate_dict['x86']), 2)
 
-        open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.mask'), 'w').write("lib")
+        with open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.mask'), 'w') as f:
+            f.write("lib")
         options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
         self.assertEqual(len(check.profile_evaluate_dict['x86']), 1)
 
         # test collapsing reusing existing profile layout
-        open(pjoin(self.dir, 'foo', 'default-linux', 'use.force'), 'w').write("foo")
+        with open(pjoin(self.dir, 'foo', 'default-linux', 'use.force'), 'w') as f:
+            f.write("foo")
         options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
         self.assertEqual(len(check.profile_evaluate_dict['x86']), 2)
 
-        open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.force'), 'w').write("foo")
+        with open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.force'), 'w') as f:
+            f.write("foo")
         options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
@@ -352,8 +355,8 @@ class TestEvaluateDepSetAddon(profile_mixin):
 
     def setUp(self):
         profile_mixin.setUp(self)
-        open(pjoin(self.dir, "arch.list"), "w").write(
-            "\n".join(addons.ArchesAddon.default_arches))
+        with open(pjoin(self.dir, "arch.list"), "w") as f:
+            f.write("\n".join(addons.ArchesAddon.default_arches))
         self.addon_kls = self.orig_addon_kls
 
     process_check = base_test.process_check
@@ -491,8 +494,8 @@ class TestLicenseAddon(mixins.TempDirMixin, base_test):
     def test_it(self):
         opts = self.process_check(['--license-dir', self.dir],
             license_dirs=[self.dir])
-        open(pjoin(self.dir, 'foo'), 'w')
-        open(pjoin(self.dir, 'foo2'), 'w')
+        open(pjoin(self.dir, 'foo'), 'w').close()
+        open(pjoin(self.dir, 'foo2'), 'w').close()
         self.assertRaises(optparse.OptionValueError, self.process_check,
             ['--license-dir', pjoin(self.dir, 'foo')])
         addon = self.addon_kls(opts)
