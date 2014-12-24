@@ -366,8 +366,8 @@ class EvaluateDepSetAddon(base.Template):
         diuse = depset.known_conditionals
         collapsed = {}
         for profiles in profile_grps:
-            immutables, enabled = profiles[0].identify_use(pkg, diuse)
-            collapsed.setdefault((immutables, enabled), []).extend(profiles)
+            immutable, enabled = profiles[0].identify_use(pkg, diuse)
+            collapsed.setdefault((immutable, enabled), []).extend(profiles)
 
         return [(depset.evaluate_depset(k[1], tristate_filter=k[0]), v)
                 for k, v in collapsed.iteritems()]

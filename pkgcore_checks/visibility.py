@@ -38,6 +38,7 @@ class FakeConfigurable(object):
     def request_disable(self, attr, *vals):
         if attr != 'use':
             return False
+
         set_vals = frozenset(vals)
         if self.eapi_obj.magic == '0':
             if not set_vals.issubset(self.iuse):
