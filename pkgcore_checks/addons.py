@@ -382,11 +382,11 @@ class StableCheckAddon(base.Template):
 
     """Check relating to stable arches by default."""
 
-    def __init__(self, options, arches, *args):
+    def __init__(self, options, *args):
         super(StableCheckAddon, self).__init__(self, options)
 
         # use known stable arches if a custom arch set isn't specified
-        if options.arches == arches.default_arches:
+        if options.arches == ArchesAddon.default_arches:
             options.arches = options.src_repo.config.stable_arches
 
 

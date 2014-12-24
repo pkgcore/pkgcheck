@@ -49,7 +49,7 @@ class ImlateReport(StableCheckAddon):
                 ", ".join(ArchesAddon.default_arches),))
 
     def __init__(self, options, arches):
-        super(ImlateReport, self).__init__(options, arches)
+        super(ImlateReport, self).__init__(options)
         arches = frozenset(arch.strip().lstrip("~") for arch in options.arches)
         self.target_arches = frozenset(
             "~%s" % arch.strip().lstrip("~") for arch in arches)
