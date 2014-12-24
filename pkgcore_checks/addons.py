@@ -363,7 +363,10 @@ class EvaluateDepSetAddon(base.Template):
         if profile_grps is None:
             profile_grps = self.profiles.identify_profiles(pkg)
             self.pkg_profiles_cache[pkg] = profile_grps
-        diuse = depset.known_conditionals
+
+        # strip use dep defaults so known flags get identified correctly
+        diuse = frozenset([x[:-3] if x[-1] == ')' else x
+                          for x in depset.known_conditionals])
         collapsed = {}
         for profiles in profile_grps:
             immutable, enabled = profiles[0].identify_use(pkg, diuse)
