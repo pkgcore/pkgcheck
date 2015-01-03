@@ -167,7 +167,7 @@ class MissingChksum(base.Result):
 
     @property
     def short_desc(self):
-        return "file %s is missing required chksums: %s; has chksums: %s" % \
+        return '"%s" missing required chksums: %s; has chksums: %s' % \
             (self.filename, ', '.join(self.missing), ', '.join(self.existing))
 
 
