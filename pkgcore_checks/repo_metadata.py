@@ -19,55 +19,6 @@ demandload(globals(),
 )
 
 
-class UnusedLocalFlagsResult(base.Result):
-
-    """
-    unused use.local.desc flag(s)
-    """
-
-    __slots__ = ("category", "package", "flags")
-
-    threshold = base.package_feed
-
-    def __init__(self, pkg, flags):
-        base.Result.__init__(self)
-        # tricky, but it works; atoms have the same attrs
-        self._store_cp(pkg)
-        self.flags = tuple(sorted(flags))
-
-    @property
-    def short_desc(self):
-        return "use.local.desc unused flag(s) %s" % ', '.join(self.flags)
-
-
-class UnusedLocalFlags(base.Template):
-
-    """
-    check for unused use.local.desc entries
-    """
-
-    feed_type = base.package_feed
-    required_addons = (addons.UseAddon,)
-    known_results = (UnusedLocalFlagsResult,) + addons.UseAddon.known_results
-
-    def __init__(self, options, use_handler):
-        base.Template.__init__(self, options)
-        self.iuse_handler = use_handler
-
-    def start(self):
-        self.collapsed = misc.non_incremental_collapsed_restrict_to_data(
-            self.iuse_handler.specific_iuse)
-
-    def feed(self, pkgs, reporter):
-        unused = set()
-        for pkg in pkgs:
-            unused.update(self.collapsed.iter_pull_data(pkg))
-        for pkg in pkgs:
-            unused.difference_update(self.iuse_handler.iuse_strip(pkg.iuse))
-        if unused:
-            reporter.add_report(UnusedLocalFlagsResult(pkg, unused))
-
-
 class UnusedGlobalFlagsResult(base.Result):
 
     """
