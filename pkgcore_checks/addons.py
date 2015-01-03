@@ -455,14 +455,12 @@ class UseAddon(base.Addon):
 
         known_iuse.update(x[1][0] for x in options.target_repo.config.use_desc)
         arches.update(options.target_repo.config.known_arches)
-        self.specific_iuse = tuple(
-            (x[0], (x[1][0],)) for x in options.target_repo.config.use_local_desc)
         unstated_iuse.update(x[1][0] for x in options.target_repo.config.use_expand_desc)
 
         self.collapsed_iuse = misc.non_incremental_collapsed_restrict_to_data(
             ((packages.AlwaysTrue, known_iuse),),
             ((packages.AlwaysTrue, unstated_iuse),),
-            self.specific_iuse)
+        )
         self.global_iuse = frozenset(known_iuse)
         unstated_iuse.update(arches)
         self.unstated_iuse = frozenset(unstated_iuse)
@@ -472,7 +470,8 @@ class UseAddon(base.Addon):
                         'use.desc, use.local.desc were found ')
 
     def allowed_iuse(self, pkg):
-        return self.collapsed_iuse.pull_data(pkg)
+        local_use = getattr(pkg, 'local_use', set())
+        return self.collapsed_iuse.pull_data(pkg).union(local_use)
 
     def get_filter(self, attr_name=None):
         if self.ignore:
