@@ -74,11 +74,6 @@ class iuse_options(TempDirMixin):
             "\n".join("%s - %s" % (x, x)
                       for x in kwds.pop("use_desc", ("foo", "bar"))))
 
-        fileutils.write_file(
-            pjoin(base, "use.local.desc"), "w",
-            "\n".join("dev-util/diffball:%s - blah" % x for x in
-                kwds.pop("use_local_desc", ("lfoo", "lbar"))))
-
         fileutils.write_file(pjoin(base, 'repo_name'), 'w', 'monkeys')
         os.mkdir(pjoin(repo_base, 'metadata'))
         fileutils.write_file(pjoin(repo_base, 'metadata', 'layout.conf'), 'w',
