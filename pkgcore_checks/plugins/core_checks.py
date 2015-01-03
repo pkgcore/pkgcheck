@@ -22,6 +22,7 @@ pkgcore_plugins = {
         imlate.ImlateReport,
         metadata_checks.LicenseMetadataReport,
         metadata_checks.IUSEMetadataReport,
+        metadata_checks.UnusedLocalFlagsReport,
         metadata_checks.DependencyReport,
         metadata_checks.KeywordsReport,
         metadata_checks.SrcUriReport,

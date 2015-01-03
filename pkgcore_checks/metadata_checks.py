@@ -123,6 +123,51 @@ class IUSEMetadataReport(base.Template):
                     "iuse unknown flags- [ %s ]" % ", ".join(iuse)))
 
 
+class UnusedLocalFlags(base.Result):
+
+    """
+    unused local use flag(s)
+    """
+
+    __slots__ = ("category", "package", "flags")
+
+    threshold = base.package_feed
+
+    def __init__(self, pkg, flags):
+        base.Result.__init__(self)
+        # tricky, but it works; atoms have the same attrs
+        self._store_cp(pkg)
+        self.flags = tuple(sorted(flags))
+
+    @property
+    def short_desc(self):
+        return "metadata.xml unused local use flag(s): %s" % ', '.join(self.flags)
+
+
+class UnusedLocalFlagsReport(base.Template):
+
+    """
+    check for unused local use flags in metadata.xml
+    """
+
+    feed_type = base.package_feed
+    required_addons = (addons.UseAddon,)
+    known_results = (UnusedLocalFlags,) + addons.UseAddon.known_results
+
+    def __init__(self, options, use_handler):
+        base.Template.__init__(self, options)
+        self.iuse_handler = use_handler
+
+    def feed(self, pkgs, reporter):
+        unused = set()
+        for pkg in pkgs:
+            unused.update(pkg.local_use)
+        for pkg in pkgs:
+            unused.difference_update(self.iuse_handler.iuse_strip(pkg.iuse))
+        if unused:
+            reporter.add_report(UnusedLocalFlags(pkg, unused))
+
+
 class DependencyReport(base.Template):
 
     """check DEPEND, PDEPEND, RDEPEND and PROVIDES"""
