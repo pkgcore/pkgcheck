@@ -54,7 +54,7 @@ class ExecutableFile(Result):
 
     @property
     def short_desc(self):
-        return "file %s has unecessary executable bit" % self.filename
+        return '"%s" has unnecessary executable bit' % self.filename
 
 
 class SizeViolation(Result):
