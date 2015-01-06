@@ -58,20 +58,21 @@ class ExecutableFile(Result):
 
 
 class SizeViolation(Result):
-    """filesdir, excluding digest/cvs, is too large"""
+    """file in $FILESDIR is too large (current limit is 20k) """
 
-    __slots__ = ("category", "package", "size")
+    __slots__ = ("category", "package", "filename", "size")
 
     threshold = package_feed
 
-    def __init__(self, pkg, size):
+    def __init__(self, pkg, filename, size):
         Result.__init__(self)
         self._store_cp(pkg)
+        self.filename = filename
         self.size = size
 
     @property
     def short_desc(self):
-        return "files directory exceeds 20k; %i bytes total" % self.size
+        return '"files/%s" exceeds 20k in size; %i bytes total' % (self.filename, self.size)
 
 
 class Glep31Violation(Result):
@@ -158,7 +159,6 @@ class PkgDirReport(Template):
             del e
             reporter.add_report(MissingFile(pkgset[0], "ChangeLog"))
 
-        size = 0
         if not os.path.exists(pjoin(base, 'files')):
             return
         unprocessed_dirs = deque(["files"])
@@ -177,10 +177,7 @@ class PkgDirReport(Template):
                         reporter.add_report(ExecutableFile(pkgset[0],
                                                            pjoin(cwd, fn)))
                     if not fn.startswith("digest-"):
-                        size += st.st_size
+                        if st.st_size > 20480:
+                            reporter.add_report(SizeViolation(pkgset[0], fn, st.st_size))
                         if any(True for x in fn if x not in allowed_filename_chars_set):
                             reporter.add_report(Glep31Violation(pkgset[0], pjoin(cwd, fn)))
-
-                # yes, we silently ignore others.
-        if size > 20480:
-            reporter.add_report(SizeViolation(pkgset[0], size))
