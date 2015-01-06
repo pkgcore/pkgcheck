@@ -120,6 +120,7 @@ class DeprecatedEclassReport(Template):
         'ruby': 'ruby-ng',
         'ruby-gnome2': 'ruby-ng-gnome2',
         'tla': None,
+        'vim': None,
         'webapp-apache': None,
         'x-modular': 'xorg-2',
         'xfree': None,
