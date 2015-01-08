@@ -470,8 +470,7 @@ class UseAddon(base.Addon):
                         'use.desc, use.local.desc were found ')
 
     def allowed_iuse(self, pkg):
-        local_use = getattr(pkg, 'local_use', set())
-        return self.collapsed_iuse.pull_data(pkg).union(local_use)
+        return self.collapsed_iuse.pull_data(pkg).union(pkg.local_use)
 
     def get_filter(self, attr_name=None):
         if self.ignore:
