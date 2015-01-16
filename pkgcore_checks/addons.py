@@ -245,7 +245,7 @@ class ProfileAddon(base.Addon):
                 if ignore_deprecated and profile.deprecated:
                     continue
 
-                mask = domain.generate_masking_restrict(profile.masks)
+                mask = domain.make_masks_filter(profile.masks)
                 virtuals = profile.make_virtuals_repo(options.search_repo)
 
                 immutable_flags = profile.masked_use.clone(unfreeze=True)
