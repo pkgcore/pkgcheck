@@ -11,7 +11,7 @@ from snakeoil import formatters
 from pkgcore_checks import base
 
 from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
     'pkgcore_checks:errors',
     'snakeoil:currying',
     'snakeoil:pickling',

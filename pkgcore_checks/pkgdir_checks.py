@@ -11,9 +11,7 @@ from snakeoil.osutils import listdir, pjoin
 from pkgcore_checks.base import Result, Template, package_feed
 
 from snakeoil.demandload import demandload
-demandload(globals(),
-    'errno',
-)
+demandload('errno')
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()

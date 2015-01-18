@@ -14,7 +14,7 @@ from pkgcore.util import commandline
 from pkgcore_checks import base
 
 from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
     'os',
     'snakeoil:pickling,formatters',
     'snakeoil.modules:load_attribute',

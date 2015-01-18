@@ -6,7 +6,7 @@ import os, optparse
 from pkgcore_checks import base
 
 from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
     'pkgcore.pkgsets.glsa:GlsaDirSet',
     'pkgcore.restrictions:packages,values',
     'pkgcore.restrictions.util:collect_package_restrictions',

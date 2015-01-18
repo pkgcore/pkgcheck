@@ -18,7 +18,7 @@ from snakeoil.osutils import abspath, listdir_files, pjoin
 from pkgcore_checks import base
 
 from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
     'os',
     'pkgcore.restrictions:packages,values',
     'pkgcore.ebuild:misc,domain,profiles,repo_objs',

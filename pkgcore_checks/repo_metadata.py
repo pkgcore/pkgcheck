@@ -11,7 +11,7 @@ from snakeoil import mappings
 from pkgcore_checks import base, addons
 
 from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
     'snakeoil.lists:iflatten_instance',
     'pkgcore:fetch',

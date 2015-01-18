@@ -6,7 +6,7 @@
 from pkgcore_checks import base
 
 from snakeoil.demandload import demandload
-demandload(globals(), "re")
+demandload("re")
 
 
 class BadInsIntoDir(base.Result):

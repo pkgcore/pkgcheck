@@ -10,17 +10,17 @@ from pkgcore_checks import base
 from snakeoil.demandload import demandload
 if compatibility.is_py3k:
     urllib_path = 'urllib.request:urlopen'
-    demandload(globals(),
+    demandload(
         'urllib.request:urlopen',
         'urllib:error@urllib_error')
 else:
     # yes, this is a bit special.  We do this
     # since the two parts we want, exist
     # in different modules dependant on py2k/py3k.
-    demandload(globals(),
+    demandload(
         'urllib2@urllib_error',
         'urllib2:urlopen')
-demandload(globals(),
+demandload(
     'pkgcore.log:logger',
     'pkgcore.spawn:spawn,find_binary',
     'snakeoil.osutils:pjoin',

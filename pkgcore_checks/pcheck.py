@@ -14,7 +14,7 @@ from pkgcore_checks import plugins
 from pkgcore_checks import plugins, base, __version__, feeds
 
 from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
     'logging',
     'optparse',
     'os',

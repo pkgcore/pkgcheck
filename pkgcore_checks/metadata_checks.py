@@ -11,9 +11,7 @@ from pkgcore.package.errors import MetadataException
 from pkgcore_checks import base, addons
 
 from snakeoil.demandload import demandload
-demandload(globals(),
-    'logging',
-)
+demandload('logging')
 
 
 class MetadataError(base.Result):

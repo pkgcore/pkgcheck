@@ -22,7 +22,7 @@ from operator import attrgetter
 from pkgcore.config import ConfigHint
 
 from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
     'itertools',
     'logging',
     're',
