@@ -2,6 +2,7 @@
 # License: BSD/GPL2
 
 from distutils.core import setup
+import glob
 import os
 
 from snakeoil import distutils_extensions as snk_distutils
@@ -47,7 +48,7 @@ setup(
     author_email="ferringb@gmail.com",
     description="pkgcore based ebuild checks- repoman replacement",
     packages=packages,
-    scripts=["pcheck", "replay-pcheck-stream"],
+    scripts=glob.glob("bin/*"),
     cmdclass={
         "sdist": mysdist,
         "test": test,
