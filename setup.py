@@ -1,12 +1,13 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-import os
 from distutils.core import setup
+import os
 
 from snakeoil import distutils_extensions as snk_distutils
 
 from pkgcore_checks import __version__
+
 
 class mysdist(snk_distutils.sdist):
 
@@ -24,6 +25,7 @@ try:
     os.unlink("MANIFEST")
 except OSError:
     pass
+
 
 class test(snk_distutils.test):
 
@@ -46,8 +48,9 @@ setup(
     description="pkgcore based ebuild checks- repoman replacement",
     packages=packages,
     scripts=["pcheck", "replay-pcheck-stream"],
-    cmdclass={"sdist":mysdist,
-        "test":test,
-        "build_py":pchecks_build_py,
-        }
+    cmdclass={
+        "sdist": mysdist,
+        "test": test,
+        "build_py": pchecks_build_py,
+    }
 )

@@ -2,11 +2,10 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 """Minimal wrapper to launch pcheck."""
 
-
 from pkgcore.util import commandline
+
 from pkgcore_checks import pcheck
 
 
