@@ -265,7 +265,7 @@ class TestProfileAddon(profile_mixin):
             "default-linux/x86": ["x86"]},
             base='foo')
         options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-profiles-desc',
-            '--profile-enable', 'default-linux/x86'])
+            '--enable-profiles', 'default-linux/x86'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
@@ -274,7 +274,7 @@ class TestProfileAddon(profile_mixin):
             "default-linux": ["x86"],
             "default-linux/x86": ["x86"]},
             base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable', 'default-linux/x86'])
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--disable-profiles', 'default-linux/x86'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux')
 
@@ -365,13 +365,9 @@ class TestEvaluateDepSetAddon(profile_mixin):
         # basically carefully tweak profileaddon to get ourself an instance
         # since evaluate relies on it.
         self.addon_kls = addons.ProfileAddon
-        enabled = []
-        for x in profiles:
-            enabled.append("--profile-enable")
-            enabled.append(x.name)
-        profile_options = profile_mixin.process_check(self,
-            self.dir, ['--profile-disable-profiles-desc'] +
-            enabled)
+        profile_options = profile_mixin.process_check(
+            self, self.dir, ['--profile-disable-profiles-desc'] +
+            ['--enable-profiles=%s' % ','.join(x.name for x in profiles)])
         self.addon_kls = self.orig_addon_kls
         profiles = dict((x.name, x) for x in profiles)
         profiles_obj = Options(create_profile=lambda x: profiles[x])

@@ -138,7 +138,11 @@ class ProfileAddon(base.Addon):
         values.profiles_dir = profiles_dir
 
     @staticmethod
-    def mangle_option_parser(parser):
+    def _record_profiles(option, opt_str, value, parser):
+        setattr(parser.values, option.dest, tuple(value.split(",")))
+
+    @classmethod
+    def mangle_option_parser(cls, parser):
         group = parser.add_option_group('Profiles')
         group.add_option(
             "--profile-base", action='store', type='string',
@@ -160,11 +164,13 @@ class ProfileAddon(base.Addon):
             help="disable loading profiles to scan from profiles.desc, you "
             "will want to enable profiles manually via --profile-enable")
         group.add_option(
-            '--profile-enable', action='append', type='string',
-            dest='profiles_enabled', help="specify a profile to scan")
+            '--enable-profiles', action='callback', callback=cls._record_profiles,
+            dest='profiles_enabled', type='string',
+            help="comma separated list of profiles to scan")
         group.add_option(
-            '--profile-disable', action='append', type='string',
-            dest='profiles_disabled', help="specify a profile to ignore")
+            '--disable-profiles', action='callback', callback=cls._record_profiles,
+            dest='profiles_disabled', type='string',
+            help="comma separated list of profiles to ignore")
 
     def __init__(self, options, *args):
         base.Addon.__init__(self, options)
