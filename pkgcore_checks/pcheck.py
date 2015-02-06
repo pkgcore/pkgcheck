@@ -2,15 +2,13 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
-"""Commandline frontend (for use with L{pkgcore.util.commandline.main}."""
+"""pkgcore-based QA utility"""
 
 from pkgcore.util import commandline, parserestrict
 from pkgcore.plugin import get_plugins, get_plugin
 from snakeoil import lists
 from snakeoil.formatters import decorate_forced_wrapping
 
-from pkgcore_checks import plugins
 from pkgcore_checks import plugins, base, __version__, feeds
 
 from snakeoil.demandload import demandload
@@ -79,8 +77,8 @@ class OptionParser(commandline.OptionParser):
             help="limit checks to those matching this regex, or package/class "
             "matching; may be specified multiple times")
         group.set_conflict_handler("resolve")
-        group.add_option("-d",
-            "--disable", action="append", type="string",
+        group.add_option(
+            "-d", "--disable", action="append", type="string",
             dest="checks_to_disable", help="specific checks to disable: "
             "may be specified multiple times")
         group.set_conflict_handler("error")
@@ -117,6 +115,7 @@ class OptionParser(commandline.OptionParser):
             "repository name to pull profiles/license from")
 
         all_addons = set()
+
         def add_addon(addon):
             if addon not in all_addons:
                 all_addons.add(addon)
@@ -136,9 +135,8 @@ class OptionParser(commandline.OptionParser):
             key=lambda x: x.__name__)
         if values.list_checks or values.list_reporters:
             if values.list_reporters == values.list_checks:
-                raise optparse.OptionValueError("--list-checks and "
-                    "--list-reporters are mutually exclusive options- "
-                    "one or the other.")
+                raise optparse.OptionValueError(
+                    "--list-checks and --list-reporters are mutually exclusive")
             return values, ()
         cwd = None
         if values.suite is None:
@@ -226,7 +224,8 @@ class OptionParser(commandline.OptionParser):
             if values.reporter is None:
                 values.reporter = get_plugin('reporter', plugins)
             if values.reporter is None:
-                self.error('no config defined reporter found, nor any default '
+                self.error(
+                    'no config defined reporter found, nor any default '
                     'plugin based reporters')
         else:
             func = values.config.pcheck_reporter_factory.get(values.reporter)
@@ -234,17 +233,18 @@ class OptionParser(commandline.OptionParser):
                 func = list(base.Whitelist([values.reporter]).filter(
                     get_plugins('reporter', plugins)))
                 if not func:
-                    self.error("no reporter matches %r\n"
+                    self.error(
+                        "no reporter matches %r\n"
                         "please see --list-reporter for a list of "
                         "valid reporters" % values.reporter)
                 elif len(func) > 1:
-                    self.error("--reporter %r matched multiple reporters, "
-                        "must match one. %r" %
-                            (values.reporter,
-                                tuple(sorted("%s.%s" %
-                                    (x.__module__, x.__name__)
-                                    for x in func))
-                            )
+                    self.error(
+                        "--reporter %r matched multiple reporters, "
+                        "must match one. %r" % (
+                            values.reporter,
+                            tuple(sorted("%s.%s" % (x.__module__, x.__name__)
+                                         for x in func))
+                        )
                     )
                 func = func[0]
             values.reporter = func
@@ -261,8 +261,8 @@ class OptionParser(commandline.OptionParser):
                 values.repo_bases.append(abspath(repo.base))
 
         if args:
-            values.limiters = lists.stable_unique(map(
-                    parserestrict.parse_match, args))
+            values.limiters = lists.stable_unique(
+                map(parserestrict.parse_match, args))
         else:
             repo_base = getattr(values.target_repo, 'base', None)
             if not repo_base:
@@ -282,13 +282,13 @@ class OptionParser(commandline.OptionParser):
                 values.limiters = [packages.AlwaysTrue]
             elif len(bits) == 1:
                 values.limiters = [packages.PackageRestriction(
-                        'category', StrExactMatch(bits[0]))]
+                    'category', StrExactMatch(bits[0]))]
             else:
                 values.limiters = [packages.AndRestriction(
-                        packages.PackageRestriction(
-                            'category', StrExactMatch(bits[0])),
-                        packages.PackageRestriction(
-                            'package', StrExactMatch(bits[1])))]
+                    packages.PackageRestriction(
+                        'category', StrExactMatch(bits[0])),
+                    packages.PackageRestriction(
+                        'package', StrExactMatch(bits[1])))]
 
         if values.checkset is None:
             values.checkset = values.config.get_default('pcheck_checkset')
@@ -307,6 +307,7 @@ class OptionParser(commandline.OptionParser):
             self.error('No active checks')
 
         values.addons = set()
+
         def add_addon(addon):
             if addon not in values.addons:
                 values.addons.add(addon)
@@ -415,7 +416,8 @@ def display_reporters(out, config, config_reporters, plugin_reporters):
             out.later_prefix.pop()
 
     if not plugin_reporters and not config_reporters:
-        out.write(out.fg("red"), "Warning", out.fg(""),
+        out.write(
+            out.fg("red"), "Warning", out.fg(""),
             " no reporters detected; pcheck won't "
             "run correctly without a reporter to use!")
         out.write()
@@ -428,7 +430,8 @@ def main(options, out, err):
         return 0
 
     if options.list_reporters:
-        display_reporters(out, options.config,
+        display_reporters(
+            out, options.config,
             options.config.pcheck_reporter_factory.values(),
             list(get_plugins('reporter', plugins)))
         return 0
@@ -454,11 +457,13 @@ def main(options, out, err):
     try:
         reporter = options.reporter(out)
     except errors.ReporterInitError, e:
-        err.write(err.fg('red'), err.bold, '!!! ', err.reset,
-                  'Error initializing reporter: ', e)
+        err.write(
+            err.fg('red'), err.bold, '!!! ', err.reset,
+            'Error initializing reporter: ', e)
         return 1
 
     addons_map = {}
+
     def init_addon(klass):
         res = addons_map.get(klass)
         if res is not None:
@@ -502,13 +507,13 @@ def main(options, out, err):
             # full repo scan separately from the ones that are
             # actually missing transforms.
             bad_sinks = set(bad_sinks)
-            full_scope = feeds.RestrictedRepoSource(options.target_repo,
-                                                    packages.AlwaysTrue)
+            full_scope = feeds.RestrictedRepoSource(
+                options.target_repo, packages.AlwaysTrue)
             really_bad, ignored = base.plug(sinks, transforms, [full_scope])
             really_bad = set(really_bad)
             assert bad_sinks >= really_bad, \
                 '%r unreachable with no limiters but reachable with?' % (
-                really_bad - bad_sinks,)
+                    really_bad - bad_sinks,)
             out_of_scope = bad_sinks - really_bad
             for sink in really_bad:
                 err.error(
@@ -516,7 +521,7 @@ def main(options, out, err):
                         sink,))
             for sink in bad_sinks - really_bad:
                 err.warn('not running %s (not a full repo scan)' % (
-                        sink.__class__.__name__,))
+                    sink.__class__.__name__,))
         if not pipes:
             out.write(out.fg('red'), ' * ', out.reset, 'No checks!')
         else:
@@ -524,8 +529,8 @@ def main(options, out, err):
                 err.write('Running %i tests' % (len(sinks) - len(bad_sinks),))
             for source, pipe in pipes:
                 pipe.start()
-                reporter.start_check(list(base.collect_checks_classes(pipe)),
-                    filterer)
+                reporter.start_check(
+                    list(base.collect_checks_classes(pipe)), filterer)
                 for thing in source.feed():
                     pipe.feed(thing, reporter)
                 pipe.finish(reporter)

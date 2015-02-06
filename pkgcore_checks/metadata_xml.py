@@ -4,10 +4,10 @@
 import os
 
 from snakeoil import compatibility
+from snakeoil.demandload import demandload
 
 from pkgcore_checks import base
 
-from snakeoil.demandload import demandload
 if compatibility.is_py3k:
     urllib_path = 'urllib.request:urlopen'
     demandload(
@@ -102,21 +102,26 @@ class PkgMissingMetadataXml(base_MissingXml):
     __slots__ = ()
     threshold = base.package_feed
 
+
 class CatMissingMetadataXml(base_MissingXml):
     __slots__ = ()
     threshold = base.category_feed
+
 
 class PkgInvalidXml(base_InvalidXml):
     __slots__ = ()
     threshold = base.package_feed
 
+
 class CatInvalidXml(base_InvalidXml):
     __slots__ = ()
     threshold = base.category_feed
 
+
 class PkgBadlyFormedXml(base_BadlyFormedXml):
     __slots__ = ()
     threshold = base.package_feed
+
 
 class CatBadlyFormedXml(base_BadlyFormedXml):
     __slots__ = ()
@@ -134,11 +139,13 @@ class base_check(base.Template):
     @classmethod
     def mangle_option_parser(cls, parser):
         if not parser.has_option('--metadata-dtd'):
-            parser.add_option('--metadata-dtd',
+            parser.add_option(
+                '--metadata-dtd',
                 help='location to cache %s' % (cls.dtd_url,))
-            parser.add_option('--metadata-dtd-required',
-                help="if %r cannot be fetched (no connection for example),"
-                    " treat it as a failure rather than warning and ignoring.")
+            parser.add_option(
+                '--metadata-dtd-required',
+                help="if %r cannot be fetched (no connection for example), "
+                     "treat it as a failure rather than warning and ignoring.")
 
     def __init__(self, options):
         base.Template.__init__(self, options)
@@ -160,11 +167,12 @@ class base_check(base.Template):
                 dtd_data = urlopen(self.dtd_url).read()
             except urllib_error.URLError, e:
                 if self.options.metadata_dtd_required:
-                    raise Exception("failed fetching dtd from %s: reason %s"
-                        ".  Due to --metadata-dtd-required in use, bailing" %
+                    raise Exception(
+                        "failed fetching dtd from %s: reason %s. "
+                        "Due to --metadata-dtd-required in use, bailing" %
                         (self.dtd_url, e.reason))
-                logger.warn("failed fetching dtd from %s: reason %s",
-                    self.dtd_url, e.reason)
+                logger.warn(
+                    "failed fetching dtd from %s: reason %s", self.dtd_url, e.reason)
                 self.validator = noop_validator
                 return
             if write_path is None:
@@ -174,11 +182,12 @@ class base_check(base.Template):
                 fileutils.write_file(write_path, 'wb', dtd_data)
             except EnvironmentError, e:
                 if self.options.metadata_dtd_required:
-                    raise Exception("failed saving dtd to %s: reason %s"
-                        ".  Due to --metadata-dtd-required in use, bailing" %
+                    raise Exception(
+                        "failed saving dtd to %s: reason %s. "
+                        "Due to --metadata-dtd-required in use, bailing" %
                         (write_path, e))
                 logger.warn("failed writing dtd to %s: reason %s.  Disabling check." %
-                    (write_path, e))
+                            (write_path, e))
                 self.validator = noop_validator
                 return
 
@@ -201,8 +210,8 @@ class base_check(base.Template):
             return self.misformed_error
         elif ret == 2:
             return self.invalid_error
-        raise AssertionError("got %r from validator, which isn't "
-            "valid" % ret)
+        raise AssertionError(
+            "got %r from validator, which isn't valid" % ret)
 
 
 class PackageMetadataXmlCheck(base_check):
@@ -220,8 +229,7 @@ class PackageMetadataXmlCheck(base_check):
         if self.last_seen == pkg.key:
             return
         self.last_seen = pkg.key
-        loc = pjoin(os.path.dirname(pkg.ebuild.path),
-                           "metadata.xml")
+        loc = pjoin(os.path.dirname(pkg.ebuild.path), "metadata.xml")
         ret = self.check_file(loc)
         if ret is not None:
             reporter.add_report(ret(loc, pkg.category, pkg.package))
@@ -301,7 +309,7 @@ class xmllint_parser(object):
                  2 invalid xml
         """
         ret = spawn([self.bin_loc, "--nonet", "--noout", "--dtdvalid",
-            self.dtd_loc, loc], fd_pipes={})
+                    self.dtd_loc, loc], fd_pipes={})
 
         if ret == 1:
             return 1

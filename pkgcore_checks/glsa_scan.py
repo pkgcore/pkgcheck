@@ -1,11 +1,13 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-import os, optparse
+import optparse
+import os
+
+from snakeoil.demandload import demandload
 
 from pkgcore_checks import base
 
-from snakeoil.demandload import demandload
 demandload(
     'pkgcore.pkgsets.glsa:GlsaDirSet',
     'pkgcore.restrictions:packages,values',
@@ -68,8 +70,8 @@ class TreeVulnerabilitiesReport(base.Template):
         glsa_loc = values.glsa_location
         if glsa_loc is not None:
             if not os.path.isdir(glsa_loc):
-                raise optparse.OptionValueError("--glsa-dir '%r' doesn't "
-                    "exist" % glsa_loc)
+                raise optparse.OptionValueError(
+                    "--glsa-dir '%r' doesn't exist" % glsa_loc)
         else:
             if not values.repo_bases:
                 raise optparse.OptionValueError(
@@ -89,11 +91,12 @@ class TreeVulnerabilitiesReport(base.Template):
                 # form of 'optional' limiting; if they are using -c, force the
                 # error, else disable
                 if values.checks_to_run:
-                    raise optparse.OptionValueError("--glsa-dir must be "
-                        "specified, couldn't identify glsa src from %r" %
-                            values.src_repo)
+                    raise optparse.OptionValueError(
+                        "--glsa-dir must be specified, couldn't identify glsa src from %r" %
+                        values.src_repo)
                 values.glsa_enabled = False
-                warnings.warn("disabling GLSA checks due to no glsa source "
+                warnings.warn(
+                    "disabling GLSA checks due to no glsa source "
                     "being found, and the check not being explicitly enabled; "
                     "this behaviour may change")
                 return
@@ -113,8 +116,8 @@ class TreeVulnerabilitiesReport(base.Template):
         # this is a bit brittle
         for r in GlsaDirSet(self.glsa_dir):
             if len(r) > 2:
-                self.vulns.setdefault(r[0].key,
-                    []).append(packages.AndRestriction(*r[1:]))
+                self.vulns.setdefault(
+                    r[0].key, []).append(packages.AndRestriction(*r[1:]))
             else:
                 self.vulns.setdefault(r[0].key, []).append(r[1])
 

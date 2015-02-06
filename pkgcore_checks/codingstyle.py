@@ -3,9 +3,10 @@
 
 """check for some bad coding styles like insinto's, old variables etc"""
 
+from snakeoil.demandload import demandload
+
 from pkgcore_checks import base
 
-from snakeoil.demandload import demandload
 demandload("re")
 
 

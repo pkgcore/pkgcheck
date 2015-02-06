@@ -2,7 +2,6 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 """Core classes and interfaces.
 
 This defines a couple of standard feed types and scopes. Currently
@@ -16,12 +15,11 @@ minimally accepted scope, and for transforms the output scope is
 identical to the input scope.
 """
 
-
 from operator import attrgetter
 
 from pkgcore.config import ConfigHint
-
 from snakeoil.demandload import demandload
+
 demandload(
     'itertools',
     'logging',

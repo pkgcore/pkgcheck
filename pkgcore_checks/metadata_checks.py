@@ -1,16 +1,16 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-from operator import attrgetter
 from itertools import ifilter
+from operator import attrgetter
 
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from pkgcore.fetch import fetchable
 from pkgcore.package.errors import MetadataException
+from snakeoil.demandload import demandload
 
 from pkgcore_checks import base, addons
 
-from snakeoil.demandload import demandload
 demandload('logging')
 
 
@@ -52,8 +52,8 @@ class LicenseMetadataReport(base.Template):
         addons.UseAddon.known_results
     feed_type = base.versioned_feed
 
-    required_addons = (addons.UseAddon, addons.ProfileAddon,
-        addons.LicenseAddon)
+    required_addons = (
+        addons.UseAddon, addons.ProfileAddon, addons.LicenseAddon)
 
     def __init__(self, options, iuse_handler, profiles, licenses):
         base.Template.__init__(self, options)
@@ -72,14 +72,15 @@ class LicenseMetadataReport(base.Template):
         except (KeyboardInterrupt, SystemExit):
             raise
         except (MetadataException, MalformedAtom, ValueError), e:
-            reporter.add_report(MetadataError(pkg, 'license',
-                "error- %s" % e))
+            reporter.add_report(MetadataError(
+                pkg, 'license', "error- %s" % e))
             del e
         except Exception, e:
-            logging.exception("unknown exception caught for pkg(%s) attr(%s): "
+            logging.exception(
+                "unknown exception caught for pkg(%s) attr(%s): "
                 "type(%s), %s" % (pkg, 'license', type(e), e))
-            reporter.add_report(MetadataError(pkg, 'license',
-                "exception- %s" % e))
+            reporter.add_report(MetadataError(
+                pkg, 'license', "exception- %s" % e))
             del e
         else:
             i = self.iuse_filter((basestring,), pkg, licenses, reporter)
@@ -91,8 +92,8 @@ class LicenseMetadataReport(base.Template):
                 licenses = set(i)
                 if not licenses:
                     if pkg.category != 'virtual':
-                        reporter.add_report(MetadataError(pkg, "license",
-                            "no license defined"))
+                        reporter.add_report(MetadataError(
+                            pkg, "license", "no license defined"))
                 else:
                     licenses.difference_update(self.licenses)
                     if licenses:
@@ -117,8 +118,8 @@ class IUSEMetadataReport(base.Template):
             iuse = set(self.iuse_handler.iuse_strip(pkg.iuse)).difference(
                 self.iuse_handler.allowed_iuse(pkg))
             if iuse:
-                reporter.add_report(MetadataError(pkg, "iuse",
-                    "iuse unknown flag(s): [ %s ]" % ", ".join(iuse)))
+                reporter.add_report(MetadataError(
+                    pkg, "iuse", "iuse unknown flag(s): [ %s ]" % ", ".join(iuse)))
 
 
 class UnusedLocalFlags(base.Result):
@@ -177,7 +178,7 @@ class DependencyReport(base.Template):
     feed_type = base.versioned_feed
 
     attrs = tuple((x, attrgetter(x)) for x in
-        ("depends", "rdepends", "post_rdepends", "provides"))
+                  ("depends", "rdepends", "post_rdepends", "provides"))
 
     def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
@@ -186,8 +187,8 @@ class DependencyReport(base.Template):
     def feed(self, pkg, reporter):
         for attr_name, getter in self.attrs:
             try:
-                i = self.iuse_filter((atom,), pkg, getter(pkg), reporter,
-                    attr=attr_name)
+                i = self.iuse_filter(
+                    (atom,), pkg, getter(pkg), reporter, attr=attr_name)
                 if attr_name == 'provides':
                     for x in i:
                         pass
@@ -198,15 +199,15 @@ class DependencyReport(base.Template):
             except (KeyboardInterrupt, SystemExit):
                 raise
             except (MetadataException, MalformedAtom, ValueError), e:
-                reporter.add_report(MetadataError(pkg, attr_name,
-                    "error- %s" % e))
+                reporter.add_report(MetadataError(
+                    pkg, attr_name, "error- %s" % e))
                 del e
             except Exception, e:
                 logging.exception(
                     "unknown exception caught for pkg(%s) attr(%s): "
                     "type(%s), %s" % (pkg, attr_name, type(e), e))
-                reporter.add_report(MetadataError(pkg, attr_name,
-                    "exception- %s" % e))
+                reporter.add_report(MetadataError(
+                    pkg, attr_name, "exception- %s" % e))
                 del e
 
 
@@ -220,8 +221,8 @@ class StupidKeywords(base.Result):
         base.Result.__init__(self)
         self._store_cpv(pkg)
 
-    short_desc = ("keywords contain -*; use package.mask or empty keywords "
-        "instead")
+    short_desc = (
+        "keywords contain -*; use package.mask or empty keywords instead")
 
 
 class KeywordsReport(base.Template):
@@ -318,13 +319,15 @@ class SrcUriReport(base.Template):
         except (KeyboardInterrupt, SystemExit):
             raise
         except (MetadataException, MalformedAtom, ValueError), e:
-            reporter.add_report(MetadataError(pkg, 'fetchables',
-                "error- %s" % e))
+            reporter.add_report(MetadataError(
+                pkg, 'fetchables', "error- %s" % e))
             del e
         except Exception, e:
-            logging.exception("unknown exception caught for pkg(%s): "
+            logging.exception(
+                "unknown exception caught for pkg(%s): "
                 "type(%s), %s" % (pkg, type(e), e))
-            reporter.add_report(MetadataError(pkg, 'fetchables',
+            reporter.add_report(MetadataError(
+                pkg, 'fetchables',
                 "exception- %s" % e))
             del e
 
@@ -360,24 +363,24 @@ class DescriptionReport(base.Template):
         s = pkg.description.lower()
 
         if s.startswith("based on") and "eclass" in s:
-            reporter.add_report(CrappyDescription(pkg,
-                "generic eclass defined description"))
+            reporter.add_report(CrappyDescription(
+                pkg, "generic eclass defined description"))
 
         elif pkg.package == s or pkg.key == s:
-            reporter.add_report(CrappyDescription(pkg,
-                "using the pkg name as the description isn't very helpful"))
+            reporter.add_report(CrappyDescription(
+                pkg, "using the pkg name as the description isn't very helpful"))
 
         else:
             l = len(pkg.description)
             if not l:
-                reporter.add_report(CrappyDescription(pkg,
-                    "empty/unset"))
+                reporter.add_report(CrappyDescription(
+                    pkg, "empty/unset"))
             elif l > 250:
-                reporter.add_report(CrappyDescription(pkg,
-                    "over 250 chars in length, bit long"))
+                reporter.add_report(CrappyDescription(
+                    pkg, "over 250 chars in length, bit long"))
             elif l < 5:
-                reporter.add_report(CrappyDescription(pkg,
-                    "under 10 chars in length- too short"))
+                reporter.add_report(CrappyDescription(
+                    pkg, "under 10 chars in length- too short"))
 
 
 class BadRestricts(base.Result):

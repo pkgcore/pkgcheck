@@ -2,7 +2,6 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-
 """Addon functionality shared by multiple checkers."""
 
 import optparse
@@ -10,6 +9,7 @@ from itertools import ifilter, ifilterfalse
 
 from snakeoil.containers import ProtectedSet
 from snakeoil.currying import partial
+from snakeoil.demandload import demandload
 from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
 from snakeoil.mappings import OrderedDict
@@ -17,7 +17,6 @@ from snakeoil.osutils import abspath, listdir_files, pjoin
 
 from pkgcore_checks import base
 
-from snakeoil.demandload import demandload
 demandload(
     'os',
     'pkgcore.restrictions:packages,values',
@@ -111,8 +110,8 @@ class profile_data(object):
         # pointless intermediate sets unless required
         # kindly don't change that in any modifications, it adds up.
         enabled = known_flags.intersection(self.forced_use.pull_data(pkg))
-        immutable = enabled.union(ifilter(known_flags.__contains__,
-            self.masked_use.pull_data(pkg)))
+        immutable = enabled.union(
+            ifilter(known_flags.__contains__, self.masked_use.pull_data(pkg)))
         force_disabled = self.masked_use.pull_data(pkg)
         if force_disabled:
             enabled = enabled.difference(force_disabled)
@@ -183,8 +182,8 @@ class ProfileAddon(base.Addon):
             profiles_obj = options.target_repo.config.profiles
         options.profiles_obj = profiles_obj
         disabled = set(norm_name(x) for x in options.profiles_disabled)
-        enabled = set(x for x in
-            (norm_name(y) for y in options.profiles_enabled)
+        enabled = set(
+            x for x in (norm_name(y) for y in options.profiles_enabled)
             if x not in disabled)
 
         arch_profiles = {}
@@ -204,7 +203,8 @@ class ProfileAddon(base.Addon):
             p = options.profiles_obj.create_profile(x)
             arch = p.arch
             if arch is None:
-                raise profiles.ProfileError(p.path, 'make.defaults',
+                raise profiles.ProfileError(
+                    p.path, 'make.defaults',
                     "profile %s lacks arch settings, unable to use it" % x)
             arch_profiles.setdefault(p.arch, []).append((x, p))
 

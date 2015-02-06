@@ -5,12 +5,11 @@ import itertools
 from operator import attrgetter, itemgetter
 
 from pkgcore.ebuild.repository import SlavedTree
-from pkgcore.package.errors import MissingChksum
 from snakeoil import mappings
+from snakeoil.demandload import demandload
 
 from pkgcore_checks import base, addons
 
-from snakeoil.demandload import demandload
 demandload(
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
     'snakeoil.lists:iflatten_instance',

@@ -1,7 +1,6 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-
 from pkgcore_checks.base import Template, package_feed, versioned_feed, Result
 
 
