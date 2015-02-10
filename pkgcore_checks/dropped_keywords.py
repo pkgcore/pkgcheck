@@ -31,12 +31,12 @@ class DroppedKeywordsReport(Template):
         self.arches = dict((k, None) for k in options.arches)
 
     def feed(self, pkgset, reporter):
-        if len(pkgset) == 1:
-            return
-
         # We need to skip live ebuilds otherwise they're flagged. Currently, we
         # assume live ebuilds have versions matching *9999*.
         pkgset = [pkg for pkg in pkgset if "9999" not in pkg.version]
+
+        if len(pkgset) <= 1:
+            return
 
         lastpkg = pkgset[-1]
         state = set(x.lstrip("~") for x in lastpkg.keywords)
