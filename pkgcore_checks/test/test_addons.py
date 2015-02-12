@@ -190,7 +190,7 @@ class TestProfileAddon(profile_mixin):
                 if l == 1 or not vals[1]:
                     fd.write("%s\t%s\tstable\n" % (vals[0], profile))
                 else:
-                    fd.write("%s\t%s\tdev\n" % (vals[0], profile))
+                    fd.write("%s\t%s\t%s\n" % (vals[0], profile, vals[1]))
                 if l == 3 and vals[2]:
                     with open(pjoin(loc, profile, 'deprecated'), 'w') as f:
                         f.write("foon\n#dar\n")
@@ -223,7 +223,7 @@ class TestProfileAddon(profile_mixin):
 
     def test_profile_base(self):
         self.mk_profiles({
-            "default-linux": ["x86", True],
+            "default-linux": ["x86", "dev"],
             "default-linux/x86": ["x86"]},
             base='foo')
         options = self.process_check(pjoin(self.dir, 'foo'), [])
@@ -232,7 +232,7 @@ class TestProfileAddon(profile_mixin):
 
     def test_disable_dev(self):
         self.mk_profiles({
-            "default-linux": ["x86", True],
+            "default-linux": ["x86", "dev"],
             "default-linux/x86": ["x86"]},
             base='foo')
         options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-dev'],
