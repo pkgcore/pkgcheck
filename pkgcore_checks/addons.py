@@ -158,6 +158,10 @@ class ProfileAddon(base.Addon):
             default=False, dest='profile_ignore_deprecated',
             help="disable scanning of deprecated profiles")
         group.add_option(
+            "--profile-disable-exp", action='store_true',
+            default=False, dest='profile_ignore_exp',
+            help="disable scanning of exp profiles")
+        group.add_option(
             "--profile-disable-profiles-desc", action='store_false',
             default=True, dest='profiles_desc_enabled',
             help="disable loading profiles to scan from profiles.desc, you "
@@ -191,6 +195,8 @@ class ProfileAddon(base.Addon):
             for arch, profiles in options.profiles_obj.arch_profiles.iteritems():
                 if options.profile_ignore_dev:
                     profiles = (x for x in profiles if x.status != 'dev')
+                if options.profile_ignore_exp:
+                    profiles = (x for x in profiles if x.status != 'exp')
                 l = [x.profile for x in profiles if x.profile not in disabled]
 
                 # wipe any enableds that are here already so we don't
