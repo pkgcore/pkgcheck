@@ -273,12 +273,12 @@ class ProfileAddon(base.Addon):
                 enabled_flags = profile.forced_use.clone(unfreeze=True)
                 enabled_flags.add_bare_global((), (stable_key,))
                 enabled_flags.optimize(cache=chunked_data_cache)
-                enabled_flags.freeze
+                enabled_flags.freeze()
 
                 stable_enabled_flags = profile.stable_forced_use.clone(unfreeze=True)
                 stable_enabled_flags.add_bare_global((), (stable_key,))
                 stable_enabled_flags.optimize(cache=chunked_data_cache)
-                stable_enabled_flags.freeze
+                stable_enabled_flags.freeze()
 
                 # used to interlink stable/unstable lookups so that if
                 # unstable says it's not visible, stable doesn't try
