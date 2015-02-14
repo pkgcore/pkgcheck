@@ -257,7 +257,7 @@ class ProfileAddon(base.Addon):
                 if ignore_deprecated and profile.deprecated:
                     continue
 
-                mask = domain.make_mask_filter(profile.masks)
+                vfilter = domain.generate_filter(profile.masks, profile.unmasks)
                 virtuals = profile.make_virtuals_repo(options.search_repo)
 
                 immutable_flags = profile.masked_use.clone(unfreeze=True)
@@ -296,7 +296,7 @@ class ProfileAddon(base.Addon):
                 profile_filters[stable_key].append(profile_data(
                     profile_name, stable_key,
                     virtuals, profile.provides_repo,
-                    packages.AndRestriction(mask, stable_r),
+                    packages.AndRestriction(vfilter, stable_r),
                     stable_immutable_flags, stable_enabled_flags,
                     stable_cache,
                     ProtectedSet(unstable_insoluble)))
@@ -304,7 +304,7 @@ class ProfileAddon(base.Addon):
                 profile_filters[unstable_key].append(profile_data(
                     profile_name, unstable_key,
                     virtuals, profile.provides_repo,
-                    packages.AndRestriction(mask, unstable_r),
+                    packages.AndRestriction(vfilter, unstable_r),
                     immutable_flags, enabled_flags,
                     ProtectedSet(stable_cache),
                     unstable_insoluble))
