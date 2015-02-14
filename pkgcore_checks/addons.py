@@ -4,11 +4,11 @@
 
 """Addon functionality shared by multiple checkers."""
 
+from functools import partial
 import optparse
 from itertools import ifilter, ifilterfalse
 
 from snakeoil.containers import ProtectedSet
-from snakeoil.currying import partial
 from snakeoil.demandload import demandload
 from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance

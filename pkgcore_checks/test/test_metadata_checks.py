@@ -1,12 +1,13 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+from functools import partial
 import os
 import tempfile
 
 from pkgcore.ebuild import repo_objs
 from snakeoil import fileutils
-from snakeoil.currying import post_curry, partial
+from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import TempDirMixin
 
