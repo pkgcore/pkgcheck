@@ -115,8 +115,7 @@ class IUSEMetadataReport(base.Template):
 
     def feed(self, pkg, reporter):
         if not self.iuse_handler.ignore:
-            iuse = set(self.iuse_handler.iuse_strip(pkg.iuse)).difference(
-                self.iuse_handler.allowed_iuse(pkg))
+            iuse = pkg.iuse_stripped.difference(self.iuse_handler.allowed_iuse(pkg))
             if iuse:
                 reporter.add_report(MetadataError(
                     pkg, "iuse", "iuse unknown flag(s): [ %s ]" % ", ".join(iuse)))
@@ -162,7 +161,7 @@ class UnusedLocalFlagsReport(base.Template):
         for pkg in pkgs:
             unused.update(pkg.local_use)
         for pkg in pkgs:
-            unused.difference_update(self.iuse_handler.iuse_strip(pkg.iuse))
+            unused.difference_update(pkg.iuse_stripped)
         if unused:
             reporter.add_report(UnusedLocalFlags(pkg, unused))
 

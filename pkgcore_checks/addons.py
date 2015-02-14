@@ -495,18 +495,11 @@ class UseAddon(base.Addon):
     def fake_use_validate(klasses, pkg, seq, reporter, attr=None):
         return iflatten_instance(seq, klasses)
 
-    def iuse_strip(self, iuse):
-        ret_val = set()
-        for flag in iuse:
-            flag = flag.lstrip("+-")
-            ret_val.add(flag)
-        return ret_val
-
     def use_validate(self, klasses, pkg, seq, reporter, attr=None):
         skip_filter = (packages.Conditional,) + klasses
         unstated = set()
 
-        stated = self.iuse_strip(pkg.iuse)
+        stated = pkg.iuse_stripped
         i = expandable_chain(iflatten_instance(seq, skip_filter))
         for node in i:
             if isinstance(node, packages.Conditional):
