@@ -32,8 +32,8 @@ class WhitespaceFound(base_whitespace):
 
     @property
     def short_desc(self):
-        return "ebuild has %s whitespace on %s" % (self.leadtrail,
-            self.lines_str)
+        return "ebuild has %s whitespace on %s" % (
+            self.leadtrail, self.lines_str)
 
 
 class WrongIndentFound(base_whitespace):
@@ -103,7 +103,8 @@ class WhitespaceCheck(base.Template):
     """checking ebuild for (useless) whitespaces"""
 
     feed_type = base.ebuild_feed
-    known_results = (WhitespaceFound, WrongIndentFound, DoubleEmptyLine,
+    known_results = (
+        WhitespaceFound, WrongIndentFound, DoubleEmptyLine,
         TrailingEmptyLine, NoFinalNewline)
 
     def feed(self, entry, reporter):

@@ -4,6 +4,7 @@
 from pkgcore_checks.test import misc
 from pkgcore_checks.codingstyle import BadInsIntoCheck
 
+
 class TestBadInsIntoUsage(misc.ReportTestCase):
 
     check_kls = BadInsIntoCheck
@@ -27,12 +28,13 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
         fake_src.append("\tinsinto /etc/cron.weekly\n")
         fake_src.append("# That's it for now\n")
 
-        bad = ("/etc/env.d", "/etc/conf.d", "/etc/init.d", "/etc/pam.d",
+        bad = (
+            "/etc/env.d", "/etc/conf.d", "/etc/init.d", "/etc/pam.d",
             "/usr/share/applications", "/usr/share/applications",
             "//usr/share//applications", "/etc/cron.d", "/etc/cron.hourly",
             "/etc/cron.daily", "/etc/cron.weekly")
         check = BadInsIntoCheck(None, None)
 
-        reports = self.assertReports(check,[fake_pkg, fake_src])
+        reports = self.assertReports(check, [fake_pkg, fake_src])
         dirs = [x.insintodir for x in reports]
         self.assertEqual(dirs, list(bad))

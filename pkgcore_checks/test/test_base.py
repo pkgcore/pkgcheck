@@ -163,15 +163,15 @@ class PlugTest(TestCase):
             trans_everything,
             [sources[0]],
             (sources[0], base.CheckRunner([
-                        trans(0, 2)(base.CheckRunner([sinks[2]]))])))
+                trans(0, 2)(base.CheckRunner([sinks[2]]))])))
         self.assertPipes(
             [sinks[2]],
             trans_up,
             [sources[0]],
             (sources[0], base.CheckRunner([
-                        trans(0, 1)(base.CheckRunner([
-                                    trans(1, 2)(base.CheckRunner([sinks[2]])),
-                                    ]))])))
+                trans(0, 1)(base.CheckRunner([
+                    trans(1, 2)(base.CheckRunner([sinks[2]])),
+                    ]))])))
 
     def test_no_transform(self):
         self.assertPipes(
@@ -196,9 +196,9 @@ class PlugTest(TestCase):
             [trans(1, 2), trans(3, 4), trans(4, 5)],
             [sources[1], sources[3]],
             (sources[1], base.CheckRunner([trans(1, 2)(base.CheckRunner([
-                                    sinks[2]]))])),
+                sinks[2]]))])),
             (sources[3], base.CheckRunner([trans(3, 4)(base.CheckRunner([
-                                    sinks[4]]))])))
+                sinks[4]]))])))
 
     def test_grow(self):
         self.assertPipes(
@@ -206,32 +206,32 @@ class PlugTest(TestCase):
             trans_up,
             [sources[0]],
             (sources[0], base.CheckRunner([
-                        sinks[0],
-                        trans(0, 1)(base.CheckRunner([sinks[1]]))])))
+                sinks[0],
+                trans(0, 1)(base.CheckRunner([sinks[1]]))])))
         self.assertPipes(
             [sinks[1], sinks[0]],
             trans_everything,
             [sources[0]],
             (sources[0], base.CheckRunner([
-                        sinks[0],
-                        trans(0, 1)(base.CheckRunner([sinks[1]]))])))
+                sinks[0],
+                trans(0, 1)(base.CheckRunner([sinks[1]]))])))
         self.assertPipes(
             [sinks[2], sinks[0]],
             trans_up,
             [sources[0]],
             (sources[0], base.CheckRunner([
-                        sinks[0],
-                        trans(0, 1)(base.CheckRunner([
-                                    trans(1, 2)(base.CheckRunner([sinks[2]])),
-                                    ]))])))
+                sinks[0],
+                trans(0, 1)(base.CheckRunner([
+                    trans(1, 2)(base.CheckRunner([sinks[2]])),
+                    ]))])))
         self.assertPipes(
             [sinks[2], sinks[1]],
             trans_up,
             [sources[0]],
             (sources[0], base.CheckRunner([trans(0, 1)(base.CheckRunner([
-                                    sinks[1],
-                                    trans(1, 2)(base.CheckRunner([sinks[2]])),
-                                    ]))])))
+                sinks[1],
+                trans(1, 2)(base.CheckRunner([sinks[2]])),
+                ]))])))
 
     def test_forks(self):
         self.assertPipes(
@@ -239,29 +239,29 @@ class PlugTest(TestCase):
             [trans(1, 2), trans(1, 3)],
             [sources[1]],
             (sources[1], base.CheckRunner([
-                        sinks[1],
-                        trans(1, 2)(base.CheckRunner([sinks[2]])),
-                        trans(1, 3)(base.CheckRunner([sinks[3]])),
-                        ])))
+                sinks[1],
+                trans(1, 2)(base.CheckRunner([sinks[2]])),
+                trans(1, 3)(base.CheckRunner([sinks[3]])),
+                ])))
         self.assertPipes(
             [sinks[1], sinks[2], sinks[3]],
             [trans(0, 1), trans(1, 2), trans(1, 3)],
             [sources[0]],
             (sources[0], base.CheckRunner([
-                        trans(0, 1)(base.CheckRunner([
-                                    sinks[1],
-                                    trans(1, 2)(base.CheckRunner([sinks[2]])),
-                                    trans(1, 3)(base.CheckRunner([sinks[3]])),
-                                    ]))])))
+                trans(0, 1)(base.CheckRunner([
+                    sinks[1],
+                    trans(1, 2)(base.CheckRunner([sinks[2]])),
+                    trans(1, 3)(base.CheckRunner([sinks[3]])),
+                    ]))])))
         self.assertPipes(
             [sinks[0], sinks[1], sinks[2]],
             (trans(1, 2),) + trans_down,
             [sources[1]],
             (sources[1], base.CheckRunner([
-                        sinks[1],
-                        trans(1, 2)(base.CheckRunner([sinks[2]])),
-                        trans(1, 0)(base.CheckRunner([sinks[0]])),
-                        ])))
+                sinks[1],
+                trans(1, 2)(base.CheckRunner([sinks[2]])),
+                trans(1, 0)(base.CheckRunner([sinks[0]])),
+                ])))
 
     def test_scope(self):
         sink1 = DummySink(dummies[1], 1)
@@ -273,11 +273,11 @@ class PlugTest(TestCase):
             [trans(1, 2), trans(2, 3)],
             [source],
             (source, base.CheckRunner([
-                        sink1,
-                        trans(1, 2)(base.CheckRunner([
-                                    sink2,
-                                    trans(2, 3)(base.CheckRunner([sink3])),
-                                    ]))])))
+                sink1,
+                trans(1, 2)(base.CheckRunner([
+                    sink2,
+                    trans(2, 3)(base.CheckRunner([sink3])),
+                    ]))])))
 
     def test_scope_affects_transform_cost(self):
         trans_fast = trans(1, 2, scope=base.repository_scope, cost=1)
@@ -287,11 +287,11 @@ class PlugTest(TestCase):
             [trans_slow, trans_fast],
             [sources[1]],
             (sources[1], base.CheckRunner([
-                        trans_slow(base.CheckRunner([sinks[2]]))])))
+                trans_slow(base.CheckRunner([sinks[2]]))])))
         source = DummySource(dummies[1], scope=base.repository_scope)
         self.assertPipes(
             [sinks[2]],
             [trans_slow, trans_fast],
             [source],
             (source, base.CheckRunner([
-                        trans_fast(base.CheckRunner([sinks[2]]))])))
+                trans_fast(base.CheckRunner([sinks[2]]))])))

@@ -63,10 +63,8 @@ class FakeConfigurable(object):
         raise AttributeError(self, 'is immutable')
 
 
-def _eapi2_flatten(val, atom_kls=atom,
-                   transitive_use_atom=atom._transitive_use_atom):
-    return isinstance(val, atom_kls) and \
-        not isinstance(val, transitive_use_atom)
+def _eapi2_flatten(val, atom_kls=atom, transitive_use_atom=atom._transitive_use_atom):
+    return isinstance(val, atom_kls) and not isinstance(val, transitive_use_atom)
 
 
 def visit_atoms(pkg, stream):
@@ -148,8 +146,8 @@ class NonsolvableDeps(base.Result):
     @property
     def short_desc(self):
         return "nonsolvable depset(%s) keyword(%s) profile (%s): " \
-            "solutions: [ %s ]" % (self.attr, self.keyword, self.profile,
-            ', '.join(self.potentials))
+               "solutions: [ %s ]" % (self.attr, self.keyword, self.profile,
+                                      ', '.join(self.potentials))
 
 
 class VisibilityReport(base.Template):
@@ -225,10 +223,7 @@ class VisibilityReport(base.Template):
         for attr, depset in (("depends", pkg.depends),
                              ("rdepends", pkg.rdepends),
                              ("post_rdepends", pkg.post_rdepends)):
-
-            for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
-                pkg, attr, depset):
-
+            for edepset, profiles in self.depset_cache.collapse_evaluate_depset(pkg, attr, depset):
                 self.process_depset(pkg, attr, edepset, profiles, reporter)
 
     def check_visibility_vcs(self, pkg, reporter):
