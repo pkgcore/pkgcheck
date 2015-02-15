@@ -1,7 +1,11 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-import os, sys, optparse, itertools, shutil
+import itertools
+import optparse
+import os
+import shutil
+import sys
 
 from pkgcore.ebuild import repo_objs
 from pkgcore.restrictions import packages
@@ -85,8 +89,8 @@ class TestQueryCacheAddon(base_test):
                 query_caching_freq=ret, silence=True)
 
     def test_default(self):
-        self.process_check([], silence=True,
-            query_caching_freq=self.default_feed)
+        self.process_check(
+            [], silence=True, query_caching_freq=self.default_feed)
 
     def test_feed(self):
         options = self.process_check([], silence=True)
@@ -101,14 +105,15 @@ class TestQueryCacheAddon(base_test):
 class Test_profile_data(TestCase):
 
     def assertResults(self, profile, known_flags, required_immutable,
-        required_forced, cpv="dev-util/diffball-0.1", key_override=None,
-        data_override=None):
+                      required_forced, cpv="dev-util/diffball-0.1",
+                      key_override=None, data_override=None):
         if key_override is None:
             key = profile.arch
-        profile_data = addons.profile_data("test-profile", key_override,
+        profile_data = addons.profile_data(
+            "test-profile", key_override,
             profile.make_virtuals_repo(None), profile.provides_repo,
-            packages.AlwaysFalse, profile.masked_use, profile.forced_use,
-            {}, set())
+            packages.AlwaysFalse, profile.iuse_effective,
+            profile.masked_use, profile.forced_use, {}, set())
         pkg = FakePkg(cpv, data=data_override)
         immutable, enabled = profile_data.identify_use(pkg, set(known_flags))
         self.assertEqual(immutable, set(required_immutable))
@@ -196,6 +201,8 @@ class TestProfileAddon(profile_mixin):
                         f.write("foon\n#dar\n")
                 with open(pjoin(loc, profile, 'make.defaults'), 'w') as f:
                     f.write("ARCH=%s\n" % vals[0])
+                with open(pjoin(loc, profile, 'eapi'), 'w') as f:
+                    f.write('5')
 
     def assertProfiles(self, check, key, *profile_names):
         self.assertEqual(

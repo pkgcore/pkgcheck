@@ -92,13 +92,14 @@ class QueryCacheAddon(base.Template):
 class profile_data(object):
 
     def __init__(self, profile_name, key, virtuals, provides, vfilter,
-                 masked_use, forced_use, lookup_cache, insoluble):
+                 iuse_effective, masked_use, forced_use, lookup_cache, insoluble):
         self.key = key
         self.name = profile_name
         self.virtuals = virtuals
         self.virtuals_has_match = getattr(virtuals, 'has_match', virtuals.match)
         self.provides_repo = provides
         self.provides_has_match = getattr(provides, 'has_match', provides.match)
+        self.iuse_effective = iuse_effective
         self.masked_use = masked_use
         self.forced_use = forced_use
         self.cache = lookup_cache
@@ -297,6 +298,7 @@ class ProfileAddon(base.Addon):
                     profile_name, stable_key,
                     virtuals, profile.provides_repo,
                     packages.AndRestriction(vfilter, stable_r),
+                    profile.iuse_effective,
                     stable_immutable_flags, stable_enabled_flags,
                     stable_cache,
                     ProtectedSet(unstable_insoluble)))
@@ -305,6 +307,7 @@ class ProfileAddon(base.Addon):
                     profile_name, unstable_key,
                     virtuals, profile.provides_repo,
                     packages.AndRestriction(vfilter, unstable_r),
+                    profile.iuse_effective,
                     immutable_flags, enabled_flags,
                     ProtectedSet(stable_cache),
                     unstable_insoluble))

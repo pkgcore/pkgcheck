@@ -11,46 +11,45 @@ from pkgcore_checks import base, addons
 
 class FakeConfigurable(object):
     configurable = True
-    use = ()
-    __slots__ = ('_raw_pkg', '_profile')
+    __slots__ = ('use', 'iuse', '_forced_use', '_masked_use', '_raw_pkg', '_profile')
 
     def __init__(self, pkg, profile):
         object.__setattr__(self, '_raw_pkg', pkg)
         object.__setattr__(self, '_profile', profile)
+
+        object.__setattr__(
+            self, '_forced_use', self._profile.forced_use.pull_data(self._raw_pkg))
+        object.__setattr__(
+            self, '_masked_use', self._profile.masked_use.pull_data(self._raw_pkg))
+        enabled_use = self._forced_use - self._masked_use
+        object.__setattr__(
+            self, 'use', frozenset(enabled_use & profile.iuse_effective))
+        object.__setattr__(
+            self, 'iuse', frozenset(pkg.iuse_stripped | profile.iuse_effective))
 
     def request_enable(self, attr, *vals):
         if attr != 'use':
             return False
 
         set_vals = frozenset(vals)
-        if self.eapi_obj.magic == '0':
-            if not set_vals.issubset(self.iuse):
-                return False
-        else:
-            if not set_vals.issubset(x.lstrip('-+') for x in self.iuse):
-                # requested a flag that doesn't exist in iuse
-                return False
+        if not set_vals.issubset(self.iuse):
+            # requested a flag that doesn't exist in iuse
+            return False
 
         # if any of the flags are in masked_use, it's a no go.
-        return set_vals.isdisjoint(
-            self._profile.masked_use.pull_data(self._raw_pkg))
+        return set_vals.isdisjoint(self._masked_use)
 
     def request_disable(self, attr, *vals):
         if attr != 'use':
             return False
 
         set_vals = frozenset(vals)
-        if self.eapi_obj.magic == '0':
-            if not set_vals.issubset(self.iuse):
-                return False
-        else:
-            if set_vals.issubset(x.lstrip('-+') for x in self.iuse):
-                # requested a flag that doesn't exist in iuse
-                return False
+        if not set_vals.issubset(self.iuse):
+            # requested a flag that doesn't exist in iuse
+            return False
 
         # if any of the flags are forced_use, it's a no go.
-        return not set_vals.isdisjoint(
-            self._profile.forced_use.pull_data(self._raw_pkg))
+        return set_vals.isdisjoint(self._forced_use)
 
     def rollback(self, point=0):
         return True
