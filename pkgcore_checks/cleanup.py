@@ -21,8 +21,8 @@ class RedundantVersionWarning(Result):
 
     @property
     def short_desc(self):
-        return "slot(%s) keywords are overshadowed by version(s): %s" % \
-            (self.slot, ', '.join(self.later_versions))
+        return "slot(%s) keywords are overshadowed by version%s: %s" % (
+            self.slot, 's'[len(self.later_versions) == 1:], ', '.join(self.later_versions))
 
 
 class RedundantVersionReport(Template):

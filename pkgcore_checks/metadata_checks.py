@@ -118,7 +118,8 @@ class IUSEMetadataReport(base.Template):
             iuse = pkg.iuse_stripped.difference(self.iuse_handler.allowed_iuse(pkg))
             if iuse:
                 reporter.add_report(MetadataError(
-                    pkg, "iuse", "iuse unknown flag(s): [ %s ]" % ", ".join(iuse)))
+                    pkg, "iuse", "iuse unknown flag%s: [ %s ]" % (
+                        's'[len(iuse) == 1:], ", ".join(iuse))))
 
 
 class UnusedLocalFlags(base.Result):
@@ -139,7 +140,8 @@ class UnusedLocalFlags(base.Result):
 
     @property
     def short_desc(self):
-        return "metadata.xml unused local use flag(s): [ %s ]" % ', '.join(self.flags)
+        return "metadata.xml unused local use flag%s: [ %s ]" % (
+            's'[len(self.flags) == 1:], ', '.join(self.flags))
 
 
 class UnusedLocalFlagsReport(base.Template):

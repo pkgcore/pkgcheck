@@ -27,8 +27,8 @@ class StaleUnstableKeyword(Result):
 
     @property
     def short_desc(self):
-        return "no change in %i days for unstable keyword(s): [ %s ]" % (
-            self.period, ', '.join(self.keywords))
+        return "no change in %i days for unstable keyword%s: [ %s ]" % (
+            self.period, 's'[len(self.keywords) == 1:], ', '.join(self.keywords))
 
 
 class StaleUnstableReport(StableCheckAddon):

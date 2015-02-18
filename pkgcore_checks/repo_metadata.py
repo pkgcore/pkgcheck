@@ -34,7 +34,8 @@ class UnusedGlobalFlagsResult(base.Result):
 
     @property
     def short_desc(self):
-        return "use.desc unused flag(s): %s" % ', '.join(self.flags)
+        return "use.desc unused flag%s: %s" % (
+            's'[len(self.flags) == 1:], ', '.join(self.flags))
 
 
 class UnusedGlobalFlags(base.Template):
@@ -81,7 +82,8 @@ class UnusedLicenseReport(base.Result):
 
     @property
     def short_desc(self):
-        return "unused license(s): %s" % ', '.join(self.licenses)
+        return "unused license%s: %s" % (
+            's'[len(self.licenses) == 1:], ', '.join(self.licenses))
 
 
 class UnusedLicense(base.Template):
