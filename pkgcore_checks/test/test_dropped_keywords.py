@@ -1,6 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+from itertools import chain
+
 from pkgcore_checks.test import misc
 from pkgcore_checks.dropped_keywords import DroppedKeywordsReport as drop_keys
 
@@ -19,7 +21,7 @@ class TestDroppedKeywords(misc.ReportTestCase):
         self.assertNoReport(check, [self.mk_pkg('1')])
         reports = self.assertReports(
             check, [self.mk_pkg("1", "x86 amd64"), self.mk_pkg("2")])
-        self.assertEqual(set(x.arch for x in reports), set(["x86", "amd64"]))
+        self.assertEqual(set(chain.from_iterable(x.arches for x in reports)), set(["x86", "amd64"]))
 
         # ensure it limits it's self to just the arches we care about
         # check unstable at the same time;

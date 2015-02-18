@@ -1,23 +1,26 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+from collections import defaultdict
+
 from pkgcore_checks.base import Template, package_feed, versioned_feed, Result
 
 
 class DroppedKeywordWarning(Result):
     """Arch keywords dropped during pkg version bumping"""
 
-    __slots__ = ("arch", "category", "package", "version")
+    __slots__ = ("arches", "category", "package", "version")
     threshold = versioned_feed
 
-    def __init__(self, arch, pkg):
+    def __init__(self, pkg, arches):
         Result.__init__(self)
         self._store_cpv(pkg)
-        self.arch = arch
+        self.arches = arches
 
     @property
     def short_desc(self):
-        return "keyword %s was dropped" % self.arch
+        return "keyword%s dropped: %s" % (
+            's'[self.arches == 1:], ', '.join(sorted(self.arches)))
 
 
 class DroppedKeywordsReport(Template):
@@ -28,7 +31,7 @@ class DroppedKeywordsReport(Template):
 
     def __init__(self, options):
         Template.__init__(self, options)
-        self.arches = dict((k, None) for k in options.arches)
+        self.arches = frozenset(options.arches)
 
     def feed(self, pkgset, reporter):
         # We need to skip live ebuilds otherwise they're flagged. Currently, we
@@ -41,7 +44,7 @@ class DroppedKeywordsReport(Template):
         lastpkg = pkgset[-1]
         state = set(x.lstrip("~") for x in lastpkg.keywords)
         arches = set(self.arches)
-        dropped = []
+        dropped = defaultdict(list)
         # pretty simple; pull the last keywords, walk backwards
         # the difference (ignoring unstable/stable) should be empty;
         # if it is, report; meanwhile, add the new arch in, and continue
@@ -53,10 +56,10 @@ class DroppedKeywordsReport(Template):
                 elif "-%s" % key in state:
                     continue
                 elif key in arches:
-                    dropped.append((key, lastpkg))
+                    dropped[lastpkg].append(key)
                     arches.discard(key)
             state = oldstate
             lastpkg = pkg
 
-        for key, pkg in dropped:
-            reporter.add_report(DroppedKeywordWarning(key, pkg))
+        for pkg in dropped.iterkeys():
+            reporter.add_report(DroppedKeywordWarning(pkg, dropped[pkg]))
