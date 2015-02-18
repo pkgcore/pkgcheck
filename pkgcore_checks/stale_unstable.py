@@ -42,7 +42,7 @@ class StaleUnstableReport(StableCheckAddon):
         super(StaleUnstableReport, self).__init__(options)
         self.staleness = staleness
         self.start_time = None
-        self.arches = frozenset("~%s" % x.lstrip("~") for x in options.arches)
+        self.arches = frozenset("~%s" % x.lstrip("~") for x in self.arches)
 
     def start(self):
         self.start_time = time.time()
