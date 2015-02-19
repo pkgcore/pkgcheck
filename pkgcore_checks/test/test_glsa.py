@@ -20,10 +20,10 @@ class TestVulnerabilitiesReport(TempDirMixin, misc.ReportTestCase):
         # single version, shouldn't yield.
         check = vuln_report(
             misc.Options(glsa_location=self.dir, glsa_enabled=True))
-        open(pjoin(self.dir, "glsa-200611-01.xml"), "w").write(
-            mk_glsa(("dev-util/diffball", ([], [">0.7"]))))
-        open(pjoin(self.dir, "glsa-200611-02.xml"), "w").write(
-            mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
+        with open(pjoin(self.dir, "glsa-200611-01.xml"), "w") as f:
+            f.write(mk_glsa(("dev-util/diffball", ([], [">0.7"]))))
+        with open(pjoin(self.dir, "glsa-200611-02.xml"), "w") as f:
+            f.write(mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
         check.start()
         self.assertNoReport(check, self.mk_pkg("0.5.1"))
         r = self.assertReports(check, self.mk_pkg("0.5-r5"))

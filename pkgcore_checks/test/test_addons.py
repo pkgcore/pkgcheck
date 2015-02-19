@@ -51,8 +51,10 @@ class base_test(TestCase):
         finally:
             if silence:
                 if orig_out:
+                    sys.stdout.close()
                     sys.stdout = orig_out
                 if orig_err:
+                    sys.stderr.close()
                     sys.stderr = orig_err
 
         for attr, val in settings.iteritems():
