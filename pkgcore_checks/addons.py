@@ -27,10 +27,10 @@ demandload(
 
 class ArchesAddon(base.Addon):
 
-    default_arches = frozenset([
+    default_arches = tuple(sorted([
         "alpha", "amd64", "arm", "arm64", "hppa", "ia64", "m68k", "mips",
         "ppc", "ppc64", "s390", "sh", "sparc", "x86",
-    ])
+    ]))
 
     @staticmethod
     def _record_arches(option, opt_str, value, parser):
@@ -402,7 +402,7 @@ class StableCheckAddon(base.Template):
 
         # use known stable arches if a custom arch set isn't specified
         self.arches = set(options.arches)
-        if self.arches == ArchesAddon.default_arches:
+        if self.arches == set(ArchesAddon.default_arches):
             self.arches = options.src_repo.config.stable_arches
 
 
