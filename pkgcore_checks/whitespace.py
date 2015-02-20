@@ -2,8 +2,11 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
+from snakeoil.demandload import demand_compile_regexp
+
 from pkgcore_checks import base
 
+demand_compile_regexp('indent_regexp', '^\t* \t+')
 
 class base_whitespace(base.Result):
 
@@ -122,7 +125,7 @@ class WhitespaceCheck(base.Template):
                     trailing.append(lineno + 1)
                 elif line[0] == ' ':
                     leading.append(lineno + 1)
-                if line.find(" \t") >= 0:
+                if indent_regexp.match(line):
                     indent.append(lineno + 1)
             elif lastlineempty:
                 double_empty.append(lineno + 1)
