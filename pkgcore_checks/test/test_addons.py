@@ -113,7 +113,7 @@ class Test_profile_data(TestCase):
             key = profile.arch
         profile_data = addons.profile_data(
             "test-profile", key_override,
-            profile.make_virtuals_repo(None), profile.provides_repo,
+            profile.provides_repo,
             packages.AlwaysFalse, profile.iuse_effective,
             profile.masked_use, profile.forced_use, {}, set())
         pkg = FakePkg(cpv, data=data_override)

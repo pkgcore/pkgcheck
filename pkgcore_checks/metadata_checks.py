@@ -170,7 +170,7 @@ class UnusedLocalFlagsReport(base.Template):
 
 class DependencyReport(base.Template):
 
-    """check DEPEND, PDEPEND, RDEPEND and PROVIDES"""
+    """check DEPEND, RDEPEND, and PDEPEND"""
 
     required_addons = (addons.UseAddon,)
     known_results = (MetadataError,) + addons.UseAddon.known_results
@@ -179,7 +179,7 @@ class DependencyReport(base.Template):
     feed_type = base.versioned_feed
 
     attrs = tuple((x, attrgetter(x)) for x in
-                  ("depends", "rdepends", "post_rdepends", "provides"))
+                  ("depends", "rdepends", "post_rdepends"))
 
     def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
@@ -190,13 +190,9 @@ class DependencyReport(base.Template):
             try:
                 i = self.iuse_filter(
                     (atom,), pkg, getter(pkg), reporter, attr=attr_name)
-                if attr_name == 'provides':
-                    for x in i:
-                        pass
-                else:
-                    for x in ifilter(self.blocks_getter, i):
-                        if x.match(pkg):
-                            reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
+                for x in ifilter(self.blocks_getter, i):
+                    if x.match(pkg):
+                        reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
             except (KeyboardInterrupt, SystemExit):
                 raise
             except (MetadataException, MalformedAtom, ValueError), e:

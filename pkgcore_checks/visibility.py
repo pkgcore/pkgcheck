@@ -254,7 +254,6 @@ class VisibilityReport(base.Template):
             # for other visibility tiers
             cache = profile.cache
             provided = profile.provides_has_match
-            is_virtual = profile.virtuals_has_match
             insoluble = profile.insoluble
             visible = profile.visible
             for required in csolutions:
@@ -263,9 +262,6 @@ class VisibilityReport(base.Template):
                     if node in cache:
                         break
                     elif provided(node):
-                        break
-                    elif node.category == 'virtual' and is_virtual(node):
-                        cache.add(node)
                         break
                 else:
                     for node in required:

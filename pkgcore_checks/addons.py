@@ -91,12 +91,10 @@ class QueryCacheAddon(base.Template):
 
 class profile_data(object):
 
-    def __init__(self, profile_name, key, virtuals, provides, vfilter,
+    def __init__(self, profile_name, key, provides, vfilter,
                  iuse_effective, masked_use, forced_use, lookup_cache, insoluble):
         self.key = key
         self.name = profile_name
-        self.virtuals = virtuals
-        self.virtuals_has_match = getattr(virtuals, 'has_match', virtuals.match)
         self.provides_repo = provides
         self.provides_has_match = getattr(provides, 'has_match', provides.match)
         self.iuse_effective = iuse_effective
@@ -259,7 +257,6 @@ class ProfileAddon(base.Addon):
                     continue
 
                 vfilter = domain.generate_filter(profile.masks, profile.unmasks)
-                virtuals = profile.make_virtuals_repo(options.search_repo)
 
                 immutable_flags = profile.masked_use.clone(unfreeze=True)
                 immutable_flags.add_bare_global((), default_masked_use)
@@ -296,7 +293,7 @@ class ProfileAddon(base.Addon):
 
                 profile_filters[stable_key].append(profile_data(
                     profile_name, stable_key,
-                    virtuals, profile.provides_repo,
+                    profile.provides_repo,
                     packages.AndRestriction(vfilter, stable_r),
                     profile.iuse_effective,
                     stable_immutable_flags, stable_enabled_flags,
@@ -305,7 +302,7 @@ class ProfileAddon(base.Addon):
 
                 profile_filters[unstable_key].append(profile_data(
                     profile_name, unstable_key,
-                    virtuals, profile.provides_repo,
+                    profile.provides_repo,
                     packages.AndRestriction(vfilter, unstable_r),
                     profile.iuse_effective,
                     immutable_flags, enabled_flags,
