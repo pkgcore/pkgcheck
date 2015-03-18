@@ -62,9 +62,20 @@ class FakeConfigurable(object):
     def __setattr__(self, attr, val):
         raise AttributeError(self, 'is immutable')
 
+class _BlockMemoryExhaustion(Exception):
+    pass
 
-def _eapi2_flatten(val, atom_kls=atom, transitive_use_atom=atom._transitive_use_atom):
-    return isinstance(val, atom_kls) and not isinstance(val, transitive_use_atom)
+
+# This is fast path code, hence the seperated implementations.
+if getattr(atom, '_TRANSITIVE_USE_ATOM_BUG_IS_FIXED', False):
+    def _eapi2_flatten(val, atom_kls=atom, transitive_use_atom=atom._transitive_use_atom):
+        return isinstance(val, atom_kls) and not isinstance(val, transitive_use_atom)
+else:
+    def _eapi2_flatten(val, atom_kls=atom, transitive_use_atom=atom._transitive_use_atom):
+        if isinstance(val, transitive_use_atom):
+            if len([x for x in val.use if x.endswith("?")]) > 16:
+                raise _BlockMemoryExhaustion(val)
+        return isinstance(val, atom_kls) and not isinstance(val, transitive_use_atom)
 
 
 def visit_atoms(pkg, stream):
@@ -127,6 +138,25 @@ class NonExistentDeps(base.Result):
             self.attr, ', '.join(self.atoms))
 
 
+class UncheckableDep(base.Result):
+
+    """Given dependency cannot be checked due to the number of transitive use deps in it"""
+
+    __slots__ = ("category", "package", "version", "attr")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, attr):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.attr = attr
+
+    @property
+    def short_desc(self):
+        return "depset %s: could not be checked due to pkgcore limitation" % (
+            self.attr)
+
+
 class NonsolvableDeps(base.Result):
     """No potential solution for a depset attribute"""
 
@@ -187,34 +217,39 @@ class VisibilityReport(base.Template):
                 self.check_visibility_vcs(pkg, reporter)
                 break
 
+        suppressed_depsets = []
         for attr, depset in (("depends", pkg.depends),
                              ("rdepends", pkg.rdepends),
                              ("post_rdepends", pkg.post_rdepends)):
             nonexistent = set()
-            for orig_node in visit_atoms(pkg, depset):
+            try:
+                for orig_node in visit_atoms(pkg, depset):
 
-                node = strip_atom_use(orig_node)
-                if node not in self.query_cache:
-                    if node in self.profiles.global_insoluble:
-                        nonexistent.add(node)
-                        # insert an empty tuple, so that tight loops further
-                        # on don't have to use the slower get method
-                        self.query_cache[node] = ()
-
-                    else:
-                        matches = caching_iter(
-                            self.options.search_repo.itermatch(node))
-                        if matches:
-                            self.query_cache[node] = matches
-                            if orig_node is not node:
-                                self.query_cache[str(orig_node)] = matches
-                        elif not node.blocks and not node.category == "virtual":
+                    node = strip_atom_use(orig_node)
+                    if node not in self.query_cache:
+                        if node in self.profiles.global_insoluble:
                             nonexistent.add(node)
+                            # insert an empty tuple, so that tight loops further
+                            # on don't have to use the slower get method
                             self.query_cache[node] = ()
-                            self.profiles.global_insoluble.add(node)
-                elif not self.query_cache[node]:
-                    nonexistent.add(node)
 
+                        else:
+                            matches = caching_iter(
+                                self.options.search_repo.itermatch(node))
+                            if matches:
+                                self.query_cache[node] = matches
+                                if orig_node is not node:
+                                    self.query_cache[str(orig_node)] = matches
+                            elif not node.blocks and not node.category == "virtual":
+                                nonexistent.add(node)
+                                self.query_cache[node] = ()
+                                self.profiles.global_insoluble.add(node)
+                    elif not self.query_cache[node]:
+                        nonexistent.add(node)
+
+            except _BlockMemoryExhaustion, e:
+                reporter.add_report(UncheckableDep(pkg, attr))
+                suppressed_depsets.append(attr)
             if nonexistent:
                 reporter.add_report(NonExistentDeps(pkg, attr, nonexistent))
 
@@ -223,6 +258,8 @@ class VisibilityReport(base.Template):
         for attr, depset in (("depends", pkg.depends),
                              ("rdepends", pkg.rdepends),
                              ("post_rdepends", pkg.post_rdepends)):
+            if attr in suppressed_depsets:
+                continue
             for edepset, profiles in self.depset_cache.collapse_evaluate_depset(pkg, attr, depset):
                 self.process_depset(pkg, attr, edepset, profiles, reporter)
 
