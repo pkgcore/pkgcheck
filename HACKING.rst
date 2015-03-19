@@ -1,6 +1,6 @@
-=======================
- Architecture overview
-=======================
+=====================
+Architecture overview
+=====================
 
 If you want to add a check or frontend to pkgcheck you should
 probably read this thing first. If you only want to add a check you
@@ -150,7 +150,7 @@ currently hardcoded. This will probably change in the future, but
 exactly how remains to be seen.
 
 For pkgcheck internals hackers
-====================================
+==============================
 
 Commandline frontend
 --------------------
