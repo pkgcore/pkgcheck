@@ -1,0 +1,4 @@
+pkgcore plugin cache v3
+core_checks:1426744357:transform,0,2:transform,0,4:transform,0,0:transform,0,1:transform,0,3:transform,0,6:transform,0,5:reporter,1,1:reporter,0,0:reporter,-1000,2:reporter,-1001,4:reporter,-1002,5:reporter,-10000000,3:check,0,9:check,0,16:check,0,11:check,0,23:check,0,14:check,0,13:check,0,0:check,0,7:check,0,19:check,0,10:check,0,22:check,0,21:check,0,12:check,0,3:check,0,6:check,0,18:check,0,5:check,0,24:check,0,17:check,0,8:check,0,20:check,0,15:check,0,2:check,0,1:check,0,4
+pcheck_config:1426744357:global_config,0,0
+pcheck_configurables:1426744357:configurable,0,4:configurable,0,1:configurable,0,5:configurable,0,2:configurable,0,6:configurable,0,3:configurable,0,0

@@ -6,7 +6,7 @@
 
 from pkgcore.util import commandline
 
-from pkgcore_checks import pcheck
+from pkgcheck import pcheck
 
 
 if __name__ == '__main__':

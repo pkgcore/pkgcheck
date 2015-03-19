@@ -7,17 +7,17 @@ import os
 
 from snakeoil import distutils_extensions as snk_distutils
 
-from pkgcore_checks import __version__
+from pkgcheck import __version__
 
 
 class mysdist(snk_distutils.sdist):
 
-    package_namespace = 'pkgcore_checks'
+    package_namespace = 'pkgcheck'
     old_verinfo = False
 
 
 packages = []
-for root, dirs, files in os.walk('pkgcore_checks'):
+for root, dirs, files in os.walk('pkgcheck'):
     if '__init__.py' in files:
         package = root.replace(os.path.sep, '.')
         packages.append(package)
@@ -30,18 +30,18 @@ except OSError:
 
 class test(snk_distutils.test):
 
-    default_test_namespace = 'pkgcore_checks'
-    blacklist = frozenset(['pkgcore_checks.plugins'])
+    default_test_namespace = 'pkgcheck'
+    blacklist = frozenset(['pkgcheck.plugins'])
 
 
 class pchecks_build_py(snk_distutils.build_py):
 
-    package_namespace = 'pkgcore_checks'
+    package_namespace = 'pkgcheck'
     generate_verinfo = True
 
 
 setup(
-    name="pkgcore-checks",
+    name="pkgcheck",
     version=__version__,
     license="BSD/GPL2",
     author="Brian Harring",

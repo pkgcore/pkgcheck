@@ -2,7 +2,7 @@
  Architecture overview
 =======================
 
-If you want to add a check or frontend to pkgcore-checks you should
+If you want to add a check or frontend to pkgcheck you should
 probably read this thing first. If you only want to add a check you
 should only read the first section ("For everyone"). After that is
 extra documentation on adding feed types and some of the internals.
@@ -81,12 +81,12 @@ Checkers are picked up by using pkgcore's plugin mechanism. For
 writing a simple custom checker the easiest thing to do is putting the
 entire thing in a single file including the pkgcore_plugins
 registration dictionary. See core_checks.py for what such a dictionary
-looks like. Then put it in a directory called pkgcore_checks/plugins/
-on your PYTHONPATH. So if you have a system-wide pkgcore-checks
+looks like. Then put it in a directory called pkgcheck/plugins/
+on your PYTHONPATH. So if you have a system-wide pkgcheck
 installation you can put your own plugin in
-~/lib/python/pkgcore_checks/plugins/mycheck.py and run
+~/lib/python/pkgcheck/plugins/mycheck.py and run
 PYTHONPATH=$HOME/lib/python pcheck ... to use the check (without
-having to install a local copy of pkgcore-checks and putting the check
+having to install a local copy of pkgcheck and putting the check
 inside it).
 
 For those who need more feed types
@@ -96,7 +96,7 @@ Transforms
 ----------
 
 Usually the checks should run in a single "pipeline": looping over the
-packages once uses various caches (not just inside pkgcore-checks but
+packages once uses various caches (not just inside pkgcheck but
 also the os disk cache) more efficiently. This is accomplished by
 applying "transforms" to the package iterator which change the feed
 type. They are very similar to checks, but they do not yield the same
@@ -149,7 +149,7 @@ plugin system. See core_checks.py. The single available feed is
 currently hardcoded. This will probably change in the future, but
 exactly how remains to be seen.
 
-For pkgcore-checks internals hackers
+For pkgcheck internals hackers
 ====================================
 
 Commandline frontend

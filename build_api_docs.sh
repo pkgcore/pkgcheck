@@ -10,6 +10,6 @@ if [ "$1" != "html" ] && [ "$1" != "pdf" ]; then
 fi
 
 export SNAKEOIL_DEMANDLOAD_PROTECTION=n
-epydoc --${1} --no-frames --no-frames --graph=all -n pkgcore_checks -u \
+epydoc --${1} --no-frames --no-frames --graph=all -n pkgcheck -u \
     http://pkgcore.org/trac/pkgcore-checks --show-imports --include-log \
-    --inheritance=included --quiet --simple-term -o "$2" pkgcore_checks
+    --inheritance=included --quiet --simple-term -o "$2" pkgcheck

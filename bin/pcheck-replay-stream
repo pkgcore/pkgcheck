@@ -6,7 +6,7 @@
 
 from pkgcore.util import commandline
 
-from pkgcore_checks import report_stream
+from pkgcheck import report_stream
 
 
 if __name__ == '__main__':

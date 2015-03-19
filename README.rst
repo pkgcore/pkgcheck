@@ -1,14 +1,14 @@
 |test|
 
-==============
-pkgcore-checks
-==============
+========
+pkgcheck
+========
 
 Dependencies
 ============
 
-pkgcore-checks is developed alongside pkgcore. To run the development version
-of pkgcore-checks you will need the development version of pkgcore. Otherwise
+pkgcheck is developed alongside pkgcore. To run the development version
+of pkgcheck you will need the development version of pkgcore. Otherwise
 the 0.x version numbers need to match.
 
 The metadata.xml checks require either xmllint (installed as part of
@@ -20,7 +20,7 @@ Installation
 
 No installation is strictly required: just run the ``pcheck`` script and
 as long as you are not root things should work. If you want to make
-pkgcore-checks available system-wide use the provided ``setup.py``
+pkgcheck available system-wide use the provided ``setup.py``
 (see `Installing python modules`_ for details).
 
 Configuration
@@ -46,7 +46,7 @@ it is used. So with the following suite definition in
 ``~/.pkgcore.conf``::
 
   [pcheck-portdir-suite]
-  class=pkgcore_checks.base.Suite
+  class=pkgcheck.base.Suite
   target_repo=portdir
 
 you can run ``pcheck`` with no further arguments inside your portage
@@ -55,7 +55,7 @@ directory and it will do the right thing.
 For use with overlays you need to define the "source" repo too::
 
   [pcheck-overlay-suite]
-  class=pkgcore_checks.base.Suite
+  class=pkgcheck.base.Suite
   target_repo=/usr/local/portage/private
   src_repo=portdir
 
@@ -67,7 +67,7 @@ See Overlays_ for more information on ``src_repo``.
 Finally, you can define a different checkset per suite::
 
   [pcheck-portdir-suite]
-  class=pkgcore_checks.base.Suite
+  class=pkgcheck.base.Suite
   target_repo=portdir
   checkset=no-arch-checks
 
@@ -88,11 +88,11 @@ checks and one running every available check except for the specified
 ones. Examples::
 
   [no-arch-checks]
-  class=pkgcore_checks.base.Blacklist
+  class=pkgcheck.base.Blacklist
   patterns=unstable_only stale_unstable imlate
 
   [only-arch-checks]
-  class=pkgcore_checks.base.Whitelist
+  class=pkgcheck.base.Whitelist
   patterns=unstable_only stale_unstable imlate
 
 The first disables the three specified checks, the second enables only
@@ -113,7 +113,7 @@ There are various ways to pick the checkset to use: ``pquery
 Overlays
 --------
 
-Checking just an overlay does not work very well since pkgcore-checks
+Checking just an overlay does not work very well since pkgcheck
 needs to know about profiles and checks if all dependencies are
 available. To do this you will usually have to specify a base or
 "source" repo to pull this data from. You can set this with ``pcheck
@@ -131,7 +131,7 @@ grep. To use an output format that prints everything on one line, put
 this in your configuration::
 
   [pcheck-plain-reporter]
-  class=pkgcore_checks.reporters.plain_reporter
+  class=pkgcheck.reporters.plain_reporter
   default=true
 
 To use a non-default reporter use ``pcheck --reporter``. To see the
