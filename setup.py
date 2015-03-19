@@ -43,15 +43,19 @@ class pchecks_build_py(snk_distutils.build_py):
 setup(
     name="pkgcore-checks",
     version=__version__,
-    license="GPL2",
+    license="BSD/GPL2",
     author="Brian Harring",
     author_email="ferringb@gmail.com",
-    description="pkgcore based ebuild checks- repoman replacement",
+    description="pkgcore-based QA utility",
     packages=packages,
     scripts=glob.glob("bin/*"),
     cmdclass={
         "sdist": mysdist,
         "test": test,
         "build_py": pchecks_build_py,
-    }
+    },
+    classifiers=[
+        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+    ],
 )
