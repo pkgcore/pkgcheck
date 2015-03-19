@@ -1,3 +1,5 @@
+|test|
+
 ==============
 pkgcore-checks
 ==============
@@ -138,3 +140,6 @@ pcheck_reporter_factory``.
 
 
 .. _`Installing python modules`: http://docs.python.org/inst/
+
+.. |test| image:: https://travis-ci.org/pkgcore/pkgcheck.svg?branch=master
+    :target: https://travis-ci.org/pkgcore/pkgcheck
