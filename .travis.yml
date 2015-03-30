@@ -8,15 +8,10 @@ before_install:
     - sudo groupadd wheel
     - sudo groupadd -g 250 portage
     - sudo useradd -u 250 -g 250 portage
-install:
-    - git clone git://github.com/pkgcore/snakeoil.git
-    - pushd snakeoil
-    - python setup.py install --install-headers "${VIRTUAL_ENV}"/include/snakeoil
+install: pip install tox coveralls
+script: tox -e py${TRAVIS_PYTHON_VERSION/\./}
+after_success:
+    # upload coverage data to coveralls.io
+    - pushd .tox/py${TRAVIS_PYTHON_VERSION/\./}/lib/python*/site-packages
+    - coveralls
     - popd
-    - git clone git://github.com/pkgcore/pkgcore.git pkgcore-lib
-    - pushd pkgcore-lib
-    - python setup.py build_ext -I "${VIRTUAL_ENV}"/include
-    - python setup.py install --disable-man-pages --disable-html-docs
-    - popd
-script:
-    - python setup.py test
