@@ -85,7 +85,7 @@ looks like. Then put it in a directory called pkgcheck/plugins/
 on your PYTHONPATH. So if you have a system-wide pkgcheck
 installation you can put your own plugin in
 ~/lib/python/pkgcheck/plugins/mycheck.py and run
-PYTHONPATH=$HOME/lib/python pcheck ... to use the check (without
+PYTHONPATH=$HOME/lib/python pkgcheck ... to use the check (without
 having to install a local copy of pkgcheck and putting the check
 inside it).
 
@@ -156,7 +156,7 @@ Commandline frontend
 --------------------
 
 The frontend code uses pkgcore's commandline utilities module and
-lives in pcheck.py. It is pretty straightforward, although how control
+lives in cli.py. It is pretty straightforward, although how control
 flows through this module is not obvious without knowing how pkgcore's
 commandline utils are used:
 

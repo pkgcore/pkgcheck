@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""Replay a pickled results stream from pcheck, feeding the results into a reporter.
+"""Replay a pickled results stream from pkgcheck, feeding the results into a reporter.
 
 Useful if you need to delay acting on results until it can be done in
 one minimal window (say updating a database), or want to generate

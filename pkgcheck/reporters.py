@@ -22,7 +22,7 @@ demandload(
 class StrReporter(base.Reporter):
 
     """
-    Simple string reporter, pcheck-0.1 behaviour. example:
+    Simple string reporter, pkgcheck-0.1 behaviour. example:
     sys-apps/portage-2.1-r2: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
     sys-apps/portage-2.1-r2: rdepends  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ >=app-misc/pax-utils-0.1.13 ]
     sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86-fbsd ]
@@ -188,7 +188,7 @@ class MultiplexReporter(base.Reporter):
 
 
 def make_configurable_reporter_factory(klass):
-    @configurable({'dest': 'str'}, typename='pcheck_reporter_factory')
+    @configurable({'dest': 'str'}, typename='pkgcheck_reporter_factory')
     def configurable_reporter_factory(dest=None):
         if dest is None:
             return klass
@@ -212,8 +212,8 @@ null_reporter = make_configurable_reporter_factory(NullReporter)
 null_reporter.__name__ = 'null'
 
 
-@configurable({'reporters': 'refs:pcheck_reporter_factory'},
-              typename='pcheck_reporter_factory')
+@configurable({'reporters': 'refs:pkgcheck_reporter_factory'},
+              typename='pkgcheck_reporter_factory')
 def multiplex_reporter(reporters):
     def make_multiplex_reporter(out):
         return MultiplexReporter(*list(factory(out) for factory in reporters))

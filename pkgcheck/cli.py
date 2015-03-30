@@ -85,7 +85,7 @@ class OptionParser(commandline.OptionParser):
         group.add_option(
             '--checkset', action='callback', type='string',
             callback=commandline.config_callback,
-            callback_args=('pcheck_checkset', 'checkset'),
+            callback_args=('pkgcheck_checkset', 'checkset'),
             help='Pick a preconfigured set of checks to run.')
 
         self.add_option(
@@ -95,7 +95,7 @@ class OptionParser(commandline.OptionParser):
         self.add_option(
             '--suite', '-s', action='callback', type='string',
             callback=commandline.config_callback,
-            callback_args=('pcheck_suite', 'suite'),
+            callback_args=('pkgcheck_suite', 'suite'),
             help='Specify the configuration suite to use')
         self.add_option(
             "--list-checks", action="store_true", default=False,
@@ -147,7 +147,7 @@ class OptionParser(commandline.OptionParser):
                 # The use of a dict here is a hack to deal with one
                 # repo having multiple names in the configuration.
                 candidates = {}
-                for name, suite in values.config.pcheck_suite.iteritems():
+                for name, suite in values.config.pkgcheck_suite.iteritems():
                     repo = suite.target_repo
                     if repo is None:
                         continue
@@ -160,7 +160,7 @@ class OptionParser(commandline.OptionParser):
             if values.target_repo is not None:
                 # We have a repo, now find a suite matching it.
                 candidates = list(
-                    suite for suite in values.config.pcheck_suite.itervalues()
+                    suite for suite in values.config.pkgcheck_suite.itervalues()
                     if suite.target_repo is values.target_repo)
                 if len(candidates) == 1:
                     values.guessed_suite = True
@@ -168,7 +168,7 @@ class OptionParser(commandline.OptionParser):
             if values.suite is None:
                 # If we have multiple candidates or no candidates we
                 # fall back to the default suite.
-                values.suite = values.config.get_default('pcheck_suite')
+                values.suite = values.config.get_default('pkgcheck_suite')
                 values.default_suite = values.suite is not None
         if values.suite is not None:
             # We have a suite. Lift defaults from it for values that
@@ -220,7 +220,7 @@ class OptionParser(commandline.OptionParser):
 
         if values.reporter is None:
             values.reporter = values.config.get_default(
-                'pcheck_reporter_factory')
+                'pkgcheck_reporter_factory')
             if values.reporter is None:
                 values.reporter = get_plugin('reporter', plugins)
             if values.reporter is None:
@@ -228,7 +228,7 @@ class OptionParser(commandline.OptionParser):
                     'no config defined reporter found, nor any default '
                     'plugin based reporters')
         else:
-            func = values.config.pcheck_reporter_factory.get(values.reporter)
+            func = values.config.pkgcheck_reporter_factory.get(values.reporter)
             if func is None:
                 func = list(base.Whitelist([values.reporter]).filter(
                     get_plugins('reporter', plugins)))
@@ -291,7 +291,7 @@ class OptionParser(commandline.OptionParser):
                         'package', StrExactMatch(bits[1])))]
 
         if values.checkset is None:
-            values.checkset = values.config.get_default('pcheck_checkset')
+            values.checkset = values.config.get_default('pkgcheck_checkset')
         if values.checkset is not None:
             values.checks = list(values.checkset.filter(values.checks))
 
@@ -418,7 +418,7 @@ def display_reporters(out, config, config_reporters, plugin_reporters):
     if not plugin_reporters and not config_reporters:
         out.write(
             out.fg("red"), "Warning", out.fg(""),
-            " no reporters detected; pcheck won't "
+            " no reporters detected; pkgcheck won't "
             "run correctly without a reporter to use!")
         out.write()
 
@@ -432,7 +432,7 @@ def main(options, out, err):
     if options.list_reporters:
         display_reporters(
             out, options.config,
-            options.config.pcheck_reporter_factory.values(),
+            options.config.pkgcheck_reporter_factory.values(),
             list(get_plugins('reporter', plugins)))
         return 0
 

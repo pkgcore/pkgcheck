@@ -4,13 +4,13 @@
 from pkgcore.test import TestCase
 from pkgcore.test.scripts import helpers
 
-from pkgcheck import pcheck
+from pkgcheck import cli
 
 
 class CommandlineTest(TestCase, helpers.MainMixin):
 
-    parser = helpers.mangle_parser(pcheck.OptionParser())
-    main = staticmethod(pcheck.main)
+    parser = helpers.mangle_parser(cli.OptionParser())
+    main = staticmethod(cli.main)
 
     def test_parser(self):
         self.assertError(

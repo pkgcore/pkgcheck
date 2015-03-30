@@ -2,12 +2,12 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""Minimal wrapper to launch pcheck."""
+"""Minimal wrapper to launch pkgcheck."""
 
 from pkgcore.util import commandline
 
-from pkgcheck import pcheck
+from pkgcheck import cli
 
 
 if __name__ == '__main__':
-    commandline.main({None: (pcheck.OptionParser, pcheck.main)})
+    commandline.main({None: (cli.OptionParser, cli.main)})

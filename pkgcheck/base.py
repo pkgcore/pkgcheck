@@ -39,10 +39,10 @@ max_scope = repository_scope
 
 class Addon(object):
 
-    """Base class for extra functionality for pcheck other than a check.
+    """Base class for extra functionality for pkgcheck other than a check.
 
     The checkers can depend on one or more of these. They will get
-    called at various points where they can extend pcheck (if any
+    called at various points where they can extend pkgcheck (if any
     active checks depend on the addon).
 
     These methods are not part of the checker interface because that
@@ -284,7 +284,7 @@ class Whitelist(_CheckSet):
     """Only run checks matching one of the provided patterns."""
 
     pkgcore_config_type = ConfigHint(
-        {'patterns': 'list'}, typename='pcheck_checkset')
+        {'patterns': 'list'}, typename='pkgcheck_checkset')
 
     def filter(self, checks):
         return list(
@@ -298,7 +298,7 @@ class Blacklist(_CheckSet):
     """Only run checks not matching any of the provided patterns."""
 
     pkgcore_config_type = ConfigHint(
-        {'patterns': 'list'}, typename='pcheck_checkset')
+        {'patterns': 'list'}, typename='pkgcheck_checkset')
 
     def filter(self, checks):
         return list(
@@ -311,7 +311,7 @@ class Suite(object):
 
     pkgcore_config_type = ConfigHint({
         'target_repo': 'ref:repo', 'src_repo': 'ref:repo',
-        'checkset': 'ref:pcheck_checkset'}, typename='pcheck_suite'
+        'checkset': 'ref:pkgcheck_checkset'}, typename='pkgcheck_suite'
     )
 
     def __init__(self, target_repo, checkset=None, src_repo=None):

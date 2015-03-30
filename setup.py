@@ -35,7 +35,7 @@ class test(snk_distutils.test):
     blacklist = frozenset(['pkgcheck.plugins'])
 
 
-class pchecks_build_py(snk_distutils.build_py):
+class pkgcheck_build_py(snk_distutils.build_py):
 
     package_namespace = 'pkgcheck'
     generate_verinfo = True
@@ -53,7 +53,7 @@ setup(
     cmdclass={
         "sdist": mysdist,
         "test": test,
-        "build_py": pchecks_build_py,
+        "build_py": pkgcheck_build_py,
     },
     classifiers=[
         'License :: OSI Approved :: BSD License',
