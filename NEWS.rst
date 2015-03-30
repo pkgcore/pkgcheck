@@ -4,6 +4,18 @@ Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
+---------------
+pkgcheck master
+---------------
+
+
+---------------------------
+pkgcheck 0.5.0 (2015-??-??)
+---------------------------
+
+* Project, python module, and related scripts renamed from pkgcore-checks (or
+  in the case of the python module pkgcore_checks) to pkgcheck.
+
 * Add check for deprecated EAPIs.
 
 * Conflicting manifests chksums scanning was added.
@@ -13,8 +25,9 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 
 * Update pkgcore API usage to move away from deprecated functionality.
 
-
-pkgcore-checks 0.4.15: Oct 27th, 2011
+----------------------------------
+pkgcore-checks 0.4.15 (2011-10-27)
+----------------------------------
 
 * pkgcore-checks issue #2; if metadata.dtd is required but can't be fetched,
   suppress metadata_xml check.  If the check must be ran (thus unfetchable
@@ -29,8 +42,9 @@ pkgcore-checks 0.4.15: Oct 27th, 2011
 
 * cleanup of deprecated api usage.
 
-
-pkgcore-checks 0.4.14: April 24th, 2011
+----------------------------------
+pkgcore-checks 0.4.14 (2011-04-24)
+----------------------------------
 
 * Updated compatibility w/ recent snakeoil/pkgcore changes.
 
@@ -38,8 +52,9 @@ pkgcore-checks 0.4.14: April 24th, 2011
 
 * LICENSE checks for virtual/* are now suppressed.
 
-
-pkgcore-checks 0.4.13: January 8th, 2010
+----------------------------------
+pkgcore-checks 0.4.13 (2010-01-08)
+----------------------------------
 
 * fix to use dep scanning in visibility where it was missing use deps that
   can never be satisfied for a specific profile due to use masking/forcing.
@@ -53,8 +68,9 @@ pkgcore-checks 0.4.13: January 8th, 2010
 
 * added a null reporter for performance testing.
 
-
-pkgcore-checks 0.4.12: December 27th, 2009
+----------------------------------
+pkgcore-checks 0.4.12 (2009-12-27)
+----------------------------------
 
 * corner case import error in metadata_xml scan for py3k is now fixed; if
   you saw urllib.urlopen complaints, this is fixed.
@@ -64,8 +80,9 @@ pkgcore-checks 0.4.12: December 27th, 2009
 * visibility scans now use 22% less memory (around 130MB on python2.6 x86_64)
   and is about 3% faster.
 
-
-pkgcore-checks 0.4.11: December 20th, 2009
+----------------------------------
+pkgcore-checks 0.4.11 (2009-12-20)
+----------------------------------
 
 * minor speedup in visibility scans- about 3% faster now.
 
@@ -75,48 +92,55 @@ pkgcore-checks 0.4.11: December 20th, 2009
 * fix a rare traceback in visibility scans where a virtual metapkg has zero
   matches.
 
-
-pkgcore-checks 0.4.10: December 14th, 2009
+----------------------------------
+pkgcore-checks 0.4.10 (2009-12-14)
+----------------------------------
 
 * fix a bug where use deps on metapkgs was invalidly being flagged.
 
-
-pkgcore-checks 0.4.9: November 26th, 2009
+---------------------------------
+pkgcore-checks 0.4.9 (2009-11-26)
+---------------------------------
 
 * fix a bug in test running- bzr_verinfo isn't generated for pkgcore-checks
   in sdist (no need), yet build_py was trying to regenerate it.  Basically
   broke installation on machines that lacked bzr.
 
-
-pkgcore-checks 0.4.8: November 26th, 2009
+---------------------------------
+pkgcore-checks 0.4.8 (2009-11-26)
+---------------------------------
 
 * experimental py3k support.
 
 * test runner improvements via depending on snakeoil.distutils_extensions.
 
-
-pkgcore-checks 0.4.7: October 26, 2009
+---------------------------------
+pkgcore-checks 0.4.7 (2009-10-26)
+---------------------------------
 
 * fix invalid flagging of use deps on PyQt4 for ia64; basically PyQt4[webkit]
   is valid due to a pkg level masked use reversal... the checking code however
   wasn't doing incremental expansion itself..  Same could occur for forced use.
 
-
-pkgcore-checks 0.4.6: October 22, 2009
+---------------------------------
+pkgcore-checks 0.4.6 (2009-10-22)
+---------------------------------
 
 * fix a bug in tristate use evaluation of potential USE combinations.
   Roughly, if a flag is masked *and* forced, the result is it's masked.
 
 * compatibility fixes for pkgcore 0.5; 0.5 isn't required, but advised.
 
-
-pkgcore-checks 0.4.5: November 7, 2008
+---------------------------------
+pkgcore-checks 0.4.5 (2008-11-07)
+---------------------------------
 
 * verify whether or not a requested use state is actually viable when profile
   masking/forcing is taken into account.
 
-
-pkgcore-checks 0.4.4: October 21, 2008
+---------------------------------
+pkgcore-checks 0.4.4 (2008-10-21)
+---------------------------------
 
 * EAPI2 support for checking use/transitive use deps.
 
@@ -127,8 +151,9 @@ pkgcore-checks 0.4.4: October 21, 2008
 * pcheck now only outputs the number of tests it's running if --debug is
   enabled.
 
-
-pkgcore-checks 0.4.3: March 18, 2008
+---------------------------------
+pkgcore-checks 0.4.3 (2008-03-18)
+---------------------------------
 
 * ticket 8; false positive unused global USE flags due to not stripping '+-'
   from iuse defaults.
@@ -137,13 +162,15 @@ pkgcore-checks 0.4.3: March 18, 2008
 
 * dropped ModularXPortingReport; no longer needed.
 
-
-pkgcore-checks 0.4.2: December 15, 2007
+----------------------------------
+pkgcore-checks 0.4.2 (2007-12-15)
+----------------------------------
 
 * minor release to be EAPI=1 compatible wrt IUSE defaults
 
-
-pkgcore-checks 0.4.1: July 16, 2007
+----------------------------------
+pkgcore-checks 0.4.1 (2007-07-16)
+----------------------------------
 
 * fixed ticket 90; NonExistantDeps occasionally wouldn't report later versions
   of an offender.
@@ -151,8 +178,9 @@ pkgcore-checks 0.4.1: July 16, 2007
 * --disable-arches option; way to specifically disable an arch (blacklisting)
   instead of having to specify all arches.
 
-
-pkgcore-checks 0.4: June 6, 2007
+-------------------------------
+pkgcore-checks 0.4 (2007-06-06)
+-------------------------------
 
 * update to use snakeoil api.
 
@@ -168,8 +196,9 @@ pkgcore-checks 0.4: June 6, 2007
   looping; now it temporarily holds onto it, thus allowing the caching to kick
   in.  Among other things, cuts file reads down from 1800 to around around 146.
 
-
-pkgcore-checks 0.3.5:
+--------------------
+pkgcore-checks 0.3.5
+--------------------
 
 * addition of __attrs__ to base.Result classes; use this if __slots__ doesn't
   suffice for listing the attrs to pickle.
@@ -180,13 +209,15 @@ pkgcore-checks 0.3.5:
   1.11: ~x86 ~amd64
   1.12: x86 ~amd64
 
-
-pkgcore-checks 0.3.4:
+--------------------
+pkgcore-checks 0.3.4
+--------------------
 
 * treat pkg.restrict as a depset.
 
-
-pkgcore-checks 0.3.3:
+--------------------
+pkgcore-checks 0.3.3
+--------------------
 
 * drop digest specific checks; portage now prunes digests on sync regardless
   of whether or not the repo is m2 pure; thus, no way to detect if a missing
@@ -202,20 +233,23 @@ pkgcore-checks 0.3.3:
 * added check for missing metadata.xml; refactored common error class selection
   logic into base class.
 
-
-pkgcore-checks 0.3.2:
+--------------------
+pkgcore-checks 0.3.2
+--------------------
 
 * correct tracebacks when dealing with a few result objects from repo_metadata
 
-
-pkgcore-checks 0.3.1:
+--------------------
+pkgcore-checks 0.3.1
+--------------------
 
 * makes StaleUnstable abide by --arches; ticket 59 (thanks leio).
 * stop complaining about empty keywords, since they're now allowed instead of
-  using -*.
+  using -\*.
 
-
-pkgcore-checks 0.3:
+------------------
+pkgcore-checks 0.3
+------------------
 
 * heavy refactoring of reporter subsystem, and clean up of check results.
   Better messages, better output for normal usage.  to_xml() methods were
@@ -231,8 +265,9 @@ pkgcore-checks 0.3:
 * added new tool replay-pcheck-stream; used to replay a pickle stream through
   alternative reporters.
 
-
-pkgcore-checks 0.2:
+------------------
+pkgcore-checks 0.2
+------------------
 
 * invocation args have changed- please see readme for details of how to
   use pcheck.
@@ -251,6 +286,8 @@ pkgcore-checks 0.2:
   to run via pcheck.  See README for details.
 * whitespace checks.
 
+------------------
+pkgcore-checks 0.1
+------------------
 
-pkgcore-checks 0.1:
 * inital release
