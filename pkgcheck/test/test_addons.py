@@ -433,10 +433,11 @@ class TestEvaluateDepSetAddon(profile_mixin):
 
         self.assertEqual(len(l), 2, msg="must collapse all profiles down "
             "to 2 runs: got %r" % l)
-        self.assertEqual(sorted(x.name for x in l[0][1]), ['1'],
-            msg="got %r, expected single profile" % (l[0],))
-        self.assertEqual(sorted(x.name for x in l[1][1]), ['2'],
-            msg="got %r, expected single profile" % (l[1],))
+        profiles = sorted(x[1][0].name for x in l)
+        self.assertEqual(profiles[0], '1',
+            msg="got %r, expected single profile" % profiles[0])
+        self.assertEqual(profiles[1], '2',
+            msg="got %r, expected single profile" % profiles[1])
 
         # ordering is potentially random; thus pull out which depset result is
         # which based upon profile
