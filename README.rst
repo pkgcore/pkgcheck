@@ -1,4 +1,4 @@
-|test|
+|test| |coverage|
 
 ========
 pkgcheck
@@ -143,3 +143,5 @@ pkgcheck_reporter_factory``.
 
 .. |test| image:: https://travis-ci.org/pkgcore/pkgcheck.svg?branch=master
     :target: https://travis-ci.org/pkgcore/pkgcheck
+.. |coverage| image:: https://coveralls.io/repos/pkgcore/pkgcheck/badge.png?branch=master
+    :target: https://coveralls.io/r/pkgcore/pkgcheck?branch=master
