@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
