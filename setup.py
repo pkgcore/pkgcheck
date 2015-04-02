@@ -53,6 +53,10 @@ setup(
     long_description=readme,
     url='https://github.com/pkgcore/pkgcheck',
     packages=packages,
+    requires=[
+        'snakeoil (>=0.6.2)',
+        'pkgcore (>=0.9)',
+    ],
     scripts=glob.glob("bin/*"),
     cmdclass={
         "sdist": mysdist,
