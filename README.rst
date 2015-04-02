@@ -7,9 +7,8 @@ pkgcheck
 Dependencies
 ============
 
-pkgcheck is developed alongside pkgcore. To run the development version
-of pkgcheck you will need the development version of pkgcore. Otherwise
-the 0.x version numbers need to match.
+pkgcheck is developed alongside pkgcore_. To run the development version of
+pkgcheck you will need the development version of pkgcore.
 
 The metadata.xml checks require either xmllint (installed as part of
 libxml2) or the python bindings to libxml2 (installed as part of
@@ -22,6 +21,15 @@ No installation is strictly required: just run the ``pkgcheck`` script and
 as long as you are not root things should work. If you want to make
 pkgcheck available system-wide use the provided ``setup.py``
 (see `Installing python modules`_ for details).
+
+Notes
+=====
+
+Currently full tree scans will use a large amount of memory (up to ~1.7GB) in
+part due to pkgcore's restriction design in relation to the expanding use of
+transitive use flag dependencies across the tree. To alleviate this
+pkgcore.restrictions_ will be refactored, probably leading to splitting
+conditionals off into their own set.
 
 Configuration
 =============
@@ -140,6 +148,8 @@ pkgcheck_reporter_factory``.
 
 
 .. _`Installing python modules`: http://docs.python.org/inst/
+.. _pkgcore: https://github.com/pkgcore/pkgcore
+.. _pkgcore.restrictions: https://github.com/pkgcore/pkgcore/issues/80
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcheck.svg
     :target: https://pypi.python.org/pypi/pkgcheck
