@@ -1,4 +1,4 @@
-|test| |coverage|
+|pypi| |test| |coverage|
 
 ========
 pkgcheck
@@ -141,6 +141,8 @@ pkgcheck_reporter_factory``.
 
 .. _`Installing python modules`: http://docs.python.org/inst/
 
+.. |pypi| image:: https://img.shields.io/pypi/v/pkgcheck.svg
+    :target: https://pypi.python.org/pypi/pkgcheck
 .. |test| image:: https://travis-ci.org/pkgcore/pkgcheck.svg?branch=master
     :target: https://travis-ci.org/pkgcore/pkgcheck
 .. |coverage| image:: https://coveralls.io/repos/pkgcore/pkgcheck/badge.png?branch=master
