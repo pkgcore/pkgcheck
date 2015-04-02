@@ -10,11 +10,25 @@ pkgcheck master
 
 
 ---------------------------
-pkgcheck 0.5.0 (2015-??-??)
+pkgcheck 0.5.0 (2015-04-01)
 ---------------------------
+
+* Suppress possible memory exhaustion cases for visibility checks due to
+  transitive use flag dependencies.
 
 * Project, python module, and related scripts renamed from pkgcore-checks (or
   in the case of the python module pkgcore_checks) to pkgcheck.
+
+* Add --profile-disable-exp option to skip experimental profiles.
+
+* Make the SizeViolation check test individual files in $FILESDIR, not the
+  entire $FILESDIR itself.
+
+* Make UnusedLocalFlags scan metadata.xml for local use flags instead of the
+  deprecated repo-wide use.local.desc file.
+
+* Stable arch related checks (e.g. UnstableOnly) now default to using only the
+  set of stable arches defined by profiles.desc.
 
 * Add check for deprecated EAPIs.
 
