@@ -54,7 +54,7 @@ setup(
     url='https://github.com/pkgcore/pkgcheck',
     packages=packages,
     requires=[
-        'snakeoil (>=0.6.2)',
+        'snakeoil (>=0.6.3)',
         'pkgcore (>=0.9)',
     ],
     scripts=glob.glob("bin/*"),
