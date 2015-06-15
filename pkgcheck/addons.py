@@ -406,35 +406,25 @@ class StableCheckAddon(base.Template):
 class LicenseAddon(base.Addon):
 
     @staticmethod
-    def mangle_option_parser(parser):
-        parser.add_option(
-            "--license-dir", action='store', type='string',
-            help="filepath to license directory")
+    def _get_license_dirs(repo):
+        r = repo
+        while r is not None:
+            candidate = pjoin(r.location, 'licenses')
+            if os.path.isdir(candidate):
+                yield candidate
 
-    @staticmethod
-    def check_values(values):
-        values.license_dirs = []
-        if values.license_dir is None:
-            for repo_base in values.repo_bases:
-                candidate = pjoin(repo_base, 'licenses')
-                if os.path.isdir(candidate):
-                    values.license_dirs.append(candidate)
-            if not values.license_dirs:
-                raise optparse.OptionValueError(
-                    'No license dir detected, pick a target or overlayed repo '
-                    'with a license dir or specify one with --license-dir.')
-        else:
-            if not os.path.isdir(values.license_dir):
-                raise optparse.OptionValueError(
-                    "--license-dir %r isn't a directory" % values.license_dir)
-            values.license_dirs.append(abspath(values.license_dir))
+            r = getattr(r, 'parent_repo', None)
+
+    def __init__(self, options, silence_warnings=False):
+        base.Addon.__init__(self, options)
+        self.license_dirs = list(self._get_license_dirs(options.target_repo))
 
     @property
     def licenses(self):
         o = getattr(self, "_licenses", None)
         if o is None:
             o = frozenset(iflatten_instance(
-                listdir_files(x) for x in self.options.license_dirs))
+                listdir_files(x) for x in self.license_dirs))
             setattr(self, "_licenses", o)
         return o
 
