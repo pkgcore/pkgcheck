@@ -440,7 +440,7 @@ def main(options, out, err):
         err.write(
             'Warning: could not determine repository base for profiles. '
             'Some checks will not work. Either specify a plain target repo '
-            '(not combined trees) or specify a PORTDIR repo '
+            '(not combined trees) or specify a master repo '
             'with --overlayed-repo.', wrap=True)
         err.write()
 

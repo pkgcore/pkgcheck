@@ -53,9 +53,9 @@ single suite with a target repository containing the current directory
 it is used. So with the following suite definition in
 ``~/.pkgcore.conf``::
 
-  [pkgcheck-portdir-suite]
+  [pkgcheck-gentoo-suite]
   class=pkgcheck.base.Suite
-  target_repo=portdir
+  target_repo=gentoo
 
 you can run ``pkgcheck`` with no further arguments inside your portage
 directory and it will do the right thing.
@@ -65,7 +65,7 @@ For use with overlays you need to define the "source" repo too::
   [pkgcheck-overlay-suite]
   class=pkgcheck.base.Suite
   target_repo=/usr/local/portage/private
-  src_repo=portdir
+  src_repo=gentoo
 
 (the ``target_repo`` and ``src_repo`` settings are both names of
 repository sections, not arbitrary filesystem paths).
@@ -74,9 +74,9 @@ See Overlays_ for more information on ``src_repo``.
 
 Finally, you can define a different checkset per suite::
 
-  [pkgcheck-portdir-suite]
+  [pkgcheck-gentoo-suite]
   class=pkgcheck.base.Suite
-  target_repo=portdir
+  target_repo=gentoo
   checkset=no-arch-checks
 
 This disables checks that are not interesting unless you can set
