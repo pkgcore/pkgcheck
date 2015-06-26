@@ -8,7 +8,7 @@ before_install:
     - sudo groupadd wheel
     - sudo groupadd -g 250 portage
     - sudo useradd -u 250 -g 250 portage
-install: pip install tox coveralls
+install: pip install 'tox<2' coveralls
 script: tox -e py${TRAVIS_PYTHON_VERSION/\./}
 after_success:
     # upload coverage data to coveralls.io
