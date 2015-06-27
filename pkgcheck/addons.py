@@ -4,6 +4,7 @@
 
 """Addon functionality shared by multiple checkers."""
 
+from collections import OrderedDict
 from functools import partial
 import optparse
 from itertools import ifilter, ifilterfalse
@@ -12,7 +13,6 @@ from snakeoil.containers import ProtectedSet
 from snakeoil.demandload import demandload
 from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
-from snakeoil.mappings import OrderedDict
 from snakeoil.osutils import abspath, listdir_files, pjoin
 
 from pkgcheck import base
