@@ -7,15 +7,14 @@
 
 from pkgcore.config import configurable
 from snakeoil import formatters
+from snakeoil.demandload import demandload
 
 from pkgcheck import base
 
-from snakeoil.demandload import demandload
 demandload(
+    'xml.sax.saxutils:escape@xml_escape',
+    'snakeoil:currying,pickling',
     'pkgcheck:errors',
-    'snakeoil:currying',
-    'snakeoil:pickling',
-    'snakeoil:xml',
 )
 
 
@@ -159,7 +158,7 @@ class XmlReporter(base.Reporter):
     def add_report(self, result):
         d = dict((k, getattr(result, k, '')) for k in
                  ("category", "package", "version"))
-        d["msg"] = xml.escape(result.short_desc)
+        d["msg"] = xml_escape(result.short_desc)
         self.out.write(self.threshold_map[result.threshold] % d)
 
     def finish(self):
