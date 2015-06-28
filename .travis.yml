@@ -3,11 +3,6 @@ python:
     - 2.7
     - 3.3
     - 3.4
-before_install:
-    # add user/group for portage and wheel
-    - sudo groupadd wheel
-    - sudo groupadd -g 250 portage
-    - sudo useradd -u 250 -g 250 portage
 install: pip install 'tox<2' coveralls
 script: tox -e py${TRAVIS_PYTHON_VERSION/\./}
 after_success:
