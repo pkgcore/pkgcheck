@@ -6,3 +6,5 @@ _trial_temp
 /cache
 /build
 /dist
+/.coverage
+/*.egg-info
