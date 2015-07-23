@@ -6,12 +6,12 @@ from distutils.core import setup
 import glob
 import os
 
-from snakeoil import distutils_extensions as snk_distutils
+from pkgdist import distutils_extensions as pkg_distutils
 
 from pkgcheck import __version__
 
 
-class mysdist(snk_distutils.sdist):
+class mysdist(pkg_distutils.sdist):
 
     package_namespace = 'pkgcheck'
 
@@ -28,13 +28,13 @@ except OSError:
     pass
 
 
-class test(snk_distutils.test):
+class test(pkg_distutils.test):
 
     default_test_namespace = 'pkgcheck'
     blacklist = frozenset(['pkgcheck.plugins'])
 
 
-class pkgcheck_build_py(snk_distutils.build_py):
+class pkgcheck_build_py(pkg_distutils.build_py):
 
     package_namespace = 'pkgcheck'
     generate_verinfo = True
