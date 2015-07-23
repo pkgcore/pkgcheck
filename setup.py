@@ -22,11 +22,6 @@ for root, dirs, files in os.walk('pkgcheck'):
         package = root.replace(os.path.sep, '.')
         packages.append(package)
 
-try:
-    os.unlink("MANIFEST")
-except OSError:
-    pass
-
 
 class test(pkg_distutils.test):
 
@@ -67,7 +62,5 @@ setup(
         'License :: OSI Approved :: BSD License',
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
     ],
 )
