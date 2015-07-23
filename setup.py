@@ -2,13 +2,13 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-from distutils.core import setup
 import glob
 import os
 
-from pkgdist import distutils_extensions as pkg_distutils
+from setuptools import setup
 
 from pkgcheck import __version__
+from pkgdist import distutils_extensions as pkg_distutils
 
 
 class mysdist(pkg_distutils.sdist):
@@ -53,9 +53,9 @@ setup(
     long_description=readme,
     url='https://github.com/pkgcore/pkgcheck',
     packages=packages,
-    requires=[
-        'snakeoil (>=0.6.4)',
-        'pkgcore (>=0.9.1)',
+    install_requires=[
+        'snakeoil>=0.6.4',
+        'pkgcore>=0.9.1',
     ],
     scripts=glob.glob("bin/*"),
     cmdclass={
