@@ -155,9 +155,9 @@ For pkgcheck internals hackers
 Commandline frontend
 --------------------
 
-The frontend code uses pkgcore's commandline utilities module and
-lives in cli.py. It is pretty straightforward, although how control
-flows through this module is not obvious without knowing how pkgcore's
+The frontend code uses pkgcore's commandline utilities module and lives in the
+pkgcheck.scripts.pkgcheck module. It is pretty straightforward, although how
+control flows through this module is not obvious without knowing how pkgcore's
 commandline utils are used:
 
 - pkgcore's commandline glue instantiates the OptionParser

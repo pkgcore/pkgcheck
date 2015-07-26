@@ -8,10 +8,10 @@ import os
 from setuptools import setup
 
 from pkgcheck import __version__
-from pkgdist import distutils_extensions as pkg_distutils
+from pkgdist import distutils_extensions as pkg_dist
 
 
-class mysdist(pkg_distutils.sdist):
+class mysdist(pkg_dist.sdist):
 
     package_namespace = 'pkgcheck'
 
@@ -23,13 +23,13 @@ for root, dirs, files in os.walk('pkgcheck'):
         packages.append(package)
 
 
-class test(pkg_distutils.test):
+class test(pkg_dist.test):
 
     default_test_namespace = 'pkgcheck'
     blacklist = frozenset(['pkgcheck.plugins'])
 
 
-class pkgcheck_build_py(pkg_distutils.build_py):
+class pkgcheck_build_py(pkg_dist.build_py):
 
     package_namespace = 'pkgcheck'
     generate_verinfo = True
@@ -57,6 +57,7 @@ setup(
         "sdist": mysdist,
         "test": test,
         "build_py": pkgcheck_build_py,
+        'build_scripts': pkg_dist.build_scripts,
     },
     classifiers=[
         'License :: OSI Approved :: BSD License',

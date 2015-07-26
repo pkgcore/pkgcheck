@@ -7,9 +7,10 @@
 # Please keep the imports and plugins sorted.
 from pkgcheck import (
     cleanup, codingstyle, deprecated, dropped_keywords, feeds, glsa_scan, imlate,
-    metadata_checks, metadata_xml, pkgdir_checks, repo_metadata, report_stream,
+    metadata_checks, metadata_xml, pkgdir_checks, repo_metadata,
     reporters, stale_unstable, unstable_only, visibility, whitespace,
 )
+from pkgcheck.scripts import pkgcheck_replay_stream
 
 pkgcore_plugins = {
     'check': [
@@ -53,7 +54,7 @@ pkgcore_plugins = {
         reporters.FancyReporter,
         reporters.XmlReporter,
         reporters.NullReporter,
-        report_stream.PickleStream,
-        report_stream.BinaryPickleStream,
+        pkgcheck_replay_stream.PickleStream,
+        pkgcheck_replay_stream.BinaryPickleStream,
         ]
     }

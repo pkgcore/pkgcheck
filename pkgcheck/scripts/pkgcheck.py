@@ -4,6 +4,8 @@
 
 """pkgcore-based QA utility"""
 
+from __future__ import absolute_import
+
 from pkgcore.util import commandline, parserestrict
 from pkgcore.plugin import get_plugins, get_plugin
 from snakeoil import lists

@@ -1,13 +1,1 @@
-#!/usr/bin/env python
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
-"""Minimal wrapper to launch pkgcheck."""
-
-from pkgcore.util import commandline
-
-from pkgcheck import cli
-
-
-if __name__ == '__main__':
-    commandline.main({None: (cli.OptionParser, cli.main)})
+../pkgdist/wrapper.py
