@@ -2,7 +2,6 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-import glob
 import os
 
 from setuptools import setup
@@ -52,7 +51,7 @@ setup(
         'snakeoil>=0.6.4',
         'pkgcore>=0.9.1',
     ],
-    scripts=glob.glob("bin/*"),
+    scripts=os.listdir('bin'),
     cmdclass={
         "sdist": mysdist,
         "test": test,
