@@ -4,7 +4,7 @@
 
 import os
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from pkgcheck import __version__
 from pkgdist import distutils_extensions as pkg_dist
@@ -13,13 +13,6 @@ from pkgdist import distutils_extensions as pkg_dist
 class mysdist(pkg_dist.sdist):
 
     package_namespace = 'pkgcheck'
-
-
-packages = []
-for root, dirs, files in os.walk('pkgcheck'):
-    if '__init__.py' in files:
-        package = root.replace(os.path.sep, '.')
-        packages.append(package)
 
 
 class test(pkg_dist.test):
@@ -46,7 +39,7 @@ setup(
     description="pkgcore-based QA utility",
     long_description=readme,
     url='https://github.com/pkgcore/pkgcheck',
-    packages=packages,
+    packages=find_packages(exclude=['pkgdist']),
     install_requires=[
         'snakeoil>=0.6.4',
         'pkgcore>=0.9.1',
