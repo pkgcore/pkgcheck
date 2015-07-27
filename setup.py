@@ -10,22 +10,9 @@ from pkgcheck import __version__
 from pkgdist import distutils_extensions as pkg_dist
 
 
-class mysdist(pkg_dist.sdist):
-
-    package_namespace = 'pkgcheck'
-
-
 class test(pkg_dist.test):
 
-    default_test_namespace = 'pkgcheck'
     blacklist = frozenset(['pkgcheck.plugins'])
-
-
-class pkgcheck_build_py(pkg_dist.build_py):
-
-    package_namespace = 'pkgcheck'
-    generate_verinfo = True
-
 
 with open('README.rst', 'r') as f:
     readme = f.read()
@@ -46,9 +33,9 @@ setup(
     ],
     scripts=os.listdir('bin'),
     cmdclass={
-        "sdist": mysdist,
+        "sdist": pkg_dist.sdist,
         "test": test,
-        "build_py": pkgcheck_build_py,
+        "build_py": pkg_dist.build_py,
         'build_scripts': pkg_dist.build_scripts,
     },
     classifiers=[
