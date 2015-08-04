@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright: 2015 Tim Harder <radhermit@gmail.com>
 # License: BSD/GPL2
 
@@ -30,3 +31,9 @@ def main(script_name=None):
         sys.exit(1)
 
     commandline.main({None: (script.OptionParser, script.main)})
+
+
+if __name__ == '__main__':
+    # we're in a git repo or tarball so add the base dir to the system path
+    sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    main(os.path.basename(__file__))
