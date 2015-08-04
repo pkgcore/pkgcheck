@@ -27,10 +27,10 @@ setup(
     long_description=readme,
     url='https://github.com/pkgcore/pkgcheck',
     packages=find_packages(),
-    setup_requires=['snakeoil>=0.6.4'],
+    setup_requires=['snakeoil>=0.6.5'],
     install_requires=[
-        'snakeoil>=0.6.4',
-        'pkgcore>=0.9.1',
+        'snakeoil>=0.6.5',
+        'pkgcore>=0.9.2',
     ],
     scripts=os.listdir('bin'),
     cmdclass={
