@@ -4,10 +4,13 @@ Release Notes
 
 See ChangeLog for full commit logs; this is summarized and major changes.
 
----------------
-pkgcheck master
----------------
+---------------------------
+pkgcheck 0.5.1 (2015-08-10)
+---------------------------
 
+* Remove portdir references, if you use a custom config file you may need to
+  update 'portdir' references to use 'gentoo' instead or whatever your main
+  repo is.
 
 ---------------------------
 pkgcheck 0.5.0 (2015-04-01)
