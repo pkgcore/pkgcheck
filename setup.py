@@ -2,6 +2,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+import io
 import os
 
 from setuptools import setup, find_packages
@@ -14,7 +15,7 @@ class test(pkg_dist.test):
 
     blacklist = frozenset(['pkgcheck.plugins'])
 
-with open('README.rst', 'r') as f:
+with io.open('README.rst', encoding='utf-8') as f:
     readme = f.read()
 
 setup(
