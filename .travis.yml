@@ -13,9 +13,7 @@ cache:
   directories:
     - $HOME/.cache/pip
 install: pip install 'tox<2' 'coveralls>0.5'
-script: tox -e py${TRAVIS_PYTHON_VERSION/\./}
+script: tox -e travis
 after_success:
-  # upload coverage data to coveralls.io
-  - pushd .tox/py${TRAVIS_PYTHON_VERSION/\./}/lib/python*/site-packages
+  # upload coverage data
   - coveralls
-  - popd
