@@ -142,20 +142,12 @@ class PkgDirReport(Template):
                 reporter.add_report(Glep31Violation(pkgset[0], filename))
 
             if filename.endswith(".ebuild") or filename in \
-                    ("Manifest", "ChangeLog", "metadata.xml"):
+                    ("Manifest", "metadata.xml"):
                 if os.stat(pjoin(base, filename)).st_mode & 0111:
                     reporter.add_report(ExecutableFile(pkgset[0], filename))
 
             if filename.endswith(".ebuild"):
                 utf8_check(pkgset[0], base, filename, reporter)
-
-        try:
-            utf8_check(pkgset[0], base, "ChangeLog", reporter)
-        except IOError, e:
-            if e.errno != errno.ENOENT:
-                raise
-            del e
-            reporter.add_report(MissingFile(pkgset[0], "ChangeLog"))
 
         if not os.path.exists(pjoin(base, 'files')):
             return
