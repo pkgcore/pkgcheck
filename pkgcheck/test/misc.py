@@ -26,7 +26,7 @@ class FakePkg(package):
         cpv = versioned_CPV(cpvstr)
         package.__init__(self, shared, parent, cpv.category, cpv.package,
                          cpv.fullver)
-        package.local_use = set()
+        package.local_use = {}
         object.__setattr__(self, "data", data)
 
     @property
