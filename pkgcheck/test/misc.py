@@ -8,6 +8,7 @@ from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.misc import ChunkedDataDict, split_negations, chunked_data
 from pkgcore.repository.util import SimpleTree
 from pkgcore.test import TestCase
+from snakeoil.mappings import ImmutableDict
 
 from pkgcheck import base
 from pkgcheck.addons import ArchesAddon
@@ -26,7 +27,7 @@ class FakePkg(package):
         cpv = versioned_CPV(cpvstr)
         package.__init__(self, shared, parent, cpv.category, cpv.package,
                          cpv.fullver)
-        package.local_use = set()
+        package.local_use = ImmutableDict()
         object.__setattr__(self, "data", data)
 
     @property
