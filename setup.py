@@ -8,10 +8,10 @@ import os
 from setuptools import setup, find_packages
 
 from pkgcheck import __version__
-from snakeoil.dist import distutils_extensions as pkg_dist
+import pkgdist
 
 
-class test(pkg_dist.test):
+class test(pkgdist.test):
 
     blacklist = frozenset(['pkgcheck.plugins'])
 
@@ -35,10 +35,10 @@ setup(
     ],
     scripts=os.listdir('bin'),
     cmdclass={
-        "sdist": pkg_dist.sdist,
+        "sdist": pkgdist.sdist,
         "test": test,
-        "build_py": pkg_dist.build_py,
-        'build_scripts': pkg_dist.build_scripts,
+        "build_py": pkgdist.build_py,
+        'build_scripts': pkgdist.build_scripts,
     },
     classifiers=[
         'License :: OSI Approved :: BSD License',
