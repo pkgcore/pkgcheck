@@ -6,7 +6,6 @@
 
 from collections import OrderedDict
 from functools import partial
-import optparse
 from itertools import ifilter, ifilterfalse
 
 from snakeoil.containers import ProtectedSet
@@ -18,6 +17,7 @@ from snakeoil.osutils import abspath, listdir_files, pjoin
 from pkgcheck import base
 
 demandload(
+    'argparse',
     'os',
     'pkgcore.restrictions:packages,values',
     'pkgcore.ebuild:misc,domain,profiles,repo_objs',
@@ -32,27 +32,22 @@ class ArchesAddon(base.Addon):
         "ppc", "ppc64", "s390", "sh", "sparc", "x86",
     ]))
 
-    @staticmethod
-    def _record_arches(option, opt_str, value, parser):
-        setattr(parser.values, option.dest, tuple(value.split(",")))
+    class _DisableArches(argparse.Action):
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            s = set(getattr(namespace, 'arches', ArchesAddon.default_arches))
+            parser.values.arches = tuple(s.difference(values.split(',')))
 
     @classmethod
-    def _disable_arches(cls, option, opt_str, value, parser):
-        s = set(getattr(parser.values, 'arches', cls.default_arches))
-        parser.values.arches = tuple(s.difference(value.split(",")))
-
-    @classmethod
-    def mangle_option_parser(cls, parser):
-        parser.add_option(
-            '-a', '--arches', action='callback', callback=cls._record_arches,
-            type='string', default=cls.default_arches,
+    def mangle_argparser(cls, parser):
+        parser.add_argument(
+            '-a', '--arches', nargs=1, action='extend_comma', default=cls.default_arches,
             help="comma separated list of what arches to run, defaults to %s "
-            "-- note that stable-related checks (e.g. UnstableOnly) default "
-            "to the set of arches having stable profiles in the target repo)"
-            % ", ".join(cls.default_arches))
-        parser.add_option(
-            '--disable-arches', action='callback', callback=cls._disable_arches,
-            type='string',
+                 "-- note that stable-related checks (e.g. UnstableOnly) default "
+                 "to the set of arches having stable profiles in the target repo)"
+                 % ", ".join(cls.default_arches))
+        parser.add_argument(
+            '--disable-arches', nargs=1, action=cls._DisableArches,
             help="comma separated list of arches to disable from the defaults")
 
 
@@ -61,22 +56,21 @@ class QueryCacheAddon(base.Template):
     priority = 1
 
     @staticmethod
-    def mangle_option_parser(parser):
-        group = parser.add_option_group('Query caching')
-        group.add_option(
-            '--reset-caching-per', action='store', type='choice',
-            choices=('version', 'package', 'category'),
-            dest='query_caching_freq', default='package',
+    def mangle_argparser(parser):
+        group = parser.add_argument_group('Query caching')
+        group.add_argument(
+            '--reset-caching-per', dest='query_caching_freq',
+            choices=('version', 'package', 'category'), default='package',
             help='control how often the cache is cleared '
-            '(version, package or category)')
+                 '(version, package or category)')
 
     @staticmethod
-    def check_values(values):
-        values.query_caching_freq = {
+    def check_args(parser, namespace):
+        namespace.query_caching_freq = {
             'version': base.versioned_feed,
             'package': base.package_feed,
             'category': base.repository_feed,
-            }[values.query_caching_freq]
+            }[namespace.query_caching_freq]
 
     def __init__(self, options):
         base.Addon.__init__(self, options)
@@ -120,59 +114,54 @@ class profile_data(object):
 class ProfileAddon(base.Addon):
 
     @staticmethod
-    def check_values(values):
-        if values.profiles_enabled is None:
-            values.profiles_enabled = []
-        if values.profiles_disabled is None:
-            values.profiles_disabled = []
-        profiles_dir = getattr(values, "profiles_dir", None)
-
-        if profiles_dir is not None:
-            profiles_dir = abspath(profiles_dir)
-            if not os.path.isdir(profiles_dir):
-                raise optparse.OptionValueError(
-                    "profile-base location %r doesn't exist/isn't a dir" % (
-                        profiles_dir,))
-        values.profiles_dir = profiles_dir
-
-    @staticmethod
-    def _record_profiles(option, opt_str, value, parser):
-        setattr(parser.values, option.dest, tuple(value.split(",")))
-
-    @classmethod
-    def mangle_option_parser(cls, parser):
-        group = parser.add_option_group('Profiles')
-        group.add_option(
-            "--profile-base", action='store', type='string',
-            dest='profiles_dir', default=None,
+    def mangle_argparser(parser):
+        group = parser.add_argument_group('Profiles')
+        group.add_argument(
+            "--profile-base", dest='profiles_dir', default=None,
             help="filepath to base profiles directory.  This will override the "
             "default usage of profiles bundled in the target repository; primarily "
             "for testing.")
-        group.add_option(
+        group.add_argument(
             "--profile-disable-dev", action='store_true',
             default=False, dest='profile_ignore_dev',
             help="disable scanning of dev profiles")
-        group.add_option(
+        group.add_argument(
             "--profile-disable-deprecated", action='store_true',
             default=False, dest='profile_ignore_deprecated',
             help="disable scanning of deprecated profiles")
-        group.add_option(
+        group.add_argument(
             "--profile-disable-exp", action='store_true',
             default=False, dest='profile_ignore_exp',
             help="disable scanning of exp profiles")
-        group.add_option(
+        group.add_argument(
             "--profile-disable-profiles-desc", action='store_false',
             default=True, dest='profiles_desc_enabled',
             help="disable loading profiles to scan from profiles.desc, you "
             "will want to enable profiles manually via --profile-enable")
-        group.add_option(
-            '--enable-profiles', action='callback', callback=cls._record_profiles,
-            dest='profiles_enabled', type='string',
+        group.add_argument(
+            '--enable-profiles', action='extend_comma',
+            dest='profiles_enabled',
             help="comma separated list of profiles to scan")
-        group.add_option(
-            '--disable-profiles', action='callback', callback=cls._record_profiles,
-            dest='profiles_disabled', type='string',
+        group.add_argument(
+            '--disable-profiles', action='extend_comma',
+            dest='profiles_disabled',
             help="comma separated list of profiles to ignore")
+
+    @staticmethod
+    def check_args(parser, namespace):
+        if namespace.profiles_enabled is None:
+            namespace.profiles_enabled = []
+        if namespace.profiles_disabled is None:
+            namespace.profiles_disabled = []
+        profiles_dir = getattr(namespace, "profiles_dir", None)
+
+        if profiles_dir is not None:
+            profiles_dir = abspath(profiles_dir)
+            if not os.path.isdir(profiles_dir):
+                raise parser.error(
+                    "profile-base location %r doesn't exist/isn't a dir" % (
+                        profiles_dir,))
+        namespace.profiles_dir = profiles_dir
 
     def __init__(self, options, *args):
         base.Addon.__init__(self, options)
@@ -406,28 +395,26 @@ class StableCheckAddon(base.Template):
 class LicenseAddon(base.Addon):
 
     @staticmethod
-    def mangle_option_parser(parser):
-        parser.add_option(
-            "--license-dir", action='store', type='string',
-            help="filepath to license directory")
+    def mangle_argparser(parser):
+        parser.add_argument("--license-dir", help="filepath to license directory")
 
     @staticmethod
-    def check_values(values):
-        values.license_dirs = []
-        if values.license_dir is None:
-            for repo_base in values.repo_bases:
+    def check_args(parser, namespace):
+        namespace.license_dirs = []
+        if namespace.license_dir is None:
+            for repo_base in namespace.repo_bases:
                 candidate = pjoin(repo_base, 'licenses')
                 if os.path.isdir(candidate):
-                    values.license_dirs.append(candidate)
-            if not values.license_dirs:
-                raise optparse.OptionValueError(
+                    namespace.license_dirs.append(candidate)
+            if not namespace.license_dirs:
+                raise parser.error(
                     'No license dir detected, pick a target or overlayed repo '
                     'with a license dir or specify one with --license-dir.')
         else:
-            if not os.path.isdir(values.license_dir):
-                raise optparse.OptionValueError(
-                    "--license-dir %r isn't a directory" % values.license_dir)
-            values.license_dirs.append(abspath(values.license_dir))
+            if not os.path.isdir(namespace.license_dir):
+                raise parser.error(
+                    "--license-dir %r isn't a directory" % namespace.license_dir)
+            namespace.license_dirs.append(abspath(namespace.license_dir))
 
     @property
     def licenses(self):

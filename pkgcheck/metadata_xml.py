@@ -21,11 +21,12 @@ else:
         'urllib2@urllib_error',
         'urllib2:urlopen')
 demandload(
+    'argparse',
+    'tempfile:NamedTemporaryFile',
     'pkgcore.log:logger',
     'pkgcore.spawn:spawn,find_binary',
     'snakeoil.osutils:pjoin',
     'snakeoil:fileutils',
-    'tempfile:NamedTemporaryFile',
 )
 
 
@@ -137,19 +138,22 @@ class base_check(base.Template):
     missing_error = None
 
     @classmethod
-    def mangle_option_parser(cls, parser):
-        if not parser.has_option('--metadata-dtd'):
-            parser.add_option(
+    def mangle_argparser(cls, parser):
+        try:
+            parser.add_argument(
                 '--metadata-dtd',
                 help='location to cache %s' % (cls.dtd_url,))
-            parser.add_option(
+            parser.add_argument(
                 '--metadata-dtd-required',
                 help="if %r cannot be fetched (no connection for example), "
                      "treat it as a failure rather than warning and ignoring.")
+        except argparse.ArgumentError:
+            # the arguments have already been added to the parser
+            pass
 
     def __init__(self, options):
         base.Template.__init__(self, options)
-        self.base = getattr(options.src_repo, "base", None)
+        self.repo_base = getattr(options.src_repo, "location", None)
         self.dtd_file = None
 
     def start(self):
@@ -157,7 +161,7 @@ class base_check(base.Template):
         refetch = False
         write_path = read_path = self.options.metadata_dtd
         if write_path is None:
-            read_path = pjoin(self.base, 'metadata', 'dtd', 'metadata.dtd')
+            read_path = pjoin(self.repo_base, 'metadata', 'dtd', 'metadata.dtd')
         refetch = not os.path.isfile(read_path)
 
         if refetch:
@@ -251,7 +255,7 @@ class CategoryMetadataXmlCheck(base_check):
         if self.last_seen == pkg.category:
             return
         self.last_seen = pkg.category
-        loc = os.path.join(self.base, pkg.category, "metadata.xml")
+        loc = os.path.join(self.repo_base, pkg.category, "metadata.xml")
         ret = self.check_file(loc)
         if ret is not None:
             reporter.add_report(ret(loc, pkg.category))

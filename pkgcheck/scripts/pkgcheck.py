@@ -11,12 +11,12 @@ from pkgcore.plugin import get_plugins, get_plugin
 from snakeoil import lists
 from snakeoil.formatters import decorate_forced_wrapping
 
-from pkgcheck import plugins, base, __version__, feeds
+from pkgcheck import plugins, base, feeds
 
 from snakeoil.demandload import demandload
 demandload(
+    'argparse',
     'logging',
-    'optparse',
     'os',
     'textwrap',
     'pkgcore.ebuild:repository',
@@ -27,305 +27,265 @@ demandload(
     'pkgcheck:errors',
 )
 
+argparser = commandline.mk_argparser(
+    domain=False, color=False, description=__doc__.split('\n', 1)[0])
+# These are all set based on other options, so have no default setting.
+argparser.set_defaults(repo_bases=[])
+argparser.set_defaults(guessed_target_repo=False)
+argparser.set_defaults(guessed_suite=False)
+argparser.set_defaults(default_suite=False)
+argparser.add_argument(
+    'targets', nargs='*', help='optional target atom(s)')
 
-def repo_callback(option, opt_str, value, parser):
-    try:
-        repo = parser.values.config.repo[value]
-    except KeyError:
-        raise optparse.OptionValueError(
-            'repo %r is not a known repo (known repos: %s)' % (
-                value, ', '.join(repr(n) for n in parser.values.config.repo)))
-    if not isinstance(repo, repository.UnconfiguredTree):
-        raise optparse.OptionValueError(
-            'repo %r is not a pkgcore.ebuild.repository.UnconfiguredTree '
-            'instance; must specify a raw ebuild repo, not type %r: %r' % (
-                value, repo.__class__, repo))
-    setattr(parser.values, option.dest, repo)
+group = argparser.add_argument_group('Check selection')
+group.add_argument(
+    "-c", action="append", dest="checks_to_run",
+    help="limit checks to those matching this regex, or package/class "
+         "matching; may be specified multiple times")
+group.add_argument(
+    "-d", "--disable", action="append",
+    dest="checks_to_disable", help="specific checks to disable: "
+    "may be specified multiple times")
+group.add_argument(
+    '--checkset', action=commandline.StoreConfigObject,
+    config_type='pkgcheck_checkset',
+    help='Pick a preconfigured set of checks to run.')
+
+argparser.add_argument(
+    '--repo', '-r', metavar='repo',
+    action=commandline.StoreRepoObject,
+    dest='target_repo', help='repo to pull packages from')
+argparser.add_argument(
+    '--suite', '-s', action=commandline.StoreConfigObject,
+    config_type='pkgcheck_suite',
+    help='Specify the configuration suite to use')
+argparser.add_argument(
+    "--list-checks", action="store_true", default=False,
+    help="print what checks are available to run and exit")
+argparser.add_argument(
+    '--reporter', action='store', default=None,
+    help="Use a non-default reporter (defined in pkgcore's config).")
+argparser.add_argument(
+    '--list-reporters', action='store_true', default=False,
+    help="print known reporters")
+
+overlay = argparser.add_argument_group('Overlay')
+overlay.add_argument(
+    '-o', '--overlayed-repo', metavar='repo',
+    action=commandline.StoreRepoObject, dest='src_repo',
+    help="if the target repo is an overlay, specify the "
+         "repository name to pull profiles/license from")
 
 
-class OptionParser(commandline.OptionParser):
+all_addons = set()
+def add_addon(addon):
+    if addon not in all_addons:
+        all_addons.add(addon)
+        for dep in addon.required_addons:
+            add_addon(dep)
 
-    """Option parser that is automagically extended by the checks.
+for check in get_plugins('check', plugins):
+    add_addon(check)
+for addon in all_addons:
+    addon.mangle_argparser(argparser)
 
-    Some comments on the resulting values object:
 
-    - target_repo is passed in as first argument and used as source for
-      packages to check.
-    - src_repo is specified with -r or defaults to target_repo. It is used
-      to get the profiles directory and other non-package repository data.
-    - repo_bases are the path(s) to selected repo(s).
-    - search_repo is a multiplex of target_repo and src_repo if they are
-      different or just target_repo if they are the same. This is used for
-      things like visibility checks (it is passed to the checkers in "start").
-    """
-
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(
-            self, version='pkgcheck %s' % (__version__,),
-            description="pkgcore based ebuild QA checks",
-            usage="usage: %prog [options] [atom1...atom2]",
-            **kwargs)
-
-        # These are all set in check_values based on other options, so have
-        # no default set through add_option.
-        self.set_default('repo_bases', [])
-        self.set_default('guessed_target_repo', False)
-        self.set_default('guessed_suite', False)
-        self.set_default('default_suite', False)
-
-        group = self.add_option_group('Check selection')
-        group.add_option(
-            "-c", action="append", type="string", dest="checks_to_run",
-            help="limit checks to those matching this regex, or package/class "
-            "matching; may be specified multiple times")
-        group.set_conflict_handler("resolve")
-        group.add_option(
-            "-d", "--disable", action="append", type="string",
-            dest="checks_to_disable", help="specific checks to disable: "
-            "may be specified multiple times")
-        group.set_conflict_handler("error")
-        group.add_option(
-            '--checkset', action='callback', type='string',
-            callback=commandline.config_callback,
-            callback_args=('pkgcheck_checkset', 'checkset'),
-            help='Pick a preconfigured set of checks to run.')
-
-        self.add_option(
-            '--repo', '-r', action='callback', type='string',
-            callback=repo_callback, dest='target_repo',
-            help='Set the target repo')
-        self.add_option(
-            '--suite', '-s', action='callback', type='string',
-            callback=commandline.config_callback,
-            callback_args=('pkgcheck_suite', 'suite'),
-            help='Specify the configuration suite to use')
-        self.add_option(
-            "--list-checks", action="store_true", default=False,
-            help="print what checks are available to run and exit")
-        self.add_option(
-            '--reporter', type='string', action='store', default=None,
-            help="Use a non-default reporter (defined in pkgcore's config).")
-        self.add_option(
-            '--list-reporters', action='store_true', default=False,
-            help="print known reporters")
-
-        overlay = self.add_option_group('Overlay')
-        overlay.add_option(
-            '--overlayed-repo', '-o', action='callback', type='string',
-            callback=repo_callback, dest='src_repo',
-            help="if the target repository is an overlay, specify the "
-            "repository name to pull profiles/license from")
-
-        all_addons = set()
-
-        def add_addon(addon):
-            if addon not in all_addons:
-                all_addons.add(addon)
-                for dep in addon.required_addons:
-                    add_addon(dep)
-        for check in get_plugins('check', plugins):
-            add_addon(check)
-        for addon in all_addons:
-            addon.mangle_option_parser(self)
-
-    def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
-            self, values, args)
-        # XXX hack...
-        values.checks = sorted(lists.unstable_unique(
-            get_plugins('check', plugins)),
-            key=lambda x: x.__name__)
-        if values.list_checks or values.list_reporters:
-            if values.list_reporters == values.list_checks:
-                raise optparse.OptionValueError(
-                    "--list-checks and --list-reporters are mutually exclusive")
-            return values, ()
-        cwd = None
-        if values.suite is None:
-            # No suite explicitly specified. Use the repo to guess the suite.
-            if values.target_repo is None:
-                # Not specified either. Try to find a repo our cwd is in.
-                cwd = os.getcwd()
-                # The use of a dict here is a hack to deal with one
-                # repo having multiple names in the configuration.
-                candidates = {}
-                for name, suite in values.config.pkgcheck_suite.iteritems():
-                    repo = suite.target_repo
-                    if repo is None:
-                        continue
-                    repo_base = getattr(repo, 'base', None)
-                    if repo_base is not None and cwd.startswith(repo_base):
-                        candidates[repo] = name
-                if len(candidates) == 1:
-                    values.guessed_suite = True
-                    values.target_repo = tuple(candidates)[0]
-            if values.target_repo is not None:
-                # We have a repo, now find a suite matching it.
-                candidates = list(
-                    suite for suite in values.config.pkgcheck_suite.itervalues()
-                    if suite.target_repo is values.target_repo)
-                if len(candidates) == 1:
-                    values.guessed_suite = True
-                    values.suite = candidates[0]
-            if values.suite is None:
-                # If we have multiple candidates or no candidates we
-                # fall back to the default suite.
-                values.suite = values.config.get_default('pkgcheck_suite')
-                values.default_suite = values.suite is not None
-        if values.suite is not None:
-            # We have a suite. Lift defaults from it for values that
-            # were not set explicitly:
-            if values.checkset is None:
-                values.checkset = values.suite.checkset
-            if values.src_repo is None:
-                values.src_repo = values.suite.src_repo
-            # If we were called with no atoms we want to force
-            # cwd-based detection.
-            if values.target_repo is None:
-                if args:
-                    values.target_repo = values.suite.target_repo
-                elif values.suite.target_repo is not None:
-                    # No atoms were passed in, so we want to guess
-                    # what to scan based on cwd below. That only makes
-                    # sense if we are inside the target repo. We still
-                    # want to pick the suite's target repo if we are
-                    # inside it, in case there is more than one repo
-                    # definition with a base that contains our dir.
-                    if cwd is None:
-                        cwd = os.getcwd()
-                    repo_base = getattr(values.suite.target_repo, 'base', None)
-                    if repo_base is not None and cwd.startswith(repo_base):
-                        values.target_repo = values.suite.target_repo
-        if values.target_repo is None:
-            # We have no target repo (not explicitly passed, not from
-            # a suite, not from an earlier guess at the target_repo).
-            # Try to guess one from cwd:
-            if cwd is None:
-                cwd = os.getcwd()
+@argparser.bind_final_check
+def check_args(parser, namespace):
+    # XXX hack...
+    namespace.checks = sorted(lists.unstable_unique(
+        get_plugins('check', plugins)),
+        key=lambda x: x.__name__)
+    if namespace.list_checks or namespace.list_reporters:
+        if namespace.list_reporters == namespace.list_checks:
+            parser.error("--list-checks and --list-reporters are mutually exclusive")
+    cwd = None
+    if namespace.suite is None:
+        # No suite explicitly specified. Use the repo to guess the suite.
+        if namespace.target_repo is None:
+            # Not specified either. Try to find a repo our cwd is in.
+            cwd = os.getcwd()
+            # The use of a dict here is a hack to deal with one
+            # repo having multiple names in the configuration.
             candidates = {}
-            for name, repo in values.config.repo.iteritems():
-                repo_base = getattr(repo, 'base', None)
+            for name, suite in namespace.config.pkgcheck_suite.iteritems():
+                repo = suite.target_repo
+                if repo is None:
+                    continue
+                repo_base = getattr(repo, 'location', None)
                 if repo_base is not None and cwd.startswith(repo_base):
                     candidates[repo] = name
-            if not candidates:
-                self.error(
-                    'No target repo specified on commandline or suite and '
-                    'current directory is not inside a known repo.')
-            elif len(candidates) > 1:
-                self.error(
-                    'Found multiple matches when guessing repo based on '
-                    'current directory (%s). Specify a repo on the '
-                    'commandline or suite or remove some repos from your '
-                    'configuration.' % (
-                        ', '.join(str(repo) for repo in candidates),))
-            values.target_repo = tuple(candidates)[0]
+            if len(candidates) == 1:
+                namespace.guessed_suite = True
+                namespace.target_repo = tuple(candidates)[0]
+        if namespace.target_repo is not None:
+            # We have a repo, now find a suite matching it.
+            candidates = list(
+                suite for suite in namespace.config.pkgcheck_suite.itervalues()
+                if suite.target_repo is namespace.target_repo)
+            if len(candidates) == 1:
+                namespace.guessed_suite = True
+                namespace.suite = candidates[0]
+        if namespace.suite is None:
+            # If we have multiple candidates or no candidates we
+            # fall back to the default suite.
+            namespace.suite = namespace.config.get_default('pkgcheck_suite')
+            namespace.default_suite = namespace.suite is not None
+    if namespace.suite is not None:
+        # We have a suite. Lift defaults from it for values that
+        # were not set explicitly:
+        if namespace.checkset is None:
+            namespace.checkset = namespace.suite.checkset
+        if namespace.src_repo is None:
+            namespace.src_repo = namespace.suite.src_repo
+        # If we were called with no atoms we want to force
+        # cwd-based detection.
+        if namespace.target_repo is None:
+            if namespace.targets:
+                namespace.target_repo = namespace.suite.target_repo
+            elif namespace.suite.target_repo is not None:
+                # No atoms were passed in, so we want to guess
+                # what to scan based on cwd below. That only makes
+                # sense if we are inside the target repo. We still
+                # want to pick the suite's target repo if we are
+                # inside it, in case there is more than one repo
+                # definition with a base that contains our dir.
+                if cwd is None:
+                    cwd = os.getcwd()
+                repo_base = getattr(namespace.suite.target_repo, 'location', None)
+                if repo_base is not None and cwd.startswith(repo_base):
+                    namespace.target_repo = namespace.suite.target_repo
+    if namespace.target_repo is None:
+        # We have no target repo (not explicitly passed, not from
+        # a suite, not from an earlier guess at the target_repo).
+        # Try to guess one from cwd:
+        if cwd is None:
+            cwd = os.getcwd()
+        candidates = {}
+        for name, repo in namespace.config.repo.iteritems():
+            repo_base = getattr(repo, 'location', None)
+            if repo_base is not None and cwd.startswith(repo_base):
+                candidates[repo] = name
+        if not candidates:
+            parser.error(
+                'No target repo specified on commandline or suite and '
+                'current directory is not inside a known repo.')
+        elif len(candidates) > 1:
+            parser.error(
+                'Found multiple matches when guessing repo based on '
+                'current directory (%s). Specify a repo on the '
+                'commandline or suite or remove some repos from your '
+                'configuration.' % (
+                    ', '.join(str(repo) for repo in candidates),))
+        namespace.target_repo = tuple(candidates)[0]
 
-        if values.reporter is None:
-            values.reporter = values.config.get_default(
-                'pkgcheck_reporter_factory')
-            if values.reporter is None:
-                values.reporter = get_plugin('reporter', plugins)
-            if values.reporter is None:
-                self.error(
-                    'no config defined reporter found, nor any default '
-                    'plugin based reporters')
-        else:
-            func = values.config.pkgcheck_reporter_factory.get(values.reporter)
-            if func is None:
-                func = list(base.Whitelist([values.reporter]).filter(
-                    get_plugins('reporter', plugins)))
-                if not func:
-                    self.error(
-                        "no reporter matches %r\n"
-                        "please see --list-reporter for a list of "
-                        "valid reporters" % values.reporter)
-                elif len(func) > 1:
-                    self.error(
-                        "--reporter %r matched multiple reporters, "
-                        "must match one. %r" % (
-                            values.reporter,
-                            tuple(sorted("%s.%s" % (x.__module__, x.__name__)
-                                         for x in func))
-                        )
+    if namespace.reporter is None:
+        namespace.reporter = namespace.config.get_default(
+            'pkgcheck_reporter_factory')
+        if namespace.reporter is None:
+            namespace.reporter = get_plugin('reporter', plugins)
+        if namespace.reporter is None:
+            parser.error(
+                'no config defined reporter found, nor any default '
+                'plugin based reporters')
+    else:
+        func = namespace.config.pkgcheck_reporter_factory.get(namespace.reporter)
+        if func is None:
+            func = list(base.Whitelist([namespace.reporter]).filter(
+                get_plugins('reporter', plugins)))
+            if not func:
+                parser.error(
+                    "no reporter matches %r\n"
+                    "please see --list-reporter for a list of "
+                    "valid reporters" % namespace.reporter)
+            elif len(func) > 1:
+                parser.error(
+                    "--reporter %r matched multiple reporters, "
+                    "must match one. %r" % (
+                        namespace.reporter,
+                        tuple(sorted("%s.%s" % (x.__module__, x.__name__)
+                                        for x in func))
                     )
-                func = func[0]
-            values.reporter = func
-        if values.src_repo is None:
-            values.src_repo = values.target_repo
-            values.search_repo = values.target_repo
+                )
+            func = func[0]
+        namespace.reporter = func
+
+    # search_repo is a multiplex of target_repo and src_repo if they are
+    # different or just target_repo if they are the same. This is used for
+    # things like visibility checks (it is passed to the checkers in "start").
+    if namespace.src_repo is None:
+        namespace.src_repo = namespace.target_repo
+        namespace.search_repo = namespace.target_repo
+    else:
+        namespace.search_repo = multiplex.tree(namespace.target_repo, namespace.src_repo)
+
+    # TODO improve this to deal with a multiplex repo.
+    for repo in set((namespace.src_repo, namespace.target_repo)):
+        if isinstance(repo, repository.UnconfiguredTree):
+            namespace.repo_bases.append(abspath(repo.location))
+
+    if namespace.targets:
+        namespace.limiters = lists.stable_unique(
+            map(parserestrict.parse_match, namespace.targets))
+    else:
+        repo_base = getattr(namespace.target_repo, 'location', None)
+        if not repo_base:
+            parser.error(
+                'Either specify a target repo that is not multi-tree or '
+                'one or more extended atoms to scan '
+                '("*" for the entire repo).')
+        cwd = abspath(os.getcwd())
+        repo_base = abspath(repo_base)
+        if not cwd.startswith(repo_base):
+            parser.error(
+                'Working dir (%s) is not inside target repo (%s). Fix '
+                'that or specify one or more extended atoms to scan.' % (
+                    cwd, repo_base))
+        bits = list(p for p in cwd[len(repo_base):].split(os.sep) if p)
+        if not bits:
+            namespace.limiters = [packages.AlwaysTrue]
+        elif len(bits) == 1:
+            namespace.limiters = [packages.PackageRestriction(
+                'category', StrExactMatch(bits[0]))]
         else:
-            values.search_repo = multiplex.tree(values.target_repo,
-                                                values.src_repo)
+            namespace.limiters = [packages.AndRestriction(
+                packages.PackageRestriction(
+                    'category', StrExactMatch(bits[0])),
+                packages.PackageRestriction(
+                    'package', StrExactMatch(bits[1])))]
 
-        # TODO improve this to deal with a multiplex repo.
-        for repo in set((values.src_repo, values.target_repo)):
-            if isinstance(repo, repository.UnconfiguredTree):
-                values.repo_bases.append(abspath(repo.base))
+    if namespace.checkset is None:
+        namespace.checkset = namespace.config.get_default('pkgcheck_checkset')
+    if namespace.checkset is not None:
+        namespace.checks = list(namespace.checkset.filter(namespace.checks))
 
-        if args:
-            values.limiters = lists.stable_unique(
-                map(parserestrict.parse_match, args))
-        else:
-            repo_base = getattr(values.target_repo, 'base', None)
-            if not repo_base:
-                self.error(
-                    'Either specify a target repo that is not multi-tree or '
-                    'one or more extended atoms to scan '
-                    '("*" for the entire repo).')
-            cwd = abspath(os.getcwd())
-            repo_base = abspath(repo_base)
-            if not cwd.startswith(repo_base):
-                self.error(
-                    'Working dir (%s) is not inside target repo (%s). Fix '
-                    'that or specify one or more extended atoms to scan.' % (
-                        cwd, repo_base))
-            bits = list(p for p in cwd[len(repo_base):].split(os.sep) if p)
-            if not bits:
-                values.limiters = [packages.AlwaysTrue]
-            elif len(bits) == 1:
-                values.limiters = [packages.PackageRestriction(
-                    'category', StrExactMatch(bits[0]))]
-            else:
-                values.limiters = [packages.AndRestriction(
-                    packages.PackageRestriction(
-                        'category', StrExactMatch(bits[0])),
-                    packages.PackageRestriction(
-                        'package', StrExactMatch(bits[1])))]
+    if namespace.checks_to_run:
+        whitelist = base.Whitelist(namespace.checks_to_run)
+        namespace.checks = list(whitelist.filter(namespace.checks))
 
-        if values.checkset is None:
-            values.checkset = values.config.get_default('pkgcheck_checkset')
-        if values.checkset is not None:
-            values.checks = list(values.checkset.filter(values.checks))
+    if namespace.checks_to_disable:
+        blacklist = base.Blacklist(namespace.checks_to_disable)
+        namespace.checks = list(blacklist.filter(namespace.checks))
 
-        if values.checks_to_run:
-            whitelist = base.Whitelist(values.checks_to_run)
-            values.checks = list(whitelist.filter(values.checks))
+    if not namespace.checks:
+        parser.error('No active checks')
 
-        if values.checks_to_disable:
-            blacklist = base.Blacklist(values.checks_to_disable)
-            values.checks = list(blacklist.filter(values.checks))
+    namespace.addons = set()
 
-        if not values.checks:
-            self.error('No active checks')
-
-        values.addons = set()
-
-        def add_addon(addon):
-            if addon not in values.addons:
-                values.addons.add(addon)
-                for dep in addon.required_addons:
-                    add_addon(dep)
-        for check in values.checks:
-            add_addon(check)
-        try:
-            for addon in values.addons:
-                addon.check_values(values)
-        except optparse.OptionValueError as e:
-            if values.debug:
-                raise
-            self.error(str(e))
-
-        return values, ()
+    def add_addon(addon):
+        if addon not in namespace.addons:
+            namespace.addons.add(addon)
+            for dep in addon.required_addons:
+                add_addon(dep)
+    for check in namespace.checks:
+        add_addon(check)
+    try:
+        for addon in namespace.addons:
+            addon.check_args(parser, namespace)
+    except argparse.ArgumentError as e:
+        if namespace.debug:
+            raise
+        parser.error(str(e))
 
 
 def dump_docstring(out, obj, prefix=None):
@@ -424,6 +384,7 @@ def display_reporters(out, config, config_reporters, plugin_reporters):
             "run correctly without a reporter to use!")
         out.write()
 
+@argparser.bind_main_func
 def main(options, out, err):
     """Do stuff."""
 

@@ -89,7 +89,7 @@ argparser.add_argument(
 
 
 @argparser.bind_final_check
-def _validate(parser, namespace):
+def check_args(parser, namespace):
     if not os.path.isfile(namespace.pickle_file):
         parser.error("pickle file doesn't exist: %r" % namespace.pickle_file)
 
@@ -120,6 +120,7 @@ def replay_stream(stream_handle, reporter, debug=None):
                 (count - last_count, headers[-1].criteria))
 
 
+@argparser.bind_main_func
 def main(options, out, err):
     if options.out:
         out = formatters.get_formatter(open(options.out, 'w'))

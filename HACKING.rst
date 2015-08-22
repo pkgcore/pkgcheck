@@ -19,15 +19,15 @@ addons referenced by the required_addons class attribute of an active
 addon are also active (and this applies recursively, of course).
 
 Before they are instantiated the class (or static) methods
-mangle_option_parser and check_values are used to modify the optparse
+mangle_argparser and check_args are used to modify the argparse
 process. At this point all available checks (and their dependencies)
 are active addons. After the commandline is parsed all checks that end
 up being active after parsing the commandline are active addons, and
-those are instantiated. They receive the optparse values instance
+those are instantiated. They receive the argparse instance
 followed by the (instantiated) addons they depend on as positional
 arguments to __init__.
 
-(The reason for the two "phases" here (optparse mangling before
+(The reason for the two "phases" here (argparse mangling before
 instantiation) is we want the addons to influence the way options are
 parsed while we cannot instantiate them before options are parsed
 (since we want to pass the values object and since we only want to
@@ -160,13 +160,12 @@ pkgcheck.scripts.pkgcheck module. It is pretty straightforward, although how
 control flows through this module is not obvious without knowing how pkgcore's
 commandline utils are used:
 
-- pkgcore's commandline glue instantiates the OptionParser
+- pkgcore's commandline glue instantiates the argument parser
 - it pulls up all available checks and transforms through the plugin system
 - grab all addon dependencies too
 - give them a chance to mangle the parser
-- the commandline glue parses options, triggering various optparse
-  callbacks (options with a callback action and check_values, which
-  calls check_values on all addon classes).
+- the commandline glue parses options, triggering various argparse actions,
+  which calls check_args on all addon classes).
 - if option parsing succeeded the commandline glue calls main
 - main instantiates all active addons and sources
 - the autoplugger builds one or more pipelines

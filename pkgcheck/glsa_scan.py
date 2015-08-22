@@ -1,7 +1,6 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-import optparse
 import os
 
 from snakeoil.demandload import demandload
@@ -58,50 +57,50 @@ class TreeVulnerabilitiesReport(base.Template):
     known_results = (VulnerablePackage,)
 
     @staticmethod
-    def mangle_option_parser(parser):
-        parser.add_option(
-            "--glsa-dir", action='store', type='string', dest='glsa_location',
-            help="source directoy for glsas; tries to autodetermine it, may "
-            "be required if no glsa dirs are known")
+    def mangle_argparser(parser):
+        parser.add_argument(
+            "--glsa-dir", dest='glsa_location',
+            help="source directory for glsas; tries to autodetermine it, may "
+                 "be required if no glsa dirs are known")
 
     @staticmethod
-    def check_values(values):
-        values.glsa_enabled = True
-        glsa_loc = values.glsa_location
+    def check_args(parser, namespace):
+        namespace.glsa_enabled = True
+        glsa_loc = namespace.glsa_location
         if glsa_loc is not None:
             if not os.path.isdir(glsa_loc):
-                raise optparse.OptionValueError(
+                raise parser.error(
                     "--glsa-dir '%r' doesn't exist" % glsa_loc)
         else:
-            if not values.repo_bases:
-                raise optparse.OptionValueError(
+            if not namespace.repo_bases:
+                raise parser.error(
                     'Need a target repo or --overlayed-repo that is a single '
                     'UnconfiguredTree for license checks')
-            for repo_base in values.repo_bases:
+            for repo_base in namespace.repo_bases:
                 candidate = pjoin(repo_base, "metadata", "glsa")
                 if os.path.isdir(candidate):
                     if glsa_loc is None:
                         glsa_loc = candidate
                     else:
-                        raise optparse.OptionValueError(
+                        raise parser.error(
                             'multiple glsa sources is unsupported (detected '
                             '%s and %s). Pick one with --glsa-dir.' % (
                                 glsa_loc, candidate))
             if glsa_loc is None:
                 # form of 'optional' limiting; if they are using -c, force the
                 # error, else disable
-                if values.checks_to_run:
-                    raise optparse.OptionValueError(
+                if namespace.checks_to_run:
+                    raise parser.error(
                         "--glsa-dir must be specified, couldn't identify glsa src from %r" %
-                        values.src_repo)
-                values.glsa_enabled = False
+                        namespace.src_repo)
+                namespace.glsa_enabled = False
                 warnings.warn(
                     "disabling GLSA checks due to no glsa source "
                     "being found, and the check not being explicitly enabled; "
                     "this behaviour may change")
                 return
 
-        values.glsa_location = abspath(glsa_loc)
+        namespace.glsa_location = abspath(glsa_loc)
 
     def __init__(self, options):
         base.Template.__init__(self, options)

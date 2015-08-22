@@ -7,17 +7,14 @@ from pkgcore.test.scripts import helpers
 from pkgcheck.scripts import pkgcheck
 
 
-class CommandlineTest(TestCase, helpers.MainMixin):
+class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(pkgcheck.OptionParser())
-    main = staticmethod(pkgcheck.main)
+    _argparser = pkgcheck.argparser
 
     def test_parser(self):
         self.assertError(
             'No target repo specified on commandline or suite and current '
             'directory is not inside a known repo.')
         self.assertError(
-            "repo 'spork' is not a known repo (known repos: )",
+            "argument --repo/-r: couldn't find repo 'spork'",
             '-r', 'spork')
-        options = self.parse('spork', '--list-checks')
-        self.assertTrue(options.list_checks)

@@ -39,14 +39,12 @@ class ImlateReport(StableCheckAddon):
     known_results = (LaggingStableInfo,)
 
     @staticmethod
-    def mangle_option_parser(parser):
-        parser.add_option(
-            "--source-arches", action='callback', dest='reference_arches',
+    def mangle_argparser(parser):
+        parser.add_argument(
+            "--source-arches", action='extend_comma', dest='reference_arches',
             default=ArchesAddon.default_arches,
-            type='string', callback=ArchesAddon._record_arches,
             help="comma separated list of what arches to compare against for "
-            "imlate, defaults to %s" % (
-                ", ".join(ArchesAddon.default_arches),))
+            "imlate, defaults to %s" % (", ".join(ArchesAddon.default_arches),))
 
     def __init__(self, options, arches):
         super(ImlateReport, self).__init__(options)

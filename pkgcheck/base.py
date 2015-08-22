@@ -64,25 +64,25 @@ class Addon(object):
 
         An instance of every addon in required_addons is passed as extra arg.
 
-        :param options: the optparse values.
+        :param options: the argparse values.
         """
         self.options = options
 
     @staticmethod
-    def mangle_option_parser(parser):
-        """Add extra options and/or groups to the option parser.
+    def mangle_argparser(parser):
+        """Add extra options and/or groups to the argparser.
 
         This hook is always triggered, even if the checker is not
         activated (because it runs before the commandline is parsed).
 
-        :param parser: an C{OptionParser} instance.
+        :param parser: an C{argparse.ArgumentParser} instance.
         """
 
     @staticmethod
-    def check_values(values):
-        """Postprocess the optparse values.
+    def check_args(parser, namespace):
+        """Postprocess the argparse values.
 
-        Should raise C{optparse.OptionValueError} on failure.
+        Should raise C{argparse.ArgumentError} on failure.
 
         This is only called for addons that are enabled, but before
         they are instantiated.

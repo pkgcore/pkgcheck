@@ -1,8 +1,8 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+import argparse
 import itertools
-import optparse
 import os
 import shutil
 import sys
@@ -10,6 +10,7 @@ import sys
 from pkgcore.ebuild import repo_objs
 from pkgcore.restrictions import packages
 from pkgcore.test import TestCase
+from pkgcore.util import commandline
 from snakeoil.fileutils import write_file
 from snakeoil.osutils import pjoin, ensure_dirs
 from snakeoil.test import mixins
@@ -18,36 +19,24 @@ from pkgcheck import addons, base
 from pkgcheck.test.misc import FakePkg, FakeProfile, Options
 
 
-class exit_exception(Exception):
-    def __init__(self, *args):
-        self.args = args
-
-
-class parser(optparse.OptionParser):
-
-    def exit(self, *args):
-        raise exit_exception(*args)
-
-
 class base_test(TestCase):
 
     addon_kls = None
 
     def process_check(self, args, silence=False, preset_values={}, **settings):
-        p = parser()
-        self.addon_kls.mangle_option_parser(p)
-        options, ret_args = p.parse_args(args)
-        self.assertFalse(ret_args, msg="%r args were left after processing %r" %
-            (ret_args, args))
+        p = commandline.mk_argparser(domain=False, color=False)
+        self.addon_kls.mangle_argparser(p)
+        args, unknown_args = p.parse_known_args(args)
+        self.assertEqual(unknown_args, [])
         orig_out, orig_err = None, None
         for attr, val in preset_values.iteritems():
-            setattr(options, attr, val)
+            setattr(args, attr, val)
         try:
                 if silence:
                     orig_out = sys.stdout
                     orig_err = sys.stderr
                     sys.stdout = sys.stderr = open("/dev/null", "w")
-                self.addon_kls.check_values(options)
+                self.addon_kls.check_args(p, args)
         finally:
             if silence:
                 if orig_out:
@@ -58,10 +47,10 @@ class base_test(TestCase):
                     sys.stderr = orig_err
 
         for attr, val in settings.iteritems():
-            self.assertEqual(getattr(options, attr), val,
+            self.assertEqual(getattr(args, attr), val,
                 msg="for args %r, %s must be %r, got %r" % (args, attr, val,
-                    getattr(options, attr)))
-        return options
+                    getattr(args, attr)))
+        return args
 
 
 class TestArchesAddon(base_test):
@@ -70,8 +59,8 @@ class TestArchesAddon(base_test):
 
     def test_opts(self):
         for arg in ('-a', '--arches'):
-            self.process_check([arg, 'x86'], arches=('x86',))
-            self.process_check([arg, 'x86,ppc'], arches=('x86', 'ppc'))
+            self.process_check([arg, 'x86'], arches=['x86'])
+            self.process_check([arg, 'x86,ppc'], arches=['x86', 'ppc'])
 
     def test_default(self):
         self.process_check([], arches=self.addon_kls.default_arches)
@@ -501,7 +490,7 @@ class TestLicenseAddon(mixins.TempDirMixin, base_test):
         os.mkdir(pjoin(r1, "licenses"))
         os.mkdir(r2)
 
-        self.assertRaises(optparse.OptionValueError, self.process_check, [],
+        self.assertRaises(SystemExit, self.process_check, [],
             preset_values={'repo_bases': [r2]})
 
         self.process_check([], preset_values={'repo_bases': [r1, r2]},
@@ -512,7 +501,7 @@ class TestLicenseAddon(mixins.TempDirMixin, base_test):
             license_dirs=[self.dir])
         open(pjoin(self.dir, 'foo'), 'w').close()
         open(pjoin(self.dir, 'foo2'), 'w').close()
-        self.assertRaises(optparse.OptionValueError, self.process_check,
+        self.assertRaises(SystemExit, self.process_check,
             ['--license-dir', pjoin(self.dir, 'foo')])
         addon = self.addon_kls(opts)
         self.assertEqual(frozenset(['foo', 'foo2']),
