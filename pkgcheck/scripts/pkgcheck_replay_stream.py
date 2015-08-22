@@ -7,11 +7,13 @@ one minimal window (say updating a database), or want to generate
 several different reports without using a config defined multiplex reporter.
 """
 
+from __future__ import absolute_import
+
 from pkgcore.util import commandline
+from snakeoil.demandload import demandload
 
 from pkgcheck import base
 
-from snakeoil.demandload import demandload
 demandload(
     'os',
     'snakeoil:pickling,formatters',
@@ -76,32 +78,20 @@ class BinaryPickleStream(PickleStream):
     protocol = -1
 
 
-class OptionParser(commandline.OptionParser):
+argparser = commandline.mk_argparser(
+    config=False, domain=False, color=False, description=__doc__.split('\n', 1)[0])
+argparser.add_argument(
+    dest='pickle_file', help='pickled results file')
+argparser.add_argument(
+    dest='reporter', help='python namespace path reporter to replay it into')
+argparser.add_argument(
+    '--out', default=None, help='redirect reporters output to a file')
 
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(self, description=__doc__,
-            usage="replay_report_stream <pickle-file> <python namespace path"
-            "reporter to replay it into>",
-            **kwargs)
-        self.add_option("--quiet", default=False, action='store_true',
-            help="disable all status information written to stderr.")
-        self.add_option("--out", default=None,
-            help="redirect reporters output to a file")
 
-    def check_values(self, values, args):
-        vals, args = commandline.OptionParser.check_values(self, values, args)
-
-        if len(args) < 2:
-            self.error("need at least two args, pickle file, and reporter")
-        elif len(args) > 2:
-            self.error("only two arguements are accepted")
-        args[0] = os.path.abspath(args[0])
-        if not os.path.isfile(args[0]):
-            self.error("pickle file %r doesn't exist" % args[0])
-        values.reporter = load_attribute(args[1])
-        values.stream_path = args[0]
-
-        return values, []
+@argparser.bind_final_check
+def _validate(parser, namespace):
+    if not os.path.isfile(namespace.pickle_file):
+        parser.error("pickle file doesn't exist: %r" % namespace.pickle_file)
 
 
 def replay_stream(stream_handle, reporter, debug=None):
@@ -125,7 +115,8 @@ def replay_stream(stream_handle, reporter, debug=None):
     if headers:
         reporter.end_check()
         if debug:
-            debug.write("finished processing %i results for %s" %
+            debug.write(
+                "finished processing %i results for %s" %
                 (count - last_count, headers[-1].criteria))
 
 
@@ -135,6 +126,6 @@ def main(options, out, err):
     debug = None
     if options.debug:
         debug = err
-    replay_stream(open(options.stream_path), options.reporter(out),
-        debug=debug)
+    replay_stream(
+        open(options.stream_path), options.reporter(out), debug=debug)
     return 0

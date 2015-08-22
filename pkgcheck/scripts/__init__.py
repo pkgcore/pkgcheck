@@ -30,7 +30,11 @@ def main(script_name=None):
         sys.stderr.write('Add --debug to the commandline for a traceback.\n')
         sys.exit(1)
 
-    commandline.main({None: (script.OptionParser, script.main)})
+    if getattr(script, 'OptionParser', False):
+        commandline.main({None: (script.OptionParser, script.main)})
+    else:
+        subcommands = getattr(script, 'argparser', None)
+        commandline.main(subcommands)
 
 
 if __name__ == '__main__':
