@@ -194,7 +194,7 @@ def make_configurable_reporter_factory(klass):
         def reporter_factory(out):
             try:
                 f = open(dest, 'w')
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 raise errors.ReporterInitError(
                     'Cannot write to %r (%s)' % (dest, e))
             return klass(formatters.PlainTextFormatter(f))

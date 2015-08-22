@@ -115,7 +115,7 @@ def utf8_check(pkg, base, filename, reporter):
     try:
         codecs.open(pjoin(base, filename), mode="rb",
                     encoding="utf8", buffering=8192).read()
-    except UnicodeDecodeError, e:
+    except UnicodeDecodeError as e:
         reporter.add_report(InvalidUtf8(pkg, filename, str(e)))
         del e
 

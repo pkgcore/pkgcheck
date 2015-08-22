@@ -320,7 +320,7 @@ class OptionParser(commandline.OptionParser):
         try:
             for addon in values.addons:
                 addon.check_values(values)
-        except optparse.OptionValueError, e:
+        except optparse.OptionValueError as e:
             if values.debug:
                 raise
             self.error(str(e))
@@ -458,7 +458,7 @@ def main(options, out, err):
 
     try:
         reporter = options.reporter(out)
-    except errors.ReporterInitError, e:
+    except errors.ReporterInitError as e:
         err.write(
             err.fg('red'), err.bold, '!!! ', err.reset,
             'Error initializing reporter: ', e)

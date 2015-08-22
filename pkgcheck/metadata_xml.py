@@ -165,7 +165,7 @@ class base_check(base.Template):
             logger.info("fetching metdata.dtd from %s", self.dtd_url)
             try:
                 dtd_data = urlopen(self.dtd_url).read()
-            except urllib_error.URLError, e:
+            except urllib_error.URLError as e:
                 if self.options.metadata_dtd_required:
                     raise Exception(
                         "failed fetching dtd from %s: reason %s. "
@@ -180,7 +180,7 @@ class base_check(base.Template):
                 write_path = read_path = self.dtd_file.name
             try:
                 fileutils.write_file(write_path, 'wb', dtd_data)
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 if self.options.metadata_dtd_required:
                     raise Exception(
                         "failed saving dtd to %s: reason %s. "

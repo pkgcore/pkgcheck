@@ -71,11 +71,11 @@ class LicenseMetadataReport(base.Template):
             licenses = pkg.license
         except (KeyboardInterrupt, SystemExit):
             raise
-        except (MetadataException, MalformedAtom, ValueError), e:
+        except (MetadataException, MalformedAtom, ValueError) as e:
             reporter.add_report(MetadataError(
                 pkg, 'license', "error- %s" % e))
             del e
-        except Exception, e:
+        except Exception as e:
             logging.exception(
                 "unknown exception caught for pkg(%s) attr(%s): "
                 "type(%s), %s" % (pkg, 'license', type(e), e))
@@ -195,11 +195,11 @@ class DependencyReport(base.Template):
                         reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
             except (KeyboardInterrupt, SystemExit):
                 raise
-            except (MetadataException, MalformedAtom, ValueError), e:
+            except (MetadataException, MalformedAtom, ValueError) as e:
                 reporter.add_report(MetadataError(
                     pkg, attr_name, "error- %s" % e))
                 del e
-            except Exception, e:
+            except Exception as e:
                 logging.exception(
                     "unknown exception caught for pkg(%s) attr(%s): "
                     "type(%s), %s" % (pkg, attr_name, type(e), e))
@@ -315,11 +315,11 @@ class SrcUriReport(base.Template):
 
         except (KeyboardInterrupt, SystemExit):
             raise
-        except (MetadataException, MalformedAtom, ValueError), e:
+        except (MetadataException, MalformedAtom, ValueError) as e:
             reporter.add_report(MetadataError(
                 pkg, 'fetchables', "error- %s" % e))
             del e
-        except Exception, e:
+        except Exception as e:
             logging.exception(
                 "unknown exception caught for pkg(%s): "
                 "type(%s), %s" % (pkg, type(e), e))

@@ -247,7 +247,7 @@ class VisibilityReport(base.Template):
                     elif not self.query_cache[node]:
                         nonexistent.add(node)
 
-            except _BlockMemoryExhaustion, e:
+            except _BlockMemoryExhaustion as e:
                 reporter.add_report(UncheckableDep(pkg, attr))
                 suppressed_depsets.append(attr)
             if nonexistent:
