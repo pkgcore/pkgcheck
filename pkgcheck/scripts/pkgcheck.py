@@ -6,14 +6,14 @@
 
 from __future__ import absolute_import
 
-from pkgcore.util import commandline, parserestrict
 from pkgcore.plugin import get_plugins, get_plugin
-from snakeoil import lists
+from pkgcore.util import commandline, parserestrict
+from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
+from snakeoil.lists import stable_unique, unstable_unique
 
 from pkgcheck import plugins, base, feeds
 
-from snakeoil.demandload import demandload
 demandload(
     'argparse',
     'logging',
@@ -93,7 +93,7 @@ for addon in all_addons:
 @argparser.bind_final_check
 def check_args(parser, namespace):
     # XXX hack...
-    namespace.checks = sorted(lists.unstable_unique(
+    namespace.checks = sorted(unstable_unique(
         get_plugins('check', plugins)),
         key=lambda x: x.__name__)
     if namespace.list_checks or namespace.list_reporters:
@@ -225,7 +225,7 @@ def check_args(parser, namespace):
             namespace.repo_bases.append(abspath(repo.location))
 
     if namespace.targets:
-        namespace.limiters = lists.stable_unique(
+        namespace.limiters = stable_unique(
             map(parserestrict.parse_match, namespace.targets))
     else:
         repo_base = getattr(namespace.target_repo, 'location', None)
