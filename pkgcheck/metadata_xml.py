@@ -145,7 +145,7 @@ class base_check(base.Template):
                 help='location to cache %s' % (cls.dtd_url,))
             parser.add_argument(
                 '--metadata-dtd-required',
-                help="if %r cannot be fetched (no connection for example), "
+                help="if metadata.dtd cannot be fetched (no connection for example), "
                      "treat it as a failure rather than warning and ignoring.")
         except argparse.ArgumentError:
             # the arguments have already been added to the parser
