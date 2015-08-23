@@ -8,3 +8,8 @@ _trial_temp
 /dist
 /.coverage
 /*.egg-info
+
+# docs
+/doc/_build
+/doc/api
+/doc/generated
