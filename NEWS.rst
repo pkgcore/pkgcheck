@@ -5,6 +5,18 @@ Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 ---------------------------
+pkgcheck 0.5.2 (2015-0?-??)
+---------------------------
+
+* Add initial man page generated from argparse info.
+
+* Migrate from optparse to argparse, usability-wise there shouldn't be any
+  changes.
+
+* Drop ChangeLog file checks, the gentoo repo moved to git so ChangeLogs are
+  not in the repo anymore.
+
+---------------------------
 pkgcheck 0.5.1 (2015-08-10)
 ---------------------------
 
