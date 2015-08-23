@@ -35,46 +35,45 @@ argparser.set_defaults(guessed_target_repo=False)
 argparser.set_defaults(guessed_suite=False)
 argparser.set_defaults(default_suite=False)
 argparser.add_argument(
-    'targets', nargs='*', help='optional target atom(s)')
+    'targets', metavar='target', nargs='*', help='optional target atom(s)')
 
-group = argparser.add_argument_group('Check selection')
-group.add_argument(
-    "-c", action="append", dest="checks_to_run",
-    help="limit checks to those matching this regex, or package/class "
-         "matching; may be specified multiple times")
-group.add_argument(
-    "-d", "--disable", action="append",
-    dest="checks_to_disable", help="specific checks to disable: "
-    "may be specified multiple times")
-group.add_argument(
-    '--checkset', action=commandline.StoreConfigObject,
-    config_type='pkgcheck_checkset',
-    help='Pick a preconfigured set of checks to run.')
-
-argparser.add_argument(
+main_options = argparser.add_argument_group('Main options')
+main_options.add_argument(
     '--repo', '-r', metavar='repo',
     action=commandline.StoreRepoObject,
     dest='target_repo', help='repo to pull packages from')
-argparser.add_argument(
+main_options.add_argument(
     '--suite', '-s', action=commandline.StoreConfigObject,
     config_type='pkgcheck_suite',
     help='Specify the configuration suite to use')
-argparser.add_argument(
+main_options.add_argument(
     "--list-checks", action="store_true", default=False,
     help="print what checks are available to run and exit")
-argparser.add_argument(
+main_options.add_argument(
     '--reporter', action='store', default=None,
     help="Use a non-default reporter (defined in pkgcore's config).")
-argparser.add_argument(
+main_options.add_argument(
     '--list-reporters', action='store_true', default=False,
     help="print known reporters")
-
-overlay = argparser.add_argument_group('Overlay')
-overlay.add_argument(
+main_options.add_argument(
     '-o', '--overlayed-repo', metavar='repo',
     action=commandline.StoreRepoObject, dest='src_repo',
     help="if the target repo is an overlay, specify the "
          "repository name to pull profiles/license from")
+
+check_options = argparser.add_argument_group('Check selection')
+check_options.add_argument(
+    "-c", action="append", dest="checks_to_run",
+    help="limit checks to those matching this regex, or package/class "
+         "matching; may be specified multiple times")
+check_options.add_argument(
+    "-d", "--disable", action="append",
+    dest="checks_to_disable", help="specific checks to disable: "
+    "may be specified multiple times")
+check_options.add_argument(
+    '--checkset', action=commandline.StoreConfigObject,
+    config_type='pkgcheck_checkset',
+    help='Pick a preconfigured set of checks to run.')
 
 
 all_addons = set()
@@ -84,10 +83,11 @@ def add_addon(addon):
         for dep in addon.required_addons:
             add_addon(dep)
 
+plugin_options = argparser.add_argument_group('Plugin options')
 for check in get_plugins('check', plugins):
     add_addon(check)
 for addon in all_addons:
-    addon.mangle_argparser(argparser)
+    addon.mangle_argparser(plugin_options)
 
 
 @argparser.bind_final_check
