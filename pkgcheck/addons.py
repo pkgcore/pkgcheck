@@ -42,10 +42,12 @@ class ArchesAddon(base.Addon):
     def mangle_argparser(cls, parser):
         parser.add_argument(
             '-a', '--arches', nargs=1, action='extend_comma', default=cls.default_arches,
-            help="comma separated list of what arches to run, defaults to %s "
-                 "-- note that stable-related checks (e.g. UnstableOnly) default "
-                 "to the set of arches having stable profiles in the target repo)"
-                 % ", ".join(cls.default_arches))
+            help='comma separated list of what arches to run',
+            docs="""
+                The default arch list is %s. Note that stable-related checks
+                (e.g. UnstableOnly) default to the set of arches having stable
+                profiles in the target repo.
+            """ % ", ".join(cls.default_arches))
         parser.add_argument(
             '--disable-arches', nargs=1, action=cls._DisableArches,
             help="comma separated list of arches to disable from the defaults")
@@ -118,9 +120,11 @@ class ProfileAddon(base.Addon):
         group = parser.add_argument_group('Profiles')
         group.add_argument(
             "--profile-base", dest='profiles_dir', default=None,
-            help="filepath to base profiles directory.  This will override the "
-            "default usage of profiles bundled in the target repository; primarily "
-            "for testing.")
+            help="filepath to base profiles directory",
+            docs="""
+                This will override the default usage of profiles bundled in the
+                target repository; primarily for testing.
+            """)
         group.add_argument(
             "--profile-disable-dev", action='store_true',
             default=False, dest='profile_ignore_dev',

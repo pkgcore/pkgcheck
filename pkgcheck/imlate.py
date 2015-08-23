@@ -43,8 +43,10 @@ class ImlateReport(StableCheckAddon):
         parser.add_argument(
             "--source-arches", action='extend_comma', dest='reference_arches',
             default=ArchesAddon.default_arches,
-            help="comma separated list of what arches to compare against for "
-            "imlate, defaults to %s" % (", ".join(ArchesAddon.default_arches),))
+            help="comma separated list of what arches to compare against for imlate",
+            docs="""
+                The default arch list is %s.
+            """ % (", ".join(ArchesAddon.default_arches)))
 
     def __init__(self, options, arches):
         super(ImlateReport, self).__init__(options)
