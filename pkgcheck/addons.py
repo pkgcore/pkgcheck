@@ -36,7 +36,7 @@ class ArchesAddon(base.Addon):
 
         def __call__(self, parser, namespace, values, option_string=None):
             s = set(getattr(namespace, 'arches', ArchesAddon.default_arches))
-            parser.values.arches = tuple(s.difference(values.split(',')))
+            namespace.arches = tuple(s.difference(values.split(',')))
 
     @classmethod
     def mangle_argparser(cls, parser):
@@ -49,7 +49,7 @@ class ArchesAddon(base.Addon):
                 profiles in the target repo.
             """ % ", ".join(cls.default_arches))
         parser.add_argument(
-            '--disable-arches', nargs=1, action=cls._DisableArches,
+            '--disable-arches', type=str, action=cls._DisableArches,
             help="comma separated list of arches to disable from the defaults")
 
 
