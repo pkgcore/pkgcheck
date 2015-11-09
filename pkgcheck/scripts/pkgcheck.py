@@ -164,7 +164,7 @@ def check_args(parser, namespace):
         candidates = {}
         for name, repo in namespace.config.repo.iteritems():
             repo_base = getattr(repo, 'location', None)
-            if repo_base is not None and cwd.startswith(repo_base):
+            if repo_base is not None and repo.contains(cwd):
                 candidates[repo] = name
         if not candidates:
             parser.error(
