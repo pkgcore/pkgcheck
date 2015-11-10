@@ -275,13 +275,14 @@ class SrcUriReport(base.Template):
     verify that it's a valid/fetchable uri, port 80,443,23
     """
 
+    required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
     known_results = (BadProto, MissingUri, MetadataError) + \
         addons.UseAddon.known_results
 
     valid_protos = frozenset(["http", "https", "ftp"])
 
-    def __init__(self, options):
+    def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
 
     def feed(self, pkg, reporter):
