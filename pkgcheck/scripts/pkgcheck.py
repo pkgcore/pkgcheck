@@ -97,8 +97,10 @@ def check_args(parser, namespace):
         get_plugins('check', plugins)),
         key=lambda x: x.__name__)
     if namespace.list_checks or namespace.list_reporters:
-        if namespace.list_reporters == namespace.list_checks:
-            parser.error("--list-checks and --list-reporters are mutually exclusive")
+        if namespace.list_reporters and namespace.list_checks:
+            parser.only_error("--list-checks and --list-reporters are mutually exclusive")
+        # no need to check any other args
+        return
     cwd = None
     if namespace.suite is None:
         # No suite explicitly specified. Use the repo to guess the suite.
