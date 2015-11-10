@@ -286,30 +286,36 @@ class SrcUriReport(base.Template):
 
     def feed(self, pkg, reporter):
         try:
-            lacks_cond_uri = set()
             lacks_uri = set()
             # duplicate entries are possible.
             seen = set()
             for f_cond in pkg.fetchables:
-                for f_inst in f_cond.payload:
+                lacks_cond_uri = []
+                if getattr(f_cond, 'payload', False):
+                    fetchables = f_cond.payload
+                    restrict = pkg.restrict.evaluate_depset(f_cond.restriction.vals)
+                else:
+                    fetchables = [f_cond]
+                    restrict = pkg.restrict
+                for f_inst in fetchables:
                     if f_inst.filename in seen:
                         continue
                     seen.add(f_inst.filename)
                     if not f_inst.uri:
-                        lacks_cond_uri.add(f_inst.filename)
+                        lacks_cond_uri.append(f_inst.filename)
                     else:
                         bad = set()
                         for x in f_inst.uri:
                             i = x.find("://")
                             if i == -1:
-                                lacks_uri.add(x)
+                                lacks_cond_uri.append(x)
                             elif x[:i] not in self.valid_protos:
                                 bad.add(x)
                         if bad:
                             reporter.add_report(
                                 BadProto(pkg, f_inst.filename, bad))
                 # enable conditional and check if RESTRICT=fetch is set
-                if 'fetch' not in pkg.restrict.evaluate_depset(f_cond.restriction.vals):
+                if 'fetch' not in restrict:
                     lacks_uri.update(lacks_cond_uri)
 
             for x in sorted(lacks_uri):
