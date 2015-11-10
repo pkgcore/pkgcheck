@@ -275,43 +275,45 @@ class SrcUriReport(base.Template):
     verify that it's a valid/fetchable uri, port 80,443,23
     """
 
-    required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
     known_results = (BadProto, MissingUri, MetadataError) + \
         addons.UseAddon.known_results
 
     valid_protos = frozenset(["http", "https", "ftp"])
 
-    def __init__(self, options, iuse_handler):
+    def __init__(self, options):
         base.Template.__init__(self, options)
-        self.iuse_filter = iuse_handler.get_filter('fetchables')
 
     def feed(self, pkg, reporter):
         try:
+            lacks_cond_uri = set()
             lacks_uri = set()
             # duplicate entries are possible.
             seen = set()
-            for f_inst in self.iuse_filter((fetchable,), pkg,
-                                           pkg.fetchables, reporter):
-                if f_inst.filename in seen:
-                    continue
-                seen.add(f_inst.filename)
-                if not f_inst.uri:
-                    lacks_uri.add(f_inst.filename)
-                else:
-                    bad = set()
-                    for x in f_inst.uri:
-                        i = x.find("://")
-                        if i == -1:
-                            lacks_uri.add(x)
-                        elif x[:i] not in self.valid_protos:
-                            bad.add(x)
-                    if bad:
-                        reporter.add_report(
-                            BadProto(pkg, f_inst.filename, bad))
-            if "fetch" not in pkg.restrict:
-                for x in sorted(lacks_uri):
-                    reporter.add_report(MissingUri(pkg, x))
+            for f_cond in pkg.fetchables:
+                for f_inst in f_cond.payload:
+                    if f_inst.filename in seen:
+                        continue
+                    seen.add(f_inst.filename)
+                    if not f_inst.uri:
+                        lacks_cond_uri.add(f_inst.filename)
+                    else:
+                        bad = set()
+                        for x in f_inst.uri:
+                            i = x.find("://")
+                            if i == -1:
+                                lacks_uri.add(x)
+                            elif x[:i] not in self.valid_protos:
+                                bad.add(x)
+                        if bad:
+                            reporter.add_report(
+                                BadProto(pkg, f_inst.filename, bad))
+                # enable conditional and check if RESTRICT=fetch is set
+                if 'fetch' not in pkg.restrict.evaluate_depset(f_cond.restriction.vals):
+                    lacks_uri.update(lacks_cond_uri)
+
+            for x in sorted(lacks_uri):
+                reporter.add_report(MissingUri(pkg, x))
 
         except (KeyboardInterrupt, SystemExit):
             raise
