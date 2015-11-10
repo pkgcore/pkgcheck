@@ -169,11 +169,11 @@ def check_args(parser, namespace):
             if repo_base is not None and repo.contains(cwd):
                 candidates[repo] = name
         if not candidates:
-            parser.error(
+            parser.only_error(
                 'No target repo specified on commandline or suite and '
                 'current directory is not inside a known repo.')
         elif len(candidates) > 1:
-            parser.error(
+            parser.only_error(
                 'Found multiple matches when guessing repo based on '
                 'current directory (%s). Specify a repo on the '
                 'commandline or suite or remove some repos from your '
@@ -187,7 +187,7 @@ def check_args(parser, namespace):
         if namespace.reporter is None:
             namespace.reporter = get_plugin('reporter', plugins)
         if namespace.reporter is None:
-            parser.error(
+            parser.only_error(
                 'no config defined reporter found, nor any default '
                 'plugin based reporters')
     else:
@@ -196,12 +196,12 @@ def check_args(parser, namespace):
             func = list(base.Whitelist([namespace.reporter]).filter(
                 get_plugins('reporter', plugins)))
             if not func:
-                parser.error(
+                parser.only_error(
                     "no reporter matches %r\n"
-                    "please see --list-reporter for a list of "
+                    "please see --list-reporters for a list of "
                     "valid reporters" % namespace.reporter)
             elif len(func) > 1:
-                parser.error(
+                parser.only_error(
                     "--reporter %r matched multiple reporters, "
                     "must match one. %r" % (
                         namespace.reporter,
@@ -232,14 +232,14 @@ def check_args(parser, namespace):
     else:
         repo_base = getattr(namespace.target_repo, 'location', None)
         if not repo_base:
-            parser.error(
+            parser.only_error(
                 'Either specify a target repo that is not multi-tree or '
                 'one or more extended atoms to scan '
                 '("*" for the entire repo).')
         cwd = abspath(os.getcwd())
         repo_base = abspath(repo_base)
         if not cwd.startswith(repo_base):
-            parser.error(
+            parser.only_error(
                 'Working dir (%s) is not inside target repo (%s). Fix '
                 'that or specify one or more extended atoms to scan.' % (
                     cwd, repo_base))
@@ -270,7 +270,7 @@ def check_args(parser, namespace):
         namespace.checks = list(blacklist.filter(namespace.checks))
 
     if not namespace.checks:
-        parser.error('No active checks')
+        parser.only_error('No active checks')
 
     namespace.addons = set()
 
