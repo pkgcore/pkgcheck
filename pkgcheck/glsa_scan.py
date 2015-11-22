@@ -8,11 +8,11 @@ from snakeoil.demandload import demandload
 from pkgcheck import base
 
 demandload(
+    'pkgcore.log:logger',
     'pkgcore.pkgsets.glsa:GlsaDirSet',
     'pkgcore.restrictions:packages,values',
     'pkgcore.restrictions.util:collect_package_restrictions',
     'snakeoil.osutils:abspath,pjoin',
-    'warnings'
 )
 
 
@@ -94,7 +94,7 @@ class TreeVulnerabilitiesReport(base.Template):
                         "--glsa-dir must be specified, couldn't identify glsa src from %r" %
                         namespace.src_repo)
                 namespace.glsa_enabled = False
-                warnings.warn(
+                logger.warn(
                     "disabling GLSA checks due to no glsa source "
                     "being found, and the check not being explicitly enabled; "
                     "this behaviour may change")
