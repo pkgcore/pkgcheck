@@ -28,7 +28,7 @@ demandload(
 )
 
 argparser = commandline.mk_argparser(
-    domain=False, color=False, description=__doc__.split('\n', 1)[0])
+    domain=False, color=False, description=__doc__)
 # These are all set based on other options, so have no default setting.
 argparser.set_defaults(repo_bases=[])
 argparser.set_defaults(guessed_target_repo=False)
