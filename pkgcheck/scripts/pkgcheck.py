@@ -336,7 +336,7 @@ def display_checks(out, checks):
             out.first_prefix.append('  ')
             out.later_prefix.append('  ')
             for check in l:
-                out.write("%s:" % check.__name__)
+                out.write(out.fg('yellow'), check.__name__, out.reset, ':')
                 dump_docstring(out, check, prefix='  ')
             out.write()
         finally:
