@@ -14,13 +14,25 @@ The metadata.xml checks require either xmllint (installed as part of
 libxml2) or the python bindings to libxml2 (installed as part of
 libxml2 with USE=python), with the latter preferred for speed reasons.
 
-Installation
-============
+Installing
+==========
 
 No installation is strictly required: just run the ``pkgcheck`` script and
-as long as you are not root things should work. If you want to make
-pkgcheck available system-wide use the provided ``setup.py``
-(see `Installing python modules`_ for details).
+things should work. For a more permanent install see the following options:
+
+Installing latest pypi release in a virtualenv::
+
+    pip install pkgcheck
+
+Installing from git in a virtualenv (latest snakeoil/pkgcore are often required)::
+
+    pip install https://github.com/pkgcore/snakeoil/archive/master.tar.gz
+    pip install https://github.com/pkgcore/pkgcore/archive/master.tar.gz
+    pip install https://github.com/pkgcore/pkgcheck/archive/master.tar.gz
+
+Installing from a tarball or git repo::
+
+    python setup.py install pplugincache
 
 Notes
 =====
