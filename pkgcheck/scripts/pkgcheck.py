@@ -47,19 +47,20 @@ main_options.add_argument(
     config_type='pkgcheck_suite',
     help='Specify the configuration suite to use')
 main_options.add_argument(
-    "--list-checks", action="store_true", default=False,
-    help="print what checks are available to run and exit")
-main_options.add_argument(
     '--reporter', action='store', default=None,
     help="Use a non-default reporter (defined in pkgcore's config).")
-main_options.add_argument(
-    '--list-reporters', action='store_true', default=False,
-    help="print known reporters")
 main_options.add_argument(
     '-o', '--overlayed-repo', metavar='repo',
     action=commandline.StoreRepoObject, dest='src_repo',
     help="if the target repo is an overlay, specify the "
          "repository name to pull profiles/license from")
+list_options = main_options.add_mutually_exclusive_group()
+list_options.add_argument(
+    "--list-checks", action="store_true", default=False,
+    help="show available checks and exit")
+list_options.add_argument(
+    '--list-reporters', action='store_true', default=False,
+    help="show available reporters and exit")
 
 check_options = argparser.add_argument_group('Check selection')
 check_options.add_argument(
@@ -96,11 +97,6 @@ def check_args(parser, namespace):
     namespace.checks = sorted(unstable_unique(
         get_plugins('check', plugins)),
         key=lambda x: x.__name__)
-    if namespace.list_checks or namespace.list_reporters:
-        if namespace.list_reporters and namespace.list_checks:
-            parser.only_error("--list-checks and --list-reporters are mutually exclusive")
-        # no need to check any other args
-        return
     cwd = None
     if namespace.suite is None:
         # No suite explicitly specified. Use the repo to guess the suite.
