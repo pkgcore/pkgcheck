@@ -97,6 +97,11 @@ def check_args(parser, namespace):
     namespace.checks = sorted(unstable_unique(
         get_plugins('check', plugins)),
         key=lambda x: x.__name__)
+
+    if namespace.list_checks or namespace.list_reporters:
+        # no need to check any other args
+        return
+
     cwd = None
     if namespace.suite is None:
         # No suite explicitly specified. Use the repo to guess the suite.
