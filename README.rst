@@ -17,7 +17,7 @@ libxml2 with USE=python), with the latter preferred for speed reasons.
 Installing
 ==========
 
-No installation is strictly required: just run the ``pkgcheck`` script and
+No installation is strictly required, just run the ``pkgcheck`` script and
 things should work. For a more permanent install see the following options:
 
 Installing latest pypi release in a virtualenv::
@@ -32,7 +32,8 @@ Installing from git in a virtualenv (latest snakeoil/pkgcore are often required)
 
 Installing from a tarball or git repo::
 
-    python setup.py install pplugincache
+    python setup.py install
+    pplugincache pkgcheck
 
 Notes
 =====
