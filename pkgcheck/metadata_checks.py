@@ -171,7 +171,7 @@ class UnusedLocalFlagsReport(base.Template):
 class MissingSlotDep(base.Result):
     """Missing slot value in dependencies"""
 
-    __slots__ = ('category', 'package', 'version', 'eapi', 'dep', 'dep_slots')
+    __slots__ = ('category', 'package', 'version', 'dep', 'dep_slots')
 
     threshold = base.versioned_feed
 
@@ -179,17 +179,12 @@ class MissingSlotDep(base.Result):
         base.Result.__init__(self)
         self.dep = dep
         self.dep_slots = dep_slots
-        self.eapi = pkg.eapi
         self._store_cpv(pkg)
 
     @property
     def short_desc(self):
-        slot_op = ''
-        if self.eapi not in (0, 1, 2, 3, 4):
-            slot_op = ' or use a slot operator'
-        s = "'%s' matches more than one slot, specify an explicit slot%s: [ %s ]" % (
-            self.dep, slot_op, ', '.join(sorted(self.dep_slots)))
-        return s
+        return "'%s' matches more than one slot: [ %s ]" % (
+            self.dep, ', '.join(sorted(self.dep_slots)))
 
 
 class MissingSlotDepReport(base.Template):
@@ -204,17 +199,16 @@ class MissingSlotDepReport(base.Template):
         self.iuse_filter = iuse_handler.get_filter()
 
     def feed(self, pkg, reporter):
-        # EAPI 0 doesn't support slot deps at all
-        if pkg.eapi == 0:
+        # only run the check for EAPI 5 and above
+        if not pkg.eapi_obj.options.get('sub_slotting', False):
             return
 
         rdepends = set(self.iuse_filter((atom,), pkg, pkg.rdepends, reporter))
         depends = set(self.iuse_filter((atom,), pkg, pkg.depends, reporter))
-        for dep in (x for x in rdepends.intersection(depends) if not x.blocks):
+        for dep in (x for x in rdepends.intersection(depends) if not (x.blocks or x.op)):
             dep_slots = set(x.slot for x in pkg.repo.itermatch(dep))
             if len(dep_slots) > 1:
-                if (pkg.eapi not in (0, 1, 2, 3, 4) and dep.slot_operator is None and dep.slot is None) or \
-                        (pkg.eapi != 0 and dep.slot is None):
+                if dep.slot_operator is None and dep.slot is None:
                     reporter.add_report(MissingSlotDep(pkg, str(dep), dep_slots))
 
 
