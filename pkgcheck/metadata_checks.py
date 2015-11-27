@@ -168,6 +168,56 @@ class UnusedLocalFlagsReport(base.Template):
             reporter.add_report(UnusedLocalFlags(pkg, unused))
 
 
+class MissingSlotDep(base.Result):
+    """Missing slot value in dependencies"""
+
+    __slots__ = ('category', 'package', 'version', 'eapi', 'dep', 'dep_slots')
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, dep, dep_slots):
+        base.Result.__init__(self)
+        self.dep = dep
+        self.dep_slots = dep_slots
+        self.eapi = pkg.eapi
+        self._store_cpv(pkg)
+
+    @property
+    def short_desc(self):
+        slot_op = ''
+        if self.eapi not in (0, 1, 2, 3, 4):
+            slot_op = ' or use a slot operator'
+        s = "'%s' matches more than one slot, specify an explicit slot%s: [ %s ]" % (
+            self.dep, slot_op, ', '.join(sorted(self.dep_slots)))
+        return s
+
+
+class MissingSlotDepReport(base.Template):
+    """Check for missing slot dependencies"""
+
+    feed_type = base.versioned_feed
+    required_addons = (addons.UseAddon,)
+    known_results = (MissingSlotDep,) + addons.UseAddon.known_results
+
+    def __init__(self, options, iuse_handler):
+        base.Template.__init__(self, options)
+        self.iuse_filter = iuse_handler.get_filter()
+
+    def feed(self, pkg, reporter):
+        # EAPI 0 doesn't support slot deps at all
+        if pkg.eapi == 0:
+            return
+
+        rdepends = set(self.iuse_filter((atom,), pkg, pkg.rdepends, reporter))
+        depends = set(self.iuse_filter((atom,), pkg, pkg.depends, reporter))
+        for dep in rdepends.intersection(depends):
+            dep_slots = set(x.slot for x in pkg.repo.match(dep))
+            if len(dep_slots) > 1:
+                if (pkg.eapi not in (0, 1, 2, 3, 4) and dep.slot_operator is None and dep.slot is None) or \
+                        (pkg.eapi != 0 and dep.slot is None):
+                    reporter.add_report(MissingSlotDep(pkg, str(dep), dep_slots))
+
+
 class DependencyReport(base.Template):
 
     """check DEPEND, RDEPEND, and PDEPEND"""

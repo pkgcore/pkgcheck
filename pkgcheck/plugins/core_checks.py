@@ -26,6 +26,7 @@ pkgcore_plugins = {
         metadata_checks.UnusedLocalFlagsReport,
         metadata_checks.DependencyReport,
         metadata_checks.KeywordsReport,
+        metadata_checks.MissingSlotDepReport,
         metadata_checks.SrcUriReport,
         metadata_checks.DescriptionReport,
         metadata_checks.RestrictsReport,
