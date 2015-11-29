@@ -6,6 +6,7 @@ from collections import deque
 import os
 import stat
 
+from pkgcore.ebuild.atom import MalformedAtom, atom
 from snakeoil.demandload import demandload
 from snakeoil.osutils import listdir, pjoin
 
@@ -36,6 +37,42 @@ class MissingFile(Result):
     @property
     def short_desc(self):
         return "required file %s doesn't exist" % self.filename
+
+
+class MismatchedPN(Result):
+    """Ebuilds that have different names than their parent directory"""
+
+    __slots__ = ("category", "package", "ebuilds")
+
+    threshold = package_feed
+
+    def __init__(self, pkg, ebuilds):
+        Result.__init__(self)
+        self._store_cp(pkg)
+        self.ebuilds = ebuilds
+
+    @property
+    def short_desc(self):
+        return "mismatched package name%s: [ %s ]" % (
+            's'[len(self.ebuilds) == 1:], ', '.join(self.ebuilds))
+
+
+class InvalidPN(Result):
+    """Ebuilds that have invalid package names"""
+
+    __slots__ = ("category", "package", "ebuilds")
+
+    threshold = package_feed
+
+    def __init__(self, pkg, ebuilds):
+        Result.__init__(self)
+        self._store_cp(pkg)
+        self.ebuilds = ebuilds
+
+    @property
+    def short_desc(self):
+        return "invalid package name%s: [ %s ]" % (
+            's'[len(self.ebuilds) == 1:], ', '.join(self.ebuilds))
 
 
 class ExecutableFile(Result):
@@ -131,6 +168,11 @@ class PkgDirReport(Template):
 
     def feed(self, pkgset, reporter):
         base = os.path.dirname(pkgset[0].ebuild.path)
+        category = os.path.basename(
+            os.path.dirname(os.path.dirname(pkgset[0].ebuild.path)))
+        ebuild_ext = '.ebuild'
+        mismatched = []
+        invalid = []
         # note we don't use os.walk, we need size info also
         for filename in listdir(base):
             # while this may seem odd, written this way such that the
@@ -141,13 +183,26 @@ class PkgDirReport(Template):
             if any(True for x in filename if x not in allowed_filename_chars_set):
                 reporter.add_report(Glep31Violation(pkgset[0], filename))
 
-            if filename.endswith(".ebuild") or filename in \
+            if filename.endswith(ebuild_ext) or filename in \
                     ("Manifest", "metadata.xml"):
                 if os.stat(pjoin(base, filename)).st_mode & 0111:
                     reporter.add_report(ExecutableFile(pkgset[0], filename))
 
-            if filename.endswith(".ebuild"):
+            if filename.endswith(ebuild_ext):
                 utf8_check(pkgset[0], base, filename, reporter)
+
+                pkg_name = os.path.basename(filename[:-len(ebuild_ext)])
+                try:
+                    pkg_atom = atom('=%s/%s' % (category, pkg_name))
+                    if pkg_atom.package != os.path.basename(base):
+                        mismatched.append(pkg_name)
+                except MalformedAtom:
+                    invalid.append(pkg_name)
+
+        if mismatched:
+            reporter.add_report(MismatchedPN(pkgset[0], mismatched))
+        if invalid:
+            reporter.add_report(InvalidPN(pkgset[0], invalid))
 
         if not os.path.exists(pjoin(base, 'files')):
             return
