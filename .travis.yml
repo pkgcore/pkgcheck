@@ -12,8 +12,10 @@ sudo: false
 cache:
   directories:
     - $HOME/.cache/pip
-install: pip install tox 'coveralls>0.5'
+install: pip install tox coveralls
 script: tox -e travis
 after_success:
   # upload coverage data
+  - pushd .tox/travis/lib/python*/site-packages
   - coveralls
+  - popd
