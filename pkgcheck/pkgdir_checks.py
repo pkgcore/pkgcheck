@@ -164,7 +164,7 @@ class PkgDirReport(Template):
 
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
     known_results = (MissingFile, ExecutableFile, SizeViolation,
-                     Glep31Violation, InvalidUtf8)
+                     Glep31Violation, InvalidUtf8, MismatchedPN, InvalidPN)
 
     def feed(self, pkgset, reporter):
         base = os.path.dirname(pkgset[0].ebuild.path)
