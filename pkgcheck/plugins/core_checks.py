@@ -33,7 +33,7 @@ pkgcore_plugins = {
         metadata_xml.CategoryMetadataXmlCheck,
         metadata_xml.PackageMetadataXmlCheck,
         pkgdir_checks.PkgDirReport,
-        repo_metadata.RequiredChksums,
+        repo_metadata.ManifestReport,
         repo_metadata.UnusedGlobalFlags,
         repo_metadata.UnusedLicense,
         stale_unstable.StaleUnstableReport,

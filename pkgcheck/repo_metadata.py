@@ -3,12 +3,14 @@
 
 import itertools
 from operator import attrgetter, itemgetter
+import os
 
 from pkgcore.ebuild.repository import SlavedTree
 from snakeoil import mappings
 from snakeoil.demandload import demandload
 
 from pkgcheck import base, addons
+from pkgcheck.pkgdir_checks import MissingFile
 
 demandload(
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
@@ -172,37 +174,93 @@ class MissingChksum(base.Result):
             (self.filename, ', '.join(self.missing), ', '.join(self.existing))
 
 
-class RequiredChksums(base.Template):
+class MissingManifest(base.Result):
+    """SRC_URI targets missing from Manifest file"""
 
-    """
-    Check to ensure that the required manifest hashes are in use.
+    __slots__ = ("category", "package", "version", "files")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, files):
+        base.Result.__init__(self)
+        self._store_cpv(pkg)
+        self.files = files
+
+    @property
+    def short_desc(self):
+        return "distfile%s missing from Manifest: [ %s ]" % (
+            's'[len(self.files) == 1:], ', '.join(sorted(self.files)),)
+
+
+class UnknownManifest(base.Result):
+    """Manifest entries not matching any SRC_URI targets"""
+
+    __slots__ = ("category", "package", "files")
+    threshold = base.package_feed
+
+    def __init__(self, pkg, files):
+        base.Result.__init__(self)
+        self._store_cp(pkg)
+        self.files = files
+
+    @property
+    def short_desc(self):
+        return "unknown distfile%s in Manifest: [ %s ]" % (
+            's'[len(self.files) == 1:], ', '.join(sorted(self.files)),)
+
+
+class ManifestReport(base.Template):
+
+    """Manifest related checks.
+
+    Verify that the Manifest file exists, doesn't have missing or
+    extraneous entries, and that the required hashes are in use.
     """
 
+    required_addons = (addons.UseAddon,)
     feed_type = base.package_feed
-    known_results = (MissingChksum,)
+    known_results = (MissingFile, MissingChksum, MissingManifest, UnknownManifest) + \
+        addons.UseAddon.known_results
 
     repo_grabber = attrgetter("repo")
 
-    def __init__(self, options):
+    def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
         self.required_checksums = mappings.defaultdictkey(
             lambda repo: frozenset(repo.config.manifests.hashes if hasattr(repo, 'config') else ()))
         self.seen_checksums = {}
+        self.iuse_filter = iuse_handler.get_filter('fetchables')
 
     def feed(self, full_pkgset, reporter):
         # sort it by repo.
         for repo, pkgset in itertools.groupby(full_pkgset, self.repo_grabber):
             required_checksums = self.required_checksums[repo]
             pkgset = list(pkgset)
+
             manifest = pkgset[0].manifest
+            if not os.path.exists(manifest.path):
+                reporter.add_report(MissingFile(pkgset[0], 'Manifest'))
+                return
+            manifests = set(manifest.distfiles.iterkeys())
 
             seen = set()
             for pkg in pkgset:
-                for f_inst in (iflatten_instance(pkg.fetchables, fetch.fetchable)):
+                pkg.release_cached_data()
+                fetchables = set(self.iuse_filter(
+                    (fetch.fetchable,), pkg,
+                    pkg._get_attr['fetchables'](pkg, allow_missing_checksums=True),
+                    reporter))
+                pkg.release_cached_data()
+
+                fetchable_files = set(f.filename for f in fetchables)
+                missing_manifests = fetchable_files - manifests
+                if missing_manifests:
+                    reporter.add_report(MissingManifest(pkg, missing_manifests))
+
+                for f_inst in fetchables:
                     if f_inst.filename in seen:
                         continue
                     missing = required_checksums.difference(f_inst.chksums)
-                    if missing:
+                    if f_inst.filename not in missing_manifests and missing:
                         reporter.add_report(
                             MissingChksum(pkg, f_inst.filename, missing,
                                           f_inst.chksums))
@@ -221,3 +279,7 @@ class RequiredChksums(base.Template):
                     else:
                         seen_chksums.update(f_inst.chksums)
                         seen_pkgs.append(pkg)
+
+            unknown_manifests = manifests.difference(seen)
+            if unknown_manifests:
+                reporter.add_report(UnknownManifest(pkgset[0], unknown_manifests))
