@@ -10,7 +10,6 @@ from snakeoil import mappings
 from snakeoil.demandload import demandload
 
 from pkgcheck import base, addons
-from pkgcheck.pkgdir_checks import MissingFile
 
 demandload(
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
@@ -218,7 +217,7 @@ class ManifestReport(base.Template):
 
     required_addons = (addons.UseAddon,)
     feed_type = base.package_feed
-    known_results = (MissingFile, MissingChksum, MissingManifest, UnknownManifest) + \
+    known_results = (MissingChksum, MissingManifest, UnknownManifest) + \
         addons.UseAddon.known_results
 
     repo_grabber = attrgetter("repo")
@@ -235,13 +234,7 @@ class ManifestReport(base.Template):
         for repo, pkgset in itertools.groupby(full_pkgset, self.repo_grabber):
             required_checksums = self.required_checksums[repo]
             pkgset = list(pkgset)
-
-            manifest = pkgset[0].manifest
-            if not os.path.exists(manifest.path):
-                reporter.add_report(MissingFile(pkgset[0], 'Manifest'))
-                return
-            manifests = set(manifest.distfiles.iterkeys())
-
+            manifests = set(pkgset[0].manifest.distfiles.iterkeys())
             seen = set()
             for pkg in pkgset:
                 pkg.release_cached_data()
