@@ -3,7 +3,6 @@
 
 import itertools
 from operator import attrgetter, itemgetter
-import os
 
 from pkgcore.ebuild.repository import SlavedTree
 from snakeoil import mappings
