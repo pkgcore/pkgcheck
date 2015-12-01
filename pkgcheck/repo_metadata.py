@@ -239,7 +239,8 @@ class ManifestReport(base.Template):
                 pkg.release_cached_data()
                 fetchables = set(self.iuse_filter(
                     (fetch.fetchable,), pkg,
-                    pkg._get_attr['fetchables'](pkg, allow_missing_checksums=True),
+                    pkg._get_attr['fetchables'](
+                        pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True),
                     reporter))
                 pkg.release_cached_data()
 
