@@ -207,9 +207,8 @@ class MissingSlotDepReport(base.Template):
         depends = set(self.iuse_filter((atom,), pkg, pkg.depends, reporter))
         for dep in (x for x in rdepends.intersection(depends) if not (x.blocks or x.op)):
             dep_slots = set(x.slot for x in pkg.repo.itermatch(dep))
-            if len(dep_slots) > 1:
-                if dep.slot_operator is None and dep.slot is None:
-                    reporter.add_report(MissingSlotDep(pkg, str(dep), dep_slots))
+            if len(dep_slots) > 1 and (dep.slot_operator is None and dep.slot is None):
+                reporter.add_report(MissingSlotDep(pkg, str(dep), dep_slots))
 
 
 class DependencyReport(base.Template):
