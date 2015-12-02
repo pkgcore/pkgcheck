@@ -245,7 +245,7 @@ class ManifestReport(base.Template):
                 pkg.release_cached_data()
 
                 fetchable_files = set(f.filename for f in fetchables)
-                missing_manifests = fetchable_files - manifests
+                missing_manifests = fetchable_files.difference(manifests)
                 if missing_manifests:
                     reporter.add_report(MissingManifest(pkg, missing_manifests))
 
