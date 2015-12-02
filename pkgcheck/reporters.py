@@ -128,13 +128,16 @@ class XmlReporter(base.Reporter):
     # xml report, shouldn't be used but in worst case.
     priority = -1000
 
-    repo_template = "<result><msg>%s</msg></result>"
-    cat_template = "<result><category>%(category)s</category><msg>%(msg)s</msg></result>"
+    repo_template = ("<result><class>%(class)s</class>"
+        "<msg>%(msg)s</msg></result>")
+    cat_template = ("<result><category>%(category)s</category>"
+        "<class>%(class)s</class><msg>%(msg)s</msg></result>")
     pkg_template = ("<result><category>%(category)s</category>"
-        "<package>%(package)s</package><msg>%(msg)s</msg></result>")
+        "<package>%(package)s</package><class>%(class)s</class>"
+        "<msg>%(msg)s</msg></result>")
     ver_template = ("<result><category>%(category)s</category>"
         "<package>%(package)s</package><version>%(version)s</version>"
-        "<msg>%(msg)s</msg></result>")
+        "<class>%(class)s</class><msg>%(msg)s</msg></result>")
 
     threshold_map = {
         base.repository_feed: repo_template,
@@ -158,6 +161,7 @@ class XmlReporter(base.Reporter):
     def add_report(self, result):
         d = dict((k, getattr(result, k, '')) for k in
                  ("category", "package", "version"))
+        d["class"] = xml_escape(result.__class__.__name__)
         d["msg"] = xml_escape(result.short_desc)
         self.out.write(self.threshold_map[result.threshold] % d)
 
