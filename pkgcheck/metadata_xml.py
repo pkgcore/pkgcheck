@@ -139,12 +139,11 @@ class base_check(base.Template):
 
     @classmethod
     def mangle_argparser(cls, parser):
-        group = parser.add_argument_group('Plugin options')
         try:
-            group.add_argument(
+            parser.plugin.add_argument(
                 '--metadata-dtd',
                 help='location to cache %s' % (cls.dtd_url,))
-            group.add_argument(
+            parser.plugin.add_argument(
                 '--metadata-dtd-required',
                 help="if metadata.dtd cannot be fetched (no connection for example), "
                      "treat it as a failure rather than warning and ignoring.")
