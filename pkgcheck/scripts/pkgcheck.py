@@ -84,11 +84,11 @@ def add_addon(addon):
         for dep in addon.required_addons:
             add_addon(dep)
 
-plugin_options = argparser.add_argument_group('Plugin options')
+argparser.plugin = argparser.add_argument_group('Plugin options')
 for check in get_plugins('check', plugins):
     add_addon(check)
 for addon in all_addons:
-    addon.mangle_argparser(plugin_options)
+    addon.mangle_argparser(argparser)
 
 
 @argparser.bind_final_check

@@ -40,7 +40,8 @@ class ArchesAddon(base.Addon):
 
     @classmethod
     def mangle_argparser(cls, parser):
-        parser.add_argument(
+        group = parser.add_argument_group('Arches')
+        group.add_argument(
             '-a', '--arches', nargs=1, action='extend_comma', default=cls.default_arches,
             help='comma separated list of what arches to run',
             docs="""
@@ -48,7 +49,7 @@ class ArchesAddon(base.Addon):
                 (e.g. UnstableOnly) default to the set of arches having stable
                 profiles in the target repo.
             """ % ", ".join(cls.default_arches))
-        parser.add_argument(
+        group.add_argument(
             '--disable-arches', type=str, action=cls._DisableArches,
             help="comma separated list of arches to disable from the defaults")
 
@@ -400,7 +401,7 @@ class LicenseAddon(base.Addon):
 
     @staticmethod
     def mangle_argparser(parser):
-        parser.add_argument("--license-dir", help="filepath to license directory")
+        parser.plugin.add_argument("--license-dir", help="filepath to license directory")
 
     @staticmethod
     def check_args(parser, namespace):
