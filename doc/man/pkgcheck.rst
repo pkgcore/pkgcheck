@@ -7,7 +7,7 @@ pkgcheck
 Description
 ===========
 
-pkgcheck is a pkgcore-based QA utility similar to ``repoman(1)`` from portage.
+pkgcheck is a QA utility based on **pkgcore**\(5) similar to **repoman**\(1) from portage.
 
 .. include:: ../generated/pkgcheck/main_options.rst
 
@@ -23,4 +23,4 @@ You can also stop by #pkgcore on freenode.
 See Also
 ========
 
-repoman(1)
+**pkgcore**\(5), **repoman**\(1)
