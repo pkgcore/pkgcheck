@@ -401,7 +401,8 @@ class LicenseAddon(base.Addon):
 
     @staticmethod
     def mangle_argparser(parser):
-        parser.plugin.add_argument("--license-dir", help="filepath to license directory")
+        group = parser.add_argument_group('Plugin options')
+        group.add_argument("--license-dir", help="filepath to license directory")
 
     @staticmethod
     def check_args(parser, namespace):

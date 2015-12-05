@@ -40,7 +40,8 @@ class ImlateReport(StableCheckAddon):
 
     @staticmethod
     def mangle_argparser(parser):
-        parser.plugin.add_argument(
+        group = parser.add_argument_group('Plugin options')
+        group.add_argument(
             "--source-arches", action='extend_comma', dest='reference_arches',
             default=ArchesAddon.default_arches,
             help="comma separated list of what arches to compare against for imlate",

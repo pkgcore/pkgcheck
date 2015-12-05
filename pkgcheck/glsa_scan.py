@@ -58,7 +58,8 @@ class TreeVulnerabilitiesReport(base.Template):
 
     @staticmethod
     def mangle_argparser(parser):
-        parser.plugin.add_argument(
+        group = parser.add_argument_group('Plugin options')
+        group.add_argument(
             "--glsa-dir", dest='glsa_location',
             help="source directory for glsas; tries to autodetermine it, may "
                  "be required if no glsa dirs are known")
