@@ -8,7 +8,7 @@ from pkgcheck import base
 
 demand_compile_regexp('indent_regexp', '^\t* \t+')
 
-class base_whitespace(base.Result):
+class base_whitespace(base.Warning):
 
     threshold = base.versioned_feed
 
@@ -28,7 +28,7 @@ class WhitespaceFound(base_whitespace):
     __slots__ = ("category", "package", "version", "lines", "leadtrail")
 
     def __init__(self, pkg, leadtrail, lines):
-        base.Result.__init__(self)
+        super(WhitespaceFound, self).__init__()
         self._store_cpv(pkg)
         self.lines = lines
         self.leadtrail = leadtrail
@@ -46,7 +46,7 @@ class WrongIndentFound(base_whitespace):
     __slots__ = ("category", "package", "version", "lines")
 
     def __init__(self, pkg, lines):
-        base.Result.__init__(self)
+        super(WrongIndentFound, self).__init__()
         self._store_cpv(pkg)
         self.lines = lines
 
@@ -62,7 +62,7 @@ class DoubleEmptyLine(base_whitespace):
     __slots__ = ("category", "package", "version", "lines")
 
     def __init__(self, pkg, lines):
-        base.Result.__init__(self)
+        super(DoubleEmptyLine, self).__init__()
         self._store_cpv(pkg)
         self.lines = lines
 
@@ -71,7 +71,7 @@ class DoubleEmptyLine(base_whitespace):
         return "ebuild has unneeded empty %s" % self.lines_str
 
 
-class TrailingEmptyLine(base.Result):
+class TrailingEmptyLine(base.Warning):
 
     """unneeded blank lines are found"""
 
@@ -80,13 +80,13 @@ class TrailingEmptyLine(base.Result):
     threshold = base.versioned_feed
 
     def __init__(self, pkg):
-        base.Result.__init__(self)
+        super(TrailingEmptyLine, self).__init__()
         self._store_cpv(pkg)
 
     short_desc = "ebuild has trailing blank line(s)"
 
 
-class NoFinalNewline(base.Result):
+class NoFinalNewline(base.Warning):
 
     """Ebuild's last line does not have a final newline."""
 
@@ -95,7 +95,7 @@ class NoFinalNewline(base.Result):
     threshold = base.versioned_feed
 
     def __init__(self, pkg):
-        base.Result.__init__(self)
+        super(NoFinalNewline, self).__init__()
         self._store_cpv(pkg)
 
     short_desc = "ebuild lacks an ending newline"

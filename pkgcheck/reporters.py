@@ -98,7 +98,8 @@ class FancyReporter(base.Reporter):
         if result.threshold == base.versioned_feed:
             s = "version %s: " % result.version
         self.out.write(
-            self.out.fg('yellow'), result.__class__.__name__, self.out.reset,
+            self.out.fg(getattr(result, 'color', 'yellow')),
+            result.__class__.__name__, self.out.reset,
             ': ', s, result.short_desc)
         self.out.first_prefix.pop()
         self.out.later_prefix.pop()

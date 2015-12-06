@@ -17,7 +17,7 @@ demandload(
 )
 
 
-class UnusedGlobalFlagsResult(base.Result):
+class UnusedGlobalFlagsResult(base.Warning):
 
     """
     unused use.desc flag(s)
@@ -28,7 +28,7 @@ class UnusedGlobalFlagsResult(base.Result):
     threshold = base.repository_feed
 
     def __init__(self, flags):
-        base.Result.__init__(self)
+        super(UnusedGlobalFlagsResult, self).__init__()
         # tricky, but it works; atoms have the same attrs
         self.flags = tuple(sorted(flags))
 
@@ -67,7 +67,7 @@ class UnusedGlobalFlags(base.Template):
             self.flags.clear()
 
 
-class UnusedLicenseReport(base.Result):
+class UnusedLicenseReport(base.Warning):
     """
     unused license(s) detected
     """
@@ -77,7 +77,7 @@ class UnusedLicenseReport(base.Result):
     threshold = base.repository_feed
 
     def __init__(self, licenses):
-        base.Result.__init__(self)
+        super(UnusedLicenseReport, self).__init__()
         self.licenses = tuple(sorted(licenses))
 
     @property
@@ -126,7 +126,7 @@ def reformat_chksums(iterable):
             yield chf, "%x" % val1, "%x" % val2
 
 
-class ConflictingChksums(base.Result):
+class ConflictingChksums(base.Error):
 
     """
     checksum conflict detected between two files
@@ -140,7 +140,7 @@ class ConflictingChksums(base.Result):
     _sorter = staticmethod(itemgetter(0))
 
     def __init__(self, pkg, filename, chksums, others):
-        base.Result.__init__(self)
+        super(ConflictingChksums, self).__init__()
         self._store_cpv(pkg)
         self.filename = filename
         self.chksums = tuple(sorted(reformat_chksums(chksums),
@@ -153,7 +153,7 @@ class ConflictingChksums(base.Result):
             ', '.join(self.others), self.filename, self.chksums)
 
 
-class MissingChksum(base.Result):
+class MissingChksum(base.Warning):
     """
     a file in the chksum data lacks required checksums
     """
@@ -162,6 +162,7 @@ class MissingChksum(base.Result):
                  'existing')
 
     def __init__(self, pkg, filename, missing, existing):
+        super(MissingChksum, self).__init__()
         self._store_cpv(pkg)
         self.filename, self.missing = filename, tuple(sorted(missing))
         self.existing = tuple(sorted(existing))
@@ -172,14 +173,14 @@ class MissingChksum(base.Result):
             (self.filename, ', '.join(self.missing), ', '.join(self.existing))
 
 
-class MissingManifest(base.Result):
+class MissingManifest(base.Error):
     """SRC_URI targets missing from Manifest file"""
 
     __slots__ = ("category", "package", "version", "files")
     threshold = base.versioned_feed
 
     def __init__(self, pkg, files):
-        base.Result.__init__(self)
+        super(MissingManifest, self).__init__()
         self._store_cpv(pkg)
         self.files = files
 
@@ -189,14 +190,14 @@ class MissingManifest(base.Result):
             's'[len(self.files) == 1:], ', '.join(sorted(self.files)),)
 
 
-class UnknownManifest(base.Result):
+class UnknownManifest(base.Warning):
     """Manifest entries not matching any SRC_URI targets"""
 
     __slots__ = ("category", "package", "files")
     threshold = base.package_feed
 
     def __init__(self, pkg, files):
-        base.Result.__init__(self)
+        super(UnknownManifest, self).__init__()
         self._store_cp(pkg)
         self.files = files
 

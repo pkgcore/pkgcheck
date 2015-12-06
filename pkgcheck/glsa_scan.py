@@ -16,7 +16,7 @@ demandload(
 )
 
 
-class VulnerablePackage(base.Result):
+class VulnerablePackage(base.Error):
 
     """Packages marked as vulnerable by GLSAs"""
 
@@ -24,7 +24,7 @@ class VulnerablePackage(base.Result):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, glsa):
-        base.Result.__init__(self)
+        super(VulnerablePackage, self).__init__()
         self._store_cpv(pkg)
         arches = set()
         for v in collect_package_restrictions(glsa, ["keywords"]):

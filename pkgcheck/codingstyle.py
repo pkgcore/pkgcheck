@@ -10,7 +10,7 @@ from pkgcheck import base
 demandload("re")
 
 
-class BadInsIntoDir(base.Result):
+class BadInsIntoDir(base.Warning):
 
     """ebuild uses insinto where compact commands exist"""
 
@@ -19,7 +19,7 @@ class BadInsIntoDir(base.Result):
     __slots__ = ("category", "package", "version", "line", "insintodir")
 
     def __init__(self, pkg, insintodir, line):
-        base.Result.__init__(self)
+        super(BadInsIntoDir, self).__init__()
         self._store_cpv(pkg)
         self.line = line
         self.insintodir = insintodir

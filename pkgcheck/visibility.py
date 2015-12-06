@@ -100,7 +100,7 @@ def strip_atom_use(inst):
     return atom(s)
 
 
-class VisibleVcsPkg(base.Result):
+class VisibleVcsPkg(base.Error):
     """pkg is vcs based, but visible"""
 
     __slots__ = ("category", "package", "version", "profile", "arch")
@@ -108,7 +108,7 @@ class VisibleVcsPkg(base.Result):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, arch, profile):
-        base.Result.__init__(self)
+        base.Error.__init__(self)
         self._store_cpv(pkg)
         self.arch = arch.lstrip("~")
         self.profile = profile
@@ -119,7 +119,7 @@ class VisibleVcsPkg(base.Result):
             self.arch, self.profile)
 
 
-class NonExistentDeps(base.Result):
+class NonExistentDeps(base.Warning):
     """No matches exist for a depset element"""
 
     __slots__ = ("category", "package", "version", "attr", "atoms")
@@ -127,7 +127,7 @@ class NonExistentDeps(base.Result):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, attr, nonexistent_atoms):
-        base.Result.__init__(self)
+        base.Warning.__init__(self)
         self._store_cpv(pkg)
         self.attr = attr
         self.atoms = tuple(str(x) for x in nonexistent_atoms)
@@ -138,7 +138,7 @@ class NonExistentDeps(base.Result):
             self.attr, ', '.join(self.atoms))
 
 
-class UncheckableDep(base.Result):
+class UncheckableDep(base.Warning):
 
     """Given dependency cannot be checked due to the number of transitive use deps in it"""
 
@@ -147,7 +147,7 @@ class UncheckableDep(base.Result):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, attr):
-        base.Result.__init__(self)
+        base.Warning.__init__(self)
         self._store_cpv(pkg)
         self.attr = attr
 
@@ -157,7 +157,7 @@ class UncheckableDep(base.Result):
             self.attr)
 
 
-class NonsolvableDeps(base.Result):
+class NonsolvableDeps(base.Error):
     """No potential solution for a depset attribute"""
 
     __slots__ = ("category", "package", "version", "attr", "profile",
@@ -166,7 +166,7 @@ class NonsolvableDeps(base.Result):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, attr, keyword, profile, horked):
-        base.Result.__init__(self)
+        base.Error.__init__(self)
         self._store_cpv(pkg)
         self.attr = attr
         self.profile = profile

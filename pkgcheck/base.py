@@ -216,6 +216,14 @@ class Result(object):
             setattr(self, k, v)
 
 
+class Error(Result):
+    color = 'red'
+
+
+class Warning(Result):
+    color = 'yellow'
+
+
 class Reporter(object):
 
     def add_report(self, result):

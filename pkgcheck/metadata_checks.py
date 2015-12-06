@@ -14,13 +14,13 @@ from pkgcheck import base, addons
 demandload('logging')
 
 
-class MetadataError(base.Result):
+class MetadataError(base.Error):
     """problem detected with a packages metadata"""
     __slots__ = ("category", "package", "version", "attr", "msg")
     threshold = base.versioned_feed
 
     def __init__(self, pkg, attr, msg):
-        base.Result.__init__(self)
+        super(MetadataError, self).__init__()
         self._store_cpv(pkg)
         self.attr, self.msg = attr, str(msg)
 
@@ -29,13 +29,14 @@ class MetadataError(base.Result):
         return "attr(%s): %s" % (self.attr, self.msg)
 
 
-class MissingLicense(base.Result):
+class MissingLicense(base.Error):
     """used license(s) have no matching license file(s)"""
 
     __slots__ = ("category", "package", "version", "licenses")
     threshold = base.versioned_feed
 
     def __init__(self, pkg, licenses):
+        super(MissingLicense, self).__init__()
         self._store_cpv(pkg)
         self.licenses = tuple(sorted(licenses))
 
@@ -122,7 +123,7 @@ class IUSEMetadataReport(base.Template):
                         's'[len(iuse) == 1:], ", ".join(iuse))))
 
 
-class UnusedLocalFlags(base.Result):
+class UnusedLocalFlags(base.Warning):
 
     """
     unused local use flag(s)
@@ -133,7 +134,7 @@ class UnusedLocalFlags(base.Result):
     threshold = base.package_feed
 
     def __init__(self, pkg, flags):
-        base.Result.__init__(self)
+        super(UnusedLocalFlags, self).__init__()
         # tricky, but it works; atoms have the same attrs
         self._store_cp(pkg)
         self.flags = tuple(sorted(flags))
@@ -168,7 +169,7 @@ class UnusedLocalFlagsReport(base.Template):
             reporter.add_report(UnusedLocalFlags(pkg, unused))
 
 
-class MissingSlotDep(base.Result):
+class MissingSlotDep(base.Warning):
     """Missing slot value in dependencies"""
 
     __slots__ = ('category', 'package', 'version', 'dep', 'dep_slots')
@@ -176,7 +177,7 @@ class MissingSlotDep(base.Result):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, dep, dep_slots):
-        base.Result.__init__(self)
+        super(MissingSlotDep, self).__init__()
         self.dep = dep
         self.dep_slots = dep_slots
         self._store_cpv(pkg)
@@ -251,14 +252,14 @@ class DependencyReport(base.Template):
                 del e
 
 
-class StupidKeywords(base.Result):
+class StupidKeywords(base.Warning):
     """pkg that is using -*; package.mask in profiles addresses this already"""
 
     __slots__ = ('category', 'package', 'version')
     threshold = base.versioned_feed
 
     def __init__(self, pkg):
-        base.Result.__init__(self)
+        super(StupidKeywords, self).__init__()
         self._store_cpv(pkg)
 
     short_desc = (
@@ -279,13 +280,13 @@ class KeywordsReport(base.Template):
             reporter.add_report(StupidKeywords(pkg))
 
 
-class MissingUri(base.Result):
+class MissingUri(base.Warning):
     """restrict=fetch isn't set, yet no full uri exists"""
     __slots__ = ("category", "package", "version", "filename")
     threshold = base.versioned_feed
 
     def __init__(self, pkg, filename):
-        base.Result.__init__(self)
+        super(MissingUri, self).__init__()
         self._store_cpv(pkg)
         self.filename = filename
 
@@ -295,13 +296,13 @@ class MissingUri(base.Result):
             "isn't set" % self.filename
 
 
-class BadProto(base.Result):
+class BadProto(base.Warning):
     """bad protocol"""
     __slots__ = ("category", "package", "version", "filename", "bad_uri")
     threshold = base.versioned_feed
 
     def __init__(self, pkg, filename, bad_uri):
-        base.Result.__init__(self)
+        super(BadProto, self).__init__()
         self._store_cpv(pkg)
         self.filename = filename
         self.bad_uri = tuple(sorted(bad_uri))
@@ -372,7 +373,7 @@ class SrcUriReport(base.Template):
             del e
 
 
-class CrappyDescription(base.Result):
+class CrappyDescription(base.Warning):
 
     """pkg's description sucks in some fashion"""
 
@@ -380,7 +381,7 @@ class CrappyDescription(base.Result):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, msg):
-        base.Result.__init__(self)
+        super(CrappyDescription, self).__init__()
         self._store_cpv(pkg)
         self.msg = msg
 
@@ -423,14 +424,14 @@ class DescriptionReport(base.Template):
                     pkg, "under 10 chars in length- too short"))
 
 
-class BadRestricts(base.Result):
+class BadRestricts(base.Warning):
     """pkg's restrict metadata has unknown/deprecated entries"""
 
     __slots__ = ("category", "package", "version", "restricts", "deprecated")
     threshold = base.versioned_feed
 
     def __init__(self, pkg, restricts, deprecated=None):
-        base.Result.__init__(self)
+        super(BadRestricts, self).__init__()
         self._store_cpv(pkg)
         self.restricts = restricts
         self.deprecated = deprecated
