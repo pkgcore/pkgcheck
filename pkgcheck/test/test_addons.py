@@ -1,7 +1,6 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-import argparse
 import itertools
 import os
 import shutil
