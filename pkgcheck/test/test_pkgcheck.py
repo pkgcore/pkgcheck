@@ -16,5 +16,5 @@ class CommandlineTest(TestCase, helpers.ArgParseMixin):
             'No target repo specified on commandline or suite and current '
             'directory is not inside a known repo.')
         self.assertError(
-            "argument --repo/-r: couldn't find repo 'spork'",
+            "argument -r/--repo: couldn't find repo 'spork'",
             '-r', 'spork')
