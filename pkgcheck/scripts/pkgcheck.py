@@ -35,22 +35,22 @@ argparser.set_defaults(guessed_target_repo=False)
 argparser.set_defaults(guessed_suite=False)
 argparser.set_defaults(default_suite=False)
 argparser.add_argument(
-    'targets', metavar='target', nargs='*', help='optional target atom(s)')
+    'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
 main_options = argparser.add_argument_group('Main options')
 main_options.add_argument(
-    '--repo', '-r', metavar='repo',
+    '-r', '--repo', metavar='REPO',
     action=commandline.StoreRepoObject,
     dest='target_repo', help='repo to pull packages from')
 main_options.add_argument(
-    '--suite', '-s', action=commandline.StoreConfigObject,
+    '-s', '--suite', action=commandline.StoreConfigObject,
     config_type='pkgcheck_suite',
     help='Specify the configuration suite to use')
 main_options.add_argument(
     '--reporter', action='store', default=None,
     help="Use a non-default reporter (defined in pkgcore's config).")
 main_options.add_argument(
-    '-o', '--overlayed-repo', metavar='repo',
+    '-o', '--overlayed-repo', metavar='REPO',
     action=commandline.StoreRepoObject, dest='src_repo',
     help="if the target repo is an overlay, specify the "
          "repository name to pull profiles/license from")
