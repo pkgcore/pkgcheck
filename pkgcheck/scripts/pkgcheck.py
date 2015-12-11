@@ -228,8 +228,20 @@ def check_args(parser, namespace):
             namespace.repo_bases.append(abspath(repo.location))
 
     if namespace.targets:
-        namespace.limiters = stable_unique(
-            map(parserestrict.parse_match, namespace.targets))
+        limiters = []
+        repo = namespace.target_repo
+        for target in namespace.targets:
+            if os.path.exists(target):
+                try:
+                    limiters.append(repo.path_restrict(target))
+                except ValueError as e:
+                    parser.only_error(e)
+            else:
+                try:
+                    limiters.append(parserestrict.parse_match(target))
+                except ValueError as e:
+                    parser.only_error(e)
+        namespace.limiters = limiters
     else:
         repo_base = getattr(namespace.target_repo, 'location', None)
         if not repo_base:
