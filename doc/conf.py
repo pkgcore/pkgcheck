@@ -15,39 +15,23 @@
 
 from __future__ import unicode_literals
 
-import errno
 from importlib import import_module
 import os
-import subprocess
 import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(1, os.path.abspath('.'))
-sys.path.insert(2, os.path.abspath('..'))
+libdir = os.path.abspath(os.path.join('..', 'build', 'lib'))
+if os.path.exists(libdir):
+    sys.path.insert(0, libdir)
+sys.path.insert(1, os.path.abspath('..'))
 
 from pkgcheck import __version__
-from snakeoil.dist.generate_man_rsts import ManConverter
+from snakeoil.dist.generate_docs import generate_man, generate_html
 
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
-def generate_docs():
-    """Generate various supporting files for building docs"""
-    try:
-        os.mkdir('generated')
-    except OSError as e:
-        if e.errno == errno.EEXIST:
-            return
-        raise
-
-    generated_man_pages = [('pkgcheck.scripts.pkgcheck', 'pkgcheck')]
-
-    # generate man page option docs
-    for module, script in generated_man_pages:
-        ManConverter.regen_if_needed('generated', module, out_name=script)
-
-    # generate API docs
-    subprocess.call(['sphinx-apidoc', '-Tf', '-o', 'api', '../pkgcheck'])
 
 # -- General configuration ------------------------------------------------
 
@@ -134,6 +118,18 @@ pygments_style = 'sphinx'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
 
+# auto-generate required files for RTD build environment
+project_dir = os.path.abspath('..')
+if on_rtd:
+    generate_man(project, project_dir)
+    generate_html(project)
+
+# handle auto-generation for setup.py
+if 'build_man' in sys.argv[1:]:
+    generate_man(project, project_dir)
+if 'build_docs' in sys.argv[1:]:
+    generate_man(project, project_dir)
+    generate_html(project)
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -264,16 +260,22 @@ latex_documents = [
 
 # -- Options for manual page output ---------------------------------------
 
+bin_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'bin')
+scripts = os.listdir(bin_path)
+
+generated_man_pages = [
+    ('%s.scripts.' % (project,) + s.replace('-', '_'), s) for s in scripts
+]
+
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/pkgcheck', 'pkgcheck', import_module('pkgcheck.scripts.pkgcheck').__doc__.split('\n', 1)[0], authors_list, 1)
+    ('man/%s' % script, script, import_module(module).__doc__.split('\n', 1)[0], authors_list, 1)
+    for module, script in generated_man_pages
 ]
 
 # If true, show URL addresses after external links.
 #man_show_urls = False
-
-generate_docs()
 
 # -- Options for Texinfo output -------------------------------------------
 

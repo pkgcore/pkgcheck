@@ -38,6 +38,7 @@ setup(
         "sdist": pkgdist.sdist,
         "test": test,
         "build_py": pkgdist.build_py,
+        "build_man": pkgdist.build_man,
         'build_scripts': pkgdist.build_scripts,
     },
     classifiers=[
