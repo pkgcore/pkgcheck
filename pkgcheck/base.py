@@ -202,7 +202,7 @@ class Result(object):
         if attrs:
             try:
                 return dict((k, getattr(self, k)) for k in attrs)
-            except AttributeError, a:
+            except AttributeError as a:
                 # rethrow so we at least know the class
                 raise AttributeError(self.__class__, str(a))
         return object.__getstate__(self)

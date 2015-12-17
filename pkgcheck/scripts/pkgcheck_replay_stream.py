@@ -65,7 +65,7 @@ class PickleStream(base.Reporter):
     def add_report(self, result):
         try:
             self.dump(result, self.out, self.protocol)
-        except TypeError, t:
+        except TypeError as t:
             raise TypeError(result, str(t))
 
 
