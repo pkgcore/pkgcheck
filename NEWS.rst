@@ -5,8 +5,10 @@ Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 ---------------------------
-pkgcheck 0.5.2 (2015-0?-??)
+pkgcheck 0.5.2 (2016-0?-??)
 ---------------------------
+
+* Officially support python3 (3.3 and up).
 
 * Add initial man page generated from argparse info.
 
