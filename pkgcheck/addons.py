@@ -129,7 +129,7 @@ class ProfileAddon(base.Addon):
         group.add_argument(
             "--profile-disable-dev", action='store_true',
             default=False, dest='profile_ignore_dev',
-            help="disable scanning of dev profiles")
+            help="disable scanning of development profiles")
         group.add_argument(
             "--profile-disable-deprecated", action='store_true',
             default=False, dest='profile_ignore_deprecated',
@@ -137,7 +137,7 @@ class ProfileAddon(base.Addon):
         group.add_argument(
             "--profile-disable-exp", action='store_true',
             default=False, dest='profile_ignore_exp',
-            help="disable scanning of exp profiles")
+            help="disable scanning of experimental profiles")
         group.add_argument(
             "--profile-disable-profiles-desc", action='store_false',
             default=True, dest='profiles_desc_enabled',
