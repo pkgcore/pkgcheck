@@ -194,7 +194,8 @@ class VisibilityReport(base.Template):
         addons.EvaluateDepSetAddon)
     known_results = (VisibleVcsPkg, NonExistentDeps, NonsolvableDeps)
 
-    vcs_eclasses = frozenset(["subversion", "git-2", "git-r3", "cvs", "darcs", "bzr", "mercurial"])
+    vcs_eclasses = frozenset([
+        "bzr", "cvs", "darcs", "git-2", "git-r3", "golang-vcs", "mercurial", "subversion"])
 
     def __init__(self, options, arches, query_cache, profiles, depset_cache):
         base.Template.__init__(self, options)
