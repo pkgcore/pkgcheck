@@ -15,7 +15,7 @@ demandload('logging')
 
 
 class MetadataError(base.Error):
-    """problem detected with a packages metadata"""
+    """Problem detected with a packages metadata"""
     __slots__ = ("category", "package", "version", "attr", "msg")
     threshold = base.versioned_feed
 
@@ -30,7 +30,7 @@ class MetadataError(base.Error):
 
 
 class MissingLicense(base.Error):
-    """used license(s) have no matching license file(s)"""
+    """Used license(s) have no matching license file(s)"""
 
     __slots__ = ("category", "package", "version", "licenses")
     threshold = base.versioned_feed
@@ -46,7 +46,6 @@ class MissingLicense(base.Error):
 
 
 class LicenseMetadataReport(base.Template):
-
     """LICENSE metadata key validity checks"""
 
     known_results = (MetadataError, MissingLicense) + \
@@ -102,7 +101,6 @@ class LicenseMetadataReport(base.Template):
 
 
 class IUSEMetadataReport(base.Template):
-
     """Check IUSE for valid use flags"""
 
     required_addons = (addons.UseAddon,)
@@ -124,10 +122,7 @@ class IUSEMetadataReport(base.Template):
 
 
 class UnusedLocalFlags(base.Warning):
-
-    """
-    unused local use flag(s)
-    """
+    """Unused local use flag(s)"""
 
     __slots__ = ("category", "package", "flags")
 
@@ -146,10 +141,7 @@ class UnusedLocalFlags(base.Warning):
 
 
 class UnusedLocalFlagsReport(base.Template):
-
-    """
-    check for unused local use flags in metadata.xml
-    """
+    """Check for unused local use flags in metadata.xml"""
 
     feed_type = base.package_feed
     required_addons = (addons.UseAddon,)
@@ -215,8 +207,7 @@ class MissingSlotDepReport(base.Template):
 
 
 class DependencyReport(base.Template):
-
-    """check DEPEND, RDEPEND, and PDEPEND"""
+    """Check DEPEND, RDEPEND, and PDEPEND"""
 
     required_addons = (addons.UseAddon,)
     known_results = (MetadataError,) + addons.UseAddon.known_results
@@ -255,7 +246,7 @@ class DependencyReport(base.Template):
 
 
 class StupidKeywords(base.Warning):
-    """pkg that is using -*; package.mask in profiles addresses this already"""
+    """Packages using -*; use package.mask instead."""
 
     __slots__ = ('category', 'package', 'version')
     threshold = base.versioned_feed
@@ -269,10 +260,7 @@ class StupidKeywords(base.Warning):
 
 
 class KeywordsReport(base.Template):
-
-    """
-    check pkgs keywords for sanity; empty keywords, and -* are flagged
-    """
+    """Check pkg keywords for sanity; empty keywords, and -* are flagged"""
 
     feed_type = base.versioned_feed
     known_results = (StupidKeywords, MetadataError)
@@ -283,7 +271,8 @@ class KeywordsReport(base.Template):
 
 
 class MissingUri(base.Warning):
-    """restrict=fetch isn't set, yet no full uri exists"""
+    """RESTRICT=fetch isn't set, yet no full URI exists"""
+
     __slots__ = ("category", "package", "version", "filename")
     threshold = base.versioned_feed
 
@@ -294,12 +283,16 @@ class MissingUri(base.Warning):
 
     @property
     def short_desc(self):
-        return "file %s is unfetchable- no URI available, and RESTRICT=fetch " \
-            "isn't set" % self.filename
+        return "file %s is unfetchable- no URI available, and " \
+            "RESTRICT=fetch isn't set" % self.filename
 
 
 class BadProto(base.Warning):
-    """bad protocol"""
+    """URI uses an unsupported protocol.
+
+    Valid protocols are currently: http, https, and ftp
+    """
+
     __slots__ = ("category", "package", "version", "filename", "bad_uri")
     threshold = base.versioned_feed
 
@@ -315,10 +308,9 @@ class BadProto(base.Warning):
 
 
 class SrcUriReport(base.Template):
-
     """SRC_URI related checks.
 
-    verify that it's a valid/fetchable uri, port 80,443,23
+    Verify that URIs are valid, fetchable, and using a supported protocol.
     """
 
     required_addons = (addons.UseAddon,)
@@ -376,8 +368,7 @@ class SrcUriReport(base.Template):
 
 
 class CrappyDescription(base.Warning):
-
-    """pkg's description sucks in some fashion"""
+    """Package's description sucks in some fashion."""
 
     __slots__ = ("category", "package", "version", "msg")
     threshold = base.versioned_feed
@@ -393,10 +384,10 @@ class CrappyDescription(base.Warning):
 
 
 class DescriptionReport(base.Template):
-    """
-    DESCRIPTION checks.
-    check on length (<=250), too short (<5), or generic (lifted from eclass or
-    just using the pkgs name
+    """DESCRIPTION checks.
+
+    Check on length (<=250), too short (<5), or generic (lifted from eclass or
+    just using the package's name.
     """
 
     feed_type = base.versioned_feed
@@ -427,7 +418,7 @@ class DescriptionReport(base.Template):
 
 
 class BadRestricts(base.Warning):
-    """pkg's restrict metadata has unknown/deprecated entries"""
+    """Package's RESTRICT metadata has unknown/deprecated entries."""
 
     __slots__ = ("category", "package", "version", "restricts", "deprecated")
     threshold = base.versioned_feed
@@ -475,7 +466,7 @@ class RestrictsReport(base.Template):
         i = self.iuse_filter((basestring,), pkg, pkg.restrict, reporter)
         bad = set(i).difference(self.known_restricts)
         if bad:
-            deprecated = set(x for x in bad if x.startswith("no")
-                             and x[2:] in self.known_restricts)
+            deprecated = set(
+                x for x in bad if x.startswith("no") and x[2:] in self.known_restricts)
             reporter.add_report(BadRestricts(
                 pkg, bad.difference(deprecated), deprecated))
