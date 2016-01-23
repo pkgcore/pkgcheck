@@ -39,6 +39,7 @@ setup(
         "build_py": pkgdist.build_py,
         "build_man": pkgdist.build_man,
         'build_scripts': pkgdist.build_scripts,
+        "install_man": pkgdist.install_man,
     },
     classifiers=[
         'License :: OSI Approved :: BSD License',
