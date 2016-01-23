@@ -7,7 +7,6 @@ import os
 
 from setuptools import setup, find_packages
 
-from pkgcheck import __version__
 import pkgdist
 
 
@@ -20,7 +19,7 @@ with io.open('README.rst', encoding='utf-8') as f:
 
 setup(
     name="pkgcheck",
-    version=__version__,
+    version=pkgdist.version(),
     license="BSD/GPL2",
     author="Brian Harring, Tim Harder",
     author_email="pkgcore-dev@googlegroups.com",
