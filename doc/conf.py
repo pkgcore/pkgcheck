@@ -122,14 +122,7 @@ pygments_style = 'sphinx'
 project_dir = os.path.abspath('..')
 if on_rtd:
     generate_man(project, project_dir)
-    generate_html(project)
-
-# handle auto-generation for setup.py
-if 'build_man' in sys.argv[1:]:
-    generate_man(project, project_dir)
-if 'build_docs' in sys.argv[1:]:
-    generate_man(project, project_dir)
-    generate_html(project)
+    generate_html(project, project_dir)
 
 # -- Options for HTML output ----------------------------------------------
 

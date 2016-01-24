@@ -27,9 +27,9 @@ setup(
     long_description=readme,
     url='https://github.com/pkgcore/pkgcheck',
     packages=find_packages(),
-    setup_requires=['snakeoil>=0.6.6'],
+    setup_requires=['snakeoil>=0.6.7'],
     install_requires=[
-        'snakeoil>=0.6.6',
+        'snakeoil>=0.6.7',
         'pkgcore>=0.9.3',
     ],
     scripts=os.listdir('bin'),
@@ -38,8 +38,10 @@ setup(
         'test': test,
         'build_py': pkgdist.build_py,
         'build_man': pkgdist.build_man,
+        'build_docs': pkgdist.build_docs,
         'build_scripts': pkgdist.build_scripts,
         'install_man': pkgdist.install_man,
+        'install_docs': pkgdist.install_docs,
     },
     classifiers=[
         'License :: OSI Approved :: BSD License',

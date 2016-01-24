@@ -6,7 +6,7 @@ A collection of distutils extensions adding things like automatic 2to3
 translation, a test runner, and working around broken stdlib extensions CFLAG
 passing in distutils.
 
-Generally speaking, you should flip through this modules src.
+Specifically, this module is only meant to be imported in setup.py scripts.
 """
 
 import errno
@@ -16,7 +16,6 @@ import math
 import os
 import re
 import sys
-import subprocess
 import textwrap
 
 os.environ["SNAKEOIL_DEMANDLOAD_PROTECTION"] = 'n'
@@ -29,14 +28,16 @@ from distutils.command import (
     sdist as dst_sdist, build_ext as dst_build_ext, build_py as dst_build_py,
     build as dst_build, build_scripts as dst_build_scripts)
 
+# top level repo/tarball directory
+TOPDIR = os.path.dirname(os.path.abspath(inspect.stack(0)[1][1]))
 
-def find_project(repo_file):
-    toplevel = os.path.dirname(os.path.realpath(repo_file))
-    toplevel_depth = len(toplevel.split('/'))
+
+def find_project(topdir=TOPDIR):
+    topdir_depth = len(topdir.split('/'))
 
     # look for a top-level module
-    for root, dirs, files in os.walk(toplevel):
-        if len(root.split('/')) > toplevel_depth + 1:
+    for root, dirs, files in os.walk(topdir):
+        if len(root.split('/')) > topdir_depth + 1:
             continue
         if '__init__.py' in files:
             return os.path.basename(root)
@@ -45,9 +46,7 @@ def find_project(repo_file):
 
 
 # determine the project we're being imported into
-PROJECT = find_project(inspect.stack(0)[1][1])
-# top level repo/tarball directory
-TOPDIR = os.path.abspath(os.path.dirname(inspect.stack(0)[1][1]))
+PROJECT = find_project()
 
 
 def version(project=PROJECT):
@@ -290,14 +289,57 @@ class build_py3(build_py):
 
 
 class build_man(Command):
-    """Override the module search path before running sphinx.
+    """Build man pages.
 
-    Fixes generating man pages for scripts that need to import modules
-    generated via 2to3 or other conversions instead of straight from the build
-    directory.
+    Override the module search path before running sphinx. This fixes
+    generating man pages for scripts that need to import modules generated via
+    2to3 or other conversions instead of straight from the build directory.
     """
 
     user_options = []
+    content_search_path = ('build/sphinx/man', 'man')
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def skip(self):
+        # don't rebuild if one of the output dirs exist
+        if any(os.path.exists(x) for x in self.content_search_path):
+            log.info('%s: docs already built, skipping regeneration...' %
+                     (self.__class__.__name__,))
+            return True
+        return False
+
+    def run(self):
+        if not self.skip():
+            # Use a built version for the man page generation process that
+            # imports script modules.
+            build_py = self.distribution.get_command_obj('build_py')
+            self.run_command('build_py')
+            syspath = sys.path[:]
+            sys.path.insert(0, os.path.abspath(build_py.build_lib))
+
+            # generate man page content for scripts we create
+            if 'build_scripts' in self.distribution.cmdclass:
+                from snakeoil.dist.generate_docs import generate_man
+                generate_man(PROJECT, TOPDIR)
+
+            # generate man pages
+            build_sphinx = self.distribution.get_command_obj('build_sphinx')
+            build_sphinx.builder = 'man'
+            build_sphinx.finalize_options()
+            self.run_command('build_sphinx')
+            sys.path = syspath
+
+
+class build_docs(build_man):
+    """Build html docs."""
+
+    user_options = []
+    content_search_path = ('build/sphinx/html', 'html')
 
     def initialize_options(self):
         pass
@@ -306,23 +348,20 @@ class build_man(Command):
         pass
 
     def run(self):
-        # Use a built version for the man page generation process that imports
-        # script modules.
-        build_py = self.distribution.get_command_obj('build_py')
-        self.run_command('build_py')
-        syspath = sys.path[:]
-        sys.path.insert(0, os.path.abspath(build_py.build_lib))
+        if not self.skip():
+            # generate man pages -- html versions of man pages are provided
+            self.run_command('build_man')
 
-        # generate man page content for scripts we create
-        if 'build_scripts' in self.distribution.cmdclass:
-            from snakeoil.dist.generate_docs import generate_man
-            generate_man(PROJECT, TOPDIR)
+            # generate API docs
+            from snakeoil.dist.generate_docs import generate_html
+            generate_html(PROJECT, TOPDIR)
 
-        # generate man pages
-        build_sphinx = self.distribution.get_command_obj('build_sphinx')
-        build_sphinx.builder = 'man'
-        self.run_command('build_sphinx')
-        sys.path = syspath
+            # generate html docs -- allow build_sphinx cmd to run again
+            self.distribution.reinitialize_command('build_sphinx')
+            build_sphinx = self.distribution.get_command_obj('build_sphinx')
+            build_sphinx.builder = 'html'
+            build_sphinx.ensure_finalized()
+            self.run_command('build_sphinx')
 
 
 class build_ext(dst_build_ext.build_ext):
@@ -400,7 +439,7 @@ class install_docs(Command):
 
     """Install html documentation"""
 
-    content_search_path = ('build/sphinx/html', 'html')
+    content_search_path = build_docs.content_search_path
     user_options = [
         ('path=', None, "final path to install to; else it's calculated"),
         ('build-dir=', None, "build directory"),
@@ -455,9 +494,7 @@ class install_docs(Command):
                 raise DistutilsExecError(
                     "no pregenerated sphinx content, and sphinx isn't available "
                     "to generate it; bailing")
-            cwd = os.getcwd()
-            if subprocess.call([sys.executable, 'setup.py', self.build_command], cwd=cwd):
-                raise DistutilsExecError("%s failed" % self.build_command)
+            self.run_command(self.build_command)
             return self.run(False)
 
         content = self.scan_content()
@@ -486,7 +523,7 @@ class install_man(install_docs):
 
     """Install man pages"""
 
-    content_search_path = ('build/sphinx/man', 'man')
+    content_search_path = build_man.content_search_path
     build_command = 'build_man'
 
     def calculate_install_path(self):
