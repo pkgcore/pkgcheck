@@ -1,5 +1,9 @@
 #compdef pkgcheck
 
+SHELL_LIB=$(python -c 'import pkgcore._const as const; print(const.LIBDIR_PATH)')/shell/zsh/pkgcore.zsh
+source "${SHELL_LIB}" || print "$0: failed to load '${SHELL_LIB}'" >&2
+unset SHELL_LIB
+
 typeset -a common_main_args common_output_args common_args
 
 common_main_args=(
@@ -29,7 +33,7 @@ typeset -a options
 options=(
   '--list-checks[print what checks are available to run and exit]'
   '--list-reporters[print known reporters]'
-  {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_pkgcore -f repos'
+  {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_repos'
 )
 
 _arguments -C \
