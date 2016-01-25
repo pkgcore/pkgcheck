@@ -6,8 +6,9 @@ Contents:
 .. toctree::
     :maxdepth: 4
 
-    api/pkgcheck
-
+    news
+    api
+    man
 
 Indices and tables
 ==================
