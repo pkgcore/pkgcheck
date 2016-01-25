@@ -33,6 +33,9 @@ setup(
         'pkgcore>=0.9.3',
     ],
     scripts=os.listdir('bin'),
+    data_files=list(
+        pkgdist.data_mapping('share/zsh/site-functions', 'completion/zsh'),
+    ),
     cmdclass={
         'sdist': pkgdist.sdist,
         'test': test,
