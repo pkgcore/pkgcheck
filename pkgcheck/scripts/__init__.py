@@ -2,23 +2,30 @@
 # Copyright: 2015 Tim Harder <radhermit@gmail.com>
 # License: BSD/GPL2
 
-"""Wrapper for commandline scripts."""
+"""Commandline scripts.
 
-from __future__ import absolute_import
+Scripts in here are accessible through this module. They should have a C{main}
+attribute that is a function usable with :obj:`pkgcore.util.commandline.main`
+and use :obj:`pkgcore.util.commandline.mk_argparser` (a wrapper around
+C{ArgumentParser}) to handle argument parsing.
+
+The goal of this is avoiding boilerplate and making sure the scripts have a
+similar look and feel. If your script needs to do something
+:obj:`pkgcore.util.commandline` does not support please improve it instead of
+bypassing it.
+"""
 
 from importlib import import_module
 import os
 import sys
 
 
-def main(script_name=None):
-    if script_name is None:
-        script_name = os.path.basename(sys.argv[0])
-
+def main(script_name):
     try:
         from pkgcore.util import commandline
+        scripts_module = '.'.join(os.path.realpath(__file__).split('/')[-3:-1])
         script = import_module(
-            'pkgcheck.scripts.%s' % script_name.replace("-", "_"))
+            '.'.join((scripts_module, script_name.replace("-", "_"))))
     except ImportError as e:
         sys.stderr.write(str(e) + '!\n')
         sys.stderr.write(
@@ -30,8 +37,8 @@ def main(script_name=None):
         sys.stderr.write('Add --debug to the commandline for a traceback.\n')
         sys.exit(1)
 
-    subcommands = getattr(script, 'argparser', None)
-    commandline.main(subcommands)
+    argparser = getattr(script, 'argparser', None)
+    commandline.main(argparser)
 
 
 if __name__ == '__main__':
