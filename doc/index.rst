@@ -8,6 +8,7 @@ Contents:
 
     news
     api
+    dev
     man
 
 Indices and tables
