@@ -59,8 +59,12 @@ class TestArchesAddon(base_test):
 
     def test_opts(self):
         for arg in ('-a', '--arches'):
-            self.process_check([arg, 'x86'], arches=['x86'])
-            self.process_check([arg, 'x86,ppc'], arches=['x86', 'ppc'])
+            self.process_check([arg, 'x86'], arches=('x86',))
+            self.process_check([arg, 'x86,ppc'], arches=('ppc', 'x86'))
+            self.process_check(
+                [arg + '=-x86'],
+                arches=tuple(sorted(
+                    set(self.addon_kls.default_arches).difference(['x86']))))
 
     def test_default(self):
         self.process_check([], arches=self.addon_kls.default_arches)
@@ -157,13 +161,13 @@ class profile_mixin(mixins.TempDirMixin, base_test):
         mixins.TempDirMixin.setUp(self)
         base_test.setUp(self)
 
-    def process_check(self, profile_base, *args, **kwds):
+    def process_check(self, profiles_base, *args, **kwds):
         options = base_test.process_check(self, *args, **kwds)
         options.search_repo = Options()
-        if profile_base is None:
+        if profiles_base is None:
             repo = QuietRepoConfig(self.dir)
         else:
-            repo = QuietRepoConfig(profile_base, profiles_base='.')
+            repo = QuietRepoConfig(profiles_base, profiles_base='.')
         options.target_repo = Options(config=repo)
         return options
 
@@ -208,10 +212,9 @@ class TestProfileAddon(profile_mixin):
         os.mkdir(pjoin(self.dir, 'metadata'))
         # write masters= to suppress logging complaints.
         write_file(pjoin(self.dir, 'metadata', 'layout.conf'), 'w', 'masters=')
-        options = self.process_check(None, [],
-            profiles_enabled=[], profiles_disabled=[],
-            profile_ignore_deprecated=False, profiles_desc_enabled=True,
-            profile_ignore_dev=False, profile_ignore_exp=False)
+        options = self.process_check(
+            None, [], profiles=((), ()),
+            profiles_ignore_deprecated=False)
         # override the default
         check = self.addon_kls(options)
         self.assertEqual(sorted(check.official_arches), ['x86'])
@@ -219,7 +222,7 @@ class TestProfileAddon(profile_mixin):
         self.assertEqual(sorted(check.profile_evaluate_dict), ['x86', '~x86'])
         self.assertProfiles(check, 'x86', 'profile1', 'profile1/2')
 
-    def test_profile_base(self):
+    def test_profiles_base(self):
         self.mk_profiles({
             "default-linux": ["x86", "dev"],
             "default-linux/x86": ["x86"]},
@@ -233,8 +236,7 @@ class TestProfileAddon(profile_mixin):
             "default-linux": ["x86", "dev"],
             "default-linux/x86": ["x86"]},
             base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-dev'],
-            profile_ignore_dev=True)
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=-dev'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
@@ -243,8 +245,8 @@ class TestProfileAddon(profile_mixin):
             "default-linux": ["x86", False, True],
             "default-linux/x86": ["x86"]},
             base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-deprecated'],
-            profile_ignore_deprecated=True)
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles-disable-deprecated'],
+            profiles_ignore_deprecated=True)
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
@@ -253,27 +255,16 @@ class TestProfileAddon(profile_mixin):
             "default-linux": ["x86", "exp"],
             "default-linux/x86": ["x86"]},
             base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-exp'],
-            profile_ignore_exp=True)
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=-exp'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
-
-    def test_disable_profiles_desc(self):
-        self.mk_profiles({
-            "default-linux": ["x86"],
-            "default-linux/x86": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-profiles-desc'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86')
 
     def test_profile_enable(self):
         self.mk_profiles({
             "default-linux": ["x86"],
             "default-linux/x86": ["x86"]},
             base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profile-disable-profiles-desc',
-            '--enable-profiles', 'default-linux/x86'])
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles', 'default-linux/x86'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
@@ -282,7 +273,7 @@ class TestProfileAddon(profile_mixin):
             "default-linux": ["x86"],
             "default-linux/x86": ["x86"]},
             base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--disable-profiles', 'default-linux/x86'])
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=-default-linux/x86'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux')
 
@@ -374,8 +365,8 @@ class TestEvaluateDepSetAddon(profile_mixin):
         # since evaluate relies on it.
         self.addon_kls = addons.ProfileAddon
         profile_options = profile_mixin.process_check(
-            self, self.dir, ['--profile-disable-profiles-desc'] +
-            ['--enable-profiles=%s' % ','.join(x.name for x in profiles)])
+            self, self.dir,
+            ['--profiles=%s' % ','.join(x.name for x in profiles)])
         self.addon_kls = self.orig_addon_kls
         profiles = dict((x.name, x) for x in profiles)
         profiles_obj = Options(create_profile=lambda x: profiles[x])

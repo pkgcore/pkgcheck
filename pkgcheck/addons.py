@@ -4,9 +4,9 @@
 
 """Addon functionality shared by multiple checkers."""
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from functools import partial
-from itertools import ifilter, ifilterfalse
+from itertools import chain, ifilter, ifilterfalse, imap
 
 from snakeoil.containers import ProtectedSet
 from snakeoil.demandload import demandload
@@ -17,7 +17,6 @@ from snakeoil.osutils import abspath, listdir_files, pjoin
 from pkgcheck import base
 
 demandload(
-    'argparse',
     'os',
     'pkgcore.restrictions:packages,values',
     'pkgcore.ebuild:misc,domain,profiles,repo_objs',
@@ -32,26 +31,32 @@ class ArchesAddon(base.Addon):
         "ppc", "ppc64", "s390", "sh", "sparc", "x86",
     ]))
 
-    class _DisableArches(argparse.Action):
-
-        def __call__(self, parser, namespace, values, option_string=None):
-            s = set(getattr(namespace, 'arches', ArchesAddon.default_arches))
-            namespace.arches = tuple(s.difference(values.split(',')))
+    @classmethod
+    def check_args(cls, parser, namespace):
+        disabled, enabled = namespace.arches
+        if not enabled:
+            enabled = cls.default_arches
+        namespace.arches = tuple(sorted(set(enabled).difference(set(disabled))))
 
     @classmethod
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('Arches')
         group.add_argument(
-            '-a', '--arches', nargs=1, action='extend_comma', default=cls.default_arches,
-            help='comma separated list of what arches to run',
+            '-a', '--arches', nargs=1, action='extend_comma_toggle',
+            default=((), cls.default_arches),
+            help='comma separated list of arches to enable/disable',
             docs="""
-                The default arch list is %s. Note that stable-related checks
-                (e.g. UnstableOnly) default to the set of arches having stable
-                profiles in the target repo.
+                Comma separated list of arches to enable and disable.
+
+                To specify disabled arches prefix them with '-'. Note that when
+                starting the argument list with a disabled arch an equals sign
+                must be used, e.g. -a=-arch, otherwise the disabled arch
+                argument is treated as an option.
+
+                By default the enabled arch list is %s; however, stable-related
+                checks (e.g. UnstableOnly) default to the set of arches having
+                stable profiles in the target repo.
             """ % ", ".join(cls.default_arches))
-        group.add_argument(
-            '--disable-arches', type=str, action=cls._DisableArches,
-            help="comma separated list of arches to disable from the defaults")
 
 
 class QueryCacheAddon(base.Template):
@@ -120,92 +125,107 @@ class ProfileAddon(base.Addon):
     def mangle_argparser(parser):
         group = parser.add_argument_group('Profiles')
         group.add_argument(
-            "--profile-base", dest='profiles_dir', default=None,
-            help="filepath to base profiles directory",
+            "--profiles-base", dest='profiles_dir', default=None,
+            help="path to base profiles directory",
             docs="""
-                This will override the default usage of profiles bundled in the
-                target repository; primarily for testing.
+                The path to the base profiles directory. This will override the
+                default usage of profiles bundled in the target repository;
+                primarily for testing.
             """)
         group.add_argument(
-            "--profile-disable-dev", action='store_true',
-            default=False, dest='profile_ignore_dev',
-            help="disable scanning of development profiles")
-        group.add_argument(
-            "--profile-disable-deprecated", action='store_true',
-            default=False, dest='profile_ignore_deprecated',
+            "--profiles-disable-deprecated", action='store_true',
+            dest='profiles_ignore_deprecated',
             help="disable scanning of deprecated profiles")
         group.add_argument(
-            "--profile-disable-exp", action='store_true',
-            default=False, dest='profile_ignore_exp',
-            help="disable scanning of experimental profiles")
-        group.add_argument(
-            "--profile-disable-profiles-desc", action='store_false',
-            default=True, dest='profiles_desc_enabled',
-            help="disable loading profiles to scan from profiles.desc, you "
-            "will want to enable profiles manually via --enable-profiles")
-        group.add_argument(
-            '--enable-profiles', action='extend_comma',
-            dest='profiles_enabled',
-            help="comma separated list of profiles to scan")
-        group.add_argument(
-            '--disable-profiles', action='extend_comma',
-            dest='profiles_disabled',
-            help="comma separated list of profiles to ignore")
+            '-p', '--profiles', action='extend_comma_toggle',
+            dest='profiles',
+            help='comma separated list of profiles to enable/disable',
+            docs="""
+                Comma separated list of profiles to enable and disable for
+                scanning. Any profiles specified in this fashion will be the
+                only profiles that get scanned, minus any disabled profiles. In
+                addition, if no profiles are explicitly enabled via this
+                option, all profiles will be scanned by default.
+
+                To specify disabled profiles prefix them with '-'. Note that
+                when starting the argument list with a disabled profile an
+                equals sign must be used, e.g. -p=-path/to/profile, otherwise
+                the disabled profile argument is treated as an option.
+
+                The special keywords of stable, dev, and exp correspond to the
+                lists of stable, development, and experimental profiles,
+                respectively. Therefore, to only scan all stable profiles
+                pass the 'stable' argument to --profiles.
+            """)
 
     @staticmethod
     def check_args(parser, namespace):
-        if namespace.profiles_enabled is None:
-            namespace.profiles_enabled = []
-        if namespace.profiles_disabled is None:
-            namespace.profiles_disabled = []
         profiles_dir = getattr(namespace, "profiles_dir", None)
-
         if profiles_dir is not None:
             profiles_dir = abspath(profiles_dir)
             if not os.path.isdir(profiles_dir):
                 raise parser.error(
                     "profile-base location %r doesn't exist/isn't a dir" % (
                         profiles_dir,))
+
         namespace.profiles_dir = profiles_dir
+        if namespace.profiles is None:
+            namespace.profiles = ((), ())
 
     def __init__(self, options, *args):
         base.Addon.__init__(self, options)
-
-        norm_name = lambda s: '/'.join(filter(None, s.split('/')))
 
         if options.profiles_dir:
             profiles_obj = repo_objs.BundledProfiles(options.profiles_dir)
         else:
             profiles_obj = options.target_repo.config.profiles
-        options.profiles_obj = profiles_obj
-        disabled = set(norm_name(x) for x in options.profiles_disabled)
-        enabled = set(
-            x for x in (norm_name(y) for y in options.profiles_enabled)
-            if x not in disabled)
 
-        arch_profiles = {}
-        if options.profiles_desc_enabled:
-            for arch, profiles in options.profiles_obj.arch_profiles.iteritems():
-                if options.profile_ignore_dev:
-                    profiles = (x for x in profiles if x.status != 'dev')
-                if options.profile_ignore_exp:
-                    profiles = (x for x in profiles if x.status != 'exp')
-                l = [x.profile for x in profiles if x.profile not in disabled]
+        def norm_name(s):
+            """Expand status keywords and format paths."""
+            if s in ('dev', 'exp', 'stable'):
+                for x in profiles_obj.status_profiles(s):
+                    yield x
+            else:
+                yield '/'.join(filter(None, s.split('/')))
 
-                # wipe any enableds that are here already so we don't
-                # get a profile twice
-                enabled.difference_update(l)
-                if l:
-                    arch_profiles[arch] = l
+        disabled, enabled = options.profiles
+        disabled = set(disabled)
+        enabled = set(enabled)
+        # remove profiles that are both enabled and disabled
+        toggled = enabled.intersection(disabled)
+        enabled = enabled.difference(toggled)
+        disabled = disabled.difference(toggled)
+        # expand status keywords, e.g. 'stable' -> set of stable profiles
+        disabled = set(chain.from_iterable(imap(norm_name, disabled)))
+        enabled = set(chain.from_iterable(imap(norm_name, enabled)))
 
-        for x in enabled:
-            p = options.profiles_obj.create_profile(x)
-            arch = p.arch
-            if arch is None:
+        # If no profiles are enabled, then all are scanned except ones that are
+        # explicitly disabled.
+        if not enabled:
+            enabled = {
+                profile for profile, status in
+                chain.from_iterable(profiles_obj.arch_profiles.itervalues())}
+
+        profile_paths = enabled.difference(disabled)
+
+        # We hold onto the profiles as we're going, due to the fact that
+        # profile nodes are weakly cached; hold onto all for this loop, avoids
+        # a lot of reparsing at the expense of slightly more memory usage
+        # temporarily.
+        cached_profiles = []
+
+        ignore_deprecated = self.options.profiles_ignore_deprecated
+        arch_profiles = defaultdict(list)
+        for profile_path in profile_paths:
+            p = profiles_obj.create_profile(profile_path)
+            if ignore_deprecated and p.deprecated:
+                continue
+            cached_profiles.append(p)
+            if p.arch is None:
                 raise profiles.ProfileError(
                     p.path, 'make.defaults',
-                    "profile %s lacks arch settings, unable to use it" % x)
-            arch_profiles.setdefault(p.arch, []).append((x, p))
+                    "profile %s lacks arch settings, unable to use it" % profile_path)
+            arch_profiles[p.arch].append((profile_path, p))
 
         self.official_arches = options.target_repo.config.known_arches
 
@@ -217,13 +237,6 @@ class ProfileAddon(base.Addon):
         self.global_insoluble = set()
         profile_filters = {}
         self.keywords_filter = {}
-        ignore_deprecated = self.options.profile_ignore_deprecated
-
-        # we hold onto the profiles as we're going, due to the fact
-        # profilenodes are weakly cached; hold onto all for this loop,
-        # avoids a lot of reparsing at the expense of slightly more memory
-        # temporarily.
-        cached_profiles = []
 
         chunked_data_cache = {}
 
@@ -241,15 +254,8 @@ class ProfileAddon(base.Addon):
                                            if x != stable_key))
 
             profile_filters.update({stable_key: [], unstable_key: []})
-            for profile_name in arch_profiles.get(k, []):
-                if not isinstance(profile_name, basestring):
-                    profile_name, profile = profile_name
-                else:
-                    profile = options.profiles_obj.create_profile(profile_name)
-                    cached_profiles.append(profile)
-                if ignore_deprecated and profile.deprecated:
-                    continue
 
+            for profile_name, profile in arch_profiles.get(k, []):
                 vfilter = domain.generate_filter(profile.masks, profile.unmasks)
 
                 immutable_flags = profile.masked_use.clone(unfreeze=True)

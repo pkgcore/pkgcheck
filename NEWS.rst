@@ -8,6 +8,24 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 pkgcheck 0.5.2 (2016-0?-??)
 ---------------------------
 
+* Large reworking of profile and arch addon options. In summary, the majority
+  of the previous options have been replaced with -a/--arches and -p/--profiles
+  that accept comma separated lists of targets to enable or disable. The
+  keywords stable, dev, and exp that related to the sets of stable,
+  development, and experimental profiles from the targetted repo can also be
+  used as --profiles arguments.
+
+  For example, to scan all stable profiles use the following::
+
+    pkgcheck -p stable
+
+  To scan all profiles except experimental profiles (note the required use of
+  an equals sign when starting the argument list with a disabled target)::
+
+    pkgcheck -p=-exp
+
+  See the related man page sections for more details.
+
 * Officially support python3 (3.3 and up).
 
 * Add initial man page generated from argparse info.
