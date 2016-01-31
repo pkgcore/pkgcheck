@@ -5,8 +5,9 @@ from pkgcore.ebuild import eapi
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.ebuild_src import package
-from pkgcore.ebuild.misc import ChunkedDataDict, split_negations, chunked_data
+from pkgcore.ebuild.misc import ChunkedDataDict, chunked_data
 from pkgcore.repository.util import SimpleTree
+from pkgcore.util import split_negations
 from pkgcore.test import TestCase
 from snakeoil.mappings import ImmutableDict
 
