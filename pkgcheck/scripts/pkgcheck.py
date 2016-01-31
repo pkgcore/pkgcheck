@@ -39,16 +39,16 @@ argparser.add_argument(
 
 main_options = argparser.add_argument_group('Main options')
 main_options.add_argument(
-    '-r', '--repo', metavar='REPO',
+    '-r', '--repo', metavar='REPO', dest='target_repo',
     action=commandline.StoreRepoObject,
-    dest='target_repo', help='repo to pull packages from')
+    help='repo to pull packages from')
 main_options.add_argument(
     '-s', '--suite', action=commandline.StoreConfigObject,
     config_type='pkgcheck_suite',
     help='Specify the configuration suite to use')
 main_options.add_argument(
     '--reporter', action='store', default=None,
-    help="Use a non-default reporter (defined in pkgcore's config).")
+    help="use a non-default reporter (defined in pkgcore's config)")
 main_options.add_argument(
     '-o', '--overlayed-repo', metavar='REPO',
     action=commandline.StoreRepoObject, dest='src_repo',
@@ -64,17 +64,15 @@ list_options.add_argument(
 
 check_options = argparser.add_argument_group('Check selection')
 check_options.add_argument(
-    "-c", action="append", dest="checks_to_run",
-    help="limit checks to those matching this regex, or package/class "
-         "matching; may be specified multiple times")
+    "-c", "--check", action="append", dest="checks_to_run",
+    help="limit checks to regex or package/class matching")
 check_options.add_argument(
-    "-d", "--disable", action="append",
-    dest="checks_to_disable", help="specific checks to disable: "
-    "may be specified multiple times")
+    "-d", "--disable", action="append", dest="checks_to_disable",
+    help="specific checks to disable")
 check_options.add_argument(
     '--checkset', action=commandline.StoreConfigObject,
     config_type='pkgcheck_checkset',
-    help='Pick a preconfigured set of checks to run.')
+    help='preconfigured set of checks to run')
 
 
 all_addons = set()
