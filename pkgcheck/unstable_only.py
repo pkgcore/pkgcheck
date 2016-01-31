@@ -8,7 +8,6 @@ from pkgcheck.base import package_feed, Result
 
 
 class UnstableOnly(Result):
-
     """package/keywords that are strictly unstable"""
 
     __slots__ = ("category", "package", "version", "arch")

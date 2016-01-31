@@ -1,7 +1,6 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 from pkgcheck import reporters, base
 
 pkgcore_plugins = {

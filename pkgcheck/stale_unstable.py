@@ -10,10 +10,7 @@ day = 24*3600
 
 
 class StaleUnstableKeyword(Result):
-    """
-    packages that have unstable keywords that have been unstable for over a
-    month
-    """
+    """Packages with unstable keywords over a month old."""
 
     __slots__ = ("category", "package", "version", "keywords", "period")
 
@@ -32,7 +29,7 @@ class StaleUnstableKeyword(Result):
 
 
 class StaleUnstableReport(StableCheckAddon):
-    """Ebuilds that have sat unstable for over a month"""
+    """Ebuilds that have sat unstable for over a month."""
 
     feed_type = versioned_feed
     required_addons = (ArchesAddon,)

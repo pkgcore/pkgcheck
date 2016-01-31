@@ -18,10 +18,7 @@ demandload(
 
 
 class UnusedGlobalFlagsResult(base.Warning):
-
-    """
-    unused use.desc flag(s)
-    """
+    """unused use.desc flag(s)"""
 
     __slots__ = ("flags",)
 
@@ -39,9 +36,7 @@ class UnusedGlobalFlagsResult(base.Warning):
 
 
 class UnusedGlobalFlags(base.Template):
-    """
-    check for unused use.desc entries
-    """
+    """check for unused use.desc entries"""
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
@@ -68,9 +63,7 @@ class UnusedGlobalFlags(base.Template):
 
 
 class UnusedLicenseReport(base.Warning):
-    """
-    unused license(s) detected
-    """
+    """unused license(s) detected"""
 
     __slots__ = ("licenses",)
 
@@ -87,9 +80,7 @@ class UnusedLicenseReport(base.Warning):
 
 
 class UnusedLicense(base.Template):
-    """
-    unused license file(s) check
-    """
+    """unused license file(s) check"""
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
@@ -127,10 +118,7 @@ def reformat_chksums(iterable):
 
 
 class ConflictingChksums(base.Error):
-
-    """
-    checksum conflict detected between two files
-    """
+    """checksum conflict detected between two files"""
 
     __slots__ = ("category", "package", "version",
                  "filename", "chksums", "others")
@@ -154,9 +142,8 @@ class ConflictingChksums(base.Error):
 
 
 class MissingChksum(base.Warning):
-    """
-    a file in the chksum data lacks required checksums
-    """
+    """a file in the chksum data lacks required checksums"""
+
     threshold = base.versioned_feed
     __slots__ = ('category', 'package', 'version', 'filename', 'missing',
                  'existing')
@@ -208,7 +195,6 @@ class UnknownManifest(base.Warning):
 
 
 class ManifestReport(base.Template):
-
     """Manifest related checks.
 
     Verify that the Manifest file exists, doesn't have missing or

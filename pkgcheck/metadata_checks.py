@@ -16,6 +16,7 @@ demandload('logging')
 
 class MetadataError(base.Error):
     """Problem detected with a packages metadata"""
+
     __slots__ = ("category", "package", "version", "attr", "msg")
     threshold = base.versioned_feed
 
@@ -199,8 +200,8 @@ class MissingSlotDepReport(base.Template):
         rdepends = set(self.iuse_filter((atom,), pkg, pkg.rdepends, reporter))
         depends = set(self.iuse_filter((atom,), pkg, pkg.depends, reporter))
         # skip deps that are blockers or have explicit slots/slot operators
-        for dep in (x for x in rdepends.intersection(depends) if not \
-                (x.blocks or x.slot is not None or x.slot_operator is not None)):
+        for dep in (x for x in rdepends.intersection(depends) if not
+                    (x.blocks or x.slot is not None or x.slot_operator is not None)):
             dep_slots = set(x.slot for x in pkg.repo.itermatch(dep))
             if len(dep_slots) > 1:
                 reporter.add_report(MissingSlotDep(pkg, str(dep), dep_slots))

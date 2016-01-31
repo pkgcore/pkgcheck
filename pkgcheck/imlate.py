@@ -8,8 +8,7 @@ from pkgcheck.base import versioned_feed, package_feed, Result
 
 
 class LaggingStableInfo(Result):
-
-    """Arch that is behind another from a stabling standpoint"""
+    """Arch that is behind another from a stabling standpoint."""
 
     __slots__ = ("category", "package", "version", "keywords", "stable")
     threshold = versioned_feed
@@ -28,11 +27,7 @@ class LaggingStableInfo(Result):
 
 
 class ImlateReport(StableCheckAddon):
-
-    """
-    scan for ebuilds that can be stabled based upon stabling status for
-    other arches
-    """
+    """Scan for ebuilds that are lagging in stabilization."""
 
     feed_type = package_feed
     required_addons = (ArchesAddon,)
@@ -43,9 +38,12 @@ class ImlateReport(StableCheckAddon):
         parser.plugin.add_argument(
             "--source-arches", action='extend_comma', dest='reference_arches',
             default=ArchesAddon.default_arches,
-            help="comma separated list of what arches to compare against for imlate",
+            help="comma separated list of arches to compare against for lagging stabilization",
             docs="""
-                The default arch list is %s.
+                Comma separated list of arches to compare against for
+                lagging stabilization.
+
+                The default arches are %s.
             """ % (", ".join(ArchesAddon.default_arches)))
 
     def __init__(self, options, arches):

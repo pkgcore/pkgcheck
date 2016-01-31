@@ -8,6 +8,7 @@ from pkgcheck import base
 
 demand_compile_regexp('indent_regexp', '^\t* \t+')
 
+
 class base_whitespace(base.Warning):
 
     threshold = base.versioned_feed
@@ -22,7 +23,6 @@ class base_whitespace(base.Warning):
 
 
 class WhitespaceFound(base_whitespace):
-
     """leading or trailing whitespaces are found"""
 
     __slots__ = ("category", "package", "version", "lines", "leadtrail")
@@ -40,7 +40,6 @@ class WhitespaceFound(base_whitespace):
 
 
 class WrongIndentFound(base_whitespace):
-
     """leading or trailing whitespaces are found"""
 
     __slots__ = ("category", "package", "version", "lines")
@@ -56,7 +55,6 @@ class WrongIndentFound(base_whitespace):
 
 
 class DoubleEmptyLine(base_whitespace):
-
     """unneeded blank lines are found"""
 
     __slots__ = ("category", "package", "version", "lines")
@@ -72,7 +70,6 @@ class DoubleEmptyLine(base_whitespace):
 
 
 class TrailingEmptyLine(base.Warning):
-
     """unneeded blank lines are found"""
 
     __slots__ = ("category", "package", "version")
@@ -87,7 +84,6 @@ class TrailingEmptyLine(base.Warning):
 
 
 class NoFinalNewline(base.Warning):
-
     """Ebuild's last line does not have a final newline."""
 
     __slots__ = ("category", "package", "version")
@@ -102,7 +98,6 @@ class NoFinalNewline(base.Warning):
 
 
 class WhitespaceCheck(base.Template):
-
     """checking ebuild for (useless) whitespaces"""
 
     feed_type = base.ebuild_feed

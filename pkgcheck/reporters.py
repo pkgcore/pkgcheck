@@ -19,9 +19,10 @@ demandload(
 
 
 class StrReporter(base.Reporter):
+    """Simple string reporter, pkgcheck-0.1 behaviour.
 
-    """
-    Simple string reporter, pkgcheck-0.1 behaviour. example:
+    Example:
+
     sys-apps/portage-2.1-r2: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
     sys-apps/portage-2.1-r2: rdepends  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ >=app-misc/pax-utils-0.1.13 ]
     sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86-fbsd ]
@@ -59,9 +60,9 @@ class StrReporter(base.Reporter):
 
 
 class FancyReporter(base.Reporter):
+    """grouped colored output
 
-    """
-    grouped colored output, example:
+    Example:
 
     sys-apps/portage
       WrongIndentFound: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
@@ -106,10 +107,7 @@ class FancyReporter(base.Reporter):
 
 
 class NullReporter(base.Reporter):
-
-    """
-    reporter used for timing tests; no output
-    """
+    """reporter used for timing tests; no output"""
 
     priority = -10000000
 
@@ -121,22 +119,23 @@ class NullReporter(base.Reporter):
 
 
 class XmlReporter(base.Reporter):
-
-    """
-    dump an xml feed of reports
-    """
+    """dump an xml feed of reports"""
 
     # xml report, shouldn't be used but in worst case.
     priority = -1000
 
-    repo_template = ("<result><class>%(class)s</class>"
+    repo_template = (
+        "<result><class>%(class)s</class>"
         "<msg>%(msg)s</msg></result>")
-    cat_template = ("<result><category>%(category)s</category>"
+    cat_template = (
+        "<result><category>%(category)s</category>"
         "<class>%(class)s</class><msg>%(msg)s</msg></result>")
-    pkg_template = ("<result><category>%(category)s</category>"
+    pkg_template = (
+        "<result><category>%(category)s</category>"
         "<package>%(package)s</package><class>%(class)s</class>"
         "<msg>%(msg)s</msg></result>")
-    ver_template = ("<result><category>%(category)s</category>"
+    ver_template = (
+        "<result><category>%(category)s</category>"
         "<package>%(package)s</package><version>%(version)s</version>"
         "<class>%(class)s</class><msg>%(msg)s</msg></result>")
 

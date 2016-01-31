@@ -11,7 +11,6 @@ from pkgcheck import base
 
 
 class VersionToEbuild(base.Transform):
-
     """Convert from just a package to a (package, list_of_lines) tuple."""
 
     source = base.versioned_feed
@@ -24,7 +23,6 @@ class VersionToEbuild(base.Transform):
 
 
 class EbuildToVersion(base.Transform):
-
     """Convert (package, list_of_lines) to just package."""
 
     source = base.ebuild_feed
@@ -37,7 +35,6 @@ class EbuildToVersion(base.Transform):
 
 
 class _Collapse(base.Transform):
-
     """Collapse the input into tuples with a function returning the same val.
 
     Override keyfunc in a subclass and set the C{transforms} attribute.
@@ -102,7 +99,7 @@ class _PackageOrCategoryToRepo(base.Transform):
         self.repo.append(item)
 
     def finish(self, reporter):
-        self.child.feed(repo, reporter)
+        self.child.feed(self.repo, reporter)
         base.Transform.finish(self, reporter)
         self.repo = None
 

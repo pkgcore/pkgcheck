@@ -139,7 +139,6 @@ class NonExistentDeps(base.Warning):
 
 
 class UncheckableDep(base.Warning):
-
     """Given dependency cannot be checked due to the number of transitive use deps in it"""
 
     __slots__ = ("category", "package", "version", "attr")
@@ -181,11 +180,11 @@ class NonsolvableDeps(base.Error):
 
 
 class VisibilityReport(base.Template):
-
     """Visibility dependency scans.
+
     Check that at least one solution is possible for a pkg, checking all
     profiles (defined by arch.list) visibility modifiers per stable/unstable
-    keyword
+    keyword.
     """
 
     feed_type = base.versioned_feed

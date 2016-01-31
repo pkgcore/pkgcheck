@@ -17,7 +17,6 @@ demandload(
 
 
 class VulnerablePackage(base.Error):
-
     """Packages marked as vulnerable by GLSAs"""
 
     __slots__ = ("category", "package", "version", "arch", "glsa")
@@ -32,7 +31,7 @@ class VulnerablePackage(base.Error):
                 arches.update(x.lstrip("~") for x in v.restriction.vals)
             else:
                 raise Exception("unexpected restriction sequence- %s in %s" %
-                    (v.restriction, glsa))
+                                (v.restriction, glsa))
         keys = set(x.lstrip("~") for x in pkg.keywords if not x.startswith("-"))
         if arches:
             self.arch = tuple(sorted(arches.intersection(keys)))
@@ -47,10 +46,9 @@ class VulnerablePackage(base.Error):
 
 
 class TreeVulnerabilitiesReport(base.Template):
-    """
-    Scan for vulnerabile ebuilds in the tree
+    """Scan for vulnerabile ebuilds in the tree
 
-    requires a GLSA directory for vuln. info
+    Requires a GLSA directory for vulnerability info.
     """
 
     feed_type = base.versioned_feed

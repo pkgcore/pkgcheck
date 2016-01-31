@@ -36,12 +36,11 @@ class StreamHeader(object):
 
 
 class PickleStream(base.Reporter):
-    """
-    Generate a stream of pickled objects.
+    """Generate a stream of pickled objects.
+
     For each specific target for checks, a header is pickled
     detailing the checks used, possible results, and search
     criteria.
-
     """
     priority = -1001
     protocol = 0
@@ -70,8 +69,8 @@ class PickleStream(base.Reporter):
 
 
 class BinaryPickleStream(PickleStream):
-    """
-    Dump a binary pickle stream (highest protocol).
+    """Dump a binary pickle stream (highest protocol).
+
     For details of the stream, see PickleStream
     """
     priority = -1002

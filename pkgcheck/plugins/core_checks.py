@@ -1,13 +1,12 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 """Default checks."""
 
 # Please keep the imports and plugins sorted.
 from pkgcheck import (
-    cleanup, codingstyle, deprecated, dropped_keywords, feeds, glsa_scan, imlate,
-    metadata_checks, metadata_xml, pkgdir_checks, repo_metadata,
+    cleanup, codingstyle, deprecated, dropped_keywords, feeds, glsa_scan,
+    imlate, metadata_checks, metadata_xml, pkgdir_checks, repo_metadata,
     reporters, stale_unstable, unstable_only, visibility, whitespace,
 )
 from pkgcheck.scripts import pkgcheck_replay_stream

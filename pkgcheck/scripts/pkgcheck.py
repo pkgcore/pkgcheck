@@ -6,16 +6,17 @@
 
 from __future__ import absolute_import
 
+import argparse
+
 from pkgcore.plugin import get_plugins, get_plugin
 from pkgcore.util import commandline, parserestrict
 from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
-from snakeoil.lists import stable_unique, unstable_unique
+from snakeoil.lists import unstable_unique
 
 from pkgcheck import plugins, base, feeds
 
 demandload(
-    'argparse',
     'logging',
     'os',
     'textwrap',
@@ -52,23 +53,23 @@ main_options.add_argument(
 main_options.add_argument(
     '-o', '--overlayed-repo', metavar='REPO',
     action=commandline.StoreRepoObject, dest='src_repo',
-    help="if the target repo is an overlay, specify the "
-         "repository name to pull profiles/license from")
+    help='if the target repo is an overlay, specify the '
+         'repository name to pull profiles/license from')
 list_options = main_options.add_mutually_exclusive_group()
 list_options.add_argument(
-    "--list-checks", action="store_true", default=False,
-    help="show available checks and exit")
+    '--list-checks', action='store_true', default=False,
+    help='show available checks and exit')
 list_options.add_argument(
     '--list-reporters', action='store_true', default=False,
-    help="show available reporters and exit")
+    help='show available reporters and exit')
 
 check_options = argparser.add_argument_group('Check selection')
 check_options.add_argument(
-    "-c", "--check", action="append", dest="checks_to_run",
-    help="limit checks to regex or package/class matching")
+    '-c', '--check', action='append', dest='checks_to_run',
+    help='limit checks to regex or package/class matching')
 check_options.add_argument(
-    "-d", "--disable", action="append", dest="checks_to_disable",
-    help="specific checks to disable")
+    '-d', '--disable', action='append', dest='checks_to_disable',
+    help='specific checks to disable')
 check_options.add_argument(
     '--checkset', action=commandline.StoreConfigObject,
     config_type='pkgcheck_checkset',
@@ -204,8 +205,7 @@ def check_args(parser, namespace):
                     "--reporter %r matched multiple reporters, "
                     "must match one. %r" % (
                         namespace.reporter,
-                        tuple(sorted("%s.%s" % (x.__module__, x.__name__)
-                                        for x in func))
+                        tuple(sorted("%s.%s" % (x.__module__, x.__name__) for x in func))
                     )
                 )
             func = func[0]
@@ -326,6 +326,7 @@ def dump_docstring(out, obj, prefix=None):
             out.first_prefix.pop()
             out.later_prefix.pop()
 
+
 @decorate_forced_wrapping()
 def display_checks(out, checks):
     d = {}
@@ -396,6 +397,7 @@ def display_reporters(out, config, config_reporters, plugin_reporters):
             " no reporters detected; pkgcheck won't "
             "run correctly without a reporter to use!")
         out.write()
+
 
 @argparser.bind_main_func
 def main(options, out, err):

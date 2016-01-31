@@ -21,7 +21,7 @@ from pkgcore.config import ConfigHint
 from snakeoil.demandload import demandload
 
 demandload(
-    'itertools',
+    'itertools:chain',
     'logging',
     're',
 )
@@ -38,7 +38,6 @@ max_scope = repository_scope
 
 
 class Addon(object):
-
     """Base class for extra functionality for pkgcheck other than a check.
 
     The checkers can depend on one or more of these. They will get
@@ -97,7 +96,6 @@ class set_documentation(type):
 
 
 class Template(Addon):
-
     """Base template for a check."""
 
     __metaclass__ = set_documentation
@@ -118,7 +116,6 @@ class Template(Addon):
 
 
 class Transform(object):
-
     """Base class for a feed type transformer.
 
     :cvar source: start type
@@ -144,19 +141,16 @@ class Transform(object):
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.child)
 
-    def finish(self, reporter):
-        pass
-
 
 def _collect_checks(obj):
     if isinstance(obj, Transform):
         i = collect_checks(obj.child)
     elif isinstance(obj, CheckRunner):
-        i = itertools.chain(*map(collect_checks, obj.checks))
+        i = chain(*map(collect_checks, obj.checks))
     elif isinstance(obj, Addon):
         i = [obj]
     else:
-        i = itertools.chain(*map(collect_checks, obj))
+        i = chain(*map(collect_checks, obj))
     for x in i:
         yield x
 
