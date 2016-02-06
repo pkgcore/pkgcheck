@@ -79,7 +79,7 @@ else:
 
 
 def visit_atoms(pkg, stream):
-    if not pkg.eapi_obj.options.transitive_use_atoms:
+    if not pkg.eapi.options.transitive_use_atoms:
         return iflatten_instance(stream, atom)
     return iflatten_func(stream, _eapi2_flatten)
 

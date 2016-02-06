@@ -1,9 +1,9 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-from pkgcore.ebuild import eapi
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
+from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.misc import ChunkedDataDict, chunked_data
 from pkgcore.repository.util import SimpleTree
@@ -32,8 +32,8 @@ class FakePkg(package):
         object.__setattr__(self, "data", data)
 
     @property
-    def eapi_obj(self):
-        return eapi.get_eapi(self.data.get('EAPI', '0'))
+    def eapi(self):
+        return get_eapi(self.data.get('EAPI', '0'))
 
 
 class FakeTimedPkg(package):
