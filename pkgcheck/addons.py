@@ -40,7 +40,7 @@ class ArchesAddon(base.Addon):
 
     @classmethod
     def mangle_argparser(cls, parser):
-        group = parser.add_argument_group('Arches')
+        group = parser.add_argument_group('arches')
         group.add_argument(
             '-a', '--arches', nargs=1, action='extend_comma_toggle',
             default=((), cls.default_arches),
@@ -65,7 +65,7 @@ class QueryCacheAddon(base.Template):
 
     @staticmethod
     def mangle_argparser(parser):
-        group = parser.add_argument_group('Query caching')
+        group = parser.add_argument_group('query caching')
         group.add_argument(
             '--reset-caching-per', dest='query_caching_freq',
             choices=('version', 'package', 'category'), default='package',
@@ -123,7 +123,7 @@ class ProfileAddon(base.Addon):
 
     @staticmethod
     def mangle_argparser(parser):
-        group = parser.add_argument_group('Profiles')
+        group = parser.add_argument_group('profiles')
         group.add_argument(
             "--profiles-base", dest='profiles_dir', default=None,
             help="path to base profiles directory",

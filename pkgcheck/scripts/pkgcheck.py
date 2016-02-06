@@ -38,7 +38,7 @@ argparser.set_defaults(default_suite=False)
 argparser.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
-main_options = argparser.add_argument_group('Main options')
+main_options = argparser.add_argument_group('main options')
 main_options.add_argument(
     '-r', '--repo', metavar='REPO', dest='target_repo',
     action=commandline.StoreRepoObject,
@@ -63,7 +63,7 @@ list_options.add_argument(
     '--list-reporters', action='store_true', default=False,
     help='show available reporters and exit')
 
-check_options = argparser.add_argument_group('Check selection')
+check_options = argparser.add_argument_group('check selection')
 check_options.add_argument(
     '-c', '--check', action='append', dest='checks_to_run',
     help='limit checks to regex or package/class matching')
@@ -83,7 +83,7 @@ def add_addon(addon):
         for dep in addon.required_addons:
             add_addon(dep)
 
-argparser.plugin = argparser.add_argument_group('Plugin options')
+argparser.plugin = argparser.add_argument_group('plugin options')
 for check in get_plugins('check', plugins):
     add_addon(check)
 for addon in all_addons:
