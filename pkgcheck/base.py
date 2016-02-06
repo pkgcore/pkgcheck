@@ -142,7 +142,7 @@ class Transform(object):
         return '%s(%r)' % (self.__class__.__name__, self.child)
 
 
-def _collect_checks(obj):
+def collect_checks(obj):
     if isinstance(obj, Transform):
         i = collect_checks(obj.child)
     elif isinstance(obj, CheckRunner):
@@ -153,10 +153,6 @@ def _collect_checks(obj):
         i = chain(*map(collect_checks, obj))
     for x in i:
         yield x
-
-
-def collect_checks(obj):
-    return set(_collect_checks(obj))
 
 
 def collect_checks_classes(obj):
