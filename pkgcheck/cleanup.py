@@ -46,9 +46,6 @@ class RedundantVersionReport(Template):
         stack = []
         bad = []
         for pkg in reversed(pkgset):
-            # reduce false positives for idiot keywords/ebuilds
-            if pkg.version == '9999' or pkg.version.startswith("cvs."):
-                continue
             curr_set = set(x for x in pkg.keywords if not x.startswith("-"))
             if not curr_set:
                 continue
