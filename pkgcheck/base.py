@@ -268,7 +268,6 @@ def convert_check_filter(tok):
 
 
 class _CheckSet(object):
-
     """Run only listed checks."""
 
     # No config hint here since this one is abstract.
@@ -278,7 +277,6 @@ class _CheckSet(object):
 
 
 class Whitelist(_CheckSet):
-
     """Only run checks matching one of the provided patterns."""
 
     pkgcore_config_type = ConfigHint(
@@ -292,7 +290,6 @@ class Whitelist(_CheckSet):
 
 
 class Blacklist(_CheckSet):
-
     """Only run checks not matching any of the provided patterns."""
 
     pkgcore_config_type = ConfigHint(
@@ -394,7 +391,6 @@ def plug(sinks, transforms, sources, debug=None):
     for source in sources:
         # (not particularly clever, if we get a ton of sources this
         # should be optimized to do less duplicate work).
-        local_best_scope = {}
         reachable = set()
         todo = set([source.feed_type])
         while todo:

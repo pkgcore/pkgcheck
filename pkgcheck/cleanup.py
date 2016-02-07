@@ -5,10 +5,7 @@ from pkgcheck.base import Template, package_feed, Result, versioned_feed
 
 
 class RedundantVersionWarning(Result):
-    """
-    Redundant version of a pkg in a slotting; keyword appears in a later
-    version
-    """
+    """Redundant version(s) of a package in a specific slot."""
 
     __slots__ = ("category", "package", "version", "slot", "later_versions")
     threshold = versioned_feed
@@ -26,8 +23,9 @@ class RedundantVersionWarning(Result):
 
 
 class RedundantVersionReport(Template):
-    """
-    scan for versions that are likely shadowed by later versions from a
+    """Scan for overshadowed package versions.
+
+    Scan for versions that are likely shadowed by later versions from a
     keywords standpoint (ignoring -9999 versioned packages)
 
     Example: pkga-1 is keyworded amd64, pkga-2 is amd64.
