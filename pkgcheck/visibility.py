@@ -8,6 +8,10 @@ from snakeoil import klass
 
 from pkgcheck import base, addons
 
+vcs_eclasses = frozenset([
+    "bzr", "cvs", "darcs", "git-2", "git-r3", "golang-vcs", "mercurial", "subversion"
+])
+
 
 class FakeConfigurable(object):
     configurable = True
@@ -193,9 +197,6 @@ class VisibilityReport(base.Template):
         addons.EvaluateDepSetAddon)
     known_results = (VisibleVcsPkg, NonExistentDeps, NonsolvableDeps)
 
-    vcs_eclasses = frozenset([
-        "bzr", "cvs", "darcs", "git-2", "git-r3", "golang-vcs", "mercurial", "subversion"])
-
     def __init__(self, options, arches, query_cache, profiles, depset_cache):
         base.Template.__init__(self, options)
         self.query_cache = query_cache.query_cache
@@ -210,7 +211,7 @@ class VisibilityReport(base.Template):
         # accessed for atom matching to remain in memory.
         # end result is less going to disk
 
-        if self.vcs_eclasses.intersection(pkg.inherited):
+        if vcs_eclasses.intersection(pkg.inherited):
             # vcs ebuild that better not be visible
             self.check_visibility_vcs(pkg, reporter)
 

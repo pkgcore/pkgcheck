@@ -2,6 +2,7 @@
 # License: BSD/GPL2
 
 from pkgcheck.base import Template, package_feed, Result, versioned_feed
+from pkgcheck.visibility import vcs_eclasses
 
 
 class RedundantVersionWarning(Result):
@@ -46,6 +47,9 @@ class RedundantVersionReport(Template):
         stack = []
         bad = []
         for pkg in reversed(pkgset):
+            # reduce false positives for idiot keywords/ebuilds
+            if vcs_eclasses.intersection(pkg.inherited):
+                continue
             curr_set = set(x for x in pkg.keywords if not x.startswith("-"))
             if not curr_set:
                 continue
