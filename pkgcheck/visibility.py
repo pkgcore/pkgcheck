@@ -210,12 +210,9 @@ class VisibilityReport(base.Template):
         # accessed for atom matching to remain in memory.
         # end result is less going to disk
 
-        fvcs = self.vcs_eclasses
-        for eclass in pkg.inherited:
-            if eclass in fvcs:
-                # vcs ebuild that better not be visible
-                self.check_visibility_vcs(pkg, reporter)
-                break
+        if self.vcs_eclasses.intersection(pkg.inherited):
+            # vcs ebuild that better not be visible
+            self.check_visibility_vcs(pkg, reporter)
 
         suppressed_depsets = []
         for attr, depset in (("depends", pkg.depends),
