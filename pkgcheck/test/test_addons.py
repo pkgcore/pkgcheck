@@ -23,7 +23,7 @@ class base_test(TestCase):
     addon_kls = None
 
     def process_check(self, args, silence=False, preset_values={}, **settings):
-        p = commandline.mk_argparser(domain=False, color=False)
+        p = commandline.ArgumentParser(domain=False, color=False)
         p.plugin = p.add_argument_group('plugin options')
         self.addon_kls.mangle_argparser(p)
         args, unknown_args = p.parse_known_args(args)

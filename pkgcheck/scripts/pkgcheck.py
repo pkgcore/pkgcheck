@@ -28,7 +28,7 @@ demandload(
     'pkgcheck:errors',
 )
 
-argparser = commandline.mk_argparser(
+argparser = commandline.ArgumentParser(
     domain=False, color=False, description=__doc__)
 # These are all set based on other options, so have no default setting.
 argparser.set_defaults(repo_bases=[])

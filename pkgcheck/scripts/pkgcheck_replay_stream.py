@@ -77,7 +77,7 @@ class BinaryPickleStream(PickleStream):
     protocol = -1
 
 
-argparser = commandline.mk_argparser(
+argparser = commandline.ArgumentParser(
     config=False, domain=False, color=False, description=__doc__)
 argparser.add_argument(
     dest='pickle_file', help='pickled results file')
