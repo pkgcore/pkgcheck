@@ -12,7 +12,7 @@ from pkgcheck import base, addons
 
 demandload(
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
-    'snakeoil.lists:iflatten_instance',
+    'snakeoil.sequences:iflatten_instance',
     'pkgcore:fetch',
 )
 

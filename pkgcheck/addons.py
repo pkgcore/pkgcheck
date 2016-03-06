@@ -11,8 +11,8 @@ from itertools import chain, ifilter, ifilterfalse, imap
 from snakeoil.containers import ProtectedSet
 from snakeoil.demandload import demandload
 from snakeoil.iterables import expandable_chain
-from snakeoil.lists import iflatten_instance
 from snakeoil.osutils import abspath, listdir_files, pjoin
+from snakeoil.sequences import iflatten_instance
 
 from pkgcheck import base
 
