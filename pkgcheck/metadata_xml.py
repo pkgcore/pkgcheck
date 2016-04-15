@@ -77,7 +77,7 @@ class base_BadlyFormedXml(base.Warning):
 
 
 class base_InvalidXml(base.Error):
-    """xml fails dtd validation"""
+    """xml fails schema validation"""
 
     __slots__ = ("category", "package", "filename")
     __attrs__ = __slots__
@@ -96,7 +96,7 @@ class base_InvalidXml(base.Error):
 
     @property
     def short_desc(self):
-        return "%s %s violates metadata.dtd" % (self._label, os.path.basename(self.filename))
+        return "%s %s violates metadata.xsd" % (self._label, os.path.basename(self.filename))
 
 
 class PkgMissingMetadataXml(base_MissingXml):
@@ -132,7 +132,7 @@ class CatBadlyFormedXml(base_BadlyFormedXml):
 class base_check(base.Template):
     """base class for metadata.xml scans"""
 
-    dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
+    schema_url = "http://www.gentoo.org/xml-schema/metadata.xsd"
     misformed_error = None
     invalid_error = None
     missing_error = None
@@ -141,11 +141,11 @@ class base_check(base.Template):
     def mangle_argparser(cls, parser):
         try:
             parser.plugin.add_argument(
-                '--metadata-dtd',
-                help='location to cache %s' % (cls.dtd_url,))
+                '--metadata-xsd',
+                help='location to cache %s' % (cls.schema_url,))
             parser.plugin.add_argument(
-                '--metadata-dtd-required',
-                help="if metadata.dtd cannot be fetched (no connection for example), "
+                '--metadata-xsd-required',
+                help="if metadata.xsd cannot be fetched (no connection for example), "
                      "treat it as a failure rather than warning and ignoring.")
         except argparse.ArgumentError:
             # the arguments have already been added to the parser
@@ -154,49 +154,49 @@ class base_check(base.Template):
     def __init__(self, options):
         base.Template.__init__(self, options)
         self.repo_base = getattr(options.src_repo, "location", None)
-        self.dtd_file = None
+        self.schema_file = None
 
     def start(self):
         self.last_seen = None
         refetch = False
-        write_path = read_path = self.options.metadata_dtd
+        write_path = read_path = self.options.metadata_xsd
         if write_path is None:
-            read_path = pjoin(self.repo_base, 'metadata', 'dtd', 'metadata.dtd')
+            read_path = pjoin(self.repo_base, 'metadata', 'xml-schema', 'metadata.xsd')
         refetch = not os.path.isfile(read_path)
 
         if refetch:
-            logger.warn('metadata.dtd cannot be opened from %s, will refetch', read_path)
-            logger.info("fetching metdata.dtd from %s", self.dtd_url)
+            logger.warn('metadata.xsd cannot be opened from %s, will refetch', read_path)
+            logger.info("fetching metdata.xsd from %s", self.schema_url)
             try:
-                dtd_data = urlopen(self.dtd_url).read()
+                schema_data = urlopen(self.schema_url).read()
             except urllib_error.URLError as e:
-                if self.options.metadata_dtd_required:
+                if self.options.metadata_xsd_required:
                     raise Exception(
-                        "failed fetching dtd from %s: reason %s. "
-                        "Due to --metadata-dtd-required in use, bailing" %
-                        (self.dtd_url, e.reason))
+                        "failed fetching XML Schema from %s: reason %s. "
+                        "Due to --metadata-xsd-required in use, bailing" %
+                        (self.schema_url, e.reason))
                 logger.warn(
-                    "failed fetching dtd from %s: reason %s", self.dtd_url, e.reason)
+                    "failed fetching XML Schema from %s: reason %s", self.schema_url, e.reason)
                 self.validator = noop_validator
                 return
             if write_path is None:
-                self.dtd_file = NamedTemporaryFile()
-                write_path = read_path = self.dtd_file.name
+                self.schema_file = NamedTemporaryFile()
+                write_path = read_path = self.schema_file.name
             try:
-                fileutils.write_file(write_path, 'wb', dtd_data)
+                fileutils.write_file(write_path, 'wb', schema_data)
             except EnvironmentError as e:
-                if self.options.metadata_dtd_required:
+                if self.options.metadata_xsd_required:
                     raise Exception(
-                        "failed saving dtd to %s: reason %s. "
-                        "Due to --metadata-dtd-required in use, bailing" %
+                        "failed saving XML Schema to %s: reason %s. "
+                        "Due to --metadata-xsd-required in use, bailing" %
                         (write_path, e))
-                logger.warn("failed writing dtd to %s: reason %s.  Disabling check." %
+                logger.warn("failed writing XML Schema to %s: reason %s.  Disabling check." %
                             (write_path, e))
                 self.validator = noop_validator
                 return
 
-        self.dtd_loc = read_path
-        self.validator = get_validator(self.dtd_loc)
+        self.schema_loc = read_path
+        self.validator = get_validator(self.schema_loc)
 
     def feed(self, thing, reporter):
         raise NotImplementedError(self.feed)
@@ -249,8 +249,6 @@ class CategoryMetadataXmlCheck(base_check):
 
     known_results = (CatBadlyFormedXml, CatInvalidXml, CatMissingMetadataXml)
 
-    dtd_url = "http://www.gentoo.org/dtd/metadata.dtd"
-
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.category:
             return
@@ -280,8 +278,8 @@ class libxml_parser(object):
 
     def __init__(self, module, loc):
         self.libxml2 = module
-        self.parsed_dtd = self.libxml2.parseDTD(None, loc)
-        self.validator = self.libxml2.newValidCtxt()
+        self.parsed_schema = self.libxml2.schemaNewParserCtxt(loc).schemaParse()
+        self.validator = self.parsed_schema.schemaNewValidCtxt()
 
     def validate(self, loc):
         """
@@ -294,7 +292,7 @@ class libxml_parser(object):
         xml.parseDocument()
         if not xml.isValid():
             return 2
-        elif not xml.doc().validateDtd(self.validator, self.parsed_dtd):
+        elif self.validator.schemaValidateDoc(xml.doc()) != 0:
             return 1
         return 0
 
@@ -302,7 +300,7 @@ class libxml_parser(object):
 class xmllint_parser(object):
 
     def __init__(self, loc):
-        self.dtd_loc = loc
+        self.schema_loc = loc
         self.bin_loc = find_binary("xmllint")
 
     def validate(self, loc):
@@ -312,8 +310,8 @@ class xmllint_parser(object):
                  1 badly formed
                  2 invalid xml
         """
-        ret = spawn([self.bin_loc, "--nonet", "--noout", "--dtdvalid",
-                    self.dtd_loc, loc], fd_pipes={})
+        ret = spawn([self.bin_loc, "--nonet", "--noout", "--schema",
+                    self.schema_loc, loc], fd_pipes={})
 
         if ret == 1:
             return 1
