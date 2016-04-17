@@ -22,6 +22,7 @@ else:
         'urllib2:urlopen')
 demandload(
     'argparse',
+    'functools:partial',
     'tempfile:NamedTemporaryFile',
     'pkgcore.log:logger',
     'pkgcore.spawn:spawn,find_binary',
@@ -82,11 +83,12 @@ class base_InvalidXml(base.Error):
     __slots__ = ("category", "package", "filename")
     __attrs__ = __slots__
 
-    def __init__(self, filename, category, package=None):
+    def __init__(self, msgs, filename, category, package=None):
         super(base_InvalidXml, self).__init__()
         self.category = category
         self.package = package
         self.filename = filename
+        self.msgs = msgs
 
     @property
     def _label(self):
@@ -96,7 +98,10 @@ class base_InvalidXml(base.Error):
 
     @property
     def short_desc(self):
-        return "%s %s violates metadata.xsd" % (self._label, os.path.basename(self.filename))
+        msg = "%s %s violates metadata.xsd" % (self._label, os.path.basename(self.filename))
+        if self.msgs:
+            msg += ": %s" % ' '.join(self.msgs)
+        return msg
 
 
 class PkgMissingMetadataXml(base_MissingXml):
@@ -213,7 +218,7 @@ class base_check(base.Template):
         elif isinstance(ret, validator_BadlyFormedXml):
             return self.misformed_error
         elif isinstance(ret, validator_InvalidXml):
-            return self.invalid_error
+            return partial(self.invalid_error, ret.msgs)
         raise AssertionError(
             "got %r from validator, which isn't valid" % ret)
 
@@ -281,7 +286,9 @@ class validator_BadlyFormedXml(object):
 
 class validator_InvalidXml(object):
     """ Return value from validator indicating schema violation. """
-    pass
+
+    def __init__(self, msgs=[]):
+        self.msgs = msgs
 
 
 class libxml_parser(object):
@@ -302,8 +309,12 @@ class libxml_parser(object):
         xml.parseDocument()
         if not xml.isValid():
             return validator_BadlyFormedXml()
-        elif self.validator.schemaValidateDoc(xml.doc()) != 0:
-            return validator_InvalidXml()
+
+        msgs = []
+        errh = lambda msg, msgs: msgs.append(msg)
+        self.validator.setValidityErrorHandler(errh, errh, msgs)
+        if self.validator.schemaValidateDoc(xml.doc()) != 0:
+            return validator_InvalidXml(msgs)
         return None
 
 
