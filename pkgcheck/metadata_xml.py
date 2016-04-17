@@ -208,11 +208,11 @@ class base_check(base.Template):
         if not os.path.exists(loc):
             return self.missing_error
         ret = self.validator(loc)
-        if ret == 0:
+        if ret is None:
             return None
-        elif ret == 1:
+        elif isinstance(ret, validator_BadlyFormedXml):
             return self.misformed_error
-        elif ret == 2:
+        elif isinstance(ret, validator_InvalidXml):
             return self.invalid_error
         raise AssertionError(
             "got %r from validator, which isn't valid" % ret)
@@ -274,6 +274,16 @@ def get_validator(loc):
     return xmllint_parser(loc).validate
 
 
+class validator_BadlyFormedXml(object):
+    """ Return value from validator indicating malformed XML. """
+    pass
+
+
+class validator_InvalidXml(object):
+    """ Return value from validator indicating schema violation. """
+    pass
+
+
 class libxml_parser(object):
 
     def __init__(self, module, loc):
@@ -291,10 +301,10 @@ class libxml_parser(object):
         xml = self.libxml2.createFileParserCtxt(loc)
         xml.parseDocument()
         if not xml.isValid():
-            return 2
+            return validator_BadlyFormedXml()
         elif self.validator.schemaValidateDoc(xml.doc()) != 0:
-            return 1
-        return 0
+            return validator_InvalidXml()
+        return None
 
 
 class xmllint_parser(object):
@@ -314,13 +324,13 @@ class xmllint_parser(object):
                     self.schema_loc, loc], fd_pipes={})
 
         if ret == 1:
-            return 1
+            return validator_BadlyFormedXml()
 
         elif ret == 3:
-            return 2
+            return validator_InvalidXml()
 
-        return 0
+        return None
 
 
 def noop_validator(loc):
-        return 0
+        return None
