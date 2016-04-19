@@ -25,6 +25,7 @@ demandload(
     'functools:partial',
     'lxml:etree',
     'tempfile:NamedTemporaryFile',
+    'pkgcore.ebuild.atom:atom',
     'pkgcore.log:logger',
     'pkgcore.spawn:spawn,find_binary',
     'snakeoil.osutils:pjoin',
@@ -109,6 +110,30 @@ class base_InvalidXml(base.Error):
         return "%s %s violates metadata.xsd:\n%s" % (self._label, os.path.basename(self.filename), '\n'.join(self.format_lxml_errors(self.message)))
 
 
+class base_MetadataXmlInvalidPkgRef(base.Error):
+    """ metadata.xml <pkg/> references unavailable / invalid package """
+
+    __slots__ = ("category", "package", "filename")
+    __attrs__ = __slots__
+
+    def __init__(self, pkgtext, filename, category, package=None):
+        super(base_MetadataXmlInvalidPkgRef, self).__init__()
+        self.category = category
+        self.package = package
+        self.filename = filename
+        self.pkgtext = pkgtext
+
+    @property
+    def _label(self):
+        if self.package is not None:
+            return "%s/%s" % (self.category, self.package)
+        return self.category
+
+    @property
+    def short_desc(self):
+        return "%s %s <pkg/> references unknown/invalid package %s" % (self._label, os.path.basename(self.filename), repr(self.pkgtext))
+
+
 class PkgMissingMetadataXml(base_MissingXml):
     __slots__ = ()
     threshold = base.package_feed
@@ -135,6 +160,16 @@ class PkgBadlyFormedXml(base_BadlyFormedXml):
 
 
 class CatBadlyFormedXml(base_BadlyFormedXml):
+    __slots__ = ()
+    threshold = base.category_feed
+
+
+class PkgMetadataXmlInvalidPkgRef(base_MetadataXmlInvalidPkgRef):
+    __slots__ = ()
+    threshold = base.package_feed
+
+
+class CatMetadataXmlInvalidPkgRef(base_MetadataXmlInvalidPkgRef):
     __slots__ = ()
     threshold = base.category_feed
 
@@ -206,12 +241,29 @@ class base_check(base.Template):
                 return
 
         self.schema = etree.XMLSchema(etree.parse(read_path))
+        self.pkgref_cache = {}
 
     def feed(self, thing, reporter):
         raise NotImplementedError(self.feed)
 
     def finish(self, reporter):
         self.last_seen = None
+
+    def check_doc(self, doc):
+        """ Perform additional document structure checks """
+        for el in doc.findall('.//pkg'):
+            p = el.text.strip()
+            if p not in self.pkgref_cache:
+                try:
+                    a = atom(p)
+                    found = self.options.search_repo.has_match(a)
+                except Exception:
+                    # invalid atom
+                    found = False
+                self.pkgref_cache[p] = found
+
+            if not self.pkgref_cache[p]:
+                yield partial(self.pkgref_error, p)
 
     def check_file(self, loc):
         try:
@@ -226,7 +278,7 @@ class base_check(base.Template):
         if not self.schema.validate(doc):
             return (None, (partial(self.invalid_error, self.schema.error_log),))
 
-        return (doc, ())
+        return (doc, self.check_doc(doc))
 
 
 class PackageMetadataXmlCheck(base_check):
@@ -237,8 +289,10 @@ class PackageMetadataXmlCheck(base_check):
     misformed_error = PkgBadlyFormedXml
     invalid_error = PkgInvalidXml
     missing_error = PkgMissingMetadataXml
+    pkgref_error = PkgMetadataXmlInvalidPkgRef
 
-    known_results = (PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml)
+    known_results = (PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
+            PkgMetadataXmlInvalidPkgRef)
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.key:
@@ -257,8 +311,10 @@ class CategoryMetadataXmlCheck(base_check):
     misformed_error = CatBadlyFormedXml
     invalid_error = CatInvalidXml
     missing_error = CatMissingMetadataXml
+    pkgref_error = CatMetadataXmlInvalidPkgRef
 
-    known_results = (CatBadlyFormedXml, CatInvalidXml, CatMissingMetadataXml)
+    known_results = (CatBadlyFormedXml, CatInvalidXml, CatMissingMetadataXml,
+            CatMetadataXmlInvalidPkgRef)
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.category:
