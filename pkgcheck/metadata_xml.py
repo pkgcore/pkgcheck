@@ -22,6 +22,7 @@ else:
         'urllib2:urlopen')
 demandload(
     'argparse',
+    'lxml:etree',
     'tempfile:NamedTemporaryFile',
     'pkgcore.log:logger',
     'pkgcore.spawn:spawn,find_binary',
@@ -195,8 +196,7 @@ class base_check(base.Template):
                 self.validator = noop_validator
                 return
 
-        self.xsd_loc = read_path
-        self.xmllint_loc = find_binary("xmllint")
+        self.schema = etree.XMLSchema(etree.parse(read_path))
 
     def feed(self, thing, reporter):
         raise NotImplementedError(self.feed)
@@ -205,14 +205,14 @@ class base_check(base.Template):
         self.last_seen = None
 
     def check_file(self, loc):
-        if not os.path.exists(loc):
+        try:
+            doc = etree.parse(loc)
+        except (IOError, OSError):
             return self.missing_error
-
-        ret = spawn([self.xmllint_loc, "--nonet", "--noout", "--schema",
-                    self.xsd_loc, loc], fd_pipes={})
-        if ret == 1:
+        except etree.XMLSyntaxError:
             return self.misformed_error
-        elif ret == 3:
+
+        if not self.schema.validate(doc):
             return self.invalid_error
 
         return 0
