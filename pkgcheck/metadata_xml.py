@@ -196,7 +196,7 @@ class base_check(base.Template):
                 return
 
         self.dtd_loc = read_path
-        self.validator = xmllint_parser(self.dtd_loc).validate
+        self.xmllint_loc = find_binary("xmllint")
 
     def feed(self, thing, reporter):
         raise NotImplementedError(self.feed)
@@ -207,15 +207,15 @@ class base_check(base.Template):
     def check_file(self, loc):
         if not os.path.exists(loc):
             return self.missing_error
-        ret = self.validator(loc)
-        if ret == 0:
-            return None
-        elif ret == 1:
+
+        ret = spawn([self.xmllint_loc, "--nonet", "--noout", "--dtdvalid",
+                    self.dtd_loc, loc], fd_pipes={})
+        if ret == 1:
             return self.misformed_error
-        elif ret == 2:
+        elif ret == 3:
             return self.invalid_error
-        raise AssertionError(
-            "got %r from validator, which isn't valid" % ret)
+
+        return 0
 
 
 class PackageMetadataXmlCheck(base_check):
@@ -259,31 +259,6 @@ class CategoryMetadataXmlCheck(base_check):
         ret = self.check_file(loc)
         if ret is not None:
             reporter.add_report(ret(loc, pkg.category))
-
-
-class xmllint_parser(object):
-
-    def __init__(self, loc):
-        self.dtd_loc = loc
-        self.bin_loc = find_binary("xmllint")
-
-    def validate(self, loc):
-        """
-        :param loc: location to verify
-        :return: 0 no issue
-                 1 badly formed
-                 2 invalid xml
-        """
-        ret = spawn([self.bin_loc, "--nonet", "--noout", "--dtdvalid",
-                    self.dtd_loc, loc], fd_pipes={})
-
-        if ret == 1:
-            return 1
-
-        elif ret == 3:
-            return 2
-
-        return 0
 
 
 def noop_validator(loc):
