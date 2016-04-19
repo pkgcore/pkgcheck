@@ -196,7 +196,7 @@ class base_check(base.Template):
                 return
 
         self.dtd_loc = read_path
-        self.validator = get_validator(self.dtd_loc)
+        self.validator = xmllint_parser(self.dtd_loc).validate
 
     def feed(self, thing, reporter):
         raise NotImplementedError(self.feed)
@@ -259,44 +259,6 @@ class CategoryMetadataXmlCheck(base_check):
         ret = self.check_file(loc)
         if ret is not None:
             reporter.add_report(ret(loc, pkg.category))
-
-
-_libxml2_module = None
-def get_validator(loc):
-    global _libxml2_module
-    if _libxml2_module is None:
-        try:
-            import libxml2
-            _libxml2_module = libxml2
-        except ImportError:
-            _libxml2_module = False
-
-    if _libxml2_module:
-        return libxml_parser(_libxml2_module, loc).validate
-    return xmllint_parser(loc).validate
-
-
-class libxml_parser(object):
-
-    def __init__(self, module, loc):
-        self.libxml2 = module
-        self.parsed_dtd = self.libxml2.parseDTD(None, loc)
-        self.validator = self.libxml2.newValidCtxt()
-
-    def validate(self, loc):
-        """
-        :param loc: location to verify
-        :return: 0 no issue
-                 1 badly formed
-                 2 invalid xml
-        """
-        xml = self.libxml2.createFileParserCtxt(loc)
-        xml.parseDocument()
-        if not xml.isValid():
-            return 2
-        elif not xml.doc().validateDtd(self.validator, self.parsed_dtd):
-            return 1
-        return 0
 
 
 class xmllint_parser(object):
