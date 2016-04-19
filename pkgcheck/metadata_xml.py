@@ -22,6 +22,7 @@ else:
         'urllib2:urlopen')
 demandload(
     'argparse',
+    'functools:partial',
     'lxml:etree',
     'tempfile:NamedTemporaryFile',
     'pkgcore.log:logger',
@@ -83,8 +84,10 @@ class base_InvalidXml(base.Error):
     __slots__ = ("category", "package", "filename")
     __attrs__ = __slots__
 
-    def __init__(self, filename, category, package=None):
+    # message first so partial() can be easily applied
+    def __init__(self, message, filename, category, package=None):
         super(base_InvalidXml, self).__init__()
+        self.message = message
         self.category = category
         self.package = package
         self.filename = filename
@@ -95,9 +98,15 @@ class base_InvalidXml(base.Error):
             return "%s/%s" % (self.category, self.package)
         return self.category
 
+    @staticmethod
+    def format_lxml_errors(error_log):
+        for l in error_log:
+            yield 'line %d, col %d: (%s) %s' % (l.line, l.column,
+                    l.type_name, l.message)
+
     @property
     def short_desc(self):
-        return "%s %s violates metadata.xsd" % (self._label, os.path.basename(self.filename))
+        return "%s %s violates metadata.xsd:\n%s" % (self._label, os.path.basename(self.filename), '\n'.join(self.format_lxml_errors(self.message)))
 
 
 class PkgMissingMetadataXml(base_MissingXml):
@@ -213,7 +222,7 @@ class base_check(base.Template):
             return self.misformed_error
 
         if not self.schema.validate(doc):
-            return self.invalid_error
+            return partial(self.invalid_error, self.schema.error_log)
 
         return 0
 
