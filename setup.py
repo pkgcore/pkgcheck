@@ -29,6 +29,7 @@ setup(
     packages=find_packages(),
     setup_requires=['snakeoil>=0.7.0'],
     install_requires=[
+        'lxml',
         'snakeoil>=0.7.0',
         'pkgcore>=0.9.3',
     ],
