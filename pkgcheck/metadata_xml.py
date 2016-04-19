@@ -134,6 +134,30 @@ class base_MetadataXmlInvalidPkgRef(base.Error):
         return "%s %s <pkg/> references unknown/invalid package %s" % (self._label, os.path.basename(self.filename), repr(self.pkgtext))
 
 
+class base_MetadataXmlInvalidCatRef(base.Error):
+    """ metadata.xml <cat/> references unavailable / invalid category """
+
+    __slots__ = ("category", "package", "filename")
+    __attrs__ = __slots__
+
+    def __init__(self, cattext, filename, category, package=None):
+        super(base_MetadataXmlInvalidPkgRef, self).__init__()
+        self.category = category
+        self.package = package
+        self.filename = filename
+        self.cattext = cattext
+
+    @property
+    def _label(self):
+        if self.package is not None:
+            return "%s/%s" % (self.category, self.package)
+        return self.category
+
+    @property
+    def short_desc(self):
+        return "%s %s <cat/> references unknown/invalid category %s" % (self._label, os.path.basename(self.filename), repr(self.cattext))
+
+
 class PkgMissingMetadataXml(base_MissingXml):
     __slots__ = ()
     threshold = base.package_feed
@@ -170,6 +194,16 @@ class PkgMetadataXmlInvalidPkgRef(base_MetadataXmlInvalidPkgRef):
 
 
 class CatMetadataXmlInvalidPkgRef(base_MetadataXmlInvalidPkgRef):
+    __slots__ = ()
+    threshold = base.category_feed
+
+
+class PkgMetadataXmlInvalidCatRef(base_MetadataXmlInvalidCatRef):
+    __slots__ = ()
+    threshold = base.package_feed
+
+
+class CatMetadataXmlInvalidCatRef(base_MetadataXmlInvalidCatRef):
     __slots__ = ()
     threshold = base.category_feed
 
@@ -251,6 +285,11 @@ class base_check(base.Template):
 
     def check_doc(self, doc):
         """ Perform additional document structure checks """
+        for el in doc.findall('.//cat'):
+            c = el.text.strip()
+            if not c in self.options.search_repo.categories:
+                yield partial(self.catref_error, c)
+
         for el in doc.findall('.//pkg'):
             p = el.text.strip()
             if p not in self.pkgref_cache:
@@ -289,10 +328,11 @@ class PackageMetadataXmlCheck(base_check):
     misformed_error = PkgBadlyFormedXml
     invalid_error = PkgInvalidXml
     missing_error = PkgMissingMetadataXml
+    catref_error = PkgMetadataXmlInvalidCatRef
     pkgref_error = PkgMetadataXmlInvalidPkgRef
 
     known_results = (PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
-            PkgMetadataXmlInvalidPkgRef)
+            PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef)
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.key:
@@ -311,10 +351,11 @@ class CategoryMetadataXmlCheck(base_check):
     misformed_error = CatBadlyFormedXml
     invalid_error = CatInvalidXml
     missing_error = CatMissingMetadataXml
+    catref_error = CatMetadataXmlInvalidCatRef
     pkgref_error = CatMetadataXmlInvalidPkgRef
 
     known_results = (CatBadlyFormedXml, CatInvalidXml, CatMissingMetadataXml,
-            CatMetadataXmlInvalidPkgRef)
+            CatMetadataXmlInvalidPkgRef, CatMetadataXmlInvalidCatRef)
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.category:
