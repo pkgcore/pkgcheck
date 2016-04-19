@@ -217,16 +217,16 @@ class base_check(base.Template):
         try:
             doc = etree.parse(loc)
         except (IOError, OSError):
-            return (None, self.missing_error)
+            return (None, (self.missing_error,))
         except etree.XMLSyntaxError:
-            return (None, self.misformed_error)
+            return (None, (self.misformed_error,))
 
         # note: while doc is available, do not pass it here as it may
         # trigger undefined behavior due to incorrect structure
         if not self.schema.validate(doc):
-            return (None, partial(self.invalid_error, self.schema.error_log))
+            return (None, (partial(self.invalid_error, self.schema.error_log),))
 
-        return (doc, None)
+        return (doc, ())
 
 
 class PackageMetadataXmlCheck(base_check):
@@ -245,8 +245,8 @@ class PackageMetadataXmlCheck(base_check):
             return
         self.last_seen = pkg.key
         loc = pjoin(os.path.dirname(pkg.ebuild.path), "metadata.xml")
-        doc, ret = self.check_file(loc)
-        if ret is not None:
+        doc, reports = self.check_file(loc)
+        for ret in reports:
             reporter.add_report(ret(loc, pkg.category, pkg.package))
 
 
@@ -265,8 +265,8 @@ class CategoryMetadataXmlCheck(base_check):
             return
         self.last_seen = pkg.category
         loc = os.path.join(self.repo_base, pkg.category, "metadata.xml")
-        doc, ret = self.check_file(loc)
-        if ret is not None:
+        doc, reports = self.check_file(loc)
+        for ret in reports:
             reporter.add_report(ret(loc, pkg.category))
 
 
