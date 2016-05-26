@@ -11,6 +11,7 @@ from snakeoil.demandload import demandload
 from pkgcheck import base, addons
 
 demandload(
+    'os',
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
     'snakeoil.sequences:iflatten_instance',
     'pkgcore:fetch',
@@ -141,28 +142,75 @@ class ArchesWithoutProfiles(base.Warning):
         return "[ %s ]" % ', '.join(self.arches)
 
 
-class UnknownProfileArchesReport(base.Template):
+class UnknownProfileStatus(base.Warning):
+    """Unknown status used for profiles."""
+
+    __slots__ = ("status",)
+
+    threshold = base.repository_feed
+
+    def __init__(self, status):
+        super(UnknownProfileStatus, self).__init__()
+        self.status = status
+
+    @property
+    def short_desc(self):
+        return "[ %s ]" % ', '.join(self.status)
+
+
+class NonexistentProfilePath(base.Warning):
+    """Specified profile path doesn't exist."""
+
+    __slots__ = ("path",)
+
+    threshold = base.repository_feed
+
+    def __init__(self, path):
+        super(NonexistentProfilePath, self).__init__()
+        self.path = path
+
+    @property
+    def short_desc(self):
+        return self.path
+
+
+class RepoProfilesReport(base.Template):
     """Scan for unknown arches in profiles and arches without profiles."""
 
     feed_type = base.repository_feed
-    known_results = (UnknownProfileArches, ArchesWithoutProfiles)
+    known_results = (
+        UnknownProfileArches, ArchesWithoutProfiles,
+        NonexistentProfilePath, UnknownProfileStatus)
 
     def __init__(self, options):
         base.Template.__init__(self, options)
         self.arches = options.target_repo.config.known_arches
-        self.profile_arches = set(options.target_repo.config.profiles.arch_profiles.iterkeys())
+        self.profiles = options.target_repo.config.profiles.arch_profiles
+        self.repo_path = options.target_repo.location
 
     def feed(self, pkg, reporter):
         pass
 
     def finish(self, reporter):
-        unknown_arches = self.profile_arches.difference(self.arches)
-        arches_without_profiles = self.arches.difference(self.profile_arches)
+        profile_arches = set(self.profiles.iterkeys())
+        unknown_arches = profile_arches.difference(self.arches)
+        arches_without_profiles = self.arches.difference(profile_arches)
+
         if unknown_arches:
             reporter.add_report(UnknownProfileArches(unknown_arches))
         if arches_without_profiles:
             reporter.add_report(ArchesWithoutProfiles(arches_without_profiles))
 
+        accepted_status = ('stable', 'dev', 'exp')
+        profile_status = set()
+        for path, status in itertools.chain.from_iterable(self.profiles.itervalues()):
+            if not os.path.exists(pjoin(self.repo_path, 'profiles', path)):
+                reporter.add_report(NonexistentProfilePath(path))
+            profile_status.add(status)
+
+        unknown_status = profile_status.difference(accepted_status)
+        if unknown_status:
+            reporter.add_report(UnknownProfileStatus(unknown_status))
 
 def reformat_chksums(iterable):
     for chf, val1, val2 in iterable:
