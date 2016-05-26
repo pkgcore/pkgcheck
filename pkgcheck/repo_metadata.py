@@ -186,7 +186,7 @@ class RepoProfilesReport(base.Template):
         base.Template.__init__(self, options)
         self.arches = options.target_repo.config.known_arches
         self.profiles = options.target_repo.config.profiles.arch_profiles
-        self.repo_path = options.target_repo.location
+        self.repo = options.target_repo
 
     def feed(self, pkg, reporter):
         pass
@@ -201,16 +201,17 @@ class RepoProfilesReport(base.Template):
         if arches_without_profiles:
             reporter.add_report(ArchesWithoutProfiles(arches_without_profiles))
 
-        accepted_status = ('stable', 'dev', 'exp')
         profile_status = set()
         for path, status in itertools.chain.from_iterable(self.profiles.itervalues()):
-            if not os.path.exists(pjoin(self.repo_path, 'profiles', path)):
+            if not os.path.exists(pjoin(self.repo.location, 'profiles', path)):
                 reporter.add_report(NonexistentProfilePath(path))
             profile_status.add(status)
 
-        unknown_status = profile_status.difference(accepted_status)
-        if unknown_status:
-            reporter.add_report(UnknownProfileStatus(unknown_status))
+        if self.repo.repo_id == 'gentoo':
+            accepted_status = ('stable', 'dev', 'exp')
+            unknown_status = profile_status.difference(accepted_status)
+            if unknown_status:
+                reporter.add_report(UnknownProfileStatus(unknown_status))
 
 def reformat_chksums(iterable):
     for chf, val1, val2 in iterable:
