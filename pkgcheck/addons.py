@@ -175,7 +175,7 @@ class ProfileAddon(base.Addon):
         if namespace.profiles is None:
             namespace.profiles = ((), ())
 
-    def __init__(self, options, arches, *args):
+    def __init__(self, options, *args):
         base.Addon.__init__(self, options)
 
         if options.profiles_dir:
@@ -232,8 +232,8 @@ class ProfileAddon(base.Addon):
 
         self.official_arches = options.target_repo.config.known_arches
 
-        self.desired_arches = set(options.arches)
-        if self.desired_arches == set(arches.default_arches):
+        self.desired_arches = getattr(self.options, 'arches', None)
+        if self.desired_arches is None or set(self.desired_arches) == set(ArchesAddon.default_arches):
             # copy it to be safe
             self.desired_arches = set(self.official_arches)
 
