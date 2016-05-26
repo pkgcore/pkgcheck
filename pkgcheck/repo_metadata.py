@@ -109,6 +109,61 @@ class UnusedLicense(base.Template):
         self.licenses = None
 
 
+class UnknownProfileArches(base.Warning):
+    """Unknown arches used in profiles."""
+
+    __slots__ = ("arches",)
+
+    threshold = base.repository_feed
+
+    def __init__(self, arches):
+        super(UnknownProfileArches, self).__init__()
+        self.arches = arches
+
+    @property
+    def short_desc(self):
+        return "[ %s ]" % ', '.join(self.arches)
+
+
+class ArchesWithoutProfiles(base.Warning):
+    """Arches without corresponding profile listings."""
+
+    __slots__ = ("arches",)
+
+    threshold = base.repository_feed
+
+    def __init__(self, arches):
+        super(ArchesWithoutProfiles, self).__init__()
+        self.arches = arches
+
+    @property
+    def short_desc(self):
+        return "[ %s ]" % ', '.join(self.arches)
+
+
+class UnknownProfileArchesReport(base.Template):
+    """Scan for unknown arches in profiles and arches without profiles."""
+
+    feed_type = base.repository_feed
+    known_results = (UnknownProfileArches, ArchesWithoutProfiles)
+
+    def __init__(self, options):
+        base.Template.__init__(self, options)
+        self.arches = options.target_repo.config.known_arches
+        self.profile_arches = set(options.target_repo.config.profiles.arch_profiles.iterkeys())
+
+    def feed(self, pkg, reporter):
+        pass
+
+    def finish(self, reporter):
+        unknown_arches = self.profile_arches.difference(self.arches)
+        arches_without_profiles = self.arches.difference(self.profile_arches)
+        if unknown_arches:
+            reporter.add_report(UnknownProfileArches(unknown_arches))
+        if arches_without_profiles:
+            reporter.add_report(ArchesWithoutProfiles(arches_without_profiles))
+
+
 def reformat_chksums(iterable):
     for chf, val1, val2 in iterable:
         if chf == "size":
