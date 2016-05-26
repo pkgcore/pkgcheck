@@ -33,6 +33,8 @@ class ArchesAddon(base.Addon):
 
     @classmethod
     def check_args(cls, parser, namespace):
+        if namespace.arches is None:
+            namespace.arches = ((), cls.default_arches)
         disabled, enabled = namespace.arches
         if not enabled:
             enabled = cls.default_arches
@@ -43,7 +45,6 @@ class ArchesAddon(base.Addon):
         group = parser.add_argument_group('arches')
         group.add_argument(
             '-a', '--arches', nargs=1, action='extend_comma_toggle',
-            default=((), cls.default_arches),
             help='comma separated list of arches to enable/disable',
             docs="""
                 Comma separated list of arches to enable and disable.
@@ -121,6 +122,8 @@ class profile_data(object):
 
 class ProfileAddon(base.Addon):
 
+    required_addons = (ArchesAddon,)
+
     @staticmethod
     def mangle_argparser(parser):
         group = parser.add_argument_group('profiles')
@@ -172,7 +175,7 @@ class ProfileAddon(base.Addon):
         if namespace.profiles is None:
             namespace.profiles = ((), ())
 
-    def __init__(self, options, *args):
+    def __init__(self, options, arches, *args):
         base.Addon.__init__(self, options)
 
         if options.profiles_dir:
@@ -229,8 +232,8 @@ class ProfileAddon(base.Addon):
 
         self.official_arches = options.target_repo.config.known_arches
 
-        self.desired_arches = getattr(self.options, 'arches', None)
-        if self.desired_arches is None:
+        self.desired_arches = set(options.arches)
+        if self.desired_arches == set(arches.default_arches):
             # copy it to be safe
             self.desired_arches = set(self.official_arches)
 
