@@ -8,7 +8,7 @@ import stat
 
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from snakeoil.demandload import demandload
-from snakeoil.osutils import listdir, pjoin
+from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 
 from pkgcheck.base import Result, Template, package_feed
 
@@ -107,7 +107,7 @@ class SizeViolation(Result):
 
     @property
     def short_desc(self):
-        return '"files/%s" exceeds 20k in size; %i bytes total' % (self.filename, self.size)
+        return '"files/%s" exceeds 20k in size; %s total' % (self.filename, sizeof_fmt(self.size))
 
 
 class Glep31Violation(Result):
