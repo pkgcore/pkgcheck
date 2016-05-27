@@ -15,10 +15,12 @@ class TestImlateReport(misc.ReportTestCase):
 
     def test_it(self):
         mk_pkg = self.mk_pkg
-        check = ImlateReport(misc.Options(
-            arches=("x86", "ppc", "amd64"),
-            reference_arches=("x86", "ppc", "amd64"),
-            target_arches=("x86", "ppc")), None)
+        check = ImlateReport(
+            misc.Options(
+                selected_arches=("x86", "ppc", "amd64"),
+                arches=("x86", "ppc", "amd64"),
+                reference_arches=("x86", "ppc", "amd64")),
+            None)
 
         self.assertNoReport(
             check,

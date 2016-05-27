@@ -33,9 +33,10 @@ class ArchesAddon(base.Addon):
 
     @classmethod
     def check_args(cls, parser, namespace):
-        if namespace.arches is None:
-            namespace.arches = ((), cls.default_arches)
-        disabled, enabled = namespace.arches
+        arches = namespace.selected_arches
+        if arches is None:
+            arches = ((), cls.default_arches)
+        disabled, enabled = arches
         if not enabled:
             enabled = cls.default_arches
         namespace.arches = tuple(sorted(set(enabled).difference(set(disabled))))
@@ -44,7 +45,8 @@ class ArchesAddon(base.Addon):
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('arches')
         group.add_argument(
-            '-a', '--arches', nargs=1, action='extend_comma_toggle',
+            '-a', '--arches', dest='selected_arches', metavar='ARCHES',
+            nargs=1, action='extend_comma_toggle',
             help='comma separated list of arches to enable/disable',
             docs="""
                 Comma separated list of arches to enable and disable.
@@ -233,7 +235,7 @@ class ProfileAddon(base.Addon):
         self.official_arches = options.target_repo.config.known_arches
 
         self.desired_arches = getattr(self.options, 'arches', None)
-        if self.desired_arches is None or set(self.desired_arches) == set(ArchesAddon.default_arches):
+        if self.desired_arches is None or self.options.selected_arches is None:
             # copy it to be safe
             self.desired_arches = set(self.official_arches)
 
@@ -399,10 +401,11 @@ class StableCheckAddon(base.Template):
 
     def __init__(self, options, *args):
         super(StableCheckAddon, self).__init__(self, options)
+        self.arches = set(options.arches)
 
         # use known stable arches if a custom arch set isn't specified
-        self.arches = set(options.arches)
-        if self.arches == set(ArchesAddon.default_arches):
+        selected_arches = getattr(options, 'selected_arches', None)
+        if selected_arches is None:
             self.arches = options.src_repo.config.stable_arches
 
 

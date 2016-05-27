@@ -11,16 +11,19 @@ class TestStaleUnstableReport(misc.ReportTestCase):
 
     check_kls = StaleUnstableReport
 
-    def mk_pkg(self, ver, keywords ,mtime):
-        return misc.FakeTimedPkg("dev-util/diffball-%s" % ver,
-            mtime,data={"KEYWORDS":keywords})
+    def mk_pkg(self, ver, keywords, mtime):
+        return misc.FakeTimedPkg(
+            "dev-util/diffball-%s" % ver,
+            mtime, data={"KEYWORDS": keywords})
 
     def test_it(self):
         now = time.time()
         mk_pkg = self.mk_pkg
-        check  = StaleUnstableReport(misc.Options(arches=("x86", "ppc", "amd64"),
-            reference_arches=("x86", "ppc", "amd64"),
-            target_arches=("x86", "ppc")),  None)
+        check = StaleUnstableReport(
+            misc.Options(
+                selected_arches=("x86", "ppc", "amd64"),
+                arches=("x86", "ppc", "amd64")),
+            None)
 
         check.start()
 
@@ -39,6 +42,6 @@ class TestStaleUnstableReport(misc.ReportTestCase):
         self.assertReport(check, mk_pkg("1.0", "~amd64 ~x86", old))
 
         # ensure it reports only specified arches.
-        report = self.assertReport(check,
-            mk_pkg("1.0", "~amd64 ~x86 ~asdfasdfasdf", old))
+        report = self.assertReport(
+            check, mk_pkg("1.0", "~amd64 ~x86 ~asdfasdfasdf", old))
         self.assertEqual(report.keywords, tuple(sorted(["~amd64", "~x86"])))
