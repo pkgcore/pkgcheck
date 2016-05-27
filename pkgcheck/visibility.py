@@ -138,8 +138,8 @@ class NonExistentDeps(base.Warning):
 
     @property
     def short_desc(self):
-        return "depset %s: nonexistent atoms [ %s ]" % (
-            self.attr, ', '.join(self.atoms))
+        return "depset %s: nonexistent dep%s: [ %s ]" % (
+            self.attr, 's'[len(self.atoms) == 1:], ', '.join(self.atoms))
 
 
 class UncheckableDep(base.Warning):
