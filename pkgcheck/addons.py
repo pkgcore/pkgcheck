@@ -222,7 +222,11 @@ class ProfileAddon(base.Addon):
         ignore_deprecated = self.options.profiles_ignore_deprecated
         arch_profiles = defaultdict(list)
         for profile_path in profile_paths:
-            p = profiles_obj.create_profile(profile_path)
+            try:
+                p = profiles_obj.create_profile(profile_path)
+            except profiles.ProfileError:
+                # caught via a later report
+                continue
             if ignore_deprecated and p.deprecated:
                 continue
             cached_profiles.append(p)
