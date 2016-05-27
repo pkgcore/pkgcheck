@@ -36,7 +36,7 @@ class MissingFile(Result):
 
     @property
     def short_desc(self):
-        return "required file %s doesn't exist" % self.filename
+        return "required file doesn't exist: %r" % (self.filename,)
 
 
 class MismatchedPN(Result):
@@ -89,7 +89,7 @@ class ExecutableFile(Result):
 
     @property
     def short_desc(self):
-        return '"%s" has unnecessary executable bit' % self.filename
+        return 'unnecessary executable bit: %r' % (self.filename,)
 
 
 class SizeViolation(Result):
@@ -107,7 +107,8 @@ class SizeViolation(Result):
 
     @property
     def short_desc(self):
-        return '"files/%s" exceeds 20k in size; %s total' % (self.filename, sizeof_fmt(self.size))
+        return '"files/%s" exceeds 20k in size; %s total' % (
+            self.filename, sizeof_fmt(self.size))
 
 
 class Glep31Violation(Result):
@@ -125,8 +126,8 @@ class Glep31Violation(Result):
 
     @property
     def short_desc(self):
-        return "file %s has char outside the allowed char ranges defined by " \
-            "glep31" % self.filename
+        return "filename contains char outside the allowed ranges defined " \
+               "by glep31: %r" % (self.filename,)
 
 
 class InvalidUtf8(Result):
@@ -145,7 +146,7 @@ class InvalidUtf8(Result):
 
     @property
     def short_desc(self):
-        return "file %s is not valid utf8- %s" % (self.filename, self.err)
+        return "invalid utf8: %s: %r" % (self.err, self.filename)
 
 
 def utf8_check(pkg, base, filename, reporter):
