@@ -262,12 +262,9 @@ class VisibilityReport(base.Template):
                 self.process_depset(pkg, attr, edepset, profiles, reporter)
 
     def check_visibility_vcs(self, pkg, reporter):
-        for key, profiles in self.profiles.profile_filters.iteritems():
-            if key.startswith("-"):
-                continue
-            for profile in profiles:
-                if profile.visible(pkg):
-                    reporter.add_report(VisibleVcsPkg(pkg, profile.key, profile.name))
+        for profile in self.profiles:
+            if profile.visible(pkg):
+                reporter.add_report(VisibleVcsPkg(pkg, profile.key, profile.name))
 
     def process_depset(self, pkg, attr, depset, profiles, reporter):
         get_cached_query = self.query_cache.get
