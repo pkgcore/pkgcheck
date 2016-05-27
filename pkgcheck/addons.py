@@ -466,26 +466,37 @@ class UnstatedIUSE(base.Error):
 
 class UseAddon(base.Addon):
 
+    required_addons = (ProfileAddon,)
     known_results = (UnstatedIUSE,)
 
-    def __init__(self, options, silence_warnings=False):
+    def __init__(self, options, profiles, silence_warnings=False):
         base.Addon.__init__(self, options)
+
+        # common profile elements
+        c_implicit_iuse = None
+
+        for key, profiles in profiles.profile_filters.iteritems():
+            if key.startswith("-"):
+                continue
+            for p in profiles:
+                if c_implicit_iuse is None:
+                    c_implicit_iuse = set(p.iuse_effective)
+                else:
+                    c_implicit_iuse.intersection_update(p.iuse_effective)
+
         known_iuse = set()
-        unstated_iuse = set()
-        arches = set()
+        known_iuse_expand = set()
 
         known_iuse.update(x[1][0] for x in options.target_repo.config.use_desc)
-        arches.update(options.target_repo.config.known_arches)
-        unstated_iuse.update(x[1][0] for x in options.target_repo.config.use_expand_desc)
+        known_iuse_expand.update(x[1][0] for x in options.target_repo.config.use_expand_desc)
 
         self.collapsed_iuse = misc.non_incremental_collapsed_restrict_to_data(
             ((packages.AlwaysTrue, known_iuse),),
-            ((packages.AlwaysTrue, unstated_iuse),),
+            ((packages.AlwaysTrue, known_iuse_expand),),
         )
-        self.global_iuse = frozenset(known_iuse)
-        unstated_iuse.update(arches)
-        self.unstated_iuse = frozenset(unstated_iuse)
-        self.ignore = not (unstated_iuse or known_iuse)
+        self.global_iuse = frozenset(known_iuse | known_iuse_expand)
+        self.unstated_iuse = frozenset(c_implicit_iuse)
+        self.ignore = not (c_implicit_iuse or known_iuse or known_iuse_expand)
         if self.ignore and not silence_warnings:
             logger.warn('disabling use/iuse validity checks since no usable '
                         'use.desc, use.local.desc were found ')
@@ -518,10 +529,7 @@ class UseAddon(base.Addon):
                 continue
             yield node
 
-        # the valid_unstated_iuse filters out USE_EXPAND as long as
-        # it's listed in a desc file
+        # implicit IUSE flags
         unstated.difference_update(self.unstated_iuse)
-        # hack, see bugs.gentoo.org 134994; same goes for prefix
-        unstated.difference_update(["bootstrap", "prefix"])
         if unstated:
             reporter.add_report(UnstatedIUSE(pkg, attr, unstated))
