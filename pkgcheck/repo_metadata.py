@@ -51,7 +51,7 @@ class UnusedGlobalFlags(base.Template):
 
     def start(self):
         if not isinstance(self.options.target_repo, SlavedTree):
-            self.flags = set(self.iuse_handler.global_iuse)
+            self.flags = set(self.iuse_handler.global_iuse - self.iuse_handler.unstated_iuse)
 
     def feed(self, pkg, reporter):
         if self.flags:

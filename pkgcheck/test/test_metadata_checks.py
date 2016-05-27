@@ -95,8 +95,9 @@ class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
     def test_it(self):
         # verify behaviour when use.* data isn't available
         options = self.get_options()
+        profiles = [misc.FakeProfile()]
         check = metadata_checks.IUSEMetadataReport(
-            options, addons.UseAddon(options))
+            options, addons.UseAddon(options, profiles))
         check.start()
         self.assertNoReport(check, self.mk_pkg("foo bar"))
         r = self.assertReport(check, self.mk_pkg("foo dar"))
@@ -114,7 +115,8 @@ def use_based():
 
         def mk_check(self, **kwargs):
             options = self.get_options(**kwargs)
-            iuse_handler = addons.UseAddon(options, silence_warnings=True)
+            profiles = [misc.FakeProfile(iuse_effective=["x86"])]
+            iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
             check = self.check_kls(options, iuse_handler)
             check.start()
             return check
@@ -149,7 +151,8 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
 
     def mk_check(self, licenses=(), **kwargs):
         options = self.get_options(**kwargs)
-        iuse_handler = addons.UseAddon(options, silence_warnings=True)
+        profiles = [misc.FakeProfile()]
+        iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
         license_handler = self.fake_licenses(licenses)
         check = self.check_kls(options, iuse_handler, {}, license_handler)
         check.start()
