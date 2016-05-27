@@ -23,7 +23,7 @@ allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 
 
 class MissingFile(Result):
-    """pkg is missing an expected file entry"""
+    """Package is missing an expected file entry."""
 
     __slots__ = ("category", "package", "filename")
 
@@ -40,7 +40,7 @@ class MissingFile(Result):
 
 
 class MismatchedPN(Result):
-    """Ebuilds that have different names than their parent directory"""
+    """Ebuilds that have different names than their parent directory."""
 
     __slots__ = ("category", "package", "ebuilds")
 
@@ -58,7 +58,7 @@ class MismatchedPN(Result):
 
 
 class InvalidPN(Result):
-    """Ebuilds that have invalid package names"""
+    """Ebuilds that have invalid package names."""
 
     __slots__ = ("category", "package", "ebuilds")
 
@@ -76,7 +76,7 @@ class InvalidPN(Result):
 
 
 class ExecutableFile(Result):
-    """file has executable bit, but doesn't need it"""
+    """File has executable bit, but doesn't need it."""
 
     __slots__ = ("category", "package", "filename")
 
@@ -93,7 +93,7 @@ class ExecutableFile(Result):
 
 
 class SizeViolation(Result):
-    """file in $FILESDIR is too large (current limit is 20k) """
+    """File in $FILESDIR is too large (current limit is 20k)."""
 
     __slots__ = ("category", "package", "filename", "size")
 
@@ -112,8 +112,7 @@ class SizeViolation(Result):
 
 
 class Glep31Violation(Result):
-
-    """file doesn't abide by glep31 requirements"""
+    """File doesn't abide by glep31 requirements."""
 
     __slots__ = ("category", "package", "filename")
 
@@ -131,8 +130,7 @@ class Glep31Violation(Result):
 
 
 class InvalidUtf8(Result):
-
-    """file isn't utf8 compliant"""
+    """File isn't utf8 compliant."""
 
     __slots__ = ("category", "package", "filename", "err")
 
@@ -159,7 +157,7 @@ def utf8_check(pkg, base, filename, reporter):
 
 
 class PkgDirReport(Template):
-    """actual ebuild directory scans; file size, glep31 rule enforcement."""
+    """Actual ebuild directory scans; file size, glep31 rule enforcement."""
 
     feed_type = package_feed
 
