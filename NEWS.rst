@@ -5,6 +5,12 @@ Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 ---------------------------
+pkgcheck 0.5.3 (2016-05-29)
+---------------------------
+
+* Fix new installs using pip.
+
+---------------------------
 pkgcheck 0.5.2 (2016-05-28)
 ---------------------------
 
