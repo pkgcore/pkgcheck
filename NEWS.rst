@@ -5,8 +5,19 @@ Release Notes
 See ChangeLog for full commit logs; this is summarized and major changes.
 
 ---------------------------
-pkgcheck 0.5.2 (2016-0?-??)
+pkgcheck 0.5.2 (2016-05-28)
 ---------------------------
+
+* Replace libxml2 with lxml-based validator for glep68 schema validation. 
+
+* UseAddon: Use profile-derived implicit USE flag lists instead of pre-EAPI 5
+  hacks. This also improves the unused global USE flag check to look for unused
+  USE_EXPAND flags.
+
+* Add various repo-level sanity checks for profile and arch lists.
+
+* Output reports for ~arch VCS ebuilds as well, previously only vcs ebuilds
+  with stable keywords would display warnings.
 
 * Large reworking of profile and arch addon options. In summary, the majority
   of the previous options have been replaced with -a/--arches and -p/--profiles
