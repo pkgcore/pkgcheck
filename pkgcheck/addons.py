@@ -173,17 +173,14 @@ class ProfileAddon(base.Addon):
                     "profile-base location %r doesn't exist/isn't a dir" % (
                         profiles_dir,))
 
-        namespace.profiles_dir = profiles_dir
-        if namespace.profiles is None:
-            namespace.profiles = ((), ())
+        selected_profiles = namespace.profiles
+        if selected_profiles is None:
+            selected_profiles = ((), ())
 
-    def __init__(self, options, *args):
-        base.Addon.__init__(self, options)
-
-        if options.profiles_dir:
-            profiles_obj = repo_objs.BundledProfiles(options.profiles_dir)
+        if profiles_dir:
+            profiles_obj = repo_objs.BundledProfiles(profiles_dir)
         else:
-            profiles_obj = options.target_repo.config.profiles
+            profiles_obj = namespace.target_repo.config.profiles
 
         def norm_name(s):
             """Expand status keywords and format paths."""
@@ -193,7 +190,7 @@ class ProfileAddon(base.Addon):
             else:
                 yield '/'.join(filter(None, s.split('/')))
 
-        disabled, enabled = options.profiles
+        disabled, enabled = selected_profiles
         disabled = set(disabled)
         enabled = set(enabled)
         # remove profiles that are both enabled and disabled
@@ -219,15 +216,17 @@ class ProfileAddon(base.Addon):
         # temporarily.
         cached_profiles = []
 
-        ignore_deprecated = self.options.profiles_ignore_deprecated
         arch_profiles = defaultdict(list)
         for profile_path in profile_paths:
             try:
                 p = profiles_obj.create_profile(profile_path)
-            except profiles.ProfileError:
-                # caught via a later report
+            except profiles.ProfileError as e:
+                # Only throw errors if the profile was selected by the user, bad
+                # repo profiles will be caught during repo metadata scans.
+                if namespace.profiles is not None:
+                    parser.error('invalid profile: %r: %s' % (e.path, e.error))
                 continue
-            if ignore_deprecated and p.deprecated:
+            if namespace.profiles_ignore_deprecated and p.deprecated:
                 continue
             cached_profiles.append(p)
             if p.arch is None:
@@ -236,8 +235,12 @@ class ProfileAddon(base.Addon):
                     "profile %s lacks arch settings, unable to use it" % profile_path)
             arch_profiles[p.arch].append((profile_path, p))
 
-        self.official_arches = options.target_repo.config.known_arches
+        namespace.arch_profiles = arch_profiles
 
+    def __init__(self, options, *args):
+        base.Addon.__init__(self, options)
+
+        self.official_arches = options.target_repo.config.known_arches
         self.desired_arches = getattr(self.options, 'arches', None)
         if self.desired_arches is None or self.options.selected_arches is None:
             # copy it to be safe
@@ -264,7 +267,7 @@ class ProfileAddon(base.Addon):
 
             profile_filters.update({stable_key: [], unstable_key: []})
 
-            for profile_name, profile in arch_profiles.get(k, []):
+            for profile_name, profile in options.arch_profiles.get(k, []):
                 vfilter = domain.generate_filter(profile.masks, profile.unmasks)
 
                 immutable_flags = profile.masked_use.clone(unfreeze=True)
@@ -336,7 +339,6 @@ class ProfileAddon(base.Addon):
                     similar.append([profile])
 
         self.profile_evaluate_dict = profile_evaluate_dict
-        self.arch_profiles = arch_profiles
         self.keywords_filter = OrderedDict(
             (k, self.keywords_filter[k])
             for k in sorted(self.keywords_filter))

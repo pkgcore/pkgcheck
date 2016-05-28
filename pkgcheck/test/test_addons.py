@@ -1,6 +1,7 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+import argparse
 import itertools
 import os
 import shutil
@@ -22,11 +23,11 @@ class base_test(TestCase):
 
     addon_kls = None
 
-    def process_check(self, args, silence=False, preset_values={}, **settings):
+    def process_check(self, args, silence=False, preset_values={}, namespace=None, **settings):
         p = commandline.ArgumentParser(domain=False, color=False)
         p.plugin = p.add_argument_group('plugin options')
         self.addon_kls.mangle_argparser(p)
-        args, unknown_args = p.parse_known_args(args)
+        args, unknown_args = p.parse_known_args(args, namespace)
         self.assertEqual(unknown_args, [])
         orig_out, orig_err = None, None
         for attr, val in preset_values.iteritems():
@@ -161,20 +162,11 @@ class profile_mixin(mixins.TempDirMixin, base_test):
         mixins.TempDirMixin.setUp(self)
         base_test.setUp(self)
 
-    def process_check(self, profiles_base, *args, **kwds):
-        options = base_test.process_check(self, *args, **kwds)
-        options.search_repo = Options()
-        if profiles_base is None:
-            repo = QuietRepoConfig(self.dir)
-        else:
-            repo = QuietRepoConfig(profiles_base, profiles_base='.')
-        options.target_repo = Options(config=repo)
-        return options
+    def mk_profiles(self, profiles, base='profiles', arches=None):
+        os.mkdir(pjoin(self.dir, 'metadata'))
+        # write masters= to suppress logging complaints.
+        write_file(pjoin(self.dir, 'metadata', 'layout.conf'), 'w', 'masters=')
 
-
-class TestProfileAddon(profile_mixin):
-
-    def mk_profiles(self, profiles, base='default', arches=None):
         loc = pjoin(self.dir, base)
         os.mkdir(loc)
         for profile in profiles:
@@ -184,6 +176,7 @@ class TestProfileAddon(profile_mixin):
             arches = set(val[0] for val in profiles.itervalues())
         write_file(pjoin(loc, 'arch.list'), 'w', "\n".join(arches))
         write_file(pjoin(loc, 'repo_name'), 'w', 'testing')
+        write_file(pjoin(loc, 'eapi'), 'w', '5')
         with open(pjoin(loc, 'profiles.desc'), 'w') as fd:
             for profile, vals in profiles.iteritems():
                 l = len(vals)
@@ -199,6 +192,20 @@ class TestProfileAddon(profile_mixin):
                 with open(pjoin(loc, profile, 'eapi'), 'w') as f:
                     f.write('5')
 
+    def process_check(self, profiles_base, *args, **kwds):
+        namespace = argparse.Namespace()
+        if profiles_base is None:
+            repo = QuietRepoConfig(self.dir)
+        else:
+            repo = QuietRepoConfig(profiles_base, profiles_base='.')
+        namespace.target_repo = Options(config=repo)
+        namespace.search_repo = Options()
+        options = base_test.process_check(self, namespace=namespace, *args, **kwds)
+        return options
+
+
+class TestProfileAddon(profile_mixin):
+
     def assertProfiles(self, check, key, *profile_names):
         self.assertEqual(
             sorted(x.name for y in check.profile_evaluate_dict[key] for x in y),
@@ -209,11 +216,8 @@ class TestProfileAddon(profile_mixin):
             "profile1": ["x86"],
             "profile1/2": ["x86"]},
             base='profiles')
-        os.mkdir(pjoin(self.dir, 'metadata'))
-        # write masters= to suppress logging complaints.
-        write_file(pjoin(self.dir, 'metadata', 'layout.conf'), 'w', 'masters=')
         options = self.process_check(
-            None, [], profiles=((), ()),
+            None, [], profiles=None,
             profiles_ignore_deprecated=False)
         # override the default
         check = self.addon_kls(options)
@@ -245,7 +249,8 @@ class TestProfileAddon(profile_mixin):
             "default-linux": ["x86", False, True],
             "default-linux/x86": ["x86"]},
             base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles-disable-deprecated'],
+        options = self.process_check(
+            pjoin(self.dir, 'foo'), ['--profiles-disable-deprecated'],
             profiles_ignore_deprecated=True)
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
@@ -285,6 +290,7 @@ class TestProfileAddon(profile_mixin):
             base='foo')
 
         counter = itertools.count()
+
         def run_check(*args):
             # create a fresh tree for the profile work everytime.
             # do this, so that it's always a unique pathway- this sidesteps
@@ -365,33 +371,33 @@ class TestEvaluateDepSetAddon(profile_mixin):
         # since evaluate relies on it.
         self.addon_kls = addons.ProfileAddon
         profile_options = profile_mixin.process_check(
-            self, self.dir,
-            ['--profiles=%s' % ','.join(x.name for x in profiles)])
+            self, None, ['--profiles=%s' % ','.join(profiles)])
         self.addon_kls = self.orig_addon_kls
-        profiles = dict((x.name, x) for x in profiles)
-        profiles_obj = Options(create_profile=lambda x: profiles[x])
-        # XXX: Cheat.
-        object.__setattr__(profile_options.target_repo.config, '_profiles',
-                           profiles_obj)
         profile_check = addons.ProfileAddon(profile_options)
 
         # now we're good to go.
         return self.addon_kls(profile_options, profile_check)
 
     def test_it(self):
-        check = self.get_check(
-            FakeProfile(stable_masked_use={"dev-util/diffball": ['foo']},
-                arch='x86', name='1'),
-            FakeProfile(stable_forced_use={"=dev-util/diffball-0.1": ['bar', 'foo']},
-                arch='x86', name='2'),
-            FakeProfile(stable_forced_use={"dev-util/diffball": ['bar', 'foo']},
-                arch='ppc', name='3')
-            )
+        self.mk_profiles({
+            "1": ["x86"],
+            "2": ["x86"],
+            "3": ["ppc"]},
+            base='profiles')
+
+        with open(pjoin(self.dir, 'profiles', '1', 'package.use.stable.mask'), 'w') as f:
+            f.write('dev-util/diffball foo')
+        with open(pjoin(self.dir, 'profiles', '2', 'package.use.stable.force'), 'w') as f:
+            f.write('=dev-util/diffball-0.1 bar foo')
+        with open(pjoin(self.dir, 'profiles', '3', 'package.use.stable.force'), 'w') as f:
+            f.write('dev-util/diffball bar foo')
+
+        check = self.get_check('1', '2', '3')
+
         def get_rets(ver, attr, KEYWORDS="x86", **data):
             data["KEYWORDS"] = KEYWORDS
             pkg = FakePkg("dev-util/diffball-%s" % ver, data=data)
-            return check.collapse_evaluate_depset(pkg, attr,
-                getattr(pkg, attr))
+            return check.collapse_evaluate_depset(pkg, attr, getattr(pkg, attr))
 
         # few notes... for ensuring proper profiles came through, use
         # sorted(x.name for x in blah); reasoning is that it will catch
