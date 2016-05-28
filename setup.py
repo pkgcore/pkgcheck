@@ -27,9 +27,9 @@ setup(
     long_description=readme,
     url='https://github.com/pkgcore/pkgcheck',
     packages=find_packages(),
-    setup_requires=['snakeoil>=0.6.7'],
+    setup_requires=['snakeoil>=0.7.0'],
     install_requires=[
-        'snakeoil>=0.6.7',
+        'snakeoil>=0.7.0',
         'pkgcore>=0.9.3',
     ],
     scripts=os.listdir('bin'),
