@@ -27,7 +27,6 @@ setup(
     long_description=readme,
     url='https://github.com/pkgcore/pkgcheck',
     packages=find_packages(),
-    setup_requires=['snakeoil>=0.7.0'],
     install_requires=[
         'lxml',
         'snakeoil>=0.7.0',
