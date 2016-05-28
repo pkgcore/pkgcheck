@@ -1,3 +1,4 @@
+# Copyright: 2015-2016 Tim Harder <radhermit@gmail.com>
 # Copyright: 2008-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
@@ -13,8 +14,10 @@ import errno
 import inspect
 import io
 import math
+import operator
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -23,12 +26,14 @@ import textwrap
 os.environ["SNAKEOIL_DEMANDLOAD_PROTECTION"] = 'n'
 os.environ["SNAKEOIL_DEMANDLOAD_WARN"] = 'n'
 
+from setuptools.command import install as dst_install
+
 from distutils import log
 from distutils.core import Command, Extension
 from distutils.errors import DistutilsExecError
 from distutils.command import (
     sdist as dst_sdist, build_ext as dst_build_ext, build_py as dst_build_py,
-    build as dst_build, build_scripts as dst_build_scripts)
+    build as dst_build, build_scripts as dst_build_scripts, config as dst_config)
 
 # getting built by readthedocs
 READTHEDOCS = os.environ.get('READTHEDOCS', None) == 'True'
@@ -44,15 +49,22 @@ def find_project(topdir=TOPDIR):
     module.
     """
     topdir_depth = len(topdir.split('/'))
+    modules = []
 
     # look for a top-level module
     for root, dirs, files in os.walk(topdir):
+        # only descend at most one level
         if len(root.split('/')) > topdir_depth + 1:
             continue
         if '__init__.py' in files:
-            return os.path.basename(root)
+            modules.append(os.path.basename(root))
 
-    raise ValueError('No project module found')
+    if not modules:
+        raise ValueError('No project module found')
+    elif len(modules) > 1:
+        raise ValueError('Multiple project modules found: %s' % (', '.join(modules)))
+
+    return modules[0]
 
 
 # determine the project we're being imported into
@@ -101,8 +113,47 @@ def data_mapping(host_prefix, path, skip=None):
                                if os.path.join(root, x) not in skip])
 
 
+def pkg_config(*packages, **kw):
+    """Translate pkg-config data to compatible Extension parameters.
+
+    Example usage:
+
+    >>> from distutils.extension import Extension
+    >>> from pkgdist import pkg_config
+    >>>
+    >>> ext_kwargs = dict(
+    ...     include_dirs=['include'],
+    ...     extra_compile_args=['-std=c++11'],
+    ... )
+    >>> extensions = [
+    ...     Extension('foo', ['foo.c']),
+    ...     Extension('bar', ['bar.c'], **pkg_config('lcms2')),
+    ...     Extension('ext', ['ext.cpp'], **pkg_config(('nss', 'libusb-1.0'), **ext_kwargs)),
+    ... ]
+    """
+    flag_map = {
+        '-I': 'include_dirs',
+        '-L': 'library_dirs',
+        '-l': 'libraries',
+    }
+
+    try:
+        tokens = subprocess.check_output(
+            ['pkg-config', '--libs', '--cflags'] + list(packages)).split()
+    except OSError as e:
+        sys.stderr.write('running pkg-config failed: {}\n'.format(e.strerror))
+        sys.exit(1)
+
+    for token in tokens:
+        if token[:2] in flag_map:
+            kw.setdefault(flag_map.get(token[:2]), []).append(token[2:])
+        else:
+            kw.setdefault('extra_compile_args', []).append(token)
+    return kw
+
+
 class OptionalExtension(Extension):
-    """python extension that is optional to build.
+    """Python extension that is optional to build.
 
     If it's not required to have the exception built, just preferable,
     use this class instead of :py:class:`Extension` since the machinery
@@ -209,15 +260,7 @@ class build_py(dst_build_py.build_py):
         from lib2to3 import refactor as ref_mod
         from snakeoil.dist import caching_2to3
 
-        if ((sys.version_info >= (3, 0) and sys.version_info < (3, 1, 2)) or
-                (sys.version_info >= (2, 6) and sys.version_info < (2, 6, 5))):
-            if proc_count not in (0, 1):
-                log.warn(
-                    "disabling parallelization: you're running a python version "
-                    "with a broken multiprocessing.queue.JoinableQueue.put "
-                    "(python bug 4660).")
-            proc_count = 1
-        elif proc_count == 0:
+        if proc_count == 0:
             import multiprocessing
             proc_count = multiprocessing.cpu_count()
 
@@ -405,7 +448,9 @@ class build_ext(dst_build_ext.build_ext):
 
         # add header install dir to the search path
         # (fixes virtualenv builds for consumer extensions)
-        self.set_undefined_options('install', ('install_headers', 'default_header_install_dir'))
+        self.set_undefined_options(
+            'install',
+            ('install_headers', 'default_header_install_dir'))
         if self.default_header_install_dir:
             self.default_header_install_dir = os.path.dirname(self.default_header_install_dir)
             for e in self.extensions:
@@ -413,18 +458,29 @@ class build_ext(dst_build_ext.build_ext):
                 if self.default_header_install_dir not in e.include_dirs:
                     e.include_dirs.append(self.default_header_install_dir)
 
+    def run(self):
+        # ensure that the platform checks were performed
+        self.run_command('config')
+        return dst_build_ext.build_ext.run(self)
+
     def build_extensions(self):
-        if self.debug:
-            # say it with me kids... distutils sucks!
-            for x in ("compiler_so", "compiler", "compiler_cxx"):
+        # say it with me kids... distutils sucks!
+        for x in ("compiler_so", "compiler", "compiler_cxx"):
+            if self.debug:
                 l = [y for y in getattr(self.compiler, x) if y != '-DNDEBUG']
                 l.append('-Wall')
                 setattr(self.compiler, x, l)
-        if not self.disable_distutils_flag_fixing:
-            for x in ("compiler_so", "compiler", "compiler_cxx"):
+            if not self.disable_distutils_flag_fixing:
                 val = getattr(self.compiler, x)
                 if "-fno-strict-aliasing" not in val:
                     val.append("-fno-strict-aliasing")
+            if getattr(self.distribution, 'check_defines', None):
+                val = getattr(self.compiler, x)
+                for d, result in self.distribution.check_defines.items():
+                    if result:
+                        val.append('-D%s=1' % d)
+                    else:
+                        val.append('-U%s' % d)
         return dst_build_ext.build_ext.build_extensions(self)
 
 
@@ -448,6 +504,38 @@ class build_scripts(dst_build_scripts.build_scripts):
                     scripts.main(basename(__file__))
                 """ % (sys.executable, PROJECT)))
         self.copy_scripts()
+
+
+class build(dst_build.build):
+    """Generic build command."""
+
+    user_options = dst_build.build.user_options[:]
+    user_options.append(('enable-man-pages', None, 'build man pages'))
+    user_options.append(('enable-html-docs', None, 'build html docs'))
+
+    boolean_options = dst_build.build.boolean_options[:]
+    boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
+
+    sub_commands = dst_build.build.sub_commands[:]
+    sub_commands.append(('build_ext', None))
+    sub_commands.append(('build_py', None))
+    sub_commands.append(('build_scripts', None))
+    sub_commands.append(('build_docs', operator.attrgetter('enable_html_docs')))
+    sub_commands.append(('build_man', operator.attrgetter('enable_man_pages')))
+
+    def initialize_options(self):
+        dst_build.build.initialize_options(self)
+        self.enable_man_pages = False
+        self.enable_html_docs = False
+
+    def finalize_options(self):
+        dst_build.build.finalize_options(self)
+        if self.enable_man_pages is None:
+            path = os.path.dirname(os.path.abspath(__file__))
+            self.enable_man_pages = not os.path.exists(os.path.join(path, 'man'))
+
+        if self.enable_html_docs is None:
+            self.enable_html_docs = False
 
 
 class install_docs(Command):
@@ -551,6 +639,35 @@ class install_man(install_docs):
                 # .1, but allow a.1).
                 d[x] = 'man%s/%s' % (x[-1], os.path.basename(x))
         return d
+
+
+class install(dst_install.install):
+    """Generic install command."""
+
+    user_options = dst_install.install.user_options[:]
+    user_options.append(('enable-man-pages', None, 'install man pages'))
+    user_options.append(('enable-html-docs', None, 'install html docs'))
+
+    boolean_options = dst_install.install.boolean_options[:]
+    boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
+
+    def initialize_options(self):
+        dst_install.install.initialize_options(self)
+        self.enable_man_pages = False
+        self.enable_html_docs = False
+
+    def finalize_options(self):
+        build_options = self.distribution.command_options.setdefault('build', {})
+        build_options['enable_html_docs'] = ('command_line', self.enable_html_docs and 1 or 0)
+        man_pages = self.enable_man_pages
+        if man_pages and os.path.exists('man'):
+            man_pages = False
+        build_options['enable_man_pages'] = ('command_line', man_pages and 1 or 0)
+        dst_install.install.finalize_options(self)
+
+    sub_commands = dst_install.install.sub_commands[:]
+    sub_commands.append(('install_man', operator.attrgetter('enable_man_pages')))
+    sub_commands.append(('install_docs', operator.attrgetter('enable_html_docs')))
 
 
 class test(Command):
@@ -668,7 +785,7 @@ class PyTest(Command):
         self.test_args = [self.default_test_dir]
         self.coverage = bool(self.coverage)
         if self.match is not None:
-            self.match = tuple(set(self.match.split(',')))
+            self.test_args.extend(['-k', self.match])
 
         if self.coverage:
             try:
@@ -693,10 +810,14 @@ class PyTest(Command):
                 sys.exit(1)
 
         # add custom pytest args
-        self.test_args.extend(self.pytest_args.split())
+        self.test_args.extend(shlex.split(self.pytest_args))
 
     def run(self):
-        import pytest
+        try:
+            import pytest
+        except ImportError:
+            sys.stderr.write('error: pytest is not installed\n')
+            sys.exit(1)
 
         # build extensions and byte-compile python
         build_ext = self.reinitialize_command('build_ext')
@@ -714,6 +835,124 @@ class PyTest(Command):
                             os.path.join(builddir, '.coveragerc'))
         ret = subprocess.call([sys.executable, '-m', 'pytest'] + self.test_args, cwd=builddir)
         sys.exit(ret)
+
+
+def print_check(message, if_yes='found', if_no='not found'):
+    """Decorator to print pre/post-check messages."""
+    def sub_decorator(f):
+        def sub_func(*args, **kwargs):
+            sys.stderr.write('-- %s\n' % (message,))
+            result = f(*args, **kwargs)
+            sys.stderr.write(
+                '-- %s -- %s\n' % (message, if_yes if result else if_no))
+            return result
+        sub_func.pkgdist_config_decorated = True
+        return sub_func
+    return sub_decorator
+
+
+def cache_check(cache_key):
+    """Method decorate to cache check result."""
+    def sub_decorator(f):
+        def sub_func(self, *args, **kwargs):
+            if cache_key in self.cache:
+                return self.cache[cache_key]
+            result = f(self, *args, **kwargs)
+            self.cache[cache_key] = result
+            return result
+        sub_func.pkgdist_config_decorated = True
+        return sub_func
+    return sub_decorator
+
+
+def check_define(define_name):
+    """Method decorator to store check result."""
+    def sub_decorator(f):
+        @cache_check(define_name)
+        def sub_func(self, *args, **kwargs):
+            result = f(self, *args, **kwargs)
+            self.check_defines[define_name] = result
+            return result
+        sub_func.pkgdist_config_decorated = True
+        return sub_func
+    return sub_decorator
+
+
+class config(dst_config.config):
+    """Perform platform checks for extension build."""
+
+    user_options = dst_config.config.user_options + [
+        ("cache-path", "C", "path to read/write configuration cache"),
+    ]
+
+    def initialize_options(self):
+        self.cache_path = None
+        self.build_base = None
+        dst_config.config.initialize_options(self)
+
+    def finalize_options(self):
+        if self.cache_path is None:
+            self.set_undefined_options(
+                'build',
+                ('build_base', 'build_base'))
+            self.cache_path = os.path.join(self.build_base, 'config.cache')
+        dst_config.config.finalize_options(self)
+
+    def _cache_env_key(self):
+        return (self.cc, self.include_dirs, self.libraries, self.library_dirs)
+
+    @cache_check('_sanity_check')
+    @print_check('Performing basic C toolchain sanity check', 'works', 'broken')
+    def _sanity_check(self):
+        return self.try_link("int main(int argc, char *argv[]) { return 0; }")
+
+    def run(self):
+        from snakeoil.pickling import dump, load
+
+        # try to load the cached results
+        try:
+            with open(self.cache_path, 'rb') as f:
+                cache_db = load(f)
+        except (OSError, IOError):
+            cache_db = {}
+        else:
+            if self._cache_env_key() == cache_db.get('env_key'):
+                sys.stderr.write('-- Using cache from %s\n' % self.cache_path)
+            else:
+                sys.stderr.write('-- Build environment changed, discarding cache\n')
+                cache_db = {}
+
+        self.cache = cache_db.get('cache', {})
+        self.check_defines = {}
+
+        if not self._sanity_check():
+            sys.stderr.write('The C toolchain is unable to compile & link a simple C program!\n')
+            sys.exit(1)
+
+        # run all decorated methods
+        for k in dir(self):
+            if k.startswith('_'):
+                continue
+            if hasattr(getattr(self, k), 'pkgdist_config_decorated'):
+                getattr(self, k)()
+
+        # store results in Distribution instance
+        self.distribution.check_defines = self.check_defines
+        # store updated cache
+        cache_db = {
+            'cache': self.cache,
+            'env_key': self._cache_env_key(),
+        }
+        self.mkpath(os.path.dirname(self.cache_path))
+        with open(self.cache_path, 'wb') as f:
+            dump(cache_db, f)
+
+    # == methods for custom checks ==
+    def check_struct_member(self, typename, member, headers=None, include_dirs=None, lang="c"):
+        """Check whether typename (must be struct or union) has the named member."""
+        return self.try_compile(
+            'int main() { %s x; (void) x.%s; return 0; }'
+            % (typename, member), headers, include_dirs, lang)
 
 
 # yes these are in snakeoil.compatibility; we can't rely on that module however
