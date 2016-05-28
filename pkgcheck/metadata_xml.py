@@ -20,6 +20,7 @@ else:
     demandload(
         'urllib2@urllib_error',
         'urllib2:urlopen')
+
 demandload(
     'argparse',
     'functools:partial',
@@ -53,7 +54,8 @@ class base_MissingXml(base.Error):
 
     @property
     def short_desc(self):
-        return "%s is missing %s" % (self._label, os.path.basename(self.filename))
+        return "%s is missing %s" % (
+            self._label, os.path.basename(self.filename))
 
 
 class base_BadlyFormedXml(base.Warning):
@@ -76,7 +78,8 @@ class base_BadlyFormedXml(base.Warning):
 
     @property
     def short_desc(self):
-        return "%s %s is not well formed xml" % (self._label, os.path.basename(self.filename))
+        return "%s %s is not well formed xml" % (
+            self._label, os.path.basename(self.filename))
 
 
 class base_InvalidXml(base.Error):
@@ -102,12 +105,14 @@ class base_InvalidXml(base.Error):
     @staticmethod
     def format_lxml_errors(error_log):
         for l in error_log:
-            yield 'line %d, col %d: (%s) %s' % (l.line, l.column,
-                    l.type_name, l.message)
+            yield 'line %d, col %d: (%s) %s' % (
+                l.line, l.column, l.type_name, l.message)
 
     @property
     def short_desc(self):
-        return "%s %s violates metadata.xsd:\n%s" % (self._label, os.path.basename(self.filename), '\n'.join(self.format_lxml_errors(self.message)))
+        return "%s %s violates metadata.xsd:\n%s" % (
+            self._label, os.path.basename(self.filename),
+            '\n'.join(self.format_lxml_errors(self.message)))
 
 
 class base_MetadataXmlInvalidPkgRef(base.Error):
@@ -131,7 +136,8 @@ class base_MetadataXmlInvalidPkgRef(base.Error):
 
     @property
     def short_desc(self):
-        return "%s %s <pkg/> references unknown/invalid package %s" % (self._label, os.path.basename(self.filename), repr(self.pkgtext))
+        return "%s %s <pkg/> references unknown/invalid package: %r" % (
+            self._label, os.path.basename(self.filename), self.pkgtext)
 
 
 class base_MetadataXmlInvalidCatRef(base.Error):
@@ -155,7 +161,8 @@ class base_MetadataXmlInvalidCatRef(base.Error):
 
     @property
     def short_desc(self):
-        return "%s %s <cat/> references unknown/invalid category %s" % (self._label, os.path.basename(self.filename), repr(self.cattext))
+        return "%s %s <cat/> references unknown/invalid category: %r" % (
+            self._label, os.path.basename(self.filename), self.cattext)
 
 
 class PkgMissingMetadataXml(base_MissingXml):
@@ -287,7 +294,7 @@ class base_check(base.Template):
         """ Perform additional document structure checks """
         for el in doc.findall('.//cat'):
             c = el.text.strip()
-            if not c in self.options.search_repo.categories:
+            if c not in self.options.search_repo.categories:
                 yield partial(self.catref_error, c)
 
         for el in doc.findall('.//pkg'):
@@ -331,8 +338,9 @@ class PackageMetadataXmlCheck(base_check):
     catref_error = PkgMetadataXmlInvalidCatRef
     pkgref_error = PkgMetadataXmlInvalidPkgRef
 
-    known_results = (PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
-            PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef)
+    known_results = (
+        PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
+        PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef)
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.key:
@@ -354,8 +362,9 @@ class CategoryMetadataXmlCheck(base_check):
     catref_error = CatMetadataXmlInvalidCatRef
     pkgref_error = CatMetadataXmlInvalidPkgRef
 
-    known_results = (CatBadlyFormedXml, CatInvalidXml, CatMissingMetadataXml,
-            CatMetadataXmlInvalidPkgRef, CatMetadataXmlInvalidCatRef)
+    known_results = (
+        CatBadlyFormedXml, CatInvalidXml, CatMissingMetadataXml,
+        CatMetadataXmlInvalidPkgRef, CatMetadataXmlInvalidCatRef)
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.category:
@@ -368,4 +377,4 @@ class CategoryMetadataXmlCheck(base_check):
 
 
 def noop_validator(loc):
-        return 0
+    return 0
