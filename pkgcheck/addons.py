@@ -363,6 +363,9 @@ class ProfileAddon(base.Addon):
         """Iterate over all profile data objects."""
         return chain.from_iterable(self.profile_filters.itervalues())
 
+    def __len__(self):
+        return len([x for x in self])
+
 
 class EvaluateDepSetAddon(base.Template):
 
