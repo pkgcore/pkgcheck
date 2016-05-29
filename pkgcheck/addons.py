@@ -484,7 +484,7 @@ class UseAddon(base.Addon):
         # common profile elements
         c_implicit_iuse = set()
         if profiles:
-            c_implicit_iuse = set.intersection(*(set(profile.iuse_effective) for profile in profiles))
+            c_implicit_iuse = set.intersection(*(set(p.iuse_effective) for p in profiles))
 
         known_iuse = set()
         known_iuse_expand = set()

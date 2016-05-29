@@ -17,7 +17,7 @@ demandload(
 
 
 class VulnerablePackage(base.Error):
-    """Packages marked as vulnerable by GLSAs"""
+    """Packages marked as vulnerable by GLSAs."""
 
     __slots__ = ("category", "package", "version", "arch", "glsa")
     threshold = base.versioned_feed
@@ -46,7 +46,7 @@ class VulnerablePackage(base.Error):
 
 
 class TreeVulnerabilitiesReport(base.Template):
-    """Scan for vulnerabile ebuilds in the tree
+    """Scan for vulnerabile ebuilds in the tree.
 
     Requires a GLSA directory for vulnerability info.
     """

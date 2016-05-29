@@ -256,6 +256,7 @@ def convert_check_filter(tok):
         return re.compile(tok, re.I).match
     else:
         toklist = tok.split('.')
+
         def func(name):
             chunks = name.lower().split('.')
             if len(toklist) > len(chunks):
@@ -264,6 +265,7 @@ def convert_check_filter(tok):
                 if chunks[i:i+len(toklist)] == toklist:
                     return True
             return False
+
         return func
 
 

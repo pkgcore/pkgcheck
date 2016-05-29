@@ -54,8 +54,8 @@ class RedundantVersionReport(Template):
             if not curr_set:
                 continue
 
-            matches = [ver for ver, keys in stack if ver.slot == pkg.slot
-                       and not curr_set.difference(keys)]
+            matches = [ver for ver, keys in stack if ver.slot == pkg.slot and
+                       not curr_set.difference(keys)]
 
             # we've done our checks; now we inject unstable for any stable
             # via this, earlier versions that are unstable only get flagged
