@@ -482,13 +482,9 @@ class UseAddon(base.Addon):
         base.Addon.__init__(self, options)
 
         # common profile elements
-        c_implicit_iuse = None
-
-        for profile in profiles:
-            if c_implicit_iuse is None:
-                c_implicit_iuse = set(profile.iuse_effective)
-            else:
-                c_implicit_iuse.intersection_update(profile.iuse_effective)
+        c_implicit_iuse = set()
+        if profiles:
+            c_implicit_iuse = set.intersection(*(set(profile.iuse_effective) for profile in profiles))
 
         known_iuse = set()
         known_iuse_expand = set()
