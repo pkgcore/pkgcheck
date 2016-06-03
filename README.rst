@@ -10,9 +10,7 @@ Dependencies
 pkgcheck is developed alongside pkgcore_. To run the development version of
 pkgcheck you will need the development version of pkgcore.
 
-The metadata.xml checks require either xmllint (installed as part of
-libxml2) or the python bindings to libxml2 (installed as part of
-libxml2 with USE=python), with the latter preferred for speed reasons.
+The metadata.xml checks require lxml to be installed.
 
 Installing
 ==========
