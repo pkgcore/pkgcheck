@@ -28,7 +28,7 @@ common_args=(
 )
 
 local curcontext=$curcontext state state_descr line ret=1
-typeset -a options
+typeset -a options arches profiles plugin_options
 
 options=(
   '--list-checks[print what checks are available to run and exit]'
@@ -36,9 +36,25 @@ options=(
   {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_repos'
 )
 
+arches=(
+  {'(--arches)-a','(-a)--arches'}'[comma separated list of arches to enable/disable]:arches:{_values -s , arches $(_arches -p)}'
+)
+
+profiles=(
+  '--profiles-base[path to base profiles directory]:profiles base path:_path_files -/'
+  '--profiles-disable-deprecated[disable scanning of deprecated profiles]'
+  {'(--profiles)-p','(-p)--profiles'}'[comma separated list of profiles to enable/disable]:arches:{_values -s , profiles stable dev exp}'
+)
+
+plugin_options=(
+  $arches
+  $profiles
+)
+
 _arguments -C \
   $common_args \
   $options \
+  $plugin_options \
   && ret=0
 
 return ret
