@@ -67,8 +67,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pkgcheck'
-authors_list = ['Brian Harring', 'Tim Harder']
-authors = ', '.join(authors_list)
+authors = ''
 copyright = '2006-2016, pkgcheck contributors'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -263,7 +262,7 @@ generated_man_pages = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/%s' % script, script, import_module(module).__doc__.split('\n', 1)[0], authors_list, 1)
+    ('man/%s' % script, script, import_module(module).__doc__.split('\n', 1)[0], [], 1)
     for module, script in generated_man_pages
 ]
 
