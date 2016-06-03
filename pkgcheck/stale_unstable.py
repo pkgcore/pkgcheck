@@ -9,7 +9,7 @@ from pkgcheck.base import versioned_feed, Warning
 day = 24*3600
 
 
-class StaleUnstableKeyword(Warning):
+class StaleUnstable(Warning):
     """Packages with unstable keywords over a month old."""
 
     __slots__ = ("category", "package", "version", "keywords", "period")
@@ -17,7 +17,7 @@ class StaleUnstableKeyword(Warning):
     threshold = versioned_feed
 
     def __init__(self, pkg, keywords, period):
-        super(StaleUnstableKeyword, self).__init__()
+        super(StaleUnstable, self).__init__()
         self._store_cpv(pkg)
         self.keywords = tuple(sorted(keywords))
         self.period = period
@@ -33,7 +33,7 @@ class StaleUnstableReport(StableCheckAddon):
 
     feed_type = versioned_feed
     required_addons = (ArchesAddon,)
-    known_results = (StaleUnstableKeyword,)
+    known_results = (StaleUnstable,)
 
     def __init__(self, options, arches, staleness=long(day*30)):
         super(StaleUnstableReport, self).__init__(options)
@@ -52,4 +52,4 @@ class StaleUnstableReport(StableCheckAddon):
         if not unstable:
             return
         reporter.add_report(
-            StaleUnstableKeyword(pkg, unstable, int(unchanged_time/day)))
+            StaleUnstable(pkg, unstable, int(unchanged_time/day)))
