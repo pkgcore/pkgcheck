@@ -4,12 +4,12 @@
 import time
 
 from pkgcheck.addons import ArchesAddon, StableCheckAddon
-from pkgcheck.base import versioned_feed, Result
+from pkgcheck.base import versioned_feed, Warning
 
 day = 24*3600
 
 
-class StaleUnstableKeyword(Result):
+class StaleUnstableKeyword(Warning):
     """Packages with unstable keywords over a month old."""
 
     __slots__ = ("category", "package", "version", "keywords", "period")
@@ -17,7 +17,7 @@ class StaleUnstableKeyword(Result):
     threshold = versioned_feed
 
     def __init__(self, pkg, keywords, period):
-        Result.__init__(self)
+        super(StaleUnstableKeyword, self).__init__()
         self._store_cpv(pkg)
         self.keywords = tuple(sorted(keywords))
         self.period = period

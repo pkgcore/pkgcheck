@@ -10,7 +10,7 @@ from pkgcore.ebuild.atom import MalformedAtom, atom
 from snakeoil.demandload import demandload
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 
-from pkgcheck.base import Result, Template, package_feed
+from pkgcheck.base import Error, Warning, Template, package_feed
 
 demandload('errno')
 
@@ -22,7 +22,7 @@ allowed_filename_chars_set.update(chr(x) for x in xrange(ord('0'), ord('9')+1))
 allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 
 
-class MissingFile(Result):
+class MissingFile(Error):
     """Package is missing an expected file entry."""
 
     __slots__ = ("category", "package", "filename")
@@ -30,7 +30,7 @@ class MissingFile(Result):
     threshold = package_feed
 
     def __init__(self, pkg, filename):
-        Result.__init__(self)
+        super(MissingFile, self).__init__()
         self._store_cp(pkg)
         self.filename = filename
 
@@ -39,7 +39,7 @@ class MissingFile(Result):
         return "required file doesn't exist: %r" % (self.filename,)
 
 
-class MismatchedPN(Result):
+class MismatchedPN(Error):
     """Ebuilds that have different names than their parent directory."""
 
     __slots__ = ("category", "package", "ebuilds")
@@ -47,7 +47,7 @@ class MismatchedPN(Result):
     threshold = package_feed
 
     def __init__(self, pkg, ebuilds):
-        Result.__init__(self)
+        super(MismatchedPN, self).__init__()
         self._store_cp(pkg)
         self.ebuilds = ebuilds
 
@@ -57,7 +57,7 @@ class MismatchedPN(Result):
             's'[len(self.ebuilds) == 1:], ', '.join(self.ebuilds))
 
 
-class InvalidPN(Result):
+class InvalidPN(Error):
     """Ebuilds that have invalid package names."""
 
     __slots__ = ("category", "package", "ebuilds")
@@ -65,7 +65,7 @@ class InvalidPN(Result):
     threshold = package_feed
 
     def __init__(self, pkg, ebuilds):
-        Result.__init__(self)
+        super(InvalidPN, self).__init__()
         self._store_cp(pkg)
         self.ebuilds = ebuilds
 
@@ -75,7 +75,7 @@ class InvalidPN(Result):
             's'[len(self.ebuilds) == 1:], ', '.join(self.ebuilds))
 
 
-class ExecutableFile(Result):
+class ExecutableFile(Warning):
     """File has executable bit, but doesn't need it."""
 
     __slots__ = ("category", "package", "filename")
@@ -83,7 +83,7 @@ class ExecutableFile(Result):
     threshold = package_feed
 
     def __init__(self, pkg, filename):
-        Result.__init__(self)
+        super(ExecutableFile, self).__init__()
         self._store_cp(pkg)
         self.filename = filename
 
@@ -92,7 +92,7 @@ class ExecutableFile(Result):
         return 'unnecessary executable bit: %r' % (self.filename,)
 
 
-class SizeViolation(Result):
+class SizeViolation(Warning):
     """File in $FILESDIR is too large (current limit is 20k)."""
 
     __slots__ = ("category", "package", "filename", "size")
@@ -100,7 +100,7 @@ class SizeViolation(Result):
     threshold = package_feed
 
     def __init__(self, pkg, filename, size):
-        Result.__init__(self)
+        super(SizeViolation, self).__init__()
         self._store_cp(pkg)
         self.filename = filename
         self.size = size
@@ -111,7 +111,7 @@ class SizeViolation(Result):
             self.filename, sizeof_fmt(self.size))
 
 
-class Glep31Violation(Result):
+class Glep31Violation(Error):
     """File doesn't abide by glep31 requirements."""
 
     __slots__ = ("category", "package", "filename")
@@ -119,7 +119,7 @@ class Glep31Violation(Result):
     threshold = package_feed
 
     def __init__(self, pkg, filename):
-        Result.__init__(self)
+        super(Glep31Violation, self).__init__()
         self._store_cp(pkg)
         self.filename = filename
 
@@ -129,7 +129,7 @@ class Glep31Violation(Result):
                "by glep31: %r" % (self.filename,)
 
 
-class InvalidUtf8(Result):
+class InvalidUtf8(Error):
     """File isn't utf8 compliant."""
 
     __slots__ = ("category", "package", "filename", "err")
@@ -137,7 +137,7 @@ class InvalidUtf8(Result):
     threshold = package_feed
 
     def __init__(self, pkg, filename, err):
-        Result.__init__(self)
+        super(InvalidUtf8, self).__init__()
         self._store_cp(pkg)
         self.filename = filename
         self.err = err
@@ -162,8 +162,10 @@ class PkgDirReport(Template):
     feed_type = package_feed
 
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
-    known_results = (MissingFile, ExecutableFile, SizeViolation,
-                     Glep31Violation, InvalidUtf8, MismatchedPN, InvalidPN)
+    known_results = (
+        ExecutableFile, SizeViolation, Glep31Violation,
+        InvalidUtf8, MismatchedPN, InvalidPN,
+    )
 
     def feed(self, pkgset, reporter):
         base = os.path.dirname(pkgset[0].ebuild.path)

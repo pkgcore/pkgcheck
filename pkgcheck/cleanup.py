@@ -1,18 +1,18 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-from pkgcheck.base import Template, package_feed, Result, versioned_feed
+from pkgcheck.base import Template, package_feed, Warning, versioned_feed
 from pkgcheck.visibility import vcs_eclasses
 
 
-class RedundantVersionWarning(Result):
+class RedundantVersion(Warning):
     """Redundant version(s) of a package in a specific slot."""
 
     __slots__ = ("category", "package", "version", "slot", "later_versions")
     threshold = versioned_feed
 
     def __init__(self, pkg, higher_pkgs):
-        Result.__init__(self)
+        super(RedundantVersion, self).__init__()
         self._store_cpv(pkg)
         self.slot = pkg.slot
         self.later_versions = tuple(x.fullver for x in higher_pkgs)
@@ -34,7 +34,7 @@ class RedundantVersionReport(Template):
     """
 
     feed_type = package_feed
-    known_results = (RedundantVersionWarning,)
+    known_results = (RedundantVersion,)
 
     def feed(self, pkgset, reporter):
         if len(pkgset) == 1:
@@ -70,4 +70,4 @@ class RedundantVersionReport(Template):
                 bad.append((pkg, matches))
 
         for pkg, matches in reversed(bad):
-            reporter.add_report(RedundantVersionWarning(pkg, matches))
+            reporter.add_report(RedundantVersion(pkg, matches))

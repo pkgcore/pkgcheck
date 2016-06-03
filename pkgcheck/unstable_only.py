@@ -4,10 +4,10 @@
 from pkgcore.restrictions import packages, values
 
 from pkgcheck.addons import ArchesAddon, StableCheckAddon
-from pkgcheck.base import package_feed, Result
+from pkgcheck.base import package_feed, Warning
 
 
-class UnstableOnly(Result):
+class UnstableOnly(Warning):
     """package/keywords that are strictly unstable"""
 
     __slots__ = ("category", "package", "version", "arch")
@@ -15,7 +15,7 @@ class UnstableOnly(Result):
     threshold = package_feed
 
     def __init__(self, pkgs, arch):
-        Result.__init__(self)
+        super(UnstableOnly, self).__init__()
         self._store_cp(pkgs[0])
         self.arch = arch
         self.version = tuple(x.fullver for x in pkgs)

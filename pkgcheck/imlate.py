@@ -4,17 +4,17 @@
 from pkgcore.restrictions import packages, values
 
 from pkgcheck.addons import ArchesAddon, StableCheckAddon
-from pkgcheck.base import versioned_feed, package_feed, Result
+from pkgcheck.base import versioned_feed, package_feed, Warning
 
 
-class LaggingStableInfo(Result):
+class LaggingStable(Warning):
     """Arch that is behind another from a stabling standpoint."""
 
     __slots__ = ("category", "package", "version", "keywords", "stable")
     threshold = versioned_feed
 
     def __init__(self, pkg, keywords):
-        Result.__init__(self)
+        super(LaggingStable, self).__init__()
         self._store_cpv(pkg)
         self.keywords = keywords
         self.stable = tuple(str(arch) for arch in pkg.keywords
@@ -31,7 +31,7 @@ class ImlateReport(StableCheckAddon):
 
     feed_type = package_feed
     required_addons = (ArchesAddon,)
-    known_results = (LaggingStableInfo,)
+    known_results = (LaggingStable,)
 
     @staticmethod
     def mangle_argparser(parser):
@@ -64,8 +64,7 @@ class ImlateReport(StableCheckAddon):
                 continue
             unstable_keys = remaining.intersection(pkg.keywords)
             if unstable_keys:
-                reporter.add_report(LaggingStableInfo(
-                    pkg, sorted(unstable_keys)))
+                reporter.add_report(LaggingStable(pkg, sorted(unstable_keys)))
                 remaining.difference_update(unstable_keys)
                 if not remaining:
                     break

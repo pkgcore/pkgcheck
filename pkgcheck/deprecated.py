@@ -3,17 +3,17 @@
 
 from snakeoil.mappings import ImmutableDict
 
-from pkgcheck.base import Template, versioned_feed, Result
+from pkgcheck.base import Template, versioned_feed, Warning
 
 
-class DeprecatedEAPI(Result):
+class DeprecatedEAPI(Warning):
     """pkg's EAPI is deprecated according to repo metadata"""
 
     __slots__ = ("category", "package", "version", "eapi")
     threshold = versioned_feed
 
     def __init__(self, pkg):
-        Result.__init__(self)
+        super(DeprecatedEAPI, self).__init__()
         self._store_cpv(pkg)
         self.eapi = pkg.eapi
 
@@ -34,14 +34,14 @@ class DeprecatedEAPIReport(Template):
             reporter.add_report(DeprecatedEAPI(pkg))
 
 
-class DeprecatedEclass(Result):
+class DeprecatedEclass(Warning):
     """pkg uses an eclass that is deprecated/abandoned"""
 
     __slots__ = ("category", "package", "version", "eclasses")
     threshold = versioned_feed
 
     def __init__(self, pkg, eclasses):
-        Result.__init__(self)
+        super(DeprecatedEclass, self).__init__()
         self._store_cpv(pkg)
         self.eclasses = eclasses
 
