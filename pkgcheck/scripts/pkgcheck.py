@@ -248,19 +248,10 @@ def check_args(parser, namespace):
                 'one or more extended atoms to scan '
                 '("*" for the entire repo).')
         cwd = abspath(os.getcwd())
-        repo_base = abspath(repo_base)
-        bits = list(p for p in cwd[len(repo_base):].split(os.sep) if p)
-        if not bits:
+        if cwd not in namespace.target_repo:
             namespace.limiters = [packages.AlwaysTrue]
-        elif len(bits) == 1:
-            namespace.limiters = [packages.PackageRestriction(
-                'category', StrExactMatch(bits[0]))]
         else:
-            namespace.limiters = [packages.AndRestriction(
-                packages.PackageRestriction(
-                    'category', StrExactMatch(bits[0])),
-                packages.PackageRestriction(
-                    'package', StrExactMatch(bits[1])))]
+            namespace.limiters = [packages.AndRestriction(*namespace.target_repo.path_restrict(cwd))]
 
     if namespace.checkset is None:
         namespace.checkset = namespace.config.get_default('pkgcheck_checkset')
