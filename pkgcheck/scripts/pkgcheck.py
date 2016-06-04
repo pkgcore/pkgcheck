@@ -19,6 +19,7 @@ from pkgcheck import plugins, base, feeds
 demandload(
     'logging',
     'os',
+    'sys',
     'textwrap',
     'pkgcore.ebuild:repository',
     'pkgcore.restrictions:packages',
@@ -228,6 +229,13 @@ def check_args(parser, namespace):
     if namespace.targets:
         limiters = []
         repo = namespace.target_repo
+
+        # read targets from stdin
+        if len(namespace.targets) == 1 and namespace.targets[0] == '-':
+            namespace.targets = [x.strip() for x in sys.stdin.readlines() if x.strip() != '']
+            # reassign stdin to allow interactivity (currently only works for unix)
+            sys.stdin = open('/dev/tty')
+
         for target in namespace.targets:
             if os.path.exists(target):
                 try:
