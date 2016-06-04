@@ -237,15 +237,15 @@ def check_args(parser, namespace):
             sys.stdin = open('/dev/tty')
 
         for target in namespace.targets:
-            if os.path.exists(target):
-                try:
-                    limiters.append(repo.path_restrict(target))
-                except ValueError as e:
-                    parser.error(e)
-            else:
-                try:
-                    limiters.append(parserestrict.parse_match(target))
-                except ValueError as e:
+            try:
+                limiters.append(parserestrict.parse_match(target))
+            except parserestrict.ParseError as e:
+                if os.path.exists(target):
+                    try:
+                        limiters.append(repo.path_restrict(target))
+                    except ValueError as e:
+                        parser.error(e)
+                else:
                     parser.error(e)
         namespace.limiters = limiters
     else:
