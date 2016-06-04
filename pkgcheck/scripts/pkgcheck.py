@@ -249,11 +249,6 @@ def check_args(parser, namespace):
                 '("*" for the entire repo).')
         cwd = abspath(os.getcwd())
         repo_base = abspath(repo_base)
-        if not cwd.startswith(repo_base):
-            parser.error(
-                'Working dir (%s) is not inside target repo (%s). Fix '
-                'that or specify one or more extended atoms to scan.' % (
-                    cwd, repo_base))
         bits = list(p for p in cwd[len(repo_base):].split(os.sep) if p)
         if not bits:
             namespace.limiters = [packages.AlwaysTrue]
