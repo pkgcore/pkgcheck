@@ -67,11 +67,11 @@ class TreeVulnerabilitiesReport(base.Template):
         glsa_loc = namespace.glsa_location
         if glsa_loc is not None:
             if not os.path.isdir(glsa_loc):
-                raise parser.error(
+                parser.error(
                     "--glsa-dir '%r' doesn't exist" % glsa_loc)
         else:
             if not namespace.repo_bases:
-                raise parser.error(
+                parser.error(
                     'Need a target repo or --overlayed-repo that is a single '
                     'UnconfiguredTree for license checks')
             for repo_base in namespace.repo_bases:
@@ -80,7 +80,7 @@ class TreeVulnerabilitiesReport(base.Template):
                     if glsa_loc is None:
                         glsa_loc = candidate
                     else:
-                        raise parser.error(
+                        parser.error(
                             'multiple glsa sources is unsupported (detected '
                             '%s and %s). Pick one with --glsa-dir.' % (
                                 glsa_loc, candidate))
@@ -88,7 +88,7 @@ class TreeVulnerabilitiesReport(base.Template):
                 # form of 'optional' limiting; if they are using -c, force the
                 # error, else disable
                 if namespace.checks_to_run:
-                    raise parser.error(
+                    parser.error(
                         "--glsa-dir must be specified, couldn't identify glsa src from %r" %
                         namespace.src_repo)
                 namespace.glsa_enabled = False
