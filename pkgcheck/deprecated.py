@@ -65,6 +65,7 @@ class DeprecatedEclassReport(Template):
 
     blacklist = ImmutableDict({
         '64-bit': None,
+        'base': None,
         'bash-completion': 'bash-completion-r1',
         'boost-utils': None,
         'darcs': None,
@@ -86,6 +87,7 @@ class DeprecatedEclassReport(Template):
         'java-utils': None,
         'kde-base': None,
         'kde-i18n': None,
+        'kde4-meta-pkg': 'kde5-meta-pkg',
         'kde-source': None,
         'kmod': None,
         'koffice-i18n': None,
