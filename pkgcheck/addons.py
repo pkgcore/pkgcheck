@@ -169,9 +169,8 @@ class ProfileAddon(base.Addon):
         if profiles_dir is not None:
             profiles_dir = abspath(profiles_dir)
             if not os.path.isdir(profiles_dir):
-                raise parser.error(
-                    "profile-base location %r doesn't exist/isn't a dir" % (
-                        profiles_dir,))
+                parser.error(
+                    "profile-base doesn't exist or isn't a dir: %r" % (profiles_dir,))
 
         selected_profiles = namespace.profiles
         if selected_profiles is None:
@@ -230,9 +229,8 @@ class ProfileAddon(base.Addon):
                 continue
             cached_profiles.append(p)
             if p.arch is None:
-                raise profiles.ProfileError(
-                    p.path, 'make.defaults',
-                    "profile %s lacks arch settings, unable to use it" % profile_path)
+                parser.error(
+                    "profile %r lacks arch settings, unable to use it" % (p.path,))
             arch_profiles[p.arch].append((profile_path, p))
 
         namespace.arch_profiles = arch_profiles
@@ -437,12 +435,12 @@ class LicenseAddon(base.Addon):
                 if os.path.isdir(candidate):
                     namespace.license_dirs.append(candidate)
             if not namespace.license_dirs:
-                raise parser.error(
+                parser.error(
                     'No license dir detected, pick a target or overlayed repo '
                     'with a license dir or specify one with --license-dir.')
         else:
             if not os.path.isdir(namespace.license_dir):
-                raise parser.error(
+                parser.error(
                     "--license-dir %r isn't a directory" % namespace.license_dir)
             namespace.license_dirs.append(abspath(namespace.license_dir))
 
