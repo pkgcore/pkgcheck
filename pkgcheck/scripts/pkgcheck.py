@@ -102,12 +102,11 @@ def check_args(parser, namespace):
         # no need to check any other args
         return
 
-    cwd = None
+    cwd = abspath(os.getcwd())
     if namespace.suite is None:
         # No suite explicitly specified. Use the repo to guess the suite.
         if namespace.target_repo is None:
             # Not specified either. Try to find a repo our cwd is in.
-            cwd = os.getcwd()
             # The use of a dict here is a hack to deal with one
             # repo having multiple names in the configuration.
             candidates = {}
@@ -153,34 +152,26 @@ def check_args(parser, namespace):
                 # want to pick the suite's target repo if we are
                 # inside it, in case there is more than one repo
                 # definition with a base that contains our dir.
-                if cwd is None:
-                    cwd = os.getcwd()
                 repo_base = getattr(namespace.suite.target_repo, 'location', None)
                 if repo_base is not None and cwd.startswith(repo_base):
                     namespace.target_repo = namespace.suite.target_repo
     if namespace.target_repo is None:
-        # We have no target repo (not explicitly passed, not from
-        # a suite, not from an earlier guess at the target_repo).
-        # Try to guess one from cwd:
-        if cwd is None:
-            cwd = os.getcwd()
-        candidates = {}
+        # We have no target repo (not explicitly passed, not from a suite, not
+        # from an earlier guess at the target_repo) so try to guess one.
+        if len(namespace.targets) == 1 and os.path.exists(namespace.targets[0]):
+            target_dir = namespace.targets[0]
+        else:
+            target_dir = cwd
+        target_repo = None
         for name, repo in namespace.config.repo.iteritems():
             repo_base = getattr(repo, 'location', None)
-            if repo_base is not None and cwd in repo:
-                candidates[repo] = name
-        if not candidates:
+            if repo_base is not None and target_dir in repo:
+                target_repo = repo
+        if target_repo is None:
             parser.error(
                 'No target repo specified on commandline or suite and '
                 'current directory is not inside a known repo.')
-        elif len(candidates) > 1:
-            parser.error(
-                'Found multiple matches when guessing repo based on '
-                'current directory (%s). Specify a repo on the '
-                'commandline or suite or remove some repos from your '
-                'configuration.' % (
-                    ', '.join(str(repo) for repo in candidates),))
-        namespace.target_repo = tuple(candidates)[0]
+        namespace.target_repo = target_repo
 
     if namespace.reporter is None:
         namespace.reporter = namespace.config.get_default(
@@ -255,7 +246,6 @@ def check_args(parser, namespace):
                 'Either specify a target repo that is not multi-tree or '
                 'one or more extended atoms to scan '
                 '("*" for the entire repo).')
-        cwd = abspath(os.getcwd())
         if cwd not in namespace.target_repo:
             namespace.limiters = [packages.AlwaysTrue]
         else:
