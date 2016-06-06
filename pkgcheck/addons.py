@@ -420,40 +420,6 @@ class StableCheckAddon(base.Template):
             self.arches = options.src_repo.config.stable_arches
 
 
-class LicenseAddon(base.Addon):
-
-    @staticmethod
-    def mangle_argparser(parser):
-        parser.plugin.add_argument("--license-dir", help="filepath to license directory")
-
-    @staticmethod
-    def check_args(parser, namespace):
-        namespace.license_dirs = []
-        if namespace.license_dir is None:
-            for repo_base in namespace.repo_bases:
-                candidate = pjoin(repo_base, 'licenses')
-                if os.path.isdir(candidate):
-                    namespace.license_dirs.append(candidate)
-            if not namespace.license_dirs:
-                parser.error(
-                    'No license dir detected, pick a target or overlayed repo '
-                    'with a license dir or specify one with --license-dir.')
-        else:
-            if not os.path.isdir(namespace.license_dir):
-                parser.error(
-                    "--license-dir %r isn't a directory" % namespace.license_dir)
-            namespace.license_dirs.append(abspath(namespace.license_dir))
-
-    @property
-    def licenses(self):
-        o = getattr(self, "_licenses", None)
-        if o is None:
-            o = frozenset(iflatten_instance(
-                listdir_files(x) for x in self.options.license_dirs))
-            setattr(self, "_licenses", o)
-        return o
-
-
 class UnstatedIUSE(base.Error):
     """pkg is reliant on conditionals that aren't in IUSE"""
     __slots__ = ("category", "package", "version", "attr", "flags")

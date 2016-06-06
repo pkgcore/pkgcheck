@@ -53,19 +53,11 @@ class LicenseMetadataReport(base.Template):
         addons.UseAddon.known_results
     feed_type = base.versioned_feed
 
-    required_addons = (
-        addons.UseAddon, addons.ProfileAddon, addons.LicenseAddon)
+    required_addons = (addons.UseAddon, addons.ProfileAddon)
 
-    def __init__(self, options, iuse_handler, profiles, licenses):
+    def __init__(self, options, iuse_handler, profiles):
         base.Template.__init__(self, options)
         self.iuse_filter = iuse_handler.get_filter('license')
-        self.license_handler = licenses
-
-    def start(self):
-        self.licenses = self.license_handler.licenses
-
-    def finish(self, reporter):
-        self.licenses = None
 
     def feed(self, pkg, reporter):
         try:
@@ -85,7 +77,7 @@ class LicenseMetadataReport(base.Template):
             del e
         else:
             i = self.iuse_filter((basestring,), pkg, licenses, reporter)
-            if self.licenses is None:
+            if not pkg.repo.licenses:
                 # force a walk of it so it'll report if needs be.
                 for x in i:
                     pass
@@ -96,7 +88,7 @@ class LicenseMetadataReport(base.Template):
                         reporter.add_report(MetadataError(
                             pkg, "license", "no license defined"))
                 else:
-                    licenses.difference_update(self.licenses)
+                    licenses.difference_update(pkg.repo.licenses)
                     if licenses:
                         reporter.add_report(MissingLicense(pkg, licenses))
 

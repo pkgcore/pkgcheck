@@ -30,7 +30,7 @@ setup(
     install_requires=[
         'lxml',
         'snakeoil>=0.7.0',
-        'pkgcore>=0.9.3',
+        'pkgcore>=0.9.5',
     ],
     scripts=os.listdir('bin'),
     data_files=list(

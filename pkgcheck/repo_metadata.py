@@ -85,21 +85,14 @@ class UnusedLicense(base.Template):
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    required_addons = (addons.LicenseAddon,)
     known_results = (UnusedLicenseReport,)
 
-    def __init__(self, options, licenses):
+    def __init__(self, options):
         base.Template.__init__(self, options)
         self.licenses = None
 
     def start(self):
-        self.licenses = set()
-        if isinstance(self.options.target_repo, SlavedTree):
-            if 'licenses' in listdir_dirs(self.options.target_repo.location):
-                self.licenses.update(listdir_files(pjoin(self.options.target_repo.location, "licenses")))
-        else:
-            for license_dir in self.options.license_dirs:
-                self.licenses.update(listdir_files(license_dir))
+        self.licenses = set(self.options.target_repo.licenses)
 
     def feed(self, pkg, reporter):
         self.licenses.difference_update(iflatten_instance(pkg.license))

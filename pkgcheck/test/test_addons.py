@@ -476,35 +476,6 @@ class TestEvaluateDepSetAddon(profile_mixin):
         self.assertEqual(sorted(x.name for x in l2), ["1", "2"])
 
 
-class TestLicenseAddon(mixins.TempDirMixin, base_test):
-
-    addon_kls = addons.LicenseAddon
-
-    def test_defaults(self):
-        r1 = pjoin(self.dir, "repo1")
-        r2 = pjoin(self.dir, "repo2")
-        os.mkdir(r1)
-        os.mkdir(pjoin(r1, "licenses"))
-        os.mkdir(r2)
-
-        self.assertRaises(SystemExit, self.process_check, [],
-            preset_values={'repo_bases': [r2]})
-
-        self.process_check([], preset_values={'repo_bases': [r1, r2]},
-            license_dirs=[pjoin(r1, 'licenses')])
-
-    def test_it(self):
-        opts = self.process_check(['--license-dir', self.dir],
-            license_dirs=[self.dir])
-        open(pjoin(self.dir, 'foo'), 'w').close()
-        open(pjoin(self.dir, 'foo2'), 'w').close()
-        self.assertRaises(SystemExit, self.process_check,
-            ['--license-dir', pjoin(self.dir, 'foo')])
-        addon = self.addon_kls(opts)
-        self.assertEqual(frozenset(['foo', 'foo2']),
-            addon.licenses)
-
-
 class TestUseAddon(mixins.TempDirMixin, base_test):
 
     addon_kls = addons.UseAddon
