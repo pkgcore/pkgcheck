@@ -76,21 +76,15 @@ class LicenseMetadataReport(base.Template):
                 pkg, 'license', "exception- %s" % e))
             del e
         else:
-            i = self.iuse_filter((basestring,), pkg, licenses, reporter)
-            if not pkg.repo.licenses:
-                # force a walk of it so it'll report if needs be.
-                for x in i:
-                    pass
+            licenses = set(self.iuse_filter((basestring,), pkg, licenses, reporter))
+            if not licenses:
+                if pkg.category != 'virtual':
+                    reporter.add_report(MetadataError(
+                        pkg, "license", "no license defined"))
             else:
-                licenses = set(i)
-                if not licenses:
-                    if pkg.category != 'virtual':
-                        reporter.add_report(MetadataError(
-                            pkg, "license", "no license defined"))
-                else:
-                    licenses.difference_update(pkg.repo.licenses)
-                    if licenses:
-                        reporter.add_report(MissingLicense(pkg, licenses))
+                licenses.difference_update(pkg.repo.licenses)
+                if licenses:
+                    reporter.add_report(MissingLicense(pkg, licenses))
 
 
 class IUSEMetadataReport(base.Template):

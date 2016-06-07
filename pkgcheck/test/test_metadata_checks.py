@@ -6,6 +6,7 @@ import os
 import tempfile
 
 from pkgcore.ebuild import repo_objs
+from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
@@ -144,23 +145,20 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
 
     check_kls = metadata_checks.LicenseMetadataReport
 
-    def fake_licenses(self, known_licenses=()):
-        class foo:
-            licenses = frozenset(known_licenses)
-        return foo()
-
     def mk_check(self, licenses=(), **kwargs):
+        self.repo = FakeRepo(repo_id='test', licenses=licenses)
         options = self.get_options(**kwargs)
         profiles = [misc.FakeProfile()]
         iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
-        license_handler = self.fake_licenses(licenses)
-        check = self.check_kls(options, iuse_handler, {}, license_handler)
+        check = self.check_kls(options, iuse_handler, {})
         check.start()
         return check
 
     def mk_pkg(self, license='', iuse=''):
-        return misc.FakePkg('dev-util/diffball-2.7.1',
-            data={'LICENSE':license, 'IUSE':iuse})
+        return FakePkg(
+            'dev-util/diffball-2.7.1',
+            data={'LICENSE': license, 'IUSE': iuse},
+            repo=self.repo)
 
     def test_malformed(self):
         r = self.assertIsInstance(
@@ -171,7 +169,8 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
     def test_it(self):
         # should puke a metadata error for empty license
         chk = self.mk_check()
-        self.assertIsInstance(self.assertReport(chk, self.mk_pkg()),
+        self.assertIsInstance(
+            self.assertReport(chk, self.mk_pkg()),
             metadata_checks.MetadataError)
         report = self.assertIsInstance(
             self.assertReport(chk, self.mk_pkg("foo")),
