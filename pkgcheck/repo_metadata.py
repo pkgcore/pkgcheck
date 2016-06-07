@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-import itertools
+from itertools import ifilterfalse, chain, groupby
 from operator import attrgetter, itemgetter
 
 from pkgcore.ebuild.repository import SlavedTree
@@ -167,13 +167,36 @@ class NonexistentProfilePath(base.Warning):
         return self.path
 
 
+class UnknownCategories(base.Warning):
+    """Category directories that aren't listed in a repo's categories.
+
+    Or the categories of the repo's masters as well.
+    """
+
+    __slots__ = ("categories",)
+
+    threshold = base.repository_feed
+
+    def __init__(self, categories):
+        super(UnknownCategories, self).__init__()
+        self.categories = categories
+
+    @property
+    def short_desc(self):
+        return "[ %s ]" % ', '.join(self.categories)
+
+
 class RepoProfilesReport(base.Template):
-    """Scan for unknown arches in profiles and arches without profiles."""
+    """Scan repo for various profiles directory issues.
+
+    Including unknown arches in profiles, arches without profiles, and unknown
+    categories.
+    """
 
     feed_type = base.repository_feed
     known_results = (
         UnknownProfileArches, ArchesWithoutProfiles,
-        NonexistentProfilePath, UnknownProfileStatus)
+        NonexistentProfilePath, UnknownProfileStatus, UnknownCategories)
 
     def __init__(self, options):
         base.Template.__init__(self, options)
@@ -185,6 +208,13 @@ class RepoProfilesReport(base.Template):
         pass
 
     def finish(self, reporter):
+        category_dirs = set(ifilterfalse(
+            self.repo.false_categories.__contains__,
+            (x for x in listdir_dirs(self.repo.location) if x[0] != '.')))
+        unknown_categories = category_dirs.difference(self.repo.categories)
+        if unknown_categories:
+            reporter.add_report(UnknownCategories(unknown_categories))
+
         profile_arches = set(self.profiles.iterkeys())
         unknown_arches = profile_arches.difference(self.arches)
         arches_without_profiles = self.arches.difference(profile_arches)
@@ -195,7 +225,7 @@ class RepoProfilesReport(base.Template):
             reporter.add_report(ArchesWithoutProfiles(arches_without_profiles))
 
         profile_status = set()
-        for path, status in itertools.chain.from_iterable(self.profiles.itervalues()):
+        for path, status in chain.from_iterable(self.profiles.itervalues()):
             if not os.path.exists(pjoin(self.repo.location, 'profiles', path)):
                 reporter.add_report(NonexistentProfilePath(path))
             profile_status.add(status)
@@ -314,7 +344,7 @@ class ManifestReport(base.Template):
 
     def feed(self, full_pkgset, reporter):
         # sort it by repo.
-        for repo, pkgset in itertools.groupby(full_pkgset, self.repo_grabber):
+        for repo, pkgset in groupby(full_pkgset, self.repo_grabber):
             required_checksums = self.required_checksums[repo]
             pkgset = list(pkgset)
             manifests = set(pkgset[0].manifest.distfiles.iterkeys())
