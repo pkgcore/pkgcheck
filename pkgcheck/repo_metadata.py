@@ -4,7 +4,6 @@
 from itertools import ifilterfalse, chain, groupby
 from operator import attrgetter, itemgetter
 
-from pkgcore.ebuild.repository import SlavedTree
 from pkgcore.fetch import fetchable
 from snakeoil import mappings
 from snakeoil.demandload import demandload
@@ -51,7 +50,7 @@ class UnusedGlobalFlagsCheck(base.Template):
         self.iuse_handler = iuse_handler
 
     def start(self):
-        if not isinstance(self.options.target_repo, SlavedTree):
+        if not self.options.target_repo.masters:
             self.flags = set(self.iuse_handler.global_iuse - self.iuse_handler.unstated_iuse)
 
     def feed(self, pkg, reporter):
