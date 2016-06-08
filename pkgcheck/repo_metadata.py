@@ -5,6 +5,7 @@ from itertools import ifilterfalse, chain, groupby
 from operator import attrgetter, itemgetter
 
 from pkgcore.ebuild.repository import SlavedTree
+from pkgcore.fetch import fetchable
 from snakeoil import mappings
 from snakeoil.demandload import demandload
 
@@ -101,6 +102,55 @@ class UnusedLicensesCheck(base.Template):
         if self.licenses:
             reporter.add_report(UnusedLicenses(self.licenses))
         self.licenses = None
+
+
+class UnusedMirrors(base.Warning):
+    """Unused mirrors detected."""
+
+    __slots__ = ("mirrors",)
+
+    threshold = base.repository_feed
+
+    def __init__(self, mirrors):
+        super(UnusedMirrors, self).__init__()
+        self.mirrors = tuple(sorted(mirrors))
+
+    @property
+    def short_desc(self):
+        return ', '.join(self.mirrors)
+
+
+class UnusedMirrorsCheck(base.Template):
+    """Check for unused mirrors."""
+
+    required_addons = (addons.UseAddon,)
+    feed_type = base.versioned_feed
+    scope = base.repository_scope
+    known_results = (UnusedMirrors,) + addons.UseAddon.known_results
+
+    def __init__(self, options, iuse_handler):
+        base.Template.__init__(self, options)
+        self.mirrors = None
+        self.iuse_filter = iuse_handler.get_filter('fetchables')
+
+    def start(self):
+        repo = self.options.target_repo
+        repo_mirrors = set(repo.mirrors.iterkeys())
+        master_mirrors = set(x for master in repo.masters for x in master.mirrors.iterkeys())
+        self.mirrors = repo_mirrors.difference(master_mirrors)
+
+    def feed(self, pkg, reporter):
+        if self.mirrors:
+            mirrors = []
+            for f in self.iuse_filter((fetchable,), pkg, pkg.fetchables, reporter):
+                for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
+                    mirrors.append(m[0].mirror_name)
+            self.mirrors.difference_update(mirrors)
+
+    def finish(self, reporter):
+        if self.mirrors:
+            reporter.add_report(UnusedMirrors(self.mirrors))
+        self.mirrors = None
 
 
 class UnknownProfileArches(base.Warning):
