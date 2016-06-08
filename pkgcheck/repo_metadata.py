@@ -18,15 +18,15 @@ demandload(
 )
 
 
-class UnusedGlobalFlagsResult(base.Warning):
-    """unused use.desc flag(s)"""
+class UnusedGlobalFlags(base.Warning):
+    """Unused use.desc flag(s)."""
 
     __slots__ = ("flags",)
 
     threshold = base.repository_feed
 
     def __init__(self, flags):
-        super(UnusedGlobalFlagsResult, self).__init__()
+        super(UnusedGlobalFlags, self).__init__()
         # tricky, but it works; atoms have the same attrs
         self.flags = tuple(sorted(flags))
 
@@ -36,13 +36,13 @@ class UnusedGlobalFlagsResult(base.Warning):
             's'[len(self.flags) == 1:], ', '.join(self.flags))
 
 
-class UnusedGlobalFlags(base.Template):
-    """check for unused use.desc entries"""
+class UnusedGlobalFlagsCheck(base.Template):
+    """Check for unused use.desc entries."""
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
     required_addons = (addons.UseAddon,)
-    known_results = (UnusedGlobalFlagsResult,) + addons.UseAddon.known_results
+    known_results = (UnusedGlobalFlags,) + addons.UseAddon.known_results
 
     def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
@@ -59,19 +59,19 @@ class UnusedGlobalFlags(base.Template):
 
     def finish(self, reporter):
         if self.flags:
-            reporter.add_report(UnusedGlobalFlagsResult(self.flags))
+            reporter.add_report(UnusedGlobalFlags(self.flags))
             self.flags.clear()
 
 
-class UnusedLicenseReport(base.Warning):
-    """unused license(s) detected"""
+class UnusedLicenses(base.Warning):
+    """Unused license(s) detected."""
 
     __slots__ = ("licenses",)
 
     threshold = base.repository_feed
 
     def __init__(self, licenses):
-        super(UnusedLicenseReport, self).__init__()
+        super(UnusedLicenses, self).__init__()
         self.licenses = tuple(sorted(licenses))
 
     @property
@@ -80,12 +80,12 @@ class UnusedLicenseReport(base.Warning):
             's'[len(self.licenses) == 1:], ', '.join(self.licenses))
 
 
-class UnusedLicense(base.Template):
-    """unused license file(s) check"""
+class UnusedLicensesCheck(base.Template):
+    """Check for unused license files."""
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    known_results = (UnusedLicenseReport,)
+    known_results = (UnusedLicenses,)
 
     def __init__(self, options):
         base.Template.__init__(self, options)
@@ -99,7 +99,7 @@ class UnusedLicense(base.Template):
 
     def finish(self, reporter):
         if self.licenses:
-            reporter.add_report(UnusedLicenseReport(self.licenses))
+            reporter.add_report(UnusedLicenses(self.licenses))
         self.licenses = None
 
 
