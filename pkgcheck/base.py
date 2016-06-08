@@ -120,7 +120,7 @@ class Transform(object):
 
     :cvar source: start type
     :cvar dest: destination type
-    :cvar scope: minimun scope
+    :cvar scope: minimum scope
     :cvar cost: cost
     """
 
