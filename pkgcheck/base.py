@@ -304,6 +304,19 @@ class Blacklist(_CheckSet):
                        for f in self.patterns))
 
 
+class Scope(object):
+    """Only run checks matching any of the given scopes."""
+
+    pkgcore_config_type = ConfigHint(
+        {'scopes': 'list'}, typename='pkgcheck_checkset')
+
+    def __init__(self, scopes):
+        self.scopes = tuple(int(x) for x in scopes)
+
+    def filter(self, checks):
+        return list(c for c in checks if c.scope in self.scopes)
+
+
 class Suite(object):
 
     pkgcore_config_type = ConfigHint({
