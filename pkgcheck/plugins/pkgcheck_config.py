@@ -7,11 +7,11 @@ from pkgcore.config import basics
 
 pkgcore_plugins = {
     'global_config': [{
-        'no-arch-checks': basics.ConfigSectionFromStringDict({
+        'no-arch': basics.ConfigSectionFromStringDict({
             'class': 'pkgcheck.base.Blacklist',
             'patterns': 'unstable_only stale_unstable imlate',
             }),
-        'all-checks': basics.ConfigSectionFromStringDict({
+        'all': basics.ConfigSectionFromStringDict({
             'class': 'pkgcheck.base.Blacklist',
             'patterns': '',
             }),
