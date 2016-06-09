@@ -30,7 +30,7 @@ demandload(
 )
 
 argparser = commandline.ArgumentParser(
-    domain=False, color=False, description=__doc__)
+    domain=False, color=False, description=__doc__, project=__name__.split('.')[0])
 # These are all set based on other options, so have no default setting.
 argparser.set_defaults(repo_bases=[])
 argparser.set_defaults(guessed_target_repo=False)
