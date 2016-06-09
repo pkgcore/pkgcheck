@@ -243,6 +243,7 @@ class RepoProfilesReport(base.Template):
     """
 
     feed_type = base.repository_feed
+    scope = base.repository_scope
     known_results = (
         UnknownProfileArches, ArchesWithoutProfiles,
         NonexistentProfilePath, UnknownProfileStatus, UnknownCategories)
