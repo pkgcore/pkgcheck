@@ -72,7 +72,7 @@ check_options.add_argument(
     '-d', '--disable', action='append', dest='checks_to_disable',
     help='specific checks to disable')
 check_options.add_argument(
-    '--checkset', action=commandline.StoreConfigObject,
+    '-C', '--checkset', metavar='CHECKSET', action=commandline.StoreConfigObject,
     config_type='pkgcheck_checkset',
     help='preconfigured set of checks to run')
 
