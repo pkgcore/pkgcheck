@@ -189,9 +189,11 @@ def check_args(parser, namespace):
                 get_plugins('reporter', plugins)))
             if not func:
                 parser.error(
-                    "no reporter matches %r\n"
-                    "please see --list-reporters for a list of "
-                    "valid reporters" % namespace.reporter)
+                    "no reporter matches %r (available: %s)" % (
+                        namespace.reporter,
+                        ', '.join(sorted(x.__name__ for x in get_plugins('reporter', plugins)))
+                    )
+                )
             elif len(func) > 1:
                 parser.error(
                     "--reporter %r matched multiple reporters, "
