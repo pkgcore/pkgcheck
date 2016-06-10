@@ -505,4 +505,4 @@ def main(options, out, err):
     # flush stdout first; if they're directing it all to a file, this makes
     # results not get the final message shoved in midway
     out.stream.flush()
-    return 0
+    return int(reporter.status)
