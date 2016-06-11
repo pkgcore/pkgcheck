@@ -169,8 +169,8 @@ def check_args(parser, namespace):
                 target_repo = repo
         if target_repo is None:
             parser.error(
-                'No target repo specified on commandline or suite and '
-                'current directory is not inside a known repo.')
+                'no target repo specified and '
+                'current directory is not inside a known repo')
         namespace.target_repo = target_repo
 
     if namespace.reporter is None:
@@ -267,7 +267,7 @@ def check_args(parser, namespace):
         namespace.checks = list(blacklist.filter(namespace.checks))
 
     if not namespace.checks:
-        parser.error('No active checks')
+        parser.error('no active checks')
 
     namespace.addons = set()
 
