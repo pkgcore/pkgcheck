@@ -216,12 +216,8 @@ class Warning(Result):
 
 class Reporter(object):
 
-    def __init__(self):
-        self.status = 0
-
     def add_report(self, result):
-        if not self.status and isinstance(result, Error):
-            self.status = 1
+        raise NotImplementedError(self.add_report)
 
     def start(self):
         pass

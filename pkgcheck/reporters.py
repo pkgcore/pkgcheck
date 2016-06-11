@@ -40,7 +40,6 @@ class StrReporter(base.Reporter):
         self.first_report = True
 
     def add_report(self, result):
-        base.Reporter.add_report(self, result)
         if self.first_report:
             self.out.write()
             self.first_report = False
@@ -84,7 +83,6 @@ class FancyReporter(base.Reporter):
         self.key = None
 
     def add_report(self, result):
-        base.Reporter.add_report(self, result)
         cat = getattr(result, 'category', None)
         pkg = getattr(result, 'package', None)
         if cat is None or pkg is None:
@@ -117,7 +115,7 @@ class NullReporter(base.Reporter):
         pass
 
     def add_report(self, result):
-        base.Reporter.add_report(self, result)
+        pass
 
 
 class XmlReporter(base.Reporter):
@@ -161,7 +159,6 @@ class XmlReporter(base.Reporter):
         self.out.write('<checks>')
 
     def add_report(self, result):
-        base.Reporter.add_report(self, result)
         d = dict((k, getattr(result, k, '')) for k in
                  ("category", "package", "version"))
         d["class"] = xml_escape(result.__class__.__name__)
