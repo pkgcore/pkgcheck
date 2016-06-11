@@ -217,11 +217,11 @@ class Warning(Result):
 class Reporter(object):
 
     def __init__(self):
-        self.status = False
+        self.status = 0
 
     def add_report(self, result):
         if not self.status and isinstance(result, Error):
-            self.status = True
+            self.status = 1
 
     def start(self):
         pass
