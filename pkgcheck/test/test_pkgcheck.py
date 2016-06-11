@@ -13,8 +13,8 @@ class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
     def test_parser(self):
         self.assertError(
-            'No target repo specified on commandline or suite and current '
-            'directory is not inside a known repo.')
+            'no target repo specified and '
+            'current directory is not inside a known repo')
         self.assertError(
             "argument -r/--repo: couldn't find repo 'spork'",
             '-r', 'spork')
