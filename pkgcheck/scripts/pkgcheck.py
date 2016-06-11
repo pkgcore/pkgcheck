@@ -26,6 +26,7 @@ demandload(
     'pkgcore.restrictions.values:StrExactMatch',
     'pkgcore.repository:multiplex',
     'snakeoil.osutils:abspath',
+    'snakeoil.sequences:iflatten_instance',
     'pkgcheck:errors',
 )
 
@@ -214,10 +215,8 @@ def check_args(parser, namespace):
     else:
         namespace.search_repo = multiplex.tree(namespace.target_repo, namespace.src_repo)
 
-    # TODO improve this to deal with a multiplex repo.
     for repo in set((namespace.src_repo, namespace.target_repo)):
-        if isinstance(repo, repository.UnconfiguredTree):
-            namespace.repo_bases.append(abspath(repo.location))
+        namespace.repo_bases.extend(abspath(x) for x in iflatten_instance([repo.location]))
 
     if namespace.targets:
         limiters = []
