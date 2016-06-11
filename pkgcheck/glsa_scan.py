@@ -71,9 +71,7 @@ class TreeVulnerabilitiesReport(base.Template):
                     "--glsa-dir '%r' doesn't exist" % glsa_loc)
         else:
             if not namespace.repo_bases:
-                parser.error(
-                    'Need a target repo or --overlayed-repo that is a single '
-                    'UnconfiguredTree for license checks')
+                parser.error('a target repo or overlayed repo must be specified')
             for repo_base in namespace.repo_bases:
                 candidate = pjoin(repo_base, "metadata", "glsa")
                 if os.path.isdir(candidate):
