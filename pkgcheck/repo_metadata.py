@@ -286,6 +286,46 @@ class RepoProfilesReport(base.Template):
             if unknown_status:
                 reporter.add_report(UnknownProfileStatus(unknown_status))
 
+
+class UnknownLicenses(base.Warning):
+    """License(s) listed in license group(s) that don't exist."""
+
+    __slots__ = ("group", "licenses")
+
+    threshold = base.repository_feed
+
+    def __init__(self, group, licenses):
+        super(UnknownLicenses, self).__init__()
+        self.group = group
+        self.licenses = licenses
+
+    @property
+    def short_desc(self):
+        return "license group %r has unknown license%s: [ %s ]" % (
+                self.group, 's'[len(self.licenses) == 1:], ', '.join(self.licenses))
+
+
+class LicenseGroupsCheck(base.Template):
+    """Scan license groups for unknown licenses."""
+
+    feed_type = base.repository_feed
+    scope = base.repository_scope
+    known_results = (UnknownLicenses,)
+
+    def __init__(self, options):
+        base.Template.__init__(self, options)
+        self.repo = options.target_repo
+
+    def feed(self, pkg, reporter):
+        pass
+
+    def finish(self, reporter):
+        for group, licenses in self.repo.licenses.groups.iteritems():
+            unknown_licenses = set(licenses).difference(self.repo.licenses)
+            if unknown_licenses:
+                reporter.add_report(UnknownLicenses(group, unknown_licenses))
+
+
 def reformat_chksums(iterable):
     for chf, val1, val2 in iterable:
         if chf == "size":

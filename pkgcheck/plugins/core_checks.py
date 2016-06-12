@@ -32,6 +32,7 @@ pkgcore_plugins = {
         metadata_xml.CategoryMetadataXmlCheck,
         metadata_xml.PackageMetadataXmlCheck,
         pkgdir_checks.PkgDirReport,
+        repo_metadata.LicenseGroupsCheck,
         repo_metadata.ManifestReport,
         repo_metadata.UnusedGlobalFlagsCheck,
         repo_metadata.UnusedLicensesCheck,
