@@ -261,6 +261,8 @@ class DependencyReport(base.Template):
                         reporter.add_report(MetadataError(pkg, attr_name, "= slot operator used inside || block (%s)" % x))
                     if x.blocks and x.match(pkg):
                         reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
+                    if x.blocks and x.slot_operator == '=':
+                        reporter.add_report(MetadataError(pkg, attr_name, "= slot operator used in blocker (%s)" % x))
             except (KeyboardInterrupt, SystemExit):
                 raise
             except (MetadataException, MalformedAtom, ValueError) as e:
