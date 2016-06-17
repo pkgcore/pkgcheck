@@ -198,7 +198,6 @@ class DependencyReport(base.Template):
 
     required_addons = (addons.UseAddon,)
     known_results = (MetadataError,) + addons.UseAddon.known_results
-    blocks_getter = attrgetter('blocks')
 
     feed_type = base.versioned_feed
 
@@ -214,8 +213,8 @@ class DependencyReport(base.Template):
             try:
                 i = self.iuse_filter(
                     (atom,), pkg, getter(pkg), reporter, attr=attr_name)
-                for x in ifilter(self.blocks_getter, i):
-                    if x.match(pkg):
+                for x in i:
+                    if x.blocks and x.match(pkg):
                         reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
             except (KeyboardInterrupt, SystemExit):
                 raise
