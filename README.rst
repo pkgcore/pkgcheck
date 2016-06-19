@@ -71,17 +71,10 @@ it is used. So with the following suite definition in
 you can run ``pkgcheck`` with no further arguments inside your portage
 directory and it will do the right thing.
 
-For use with overlays you need to define the "source" repo too::
-
-  [pkgcheck-overlay-suite]
-  class=pkgcheck.base.Suite
-  target_repo=/usr/local/portage/private
-  src_repo=gentoo
-
-(the ``target_repo`` and ``src_repo`` settings are both names of
-repository sections, not arbitrary filesystem paths).
-
-See Overlays_ for more information on ``src_repo``.
+Make sure the target repo properly specifies its masters in
+metadata/layout.conf if it's meant to be an overlay, otherwise many errors are
+likely to be produced relating to missing licenses, categories, dependencies,
+etc.
 
 Finally, you can define a different checkset per suite::
 
@@ -128,18 +121,6 @@ default.
 There are various ways to pick the checkset to use: ``pquery
 --checkset``, the checkset setting of a suite and setting
 ``default=true`` on a checkset in the configuration.
-
-Overlays
---------
-
-Checking just an overlay does not work very well since pkgcheck
-needs to know about profiles and checks if all dependencies are
-available. To do this you will usually have to specify a base or
-"source" repo to pull this data from. You can set this with ``pkgcheck
---overlayed-repo`` or the ``pkgcheck -o`` shorthand, or you can set it
-in the configuration file as part of a suite__ definition.
-
-__ Suites_
 
 Reporters
 ---------
