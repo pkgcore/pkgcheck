@@ -92,10 +92,10 @@ class UnusedLicensesCheck(base.Template):
         self.licenses = None
 
     def start(self):
-        self.master_licenses = set()
+        master_licenses = set()
         for repo in self.options.target_repo.masters:
-            self.master_licenses.update(repo.licenses)
-        self.licenses = set(self.options.target_repo.licenses) - self.master_licenses
+            master_licenses.update(repo.licenses)
+        self.licenses = set(self.options.target_repo.licenses) - master_licenses
 
     def feed(self, pkg, reporter):
         self.licenses.difference_update(iflatten_instance(pkg.license))
