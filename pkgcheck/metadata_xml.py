@@ -239,7 +239,7 @@ class base_check(base.Template):
 
     def __init__(self, options):
         base.Template.__init__(self, options)
-        self.repo_base = getattr(options.src_repo, "location", None)
+        self.repo_base = options.target_repo.location
         self.xsd_file = None
 
     def start(self):

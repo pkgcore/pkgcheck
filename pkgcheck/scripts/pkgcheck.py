@@ -52,11 +52,6 @@ main_options.add_argument(
 main_options.add_argument(
     '--reporter', action='store', default=None,
     help="use a non-default reporter (defined in pkgcore's config)")
-main_options.add_argument(
-    '-o', '--overlayed-repo', metavar='REPO',
-    action=commandline.StoreRepoObject, dest='src_repo',
-    help='if the target repo is an overlay, specify the '
-         'repository name to pull profiles/license from')
 list_options = main_options.add_mutually_exclusive_group()
 list_options.add_argument(
     '--list-checks', action='store_true', default=False,
@@ -139,8 +134,6 @@ def check_args(parser, namespace):
         # were not set explicitly:
         if namespace.checkset is None:
             namespace.checkset = namespace.suite.checkset
-        if namespace.src_repo is None:
-            namespace.src_repo = namespace.suite.src_repo
         # If we were called with no atoms we want to force
         # cwd-based detection.
         if namespace.target_repo is None:
@@ -206,17 +199,12 @@ def check_args(parser, namespace):
             func = func[0]
         namespace.reporter = func
 
-    # search_repo is a multiplex of target_repo and src_repo if they are
-    # different or just target_repo if they are the same. This is used for
+    # search_repo is a multiplex of target_repo and its masters, make sure
+    # they're configured properly in metadata/layout.conf. This is used for
     # things like visibility checks (it is passed to the checkers in "start").
-    if namespace.src_repo is None:
-        namespace.src_repo = namespace.target_repo
-        namespace.search_repo = namespace.target_repo
-    else:
-        namespace.search_repo = multiplex.tree(namespace.target_repo, namespace.src_repo)
+    namespace.search_repo = multiplex.tree(*namespace.target_repo.trees)
 
-    for repo in set((namespace.src_repo, namespace.target_repo)):
-        namespace.repo_bases.extend(abspath(x) for x in iflatten_instance([repo.location]))
+    namespace.repo_bases = [abspath(repo.location) for repo in reversed(namespace.target_repo.trees)]
 
     if namespace.targets:
         limiters = []
@@ -401,10 +389,7 @@ def main(options, out, err):
 
     if not options.repo_bases:
         err.write(
-            'Warning: could not determine repository base for profiles. '
-            'Some checks will not work. Either specify a plain target repo '
-            '(not combined trees) or specify a master repo '
-            'with --overlayed-repo.', wrap=True)
+            'Warning: could not determine repo base for profiles, some checks will not work.')
         err.write()
 
     if options.guessed_suite:
@@ -447,7 +432,6 @@ def main(options, out, err):
 
     if options.debug:
         err.write('target repo: ', repr(options.target_repo))
-        err.write('source repo: ', repr(options.src_repo))
         err.write('base dirs: ', repr(options.repo_bases))
         for filterer in options.limiters:
             err.write('limiter: ', repr(filterer))

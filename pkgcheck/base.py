@@ -320,14 +320,14 @@ class Scope(object):
 class Suite(object):
 
     pkgcore_config_type = ConfigHint({
-        'target_repo': 'ref:repo', 'src_repo': 'ref:repo',
-        'checkset': 'ref:pkgcheck_checkset'}, typename='pkgcheck_suite'
+        'target_repo': 'ref:repo',
+        'checkset': 'ref:pkgcheck_checkset'},
+        typename='pkgcheck_suite'
     )
 
-    def __init__(self, target_repo, checkset=None, src_repo=None):
+    def __init__(self, target_repo, checkset=None):
         self.target_repo = target_repo
         self.checkset = checkset
-        self.src_repo = src_repo
 
 
 class CheckRunner(object):

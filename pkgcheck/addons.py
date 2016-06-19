@@ -417,7 +417,7 @@ class StableCheckAddon(base.Template):
         # use known stable arches if a custom arch set isn't specified
         selected_arches = getattr(options, 'selected_arches', None)
         if selected_arches is None:
-            self.arches = options.src_repo.config.stable_arches
+            self.arches = set().union(*(repo.config.stable_arches for repo in options.target_repo.trees))
 
 
 class UnstatedIUSE(base.Error):

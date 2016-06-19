@@ -87,8 +87,7 @@ class TreeVulnerabilitiesReport(base.Template):
                 # error, else disable
                 if namespace.checks_to_run:
                     parser.error(
-                        "--glsa-dir must be specified, couldn't identify glsa src from %r" %
-                        namespace.src_repo)
+                        "--glsa-dir must be specified, couldn't find glsa source")
                 namespace.glsa_enabled = False
                 logger.warn(
                     "disabling GLSA checks due to no glsa source "
