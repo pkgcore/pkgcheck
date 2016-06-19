@@ -5,7 +5,7 @@ from functools import partial
 import os
 import tempfile
 
-from pkgcore.ebuild.repository import _UnconfiguredTree
+from pkgcore.ebuild import repository
 from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
 from snakeoil.currying import post_curry
@@ -80,7 +80,7 @@ class iuse_options(TempDirMixin):
         os.mkdir(pjoin(repo_base, 'metadata'))
         fileutils.write_file(pjoin(repo_base, 'metadata', 'layout.conf'), 'w',
             "masters = ")
-        kwds['target_repo'] = _UnconfiguredTree(repo_base, eclass_cache=None)
+        kwds['target_repo'] = repository._UnconfiguredTree(repo_base)
         return misc.Options(**kwds)
 
 
