@@ -453,8 +453,9 @@ class UseAddon(base.Addon):
         known_iuse = set()
         known_iuse_expand = set()
 
-        known_iuse.update(x[1][0] for x in options.target_repo.config.use_desc)
-        known_iuse_expand.update(x[1][0] for x in options.target_repo.config.use_expand_desc)
+        for repo in options.target_repo.trees:
+            known_iuse.update(x[1][0] for x in repo.config.use_desc)
+            known_iuse_expand.update(x[1][0] for x in repo.config.use_expand_desc)
 
         self.collapsed_iuse = misc.non_incremental_collapsed_restrict_to_data(
             ((packages.AlwaysTrue, known_iuse),),
