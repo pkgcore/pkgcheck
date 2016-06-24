@@ -571,7 +571,8 @@ class ManifestReport(base.Template):
                     seen.add(f_inst.filename)
                     existing = self.seen_checksums.get(f_inst.filename)
                     if existing is None:
-                        existing = ([pkg], dict(f_inst.chksums.iteritems()))
+                        self.seen_checksums[f_inst.filename] = (
+                                [pkg], dict(f_inst.chksums.iteritems()))
                         continue
                     seen_pkgs, seen_chksums = existing
                     for chf_type, value in seen_chksums.iteritems():
