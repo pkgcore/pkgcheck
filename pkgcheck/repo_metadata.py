@@ -572,15 +572,17 @@ class ManifestReport(base.Template):
                     existing = self.seen_checksums.get(f_inst.filename)
                     if existing is None:
                         self.seen_checksums[f_inst.filename] = (
-                                [pkg], dict(f_inst.chksums.iteritems()))
+                                [pkg.key], dict(f_inst.chksums.iteritems()))
                         continue
                     seen_pkgs, seen_chksums = existing
+                    confl_checksums = []
                     for chf_type, value in seen_chksums.iteritems():
                         our_value = f_inst.chksums.get(chf_type)
                         if our_value is not None and our_value != value:
-                            reporter.add_result(ConflictingChksums(
-                                pkg, f_inst.filename, f_inst.chksums, seen_chksums))
-                            break
+                            confl_checksums.append((chf_type, value, our_value))
+                    if confl_checksums:
+                        reporter.add_report(ConflictingChksums(
+                            pkg, f_inst.filename, confl_checksums, seen_pkgs))
                     else:
                         seen_chksums.update(f_inst.chksums)
                         seen_pkgs.append(pkg)
