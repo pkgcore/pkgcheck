@@ -527,7 +527,8 @@ class ManifestReport(base.Template):
 
     required_addons = (addons.UseAddon,)
     feed_type = base.package_feed
-    known_results = (MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest)
+    known_results = (MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
+                     ConflictingChksums)
 
     repo_grabber = attrgetter("repo")
 
