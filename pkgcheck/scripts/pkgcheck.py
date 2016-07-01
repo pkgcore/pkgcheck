@@ -455,7 +455,7 @@ def _scan(options, out, err):
     reporter.start()
 
     for filterer in options.limiters:
-        sources = [feeds.RestrictedRepoSource(options.target_repo, filterer)]
+        sources = [feeds.RestrictedRepoSource(options.target_repo, filterer, reporter)]
         bad_sinks, pipes = base.plug(sinks, transforms, sources, debug)
         if bad_sinks:
             # We want to report the ones that would work if this was a
@@ -463,7 +463,7 @@ def _scan(options, out, err):
             # actually missing transforms.
             bad_sinks = set(bad_sinks)
             full_scope = feeds.RestrictedRepoSource(
-                options.target_repo, packages.AlwaysTrue)
+                options.target_repo, packages.AlwaysTrue, reporter)
             really_bad, ignored = base.plug(sinks, transforms, [full_scope])
             really_bad = set(really_bad)
             assert bad_sinks >= really_bad, \

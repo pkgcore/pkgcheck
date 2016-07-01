@@ -2,6 +2,7 @@
 
 from operator import attrgetter
 
+from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import util
 
 from pkgcheck import base
@@ -147,14 +148,31 @@ class PackageToCategory(base.Transform):
         self.chunk = None
 
 
+class MetadataLoadError(base.Error):
+    """Problem with loading package's metadata"""
+
+    __slots__ = ("category", "package", "version", "msg")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, msg):
+        super(MetadataLoadError, self).__init__()
+        self._store_cpv(pkg)
+        self.msg = msg
+
+    @property
+    def short_desc(self):
+        return "unable to process package: %s" % self.msg
+
+
 class RestrictedRepoSource(object):
 
     feed_type = base.versioned_feed
     cost = 10
 
-    def __init__(self, repo, limiter):
+    def __init__(self, repo, limiter, reporter):
         self.repo = repo
         self.limiter = limiter
+        self.reporter = reporter
         for scope, attrs in ((base.version_scope, ['fullver', 'version', 'rev']),
                              (base.package_scope, ['package']),
                              (base.category_scope, ['category'])):
@@ -164,4 +182,11 @@ class RestrictedRepoSource(object):
         self.scope = base.repository_scope
 
     def feed(self):
-        return self.repo.itermatch(self.limiter, sorter=sorted)
+        for x in self.repo.itermatch(self.limiter, sorter=sorted):
+            try:
+                x.data
+            except MetadataException:
+                self.reporter.add_report(MetadataLoadError(
+                    x, "error sourcing the ebuild"))
+            else:
+                yield x
