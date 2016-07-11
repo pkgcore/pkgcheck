@@ -238,7 +238,7 @@ class VisibilityReport(base.Template):
                                 self.query_cache[node] = matches
                                 if orig_node is not node:
                                     self.query_cache[str(orig_node)] = matches
-                            elif not node.blocks and not node.category == "virtual":
+                            elif not node.blocks:
                                 nonexistent.add(node)
                                 self.query_cache[node] = ()
                                 self.profiles.global_insoluble.add(node)
