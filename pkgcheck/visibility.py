@@ -66,26 +66,12 @@ class FakeConfigurable(object):
     def __setattr__(self, attr, val):
         raise AttributeError(self, 'is immutable')
 
-class _BlockMemoryExhaustion(Exception):
-    pass
-
-
-# This is fast path code, hence the seperated implementations.
-if getattr(atom, '_TRANSITIVE_USE_ATOM_BUG_IS_FIXED', False):
-    def _eapi2_flatten(val, atom_kls=atom, transitive_use_atom=atom._transitive_use_atom):
-        return isinstance(val, atom_kls) and not isinstance(val, transitive_use_atom)
-else:
-    def _eapi2_flatten(val, atom_kls=atom, transitive_use_atom=atom._transitive_use_atom):
-        if isinstance(val, transitive_use_atom):
-            if len([x for x in val.use if x.endswith("?")]) > 16:
-                raise _BlockMemoryExhaustion(val)
-        return isinstance(val, atom_kls) and not isinstance(val, transitive_use_atom)
-
 
 def visit_atoms(pkg, stream):
     if not pkg.eapi.options.transitive_use_atoms:
         return iflatten_instance(stream, atom)
-    return iflatten_func(stream, _eapi2_flatten)
+    return iflatten_func(stream, \
+        lambda x: isinstance(x,atom) and not isinstance(x,atom._transitive_use_atom))
 
 
 def strip_atom_use(inst):
@@ -220,34 +206,27 @@ class VisibilityReport(base.Template):
                              ("rdepends", pkg.rdepends),
                              ("post_rdepends", pkg.post_rdepends)):
             nonexistent = set()
-            try:
-                for orig_node in visit_atoms(pkg, depset):
-
-                    node = strip_atom_use(orig_node)
-                    if node not in self.query_cache:
-                        if node in self.profiles.global_insoluble:
-                            nonexistent.add(node)
-                            # insert an empty tuple, so that tight loops further
-                            # on don't have to use the slower get method
-                            self.query_cache[node] = ()
-
-                        else:
-                            matches = caching_iter(
-                                self.options.search_repo.itermatch(node))
-                            if matches:
-                                self.query_cache[node] = matches
-                                if orig_node is not node:
-                                    self.query_cache[str(orig_node)] = matches
-                            elif not node.blocks:
-                                nonexistent.add(node)
-                                self.query_cache[node] = ()
-                                self.profiles.global_insoluble.add(node)
-                    elif not self.query_cache[node]:
+            for orig_node in visit_atoms(pkg, depset):
+                node = strip_atom_use(orig_node)
+                if node not in self.query_cache:
+                    if node in self.profiles.global_insoluble:
                         nonexistent.add(node)
-
-            except _BlockMemoryExhaustion as e:
-                reporter.add_report(UncheckableDep(pkg, attr))
-                suppressed_depsets.append(attr)
+                        # insert an empty tuple, so that tight loops further
+                        # on don't have to use the slower get method
+                        self.query_cache[node] = ()
+                    else:
+                        matches = caching_iter(
+                            self.options.search_repo.itermatch(node))
+                        if matches:
+                            self.query_cache[node] = matches
+                            if orig_node is not node:
+                                self.query_cache[str(orig_node)] = matches
+                        elif not node.blocks and not node.category == "virtual":
+                            nonexistent.add(node)
+                            self.query_cache[node] = ()
+                            self.profiles.global_insoluble.add(node)
+                elif not self.query_cache[node]:
+                    nonexistent.add(node)
             if nonexistent:
                 reporter.add_report(NonExistentDeps(pkg, attr, nonexistent))
 
