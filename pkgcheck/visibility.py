@@ -193,16 +193,15 @@ class VisibilityReport(base.Template):
 
     feed_type = base.versioned_feed
     required_addons = (
-        addons.ArchesAddon, addons.QueryCacheAddon, addons.ProfileAddon,
+        addons.QueryCacheAddon, addons.ProfileAddon,
         addons.EvaluateDepSetAddon)
     known_results = (VisibleVcsPkg, NonExistentDeps, NonsolvableDeps)
 
-    def __init__(self, options, arches, query_cache, profiles, depset_cache):
+    def __init__(self, options, query_cache, profiles, depset_cache):
         base.Template.__init__(self, options)
         self.query_cache = query_cache.query_cache
         self.depset_cache = depset_cache
         self.profiles = profiles
-        self.arches = frozenset(x.lstrip("~") for x in options.arches)
 
     def feed(self, pkg, reporter):
         # query_cache gets caching_iter partial repo searches shoved into it-
