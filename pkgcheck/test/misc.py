@@ -14,8 +14,6 @@ from snakeoil.sequences import split_negations
 from pkgcheck import base
 from pkgcheck.addons import ArchesAddon
 
-default_arches = ArchesAddon.default_arches
-
 
 class FakePkg(package):
     def __init__(self, cpvstr, data=None, shared=None, parent=None):

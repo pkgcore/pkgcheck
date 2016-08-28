@@ -62,13 +62,10 @@ class TestArchesAddon(base_test):
         for arg in ('-a', '--arches'):
             self.process_check([arg, 'x86'], arches=('x86',))
             self.process_check([arg, 'x86,ppc'], arches=('ppc', 'x86'))
-            self.process_check(
-                [arg + '=-x86'],
-                arches=tuple(sorted(
-                    set(self.addon_kls.default_arches).difference(['x86']))))
+            self.process_check([arg, 'x86,ppc,-x86'], arches=('ppc',))
 
     def test_default(self):
-        self.process_check([], arches=self.addon_kls.default_arches)
+        self.process_check([], arches=())
 
 
 class TestQueryCacheAddon(base_test):
@@ -361,7 +358,7 @@ class TestEvaluateDepSetAddon(profile_mixin):
     def setUp(self):
         profile_mixin.setUp(self)
         with open(pjoin(self.dir, "arch.list"), "w") as f:
-            f.write("\n".join(addons.ArchesAddon.default_arches))
+            f.write("\n".join(('amd64', 'ppc', 'x86')))
         self.addon_kls = self.orig_addon_kls
 
     process_check = base_test.process_check

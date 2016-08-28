@@ -26,20 +26,31 @@ demandload(
 
 class ArchesAddon(base.Addon):
 
-    default_arches = tuple(sorted([
-        "alpha", "amd64", "arm", "arm64", "hppa", "ia64", "m68k", "mips",
-        "ppc", "ppc64", "s390", "sh", "sparc", "x86",
-    ]))
-
-    @classmethod
-    def check_args(cls, parser, namespace):
+    @staticmethod
+    def check_args(parser, namespace):
         arches = namespace.selected_arches
+        target_repo = getattr(namespace, "target_repo", None)
+        if target_repo is not None:
+            all_arches = set().union(*(repo.config.known_arches for repo in target_repo.trees))
+        else:
+            all_arches = set()
+
         if arches is None:
-            arches = ((), cls.default_arches)
+            arches = (set(), all_arches)
         disabled, enabled = arches
         if not enabled:
-            enabled = cls.default_arches
-        namespace.arches = tuple(sorted(set(enabled).difference(set(disabled))))
+            # enable all non-prefix arches
+            enabled = set(arch for arch in all_arches if '-' not in arch)
+
+        arches = set(enabled).difference(set(disabled))
+        if all_arches:
+            unknown_arches = arches.difference(all_arches)
+            if unknown_arches:
+                parser.error('unknown arches: %s (valid arches: %s)' % (
+                    ', '.join(unknown_arches),
+                    ', '.join(sorted(all_arches))))
+
+        namespace.arches = tuple(sorted(arches))
 
     @classmethod
     def mangle_argparser(cls, parser):
@@ -56,10 +67,10 @@ class ArchesAddon(base.Addon):
                 must be used, e.g. -a=-arch, otherwise the disabled arch
                 argument is treated as an option.
 
-                By default the enabled arch list is %s; however, stable-related
-                checks (e.g. UnstableOnly) default to the set of arches having
-                stable profiles in the target repo.
-            """ % ", ".join(cls.default_arches))
+                By default all repo defined arches are used; however,
+                stable-related checks (e.g. UnstableOnly) default to the set of
+                arches having stable profiles in the target repo.
+            """)
 
 
 class QueryCacheAddon(base.Template):
@@ -412,12 +423,14 @@ class StableCheckAddon(base.Template):
 
     def __init__(self, options, *args):
         super(StableCheckAddon, self).__init__(self, options)
-        self.arches = set(options.arches)
+        arches = set(options.arches)
 
         # use known stable arches if a custom arch set isn't specified
         selected_arches = getattr(options, 'selected_arches', None)
         if selected_arches is None:
-            self.arches = set().union(*(repo.config.stable_arches for repo in options.target_repo.trees))
+            arches = set().union(*(repo.config.stable_arches for repo in options.target_repo.trees))
+
+        options.arches = arches
 
 
 class UnstatedIUSE(base.Error):

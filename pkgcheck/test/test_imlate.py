@@ -19,7 +19,7 @@ class TestImlateReport(misc.ReportTestCase):
             misc.Options(
                 selected_arches=("x86", "ppc", "amd64"),
                 arches=("x86", "ppc", "amd64"),
-                reference_arches=("x86", "ppc", "amd64")),
+                source_arches=("x86", "ppc", "amd64")),
             None)
 
         self.assertNoReport(

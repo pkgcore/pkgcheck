@@ -36,23 +36,26 @@ class ImlateReport(StableCheckAddon):
     @staticmethod
     def mangle_argparser(parser):
         parser.plugin.add_argument(
-            "--source-arches", action='extend_comma', dest='reference_arches',
-            default=ArchesAddon.default_arches,
+            "--source-arches", action='extend_comma',
             help="comma separated list of arches to compare against for lagging stabilization",
             docs="""
                 Comma separated list of arches to compare against for
                 lagging stabilization.
 
-                The default arches are %s.
-            """ % (", ".join(ArchesAddon.default_arches)))
+                The default arches are all stable arches (unless --arches is specified).
+            """)
 
     def __init__(self, options, arches):
         super(ImlateReport, self).__init__(options)
-        arches = frozenset(arch.strip().lstrip("~") for arch in self.arches)
+        arches = frozenset(arch.strip().lstrip("~") for arch in options.arches)
         self.target_arches = frozenset(
             "~%s" % arch.strip().lstrip("~") for arch in arches)
+
+        source_arches = options.source_arches
+        if source_arches is None:
+            source_arches = options.arches
         self.source_arches = frozenset(
-            arch.lstrip("~") for arch in options.reference_arches)
+            arch.lstrip("~") for arch in source_arches)
         self.source_filter = packages.PackageRestriction(
             "keywords", values.ContainmentMatch(*self.source_arches))
 
