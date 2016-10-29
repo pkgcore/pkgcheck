@@ -47,7 +47,7 @@ class MissingLicense(base.Error):
 
 
 class LicenseMetadataReport(base.Template):
-    """LICENSE metadata key validity checks"""
+    """LICENSE validity checks."""
 
     known_results = (MetadataError, MissingLicense) + \
         addons.UseAddon.known_results
@@ -88,7 +88,7 @@ class LicenseMetadataReport(base.Template):
 
 
 class IUSEMetadataReport(base.Template):
-    """Check IUSE for valid USE flags"""
+    """IUSE validity checks."""
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon,)
@@ -108,7 +108,7 @@ class IUSEMetadataReport(base.Template):
 
 
 class RequiredUSEMetadataReport(base.Template):
-    """Check REQUIRED_USE for valid USE flags"""
+    """REQUIRED_USE validity checks."""
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon,)
