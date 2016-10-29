@@ -12,7 +12,6 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import split_negations
 
 from pkgcheck import base
-from pkgcheck.addons import ArchesAddon
 
 
 class FakePkg(package):
