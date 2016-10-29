@@ -88,12 +88,11 @@ class LicenseMetadataReport(base.Template):
 
 
 class IUSEMetadataReport(base.Template):
-    """Check IUSE for valid use flags"""
-
-    required_addons = (addons.UseAddon,)
-    known_results = (MetadataError,) + addons.UseAddon.known_results
+    """Check IUSE for valid USE flags"""
 
     feed_type = base.versioned_feed
+    required_addons = (addons.UseAddon,)
+    known_results = (MetadataError,) + addons.UseAddon.known_results
 
     def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
