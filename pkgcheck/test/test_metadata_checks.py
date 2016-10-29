@@ -106,6 +106,43 @@ class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertReport(check, self.mk_pkg("x86"))
 
 
+class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
+
+    check_kls = metadata_checks.RequiredUSEMetadataReport
+
+    def mk_pkg(self, eapi="4", iuse="", required_use=""):
+        return FakePkg(
+            "dev-util/diffball-0.7.1",
+            eapi=eapi,
+            iuse=iuse.split(),
+            data={"REQUIRED_USE": required_use})
+
+    def test_it(self):
+        # verify behaviour when use.* data isn't available
+        options = self.get_options()
+        profiles = [misc.FakeProfile()]
+        check = metadata_checks.RequiredUSEMetadataReport(
+            options, addons.UseAddon(options, profiles))
+        check.start()
+        self.assertNoReport(check, self.mk_pkg(iuse="foo bar"))
+        self.assertNoReport(check, self.mk_pkg(iuse="foo", required_use="foo"))
+        self.assertNoReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( bar )"))
+        r = self.assertReport(check, self.mk_pkg(required_use="foo? ( blah )"))
+        self.assertEqual(r.flags, ("blah", "foo"))
+        r = self.assertReport(check, self.mk_pkg(iuse="foo", required_use="bar"))
+        self.assertEqual(r.attr, "required_use")
+        self.assertEqual(r.flags, ("bar",))
+        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
+        self.assertEqual(r.flags, ("blah",))
+
+        # bad syntax
+        self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="| ( foo bar )"))
+
+        # only supported in >= EAPI 5
+        self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="?? ( foo bar )"))
+        self.assertNoReport(check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
+
+
 def use_based():
     # hidden to keep the test runner from finding it.
     class use_based(iuse_options):

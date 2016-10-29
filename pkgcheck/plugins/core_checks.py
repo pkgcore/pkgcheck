@@ -23,6 +23,7 @@ pkgcore_plugins = {
         metadata_checks.DependencyReport,
         metadata_checks.DescriptionReport,
         metadata_checks.IUSEMetadataReport,
+        metadata_checks.RequiredUSEMetadataReport,
         metadata_checks.KeywordsReport,
         metadata_checks.LicenseMetadataReport,
         metadata_checks.MissingSlotDepReport,

@@ -108,6 +108,36 @@ class IUSEMetadataReport(base.Template):
                         's'[len(iuse) == 1:], ", ".join(iuse))))
 
 
+class RequiredUSEMetadataReport(base.Template):
+    """Check REQUIRED_USE for valid USE flags"""
+
+    feed_type = base.versioned_feed
+    required_addons = (addons.UseAddon,)
+    known_results = (MetadataError,) + addons.UseAddon.known_results
+
+    def __init__(self, options, iuse_handler):
+        base.Template.__init__(self, options)
+        self.iuse_filter = iuse_handler.get_filter('required_use')
+
+    def feed(self, pkg, reporter):
+        try:
+            for x in self.iuse_filter((basestring,), pkg, pkg.required_use, reporter):
+                pass
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except (MetadataException, ValueError) as e:
+            reporter.add_report(MetadataError(
+                pkg, 'required_use', "error- %s" % e))
+            del e
+        except Exception as e:
+            logging.exception(
+                "unknown exception caught for pkg(%s) attr(%s): "
+                "type(%s), %s" % (pkg, 'required_use', type(e), e))
+            reporter.add_report(MetadataError(
+                pkg, 'required_use', "exception- %s" % e))
+            del e
+
+
 class UnusedLocalFlags(base.Warning):
     """Unused local use flag(s)"""
 

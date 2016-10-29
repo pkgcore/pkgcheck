@@ -507,6 +507,8 @@ class UseAddon(base.Addon):
                 unstated.update(ifilterfalse(stated.__contains__, node.restriction.vals))
                 i.append(iflatten_instance(node.payload, skip_filter))
                 continue
+            elif attr == 'required_use':
+                unstated.update(ifilterfalse(stated.__contains__, node.vals))
             yield node
 
         # implicit IUSE flags
