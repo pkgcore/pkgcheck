@@ -512,6 +512,7 @@ class UseAddon(base.Addon):
             yield node
 
         # implicit IUSE flags
-        unstated.difference_update(self.unstated_iuse)
-        if unstated:
-            reporter.add_report(UnstatedIUSE(pkg, attr, sorted(unstated)))
+        if attr is not None:
+            unstated.difference_update(self.unstated_iuse)
+            if unstated:
+                reporter.add_report(UnstatedIUSE(pkg, attr, sorted(unstated)))
