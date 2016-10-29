@@ -136,7 +136,10 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertEqual(r.flags, ("blah",))
 
         # bad syntax
-        self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="| ( foo bar )"))
+        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="| ( foo bar )"))
+        self.assertIsInstance(r, metadata_checks.MetadataError)
+        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( )"))
+        self.assertIsInstance(r, metadata_checks.MetadataError)
 
         # only supported in >= EAPI 5
         self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="?? ( foo bar )"))
