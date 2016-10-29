@@ -119,6 +119,10 @@ class RequiredUSEMetadataReport(base.Template):
         self.iuse_filter = iuse_handler.get_filter('required_use')
 
     def feed(self, pkg, reporter):
+        # only run the check for EAPI 4 and above
+        if not pkg.eapi.options.get('has_required_use', False):
+            return
+
         try:
             for x in self.iuse_filter((basestring,), pkg, pkg.required_use, reporter):
                 pass
