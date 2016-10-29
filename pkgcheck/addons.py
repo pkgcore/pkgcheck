@@ -446,7 +446,7 @@ class UnstatedIUSE(base.Error):
 
     @property
     def short_desc(self):
-        return "attr(%s) uses unstated flags [ %s ]" % \
+        return "attr(%s) uses unstated flags: [ %s ]" % \
             (self.attr, ', '.join(self.flags))
 
 
@@ -514,4 +514,4 @@ class UseAddon(base.Addon):
         # implicit IUSE flags
         unstated.difference_update(self.unstated_iuse)
         if unstated:
-            reporter.add_report(UnstatedIUSE(pkg, attr, unstated))
+            reporter.add_report(UnstatedIUSE(pkg, attr, sorted(unstated)))
