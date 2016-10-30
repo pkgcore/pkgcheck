@@ -33,6 +33,21 @@ Installing from a tarball or git repo::
     python setup.py install
     pplugincache pkgcheck
 
+Tests
+=====
+
+A standalone test runner is integrated in setup.py; to run, just execute::
+
+    python setup.py test
+
+In addition, a tox config is provided so the testsuite can be run in a
+virtualenv setup against all supported python versions. To run tests for all
+environments just execute **tox** in the root directory of a repo or unpacked
+tarball. Otherwise, for a specific python version execute something similar to
+the following::
+
+    tox -e py27
+
 Notes
 =====
 
