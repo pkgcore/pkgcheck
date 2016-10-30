@@ -225,7 +225,8 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
 
     check_kls = metadata_checks.DependencyReport
 
-    attr_map = dict((x, x.rstrip("s").upper())
+    attr_map = dict(
+        (x, x.rstrip("s").upper())
         for x in ("depends", "rdepends"))
     attr_map['post_rdepends'] = 'PDEPEND'
 
@@ -277,8 +278,8 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
 
     check_kls = metadata_checks.SrcUriReport
 
-    def mk_pkg(self, src_uri='', default_chksums={"size":100},
-        iuse='', disable_chksums=False):
+    def mk_pkg(self, src_uri='', default_chksums={"size": 100},
+               iuse='', disable_chksums=False):
         class fake_repo:
             def __init__(self, default_chksums):
                 if disable_chksums:
