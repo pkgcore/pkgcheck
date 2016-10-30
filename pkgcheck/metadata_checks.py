@@ -7,7 +7,9 @@ from operator import attrgetter
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from pkgcore.fetch import fetchable
 from pkgcore.package.errors import MetadataException
+from pkgcore.restrictions.boolean import OrRestriction
 from snakeoil.demandload import demandload
+from snakeoil.sequences import iflatten_instance
 
 from pkgcheck import base, addons
 
@@ -231,7 +233,6 @@ class DependencyReport(base.Template):
 
     required_addons = (addons.UseAddon,)
     known_results = (MetadataError,) + addons.UseAddon.known_results
-    blocks_getter = attrgetter('blocks')
 
     feed_type = base.versioned_feed
 
@@ -245,11 +246,23 @@ class DependencyReport(base.Template):
     def feed(self, pkg, reporter):
         for attr_name, getter in self.attrs:
             try:
+                def _flatten_or_restrictions(i):
+                    for x in i:
+                        if isinstance(x, OrRestriction):
+                            for y in iflatten_instance(x, (atom,)):
+                                yield (y, True)
+                        else:
+                            yield (x, False)
+
                 i = self.iuse_filter(
-                    (atom,), pkg, getter(pkg), reporter, attr=attr_name)
-                for x in ifilter(self.blocks_getter, i):
-                    if x.match(pkg):
+                    (atom, OrRestriction), pkg, getter(pkg), reporter, attr=attr_name)
+                for x, in_or_restriction in _flatten_or_restrictions(i):
+                    if in_or_restriction and x.slot_operator == '=':
+                        reporter.add_report(MetadataError(pkg, attr_name, "= slot operator used inside || block (%s)" % x))
+                    if x.blocks and x.match(pkg):
                         reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
+                    if x.blocks and x.slot_operator == '=':
+                        reporter.add_report(MetadataError(pkg, attr_name, "= slot operator used in blocker (%s)" % x))
             except (KeyboardInterrupt, SystemExit):
                 raise
             except (MetadataException, MalformedAtom, ValueError) as e:
