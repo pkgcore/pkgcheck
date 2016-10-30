@@ -44,7 +44,7 @@ class TestDescriptionReport(misc.ReportTestCase):
             self.assertReport(check, self.mk_pkg("foon")),
             metadata_checks.CrappyDescription)
         self.assertIsInstance(
-            self.assertReport(check, self.mk_pkg("based on eclass"*50)),
+            self.assertReport(check, self.mk_pkg("s"*251)),
             metadata_checks.CrappyDescription)
 
 
