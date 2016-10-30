@@ -254,15 +254,29 @@ class DependencyReport(base.Template):
                         else:
                             yield (x, False)
 
+                slot_op_or_blocks = set()
+                slot_op_blockers = set()
+
                 i = self.iuse_filter(
                     (atom, OrRestriction), pkg, getter(pkg), reporter, attr=attr_name)
                 for x, in_or_restriction in _flatten_or_restrictions(i):
                     if in_or_restriction and x.slot_operator == '=':
-                        reporter.add_report(MetadataError(pkg, attr_name, "= slot operator used inside || block (%s)" % x))
+                        slot_op_or_blocks.add(x.key)
                     if x.blocks and x.match(pkg):
                         reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
                     if x.blocks and x.slot_operator == '=':
-                        reporter.add_report(MetadataError(pkg, attr_name, "= slot operator used in blocker (%s)" % x))
+                        slot_op_blockers.add(x.key)
+
+                if slot_op_or_blocks:
+                    reporter.add_report(MetadataError(
+                        pkg, attr_name,
+                        "= slot operator used inside || block: [%s]" %
+                        (', '.join(sorted(slot_op_or_blocks),))))
+                if slot_op_blockers:
+                    reporter.add_report(MetadataError(
+                        pkg, attr_name,
+                        "= slot operator used in blocker: [%s]" %
+                        (', '.join(sorted(slot_op_blockers),))))
             except (KeyboardInterrupt, SystemExit):
                 raise
             except (MetadataException, MalformedAtom, ValueError) as e:
