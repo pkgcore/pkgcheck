@@ -461,12 +461,12 @@ def main(options, out, err):
             assert bad_sinks >= really_bad, \
                 '%r unreachable with no limiters but reachable with?' % (
                     really_bad - bad_sinks,)
-            out_of_scope = bad_sinks - really_bad
             for sink in really_bad:
                 err.error(
                     'sink %s could not be connected (missing transforms?)' % (
                         sink,))
-            if options.verbose and bad_sinks - really_bad:
+            out_of_scope = bad_sinks - really_bad
+            if options.verbose and out_of_scope:
                 err.warn('skipping repo checks (not a full repo scan)')
         if not pipes:
             out.write(out.fg('red'), ' * ', out.reset, 'No checks!')
