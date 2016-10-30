@@ -229,9 +229,10 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
         for x in ("depends", "rdepends"))
     attr_map['post_rdepends'] = 'PDEPEND'
 
-    def mk_pkg(self, attr, data='', iuse=''):
-        return misc.FakePkg('dev-util/diffball-2.7.1',
-            data={'IUSE':iuse, self.attr_map[attr]:data})
+    def mk_pkg(self, attr, data='', eapi='0', iuse=''):
+        return misc.FakePkg(
+            'dev-util/diffball-2.7.1',
+            data={'EAPI': eapi, 'IUSE': iuse, self.attr_map[attr]: data})
 
     def generic_check(self, attr):
         # should puke a metadata error for empty license
@@ -246,10 +247,26 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
         if 'depend' not in attr:
             return
         self.assertNoReport(chk, mk_pkg("!dev-util/blah"))
-        r = self.assertIsInstance(self.assertReport(self.mk_check(),
-            mk_pkg("!dev-util/diffball")),
+        r = self.assertIsInstance(
+            self.assertReport(self.mk_check(), mk_pkg("!dev-util/diffball")),
             metadata_checks.MetadataError)
-        self.assertIn(r.msg, "blocks itself")
+        self.assertIn("blocks itself", r.msg)
+
+        # check for := in || () blocks
+        r = self.assertIsInstance(
+            self.assertReport(
+                self.mk_check(),
+                mk_pkg(eapi='5', data="|| ( dev-libs/foo:= dev-libs/bar:= )")),
+            metadata_checks.MetadataError)
+        self.assertIn("[dev-libs/bar, dev-libs/foo]", r.msg)
+
+        # check for := in blockers
+        r = self.assertIsInstance(
+            self.assertReport(
+                self.mk_check(),
+                mk_pkg(eapi='5', data="!dev-libs/foo:=")),
+            metadata_checks.MetadataError)
+        self.assertIn("[dev-libs/foo]", r.msg)
 
     for x in attr_map:
         locals()["test_%s" % x] = post_curry(generic_check, x)
