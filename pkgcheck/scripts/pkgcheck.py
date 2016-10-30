@@ -466,9 +466,8 @@ def main(options, out, err):
                 err.error(
                     'sink %s could not be connected (missing transforms?)' % (
                         sink,))
-            for sink in bad_sinks - really_bad:
-                err.warn('not running %s (not a full repo scan)' % (
-                    sink.__class__.__name__,))
+            if options.verbose and bad_sinks - really_bad:
+                err.warn('skipping repo checks (not a full repo scan)')
         if not pipes:
             out.write(out.fg('red'), ' * ', out.reset, 'No checks!')
         else:
