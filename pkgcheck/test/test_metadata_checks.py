@@ -21,27 +21,27 @@ class TestDescriptionReport(misc.ReportTestCase):
     check_kls = metadata_checks.DescriptionReport
 
     def mk_pkg(self, desc=""):
-        return misc.FakePkg("dev-util/diffball-0.7.1",
-            data={"DESCRIPTION":desc})
+        return misc.FakePkg("dev-util/diffball-0.7.1", data={"DESCRIPTION": desc})
 
     def test_it(self):
         check = metadata_checks.DescriptionReport(None, None)
-        self.assertIsInstance(self.assertReport(check, self.mk_pkg()),
+        self.assertIsInstance(
+            self.assertReport(check, self.mk_pkg()),
             metadata_checks.CrappyDescription)
-        self.assertIsInstance(self.assertReport(check,
-            self.mk_pkg("based on eclass")),
+        self.assertIsInstance(
+            self.assertReport(check, self.mk_pkg("based on eclass")),
             metadata_checks.CrappyDescription)
-        self.assertIsInstance(self.assertReport(check,
-            self.mk_pkg("diffball")),
+        self.assertIsInstance(
+            self.assertReport(check, self.mk_pkg("diffball")),
             metadata_checks.CrappyDescription)
-        self.assertIsInstance(self.assertReport(check,
-            self.mk_pkg("dev-util/diffball")),
+        self.assertIsInstance(
+            self.assertReport(check, self.mk_pkg("dev-util/diffball")),
             metadata_checks.CrappyDescription)
-        self.assertIsInstance(self.assertReport(check,
-            self.mk_pkg("foon")),
+        self.assertIsInstance(
+            self.assertReport(check, self.mk_pkg("foon")),
             metadata_checks.CrappyDescription)
-        self.assertIsInstance(self.assertReport(check,
-            self.mk_pkg("based on eclass"*50)),
+        self.assertIsInstance(
+            self.assertReport(check, self.mk_pkg("based on eclass"*50)),
             metadata_checks.CrappyDescription)
 
 
@@ -50,14 +50,15 @@ class TestKeywordsReport(misc.ReportTestCase):
     check_kls = metadata_checks.KeywordsReport
 
     def mk_pkg(self, keywords=""):
-        return misc.FakePkg("dev-util/diffball-0.7.1",
-            data={"KEYWORDS":keywords})
+        return misc.FakePkg("dev-util/diffball-0.7.1", data={"KEYWORDS": keywords})
 
     def test_it(self):
         check = metadata_checks.KeywordsReport(None, None)
-        self.assertIsInstance(self.assertReport(check, self.mk_pkg("-*")),
+        self.assertIsInstance(
+            self.assertReport(check, self.mk_pkg("-*")),
             metadata_checks.StupidKeywords)
-        self.assertNoReport(check, self.mk_pkg("-* ~arch"),
+        self.assertNoReport(
+            check, self.mk_pkg("-* ~arch"),
             metadata_checks.StupidKeywords)
 
 
@@ -78,8 +79,8 @@ class iuse_options(TempDirMixin):
 
         fileutils.write_file(pjoin(base, 'repo_name'), 'w', 'monkeys')
         os.mkdir(pjoin(repo_base, 'metadata'))
-        fileutils.write_file(pjoin(repo_base, 'metadata', 'layout.conf'), 'w',
-            "masters = ")
+        fileutils.write_file(
+            pjoin(repo_base, 'metadata', 'layout.conf'), 'w', "masters = ")
         kwds['target_repo'] = repository._UnconfiguredTree(repo_base)
         return misc.Options(**kwds)
 
@@ -89,8 +90,7 @@ class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
     check_kls = metadata_checks.IUSEMetadataReport
 
     def mk_pkg(self, iuse=""):
-        return misc.FakePkg("dev-util/diffball-0.7.1",
-            data={"IUSE":iuse})
+        return misc.FakePkg("dev-util/diffball-0.7.1", data={"IUSE": iuse})
 
     def test_it(self):
         # verify behaviour when use.* data isn't available
@@ -170,7 +170,7 @@ class TestRestrictsReport(use_based(), misc.ReportTestCase):
 
     def mk_pkg(self, restrict=''):
         return misc.FakePkg(
-            'dev-util/diffball-2.7.1', data={'RESTRICT':restrict})
+            'dev-util/diffball-2.7.1', data={'RESTRICT': restrict})
 
     def test_it(self):
         check = self.mk_check()
@@ -295,14 +295,15 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         class fake_parent:
             _parent_repo = fake_repo(default_chksums)
 
-        return misc.FakePkg('dev-util/diffball-2.7.1',
-            data={'SRC_URI':src_uri, 'IUSE':iuse},
-                parent=fake_parent())
+        return misc.FakePkg(
+            'dev-util/diffball-2.7.1',
+            data={'SRC_URI': src_uri, 'IUSE': iuse},
+            parent=fake_parent())
 
     def test_malformed(self):
         r = self.assertIsInstance(
-            self.assertReport(self.mk_check(),
-            self.mk_pkg("foon", disable_chksums=True)),
+            self.assertReport(
+                self.mk_check(), self.mk_pkg("foon", disable_chksums=True)),
             metadata_checks.MetadataError)
         self.assertEqual(r.attr, 'fetchables')
 
@@ -310,17 +311,19 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         chk = self.mk_check()
         # ensure it pukes about RESTRICT!=fetch, and no uri
 
-        r = self.assertIsInstance(self.assertReport(chk,
-            self.mk_pkg("foon")),
+        r = self.assertIsInstance(
+            self.assertReport(chk, self.mk_pkg("foon")),
             metadata_checks.MissingUri)
         self.assertEqual(r.filename, 'foon')
 
         # verify valid protos.
-        self.assertTrue(self.check_kls.valid_protos,
+        self.assertTrue(
+            self.check_kls.valid_protos,
             msg="valid_protos needs to have at least one protocol")
 
         for x in self.check_kls.valid_protos:
-            self.assertNoReport(chk, self.mk_pkg("%s://dar.com/foon" % x),
+            self.assertNoReport(
+                chk, self.mk_pkg("%s://dar.com/foon" % x),
                 msg="testing valid proto %s" % x)
 
         # grab a proto, and mangle it.
@@ -328,21 +331,22 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         while bad_proto in self.check_kls.valid_protos:
             bad_proto += "s"
 
-        r = self.assertIsInstance(self.assertReport(chk,
-            self.mk_pkg("%s://foon.com/foon" % bad_proto)),
+        r = self.assertIsInstance(
+            self.assertReport(chk, self.mk_pkg("%s://foon.com/foon" % bad_proto)),
             metadata_checks.BadProto)
 
-        self.assertEqual(r.filename, 'foon');
+        self.assertEqual(r.filename, 'foon')
         self.assertEqual(list(r.bad_uri), ['%s://foon.com/foon' % bad_proto])
 
         # check collapsing.
 
-        r = self.assertIsInstance(self.assertReport(chk,
-            self.mk_pkg("%s://foon.com/foon %s://dar.com/foon" %
-                (bad_proto, bad_proto))),
+        r = self.assertIsInstance(
+            self.assertReport(
+                chk,
+                self.mk_pkg("%s://foon.com/foon %s://dar.com/foon" % (bad_proto, bad_proto))),
             metadata_checks.BadProto)
 
-        self.assertEqual(r.filename, 'foon');
-        self.assertEqual(list(r.bad_uri),
-            sorted(['%s://%s/foon' % (bad_proto, x)
-                for x in ('foon.com', 'dar.com')]))
+        self.assertEqual(r.filename, 'foon')
+        self.assertEqual(
+            list(r.bad_uri),
+            sorted(['%s://%s/foon' % (bad_proto, x) for x in ('foon.com', 'dar.com')]))
