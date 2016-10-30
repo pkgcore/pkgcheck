@@ -25,6 +25,9 @@ class TestDescriptionReport(misc.ReportTestCase):
 
     def test_it(self):
         check = metadata_checks.DescriptionReport(None, None)
+
+        self.assertNoReport(check, self.mk_pkg("a perfectly written package description"))
+
         self.assertIsInstance(
             self.assertReport(check, self.mk_pkg()),
             metadata_checks.CrappyDescription)
