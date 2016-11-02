@@ -54,6 +54,9 @@ main_options.add_argument(
     help="use a non-default reporter (defined in pkgcore's config)")
 list_options = main_options.add_mutually_exclusive_group()
 list_options.add_argument(
+    '--list-keywords', action='store_true', default=False,
+    help='show available warning/error keywords and exit')
+list_options.add_argument(
     '--list-checks', action='store_true', default=False,
     help='show available checks and exit')
 list_options.add_argument(
@@ -94,7 +97,7 @@ def check_args(parser, namespace):
         get_plugins('check', plugins)),
         key=lambda x: x.__name__)
 
-    if namespace.list_checks or namespace.list_reporters:
+    if any((namespace.list_keywords, namespace.list_checks, namespace.list_reporters)):
         # no need to check any other args
         return
 
@@ -301,6 +304,34 @@ def dump_docstring(out, obj, prefix=None):
 
 
 @decorate_forced_wrapping()
+def display_keywords(out, checks):
+    d = {}
+    for x in checks:
+        d.setdefault(x.scope, set()).update(x.known_results)
+
+    if not d:
+        out.write(out.fg('red'), "No Documentation")
+        out.write()
+        return
+
+    scopes = ('version', 'package', 'category', 'repository')
+    for scope in sorted(d):
+        out.write(out.bold, "%s:" % scopes[scope])
+        keywords= sorted(d[scope], key=lambda x: x.__name__)
+
+        try:
+            out.first_prefix.append('  ')
+            out.later_prefix.append('  ')
+            for keyword in keywords:
+                out.write(out.fg('yellow'), keyword.__name__, out.reset, ':')
+                dump_docstring(out, keyword, prefix='  ')
+            out.write()
+        finally:
+            out.first_prefix.pop()
+            out.later_prefix.pop()
+
+
+@decorate_forced_wrapping()
 def display_checks(out, checks):
     d = {}
     for x in checks:
@@ -375,6 +406,10 @@ def display_reporters(out, config, config_reporters, plugin_reporters):
 @argparser.bind_main_func
 def main(options, out, err):
     """Do stuff."""
+
+    if options.list_keywords:
+        display_keywords(out, options.checks)
+        return 0
 
     if options.list_checks:
         display_checks(out, options.checks)
