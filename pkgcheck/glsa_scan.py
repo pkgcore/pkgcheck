@@ -85,7 +85,7 @@ class TreeVulnerabilitiesReport(base.Template):
             if glsa_loc is None:
                 # form of 'optional' limiting; if they are using -c, force the
                 # error, else disable
-                if any(namespace.selected_checks):
+                if namespace.selected_checks is not None:
                     parser.error(
                         "--glsa-dir must be specified, couldn't find glsa source")
                 namespace.glsa_enabled = False

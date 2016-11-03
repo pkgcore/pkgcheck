@@ -245,7 +245,10 @@ def check_args(parser, namespace):
     if namespace.checkset is not None:
         namespace.checks = list(namespace.checkset.filter(namespace.checks))
 
-    disabled_checks, enabled_checks = namespace.selected_checks
+    disabled_checks, enabled_checks = ((), ())
+    if namespace.selected_checks is not None:
+        disabled_checks, enabled_checks = namespace.selected_checks
+
     if enabled_checks:
         whitelist = base.Whitelist(enabled_checks)
         namespace.checks = list(whitelist.filter(namespace.checks))
