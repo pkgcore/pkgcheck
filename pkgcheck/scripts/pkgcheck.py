@@ -68,7 +68,7 @@ check_options.add_argument(
     '-c', '--check', action='append', dest='checks_to_run',
     help='limit checks to regex or package/class matching')
 check_options.add_argument(
-    '-d', '--disable', action='append', dest='checks_to_disable',
+    '-d', '--disable-check', action='append', dest='checks_to_disable',
     help='specific checks to disable')
 check_options.add_argument(
     '-C', '--checkset', metavar='CHECKSET', action=commandline.StoreConfigObject,
