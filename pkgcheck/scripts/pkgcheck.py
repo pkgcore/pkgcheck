@@ -65,11 +65,8 @@ list_options.add_argument(
 
 check_options = argparser.add_argument_group('check selection')
 check_options.add_argument(
-    '-c', '--check', action='append', dest='checks_to_run',
+    '-c', '--checks', action='extend_comma_toggle', dest='selected_checks',
     help='limit checks to regex or package/class matching')
-check_options.add_argument(
-    '-d', '--disable-check', action='append', dest='checks_to_disable',
-    help='specific checks to disable')
 check_options.add_argument(
     '-C', '--checkset', metavar='CHECKSET', action=commandline.StoreConfigObject,
     config_type='pkgcheck_checkset',
@@ -248,12 +245,13 @@ def check_args(parser, namespace):
     if namespace.checkset is not None:
         namespace.checks = list(namespace.checkset.filter(namespace.checks))
 
-    if namespace.checks_to_run:
-        whitelist = base.Whitelist(namespace.checks_to_run)
+    disabled_checks, enabled_checks = namespace.selected_checks
+    if enabled_checks:
+        whitelist = base.Whitelist(enabled_checks)
         namespace.checks = list(whitelist.filter(namespace.checks))
 
-    if namespace.checks_to_disable:
-        blacklist = base.Blacklist(namespace.checks_to_disable)
+    if disabled_checks:
+        blacklist = base.Blacklist(disabled_checks)
         namespace.checks = list(blacklist.filter(namespace.checks))
 
     if not namespace.checks:
