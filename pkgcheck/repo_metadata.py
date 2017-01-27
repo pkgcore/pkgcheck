@@ -440,7 +440,8 @@ class ManifestReport(base.Template):
         for repo, pkgset in groupby(full_pkgset, self.repo_grabber):
             required_checksums = self.required_checksums[repo]
             pkgset = list(pkgset)
-            manifests = set(pkgset[0].manifest.distfiles.iterkeys())
+            pkg_manifest = pkgset[0].manifest
+            manifest_distfiles = set(pkg_manifest.distfiles.iterkeys())
             seen = set()
             for pkg in pkgset:
                 pkg.release_cached_data()
@@ -452,7 +453,7 @@ class ManifestReport(base.Template):
                 pkg.release_cached_data()
 
                 fetchable_files = set(f.filename for f in fetchables)
-                missing_manifests = fetchable_files.difference(manifests)
+                missing_manifests = fetchable_files.difference(manifest_distfiles)
                 if missing_manifests:
                     reporter.add_report(MissingManifest(pkg, missing_manifests))
 
@@ -480,6 +481,6 @@ class ManifestReport(base.Template):
                         seen_chksums.update(f_inst.chksums)
                         seen_pkgs.append(pkg)
 
-            unknown_manifests = manifests.difference(seen)
+            unknown_manifests = manifest_distfiles.difference(seen)
             if unknown_manifests:
                 reporter.add_report(UnknownManifest(pkgset[0], unknown_manifests))
