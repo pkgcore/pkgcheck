@@ -414,6 +414,23 @@ class UnknownManifest(base.Warning):
             's'[len(self.files) == 1:], ', '.join(sorted(self.files)),)
 
 
+class UnnecessaryManifest(base.Warning):
+    """Manifest entries for non-DIST targets on a repo with thin manifests enabled."""
+
+    __slots__ = ("category", "package", "files")
+    threshold = base.package_feed
+
+    def __init__(self, pkg, files):
+        super(UnnecessaryManifest, self).__init__()
+        self._store_cp(pkg)
+        self.files = files
+
+    @property
+    def short_desc(self):
+        return "unnecessary file%s in Manifest: [ %s ]" % (
+            's'[len(self.files) == 1:], ', '.join(sorted(self.files)),)
+
+
 class ManifestReport(base.Template):
     """Manifest related checks.
 
@@ -480,6 +497,13 @@ class ManifestReport(base.Template):
                     else:
                         seen_chksums.update(f_inst.chksums)
                         seen_pkgs.append(pkg)
+
+            if pkg_manifest.thin:
+                unnecessary_manifests = []
+                for attr in ('aux_files', 'ebuilds', 'misc'):
+                    unnecessary_manifests.extend(getattr(pkg_manifest, attr, []))
+                if unnecessary_manifests:
+                    reporter.add_report(UnnecessaryManifest(pkgset[0], unnecessary_manifests))
 
             unknown_manifests = manifest_distfiles.difference(seen)
             if unknown_manifests:
