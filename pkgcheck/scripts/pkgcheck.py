@@ -317,7 +317,7 @@ def display_keywords(out, checks):
 
     scopes = ('version', 'package', 'category', 'repository')
     for scope in reversed(sorted(d)):
-        out.write(out.bold, "%s:" % scopes[scope])
+        out.write(out.bold, "%s scope:" % scopes[scope].capitalize())
         keywords = sorted(d[scope], key=lambda x: x.__name__)
 
         try:
