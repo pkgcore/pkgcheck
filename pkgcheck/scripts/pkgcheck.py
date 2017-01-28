@@ -48,7 +48,7 @@ main_options.add_argument(
 main_options.add_argument(
     '-s', '--suite', action=commandline.StoreConfigObject,
     config_type='pkgcheck_suite',
-    help='Specify the configuration suite to use')
+    help='specify the configuration suite to use')
 main_options.add_argument(
     '--reporter', action='store', default=None,
     help="use a non-default reporter (defined in pkgcore's config)")
