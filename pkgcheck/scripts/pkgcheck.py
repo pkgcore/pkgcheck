@@ -316,7 +316,7 @@ def display_keywords(out, checks):
         return
 
     scopes = ('version', 'package', 'category', 'repository')
-    for scope in sorted(d):
+    for scope in reversed(sorted(d)):
         out.write(out.bold, "%s:" % scopes[scope])
         keywords = sorted(d[scope], key=lambda x: x.__name__)
 
