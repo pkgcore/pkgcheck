@@ -318,7 +318,7 @@ def display_keywords(out, checks):
     scopes = ('version', 'package', 'category', 'repository')
     for scope in sorted(d):
         out.write(out.bold, "%s:" % scopes[scope])
-        keywords= sorted(d[scope], key=lambda x: x.__name__)
+        keywords = sorted(d[scope], key=lambda x: x.__name__)
 
         try:
             out.first_prefix.append('  ')
