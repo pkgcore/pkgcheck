@@ -166,51 +166,61 @@ class base_MetadataXmlInvalidCatRef(base.Error):
 
 
 class PkgMissingMetadataXml(base_MissingXml):
+    """Package is missing metadata.xml."""
     __slots__ = ()
     threshold = base.package_feed
 
 
 class CatMissingMetadataXml(base_MissingXml):
+    """Category is missing metadata.xml."""
     __slots__ = ()
     threshold = base.category_feed
 
 
 class PkgInvalidXml(base_InvalidXml):
+    """Invalid package metadata.xml."""
     __slots__ = ()
     threshold = base.package_feed
 
 
 class CatInvalidXml(base_InvalidXml):
+    """Invalid category metadata.xml."""
     __slots__ = ()
     threshold = base.category_feed
 
 
 class PkgBadlyFormedXml(base_BadlyFormedXml):
+    """Badly formed package metadata.xml."""
     __slots__ = ()
     threshold = base.package_feed
 
 
 class CatBadlyFormedXml(base_BadlyFormedXml):
+    """Badly formed category metadata.xml."""
     __slots__ = ()
     threshold = base.category_feed
 
 
 class PkgMetadataXmlInvalidPkgRef(base_MetadataXmlInvalidPkgRef):
+    """Invalid package reference in package metadata.xml."""
     __slots__ = ()
     threshold = base.package_feed
 
 
 class CatMetadataXmlInvalidPkgRef(base_MetadataXmlInvalidPkgRef):
+    """Invalid package reference in category metadata.xml."""
     __slots__ = ()
     threshold = base.category_feed
 
 
 class PkgMetadataXmlInvalidCatRef(base_MetadataXmlInvalidCatRef):
+    """Invalid category reference in package metadata.xml."""
     __slots__ = ()
     threshold = base.package_feed
 
 
 class CatMetadataXmlInvalidCatRef(base_MetadataXmlInvalidCatRef):
+    """Invalid category reference in category metadata.xml."""
     __slots__ = ()
     threshold = base.category_feed
 
