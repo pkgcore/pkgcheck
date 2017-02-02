@@ -428,7 +428,7 @@ class StableCheckAddon(base.Template):
         # use known stable arches if a custom arch set isn't specified
         selected_arches = getattr(options, 'selected_arches', None)
         if selected_arches is None:
-            arches = set().union(*(repo.config.stable_arches for repo in options.target_repo.trees))
+            arches = set().union(*(repo.config.profiles.arches('stable') for repo in options.target_repo.trees))
 
         options.arches = arches
 
