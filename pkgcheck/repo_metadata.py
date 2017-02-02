@@ -156,6 +156,22 @@ class UnusedMirrorsCheck(base.Template):
         self.mirrors = None
 
 
+class UnusedProfileDirs(base.Warning):
+    """Unused profile directories detected."""
+
+    __slots__ = ("dirs",)
+
+    threshold = base.repository_feed
+
+    def __init__(self, dirs):
+        super(UnusedProfileDirs, self).__init__()
+        self.dirs = sorted(dirs)
+
+    @property
+    def short_desc(self):
+        return "[ %s ]" % ', '.join(self.dirs)
+
+
 class UnknownProfileArches(base.Warning):
     """Unknown arches used in profiles."""
 
@@ -246,17 +262,20 @@ class RepoProfilesReport(base.Template):
     categories.
     """
 
+    required_addons = (addons.ProfileAddon,)
     feed_type = base.repository_feed
     scope = base.repository_scope
     known_results = (
-        UnknownProfileArches, ArchesWithoutProfiles,
+        UnknownProfileArches, ArchesWithoutProfiles, UnusedProfileDirs,
         NonexistentProfilePath, UnknownProfileStatus, UnknownCategories)
 
-    def __init__(self, options):
+    def __init__(self, options, profile_filters):
         base.Template.__init__(self, options)
         self.arches = options.target_repo.config.known_arches
-        self.profiles = options.target_repo.config.profiles.arch_profiles
+        self.arch_profiles = options.arch_profiles
+        self.profiles = options.target_repo.config.arch_profiles.itervalues()
         self.repo = options.target_repo
+        self.profiles_dir = pjoin(self.repo.location, 'profiles')
 
     def feed(self, pkg, reporter):
         pass
@@ -269,9 +288,33 @@ class RepoProfilesReport(base.Template):
         if unknown_categories:
             reporter.add_report(UnknownCategories(unknown_categories))
 
-        profile_arches = set(self.profiles.iterkeys())
-        unknown_arches = profile_arches.difference(self.arches)
-        arches_without_profiles = self.arches.difference(profile_arches)
+        unknown_arches = self.repo.config.profiles.arches().difference(self.arches)
+        arches_without_profiles = self.arches.difference(self.repo.config.profiles.arches())
+
+        non_profile_dirs = {'desc', 'updates'}
+        root_profile_dirs = {'embedded'}
+        available_profile_dirs = set()
+        for x in os.walk(self.profiles_dir):
+            d = x[0][len(self.profiles_dir):].lstrip('/')
+            if d:
+                available_profile_dirs.add(d)
+        available_profile_dirs -= non_profile_dirs | root_profile_dirs
+
+        def parents(path):
+            path = os.path.normpath(path.lstrip('/'))
+            while path:
+                yield path
+                dirname, _basename = os.path.split(path)
+                path = dirname.rstrip('/')
+                
+        seen_profile_dirs = set()
+        for path, profile in chain.from_iterable(self.arch_profiles.itervalues()):
+            for x in profile.stack:
+                profile_dir = x.path[len(self.profiles_dir):].rstrip('/')
+                seen_profile_dirs.update(parents(profile_dir))
+        unused_profile_dirs = available_profile_dirs - seen_profile_dirs
+        if unused_profile_dirs:
+            reporter.add_report(UnusedProfileDirs(unused_profile_dirs))
 
         if unknown_arches:
             reporter.add_report(UnknownProfileArches(unknown_arches))
@@ -279,8 +322,8 @@ class RepoProfilesReport(base.Template):
             reporter.add_report(ArchesWithoutProfiles(arches_without_profiles))
 
         profile_status = set()
-        for path, status in chain.from_iterable(self.profiles.itervalues()):
-            if not os.path.exists(pjoin(self.repo.location, 'profiles', path)):
+        for path, status in chain.from_iterable(self.profiles):
+            if not os.path.exists(pjoin(self.profiles_dir, path)):
                 reporter.add_report(NonexistentProfilePath(path))
             profile_status.add(status)
 
