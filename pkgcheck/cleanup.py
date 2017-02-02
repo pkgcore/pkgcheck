@@ -1,6 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+from snakeoil.strings import pluralism
+
 from pkgcheck.base import Template, package_feed, Warning, versioned_feed
 from pkgcheck.visibility import vcs_eclasses
 
@@ -20,7 +22,7 @@ class RedundantVersion(Warning):
     @property
     def short_desc(self):
         return "slot(%s) keywords are overshadowed by version%s: %s" % (
-            self.slot, 's'[len(self.later_versions) == 1:], ', '.join(self.later_versions))
+            self.slot, pluralism(self.later_versions), ', '.join(self.later_versions))
 
 
 class RedundantVersionReport(Template):

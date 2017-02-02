@@ -10,6 +10,7 @@ from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions.boolean import OrRestriction
 from snakeoil.demandload import demandload
 from snakeoil.sequences import iflatten_instance
+from snakeoil.strings import pluralism
 
 from pkgcheck import base, addons
 
@@ -106,7 +107,7 @@ class IUSEMetadataReport(base.Template):
             if iuse:
                 reporter.add_report(MetadataError(
                     pkg, "iuse", "iuse unknown flag%s: [ %s ]" % (
-                        's'[len(iuse) == 1:], ", ".join(iuse))))
+                        pluralism(iuse), ", ".join(iuse))))
 
 
 class RequiredUSEMetadataReport(base.Template):
@@ -159,7 +160,7 @@ class UnusedLocalFlags(base.Warning):
     @property
     def short_desc(self):
         return "metadata.xml unused local use flag%s: [ %s ]" % (
-            's'[len(self.flags) == 1:], ', '.join(self.flags))
+            pluralism(self.flags), ', '.join(self.flags))
 
 
 class UnusedLocalFlagsReport(base.Template):

@@ -3,6 +3,8 @@
 
 import time
 
+from snakeoil.strings import pluralism
+
 from pkgcheck.addons import ArchesAddon, StableCheckAddon
 from pkgcheck.base import versioned_feed, Warning
 
@@ -25,7 +27,7 @@ class StaleUnstable(Warning):
     @property
     def short_desc(self):
         return "no change in %i days for unstable keyword%s: [ %s ]" % (
-            self.period, 's'[len(self.keywords) == 1:], ', '.join(self.keywords))
+            self.period, pluralism(self.keywords), ', '.join(self.keywords))
 
 
 class StaleUnstableReport(StableCheckAddon):

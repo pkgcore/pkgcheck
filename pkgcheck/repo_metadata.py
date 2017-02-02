@@ -14,6 +14,7 @@ demandload(
     'os',
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
     'snakeoil.sequences:iflatten_instance',
+    'snakeoil.strings:pluralism',
     'pkgcore:fetch',
 )
 
@@ -33,7 +34,7 @@ class UnusedGlobalFlags(base.Warning):
     @property
     def short_desc(self):
         return "use.desc unused flag%s: %s" % (
-            's'[len(self.flags) == 1:], ', '.join(self.flags))
+            pluralism(self.flags), ', '.join(self.flags))
 
 
 class UnusedGlobalFlagsCheck(base.Template):
@@ -77,7 +78,7 @@ class UnusedLicenses(base.Warning):
     @property
     def short_desc(self):
         return "unused license%s: %s" % (
-            's'[len(self.licenses) == 1:], ', '.join(self.licenses))
+            pluralism(self.licenses), ', '.join(self.licenses))
 
 
 class UnusedLicensesCheck(base.Template):
@@ -305,7 +306,7 @@ class UnknownLicenses(base.Warning):
     @property
     def short_desc(self):
         return "license group %r has unknown license%s: [ %s ]" % (
-                self.group, 's'[len(self.licenses) == 1:], ', '.join(self.licenses))
+            self.group, pluralism(self.licenses), ', '.join(self.licenses))
 
 
 class LicenseGroupsCheck(base.Template):
@@ -394,7 +395,7 @@ class MissingManifest(base.Error):
     @property
     def short_desc(self):
         return "distfile%s missing from Manifest: [ %s ]" % (
-            's'[len(self.files) == 1:], ', '.join(sorted(self.files)),)
+            pluralism(self.files), ', '.join(sorted(self.files)),)
 
 
 class UnknownManifest(base.Warning):
@@ -411,7 +412,7 @@ class UnknownManifest(base.Warning):
     @property
     def short_desc(self):
         return "unknown distfile%s in Manifest: [ %s ]" % (
-            's'[len(self.files) == 1:], ', '.join(sorted(self.files)),)
+            pluralism(self.files), ', '.join(sorted(self.files)),)
 
 
 class UnnecessaryManifest(base.Warning):
@@ -428,7 +429,7 @@ class UnnecessaryManifest(base.Warning):
     @property
     def short_desc(self):
         return "unnecessary file%s in Manifest: [ %s ]" % (
-            's'[len(self.files) == 1:], ', '.join(sorted(self.files)),)
+            pluralism(self.files), ', '.join(sorted(self.files)),)
 
 
 class ManifestReport(base.Template):

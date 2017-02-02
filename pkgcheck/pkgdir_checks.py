@@ -9,6 +9,7 @@ import stat
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from snakeoil.demandload import demandload
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
+from snakeoil.strings import pluralism
 
 from pkgcheck.base import Error, Warning, Template, package_feed
 
@@ -54,7 +55,7 @@ class MismatchedPN(Error):
     @property
     def short_desc(self):
         return "mismatched package name%s: [ %s ]" % (
-            's'[len(self.ebuilds) == 1:], ', '.join(self.ebuilds))
+            pluralism(self.ebuilds), ', '.join(self.ebuilds))
 
 
 class InvalidPN(Error):
@@ -72,7 +73,7 @@ class InvalidPN(Error):
     @property
     def short_desc(self):
         return "invalid package name%s: [ %s ]" % (
-            's'[len(self.ebuilds) == 1:], ', '.join(self.ebuilds))
+            pluralism(self.ebuilds), ', '.join(self.ebuilds))
 
 
 class ExecutableFile(Warning):

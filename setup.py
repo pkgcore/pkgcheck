@@ -29,7 +29,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'lxml',
-        'snakeoil>=0.7.0',
+        'snakeoil>=0.7.2',
         'pkgcore>=0.9.5',
     ],
     scripts=os.listdir('bin'),

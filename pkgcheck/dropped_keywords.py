@@ -3,6 +3,8 @@
 
 from collections import defaultdict
 
+from snakeoil.strings import pluralism
+
 from pkgcheck.base import Template, package_feed, versioned_feed, Warning
 
 
@@ -20,7 +22,7 @@ class DroppedKeyword(Warning):
     @property
     def short_desc(self):
         return "keyword%s dropped: %s" % (
-            's'[self.arches == 1:], ', '.join(sorted(self.arches)))
+            pluralism(self.arches), ', '.join(sorted(self.arches)))
 
 
 class DroppedKeywordsReport(Template):

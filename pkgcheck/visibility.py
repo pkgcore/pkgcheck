@@ -5,6 +5,7 @@ from pkgcore.ebuild.atom import atom
 from snakeoil import klass
 from snakeoil.iterables import caching_iter
 from snakeoil.sequences import stable_unique, iflatten_instance, iflatten_func
+from snakeoil.strings import pluralism
 
 from pkgcheck import base, addons
 
@@ -139,7 +140,7 @@ class NonExistentDeps(base.Warning):
     @property
     def short_desc(self):
         return "depset %s: nonexistent dep%s: [ %s ]" % (
-            self.attr, 's'[len(self.atoms) == 1:], ', '.join(self.atoms))
+            self.attr, pluralism(self.atoms), ', '.join(self.atoms))
 
 
 class UncheckableDep(base.Warning):
