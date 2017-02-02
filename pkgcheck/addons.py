@@ -195,7 +195,7 @@ class ProfileAddon(base.Addon):
         def norm_name(s):
             """Expand status keywords and format paths."""
             if s in ('dev', 'exp', 'stable'):
-                for x in profiles_obj.status_profiles(s):
+                for x in profiles_obj.paths(s):
                     yield x
             else:
                 yield '/'.join(filter(None, s.split('/')))
