@@ -283,7 +283,7 @@ class RepoProfilesReport(base.Template):
                 reporter.add_report(NonexistentProfilePath(path))
             profile_status.add(status)
 
-        if self.repo.repo_id == 'gentoo':
+        if self.repo.repo_name == 'gentoo':
             accepted_status = ('stable', 'dev', 'exp')
             unknown_status = profile_status.difference(accepted_status)
             if unknown_status:
