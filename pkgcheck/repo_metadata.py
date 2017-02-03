@@ -301,17 +301,22 @@ class RepoProfilesReport(base.Template):
         available_profile_dirs -= non_profile_dirs | root_profile_dirs
 
         def parents(path):
-            path = os.path.normpath(path.lstrip('/'))
+            """Yield all directory path parents excluding the root directory.
+
+            Example:
+            >>> l = list(parents('/root/foo/bar/baz'))
+            >>> l = ['root/foo/bar', 'root/foo', 'root']
+            """
+            path = os.path.normpath(path.strip('/'))
             while path:
                 yield path
                 dirname, _basename = os.path.split(path)
                 path = dirname.rstrip('/')
                 
         seen_profile_dirs = set()
-        for path, profile in chain.from_iterable(self.arch_profiles.itervalues()):
+        for _path, profile in chain.from_iterable(self.arch_profiles.itervalues()):
             for x in profile.stack:
-                profile_dir = x.path[len(self.profiles_dir):].rstrip('/')
-                seen_profile_dirs.update(parents(profile_dir))
+                seen_profile_dirs.update(parents(x.path[len(self.profiles_dir):]))
         unused_profile_dirs = available_profile_dirs - seen_profile_dirs
         if unused_profile_dirs:
             reporter.add_report(UnusedProfileDirs(unused_profile_dirs))
