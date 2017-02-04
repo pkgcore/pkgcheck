@@ -305,103 +305,112 @@ def dump_docstring(out, obj, prefix=None):
 
 
 @decorate_forced_wrapping()
-def display_keywords(out, checks):
+def display_keywords(out, options):
     d = {}
-    for x in checks:
+    for x in options.checks:
         d.setdefault(x.scope, set()).update(x.known_results)
 
-    if not d:
-        out.write(out.fg('red'), "No Documentation")
-        out.write()
-        return
-
-    scopes = ('version', 'package', 'category', 'repository')
-    for scope in reversed(sorted(d)):
-        out.write(out.bold, "%s scope:" % scopes[scope].capitalize())
-        keywords = sorted(d[scope], key=lambda x: x.__name__)
-
-        try:
-            out.first_prefix.append('  ')
-            out.later_prefix.append('  ')
-            for keyword in keywords:
-                out.write(out.fg('yellow'), keyword.__name__, out.reset, ':')
-                dump_docstring(out, keyword, prefix='  ')
+    if options.quiet:
+        out.write('\n'.join(sorted(x.__name__ for s in d.itervalues() for x in s)), wrap=False)
+    else:
+        if not d:
+            out.write(out.fg('red'), "No Documentation")
             out.write()
-        finally:
-            out.first_prefix.pop()
-            out.later_prefix.pop()
+            return
+
+        scopes = ('version', 'package', 'category', 'repository')
+        for scope in reversed(sorted(d)):
+            out.write(out.bold, "%s scope:" % scopes[scope].capitalize())
+            keywords = sorted(d[scope], key=lambda x: x.__name__)
+
+            try:
+                out.first_prefix.append('  ')
+                out.later_prefix.append('  ')
+                for keyword in keywords:
+                    out.write(out.fg('yellow'), keyword.__name__, out.reset, ':')
+                    dump_docstring(out, keyword, prefix='  ')
+                out.write()
+            finally:
+                out.first_prefix.pop()
+                out.later_prefix.pop()
 
 
 @decorate_forced_wrapping()
-def display_checks(out, checks):
+def display_checks(out, options):
     d = {}
-    for x in checks:
+    for x in options.checks:
         d.setdefault(x.__module__, []).append(x)
 
-    if not d:
-        out.write(out.fg('red'), "No Documentation")
-        out.write()
-        return
-
-    for module_name in sorted(d):
-        out.write(out.bold, "%s:" % module_name)
-        l = d[module_name]
-        l.sort(key=lambda x: x.__name__)
-
-        try:
-            out.first_prefix.append('  ')
-            out.later_prefix.append('  ')
-            for check in l:
-                out.write(out.fg('yellow'), check.__name__, out.reset, ':')
-                dump_docstring(out, check, prefix='  ')
+    if options.quiet:
+        out.write('\n'.join(sorted(x.__name__ for s in d.itervalues() for x in s)), wrap=False)
+    else:
+        if not d:
+            out.write(out.fg('red'), "No Documentation")
             out.write()
-        finally:
-            out.first_prefix.pop()
-            out.later_prefix.pop()
+            return
+
+        for module_name in sorted(d):
+            out.write(out.bold, "%s:" % module_name)
+            l = d[module_name]
+            l.sort(key=lambda x: x.__name__)
+
+            try:
+                out.first_prefix.append('  ')
+                out.later_prefix.append('  ')
+                for check in l:
+                    out.write(out.fg('yellow'), check.__name__, out.reset, ':')
+                    dump_docstring(out, check, prefix='  ')
+                out.write()
+            finally:
+                out.first_prefix.pop()
+                out.later_prefix.pop()
 
 
 @decorate_forced_wrapping()
-def display_reporters(out, config, config_reporters, plugin_reporters):
-    out.write("known reporters:")
-    out.write()
-    if config_reporters:
-        out.write("configured reporters:")
-        out.first_prefix.append(' ')
-        out.later_prefix.append(' ')
-        try:
-            # sorting here is random
-            for reporter in sorted(config_reporters, key=lambda x: x.__name__):
-                key = config.get_section_name(reporter)
-                if not key:
-                    continue
-                out.write(out.bold, key)
-                dump_docstring(out, reporter, prefix=' ')
-                out.write()
-        finally:
-            out.first_prefix.pop()
-            out.later_prefix.pop()
-
-    if plugin_reporters:
-        if config_reporters:
-            out.write()
-        out.write("plugin reporters:")
-        out.first_prefix.append(' ')
-        out.later_prefix.append(' ')
-        try:
-            for reporter in sorted(plugin_reporters, key=lambda x: x.__name__):
-                out.write(out.bold, reporter.__name__)
-                dump_docstring(out, reporter, prefix=' ')
-                out.write()
-        finally:
-            out.first_prefix.pop()
-            out.later_prefix.pop()
-
-    if not plugin_reporters and not config_reporters:
-        out.write(
-            out.fg("red"), "Warning", out.fg(""),
-            " no reporters detected; pkgcheck won't "
-            "run correctly without a reporter to use!")
+def display_reporters(out, options, config_reporters, plugin_reporters):
+    if options.quiet:
+        out.write('\n'.join(sorted(x.__name__ for x in plugin_reporters)), wrap=False)
+    else:
+        out.write("known reporters:")
         out.write()
+        if config_reporters:
+            out.write("configured reporters:")
+            out.first_prefix.append(' ')
+            out.later_prefix.append(' ')
+            try:
+                # sorting here is random
+                for reporter in sorted(config_reporters, key=lambda x: x.__name__):
+                    key = options.config.get_section_name(reporter)
+                    if not key:
+                        continue
+                    out.write(out.bold, key)
+                    dump_docstring(out, reporter, prefix=' ')
+                    out.write()
+            finally:
+                out.first_prefix.pop()
+                out.later_prefix.pop()
+
+        if plugin_reporters:
+            if config_reporters:
+                out.write()
+            out.write("plugin reporters:")
+            out.first_prefix.append(' ')
+            out.later_prefix.append(' ')
+            try:
+                for reporter in sorted(plugin_reporters, key=lambda x: x.__name__):
+                    out.write(out.bold, reporter.__name__)
+                    dump_docstring(out, reporter, prefix=' ')
+                    out.write()
+            finally:
+                out.first_prefix.pop()
+                out.later_prefix.pop()
+
+        if not plugin_reporters and not config_reporters:
+            out.write(
+                out.fg("red"), "Warning", out.fg(""),
+                " no reporters detected; pkgcheck won't "
+                "run correctly without a reporter to use!")
+            out.write()
 
 
 @argparser.bind_main_func
@@ -409,16 +418,16 @@ def main(options, out, err):
     """Do stuff."""
 
     if options.list_keywords:
-        display_keywords(out, options.checks)
+        display_keywords(out, options)
         return 0
 
     if options.list_checks:
-        display_checks(out, options.checks)
+        display_checks(out, options)
         return 0
 
     if options.list_reporters:
         display_reporters(
-            out, options.config,
+            out, options,
             options.config.pkgcheck_reporter_factory.values(),
             list(get_plugins('reporter', plugins)))
         return 0
