@@ -16,6 +16,7 @@ demandload(
     'snakeoil.sequences:iflatten_instance',
     'snakeoil.strings:pluralism',
     'pkgcore:fetch',
+    'pkgcore.ebuild.profiles:ProfileStack',
 )
 
 
@@ -272,7 +273,6 @@ class RepoProfilesReport(base.Template):
     def __init__(self, options, profile_filters):
         base.Template.__init__(self, options)
         self.arches = options.target_repo.config.known_arches
-        self.arch_profiles = options.arch_profiles
         self.profiles = options.target_repo.config.arch_profiles.itervalues()
         self.repo = options.target_repo
         self.profiles_dir = pjoin(self.repo.location, 'profiles')
@@ -290,6 +290,11 @@ class RepoProfilesReport(base.Template):
 
         unknown_arches = self.repo.config.profiles.arches().difference(self.arches)
         arches_without_profiles = self.arches.difference(self.repo.config.profiles.arches())
+
+        if unknown_arches:
+            reporter.add_report(UnknownProfileArches(unknown_arches))
+        if arches_without_profiles:
+            reporter.add_report(ArchesWithoutProfiles(arches_without_profiles))
 
         non_profile_dirs = {'desc', 'updates'}
         root_profile_dirs = {'embedded'}
@@ -312,25 +317,19 @@ class RepoProfilesReport(base.Template):
                 yield path
                 dirname, _basename = os.path.split(path)
                 path = dirname.rstrip('/')
-                
+
         seen_profile_dirs = set()
-        for _path, profile in chain.from_iterable(self.arch_profiles.itervalues()):
-            for x in profile.stack:
-                seen_profile_dirs.update(parents(x.path[len(self.profiles_dir):]))
-        unused_profile_dirs = available_profile_dirs - seen_profile_dirs
-        if unused_profile_dirs:
-            reporter.add_report(UnusedProfileDirs(unused_profile_dirs))
-
-        if unknown_arches:
-            reporter.add_report(UnknownProfileArches(unknown_arches))
-        if arches_without_profiles:
-            reporter.add_report(ArchesWithoutProfiles(arches_without_profiles))
-
         profile_status = set()
         for path, status in chain.from_iterable(self.profiles):
+            for x in ProfileStack(pjoin(self.profiles_dir, path)).stack:
+                seen_profile_dirs.update(parents(x.path[len(self.profiles_dir):]))
             if not os.path.exists(pjoin(self.profiles_dir, path)):
                 reporter.add_report(NonexistentProfilePath(path))
             profile_status.add(status)
+
+        unused_profile_dirs = available_profile_dirs - seen_profile_dirs
+        if unused_profile_dirs:
+            reporter.add_report(UnusedProfileDirs(unused_profile_dirs))
 
         if self.repo.repo_name == 'gentoo':
             accepted_status = ('stable', 'dev', 'exp')
