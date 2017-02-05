@@ -38,8 +38,8 @@ for scope in reversed(sorted(d)):
         else:
             summary = None
 
-        print('\n{}::'.format(keyword.__name__))
+        print('\n{}'.format(keyword.__name__))
         if summary:
-            print('\n  ' + summary)
+            print('\t' + summary)
             if explanation:
-                print('\n  ' + explanation.strip())
+                print('\n\t' + explanation.strip())
