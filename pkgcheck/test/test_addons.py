@@ -242,29 +242,29 @@ class TestProfileAddon(profile_mixin):
 
     def test_disable_dev(self):
         self.mk_profiles({
-            "default-linux": ["x86", "dev"],
+            "default-linux/dev": ["x86", "dev"],
             "default-linux/x86": ["x86"]},
             base='foo')
         options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=-dev'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
+    def test_disable_exp(self):
+        self.mk_profiles({
+            "default-linux/exp": ["x86", "exp"],
+            "default-linux/x86": ["x86"]},
+            base='foo')
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=-exp'])
+        check = self.addon_kls(options)
+        self.assertProfiles(check, 'x86', 'default-linux/x86')
+
     def test_disable_deprecated(self):
         self.mk_profiles({
-            "default-linux": ["x86", False, True],
+            "default-linux/dep": ["x86", False, True],
             "default-linux/x86": ["x86"]},
             base='foo')
         options = self.process_check(
             pjoin(self.dir, 'foo'), ['--profiles=-deprecated'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux/x86')
-
-    def test_disable_exp(self):
-        self.mk_profiles({
-            "default-linux": ["x86", "exp"],
-            "default-linux/x86": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=-exp'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
