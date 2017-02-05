@@ -213,9 +213,7 @@ class TestProfileAddon(profile_mixin):
             "profile1": ["x86"],
             "profile1/2": ["x86"]},
             base='profiles')
-        options = self.process_check(
-            None, [], profiles=None,
-            profiles_ignore_deprecated=False)
+        options = self.process_check(None, [], profiles=None)
         # override the default
         check = self.addon_kls(options)
         self.assertEqual(sorted(check.official_arches), ['x86'])
@@ -247,8 +245,7 @@ class TestProfileAddon(profile_mixin):
             "default-linux/x86": ["x86"]},
             base='foo')
         options = self.process_check(
-            pjoin(self.dir, 'foo'), ['--profiles-disable-deprecated'],
-            profiles_ignore_deprecated=True)
+            pjoin(self.dir, 'foo'), ['--profiles=-deprecated'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
