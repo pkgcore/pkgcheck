@@ -234,6 +234,7 @@ class TestProfileAddon(profile_mixin):
 
     def test_profiles_base(self):
         self.mk_profiles({
+            "default-linux/dep": ["x86", False, True],
             "default-linux": ["x86", "dev"],
             "default-linux/x86": ["x86"]},
             base='foo')
@@ -243,6 +244,7 @@ class TestProfileAddon(profile_mixin):
 
     def test_enable_stable(self):
         self.mk_profiles({
+            "default-linux/dep": ["x86", False, True],
             "default-linux/dev": ["x86", "dev"],
             "default-linux/exp": ["x86", "exp"],
             "default-linux": ["x86"]},
@@ -253,6 +255,7 @@ class TestProfileAddon(profile_mixin):
 
     def test_disable_stable(self):
         self.mk_profiles({
+            "default-linux/dep": ["x86", False, True],
             "default-linux/dev": ["x86", "dev"],
             "default-linux/exp": ["x86", "exp"],
             "default-linux": ["x86"]},
@@ -263,6 +266,7 @@ class TestProfileAddon(profile_mixin):
 
     def test_enable_dev(self):
         self.mk_profiles({
+            "default-linux/dep": ["x86", False, True],
             "default-linux/dev": ["x86", "dev"],
             "default-linux/x86": ["x86"]},
             base='foo')
@@ -272,6 +276,7 @@ class TestProfileAddon(profile_mixin):
 
     def test_disable_dev(self):
         self.mk_profiles({
+            "default-linux/dep": ["x86", False, True],
             "default-linux/dev": ["x86", "dev"],
             "default-linux/x86": ["x86"]},
             base='foo')
@@ -281,6 +286,7 @@ class TestProfileAddon(profile_mixin):
 
     def test_enable_exp(self):
         self.mk_profiles({
+            "default-linux/dep": ["x86", False, True],
             "default-linux/exp": ["x86", "exp"],
             "default-linux/x86": ["x86"]},
             base='foo')
@@ -290,6 +296,7 @@ class TestProfileAddon(profile_mixin):
 
     def test_disable_exp(self):
         self.mk_profiles({
+            "default-linux/dep": ["x86", False, True],
             "default-linux/exp": ["x86", "exp"],
             "default-linux/x86": ["x86"]},
             base='foo')
@@ -319,6 +326,7 @@ class TestProfileAddon(profile_mixin):
 
     def test_profile_enable(self):
         self.mk_profiles({
+            "default-linux/dep": ["x86", False, True],
             "default-linux": ["x86"],
             "default-linux/x86": ["x86"]},
             base='foo')
@@ -328,6 +336,7 @@ class TestProfileAddon(profile_mixin):
 
     def test_profile_disable(self):
         self.mk_profiles({
+            "default-linux/dep": ["x86", False, True],
             "default-linux": ["x86"],
             "default-linux/x86": ["x86"]},
             base='foo')
