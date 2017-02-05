@@ -205,6 +205,7 @@ class ProfileAddon(base.Addon):
         toggled = enabled.intersection(disabled)
         enabled = enabled.difference(toggled)
         disabled = disabled.difference(toggled)
+        ignore_deprecated = 'deprecated' not in enabled
 
         # expand status keywords, e.g. 'stable' -> set of stable profiles
         disabled = set(chain.from_iterable(imap(norm_name, disabled)))
@@ -234,6 +235,8 @@ class ProfileAddon(base.Addon):
                 # repo profiles will be caught during repo metadata scans.
                 if namespace.profiles is not None:
                     parser.error('invalid profile: %r: %s' % (e.path, e.error))
+                continue
+            if ignore_deprecated and p.deprecated:
                 continue
             cached_profiles.append(p)
             if p.arch is None:
