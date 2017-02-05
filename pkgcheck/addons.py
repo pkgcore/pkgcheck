@@ -149,27 +149,24 @@ class ProfileAddon(base.Addon):
                 primarily for testing.
             """)
         group.add_argument(
-            "--profiles-disable-deprecated", action='store_true',
-            dest='profiles_ignore_deprecated',
-            help="disable scanning of deprecated profiles")
-        group.add_argument(
             '-p', '--profiles', action='extend_comma_toggle',
             dest='profiles',
             help='comma separated list of profiles to enable/disable',
             docs="""
                 Comma separated list of profiles to enable and disable for
                 scanning. Any profiles specified in this fashion will be the
-                only profiles that get scanned, minus any disabled profiles. In
-                addition, if no profiles are explicitly enabled via this
-                option, all profiles will be scanned by default.
+                only profiles that get scanned, skipping any disabled profiles.
+                In addition, if no profiles are explicitly enabled, all
+                profiles defined in the target repo's profiles.desc file will be
+                scanned.
 
                 To specify disabled profiles prefix them with '-'. Note that
                 when starting the argument list with a disabled profile an
                 equals sign must be used, e.g. -p=-path/to/profile, otherwise
                 the disabled profile argument is treated as an option.
 
-                The special keywords of stable, dev, and exp correspond to the
-                lists of stable, development, and experimental profiles,
+                The special keywords of stable, dev, exp, and deprecated correspond to the
+                lists of stable, development, experimental, and deprecated profiles,
                 respectively. Therefore, to only scan all stable profiles
                 pass the 'stable' argument to --profiles.
             """)
@@ -194,7 +191,7 @@ class ProfileAddon(base.Addon):
 
         def norm_name(s):
             """Expand status keywords and format paths."""
-            if s in ('dev', 'exp', 'stable'):
+            if s in ('dev', 'exp', 'stable', 'deprecated'):
                 for x in profiles_obj.paths(s):
                     yield x
             else:
@@ -203,16 +200,18 @@ class ProfileAddon(base.Addon):
         disabled, enabled = selected_profiles
         disabled = set(disabled)
         enabled = set(enabled)
+
         # remove profiles that are both enabled and disabled
         toggled = enabled.intersection(disabled)
         enabled = enabled.difference(toggled)
         disabled = disabled.difference(toggled)
+
         # expand status keywords, e.g. 'stable' -> set of stable profiles
         disabled = set(chain.from_iterable(imap(norm_name, disabled)))
         enabled = set(chain.from_iterable(imap(norm_name, enabled)))
 
-        # If no profiles are enabled, then all are scanned except ones that are
-        # explicitly disabled.
+        # If no profiles are enabled, then all that are defined in
+        # profiles.desc are scanned except ones that are explicitly disabled.
         if not enabled:
             enabled = {
                 profile for profile, status in
@@ -235,8 +234,6 @@ class ProfileAddon(base.Addon):
                 # repo profiles will be caught during repo metadata scans.
                 if namespace.profiles is not None:
                     parser.error('invalid profile: %r: %s' % (e.path, e.error))
-                continue
-            if namespace.profiles_ignore_deprecated and p.deprecated:
                 continue
             cached_profiles.append(p)
             if p.arch is None:
