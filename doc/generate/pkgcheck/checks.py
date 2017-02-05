@@ -2,6 +2,8 @@
 #
 # Output rst doc for defined pkgcheck checks.
 
+from __future__ import print_function
+
 from collections import defaultdict
 from textwrap import dedent
 
@@ -11,8 +13,10 @@ from snakeoil.sequences import unstable_unique
 from pkgcheck import plugins
 
 
-def _rst_header(char, text):
-    print('\n' + text)
+def _rst_header(char, text, newline=True):
+    if newline:
+        print('\n', end='')
+    print(text)
     print(char * len(text))
 
 
@@ -24,7 +28,7 @@ d = defaultdict(set)
 for check in checks:
     d[check.scope].add(check)
 
-_rst_header('=', 'Checks')
+_rst_header('=', 'Checks', newline=False)
 
 scopes = ('version', 'package', 'category', 'repository')
 for scope in reversed(sorted(d)):
