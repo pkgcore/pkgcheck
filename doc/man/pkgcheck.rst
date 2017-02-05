@@ -13,6 +13,7 @@ pkgcheck is a QA utility based on **pkgcore**\(5) similar to **repoman**\(1) fro
 
 .. include:: pkgcheck/checks.rst
 .. include:: pkgcheck/keywords.rst
+.. include:: pkgcheck/reporters.rst
 
 Reporting Bugs
 ==============
