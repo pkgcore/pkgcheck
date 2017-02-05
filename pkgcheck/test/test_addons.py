@@ -221,6 +221,17 @@ class TestProfileAddon(profile_mixin):
         self.assertEqual(sorted(check.profile_evaluate_dict), ['x86', '~x86'])
         self.assertProfiles(check, 'x86', 'profile1', 'profile1/2')
 
+    def test_fallback_defaults(self):
+        self.mk_profiles({
+            "default-linux/dep": ["x86", False, True],
+            "default-linux/dev": ["x86", "dev"],
+            "default-linux/exp": ["x86", "exp"],
+            "default-linux": ["x86"]},
+            base='foo')
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=stable,-stable'])
+        check = self.addon_kls(options)
+        self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/dev', 'default-linux/exp')
+
     def test_profiles_base(self):
         self.mk_profiles({
             "default-linux": ["x86", "dev"],
