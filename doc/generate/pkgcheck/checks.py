@@ -3,6 +3,7 @@
 # Output rst doc for defined pkgcheck checks.
 
 from collections import defaultdict
+from textwrap import dedent
 
 from pkgcore.plugin import get_plugins
 from snakeoil.sequences import unstable_unique
@@ -19,9 +20,9 @@ checks = sorted(unstable_unique(
     get_plugins('check', plugins)),
     key=lambda x: x.__name__)
 
-d = defaultdict(list)
+d = defaultdict(set)
 for check in checks:
-    d[check.scope].append(check)
+    d[check.scope].add(check)
 
 _rst_header('=', 'Checks')
 
@@ -42,6 +43,6 @@ for scope in reversed(sorted(d)):
 
         print('\n{}'.format(check.__name__))
         if summary:
-            print('\t' + summary)
+            print('\t' + ' '.join(dedent(summary).strip().split('\n')))
             if explanation:
-                print('\n\t' + explanation.strip())
+                print('\n\t' + ' '.join(dedent(explanation).strip().split('\n')))

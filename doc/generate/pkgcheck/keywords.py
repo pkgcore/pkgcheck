@@ -2,6 +2,8 @@
 #
 # Output rst doc for defined pkgcheck keywords.
 
+from textwrap import dedent
+
 from pkgcore.plugin import get_plugins
 from snakeoil.sequences import unstable_unique
 
@@ -40,6 +42,6 @@ for scope in reversed(sorted(d)):
 
         print('\n{}'.format(keyword.__name__))
         if summary:
-            print('\t' + summary)
+            print('\t' + ' '.join(dedent(summary).strip().split('\n')))
             if explanation:
-                print('\n\t' + explanation.strip())
+                print('\n\t' + ' '.join(dedent(explanation).strip().split('\n')))
