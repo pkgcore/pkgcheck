@@ -294,7 +294,7 @@ class DependencyReport(base.Template):
 
 
 class StupidKeywords(base.Warning):
-    """Packages using -*; use package.mask instead."""
+    """Packages using ``-*``; use package.mask instead."""
 
     __slots__ = ('category', 'package', 'version')
     threshold = base.versioned_feed
