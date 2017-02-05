@@ -21,7 +21,7 @@ d = {}
 for x in checks:
     d.setdefault(x.scope, set()).update(x.known_results)
 
-_rst_header('=', 'Check Keywords')
+_rst_header('=', 'Keywords')
 
 scopes = ('version', 'package', 'category', 'repository')
 for scope in reversed(sorted(d)):
