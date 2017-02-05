@@ -311,8 +311,8 @@ class RepoProfilesReport(base.Template):
             """Yield all directory path parents excluding the root directory.
 
             Example:
-            >>> l = list(parents('/root/foo/bar/baz'))
-            >>> l = ['root/foo/bar', 'root/foo', 'root']
+            >>> list(parents('/root/foo/bar/baz'))
+            ['root/foo/bar', 'root/foo', 'root']
             """
             path = os.path.normpath(path.strip('/'))
             while path:
