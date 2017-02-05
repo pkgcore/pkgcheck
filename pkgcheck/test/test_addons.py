@@ -230,6 +230,16 @@ class TestProfileAddon(profile_mixin):
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
 
+    def test_disable_stable(self):
+        self.mk_profiles({
+            "default-linux/dev": ["x86", "dev"],
+            "default-linux/exp": ["x86", "exp"],
+            "default-linux": ["x86"]},
+            base='foo')
+        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=-stable'])
+        check = self.addon_kls(options)
+        self.assertProfiles(check, 'x86', 'default-linux/dev', 'default-linux/exp')
+
     def test_disable_dev(self):
         self.mk_profiles({
             "default-linux": ["x86", "dev"],
