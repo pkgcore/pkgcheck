@@ -503,7 +503,7 @@ class RestrictsReport(base.Template):
     required_addons = (addons.UseAddon,)
 
     __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \
-        "restricts:%s" % ", ".join(sorted(known_restricts))
+        "restricts: %s" % ", ".join(sorted(known_restricts))
 
     def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)

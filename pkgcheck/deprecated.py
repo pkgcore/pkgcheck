@@ -128,7 +128,7 @@ class DeprecatedEclassReport(Template):
         'xfree': None,
     })
 
-    __doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses:%s\n" % \
+    __doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses: %s\n" % \
         ", ".join(sorted(blacklist))
 
     def feed(self, pkg, reporter):
