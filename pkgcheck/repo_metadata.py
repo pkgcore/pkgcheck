@@ -78,8 +78,7 @@ class UnusedLicenses(base.Warning):
 
     @property
     def short_desc(self):
-        return "unused license%s: %s" % (
-            pluralism(self.licenses), ', '.join(self.licenses))
+        return ', '.join(self.licenses)
 
 
 class UnusedLicensesCheck(base.Template):
