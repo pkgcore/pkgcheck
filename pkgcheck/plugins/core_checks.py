@@ -36,6 +36,7 @@ pkgcore_plugins = {
         repo_metadata.LicenseGroupsCheck,
         repo_metadata.ManifestReport,
         repo_metadata.UnusedGlobalFlagsCheck,
+        repo_metadata.UnusedEclassesCheck,
         repo_metadata.UnusedLicensesCheck,
         repo_metadata.UnusedMirrorsCheck,
         repo_metadata.RepoProfilesReport,

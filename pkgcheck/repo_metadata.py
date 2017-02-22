@@ -157,6 +157,45 @@ class UnusedMirrorsCheck(base.Template):
         self.mirrors = None
 
 
+class UnusedEclasses(base.Warning):
+    """Unused eclasses detected."""
+
+    __slots__ = ("eclasses",)
+
+    threshold = base.repository_feed
+
+    def __init__(self, eclasses):
+        super(UnusedEclasses, self).__init__()
+        self.eclasses = tuple(sorted(eclasses))
+
+    @property
+    def short_desc(self):
+        return ', '.join(self.eclasses)
+
+
+class UnusedEclassesCheck(base.Template):
+    """Check for unused eclasses."""
+
+    feed_type = base.versioned_feed
+    scope = base.repository_scope
+    known_results = (UnusedEclasses,)
+
+    def __init__(self, options):
+        base.Template.__init__(self, options)
+        self.eclasses = None
+
+    def start(self):
+        self.eclasses = {e for e in self.options.target_repo.eclass_cache.eclasses.iterkeys()}
+
+    def feed(self, pkg, reporter):
+        self.eclasses.difference_update(pkg.inherited)
+
+    def finish(self, reporter):
+        if self.eclasses:
+            reporter.add_report(UnusedEclasses(self.eclasses))
+        self.eclasses = None
+
+
 class UnusedProfileDirs(base.Warning):
     """Unused profile directories detected."""
 
