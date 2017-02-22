@@ -185,7 +185,7 @@ class UnusedEclassesCheck(base.Template):
         self.eclasses = None
 
     def start(self):
-        self.eclasses = {e for e in self.options.target_repo.eclass_cache.eclasses.iterkeys()}
+        self.eclasses = set(self.options.target_repo.eclass_cache.eclasses.iterkeys())
 
     def feed(self, pkg, reporter):
         self.eclasses.difference_update(pkg.inherited)
