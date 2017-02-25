@@ -251,6 +251,7 @@ class base_check(base.Template):
         base.Template.__init__(self, options)
         self.repo_base = options.target_repo.location
         self.xsd_file = None
+        self.verbose = options.verbose
 
     def start(self):
         self.last_seen = None
@@ -261,7 +262,8 @@ class base_check(base.Template):
         refetch = not os.path.isfile(read_path)
 
         if refetch:
-            logger.warn('metadata.xsd cannot be opened from %s, will refetch', read_path)
+            if self.verbose:
+                logger.warn('metadata.xsd cannot be opened from %s, will refetch', read_path)
             logger.info("fetching metdata.xsd from %s", self.xsd_url)
             try:
                 xsd_data = urlopen(self.xsd_url).read()
