@@ -6,14 +6,14 @@ from collections import defaultdict
 from pkgcheck.base import Template, package_feed, versioned_feed, Warning
 
 
-class DroppedKeyword(Warning):
+class DroppedKeywords(Warning):
     """Arch keywords dropped during pkg version bumping"""
 
     __slots__ = ("arches", "category", "package", "version")
     threshold = versioned_feed
 
     def __init__(self, pkg, arches):
-        super(DroppedKeyword, self).__init__()
+        super(DroppedKeywords, self).__init__()
         self._store_cpv(pkg)
         self.arches = arches
 
@@ -26,7 +26,7 @@ class DroppedKeywordsReport(Template):
     """scan pkgs for keyword dropping across versions"""
 
     feed_type = package_feed
-    known_results = (DroppedKeyword,)
+    known_results = (DroppedKeywords,)
 
     def __init__(self, options):
         Template.__init__(self, options)
@@ -61,4 +61,4 @@ class DroppedKeywordsReport(Template):
             lastpkg = pkg
 
         for pkg in dropped.iterkeys():
-            reporter.add_report(DroppedKeyword(pkg, dropped[pkg]))
+            reporter.add_report(DroppedKeywords(pkg, dropped[pkg]))
