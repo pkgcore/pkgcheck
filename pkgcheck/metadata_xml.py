@@ -28,7 +28,6 @@ demandload(
     'tempfile:NamedTemporaryFile',
     'pkgcore.ebuild.atom:atom',
     'pkgcore.log:logger',
-    'pkgcore.spawn:spawn,find_binary',
     'snakeoil.osutils:pjoin',
     'snakeoil:fileutils',
 )
