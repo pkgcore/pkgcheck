@@ -12,11 +12,12 @@ sudo: false
 cache:
   directories:
     - $HOME/.cache/pip
-install: pip install tox coveralls codecov
+install:
+  - pip install --upgrade pip
+  - pip install --only-binary ":all:" tox codecov
 script: tox -e travis
 after_success:
   # upload coverage data
   - pushd .tox/travis/lib/python*/site-packages
-  - coveralls
   - codecov
   - popd
