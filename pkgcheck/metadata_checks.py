@@ -46,7 +46,7 @@ class MissingLicense(base.Error):
 
     @property
     def short_desc(self):
-        return "no license files: %s" % ', '.join(self.licenses)
+        return ', '.join(self.licenses)
 
 
 class LicenseMetadataReport(base.Template):
