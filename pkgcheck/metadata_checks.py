@@ -123,7 +123,7 @@ class RequiredUSEMetadataReport(base.Template):
 
     def feed(self, pkg, reporter):
         # only run the check for EAPI 4 and above
-        if not pkg.eapi.options.get('has_required_use', False):
+        if not pkg.eapi.options.has_required_use:
             return
 
         try:
@@ -216,7 +216,7 @@ class MissingSlotDepReport(base.Template):
 
     def feed(self, pkg, reporter):
         # only run the check for EAPI 5 and above
-        if not pkg.eapi.options.get('sub_slotting', False):
+        if not pkg.eapi.options.sub_slotting:
             return
 
         rdepends = set(self.iuse_filter((atom,), pkg, pkg.rdepends, reporter))
