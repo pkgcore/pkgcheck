@@ -56,8 +56,8 @@ class ArchesAddon(base.Addon):
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('arches')
         group.add_argument(
-            '-a', '--arches', dest='selected_arches', metavar='ARCHES',
-            nargs=1, action='extend_comma_toggle',
+            '-a', '--arches', dest='selected_arches', metavar='ARCH',
+            action='extend_comma_toggle',
             help='comma separated list of arches to enable/disable',
             docs="""
                 Comma separated list of arches to enable and disable.
@@ -149,7 +149,7 @@ class ProfileAddon(base.Addon):
                 primarily for testing.
             """)
         group.add_argument(
-            '-p', '--profiles', action='extend_comma_toggle',
+            '-p', '--profiles', metavar='PROFILE', action='extend_comma_toggle',
             dest='profiles',
             help='comma separated list of profiles to enable/disable',
             docs="""
