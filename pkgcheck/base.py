@@ -267,7 +267,7 @@ def convert_check_filter(tok):
             if len(toklist) > len(chunks):
                 return False
             for i in xrange(len(chunks)):
-                if chunks[i:i+len(toklist)] == toklist:
+                if chunks[i:i + len(toklist)] == toklist:
                     return True
             return False
 

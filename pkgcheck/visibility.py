@@ -2,6 +2,7 @@
 # License: BSD/GPL2
 
 from pkgcore.ebuild.atom import atom
+
 from snakeoil import klass
 from snakeoil.iterables import caching_iter
 from snakeoil.sequences import stable_unique, iflatten_instance, iflatten_func

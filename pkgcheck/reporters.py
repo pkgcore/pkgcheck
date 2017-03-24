@@ -2,7 +2,6 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 """Basic reporters and reporter factories."""
 
 from pkgcore.config import configurable
@@ -46,11 +45,11 @@ class StrReporter(base.Reporter):
             self.out.write()
             self.first_report = False
         if result.threshold == base.versioned_feed:
-            self.out.write("%s/%s-%s: %s" % (result.category, result.package,
-                result.version, result.short_desc))
+            self.out.write(
+                "%s/%s-%s: %s" % (result.category, result.package, result.version, result.short_desc))
         elif result.threshold == base.package_feed:
-            self.out.write("%s/%s: %s" % (result.category, result.package,
-                result.short_desc))
+            self.out.write(
+                "%s/%s: %s" % (result.category, result.package, result.short_desc))
         elif result.threshold == base.category_feed:
             self.out.write("%s: %s" % (result.category, result.short_desc))
         else:
@@ -203,6 +202,7 @@ def make_configurable_reporter_factory(klass):
     def configurable_reporter_factory(dest=None):
         if dest is None:
             return klass
+
         def reporter_factory(out):
             try:
                 f = open(dest, 'w')
@@ -210,8 +210,10 @@ def make_configurable_reporter_factory(klass):
                 raise errors.ReporterInitError(
                     'Cannot write to %r (%s)' % (dest, e))
             return klass(formatters.PlainTextFormatter(f))
+
         return reporter_factory
     return configurable_reporter_factory
+
 
 xml_reporter = make_configurable_reporter_factory(XmlReporter)
 xml_reporter.__name__ = 'xml_reporter'
