@@ -36,7 +36,7 @@ class ImlateReport(StableCheckAddon):
     @staticmethod
     def mangle_argparser(parser):
         parser.plugin.add_argument(
-            "--source-arches", action='extend_comma',
+            "--source-arches", action='extend_comma', metavar='ARCH',
             help="comma separated list of arches to compare against for lagging stabilization",
             docs="""
                 Comma separated list of arches to compare against for
