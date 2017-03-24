@@ -481,14 +481,18 @@ class UseAddon(base.Addon):
             logger.warn('disabling use/iuse validity checks since no usable '
                         'use.desc, use.local.desc were found ')
 
+        # verify IUSE flags are valid
+        self.verify = True
+
     def allowed_iuse(self, pkg):
         return self.collapsed_iuse.pull_data(pkg).union(pkg.local_use)
 
-    def get_filter(self, attr_name=None):
+    def get_filter(self, attr=None, verify=True):
+        self.verify = verify
         if self.ignore:
             return self.fake_use_validate
-        if attr_name is not None:
-            return partial(self.use_validate, attr=attr_name)
+        if attr is not None:
+            return partial(self.use_validate, attr=attr)
         return self.use_validate
 
     @staticmethod
@@ -512,7 +516,7 @@ class UseAddon(base.Addon):
             yield node
 
         # implicit IUSE flags
-        if attr is not None:
+        if self.verify and attr is not None:
             unstated.difference_update(self.unstated_iuse)
             if unstated:
                 reporter.add_report(UnstatedIUSE(pkg, attr, sorted(unstated)))

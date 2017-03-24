@@ -44,7 +44,7 @@ class UnusedGlobalFlagsCheck(base.Template):
     feed_type = base.versioned_feed
     scope = base.repository_scope
     required_addons = (addons.UseAddon,)
-    known_results = (UnusedGlobalFlags,) + addons.UseAddon.known_results
+    known_results = (UnusedGlobalFlags,)
 
     def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
@@ -129,12 +129,12 @@ class UnusedMirrorsCheck(base.Template):
     required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    known_results = (UnusedMirrors,) + addons.UseAddon.known_results
+    known_results = (UnusedMirrors,)
 
     def __init__(self, options, iuse_handler):
         base.Template.__init__(self, options)
         self.mirrors = None
-        self.iuse_filter = iuse_handler.get_filter('fetchables')
+        self.iuse_filter = iuse_handler.get_filter('fetchables', verify=False)
 
     def start(self):
         repo = self.options.target_repo
@@ -528,8 +528,7 @@ class ManifestReport(base.Template):
 
     required_addons = (addons.UseAddon,)
     feed_type = base.package_feed
-    known_results = (MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest) + \
-        addons.UseAddon.known_results
+    known_results = (MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest)
 
     repo_grabber = attrgetter("repo")
 
@@ -538,7 +537,7 @@ class ManifestReport(base.Template):
         self.required_checksums = mappings.defaultdictkey(
             lambda repo: frozenset(repo.config.manifests.hashes if hasattr(repo, 'config') else ()))
         self.seen_checksums = {}
-        self.iuse_filter = iuse_handler.get_filter('fetchables')
+        self.iuse_filter = iuse_handler.get_filter('fetchables', verify=False)
 
     def feed(self, full_pkgset, reporter):
         # sort it by repo.
