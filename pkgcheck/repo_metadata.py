@@ -4,7 +4,6 @@
 from itertools import ifilterfalse, chain, groupby
 from operator import attrgetter, itemgetter
 
-from pkgcore.fetch import fetchable
 from snakeoil import mappings
 from snakeoil.demandload import demandload
 
@@ -145,7 +144,7 @@ class UnusedMirrorsCheck(base.Template):
     def feed(self, pkg, reporter):
         if self.mirrors:
             mirrors = []
-            for f in self.iuse_filter((fetchable,), pkg, pkg.fetchables, reporter):
+            for f in self.iuse_filter((fetch.fetchable,), pkg, pkg.fetchables, reporter):
                 for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
                     mirrors.append(m[0].mirror_name)
             self.mirrors.difference_update(mirrors)
