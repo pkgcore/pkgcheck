@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 import argparse
+from itertools import chain
 
 from pkgcore.plugin import get_plugins, get_plugin
 from pkgcore.util import commandline, parserestrict
@@ -71,6 +72,9 @@ check_options.add_argument(
     '-C', '--checkset', metavar='CHECKSET', action=commandline.StoreConfigObject,
     config_type='pkgcheck_checkset',
     help='preconfigured set of checks to run')
+check_options.add_argument(
+    '-k', '--keywords', metavar='KEYWORD', action='extend_comma_toggle', dest='selected_keywords',
+    help='limit keywords to scan for (comma-separated list)')
 
 
 all_addons = set()
@@ -97,6 +101,10 @@ def check_args(parser, namespace):
     if any((namespace.list_keywords, namespace.list_checks, namespace.list_reporters)):
         # no need to check any other args
         return
+
+    namespace.keywords = sorted(unstable_unique(chain.from_iterable(
+        check.known_results for check in namespace.checks)),
+        key=lambda x: x.__name__)
 
     cwd = abspath(os.getcwd())
     if namespace.suite is None:
@@ -246,6 +254,19 @@ def check_args(parser, namespace):
         namespace.checks = list(namespace.checkset.filter(namespace.checks))
 
     disabled_checks, enabled_checks = ((), ())
+    disabled_keywords, enabled_keywords = ((), ())
+
+    if namespace.selected_keywords is not None:
+        disabled_keywords, enabled_keywords = namespace.selected_keywords
+
+    if enabled_keywords:
+        whitelist = base.Whitelist(enabled_keywords)
+        namespace.keywords = list(whitelist.filter(namespace.keywords))
+
+    if disabled_keywords:
+        blacklist = base.Blacklist(disabled_keywords)
+        namespace.keywords = list(blacklist.filter(namespace.keywords))
+
     if namespace.selected_checks is not None:
         disabled_checks, enabled_checks = namespace.selected_checks
 
@@ -449,6 +470,7 @@ def main(options, out, err):
 
     try:
         reporter = options.reporter(out)
+        reporter.keywords = options.keywords
     except errors.ReporterInitError as e:
         err.write(
             err.fg('red'), err.bold, '!!! ', err.reset,

@@ -216,6 +216,11 @@ class Warning(Result):
 
 class Reporter(object):
 
+    keywords = ()
+
+    def skip_report(self, result):
+        return result.__class__ not in self.keywords
+
     def add_report(self, result):
         raise NotImplementedError(self.add_report)
 
