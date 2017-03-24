@@ -66,8 +66,8 @@ list_options.add_argument(
 
 check_options = argparser.add_argument_group('check selection')
 check_options.add_argument(
-    '-c', '--checks', action='extend_comma_toggle', dest='selected_checks',
-    help='limit checks to regex or package/class matching')
+    '-c', '--checks', metavar='CHECK', action='extend_comma_toggle', dest='selected_checks',
+    help='limit checks to regex or package/class matching (comma-separated list)')
 check_options.add_argument(
     '-C', '--checkset', metavar='CHECKSET', action=commandline.StoreConfigObject,
     config_type='pkgcheck_checkset',
