@@ -269,6 +269,12 @@ def check_args(parser, namespace):
 
     if namespace.selected_checks is not None:
         disabled_checks, enabled_checks = namespace.selected_checks
+    elif namespace.selected_keywords is not None:
+        # enable checks based on enabled keyword -> check mapping
+        enabled_checks = []
+        for check in unstable_unique(get_plugins('check', plugins)):
+            if (set(namespace.keywords) & set(check.known_results)):
+                enabled_checks.append(check.__name__)
 
     if enabled_checks:
         whitelist = base.Whitelist(enabled_checks)
