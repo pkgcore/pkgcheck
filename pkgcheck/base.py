@@ -218,11 +218,9 @@ class Reporter(object):
 
     keywords = ()
 
-    def _skip_report(self, result):
-        return result.__class__ not in self.keywords
-
     def add_report(self, result):
-        if self._skip_report(result):
+        # skip check keywords that are disabled
+        if result.__class__ not in self.keywords:
             return
         self.process_report(result)
 
