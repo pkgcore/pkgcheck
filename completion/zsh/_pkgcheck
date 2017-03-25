@@ -1,6 +1,6 @@
 #compdef pkgcheck
 
-SHELL_LIB=$(python -c 'import pkgcore._const as const; print(const.LIBDIR_PATH)')/shell/zsh/pkgcore.zsh
+SHELL_LIB=$(python -c 'from pkgcore import const; print(const.LIBDIR_PATH)')/shell/zsh/pkgcore.zsh
 source "${SHELL_LIB}" || print "$0: failed to load '${SHELL_LIB}'" >&2
 unset SHELL_LIB
 
