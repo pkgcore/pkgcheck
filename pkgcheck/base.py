@@ -218,11 +218,16 @@ class Reporter(object):
 
     keywords = ()
 
-    def skip_report(self, result):
+    def _skip_report(self, result):
         return result.__class__ not in self.keywords
 
     def add_report(self, result):
-        raise NotImplementedError(self.add_report)
+        if self._skip_report(result):
+            return
+        self.process_report(result)
+
+    def process_report(self, result):
+        raise NotImplementedError(self.process_report)
 
     def start(self):
         pass
