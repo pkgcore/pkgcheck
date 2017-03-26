@@ -108,12 +108,13 @@ class QueryCacheAddon(base.Template):
 class profile_data(object):
 
     def __init__(self, profile_name, key, provides, vfilter,
-                 iuse_effective, masked_use, forced_use, lookup_cache, insoluble):
+                 iuse_effective, use, masked_use, forced_use, lookup_cache, insoluble):
         self.key = key
         self.name = profile_name
         self.provides_repo = provides
         self.provides_has_match = getattr(provides, 'has_match', provides.match)
         self.iuse_effective = iuse_effective
+        self.use = use
         self.masked_use = masked_use
         self.forced_use = forced_use
         self.cache = lookup_cache
@@ -305,6 +306,10 @@ class ProfileAddon(base.Addon):
                 stable_cache = set()
                 unstable_insoluble = ProtectedSet(self.global_insoluble)
 
+                # finalize enabled USE flags
+                use = set()
+                misc.incremental_expansion(use, profile.use, 'while expanding USE')
+
                 # few notes.  for filter, ensure keywords is last, on the
                 # offchance a non-metadata based restrict foregos having to
                 # access the metadata.
@@ -317,6 +322,7 @@ class ProfileAddon(base.Addon):
                     profile.provides_repo,
                     packages.AndRestriction(vfilter, stable_r),
                     profile.iuse_effective,
+                    use,
                     stable_immutable_flags, stable_enabled_flags,
                     stable_cache,
                     ProtectedSet(unstable_insoluble)))
@@ -326,6 +332,7 @@ class ProfileAddon(base.Addon):
                     profile.provides_repo,
                     packages.AndRestriction(vfilter, unstable_r),
                     profile.iuse_effective,
+                    use,
                     immutable_flags, enabled_flags,
                     ProtectedSet(stable_cache),
                     unstable_insoluble))
