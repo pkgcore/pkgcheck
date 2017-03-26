@@ -13,6 +13,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from pkgcheck import base, addons
+from pkgcheck.visibility import FakeConfigurable
 
 demandload('logging')
 
@@ -110,16 +111,35 @@ class IUSEMetadataReport(base.Template):
                         pluralism(iuse), ", ".join(iuse))))
 
 
+class RequiredUseDefaults(base.Warning):
+    """Default USE flag settings don't satisfy REQUIRED_USE."""
+
+    __slots__ = ("category", "package", "version", "profile", "arch", "required_use")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, required_use, arch, profile):
+        super(RequiredUseDefaults, self).__init__()
+        self._store_cpv(pkg)
+        self.required_use = required_use
+        self.arch = arch.lstrip("~")
+        self.profile = profile
+
+    @property
+    def short_desc(self):
+        return 'arch %s, profile %s: %s' % (self.arch, self.profile, self.required_use)
+
+
 class RequiredUSEMetadataReport(base.Template):
     """REQUIRED_USE validity checks."""
 
     feed_type = base.versioned_feed
-    required_addons = (addons.UseAddon,)
-    known_results = (MetadataError,) + addons.UseAddon.known_results
+    required_addons = (addons.UseAddon, addons.ProfileAddon)
+    known_results = (MetadataError, RequiredUseDefaults) + addons.UseAddon.known_results
 
-    def __init__(self, options, iuse_handler):
+    def __init__(self, options, iuse_handler, profiles):
         base.Template.__init__(self, options)
         self.iuse_filter = iuse_handler.get_filter('required_use')
+        self.profiles = profiles
 
     def feed(self, pkg, reporter):
         # only run the check for EAPI 4 and above
@@ -142,6 +162,12 @@ class RequiredUSEMetadataReport(base.Template):
             reporter.add_report(MetadataError(
                 pkg, 'required_use', "exception- %s" % e))
             del e
+
+        for profile in self.profiles:
+            src = FakeConfigurable(pkg, profile)
+            for node in pkg.required_use.evaluate_depset(src.use):
+                if not node.match(src.use):
+                    reporter.add_report(RequiredUseDefaults(pkg, node, profile.key, profile.name))
 
 
 class UnusedLocalFlags(base.Warning):

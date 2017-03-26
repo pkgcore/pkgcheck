@@ -101,12 +101,12 @@ class Test_profile_data(TestCase):
                       required_forced, cpv="dev-util/diffball-0.1",
                       key_override=None, data_override=None):
         if key_override is None:
-            key = profile.arch
+            key = profile.key
         profile_data = addons.profile_data(
             "test-profile", key_override,
             profile.provides_repo,
             packages.AlwaysFalse, profile.iuse_effective,
-            profile.masked_use, profile.forced_use, {}, set())
+            profile.use, profile.masked_use, profile.forced_use, {}, set())
         pkg = FakePkg(cpv, data=data_override)
         immutable, enabled = profile_data.identify_use(pkg, set(known_flags))
         self.assertEqual(immutable, set(required_immutable))

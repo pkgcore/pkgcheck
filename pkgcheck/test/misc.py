@@ -121,7 +121,7 @@ class FakeProfile(object):
 
     def __init__(self, masked_use={}, stable_masked_use={}, forced_use={},
                  stable_forced_use={}, provides={}, iuse_effective=[],
-                 masks=[], unmasks=[], arch='x86', name='none'):
+                 use=[], masks=[], unmasks=[], arch='x86', name='none'):
         self.provides_repo = SimpleTree(provides)
 
         self.masked_use = ChunkedDataDict()
@@ -150,6 +150,7 @@ class FakeProfile(object):
 
         self.masks = tuple(map(atom, masks))
         self.unmasks = tuple(map(atom, unmasks))
-        self.iuse_effective = tuple(iuse_effective)
-        self.arch = arch
+        self.iuse_effective = set(iuse_effective)
+        self.use = set(use)
+        self.key = arch
         self.name = name

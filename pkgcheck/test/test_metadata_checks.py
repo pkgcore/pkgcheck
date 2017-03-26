@@ -125,16 +125,18 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         options = self.get_options()
         profiles = [misc.FakeProfile()]
         check = metadata_checks.RequiredUSEMetadataReport(
-            options, addons.UseAddon(options, profiles))
+            options, addons.UseAddon(options, profiles), profiles)
         check.start()
         self.assertNoReport(check, self.mk_pkg(iuse="foo bar"))
-        self.assertNoReport(check, self.mk_pkg(iuse="foo", required_use="foo"))
+        self.assertNoReport(check, self.mk_pkg(iuse="+foo", required_use="foo"))
         self.assertNoReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( bar )"))
         r = self.assertReport(check, self.mk_pkg(required_use="foo? ( blah )"))
         self.assertEqual(r.flags, ("blah", "foo"))
-        r = self.assertReport(check, self.mk_pkg(iuse="foo", required_use="bar"))
-        self.assertEqual(r.attr, "required_use")
-        self.assertEqual(r.flags, ("bar",))
+        r = self.assertReports(check, self.mk_pkg(iuse="foo", required_use="bar"))
+        self.assertIsInstance(r[0], addons.UnstatedIUSE)
+        self.assertEqual(r[0].attr, "required_use")
+        self.assertEqual(r[0].flags, ("bar",))
+        self.assertIsInstance(r[1], metadata_checks.RequiredUseDefaults)
         r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
         self.assertEqual(r.flags, ("blah",))
 
