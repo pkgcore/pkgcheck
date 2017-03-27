@@ -379,6 +379,13 @@ class ProfileAddon(base.Addon):
         """Return profiles matching a given keyword."""
         return self.profile_filters[key]
 
+    def get(self, key, default=None):
+        """Return profiles matching a given keyword with a fallback if none exist."""
+        try:
+            return self.profile_filters[key]
+        except KeyError:
+            return default
+
     def __iter__(self):
         """Iterate over all profile data objects."""
         return chain.from_iterable(self.profile_filters.itervalues())

@@ -165,10 +165,17 @@ class RequiredUSEMetadataReport(base.Template):
                 pkg, 'required_use', "exception- %s" % e))
             del e
 
-        # check USE defaults (pkg IUSE defaults + profile USE) against
-        # REQUIRED_USE for all profiles matching a package's KEYWORDS
+        # check both stable and unstable profiles for all pkg KEYWORDS
+        keywords = []
         for keyword in pkg.keywords:
-            for profile in self.profiles[keyword]:
+            keyword = keyword.lstrip('~')
+            keywords.append(keyword)
+            keywords.append('~' + keyword)
+
+        # check USE defaults (pkg IUSE defaults + profile USE) against
+        # REQUIRED_USE for all profiles matching a pkg's KEYWORDS
+        for keyword in keywords:
+            for profile in self.profiles.get(keyword, ()):
                 src = FakeConfigurable(pkg, profile)
                 for node in pkg.required_use.evaluate_depset(src.use):
                     if not node.match(src.use):
