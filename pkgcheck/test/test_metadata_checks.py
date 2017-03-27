@@ -116,7 +116,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
     def setUp(self):
         super(TestRequiredUSEMetadataReport, self).setUp()
         options = self.get_options()
-        profiles = {'x86': [misc.FakeProfile()]}
+        profiles = {'x86': [misc.FakeProfile(name='default/linux/x86')]}
         self.check = metadata_checks.RequiredUSEMetadataReport(
             options, addons.UseAddon(options, profiles['x86']), profiles)
         self.check.start()
@@ -160,31 +160,50 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         # unsatisfied REQUIRED_USE
         r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="bar"))
         self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
+        self.assertEqual(r.arch, 'x86')
+        self.assertEqual(r.profile, 'default/linux/x86')
+        self.assertEqual(r.use, frozenset())
+        self.assertEqual(str(r.required_use), 'contains [bar]')
 
         # at-most-one-of
         self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
+        self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="+foo bar", required_use="?? ( foo bar )"))
         self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo +bar", required_use="?? ( foo bar )"))
-        self.assertReport(self.check, self.mk_pkg(eapi="5", iuse="+foo +bar", required_use="?? ( foo bar )"))
+        r = self.assertReport(self.check, self.mk_pkg(eapi="5", iuse="+foo +bar", required_use="?? ( foo bar )"))
+        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
+        self.assertEqual(r.use, frozenset(['foo', 'bar']))
+        self.assertEqual(str(r.required_use), '?? ( contains [foo] contains [bar] )')
 
         # exactly-one-of
         self.assertNoReport(self.check, self.mk_pkg(iuse="+foo bar", required_use="^^ ( foo bar )"))
         self.assertNoReport(self.check, self.mk_pkg(iuse="foo +bar", required_use="^^ ( foo bar )"))
         self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="^^ ( foo bar )"))
-        self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar", required_use="^^ ( foo bar )"))
+        r = self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar", required_use="^^ ( foo bar )"))
+        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
+        self.assertEqual(r.use, frozenset(['foo', 'bar']))
+        self.assertEqual(str(r.required_use), '^^ ( contains [foo] contains [bar] )')
 
         # all-of
         self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( bar baz )"))
         self.assertNoReport(self.check, self.mk_pkg(iuse="+foo +bar +baz", required_use="foo? ( bar baz )"))
         self.assertReports(self.check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( bar baz )"))
         self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar baz", required_use="foo? ( bar baz )"))
-        self.assertReport(self.check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( bar baz )"))
+        r = self.assertReport(self.check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( bar baz )"))
+        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
+        self.assertEqual(r.use, frozenset(['foo', 'baz']))
+        # TODO: fix this output to show both required USE flags
+        self.assertEqual(str(r.required_use), 'contains [bar]')
 
         # any-of
         self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( || ( bar baz ) )"))
         self.assertNoReport(self.check, self.mk_pkg(iuse="+foo +bar baz", required_use="foo? ( || ( bar baz ) )"))
         self.assertNoReport(self.check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( || ( bar baz ) )"))
         self.assertNoReport(self.check, self.mk_pkg(iuse="+foo +bar +baz", required_use="foo? ( || ( bar baz ) )"))
-        self.assertReport(self.check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( || ( bar baz ) )"))
+        r = self.assertReport(self.check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( || ( bar baz ) )"))
+        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
+        self.assertEqual(r.use, frozenset(['foo']))
+        self.assertEqual(str(r.required_use), '( contains [bar] || contains [baz] )')
+
 
 def use_based():
     # hidden to keep the test runner from finding it.
