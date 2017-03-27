@@ -31,11 +31,11 @@ local curcontext=$curcontext state state_descr line ret=1
 typeset -a options arches profiles plugin_options
 
 options=(
-  "--reporter[use a non-default reporter (defined in pkgcore's config]"
   '--list-keywords[print available warning/error keywords and exit]'
   '--list-checks[print what checks are available to run and exit]'
   '--list-reporters[print known reporters and exit]'
   {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_repos'
+  {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter (defined in pkgcore's config)]"
   {'(--suite)-s','(-s)--suite'}'[specify the configuration suite to use]'
 )
 

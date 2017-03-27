@@ -51,7 +51,7 @@ main_options.add_argument(
     config_type='pkgcheck_suite',
     help='specify the configuration suite to use')
 main_options.add_argument(
-    '--reporter', action='store', default=None,
+    '-R', '--reporter', action='store', default=None,
     help="use a non-default reporter (defined in pkgcore's config)")
 list_options = main_options.add_mutually_exclusive_group()
 list_options.add_argument(
