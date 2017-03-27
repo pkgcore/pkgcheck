@@ -375,6 +375,10 @@ class ProfileAddon(base.Addon):
                 l.append(l2)
         return l
 
+    def __getitem__(self, key):
+        """Return profiles matching a given keyword."""
+        return self.profile_filters[key]
+
     def __iter__(self):
         """Iterate over all profile data objects."""
         return chain.from_iterable(self.profile_filters.itervalues())
