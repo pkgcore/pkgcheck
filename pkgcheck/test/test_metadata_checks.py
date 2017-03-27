@@ -113,32 +113,42 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
     check_kls = metadata_checks.RequiredUSEMetadataReport
 
-    def mk_pkg(self, eapi="4", iuse="", required_use=""):
+    def mk_pkg(self, eapi="4", iuse="", required_use="", keywords="x86"):
         return FakePkg(
             "dev-util/diffball-0.7.1",
             eapi=eapi,
             iuse=iuse.split(),
-            data={"REQUIRED_USE": required_use})
+            data={"REQUIRED_USE": required_use, "KEYWORDS": keywords})
 
     def test_it(self):
         # verify behaviour when use.* data isn't available
         options = self.get_options()
-        profiles = [misc.FakeProfile()]
+        profiles = {'x86': [misc.FakeProfile()]}
         check = metadata_checks.RequiredUSEMetadataReport(
-            options, addons.UseAddon(options, profiles), profiles)
+            options, addons.UseAddon(options, profiles['x86']), profiles)
         check.start()
+
+        # simple, valid IUSE/REQUIRED_USE usage
         self.assertNoReport(check, self.mk_pkg(iuse="foo bar"))
         self.assertNoReport(check, self.mk_pkg(iuse="+foo", required_use="foo"))
         self.assertNoReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( bar )"))
+
+        # USE flags in REQUIRED_USE aren't in IUSE_EFFECTIVE
         r = self.assertReport(check, self.mk_pkg(required_use="foo? ( blah )"))
+        self.assertIsInstance(r, addons.UnstatedIUSE)
         self.assertEqual(r.flags, ("blah", "foo"))
+        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
+        self.assertIsInstance(r, addons.UnstatedIUSE)
+        self.assertEqual(r.flags, ("blah",))
+
+        # REQUIRED_USE isn't satisfied by pkg USE defaults
         r = self.assertReports(check, self.mk_pkg(iuse="foo", required_use="bar"))
         self.assertIsInstance(r[0], addons.UnstatedIUSE)
         self.assertEqual(r[0].attr, "required_use")
         self.assertEqual(r[0].flags, ("bar",))
         self.assertIsInstance(r[1], metadata_checks.RequiredUseDefaults)
-        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
-        self.assertEqual(r.flags, ("blah",))
+        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="bar"))
+        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
 
         # bad syntax
         r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="| ( foo bar )"))

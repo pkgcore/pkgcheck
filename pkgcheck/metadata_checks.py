@@ -165,11 +165,15 @@ class RequiredUSEMetadataReport(base.Template):
                 pkg, 'required_use', "exception- %s" % e))
             del e
 
-        for profile in self.profiles:
-            src = FakeConfigurable(pkg, profile)
-            for node in pkg.required_use.evaluate_depset(src.use):
-                if not node.match(src.use):
-                    reporter.add_report(RequiredUseDefaults(pkg, node, profile.key, profile.name))
+        # check USE defaults (pkg IUSE defaults + profile USE) against
+        # REQUIRED_USE for all profiles matching a package's KEYWORDS
+        for keyword in pkg.keywords:
+            for profile in self.profiles[keyword]:
+                src = FakeConfigurable(pkg, profile)
+                for node in pkg.required_use.evaluate_depset(src.use):
+                    if not node.match(src.use):
+                        reporter.add_report(RequiredUseDefaults(
+                            pkg, node, src.use, profile.key, profile.name))
 
 
 class UnusedLocalFlags(base.Warning):
