@@ -127,7 +127,7 @@ class RequiredUseDefaults(base.Warning):
 
     @property
     def short_desc(self):
-        return 'arch %s, profile %s, default USE: %s -- failed REQUIRED_USE: %s' % (
+        return 'arch: %s, profile: %s, default USE: [%s] -- failed REQUIRED_USE: %s' % (
             self.arch, self.profile, ', '.join(sorted(self.use)), self.required_use)
 
 
