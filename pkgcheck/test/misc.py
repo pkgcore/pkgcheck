@@ -7,9 +7,9 @@ from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.misc import ChunkedDataDict, chunked_data
 from pkgcore.repository.util import SimpleTree
-from pkgcore.test import TestCase
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import split_negations
+from snakeoil.test import TestCase
 
 from pkgcheck import base
 

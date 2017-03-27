@@ -9,11 +9,10 @@ import sys
 
 from pkgcore.ebuild import repo_objs
 from pkgcore.restrictions import packages
-from pkgcore.test import TestCase
 from pkgcore.util import commandline
 from snakeoil.fileutils import write_file
 from snakeoil.osutils import pjoin, ensure_dirs
-from snakeoil.test import mixins
+from snakeoil.test import mixins, TestCase
 
 from pkgcheck import addons, base
 from pkgcheck.test.misc import FakePkg, FakeProfile, Options
