@@ -113,6 +113,14 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
     check_kls = metadata_checks.RequiredUSEMetadataReport
 
+    def setUp(self):
+        super(TestRequiredUSEMetadataReport, self).setUp()
+        options = self.get_options()
+        profiles = {'x86': [misc.FakeProfile()]}
+        self.check = metadata_checks.RequiredUSEMetadataReport(
+            options, addons.UseAddon(options, profiles['x86']), profiles)
+        self.check.start()
+
     def mk_pkg(self, eapi="4", iuse="", required_use="", keywords="x86"):
         return FakePkg(
             "dev-util/diffball-0.7.1",
@@ -120,50 +128,63 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
             iuse=iuse.split(),
             data={"REQUIRED_USE": required_use, "KEYWORDS": keywords})
 
-    def test_it(self):
-        # verify behaviour when use.* data isn't available
-        options = self.get_options()
-        profiles = {'x86': [misc.FakeProfile()]}
-        check = metadata_checks.RequiredUSEMetadataReport(
-            options, addons.UseAddon(options, profiles['x86']), profiles)
-        check.start()
-
-        # simple, valid IUSE/REQUIRED_USE usage
-        self.assertNoReport(check, self.mk_pkg(iuse="foo bar"))
-        self.assertNoReport(check, self.mk_pkg(iuse="+foo", required_use="foo"))
-        self.assertNoReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( bar )"))
-
-        # USE flags in REQUIRED_USE aren't in IUSE_EFFECTIVE
-        r = self.assertReport(check, self.mk_pkg(required_use="foo? ( blah )"))
-        self.assertIsInstance(r, addons.UnstatedIUSE)
-        self.assertEqual(r.flags, ("blah", "foo"))
-        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
-        self.assertIsInstance(r, addons.UnstatedIUSE)
-        self.assertEqual(r.flags, ("blah",))
-
-        # REQUIRED_USE isn't satisfied by pkg USE defaults
-        r = self.assertReports(check, self.mk_pkg(iuse="foo", required_use="bar"))
-        self.assertIsInstance(r[0], addons.UnstatedIUSE)
-        self.assertEqual(r[0].attr, "required_use")
-        self.assertEqual(r[0].flags, ("bar",))
-        self.assertIsInstance(r[1], metadata_checks.RequiredUseDefaults)
-        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="bar"))
-        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
-
+    def test_required_use(self):
         # bad syntax
-        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="| ( foo bar )"))
+        r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="| ( foo bar )"))
         self.assertIsInstance(r, metadata_checks.MetadataError)
 
         # useless constructs
-        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( )"))
+        r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="foo? ( )"))
         self.assertIsInstance(r, metadata_checks.MetadataError)
-        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="|| ( )"))
+        r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="|| ( )"))
         self.assertIsInstance(r, metadata_checks.MetadataError)
 
         # only supported in >= EAPI 5
-        self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="?? ( foo bar )"))
-        self.assertNoReport(check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
+        self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="?? ( foo bar )"))
+        self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
 
+    def test_required_use_unstated_iuse(self):
+        r = self.assertReport(self.check, self.mk_pkg(required_use="foo? ( blah )"))
+        self.assertIsInstance(r, addons.UnstatedIUSE)
+        self.assertEqual(r.flags, ("blah", "foo"))
+        r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
+        self.assertIsInstance(r, addons.UnstatedIUSE)
+        self.assertEqual(r.flags, ("blah",))
+
+    def test_required_use_defaults(self):
+        # simple, valid IUSE/REQUIRED_USE usage
+        self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar"))
+        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo", required_use="foo"))
+        self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar", required_use="foo? ( bar )"))
+
+        # unsatisfied REQUIRED_USE
+        r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="bar"))
+        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
+
+        # at-most-one-of
+        self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
+        self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo +bar", required_use="?? ( foo bar )"))
+        self.assertReport(self.check, self.mk_pkg(eapi="5", iuse="+foo +bar", required_use="?? ( foo bar )"))
+
+        # exactly-one-of
+        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo bar", required_use="^^ ( foo bar )"))
+        self.assertNoReport(self.check, self.mk_pkg(iuse="foo +bar", required_use="^^ ( foo bar )"))
+        self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="^^ ( foo bar )"))
+        self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar", required_use="^^ ( foo bar )"))
+
+        # all-of
+        self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( bar baz )"))
+        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo +bar +baz", required_use="foo? ( bar baz )"))
+        self.assertReports(self.check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( bar baz )"))
+        self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar baz", required_use="foo? ( bar baz )"))
+        self.assertReport(self.check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( bar baz )"))
+
+        # any-of
+        self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( || ( bar baz ) )"))
+        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo +bar baz", required_use="foo? ( || ( bar baz ) )"))
+        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( || ( bar baz ) )"))
+        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo +bar +baz", required_use="foo? ( || ( bar baz ) )"))
+        self.assertReport(self.check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( || ( bar baz ) )"))
 
 def use_based():
     # hidden to keep the test runner from finding it.
