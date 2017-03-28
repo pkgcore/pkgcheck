@@ -1,7 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-from itertools import ifilter
+from collections import defaultdict
+from itertools import chain
 from operator import attrgetter
 
 from pkgcore.ebuild.atom import MalformedAtom, atom
@@ -117,18 +118,22 @@ class RequiredUseDefaults(base.Warning):
     __slots__ = ("category", "package", "version", "profile", "arch", "required_use", "use")
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, required_use, use, arch, profile):
+    def __init__(self, pkg, required_use, use=None, arch=None, profile=None):
         super(RequiredUseDefaults, self).__init__()
         self._store_cpv(pkg)
         self.required_use = required_use
         self.use = use
-        self.arch = arch.lstrip("~")
+        self.arch = arch.lstrip("~") if arch is not None else arch
         self.profile = profile
 
     @property
     def short_desc(self):
-        return 'arch: %s, profile: %s, default USE: [%s] -- failed REQUIRED_USE: %s' % (
-            self.arch, self.profile, ', '.join(sorted(self.use)), self.required_use)
+        if self.use is None:
+            # collapsed version
+            return 'failed REQUIRED_USE: %s' % (self.required_use,)
+        else:
+            return 'arch: %s, profile: %s, default USE: [%s] -- failed REQUIRED_USE: %s' % (
+                self.arch, self.profile, ', '.join(sorted(self.use)), self.required_use)
 
 
 class RequiredUSEMetadataReport(base.Template):
@@ -174,13 +179,24 @@ class RequiredUSEMetadataReport(base.Template):
 
         # check USE defaults (pkg IUSE defaults + profile USE) against
         # REQUIRED_USE for all profiles matching a pkg's KEYWORDS
+        failures = defaultdict(list)
         for keyword in keywords:
             for profile in self.profiles.get(keyword, ()):
                 src = FakeConfigurable(pkg, profile)
                 for node in pkg.required_use.evaluate_depset(src.use):
                     if not node.match(src.use):
-                        reporter.add_report(RequiredUseDefaults(
-                            pkg, node, src.use, profile.key, profile.name))
+                        failures[node].append((node, src.use, profile.key, profile.name))
+
+        if self.options.verbose:
+            # report all failures with profile info in verbose mode
+            for node, use, arch, profile in chain.from_iterable(failures.itervalues()):
+                reporter.add_report(RequiredUseDefaults(
+                    pkg, node, use, arch, profile))
+        else:
+            # only report one failure per REQUIRED_USE node in regular mode
+            for node in failures.iterkeys():
+                node, _use, _arch, _profile = failures[node][0]
+                reporter.add_report(RequiredUseDefaults(pkg, node))
 
 
 class UnusedLocalFlags(base.Warning):
