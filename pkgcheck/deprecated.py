@@ -1,5 +1,4 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
-# License: BSD/GPL2
 
 from snakeoil.mappings import ImmutableDict
 

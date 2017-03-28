@@ -1,5 +1,4 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
-# License: BSD/GPL2
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV

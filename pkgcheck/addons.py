@@ -1,6 +1,5 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: BSD/GPL2
 
 """Addon functionality shared by multiple checkers."""
 

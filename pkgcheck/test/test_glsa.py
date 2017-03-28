@@ -1,5 +1,4 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: BSD/GPL2
 
 from pkgcore.test.pkgsets.test_glsa import mk_glsa
 from snakeoil.osutils import pjoin

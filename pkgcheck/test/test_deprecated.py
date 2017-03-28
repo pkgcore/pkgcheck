@@ -1,5 +1,4 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: BSD/GPL2
 
 from pkgcheck.test import misc
 from pkgcheck.deprecated import DeprecatedEclassReport as dep_eclass

@@ -1,5 +1,4 @@
 # Copyright: 2007 Markus Ullmann <jokey@gentoo.org>
-# License: BSD/GPL2
 
 from pkgcheck.test import misc
 from pkgcheck.codingstyle import BadInsIntoCheck

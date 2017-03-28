@@ -1,6 +1,5 @@
 # Copyright: 2015-2017 Tim Harder <radhermit@gmail.com>
 # Copyright: 2008-2011 Brian Harring <ferringb@gmail.com>
-# License: BSD/GPL2
 
 """
 A collection of distutils extensions adding things like automatic 2to3

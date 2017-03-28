@@ -1,5 +1,4 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: BSD/GPL2
 
 from itertools import ifilterfalse, chain, groupby
 from operator import attrgetter, itemgetter

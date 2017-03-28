@@ -1,6 +1,5 @@
 # Copyright: 2006 Markus Ullmann <jokey@gentoo.org>
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
 
 from snakeoil.demandload import demand_compile_regexp
 
