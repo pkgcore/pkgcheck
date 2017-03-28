@@ -2,7 +2,6 @@
 # License: BSD/GPL2
 
 from collections import defaultdict
-from itertools import chain
 from operator import attrgetter
 
 from pkgcore.ebuild.atom import MalformedAtom, atom
@@ -185,17 +184,17 @@ class RequiredUSEMetadataReport(base.Template):
                 src = FakeConfigurable(pkg, profile)
                 for node in pkg.required_use.evaluate_depset(src.use):
                     if not node.match(src.use):
-                        failures[node].append((node, src.use, profile.key, profile.name))
+                        failures[node].append((src.use, profile.key, profile.name))
 
         if self.options.verbose:
             # report all failures with profile info in verbose mode
-            for node, use, arch, profile in chain.from_iterable(failures.itervalues()):
-                reporter.add_report(RequiredUseDefaults(
-                    pkg, node, use, arch, profile))
+            for node, profile_info in failures.iteritems():
+                for use, arch, profile in profile_info:
+                    reporter.add_report(RequiredUseDefaults(
+                        pkg, node, use, arch, profile))
         else:
             # only report one failure per REQUIRED_USE node in regular mode
             for node in failures.iterkeys():
-                node, _use, _arch, _profile = failures[node][0]
                 reporter.add_report(RequiredUseDefaults(pkg, node))
 
 
