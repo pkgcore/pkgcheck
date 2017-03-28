@@ -20,7 +20,7 @@ with io.open('README.rst', encoding='utf-8') as f:
 setup(
     name='pkgcheck',
     version=pkgdist.version(),
-    license='BSD/GPL2',
+    license='BSD',
     author='Brian Harring, Tim Harder',
     author_email='pkgcore-dev@googlegroups.com',
     description='pkgcore-based QA utility',

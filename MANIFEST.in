@@ -1,4 +1,4 @@
-include AUTHORS BSD GPL2 LICENSE TODO *.py *.rst
+include AUTHORS LICENSE *.py *.rst
 include tox.ini .coveragerc
 recursive-include bin *
 global-exclude *.pyc *.pyo __pycache__
