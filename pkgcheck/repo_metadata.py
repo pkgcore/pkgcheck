@@ -1,5 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-
 from itertools import ifilterfalse, chain, groupby
 from operator import attrgetter, itemgetter
 

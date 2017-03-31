@@ -1,5 +1,3 @@
-# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
-
 from pkgcore.ebuild.atom import atom
 
 from snakeoil import klass

@@ -1,5 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-
 import codecs
 from collections import deque
 import os

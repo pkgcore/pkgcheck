@@ -1,5 +1,3 @@
-# Copyright: 2007 Markus Ullmann <jokey@gentoo.org>
-
 """check for some bad coding styles like insinto's, old variables etc"""
 
 from snakeoil.demandload import demandload

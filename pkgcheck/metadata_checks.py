@@ -1,5 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-
 from collections import defaultdict
 from operator import attrgetter
 

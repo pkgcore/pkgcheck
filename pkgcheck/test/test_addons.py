@@ -1,5 +1,3 @@
-# Copyright: 2007 Brian Harring <ferringb@gmail.com>
-
 import argparse
 import itertools
 import os

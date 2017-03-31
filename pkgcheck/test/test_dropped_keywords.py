@@ -1,5 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-
 from itertools import chain
 
 from pkgcheck.test import misc

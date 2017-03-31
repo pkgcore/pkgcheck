@@ -1,5 +1,3 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-
 """Default checks."""
 
 # Please keep the imports and plugins sorted.

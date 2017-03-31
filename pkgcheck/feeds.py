@@ -1,5 +1,3 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-
 """Feed classes: pass groups of packages to other addons."""
 
 from operator import attrgetter

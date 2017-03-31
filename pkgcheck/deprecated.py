@@ -1,5 +1,3 @@
-# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
-
 from snakeoil.mappings import ImmutableDict
 
 from pkgcheck.base import Template, versioned_feed, Warning

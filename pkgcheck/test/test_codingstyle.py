@@ -1,5 +1,3 @@
-# Copyright: 2007 Markus Ullmann <jokey@gentoo.org>
-
 from pkgcheck.test import misc
 from pkgcheck.codingstyle import BadInsIntoCheck
 

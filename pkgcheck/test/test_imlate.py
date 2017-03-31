@@ -1,5 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-
 from pkgcheck.test import misc
 from pkgcheck.imlate import ImlateReport
 

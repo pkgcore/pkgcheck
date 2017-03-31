@@ -1,6 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-
 """Basic reporters and reporter factories."""
 
 from pkgcore.config import configurable

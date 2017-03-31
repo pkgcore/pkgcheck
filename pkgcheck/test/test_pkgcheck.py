@@ -1,5 +1,3 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-
 from pkgcore.test.scripts import helpers
 from snakeoil.test import TestCase
 

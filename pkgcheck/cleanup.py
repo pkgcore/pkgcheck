@@ -1,5 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-
 from snakeoil.strings import pluralism
 
 from pkgcheck.base import Template, package_feed, Warning, versioned_feed

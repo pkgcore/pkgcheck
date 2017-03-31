@@ -1,5 +1,3 @@
-# Copyright: 2007 Markus Ullmann <jokey@gentoo.org>
-
 import time
 
 from pkgcheck.stale_unstable import StaleUnstableReport

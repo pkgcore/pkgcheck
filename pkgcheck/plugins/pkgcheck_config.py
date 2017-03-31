@@ -1,5 +1,3 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-
 """Extra default config sections from pkgcheck."""
 
 from pkgcore.config import basics

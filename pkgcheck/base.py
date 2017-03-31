@@ -1,6 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-
 """Core classes and interfaces.
 
 This defines a couple of standard feed types and scopes. Currently

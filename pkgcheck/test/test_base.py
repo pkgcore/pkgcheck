@@ -1,5 +1,3 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-
 from snakeoil.test import TestCase
 
 from pkgcheck import base

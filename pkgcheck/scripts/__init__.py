@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# Copyright: 2015 Tim Harder <radhermit@gmail.com>
 
 """Commandline scripts.
 

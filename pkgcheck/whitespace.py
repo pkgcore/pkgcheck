@@ -1,6 +1,3 @@
-# Copyright: 2006 Markus Ullmann <jokey@gentoo.org>
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-
 from snakeoil.demandload import demand_compile_regexp
 
 from pkgcheck import base

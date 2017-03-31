@@ -1,5 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-
 from pkgcore.test.pkgsets.test_glsa import mk_glsa
 from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import TempDirMixin

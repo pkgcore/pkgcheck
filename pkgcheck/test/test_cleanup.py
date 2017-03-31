@@ -1,5 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-
 from pkgcheck.test import misc
 from pkgcheck.cleanup import RedundantVersionReport as redundant_ver
 

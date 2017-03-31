@@ -1,5 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-
 from pkgcore.restrictions import packages, values
 
 from pkgcheck.addons import ArchesAddon, StableCheckAddon
