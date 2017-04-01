@@ -343,8 +343,8 @@ class ProfileAddon(base.Addon):
             similar = profile_evaluate_dict[key] = []
             for profile in profile_list:
                 for existing in similar:
-                    if existing[0].masked_use == profile.masked_use and \
-                            existing[0].forced_use == profile.forced_use:
+                    if (existing[0].masked_use == profile.masked_use and
+                            existing[0].forced_use == profile.forced_use):
                         existing.append(profile)
                         break
                 else:

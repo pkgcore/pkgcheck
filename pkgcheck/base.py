@@ -363,8 +363,8 @@ class CheckRunner(object):
 
     # The plugger tests use these.
     def __eq__(self, other):
-        return self.__class__ is other.__class__ and \
-            frozenset(self.checks) == frozenset(other.checks)
+        return (self.__class__ is other.__class__ and
+            frozenset(self.checks) == frozenset(other.checks))
 
     def __ne__(self, other):
         return not self == other
@@ -416,8 +416,8 @@ def plug(sinks, transforms, sources, debug=None):
             feed_type = todo.pop()
             reachable.add(feed_type)
             for transform in feed_to_transforms.get(feed_type, ()):
-                if transform.scope <= source.scope and \
-                        transform.dest not in reachable:
+                if (transform.scope <= source.scope and
+                        transform.dest not in reachable):
                     todo.add(transform.dest)
         for feed_type in reachable:
             scope = best_scope.get(feed_type)
@@ -489,9 +489,9 @@ def plug(sinks, transforms, sources, debug=None):
             # No point in growing this further.
             continue
         for transform in transforms:
-            if source.scope >= transform.scope and \
-                    transform.source in visited and \
-                    transform.dest not in visited:
+            if (source.scope >= transform.scope and
+                    transform.source in visited and
+                    transform.dest not in visited):
                 unprocessed.add((
                     visited.union((transform.dest,)), source,
                     trans.union((transform,)), cost + transform.cost))

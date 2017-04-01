@@ -182,8 +182,8 @@ class PkgDirReport(Template):
             if any(True for x in filename if x not in allowed_filename_chars_set):
                 reporter.add_report(Glep31Violation(pkgset[0], filename))
 
-            if filename.endswith(ebuild_ext) or filename in \
-                    ("Manifest", "metadata.xml"):
+            if (filename.endswith(ebuild_ext) or filename in
+                    ("Manifest", "metadata.xml")):
                 if os.stat(pjoin(base, filename)).st_mode & 0111:
                     reporter.add_report(ExecutableFile(pkgset[0], filename))
 
