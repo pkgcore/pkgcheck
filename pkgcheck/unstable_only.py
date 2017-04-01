@@ -1,4 +1,7 @@
+from collections import defaultdict
+
 from pkgcore.restrictions import packages, values
+from snakeoil.strings import pluralism
 
 from pkgcheck.addons import ArchesAddon, StableCheckAddon
 from pkgcheck.base import package_feed, Warning
@@ -7,20 +10,20 @@ from pkgcheck.base import package_feed, Warning
 class UnstableOnly(Warning):
     """package/keywords that are strictly unstable"""
 
-    __slots__ = ("category", "package", "version", "arch")
+    __slots__ = ("category", "package", "versions", "arches")
 
     threshold = package_feed
 
-    def __init__(self, pkgs, arch):
+    def __init__(self, pkgs, arches):
         super(UnstableOnly, self).__init__()
         self._store_cp(pkgs[0])
-        self.arch = arch
-        self.version = tuple(x.fullver for x in pkgs)
+        self.arches = arches
+        self.versions = tuple(x.fullver for x in pkgs)
 
     @property
     def short_desc(self):
-        return "for arch %s, all versions are unstable: [ %s ]" % (
-            self.arch, ', '.join(self.version))
+        return "for arch%s: [ %s ], all versions are unstable: [ %s ]" % (
+            pluralism(self.arches, plural='es'), ', '.join(self.arches), ', '.join(self.versions))
 
 
 class UnstableOnlyReport(StableCheckAddon):
@@ -46,6 +49,7 @@ class UnstableOnlyReport(StableCheckAddon):
 
     def feed(self, pkgset, reporter):
         # stable, then unstable, then file
+        unstable_arches = defaultdict(list)
         for k, v in self.arch_restricts.iteritems():
             stable = unstable = None
             for x in pkgset:
@@ -54,9 +58,13 @@ class UnstableOnlyReport(StableCheckAddon):
                     break
             if stable is not None:
                 continue
-            unstable = [x for x in pkgset if v[1].match(x)]
+            unstable = tuple(x for x in pkgset if v[1].match(x))
             if unstable:
-                reporter.add_report(UnstableOnly(unstable, k))
+                unstable_arches[unstable].append(k)
+
+        # collapse reports by available versions
+        for pkgs in unstable_arches.iterkeys():
+            reporter.add_report(UnstableOnly(pkgs, unstable_arches[pkgs]))
 
     def finish(self, reporter):
         self.arch_restricts.clear()
