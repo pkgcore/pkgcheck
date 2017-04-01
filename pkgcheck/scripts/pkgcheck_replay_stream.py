@@ -48,7 +48,7 @@ class PickleStream(base.Reporter):
 
         :type out: L{snakeoil.formatters.Formatter}.
         """
-        base.Reporter.__init__(self)
+        super(PickleStream, self).__init__()
         self.out = out
         self.dump = pickling.dump
 

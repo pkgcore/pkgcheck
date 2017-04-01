@@ -57,7 +57,7 @@ class LicenseMetadataReport(base.Template):
     required_addons = (addons.UseAddon, addons.ProfileAddon)
 
     def __init__(self, options, iuse_handler, profiles):
-        base.Template.__init__(self, options)
+        super(LicenseMetadataReport, self).__init__(options)
         self.iuse_filter = iuse_handler.get_filter('license')
 
     def feed(self, pkg, reporter):
@@ -96,7 +96,7 @@ class IUSEMetadataReport(base.Template):
     known_results = (MetadataError,) + addons.UseAddon.known_results
 
     def __init__(self, options, iuse_handler):
-        base.Template.__init__(self, options)
+        super(IUSEMetadataReport, self).__init__(options)
         self.iuse_handler = iuse_handler
 
     def feed(self, pkg, reporter):
@@ -140,7 +140,7 @@ class RequiredUSEMetadataReport(base.Template):
     known_results = (MetadataError, RequiredUseDefaults) + addons.UseAddon.known_results
 
     def __init__(self, options, iuse_handler, profiles):
-        base.Template.__init__(self, options)
+        super(RequiredUSEMetadataReport, self).__init__(options)
         self.iuse_filter = iuse_handler.get_filter('required_use')
         self.profiles = profiles
 
@@ -222,7 +222,7 @@ class UnusedLocalFlagsReport(base.Template):
     known_results = (UnusedLocalFlags,) + addons.UseAddon.known_results
 
     def __init__(self, options, use_handler):
-        base.Template.__init__(self, options)
+        super(UnusedLocalFlagsReport, self).__init__(options)
         self.iuse_handler = use_handler
 
     def feed(self, pkgs, reporter):
@@ -262,7 +262,7 @@ class MissingSlotDepReport(base.Template):
     known_results = (MissingSlotDep,) + addons.UseAddon.known_results
 
     def __init__(self, options, iuse_handler):
-        base.Template.__init__(self, options)
+        super(MissingSlotDepReport, self).__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
 
     def feed(self, pkg, reporter):
@@ -292,7 +292,7 @@ class DependencyReport(base.Template):
                   ("depends", "rdepends", "post_rdepends"))
 
     def __init__(self, options, iuse_handler):
-        base.Template.__init__(self, options)
+        super(DependencyReport, self).__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
 
     def feed(self, pkg, reporter):
@@ -420,7 +420,7 @@ class SrcUriReport(base.Template):
     valid_protos = frozenset(["http", "https", "ftp"])
 
     def __init__(self, options, iuse_handler):
-        base.Template.__init__(self, options)
+        super(SrcUriReport, self).__init__(options)
         self.iuse_filter = iuse_handler.get_filter('fetchables')
 
     def feed(self, pkg, reporter):
@@ -557,7 +557,7 @@ class RestrictsReport(base.Template):
         "restricts: %s" % ", ".join(sorted(known_restricts))
 
     def __init__(self, options, iuse_handler):
-        base.Template.__init__(self, options)
+        super(RestrictsReport, self).__init__(options)
         self.iuse_filter = iuse_handler.get_filter('restrict')
 
     def feed(self, pkg, reporter):

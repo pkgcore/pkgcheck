@@ -96,8 +96,7 @@ class TreeVulnerabilitiesReport(base.Template):
         namespace.glsa_location = abspath(glsa_loc)
 
     def __init__(self, options):
-        base.Template.__init__(self, options)
-        self.options = options
+        super(TreeVulnerabilitiesReport, self).__init__(options)
         self.glsa_dir = options.glsa_location
         self.enabled = False
         self.vulns = {}

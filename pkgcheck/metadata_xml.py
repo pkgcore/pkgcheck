@@ -244,7 +244,7 @@ class base_check(base.Template):
             pass
 
     def __init__(self, options):
-        base.Template.__init__(self, options)
+        super(base_check, self).__init__(options)
         self.repo_base = options.target_repo.location
         self.xsd_file = None
         self.verbose = options.verbose

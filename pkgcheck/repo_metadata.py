@@ -43,7 +43,7 @@ class UnusedGlobalFlagsCheck(base.Template):
     known_results = (UnusedGlobalFlags,)
 
     def __init__(self, options, iuse_handler):
-        base.Template.__init__(self, options)
+        super(UnusedGlobalFlagsCheck, self).__init__(options)
         self.flags = None
         self.iuse_handler = iuse_handler
 
@@ -85,7 +85,7 @@ class UnusedLicensesCheck(base.Template):
     known_results = (UnusedLicenses,)
 
     def __init__(self, options):
-        base.Template.__init__(self, options)
+        super(UnusedLicensesCheck, self).__init__(options)
         self.licenses = None
 
     def start(self):
@@ -128,7 +128,7 @@ class UnusedMirrorsCheck(base.Template):
     known_results = (UnusedMirrors,)
 
     def __init__(self, options, iuse_handler):
-        base.Template.__init__(self, options)
+        super(UnusedMirrorsCheck, self).__init__(options)
         self.mirrors = None
         self.iuse_filter = iuse_handler.get_filter('fetchables', verify=False)
 
@@ -176,7 +176,7 @@ class UnusedEclassesCheck(base.Template):
     known_results = (UnusedEclasses,)
 
     def __init__(self, options):
-        base.Template.__init__(self, options)
+        super(UnusedEclassesCheck, self).__init__(options)
         self.eclasses = None
 
     def start(self):
@@ -305,7 +305,7 @@ class RepoProfilesReport(base.Template):
         NonexistentProfilePath, UnknownProfileStatus, UnknownCategories)
 
     def __init__(self, options, profile_filters):
-        base.Template.__init__(self, options)
+        super(RepoProfilesReport, self).__init__(options)
         self.arches = options.target_repo.config.known_arches
         self.profiles = options.target_repo.config.arch_profiles.itervalues()
         self.repo = options.target_repo
@@ -400,7 +400,7 @@ class LicenseGroupsCheck(base.Template):
     known_results = (UnknownLicenses,)
 
     def __init__(self, options):
-        base.Template.__init__(self, options)
+        super(LicenseGroupsCheck, self).__init__(options)
         self.repo = options.target_repo
 
     def feed(self, pkg, reporter):
@@ -529,7 +529,7 @@ class ManifestReport(base.Template):
     repo_grabber = attrgetter("repo")
 
     def __init__(self, options, iuse_handler):
-        base.Template.__init__(self, options)
+        super(ManifestReport, self).__init__(options)
         self.required_checksums = mappings.defaultdictkey(
             lambda repo: frozenset(repo.config.manifests.hashes if hasattr(repo, 'config') else ()))
         self.seen_checksums = {}

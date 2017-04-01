@@ -91,7 +91,7 @@ class QueryCacheAddon(base.Template):
             }[namespace.query_caching_freq]
 
     def __init__(self, options):
-        base.Addon.__init__(self, options)
+        super(QueryCacheAddon, self).__init__(options)
         self.query_cache = {}
         # XXX this should be logging debug info
         self.feed_type = self.options.query_caching_freq
@@ -243,8 +243,8 @@ class ProfileAddon(base.Addon):
 
         namespace.arch_profiles = arch_profiles
 
-    def __init__(self, options, *args):
-        base.Addon.__init__(self, options)
+    def __init__(self, options, arches):
+        super(ProfileAddon, self).__init__(options)
 
         self.official_arches = options.target_repo.config.known_arches
         self.desired_arches = getattr(self.options, 'arches', None)
@@ -397,7 +397,7 @@ class EvaluateDepSetAddon(base.Template):
     priority = 1
 
     def __init__(self, options, profiles):
-        base.Addon.__init__(self, options)
+        super(EvaluateDepSetAddon, self).__init__(options)
         self.pkg_evaluate_depsets_cache = {}
         self.pkg_profiles_cache = {}
         self.profiles = profiles
@@ -435,8 +435,8 @@ class StableCheckAddon(base.Template):
 
     """Check relating to stable arches by default."""
 
-    def __init__(self, options, *args):
-        super(StableCheckAddon, self).__init__(self, options)
+    def __init__(self, options):
+        super(StableCheckAddon, self).__init__(options)
         arches = set(options.arches)
 
         # use known stable arches if a custom arch set isn't specified
@@ -471,7 +471,7 @@ class UseAddon(base.Addon):
     known_results = (UnstatedIUSE,)
 
     def __init__(self, options, profiles, silence_warnings=False):
-        base.Addon.__init__(self, options)
+        super(UseAddon, self).__init__(options)
 
         # common profile elements
         c_implicit_iuse = set()

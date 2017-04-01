@@ -30,7 +30,7 @@ class StrReporter(base.Reporter):
         """Initialize.
         :type out: L{snakeoil.formatters.Formatter}.
         """
-        base.Reporter.__init__(self)
+        super(StrReporter, self).__init__()
         self.out = out
         self.first_report = True
 
@@ -73,7 +73,7 @@ class FancyReporter(base.Reporter):
 
         :type out: L{snakeoil.formatters.Formatter}.
         """
-        base.Reporter.__init__(self)
+        super(FancyReporter, self).__init__()
         self.out = out
         self.key = None
 
@@ -147,7 +147,7 @@ class XmlReporter(base.Reporter):
 
         :type out: L{snakeoil.formatters.Formatter}.
         """
-        base.Reporter.__init__(self)
+        super(XmlReporter, self).__init__()
         self.out = out
 
     def start(self):
@@ -169,7 +169,7 @@ class MultiplexReporter(base.Reporter):
     def __init__(self, *reporters):
         if len(reporters) < 2:
             raise ValueError("need at least two reporters")
-        base.Reporter.__init__(self)
+        super(MultiplexReporter, self).__init__()
         self.reporters = tuple(reporters)
 
     def start(self):

@@ -30,7 +30,7 @@ class UnstableOnlyReport(StableCheckAddon):
     required_addons = (ArchesAddon,)
     known_results = (UnstableOnly,)
 
-    def __init__(self, options, arches, *args):
+    def __init__(self, options, arches):
         super(UnstableOnlyReport, self).__init__(options)
         arches = set(x.strip().lstrip("~") for x in options.arches)
 
@@ -42,7 +42,7 @@ class UnstableOnlyReport(StableCheckAddon):
                     "keywords", values.ContainmentMatch(arch)),
                 packages.PackageRestriction(
                     "keywords", values.ContainmentMatch("~%s" % arch))
-                ]
+            ]
 
     def feed(self, pkgset, reporter):
         # stable, then unstable, then file

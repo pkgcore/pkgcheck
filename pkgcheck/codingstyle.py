@@ -38,8 +38,8 @@ class BadInsIntoCheck(base.Template):
 
     known_results = (BadInsIntoDir,)
 
-    def __init__(self, *args, **kwds):
-        base.Template.__init__(self, *args, **kwds)
+    def __init__(self, options):
+        super(BadInsIntoCheck, self).__init__(options)
         if self._bad_insinto is None:
             self._load_class_regex()
 
