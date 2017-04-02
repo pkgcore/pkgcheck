@@ -24,6 +24,7 @@ demandload(
     'pkgcore.repository:multiplex',
     'snakeoil.osutils:abspath',
     'snakeoil.sequences:iflatten_instance',
+    'snakeoil.strings:pluralism',
     'pkgcheck:errors',
 )
 
@@ -254,6 +255,13 @@ def check_args(parser, namespace):
 
     if namespace.selected_keywords is not None:
         disabled_keywords, enabled_keywords = namespace.selected_keywords
+        # check for unknown keywords
+        selected_keywords = set(disabled_keywords + enabled_keywords)
+        available_keywords = set(x.__name__ for x in namespace.keywords)
+        unknown_keywords = selected_keywords - available_keywords
+        if unknown_keywords:
+            parser.error('unknown keyword%s: %s (use --list-keywords to show valid selections)' % (
+                pluralism(unknown_keywords), ', '.join(unknown_keywords)))
 
     if enabled_keywords:
         whitelist = base.Whitelist(enabled_keywords)
@@ -265,6 +273,13 @@ def check_args(parser, namespace):
 
     if namespace.selected_checks is not None:
         disabled_checks, enabled_checks = namespace.selected_checks
+        # check for unknown checks
+        selected_checks = set(disabled_checks + enabled_checks)
+        available_checks = set(x.__name__ for x in namespace.checks)
+        unknown_checks = selected_checks - available_checks
+        if unknown_checks:
+            parser.error('unknown check%s: %s (use --list-checks to show valid selections)' % (
+                pluralism(unknown_checks), ', '.join(unknown_checks)))
     elif namespace.selected_keywords is not None:
         # enable checks based on enabled keyword -> check mapping
         enabled_checks = []
