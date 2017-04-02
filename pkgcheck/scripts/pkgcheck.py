@@ -491,7 +491,8 @@ def main(options, out, err):
         except KeyboardInterrupt:
             raise
         except Exception:
-            err.write('instantiating %s' % (klass,))
+            if options.debug:
+                err.write('instantiating %s' % (klass,))
             raise
         return res
 
