@@ -250,35 +250,35 @@ def check_args(parser, namespace):
     if namespace.checkset is not None:
         namespace.checks = list(namespace.checkset.filter(namespace.checks))
 
-    disabled_checks, enabled_checks = ((), ())
-    disabled_keywords, enabled_keywords = ((), ())
-
     if namespace.selected_keywords is not None:
         disabled_keywords, enabled_keywords = namespace.selected_keywords
-        # check for unknown keywords
+
+        # validate selected keywords
         selected_keywords = set(disabled_keywords + enabled_keywords)
         available_keywords = set(x.__name__ for x in namespace.keywords)
         unknown_keywords = selected_keywords - available_keywords
         if unknown_keywords:
-            parser.error('unknown keyword%s: %s (use --list-keywords to show valid selections)' % (
+            parser.error('unknown keyword%s: %s (use --list-keywords to show valid keywords)' % (
                 pluralism(unknown_keywords), ', '.join(unknown_keywords)))
 
-    if enabled_keywords:
-        whitelist = base.Whitelist(enabled_keywords)
-        namespace.keywords = list(whitelist.filter(namespace.keywords))
+        # filter outputted keywords
+        if enabled_keywords:
+            whitelist = base.Whitelist(enabled_keywords)
+            namespace.keywords = list(whitelist.filter(namespace.keywords))
+        if disabled_keywords:
+            blacklist = base.Blacklist(disabled_keywords)
+            namespace.keywords = list(blacklist.filter(namespace.keywords))
 
-    if disabled_keywords:
-        blacklist = base.Blacklist(disabled_keywords)
-        namespace.keywords = list(blacklist.filter(namespace.keywords))
-
+    disabled_checks, enabled_checks = ((), ())
     if namespace.selected_checks is not None:
         disabled_checks, enabled_checks = namespace.selected_checks
-        # check for unknown checks
+
+        # validate selected checks
         selected_checks = set(disabled_checks + enabled_checks)
         available_checks = set(x.__name__ for x in namespace.checks)
         unknown_checks = selected_checks - available_checks
         if unknown_checks:
-            parser.error('unknown check%s: %s (use --list-checks to show valid selections)' % (
+            parser.error('unknown check%s: %s (use --list-checks to show valid checks)' % (
                 pluralism(unknown_checks), ', '.join(unknown_checks)))
     elif namespace.selected_keywords is not None:
         # enable checks based on enabled keyword -> check mapping
@@ -287,10 +287,10 @@ def check_args(parser, namespace):
             if (set(namespace.keywords) & set(check.known_results)):
                 enabled_checks.append(check.__name__)
 
+    # filter checks to run
     if enabled_checks:
         whitelist = base.Whitelist(enabled_checks)
         namespace.checks = list(whitelist.filter(namespace.checks))
-
     if disabled_checks:
         blacklist = base.Blacklist(disabled_checks)
         namespace.checks = list(blacklist.filter(namespace.checks))
