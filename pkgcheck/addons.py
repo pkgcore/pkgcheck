@@ -243,7 +243,7 @@ class ProfileAddon(base.Addon):
 
         namespace.arch_profiles = arch_profiles
 
-    def __init__(self, options, arches):
+    def __init__(self, options, arches=None):
         super(ProfileAddon, self).__init__(options)
 
         self.official_arches = options.target_repo.config.known_arches

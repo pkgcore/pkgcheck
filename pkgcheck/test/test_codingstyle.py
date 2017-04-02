@@ -30,7 +30,7 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
             "/usr/share/applications", "/usr/share/applications",
             "//usr/share//applications", "/etc/cron.d", "/etc/cron.hourly",
             "/etc/cron.daily", "/etc/cron.weekly")
-        check = BadInsIntoCheck(None, None)
+        check = BadInsIntoCheck(None)
 
         reports = self.assertReports(check, [fake_pkg, fake_src])
         dirs = [x.insintodir for x in reports]
