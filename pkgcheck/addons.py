@@ -17,6 +17,7 @@ demandload(
     'pkgcore.restrictions:packages,values',
     'pkgcore.ebuild:misc,domain,profiles,repo_objs',
     'pkgcore.log:logger',
+    'snakeoil.strings:pluralism',
 )
 
 
@@ -42,7 +43,8 @@ class ArchesAddon(base.Addon):
         if all_arches:
             unknown_arches = arches.difference(all_arches)
             if unknown_arches:
-                parser.error('unknown arches: %s (valid arches: %s)' % (
+                parser.error('unknown arch%s: %s (valid arches: %s)' % (
+                    pluralism(unknown_arches, plural='es'),
                     ', '.join(unknown_arches),
                     ', '.join(sorted(all_arches))))
 
