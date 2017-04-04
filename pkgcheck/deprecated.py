@@ -1,4 +1,5 @@
 from snakeoil.mappings import ImmutableDict
+from snakeoil.strings import pluralism
 
 from pkgcheck.base import Template, versioned_feed, Warning
 
@@ -52,7 +53,8 @@ class DeprecatedEclass(Warning):
                 update_path = 'no replacement'
             eclass_migration.append('%s (%s)' % (old_eclass, update_path))
 
-        return "uses deprecated eclass(es): [ %s ]" % ', '.join(eclass_migration)
+        return "uses deprecated eclass%s: [ %s ]" % (
+            pluralism(eclass_migration, plural='es'), ', '.join(eclass_migration))
 
 
 class DeprecatedEclassReport(Template):

@@ -1,4 +1,5 @@
 from pkgcore.restrictions import packages, values
+from snakeoil.strings import pluralism
 
 from pkgcheck.addons import ArchesAddon, StableCheckAddon
 from pkgcheck.base import versioned_feed, package_feed, Warning
@@ -19,8 +20,9 @@ class LaggingStable(Warning):
 
     @property
     def short_desc(self):
-        return "stabled arches [ %s ], potentials [ %s ]" % \
-            (', '.join(self.stable), ', '.join(self.keywords))
+        return "stabled arch%s: [ %s ], potential%s: [ %s ]" % (
+            pluralism(self.stable, plural='es'), ', '.join(self.stable),
+            pluralism(self.keywords), ', '.join(self.keywords))
 
 
 class ImlateReport(StableCheckAddon):

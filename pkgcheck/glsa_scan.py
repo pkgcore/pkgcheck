@@ -10,13 +10,14 @@ demandload(
     'pkgcore.restrictions:packages,values',
     'pkgcore.restrictions.util:collect_package_restrictions',
     'snakeoil.osutils:abspath,pjoin',
+    'snakeoil.strings:pluralism',
 )
 
 
 class VulnerablePackage(base.Error):
     """Packages marked as vulnerable by GLSAs."""
 
-    __slots__ = ("category", "package", "version", "arch", "glsa")
+    __slots__ = ("category", "package", "version", "arches", "glsa")
     threshold = base.versioned_feed
 
     def __init__(self, pkg, glsa):
@@ -31,15 +32,16 @@ class VulnerablePackage(base.Error):
                                 (v.restriction, glsa))
         keys = set(x.lstrip("~") for x in pkg.keywords if not x.startswith("-"))
         if arches:
-            self.arch = tuple(sorted(arches.intersection(keys)))
-            assert self.arch
+            self.arches = tuple(sorted(arches.intersection(keys)))
+            assert self.arches
         else:
-            self.arch = tuple(sorted(keys))
+            self.arches = tuple(sorted(keys))
         self.glsa = str(glsa)
 
     @property
     def short_desc(self):
-        return "vulnerable via %s, keywords %s" % (self.glsa, self.arch)
+        return "vulnerable via %s, keyword%s: %s" % (
+            self.glsa, pluralism(self.arches), ', '.join(self.arches))
 
 
 class TreeVulnerabilitiesReport(base.Template):
