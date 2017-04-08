@@ -276,6 +276,7 @@ def check_args(parser, namespace):
         # validate selected checks
         selected_checks = set(disabled_checks + enabled_checks)
         available_checks = set(x.__name__ for x in namespace.checks)
+        available_checks.update(set(x.__module__.split('.')[1] for x in namespace.checks))
         unknown_checks = selected_checks - available_checks
         if unknown_checks:
             parser.error('unknown check%s: %s (use --list-checks to show valid checks)' % (
