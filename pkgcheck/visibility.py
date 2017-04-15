@@ -14,7 +14,7 @@ vcs_eclasses = frozenset([
 
 class FakeConfigurable(object):
     configurable = True
-    __slots__ = ('use', 'iuse', '_forced_use', '_masked_use', '_raw_pkg', '_profile')
+    __slots__ = ('use', 'iuse', '_forced_use', '_masked_use', '_pkg_use', '_raw_pkg', '_profile')
 
     def __init__(self, pkg, profile):
         object.__setattr__(self, '_raw_pkg', pkg)
@@ -24,8 +24,10 @@ class FakeConfigurable(object):
             self, '_forced_use', self._profile.forced_use.pull_data(self._raw_pkg))
         object.__setattr__(
             self, '_masked_use', self._profile.masked_use.pull_data(self._raw_pkg))
+        object.__setattr__(
+            self, '_pkg_use', self._profile.pkg_use.pull_data(self._raw_pkg))
         use_defaults = set(x[1:] for x in pkg.iuse if x[0] == '+')
-        enabled_use = (use_defaults | profile.use | self._forced_use) - self._masked_use
+        enabled_use = (use_defaults | profile.use | self._pkg_use | self._forced_use) - self._masked_use
         object.__setattr__(
             self, 'use', frozenset(enabled_use & (profile.iuse_effective | pkg.iuse_effective)))
         object.__setattr__(

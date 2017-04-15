@@ -102,7 +102,7 @@ class Test_profile_data(TestCase):
             "test-profile", key_override,
             profile.provides_repo,
             packages.AlwaysFalse, profile.iuse_effective,
-            profile.use, profile.masked_use, profile.forced_use, {}, set())
+            profile.use, profile.pkg_use, profile.masked_use, profile.forced_use, {}, set())
         pkg = FakePkg(cpv, data=data_override)
         immutable, enabled = profile_data.identify_use(pkg, set(known_flags))
         self.assertEqual(immutable, set(required_immutable))

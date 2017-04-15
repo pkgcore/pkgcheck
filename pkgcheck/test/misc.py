@@ -117,7 +117,7 @@ class Options(dict):
 class FakeProfile(object):
 
     def __init__(self, masked_use={}, stable_masked_use={}, forced_use={},
-                 stable_forced_use={}, provides={}, iuse_effective=[],
+                 stable_forced_use={}, pkg_use={}, provides={}, iuse_effective=[],
                  use=[], masks=[], unmasks=[], arch='x86', name='none'):
         self.provides_repo = SimpleTree(provides)
 
@@ -144,6 +144,12 @@ class FakeProfile(object):
             chunked_data(atom(k), *split_negations(v))
             for k, v in stable_forced_use.iteritems())
         self.stable_forced_use.freeze()
+
+        self.pkg_use = ChunkedDataDict()
+        self.pkg_use.update_from_stream(
+            chunked_data(atom(k), *split_negations(v))
+            for k, v in pkg_use.iteritems())
+        self.pkg_use.freeze()
 
         self.masks = tuple(map(atom, masks))
         self.unmasks = tuple(map(atom, unmasks))
