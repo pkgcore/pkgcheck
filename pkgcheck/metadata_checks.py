@@ -166,12 +166,13 @@ class RequiredUSEMetadataReport(base.Template):
                 pkg, 'required_use', "exception- %s" % e))
             del e
 
-        # check both stable and unstable profiles for all pkg KEYWORDS
+        # check both stable/unstable profiles for stable KEYWORDS and only
+        # unstable profiles for unstable KEYWORDS
         keywords = []
         for keyword in pkg.keywords:
-            keyword = keyword.lstrip('~')
-            keywords.append(keyword)
-            keywords.append('~' + keyword)
+            if keyword[0] != '~':
+                keywords.append(keyword)
+            keywords.append('~' + keyword.lstrip('~'))
 
         # check USE defaults (pkg IUSE defaults + profile USE) against
         # REQUIRED_USE for all profiles matching a pkg's KEYWORDS
