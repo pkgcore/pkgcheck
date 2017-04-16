@@ -158,7 +158,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         # unsatisfied REQUIRED_USE
         r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="bar"))
         self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
-        self.assertEqual(r.arch, 'x86')
+        self.assertEqual(r.keyword, 'x86')
         self.assertEqual(r.profile, 'default/linux/x86')
         self.assertEqual(r.use, frozenset())
         self.assertEqual(str(r.required_use), 'contains [bar]')

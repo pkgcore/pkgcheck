@@ -111,15 +111,15 @@ class IUSEMetadataReport(base.Template):
 class RequiredUseDefaults(base.Warning):
     """Default USE flag settings don't satisfy REQUIRED_USE."""
 
-    __slots__ = ("category", "package", "version", "profile", "arch", "required_use", "use")
+    __slots__ = ("category", "package", "version", "profile", "keyword", "required_use", "use")
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, required_use, use=None, arch=None, profile=None):
+    def __init__(self, pkg, required_use, use=None, keyword=None, profile=None):
         super(RequiredUseDefaults, self).__init__()
         self._store_cpv(pkg)
         self.required_use = required_use
         self.use = use
-        self.arch = arch.lstrip("~") if arch is not None else arch
+        self.keyword = keyword
         self.profile = profile
 
     @property
@@ -128,8 +128,8 @@ class RequiredUseDefaults(base.Warning):
             # collapsed version
             return 'failed REQUIRED_USE: %s' % (self.required_use,)
         else:
-            return 'arch: %s, profile: %s, default USE: [%s] -- failed REQUIRED_USE: %s' % (
-                self.arch, self.profile, ', '.join(sorted(self.use)), self.required_use)
+            return 'keyword: %s, profile: %s, default USE: [%s] -- failed REQUIRED_USE: %s' % (
+                self.keyword, self.profile, ', '.join(sorted(self.use)), self.required_use)
 
 
 class RequiredUSEMetadataReport(base.Template):
