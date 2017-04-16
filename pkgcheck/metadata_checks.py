@@ -187,9 +187,9 @@ class RequiredUSEMetadataReport(base.Template):
         if self.options.verbose:
             # report all failures with profile info in verbose mode
             for node, profile_info in failures.iteritems():
-                for use, arch, profile in profile_info:
+                for use, keyword, profile in profile_info:
                     reporter.add_report(RequiredUseDefaults(
-                        pkg, node, use, arch, profile))
+                        pkg, node, use, keyword, profile))
         else:
             # only report one failure per REQUIRED_USE node in regular mode
             for node in failures.iterkeys():
