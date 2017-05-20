@@ -405,8 +405,8 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
         out.write()
         if config_reporters:
             out.write("configured reporters:")
-            out.first_prefix.append(' ')
-            out.later_prefix.append(' ')
+            out.first_prefix.append('  ')
+            out.later_prefix.append('  ')
             try:
                 # sorting here is random
                 for reporter in sorted(config_reporters, key=lambda x: x.__name__):
@@ -414,7 +414,7 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
                     if not key:
                         continue
                     out.write(out.bold, key)
-                    dump_docstring(out, reporter, prefix=' ')
+                    dump_docstring(out, reporter, prefix='  ')
                     out.write()
             finally:
                 out.first_prefix.pop()
@@ -424,12 +424,12 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
             if config_reporters:
                 out.write()
             out.write("plugin reporters:")
-            out.first_prefix.append(' ')
-            out.later_prefix.append(' ')
+            out.first_prefix.append('  ')
+            out.later_prefix.append('  ')
             try:
                 for reporter in sorted(plugin_reporters, key=lambda x: x.__name__):
                     out.write(out.bold, reporter.__name__)
-                    dump_docstring(out, reporter, prefix=' ')
+                    dump_docstring(out, reporter, prefix='  ')
                     out.write()
             finally:
                 out.first_prefix.pop()
