@@ -325,6 +325,8 @@ def dump_docstring(out, obj, prefix=None):
         if firstline:
             out.write(firstline)
         if len(lines) > 1:
+            if firstline:
+                out.write()
             for line in textwrap.dedent('\n'.join(lines[1:])).split('\n'):
                 if line:
                     out.write(line)
@@ -351,6 +353,7 @@ def display_keywords(out, options):
         scopes = ('version', 'package', 'category', 'repository')
         for scope in reversed(sorted(d)):
             out.write(out.bold, "%s scope:" % scopes[scope].capitalize())
+            out.write()
             keywords = sorted(d[scope], key=lambda x: x.__name__)
 
             try:
@@ -359,7 +362,7 @@ def display_keywords(out, options):
                 for keyword in keywords:
                     out.write(out.fg('yellow'), keyword.__name__, out.reset, ':')
                     dump_docstring(out, keyword, prefix='  ')
-                out.write()
+                    out.write()
             finally:
                 out.first_prefix.pop()
                 out.later_prefix.pop()
@@ -381,6 +384,7 @@ def display_checks(out, options):
 
         for module_name in sorted(d):
             out.write(out.bold, "%s:" % module_name)
+            out.write()
             l = d[module_name]
             l.sort(key=lambda x: x.__name__)
 
@@ -390,7 +394,7 @@ def display_checks(out, options):
                 for check in l:
                     out.write(out.fg('yellow'), check.__name__, out.reset, ':')
                     dump_docstring(out, check, prefix='  ')
-                out.write()
+                    out.write()
             finally:
                 out.first_prefix.pop()
                 out.later_prefix.pop()
@@ -403,6 +407,7 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
     else:
         if config_reporters:
             out.write("configured reporters:")
+            out.write()
             out.first_prefix.append('  ')
             out.later_prefix.append('  ')
             try:
@@ -422,6 +427,7 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
             if config_reporters:
                 out.write()
             out.write("plugin reporters:")
+            out.write()
             out.first_prefix.append('  ')
             out.later_prefix.append('  ')
             try:
