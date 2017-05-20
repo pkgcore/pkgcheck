@@ -428,7 +428,7 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
             out.later_prefix.append('  ')
             try:
                 for reporter in sorted(plugin_reporters, key=lambda x: x.__name__):
-                    out.write(out.bold, reporter.__name__)
+                    out.write(out.bold, out.fg('yellow'), reporter.__name__)
                     dump_docstring(out, reporter, prefix='  ')
                     out.write()
             finally:
