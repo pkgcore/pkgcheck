@@ -401,8 +401,6 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
     if not options.verbose:
         out.write('\n'.join(sorted(x.__name__ for x in plugin_reporters)), wrap=False)
     else:
-        out.write("known reporters:")
-        out.write()
         if config_reporters:
             out.write("configured reporters:")
             out.first_prefix.append('  ')
