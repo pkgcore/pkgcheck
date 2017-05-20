@@ -340,7 +340,7 @@ def display_keywords(out, options):
     for x in options.checks:
         d.setdefault(x.scope, set()).update(x.known_results)
 
-    if options.quiet:
+    if not options.verbose:
         out.write('\n'.join(sorted(x.__name__ for s in d.itervalues() for x in s)), wrap=False)
     else:
         if not d:
@@ -371,7 +371,7 @@ def display_checks(out, options):
     for x in options.checks:
         d.setdefault(x.__module__, []).append(x)
 
-    if options.quiet:
+    if not options.verbose:
         out.write('\n'.join(sorted(x.__name__ for s in d.itervalues() for x in s)), wrap=False)
     else:
         if not d:
@@ -398,7 +398,7 @@ def display_checks(out, options):
 
 @decorate_forced_wrapping()
 def display_reporters(out, options, config_reporters, plugin_reporters):
-    if options.quiet:
+    if not options.verbose:
         out.write('\n'.join(sorted(x.__name__ for x in plugin_reporters)), wrap=False)
     else:
         out.write("known reporters:")
