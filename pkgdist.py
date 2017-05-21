@@ -1,5 +1,6 @@
 # Copyright: 2015-2017 Tim Harder <radhermit@gmail.com>
 # Copyright: 2008-2011 Brian Harring <ferringb@gmail.com>
+# License: BSD/GPL2
 
 """
 A collection of distutils extensions adding things like automatic 2to3
@@ -11,7 +12,6 @@ Specifically, this module is only meant to be imported in setup.py scripts.
 
 import copy
 import errno
-import inspect
 import io
 import math
 import operator
@@ -39,7 +39,7 @@ from distutils.command import (
 READTHEDOCS = os.environ.get('READTHEDOCS', None) == 'True'
 
 # top level repo/tarball directory
-TOPDIR = os.path.dirname(os.path.abspath(inspect.stack(0)[1][1]))
+TOPDIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def find_project(topdir=TOPDIR):
@@ -62,7 +62,7 @@ def find_project(topdir=TOPDIR):
     if not modules:
         raise ValueError('No project module found')
     elif len(modules) > 1:
-        raise ValueError('Multiple project modules found: %s' % (', '.join(modules)))
+        raise ValueError('Multiple project modules found in %r: %s' % (topdir, ', '.join(modules)))
 
     return modules[0]
 
@@ -168,6 +168,16 @@ def pkg_config(*packages, **kw):
     return kw
 
 
+def cython_exts(path=PROJECT):
+    """Return all available cython extensions under a given path."""
+    cython_exts = []
+    for root, _dirs, files in os.walk(path):
+        for f in files:
+            if f.endswith('.pyx'):
+                cython_exts.append(os.path.join(root, f))
+    return cython_exts
+
+
 class OptionalExtension(Extension):
     """Python extension that is optional to build.
 
@@ -225,12 +235,10 @@ class sdist(dst_sdist.sdist):
         build_ext.ensure_finalized()
 
         # generate cython extensions if any exist
-        cython = any(
-            os.path.splitext(f)[1] == '.pyx' for e in
-            build_ext.extensions for f in e.sources)
-        if cython:
+        extensions = cython_exts()
+        if extensions:
             from Cython.Build import cythonize
-            cythonize(build_ext.extensions)
+            cythonize(extensions)
 
         dst_sdist.sdist.run(self)
 
@@ -849,32 +857,46 @@ class test(Command):
             raise DistutilsExecError("tests failed; return %i" % (retval,))
 
 
-class PyTest(Command):
+class pytest(Command):
     """Run tests using pytest."""
 
     user_options = [
         ('pytest-args=', 'a', 'arguments to pass to py.test'),
         ('coverage', 'c', 'generate coverage info'),
         ('skip-build', 's', 'skip building the module'),
+        ('test-dir=', 'd', 'directory to source tests from'),
         ('report=', 'r', 'generate and/or show a coverage report'),
         ('jobs=', 'j', 'run X parallel tests at once'),
         ('match=', 'k', 'run only tests that match the provided expressions'),
     ]
 
-    default_test_dir = os.path.join(TOPDIR, PROJECT, 'test')
-
     def initialize_options(self):
         self.pytest_args = ''
         self.coverage = False
         self.skip_build = False
+        self.test_dir = None
         self.match = None
         self.jobs = None
         self.report = None
 
     def finalize_options(self):
-        self.test_args = [self.default_test_dir]
+        # if a test dir isn't specified explicitly try to find one
+        if self.test_dir is None:
+            for path in (os.path.join(TOPDIR, 'test'),
+                         os.path.join(TOPDIR, 'tests'),
+                         os.path.join(TOPDIR, PROJECT, 'test'),
+                         os.path.join(TOPDIR, PROJECT, 'tests')):
+                if os.path.exists(path):
+                    self.test_dir = path
+                    break
+            else:
+                raise DistutilsExecError('cannot automatically determine test directory')
+
+        self.test_args = [self.test_dir]
         self.coverage = bool(self.coverage)
         self.skip_build = bool(self.skip_build)
+        if self.verbose:
+            self.test_args.append('-v')
         if self.match is not None:
             self.test_args.extend(['-k', self.match])
 
@@ -883,8 +905,7 @@ class PyTest(Command):
                 import pytest_cov
                 self.test_args.extend(['--cov', PROJECT])
             except ImportError:
-                sys.stderr.write('error: install pytest-cov for coverage support\n')
-                sys.exit(1)
+                raise DistutilsExecError('install pytest-cov for coverage support')
 
             if self.report is None:
                 # disable coverage report output
@@ -897,8 +918,7 @@ class PyTest(Command):
                 import xdist
                 self.test_args.extend(['-n', self.jobs])
             except ImportError:
-                sys.stderr.write('error: install pytest-xdist for -j/--jobs support\n')
-                sys.exit(1)
+                raise DistutilsExecError('install pytest-xdist for -j/--jobs support')
 
         # add custom pytest args
         self.test_args.extend(shlex.split(self.pytest_args))
@@ -907,8 +927,7 @@ class PyTest(Command):
         try:
             import pytest
         except ImportError:
-            sys.stderr.write('error: pytest is not installed\n')
-            sys.exit(1)
+            raise DistutilsExecError('pytest is not installed')
 
         if self.skip_build:
             # run tests from the parent directory to the local dir isn't used for module imports
@@ -931,6 +950,38 @@ class PyTest(Command):
 
         ret = subprocess.call([sys.executable, '-m', 'pytest'] + self.test_args, cwd=builddir)
         sys.exit(ret)
+
+
+class pylint(Command):
+    """Run pylint on a project."""
+
+    user_options = [
+        ('errors-only', 'E', 'Check only errors with pylint'),
+        ('output-format=', 'f', 'Change the output format'),
+    ]
+
+    def initialize_options(self):
+        self.errors_only = False
+        self.output_format = 'colorized'
+
+    def finalize_options(self):
+        self.errors_only = bool(self.errors_only)
+
+    def run(self):
+        print(self.output_format)
+        try:
+            from pylint import lint
+        except ImportError:
+            raise DistutilsExecError('pylint is not installed')
+
+        lint_args = [PROJECT]
+        rcfile = os.path.join(TOPDIR, '.pylintrc')
+        if os.path.exists(rcfile):
+            lint_args.extend(['--rcfile', rcfile])
+        if self.errors_only:
+            lint_args.append('-E')
+        lint_args.extend(['--output-format', self.output_format])
+        lint.Run(lint_args)
 
 
 def print_check(message, if_yes='found', if_no='not found'):
