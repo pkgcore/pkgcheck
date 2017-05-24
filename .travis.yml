@@ -20,7 +20,6 @@ cache:
 install:
   - pip install --upgrade pip
   - pip install --only-binary ":all:" tox codecov
-  - pip install -r requirements.txt
 before_script: git clone https://github.com/pkgcore/pkgdist.git
 script:
   - tox -e travis
