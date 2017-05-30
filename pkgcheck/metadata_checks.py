@@ -5,7 +5,7 @@ from pkgcore.ebuild.atom import MalformedAtom, atom
 from pkgcore.fetch import fetchable
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions.boolean import OrRestriction
-from snakeoil.demandload import demandload
+from snakeoil.demandload import demandload, demand_compile_regexp
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
@@ -13,6 +13,11 @@ from pkgcheck import base, addons
 from pkgcheck.visibility import FakeConfigurable
 
 demandload('logging')
+
+# TODO: move to pkgcore
+demand_compile_regexp(
+    'file_suffixes_re',
+    r'\.(tar(\.gz|\.Z|\.z|\.bz2|\.lzma|\.xz)?|tgz|tbz2|tbz|txz|ZIP|zip|jar|gz|Z|z|bz2|bz|xz|7Z|7z|RAR|rar|LHa|LHA|lha|lzh|a|deb|lzma)')
 
 
 class MetadataError(base.Error):
@@ -407,15 +412,32 @@ class BadProto(base.Warning):
         return "file %s: bad protocol/uri: %r " % (self.filename, self.bad_uri)
 
 
+class BadFilename(base.Warning):
+    """URI uses unspecific or poor filename(s)."""
+
+    __slots__ = ("category", "package", "version", "filenames")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, filenames):
+        super(BadFilename, self).__init__()
+        self._store_cpv(pkg)
+        self.filenames = tuple(sorted(filenames))
+
+    @property
+    def short_desc(self):
+        return "bad filename%s: [ %s ]" % (pluralism(self.filenames), ', '.join(self.filenames))
+
+
 class SrcUriReport(base.Template):
     """SRC_URI related checks.
 
-    Verify that URIs are valid, fetchable, and using a supported protocol.
+    Verify that URIs are valid, fetchable, using a supported protocol, and
+    don't use unspecific filenames.
     """
 
     required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
-    known_results = (BadProto, MissingUri, MetadataError) + \
+    known_results = (BadFilename, BadProto, MissingUri, MetadataError) + \
         addons.UseAddon.known_results
 
     valid_protos = frozenset(["http", "https", "ftp"])
@@ -429,11 +451,18 @@ class SrcUriReport(base.Template):
             lacks_uri = set()
             # duplicate entries are possible.
             seen = set()
+            bad_filenames = set()
             for f_inst in self.iuse_filter((fetchable,), pkg,
                                            pkg.fetchables, reporter):
                 if f_inst.filename in seen:
                     continue
                 seen.add(f_inst.filename)
+
+                # check for unspecific github-style filenames
+                filename_no_ext = file_suffixes_re.sub('', f_inst.filename)
+                if filename_no_ext in (pkg.PV, 'v' + pkg.PV):
+                    bad_filenames.add(f_inst.filename)
+
                 if not f_inst.uri:
                     lacks_uri.add(f_inst.filename)
                 else:
@@ -450,6 +479,9 @@ class SrcUriReport(base.Template):
             if "fetch" not in pkg.restrict:
                 for x in sorted(lacks_uri):
                     reporter.add_report(MissingUri(pkg, x))
+
+            if bad_filenames:
+                reporter.add_report(BadFilename(pkg, bad_filenames))
 
         except (KeyboardInterrupt, SystemExit):
             raise

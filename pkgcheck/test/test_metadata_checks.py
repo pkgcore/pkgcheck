@@ -364,6 +364,15 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
             metadata_checks.MetadataError)
         self.assertEqual(r.attr, 'fetchables')
 
+    def test_bad_filename(self):
+        chk = self.mk_check()
+        self.assertIsInstance(
+            self.assertReport(chk, self.mk_pkg("https://foon.com/2.7.1.tar.gz")),
+            metadata_checks.BadFilename)
+        self.assertIsInstance(
+            self.assertReport(chk, self.mk_pkg("https://foon.com/v2.7.1.zip")),
+            metadata_checks.BadFilename)
+
     def test_it(self):
         chk = self.mk_check()
         # ensure it pukes about RESTRICT!=fetch, and no uri
