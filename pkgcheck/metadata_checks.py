@@ -409,7 +409,10 @@ class BadProto(base.Warning):
 
 
 class BadFilename(base.Warning):
-    """URI uses unspecific or poor filename(s)."""
+    """URI uses unspecific or poor filename(s).
+
+    Archive filenames should be disambiguated using '->' to rename them.
+    """
 
     __slots__ = ("category", "package", "version", "filenames")
     threshold = base.versioned_feed
@@ -457,7 +460,7 @@ class SrcUriReport(base.Template):
                 # Check for unspecific filenames of the form ${PV}.ext and
                 # v${PV}.ext prevalent in github tagged releases as well as
                 # archives named using only the raw git commit hash.
-                bad_filenames_re = r'(v?%s|[0-9a-f]{40})\.%s' % (pkg.PV, pkg.eapi.archive_suffixes_re)
+                bad_filenames_re = r'^(v?%s|[0-9a-f]{40})\.%s$' % (pkg.PV, pkg.eapi.archive_suffixes_re)
                 if re.match(bad_filenames_re, f_inst.filename):
                     bad_filenames.add(f_inst.filename)
 
