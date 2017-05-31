@@ -372,6 +372,9 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         self.assertIsInstance(
             self.assertReport(chk, self.mk_pkg("https://foon.com/v2.7.1.zip")),
             metadata_checks.BadFilename)
+        self.assertIsInstance(
+            self.assertReport(chk, self.mk_pkg("https://foon.com/cb230f01fb288a0b9f0fc437545b97d06c846bd3.tar.gz")),
+            metadata_checks.BadFilename)
 
     def test_it(self):
         chk = self.mk_check()
