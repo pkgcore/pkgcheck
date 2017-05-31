@@ -1,11 +1,12 @@
 from collections import defaultdict
 from operator import attrgetter
+import re
 
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from pkgcore.fetch import fetchable
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions.boolean import OrRestriction
-from snakeoil.demandload import demandload, demand_compile_regexp
+from snakeoil.demandload import demandload
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
@@ -13,11 +14,6 @@ from pkgcheck import base, addons
 from pkgcheck.visibility import FakeConfigurable
 
 demandload('logging')
-
-# TODO: move to pkgcore
-demand_compile_regexp(
-    'file_suffixes_re',
-    r'\.(tar(\.gz|\.Z|\.z|\.bz2|\.lzma|\.xz)?|tgz|tbz2|tbz|txz|ZIP|zip|jar|gz|Z|z|bz2|bz|xz|7Z|7z|RAR|rar|LHa|LHA|lha|lzh|a|deb|lzma)')
 
 
 class MetadataError(base.Error):
@@ -458,9 +454,10 @@ class SrcUriReport(base.Template):
                     continue
                 seen.add(f_inst.filename)
 
-                # check for unspecific github-style filenames
-                filename_no_ext = file_suffixes_re.sub('', f_inst.filename)
-                if filename_no_ext in (pkg.PV, 'v' + pkg.PV):
+                # Check for unspecific filenames of the form ${PV}.ext and
+                # v${PV}.ext prevalent in github tagged releases.
+                bad_filenames_re = r'v?%s\.%s' % (pkg.PV, pkg.eapi.archive_suffixes_re)
+                if re.match(bad_filenames_re, f_inst.filename):
                     bad_filenames.add(f_inst.filename)
 
                 if not f_inst.uri:
