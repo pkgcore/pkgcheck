@@ -147,8 +147,9 @@ class InvalidUtf8(Error):
 
 def utf8_check(pkg, base, filename, reporter):
     try:
-        codecs.open(pjoin(base, filename), mode="rb",
-                    encoding="utf8", buffering=8192).read()
+        codecs.open(
+            pjoin(base, filename), mode="rb",
+            encoding="utf8", buffering=8192).read()
     except UnicodeDecodeError as e:
         reporter.add_report(InvalidUtf8(pkg, filename, str(e)))
         del e
@@ -215,11 +216,10 @@ class PkgDirReport(Template):
                 if stat.S_ISDIR(st.st_mode):
                     if fn not in self.ignore_dirs:
                         unprocessed_dirs.append(pjoin(cwd, fn))
-
                 elif stat.S_ISREG(st.st_mode):
                     if st.st_mode & 0111:
-                        reporter.add_report(ExecutableFile(pkgset[0],
-                                                           pjoin(cwd, fn)))
+                        reporter.add_report(
+                            ExecutableFile(pkgset[0], pjoin(cwd, fn)))
                     if not fn.startswith("digest-"):
                         if st.st_size > 20480:
                             reporter.add_report(SizeViolation(pkgset[0], pjoin(cwd, fn), st.st_size))
