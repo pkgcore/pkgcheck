@@ -105,7 +105,7 @@ class SizeViolation(Warning):
 
     @property
     def short_desc(self):
-        return '"files/%s" exceeds 20k in size; %s total' % (
+        return '"%s" exceeds 20k in size; %s total' % (
             self.filename, sizeof_fmt(self.size))
 
 
@@ -222,6 +222,6 @@ class PkgDirReport(Template):
                                                            pjoin(cwd, fn)))
                     if not fn.startswith("digest-"):
                         if st.st_size > 20480:
-                            reporter.add_report(SizeViolation(pkgset[0], fn, st.st_size))
+                            reporter.add_report(SizeViolation(pkgset[0], pjoin(cwd, fn), st.st_size))
                         if any(True for x in fn if x not in allowed_filename_chars_set):
                             reporter.add_report(Glep31Violation(pkgset[0], pjoin(cwd, fn)))
