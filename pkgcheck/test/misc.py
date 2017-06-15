@@ -5,6 +5,7 @@ from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.misc import ChunkedDataDict, chunked_data
 from pkgcore.repository.util import SimpleTree
 from snakeoil.mappings import ImmutableDict
+from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
 from snakeoil.test import TestCase
 
@@ -41,6 +42,28 @@ class FakeTimedPkg(package):
                          cpv.fullver)
         object.__setattr__(self, "data", data)
         object.__setattr__(self, "_mtime_", mtime)
+
+
+class FakeEbuild(object):
+
+    __slots__ = ("path",)
+
+    def __init__(self, path):
+        self.path = path
+
+
+class FakeFilesDirPkg(package):
+
+    __slots__ = ("ebuild",)
+
+    def __init__(self, cpvstr, tempdir, data=None, shared=None, repo=None):
+        if data is None:
+            data = {}
+        cpv = versioned_CPV(cpvstr)
+        package.__init__(self, shared, repo, cpv.category, cpv.package, cpv.fullver)
+        object.__setattr__(self, "data", data)
+        object.__setattr__(self, "ebuild", FakeEbuild(
+            pjoin(tempdir, '%s-%s.ebuild' % (cpv.package, cpv.fullver))))
 
 
 default_threshold_attrs = {

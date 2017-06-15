@@ -73,6 +73,23 @@ class InvalidPN(Error):
             pluralism(self.ebuilds), ', '.join(self.ebuilds))
 
 
+class EmptyFile(Warning):
+    """File in FILESDIR is empty."""
+
+    __slots__ = ("category", "package", "filename")
+
+    threshold = package_feed
+
+    def __init__(self, pkg, filename):
+        super(EmptyFile, self).__init__()
+        self._store_cp(pkg)
+        self.filename = filename
+
+    @property
+    def short_desc(self):
+        return 'empty file in FILESDIR: %r' % (self.filename,)
+
+
 class ExecutableFile(Warning):
     """File has executable bit, but doesn't need it."""
 
@@ -162,7 +179,7 @@ class PkgDirReport(Template):
 
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
     known_results = (
-        ExecutableFile, SizeViolation, Glep31Violation,
+        EmptyFile, ExecutableFile, SizeViolation, Glep31Violation,
         InvalidUtf8, MismatchedPN, InvalidPN,
     )
 
@@ -223,5 +240,7 @@ class PkgDirReport(Template):
                     if not fn.startswith("digest-"):
                         if st.st_size > 20480:
                             reporter.add_report(SizeViolation(pkgset[0], pjoin(cwd, fn), st.st_size))
+                        elif st.st_size == 0:
+                            reporter.add_report(EmptyFile(pkgset[0], pjoin(cwd, fn)))
                         if any(True for x in fn if x not in allowed_filename_chars_set):
                             reporter.add_report(Glep31Violation(pkgset[0], pjoin(cwd, fn)))
