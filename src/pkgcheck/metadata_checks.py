@@ -11,6 +11,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from . import base, addons
+from .glep73 import glep73_validate_syntax, glep73_known_results
 from .visibility import FakeConfigurable
 
 demandload('logging')
@@ -138,7 +139,8 @@ class RequiredUSEMetadataReport(base.Template):
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon, addons.ProfileAddon)
-    known_results = (MetadataError, RequiredUseDefaults) + addons.UseAddon.known_results
+    known_results = (MetadataError, RequiredUseDefaults
+            ) + glep73_known_results + addons.UseAddon.known_results
 
     def __init__(self, options, iuse_handler, profiles):
         super(RequiredUSEMetadataReport, self).__init__(options)
@@ -166,6 +168,10 @@ class RequiredUSEMetadataReport(base.Template):
             reporter.add_report(MetadataError(
                 pkg, 'required_use', "exception- %s" % e))
             del e
+
+        # check GLEP 73 syntax first, so that we know if we can perform
+        # further tests
+        glep73_valid = glep73_validate_syntax(pkg.required_use, reporter, pkg)
 
         # check both stable/unstable profiles for stable KEYWORDS and only
         # unstable profiles for unstable KEYWORDS

@@ -58,7 +58,7 @@ class iuse_options(TempDirMixin):
         fileutils.write_file(
             pjoin(base, "use.desc"), "w",
             "\n".join("%s - %s" % (x, x)
-                      for x in kwds.pop("use_desc", ("foo", "bar"))))
+                      for x in kwds.pop("use_desc", ("foo", "bar", "baz"))))
 
         fileutils.write_file(pjoin(base, 'repo_name'), 'w', 'monkeys')
         os.mkdir(pjoin(repo_base, 'metadata'))
