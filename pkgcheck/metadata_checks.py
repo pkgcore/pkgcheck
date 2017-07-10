@@ -5,7 +5,10 @@ import re
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from pkgcore.fetch import fetchable
 from pkgcore.package.errors import MetadataException
-from pkgcore.restrictions.boolean import OrRestriction
+from pkgcore.restrictions.boolean import (OrRestriction, AndRestriction,
+        JustOneRestriction, AtMostOneOfRestriction)
+from pkgcore.restrictions.packages import Conditional
+from pkgcore.restrictions.values import ContainmentMatch
 from snakeoil.demandload import demandload
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
@@ -133,12 +136,56 @@ class RequiredUseDefaults(base.Warning):
                 self.keyword, self.profile, ', '.join(sorted(self.use)), self.required_use)
 
 
+class ComplexRequiredUse(base.Warning):
+    """Complex nested REQUIRED_USE constructs that should be replaced
+    by more readable code."""
+
+    __slots__ = ("category", "package", "version", "required_use")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, required_use):
+        super(ComplexRequiredUse, self).__init__()
+        self._store_cpv(pkg)
+        self.required_use = required_use
+
+    @property
+    def short_desc(self):
+        return 'unnecessarily complex REQUIRED_USE: %s' % (self.required_use,)
+
+
+def is_required_use_overcomplex(requse):
+    for c in requse:
+        if isinstance(c, AndRestriction):
+            # and restrictions are always wrong -- either they are nested
+            # in ||/^^/??, or unnecessary
+            return True
+        elif (isinstance(c, OrRestriction) or
+              isinstance(c, JustOneRestriction) or
+              isinstance(c, AtMostOneOfRestriction)):
+            # ||/^^/?? can contain only flat flags -- nesting is forbidden
+            for f in c:
+                if not isinstance(f, ContainmentMatch):
+                    return True
+        elif isinstance(c, Conditional):
+            # recurse on conditionals
+            if is_required_use_overcomplex(c):
+                return True
+        elif isinstance(c, ContainmentMatch):
+            # plain flag
+            pass
+        else:
+            raise AssertionError('Unknown item in REQUIRED_USE: %s' % (c,))
+
+    return False
+
+
 class RequiredUSEMetadataReport(base.Template):
     """REQUIRED_USE validity checks."""
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon, addons.ProfileAddon)
-    known_results = (MetadataError, RequiredUseDefaults) + addons.UseAddon.known_results
+    known_results = (MetadataError, RequiredUseDefaults,
+            ComplexRequiredUse) + addons.UseAddon.known_results
 
     def __init__(self, options, iuse_handler, profiles):
         super(RequiredUSEMetadataReport, self).__init__(options)
@@ -166,6 +213,11 @@ class RequiredUSEMetadataReport(base.Template):
             reporter.add_report(MetadataError(
                 pkg, 'required_use', "exception- %s" % e))
             del e
+
+        # check for discouraged nested constructs
+        if is_required_use_overcomplex(pkg.required_use):
+            reporter.add_report(ComplexRequiredUse(
+                pkg, pkg.required_use))
 
         # check both stable/unstable profiles for stable KEYWORDS and only
         # unstable profiles for unstable KEYWORDS
