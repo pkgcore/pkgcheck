@@ -11,7 +11,8 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from . import base, addons
-from .glep73 import glep73_validate_syntax, glep73_known_results
+from .glep73 import (glep73_validate_syntax, glep73_run_checks,
+                     glep73_known_results)
 from .visibility import FakeConfigurable
 
 demandload('logging')
@@ -184,12 +185,28 @@ class RequiredUSEMetadataReport(base.Template):
         # check USE defaults (pkg IUSE defaults + profile USE) against
         # REQUIRED_USE for all profiles matching a pkg's KEYWORDS
         failures = defaultdict(list)
+        # also check GLEP73 problems
+        glep73_failures = defaultdict(list)
         for keyword in keywords:
             for profile in self.profiles.get(keyword, ()):
                 src = FakeConfigurable(pkg, profile)
                 for node in pkg.required_use.evaluate_depset(src.use):
                     if not node.match(src.use):
                         failures[node].append((src.use, profile.key, profile.name))
+
+                # if the syntax conforms to GLEP73, perform the relevant checks
+                if glep73_valid:
+                    # PMS note: mask takes precedence over force
+                    immutables = {}
+                    for x in src._forced_use:
+                        immutables[x] = True
+                    for x in src._masked_use:
+                        immutables[x] = False
+
+                    # TODO: cache check results per (forced, masked) set
+                    for r in glep73_run_checks(pkg.required_use, immutables):
+                        glep73_failures[(r.func, r.args, tuple(sorted(r.keywords)))].append(
+                                (r, profile.key, profile.name))
 
         if self.options.verbose:
             # report all failures with profile info in verbose mode
@@ -201,6 +218,13 @@ class RequiredUSEMetadataReport(base.Template):
             # only report one failure per REQUIRED_USE node in regular mode
             for node in failures.iterkeys():
                 reporter.add_report(RequiredUseDefaults(pkg, node))
+
+        # collapse errors that occur within multiple profiles
+        for report_data in glep73_failures.itervalues():
+            all_profiles = []
+            for report, keyword, profile in report_data:
+                all_profiles.append((keyword, profile))
+            reporter.add_report(report(pkg=pkg, profiles=all_profiles))
 
 
 class UnusedLocalFlags(base.Warning):

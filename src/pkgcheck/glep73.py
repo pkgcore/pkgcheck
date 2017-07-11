@@ -1,3 +1,5 @@
+from functools import partial
+
 from pkgcore.restrictions.boolean import (OrRestriction, AndRestriction,
         JustOneRestriction, AtMostOneOfRestriction)
 from pkgcore.restrictions.packages import Conditional
@@ -26,7 +28,33 @@ class GLEP73Syntax(base.Warning):
                 self.issue, self.required_use)
 
 
-glep73_known_results = (GLEP73Syntax,)
+class GLEP73Immutability(base.Error):
+    """REQUIRED_USE constraints that can request the user to enable
+    (disable) a flag that is masked (forced). This is both a problem
+    for the auto-enforcing and for regular users which can hit
+    unsolvable requests."""
+
+    __slots__ = ("category", "package", "version", "condition",
+                 "enforcement", "profiles")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, condition, enforcement, profiles):
+        super(GLEP73Immutability, self).__init__()
+        self._store_cpv(pkg)
+        self.condition = condition
+        self.enforcement = enforcement
+        self.profiles = profiles
+
+    @property
+    def short_desc(self):
+        return ('REQUIRED_USE violates immutability rules: ' +
+                '[%s] requires [%s] while the opposite value is ' +
+                'enforced by use.force/mask (in profiles: %s)') % (
+                ' && '.join('%s' % x for x in self.condition),
+                self.enforcement, self.profiles)
+
+
+glep73_known_results = (GLEP73Syntax, GLEP73Immutability)
 
 
 def group_name(c):
@@ -184,3 +212,20 @@ def glep73_flatten(requse, immutables={}):
                 raise AssertionError('Unknown item in REQUIRED_USE: %s' % (c,))
 
     return list(rec(requse, []))
+
+
+def glep73_run_checks(requse, immutables):
+    flattened = glep73_flatten(requse, immutables)
+
+    for ci, ei in flattened:
+        for cix in ci:
+            # if Ci,x is in immutables, and it evaluates to false,
+            # the rule will never apply; if it is not in immutables,
+            # we assume it can apply
+            if immutables.get(cix.name, cix.enabled) != cix.enabled:
+                break
+        else:
+            if immutables.get(ei.name, ei.enabled) != ei.enabled:
+                yield partial(GLEP73Immutability,
+                              condition=ci,
+                              enforcement=ei)

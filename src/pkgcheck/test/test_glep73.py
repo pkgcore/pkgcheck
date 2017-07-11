@@ -13,14 +13,31 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
         super(TestGLEP73, self).setUp()
         options = self.get_options(verbose=1,
                                    use_desc=('a', 'b', 'c', 'd'))
-        profiles = {'x86': [misc.FakeProfile(name='default/linux/x86')]}
+        profile = misc.FakeProfile(name='default/linux/x86',
+            forced_use={
+                'dev-foo/a-forced': ['a'],
+                'dev-foo/a-b-forced': ['a', 'b'],
+                'dev-foo/b-forced': ['b'],
+                'dev-foo/a-forced-b-masked': ['a'],
+                'dev-foo/a-masked-b-forced': ['b'],
+            },
+            masked_use={
+                'dev-foo/a-masked': ['a'],
+                'dev-foo/a-b-masked': ['a', 'b'],
+                'dev-foo/b-masked': ['b'],
+                'dev-foo/a-forced-b-masked': ['b'],
+                'dev-foo/a-masked-b-forced': ['a'],
+            })
+
+        profiles = {'x86': [profile]}
         self.check = metadata_checks.RequiredUSEMetadataReport(
             options, addons.UseAddon(options, profiles['x86']), profiles)
         self.check.start()
 
-    def mk_pkg(self, eapi="5", iuse="", required_use="", keywords="x86"):
+    def mk_pkg(self, eapi="5", iuse="", required_use="", keywords="x86",
+               cpv="dev-foo/bar-1"):
         return FakePkg(
-            "dev-foo/bar-1",
+            cpv,
             eapi=eapi,
             iuse=iuse.split(),
             data={"REQUIRED_USE": required_use, "KEYWORDS": keywords})
@@ -160,3 +177,43 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
         self.assertListEqual(glep73.glep73_flatten(p.required_use,
                                                    {'a': False, 'b': False}),
                 [([nf('a'), nf('b')], f('c'))])
+
+    def test_immutability_check(self):
+        """Test immutability errors."""
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/a-masked-1",
+            iuse="a b", required_use="a? ( b )"))
+        r = self.assertReport(self.check, self.mk_pkg(cpv="dev-foo/b-masked-1",
+            iuse="a b", required_use="a? ( b )"))
+        self.assertIsInstance(r, glep73.GLEP73Immutability)
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/a-b-masked-1",
+            iuse="a b", required_use="a? ( b )"))
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/a-forced-1",
+            iuse="a +b", required_use="a? ( b )"))
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/b-forced-1",
+            iuse="a +b", required_use="a? ( b )"))
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/a-b-forced-1",
+            iuse="a b", required_use="a? ( b )"))
+        r = self.assertReports(self.check, self.mk_pkg(cpv="dev-foo/a-forced-b-masked-1",
+            iuse="a b", required_use="a? ( b )"))
+        self.assertIsInstance(r[-1], glep73.GLEP73Immutability)
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/b-forced-a-masked-1",
+            iuse="a b", required_use="a? ( b )"))
+
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/a-masked-1",
+            iuse="a b", required_use="a? ( b )"))
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/b-masked-1",
+            iuse="a b", required_use="a? ( !b )"))
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/a-b-masked-1",
+            iuse="a b", required_use="a? ( !b )"))
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/a-forced-1",
+            iuse="a b", required_use="a? ( !b )"))
+        r = self.assertReport(self.check, self.mk_pkg(cpv="dev-foo/b-forced-1",
+            iuse="a b", required_use="a? ( !b )"))
+        self.assertIsInstance(r, glep73.GLEP73Immutability)
+        r = self.assertReports(self.check, self.mk_pkg(cpv="dev-foo/a-b-forced-1",
+            iuse="a b", required_use="a? ( !b )"))
+        self.assertIsInstance(r[-1], glep73.GLEP73Immutability)
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/a-forced-b-masked-1",
+            iuse="a b", required_use="a? ( !b )"))
+        self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/b-forced-a-masked-1",
+            iuse="a b", required_use="a? ( !b )"))
