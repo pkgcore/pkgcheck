@@ -115,9 +115,41 @@ class GLEP73Flag(object):
         return 'GLEP73Flag("%s", negate=%s)' % (self.name, not self.enabled)
 
 
-def glep73_flatten(requse):
+class immutability_sort_key(object):
+    """Sorting key for immutability-based flag reordering defined
+    in GLEP 73. Immutable flags that evaluate to true are moved to
+    the beginning, those that evaluate to false are moved to
+    the end and the remaining flags are left in the middle. Flags within
+    the same class return the same key, so a stable sort will preserve
+    their relative ordering."""
+
+    __slots__ = ('immutables')
+
+    def __init__(self, immutables):
+        self.immutables = immutables
+
+    def __call__(self, key):
+        assert(isinstance(key, ContainmentMatch))
+        assert(len(key.vals) == 1)
+        name = next(iter(key.vals))
+
+        v = self.immutables.get(name)
+        if v is True:
+            # forced go to the front
+            return 0
+        elif v is False:
+            # masked go to the end
+            return 2
+        else:
+            # normal go in the middle
+            return 1
+
+
+def glep73_flatten(requse, immutables={}):
     """Transform the REQUIRED_USE into flat constraints as described
     in GLEP 73."""
+    sort_key = immutability_sort_key(immutables)
+
     def rec(restrictions, conditions):
         for c in restrictions:
             if isinstance(c, ContainmentMatch):
@@ -132,17 +164,21 @@ def glep73_flatten(requse):
             elif (isinstance(c, OrRestriction) or
                   isinstance(c, JustOneRestriction) or
                   isinstance(c, AtMostOneOfRestriction)):
+
+                # reorder according to immutability
+                subitems = sorted(c.restrictions, key=sort_key)
+
                 if not isinstance(c, AtMostOneOfRestriction):
                     # ^^ ( a b c ... ) -> || ( a b c ) ...
                     # || ( a b c ... ) -> [!b !c ...]? ( a )
-                    yield (conditions + [GLEP73Flag(x, negate=True) for x in c.restrictions[1:]],
-                           GLEP73Flag(c.restrictions[0]))
+                    yield (conditions + [GLEP73Flag(x, negate=True) for x in subitems[1:]],
+                           GLEP73Flag(subitems[0]))
                 if not isinstance(c, OrRestriction):
                     # ^^ ( a b c ... ) -> ... ?? ( a b c )
                     # ?? ( a b c ... ) -> a? ( !b !c ... ) b? ( !c ... ) ...
-                    for i in range(0, len(c.restrictions)-1):
-                        new_cond = conditions + [GLEP73Flag(x) for x in c.restrictions[i:i+1]]
-                        for x in c.restrictions[i+1:]:
+                    for i in range(0, len(subitems)-1):
+                        new_cond = conditions + [GLEP73Flag(x) for x in subitems[i:i+1]]
+                        for x in subitems[i+1:]:
                             yield (new_cond, GLEP73Flag(x, negate=True))
             else:
                 raise AssertionError('Unknown item in REQUIRED_USE: %s' % (c,))

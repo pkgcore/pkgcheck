@@ -128,3 +128,35 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
         p = self.mk_pkg(iuse="a b c", required_use="a? ( b ) a? ( c )")
         pf = glep73.glep73_flatten(p.required_use)
         self.assertIsNot(pf[0][0][0], pf[1][0][0])
+
+    def test_flatten_with_immutables(self):
+        """Test whether constraints with immutable reordering are
+        flattened correctly"""
+        f = glep73.GLEP73Flag
+        nf = lambda x: glep73.GLEP73Flag(x, negate=True)
+
+        p = self.mk_pkg(iuse="a b c", required_use="|| ( a b c )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use,
+                                                   {'c': True}),
+                [([nf('a'), nf('b')], f('c'))])
+
+        p = self.mk_pkg(iuse="a b c", required_use="|| ( a b c )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use,
+                                                   {'a': False}),
+                [([nf('c'), nf('a')], f('b'))])
+
+        p = self.mk_pkg(iuse="a b c", required_use="|| ( a b c )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use,
+                                                   {'a': False, 'c': True}),
+                [([nf('b'), nf('a')], f('c'))])
+
+        # check whether relative ordering is preserved within forced/masked flags
+        p = self.mk_pkg(iuse="a b c", required_use="|| ( a b c )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use,
+                                                   {'b': True, 'c': True}),
+                [([nf('c'), nf('a')], f('b'))])
+
+        p = self.mk_pkg(iuse="a b c", required_use="|| ( a b c )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use,
+                                                   {'a': False, 'b': False}),
+                [([nf('a'), nf('b')], f('c'))])
