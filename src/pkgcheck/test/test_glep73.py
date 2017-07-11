@@ -12,7 +12,7 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
     def setUp(self):
         super(TestGLEP73, self).setUp()
         options = self.get_options(verbose=1,
-                                   use_desc=('a', 'b', 'c'))
+                                   use_desc=('a', 'b', 'c', 'd'))
         profiles = {'x86': [misc.FakeProfile(name='default/linux/x86')]}
         self.check = metadata_checks.RequiredUSEMetadataReport(
             options, addons.UseAddon(options, profiles['x86']), profiles)
@@ -65,3 +65,66 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
         r = self.assertReport(self.check, self.mk_pkg(iuse="a b c", required_use="a? ( ( b c ) )"))
         self.assertIsInstance(r, glep73.GLEP73Syntax)
     test_syntax_allof.todo = "meaningless all-of groups are collapsed by pkgcore"
+
+    def test_flatten(self):
+        """Test common cases for flattening"""
+        f = glep73.GLEP73Flag
+        nf = lambda x: glep73.GLEP73Flag(x, negate=True)
+
+        # flat constraints
+        p = self.mk_pkg(iuse="a b", required_use="a b")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([], f('a')), ([], f('b'))])
+        p = self.mk_pkg(iuse="a b", required_use="a !b")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([], f('a')), ([], nf('b'))])
+
+        # easy conditions
+        p = self.mk_pkg(iuse="a b c", required_use="a? ( b ) b? ( c )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([f('a')], f('b')), ([f('b')], f('c'))])
+        p = self.mk_pkg(iuse="a b c", required_use="a? ( b? ( c ) )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([f('a'), f('b')], f('c'))])
+        p = self.mk_pkg(iuse="a b c d", required_use="a? ( b? ( c d ) )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([f('a'), f('b')], f('c')), ([f('a'), f('b')], f('d'))])
+        p = self.mk_pkg(iuse="a b c d", required_use="a? ( b? ( c ) d )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([f('a'), f('b')], f('c')), ([f('a')], f('d'))])
+
+        # ||/??/^^ groups
+        p = self.mk_pkg(iuse="a b c", required_use="|| ( a b c )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([nf('b'), nf('c')], f('a'))])
+        p = self.mk_pkg(iuse="a b c", required_use="?? ( a b c )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([f('a')], nf('b')), ([f('a')], nf('c')), ([f('b')], nf('c'))])
+        p = self.mk_pkg(iuse="a b c", required_use="^^ ( a b c )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([nf('b'), nf('c')], f('a')),
+                 ([f('a')], nf('b')), ([f('a')], nf('c')), ([f('b')], nf('c'))])
+
+        # ||/??/^^ groups in a conditional
+        p = self.mk_pkg(iuse="a b c d", required_use="d? ( || ( a b c ) )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([f('d'), nf('b'), nf('c')], f('a'))])
+        p = self.mk_pkg(iuse="a b c d", required_use="d? ( ?? ( a b c ) )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([f('d'), f('a')], nf('b')), ([f('d'), f('a')], nf('c')),
+                 ([f('d'), f('b')], nf('c'))])
+        p = self.mk_pkg(iuse="a b c d", required_use="d? ( ^^ ( a b c ) )")
+        self.assertListEqual(glep73.glep73_flatten(p.required_use),
+                [([f('d'), nf('b'), nf('c')], f('a')),
+                 ([f('d'), f('a')], nf('b')), ([f('d'), f('a')], nf('c')),
+                 ([f('d'), f('b')], nf('c'))])
+
+    def test_flatten_identity(self):
+        """Test whether identity of flags is preserved while flattening"""
+        p = self.mk_pkg(iuse="a b c", required_use="a? ( b c )")
+        pf = glep73.glep73_flatten(p.required_use)
+        self.assertIs(pf[0][0][0], pf[1][0][0])
+
+        p = self.mk_pkg(iuse="a b c", required_use="a? ( b ) a? ( c )")
+        pf = glep73.glep73_flatten(p.required_use)
+        self.assertIsNot(pf[0][0][0], pf[1][0][0])
