@@ -82,8 +82,36 @@ class GLEP73Conflict(base.Warning):
                 ' && '.join('%s' % x for x in self.cj), self.ej)
 
 
+class GLEP73BackAlteration(base.Warning):
+    """A REQUIRED_USE constraint that can cause another constraint
+    preceding it to start to meaningfully apply. This is a minor issue
+    for the auto-enforcing since it requires the parser to do additional
+    iterations in order to enforce the constraints."""
+
+    __slots__ = ("category", "package", "version", "ci", "ei",
+                 "cj", "ej", "profiles")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, ci, ei, cj, ej, profiles):
+        super(GLEP73BackAlteration, self).__init__()
+        self._store_cpv(pkg)
+        self.ci = ci
+        self.ei = ei
+        self.cj = cj
+        self.ej = ej
+        self.profiles = profiles
+
+    @property
+    def short_desc(self):
+        return ('REQUIRED_USE causes a preceding condition to start ' +
+                'applying: [%s] enforces [%s] which may cause preceding ' +
+                '[%s] enforcing [%s] to evaluate to true') % (
+                ' && '.join('%s' % x for x in self.cj), self.ej,
+                ' && '.join('%s' % x for x in self.ci), self.ei)
+
+
 glep73_known_results = (GLEP73Syntax, GLEP73Immutability,
-                        GLEP73Conflict)
+                        GLEP73Conflict, GLEP73BackAlteration)
 
 
 def group_name(c):
@@ -398,3 +426,12 @@ def glep73_run_checks(requse, immutables):
                     yield partial(GLEP73Conflict,
                                   ci=ci, ei=ei,
                                   cj=cj, ej=ej)
+
+            # 3. back alteration check:
+            # constraint (Cj, Ej) alters (Ci, Ei) if:
+            # 1. Ej is in the non-common part of Ci,
+            # 2. Ci can occur simultaneously with Cj.
+            if ej in cis and conditions_can_coexist(cis, cjs):
+                yield partial(GLEP73BackAlteration,
+                              ci=ci, ei=ei,
+                              cj=cj, ej=ej)
