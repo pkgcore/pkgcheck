@@ -354,3 +354,47 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
         self.assertFalse(glep73.test_condition([f('a')], {}, False))
         self.assertTrue(glep73.test_condition([nf('a')], {}, True))
         self.assertFalse(glep73.test_condition([nf('a')], {}, False))
+
+    def test_get_final_flags(self):
+        f = glep73.GLEP73Flag
+        nf = lambda x: glep73.GLEP73Flag(x, negate=True)
+
+        # initial flags
+        self.assertEqual(glep73.get_final_flags([], [f('a')]),
+            {'a': True})
+        self.assertEqual(glep73.get_final_flags([], [nf('a')]),
+            {'a': False})
+
+        # plain constraints:
+        # a
+        self.assertEqual(glep73.get_final_flags(
+            [([], f('a'))], []),
+            {'a': True})
+        # a? ( b )
+        self.assertEqual(glep73.get_final_flags(
+            [([f('a')], f('b'))], []),
+            {})
+        self.assertEqual(glep73.get_final_flags(
+            [([f('a')], f('b'))], [nf('a')]),
+            {'a': False})
+        self.assertEqual(glep73.get_final_flags(
+            [([f('a')], f('b'))], [f('a')]),
+            {'a': True, 'b': True})
+        # a? ( !b )
+        self.assertEqual(glep73.get_final_flags(
+            [([f('a')], nf('b'))], [f('a')]),
+            {'a': True, 'b': False})
+        self.assertEqual(glep73.get_final_flags(
+            [([f('a')], nf('b'))], [f('b')]),
+            {'b': True})
+        self.assertEqual(glep73.get_final_flags(
+            [([f('a')], nf('b'))], [f('a'), f('b')]),
+            {'a': True, 'b': False})
+        # a? ( !a )
+        self.assertEqual(glep73.get_final_flags(
+            [([f('a')], nf('a'))], [f('a')]),
+            {'a': False})
+
+        # invalid initial flags
+        self.assertRaises(glep73.ConflictingInitialFlags, glep73.get_final_flags,
+            [], [f('a'), nf('a')])

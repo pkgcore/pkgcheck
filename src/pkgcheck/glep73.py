@@ -306,6 +306,38 @@ def test_condition(c, flag_dict, accept_undefined):
     return True
 
 
+class ConflictingInitialFlags(ValueError):
+    def __init__(self, flag):
+        super(ConflictingInitialFlags, self).__init__(
+                'Condition requires %s to be both true and false'
+                % (flag,))
+        self.flag = flag
+
+
+def get_final_flags(constraints, initial_flags):
+    """Evaluate the 'guaranteed' final flag state after processing
+    constraints with the specified initial set of flags. The constraints
+    will be processed in order, and the flag states will be altered
+    only if the condition is guaranteed to match with already evaluated
+    flag state. In other words, constraints with conditions depending
+    on at least one flag whose value is undefined will be skipped."""
+    # convert initial_flags to a dict
+    flag_states = {}
+    for f in initial_flags:
+        if flag_states.setdefault(f.name, f.enabled) != f.enabled:
+            raise ConflictingInitialFlags(f.name)
+
+    for c, e in constraints:
+        # TODO: common prefix support
+
+        # if all conditions evaluate to true (and there are no unmatched
+        # flags), the effect will always apply
+        if test_condition(c, flag_states, False):
+            flag_states[e.name] = e.enabled
+
+    return flag_states
+
+
 def glep73_run_checks(requse, immutables):
     flattened = glep73_flatten(requse, immutables)
 
