@@ -480,3 +480,8 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
         # no common prefix: a? ( !a ) a? ( b )
         self.assertFalse(glep73.condition_always_occurs(
             [f('b')], [([f('a')], nf('a')), ([f('a')], f('b'))], [f('a')]))
+
+    def test_self_conflicting_rule(self):
+        r = self.assertReport(self.check, self.mk_pkg(
+            iuse="a b", required_use="a? ( !a? ( b ) ) !b"))
+        self.assertIsInstance(r, glep73.GLEP73SelfConflicting)

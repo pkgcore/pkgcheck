@@ -54,6 +54,32 @@ class GLEP73Immutability(base.Error):
                 self.enforcement, self.profiles)
 
 
+class GLEP73SelfConflicting(base.Warning):
+    """A REQUIRED_USE constraint that has both flag and !flag
+    in a single condition. Such a condition can never be true
+    and our algorithms do not take it into consideration."""
+
+    __slots__ = ("category", "package", "version", "condition",
+                 "enforcement", "flag", "profiles")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, condition, enforcement, flag, profiles):
+        super(GLEP73SelfConflicting, self).__init__()
+        self._store_cpv(pkg)
+        self.condition = condition
+        self.enforcement = enforcement
+        self.flag = flag
+        self.profiles = profiles
+
+    @property
+    def short_desc(self):
+        return ('REQUIRED_USE has impossible self-conflicting condition: ' +
+                '[%s] => [%s] can never be true since it requires [%s] ' +
+                'to be true and false simultaneously') % (
+                ' && '.join('%s' % x for x in self.condition),
+                self.enforcement, self.flag)
+
+
 class GLEP73Conflict(base.Warning):
     """REQUIRED_USE constraints that can request the user to enable
     and disable the same flag simultaneously. This is a major issue
@@ -111,7 +137,8 @@ class GLEP73BackAlteration(base.Warning):
 
 
 glep73_known_results = (GLEP73Syntax, GLEP73Immutability,
-                        GLEP73Conflict, GLEP73BackAlteration)
+                        GLEP73SelfConflicting, GLEP73Conflict,
+                        GLEP73BackAlteration)
 
 
 def group_name(c):
@@ -429,14 +456,32 @@ def glep73_run_checks(requse, immutables):
             if ei == ej.negated() and conditions_can_coexist(cis, cjs):
                 # we presume both can only match simultaneously if Ci|Cj
                 common_cond = set(ci) | set(cj)
+
                 # check if common_cond does not make either of
                 # the conditions impossible
-                if (condition_can_occur(ci, flattened[:i], common_cond) and
-                    condition_can_occur(cj, flattened[:j], common_cond)):
+                try:
+                    if not condition_can_occur(ci, flattened[:i], common_cond):
+                        continue
+                except ConflictingInitialFlags as e:
+                    yield partial(GLEP73SelfConflicting,
+                                  condition=ci,
+                                  enforcement=ei,
+                                  flag=e.flag)
+                    return
 
-                    yield partial(GLEP73Conflict,
-                                  ci=ci, ei=ei,
-                                  cj=cj, ej=ej)
+                try:
+                    if not condition_can_occur(cj, flattened[:j], common_cond):
+                        continue
+                except ConflictingInitialFlags as e:
+                    yield partial(GLEP73SelfConflicting,
+                                  condition=cj,
+                                  enforcement=ej,
+                                  flag=e.flag)
+                    return
+
+                yield partial(GLEP73Conflict,
+                              ci=ci, ei=ei,
+                              cj=cj, ej=ej)
 
             # 3. back alteration check:
             # constraint (Cj, Ej) alters (Ci, Ei) if:
