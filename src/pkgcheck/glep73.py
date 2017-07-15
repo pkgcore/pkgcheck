@@ -110,6 +110,25 @@ def glep73_validate_syntax(requse, reporter, pkg):
     return True
 
 
+def glep73_get_all_flags(requse):
+    """Grab names of all flags used in the REQUIRED_USE constraint."""
+    ret = set()
+    for c in requse:
+        if isinstance(c, ContainmentMatch):
+            ret.update(c.vals)
+        elif isinstance(c, Conditional):
+            ret.update(glep73_get_all_flags(c))
+            ret.update(glep73_get_all_flags((c.restriction,)))
+        elif (isinstance(c, OrRestriction) or
+              isinstance(c, JustOneRestriction) or
+              isinstance(c, AtMostOneOfRestriction)):
+            ret.update(glep73_get_all_flags(c))
+        else:
+            raise AssertionError('Unexpected item in REQUIRED_USE: %s' % (c,))
+
+    return ret
+
+
 class GLEP73Flag(object):
     """A trivial holder for flag name+value inside flat constraints.
     It replaces ContainmentMatch since the latter has instance caching

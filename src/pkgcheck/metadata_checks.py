@@ -12,7 +12,7 @@ from snakeoil.strings import pluralism
 
 from . import base, addons
 from .glep73 import (glep73_validate_syntax, glep73_run_checks,
-                     glep73_known_results)
+                     glep73_known_results, glep73_get_all_flags)
 from .visibility import FakeConfigurable
 
 demandload('logging')
@@ -173,6 +173,8 @@ class RequiredUSEMetadataReport(base.Template):
         # check GLEP 73 syntax first, so that we know if we can perform
         # further tests
         glep73_valid = glep73_validate_syntax(pkg.required_use, reporter, pkg)
+        if glep73_valid:
+            glep73_all_flags = glep73_get_all_flags(pkg.required_use)
 
         # check both stable/unstable profiles for stable KEYWORDS and only
         # unstable profiles for unstable KEYWORDS
@@ -200,10 +202,11 @@ class RequiredUSEMetadataReport(base.Template):
                 if glep73_valid:
                     # PMS note: mask takes precedence over force
                     immutables = {}
-                    for x in src._forced_use:
-                        immutables[x] = True
-                    for x in src._masked_use:
-                        immutables[x] = False
+                    for x in glep73_all_flags:
+                        for x in src._forced_use:
+                            immutables[x] = True
+                        for x in src._masked_use:
+                            immutables[x] = False
 
                     cache_key = tuple(immutables.iteritems())
                     if cache_key in glep73_cache:
