@@ -290,6 +290,22 @@ def strip_common_prefix(c1, c2):
     return (c1, c2)
 
 
+def test_condition(c, flag_dict, accept_undefined):
+    """Test whether the set of conditions C evaluates to true, with flag
+    states defined by flag_dict (dict of flag name->bool). If the flag
+    is not included in flag_dict and accept_undefined is true, it is
+    assumed to match. If accept_undefined is false, it is assumed
+    not to match."""
+    for ci in c:
+        v = flag_dict.get(ci.name)
+        if v is None:
+            if not accept_undefined:
+                return False
+        elif v != ci.enabled:
+            return False
+    return True
+
+
 def glep73_run_checks(requse, immutables):
     flattened = glep73_flatten(requse, immutables)
 

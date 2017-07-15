@@ -324,3 +324,33 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
             [([f('a'), f('b')], f('c')), ([f('a'), f('b')], f('d'))])
         self.assertEqual(glep73.strip_common_prefix(fr[0][0], fr[1][0]),
             ([f('b')], [f('b')]))
+
+    def test_test_condition(self):
+        f = glep73.GLEP73Flag
+        nf = lambda x: glep73.GLEP73Flag(x, negate=True)
+
+        self.assertTrue(glep73.test_condition(
+            [f('a')], {'a': True}, False))
+        self.assertTrue(glep73.test_condition(
+            [nf('a')], {'a': False}, False))
+        self.assertFalse(glep73.test_condition(
+            [nf('a')], {'a': True}, False))
+        self.assertFalse(glep73.test_condition(
+            [f('a')], {'a': False}, False))
+
+        # multiple conditions
+        self.assertTrue(glep73.test_condition(
+            [f('a'), f('b'), f('c')],
+            {'a': True, 'b': True, 'c': True}, False))
+        self.assertFalse(glep73.test_condition(
+            [f('a'), f('b'), f('c')],
+            {'a': False, 'b': True, 'c': True}, False))
+        self.assertFalse(glep73.test_condition(
+            [f('a'), f('b'), f('c')],
+            {'a': True, 'b': True, 'c': False}, False))
+
+        # fallback bit
+        self.assertTrue(glep73.test_condition([f('a')], {}, True))
+        self.assertFalse(glep73.test_condition([f('a')], {}, False))
+        self.assertTrue(glep73.test_condition([nf('a')], {}, True))
+        self.assertFalse(glep73.test_condition([nf('a')], {}, False))
