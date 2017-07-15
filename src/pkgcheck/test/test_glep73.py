@@ -271,9 +271,6 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
             iuse="+amd64 x86 binary debug",
             required_use='!amd64? ( !x86? ( !debug binary ) ) debug? ( !binary )'))
 
-    test_conflict_disarmed_by_preceding_rules.todo = (
-            "implement taking preceding constraints into consideration")
-
     def test_strip_common_prefix(self):
         f = glep73.GLEP73Flag
 

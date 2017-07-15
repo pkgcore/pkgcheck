@@ -380,7 +380,7 @@ def glep73_run_checks(requse, immutables):
                               condition=ci,
                               enforcement=ei)
 
-        for cj, ej in flattened[i+1:]:
+        for j, (cj, ej) in enumerate(flattened[i+1:], i+1):
             cis, cjs = strip_common_prefix(ci, cj)
 
             # 2. conflict check:
@@ -388,6 +388,13 @@ def glep73_run_checks(requse, immutables):
             # a. Ei = !Ej, and
             # b. Ci and Cj can occur simultaneously.
             if ei == ej.negated() and conditions_can_coexist(cis, cjs):
-                yield partial(GLEP73Conflict,
-                              ci=ci, ei=ei,
-                              cj=cj, ej=ej)
+                # we presume both can only match simultaneously if Ci|Cj
+                common_cond = set(ci) | set(cj)
+                # check if common_cond does not make either of
+                # the conditions impossible
+                if (condition_can_occur(ci, flattened[:i], common_cond) and
+                    condition_can_occur(cj, flattened[:j], common_cond)):
+
+                    yield partial(GLEP73Conflict,
+                                  ci=ci, ei=ei,
+                                  cj=cj, ej=ej)
