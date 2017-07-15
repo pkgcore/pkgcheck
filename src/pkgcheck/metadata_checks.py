@@ -187,6 +187,8 @@ class RequiredUSEMetadataReport(base.Template):
         failures = defaultdict(list)
         # also check GLEP73 problems
         glep73_failures = defaultdict(list)
+        # cached results for combinations of forced+masked flags
+        glep73_cache = {}
         for keyword in keywords:
             for profile in self.profiles.get(keyword, ()):
                 src = FakeConfigurable(pkg, profile)
@@ -203,8 +205,14 @@ class RequiredUSEMetadataReport(base.Template):
                     for x in src._masked_use:
                         immutables[x] = False
 
-                    # TODO: cache check results per (forced, masked) set
-                    for r in glep73_run_checks(pkg.required_use, immutables):
+                    cache_key = tuple(immutables.iteritems())
+                    if cache_key in glep73_cache:
+                        res = glep73_cache[cache_key]
+                    else:
+                        res = list(glep73_run_checks(pkg.required_use,
+                                                     immutables))
+                        glep73_cache[cache_key] = res
+                    for r in res:
                         glep73_failures[(r.func, r.args, tuple(sorted(r.keywords)))].append(
                                 (r, profile.key, profile.name))
 
