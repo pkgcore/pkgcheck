@@ -443,6 +443,9 @@ def glep73_run_checks(requse, immutables):
             # 1. Ej is in the non-common part of Ci,
             # 2. Ci can occur simultaneously with Cj.
             if ej in cis and conditions_can_coexist(cis, cjs):
-                yield partial(GLEP73BackAlteration,
-                              ci=ci, ei=ei,
-                              cj=cj, ej=ej)
+                # check if Ei is not enforced by some other rule for Cj
+                # anyway
+                if not condition_always_occurs([ei], flattened, cj):
+                    yield partial(GLEP73BackAlteration,
+                                  ci=ci, ei=ei,
+                                  cj=cj, ej=ej)

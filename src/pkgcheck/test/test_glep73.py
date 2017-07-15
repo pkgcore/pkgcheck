@@ -263,8 +263,6 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
             required_use="!static? ( ^^ ( gcrypt kernel nettle openssl ) ) " +
                 "static? ( ^^ ( kernel nettle openssl ) )"))
 
-    test_conflicts_real_example.todo = "confused by partial back-alteration check"
-
     def test_conflict_disarmed_by_preceding_rules(self):
         self.assertNoReport(self.check, self.mk_pkg(
             iuse="a b c", required_use="a? ( !b c ) b? ( !c )"))
@@ -450,16 +448,10 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
             iuse="a b", required_use="a? ( !b ) b? ( a )"))
         self.assertIsInstance(r, glep73.GLEP73BackAlteration)
 
-    test_back_alteration_circular.todo = (
-            "Need to implement checking previous constraints")
-
     def test_back_alteration_duplicate_enforcement(self):
         self.assertNoReport(self.check, self.mk_pkg(
             iuse="jit shadowstack x86",
             required_use='!jit? ( !shadowstack ) x86? ( !jit !shadowstack )'))
-
-    test_back_alteration_duplicate_enforcement.todo = (
-            "Need to implement checking previous constraints")
 
     def test_condition_always_occurs(self):
         f = glep73.GLEP73Flag
