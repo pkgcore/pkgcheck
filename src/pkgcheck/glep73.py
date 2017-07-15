@@ -391,6 +391,17 @@ def condition_can_occur(final_condition, constraints, initial_flags):
             True)
 
 
+def condition_always_occurs(final_condition, constraints, initial_flags):
+    """Returns true if final_condition always evaluates to true after
+    applying the specified initial flags and processing the constraints.
+    It is assumed that the condition always evaluates to true
+    if the final flags match all the sub-conditions of the final
+    condition explicitly."""
+    return test_condition(final_condition,
+            get_final_flags(constraints, initial_flags),
+            False)
+
+
 def glep73_run_checks(requse, immutables):
     flattened = glep73_flatten(requse, immutables)
 

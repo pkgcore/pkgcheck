@@ -460,3 +460,31 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
 
     test_back_alteration_duplicate_enforcement.todo = (
             "Need to implement checking previous constraints")
+
+    def test_condition_always_occurs(self):
+        f = glep73.GLEP73Flag
+        nf = lambda x: glep73.GLEP73Flag(x, negate=True)
+
+        # a? ( b )
+        self.assertFalse(glep73.condition_always_occurs(
+            [f('b')], [([f('a')], f('b'))], []))
+        self.assertTrue(glep73.condition_always_occurs(
+            [f('b')], [([f('a')], f('b'))], [f('b')]))
+        self.assertTrue(glep73.condition_always_occurs(
+            [f('b')], [([f('a')], f('b'))], [f('a')]))
+        # a? ( b? ( c ) )
+        self.assertFalse(glep73.condition_always_occurs(
+            [f('c')], [([f('a'), f('b')], f('c'))], []))
+        self.assertFalse(glep73.condition_always_occurs(
+            [f('c')], [([f('a'), f('b')], f('c'))], [f('a')]))
+        self.assertTrue(glep73.condition_always_occurs(
+            [f('c')], [([f('a'), f('b')], f('c'))], [f('a'), f('b')]))
+        self.assertTrue(glep73.condition_always_occurs(
+            [f('c')], [([f('a'), f('b')], f('c'))], [f('a'), f('c')]))
+        # common prefix: a? ( !a b )
+        fa = f('a')
+        self.assertTrue(glep73.condition_always_occurs(
+            [f('b')], [([fa], nf('a')), ([fa], f('b'))], [f('a')]))
+        # no common prefix: a? ( !a ) a? ( b )
+        self.assertFalse(glep73.condition_always_occurs(
+            [f('b')], [([f('a')], nf('a')), ([f('a')], f('b'))], [f('a')]))
