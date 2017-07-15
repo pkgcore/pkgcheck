@@ -277,6 +277,19 @@ def conditions_can_coexist(c1, c2):
     return True
 
 
+def strip_common_prefix(c1, c2):
+    """Check if the conditions of two flattened constraint share common
+    nodes on the condition graph. If they do, discard the common prefix
+    and return the tuple with unique node sets for both."""
+    # copy in order to avoid altering the original values
+    c1 = list(c1)
+    c2 = list(c2)
+    while c1 and c2 and c1[0] is c2[0]:
+        del c1[0]
+        del c2[0]
+    return (c1, c2)
+
+
 def glep73_run_checks(requse, immutables):
     flattened = glep73_flatten(requse, immutables)
 
@@ -295,11 +308,13 @@ def glep73_run_checks(requse, immutables):
                               enforcement=ei)
 
         for cj, ej in flattened[i+1:]:
+            cis, cjs = strip_common_prefix(ci, cj)
+
             # 2. conflict check:
             # two constraints (Ci, Ei); (Cj, Ej) conflict if:
             # a. Ei = !Ej, and
             # b. Ci and Cj can occur simultaneously.
-            if ei == ej.negated() and conditions_can_coexist(ci, cj):
+            if ei == ej.negated() and conditions_can_coexist(cis, cjs):
                 yield partial(GLEP73Conflict,
                               ci=ci, ei=ei,
                               cj=cj, ej=ej)

@@ -273,3 +273,54 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
 
     test_conflict_disarmed_by_preceding_rules.todo = (
             "implement taking preceding constraints into consideration")
+
+    def test_strip_common_prefix(self):
+        f = glep73.GLEP73Flag
+
+        # a? ( b c ) -> [a] is common prefix
+        p = self.mk_pkg(iuse="a b c", required_use="a? ( b c )")
+        fr = glep73.glep73_flatten(p.required_use)
+        self.assertListEqual(fr,
+            [([f('a')], f('b')), ([f('a')], f('c'))])
+        self.assertEqual(glep73.strip_common_prefix(fr[0][0], fr[1][0]),
+            ([], []))
+
+        # a? ( b c? ( d ) ) -> [a] is common prefix
+        p = self.mk_pkg(iuse="a b c d", required_use="a? ( b c? ( d ) )")
+        fr = glep73.glep73_flatten(p.required_use)
+        self.assertListEqual(fr,
+            [([f('a')], f('b')), ([f('a'), f('c')], f('d'))])
+        self.assertEqual(glep73.strip_common_prefix(fr[0][0], fr[1][0]),
+            ([], [f('c')]))
+
+        # a? ( b? ( c ) d? ( e ) ) -> [a] is common prefix
+        p = self.mk_pkg(iuse="a b c d e", required_use="a? ( b? ( c ) d? ( e ) )")
+        fr = glep73.glep73_flatten(p.required_use)
+        self.assertListEqual(fr,
+            [([f('a'), f('b')], f('c')), ([f('a'), f('d')], f('e'))])
+        self.assertEqual(glep73.strip_common_prefix(fr[0][0], fr[1][0]),
+            ([f('b')], [f('d')]))
+
+        # a? ( b? ( c d ) ) -> [a,b] is common prefix
+        p = self.mk_pkg(iuse="a b c d", required_use="a? ( b? ( c d ) )")
+        fr = glep73.glep73_flatten(p.required_use)
+        self.assertListEqual(fr,
+            [([f('a'), f('b')], f('c')), ([f('a'), f('b')], f('d'))])
+        self.assertEqual(glep73.strip_common_prefix(fr[0][0], fr[1][0]),
+            ([], []))
+
+        # a? ( b ) a? ( c ) -> no common prefix
+        p = self.mk_pkg(iuse="a b c", required_use="a? ( b ) a? ( c )")
+        fr = glep73.glep73_flatten(p.required_use)
+        self.assertListEqual(fr,
+            [([f('a')], f('b')), ([f('a')], f('c'))])
+        self.assertEqual(glep73.strip_common_prefix(fr[0][0], fr[1][0]),
+            ([f('a')], [f('a')]))
+
+        # a? ( b? ( c ) b? ( d ) ) -> [a] is common prefix
+        p = self.mk_pkg(iuse="a b c d", required_use="a? ( b? ( c ) b? ( d ) )")
+        fr = glep73.glep73_flatten(p.required_use)
+        self.assertListEqual(fr,
+            [([f('a'), f('b')], f('c')), ([f('a'), f('b')], f('d'))])
+        self.assertEqual(glep73.strip_common_prefix(fr[0][0], fr[1][0]),
+            ([f('b')], [f('b')]))
