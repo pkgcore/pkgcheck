@@ -352,6 +352,17 @@ def get_final_flags(constraints, initial_flags):
     return flag_states
 
 
+def condition_can_occur(final_condition, constraints, initial_flags):
+    """Returns true if final_condition can evaluate to true after
+    applying the specified initial flags and processing the constraints.
+    It is assumed that the condition can evaluate to true if the final
+    flags do not cause any of the subconditions to unconditionally
+    evaluate to false."""
+    return test_condition(final_condition,
+            get_final_flags(constraints, initial_flags),
+            True)
+
+
 def glep73_run_checks(requse, immutables):
     flattened = glep73_flatten(requse, immutables)
 

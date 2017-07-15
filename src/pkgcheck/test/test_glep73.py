@@ -410,3 +410,22 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
         self.assertEqual(glep73.get_final_flags(
             [([f('a')], nf('a')), ([f('a')], f('b'))], [f('a')]),
             {'a': False})
+
+    def test_condition_can_occur(self):
+        f = glep73.GLEP73Flag
+        nf = lambda x: glep73.GLEP73Flag(x, negate=True)
+
+        # b? ( !a )
+        self.assertTrue(glep73.condition_can_occur(
+            [f('a')], [([f('b')], nf('a'))], []))
+        self.assertTrue(glep73.condition_can_occur(
+            [f('a')], [([f('b')], nf('a'))], [f('a')]))
+        self.assertFalse(glep73.condition_can_occur(
+            [f('a')], [([f('b')], nf('a'))], [f('b')]))
+        # common prefix: b? ( !b !a )
+        fb = f('b')
+        self.assertFalse(glep73.condition_can_occur(
+            [f('a')], [([fb], nf('b')), ([fb], nf('a'))], [f('b')]))
+        # no common prefix: b? ( !b ) b? ( !a )
+        self.assertTrue(glep73.condition_can_occur(
+            [f('a')], [([f('b')], nf('b')), ([f('b')], nf('a'))], [f('b')]))
