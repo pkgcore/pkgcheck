@@ -327,12 +327,26 @@ def get_final_flags(constraints, initial_flags):
         if flag_states.setdefault(f.name, f.enabled) != f.enabled:
             raise ConflictingInitialFlags(f.name)
 
+    # success cache is where we store ids of conditions that we
+    # evaluated already
+    success_cache = set()
+
     for c, e in constraints:
-        # TODO: common prefix support
+        # common prefix support:
+        # if two constraints have a common prefix, the ids of their nodes
+        # match; otherwise, the ids will always be different. therefore,
+        # we can just dumbly prefix-match every next constraint against
+        # the successes so far and strip them
+        c = list(c)
+        while c and id(c[0]) in success_cache:
+            del c[0]
 
         # if all conditions evaluate to true (and there are no unmatched
         # flags), the effect will always apply
         if test_condition(c, flag_states, False):
+            # store all the successes in the cache
+            success_cache.update(id(ci) for ci in c)
+
             flag_states[e.name] = e.enabled
 
     return flag_states

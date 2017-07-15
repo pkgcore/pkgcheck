@@ -398,3 +398,15 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
         # invalid initial flags
         self.assertRaises(glep73.ConflictingInitialFlags, glep73.get_final_flags,
             [], [f('a'), nf('a')])
+
+        # common prefix problem
+        # a? ( !a b )
+        fa = f('a')
+        self.assertEqual(glep73.get_final_flags(
+            [([fa], nf('a')), ([fa], f('b'))], [f('a')]),
+            {'a': False, 'b': True})
+        # false positive test:
+        # a? ( !a ) a? ( b )
+        self.assertEqual(glep73.get_final_flags(
+            [([f('a')], nf('a')), ([f('a')], f('b'))], [f('a')]),
+            {'a': False})
