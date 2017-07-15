@@ -217,3 +217,26 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
             iuse="a b", required_use="a? ( !b )"))
         self.assertNoReport(self.check, self.mk_pkg(cpv="dev-foo/b-forced-a-masked-1",
             iuse="a b", required_use="a? ( !b )"))
+
+    def test_conditions_can_coexist(self):
+        f = glep73.GLEP73Flag
+        nf = lambda x: glep73.GLEP73Flag(x, negate=True)
+
+        self.assertTrue(glep73.conditions_can_coexist([], []))
+        self.assertTrue(glep73.conditions_can_coexist([f('a')], [f('a')]))
+        self.assertTrue(glep73.conditions_can_coexist(
+            [f('a'), f('b'), f('c')], [f('d'), f('e'), f('f')]))
+        self.assertTrue(glep73.conditions_can_coexist(
+            [f('a'), f('b'), f('c')], [f('c'), nf('d'), nf('e')]))
+        self.assertFalse(glep73.conditions_can_coexist(
+            [f('a'), f('b'), f('c')], [nf('c'), nf('d'), nf('e')]))
+        self.assertTrue(glep73.conditions_can_coexist(
+            [f('a'), f('b'), f('c')], [f('a'), f('b'), f('a'), f('b'), f('a')]))
+        self.assertTrue(glep73.conditions_can_coexist(
+            [f('a'), f('b'), f('c')], []))
+        self.assertFalse(glep73.conditions_can_coexist(
+            [f('a'), f('b'), f('c')], [nf('a')]))
+        self.assertFalse(glep73.conditions_can_coexist(
+            [f('a'), f('b'), f('c')], [f('a'), nf('a')]))
+        self.assertFalse(glep73.conditions_can_coexist(
+            [f('a'), f('b'), f('c')], [f('c'), f('b'), nf('a')]))

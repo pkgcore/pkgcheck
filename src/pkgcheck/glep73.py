@@ -149,6 +149,10 @@ class GLEP73Flag(object):
             self.name = name_or_restriction
             self.enabled = not negate
 
+    def negated(self):
+        """Return the negated version of the flag."""
+        return GLEP73Flag(self.name, negate=self.enabled)
+
     def __eq__(self, other):
         return self.name == other.name and self.enabled == other.enabled
 
@@ -231,6 +235,17 @@ def glep73_flatten(requse, immutables={}):
                 raise AssertionError('Unknown item in REQUIRED_USE: %s' % (c,))
 
     return list(rec(requse, []))
+
+
+def conditions_can_coexist(c1, c2):
+    """Check whether the two conditions c1 and c2 can coexist, that is
+    whether they both can evaluate to true simultaneously. It is assumed
+    that this is true if the two conditions do not request the opposite
+    states of the same flag."""
+    for c1i in c1:
+        if c1i.negated() in c2:
+            return False
+    return True
 
 
 def glep73_run_checks(requse, immutables):
