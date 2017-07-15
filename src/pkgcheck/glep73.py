@@ -54,7 +54,36 @@ class GLEP73Immutability(base.Error):
                 self.enforcement, self.profiles)
 
 
-glep73_known_results = (GLEP73Syntax, GLEP73Immutability)
+class GLEP73Conflict(base.Warning):
+    """REQUIRED_USE constraints that can request the user to enable
+    and disable the same flag simultaneously. This is a major issue
+    for the auto-enforcing (since it is unclear which constraint should
+    take priority), and it can cause confusing REQUIRED_USE mismatch
+    messages for regular users."""
+
+    __slots__ = ("category", "package", "version", "ci", "ei",
+                 "cj", "ej", "profiles")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, ci, ei, cj, ej, profiles):
+        super(GLEP73Conflict, self).__init__()
+        self._store_cpv(pkg)
+        self.ci = ci
+        self.ei = ei
+        self.cj = cj
+        self.ej = ej
+        self.profiles = profiles
+
+    @property
+    def short_desc(self):
+        return ('REQUIRED_USE can request conflicting states: ' +
+                '[%s] requires [%s] while [%s] requires [%s]') % (
+                ' && '.join('%s' % x for x in self.ci), self.ei,
+                ' && '.join('%s' % x for x in self.cj), self.ej)
+
+
+glep73_known_results = (GLEP73Syntax, GLEP73Immutability,
+                        GLEP73Conflict)
 
 
 def group_name(c):
@@ -251,7 +280,8 @@ def conditions_can_coexist(c1, c2):
 def glep73_run_checks(requse, immutables):
     flattened = glep73_flatten(requse, immutables)
 
-    for ci, ei in flattened:
+    for i, (ci, ei) in enumerate(flattened):
+        # 1. immutability check
         for cix in ci:
             # if Ci,x is in immutables, and it evaluates to false,
             # the rule will never apply; if it is not in immutables,
@@ -263,3 +293,13 @@ def glep73_run_checks(requse, immutables):
                 yield partial(GLEP73Immutability,
                               condition=ci,
                               enforcement=ei)
+
+        for cj, ej in flattened[i+1:]:
+            # 2. conflict check:
+            # two constraints (Ci, Ei); (Cj, Ej) conflict if:
+            # a. Ei = !Ej, and
+            # b. Ci and Cj can occur simultaneously.
+            if ei == ej.negated() and conditions_can_coexist(ci, cj):
+                yield partial(GLEP73Conflict,
+                              ci=ci, ei=ei,
+                              cj=cj, ej=ej)

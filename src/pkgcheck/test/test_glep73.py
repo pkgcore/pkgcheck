@@ -240,3 +240,36 @@ class TestGLEP73(iuse_options, misc.ReportTestCase):
             [f('a'), f('b'), f('c')], [f('a'), nf('a')]))
         self.assertFalse(glep73.conditions_can_coexist(
             [f('a'), f('b'), f('c')], [f('c'), f('b'), nf('a')]))
+
+    def test_conflicts(self):
+        self.assertNoReport(self.check, self.mk_pkg(
+            iuse="+a b", required_use="a !b"))
+        r = self.assertReports(self.check, self.mk_pkg(
+            iuse="a", required_use="a !a"))
+        self.assertIsInstance(r[-1], glep73.GLEP73Conflict)
+        r = self.assertReport(self.check, self.mk_pkg(
+            iuse="a b", required_use="a? ( b ) !b"))
+        self.assertIsInstance(r, glep73.GLEP73Conflict)
+        self.assertNoReport(self.check, self.mk_pkg(
+            iuse="a b", required_use="a? ( b ) !a? ( !b )"))
+
+        # real example test
+        r = self.assertReport(self.check, self.mk_pkg(
+            iuse="+gcrypt kernel nettle openssl static",
+            required_use="^^ ( gcrypt kernel nettle openssl ) static? ( !gcrypt )"))
+        self.assertIsInstance(r, glep73.GLEP73Conflict)
+        self.assertNoReport(self.check, self.mk_pkg(
+            iuse="+gcrypt kernel nettle openssl static",
+            required_use="!static? ( ^^ ( gcrypt kernel nettle openssl ) ) " +
+                "static? ( ^^ ( kernel nettle openssl ) )"))
+
+    def test_conflict_disarmed_by_preceding_rules(self):
+        self.assertNoReport(self.check, self.mk_pkg(
+            iuse="a b c", required_use="a? ( !b c ) b? ( !c )"))
+        # real example test
+        self.assertNoReport(self.check, self.mk_pkg(
+            iuse="+amd64 x86 binary debug",
+            required_use='!amd64? ( !x86? ( !debug binary ) ) debug? ( !binary )'))
+
+    test_conflict_disarmed_by_preceding_rules.todo = (
+            "implement taking preceding constraints into consideration")
