@@ -80,10 +80,14 @@ class FancyReporter(base.Reporter):
     def process_report(self, result):
         cat = getattr(result, 'category', None)
         pkg = getattr(result, 'package', None)
-        if cat is None or pkg is None:
+
+        if cat is None and pkg is None:
             key = 'unknown'
+        elif pkg is None:
+            key = cat
         else:
             key = '%s/%s' % (cat, pkg)
+
         if key != self.key:
             self.out.write()
             self.out.write(self.out.bold, key)
