@@ -27,9 +27,6 @@ class StrReporter(base.Reporter):
     priority = 0
 
     def __init__(self, *args, **kwargs):
-        """Initialize.
-        :type out: L{snakeoil.formatters.Formatter}.
-        """
         super(StrReporter, self).__init__(*args, **kwargs)
         self.first_report = True
 
@@ -68,10 +65,6 @@ class FancyReporter(base.Reporter):
     priority = 1
 
     def __init__(self, *args, **kwargs):
-        """Initialize.
-
-        :type out: L{snakeoil.formatters.Formatter}.
-        """
         super(FancyReporter, self).__init__(*args, **kwargs)
         self.key = None
 
@@ -142,10 +135,6 @@ class XmlReporter(base.Reporter):
     }
 
     def __init__(self, *args, **kwargs):
-        """Initialize.
-
-        :type out: L{snakeoil.formatters.Formatter}.
-        """
         super(XmlReporter, self).__init__(*args, **kwargs)
 
     def start(self):

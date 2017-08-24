@@ -221,10 +221,14 @@ class Reporter(object):
     keywords = ()
 
     def __init__(self, out, verbose=None):
+        """Initialize
+
+        :type out: L{snakeoil.formatters.Formatter}
+        """
         self.out = out
         if verbose is None:
             verbose = False
-        self.verbose = verbose  
+        self.verbose = verbose
 
     def add_report(self, result):
         # skip check keywords that are disabled
