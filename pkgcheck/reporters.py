@@ -114,7 +114,7 @@ class JsonReporter(base.Reporter):
     to a separate report. To merge the objects together something like jq can
     be leveraged similar to the following:
 
-        cat orig.json | jq -c -s 'reduce.[]as$x({};.*$x)' > new.json
+        jq -c -s 'reduce.[]as$x({};.*$x)' orig.json > new.json
     """
 
     # json report should only be used if requested
