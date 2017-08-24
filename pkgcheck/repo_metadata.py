@@ -182,6 +182,10 @@ class UnusedEclassesCheck(base.Template):
     def start(self):
         self.eclasses = set(self.options.target_repo.eclass_cache.eclasses.iterkeys())
 
+        # remove eclasses inherited from master repo(s)
+        for repo in self.options.target_repo.masters:
+            self.eclasses.difference_update(repo.eclass_cache.eclasses.iterkeys())
+
     def feed(self, pkg, reporter):
         self.eclasses.difference_update(pkg.inherited)
 
