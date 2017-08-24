@@ -57,6 +57,7 @@ pkgcore_plugins = {
         reporters.FancyReporter,
         reporters.NullReporter,
         reporters.StrReporter,
+        reporters.JsonReporter,
         reporters.XmlReporter,
         ]
     }

@@ -7,6 +7,8 @@ from snakeoil.demandload import demandload
 from pkgcheck import base
 
 demandload(
+    'collections:defaultdict',
+    'json',
     'xml.sax.saxutils:escape@xml_escape',
     'snakeoil:currying,pickling',
     'pkgcheck:errors',
@@ -105,6 +107,51 @@ class NullReporter(base.Reporter):
         pass
 
 
+class JsonReporter(base.Reporter):
+    """Dump a json feed of reports.
+
+    Note that the format is newline-delimited JSON with each line being related
+    to a separate report. To merge the objects together something like jq can
+    be leveraged similar to the following:
+
+        cat orig.json | jq -c -s 'reduce.[]as$x({};.*$x)' > new.json
+    """
+
+    # json report should only be used if requested
+    priority = -1000
+
+    def __init__(self, *args, **kwargs):
+        super(JsonReporter, self).__init__(*args, **kwargs)
+        self._json_dict = lambda: defaultdict(self._json_dict)
+
+    def start(self):
+        self.keyword_map = {
+            'yellow': '_warning',
+            'red': '_error',
+        }
+
+    def process_report(self, result):
+        data = self._json_dict()
+
+        if result.threshold == base.repository_feed:
+            d = data
+        elif result.threshold == base.category_feed:
+            d = data[result.category]
+        elif result.threshold == base.package_feed:
+            d = data[result.category][result.package]
+        else:
+            # versioned or ebuild feed
+            d = data[result.category][result.package][result.version]
+
+        level = self.keyword_map[getattr(result, '_color', 'yellow')]
+        name = result.__class__.__name__
+        d[level][name] = [result.desc]
+
+        self.out.write(json.dumps(data))
+        # flush output so partial objects aren't written
+        self.out.stream.flush()
+
+
 class XmlReporter(base.Reporter):
     """dump an xml feed of reports"""
 
@@ -190,6 +237,8 @@ def make_configurable_reporter_factory(klass):
     return configurable_reporter_factory
 
 
+json_reporter = make_configurable_reporter_factory(JsonReporter)
+json_reporter.__name__ = 'json_reporter'
 xml_reporter = make_configurable_reporter_factory(XmlReporter)
 xml_reporter.__name__ = 'xml_reporter'
 plain_reporter = make_configurable_reporter_factory(StrReporter)
