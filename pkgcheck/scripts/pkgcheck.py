@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 
 import argparse
+from functools import partial
 from itertools import chain
 
 from pkgcore.plugin import get_plugins, get_plugin
@@ -203,6 +204,7 @@ def check_args(parser, namespace):
                 )
             func = func[0]
         namespace.reporter = func
+    namespace.reporter = partial(namespace.reporter, verbose=namespace.verbose)
 
     # search_repo is a multiplex of target_repo and its masters, make sure
     # they're configured properly in metadata/layout.conf. This is used for
@@ -482,7 +484,7 @@ def main(options, out, err):
         err.write('using repository guessed from working directory')
 
     try:
-        reporter = options.reporter(out, options.verbose)
+        reporter = options.reporter(out)
         reporter.keywords = options.keywords
     except errors.ReporterInitError as e:
         err.write(

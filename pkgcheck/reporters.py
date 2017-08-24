@@ -26,12 +26,11 @@ class StrReporter(base.Reporter):
     # simple reporter; fallback default
     priority = 0
 
-    def __init__(self, out):
+    def __init__(self, *args, **kwargs):
         """Initialize.
         :type out: L{snakeoil.formatters.Formatter}.
         """
-        super(StrReporter, self).__init__()
-        self.out = out
+        super(StrReporter, self).__init__(*args, **kwargs)
         self.first_report = True
 
     def process_report(self, result):
@@ -68,13 +67,12 @@ class FancyReporter(base.Reporter):
     # default report, akin to repoman
     priority = 1
 
-    def __init__(self, out, *args):
+    def __init__(self, *args, **kwargs):
         """Initialize.
 
         :type out: L{snakeoil.formatters.Formatter}.
         """
-        super(FancyReporter, self).__init__(*args)
-        self.out = out
+        super(FancyReporter, self).__init__(*args, **kwargs)
         self.key = None
 
     def process_report(self, result):
@@ -110,7 +108,7 @@ class NullReporter(base.Reporter):
 
     priority = -10000000
 
-    def __init__(self, out):
+    def __init__(self, *args, **kwargs):
         pass
 
     def process_report(self, result):
@@ -146,13 +144,12 @@ class XmlReporter(base.Reporter):
         base.ebuild_feed: ver_template,
     }
 
-    def __init__(self, out):
+    def __init__(self, *args, **kwargs):
         """Initialize.
 
         :type out: L{snakeoil.formatters.Formatter}.
         """
-        super(XmlReporter, self).__init__()
-        self.out = out
+        super(XmlReporter, self).__init__(*args, **kwargs)
 
     def start(self):
         self.out.write('<checks>')
@@ -170,10 +167,10 @@ class XmlReporter(base.Reporter):
 
 class MultiplexReporter(base.Reporter):
 
-    def __init__(self, *reporters):
+    def __init__(self, reporters, *args, **kwargs):
         if len(reporters) < 2:
             raise ValueError("need at least two reporters")
-        super(MultiplexReporter, self).__init__()
+        super(MultiplexReporter, self).__init__(*args, **kwargs)
         self.reporters = tuple(reporters)
 
     def start(self):
@@ -221,5 +218,5 @@ null_reporter.__name__ = 'null'
               typename='pkgcheck_reporter_factory')
 def multiplex_reporter(reporters):
     def make_multiplex_reporter(out):
-        return MultiplexReporter(*list(factory(out) for factory in reporters))
+        return MultiplexReporter([factory(out) for factory in reporters])
     return make_multiplex_reporter

@@ -220,7 +220,8 @@ class Reporter(object):
 
     keywords = ()
 
-    def __init__(self, verbose=None):
+    def __init__(self, out, verbose=None):
+        self.out = out
         if verbose is None:
             verbose = False
         self.verbose = verbose  
