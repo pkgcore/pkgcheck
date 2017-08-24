@@ -21,12 +21,14 @@ else:
 demandload(
     'argparse',
     'functools:partial',
+    'itertools:chain',
     'lxml:etree',
     'tempfile:NamedTemporaryFile',
     'pkgcore.ebuild.atom:atom',
     'pkgcore.log:logger',
     'snakeoil.osutils:pjoin',
     'snakeoil:fileutils',
+    'snakeoil.strings:pluralism',
 )
 
 
@@ -221,6 +223,29 @@ class CatMetadataXmlInvalidCatRef(base_MetadataXmlInvalidCatRef):
     threshold = base.category_feed
 
 
+class InconsistentIndentation(base.Warning):
+    """Inconsistent indentation in metadata.xml file."""
+
+    __slots__ = ("category", "package", "version", "lines")
+    threshold = base.package_feed
+
+    def __init__(self, lines, filename, category, package=None):
+        super(InconsistentIndentation, self).__init__()
+        self.lines = lines
+        self.filename = filename
+        self.category = category
+        self.package = package
+
+    @property
+    def short_desc(self):
+        return "metadata.xml has inconsistent indentation"
+
+    @property
+    def long_desc(self):
+        return "%s on line%s %s" % (
+            self.short_desc, pluralism(self.lines), ', '.join(str(x) for x in self.lines))
+
+
 class base_check(base.Template):
     """base class for metadata.xml scans"""
 
@@ -319,20 +344,34 @@ class base_check(base.Template):
             if not self.pkgref_cache[p]:
                 yield partial(self.pkgref_error, p)
 
+    def check_whitespace(self, loc):
+        orig_indent = None
+        indents = set()
+        with open(loc) as f:
+            for lineno, line in enumerate(f):
+                for i in line[:-len(line.lstrip())]:
+                    if i != orig_indent:
+                        if orig_indent is None:
+                            orig_indent = i
+                        else:
+                            indents.update([lineno + 1])
+        if indents:
+            yield partial(InconsistentIndentation, indents)
+
     def check_file(self, loc):
         try:
             doc = etree.parse(loc)
         except (IOError, OSError):
-            return (None, (self.missing_error,))
+            return self.missing_error
         except etree.XMLSyntaxError:
-            return (None, (self.misformed_error,))
+            return self.misformed_error
 
         # note: while doc is available, do not pass it here as it may
         # trigger undefined behavior due to incorrect structure
         if not self.schema.validate(doc):
-            return (None, (partial(self.invalid_error, self.schema.error_log),))
+            return partial(self.invalid_error, self.schema.error_log)
 
-        return (doc, self.check_doc(doc))
+        return chain.from_iterable((self.check_doc(doc), self.check_whitespace(loc)))
 
 
 class PackageMetadataXmlCheck(base_check):
@@ -348,20 +387,21 @@ class PackageMetadataXmlCheck(base_check):
 
     known_results = (
         PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
-        PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef)
+        PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
+        InconsistentIndentation)
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.key:
             return
         self.last_seen = pkg.key
         loc = pjoin(os.path.dirname(pkg.ebuild.path), "metadata.xml")
-        doc, reports = self.check_file(loc)
-        for ret in reports:
-            reporter.add_report(ret(loc, pkg.category, pkg.package))
+        for report in self.check_file(loc):
+            reporter.add_report(report(loc, pkg.category, pkg.package))
 
 
 class CategoryMetadataXmlCheck(base_check):
-    """metadata.xml scans"""
+    """category level metadata.xml scans"""
+
     feed_type = base.versioned_feed
     scope = base.category_scope
     misformed_error = CatBadlyFormedXml
@@ -372,16 +412,16 @@ class CategoryMetadataXmlCheck(base_check):
 
     known_results = (
         CatBadlyFormedXml, CatInvalidXml, CatMissingMetadataXml,
-        CatMetadataXmlInvalidPkgRef, CatMetadataXmlInvalidCatRef)
+        CatMetadataXmlInvalidPkgRef, CatMetadataXmlInvalidCatRef,
+        InconsistentIndentation)
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.category:
             return
         self.last_seen = pkg.category
         loc = os.path.join(self.repo_base, pkg.category, "metadata.xml")
-        doc, reports = self.check_file(loc)
-        for ret in reports:
-            reporter.add_report(ret(loc, pkg.category))
+        for report in self.check_file(loc):
+            reporter.add_report(report(loc, pkg.category))
 
 
 def noop_validator(loc):
