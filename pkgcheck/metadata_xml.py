@@ -272,7 +272,6 @@ class base_check(base.Template):
         super(base_check, self).__init__(options)
         self.repo_base = options.target_repo.location
         self.xsd_file = None
-        self.verbose = options.verbose
 
     def start(self):
         self.last_seen = None
@@ -283,7 +282,7 @@ class base_check(base.Template):
         refetch = not os.path.isfile(read_path)
 
         if refetch:
-            if self.verbose:
+            if self.options.verbose:
                 logger.warn('metadata.xsd cannot be opened from %s, will refetch', read_path)
             logger.info("fetching metdata.xsd from %s", self.xsd_url)
             try:
