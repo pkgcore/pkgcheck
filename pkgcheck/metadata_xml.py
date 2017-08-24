@@ -260,6 +260,8 @@ class base_check(base.Template):
     """base class for metadata.xml scans"""
 
     xsd_url = "http://www.gentoo.org/xml-schema/metadata.xsd"
+    schema = None
+
     misformed_error = None
     invalid_error = None
     missing_error = None
@@ -284,45 +286,47 @@ class base_check(base.Template):
         self.xsd_file = None
 
     def start(self):
-        refetch = False
-        write_path = read_path = self.options.metadata_xsd
-        if write_path is None:
-            read_path = pjoin(self.repo_base, 'metadata', 'xml-schema', 'metadata.xsd')
-        refetch = not os.path.isfile(read_path)
-
-        if refetch:
-            if self.options.verbose:
-                logger.warn('metadata.xsd cannot be opened from %s, will refetch', read_path)
-            logger.info("fetching metdata.xsd from %s", self.xsd_url)
-            try:
-                xsd_data = urlopen(self.xsd_url).read()
-            except urllib_error.URLError as e:
-                if self.options.metadata_xsd_required:
-                    raise Exception(
-                        "failed fetching xsd from %s: reason %s. "
-                        "Due to --metadata-xsd-required in use, bailing" %
-                        (self.xsd_url, e.reason))
-                logger.warn(
-                    "failed fetching XML Schema from %s: reason %s", self.xsd_url, e.reason)
-                self.validator = noop_validator
-                return
+        if base_check.schema is None:
+            refetch = False
+            write_path = read_path = self.options.metadata_xsd
             if write_path is None:
-                self.xsd_file = NamedTemporaryFile()
-                write_path = read_path = self.xsd_file.name
-            try:
-                fileutils.write_file(write_path, 'wb', xsd_data)
-            except EnvironmentError as e:
-                if self.options.metadata_xsd_required:
-                    raise Exception(
-                        "failed saving XML Schema to %s: reason %s. "
-                        "Due to --metadata-xsd-required in use, bailing" %
-                        (write_path, e))
-                logger.warn("failed writing XML Schema to %s: reason %s.  Disabling check." %
-                            (write_path, e))
-                self.validator = noop_validator
-                return
+                read_path = pjoin(self.repo_base, 'metadata', 'xml-schema', 'metadata.xsd')
+            refetch = not os.path.isfile(read_path)
 
-        self.schema = etree.XMLSchema(etree.parse(read_path))
+            if refetch:
+                if self.options.verbose:
+                    logger.warn('metadata.xsd cannot be opened from %s, will refetch', read_path)
+                logger.info("fetching metdata.xsd from %s", self.xsd_url)
+                try:
+                    xsd_data = urlopen(self.xsd_url).read()
+                except urllib_error.URLError as e:
+                    if self.options.metadata_xsd_required:
+                        raise Exception(
+                            "failed fetching xsd from %s: reason %s. "
+                            "Due to --metadata-xsd-required in use, bailing" %
+                            (self.xsd_url, e.reason))
+                    logger.warn(
+                        "failed fetching XML Schema from %s: reason %s", self.xsd_url, e.reason)
+                    self.validator = noop_validator
+                    return
+                if write_path is None:
+                    self.xsd_file = NamedTemporaryFile()
+                    write_path = read_path = self.xsd_file.name
+                try:
+                    fileutils.write_file(write_path, 'wb', xsd_data)
+                except EnvironmentError as e:
+                    if self.options.metadata_xsd_required:
+                        raise Exception(
+                            "failed saving XML Schema to %s: reason %s. "
+                            "Due to --metadata-xsd-required in use, bailing" %
+                            (write_path, e))
+                    logger.warn("failed writing XML Schema to %s: reason %s.  Disabling check." %
+                                (write_path, e))
+                    self.validator = noop_validator
+                    return
+
+            base_check.schema = etree.XMLSchema(etree.parse(read_path))
+
         self.pkgref_cache = {}
 
     def feed(self, thing, reporter):
