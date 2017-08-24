@@ -223,14 +223,14 @@ class CatMetadataXmlInvalidCatRef(base_MetadataXmlInvalidCatRef):
     threshold = base.category_feed
 
 
-class InconsistentIndentation(base.Warning):
+class MetadataXmlIndentation(base.Warning):
     """Inconsistent indentation in metadata.xml file."""
 
     __slots__ = ("category", "package", "version", "lines")
     threshold = base.package_feed
 
     def __init__(self, lines, filename, category, package=None):
-        super(InconsistentIndentation, self).__init__()
+        super(MetadataXmlIndentation, self).__init__()
         self.lines = lines
         self.filename = filename
         self.category = category
@@ -244,6 +244,15 @@ class InconsistentIndentation(base.Warning):
     def long_desc(self):
         return "%s on line%s %s" % (
             self.short_desc, pluralism(self.lines), ', '.join(str(x) for x in self.lines))
+
+
+class CatMetadataXmlIndentation(MetadataXmlIndentation):
+    """Inconsistent indentation in category metadata.xml file."""
+    threshold = base.category_feed
+
+class PkgMetadataXmlIndentation(MetadataXmlIndentation):
+    """Inconsistent indentation in package metadata.xml file."""
+    threshold = base.package_feed
 
 
 class base_check(base.Template):
@@ -355,7 +364,7 @@ class base_check(base.Template):
                         else:
                             indents.update([lineno + 1])
         if indents:
-            yield partial(InconsistentIndentation, indents)
+            yield partial(self.indent_error, indents)
 
     def check_file(self, loc):
         try:
@@ -383,11 +392,12 @@ class PackageMetadataXmlCheck(base_check):
     missing_error = PkgMissingMetadataXml
     catref_error = PkgMetadataXmlInvalidCatRef
     pkgref_error = PkgMetadataXmlInvalidPkgRef
+    indent_error = PkgMetadataXmlIndentation
 
     known_results = (
         PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
-        InconsistentIndentation)
+        PkgMetadataXmlIndentation)
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.key:
@@ -408,11 +418,12 @@ class CategoryMetadataXmlCheck(base_check):
     missing_error = CatMissingMetadataXml
     catref_error = CatMetadataXmlInvalidCatRef
     pkgref_error = CatMetadataXmlInvalidPkgRef
+    indent_error = CatMetadataXmlIndentation
 
     known_results = (
         CatBadlyFormedXml, CatInvalidXml, CatMissingMetadataXml,
         CatMetadataXmlInvalidPkgRef, CatMetadataXmlInvalidCatRef,
-        InconsistentIndentation)
+        CatMetadataXmlIndentation)
 
     def feed(self, pkg, reporter):
         if self.last_seen == pkg.category:
