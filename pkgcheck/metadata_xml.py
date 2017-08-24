@@ -227,7 +227,6 @@ class MetadataXmlIndentation(base.Warning):
     """Inconsistent indentation in metadata.xml file."""
 
     __slots__ = ("category", "package", "version", "lines")
-    threshold = base.package_feed
 
     def __init__(self, lines, filename, category, package=None):
         super(MetadataXmlIndentation, self).__init__()
@@ -248,10 +247,12 @@ class MetadataXmlIndentation(base.Warning):
 
 class CatMetadataXmlIndentation(MetadataXmlIndentation):
     """Inconsistent indentation in category metadata.xml file."""
+    __slots__ = ()
     threshold = base.category_feed
 
 class PkgMetadataXmlIndentation(MetadataXmlIndentation):
     """Inconsistent indentation in package metadata.xml file."""
+    __slots__ = ()
     threshold = base.package_feed
 
 
