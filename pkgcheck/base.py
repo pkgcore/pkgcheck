@@ -169,7 +169,7 @@ class Result(object):
 
     @property
     def desc(self):
-        if getattr(self, 'verbose', False):
+        if getattr(self, '_verbose', False):
             return self.long_desc
         return self.short_desc
 
@@ -209,11 +209,11 @@ class Result(object):
 
 
 class Error(Result):
-    color = 'red'
+    _color = 'red'
 
 
 class Warning(Result):
-    color = 'yellow'
+    _color = 'yellow'
 
 
 class Reporter(object):
@@ -234,7 +234,7 @@ class Reporter(object):
         # skip check keywords that are disabled
         if result.__class__ not in self.keywords:
             return
-        result.verbose = self.verbose
+        result._verbose = self.verbose
         self.process_report(result)
 
     def process_report(self, result):
