@@ -161,6 +161,22 @@ class Result(object):
 
     __slots__ = ()
 
+    # level values match those used in logging module
+    _level = 20
+    _level_to_desc = {
+        40: ('error', 'red'),
+        30: ('warning', 'yellow'),
+        20: ('info', 'green'),
+    }
+
+    @property
+    def color(self):
+        return self._level_to_desc[self._level][1]
+
+    @property
+    def level(self):
+        return self._level_to_desc[self._level][0]
+
     def __str__(self):
         try:
             return self.desc
@@ -209,11 +225,11 @@ class Result(object):
 
 
 class Error(Result):
-    _color = 'red'
+    _level = 40
 
 
 class Warning(Result):
-    _color = 'yellow'
+    _level = 30
 
 
 class Reporter(object):

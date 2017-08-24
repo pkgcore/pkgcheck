@@ -362,7 +362,7 @@ def display_keywords(out, options):
                 out.first_prefix.append('  ')
                 out.later_prefix.append('  ')
                 for keyword in keywords:
-                    out.write(out.fg(keyword.color), keyword.__name__, out.reset, ':')
+                    out.write(out.fg(keyword.color.__get__(keyword)), keyword.__name__, out.reset, ':')
                     dump_docstring(out, keyword, prefix='  ')
                     out.write()
             finally:

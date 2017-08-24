@@ -88,7 +88,7 @@ class FancyReporter(base.Reporter):
         if result.threshold == base.versioned_feed:
             s = "version %s: " % result.version
         self.out.write(
-            self.out.fg(getattr(result, '_color', 'yellow')),
+            self.out.fg(result.color),
             result.__class__.__name__, self.out.reset,
             ': ', s, result.desc)
         self.out.first_prefix.pop()
@@ -124,12 +124,6 @@ class JsonReporter(base.Reporter):
         super(JsonReporter, self).__init__(*args, **kwargs)
         self._json_dict = lambda: defaultdict(self._json_dict)
 
-    def start(self):
-        self.keyword_map = {
-            'yellow': '_warning',
-            'red': '_error',
-        }
-
     def process_report(self, result):
         data = self._json_dict()
 
@@ -143,9 +137,8 @@ class JsonReporter(base.Reporter):
             # versioned or ebuild feed
             d = data[result.category][result.package][result.version]
 
-        level = self.keyword_map[getattr(result, '_color', 'yellow')]
         name = result.__class__.__name__
-        d[level][name] = [result.desc]
+        d['_' + result.level][name] = [result.desc]
 
         self.out.write(json.dumps(data))
         # flush output so partial objects aren't written
