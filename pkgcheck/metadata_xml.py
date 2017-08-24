@@ -283,7 +283,6 @@ class base_check(base.Template):
         self.xsd_file = None
 
     def start(self):
-        self.last_seen = None
         refetch = False
         write_path = read_path = self.options.metadata_xsd
         if write_path is None:
@@ -327,9 +326,6 @@ class base_check(base.Template):
 
     def feed(self, thing, reporter):
         raise NotImplementedError(self.feed)
-
-    def finish(self, reporter):
-        self.last_seen = None
 
     def check_doc(self, doc):
         """ Perform additional document structure checks """
@@ -385,7 +381,7 @@ class base_check(base.Template):
 class PackageMetadataXmlCheck(base_check):
     """package level metadata.xml scans"""
 
-    feed_type = base.versioned_feed
+    feed_type = base.package_feed
     scope = base.package_scope
     misformed_error = PkgBadlyFormedXml
     invalid_error = PkgInvalidXml
@@ -399,10 +395,11 @@ class PackageMetadataXmlCheck(base_check):
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
         PkgMetadataXmlIndentation)
 
-    def feed(self, pkg, reporter):
-        if self.last_seen == pkg.key:
+    def feed(self, pkgs, reporter):
+        # package with no ebuilds, skipping check
+        if not pkgs:
             return
-        self.last_seen = pkg.key
+        pkg = pkgs[0]
         loc = pjoin(os.path.dirname(pkg.ebuild.path), "metadata.xml")
         for report in self.check_file(loc):
             reporter.add_report(report(loc, pkg.category, pkg.package))
@@ -411,7 +408,7 @@ class PackageMetadataXmlCheck(base_check):
 class CategoryMetadataXmlCheck(base_check):
     """category level metadata.xml scans"""
 
-    feed_type = base.versioned_feed
+    feed_type = base.category_feed
     scope = base.category_scope
     misformed_error = CatBadlyFormedXml
     invalid_error = CatInvalidXml
@@ -425,10 +422,11 @@ class CategoryMetadataXmlCheck(base_check):
         CatMetadataXmlInvalidPkgRef, CatMetadataXmlInvalidCatRef,
         CatMetadataXmlIndentation)
 
-    def feed(self, pkg, reporter):
-        if self.last_seen == pkg.category:
+    def feed(self, pkgs, reporter):
+        # empty category, skipping check
+        if not pkgs:
             return
-        self.last_seen = pkg.category
+        pkg = pkgs[0]
         loc = os.path.join(self.repo_base, pkg.category, "metadata.xml")
         for report in self.check_file(loc):
             reporter.add_report(report(loc, pkg.category))
