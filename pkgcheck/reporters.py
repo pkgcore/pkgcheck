@@ -76,15 +76,12 @@ class FancyReporter(base.Reporter):
         self.key = None
 
     def process_report(self, result):
-        cat = getattr(result, 'category', None)
-        pkg = getattr(result, 'package', None)
-
-        if cat is None and pkg is None:
-            key = 'unknown'
-        elif pkg is None:
-            key = cat
+        if result.threshold in (base.versioned_feed, base.package_feed):
+            key = '%s/%s' % (result.category, result.package)
+        elif result.threshold == base.category_feed:
+            key = result.category
         else:
-            key = '%s/%s' % (cat, pkg)
+            key = 'unknown'
 
         if key != self.key:
             self.out.write()
