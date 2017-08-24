@@ -163,9 +163,15 @@ class Result(object):
 
     def __str__(self):
         try:
-            return self.short_desc
+            return self.desc
         except NotImplementedError:
             return "result from %s" % self.__class__.__name__
+
+    @property
+    def desc(self):
+        if getattr(self, 'verbose', False):
+            return self.long_desc
+        return self.short_desc
 
     @property
     def short_desc(self):
@@ -214,10 +220,16 @@ class Reporter(object):
 
     keywords = ()
 
+    def __init__(self, verbose=None):
+        if verbose is None:
+            verbose = False
+        self.verbose = verbose  
+
     def add_report(self, result):
         # skip check keywords that are disabled
         if result.__class__ not in self.keywords:
             return
+        result.verbose = self.verbose
         self.process_report(result)
 
     def process_report(self, result):

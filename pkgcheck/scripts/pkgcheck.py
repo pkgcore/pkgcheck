@@ -482,7 +482,7 @@ def main(options, out, err):
         err.write('using repository guessed from working directory')
 
     try:
-        reporter = options.reporter(out)
+        reporter = options.reporter(out, options.verbose)
         reporter.keywords = options.keywords
     except errors.ReporterInitError as e:
         err.write(

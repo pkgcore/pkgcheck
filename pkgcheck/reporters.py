@@ -40,14 +40,14 @@ class StrReporter(base.Reporter):
             self.first_report = False
         if result.threshold == base.versioned_feed:
             self.out.write(
-                "%s/%s-%s: %s" % (result.category, result.package, result.version, result.short_desc))
+                "%s/%s-%s: %s" % (result.category, result.package, result.version, result.desc))
         elif result.threshold == base.package_feed:
             self.out.write(
-                "%s/%s: %s" % (result.category, result.package, result.short_desc))
+                "%s/%s: %s" % (result.category, result.package, result.desc))
         elif result.threshold == base.category_feed:
-            self.out.write("%s: %s" % (result.category, result.short_desc))
+            self.out.write("%s: %s" % (result.category, result.desc))
         else:
-            self.out.write(result.short_desc)
+            self.out.write(result.desc)
 
     def finish(self):
         if not self.first_report:
@@ -68,12 +68,12 @@ class FancyReporter(base.Reporter):
     # default report, akin to repoman
     priority = 1
 
-    def __init__(self, out):
+    def __init__(self, out, *args):
         """Initialize.
 
         :type out: L{snakeoil.formatters.Formatter}.
         """
-        super(FancyReporter, self).__init__()
+        super(FancyReporter, self).__init__(*args)
         self.out = out
         self.key = None
 
@@ -96,7 +96,7 @@ class FancyReporter(base.Reporter):
         self.out.write(
             self.out.fg(getattr(result, 'color', 'yellow')),
             result.__class__.__name__, self.out.reset,
-            ': ', s, result.short_desc)
+            ': ', s, result.desc)
         self.out.first_prefix.pop()
         self.out.later_prefix.pop()
 
@@ -157,7 +157,7 @@ class XmlReporter(base.Reporter):
         d = dict((k, getattr(result, k, '')) for k in
                  ("category", "package", "version"))
         d["class"] = xml_escape(result.__class__.__name__)
-        d["msg"] = xml_escape(result.short_desc)
+        d["msg"] = xml_escape(result.desc)
         self.out.write(self.threshold_map[result.threshold] % d)
 
     def finish(self):
