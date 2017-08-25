@@ -77,30 +77,54 @@ class UnusedLicenses(base.Warning):
         return ', '.join(self.licenses)
 
 
+class UnusedInMasterLicenses(UnusedLicenses):
+    """License(s) detected that are unused in the master repo(s).
+
+    In other words, they're likely to be removed so should be copied to the overlay.
+    """
+
+
 class UnusedLicensesCheck(base.Template):
     """Check for unused license files."""
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    known_results = (UnusedLicenses,)
+    known_results = (UnusedLicenses, UnusedInMasterLicenses)
 
     def __init__(self, options):
         super(UnusedLicensesCheck, self).__init__(options)
-        self.licenses = None
+        self.unused_licenses = None
 
     def start(self):
-        master_licenses = set()
+        master_licenses = self.unused_master_licenses = set()
         for repo in self.options.target_repo.masters:
             master_licenses.update(repo.licenses)
-        self.licenses = set(self.options.target_repo.licenses) - master_licenses
+        self.unused_licenses = set(self.options.target_repo.licenses) - master_licenses
+
+        # determine unused licenses across all master repos
+        self.unused_in_master_licenses = set()
+        if master_licenses:
+            for repo in self.options.target_repo.masters:
+                for pkg in repo:
+                    self.unused_master_licenses.difference_update(iflatten_instance(pkg.license))
 
     def feed(self, pkg, reporter):
-        self.licenses.difference_update(iflatten_instance(pkg.license))
+        pkg_licenses = set(iflatten_instance(pkg.license))
+        self.unused_licenses.difference_update(pkg_licenses)
+
+        # track licenses used in the target repo but not in any master
+        if self.unused_master_licenses:
+            self.unused_in_master_licenses.update(
+                self.unused_master_licenses & pkg_licenses)
 
     def finish(self, reporter):
-        if self.licenses:
-            reporter.add_report(UnusedLicenses(self.licenses))
-        self.licenses = None
+        if self.unused_licenses:
+            reporter.add_report(UnusedLicenses(self.unused_licenses))
+
+        if self.unused_in_master_licenses:
+            reporter.add_report(UnusedInMasterLicenses(self.unused_in_master_licenses))
+
+        self.unused_licenses = self.unused_master_licenses = self.unused_in_master_licenses = None
 
 
 class UnusedMirrors(base.Warning):
