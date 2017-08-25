@@ -113,11 +113,25 @@ class UnusedLicenses(base.Warning):
         return ', '.join(self.licenses)
 
 
-class UnusedInMasterLicenses(UnusedLicenses):
+class UnusedInMasterLicenses(base.Warning):
     """Licenses detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
     """
+
+    __slots__ = ("category", "package", "version", "licenses")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, licenses):
+        super(UnusedInMasterLicenses, self).__init__()
+        self._store_cpv(pkg)
+        self.licenses = tuple(sorted(licenses))
+
+    @property
+    def short_desc(self):
+        return "unused license%s in master repo(s): %s" % (
+            pluralism(self.licenses), ', '.join(self.licenses))
 
 
 class UnusedLicensesCheck(base.Template):
@@ -148,19 +162,17 @@ class UnusedLicensesCheck(base.Template):
         pkg_licenses = set(iflatten_instance(pkg.license))
         self.unused_licenses.difference_update(pkg_licenses)
 
-        # track licenses used in the target repo but not in any master
+        # report licenses used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_licenses:
-            self.unused_in_master_licenses.update(
-                self.unused_master_licenses & pkg_licenses)
+            licenses = self.unused_master_licenses & pkg_licenses
+            if licenses:
+                reporter.add_report(UnusedInMasterLicenses(pkg, licenses))
 
     def finish(self, reporter):
         if self.unused_licenses:
             reporter.add_report(UnusedLicenses(self.unused_licenses))
 
-        if self.unused_in_master_licenses:
-            reporter.add_report(UnusedInMasterLicenses(self.unused_in_master_licenses))
-
-        self.unused_licenses = self.unused_master_licenses = self.unused_in_master_licenses = None
+        self.unused_licenses = self.unused_master_licenses = None
 
 
 class UnusedMirrors(base.Warning):
@@ -228,11 +240,25 @@ class UnusedEclasses(base.Warning):
         return ', '.join(self.eclasses)
 
 
-class UnusedInMasterEclasses(UnusedEclasses):
+class UnusedInMasterEclasses(base.Warning):
     """Eclasses detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
     """
+
+    __slots__ = ("category", "package", "version", "eclasses")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, eclasses):
+        super(UnusedInMasterEclasses, self).__init__()
+        self._store_cpv(pkg)
+        self.eclasses = tuple(sorted(eclasses))
+
+    @property
+    def short_desc(self):
+        return "unused eclass%s in master repo(s): %s" % (
+            pluralism(self.eclasses, 'es'), ', '.join(self.eclasses))
 
 
 class UnusedEclassesCheck(base.Template):
@@ -263,19 +289,17 @@ class UnusedEclassesCheck(base.Template):
         pkg_eclasses = set(pkg.inherited)
         self.unused_eclasses.difference_update(pkg_eclasses)
 
-        # track eclasses used in the target repo but not in any master
+        # report eclasses used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_eclasses:
-            self.unused_in_master_eclasses.update(
-                self.unused_master_eclasses & pkg_eclasses)
+            eclasses = self.unused_master_eclasses & pkg_eclasses
+            if eclasses:
+                reporter.add_report(UnusedInMasterEclasses(pkg, eclasses))
 
     def finish(self, reporter):
         if self.unused_eclasses:
             reporter.add_report(UnusedEclasses(self.unused_eclasses))
 
-        if self.unused_in_master_eclasses:
-            reporter.add_report(UnusedInMasterEclasses(self.unused_in_master_eclasses))
-
-        self.unused_eclasses = self.unused_master_eclasses = self.unused_in_master_eclasses = None
+        self.unused_eclasses = self.unused_master_eclasses = None
 
 
 class UnusedProfileDirs(base.Warning):
