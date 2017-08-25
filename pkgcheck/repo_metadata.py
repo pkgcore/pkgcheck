@@ -191,37 +191,76 @@ class UnusedMirrors(base.Warning):
         return ', '.join(self.mirrors)
 
 
+class UnusedInMasterMirrors(base.Warning):
+    """Mirrors detected that are unused in the master repo(s).
+
+    In other words, they're likely to be removed so should be copied to the overlay.
+    """
+
+    __slots__ = ("category", "package", "version", "mirrors")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, mirrors):
+        super(UnusedInMasterMirrors, self).__init__()
+        self._store_cpv(pkg)
+        self.mirrors = tuple(sorted(mirrors))
+
+    @property
+    def short_desc(self):
+        return "unused mirror%s in master repo(s): %s" % (
+            pluralism(self.mirrors), ', '.join(self.mirrors))
+
+
 class UnusedMirrorsCheck(base.Template):
     """Check for unused mirrors."""
 
     required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    known_results = (UnusedMirrors,)
+    known_results = (UnusedMirrors, UnusedInMasterMirrors)
 
     def __init__(self, options, iuse_handler):
         super(UnusedMirrorsCheck, self).__init__(options)
-        self.mirrors = None
+        self.unused_mirrors = None
         self.iuse_filter = iuse_handler.get_filter('fetchables', verify=False)
 
+    def _get_mirrors(self, pkg, reporter=None):
+        mirrors = []
+        for f in self.iuse_filter((fetch.fetchable,), pkg, pkg.fetchables, reporter):
+            for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
+                mirrors.append(m[0].mirror_name)
+        return set(mirrors)
+
     def start(self):
-        repo = self.options.target_repo
-        repo_mirrors = set(repo.mirrors.iterkeys())
-        master_mirrors = set(x for master in repo.masters for x in master.mirrors.iterkeys())
-        self.mirrors = repo_mirrors.difference(master_mirrors)
+        master_mirrors = self.unused_master_mirrors = set()
+        for repo in self.options.target_repo.masters:
+            master_mirrors.update(repo.mirrors.iterkeys())
+        self.unused_mirrors = set(self.options.target_repo.mirrors.iterkeys()) - master_mirrors
+
+        # determine unused mirrors across all master repos
+        self.unused_in_master_mirrors = set()
+        if master_mirrors:
+            for repo in self.options.target_repo.masters:
+                for pkg in repo:
+                    self.unused_master_mirrors.difference_update(self._get_mirrors(pkg))
 
     def feed(self, pkg, reporter):
-        if self.mirrors:
-            mirrors = []
-            for f in self.iuse_filter((fetch.fetchable,), pkg, pkg.fetchables, reporter):
-                for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
-                    mirrors.append(m[0].mirror_name)
-            self.mirrors.difference_update(mirrors)
+        pkg_mirrors = self._get_mirrors(pkg)
+        if self.unused_mirrors:
+            self.unused_mirrors.difference_update(pkg_mirrors)
+
+        # report mirrors used in the pkg but not in any pkg from the master repo(s)
+        if self.unused_master_mirrors:
+            mirrors = self.unused_master_mirrors & pkg_mirrors
+            if mirrors:
+                reporter.add_report(UnusedInMasterMirrors(pkg, mirrors))
 
     def finish(self, reporter):
-        if self.mirrors:
-            reporter.add_report(UnusedMirrors(self.mirrors))
-        self.mirrors = None
+        if self.unused_mirrors:
+            reporter.add_report(UnusedMirrors(self.unused_mirrors))
+
+        self.unused_mirrors = self.unused_master_mirrors = None
 
 
 class UnusedEclasses(base.Warning):
