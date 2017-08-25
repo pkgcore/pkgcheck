@@ -34,31 +34,67 @@ class UnusedGlobalFlags(base.Warning):
             pluralism(self.flags), ', '.join(self.flags))
 
 
+class UnusedInMasterGlobalFlags(base.Warning):
+    """Global USE flags detected that are unused in the master repo(s).
+
+    In other words, they're likely to be removed so should be copied to the overlay.
+    """
+
+    __slots__ = ("category", "package", "version", "flags")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, flags):
+        super(UnusedInMasterGlobalFlags, self).__init__()
+        self._store_cpv(pkg)
+        self.flags = tuple(sorted(flags))
+
+    @property
+    def short_desc(self):
+        return "use.desc unused flag%s in master repo(s): %s" % (
+            pluralism(self.flags), ', '.join(self.flags))
+
+
 class UnusedGlobalFlagsCheck(base.Template):
     """Check for unused use.desc entries."""
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
     required_addons = (addons.UseAddon,)
-    known_results = (UnusedGlobalFlags,)
+    known_results = (UnusedGlobalFlags, UnusedInMasterGlobalFlags)
 
     def __init__(self, options, iuse_handler):
         super(UnusedGlobalFlagsCheck, self).__init__(options)
-        self.flags = None
+        self.unused_flags = None
         self.iuse_handler = iuse_handler
 
     def start(self):
-        if not self.options.target_repo.masters:
-            self.flags = set(self.iuse_handler.global_iuse - self.iuse_handler.unstated_iuse)
+        master_flags = self.unused_master_flags = set()
+        for repo in self.options.target_repo.masters:
+            master_flags.update(x[1][0] for x in repo.config.use_desc)
+            master_flags.update(x[1][0] for x in repo.config.use_expand_desc)
+        self.unused_flags = set(self.iuse_handler.global_iuse - self.iuse_handler.unstated_iuse) - master_flags
+
+        # determine unused flags across all master repos
+        if master_flags:
+            for repo in self.options.target_repo.masters:
+                for pkg in repo:
+                    self.unused_master_flags.difference_update(pkg.iuse_stripped)
 
     def feed(self, pkg, reporter):
-        if self.flags:
-            self.flags.difference_update(pkg.iuse_stripped)
+        self.unused_flags.difference_update(pkg.iuse_stripped)
+
+        # report flags used in the pkg but not in any pkg from the master repo(s)
+        if self.unused_master_flags:
+            flags = self.unused_master_flags & pkg.iuse_stripped
+            if flags:
+                reporter.add_report(UnusedInMasterGlobalFlags(pkg, flags))
 
     def finish(self, reporter):
-        if self.flags:
-            reporter.add_report(UnusedGlobalFlags(self.flags))
-            self.flags.clear()
+        if self.unused_flags:
+            reporter.add_report(UnusedGlobalFlags(self.unused_flags))
+
+        self.unused_flags = self.unused_master_flags = None
 
 
 class UnusedLicenses(base.Warning):
