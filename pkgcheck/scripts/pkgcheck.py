@@ -341,8 +341,15 @@ def dump_docstring(out, obj, prefix=None):
 @decorate_forced_wrapping()
 def display_keywords(out, options):
     d = {}
-    for x in options.checks:
-        d.setdefault(x.scope, set()).update(x.known_results)
+    scope_map = {
+        base.versioned_feed: base.version_scope,
+        base.package_feed: base.package_scope,
+        base.category_feed: base.category_scope,
+        base.repository_feed: base.repository_scope,
+    }
+    for check in options.checks:
+        for report in check.known_results:
+            d.setdefault(scope_map[report.threshold], set()).add(report)
 
     if not options.verbose:
         out.write('\n'.join(sorted(x.__name__ for s in d.itervalues() for x in s)), wrap=False)
