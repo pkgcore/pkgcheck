@@ -78,7 +78,7 @@ class UnusedLicenses(base.Warning):
 
 
 class UnusedInMasterLicenses(UnusedLicenses):
-    """License(s) detected that are unused in the master repo(s).
+    """Licenses detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
     """
@@ -192,31 +192,54 @@ class UnusedEclasses(base.Warning):
         return ', '.join(self.eclasses)
 
 
+class UnusedInMasterEclasses(UnusedEclasses):
+    """Eclasses detected that are unused in the master repo(s).
+
+    In other words, they're likely to be removed so should be copied to the overlay.
+    """
+
+
 class UnusedEclassesCheck(base.Template):
     """Check for unused eclasses."""
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    known_results = (UnusedEclasses,)
+    known_results = (UnusedEclasses, UnusedInMasterEclasses)
 
     def __init__(self, options):
         super(UnusedEclassesCheck, self).__init__(options)
-        self.eclasses = None
+        self.unused_eclasses = None
 
     def start(self):
-        self.eclasses = set(self.options.target_repo.eclass_cache.eclasses.iterkeys())
-
-        # remove eclasses inherited from master repo(s)
+        master_eclasses = self.unused_master_eclasses = set()
         for repo in self.options.target_repo.masters:
-            self.eclasses.difference_update(repo.eclass_cache.eclasses.iterkeys())
+            master_eclasses.update(repo.eclass_cache.eclasses.iterkeys())
+        self.unused_eclasses = set(self.options.target_repo.eclass_cache.eclasses.iterkeys()) - master_eclasses
+
+        # determine unused eclasses across all master repos
+        self.unused_in_master_eclasses = set()
+        if master_eclasses:
+            for repo in self.options.target_repo.masters:
+                for pkg in repo:
+                    self.unused_master_eclasses.difference_update(pkg.inherited)
 
     def feed(self, pkg, reporter):
-        self.eclasses.difference_update(pkg.inherited)
+        pkg_eclasses = set(pkg.inherited)
+        self.unused_eclasses.difference_update(pkg_eclasses)
+
+        # track eclasses used in the target repo but not in any master
+        if self.unused_master_eclasses:
+            self.unused_in_master_eclasses.update(
+                self.unused_master_eclasses & pkg_eclasses)
 
     def finish(self, reporter):
-        if self.eclasses:
-            reporter.add_report(UnusedEclasses(self.eclasses))
-        self.eclasses = None
+        if self.unused_eclasses:
+            reporter.add_report(UnusedEclasses(self.unused_eclasses))
+
+        if self.unused_in_master_eclasses:
+            reporter.add_report(UnusedInMasterEclasses(self.unused_in_master_eclasses))
+
+        self.unused_eclasses = self.unused_master_eclasses = self.unused_in_master_eclasses = None
 
 
 class UnusedProfileDirs(base.Warning):
