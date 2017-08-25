@@ -34,7 +34,7 @@ class UnusedGlobalFlags(base.Warning):
             pluralism(self.flags), ', '.join(self.flags))
 
 
-class UnusedInMasterGlobalFlags(base.Warning):
+class UnusedInMastersGlobalFlags(base.Warning):
     """Global USE flags detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
@@ -45,7 +45,7 @@ class UnusedInMasterGlobalFlags(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, flags):
-        super(UnusedInMasterGlobalFlags, self).__init__()
+        super(UnusedInMastersGlobalFlags, self).__init__()
         self._store_cpv(pkg)
         self.flags = tuple(sorted(flags))
 
@@ -61,7 +61,7 @@ class UnusedGlobalFlagsCheck(base.Template):
     feed_type = base.versioned_feed
     scope = base.repository_scope
     required_addons = (addons.UseAddon,)
-    known_results = (UnusedGlobalFlags, UnusedInMasterGlobalFlags)
+    known_results = (UnusedGlobalFlags, UnusedInMastersGlobalFlags)
 
     def __init__(self, options, iuse_handler):
         super(UnusedGlobalFlagsCheck, self).__init__(options)
@@ -88,7 +88,7 @@ class UnusedGlobalFlagsCheck(base.Template):
         if self.unused_master_flags:
             flags = self.unused_master_flags & pkg.iuse_stripped
             if flags:
-                reporter.add_report(UnusedInMasterGlobalFlags(pkg, flags))
+                reporter.add_report(UnusedInMastersGlobalFlags(pkg, flags))
 
     def finish(self, reporter):
         if self.unused_flags:
@@ -113,7 +113,7 @@ class UnusedLicenses(base.Warning):
         return ', '.join(self.licenses)
 
 
-class UnusedInMasterLicenses(base.Warning):
+class UnusedInMastersLicenses(base.Warning):
     """Licenses detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
@@ -124,7 +124,7 @@ class UnusedInMasterLicenses(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, licenses):
-        super(UnusedInMasterLicenses, self).__init__()
+        super(UnusedInMastersLicenses, self).__init__()
         self._store_cpv(pkg)
         self.licenses = tuple(sorted(licenses))
 
@@ -139,7 +139,7 @@ class UnusedLicensesCheck(base.Template):
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    known_results = (UnusedLicenses, UnusedInMasterLicenses)
+    known_results = (UnusedLicenses, UnusedInMastersLicenses)
 
     def __init__(self, options):
         super(UnusedLicensesCheck, self).__init__(options)
@@ -166,7 +166,7 @@ class UnusedLicensesCheck(base.Template):
         if self.unused_master_licenses:
             licenses = self.unused_master_licenses & pkg_licenses
             if licenses:
-                reporter.add_report(UnusedInMasterLicenses(pkg, licenses))
+                reporter.add_report(UnusedInMastersLicenses(pkg, licenses))
 
     def finish(self, reporter):
         if self.unused_licenses:
@@ -191,7 +191,7 @@ class UnusedMirrors(base.Warning):
         return ', '.join(self.mirrors)
 
 
-class UnusedInMasterMirrors(base.Warning):
+class UnusedInMastersMirrors(base.Warning):
     """Mirrors detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
@@ -202,7 +202,7 @@ class UnusedInMasterMirrors(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, mirrors):
-        super(UnusedInMasterMirrors, self).__init__()
+        super(UnusedInMastersMirrors, self).__init__()
         self._store_cpv(pkg)
         self.mirrors = tuple(sorted(mirrors))
 
@@ -218,7 +218,7 @@ class UnusedMirrorsCheck(base.Template):
     required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    known_results = (UnusedMirrors, UnusedInMasterMirrors)
+    known_results = (UnusedMirrors, UnusedInMastersMirrors)
 
     def __init__(self, options, iuse_handler):
         super(UnusedMirrorsCheck, self).__init__(options)
@@ -254,7 +254,7 @@ class UnusedMirrorsCheck(base.Template):
         if self.unused_master_mirrors:
             mirrors = self.unused_master_mirrors & pkg_mirrors
             if mirrors:
-                reporter.add_report(UnusedInMasterMirrors(pkg, mirrors))
+                reporter.add_report(UnusedInMastersMirrors(pkg, mirrors))
 
     def finish(self, reporter):
         if self.unused_mirrors:
@@ -279,7 +279,7 @@ class UnusedEclasses(base.Warning):
         return ', '.join(self.eclasses)
 
 
-class UnusedInMasterEclasses(base.Warning):
+class UnusedInMastersEclasses(base.Warning):
     """Eclasses detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
@@ -290,7 +290,7 @@ class UnusedInMasterEclasses(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, eclasses):
-        super(UnusedInMasterEclasses, self).__init__()
+        super(UnusedInMastersEclasses, self).__init__()
         self._store_cpv(pkg)
         self.eclasses = tuple(sorted(eclasses))
 
@@ -305,7 +305,7 @@ class UnusedEclassesCheck(base.Template):
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    known_results = (UnusedEclasses, UnusedInMasterEclasses)
+    known_results = (UnusedEclasses, UnusedInMastersEclasses)
 
     def __init__(self, options):
         super(UnusedEclassesCheck, self).__init__(options)
@@ -332,7 +332,7 @@ class UnusedEclassesCheck(base.Template):
         if self.unused_master_eclasses:
             eclasses = self.unused_master_eclasses & pkg_eclasses
             if eclasses:
-                reporter.add_report(UnusedInMasterEclasses(pkg, eclasses))
+                reporter.add_report(UnusedInMastersEclasses(pkg, eclasses))
 
     def finish(self, reporter):
         if self.unused_eclasses:
