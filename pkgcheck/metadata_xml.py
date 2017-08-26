@@ -259,7 +259,7 @@ class PkgMetadataXmlIndentation(MetadataXmlIndentation):
 class base_check(base.Template):
     """base class for metadata.xml scans"""
 
-    xsd_url = "http://www.gentoo.org/xml-schema/metadata.xsd"
+    xsd_url = "https://www.gentoo.org/xml-schema/metadata.xsd"
     schema = None
 
     misformed_error = None
