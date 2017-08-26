@@ -223,11 +223,11 @@ class UnusedMirrorsCheck(base.Template):
     def __init__(self, options, iuse_handler):
         super(UnusedMirrorsCheck, self).__init__(options)
         self.unused_mirrors = None
-        self.iuse_filter = iuse_handler.get_filter('fetchables', verify=False)
+        self.iuse_filter = iuse_handler.get_filter('fetchables')
 
     def _get_mirrors(self, pkg, reporter=None):
         mirrors = []
-        for f in self.iuse_filter((fetch.fetchable,), pkg, pkg.fetchables, reporter):
+        for f in self.iuse_filter((fetch.fetchable,), pkg, pkg.fetchables):
             for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
                 mirrors.append(m[0].mirror_name)
         return set(mirrors)
@@ -683,7 +683,7 @@ class ManifestReport(base.Template):
         self.required_checksums = mappings.defaultdictkey(
             lambda repo: frozenset(repo.config.manifests.hashes if hasattr(repo, 'config') else ()))
         self.seen_checksums = {}
-        self.iuse_filter = iuse_handler.get_filter('fetchables', verify=False)
+        self.iuse_filter = iuse_handler.get_filter('fetchables')
 
     def feed(self, full_pkgset, reporter):
         # sort it by repo.
@@ -698,8 +698,7 @@ class ManifestReport(base.Template):
                 fetchables = set(self.iuse_filter(
                     (fetch.fetchable,), pkg,
                     pkg._get_attr['fetchables'](
-                        pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True),
-                    reporter))
+                        pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True)))
                 pkg.release_cached_data()
 
                 fetchable_files = set(f.filename for f in fetchables)
