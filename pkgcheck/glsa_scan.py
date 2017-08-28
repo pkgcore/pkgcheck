@@ -45,7 +45,7 @@ class VulnerablePackage(base.Error):
 
 
 class TreeVulnerabilitiesReport(base.Template):
-    """Scan for vulnerabile ebuilds in the tree.
+    """Scan for vulnerable ebuilds in the tree.
 
     Requires a GLSA directory for vulnerability info.
     """
