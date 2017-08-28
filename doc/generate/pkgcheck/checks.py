@@ -50,3 +50,4 @@ for scope in reversed(sorted(d)):
             print('\t' + ' '.join(dedent(summary).strip().split('\n')))
             if explanation:
                 print('\n\t' + ' '.join(dedent(explanation).strip().split('\n')))
+            print('\n\n\t(known results: %s)' % ', '.join((r.__name__ for r in sorted(check.known_results, key=lambda x: x.__name__))))
