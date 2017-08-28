@@ -341,6 +341,17 @@ class Blacklist(_CheckSet):
                        for f in self.patterns))
 
 
+def filter_update(objs, enabled=(), disabled=()):
+    """Filter a given list of check or result types."""
+    if enabled:
+        whitelist = Whitelist(enabled)
+        objs = list(whitelist.filter(objs))
+    if disabled:
+        blacklist = Blacklist(disabled)
+        objs = list(blacklist.filter(objs))
+    return objs
+
+
 class Scope(object):
     """Only run checks matching any of the given scopes."""
 

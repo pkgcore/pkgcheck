@@ -43,6 +43,7 @@ check_options=(
   {'(--checks)-c','(-c)--checks'}'[comma separated list of checks to enable/disable]'
   {'(--checkset)-C','(-C)--checkset'}'[preconfigured set of checks to run]'
   {'(--keywords)-k','(-k)--keywords'}'[comma separated list of keywords to enable/disable]'
+  {'(--scopes)-S','(-S)--scopes'}'[comma separated list of keyword scopes to enable/disable]'
 )
 
 arches=(
