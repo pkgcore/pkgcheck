@@ -234,21 +234,21 @@ class Warning(Result):
 
 class Reporter(object):
 
-    keywords = ()
-
-    def __init__(self, out, verbose=None):
+    def __init__(self, out, keywords=(), verbose=None):
         """Initialize
 
         :type out: L{snakeoil.formatters.Formatter}
+        :param keywords: result keywords to report, other keywords will be skipped
         """
         self.out = out
         if verbose is None:
             verbose = False
         self.verbose = verbose
+        self._enabled_keywords = keywords
 
     def add_report(self, result):
         # skip check keywords that are disabled
-        if result.__class__ not in self.keywords:
+        if result.__class__ not in self._enabled_keywords:
             return
         result._verbose = self.verbose
         self.process_report(result)
