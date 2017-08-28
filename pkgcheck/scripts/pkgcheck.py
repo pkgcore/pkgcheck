@@ -88,21 +88,24 @@ for check in get_plugins('check', plugins):
 for addon in all_addons:
     addon.mangle_argparser(argparser)
 
+# XXX hack...
+_known_checks = tuple(sorted(
+    unstable_unique(get_plugins('check', plugins)),
+    key=lambda x: x.__name__))
+_known_keywords = tuple(sorted(
+    unstable_unique(chain.from_iterable(
+    check.known_results for check in _known_checks)),
+    key=lambda x: x.__name__))
+
 
 @argparser.bind_final_check
-def check_args(parser, namespace):
-    # XXX hack...
-    namespace.checks = sorted(unstable_unique(
-        get_plugins('check', plugins)),
-        key=lambda x: x.__name__)
-
+def _validate_args(parser, namespace):
     if any((namespace.list_keywords, namespace.list_checks, namespace.list_reporters)):
         # no need to check any other args
         return
 
-    namespace.keywords = sorted(unstable_unique(chain.from_iterable(
-        check.known_results for check in namespace.checks)),
-        key=lambda x: x.__name__)
+    namespace.enabled_checks = list(_known_checks)
+    namespace.enabled_keywords = list(_known_keywords)
 
     cwd = abspath(os.getcwd())
     if namespace.suite is None:
@@ -250,14 +253,14 @@ def check_args(parser, namespace):
     if namespace.checkset is None:
         namespace.checkset = namespace.config.get_default('pkgcheck_checkset')
     if namespace.checkset is not None:
-        namespace.checks = list(namespace.checkset.filter(namespace.checks))
+        namespace.enabled_checks = list(namespace.checkset.filter(namespace.enabled_checks))
 
     if namespace.selected_keywords is not None:
         disabled_keywords, enabled_keywords = namespace.selected_keywords
 
         # validate selected keywords
         selected_keywords = set(disabled_keywords + enabled_keywords)
-        available_keywords = set(x.__name__ for x in namespace.keywords)
+        available_keywords = set(x.__name__ for x in _known_keywords)
         unknown_keywords = selected_keywords - available_keywords
         if unknown_keywords:
             parser.error('unknown keyword%s: %s (use --list-keywords to show valid keywords)' % (
@@ -266,10 +269,10 @@ def check_args(parser, namespace):
         # filter outputted keywords
         if enabled_keywords:
             whitelist = base.Whitelist(enabled_keywords)
-            namespace.keywords = list(whitelist.filter(namespace.keywords))
+            namespace.enabled_keywords = list(whitelist.filter(namespace.enabled_keywords))
         if disabled_keywords:
             blacklist = base.Blacklist(disabled_keywords)
-            namespace.keywords = list(blacklist.filter(namespace.keywords))
+            namespace.enabled_keywords = list(blacklist.filter(namespace.enabled_keywords))
 
     disabled_checks, enabled_checks = ((), ())
     if namespace.selected_checks is not None:
@@ -277,19 +280,19 @@ def check_args(parser, namespace):
     elif namespace.selected_keywords is not None:
         # enable checks based on enabled keyword -> check mapping
         enabled_checks = []
-        for check in unstable_unique(get_plugins('check', plugins)):
-            if (set(namespace.keywords) & set(check.known_results)):
+        for check in _known_checks:
+            if (set(namespace.enabled_keywords) & set(check.known_results)):
                 enabled_checks.append(check.__name__)
 
     # filter checks to run
     if enabled_checks:
         whitelist = base.Whitelist(enabled_checks)
-        namespace.checks = list(whitelist.filter(namespace.checks))
+        namespace.enabled_checks = list(whitelist.filter(namespace.enabled_checks))
     if disabled_checks:
         blacklist = base.Blacklist(disabled_checks)
-        namespace.checks = list(blacklist.filter(namespace.checks))
+        namespace.enabled_checks = list(blacklist.filter(namespace.enabled_checks))
 
-    if not namespace.checks:
+    if not namespace.enabled_checks:
         parser.error('no active checks')
 
     namespace.addons = set()
@@ -299,7 +302,7 @@ def check_args(parser, namespace):
             namespace.addons.add(addon)
             for dep in addon.required_addons:
                 add_addon(dep)
-    for check in namespace.checks:
+    for check in namespace.enabled_checks:
         add_addon(check)
     try:
         for addon in namespace.addons:
@@ -347,9 +350,8 @@ def display_keywords(out, options):
         base.category_feed: base.category_scope,
         base.repository_feed: base.repository_scope,
     }
-    for check in options.checks:
-        for report in check.known_results:
-            d.setdefault(scope_map[report.threshold], set()).add(report)
+    for keyword in _known_keywords:
+        d.setdefault(scope_map[keyword.threshold], set()).add(keyword)
 
     if not options.verbose:
         out.write('\n'.join(sorted(x.__name__ for s in d.itervalues() for x in s)), wrap=False)
@@ -380,7 +382,7 @@ def display_keywords(out, options):
 @decorate_forced_wrapping()
 def display_checks(out, options):
     d = {}
-    for x in options.checks:
+    for x in _known_checks:
         d.setdefault(x.__module__, []).append(x)
 
     if not options.verbose:
