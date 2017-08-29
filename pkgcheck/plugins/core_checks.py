@@ -11,6 +11,7 @@ from pkgcheck.scripts import pkgcheck_replay_stream
 pkgcore_plugins = {
     'check': [
         cleanup.RedundantVersionReport,
+        codingstyle.AbsoluteSymlinkCheck,
         codingstyle.BadInsIntoCheck,
         deprecated.DeprecatedEAPIReport,
         deprecated.DeprecatedEclassReport,

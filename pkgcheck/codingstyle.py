@@ -1,11 +1,53 @@
 """check for some bad coding styles like insinto's, old variables etc"""
 
-from snakeoil.demandload import demandload
+from snakeoil.demandload import demandload, demand_compile_regexp
 
 from pkgcheck import base
 
 demandload("re")
 
+demand_compile_regexp(
+    'dosym_regexp',
+    r'^\s*dosym\s+["\']?(/(bin|etc|lib|opt|sbin|srv|usr|var)\S*)')
+
+
+class AbsoluteSymlink(base.Warning):
+    """Ebuild uses dosym with absolute paths instead of relative."""
+
+    threshold = base.versioned_feed
+
+    __slots__ = ("category", "package", "version", "line", "abspath")
+
+    def __init__(self, pkg, abspath, line):
+        super(AbsoluteSymlink, self).__init__()
+        self._store_cpv(pkg)
+        self.abspath = abspath
+        self.line = line
+
+    @property
+    def short_desc(self):
+        return "'dosym %s ...' uses absolute path on line %s" % (self.abspath, self.line)
+
+
+class AbsoluteSymlinkCheck(base.Template):
+    """Scan ebuild for dosym absolute path usage instead of relative."""
+
+    feed_type = base.ebuild_feed
+
+    known_results = (AbsoluteSymlink,)
+
+    def __init__(self, options):
+        super(AbsoluteSymlinkCheck, self).__init__(options)
+
+    def feed(self, entry, reporter):
+        pkg, lines = entry
+        for lineno, line in enumerate(lines):
+            if not line:
+                continue
+            matches = dosym_regexp.match(line)
+            if matches is not None:
+                reporter.add_report(
+                    AbsoluteSymlink(pkg, matches.groups()[0], lineno + 1))
 
 
 class BadInsIntoDir(base.Warning):
