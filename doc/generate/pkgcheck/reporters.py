@@ -19,24 +19,29 @@ def _rst_header(char, text, newline=True):
     print(char * len(text))
 
 
-reporters = sorted(unstable_unique(
-    get_plugins('reporter', plugins)),
-    key=lambda x: x.__name__)
+def main():
+    reporters = sorted(unstable_unique(
+        get_plugins('reporter', plugins)),
+        key=lambda x: x.__name__)
 
-_rst_header('=', 'Reporters', newline=False)
+    _rst_header('=', 'Reporters', newline=False)
 
-for reporter in reporters:
-    if reporter.__doc__ is not None:
-        try:
-            summary, explanation = reporter.__doc__.split('\n', 1)
-        except ValueError:
-            summary = reporter.__doc__
-            explanation = None
-    else:
-        summary = None
+    for reporter in reporters:
+        if reporter.__doc__ is not None:
+            try:
+                summary, explanation = reporter.__doc__.split('\n', 1)
+            except ValueError:
+                summary = reporter.__doc__
+                explanation = None
+        else:
+            summary = None
 
-    print('\n{}'.format(reporter.__name__))
-    if summary:
-        print('\t' + ' '.join(dedent(summary).strip().split('\n')))
-        if explanation:
-            print('\n\t' + '\n\t'.join(dedent(explanation).strip().split('\n')))
+        print('\n{}'.format(reporter.__name__))
+        if summary:
+            print('\t' + ' '.join(dedent(summary).strip().split('\n')))
+            if explanation:
+                print('\n\t' + '\n\t'.join(dedent(explanation).strip().split('\n')))
+
+
+if __name__ == '__main__':
+    main()
