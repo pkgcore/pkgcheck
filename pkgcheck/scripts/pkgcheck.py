@@ -78,16 +78,17 @@ check_options.add_argument(
     help='limit keywords to scan for by scope (comma-separated list)')
 
 
-all_addons = set()
-def add_addon(addon):
-    if addon not in all_addons:
-        all_addons.add(addon)
+def add_addon(addon, addon_set):
+    if addon not in addon_set:
+        addon_set.add(addon)
         for dep in addon.required_addons:
-            add_addon(dep)
+            add_addon(dep, addon_set)
 
+
+all_addons = set()
 argparser.plugin = argparser.add_argument_group('plugin options')
 for check in get_plugins('check', plugins):
-    add_addon(check)
+    add_addon(check, all_addons)
 for addon in all_addons:
     addon.mangle_argparser(argparser)
 
@@ -325,13 +326,8 @@ def _validate_args(parser, namespace):
 
     namespace.addons = set()
 
-    def add_addon(addon):
-        if addon not in namespace.addons:
-            namespace.addons.add(addon)
-            for dep in addon.required_addons:
-                add_addon(dep)
     for check in namespace.enabled_checks:
-        add_addon(check)
+        add_addon(check, namespace.addons)
     try:
         for addon in namespace.addons:
             addon.check_args(parser, namespace)
