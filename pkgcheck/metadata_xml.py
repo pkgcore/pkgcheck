@@ -114,7 +114,7 @@ class base_InvalidXml(base.Error):
 
 
 class base_MetadataXmlInvalidPkgRef(base.Error):
-    """ metadata.xml <pkg/> references unavailable / invalid package """
+    """metadata.xml <pkg/> references unavailable / invalid package"""
 
     __slots__ = ("category", "package", "filename")
     __attrs__ = __slots__
@@ -139,7 +139,7 @@ class base_MetadataXmlInvalidPkgRef(base.Error):
 
 
 class base_MetadataXmlInvalidCatRef(base.Error):
-    """ metadata.xml <cat/> references unavailable / invalid category """
+    """metadata.xml <cat/> references unavailable / invalid category"""
 
     __slots__ = ("category", "package", "filename")
     __attrs__ = __slots__
@@ -224,7 +224,10 @@ class CatMetadataXmlInvalidCatRef(base_MetadataXmlInvalidCatRef):
 
 
 class MetadataXmlIndentation(base.Warning):
-    """Inconsistent indentation in metadata.xml file."""
+    """Inconsistent indentation in metadata.xml file.
+
+    Either all tabs or all spaces should be used, not a mixture of both.
+    """
 
     __slots__ = ("category", "package", "version", "lines")
 
@@ -246,18 +249,24 @@ class MetadataXmlIndentation(base.Warning):
 
 
 class CatMetadataXmlIndentation(MetadataXmlIndentation):
-    """Inconsistent indentation in category metadata.xml file."""
+    """Inconsistent indentation in category metadata.xml file.
+
+    Either all tabs or all spaces should be used, not a mixture of both.
+    """
     __slots__ = ()
     threshold = base.category_feed
 
 class PkgMetadataXmlIndentation(MetadataXmlIndentation):
-    """Inconsistent indentation in package metadata.xml file."""
+    """Inconsistent indentation in package metadata.xml file.
+
+    Either all tabs or all spaces should be used, not a mixture of both.
+    """
     __slots__ = ()
     threshold = base.package_feed
 
 
 class base_check(base.Template):
-    """base class for metadata.xml scans"""
+    """Base class for metadata.xml scans."""
 
     xsd_url = "https://www.gentoo.org/xml-schema/metadata.xsd"
     schema = None
@@ -333,7 +342,7 @@ class base_check(base.Template):
         raise NotImplementedError(self.feed)
 
     def check_doc(self, doc):
-        """ Perform additional document structure checks """
+        """Perform additional document structure checks."""
         for el in doc.findall('.//cat'):
             c = el.text.strip()
             if c not in self.options.search_repo.categories:
@@ -354,6 +363,7 @@ class base_check(base.Template):
                 yield partial(self.pkgref_error, p)
 
     def check_whitespace(self, loc):
+        """Check for indentation consistency."""
         orig_indent = None
         indents = set()
         with open(loc) as f:
@@ -384,7 +394,7 @@ class base_check(base.Template):
 
 
 class PackageMetadataXmlCheck(base_check):
-    """package level metadata.xml scans"""
+    """Package level metadata.xml scans."""
 
     feed_type = base.package_feed
     scope = base.package_scope
@@ -411,7 +421,7 @@ class PackageMetadataXmlCheck(base_check):
 
 
 class CategoryMetadataXmlCheck(base_check):
-    """category level metadata.xml scans"""
+    """Category level metadata.xml scans."""
 
     feed_type = base.category_feed
     scope = base.category_scope

@@ -7,9 +7,9 @@ from pkgcheck import base
 demandload("re")
 
 
-class BadInsIntoDir(base.Warning):
 
-    """ebuild uses insinto where compact commands exist"""
+class BadInsIntoDir(base.Warning):
+    """Ebuild uses insinto where more compact commands exist."""
 
     threshold = base.versioned_feed
 
@@ -27,8 +27,7 @@ class BadInsIntoDir(base.Warning):
 
 
 class BadInsIntoCheck(base.Template):
-
-    """checking ebuild for bad insinto usage"""
+    """Scan ebuild for bad insinto usage."""
 
     feed_type = base.ebuild_feed
     _bad_insinto = None
