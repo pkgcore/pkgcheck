@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 
+import sys
 from textwrap import dedent
 
 from pkgcore.plugin import get_plugins
@@ -12,14 +13,20 @@ from snakeoil.sequences import unstable_unique
 from pkgcheck import plugins
 
 
-def _rst_header(char, text, newline=True):
-    if newline:
-        print('\n', end='')
-    print(text)
-    print(char * len(text))
+def main(f=sys.stdout):
+    def out(s, **kwargs):
+        print(s, file=f, **kwargs)
 
+    def _rst_header(char, text, newline=True):
+        if newline:
+            out('\n', end='')
+        out(text)
+        out(char * len(text))
 
-def main():
+    # add module docstring to output doc
+    if __doc__ is not None:
+        out(__doc__.strip())
+
     reporters = sorted(unstable_unique(
         get_plugins('reporter', plugins)),
         key=lambda x: x.__name__)
@@ -36,11 +43,11 @@ def main():
         else:
             summary = None
 
-        print('\n{}'.format(reporter.__name__))
+        out('\n{}'.format(reporter.__name__))
         if summary:
-            print('\t' + ' '.join(dedent(summary).strip().split('\n')))
+            out('\t' + ' '.join(dedent(summary).strip().split('\n')))
             if explanation:
-                print('\n\t' + '\n\t'.join(dedent(explanation).strip().split('\n')))
+                out('\n\t' + '\n\t'.join(dedent(explanation).strip().split('\n')))
 
 
 if __name__ == '__main__':

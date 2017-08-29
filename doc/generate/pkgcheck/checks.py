@@ -5,6 +5,7 @@
 from __future__ import print_function
 
 from collections import defaultdict
+import sys
 from textwrap import dedent
 
 from snakeoil.sequences import unstable_unique
@@ -12,14 +13,20 @@ from snakeoil.sequences import unstable_unique
 from pkgcheck.scripts.pkgcheck import _known_checks
 
 
-def _rst_header(char, text, newline=True):
-    if newline:
-        print('\n', end='')
-    print(text)
-    print(char * len(text))
+def main(f=sys.stdout):
+    def out(s, **kwargs):
+        print(s, file=f, **kwargs)
 
+    def _rst_header(char, text, newline=True):
+        if newline:
+            out('\n', end='')
+        out(text)
+        out(char * len(text))
 
-def main():
+    # add module docstring to output doc
+    if __doc__ is not None:
+        out(__doc__.strip())
+
     d = defaultdict(set)
     for check in _known_checks:
         d[check.scope].add(check)
@@ -41,12 +48,12 @@ def main():
             else:
                 summary = None
 
-            print('\n{}'.format(check.__name__))
+            out('\n{}'.format(check.__name__))
             if summary:
-                print('\t' + ' '.join(dedent(summary).strip().split('\n')))
+                out('\t' + ' '.join(dedent(summary).strip().split('\n')))
                 if explanation:
-                    print('\n\t' + ' '.join(dedent(explanation).strip().split('\n')))
-                print('\n\n\t(known results: %s)' % ', '.join((r.__name__ for r in sorted(check.known_results, key=lambda x: x.__name__))))
+                    out('\n\t' + ' '.join(dedent(explanation).strip().split('\n')))
+                out('\n\n\t(known results: %s)' % ', '.join((r.__name__ for r in sorted(check.known_results, key=lambda x: x.__name__))))
 
 
 if __name__ == '__main__':
