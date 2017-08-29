@@ -7,10 +7,9 @@ from __future__ import print_function
 from collections import defaultdict
 from textwrap import dedent
 
-from pkgcore.plugin import get_plugins
 from snakeoil.sequences import unstable_unique
 
-from pkgcheck import plugins
+from pkgcheck.scripts.pkgcheck import _known_checks
 
 
 def _rst_header(char, text, newline=True):
@@ -21,12 +20,8 @@ def _rst_header(char, text, newline=True):
 
 
 def main():
-    checks = sorted(unstable_unique(
-        get_plugins('check', plugins)),
-        key=lambda x: x.__name__)
-
     d = defaultdict(set)
-    for check in checks:
+    for check in _known_checks:
         d[check.scope].add(check)
 
     _rst_header('=', 'Checks', newline=False)

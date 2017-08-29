@@ -18,10 +18,10 @@ from __future__ import print_function
 from itertools import chain
 from textwrap import dedent
 
-from pkgcore.plugin import get_plugins
 from snakeoil.sequences import unstable_unique
 
-from pkgcheck import base, plugins
+from pkgcheck import base
+from pkgcheck.scripts.pkgcheck import _known_keywords
 
 
 def _rst_header(char, text, newline=True):
@@ -32,14 +32,6 @@ def _rst_header(char, text, newline=True):
 
 
 def main():
-    _known_checks = tuple(sorted(
-        unstable_unique(get_plugins('check', plugins)),
-        key=lambda x: x.__name__))
-    _known_keywords = tuple(sorted(
-        unstable_unique(chain.from_iterable(
-        check.known_results for check in _known_checks)),
-        key=lambda x: x.__name__))
-
     scope_map = {
         base.versioned_feed: base.version_scope,
         base.package_feed: base.package_scope,
