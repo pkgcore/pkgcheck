@@ -8,12 +8,120 @@ from pkgcheck import base, addons
 
 demandload(
     'os',
+    'snakeoil.contexts:patch',
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
     'snakeoil.sequences:iflatten_instance',
     'snakeoil.strings:pluralism',
     'pkgcore.ebuild.profiles:ProfileStack',
     'pkgcore:fetch',
 )
+
+
+class MultiMovePackageUpdate(base.Warning):
+    """Entry for package moved multiple times profiles/updates/*."""
+
+    __slots__ = ("pkg", "updates")
+
+    threshold = base.repository_feed
+
+    def __init__(self, pkg, updates):
+        super(MultiMovePackageUpdate, self).__init__()
+        self.pkg = pkg
+        self.updates = updates
+
+    @property
+    def short_desc(self):
+        return "multi-move update '%s': %s" % (self.pkg, ' -> '.join(self.updates))
+
+
+class OldMovePackageUpdate(base.Warning):
+    """Old move entry for removed package in profiles/updates/*."""
+
+    __slots__ = ("pkg", "updates")
+
+    threshold = base.repository_feed
+
+    def __init__(self, pkg, updates):
+        super(OldMovePackageUpdate, self).__init__()
+        self.pkg = pkg
+        self.updates = updates
+
+    @property
+    def short_desc(self):
+        return "'%s' unavailable: old move update %s" % (self.pkg, ' -> '.join(self.updates))
+
+
+class MovedPackageUpdate(base.Warning):
+    """Entry for package already moved in profiles/updates/*."""
+
+    __slots__ = ("error",)
+
+    threshold = base.repository_feed
+
+    def __init__(self, error):
+        super(MovedPackageUpdate, self).__init__()
+        self.error = error
+
+    @property
+    def short_desc(self):
+        return self.error
+
+
+class BadPackageUpdate(base.Error):
+    """Badly formatted package update in profiles/updates/*."""
+
+    __slots__ = ("error",)
+
+    threshold = base.repository_feed
+
+    def __init__(self, error):
+        super(BadPackageUpdate, self).__init__()
+        self.error = error
+
+    @property
+    def short_desc(self):
+        return self.error
+
+
+class PackageUpdatesCheck(base.Template):
+    """Scan profiles/updates/* for outdated entries and other issues."""
+
+    feed_type = base.repository_feed
+    scope = base.repository_scope
+    known_results = (
+        MultiMovePackageUpdate, OldMovePackageUpdate,
+        MovedPackageUpdate, BadPackageUpdate,
+    )
+
+    def __init__(self, options):
+        super(PackageUpdatesCheck, self).__init__(options)
+        self.repo = options.target_repo
+
+    def feed(self, pkg, reporter):
+        pass
+
+    def finish(self, reporter):
+        _report_bad_updates = lambda x: reporter.add_report(BadPackageUpdate(x))
+        _report_old_updates = lambda x: reporter.add_report(MovedPackageUpdate(x))
+
+        # convert log warnings/errors into reports
+        with patch('pkgcore.log.logger.error', _report_bad_updates), \
+                patch('pkgcore.log.logger.warning', _report_old_updates):
+            repo_updates = self.repo.config.updates
+            for pkg, updates in repo_updates.iteritems():
+                move_updates = [x for x in updates if x[0] == 'move']
+
+                # check for old move updates for removed packages
+                for _, old, new in move_updates:
+                    if not self.repo.match(new):
+                        reporter.add_report(OldMovePackageUpdate(str(new), [str(old), str(new)]))
+
+                # check for multi-updates, a -> b, b -> c, ...
+                if len(move_updates) > 1:
+                    multi_move_updates = [str(pkg)]
+                    multi_move_updates.extend([str(x[2]) for x in move_updates])
+                    if len(multi_move_updates) > 2:
+                        reporter.add_report(MultiMovePackageUpdate(pkg, multi_move_updates))
 
 
 class UnusedGlobalFlags(base.Warning):
