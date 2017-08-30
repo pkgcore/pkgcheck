@@ -18,7 +18,7 @@ demandload(
 
 
 class MultiMovePackageUpdate(base.Warning):
-    """Entry for package moved multiple times profiles/updates/*."""
+    """Entry for package moved multiple times in profiles/updates files."""
 
     __slots__ = ("pkg", "updates")
 
@@ -35,7 +35,7 @@ class MultiMovePackageUpdate(base.Warning):
 
 
 class OldMovePackageUpdate(base.Warning):
-    """Old move entry for removed package in profiles/updates/*."""
+    """Old move entry for removed package in profiles/updates files."""
 
     __slots__ = ("pkg", "updates")
 
@@ -52,7 +52,7 @@ class OldMovePackageUpdate(base.Warning):
 
 
 class MovedPackageUpdate(base.Warning):
-    """Entry for package already moved in profiles/updates/*."""
+    """Entry for package already moved in profiles/updates files."""
 
     __slots__ = ("error",)
 
@@ -68,7 +68,7 @@ class MovedPackageUpdate(base.Warning):
 
 
 class BadPackageUpdate(base.Error):
-    """Badly formatted package update in profiles/updates/*."""
+    """Badly formatted package update in profiles/updates files."""
 
     __slots__ = ("error",)
 
