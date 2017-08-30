@@ -108,20 +108,21 @@ class PackageUpdatesCheck(base.Template):
         with patch('pkgcore.log.logger.error', _report_bad_updates), \
                 patch('pkgcore.log.logger.warning', _report_old_updates):
             repo_updates = self.repo.config.updates
-            for pkg, updates in repo_updates.iteritems():
-                move_updates = [x for x in updates if x[0] == 'move']
 
-                # check for old move updates for removed packages
-                for _, old, new in move_updates:
-                    if not self.repo.match(new):
-                        reporter.add_report(OldMovePackageUpdate(str(new), [str(old), str(new)]))
+        for pkg, updates in repo_updates.iteritems():
+            move_updates = [x for x in updates if x[0] == 'move']
 
-                # check for multi-updates, a -> b, b -> c, ...
-                if len(move_updates) > 1:
-                    multi_move_updates = [str(pkg)]
-                    multi_move_updates.extend([str(x[2]) for x in move_updates])
-                    if len(multi_move_updates) > 2:
-                        reporter.add_report(MultiMovePackageUpdate(pkg, multi_move_updates))
+            # check for old move updates for removed packages
+            for _, old, new in move_updates:
+                if not self.repo.match(new):
+                    reporter.add_report(OldMovePackageUpdate(str(new), [str(old), str(new)]))
+
+            # check for multi-updates, a -> b, b -> c, ...
+            if len(move_updates) > 1:
+                multi_move_updates = [str(pkg)]
+                multi_move_updates.extend([str(x[2]) for x in move_updates])
+                if len(multi_move_updates) > 2:
+                    reporter.add_report(MultiMovePackageUpdate(pkg, multi_move_updates))
 
 
 class UnusedGlobalFlags(base.Warning):
