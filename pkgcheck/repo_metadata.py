@@ -12,6 +12,7 @@ demandload(
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
     'snakeoil.sequences:iflatten_instance',
     'snakeoil.strings:pluralism',
+    'pkgcore.ebuild:atom',
     'pkgcore.ebuild.profiles:ProfileStack',
     'pkgcore:fetch',
 )
@@ -31,24 +32,24 @@ class MultiMovePackageUpdate(base.Warning):
 
     @property
     def short_desc(self):
-        return "multi-move update '%s': %s" % (self.pkg, ' -> '.join(self.updates))
+        return "multi-move update '%s': %s" % (self.pkg, ' -> '.join(map(str, self.updates)))
 
 
-class OldMovePackageUpdate(base.Warning):
-    """Old move entry for removed package in profiles/updates files."""
+class OldPackageUpdate(base.Warning):
+    """Old entry for removed package in profiles/updates files."""
 
     __slots__ = ("pkg", "updates")
 
     threshold = base.repository_feed
 
     def __init__(self, pkg, updates):
-        super(OldMovePackageUpdate, self).__init__()
+        super(OldPackageUpdate, self).__init__()
         self.pkg = pkg
         self.updates = updates
 
     @property
     def short_desc(self):
-        return "'%s' unavailable: old move update %s" % (self.pkg, ' -> '.join(self.updates))
+        return "'%s' unavailable: old update line: '%s'" % (self.pkg, ' '.join(map(str, self.updates)))
 
 
 class MovedPackageUpdate(base.Warning):
@@ -89,7 +90,7 @@ class PackageUpdatesCheck(base.Template):
     feed_type = base.repository_feed
     scope = base.repository_scope
     known_results = (
-        MultiMovePackageUpdate, OldMovePackageUpdate,
+        MultiMovePackageUpdate, OldPackageUpdate,
         MovedPackageUpdate, BadPackageUpdate,
     )
 
@@ -111,18 +112,24 @@ class PackageUpdatesCheck(base.Template):
 
         for pkg, updates in repo_updates.iteritems():
             move_updates = [x for x in updates if x[0] == 'move']
+            slotmove_updates = [x for x in updates if x[0] == 'slotmove']
 
-            # check for old move updates for removed packages
-            for _, old, new in move_updates:
+            # check for old updates for removed packages
+            for x in move_updates:
+                _, _old, new = x
                 if not self.repo.match(new):
-                    reporter.add_report(OldMovePackageUpdate(str(new), [str(old), str(new)]))
+                    reporter.add_report(OldPackageUpdate(new, x))
+            for x in slotmove_updates:
+                _, pkg, newslot = x
+                if not self.repo.match(atom.atom(pkg.key)):
+                    # reproduce old line data for result output
+                    x = ['slotmove', str(pkg)[:-(len(pkg.slot) + 1)], pkg.slot, newslot]
+                    reporter.add_report(OldPackageUpdate(pkg.key, x))
 
             # check for multi-updates, a -> b, b -> c, ...
             if len(move_updates) > 1:
-                multi_move_updates = [str(pkg)]
-                multi_move_updates.extend([str(x[2]) for x in move_updates])
-                if len(multi_move_updates) > 2:
-                    reporter.add_report(MultiMovePackageUpdate(pkg, multi_move_updates))
+                multi_move_updates = [pkg] + [x[2] for x in move_updates]
+                reporter.add_report(MultiMovePackageUpdate(pkg, multi_move_updates))
 
 
 class UnusedGlobalFlags(base.Warning):
