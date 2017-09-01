@@ -790,8 +790,10 @@ class ManifestReport(base.Template):
 
     required_addons = (addons.UseAddon,)
     feed_type = base.package_feed
-    known_results = (MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
-                     ConflictingChksums)
+    known_results = (
+        MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
+        ConflictingChksums,
+    )
 
     repo_grabber = attrgetter("repo")
 
@@ -828,14 +830,13 @@ class ManifestReport(base.Template):
                         continue
                     missing = required_checksums.difference(f_inst.chksums)
                     if f_inst.filename not in missing_manifests and missing:
-                        reporter.add_report(
-                            MissingChksum(pkg, f_inst.filename, missing,
-                                          f_inst.chksums))
+                        reporter.add_report(MissingChksum(
+                            pkg, f_inst.filename, missing, f_inst.chksums))
                     seen.add(f_inst.filename)
                     existing = self.seen_checksums.get(f_inst.filename)
                     if existing is None:
                         self.seen_checksums[f_inst.filename] = (
-                                [pkg.key], dict(f_inst.chksums.iteritems()))
+                            [pkg.key], dict(f_inst.chksums.iteritems()))
                         continue
                     seen_pkgs, seen_chksums = existing
                     confl_checksums = []
