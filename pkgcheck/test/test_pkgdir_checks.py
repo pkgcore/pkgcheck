@@ -45,16 +45,19 @@ class TestDuplicateFilesReport(filesdir_mixin, misc.ReportTestCase):
         self.assertNoReport(check, [self.mk_pkg({'test': 'abc', 'test2': 'bcd'})])
 
         # filesdir with a duplicate
-        self.assertIsInstance(
+        r = self.assertIsInstance(
             self.assertReport(check, [self.mk_pkg({'test': 'abc', 'test2': 'abc'})]),
             pkgdir_checks.DuplicateFiles)
+        r = self.assertEqual(r.files, ['files/test', 'files/test2'])
 
         # two sets of duplicates
         r = self.assertReports(check, [self.mk_pkg(
             {'test': 'abc', 'test2': 'abc', 'test3': 'bcd', 'test4': 'bcd'})])
         self.assertLen(r, 2)
         self.assertIsInstance(r[0], pkgdir_checks.DuplicateFiles)
+        self.assertEqual(r[0].files, ['files/test', 'files/test2'])
         self.assertIsInstance(r[1], pkgdir_checks.DuplicateFiles)
+        self.assertEqual(r[1].files, ['files/test3', 'files/test4'])
 
 
 class TestEmptyFileReport(filesdir_mixin, misc.ReportTestCase):
@@ -81,15 +84,18 @@ class TestEmptyFileReport(filesdir_mixin, misc.ReportTestCase):
         self.assertNoReport(check, [self.mk_pkg({'test': 'asdfgh'})])
 
         # a mix of both
-        self.assertIsInstance(
+        r = self.assertIsInstance(
             self.assertReport(check, [self.mk_pkg({'test': 'asdfgh', 'test2': ''})]),
             pkgdir_checks.EmptyFile)
-        self.assertIsInstance(
+        self.assertEqual(r.filename, 'files/test2')
+        r = self.assertIsInstance(
             self.assertReport(check, [self.mk_pkg({'test': '', 'test2': 'asdfgh'})]),
             pkgdir_checks.EmptyFile)
+        self.assertEqual(r.filename, 'files/test')
 
         # two empty files
         r = self.assertReports(check, [self.mk_pkg({'test': '', 'test2': ''})])
         self.assertLen(r, 2)
         self.assertIsInstance(r[0], pkgdir_checks.EmptyFile)
         self.assertIsInstance(r[1], pkgdir_checks.EmptyFile)
+        self.assertEqual(sorted(x.filename for x in r), ['files/test', 'files/test2'])
