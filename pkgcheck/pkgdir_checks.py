@@ -244,7 +244,7 @@ class PkgDirReport(Template):
         if not os.path.exists(pjoin(base, 'files')):
             return
         unprocessed_dirs = deque(["files"])
-        files_by_digest = defaultdict(list)
+        files_by_size = defaultdict(list)
         while unprocessed_dirs:
             cwd = unprocessed_dirs.pop()
             for fn in listdir(pjoin(base, cwd)):
@@ -262,12 +262,18 @@ class PkgDirReport(Template):
                         if st.st_size == 0:
                             reporter.add_report(EmptyFile(pkgset[0], pjoin(cwd, fn)))
                         else:
-                            digest = get_chksums(afn, self.digest_algo)[0]
-                            files_by_digest[digest].append(pjoin(cwd, fn))
+                            files_by_size[st.st_size].append(pjoin(cwd, fn))
                             if st.st_size > 20480:
                                 reporter.add_report(SizeViolation(pkgset[0], pjoin(cwd, fn), st.st_size))
                         if any(True for x in fn if x not in allowed_filename_chars_set):
                             reporter.add_report(Glep31Violation(pkgset[0], pjoin(cwd, fn)))
+
+        files_by_digest = defaultdict(list)
+        for size, files in files_by_size.iteritems():
+            if len(files) > 1:
+                for f in files:
+                    digest = get_chksums(pjoin(base, f), self.digest_algo)[0]
+                    files_by_digest[digest].append(f)
 
         for digest, files in files_by_digest.iteritems():
             if len(files) > 1:
