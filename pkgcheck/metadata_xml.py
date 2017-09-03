@@ -33,7 +33,7 @@ demandload(
 
 
 class base_MissingXml(base.Error):
-    """required xml file is missing"""
+    """Required XML file is missing."""
 
     __slots__ = ('category', 'package', 'filename')
     __attrs__ = __slots__
@@ -57,7 +57,7 @@ class base_MissingXml(base.Error):
 
 
 class base_BadlyFormedXml(base.Warning):
-    """xml isn't well formed"""
+    """XML isn't well formed."""
 
     __slots__ = ("category", "package", "filename")
     __attrs__ = __slots__
@@ -81,7 +81,7 @@ class base_BadlyFormedXml(base.Warning):
 
 
 class base_InvalidXml(base.Error):
-    """xml fails XML Schema validation"""
+    """XML fails XML Schema validation."""
 
     __slots__ = ("category", "package", "filename")
     __attrs__ = __slots__
@@ -114,7 +114,7 @@ class base_InvalidXml(base.Error):
 
 
 class base_MetadataXmlInvalidPkgRef(base.Error):
-    """metadata.xml <pkg/> references unavailable / invalid package"""
+    """metadata.xml <pkg/> references unknown/invalid package."""
 
     __slots__ = ("category", "package", "filename")
     __attrs__ = __slots__
@@ -139,7 +139,7 @@ class base_MetadataXmlInvalidPkgRef(base.Error):
 
 
 class base_MetadataXmlInvalidCatRef(base.Error):
-    """metadata.xml <cat/> references unavailable / invalid category"""
+    """metadata.xml <cat/> references unknown/invalid category"""
 
     __slots__ = ("category", "package", "filename")
     __attrs__ = __slots__

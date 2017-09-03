@@ -19,7 +19,7 @@ class base_whitespace(base.Warning):
 
 
 class WhitespaceFound(base_whitespace):
-    """leading or trailing whitespaces are found"""
+    """Leading or trailing whitespace found."""
 
     __slots__ = ("category", "package", "version", "lines", "leadtrail")
 
@@ -36,7 +36,7 @@ class WhitespaceFound(base_whitespace):
 
 
 class WrongIndentFound(base_whitespace):
-    """leading or trailing whitespaces are found"""
+    """Incorrect indentation whitespace found."""
 
     __slots__ = ("category", "package", "version", "lines")
 
@@ -51,7 +51,7 @@ class WrongIndentFound(base_whitespace):
 
 
 class DoubleEmptyLine(base_whitespace):
-    """unneeded blank lines are found"""
+    """Unneeded blank lines found."""
 
     __slots__ = ("category", "package", "version", "lines")
 
@@ -66,7 +66,7 @@ class DoubleEmptyLine(base_whitespace):
 
 
 class TrailingEmptyLine(base.Warning):
-    """unneeded blank lines are found"""
+    """Unneeded trailing blank lines found."""
 
     __slots__ = ("category", "package", "version")
 
@@ -94,7 +94,7 @@ class NoFinalNewline(base.Warning):
 
 
 class WhitespaceCheck(base.Template):
-    """checking ebuild for (useless) whitespaces"""
+    """Scan ebuild for useless whitespace."""
 
     feed_type = base.ebuild_feed
     known_results = (

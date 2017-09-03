@@ -8,7 +8,7 @@ from pkgcheck.base import package_feed, Warning
 
 
 class UnstableOnly(Warning):
-    """package/keywords that are strictly unstable"""
+    """Package/keywords that are strictly unstable."""
 
     __slots__ = ("category", "package", "versions", "arches")
 
@@ -27,7 +27,7 @@ class UnstableOnly(Warning):
 
 
 class UnstableOnlyReport(StableCheckAddon):
-    """scan for pkgs that have just unstable keywords"""
+    """Scan for packages that have just unstable keywords."""
 
     feed_type = package_feed
     required_addons = (ArchesAddon,)

@@ -107,7 +107,7 @@ def strip_atom_use(inst):
 
 
 class VisibleVcsPkg(base.Error):
-    """pkg is vcs based, but visible"""
+    """Package is VCS-based, but visible."""
 
     __slots__ = ("category", "package", "version", "profile", "arch")
 
@@ -126,7 +126,7 @@ class VisibleVcsPkg(base.Error):
 
 
 class NonExistentDeps(base.Warning):
-    """No matches exist for a depset element"""
+    """No matches exist for a depset element."""
 
     __slots__ = ("category", "package", "version", "attr", "atoms")
 
@@ -145,7 +145,7 @@ class NonExistentDeps(base.Warning):
 
 
 class UncheckableDep(base.Warning):
-    """Given dependency cannot be checked due to the number of transitive use deps in it"""
+    """Given dependency cannot be checked due to the number of transitive use deps in it."""
 
     __slots__ = ("category", "package", "version", "attr")
 
@@ -163,7 +163,7 @@ class UncheckableDep(base.Warning):
 
 
 class NonsolvableDeps(base.Error):
-    """No potential solution for a depset attribute"""
+    """No potential solution for a depset attribute."""
 
     __slots__ = ("category", "package", "version", "attr", "profile",
                  "keyword", "potentials")

@@ -17,7 +17,7 @@ demandload('logging')
 
 
 class MetadataError(base.Error):
-    """Problem detected with a packages metadata"""
+    """Problem detected with a package's metadata."""
 
     __slots__ = ("category", "package", "version", "attr", "msg")
     threshold = base.versioned_feed
@@ -33,7 +33,7 @@ class MetadataError(base.Error):
 
 
 class MissingLicense(base.Error):
-    """Used license(s) have no matching license file(s)"""
+    """Used license(s) have no matching license file(s)."""
 
     __slots__ = ("category", "package", "version", "licenses")
     threshold = base.versioned_feed
@@ -198,7 +198,7 @@ class RequiredUSEMetadataReport(base.Template):
 
 
 class UnusedLocalFlags(base.Warning):
-    """Unused local use flag(s)"""
+    """Unused local USE flag(s)."""
 
     __slots__ = ("category", "package", "flags")
 
@@ -212,12 +212,12 @@ class UnusedLocalFlags(base.Warning):
 
     @property
     def short_desc(self):
-        return "metadata.xml unused local use flag%s: [ %s ]" % (
+        return "metadata.xml unused local USE flag%s: [ %s ]" % (
             pluralism(self.flags), ', '.join(self.flags))
 
 
 class UnusedLocalFlagsReport(base.Template):
-    """Check for unused local use flags in metadata.xml"""
+    """Check for unused local USE flags in metadata.xml."""
 
     feed_type = base.package_feed
     required_addons = (addons.UseAddon,)
@@ -238,7 +238,7 @@ class UnusedLocalFlagsReport(base.Template):
 
 
 class MissingSlotDep(base.Warning):
-    """Missing slot value in dependencies"""
+    """Missing slot value in dependencies."""
 
     __slots__ = ('category', 'package', 'version', 'dep', 'dep_slots')
 
@@ -257,7 +257,7 @@ class MissingSlotDep(base.Warning):
 
 
 class MissingSlotDepReport(base.Template):
-    """Check for missing slot dependencies"""
+    """Check for missing slot dependencies."""
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon,)
@@ -283,7 +283,7 @@ class MissingSlotDepReport(base.Template):
 
 
 class DependencyReport(base.Template):
-    """Check DEPEND, RDEPEND, and PDEPEND"""
+    """Check DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon,)
     known_results = (MetadataError,) + addons.UseAddon.known_results
@@ -361,7 +361,7 @@ class StupidKeywords(base.Warning):
 
 
 class KeywordsReport(base.Template):
-    """Check pkg keywords for sanity; empty keywords, and -* are flagged"""
+    """Check package keywords for sanity; empty keywords, and -* are flagged."""
 
     feed_type = base.versioned_feed
     known_results = (StupidKeywords, MetadataError)
@@ -372,7 +372,7 @@ class KeywordsReport(base.Template):
 
 
 class MissingUri(base.Warning):
-    """RESTRICT=fetch isn't set, yet no full URI exists"""
+    """RESTRICT=fetch isn't set, yet no full URI exists."""
 
     __slots__ = ("category", "package", "version", "filename")
     threshold = base.versioned_feed

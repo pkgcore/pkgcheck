@@ -688,7 +688,7 @@ def reformat_chksums(iterable):
 
 
 class ConflictingChksums(base.Error):
-    """checksum conflict detected between two files"""
+    """Checksum conflict detected between two files."""
 
     __slots__ = ("category", "package", "version",
                  "filename", "chksums", "others")
@@ -711,7 +711,7 @@ class ConflictingChksums(base.Error):
 
 
 class MissingChksum(base.Warning):
-    """a file in the chksum data lacks required checksums"""
+    """A file in the chksum data lacks required checksums."""
 
     threshold = base.versioned_feed
     __slots__ = ('category', 'package', 'version', 'filename', 'missing',
@@ -730,7 +730,7 @@ class MissingChksum(base.Warning):
 
 
 class MissingManifest(base.Error):
-    """SRC_URI targets missing from Manifest file"""
+    """SRC_URI targets missing from Manifest file."""
 
     __slots__ = ("category", "package", "version", "files")
     threshold = base.versioned_feed
@@ -747,7 +747,7 @@ class MissingManifest(base.Error):
 
 
 class UnknownManifest(base.Warning):
-    """Manifest entries not matching any SRC_URI targets"""
+    """Manifest entries not matching any SRC_URI targets."""
 
     __slots__ = ("category", "package", "files")
     threshold = base.package_feed

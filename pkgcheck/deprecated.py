@@ -5,7 +5,7 @@ from pkgcheck.base import Template, versioned_feed, Warning
 
 
 class DeprecatedEAPI(Warning):
-    """pkg's EAPI is deprecated according to repo metadata"""
+    """Package's EAPI is deprecated according to repo metadata."""
 
     __slots__ = ("category", "package", "version", "eapi")
     threshold = versioned_feed
@@ -21,11 +21,11 @@ class DeprecatedEAPI(Warning):
 
 
 class DeprecatedEAPIReport(Template):
+    """Scan for deprecated EAPIs."""
 
     feed_type = versioned_feed
     known_results = (DeprecatedEAPI,)
 
-    __doc__ = "scan for deprecated EAPIs"
 
     def feed(self, pkg, reporter):
         if str(pkg.eapi) in pkg.repo.config.eapis_deprecated:
@@ -33,7 +33,7 @@ class DeprecatedEAPIReport(Template):
 
 
 class DeprecatedEclass(Warning):
-    """pkg uses an eclass that is deprecated/abandoned"""
+    """Package uses an eclass that is deprecated/abandoned."""
 
     __slots__ = ("category", "package", "version", "eclasses")
     threshold = versioned_feed
@@ -140,7 +140,7 @@ class DeprecatedEclassReport(Template):
         'xfree': None,
     })
 
-    __doc__ = "scan for deprecated eclass usage\n\ndeprecated eclasses: %s\n" % \
+    __doc__ = "Scan for deprecated eclass usage.\n\ndeprecated eclasses: %s\n" % \
         ", ".join(sorted(blacklist))
 
     def feed(self, pkg, reporter):

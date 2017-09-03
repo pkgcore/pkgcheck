@@ -4,7 +4,7 @@ from pkgcheck.base import Template, package_feed, versioned_feed, Warning
 
 
 class DroppedKeywords(Warning):
-    """Arch keywords dropped during pkg version bumping"""
+    """Arch keywords dropped during version bumping."""
 
     __slots__ = ("arches", "category", "package", "version")
     threshold = versioned_feed
@@ -20,7 +20,7 @@ class DroppedKeywords(Warning):
 
 
 class DroppedKeywordsReport(Template):
-    """scan pkgs for keyword dropping across versions"""
+    """Scan packages for keyword dropping across versions."""
 
     feed_type = package_feed
     known_results = (DroppedKeywords,)
