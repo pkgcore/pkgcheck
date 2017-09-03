@@ -26,6 +26,37 @@ class filesdir_mixin(TempDirMixin):
         return ebuild_base
 
 
+class TestDuplicateFilesReport(filesdir_mixin, misc.ReportTestCase):
+
+    check_kls = pkgdir_checks.PkgDirReport
+
+    def mk_pkg(self, files={}):
+        return misc.FakeFilesDirPkg(
+            "dev-util/diffball-0.7.1",
+            self.get_pkgdir_with_filesdir(files))
+
+    def test_it(self):
+        check = pkgdir_checks.PkgDirReport(None, None)
+
+        # empty filesdir
+        self.assertNoReport(check, [self.mk_pkg()])
+
+        # filesdir with two unique files
+        self.assertNoReport(check, [self.mk_pkg({'test': 'abc', 'test2': 'bcd'})])
+
+        # filesdir with a duplicate
+        self.assertIsInstance(
+            self.assertReport(check, [self.mk_pkg({'test': 'abc', 'test2': 'abc'})]),
+            pkgdir_checks.DuplicateFiles)
+
+        # two sets of duplicates
+        r = self.assertReports(check, [self.mk_pkg(
+            {'test': 'abc', 'test2': 'abc', 'test3': 'bcd', 'test4': 'bcd'})])
+        self.assertLen(r, 2)
+        self.assertIsInstance(r[0], pkgdir_checks.DuplicateFiles)
+        self.assertIsInstance(r[1], pkgdir_checks.DuplicateFiles)
+
+
 class TestEmptyFileReport(filesdir_mixin, misc.ReportTestCase):
 
     check_kls = pkgdir_checks.PkgDirReport

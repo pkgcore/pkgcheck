@@ -1,5 +1,5 @@
 import codecs
-from collections import deque
+from collections import defaultdict, deque
 import os
 import stat
 
@@ -10,7 +10,7 @@ from snakeoil.strings import pluralism
 
 from pkgcheck.base import Error, Warning, Template, package_feed
 
-demandload('errno')
+demandload('errno', 'snakeoil.chksum:get_chksums')
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()
@@ -71,6 +71,23 @@ class InvalidPN(Error):
     def short_desc(self):
         return "invalid package name%s: [ %s ]" % (
             pluralism(self.ebuilds), ', '.join(self.ebuilds))
+
+
+class DuplicateFiles(Warning):
+    """Two or more identical files in FILESDIR."""
+
+    __slots__ = ("category", "package", "files")
+
+    threshold = package_feed
+
+    def __init__(self, pkg, files):
+        super(DuplicateFiles, self).__init__()
+        self._store_cp(pkg)
+        self.files = files
+
+    @property
+    def short_desc(self):
+        return 'duplicate identical files in FILESDIR: %r' % (self.files,)
 
 
 class EmptyFile(Warning):
@@ -179,9 +196,12 @@ class PkgDirReport(Template):
 
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
     known_results = (
-        EmptyFile, ExecutableFile, SizeViolation, Glep31Violation,
-        InvalidUtf8, MismatchedPN, InvalidPN,
+        DuplicateFiles, EmptyFile, ExecutableFile, SizeViolation,
+        Glep31Violation, InvalidUtf8, MismatchedPN, InvalidPN,
     )
+
+    # TODO: put some 'preferred algorithms by purpose' into snakeoil?
+    digest_algo = 'sha256'
 
     def feed(self, pkgset, reporter):
         base = os.path.dirname(pkgset[0].ebuild.path)
@@ -224,6 +244,7 @@ class PkgDirReport(Template):
         if not os.path.exists(pjoin(base, 'files')):
             return
         unprocessed_dirs = deque(["files"])
+        files_by_digest = defaultdict(list)
         while unprocessed_dirs:
             cwd = unprocessed_dirs.pop()
             for fn in listdir(pjoin(base, cwd)):
@@ -238,9 +259,16 @@ class PkgDirReport(Template):
                         reporter.add_report(
                             ExecutableFile(pkgset[0], pjoin(cwd, fn)))
                     if not fn.startswith("digest-"):
-                        if st.st_size > 20480:
-                            reporter.add_report(SizeViolation(pkgset[0], pjoin(cwd, fn), st.st_size))
-                        elif st.st_size == 0:
+                        if st.st_size == 0:
                             reporter.add_report(EmptyFile(pkgset[0], pjoin(cwd, fn)))
+                        else:
+                            digest = get_chksums(afn, self.digest_algo)[0]
+                            files_by_digest[digest].append(pjoin(cwd, fn))
+                            if st.st_size > 20480:
+                                reporter.add_report(SizeViolation(pkgset[0], pjoin(cwd, fn), st.st_size))
                         if any(True for x in fn if x not in allowed_filename_chars_set):
                             reporter.add_report(Glep31Violation(pkgset[0], pjoin(cwd, fn)))
+
+        for digest, files in files_by_digest.iteritems():
+            if len(files) > 1:
+                reporter.add_report(DuplicateFiles(pkgset[0], sorted(files)))
