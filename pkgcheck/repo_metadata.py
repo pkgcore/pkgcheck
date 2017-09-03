@@ -21,18 +21,42 @@ demandload(
 class MultiMovePackageUpdate(base.Warning):
     """Entry for package moved multiple times in profiles/updates files."""
 
-    __slots__ = ("pkg", "updates")
+    __slots__ = ("pkg", "moves")
 
     threshold = base.repository_feed
 
-    def __init__(self, pkg, updates):
+    def __init__(self, pkg, moves):
         super(MultiMovePackageUpdate, self).__init__()
-        self.pkg = pkg
-        self.updates = updates
+        self.pkg = str(pkg)
+        self.moves = tuple([self.pkg] + list(map(str, moves)))
 
     @property
     def short_desc(self):
-        return "multi-move update '%s': %s" % (self.pkg, ' -> '.join(map(str, self.updates)))
+        return "'%s': multi-move update: %s" % (
+            self.pkg, ' -> '.join(self.moves))
+
+
+class OldMultiMovePackageUpdate(MultiMovePackageUpdate):
+    """Old entry for removed package moved multiple times in profiles/updates files.
+
+    This means that the reported pkg has been moved at least three times and
+    finally removed from the tree. All the related lines should be removed from
+    the update files.
+    """
+
+    __slots__ = ("pkg", "moves")
+
+    threshold = base.repository_feed
+
+    def __init__(self, pkg, moves):
+        super(MultiMovePackageUpdate, self).__init__()
+        self.pkg = str(moves[-1])
+        self.moves = tuple([str(pkg)] + list(map(str, moves)))
+
+    @property
+    def short_desc(self):
+        return "'%s' unavailable: old multi-move update: %s" % (
+            self.pkg, ' -> '.join(self.moves))
 
 
 class OldPackageUpdate(base.Warning):
@@ -45,11 +69,12 @@ class OldPackageUpdate(base.Warning):
     def __init__(self, pkg, updates):
         super(OldPackageUpdate, self).__init__()
         self.pkg = pkg
-        self.updates = updates
+        self.updates = tuple(map(str, updates))
 
     @property
     def short_desc(self):
-        return "'%s' unavailable: old update line: '%s'" % (self.pkg, ' '.join(map(str, self.updates)))
+        return "'%s' unavailable: old update line: '%s'" % (
+            self.pkg, ' '.join(self.updates))
 
 
 class MovedPackageUpdate(base.Warning):
@@ -90,8 +115,8 @@ class PackageUpdatesCheck(base.Template):
     feed_type = base.repository_feed
     scope = base.repository_scope
     known_results = (
-        MultiMovePackageUpdate, OldPackageUpdate,
-        MovedPackageUpdate, BadPackageUpdate,
+        MultiMovePackageUpdate, OldMultiMovePackageUpdate,
+        OldPackageUpdate, MovedPackageUpdate, BadPackageUpdate,
     )
 
     def __init__(self, options):
@@ -102,35 +127,55 @@ class PackageUpdatesCheck(base.Template):
         pass
 
     def finish(self, reporter):
-        _report_bad_updates = lambda x: reporter.add_report(BadPackageUpdate(x))
-        _report_old_updates = lambda x: reporter.add_report(MovedPackageUpdate(x))
+        report_bad_updates = lambda x: reporter.add_report(BadPackageUpdate(x))
+        report_old_updates = lambda x: reporter.add_report(MovedPackageUpdate(x))
 
         # convert log warnings/errors into reports
-        with patch('pkgcore.log.logger.error', _report_bad_updates), \
-                patch('pkgcore.log.logger.warning', _report_old_updates):
+        with patch('pkgcore.log.logger.error', report_bad_updates), \
+                patch('pkgcore.log.logger.warning', report_old_updates):
             repo_updates = self.repo.config.updates
+
+        multi_move_updates = {}
+        old_move_updates = {}
+        old_slotmove_updates = {}
 
         for pkg, updates in repo_updates.iteritems():
             move_updates = [x for x in updates if x[0] == 'move']
             slotmove_updates = [x for x in updates if x[0] == 'slotmove']
 
-            # check for old updates for removed packages
-            for x in move_updates:
-                _, _old, new = x
-                if not self.repo.match(new):
-                    reporter.add_report(OldPackageUpdate(new, x))
+            # check for multi-updates, a -> b, b -> c, ...
+            if len(move_updates) > 1:
+                # the most recent move should override all the older entries,
+                # meaning only a single report for the entire chain should created
+                multi_move_updates[move_updates[-1][2]] = (pkg, [x[2] for x in move_updates])
+            else:
+                # scan updates for old entries with removed packages
+                for x in move_updates:
+                    _, _old, new = x
+                    if not self.repo.match(new):
+                        old_move_updates[new] = x
+
+            # scan updates for old entries with removed packages
             for x in slotmove_updates:
                 _, pkg, newslot = x
                 if not self.repo.match(atom.atom(pkg.key)):
-                    # reproduce old line data for result output
-                    x = ['slotmove', str(pkg)[:-(len(pkg.slot) + 1)], pkg.slot, newslot]
-                    reporter.add_report(OldPackageUpdate(pkg.key, x))
+                    # reproduce updates file line data for result output
+                    x = ('slotmove', str(pkg)[:-(len(pkg.slot) + 1)], pkg.slot, newslot)
+                    old_slotmove_updates[pkg.key] = x
 
-            # check for multi-updates, a -> b, b -> c, ...
-            if len(move_updates) > 1:
-                multi_move_updates = [pkg] + [x[2] for x in move_updates]
-                reporter.add_report(MultiMovePackageUpdate(pkg, multi_move_updates))
+        for pkg, v in multi_move_updates.iteritems():
+            orig_pkg, moves = v
+            # check for multi-move chains ending in removed packages
+            if not self.repo.match(pkg):
+                reporter.add_report(OldMultiMovePackageUpdate(orig_pkg, moves))
+                # don't generate duplicate old report
+                old_move_updates.pop(pkg, None)
+            else:
+                reporter.add_report(MultiMovePackageUpdate(orig_pkg, moves))
 
+        # report remaining old updates
+        for pkg, move in chain(old_move_updates.iteritems(), old_slotmove_updates.iteritems()):
+            reporter.add_report(OldPackageUpdate(pkg, move))
 
 class UnusedGlobalFlags(base.Warning):
     """Unused use.desc flag(s)."""
