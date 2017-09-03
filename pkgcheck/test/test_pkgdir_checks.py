@@ -55,9 +55,11 @@ class TestDuplicateFilesReport(filesdir_mixin, misc.ReportTestCase):
             {'test': 'abc', 'test2': 'abc', 'test3': 'bcd', 'test4': 'bcd'})])
         self.assertLen(r, 2)
         self.assertIsInstance(r[0], pkgdir_checks.DuplicateFiles)
-        self.assertEqual(r[0].files, ('files/test', 'files/test2'))
         self.assertIsInstance(r[1], pkgdir_checks.DuplicateFiles)
-        self.assertEqual(r[1].files, ('files/test3', 'files/test4'))
+        self.assertEqual(
+            tuple(sorted(x.files for x in r)),
+            (('files/test', 'files/test2'), ('files/test3', 'files/test4'))
+        )
 
 
 class TestEmptyFileReport(filesdir_mixin, misc.ReportTestCase):

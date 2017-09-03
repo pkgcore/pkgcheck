@@ -30,7 +30,7 @@ class TestDeprecatedEclass(misc.ReportTestCase):
 
         # mix of deprecated and non-deprecated eclasses
         current = {str(x): None for x in range(3)}
-        old = {x: check.blacklist[x] for x in random.sample(check.blacklist, 3)}
+        old = {x: check.blacklist[x] for x in random.sample(list(check.blacklist), 3)}
         eclasses = current.copy()
         eclasses.update(old)
         pkg = self.mk_pkg("0.1", eclasses)
