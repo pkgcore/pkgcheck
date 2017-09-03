@@ -119,7 +119,7 @@ class RequiredUseDefaults(base.Warning):
         super(RequiredUseDefaults, self).__init__()
         self._store_cpv(pkg)
         self.required_use = required_use
-        self.use = use
+        self.use = tuple(sorted(use))
         self.keyword = keyword
         self.profile = profile
 
@@ -130,7 +130,7 @@ class RequiredUseDefaults(base.Warning):
             return 'failed REQUIRED_USE: %s' % (self.required_use,)
         else:
             return 'keyword: %s, profile: %s, default USE: [%s] -- failed REQUIRED_USE: %s' % (
-                self.keyword, self.profile, ', '.join(sorted(self.use)), self.required_use)
+                self.keyword, self.profile, ', '.join(self.use), self.required_use)
 
 
 class RequiredUSEMetadataReport(base.Template):
@@ -247,13 +247,13 @@ class MissingSlotDep(base.Warning):
     def __init__(self, pkg, dep, dep_slots):
         super(MissingSlotDep, self).__init__()
         self.dep = dep
-        self.dep_slots = dep_slots
+        self.dep_slots = tuple(sorted(dep_slots))
         self._store_cpv(pkg)
 
     @property
     def short_desc(self):
         return "'%s' matches more than one slot: [ %s ]" % (
-            self.dep, ', '.join(sorted(self.dep_slots)))
+            self.dep, ', '.join(self.dep_slots))
 
 
 class MissingSlotDepReport(base.Template):

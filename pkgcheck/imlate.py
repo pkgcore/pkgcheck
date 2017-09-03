@@ -14,7 +14,7 @@ class LaggingStable(Warning):
     def __init__(self, pkg, keywords):
         super(LaggingStable, self).__init__()
         self._store_cpv(pkg)
-        self.keywords = keywords
+        self.keywords = tuple(sorted(keywords))
         self.stable = tuple(str(arch) for arch in pkg.keywords
                             if not arch[0] in ("~", "-"))
 
@@ -66,7 +66,7 @@ class ImlateReport(StableCheckAddon):
                 continue
             unstable_keys = remaining.intersection(pkg.keywords)
             if unstable_keys:
-                reporter.add_report(LaggingStable(pkg, sorted(unstable_keys)))
+                reporter.add_report(LaggingStable(pkg, unstable_keys))
                 remaining.difference_update(unstable_keys)
                 if not remaining:
                     break

@@ -41,12 +41,12 @@ class DeprecatedEclass(Warning):
     def __init__(self, pkg, eclasses):
         super(DeprecatedEclass, self).__init__()
         self._store_cpv(pkg)
-        self.eclasses = eclasses
+        self.eclasses = tuple(sorted(eclasses.iteritems()))
 
     @property
     def short_desc(self):
         eclass_migration = []
-        for old_eclass, new_eclass in sorted(self.eclasses.iteritems()):
+        for old_eclass, new_eclass in self.eclasses:
             if new_eclass:
                 update_path = 'migrate to %s' % (new_eclass,)
             else:

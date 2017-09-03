@@ -41,4 +41,4 @@ class TestStaleUnstableReport(misc.ReportTestCase):
         # ensure it reports only specified arches.
         report = self.assertReport(
             check, mk_pkg("1.0", "~amd64 ~x86 ~asdfasdfasdf", old))
-        self.assertEqual(report.keywords, tuple(sorted(["~amd64", "~x86"])))
+        self.assertEqual(report.keywords, ("~amd64", "~x86"))

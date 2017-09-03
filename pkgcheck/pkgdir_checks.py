@@ -83,7 +83,7 @@ class DuplicateFiles(Warning):
     def __init__(self, pkg, files):
         super(DuplicateFiles, self).__init__()
         self._store_cp(pkg)
-        self.files = files
+        self.files = tuple(sorted(files))
 
     @property
     def short_desc(self):
@@ -277,4 +277,4 @@ class PkgDirReport(Template):
 
         for digest, files in files_by_digest.iteritems():
             if len(files) > 1:
-                reporter.add_report(DuplicateFiles(pkgset[0], sorted(files)))
+                reporter.add_report(DuplicateFiles(pkgset[0], files))

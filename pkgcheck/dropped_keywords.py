@@ -12,11 +12,11 @@ class DroppedKeywords(Warning):
     def __init__(self, pkg, arches):
         super(DroppedKeywords, self).__init__()
         self._store_cpv(pkg)
-        self.arches = arches
+        self.arches = tuple(sorted(arches))
 
     @property
     def short_desc(self):
-        return ', '.join(sorted(self.arches))
+        return ', '.join(self.arches)
 
 
 class DroppedKeywordsReport(Template):

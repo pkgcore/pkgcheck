@@ -466,7 +466,7 @@ class UnusedProfileDirs(base.Warning):
 
     def __init__(self, dirs):
         super(UnusedProfileDirs, self).__init__()
-        self.dirs = sorted(dirs)
+        self.dirs = tuple(sorted(dirs))
 
     @property
     def short_desc(self):
@@ -701,8 +701,7 @@ class ConflictingChksums(base.Error):
         super(ConflictingChksums, self).__init__()
         self._store_cpv(pkg)
         self.filename = filename
-        self.chksums = tuple(sorted(reformat_chksums(chksums),
-                                    key=self._sorter))
+        self.chksums = tuple(sorted(reformat_chksums(chksums), key=self._sorter))
         self.others = tuple(sorted(others))
 
     @property
@@ -739,12 +738,12 @@ class MissingManifest(base.Error):
     def __init__(self, pkg, files):
         super(MissingManifest, self).__init__()
         self._store_cpv(pkg)
-        self.files = files
+        self.files = tuple(sorted(files))
 
     @property
     def short_desc(self):
         return "distfile%s missing from Manifest: [ %s ]" % (
-            pluralism(self.files), ', '.join(sorted(self.files)),)
+            pluralism(self.files), ', '.join(self.files),)
 
 
 class UnknownManifest(base.Warning):
@@ -756,12 +755,12 @@ class UnknownManifest(base.Warning):
     def __init__(self, pkg, files):
         super(UnknownManifest, self).__init__()
         self._store_cp(pkg)
-        self.files = files
+        self.files = tuple(sorted(files))
 
     @property
     def short_desc(self):
         return "unknown distfile%s in Manifest: [ %s ]" % (
-            pluralism(self.files), ', '.join(sorted(self.files)),)
+            pluralism(self.files), ', '.join(self.files),)
 
 
 class UnnecessaryManifest(base.Warning):
@@ -773,12 +772,12 @@ class UnnecessaryManifest(base.Warning):
     def __init__(self, pkg, files):
         super(UnnecessaryManifest, self).__init__()
         self._store_cp(pkg)
-        self.files = files
+        self.files = tuple(sorted(files))
 
     @property
     def short_desc(self):
         return "unnecessary file%s in Manifest: [ %s ]" % (
-            pluralism(self.files), ', '.join(sorted(self.files)),)
+            pluralism(self.files), ', '.join(self.files),)
 
 
 class ManifestReport(base.Template):
