@@ -11,6 +11,68 @@ demand_compile_regexp(
     r'^\s*dosym\s+["\']?(/(bin|etc|lib|opt|sbin|srv|usr|var)\S*)')
 
 
+class HttpsAvailable(base.Warning):
+    """Ebuild contains a http:// link that should use https:// instead."""
+
+    threshold = base.versioned_feed
+
+    __slots__ = ("category", "package", "link", "line")
+
+    def __init__(self, pkg, link, line):
+        super(HttpsAvailable, self).__init__()
+        self._store_cpv(pkg)
+        self.link = link
+        self.line = line
+
+    @property
+    def short_desc(self):
+        return "http:// link to '%s' on line %s should use https://" % (self.link, self.line)
+
+
+class HttpsAvailableCheck(base.Template):
+    """Scan ebuild for http:// links that should use https://."""
+
+    feed_type = base.ebuild_feed
+    known_results = (HttpsAvailable,)
+
+    SITES = (
+        '([-._a-zA-Z0-9]*\.)?apache\.org',
+        '((alioth|packages(\.qa)?|people|www)\.)?debian\.org',
+        # Most FDO sites support https, but not all (like tango).
+        # List the most common ones here for now.
+        '((anongit|bugs|cgit|dri|patchwork|people|specifications|www|xcb|xorg)\.)?freedesktop\.org',
+        '((bugs|dev|wiki|www)\.)?gentoo\.org',
+        '((wiki)\.)?github\.(io|com)',
+        'savannah\.(non)?gnu\.org',
+        '((gcc|www)\.)?gnu\.org',
+        'curl\.haxx\.se',
+        '((bugzilla|git|mirrors|patchwork|planet|www(\.wiki)?)\.)?kernel\.org',
+        '((bugs|wiki|www)\.)?linuxfoundation\.org',
+        '((docs|pypi|www)\.)?python\.org',
+        '(sf|sourceforge)\.net',
+        '(www\.)?(enlightenment|sourceware|x)\.org',
+    )
+
+    # anchor the end of the URL so we don't get false positives,
+    # e.g. http://github.com.foo.bar.com/
+    demand_compile_regexp(
+        'https_sites_regex',
+        r'.*\bhttp://(%s)(\s|["\'/]|$)' % r'|'.join(SITES))
+
+    def __init__(self, options):
+        super(HttpsAvailableCheck, self).__init__(options)
+
+    def feed(self, entry, reporter):
+        pkg, lines = entry
+        for lineno, line in enumerate(lines):
+            if not line:
+                continue
+            matches = https_sites_regex.match(line)
+            if matches is not None:
+                reporter.add_report(
+                    HttpsAvailable(pkg, matches.groups()[0], lineno + 1))
+
+
 class AbsoluteSymlink(base.Warning):
     """Ebuild uses dosym with absolute paths instead of relative."""
 

@@ -13,6 +13,7 @@ pkgcore_plugins = {
         cleanup.RedundantVersionReport,
         codingstyle.AbsoluteSymlinkCheck,
         codingstyle.BadInsIntoCheck,
+        codingstyle.HttpsAvailableCheck,
         deprecated.DeprecatedEAPIReport,
         deprecated.DeprecatedEclassReport,
         dropped_keywords.DroppedKeywordsReport,
