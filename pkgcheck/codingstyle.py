@@ -26,7 +26,7 @@ class HttpsAvailable(base.Warning):
 
     @property
     def short_desc(self):
-        return "http:// link to '%s' on line %s should use https://" % (self.link, self.line)
+        return "'%s' link on line %s should use https://" % (self.link, self.line)
 
 
 class HttpsAvailableCheck(base.Template):
@@ -57,7 +57,7 @@ class HttpsAvailableCheck(base.Template):
     # e.g. http://github.com.foo.bar.com/
     demand_compile_regexp(
         'https_sites_regex',
-        r'.*\bhttp://(%s)(\s|["\'/]|$)' % r'|'.join(SITES))
+        r'.*(\bhttp://(%s)(\s|["\'/]|$))' % r'|'.join(SITES))
 
     def __init__(self, options):
         super(HttpsAvailableCheck, self).__init__(options)
@@ -67,10 +67,10 @@ class HttpsAvailableCheck(base.Template):
         for lineno, line in enumerate(lines):
             if not line:
                 continue
+            # searching for multiple matches on a single line is too slow
             matches = https_sites_regex.match(line)
             if matches is not None:
-                reporter.add_report(
-                    HttpsAvailable(pkg, matches.groups()[0], lineno + 1))
+                reporter.add_report(HttpsAvailable(pkg, matches.group(1), lineno + 1))
 
 
 class AbsoluteSymlink(base.Warning):
