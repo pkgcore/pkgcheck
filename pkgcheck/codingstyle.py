@@ -33,6 +33,8 @@ class HttpsAvailableCheck(base.Template):
 
     SITES = (
         '([-._a-zA-Z0-9]*\.)?apache\.org',
+        '(www\.)?crosswire.org',
+        '(www\.)?ctan\.org',
         '((alioth|packages(\.qa)?|people|www)\.)?debian\.org',
         # Most FDO sites support https, but not all (like tango).
         # List the most common ones here for now.
@@ -41,10 +43,16 @@ class HttpsAvailableCheck(base.Template):
         '((wiki)\.)?github\.(io|com)',
         'savannah\.(non)?gnu\.org',
         '((gcc|www)\.)?gnu\.org',
+        '((archives|code|hackage|projects|wiki|www)\.)?haskell\.org',
         'curl\.haxx\.se',
+        'invisible-island\.net',
         '((bugzilla|git|mirrors|patchwork|planet|www(\.wiki)?)\.)?kernel\.org',
         '((bugs|wiki|www)\.)?linuxfoundation\.org',
+        '((download|hg)\.)?netbeans\.org',
+        '(((download\.)?pear|pecl|www)\.)?php\.net',
         '((docs|pypi|www)\.)?python\.org',
+        '([-._a-zA-Z0-9]*\.)?readthedocs\.(io|org)',
+        'rubygems\.org',
         '(sf|sourceforge)\.net',
         '(www\.)?(enlightenment|sourceware|x)\.org',
     )
