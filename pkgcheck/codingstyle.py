@@ -1,14 +1,10 @@
 """check for some bad coding styles like insinto's, old variables etc"""
 
-from snakeoil.demandload import demandload, demand_compile_regexp
+from snakeoil.demandload import demandload
 
 from pkgcheck import base
 
 demandload("re")
-
-demand_compile_regexp(
-    'dosym_regexp',
-    r'^\s*dosym\s+["\']?(/(bin|etc|lib|opt|sbin|srv|usr|var)\S*)')
 
 
 class HttpsAvailable(base.Warning):
@@ -53,14 +49,11 @@ class HttpsAvailableCheck(base.Template):
         '(www\.)?(enlightenment|sourceware|x)\.org',
     )
 
-    # anchor the end of the URL so we don't get false positives,
-    # e.g. http://github.com.foo.bar.com/
-    demand_compile_regexp(
-        'https_sites_regex',
-        r'.*(\bhttp://(%s)(\s|["\'/]|$))' % r'|'.join(SITES))
-
     def __init__(self, options):
         super(HttpsAvailableCheck, self).__init__(options)
+        # anchor the end of the URL so we don't get false positives,
+        # e.g. http://github.com.foo.bar.com/
+        self.regex = re.compile(r'.*(\bhttp://(%s)(\s|["\'/]|$))' % r'|'.join(self.SITES))
 
     def feed(self, entry, reporter):
         pkg, lines = entry
@@ -68,7 +61,7 @@ class HttpsAvailableCheck(base.Template):
             if not line:
                 continue
             # searching for multiple matches on a single line is too slow
-            matches = https_sites_regex.match(line)
+            matches = self.regex.match(line)
             if matches is not None:
                 reporter.add_report(HttpsAvailable(pkg, matches.group(1), lineno + 1))
 
@@ -106,12 +99,9 @@ class PortageInternalsCheck(base.Template):
         'preplib',
     )
 
-    demand_compile_regexp(
-        'portage_internals_regex',
-        r'^(\s*|.*[|&{(]+\s*)\b(%s)\b' % r'|'.join(INTERNALS))
-
     def __init__(self, options):
         super(PortageInternalsCheck, self).__init__(options)
+        self.regex = re.compile(r'^(\s*|.*[|&{(]+\s*)\b(%s)\b' % r'|'.join(self.INTERNALS))
 
     def feed(self, entry, reporter):
         pkg, lines = entry
@@ -119,7 +109,7 @@ class PortageInternalsCheck(base.Template):
             if not line:
                 continue
             # searching for multiple matches on a single line is too slow
-            matches = portage_internals_regex.match(line)
+            matches = self.regex.match(line)
             if matches is not None:
                 reporter.add_report(PortageInternals(pkg, matches.group(2), lineno + 1))
 
@@ -151,13 +141,14 @@ class AbsoluteSymlinkCheck(base.Template):
 
     def __init__(self, options):
         super(AbsoluteSymlinkCheck, self).__init__(options)
+        self.regex = re.compile(r'^\s*dosym\s+["\']?(/(bin|etc|lib|opt|sbin|srv|usr|var)\S*)')
 
     def feed(self, entry, reporter):
         pkg, lines = entry
         for lineno, line in enumerate(lines):
             if not line:
                 continue
-            matches = dosym_regexp.match(line)
+            matches = self.regex.match(line)
             if matches is not None:
                 reporter.add_report(
                     AbsoluteSymlink(pkg, matches.groups()[0], lineno + 1))
