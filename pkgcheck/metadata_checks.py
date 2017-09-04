@@ -115,7 +115,7 @@ class RequiredUseDefaults(base.Warning):
     __slots__ = ("category", "package", "version", "profile", "keyword", "required_use", "use")
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, required_use, use=None, keyword=None, profile=None):
+    def __init__(self, pkg, required_use, use=(), keyword=None, profile=None):
         super(RequiredUseDefaults, self).__init__()
         self._store_cpv(pkg)
         self.required_use = required_use
@@ -125,7 +125,7 @@ class RequiredUseDefaults(base.Warning):
 
     @property
     def short_desc(self):
-        if self.use is None:
+        if not self.use:
             # collapsed version
             return 'failed REQUIRED_USE: %s' % (self.required_use,)
         else:
