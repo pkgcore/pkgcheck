@@ -162,5 +162,5 @@ pkgcheck_reporter_factory``.
     :target: https://pypi.python.org/pypi/pkgcheck
 .. |test| image:: https://travis-ci.org/pkgcore/pkgcheck.svg?branch=master
     :target: https://travis-ci.org/pkgcore/pkgcheck
-.. |coverage| image:: https://coveralls.io/repos/pkgcore/pkgcheck/badge.png?branch=master
-    :target: https://coveralls.io/r/pkgcore/pkgcheck?branch=master
+.. |coverage| image:: https://codecov.io/gh/pkgcore/pkgcheck/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/pkgcore/pkgcheck
