@@ -73,6 +73,57 @@ class HttpsAvailableCheck(base.Template):
                 reporter.add_report(HttpsAvailable(pkg, matches.group(1), lineno + 1))
 
 
+class PortageInternals(base.Warning):
+    """Ebuild uses a function or variable internal to portage."""
+
+    threshold = base.versioned_feed
+
+    __slots__ = ("category", "package", "internal", "line")
+
+    def __init__(self, pkg, internal, line):
+        super(PortageInternals, self).__init__()
+        self._store_cpv(pkg)
+        self.internal = internal
+        self.line = line
+
+    @property
+    def short_desc(self):
+        return "'%s' used on line %s" % (self.internal, self.line)
+
+
+class PortageInternalsCheck(base.Template):
+    """Scan ebuild for portage internals usage."""
+
+    feed_type = base.ebuild_feed
+    known_results = (PortageInternals,)
+
+    INTERNALS = (
+        'ecompress',
+        'ecompressdir',
+        'env-update',
+        'prepall',
+        'prepalldocs',
+        'preplib',
+    )
+
+    demand_compile_regexp(
+        'portage_internals_regex',
+        r'^(\s*|.*[|&{(]+\s*)\b(%s)\b' % r'|'.join(INTERNALS))
+
+    def __init__(self, options):
+        super(PortageInternalsCheck, self).__init__(options)
+
+    def feed(self, entry, reporter):
+        pkg, lines = entry
+        for lineno, line in enumerate(lines):
+            if not line:
+                continue
+            # searching for multiple matches on a single line is too slow
+            matches = portage_internals_regex.match(line)
+            if matches is not None:
+                reporter.add_report(PortageInternals(pkg, matches.group(2), lineno + 1))
+
+
 class AbsoluteSymlink(base.Warning):
     """Ebuild uses dosym with absolute paths instead of relative."""
 
