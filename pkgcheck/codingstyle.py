@@ -1,6 +1,9 @@
 """check for some bad coding styles like insinto's, old variables etc"""
 
+from collections import defaultdict
+
 from snakeoil.demandload import demandload
+from snakeoil.strings import pluralism
 
 from pkgcheck import base
 
@@ -12,17 +15,18 @@ class HttpsAvailable(base.Warning):
 
     threshold = base.versioned_feed
 
-    __slots__ = ("category", "package", "link", "line")
+    __slots__ = ("category", "package", "link", "lines")
 
-    def __init__(self, pkg, link, line):
+    def __init__(self, pkg, link, lines):
         super(HttpsAvailable, self).__init__()
         self._store_cpv(pkg)
         self.link = link
-        self.line = line
+        self.lines = tuple(lines)
 
     @property
     def short_desc(self):
-        return "'%s' link on line %s should use https://" % (self.link, self.line)
+        return "'%s' link should use https:// on line%s: %s" % (
+            self.link, pluralism(self.lines), ', '.join(map(str, self.lines)))
 
 
 class HttpsAvailableCheck(base.Template):
@@ -65,13 +69,18 @@ class HttpsAvailableCheck(base.Template):
 
     def feed(self, entry, reporter):
         pkg, lines = entry
+        links = defaultdict(list)
+
         for lineno, line in enumerate(lines):
             if not line:
                 continue
             # searching for multiple matches on a single line is too slow
             matches = self.regex.match(line)
             if matches is not None:
-                reporter.add_report(HttpsAvailable(pkg, matches.group(1), lineno + 1))
+                links[matches.group(1)].append(lineno + 1)
+
+        for link, lines in links.iteritems():
+            reporter.add_report(HttpsAvailable(pkg, link, lines))
 
 
 class PortageInternals(base.Warning):
