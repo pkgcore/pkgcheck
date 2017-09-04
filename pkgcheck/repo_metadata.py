@@ -247,7 +247,7 @@ class UnusedGlobalFlagsCheck(base.Template):
 
         # report flags used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_flags:
-            flags = self.unused_master_flags & pkg.iuse_stripped
+            flags = self.unused_master_flags.intersection(pkg.iuse_stripped)
             if flags:
                 reporter.add_report(UnusedInMastersGlobalFlags(pkg, flags))
 

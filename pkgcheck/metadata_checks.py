@@ -102,7 +102,7 @@ class IUSEMetadataReport(base.Template):
 
     def feed(self, pkg, reporter):
         if not self.iuse_handler.ignore:
-            iuse = pkg.iuse_stripped.difference(self.iuse_handler.allowed_iuse(pkg))
+            iuse = set(pkg.iuse_stripped).difference(self.iuse_handler.allowed_iuse(pkg))
             if iuse:
                 reporter.add_report(MetadataError(
                     pkg, "iuse", "iuse unknown flag%s: [ %s ]" % (

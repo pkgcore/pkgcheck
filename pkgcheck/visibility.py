@@ -31,7 +31,7 @@ class FakeConfigurable(object):
         object.__setattr__(
             self, 'use', frozenset(enabled_use & (profile.iuse_effective | pkg.iuse_effective)))
         object.__setattr__(
-            self, 'iuse', frozenset(pkg.iuse_stripped | profile.iuse_effective))
+            self, 'iuse', frozenset(profile.iuse_effective.union(pkg.iuse_stripped)))
 
     def request_enable(self, attr, *vals):
         if attr != 'use':
