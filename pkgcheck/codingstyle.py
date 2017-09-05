@@ -108,12 +108,14 @@ class PortageInternalsCheck(base.Template):
     known_results = (PortageInternals,)
 
     INTERNALS = (
-        'ecompress',
-        'ecompressdir',
-        'env-update',
         'prepall',
         'prepalldocs',
-        'preplib',
+        'prepallinfo',
+        'prepallman',
+        'prepallstrip',
+        'prepinfo',
+        'prepman',
+        'prepstrip',
     )
 
     def __init__(self, options):
