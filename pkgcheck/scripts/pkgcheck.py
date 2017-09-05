@@ -474,18 +474,19 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
         if plugin_reporters:
             if config_reporters:
                 out.write()
-            out.write("plugin reporters:")
-            out.write()
-            out.first_prefix.append('  ')
-            out.later_prefix.append('  ')
+                out.write("plugin reporters:")
+                out.write()
+                out.first_prefix.append('  ')
+                out.later_prefix.append('  ')
             try:
                 for reporter in sorted(plugin_reporters, key=lambda x: x.__name__):
                     out.write(out.bold, out.fg('yellow'), reporter.__name__)
                     dump_docstring(out, reporter, prefix='  ')
                     out.write()
             finally:
-                out.first_prefix.pop()
-                out.later_prefix.pop()
+                if config_reporters:
+                    out.first_prefix.pop()
+                    out.later_prefix.pop()
 
         if not plugin_reporters and not config_reporters:
             out.write(
