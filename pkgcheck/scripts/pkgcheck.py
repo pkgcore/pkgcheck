@@ -433,14 +433,16 @@ def display_checks(out, options):
                     out.write(out.fg('yellow'), check.__name__, out.reset, ':')
                     dump_docstring(out, check, prefix='  ')
                     out.write()
-                    if options.verbose > 1 and check.known_results:
-                        # output result types that each check can generate
+
+                    # output result types that each check can generate
+                    if check.known_results:
                         results = []
                         for r in sorted(check.known_results, key=lambda x: x.__name__):
                             results.extend([out.fg(r.color.__get__(r)), r.__name__, out.reset, ', '])
                         results.pop()
                         out.write(*(['  (known results: '] + results + [')']))
                         out.write()
+
             finally:
                 out.first_prefix.pop()
                 out.later_prefix.pop()
