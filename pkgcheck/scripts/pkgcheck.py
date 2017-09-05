@@ -50,17 +50,40 @@ main_options.add_argument(
     help='specify the configuration suite to use')
 main_options.add_argument(
     '-R', '--reporter', action='store', default=None,
-    help="use a non-default reporter (defined in pkgcore's config)")
+    help='use a non-default reporter',
+    docs="""
+        Select a reporter to use for scan output.
+
+        Use --list-reporters to see available options.
+    """)
 list_options = main_options.add_mutually_exclusive_group()
 list_options.add_argument(
     '--list-keywords', action='store_true', default=False,
-    help='show available warning/error keywords and exit')
+    help='show available warning/error keywords and exit',
+    docs="""
+        List all available keywords and exit.
+
+        Use -v/--verbose to show keywords sorted into the scope they run at
+        (repository, category, package, or version) along with their
+        descriptions.
+    """)
 list_options.add_argument(
     '--list-checks', action='store_true', default=False,
-    help='show available checks and exit')
+    help='show available checks and exit',
+    docs="""
+        List all available checks and exit.
+
+        Use -v/--verbose to show descriptions and possible keyword results for
+        each check.
+    """)
 list_options.add_argument(
     '--list-reporters', action='store_true', default=False,
-    help='show available reporters and exit')
+    help='show available reporters and exit',
+    docs="""
+        List all available reporters and exit.
+
+        Use -v/--verbose to show reporter descriptions.
+    """)
 
 check_options = argparser.add_argument_group('check selection')
 check_options.add_argument(
@@ -72,10 +95,32 @@ check_options.add_argument(
     help='preconfigured set of checks to run')
 check_options.add_argument(
     '-k', '--keywords', metavar='KEYWORD', action='extend_comma_toggle', dest='selected_keywords',
-    help='limit keywords to scan for (comma-separated list)')
+    help='limit keywords to scan for (comma-separated list)',
+    docs="""
+        Comma separated list of keywords to enable and disable for
+        scanning. Any keywords specified in this fashion will be the
+        only keywords that get reported, skipping any disabled keywords.
+
+        To specify disabled keywords prefix them with '-'. Note that when
+        starting the argument list with a disabled keyword an equals sign must
+        be used, e.g. -k=-keyword, otherwise the disabled keyword argument is
+        treated as an option.
+
+        Use --list-keywords or the list below to see available options.
+    """)
 check_options.add_argument(
     '-S', '--scopes', metavar='SCOPE', action='extend_comma_toggle', dest='selected_scopes',
-    help='limit keywords to scan for by scope (comma-separated list)')
+    help='limit keywords to scan for by scope (comma-separated list)',
+    docs="""
+        Comma separated list of scopes to enable and disable for scanning. Any
+        scopes specified in this fashion will affect the keywords that get
+        reported. For example, running pkgcheck with only the 'repo' scope
+        enabled will cause only repo-level keywords to be scanned for and
+        reported.
+
+        To specify disabled scopes prefix them with '-' the same as for
+        -k/--keywords option.
+    """)
 
 
 def add_addon(addon, addon_set):
