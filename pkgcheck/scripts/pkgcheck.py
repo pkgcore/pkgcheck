@@ -557,11 +557,12 @@ def main(options, out, err):
         # Ignore the return value, we just need to populate addons_map.
         init_addon(addon)
 
-    if options.debug:
-        err.write('target repo: ', repr(options.target_repo))
-        err.write('base dirs: ', repr(options.repo_bases))
+    if options.verbose:
+        err.write("target repo: '%s' at '%s'" % (
+            options.target_repo.repo_id, options.target_repo.location))
+        err.write('base dirs: ', ', '.join(options.repo_bases))
         for filterer in options.limiters:
-            err.write('limiter: ', repr(filterer))
+            err.write('limiter: ', filterer)
         debug = logging.debug
     else:
         debug = None
