@@ -175,9 +175,12 @@ def _validate_args(parser, namespace):
             if repo_base is not None and target_dir in repo:
                 target_repo = repo
         if target_repo is None:
-            parser.error(
-                'no target repo specified and '
-                'current directory is not inside a known repo')
+            # try to fallback to the default repo
+            target_repo = namespace.config.get_default('repo')
+            if target_repo is None:
+                parser.error(
+                    'no target repo specified and '
+                    'current directory is not inside a known repo')
         namespace.target_repo = target_repo
 
     if namespace.reporter is None:
