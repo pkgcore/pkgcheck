@@ -155,12 +155,13 @@ class AbsoluteSymlinkCheck(base.Template):
     """Scan ebuild for dosym absolute path usage instead of relative."""
 
     feed_type = base.ebuild_feed
-
     known_results = (AbsoluteSymlink,)
+
+    DIRS = ('bin', 'etc', 'lib', 'opt', 'sbin', 'srv', 'usr', 'var')
 
     def __init__(self, options):
         super(AbsoluteSymlinkCheck, self).__init__(options)
-        self.regex = re.compile(r'^\s*dosym\s+["\']?(/(bin|etc|lib|opt|sbin|srv|usr|var)\S*)')
+        self.regex = re.compile(r'^\s*dosym\s+["\']?(/(%s)\S*)' % r'|'.join(self.DIRS))
 
     def feed(self, entry, reporter):
         pkg, lines = entry
