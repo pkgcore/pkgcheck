@@ -106,6 +106,11 @@ check_options.add_argument(
         be used, e.g. -k=-keyword, otherwise the disabled keyword argument is
         treated as an option.
 
+        The special arguments of 'errors' and 'warnings' correspond to the
+        lists of error and warning keywords, respectively. Therefore, to only
+        scan for errors and ignore all QA warnings use the 'errors' argument to
+        -k/--keywords.
+
         Use --list-keywords or the list below to see available options.
     """)
 check_options.add_argument(
@@ -338,6 +343,22 @@ def _validate_args(parser, namespace):
 
     if namespace.selected_keywords is not None:
         disabled_keywords, enabled_keywords = namespace.selected_keywords
+
+        errors = [x.__name__ for x in _known_keywords if issubclass(x, base.Error)]
+        warnings = [x.__name__ for x in _known_keywords if issubclass(x, base.Warning)]
+
+        def _replace_aliases(x):
+            """Replace keyword aliases with actual values."""
+            if x == 'errors':
+                return errors 
+            elif x == 'warnings':
+                return warnings
+            else:
+                return x
+
+        # expand keyword aliases to keyword lists
+        disabled_keywords = list(chain.from_iterable(map(_replace_aliases, disabled_keywords)))
+        enabled_keywords = list(chain.from_iterable(map(_replace_aliases, enabled_keywords)))
 
         # validate selected keywords
         selected_keywords = set(disabled_keywords + enabled_keywords)
