@@ -234,7 +234,7 @@ class Warning(Result):
 
 class Reporter(object):
 
-    def __init__(self, out, keywords=(), verbose=None):
+    def __init__(self, out, keywords=None, verbose=None):
         """Initialize
 
         :type out: L{snakeoil.formatters.Formatter}
@@ -244,14 +244,13 @@ class Reporter(object):
         if verbose is None:
             verbose = False
         self.verbose = verbose
-        self._enabled_keywords = set(keywords)
+        self._filtered_keywords = set(keywords) if keywords is not None else keywords
 
     def add_report(self, result):
-        # skip check keywords that are disabled
-        if result.__class__ not in self._enabled_keywords:
-            return
-        result._verbose = self.verbose
-        self.process_report(result)
+        # only process reports for keywords that are enabled
+        if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
+            result._verbose = self.verbose
+            self.process_report(result)
 
     def process_report(self, result):
         raise NotImplementedError(self.process_report)

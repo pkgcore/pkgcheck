@@ -367,10 +367,13 @@ def _validate_args(parser, namespace):
             namespace.enabled_keywords, enabled_keywords, disabled_keywords)
 
     namespace.enabled_keywords = set(namespace.enabled_keywords)
+    if namespace.enabled_keywords == set(_known_keywords):
+        namespace.enabled_keywords = None
+
     disabled_checks, enabled_checks = ((), ())
     if namespace.selected_checks is not None:
         disabled_checks, enabled_checks = namespace.selected_checks
-    elif namespace.selected_keywords is not None or namespace.selected_scopes is not None:
+    elif namespace.enabled_keywords is not None:
         # enable checks based on enabled keyword -> check mapping
         enabled_checks = []
         for check in _known_checks:
