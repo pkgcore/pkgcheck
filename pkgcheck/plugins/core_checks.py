@@ -6,7 +6,6 @@ from pkgcheck import (
     imlate, metadata_checks, metadata_xml, pkgdir_checks, repo_metadata,
     reporters, stale_unstable, unstable_only, visibility, whitespace,
 )
-from pkgcheck.scripts import pkgcheck_replay_stream
 
 pkgcore_plugins = {
     'check': [
@@ -56,8 +55,8 @@ pkgcore_plugins = {
         feeds.VersionToPackage,
         ],
     'reporter': [
-        pkgcheck_replay_stream.BinaryPickleStream,
-        pkgcheck_replay_stream.PickleStream,
+        reporters.BinaryPickleStream,
+        reporters.PickleStream,
         reporters.FancyReporter,
         reporters.NullReporter,
         reporters.StrReporter,

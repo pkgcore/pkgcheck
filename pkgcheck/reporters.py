@@ -191,6 +191,60 @@ class XmlReporter(base.Reporter):
         self.out.write('</checks>')
 
 
+class StreamHeader(object):
+
+    def __init__(self, checks, criteria):
+        self.checks = sorted((x for x in checks if x.known_results),
+                             key=lambda x: x.__name__)
+        self.known_results = set()
+        for x in checks:
+            self.known_results.update(x.known_results)
+
+        self.known_results = tuple(sorted(self.known_results))
+        self.criteria = str(criteria)
+
+
+class PickleStream(base.Reporter):
+    """Generate a stream of pickled objects.
+
+    For each specific target for checks, a header is pickled
+    detailing the checks used, possible results, and search
+    criteria.
+    """
+    priority = -1001
+    protocol = 0
+
+    def __init__(self, *args, **kwargs):
+        """Initialize.
+
+        :type out: L{snakeoil.formatters.Formatter}.
+        """
+        super(PickleStream, self).__init__(*args, **kwargs)
+        self.dump = pickling.dump
+
+    def start(self):
+        self.out.wrap = False
+        self.out.autoline = False
+
+    def start_check(self, checks, target):
+        self.dump(StreamHeader(checks, target), self.out)
+
+    def process_report(self, result):
+        try:
+            self.dump(result, self.out, self.protocol)
+        except TypeError as t:
+            raise TypeError(result, str(t))
+
+
+class BinaryPickleStream(PickleStream):
+    """Dump a binary pickle stream (highest protocol).
+
+    For details of the stream, see PickleStream.
+    """
+    priority = -1002
+    protocol = -1
+
+
 class MultiplexReporter(base.Reporter):
 
     def __init__(self, reporters, *args, **kwargs):
@@ -238,6 +292,10 @@ plain_reporter = make_configurable_reporter_factory(StrReporter)
 plain_reporter.__name__ = 'plain_reporter'
 fancy_reporter = make_configurable_reporter_factory(FancyReporter)
 fancy_reporter.__name__ = 'fancy_reporter'
+picklestream_reporter = make_configurable_reporter_factory(PickleStream)
+picklestream_reporter.__name__ = 'picklestream_reporter'
+binarypicklestream_reporter = make_configurable_reporter_factory(BinaryPickleStream)
+binarypicklestream_reporter.__name__ = 'binarypicklestream_reporter'
 null_reporter = make_configurable_reporter_factory(NullReporter)
 null_reporter.__name__ = 'null'
 
