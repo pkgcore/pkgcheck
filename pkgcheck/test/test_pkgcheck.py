@@ -6,7 +6,7 @@ from pkgcheck.scripts import pkgcheck
 
 class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    _argparser = pkgcheck.argparser
+    _argparser = pkgcheck.scan
 
     def test_parser(self):
         self.assertError(

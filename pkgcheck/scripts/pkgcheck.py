@@ -8,6 +8,7 @@ from itertools import chain
 
 from pkgcore.plugin import get_plugins, get_plugin
 from pkgcore.util import commandline, parserestrict
+from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.sequences import unstable_unique
@@ -23,23 +24,28 @@ demandload(
     'pkgcore.restrictions:packages',
     'pkgcore.restrictions.values:StrExactMatch',
     'pkgcore.repository:multiplex',
+    'snakeoil:pickling,formatters',
     'snakeoil.osutils:abspath',
     'snakeoil.sequences:iflatten_instance',
     'snakeoil.strings:pluralism',
     'pkgcheck:errors',
 )
 
-argparser = commandline.ArgumentParser(
-    domain=False, color=False, description=__doc__, script=(__file__, __name__))
+pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
+argparser = arghparse.ArgumentParser(
+    suppress=True, color=False, description=__doc__, parents=(pkgcore_opts,))
+subparsers = argparser.add_subparsers(description="check applets")
+
 # These are all set based on other options, so have no default setting.
-argparser.set_defaults(repo_bases=[])
-argparser.set_defaults(guessed_target_repo=False)
-argparser.set_defaults(guessed_suite=False)
-argparser.set_defaults(default_suite=False)
-argparser.add_argument(
+scan = subparsers.add_parser('scan', description='scan targets for QA issues')
+scan.set_defaults(repo_bases=[])
+scan.set_defaults(guessed_target_repo=False)
+scan.set_defaults(guessed_suite=False)
+scan.set_defaults(default_suite=False)
+scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
-main_options = argparser.add_argument_group('main options')
+main_options = scan.add_argument_group('main options')
 main_options.add_argument(
     '-r', '--repo', metavar='REPO', dest='target_repo',
     action=commandline.StoreRepoObject,
@@ -54,38 +60,10 @@ main_options.add_argument(
     docs="""
         Select a reporter to use for scan output.
 
-        Use --list-reporters to see available options.
-    """)
-list_options = main_options.add_mutually_exclusive_group()
-list_options.add_argument(
-    '--list-keywords', action='store_true', default=False,
-    help='show available warning/error keywords and exit',
-    docs="""
-        List all available keywords and exit.
-
-        Use -v/--verbose to show keywords sorted into the scope they run at
-        (repository, category, package, or version) along with their
-        descriptions.
-    """)
-list_options.add_argument(
-    '--list-checks', action='store_true', default=False,
-    help='show available checks and exit',
-    docs="""
-        List all available checks and exit.
-
-        Use -v/--verbose to show descriptions and possible keyword results for
-        each check.
-    """)
-list_options.add_argument(
-    '--list-reporters', action='store_true', default=False,
-    help='show available reporters and exit',
-    docs="""
-        List all available reporters and exit.
-
-        Use -v/--verbose to show reporter descriptions.
+        Use 'pkgcheck show --reporters' to see available options.
     """)
 
-check_options = argparser.add_argument_group('check selection')
+check_options = scan.add_argument_group('check selection')
 check_options.add_argument(
     '-c', '--checks', metavar='CHECK', action='extend_comma_toggle', dest='selected_checks',
     help='limit checks to regex or package/class matching (comma-separated list)')
@@ -111,7 +89,7 @@ check_options.add_argument(
         scan for errors and ignore all QA warnings use the 'errors' argument to
         -k/--keywords.
 
-        Use --list-keywords or the list below to see available options.
+        Use 'pkgcheck show --keywords' or the list below to see available options.
     """)
 check_options.add_argument(
     '-S', '--scopes', metavar='SCOPE', action='extend_comma_toggle', dest='selected_scopes',
@@ -136,11 +114,11 @@ def add_addon(addon, addon_set):
 
 
 all_addons = set()
-argparser.plugin = argparser.add_argument_group('plugin options')
+scan.plugin = scan.add_argument_group('plugin options')
 for check in get_plugins('check', plugins):
     add_addon(check, all_addons)
 for addon in all_addons:
-    addon.mangle_argparser(argparser)
+    addon.mangle_argparser(scan)
 
 # XXX hack...
 _known_checks = tuple(sorted(
@@ -152,12 +130,9 @@ _known_keywords = tuple(sorted(
     key=lambda x: x.__name__))
 
 
-@argparser.bind_final_check
+@scan.bind_final_check
 def _validate_args(parser, namespace):
-    if any((namespace.list_keywords, namespace.list_checks, namespace.list_reporters)):
-        # no need to check any other args
-        return
-
+    namespace.targets = []
     namespace.enabled_checks = list(_known_checks)
     namespace.enabled_keywords = list(_known_keywords)
 
@@ -359,25 +334,25 @@ def _validate_args(parser, namespace):
         available_keywords = set(x.__name__ for x in _known_keywords)
         unknown_keywords = selected_keywords - available_keywords
         if unknown_keywords:
-            parser.error('unknown keyword%s: %s (use --list-keywords to show valid keywords)' % (
+            parser.error("unknown keyword%s: %s (use 'pkgcheck show --keywords' to show valid keywords)" % (
                 pluralism(unknown_keywords), ', '.join(unknown_keywords)))
 
         # filter outputted keywords
         namespace.enabled_keywords = base.filter_update(
             namespace.enabled_keywords, enabled_keywords, disabled_keywords)
 
-    namespace.enabled_keywords = set(namespace.enabled_keywords)
-    if namespace.enabled_keywords == set(_known_keywords):
-        namespace.enabled_keywords = None
+    namespace.filtered_keywords = set(namespace.enabled_keywords)
+    if namespace.filtered_keywords == set(_known_keywords):
+        namespace.filtered_keywords = None
 
     disabled_checks, enabled_checks = ((), ())
     if namespace.selected_checks is not None:
         disabled_checks, enabled_checks = namespace.selected_checks
-    elif namespace.enabled_keywords is not None:
+    elif namespace.filtered_keywords is not None:
         # enable checks based on enabled keyword -> check mapping
         enabled_checks = []
         for check in _known_checks:
-            if namespace.enabled_keywords.intersection(check.known_results):
+            if namespace.filtered_keywords.intersection(check.known_results):
                 enabled_checks.append(check.__name__)
 
     # filter checks to run
@@ -402,6 +377,196 @@ def _validate_args(parser, namespace):
         if namespace.debug:
             raise
         parser.error(str(e))
+
+
+@scan.bind_main_func
+def _scan(options, out, err):
+    """Do stuff."""
+    if not options.repo_bases:
+        err.write(
+            'Warning: could not determine repo base for profiles, some checks will not work.')
+        err.write()
+
+    if options.guessed_suite:
+        if options.default_suite:
+            err.write('Tried to guess a suite to use but got multiple matches')
+            err.write('and fell back to the default.')
+        else:
+            err.write('using suite guessed from working directory')
+
+    if options.guessed_target_repo:
+        err.write('using repository guessed from working directory')
+
+    try:
+        reporter = options.reporter(
+            out, keywords=options.filtered_keywords, verbose=options.verbose)
+    except errors.ReporterInitError as e:
+        err.write(
+            err.fg('red'), err.bold, '!!! ', err.reset,
+            'Error initializing reporter: ', e)
+        return 1
+
+    addons_map = {}
+
+    def init_addon(klass):
+        res = addons_map.get(klass)
+        if res is not None:
+            return res
+        deps = list(init_addon(dep) for dep in klass.required_addons)
+        try:
+            res = addons_map[klass] = klass(options, *deps)
+        except KeyboardInterrupt:
+            raise
+        except Exception:
+            if options.debug:
+                err.write('instantiating %s' % (klass,))
+            raise
+        return res
+
+    for addon in options.addons:
+        # Ignore the return value, we just need to populate addons_map.
+        init_addon(addon)
+
+    if options.verbose:
+        err.write("target repo: '%s' at '%s'" % (
+            options.target_repo.repo_id, options.target_repo.location))
+        err.write('base dirs: ', ', '.join(options.repo_bases))
+        for filterer in options.limiters:
+            err.write('limiter: ', filterer)
+        debug = logging.debug
+    else:
+        debug = None
+
+    transforms = list(get_plugins('transform', plugins))
+    # XXX this is pretty horrible.
+    sinks = list(addon for addon in addons_map.itervalues()
+                 if getattr(addon, 'feed_type', False))
+
+    reporter.start()
+
+    for filterer in options.limiters:
+        sources = [feeds.RestrictedRepoSource(options.target_repo, filterer)]
+        bad_sinks, pipes = base.plug(sinks, transforms, sources, debug)
+        if bad_sinks:
+            # We want to report the ones that would work if this was a
+            # full repo scan separately from the ones that are
+            # actually missing transforms.
+            bad_sinks = set(bad_sinks)
+            full_scope = feeds.RestrictedRepoSource(
+                options.target_repo, packages.AlwaysTrue)
+            really_bad, ignored = base.plug(sinks, transforms, [full_scope])
+            really_bad = set(really_bad)
+            assert bad_sinks >= really_bad, \
+                '%r unreachable with no limiters but reachable with?' % (
+                    really_bad - bad_sinks,)
+            for sink in really_bad:
+                err.error(
+                    'sink %s could not be connected (missing transforms?)' % (
+                        sink,))
+            out_of_scope = bad_sinks - really_bad
+            if options.verbose and out_of_scope:
+                err.warn('skipping repo checks (not a full repo scan)')
+        if not pipes:
+            out.write(out.fg('red'), ' * ', out.reset, 'No checks!')
+        else:
+            if options.debug:
+                err.write('Running %i tests' % (len(sinks) - len(bad_sinks),))
+            for source, pipe in pipes:
+                pipe.start()
+                reporter.start_check(
+                    list(base.collect_checks_classes(pipe)), filterer)
+                for thing in source.feed():
+                    pipe.feed(thing, reporter)
+                pipe.finish(reporter)
+                reporter.end_check()
+
+    reporter.finish()
+
+    # flush stdout first; if they're directing it all to a file, this makes
+    # results not get the final message shoved in midway
+    out.stream.flush()
+    return 0
+
+
+replay = subparsers.add_parser(
+    'replay',
+    description='replay results streams',
+    docs="""
+        Replay previous results streams from pkgcheck, feeding the results into
+        a reporter. Currently only supports replaying streams from
+        pickled-based reporters.
+
+        Useful if you need to delay acting on results until it can be done in
+        one minimal window (say updating a database), or want to generate
+        several different reports without using a config defined multiplex
+        reporter.
+    """)
+replay.add_argument(
+    dest='pickle_file', type=argparse.FileType(), help='pickled results file')
+replay.add_argument(
+    dest='reporter', help='python namespace path reporter to replay it into')
+replay.add_argument(
+    '--out', default=None, help='redirect reporters output to a file')
+@replay.bind_final_check
+def _replay_validate_args(parser, namespace):
+    func = namespace.config.pkgcheck_reporter_factory.get(namespace.reporter)
+    if func is None:
+        func = list(base.Whitelist([namespace.reporter]).filter(
+            get_plugins('reporter', plugins)))
+        if not func:
+            parser.error(
+                "no reporter matches %r (available: %s)" % (
+                    namespace.reporter,
+                    ', '.join(sorted(x.__name__ for x in get_plugins('reporter', plugins)))
+                )
+            )
+        elif len(func) > 1:
+            parser.error(
+                "--reporter %r matched multiple reporters, "
+                "must match one. %r" % (
+                    namespace.reporter,
+                    tuple(sorted("%s.%s" % (x.__module__, x.__name__) for x in func))
+                )
+            )
+        func = func[0]
+    namespace.reporter = func
+
+
+def replay_stream(stream_handle, reporter, debug=None):
+    headers = []
+    last_count = 0
+    for count, item in enumerate(pickling.iter_stream(stream_handle)):
+        if isinstance(item, base.StreamHeader):
+            if debug:
+                if headers:
+                    debug.write("finished processing %i results for %s" %
+                                (count - last_count, headers[-1].criteria))
+                last_count = count
+                debug.write("encountered new stream header for %s" %
+                            item.criteria)
+            if headers:
+                reporter.end_check()
+            reporter.start_check(item.checks, item.criteria)
+            headers.append(item)
+            continue
+        reporter.add_report(item)
+    if headers:
+        reporter.end_check()
+        if debug:
+            debug.write(
+                "finished processing %i results for %s" %
+                (count - last_count, headers[-1].criteria))
+
+
+@replay.bind_main_func
+def _replay(options, out, err):
+    if options.out:
+        out = formatters.get_formatter(open(options.out, 'w'))
+    debug = None
+    if options.debug:
+        debug = err
+    replay_stream(options.pickle_file, options.reporter(out), debug=debug)
+    return 0
 
 
 def dump_docstring(out, obj, prefix=None):
@@ -560,126 +725,47 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
             out.write()
 
 
-@argparser.bind_main_func
-def main(options, out, err):
-    """Do stuff."""
+show = subparsers.add_parser('show', description='show various pkgcheck info')
+list_options = show.add_argument_group('list options')
+list_options.add_argument(
+    '--keywords', action='store_true', default=False,
+    help='show available warning/error keywords',
+    docs="""
+        List all available keywords.
 
-    if options.list_keywords:
+        Use -v/--verbose to show keywords sorted into the scope they run at
+        (repository, category, package, or version) along with their
+        descriptions.
+    """)
+list_options.add_argument(
+    '--checks', action='store_true', default=False,
+    help='show available checks',
+    docs="""
+        List all available checks.
+
+        Use -v/--verbose to show descriptions and possible keyword results for
+        each check.
+    """)
+list_options.add_argument(
+    '--reporters', action='store_true', default=False,
+    help='show available reporters',
+    docs="""
+        List all available reporters.
+
+        Use -v/--verbose to show reporter descriptions.
+    """)
+@show.bind_main_func
+def _main(options, out, err):
+    if options.keywords:
         display_keywords(out, options)
-        return 0
 
-    if options.list_checks:
+    if options.checks:
         display_checks(out, options)
-        return 0
 
-    if options.list_reporters:
+    if options.reporters:
         display_reporters(
             out, options,
             options.config.pkgcheck_reporter_factory.values(),
             list(get_plugins('reporter', plugins)))
-        return 0
 
-    if not options.repo_bases:
-        err.write(
-            'Warning: could not determine repo base for profiles, some checks will not work.')
-        err.write()
-
-    if options.guessed_suite:
-        if options.default_suite:
-            err.write('Tried to guess a suite to use but got multiple matches')
-            err.write('and fell back to the default.')
-        else:
-            err.write('using suite guessed from working directory')
-
-    if options.guessed_target_repo:
-        err.write('using repository guessed from working directory')
-
-    try:
-        reporter = options.reporter(
-            out, keywords=options.enabled_keywords, verbose=options.verbose)
-    except errors.ReporterInitError as e:
-        err.write(
-            err.fg('red'), err.bold, '!!! ', err.reset,
-            'Error initializing reporter: ', e)
-        return 1
-
-    addons_map = {}
-
-    def init_addon(klass):
-        res = addons_map.get(klass)
-        if res is not None:
-            return res
-        deps = list(init_addon(dep) for dep in klass.required_addons)
-        try:
-            res = addons_map[klass] = klass(options, *deps)
-        except KeyboardInterrupt:
-            raise
-        except Exception:
-            if options.debug:
-                err.write('instantiating %s' % (klass,))
-            raise
-        return res
-
-    for addon in options.addons:
-        # Ignore the return value, we just need to populate addons_map.
-        init_addon(addon)
-
-    if options.verbose:
-        err.write("target repo: '%s' at '%s'" % (
-            options.target_repo.repo_id, options.target_repo.location))
-        err.write('base dirs: ', ', '.join(options.repo_bases))
-        for filterer in options.limiters:
-            err.write('limiter: ', filterer)
-        debug = logging.debug
-    else:
-        debug = None
-
-    transforms = list(get_plugins('transform', plugins))
-    # XXX this is pretty horrible.
-    sinks = list(addon for addon in addons_map.itervalues()
-                 if getattr(addon, 'feed_type', False))
-
-    reporter.start()
-
-    for filterer in options.limiters:
-        sources = [feeds.RestrictedRepoSource(options.target_repo, filterer)]
-        bad_sinks, pipes = base.plug(sinks, transforms, sources, debug)
-        if bad_sinks:
-            # We want to report the ones that would work if this was a
-            # full repo scan separately from the ones that are
-            # actually missing transforms.
-            bad_sinks = set(bad_sinks)
-            full_scope = feeds.RestrictedRepoSource(
-                options.target_repo, packages.AlwaysTrue)
-            really_bad, ignored = base.plug(sinks, transforms, [full_scope])
-            really_bad = set(really_bad)
-            assert bad_sinks >= really_bad, \
-                '%r unreachable with no limiters but reachable with?' % (
-                    really_bad - bad_sinks,)
-            for sink in really_bad:
-                err.error(
-                    'sink %s could not be connected (missing transforms?)' % (
-                        sink,))
-            out_of_scope = bad_sinks - really_bad
-            if options.verbose and out_of_scope:
-                err.warn('skipping repo checks (not a full repo scan)')
-        if not pipes:
-            out.write(out.fg('red'), ' * ', out.reset, 'No checks!')
-        else:
-            if options.debug:
-                err.write('Running %i tests' % (len(sinks) - len(bad_sinks),))
-            for source, pipe in pipes:
-                pipe.start()
-                reporter.start_check(
-                    list(base.collect_checks_classes(pipe)), filterer)
-                for thing in source.feed():
-                    pipe.feed(thing, reporter)
-                pipe.finish(reporter)
-                reporter.end_check()
-
-    reporter.finish()
-
-    # flush stdout first; if they're directing it all to a file, this makes
-    # results not get the final message shoved in midway
-    out.stream.flush()
     return 0

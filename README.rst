@@ -123,10 +123,10 @@ ones. Examples::
   patterns=unstable_only stale_unstable imlate
 
 The first disables the three specified checks, the second enables only
-those three. For available names see ``pkgcheck --list-checks``.
+those three. For available names see ``pkgcheck show --checks``.
 
 ``patterns`` is a whitespace-separated list. If the values are strings
-they need to match a component of the name in ``--list-checks``
+they need to match a component of the name in ``pkgcheck show --checks``
 exactly. If it looks like a regexp (currently defined as "contains a +
 or \*") this needs to match the entire name.
 
