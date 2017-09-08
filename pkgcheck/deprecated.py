@@ -17,7 +17,7 @@ class DeprecatedEAPI(Warning):
 
     @property
     def short_desc(self):
-        return "uses deprecated EAPI: %s" % (self.eapi,)
+        return "uses deprecated EAPI %s" % (self.eapi,)
 
 
 class DeprecatedEAPIReport(Template):
