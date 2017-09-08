@@ -13,9 +13,8 @@ demandload("re")
 class HttpsAvailable(base.Warning):
     """Ebuild contains a http:// link that should use https:// instead."""
 
+    __slots__ = ("category", "package", "version", "link", "lines")
     threshold = base.versioned_feed
-
-    __slots__ = ("category", "package", "link", "lines")
 
     def __init__(self, pkg, link, lines):
         super(HttpsAvailable, self).__init__()
@@ -86,9 +85,8 @@ class HttpsAvailableCheck(base.Template):
 class PortageInternals(base.Warning):
     """Ebuild uses a function or variable internal to portage."""
 
+    __slots__ = ("category", "package", "version", "internal", "line")
     threshold = base.versioned_feed
-
-    __slots__ = ("category", "package", "internal", "line")
 
     def __init__(self, pkg, internal, line):
         super(PortageInternals, self).__init__()
