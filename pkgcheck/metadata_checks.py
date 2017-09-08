@@ -118,7 +118,7 @@ class RequiredUseDefaults(base.Warning):
     def __init__(self, pkg, required_use, use=(), keyword=None, profile=None):
         super(RequiredUseDefaults, self).__init__()
         self._store_cpv(pkg)
-        self.required_use = required_use
+        self.required_use = str(required_use)
         self.use = tuple(sorted(use))
         self.keyword = keyword
         self.profile = profile
