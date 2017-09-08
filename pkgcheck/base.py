@@ -244,7 +244,7 @@ class Reporter(object):
         if verbose is None:
             verbose = False
         self.verbose = verbose
-        self._enabled_keywords = keywords
+        self._enabled_keywords = set(keywords)
 
     def add_report(self, result):
         # skip check keywords that are disabled

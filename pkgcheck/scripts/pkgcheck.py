@@ -366,6 +366,7 @@ def _validate_args(parser, namespace):
         namespace.enabled_keywords = base.filter_update(
             namespace.enabled_keywords, enabled_keywords, disabled_keywords)
 
+    namespace.enabled_keywords = set(namespace.enabled_keywords)
     disabled_checks, enabled_checks = ((), ())
     if namespace.selected_checks is not None:
         disabled_checks, enabled_checks = namespace.selected_checks
@@ -373,7 +374,7 @@ def _validate_args(parser, namespace):
         # enable checks based on enabled keyword -> check mapping
         enabled_checks = []
         for check in _known_checks:
-            if (set(namespace.enabled_keywords) & set(check.known_results)):
+            if namespace.enabled_keywords.intersection(check.known_results):
                 enabled_checks.append(check.__name__)
 
     # filter checks to run
