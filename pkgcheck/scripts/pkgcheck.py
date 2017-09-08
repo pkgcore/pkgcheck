@@ -347,18 +347,12 @@ def _validate_args(parser, namespace):
         errors = [x.__name__ for x in _known_keywords if issubclass(x, base.Error)]
         warnings = [x.__name__ for x in _known_keywords if issubclass(x, base.Warning)]
 
-        def _replace_aliases(x):
-            """Replace keyword aliases with actual values."""
-            if x == 'errors':
-                return errors 
-            elif x == 'warnings':
-                return warnings
-            else:
-                return x
+        alias_map = {'errors': errors, 'warnings': warnings}
+        replace_aliases = lambda x: alias_map.get(x, x)
 
         # expand keyword aliases to keyword lists
-        disabled_keywords = list(chain.from_iterable(map(_replace_aliases, disabled_keywords)))
-        enabled_keywords = list(chain.from_iterable(map(_replace_aliases, enabled_keywords)))
+        disabled_keywords = list(chain.from_iterable(map(replace_aliases, disabled_keywords)))
+        enabled_keywords = list(chain.from_iterable(map(replace_aliases, enabled_keywords)))
 
         # validate selected keywords
         selected_keywords = set(disabled_keywords + enabled_keywords)
