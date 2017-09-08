@@ -344,8 +344,8 @@ def _validate_args(parser, namespace):
     if namespace.selected_keywords is not None:
         disabled_keywords, enabled_keywords = namespace.selected_keywords
 
-        errors = [x.__name__ for x in _known_keywords if issubclass(x, base.Error)]
-        warnings = [x.__name__ for x in _known_keywords if issubclass(x, base.Warning)]
+        errors = (x.__name__ for x in _known_keywords if issubclass(x, base.Error))
+        warnings = (x.__name__ for x in _known_keywords if issubclass(x, base.Warning))
 
         alias_map = {'errors': errors, 'warnings': warnings}
         replace_aliases = lambda x: alias_map.get(x, x)
