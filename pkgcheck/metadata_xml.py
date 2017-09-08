@@ -229,7 +229,8 @@ class MetadataXmlIndentation(base.Warning):
     Either all tabs or all spaces should be used, not a mixture of both.
     """
 
-    __slots__ = ("category", "package", "version", "lines")
+    __slots__ = ("category", "package", "filename", "lines")
+    __attrs__ = __slots__
 
     def __init__(self, lines, filename, category, package=None):
         super(MetadataXmlIndentation, self).__init__()
