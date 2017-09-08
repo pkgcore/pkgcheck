@@ -13,7 +13,7 @@ class DeprecatedEAPI(Warning):
     def __init__(self, pkg):
         super(DeprecatedEAPI, self).__init__()
         self._store_cpv(pkg)
-        self.eapi = pkg.eapi
+        self.eapi = str(pkg.eapi)
 
     @property
     def short_desc(self):
