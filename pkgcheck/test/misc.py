@@ -21,8 +21,7 @@ class FakePkg(package):
             data.setdefault(x, "")
 
         cpv = versioned_CPV(cpvstr)
-        package.__init__(self, shared, parent, cpv.category, cpv.package,
-                         cpv.fullver)
+        package.__init__(self, shared, parent, cpv.category, cpv.package, cpv.fullver)
         package.local_use = ImmutableDict()
         object.__setattr__(self, "data", data)
 
@@ -38,8 +37,7 @@ class FakeTimedPkg(package):
         if data is None:
             data = {}
         cpv = versioned_CPV(cpvstr)
-        package.__init__(self, shared, repo, cpv.category, cpv.package,
-                         cpv.fullver)
+        package.__init__(self, shared, repo, cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
         object.__setattr__(self, "_mtime_", mtime)
 
@@ -72,8 +70,7 @@ default_threshold_attrs = {
     base.package_feed: ('category', 'package'),
     base.versioned_feed: ('category', 'package', 'version'),
 }
-default_threshold_attrs[base.ebuild_feed] = \
-    default_threshold_attrs[base.versioned_feed]
+default_threshold_attrs[base.ebuild_feed] = default_threshold_attrs[base.versioned_feed]
 
 
 class ReportTestCase(TestCase):
@@ -91,24 +88,27 @@ class ReportTestCase(TestCase):
         r = fake_reporter(lambda r: l.append(r))
         check.feed(data, r)
         self.assert_known_results(*l)
-        self.assertEqual(l, [], msg="%s%s" %
-                         (msg, list(report.short_desc for report in l)))
+        self.assertEqual(
+            l, [], msg="%s%s" %
+            (msg, list(report.short_desc for report in l)))
 
     def assertReportSanity(self, *reports):
         for report in reports:
             attrs = self._threshold_attrs.get(report.threshold)
             self.assertTrue(attrs, msg="unknown threshold on %r" % (report.__class__,))
             for x in attrs:
-                self.assertTrue(hasattr(report, x), msg="threshold %s, missing attr %s: %r %s" %
-                                (report.threshold, x, report.__class__, report))
+                self.assertTrue(
+                    hasattr(report, x), msg="threshold %s, missing attr %s: %r %s" %
+                        (report.threshold, x, report.__class__, report))
 
     def assertReports(self, check, data):
         l = []
         r = fake_reporter(lambda r: l.append(r))
         check.feed(data, r)
         self.assert_known_results(*l)
-        self.assertTrue(l, msg="must get a report from %r %r, got none" %
-                        (check, data))
+        self.assertTrue(
+            l, msg="must get a report from %r %r, got none" %
+            (check, data))
         self.assertReportSanity(*l)
         return l
 
@@ -120,8 +120,9 @@ class ReportTestCase(TestCase):
     def assertReport(self, check, data):
         r = self.assertReports(check, data)
         self.assert_known_results(*r)
-        self.assertEqual(len(r), 1, msg="expected one report, got %i: %r" %
-                         (len(r), r))
+        self.assertEqual(
+            len(r), 1, msg="expected one report, got %i: %r" %
+            (len(r), r))
         self.assertReportSanity(r[0])
         return r[0]
 
