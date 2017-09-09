@@ -87,7 +87,8 @@ class DuplicateFiles(Warning):
 
     @property
     def short_desc(self):
-        return 'duplicate identical files in FILESDIR: %r' % (self.files,)
+        return 'duplicate identical files in FILESDIR: %s' % (
+            ', '.join(map(repr, self.files)))
 
 
 class EmptyFile(Warning):
