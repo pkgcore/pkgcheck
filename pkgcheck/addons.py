@@ -518,8 +518,8 @@ class UseAddon(base.Addon):
     def use_validate(self, klasses, pkg, seq, reporter=None, attr=None):
         skip_filter = (packages.Conditional,) + klasses
         unstated = set()
+        stated = pkg.iuse_stripped
 
-        stated = set(pkg.iuse_stripped)
         i = expandable_chain(iflatten_instance(seq, skip_filter))
         for node in i:
             if isinstance(node, packages.Conditional):
