@@ -48,14 +48,14 @@ class FakeFilesDirPkg(package):
 
     __slots__ = ("path",)
 
-    def __init__(self, cpvstr, tempdir, data=None, shared=None, repo=None):
+    def __init__(self, cpvstr, repo, data=None, shared=None):
         if data is None:
             data = {}
         cpv = versioned_CPV(cpvstr)
         package.__init__(self, shared, factory(repo), cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
         object.__setattr__(self, "path", pjoin(
-            tempdir, '%s-%s.ebuild' % (cpv.package, cpv.fullver)))
+            repo.location, cpv.category, cpv.package, '%s-%s.ebuild' % (cpv.package, cpv.fullver)))
 
 
 default_threshold_attrs = {

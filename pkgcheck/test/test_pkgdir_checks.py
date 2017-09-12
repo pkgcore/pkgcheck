@@ -1,5 +1,6 @@
 import os
 import tempfile
+import uuid
 
 from pkgcore.test.misc import FakeRepo
 from snakeoil import fileutils
@@ -24,23 +25,18 @@ class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
         TempDirMixin.tearDown(self)
 
     def mk_pkg(self, files={}):
-        return misc.FakeFilesDirPkg(
-            "dev-util/diffball-0.7.1",
-            self.get_pkgdir_with_filesdir(files),
-            repo=self.repo)
+        # generate random cat/PN
+        category = uuid.uuid4().hex
+        PN = uuid.uuid4().hex
+        self.pkg = "%s/%s-0.7.1" % (category, PN)
+        self.filesdir = pjoin(self.repo.location, category, PN, 'files')
+        os.makedirs(self.filesdir)
 
-    def get_pkgdir_with_filesdir(self, files={}):
-        """Create a temporary directory for the ebuild with files/ subdirectory.
-
-        Fill it in with files from the files dict (key specifying the filename,
-        value the contents).
-        """
-        ebuild_base = tempfile.mkdtemp(dir=self.dir)
-        base = pjoin(ebuild_base, 'files')
-        os.mkdir(base)
+        # create specified files in FILESDIR
         for fn, contents in files.iteritems():
-            fileutils.write_file(pjoin(base, fn), 'w', contents)
-        return ebuild_base
+            fileutils.write_file(pjoin(self.filesdir, fn), 'w', contents)
+
+        return misc.FakeFilesDirPkg(self.pkg, repo=self.repo)
 
 
 class TestDuplicateFilesReport(PkgDirReportTest):
@@ -54,9 +50,8 @@ class TestDuplicateFilesReport(PkgDirReportTest):
         self.assertNoReport(self.check, [self.mk_pkg({'test': 'abc', 'test2': 'bcd'})])
 
         # filesdir with a duplicate
-        r = self.assertIsInstance(
-            self.assertReport(self.check, [self.mk_pkg({'test': 'abc', 'test2': 'abc'})]),
-            pkgdir_checks.DuplicateFiles)
+        r = self.assertReport(self.check, [self.mk_pkg({'test': 'abc', 'test2': 'abc'})])
+        self.assertIsInstance(r, pkgdir_checks.DuplicateFiles)
         self.assertEqual(r.files, ('files/test', 'files/test2'))
         self.assertEqual(r.files, ('files/test', 'files/test2'))
 
