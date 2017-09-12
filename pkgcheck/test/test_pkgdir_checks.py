@@ -25,10 +25,14 @@ class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
     def tearDown(self):
         TempDirMixin.tearDown(self)
 
-    def mk_pkg(self, files={}):
-        # generate random cat/PN
-        category = uuid.uuid4().hex
-        PN = uuid.uuid4().hex
+    def mk_pkg(self, files={}, pkg=None):
+        if pkg is None:
+            # generate random cat/PN
+            category = uuid.uuid4().hex
+            PN = uuid.uuid4().hex
+        else:
+            category, PN = pkg.split(os.path.sep)
+
         self.pkg = "%s/%s-0.7.1" % (category, PN)
         self.filesdir = pjoin(self.repo.location, category, PN, 'files')
         os.makedirs(self.filesdir)
