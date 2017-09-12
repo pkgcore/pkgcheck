@@ -47,7 +47,7 @@ class MismatchedPN(Error):
     def __init__(self, pkg, ebuilds):
         super(MismatchedPN, self).__init__()
         self._store_cp(pkg)
-        self.ebuilds = ebuilds
+        self.ebuilds = tuple(sorted(ebuilds))
 
     @property
     def short_desc(self):
@@ -65,7 +65,7 @@ class InvalidPN(Error):
     def __init__(self, pkg, ebuilds):
         super(InvalidPN, self).__init__()
         self._store_cp(pkg)
-        self.ebuilds = ebuilds
+        self.ebuilds = tuple(sorted(ebuilds))
 
     @property
     def short_desc(self):
