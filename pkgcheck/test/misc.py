@@ -3,6 +3,7 @@ from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.misc import ChunkedDataDict, chunked_data
+from pkgcore.package.metadata import factory
 from pkgcore.repository.util import SimpleTree
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
@@ -31,37 +32,30 @@ class FakePkg(package):
 
 
 class FakeTimedPkg(package):
+
     __slots__ = "_mtime_"
 
     def __init__(self, cpvstr, mtime, data=None, shared=None, repo=None):
         if data is None:
             data = {}
         cpv = versioned_CPV(cpvstr)
-        package.__init__(self, shared, repo, cpv.category, cpv.package, cpv.fullver)
+        package.__init__(self, shared, factory(repo), cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
         object.__setattr__(self, "_mtime_", mtime)
 
 
-class FakeEbuild(object):
-
-    __slots__ = ("path",)
-
-    def __init__(self, path):
-        self.path = path
-
-
 class FakeFilesDirPkg(package):
 
-    __slots__ = ("ebuild",)
+    __slots__ = ("path",)
 
     def __init__(self, cpvstr, tempdir, data=None, shared=None, repo=None):
         if data is None:
             data = {}
         cpv = versioned_CPV(cpvstr)
-        package.__init__(self, shared, repo, cpv.category, cpv.package, cpv.fullver)
+        package.__init__(self, shared, factory(repo), cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
-        object.__setattr__(self, "ebuild", FakeEbuild(
-            pjoin(tempdir, '%s-%s.ebuild' % (cpv.package, cpv.fullver))))
+        object.__setattr__(self, "path", pjoin(
+            tempdir, '%s-%s.ebuild' % (cpv.package, cpv.fullver)))
 
 
 default_threshold_attrs = {

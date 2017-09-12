@@ -205,9 +205,9 @@ class PkgDirReport(Template):
     digest_algo = 'sha256'
 
     def feed(self, pkgset, reporter):
-        base = os.path.dirname(pkgset[0].ebuild.path)
+        base = os.path.dirname(pkgset[0].path)
         category = os.path.basename(
-            os.path.dirname(os.path.dirname(pkgset[0].ebuild.path)))
+            os.path.dirname(os.path.dirname(pkgset[0].path)))
         ebuild_ext = '.ebuild'
         mismatched = []
         invalid = []

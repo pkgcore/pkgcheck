@@ -1,6 +1,7 @@
 import os
 import tempfile
 
+from pkgcore.test.misc import FakeRepo
 from snakeoil import fileutils
 from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import TempDirMixin
@@ -17,6 +18,7 @@ class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
     def setUp(self):
         TempDirMixin.setUp(self)
         self.check = pkgdir_checks.PkgDirReport(None, None)
+        self.repo = FakeRepo(repo_id='repo', location=self.dir)
 
     def tearDown(self):
         TempDirMixin.tearDown(self)
@@ -24,7 +26,8 @@ class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
     def mk_pkg(self, files={}):
         return misc.FakeFilesDirPkg(
             "dev-util/diffball-0.7.1",
-            self.get_pkgdir_with_filesdir(files))
+            self.get_pkgdir_with_filesdir(files),
+            repo=self.repo)
 
     def get_pkgdir_with_filesdir(self, files={}):
         """Create a temporary directory for the ebuild with files/ subdirectory.
