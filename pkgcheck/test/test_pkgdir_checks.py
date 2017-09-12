@@ -20,7 +20,6 @@ class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
     def setUp(self):
         TempDirMixin.setUp(self)
         self.check = pkgdir_checks.PkgDirReport(None, None)
-        self.repo = FakeRepo(repo_id='repo', location=self.dir)
 
     def tearDown(self):
         TempDirMixin.tearDown(self)
@@ -33,15 +32,16 @@ class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
         else:
             category, PN = pkg.split(os.path.sep)
 
-        self.pkg = "%s/%s-0.7.1" % (category, PN)
-        self.filesdir = pjoin(self.repo.location, category, PN, 'files')
+        pkg = "%s/%s-0.7.1" % (category, PN)
+        repo = FakeRepo(repo_id='repo', location=self.dir)
+        self.filesdir = pjoin(repo.location, category, PN, 'files')
         os.makedirs(self.filesdir)
 
         # create specified files in FILESDIR
         for fn, contents in files.iteritems():
             fileutils.write_file(pjoin(self.filesdir, fn), 'w', contents)
 
-        return misc.FakeFilesDirPkg(self.pkg, repo=self.repo)
+        return misc.FakeFilesDirPkg(pkg, repo=repo)
 
 
 class TestDuplicateFilesReport(PkgDirReportTest):
