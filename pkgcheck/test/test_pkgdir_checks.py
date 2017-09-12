@@ -4,6 +4,7 @@ import uuid
 
 from pkgcore.test.misc import FakeRepo
 from snakeoil import fileutils
+from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import TempDirMixin
 
@@ -98,3 +99,76 @@ class TestEmptyFileReport(PkgDirReportTest):
         self.assertIsInstance(r[0], pkgdir_checks.EmptyFile)
         self.assertIsInstance(r[1], pkgdir_checks.EmptyFile)
         self.assertEqual(sorted(x.filename for x in r), ['files/test', 'files/test2'])
+
+
+class TestMismatchedPN(PkgDirReportTest):
+    """Check MismatchedPN results."""
+
+    def test_it(self):
+        # no files
+        self.assertNoReport(self.check, [self.mk_pkg()])
+
+        # multiple regular ebuilds
+        pkg = self.mk_pkg()
+        touch(pjoin(os.path.dirname(pkg.path), '%s-0.ebuild' % pkg.package))
+        touch(pjoin(os.path.dirname(pkg.path), '%s-1.ebuild' % pkg.package))
+        touch(pjoin(os.path.dirname(pkg.path), '%s-2.ebuild' % pkg.package))
+        self.assertNoReport(self.check, [pkg])
+
+        # single, mismatched ebuild
+        pkg = self.mk_pkg()
+        touch(pjoin(os.path.dirname(pkg.path), 'mismatched-0.ebuild'))
+        r = self.assertReport(self.check, [pkg])
+        self.assertIsInstance(r, pkgdir_checks.MismatchedPN)
+        self.assertEqual(r.ebuilds, ('mismatched-0',))
+
+        # multiple ebuilds, multiple mismatched
+        pkg = self.mk_pkg()
+        touch(pjoin(os.path.dirname(pkg.path), '%s-0.ebuild' % pkg.package))
+        touch(pjoin(os.path.dirname(pkg.path), '%s-1.ebuild' % pkg.package))
+        touch(pjoin(os.path.dirname(pkg.path), 'mismatched-0.ebuild'))
+        touch(pjoin(os.path.dirname(pkg.path), 'abc-1.ebuild'))
+        r = self.assertReport(self.check, [pkg])
+        self.assertIsInstance(r, pkgdir_checks.MismatchedPN)
+        self.assertEqual(r.ebuilds, ('abc-1', 'mismatched-0'))
+
+
+class TestExecutableFile(PkgDirReportTest):
+    """Check ExecutableFile results."""
+
+    def test_it(self):
+        # no files
+        self.assertNoReport(self.check, [self.mk_pkg()])
+
+        # non-empty filesdir
+        self.assertNoReport(self.check, [self.mk_pkg({'test': 'asdfgh'})])
+
+        # executable ebuild
+        pkg = self.mk_pkg()
+        touch(pkg.path, mode=0o777)
+        r = self.assertReport(self.check, [pkg])
+        self.assertIsInstance(r, pkgdir_checks.ExecutableFile)
+        self.assertEqual(r.filename, os.path.basename(pkg.path))
+
+        # executable Manifest and metadata
+        pkg = self.mk_pkg()
+        touch(pjoin(os.path.dirname(pkg.path), 'Manifest'), mode=0o755)
+        touch(pjoin(os.path.dirname(pkg.path), 'metadata.xml'), mode=0o744)
+        r = self.assertReports(self.check, [pkg])
+        self.assertLen(r, 2)
+        self.assertIsInstance(r[0], pkgdir_checks.ExecutableFile)
+        self.assertIsInstance(r[1], pkgdir_checks.ExecutableFile)
+        self.assertEqual(
+            tuple(sorted(x.filename for x in r)),
+            ('Manifest', 'metadata.xml')
+        )
+
+        # mix of regular files and executable FILESDIR file
+        pkg = self.mk_pkg({'foo.init': 'blah'})
+        touch(pkg.path)
+        touch(pjoin(os.path.dirname(pkg.path), 'Manifest'))
+        touch(pjoin(os.path.dirname(pkg.path), 'metadata.xml'))
+        os.chmod(pjoin(os.path.dirname(pkg.path), 'files', 'foo.init'), 0o645)
+        r = self.assertReport(self.check, [pkg])
+        self.assertIsInstance(r, pkgdir_checks.ExecutableFile)
+        self.assertEqual(r.filename, 'files/foo.init')
