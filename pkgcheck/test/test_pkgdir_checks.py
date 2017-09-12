@@ -137,6 +137,81 @@ class TestMismatchedPN(PkgDirReportTest):
         self.assertEqual(r.ebuilds, ('abc-1', 'mismatched-0'))
 
 
+class TestInvalidPN(PkgDirReportTest):
+    """Check InvalidPN results."""
+
+    def test_it(self):
+        # no files
+        self.assertNoReport(self.check, [self.mk_pkg()])
+
+        # regular ebuild
+        pkg = self.mk_pkg()
+        touch(pjoin(os.path.dirname(pkg.path), '%s-0.ebuild' % pkg.package))
+        self.assertNoReport(self.check, [pkg])
+
+        # single, invalid ebuild
+        pkg = self.mk_pkg(pkg='sys-apps/invalid')
+        touch(pjoin(os.path.dirname(pkg.path), 'invalid-0-foo.ebuild'))
+        r = self.assertReport(self.check, [pkg])
+        self.assertIsInstance(r, pkgdir_checks.InvalidPN)
+        self.assertEqual(r.ebuilds, ('invalid-0-foo',))
+
+        # multiple ebuilds, multiple invalid
+        pkg = self.mk_pkg(pkg='sys-apps/bar')
+        touch(pjoin(os.path.dirname(pkg.path), 'bar-0.ebuild'))
+        touch(pjoin(os.path.dirname(pkg.path), 'bar-1.ebuild'))
+        touch(pjoin(os.path.dirname(pkg.path), 'bar-0-foo1.ebuild'))
+        touch(pjoin(os.path.dirname(pkg.path), 'bar-1-foo2.ebuild'))
+        r = self.assertReport(self.check, [pkg])
+        self.assertIsInstance(r, pkgdir_checks.InvalidPN)
+        self.assertEqual(r.ebuilds, ('bar-0-foo1', 'bar-1-foo2'))
+
+
+class TestSizeViolation(PkgDirReportTest):
+    """Check SizeViolation results."""
+
+    def test_it(self):
+        # no files
+        self.assertNoReport(self.check, [self.mk_pkg()])
+
+        # files under the 20k limit
+        pkg = self.mk_pkg()
+        for name, size in (('small', 1024*10),
+                           ('limit', 1024*20-1)):
+            with open(pjoin(self.filesdir, name), 'w') as f:
+                f.seek(size)
+                f.write('\0')
+        self.assertNoReport(self.check, [pkg])
+
+        # single file one byte over the 20k limit
+        pkg = self.mk_pkg()
+        with open(pjoin(self.filesdir, 'over'), 'w') as f:
+            f.seek(1024*20)
+            f.write('\0')
+        r = self.assertReport(self.check, [pkg])
+        self.assertIsInstance(r, pkgdir_checks.SizeViolation)
+        self.assertEqual(r.filename, 'files/over')
+        self.assertEqual(r.size, 1024*20+1)
+
+        # mix of files
+        pkg = self.mk_pkg()
+        for name, size in (('small', 1024*10),
+                           ('limit', 1024*20-1),
+                           ('over', 1024*20),
+                           ('massive', 1024*100)):
+            with open(pjoin(self.filesdir, name), 'w') as f:
+                f.seek(size)
+                f.write('\0')
+        r = self.assertReports(self.check, [pkg])
+        self.assertLen(r, 2)
+        self.assertIsInstance(r[0], pkgdir_checks.SizeViolation)
+        self.assertIsInstance(r[1], pkgdir_checks.SizeViolation)
+        self.assertEqual(
+            tuple(sorted((x.filename, x.size) for x in r)),
+            (('files/massive', 1024*100+1), ('files/over', 1024*20+1))
+        )
+
+
 class TestExecutableFile(PkgDirReportTest):
     """Check ExecutableFile results."""
 
