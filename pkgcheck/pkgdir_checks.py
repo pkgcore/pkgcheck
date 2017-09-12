@@ -205,9 +205,10 @@ class PkgDirReport(Template):
     digest_algo = 'sha256'
 
     def feed(self, pkgset, reporter):
-        base = os.path.dirname(pkgset[0].path)
+        pkg = pkgset[0]
+        base = os.path.dirname(pkg.path)
         category = os.path.basename(
-            os.path.dirname(os.path.dirname(pkgset[0].path)))
+            os.path.dirname(os.path.dirname(pkg.path)))
         ebuild_ext = '.ebuild'
         mismatched = []
         invalid = []
@@ -219,15 +220,15 @@ class PkgDirReport(Template):
             # char, which adds up.
 
             if any(True for x in filename if x not in allowed_filename_chars_set):
-                reporter.add_report(Glep31Violation(pkgset[0], filename))
+                reporter.add_report(Glep31Violation(pkg, filename))
 
             if (filename.endswith(ebuild_ext) or filename in
                     ("Manifest", "metadata.xml")):
                 if os.stat(pjoin(base, filename)).st_mode & 0111:
-                    reporter.add_report(ExecutableFile(pkgset[0], filename))
+                    reporter.add_report(ExecutableFile(pkg, filename))
 
             if filename.endswith(ebuild_ext):
-                utf8_check(pkgset[0], base, filename, reporter)
+                utf8_check(pkg, base, filename, reporter)
 
                 pkg_name = os.path.basename(filename[:-len(ebuild_ext)])
                 try:
@@ -238,9 +239,9 @@ class PkgDirReport(Template):
                     invalid.append(pkg_name)
 
         if mismatched:
-            reporter.add_report(MismatchedPN(pkgset[0], mismatched))
+            reporter.add_report(MismatchedPN(pkg, mismatched))
         if invalid:
-            reporter.add_report(InvalidPN(pkgset[0], invalid))
+            reporter.add_report(InvalidPN(pkg, invalid))
 
         if not os.path.exists(pjoin(base, 'files')):
             return
@@ -258,16 +259,16 @@ class PkgDirReport(Template):
                 elif stat.S_ISREG(st.st_mode):
                     if st.st_mode & 0111:
                         reporter.add_report(
-                            ExecutableFile(pkgset[0], pjoin(cwd, fn)))
+                            ExecutableFile(pkg, pjoin(cwd, fn)))
                     if not fn.startswith("digest-"):
                         if st.st_size == 0:
-                            reporter.add_report(EmptyFile(pkgset[0], pjoin(cwd, fn)))
+                            reporter.add_report(EmptyFile(pkg, pjoin(cwd, fn)))
                         else:
                             files_by_size[st.st_size].append(pjoin(cwd, fn))
                             if st.st_size > 20480:
-                                reporter.add_report(SizeViolation(pkgset[0], pjoin(cwd, fn), st.st_size))
+                                reporter.add_report(SizeViolation(pkg, pjoin(cwd, fn), st.st_size))
                         if any(True for x in fn if x not in allowed_filename_chars_set):
-                            reporter.add_report(Glep31Violation(pkgset[0], pjoin(cwd, fn)))
+                            reporter.add_report(Glep31Violation(pkg, pjoin(cwd, fn)))
 
         files_by_digest = defaultdict(list)
         for size, files in files_by_size.iteritems():
@@ -278,4 +279,4 @@ class PkgDirReport(Template):
 
         for digest, files in files_by_digest.iteritems():
             if len(files) > 1:
-                reporter.add_report(DuplicateFiles(pkgset[0], files))
+                reporter.add_report(DuplicateFiles(pkg, files))
