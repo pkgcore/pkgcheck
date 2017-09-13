@@ -43,14 +43,15 @@ class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
 
         return misc.FakeFilesDirPkg(pkg, repo=repo)
 
+    def test_it(self):
+        # no files
+        self.assertNoReport(self.check, [self.mk_pkg()])
+
 
 class TestDuplicateFilesReport(PkgDirReportTest):
     """Check DuplicateFiles results."""
 
     def test_it(self):
-        # empty filesdir
-        self.assertNoReport(self.check, [self.mk_pkg()])
-
         # filesdir with two unique files
         self.assertNoReport(self.check, [self.mk_pkg({'test': 'abc', 'test2': 'bcd'})])
 
@@ -76,9 +77,6 @@ class TestEmptyFileReport(PkgDirReportTest):
     """Check EmptyFile results."""
 
     def test_it(self):
-        # empty filesdir
-        self.assertNoReport(self.check, [self.mk_pkg()])
-
         # filesdir with an empty file
         self.assertIsInstance(
             self.assertReport(self.check, [self.mk_pkg({'test': ''})]),
@@ -109,9 +107,6 @@ class TestMismatchedPN(PkgDirReportTest):
     """Check MismatchedPN results."""
 
     def test_it(self):
-        # no files
-        self.assertNoReport(self.check, [self.mk_pkg()])
-
         # multiple regular ebuilds
         pkg = self.mk_pkg()
         touch(pjoin(os.path.dirname(pkg.path), '%s-0.ebuild' % pkg.package))
@@ -141,9 +136,6 @@ class TestInvalidPN(PkgDirReportTest):
     """Check InvalidPN results."""
 
     def test_it(self):
-        # no files
-        self.assertNoReport(self.check, [self.mk_pkg()])
-
         # regular ebuild
         pkg = self.mk_pkg()
         touch(pjoin(os.path.dirname(pkg.path), '%s-0.ebuild' % pkg.package))
@@ -171,9 +163,6 @@ class TestSizeViolation(PkgDirReportTest):
     """Check SizeViolation results."""
 
     def test_it(self):
-        # no files
-        self.assertNoReport(self.check, [self.mk_pkg()])
-
         # files under the 20k limit
         pkg = self.mk_pkg()
         for name, size in (('small', 1024*10),
@@ -216,9 +205,6 @@ class TestExecutableFile(PkgDirReportTest):
     """Check ExecutableFile results."""
 
     def test_it(self):
-        # no files
-        self.assertNoReport(self.check, [self.mk_pkg()])
-
         # non-empty filesdir
         self.assertNoReport(self.check, [self.mk_pkg({'test': 'asdfgh'})])
 
