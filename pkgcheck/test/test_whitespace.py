@@ -1,10 +1,17 @@
 from pkgcheck.test import misc
-from pkgcheck.whitespace import WhitespaceCheck
+from pkgcheck import whitespace
 
 
-class TestStandardWhitespaces(misc.ReportTestCase):
+class WhitespaceCheckTest(misc.ReportTestCase):
+    """Various whitespace related test support."""
 
-    check_kls = WhitespaceCheck
+    check_kls = whitespace.WhitespaceCheck
+
+    def setUp(self):
+        self.check = whitespace.WhitespaceCheck(None, None)
+
+
+class TestStandardWhitespaces(WhitespaceCheckTest):
 
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
@@ -19,15 +26,11 @@ class TestStandardWhitespaces(misc.ReportTestCase):
         fake_src.append("\n")
         fake_src.append("# That's it for now\n")
 
-        check = WhitespaceCheck(None, None)
-
-        report = self.assertReports(check,[fake_pkg,fake_src])
+        report = self.assertReports(self.check,[fake_pkg,fake_src])
         self.assertEqual(len(report), 4)
 
 
-class TestNoNewLineOnEnd(misc.ReportTestCase):
-
-    check_kls = WhitespaceCheck
+class TestNoNewLineOnEnd(WhitespaceCheckTest):
 
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
@@ -35,15 +38,11 @@ class TestNoNewLineOnEnd(misc.ReportTestCase):
         fake_src.append("# This is our first fake ebuild\n")
         fake_src.append("# That's it for now")
 
-        check = WhitespaceCheck(None, None)
-
-        report = self.assertReports(check,[fake_pkg,fake_src])
+        report = self.assertReports(self.check,[fake_pkg,fake_src])
         self.assertEqual(len(report), 1)
 
 
-class TestTrailingNewLineOnEnd(misc.ReportTestCase):
-
-    check_kls = WhitespaceCheck
+class TestTrailingNewLineOnEnd(WhitespaceCheckTest):
 
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
@@ -52,8 +51,5 @@ class TestTrailingNewLineOnEnd(misc.ReportTestCase):
         fake_src.append("# That's it for now\n")
         fake_src.append("\n")
 
-        check = WhitespaceCheck(None, None)
-
-        report = self.assertReports(check,[fake_pkg,fake_src])
+        report = self.assertReports(self.check,[fake_pkg,fake_src])
         self.assertEqual(len(report), 1)
-
