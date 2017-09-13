@@ -1,4 +1,5 @@
 from snakeoil.demandload import demand_compile_regexp
+from snakeoil.strings import pluralism
 
 from pkgcheck import base
 
@@ -13,9 +14,8 @@ class base_whitespace(base.Warning):
 
     @property
     def lines_str(self):
-        if len(self.lines) == 1:
-            return "line %i" % self.lines[0]
-        return "lines %s" % ', '.join(str(x) for x in self.lines)
+        return "line%s: %s" % (
+            pluralism(self.lines), ', '.join(str(x) for x in self.lines))
 
 
 class WhitespaceFound(base_whitespace):
