@@ -1,4 +1,8 @@
-"""pkgcore-based QA utility"""
+"""pkgcore-based QA utility
+
+pkgcheck is a QA utility based on **pkgcore**\(5) similar to **repoman**\(1)
+from portage.
+"""
 
 from __future__ import absolute_import
 
