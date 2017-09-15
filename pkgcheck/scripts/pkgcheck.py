@@ -136,7 +136,6 @@ _known_keywords = tuple(sorted(
 
 @scan.bind_final_check
 def _validate_args(parser, namespace):
-    namespace.targets = []
     namespace.enabled_checks = list(_known_checks)
     namespace.enabled_keywords = list(_known_keywords)
 
