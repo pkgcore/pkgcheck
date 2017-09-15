@@ -31,7 +31,7 @@ Installing from git in a virtualenv (latest snakeoil/pkgcore are often required)
 Installing from a tarball or git repo::
 
     python setup.py install
-    pplugincache pkgcheck
+    pplugincache pkgcheck.plugins
 
 Tests
 =====
@@ -77,13 +77,13 @@ Defining "suites" in the configuration solves this ambiguity. A
 to use as a base and optionally a set of checks to run. If there is a
 single suite with a target repository containing the current directory
 it is used. So with the following suite definition in
-``~/.pkgcore.conf``::
+``~/.config/pkgcore/pkgcore.conf``::
 
   [pkgcheck-gentoo-suite]
   class=pkgcheck.base.Suite
   target_repo=gentoo
 
-you can run ``pkgcheck`` with no further arguments inside your portage
+you can run ``pkgcheck scan`` with no further arguments inside your portage
 directory and it will do the right thing.
 
 Make sure the target repo properly specifies its masters in
@@ -102,12 +102,12 @@ This disables checks that are not interesting unless you can set
 stable keywords for this suite. See Checksets_ for more information.
 
 Instead of relying on the working directory to pick the right suite
-you can specify one explicitly with ``pkgcheck --suite``.
+you can specify one explicitly with ``pkgcheck scan -s/--suite``.
 
 Checksets
 ---------
 
-By default ``pkgcheck`` runs all available checks. This is not always
+By default ``pkgcheck scan`` runs all available checks. This is not always
 desired. For example, checks about missing stable keywords are often
 just noise in the output for ebuild devs. A checkset defines a subset
 of checks to run. There are two kinds: one enabling a specific set of
@@ -149,7 +149,7 @@ this in your configuration::
   class=pkgcheck.reporters.plain_reporter
   default=true
 
-To use a non-default reporter use ``pkgcheck --reporter``. To see the
+To use a non-default reporter use ``pkgcheck scan -R/--reporter``. To see the
 reporters available use ``pconfig configurables
 pkgcheck_reporter_factory``.
 
