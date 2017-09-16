@@ -4,15 +4,15 @@ SHELL_LIB=$(python -c 'from pkgcore import const; print(const.LIBDIR_PATH)')/she
 source "${SHELL_LIB}" || print "$0: failed to load '${SHELL_LIB}'" >&2
 unset SHELL_LIB
 
-typeset -a common_main_args common_output_args common_args
+typeset -a common_pkgcore_args common_output_args
+local curcontext=$curcontext state state_descr line ret=1
 
-common_main_args=(
+common_pkgcore_args=(
   '(- :)'--version'[show version information and exit]'
   '--add-config[modify an existing configuration section]'
   '--new-config[add a new configuration section]'
   '--empty-config[do not load user/system configuration]'
   '--config[override location of config files]:config path:_files'
-  "--color[Color output]:yes/no:((y\:'yes' n\:'no'))"
 )
 
 common_output_args=(
@@ -20,53 +20,90 @@ common_output_args=(
   '(--debug --help -h)--debug[enable debugging output]'
   '(--quiet -q --verbose -v)'{-q,--quiet}'[suppress non-error output]'
   '(--verbose -v --quiet -q)'{-v,--verbose}'[show verbose output]'
-)
-
-common_args=(
-  $common_main_args
-  $common_output_args
-)
-
-local curcontext=$curcontext state state_descr line ret=1
-typeset -a options arches profiles plugin_options
-
-options=(
-  '--list-keywords[print available warning/error keywords and exit]'
-  '--list-checks[print what checks are available to run and exit]'
-  '--list-reporters[print known reporters and exit]'
-  {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_repos'
-  {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter (defined in pkgcore's config)]"
-  {'(--suite)-s','(-s)--suite'}'[specify the configuration suite to use]'
-)
-
-check_options=(
-  {'(--checks)-c','(-c)--checks'}'[comma separated list of checks to enable/disable]'
-  {'(--checkset)-C','(-C)--checkset'}'[preconfigured set of checks to run]'
-  {'(--keywords)-k','(-k)--keywords'}'[comma separated list of keywords to enable/disable]'
-  {'(--scopes)-S','(-S)--scopes'}'[comma separated list of keyword scopes to enable/disable]'
-)
-
-arches=(
-  {'(--arches)-a','(-a)--arches'}'[comma separated list of arches to enable/disable]:arches:{_values -s , arches $(_arches -p)}'
-)
-
-profiles=(
-  '--profiles-base[path to base profiles directory]:profiles base path:_path_files -/'
-  '--profiles-disable-deprecated[disable scanning of deprecated profiles]'
-  {'(--profiles)-p','(-p)--profiles'}'[comma separated list of profiles to enable/disable]:arches:{_values -s , profiles stable dev exp}'
-)
-
-plugin_options=(
-  $arches
-  $profiles
+  "--color[Color output]:yes/no:((y\:'yes' n\:'no'))"
 )
 
 _arguments -C \
-  $common_args \
-  $options \
-  $check_options \
-  $plugin_options \
+  $common_pkgcore_args \
+  $common_output_args \
+  '(-): :->command' \
+  '(-)*:: :->subcommand' \
   && ret=0
+
+case $state in
+  (command)
+    typeset -a subcommands
+
+    subcommands=(
+      scan:'scan targets for QA issues'
+      replay:'replay results streams'
+      show:'show various pkgcheck info'
+    )
+
+    _describe -t subcommands subcommand subcommands && ret=0
+
+    ;;
+  (subcommand)
+    curcontext=${curcontext%:*}-$line[1]:
+
+    case $line[1] in
+      (scan)
+        typeset -a scan_opts check_opts arch_opts profile_opts plugin_opts
+
+        scan_opts=(
+          {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_repos'
+          {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter (defined in pkgcore's config)]"
+          {'(--suite)-s','(-s)--suite'}'[specify the configuration suite to use]'
+        )
+
+        check_opts=(
+          {'(--checks)-c','(-c)--checks'}'[comma separated list of checks to enable/disable]'
+          {'(--checkset)-C','(-C)--checkset'}'[preconfigured set of checks to run]'
+          {'(--keywords)-k','(-k)--keywords'}'[comma separated list of keywords to enable/disable]'
+          {'(--scopes)-S','(-S)--scopes'}'[comma separated list of keyword scopes to enable/disable]'
+        )
+
+        arch_opts=(
+          {'(--arches)-a','(-a)--arches'}'[comma separated list of arches to enable/disable]:arches:{_values -s , arches $(_arches -p)}'
+        )
+
+        profile_opts=(
+          '--profiles-base[path to base profiles directory]:profiles base path:_path_files -/'
+          '--profiles-disable-deprecated[disable scanning of deprecated profiles]'
+          {'(--profiles)-p','(-p)--profiles'}'[comma separated list of profiles to enable/disable]:arches:{_values -s , profiles stable dev exp}'
+        )
+
+        plugin_opts=(
+          $arch_opts
+          $profile_opts
+        )
+
+        _arguments -C -A '-*' \
+          $common_output_args \
+          $scan_opts \
+          $check_opts \
+          $plugin_opts \
+          && ret=0
+        ;;
+      (replay)
+        _arguments -C -A '-*' \
+          $common_output_args \
+          && ret=0
+        ;;
+      (show)
+        _arguments -C -A '-*' \
+          $common_output_args \
+          '--keywords[print available warning/error keywords and exit]' \
+          '--checks[print what checks are available to run and exit]' \
+          '--reporters[print known reporters and exit]' \
+          && ret=0
+        ;;
+      (*)
+        _nothing
+        ;;
+    esac
+    ;;
+esac
 
 return ret
 
