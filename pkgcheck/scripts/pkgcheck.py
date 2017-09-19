@@ -351,6 +351,13 @@ def _validate_args(parser, namespace):
     disabled_checks, enabled_checks = ((), ())
     if namespace.selected_checks is not None:
         disabled_checks, enabled_checks = namespace.selected_checks
+        # validate selected checks
+        selected_checks = set(disabled_checks + enabled_checks)
+        available_checks = set(x.__name__ for x in _known_checks)
+        unknown_checks = selected_checks - available_checks
+        if unknown_checks:
+            parser.error("unknown check%s: %r (use 'pkgcheck show --checks' to show valid checks)" % (
+                pluralism(unknown_checks), ', '.join(unknown_checks)))
     elif namespace.filtered_keywords is not None:
         # enable checks based on enabled keyword -> check mapping
         enabled_checks = []
