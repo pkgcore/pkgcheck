@@ -1,3 +1,4 @@
+from collections import defaultdict
 from itertools import ifilterfalse, chain, groupby
 from operator import attrgetter, itemgetter
 
@@ -9,11 +10,11 @@ from pkgcheck import base, addons
 demandload(
     'os',
     'snakeoil.contexts:patch',
-    'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
+    'snakeoil.osutils:listdir_dirs,pjoin',
     'snakeoil.sequences:iflatten_instance',
     'snakeoil.strings:pluralism',
-    'pkgcore.ebuild:atom',
-    'pkgcore.ebuild.profiles:ProfileStack',
+    'pkgcore.ebuild:atom,misc',
+    'pkgcore.ebuild.profiles:ProfileNode,ProfileStack',
     'pkgcore:fetch',
 )
 
@@ -601,6 +602,147 @@ class UnknownCategories(base.Warning):
         return "[ %s ]" % ', '.join(self.categories)
 
 
+class BadProfileEntry(base.Error):
+    """Badly formatted entry in a profiles file."""
+
+    __slots__ = ("path", "error")
+
+    threshold = base.repository_feed
+
+    def __init__(self, path, error):
+        super(BadProfileEntry, self).__init__()
+        self.path = path
+        self.error = error
+
+    @property
+    def short_desc(self):
+        return 'failed parsing %r: %s' % (self.path, self.error)
+
+
+class UnknownProfilePackages(base.Warning):
+    """Profile files include package entries that don't exist in the repo."""
+
+    __slots__ = ("path", "packages")
+
+    threshold = base.repository_feed
+
+    def __init__(self, path, packages):
+        super(UnknownProfilePackages, self).__init__()
+        self.path = path
+        self.packages = tuple(str(x) for x in packages)
+
+    @property
+    def short_desc(self):
+        return "unknown package%s in %r: [ %s ]" % (
+            pluralism(self.packages), self.path, ', '.join(map(repr, self.packages)))
+
+
+class UnknownProfilePackageUse(base.Warning):
+    """Profile files include package entries with USE flags that don't exist."""
+
+    __slots__ = ("path", "package", "flags")
+
+    threshold = base.repository_feed
+
+    def __init__(self, path, package, flags):
+        super(UnknownProfilePackageUse, self).__init__()
+        self.path = path
+        self.package = str(package)
+        self.flags = tuple(flags)
+
+    @property
+    def short_desc(self):
+        return "unknown USE flag%s for %r in %r: [ %s ]" % (
+            pluralism(self.flags), self.package, self.path,
+            ', '.join(map(repr, self.flags)))
+
+
+class ProfilesCheck(base.Template):
+    """Scan repo profiles for unknown flags/packages."""
+
+    required_addons = (addons.ProfileAddon,)
+    feed_type = base.repository_feed
+    scope = base.repository_scope
+    known_results = (BadProfileEntry, UnknownProfilePackages, UnknownProfilePackageUse)
+
+    def __init__(self, options, profile_filters):
+        super(ProfilesCheck, self).__init__(options)
+        self.repo = options.target_repo
+        self.profiles_dir = pjoin(self.repo.location, 'profiles')
+        self.non_profile_dirs = {
+            pjoin(self.profiles_dir, x) for x in profile_filters.non_profile_dirs}
+
+    def feed(self, pkg, reporter):
+        pass
+
+    def finish(self, reporter):
+        unknown_pkgs = defaultdict(lambda: defaultdict(list))
+        unknown_use = defaultdict(lambda: defaultdict(list))
+
+        def _pkg_atoms(vals):
+            for x in iflatten_instance(vals, atom.atom):
+                if not self.repo.match(x):
+                    unknown_pkgs[profile.path][filename].append(x)
+
+        def _pkg_use(vals):
+            # TODO: give ChunkedDataDict some dict view methods
+            d = vals
+            if isinstance(d, misc.ChunkedDataDict):
+                d = vals.render_to_dict()
+
+            for _pkg, entries in d.iteritems():
+                for x, disabled_use, enabled_use in entries:
+                    pkgs = self.repo.match(x)
+                    if not pkgs:
+                        unknown_pkgs[profile.path][filename].append(x)
+                    else:
+                        available_pkg_use = {x for pkg in pkgs for x in pkg.iuse_stripped}
+                        requested_pkg_use = set(disabled_use).union(enabled_use)
+                        unknown_pkg_use = requested_pkg_use - available_pkg_use
+                        if unknown_pkg_use:
+                            unknown_use[profile.path][filename].append((x, unknown_pkg_use))
+
+        for root, _dirs, files in os.walk(self.profiles_dir):
+            if root not in self.non_profile_dirs:
+                profile = ProfileNode(root)
+                for filename, attr, func in (
+                    ('packages', 'packages', _pkg_atoms),
+                    ('package.mask', 'masks', _pkg_atoms),
+                    ('package.unmask', 'unmasks', _pkg_atoms),
+                    ('package.use', 'pkg_use', _pkg_use),
+                    ('package.use.force', 'pkg_use_force', _pkg_use),
+                    ('package.use.stable.force', 'pkg_use_stable_force', _pkg_use),
+                    ('package.use.mask', 'pkg_use_mask', _pkg_use),
+                    ('package.use.stable.mask', 'pkg_use_stable_mask', _pkg_use)):
+
+                    if filename in files:
+                        # catch badly formatted entries
+                        # TODO: switch this to a patched logger catcher once
+                        # pkgcore is updated to log and ignore bad entries
+                        try:
+                            vals = getattr(profile, attr)
+                        except Exception as e:
+                            reporter.add_report(BadProfileEntry(
+                                pjoin(root[len(self.repo.location):].lstrip('/'), e.filename),
+                                e.error))
+                            continue
+
+                        func(vals)
+
+        for path, filenames in sorted(unknown_pkgs.iteritems()):
+            for filename, vals in filenames.iteritems():
+                reporter.add_report(UnknownProfilePackages(
+                    pjoin(path[len(self.repo.location):].lstrip('/'), filename),
+                    vals))
+
+        for path, filenames in sorted(unknown_use.iteritems()):
+            for filename, vals in filenames.iteritems():
+                for pkg, flags in vals:
+                    reporter.add_report(UnknownProfilePackageUse(
+                        pjoin(path[len(self.repo.location):].lstrip('/'), filename),
+                        pkg, flags))
+
+
 class RepoProfilesReport(base.Template):
     """Scan repo for various profiles directory issues.
 
@@ -621,6 +763,7 @@ class RepoProfilesReport(base.Template):
         self.profiles = options.target_repo.config.arch_profiles.itervalues()
         self.repo = options.target_repo
         self.profiles_dir = pjoin(self.repo.location, 'profiles')
+        self.non_profile_dirs = profile_filters.non_profile_dirs
 
     def feed(self, pkg, reporter):
         pass
@@ -641,7 +784,6 @@ class RepoProfilesReport(base.Template):
         if arches_without_profiles:
             reporter.add_report(ArchesWithoutProfiles(arches_without_profiles))
 
-        non_profile_dirs = {'desc', 'updates'}
         root_profile_dirs = {'embedded'}
         available_profile_dirs = set()
         for root, _dirs, _files in os.walk(self.profiles_dir):
@@ -650,7 +792,7 @@ class RepoProfilesReport(base.Template):
                 d = root[len(self.profiles_dir):].lstrip('/')
                 if d:
                     available_profile_dirs.add(d)
-        available_profile_dirs -= non_profile_dirs | root_profile_dirs
+        available_profile_dirs -= self.non_profile_dirs | root_profile_dirs
 
         def parents(path):
             """Yield all directory path parents excluding the root directory.
