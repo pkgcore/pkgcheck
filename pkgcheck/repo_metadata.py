@@ -723,7 +723,7 @@ class ProfilesCheck(base.Template):
                             vals = getattr(profile, attr)
                         except Exception as e:
                             reporter.add_report(BadProfileEntry(
-                                pjoin(root[len(self.repo.location):].lstrip('/'), e.filename),
+                                pjoin(root[len(self.profiles_dir):].lstrip('/'), e.filename),
                                 e.error))
                             continue
 
@@ -732,14 +732,14 @@ class ProfilesCheck(base.Template):
         for path, filenames in sorted(unknown_pkgs.iteritems()):
             for filename, vals in filenames.iteritems():
                 reporter.add_report(UnknownProfilePackages(
-                    pjoin(path[len(self.repo.location):].lstrip('/'), filename),
+                    pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
                     vals))
 
         for path, filenames in sorted(unknown_use.iteritems()):
             for filename, vals in filenames.iteritems():
                 for pkg, flags in vals:
                     reporter.add_report(UnknownProfilePackageUse(
-                        pjoin(path[len(self.repo.location):].lstrip('/'), filename),
+                        pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
                         pkg, flags))
 
 
