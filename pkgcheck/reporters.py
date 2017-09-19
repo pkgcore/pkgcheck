@@ -76,7 +76,7 @@ class FancyReporter(base.Reporter):
         elif result.threshold == base.category_feed:
             key = result.category
         else:
-            key = 'unknown'
+            key = 'repo'
 
         if key != self.key:
             self.out.write()
