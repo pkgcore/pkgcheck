@@ -266,6 +266,38 @@ class PkgMetadataXmlIndentation(MetadataXmlIndentation):
     threshold = base.package_feed
 
 
+class MetadataXmlEmptyElement(base.Warning):
+    """Empty element in metadata.xml file."""
+
+    __slots__ = ("category", "package", "filename", "line", "element")
+    __attrs__ = __slots__
+
+    def __init__(self, element, line, filename, category, package=None):
+        super(MetadataXmlEmptyElement, self).__init__()
+        self.element = element
+        self.line = line
+        self.filename = filename
+        self.category = category
+        self.package = package
+
+    @property
+    def short_desc(self):
+        return "metadata.xml has empty element %r on line %s" % (
+            self.element, self.line)
+
+
+class CatMetadataXmlEmptyElement(MetadataXmlEmptyElement):
+    """Empty element in category metadata.xml file."""
+    __slots__ = ()
+    threshold = base.category_feed
+
+
+class PkgMetadataXmlEmptyElement(MetadataXmlEmptyElement):
+    """Empty element in package metadata.xml file."""
+    __slots__ = ()
+    threshold = base.package_feed
+
+
 class base_check(base.Template):
     """Base class for metadata.xml scans."""
 
@@ -344,6 +376,11 @@ class base_check(base.Template):
 
     def check_doc(self, doc):
         """Perform additional document structure checks."""
+        # find all root descendant elements that are empty
+        for el in doc.getroot().iterdescendants():
+            if not el.getchildren() and (el.text is None or not el.text.strip()):
+                yield partial(self.empty_element, el.tag, el.sourceline)
+
         for el in doc.findall('.//cat'):
             c = el.text.strip()
             if c not in self.options.search_repo.categories:
@@ -405,11 +442,12 @@ class PackageMetadataXmlCheck(base_check):
     catref_error = PkgMetadataXmlInvalidCatRef
     pkgref_error = PkgMetadataXmlInvalidPkgRef
     indent_error = PkgMetadataXmlIndentation
+    empty_element = PkgMetadataXmlEmptyElement
 
     known_results = (
         PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
-        PkgMetadataXmlIndentation)
+        PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement)
 
     def feed(self, pkgs, reporter):
         # package with no ebuilds, skipping check
@@ -432,11 +470,12 @@ class CategoryMetadataXmlCheck(base_check):
     catref_error = CatMetadataXmlInvalidCatRef
     pkgref_error = CatMetadataXmlInvalidPkgRef
     indent_error = CatMetadataXmlIndentation
+    empty_element = CatMetadataXmlEmptyElement
 
     known_results = (
         CatBadlyFormedXml, CatInvalidXml, CatMissingMetadataXml,
         CatMetadataXmlInvalidPkgRef, CatMetadataXmlInvalidCatRef,
-        CatMetadataXmlIndentation)
+        CatMetadataXmlIndentation, CatMetadataXmlEmptyElement)
 
     def feed(self, pkgs, reporter):
         # empty category, skipping check
