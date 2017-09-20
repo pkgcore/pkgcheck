@@ -657,26 +657,51 @@ class UnknownProfilePackageUse(base.Warning):
             ', '.join(map(repr, self.flags)))
 
 
+class UnknownProfileUse(base.Warning):
+    """Profile files include USE flags that don't exist."""
+
+    __slots__ = ("path", "flags")
+
+    threshold = base.repository_feed
+
+    def __init__(self, path, flags):
+        super(UnknownProfileUse, self).__init__()
+        self.path = path
+        self.flags = tuple(flags)
+
+    @property
+    def short_desc(self):
+        return "unknown USE flag%s in %r: [ %s ]" % (
+            pluralism(self.flags), self.path, ', '.join(map(repr, self.flags)))
+
+
 class ProfilesCheck(base.Template):
     """Scan repo profiles for unknown flags/packages."""
 
-    required_addons = (addons.ProfileAddon,)
+    required_addons = (addons.ProfileAddon, addons.UseAddon)
     feed_type = base.repository_feed
     scope = base.repository_scope
-    known_results = (BadProfileEntry, UnknownProfilePackages, UnknownProfilePackageUse)
+    known_results = (
+        BadProfileEntry, UnknownProfilePackages,
+        UnknownProfilePackageUse, UnknownProfileUse,
+    )
 
-    def __init__(self, options, profile_filters):
+    def __init__(self, options, profile_filters, iuse_handler):
         super(ProfilesCheck, self).__init__(options)
         self.repo = options.target_repo
         self.profiles_dir = pjoin(self.repo.location, 'profiles')
         self.non_profile_dirs = {
             pjoin(self.profiles_dir, x) for x in profile_filters.non_profile_dirs}
+        local_iuse = {use for pkg, (use, desc) in self.repo.config.use_local_desc}
+        self.available_iuse = frozenset(
+            local_iuse | iuse_handler.global_iuse | iuse_handler.unstated_iuse)
 
     def feed(self, pkg, reporter):
         pass
 
     def finish(self, reporter):
         unknown_pkgs = defaultdict(lambda: defaultdict(list))
+        unknown_pkg_use = defaultdict(lambda: defaultdict(list))
         unknown_use = defaultdict(lambda: defaultdict(list))
 
         def _pkg_atoms(vals):
@@ -691,16 +716,26 @@ class ProfilesCheck(base.Template):
                 d = vals.render_to_dict()
 
             for _pkg, entries in d.iteritems():
-                for x, disabled_use, enabled_use in entries:
+                for x, disabled, enabled in entries:
                     pkgs = self.repo.match(x)
                     if not pkgs:
                         unknown_pkgs[profile.path][filename].append(x)
                     else:
-                        available_pkg_use = {x for pkg in pkgs for x in pkg.iuse_stripped}
-                        requested_pkg_use = set(disabled_use).union(enabled_use)
-                        unknown_pkg_use = requested_pkg_use - available_pkg_use
-                        if unknown_pkg_use:
-                            unknown_use[profile.path][filename].append((x, unknown_pkg_use))
+                        available = {x for pkg in pkgs for x in pkg.iuse_stripped}
+                        requested = set(disabled).union(enabled)
+                        unknown = requested - available
+                        if unknown:
+                            unknown_pkg_use[profile.path][filename].append((x, unknown))
+
+        def _use(vals):
+            # TODO: give ChunkedDataDict some dict view methods
+            d = vals.render_to_dict()
+            for _, entries in d.iteritems():
+                for _, disabled, enabled in entries:
+                    requested = set(disabled).union(enabled)
+                    unknown = requested - self.available_iuse
+                    if unknown:
+                        unknown_use[profile.path][filename].extend(unknown)
 
         for root, _dirs, files in os.walk(self.profiles_dir):
             if root not in self.non_profile_dirs:
@@ -713,7 +748,11 @@ class ProfilesCheck(base.Template):
                     ('package.use.force', 'pkg_use_force', _pkg_use),
                     ('package.use.stable.force', 'pkg_use_stable_force', _pkg_use),
                     ('package.use.mask', 'pkg_use_mask', _pkg_use),
-                    ('package.use.stable.mask', 'pkg_use_stable_mask', _pkg_use)):
+                    ('package.use.stable.mask', 'pkg_use_stable_mask', _pkg_use),
+                    ('use.force', 'use_force', _use),
+                    ('use.stable.force', 'use_stable_force', _use),
+                    ('use.mask', 'use_mask', _use),
+                    ('use.stable.mask', 'use_stable_mask', _use)):
 
                     if filename in files:
                         # catch badly formatted entries
@@ -735,12 +774,18 @@ class ProfilesCheck(base.Template):
                     pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
                     vals))
 
-        for path, filenames in sorted(unknown_use.iteritems()):
+        for path, filenames in sorted(unknown_pkg_use.iteritems()):
             for filename, vals in filenames.iteritems():
                 for pkg, flags in vals:
                     reporter.add_report(UnknownProfilePackageUse(
                         pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
                         pkg, flags))
+
+        for path, filenames in sorted(unknown_use.iteritems()):
+            for filename, vals in filenames.iteritems():
+                reporter.add_report(UnknownProfileUse(
+                    pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
+                    vals))
 
 
 class RepoProfilesReport(base.Template):
