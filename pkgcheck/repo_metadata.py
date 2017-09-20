@@ -638,7 +638,7 @@ class UnknownProfilePackages(base.Warning):
 
 
 class UnknownProfilePackageUse(base.Warning):
-    """Profile files include package entries with USE flags that don't exist."""
+    """Profile files include entries with USE flags that aren't used on any matching packages."""
 
     __slots__ = ("path", "package", "flags")
 
