@@ -765,7 +765,7 @@ list_options.add_argument(
         Use -v/--verbose to show reporter descriptions.
     """)
 @show.bind_main_func
-def _main(options, out, err):
+def _show(options, out, err):
     if options.keywords:
         display_keywords(out, options)
 
