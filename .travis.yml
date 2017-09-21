@@ -6,8 +6,8 @@ python:
   - 3.6
 env:
   global:
-    - secure: "op74khJo1E0o61WM0KI6VttaZBZR3mhRzndhs0fJS87fpB1VbLgx7XFDw7oho+EwDrbJYqudFGBKF86wyUplNfiM8ovu6xAT6MaBGmmnuLIT2o41fMofS/b3DSs+GjaENzRI23UCNCT9eTJLBXkmwYo8vhzd/NZ3UOTdc1VZq/A="
-    - secure: "UjpnoaH0vkNr6P9YfSWU1MWqXXQgxe56il4jheVKmoK+V0uepSsKynacVy8Qg6Lx4CNJWzBSA/xtILwBOhj/pKeP7dhCWWdbrOLH6++VZDZmDk+32OY9fCClroKujfv9McMH8la9ZWk76pnOsDjfQ1Q19wfyAtPLftoHSy11MJU="
+    - secure: "Y94kVKSbboNJnFK6UGL2BKWLtbN692tCl0prYh4Ivq5taHET5Phi9TRKA64AaXXndxNqLk8ALoMuQDsJcpXjYGQjK7aM6VXOTLHjIhE0d2kJuC+ibhm04MhUhG4PrbOMJLg6jqS11fSLeqy/CkawzOVcia6ACV3aB44uTnu79g0="
+    - secure: "FmQEUPLe9lBG5rT7qkrPwZsOyULX3pmKgru4bC3ZrST6ibCaAmT/TfLZ/XqHrvGeaP0vKu7daqlgrpbIkzBfxeJ+UZYL4T5F2yTLSgoigs4mGaDgt3zZvuzGEffJV+drgQVuHeEBKtT+f3BQ1UnLTKREjgRgwbIVmQ6GHKxwU1s="
     - CIBW_PLATFORM=linux
     - CIBW_SKIP="cp26-* cp33-*"
     - CIBW_BEFORE_BUILD="{pip} install -r requirements.txt"
