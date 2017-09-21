@@ -38,7 +38,7 @@ demandload(
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
 argparser = arghparse.ArgumentParser(
     suppress=True, color=False, description=__doc__, parents=(pkgcore_opts,))
-subparsers = argparser.add_subparsers(description="check applets")
+subparsers = argparser.add_subparsers(description="check applets", default='scan')
 
 # These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser('scan', description='scan targets for QA issues')
