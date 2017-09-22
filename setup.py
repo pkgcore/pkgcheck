@@ -25,11 +25,7 @@ setup(
     long_description=readme,
     url='https://github.com/pkgcore/pkgcheck',
     packages=find_packages(),
-    install_requires=[
-        'lxml',
-        'snakeoil>=0.7.2',
-        'pkgcore>=0.9.5',
-    ],
+    install_requires=pkgdist.install_requires(),
     scripts=os.listdir('bin'),
     data_files=list(
         pkgdist.data_mapping('share/zsh/site-functions', 'completion/zsh'),

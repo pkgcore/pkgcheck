@@ -10,7 +10,7 @@ env:
     - secure: "FmQEUPLe9lBG5rT7qkrPwZsOyULX3pmKgru4bC3ZrST6ibCaAmT/TfLZ/XqHrvGeaP0vKu7daqlgrpbIkzBfxeJ+UZYL4T5F2yTLSgoigs4mGaDgt3zZvuzGEffJV+drgQVuHeEBKtT+f3BQ1UnLTKREjgRgwbIVmQ6GHKxwU1s="
     - CIBW_PLATFORM=linux
     - CIBW_SKIP="cp26-* cp33-*"
-    - CIBW_BEFORE_BUILD="{pip} install -r requirements.txt"
+    - CIBW_BEFORE_BUILD="{pip} install -r requirements/release.txt"
 sudo: required
 services:
   - docker
@@ -18,10 +18,11 @@ cache:
   directories:
     - $HOME/.cache/pip
 install:
-  - pip install --upgrade pip
-  - pip install --only-binary ":all:" tox codecov
+  - pip install -U pip
 before_script: git clone https://github.com/pkgcore/pkgdist.git
 script:
+  - cp -av pkgdist/requirements/* requirements/
+  - pip install -r requirements/ci.txt
   - tox -e travis
   - pkgdist/build-dist-files.sh
 after_success:
