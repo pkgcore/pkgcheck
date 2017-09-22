@@ -16,7 +16,7 @@ with io.open('README.rst', encoding='utf-8') as f:
     readme = f.read()
 
 setup(
-    name='pkgcheck',
+    name=pkgdist.MODULE,
     version=pkgdist.version(),
     license='BSD',
     author='Brian Harring, Tim Harder',
