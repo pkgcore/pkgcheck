@@ -2,7 +2,96 @@
 Release Notes
 =============
 
-See ChangeLog for full commit logs; this is summarized and major changes.
+---------------------------
+pkgcheck 0.5.4 (2017-09-22)
+---------------------------
+
+- Add MetadataXmlEmptyElement check for empty elements in metadata.xml files.
+
+- Add BadProfileEntry, UnknownProfilePackages, UnknownProfilePackageUse, and
+  UnknownProfileUse checks that scan various files in a repo's profiles
+  directory looking for old packages and/or USE flags.
+
+- Merge replay functionality into pkgcheck and split the commands into 'scan',
+  'replay', and 'show' subcommands with 'scan' still being the default
+  subcommand so previous commandline usage for running pkgcheck remains the
+  same for now.
+
+- Add 'errors' and 'warnings' aliases for the -k/--keywords option, e.g. if you
+  only want to scan for errors use the following: pkgcheck -k errors
+
+- Fallback to the default repo if not running with a configured repo and one
+  wasn't specified.
+
+- Add PortageInternals check for ebuilds using a function or variable internal
+  to portage similar to repoman.
+
+- Add HttpsAvailable check for http:// links that should use https:// similar
+  to repoman.
+
+- Add DuplicateFiles check for duplicate files in FILESDIR.
+
+- Add EmptyFile check for empty files in FILESDIR.
+
+- Add AbsoluteSymlink check similar to repoman's.
+
+- Add UnusedInMasterLicenses, UnusedInMasterEclasses,
+  UnusedInMasterGlobalFlags, and UnusedInMasterMirrors reports that check if an
+  overlay is using the related items from the master repo that are unused there
+  (meaning they could be removed from the master soon).
+
+- Add initial json reporter that outputs newline-delimited json for report
+  objects.
+
+- Add BadFilename check for unspecific filenames such as ${PV}.tar.gz or
+  v${PV}.zip that can be found on raw github tag archive downloads.
+
+- GPL2/BSD dual licensing was dropped to BSD as agreed by all contributors.
+
+- Add check for REQUIRED_USE against default profile USE which flags packages
+  with default USE settings that don't satisfy their REQUIRED_USE for each
+  profile scanned.
+
+- Add -k/--keywords option to only check for certain keywords.
+
+- Add UnusedEclasses check.
+
+- Drop --profiles-disable-deprecated option, deprecated profiles are skipped by
+  default now and can be enabled or disabled using the 'deprecated' argument to
+  -p/--profiles similar to the stable, dev, and exp keywords for profile
+  scanning.
+
+- Add UnusedProfileDirs check that will output all profile dirs that aren't
+  specified as a profile in profiles.desc or aren't sourced by any as a parent.
+
+- Add python3.6 support and drop python3.3 support.
+
+- Add UnnecessaryManifest report for showing unnecessary manifest entries for
+  non-DIST targets on a repo with thin manifests enabled.
+
+- Collapse -c/--check and -d/--disable-check into -c/--checks option using the
+  same extended comma toggling method used for --arches and --profiles options.
+
+- Add support for checking REQUIRED_USE for validity.
+
+- Drop -o/--overlayed-repo support and rely on properly configured masters.
+
+- Add UnknownLicenses report for unknown licenses listed in license groups.
+
+- Add support for running checks of a certain scope using -S/--scopes, e.g. to
+  run all repo scope checks on the gentoo repo use the following command:
+  pkgcheck -r gentoo -S repo
+
+- Add UnusedMirrorsCheck to scan for unused third party mirrors.
+
+- Add UnknownCategories report that shows categories that aren't listed in a
+  repo's (or its masters) categories.
+
+- Update deprecated eclasses list.
+
+- Drop restriction on current working directory for full repo scans. Previously
+  pkgcheck had to be run within a repo, now it should be able to run from
+  anywhere against a specified repo.
 
 ---------------------------
 pkgcheck 0.5.3 (2016-05-29)
