@@ -6,8 +6,8 @@ python:
   - 3.6
 env:
   global:
-    - secure: "Y94kVKSbboNJnFK6UGL2BKWLtbN692tCl0prYh4Ivq5taHET5Phi9TRKA64AaXXndxNqLk8ALoMuQDsJcpXjYGQjK7aM6VXOTLHjIhE0d2kJuC+ibhm04MhUhG4PrbOMJLg6jqS11fSLeqy/CkawzOVcia6ACV3aB44uTnu79g0="
-    - secure: "FmQEUPLe9lBG5rT7qkrPwZsOyULX3pmKgru4bC3ZrST6ibCaAmT/TfLZ/XqHrvGeaP0vKu7daqlgrpbIkzBfxeJ+UZYL4T5F2yTLSgoigs4mGaDgt3zZvuzGEffJV+drgQVuHeEBKtT+f3BQ1UnLTKREjgRgwbIVmQ6GHKxwU1s="
+    - secure: Y94kVKSbboNJnFK6UGL2BKWLtbN692tCl0prYh4Ivq5taHET5Phi9TRKA64AaXXndxNqLk8ALoMuQDsJcpXjYGQjK7aM6VXOTLHjIhE0d2kJuC+ibhm04MhUhG4PrbOMJLg6jqS11fSLeqy/CkawzOVcia6ACV3aB44uTnu79g0=
+    - secure: FmQEUPLe9lBG5rT7qkrPwZsOyULX3pmKgru4bC3ZrST6ibCaAmT/TfLZ/XqHrvGeaP0vKu7daqlgrpbIkzBfxeJ+UZYL4T5F2yTLSgoigs4mGaDgt3zZvuzGEffJV+drgQVuHeEBKtT+f3BQ1UnLTKREjgRgwbIVmQ6GHKxwU1s=
     - CIBW_PLATFORM=linux
     - CIBW_SKIP="cp26-* cp33-*"
     - CIBW_BEFORE_BUILD="{pip} install -r requirements/release.txt"
@@ -16,12 +16,12 @@ services:
   - docker
 cache:
   directories:
-    - $HOME/.cache/pip
+    - "$HOME/.cache/pip"
 install:
   - pip install -U pip
 before_script: git clone https://github.com/pkgcore/pkgdist.git
 script:
-  - cp -av pkgdist/requirements/* requirements/
+  - cp -R pkgdist/requirements/* requirements/
   - pip install -r requirements/ci.txt
   - tox -e travis
   - pkgdist/build-dist-files.sh
@@ -30,3 +30,14 @@ after_success:
   - pushd .tox/travis/lib/python*/site-packages
   - codecov
   - popd
+
+# push release tarballs to github
+deploy:
+  provider: releases
+  api_key:
+    secure: LiWvebihdlkZ2nc0psCyLYcaGU3y2UehddndYYquYgDnKSGrpWo6uF2vg+YXzdEMeDc2BaEDrcu9OwUaCbXTuO2f2YPq9lom4GRDY1lD9kJBKXuAAArRzysijbd7HEEg119FLzkOvbHC1XW0Bi/mV37IHQ7pP2KU1rnbY5Ltby4=
+  file_glob: true
+  file: dist/pkgcheck-*.tar.gz
+  skip_cleanup: true
+  on:
+    tags: true
