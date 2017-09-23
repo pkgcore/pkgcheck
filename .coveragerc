@@ -1,7 +1,15 @@
 [run]
 source = pkgcheck
 branch = True
-omit = pkgcheck/test/*
+omit =
+	src/pkgcheck/test/*
+	*/_verinfo.py
+
+[paths]
+source =
+    src/pkgcheck
+	.tox/*/lib/python*/site-packages/pkgcheck
+	.tox/pypy*/site-packages/pkgcheck
 
 [report]
 show_missing = True

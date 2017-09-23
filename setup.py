@@ -1,45 +1,29 @@
 #!/usr/bin/env python
 
-import io
-import os
-
-from setuptools import setup, find_packages
+from setuptools import setup
 
 import pkgdist
+pkgdist_setup, pkgdist_cmds = pkgdist.setup()
 
 
 class test(pkgdist.test):
-
     blacklist = frozenset(['pkgcheck.plugins'])
 
-with io.open('README.rst', encoding='utf-8') as f:
-    readme = f.read()
 
 setup(
-    name=pkgdist.MODULE,
-    version=pkgdist.version(),
     license='BSD',
     author='Brian Harring, Tim Harder',
     author_email='pkgcore-dev@googlegroups.com',
     description='pkgcore-based QA utility',
-    long_description=readme,
     url='https://github.com/pkgcore/pkgcheck',
-    packages=find_packages(),
-    install_requires=pkgdist.install_requires(),
-    scripts=os.listdir('bin'),
     data_files=list(
         pkgdist.data_mapping('share/zsh/site-functions', 'completion/zsh'),
     ),
-    cmdclass={
-        'sdist': pkgdist.sdist,
-        'test': test,
-        'build_py': pkgdist.build_py2to3,
-        'build_man': pkgdist.build_man,
-        'build_docs': pkgdist.build_docs,
-        'build_scripts': pkgdist.build_scripts,
-        'install_man': pkgdist.install_man,
-        'install_docs': pkgdist.install_docs,
-    },
+    cmdclass=dict(
+        test=test,
+        build_py=pkgdist.build_py2to3,
+        **pkgdist_cmds
+    ),
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 2.7',
@@ -47,4 +31,5 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
+    **pkgdist_setup
 )
