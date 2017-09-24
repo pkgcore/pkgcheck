@@ -26,9 +26,7 @@ libdir = os.path.abspath(os.path.join('..', 'build', 'lib'))
 if os.path.exists(libdir):
     sys.path.insert(0, libdir)
 sys.path.insert(1, os.path.abspath('..'))
-
-from pkgcheck import __version__
-from snakeoil.dist.generate_docs import generate_man, generate_html
+import pkgdist
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -66,7 +64,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'pkgcheck'
+project = pkgdist.MODULE
 authors = ''
 copyright = '2006-2017, pkgcheck contributors'
 
@@ -75,7 +73,7 @@ copyright = '2006-2017, pkgcheck contributors'
 # built documents.
 #
 # The short X.Y version.
-version = __version__
+version = pkgdist.version()
 # The full version, including alpha/beta/rc tags.
 release = 'master'
 
@@ -118,10 +116,9 @@ pygments_style = 'sphinx'
 #keep_warnings = False
 
 # auto-generate required files for RTD build environment
-project_dir = os.path.abspath('..')
 if on_rtd:
-    generate_man(project, project_dir)
-    generate_html(project, project_dir)
+    pkgdist.generate_man()
+    pkgdist.generate_html()
 
 # -- Options for HTML output ----------------------------------------------
 

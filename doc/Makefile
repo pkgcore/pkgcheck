@@ -9,6 +9,8 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
+TOPDIR        = ..
+PACKAGEDIR    = ../src
 PREFIX        = /usr/local
 MAN_PREFIX    = $(PREFIX)/share/man
 
@@ -56,7 +58,7 @@ clean:
 	-rm -rf $(BUILDDIR) api generated
 
 html:
-	$(PYTHON) -m snakeoil.dist.generate_docs --html ../ pkgcheck
+	$(PYTHON) -m snakeoil.dist.generate_docs --html $(TOPDIR) $(PACKAGEDIR) pkgcheck
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
@@ -135,7 +137,7 @@ text:
 	@echo "Build finished. The text files are in $(BUILDDIR)/text."
 
 man:
-	$(PYTHON) -m snakeoil.dist.generate_docs --man ../ pkgcheck
+	$(PYTHON) -m snakeoil.dist.generate_docs --man $(TOPDIR) $(PACKAGEDIR) pkgcheck
 	$(SPHINXBUILD) -b man $(ALLSPHINXOPTS) $(BUILDDIR)/man
 	@echo
 	@echo "Build finished. The manual pages are in $(BUILDDIR)/man."
