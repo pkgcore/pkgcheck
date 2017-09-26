@@ -2,7 +2,7 @@
 
 # Please keep the imports and plugins sorted.
 from pkgcheck import (
-    cleanup, codingstyle, deprecated, dropped_keywords, feeds, glsa_scan,
+    cleanup, codingstyle, deprecated, dropped_keywords, feeds, glsa,
     imlate, metadata_checks, metadata_xml, pkgdir_checks, repo_metadata,
     reporters, stale_unstable, unstable_only, visibility, whitespace,
 )
@@ -17,7 +17,7 @@ pkgcore_plugins = {
         deprecated.DeprecatedEAPIReport,
         deprecated.DeprecatedEclassReport,
         dropped_keywords.DroppedKeywordsReport,
-        glsa_scan.TreeVulnerabilitiesReport,
+        glsa.TreeVulnerabilitiesReport,
         imlate.ImlateReport,
         metadata_checks.DependencyReport,
         metadata_checks.DescriptionReport,
