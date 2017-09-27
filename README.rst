@@ -22,10 +22,8 @@ Installing latest pypi release in a virtualenv::
 
     pip install pkgcheck
 
-Installing from git in a virtualenv (latest snakeoil/pkgcore are often required)::
+Installing from git in a virtualenv::
 
-    pip install https://github.com/pkgcore/snakeoil/archive/master.tar.gz
-    pip install https://github.com/pkgcore/pkgcore/archive/master.tar.gz
     pip install https://github.com/pkgcore/pkgcheck/archive/master.tar.gz
 
 Installing from a tarball or git repo::
