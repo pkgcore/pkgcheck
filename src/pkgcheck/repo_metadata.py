@@ -704,12 +704,12 @@ class ProfilesCheck(base.Template):
         unknown_pkg_use = defaultdict(lambda: defaultdict(list))
         unknown_use = defaultdict(lambda: defaultdict(list))
 
-        def _pkg_atoms(vals):
+        def _pkg_atoms(filename, vals):
             for a in iflatten_instance(vals, atom.atom):
                 if not self.repo.match(a):
                     unknown_pkgs[profile.path][filename].append(a)
 
-        def _pkg_use(vals):
+        def _pkg_use(filename, vals):
             # TODO: give ChunkedDataDict some dict view methods
             d = vals
             if isinstance(d, misc.ChunkedDataDict):
@@ -731,7 +731,7 @@ class ProfilesCheck(base.Template):
                             unknown_pkg_use[profile.path][filename].append(
                                 (a, unknown_enabled))
 
-        def _use(vals):
+        def _use(filename, vals):
             # TODO: give ChunkedDataDict some dict view methods
             d = vals.render_to_dict()
             for _, entries in d.iteritems():
@@ -745,35 +745,37 @@ class ProfilesCheck(base.Template):
                         unknown_use[profile.path][filename].extend(
                             unknown_enabled)
 
+        file_parse_map = {
+            'packages': ('packages', _pkg_atoms),
+            'package.mask': ('masks', _pkg_atoms),
+            'package.unmask': ('unmasks', _pkg_atoms),
+            'package.use': ('pkg_use', _pkg_use),
+            'package.use.force': ('pkg_use_force', _pkg_use),
+            'package.use.stable.force': ('pkg_use_stable_force', _pkg_use),
+            'package.use.mask': ('pkg_use_mask', _pkg_use),
+            'package.use.stable.mask': ('pkg_use_stable_mask', _pkg_use),
+            'use.force': ('use_force', _use),
+            'use.stable.force': ('use_stable_force', _use),
+            'use.mask': ('use_mask', _use),
+            'use.stable.mask': ('use_stable_mask', _use),
+        }
+
         for root, _dirs, files in os.walk(self.profiles_dir):
             if root not in self.non_profile_dirs:
                 profile = ProfileNode(root)
-                for filename, attr, func in (
-                    ('packages', 'packages', _pkg_atoms),
-                    ('package.mask', 'masks', _pkg_atoms),
-                    ('package.unmask', 'unmasks', _pkg_atoms),
-                    ('package.use', 'pkg_use', _pkg_use),
-                    ('package.use.force', 'pkg_use_force', _pkg_use),
-                    ('package.use.stable.force', 'pkg_use_stable_force', _pkg_use),
-                    ('package.use.mask', 'pkg_use_mask', _pkg_use),
-                    ('package.use.stable.mask', 'pkg_use_stable_mask', _pkg_use),
-                    ('use.force', 'use_force', _use),
-                    ('use.stable.force', 'use_stable_force', _use),
-                    ('use.mask', 'use_mask', _use),
-                    ('use.stable.mask', 'use_stable_mask', _use)):
-
-                    if filename in files:
-                        # catch badly formatted entries
-                        # TODO: switch this to a patched logger catcher once
-                        # pkgcore is updated to log and ignore bad entries
-                        try:
-                            vals = getattr(profile, attr)
-                        except Exception as e:
-                            reporter.add_report(BadProfileEntry(
-                                pjoin(root[len(self.profiles_dir):].lstrip('/'), e.filename),
-                                e.error))
-                            continue
-                        func(vals)
+                for f in set(files).intersection(file_parse_map.iterkeys()):
+                    attr, func = file_parse_map[f]
+                    # catch badly formatted entries
+                    # TODO: switch this to a patched logger catcher once
+                    # pkgcore is updated to log and ignore bad entries
+                    try:
+                        vals = getattr(profile, attr)
+                    except Exception as e:
+                        reporter.add_report(BadProfileEntry(
+                            pjoin(root[len(self.profiles_dir):].lstrip('/'), e.filename),
+                            e.error))
+                        continue
+                    func(f, vals)
 
         for path, filenames in sorted(unknown_pkgs.iteritems()):
             for filename, vals in filenames.iteritems():
