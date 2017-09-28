@@ -633,8 +633,8 @@ class UnknownProfilePackages(base.Warning):
 
     @property
     def short_desc(self):
-        return "unknown package%s in %r: [ %s ]" % (
-            pluralism(self.packages), self.path, ', '.join(map(repr, self.packages)))
+        return "%r: unknown package%s: [ %s ]" % (
+            self.path, pluralism(self.packages), ', '.join(map(repr, self.packages)))
 
 
 class UnknownProfilePackageUse(base.Warning):
@@ -652,9 +652,9 @@ class UnknownProfilePackageUse(base.Warning):
 
     @property
     def short_desc(self):
-        return "unknown USE flag%s for %r in %r: [ %s ]" % (
-            pluralism(self.flags), self.package, self.path,
-            ', '.join(map(repr, self.flags)))
+        return "%r: unknown package USE flag%s: [ '%s[%s]' ]" % (
+            self.path, pluralism(self.flags), self.package,
+            ','.join(self.flags))
 
 
 class UnknownProfileUse(base.Warning):
@@ -671,8 +671,8 @@ class UnknownProfileUse(base.Warning):
 
     @property
     def short_desc(self):
-        return "unknown USE flag%s in %r: [ %s ]" % (
-            pluralism(self.flags), self.path, ', '.join(map(repr, self.flags)))
+        return "%r: unknown USE flag%s: [ %s ]" % (
+            self.path, pluralism(self.flags), ', '.join(map(repr, self.flags)))
 
 
 class ProfilesCheck(base.Template):
@@ -705,9 +705,9 @@ class ProfilesCheck(base.Template):
         unknown_use = defaultdict(lambda: defaultdict(list))
 
         def _pkg_atoms(vals):
-            for x in iflatten_instance(vals, atom.atom):
-                if not self.repo.match(x):
-                    unknown_pkgs[profile.path][filename].append(x)
+            for a in iflatten_instance(vals, atom.atom):
+                if not self.repo.match(a):
+                    unknown_pkgs[profile.path][filename].append(a)
 
         def _pkg_use(vals):
             # TODO: give ChunkedDataDict some dict view methods
@@ -716,26 +716,34 @@ class ProfilesCheck(base.Template):
                 d = vals.render_to_dict()
 
             for _pkg, entries in d.iteritems():
-                for x, disabled, enabled in entries:
-                    pkgs = self.repo.match(x)
+                for a, disabled, enabled in entries:
+                    pkgs = self.repo.match(a)
                     if not pkgs:
-                        unknown_pkgs[profile.path][filename].append(x)
+                        unknown_pkgs[profile.path][filename].append(a)
                     else:
-                        available = {x for pkg in pkgs for x in pkg.iuse_stripped}
-                        requested = set(disabled).union(enabled)
-                        unknown = requested - available
-                        if unknown:
-                            unknown_pkg_use[profile.path][filename].append((x, unknown))
+                        available = {u for pkg in pkgs for u in pkg.iuse_stripped}
+                        unknown_disabled = set(disabled) - available
+                        unknown_enabled = set(enabled) - available
+                        if unknown_disabled:
+                            unknown_pkg_use[profile.path][filename].append(
+                                (a, ('-' + u for u in unknown_disabled)))
+                        if unknown_enabled:
+                            unknown_pkg_use[profile.path][filename].append(
+                                (a, unknown_enabled))
 
         def _use(vals):
             # TODO: give ChunkedDataDict some dict view methods
             d = vals.render_to_dict()
             for _, entries in d.iteritems():
                 for _, disabled, enabled in entries:
-                    requested = set(disabled).union(enabled)
-                    unknown = requested - self.available_iuse
-                    if unknown:
-                        unknown_use[profile.path][filename].extend(unknown)
+                    unknown_disabled = set(disabled) - self.available_iuse
+                    unknown_enabled = set(enabled) - self.available_iuse
+                    if unknown_disabled:
+                        unknown_use[profile.path][filename].extend(
+                            ('-' + u for u in unknown_disabled))
+                    if unknown_enabled:
+                        unknown_use[profile.path][filename].extend(
+                            unknown_enabled)
 
         for root, _dirs, files in os.walk(self.profiles_dir):
             if root not in self.non_profile_dirs:
@@ -765,7 +773,6 @@ class ProfilesCheck(base.Template):
                                 pjoin(root[len(self.profiles_dir):].lstrip('/'), e.filename),
                                 e.error))
                             continue
-
                         func(vals)
 
         for path, filenames in sorted(unknown_pkgs.iteritems()):
