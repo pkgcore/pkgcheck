@@ -24,7 +24,8 @@ Installing latest pypi release in a virtualenv::
 
 Installing from git in a virtualenv::
 
-    pip install https://github.com/pkgcore/pkgcheck/archive/master.tar.gz
+    git clone https://github.com/pkgcore/pkgcheck.git
+    ./pkgcheck/requirements/pip.sh ./pkgcheck
 
 Installing from a tarball or git repo::
 
