@@ -1,3 +1,4 @@
+cython
 https://github.com/pkgcore/snakeoil/archive/master.tar.gz#egg=snakeoil
 https://github.com/pkgcore/pkgcore/archive/master.tar.gz#egg=pkgcore
 lxml
