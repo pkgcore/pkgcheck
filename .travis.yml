@@ -12,7 +12,7 @@ install:
 before_script:
   - git clone https://github.com/pkgcore/pkgdist.git
   - cp -R pkgdist/requirements/* requirements/
-  - pip install -r requirements/ci.txt
+  - requirements/pip.sh -rrequirements/ci.txt
 script: tox -e travis
 after_success:
   # upload coverage data
@@ -42,7 +42,7 @@ jobs:
         - CIBW_BEFORE_BUILD="{pip} install -r requirements/wheel.txt"
       before_script:
         - git clone https://github.com/pkgcore/pkgdist.git
-        - cp -av pkgdist/requirements/* requirements/
+        - cp -R pkgdist/requirements/* requirements/
       script: pkgdist/build-dist-files.sh
       after_success:
 
@@ -51,8 +51,8 @@ jobs:
       python: 3.6
       before_script:
         - git clone https://github.com/pkgcore/pkgdist.git
-        - cp -av pkgdist/requirements/* requirements/
-        - pip install -r requirements/docs.txt
+        - cp -R pkgdist/requirements/* requirements/
+        - pip install -r requirements/sdist.txt
       script: python setup.py sdist
       after_success:
       deploy:
