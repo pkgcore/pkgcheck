@@ -6,10 +6,6 @@ import pkgdist
 pkgdist_setup, pkgdist_cmds = pkgdist.setup()
 
 
-class test(pkgdist.test):
-    blacklist = frozenset(['pkgcheck.plugins'])
-
-
 setup(
     license='BSD',
     author='Brian Harring, Tim Harder',
@@ -20,9 +16,9 @@ setup(
         pkgdist.data_mapping('share/zsh/site-functions', 'completion/zsh'),
     ),
     cmdclass=dict(
-        test=test,
+        pkgdist_cmds,
+        test=pkgdist.test,
         build_py=pkgdist.build_py2to3,
-        **pkgdist_cmds
     ),
     classifiers=[
         'License :: OSI Approved :: BSD License',
