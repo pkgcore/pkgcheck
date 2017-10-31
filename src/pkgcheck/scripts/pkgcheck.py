@@ -199,9 +199,10 @@ def _validate_args(parser, namespace):
         else:
             target_dir = cwd
         target_repo = None
+        # TODO: simplify this when pkgcore supports returning only ebuild repos
         for name, repo in namespace.config.repo.iteritems():
             repo_base = getattr(repo, 'location', None)
-            if repo_base is not None and target_dir in repo:
+            if isinstance(repo_base, basestring) and target_dir in repo:
                 target_repo = repo
         if target_repo is None:
             # try to fallback to the default repo
