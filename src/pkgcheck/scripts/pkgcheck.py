@@ -253,27 +253,31 @@ def _validate_args(parser, namespace):
     namespace.repo_bases = [abspath(repo.location) for repo in reversed(namespace.target_repo.trees)]
 
     if namespace.targets:
-        limiters = []
         repo = namespace.target_repo
 
-        # read targets from stdin
+        # read targets from stdin in a non-blocking manner
         if len(namespace.targets) == 1 and namespace.targets[0] == '-':
-            namespace.targets = [x.strip() for x in sys.stdin.readlines() if x.strip() != '']
-            # reassign stdin to allow interactivity (currently only works for unix)
-            sys.stdin = open('/dev/tty')
+            def stdin():
+                while True:
+                    line = sys.stdin.readline()
+                    if not line:
+                        break
+                    yield line.rstrip()
+            namespace.targets = stdin()
 
-        for target in namespace.targets:
-            try:
-                limiters.append(parserestrict.parse_match(target))
-            except parserestrict.ParseError as e:
-                if os.path.exists(target):
-                    try:
-                        limiters.append(repo.path_restrict(target))
-                    except ValueError as e:
+        def limiters():
+            for target in namespace.targets:
+                try:
+                    yield parserestrict.parse_match(target)
+                except parserestrict.ParseError as e:
+                    if os.path.exists(target):
+                        try:
+                            yield repo.path_restrict(target)
+                        except ValueError as e:
+                            parser.error(e)
+                    else:
                         parser.error(e)
-                else:
-                    parser.error(e)
-        namespace.limiters = limiters
+        namespace.limiters = limiters()
     else:
         repo_base = getattr(namespace.target_repo, 'location', None)
         if not repo_base:
