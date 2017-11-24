@@ -360,15 +360,47 @@ class StupidKeywords(base.Warning):
         "keywords contain -*; use package.mask or empty keywords instead")
 
 
+class InvalidKeywords(base.Warning):
+    """Packages using invalid KEYWORDS."""
+
+    __slots__ = ('category', 'package', 'version', 'keywords')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, keywords):
+        super(InvalidKeywords, self).__init__()
+        self._store_cpv(pkg)
+        self.keywords = tuple(keywords)
+
+    @property
+    def short_desc(self):
+        return "invalid KEYWORDS: %s" % ', '.join(self.keywords)
+
+
 class KeywordsReport(base.Template):
     """Check package keywords for sanity; empty keywords, and -* are flagged."""
 
     feed_type = base.versioned_feed
-    known_results = (StupidKeywords, MetadataError)
+    known_results = (StupidKeywords, InvalidKeywords, MetadataError)
+
+    def __init__(self, options):
+        super(KeywordsReport, self).__init__(options)
+        valid_arches = self.options.target_repo.config.known_arches
+        # Note: '*' and '~*' are portage-only special KEYWORDS atm, i.e. not
+        # in PMS or implemented in pkgcore.
+        special_keywords = set(('-*', '*', '~*'))
+        stable_keywords = valid_arches
+        unstable_keywords = set('~' + x for x in valid_arches)
+        disabled_keywords = set('-' + x for x in valid_arches)
+        self.valid_keywords = (
+            special_keywords | stable_keywords | unstable_keywords | disabled_keywords)
 
     def feed(self, pkg, reporter):
         if len(pkg.keywords) == 1 and pkg.keywords[0] == "-*":
             reporter.add_report(StupidKeywords(pkg))
+        else:
+            invalid = set(pkg.keywords) - self.valid_keywords
+            if invalid:
+                reporter.add_report(InvalidKeywords(pkg, invalid))
 
 
 class MissingUri(base.Warning):

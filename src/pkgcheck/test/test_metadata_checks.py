@@ -45,23 +45,6 @@ class TestDescriptionReport(misc.ReportTestCase):
             metadata_checks.CrappyDescription)
 
 
-class TestKeywordsReport(misc.ReportTestCase):
-
-    check_kls = metadata_checks.KeywordsReport
-
-    def mk_pkg(self, keywords=""):
-        return misc.FakePkg("dev-util/diffball-0.7.1", data={"KEYWORDS": keywords})
-
-    def test_it(self):
-        check = metadata_checks.KeywordsReport(None, None)
-        self.assertIsInstance(
-            self.assertReport(check, self.mk_pkg("-*")),
-            metadata_checks.StupidKeywords)
-        self.assertNoReport(
-            check, self.mk_pkg("-* ~arch"),
-            metadata_checks.StupidKeywords)
-
-
 class iuse_options(TempDirMixin):
 
     def get_options(self, **kwds):
@@ -84,6 +67,37 @@ class iuse_options(TempDirMixin):
         kwds['target_repo'] = repository._UnconfiguredTree(repo_base)
         kwds['verbose'] = kwds.get('verbose', None)
         return misc.Options(**kwds)
+
+
+class TestKeywordsReport(iuse_options, misc.ReportTestCase):
+
+    check_kls = metadata_checks.KeywordsReport
+
+    def setUp(self):
+        super(TestKeywordsReport, self).setUp()
+        self.check = metadata_checks.KeywordsReport(options=self.get_options())
+
+    def mk_pkg(self, keywords=""):
+        return misc.FakePkg("dev-util/diffball-0.7.1", data={"KEYWORDS": keywords})
+
+    def test_stupid_keywords(self):
+        self.assertIsInstance(
+            self.assertReport(self.check, self.mk_pkg("-*")),
+            metadata_checks.StupidKeywords)
+        self.assertNoReport(
+            self.check, self.mk_pkg("-* ~x86"),
+            metadata_checks.StupidKeywords)
+        self.assertNoReport(
+            self.check, self.mk_pkg("ppc"),
+            metadata_checks.StupidKeywords)
+
+    def test_invalid_keywords(self):
+        self.assertIsInstance(
+            self.assertReport(self.check, self.mk_pkg("foo")),
+            metadata_checks.InvalidKeywords)
+        self.assertNoReport(
+            self.check, self.mk_pkg("-* * ~* -amd64 ~x86 ppc"),
+            metadata_checks.InvalidKeywords)
 
 
 class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
