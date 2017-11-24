@@ -39,25 +39,34 @@ class DroppedKeywordsReport(Template):
         if len(pkgset) <= 1:
             return
 
-        lastpkg = pkgset[-1]
-        state = set(x.lstrip("~") for x in lastpkg.keywords)
-        arches = set(self.arches)
-        dropped = defaultdict(list)
-        # pretty simple; pull the last keywords, walk backwards
-        # the difference (ignoring unstable/stable) should be empty;
-        # if it is, report; meanwhile, add the new arch in, and continue
-        for pkg in reversed(pkgset):
-            oldstate = set(x.lstrip("~") for x in pkg.keywords)
-            for key in oldstate.difference(state):
-                if key.startswith("-"):
-                    continue
-                elif "-%s" % key in state:
-                    continue
-                elif key in arches:
-                    dropped[lastpkg].append(key)
-                    arches.discard(key)
-            state = oldstate
-            lastpkg = pkg
+        seen_arches = set()
+        previous_arches = set()
+        changes = defaultdict(list)
+        for pkg in pkgset:
+            pkg_arches = set(x.lstrip("~-") for x in pkg.keywords)
+            disabled_arches = set(x.lstrip("-") for x in pkg.keywords if x.startswith('-'))
+            adds = pkg_arches.difference(previous_arches) - disabled_arches
+            drops = previous_arches.difference(pkg_arches) | seen_arches.difference(pkg_arches)
+            for key in drops:
+                if key in self.arches:
+                    changes[key].append(pkg)
+            if changes:
+                # ignore missing arches on previous versions that were re-enabled
+                for key in adds:
+                    if key in changes:
+                        del changes[key]
+            seen_arches.update(pkg_arches)
+            previous_arches = pkg_arches
 
-        for pkg in dropped.iterkeys():
-            reporter.add_report(DroppedKeywords(pkg, dropped[pkg]))
+        dropped = defaultdict(list)
+        for key, pkgs in changes.iteritems():
+            if self.options.verbose:
+                # output all pkgs with dropped keywords in verbose mode
+                for pkg in pkgs:
+                    dropped[pkg].append(key)
+            else:
+                # only report the most recent pkg with dropped keywords
+                dropped[pkgs[-1]].append(key)
+
+        for pkg, keys in dropped.iteritems():
+            reporter.add_report(DroppedKeywords(pkg, keys))

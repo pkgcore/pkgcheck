@@ -14,13 +14,15 @@ class TestDroppedKeywords(misc.ReportTestCase):
 
     def test_it(self):
         # single version, shouldn't yield.
-        check = drop_keys(misc.Options((("arches", ["x86", "amd64"]),)))
+        check = drop_keys(
+            misc.Options((("arches", ["x86", "amd64"]),), verbose=None),
+            None)
         self.assertNoReport(check, [self.mk_pkg('1')])
         reports = self.assertReports(
             check, [self.mk_pkg("1", "x86 amd64"), self.mk_pkg("2")])
         self.assertEqual(set(chain.from_iterable(x.arches for x in reports)), set(["x86", "amd64"]))
 
-        # ensure it limits it's self to just the arches we care about
+        # ensure it limits its self to just the arches we care about
         # check unstable at the same time;
         # finally, check '-' handling; if x86 -> -x86, that's valid.
         self.assertNoReport(
