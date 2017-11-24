@@ -7,10 +7,6 @@ from snakeoil.strings import pluralism
 
 from pkgcheck import base, addons
 
-vcs_eclasses = frozenset([
-    "bzr", "cvs", "darcs", "git-2", "git-r3", "golang-vcs", "mercurial", "subversion"
-])
-
 
 class FakeConfigurable(object):
     configurable = True
@@ -212,7 +208,7 @@ class VisibilityReport(base.Template):
         # accessed for atom matching to remain in memory.
         # end result is less going to disk
 
-        if vcs_eclasses.intersection(pkg.inherited):
+        if pkg.live:
             # vcs ebuild that better not be visible
             self.check_visibility_vcs(pkg, reporter)
 
