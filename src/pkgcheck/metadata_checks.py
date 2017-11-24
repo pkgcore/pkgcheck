@@ -367,7 +367,7 @@ class KeywordsReport(base.Template):
     known_results = (StupidKeywords, MetadataError)
 
     def feed(self, pkg, reporter):
-        if "-*" in pkg.keywords and len(pkg.keywords) == 1:
+        if len(pkg.keywords) == 1 and pkg.keywords[0] == "-*":
             reporter.add_report(StupidKeywords(pkg))
 
 
