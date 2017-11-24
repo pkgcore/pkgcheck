@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from pkgcheck.addons import ArchesAddon
 from pkgcheck.base import Template, package_feed, versioned_feed, Warning
 
 
@@ -23,9 +24,10 @@ class DroppedKeywordsReport(Template):
     """Scan packages for keyword dropping across versions."""
 
     feed_type = package_feed
+    required_addons = (ArchesAddon,)
     known_results = (DroppedKeywords,)
 
-    def __init__(self, options):
+    def __init__(self, options, arches):
         Template.__init__(self, options)
         self.arches = frozenset(options.arches)
 
