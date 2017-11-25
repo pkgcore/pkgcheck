@@ -141,12 +141,6 @@ class Test_profile_data(TestCase):
         self.assertResults(profile, ["lib", "bar"], ["lib"], [])
 
 
-class QuietRepoConfig(repo_objs.RepoConfig):
-
-    def load_config(self):
-        return {'masters': ''}
-
-
 class profile_mixin(mixins.TempDirMixin, base_test):
 
     addon_kls = addons.ProfileAddon
@@ -157,11 +151,15 @@ class profile_mixin(mixins.TempDirMixin, base_test):
 
     def mk_profiles(self, profiles, base='profiles', arches=None):
         os.mkdir(pjoin(self.dir, 'metadata'))
-        # write masters= to suppress logging complaints.
+        # write empty masters to suppress warnings
         write_file(pjoin(self.dir, 'metadata', 'layout.conf'), 'w', 'masters=')
 
         loc = pjoin(self.dir, base)
         os.mkdir(loc)
+        if base != 'profiles':
+            # write empty masters to suppress warnings
+            os.mkdir(pjoin(loc, 'metadata'))
+            write_file(pjoin(loc, 'metadata', 'layout.conf'), 'w', 'masters=')
         for profile in profiles:
             self.assertTrue(ensure_dirs(pjoin(loc, profile)),
                             msg="failed creating profile %r" % profile)
@@ -188,9 +186,9 @@ class profile_mixin(mixins.TempDirMixin, base_test):
     def process_check(self, profiles_base, *args, **kwds):
         namespace = argparse.Namespace()
         if profiles_base is None:
-            repo = QuietRepoConfig(self.dir)
+            repo = repo_objs.RepoConfig(location=self.dir)
         else:
-            repo = QuietRepoConfig(profiles_base, profiles_base='.')
+            repo = repo_objs.RepoConfig(location=profiles_base, profiles_base='.')
         namespace.target_repo = Options(config=repo)
         namespace.search_repo = Options()
         options = base_test.process_check(self, namespace=namespace, *args, **kwds)
