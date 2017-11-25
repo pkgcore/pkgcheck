@@ -46,7 +46,11 @@ class DroppedKeywordsReport(Template):
             pkg_arches = set(x.lstrip("~-") for x in pkg.keywords)
             disabled_arches = set(x.lstrip("-") for x in pkg.keywords if x.startswith('-'))
             adds = pkg_arches.difference(previous_arches) - disabled_arches
-            drops = previous_arches.difference(pkg_arches) | seen_arches.difference(pkg_arches)
+            # special keywords -*, *, and ~* override all dropped keywords
+            if '*' in pkg_arches:
+                drops = set()
+            else:
+                drops = previous_arches.difference(pkg_arches) | seen_arches.difference(pkg_arches)
             for key in drops:
                 if key in self.arches:
                     changes[key].append(pkg)
