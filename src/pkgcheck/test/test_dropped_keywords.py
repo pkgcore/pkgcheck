@@ -1,5 +1,7 @@
 from itertools import chain
 
+from pkgcore.ebuild.const import VCS_ECLASSES
+
 from pkgcheck.test import misc
 from pkgcheck.dropped_keywords import DroppedKeywordsReport as drop_keys
 
@@ -8,9 +10,13 @@ class TestDroppedKeywords(misc.ReportTestCase):
 
     check_kls = drop_keys
 
-    def mk_pkg(self, ver, keywords=''):
+    def mk_pkg(self, ver, keywords='', eclasses=()):
         return misc.FakePkg(
-            "dev-util/diffball-%s" % ver, data={"KEYWORDS": keywords})
+            "dev-util/diffball-%s" % ver,
+            data={
+                "KEYWORDS": keywords,
+                "_eclasses_": eclasses,
+            })
 
     def test_it(self):
         # single version, shouldn't yield.
@@ -32,15 +38,8 @@ class TestDroppedKeywords(misc.ReportTestCase):
              self.mk_pkg("3", "-amd64 x86")])
 
         # ensure it doesn't flag live ebuilds
-        self.assertNoReport(
-            check,
-            [self.mk_pkg("1", "x86 amd64"),
-             self.mk_pkg("9999", "")])
-        self.assertNoReport(
-            check,
-            [self.mk_pkg("1", "x86 amd64"),
-             self.mk_pkg("99999999", "")])
-        self.assertNoReport(
-            check,
-            [self.mk_pkg("1", "x86 amd64"),
-             self.mk_pkg("1.0.0.9999", "")])
+        for eclass in VCS_ECLASSES:
+            self.assertNoReport(
+                check,
+                [self.mk_pkg("1", "x86 amd64"),
+                self.mk_pkg("9999", "", eclasses=(eclass,))])

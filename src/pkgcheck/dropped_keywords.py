@@ -32,9 +32,8 @@ class DroppedKeywordsReport(Template):
         self.arches = frozenset(options.arches)
 
     def feed(self, pkgset, reporter):
-        # We need to skip live ebuilds otherwise they're flagged. Currently, we
-        # assume live ebuilds have versions matching *9999*.
-        pkgset = [pkg for pkg in pkgset if "9999" not in pkg.version]
+        # skip live ebuilds otherwise they're flagged
+        pkgset = [pkg for pkg in pkgset if not pkg.live]
 
         if len(pkgset) <= 1:
             return
