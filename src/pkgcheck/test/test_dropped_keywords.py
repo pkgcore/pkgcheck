@@ -37,6 +37,13 @@ class TestDroppedKeywords(misc.ReportTestCase):
              self.mk_pkg("2", "~amd64 x86"),
              self.mk_pkg("3", "-amd64 x86")])
 
+        # check special keyword handling
+        for key in ('-*', '*', '~*'):
+            self.assertNoReport(
+                check,
+                [self.mk_pkg("1", "x86 ~amd64 ppc"),
+                self.mk_pkg("2", key)])
+
         # ensure it doesn't flag live ebuilds
         for eclass in VCS_ECLASSES:
             self.assertNoReport(
