@@ -37,11 +37,11 @@ class TestDroppedKeywords(misc.ReportTestCase):
              self.mk_pkg("2", "~amd64 x86"),
              self.mk_pkg("3", "-amd64 x86")])
 
-        # check re-added keyword handling
+        # check added keyword handling
         self.assertNoReport(
             check,
-            [self.mk_pkg("1", "x86 amd64"),
-             self.mk_pkg("2", "~x86"),
+            [self.mk_pkg("1", "amd64"),
+             self.mk_pkg("2", "x86"),
              self.mk_pkg("3", "~x86 ~amd64")])
 
         # check special keyword handling
