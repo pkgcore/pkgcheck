@@ -1040,7 +1040,7 @@ class ManifestReport(base.Template):
     def __init__(self, options, iuse_handler):
         super(ManifestReport, self).__init__(options)
         self.required_checksums = mappings.defaultdictkey(lambda repo: frozenset(
-            repo.config.manifests.hashes if hasattr(repo, 'config') else ()))
+            repo.config.manifests.required_hashes if hasattr(repo, 'config') else ()))
         self.seen_checksums = {}
         self.iuse_filter = iuse_handler.get_filter('fetchables')
 
