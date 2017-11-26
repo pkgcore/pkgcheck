@@ -69,8 +69,7 @@ case $state in
 
         profile_opts=(
           '--profiles-base[path to base profiles directory]:profiles base path:_path_files -/'
-          '--profiles-disable-deprecated[disable scanning of deprecated profiles]'
-          {'(--profiles)-p','(-p)--profiles'}'[comma separated list of profiles to enable/disable]:arches:{_values -s , profiles stable dev exp}'
+          {'(--profiles)-p','(-p)--profiles'}'[comma separated list of profiles to enable/disable]:profiles:{_values -s , profiles stable dev exp deprecated}'
         )
 
         plugin_opts=(
