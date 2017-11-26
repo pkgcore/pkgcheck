@@ -11,6 +11,7 @@ minimally accepted scope, and for transforms the output scope is
 identical to the input scope.
 """
 
+from collections import OrderedDict
 from operator import attrgetter
 
 from pkgcore.config import ConfigHint
@@ -31,6 +32,14 @@ ebuild_feed = "cat/pkg-ver+text"
 # The plugger needs to be able to compare those and know the highest one.
 version_scope, package_scope, category_scope, repository_scope = range(4)
 max_scope = repository_scope
+
+# mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
+known_scopes = OrderedDict((
+    ('repo', repository_feed),
+    ('cat', category_feed),
+    ('pkg', package_feed),
+    ('ver', versioned_feed),
+))
 
 
 class Addon(object):

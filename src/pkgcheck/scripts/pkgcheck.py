@@ -8,7 +8,6 @@ from portage.
 from __future__ import absolute_import
 
 import argparse
-from collections import OrderedDict
 from itertools import chain
 
 from pkgcore.plugin import get_plugins, get_plugin
@@ -108,7 +107,9 @@ check_options.add_argument(
 
         To specify disabled scopes prefix them with '-' the same as for
         -k/--keywords option.
-    """)
+
+        Available scopes: %s
+    """ % (', '.join(base.known_scopes)))
 
 
 def add_addon(addon, addon_set):
@@ -298,28 +299,20 @@ def _validate_args(parser, namespace):
     if namespace.selected_scopes is not None:
         disabled_scopes, enabled_scopes = namespace.selected_scopes
 
-        # ordered for ordered output in the case of unknown scopes
-        known_scopes = OrderedDict((
-            ('repo', base.repository_feed),
-            ('cat', base.category_feed),
-            ('pkg', base.package_feed),
-            ('ver', base.versioned_feed),
-        ))
-
         # validate selected scopes
         selected_scopes = set(disabled_scopes + enabled_scopes)
-        unknown_scopes = selected_scopes - set(known_scopes.keys())
+        unknown_scopes = selected_scopes - set(base.known_scopes.keys())
         if unknown_scopes:
             parser.error('unknown scope%s: %s (available scopes: %s)' % (
-                pluralism(unknown_scopes), ', '.join(unknown_scopes), ', '.join(known_scopes.keys())))
+                pluralism(unknown_scopes), ', '.join(unknown_scopes), ', '.join(base.known_scopes.keys())))
 
         # convert scopes to keyword lists
         disabled_keywords = [
             k.__name__ for s in disabled_scopes for k in _known_keywords
-            if k.threshold == known_scopes[s]]
+            if k.threshold == base.known_scopes[s]]
         enabled_keywords = [
             k.__name__ for s in enabled_scopes for k in _known_keywords
-            if k.threshold == known_scopes[s]]
+            if k.threshold == base.known_scopes[s]]
 
         # filter outputted keywords
         namespace.enabled_keywords = base.filter_update(
