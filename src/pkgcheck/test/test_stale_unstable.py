@@ -8,37 +8,49 @@ class TestStaleUnstableReport(misc.ReportTestCase):
 
     check_kls = StaleUnstableReport
 
-    def mk_pkg(self, ver, keywords, mtime):
+    def mk_pkg(self, ver, keywords, mtime, slot='0'):
         return misc.FakeTimedPkg(
             "dev-util/diffball-%s" % ver,
-            mtime, data={"KEYWORDS": keywords})
+            mtime, data={"KEYWORDS": keywords, "SLOT": slot})
 
     def test_it(self):
         now = time.time()
-        mk_pkg = self.mk_pkg
         check = StaleUnstableReport(
-            misc.Options(
+            options=misc.Options(
                 selected_arches=("x86", "ppc", "amd64"),
-                arches=("x86", "ppc", "amd64")),
-            None)
+                arches=("x86", "ppc", "amd64"),
+                verbose=None),
+            arches=None)
 
         check.start()
 
         old = now - (30 * 24 * 3600)
 
         # a current one
-        self.assertNoReport(check, mk_pkg("1.0", "x86", now))
+        self.assertNoReport(check, [self.mk_pkg("1.0", "x86", now)])
 
         # an outdated, but stable one
-        self.assertNoReport(check, mk_pkg("1.0", "x86", old))
+        self.assertNoReport(check, [self.mk_pkg("1.0", "x86", old)])
 
         # an outdated, partly unstable one
-        self.assertReport(check, mk_pkg("1.0", "~amd64 x86", old))
+        self.assertReport(
+            check, [
+                self.mk_pkg("1.0", "amd64 x86", old),
+                self.mk_pkg("2.0", "~amd64 x86", old),
+                ]
+            )
 
         # an outdated, fully unstable one
-        self.assertReport(check, mk_pkg("1.0", "~amd64 ~x86", old))
+        self.assertReport(
+            check, [
+                self.mk_pkg("1.0", "amd64 x86", old),
+                self.mk_pkg("2.0", "~amd64 ~x86", old),
+                ]
+            )
 
         # ensure it reports only specified arches.
         report = self.assertReport(
-            check, mk_pkg("1.0", "~amd64 ~x86 ~asdfasdfasdf", old))
+            check, [
+                self.mk_pkg("1.0", "amd64 x86 sparc", old),
+                self.mk_pkg("2.0", "~amd64 ~x86 ~sparc", old)])
         self.assertEqual(report.keywords, ("~amd64", "~x86"))
