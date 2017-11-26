@@ -34,7 +34,7 @@ class UnstableOnlyReport(StableCheckAddon):
     known_results = (UnstableOnly,)
 
     def __init__(self, options, arches):
-        super(UnstableOnlyReport, self).__init__(options)
+        super(UnstableOnlyReport, self).__init__(options, arches)
         arches = set(x.strip().lstrip("~") for x in options.arches)
 
         # stable, then unstable, then file

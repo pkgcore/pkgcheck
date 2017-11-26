@@ -35,7 +35,7 @@ class StaleUnstableReport(StableCheckAddon):
     known_results = (StaleUnstable,)
 
     def __init__(self, options, arches, staleness=long(day*30)):
-        super(StaleUnstableReport, self).__init__(options)
+        super(StaleUnstableReport, self).__init__(options, arches)
         self.staleness = staleness
         self.start_time = None
         self.arches = frozenset("~%s" % x.lstrip("~") for x in options.arches)

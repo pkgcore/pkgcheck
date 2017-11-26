@@ -441,18 +441,18 @@ class EvaluateDepSetAddon(base.Template):
 
 
 class StableCheckAddon(base.Template):
-
     """Check relating to stable arches by default."""
 
-    def __init__(self, options):
-        super(StableCheckAddon, self).__init__(options)
-        arches = set(options.arches)
+    required_addons = (ArchesAddon,)
 
-        # use known stable arches if a custom arch set isn't specified
-        selected_arches = getattr(options, 'selected_arches', None)
-        if selected_arches is None:
+    def __init__(self, options, arches):
+        super(StableCheckAddon, self).__init__(options)
+        # use known stable arches if arches aren't specified
+        if options.selected_arches is None:
             arches = set().union(*(repo.config.profiles.arches('stable')
                                    for repo in options.target_repo.trees))
+        else:
+            arches = set(options.arches)
 
         options.arches = arches
 
