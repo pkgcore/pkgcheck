@@ -483,8 +483,11 @@ class SrcUriReport(base.Template):
             # duplicate entries are possible.
             seen = set()
             bad_filenames = set()
-            for f_inst in self.iuse_filter((fetchable,), pkg,
-                                           pkg.fetchables, reporter):
+            fetchables = set(self.iuse_filter(
+                (fetchable,), pkg,
+                pkg._get_attr['fetchables'](
+                    pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True), reporter))
+            for f_inst in fetchables:
                 if f_inst.filename in seen:
                     continue
                 seen.add(f_inst.filename)
