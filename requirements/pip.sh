@@ -22,7 +22,7 @@ if [[ ! -f ${INSTALLED} ]]; then
 
 	if [[ ${ret} -ne 0 ]]; then
 		while read -r dep; do
-			pip install ${dep}
+			pip install -r ${dep}
 		done < "${DIR}"/dev.txt
 		ret=$?
 	fi
