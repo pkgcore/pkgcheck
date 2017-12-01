@@ -35,7 +35,7 @@ demandload(
     'pkgcheck:errors',
 )
 
-pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
+pkgcore_opts = commandline.ArgumentParser(domain=True, script=(__file__, __name__))
 argparser = arghparse.ArgumentParser(
     suppress=True, color=False, description=__doc__, parents=(pkgcore_opts,))
 subparsers = argparser.add_subparsers(description="check applets", default='scan')
@@ -198,23 +198,28 @@ def _validate_args(parser, namespace):
         # from an earlier guess at the target_repo) so try to guess one.
         target_repo = None
         target_dir = cwd
+
+        # pull a target directory from target args if they're path-based
         if namespace.targets and os.path.exists(namespace.targets[0]):
             target = namespace.targets[0]
             if os.path.isfile(target):
                 target = os.path.dirname(target)
             target_dir = target
-        # TODO: simplify this when pkgcore supports returning only ebuild repos
-        for name, repo in namespace.config.repo.iteritems():
-            repo_base = getattr(repo, 'location', None)
-            if isinstance(repo_base, basestring) and target_dir in repo:
+
+        # determine target repo from the target directory
+        for repo in namespace.domain.ebuild_repos:
+            if target_dir in repo:
                 target_repo = repo
+                break
+
+        # fallback to the default repo if it exists
         if target_repo is None:
-            # try to fallback to the default repo
             target_repo = namespace.config.get_default('repo')
             if target_repo is None:
                 parser.error(
                     'no target repo specified and '
                     'current directory is not inside a known repo')
+
         namespace.target_repo = target_repo
 
     if namespace.reporter is None:
