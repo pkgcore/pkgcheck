@@ -212,13 +212,9 @@ def _validate_args(parser, namespace):
                 target_repo = repo
                 break
 
-        # fallback to the default repo if it exists
+        # fallback to the default repo
         if target_repo is None:
             target_repo = namespace.config.get_default('repo')
-            if target_repo is None:
-                parser.error(
-                    'no target repo specified and '
-                    'current directory is not inside a known repo')
 
         namespace.target_repo = target_repo
 
