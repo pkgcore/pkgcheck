@@ -140,8 +140,8 @@ _known_keywords = tuple(sorted(
 def _validate_args(parser, namespace):
     namespace.enabled_checks = list(_known_checks)
     namespace.enabled_keywords = list(_known_keywords)
-
     cwd = abspath(os.getcwd())
+
     if namespace.suite is None:
         # No suite explicitly specified. Use the repo to guess the suite.
         if namespace.target_repo is None:
@@ -192,14 +192,17 @@ def _validate_args(parser, namespace):
                 repo_base = getattr(namespace.suite.target_repo, 'location', None)
                 if repo_base is not None and cwd.startswith(repo_base):
                     namespace.target_repo = namespace.suite.target_repo
+
     if namespace.target_repo is None:
         # We have no target repo (not explicitly passed, not from a suite, not
         # from an earlier guess at the target_repo) so try to guess one.
-        if len(namespace.targets) == 1 and os.path.exists(namespace.targets[0]):
-            target_dir = namespace.targets[0]
-        else:
-            target_dir = cwd
         target_repo = None
+        target_dir = cwd
+        if namespace.targets and os.path.exists(namespace.targets[0]):
+            target = namespace.targets[0]
+            if os.path.isfile(target):
+                target = os.path.dirname(target)
+            target_dir = target
         # TODO: simplify this when pkgcore supports returning only ebuild repos
         for name, repo in namespace.config.repo.iteritems():
             repo_base = getattr(repo, 'location', None)
