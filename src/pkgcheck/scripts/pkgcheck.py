@@ -51,8 +51,8 @@ scan.add_argument(
 
 main_options = scan.add_argument_group('main options')
 main_options.add_argument(
-    '-r', '--repo', metavar='REPO', dest='selected_repo',
-    action=commandline.StoreRepoObject,
+    '-r', '--repo', metavar='REPO', dest='target_repo',
+    action=commandline.StoreRepoObject, raw=True, allow_external_repos=True,
     help='repo to pull packages from')
 main_options.add_argument(
     '-s', '--suite', action=commandline.StoreConfigObject,
@@ -140,15 +140,7 @@ _known_keywords = tuple(sorted(
 def _validate_args(parser, namespace):
     namespace.enabled_checks = list(_known_checks)
     namespace.enabled_keywords = list(_known_keywords)
-    namespace.target_repo = None
     cwd = abspath(os.getcwd())
-
-    # set the raw repo related to the selected repo as a target
-    if namespace.selected_repo is not None:
-        repo = namespace.selected_repo
-        while hasattr(repo, 'raw_repo') and repo.raw_repo is not None:
-            repo = repo.raw_repo
-        namespace.target_repo = repo
 
     if namespace.suite is None:
         # No suite explicitly specified. Use the repo to guess the suite.
