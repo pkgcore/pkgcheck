@@ -207,7 +207,7 @@ def _validate_args(parser, namespace):
             target_dir = target
 
         # determine target repo from the target directory
-        for repo in namespace.domain.ebuild_repos:
+        for repo in namespace.domain.ebuild_repos_raw:
             if target_dir in repo:
                 target_repo = repo
                 break
@@ -255,7 +255,7 @@ def _validate_args(parser, namespace):
         namespace.reporter = func
 
     # TODO: drop this once StoreRepoObject supports specifying supported repo type
-    if namespace.target_repo not in namespace.domain.ebuild_repos:
+    if namespace.target_repo not in namespace.domain.ebuild_repos_raw:
         parser.error('unsupported repo: %r -- only ebuild repos are supported' % (
             namespace.target_repo.repo_id,))
 
