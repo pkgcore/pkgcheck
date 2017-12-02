@@ -52,7 +52,7 @@ scan.add_argument(
 main_options = scan.add_argument_group('main options')
 main_options.add_argument(
     '-r', '--repo', metavar='REPO', dest='target_repo',
-    action=commandline.StoreRepoObject, raw=True, allow_external_repos=True,
+    action=commandline.StoreRepoObject, repo_type='ebuild_raw', allow_external_repos=True,
     help='repo to pull packages from')
 main_options.add_argument(
     '-s', '--suite', action=commandline.StoreConfigObject,
@@ -249,11 +249,6 @@ def _validate_args(parser, namespace):
                 )
             func = func[0]
         namespace.reporter = func
-
-    # TODO: drop this once StoreRepoObject supports specifying supported repo type
-    if namespace.target_repo not in namespace.domain.ebuild_repos_raw:
-        parser.error('unsupported repo: %r -- only ebuild repos are supported' % (
-            namespace.target_repo.repo_id,))
 
     # search_repo is a multiplex of target_repo and its masters, make sure
     # they're configured properly in metadata/layout.conf. This is used for
