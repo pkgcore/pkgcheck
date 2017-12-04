@@ -2,7 +2,7 @@ import os
 
 from snakeoil.demandload import demandload
 
-from pkgcheck import base
+from . import base
 
 demandload(
     'pkgcore.log:logger',

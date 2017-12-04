@@ -1,7 +1,7 @@
 """Default checks."""
 
 # Please keep the imports and plugins sorted.
-from pkgcheck import (
+from .. import (
     cleanup, codingstyle, deprecated, dropped_keywords, feeds, glsa,
     imlate, metadata_checks, metadata_xml, pkgdir_checks, repo_metadata,
     reporters, stale_unstable, unstable_only, visibility, whitespace,

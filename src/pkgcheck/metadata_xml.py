@@ -3,7 +3,7 @@ import os
 from snakeoil import compatibility
 from snakeoil.demandload import demandload
 
-from pkgcheck import base
+from . import base
 
 if compatibility.is_py3k:
     urllib_path = 'urllib.request:urlopen'

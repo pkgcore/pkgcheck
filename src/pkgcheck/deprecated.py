@@ -1,7 +1,7 @@
 from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism
 
-from pkgcheck.base import Template, versioned_feed, Warning
+from .base import Template, versioned_feed, Warning
 
 
 class DeprecatedEAPI(Warning):

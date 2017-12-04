@@ -2,7 +2,7 @@
 
 from pkgcore.config import basics
 
-from pkgcheck import base
+from .. import base
 
 pkgcore_plugins = {
     'global_config': [{

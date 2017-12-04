@@ -17,7 +17,7 @@ from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.sequences import unstable_unique
 
-from pkgcheck import plugins, base, feeds
+from .. import plugins, base, feeds
 
 demandload(
     'logging',

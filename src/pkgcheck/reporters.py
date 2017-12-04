@@ -4,7 +4,7 @@ from pkgcore.config import configurable
 from snakeoil import formatters
 from snakeoil.demandload import demandload
 
-from pkgcheck import base
+from . import base
 
 demandload(
     'collections:defaultdict',

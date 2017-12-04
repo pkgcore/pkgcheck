@@ -5,7 +5,7 @@ from operator import attrgetter, itemgetter
 from snakeoil import mappings
 from snakeoil.demandload import demandload
 
-from pkgcheck import base, addons
+from . import base, addons
 
 demandload(
     'os',

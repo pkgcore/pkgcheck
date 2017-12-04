@@ -1,7 +1,7 @@
 from collections import defaultdict
 
-from pkgcheck.addons import ArchesAddon
-from pkgcheck.base import Template, package_feed, versioned_feed, Warning
+from .addons import ArchesAddon
+from .base import Template, package_feed, versioned_feed, Warning
 
 
 class DroppedKeywords(Warning):

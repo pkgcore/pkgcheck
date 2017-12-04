@@ -5,7 +5,7 @@ from snakeoil.iterables import caching_iter
 from snakeoil.sequences import stable_unique, iflatten_instance, iflatten_func
 from snakeoil.strings import pluralism
 
-from pkgcheck import base, addons
+from . import base, addons
 
 
 class FakeConfigurable(object):

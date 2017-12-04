@@ -10,8 +10,8 @@ from snakeoil.demandload import demandload
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
-from pkgcheck import base, addons
-from pkgcheck.visibility import FakeConfigurable
+from . import base, addons
+from .visibility import FakeConfigurable
 
 demandload('logging')
 

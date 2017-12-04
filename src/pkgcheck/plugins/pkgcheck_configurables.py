@@ -1,4 +1,4 @@
-from pkgcheck import reporters, base
+from .. import reporters, base
 
 pkgcore_plugins = {
     'configurable': [

@@ -1,7 +1,7 @@
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.strings import pluralism
 
-from pkgcheck import base
+from . import base
 
 demand_compile_regexp('indent_regexp', '^\t* \t+')
 

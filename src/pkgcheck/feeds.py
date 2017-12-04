@@ -4,7 +4,7 @@ from operator import attrgetter
 
 from pkgcore.restrictions import util
 
-from pkgcheck import base
+from . import base
 
 
 class VersionToEbuild(base.Transform):

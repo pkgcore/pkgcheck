@@ -10,7 +10,7 @@ from snakeoil.iterables import expandable_chain
 from snakeoil.osutils import abspath, listdir_files, pjoin
 from snakeoil.sequences import iflatten_instance
 
-from pkgcheck import base
+from . import base
 
 demandload(
     'os',

@@ -1,6 +1,6 @@
 from snakeoil.strings import pluralism
 
-from pkgcheck.base import Template, package_feed, Warning, versioned_feed
+from .base import Template, package_feed, Warning, versioned_feed
 
 
 class RedundantVersion(Warning):

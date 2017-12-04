@@ -1,8 +1,8 @@
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism
 
-from pkgcheck.addons import ArchesAddon, StableCheckAddon
-from pkgcheck.base import versioned_feed, package_feed, Warning
+from .addons import ArchesAddon, StableCheckAddon
+from .base import versioned_feed, package_feed, Warning
 
 
 class LaggingStable(Warning):

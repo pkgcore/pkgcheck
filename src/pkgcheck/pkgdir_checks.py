@@ -8,7 +8,7 @@ from snakeoil.demandload import demandload
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism
 
-from pkgcheck.base import Error, Warning, Template, package_feed
+from .base import Error, Warning, Template, package_feed
 
 demandload('errno', 'snakeoil.chksum:get_chksums')
 
