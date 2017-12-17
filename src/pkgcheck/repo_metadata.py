@@ -970,6 +970,25 @@ class MissingChksum(base.Warning):
             (self.filename, ', '.join(self.missing), ', '.join(self.existing))
 
 
+class DeprecatedChksum(base.Warning):
+    """A file in the chksum data does not use modern checksum set."""
+
+    threshold = base.versioned_feed
+    __slots__ = ('category', 'package', 'version', 'filename', 'expected',
+                 'existing')
+
+    def __init__(self, pkg, filename, expected, existing):
+        super(DeprecatedChksum, self).__init__()
+        self._store_cpv(pkg)
+        self.filename, self.expected = filename, tuple(sorted(expected))
+        self.existing = tuple(sorted(existing))
+
+    @property
+    def short_desc(self):
+        return '"%s" uses deprecated checksum set: %s; expected: %s' % \
+            (self.filename, ', '.join(self.existing), ', '.join(self.expected))
+
+
 class MissingManifest(base.Error):
     """SRC_URI targets missing from Manifest file."""
 
@@ -1032,13 +1051,15 @@ class ManifestReport(base.Template):
     feed_type = base.package_feed
     known_results = (
         MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
-        ConflictingChksums,
+        ConflictingChksums, DeprecatedChksum,
     )
 
     repo_grabber = attrgetter("repo")
 
     def __init__(self, options, iuse_handler):
         super(ManifestReport, self).__init__(options)
+        self.preferred_checksums = mappings.defaultdictkey(lambda repo: frozenset(
+            repo.config.manifests.hashes if hasattr(repo, 'config') else ()))
         self.required_checksums = mappings.defaultdictkey(lambda repo: frozenset(
             repo.config.manifests.required_hashes if hasattr(repo, 'config') else ()))
         self.seen_checksums = {}
@@ -1047,6 +1068,7 @@ class ManifestReport(base.Template):
     def feed(self, full_pkgset, reporter):
         # sort it by repo.
         for repo, pkgset in groupby(full_pkgset, self.repo_grabber):
+            preferred_checksums = self.preferred_checksums[repo]
             required_checksums = self.required_checksums[repo]
             pkgset = list(pkgset)
             pkg_manifest = pkgset[0].manifest
@@ -1072,6 +1094,10 @@ class ManifestReport(base.Template):
                     if f_inst.filename not in missing_manifests and missing:
                         reporter.add_report(MissingChksum(
                             pkg, f_inst.filename, missing, f_inst.chksums))
+                    elif preferred_checksums != frozenset(f_inst.chksums):
+                        reporter.add_report(DeprecatedChksum(
+                            pkg, f_inst.filename, preferred_checksums,
+                            f_inst.chksums))
                     seen.add(f_inst.filename)
                     existing = self.seen_checksums.get(f_inst.filename)
                     if existing is None:
