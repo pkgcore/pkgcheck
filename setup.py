@@ -9,7 +9,6 @@ pkgdist_setup, pkgdist_cmds = pkgdist.setup()
 setup(**dict(pkgdist_setup,
     license='BSD',
     author='Brian Harring, Tim Harder',
-    author_email='pkgcore-dev@googlegroups.com',
     description='pkgcore-based QA utility',
     url='https://github.com/pkgcore/pkgcheck',
     data_files=list(
