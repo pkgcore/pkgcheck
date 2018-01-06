@@ -124,7 +124,8 @@ class QueryCacheAddon(base.Template):
 class profile_data(object):
 
     def __init__(self, profile_name, key, provides, vfilter,
-                 iuse_effective, use, pkg_use, masked_use, forced_use, lookup_cache, insoluble):
+                 iuse_effective, use, pkg_use, masked_use, forced_use, lookup_cache, insoluble,
+                 status, deprecated):
         self.key = key
         self.name = profile_name
         self.provides_repo = provides
@@ -137,6 +138,8 @@ class profile_data(object):
         self.cache = lookup_cache
         self.insoluble = insoluble
         self.visible = vfilter.match
+        self.status = status
+        self.deprecated = deprecated
 
     def identify_use(self, pkg, known_flags):
         # note we're trying to be *really* careful about not creating
@@ -503,6 +506,9 @@ class ProfileAddon(base.Addon):
         # temporarily.
         cached_profiles = []
 
+        profile_status_map = dict(chain.from_iterable(
+            profiles_obj.arch_profiles.values()))
+
         arch_profiles = defaultdict(list)
         for profile_path in profile_paths:
             try:
@@ -518,7 +524,8 @@ class ProfileAddon(base.Addon):
             cached_profiles.append(p)
             if p.arch is None:
                 parser.error(f"profile {p.path!r} lacks arch settings, unable to use it")
-            arch_profiles[p.arch].append((profile_path, p))
+            arch_profiles[p.arch].append((profile_path, p,
+                profile_status_map.get(profile_path)))
 
         namespace.arch_profiles = arch_profiles
 
@@ -564,7 +571,7 @@ class ProfileAddon(base.Addon):
             default_masked_use = tuple(set(
                 x for x in self.official_arches if x != stable_key))
 
-            for profile_name, profile in options.arch_profiles.get(k, []):
+            for profile_name, profile, profile_status in options.arch_profiles.get(k, []):
                 vfilter = domain.generate_filter(profile.masks, profile.unmasks)
 
                 cached_profile = cached_profile_filters.get(profile_name, None)
@@ -636,7 +643,9 @@ class ProfileAddon(base.Addon):
                     profile.pkg_use,
                     stable_immutable_flags, stable_enabled_flags,
                     stable_cache,
-                    ProtectedSet(unstable_insoluble)))
+                    ProtectedSet(unstable_insoluble),
+                    profile_status,
+                    profile.deprecated is not None))
 
                 profile_filters[unstable_key].append(profile_data(
                     profile_name, unstable_key,
@@ -647,7 +656,9 @@ class ProfileAddon(base.Addon):
                     profile.pkg_use,
                     immutable_flags, enabled_flags,
                     ProtectedSet(stable_cache),
-                    unstable_insoluble))
+                    unstable_insoluble,
+                    profile_status,
+                    profile.deprecated is not None))
 
         # dump cached profile filters
         if options.profile_cache:
