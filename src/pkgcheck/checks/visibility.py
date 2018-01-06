@@ -190,6 +190,18 @@ class NonsolvableDeps(base.Error):
             f"profile ({self.profile}): solutions: [ {', '.join(self.potentials)} ]"
 
 
+class NonsolvableDepsInStable(NonsolvableDeps):
+    pass
+
+
+class NonsolvableDepsInDev(NonsolvableDeps):
+    pass
+
+
+class NonsolvableDepsInExp(NonsolvableDeps):
+    pass
+
+
 class VisibilityReport(base.Template):
     """Visibility dependency scans.
 
@@ -202,7 +214,10 @@ class VisibilityReport(base.Template):
     required_addons = (
         addons.QueryCacheAddon, addons.ProfileAddon,
         addons.EvaluateDepSetAddon)
-    known_results = (VisibleVcsPkg, NonExistentDeps, NonsolvableDeps)
+    known_results = (
+        VisibleVcsPkg, NonExistentDeps, NonsolvableDeps,
+        NonsolvableDepsInStable, NonsolvableDepsInDev, NonsolvableDepsInExp
+    )
 
     def __init__(self, options, query_cache, profiles, depset_cache):
         super().__init__(options)
@@ -319,6 +334,15 @@ class VisibilityReport(base.Template):
                         # no matches.  not great, should collect them all
                         failures.update(required)
             if failures:
-                reporter.add_report(NonsolvableDeps(
+                if profile.status == 'stable':
+                    cls = NonsolvableDepsInStable
+                elif profile.status == 'dev':
+                    cls = NonsolvableDepsInDev
+                elif profile.status == 'exp':
+                    cls = NonsolvableDepsInExp
+                else:
+                    cls = NonsolvableDeps
+
+                reporter.add_report(cls(
                     pkg, attr, profile.key, profile.name, list(failures),
                     profile.status, profile.deprecated))
