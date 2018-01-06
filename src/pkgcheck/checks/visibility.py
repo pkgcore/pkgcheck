@@ -164,24 +164,32 @@ class UncheckableDep(base.Warning):
 class NonsolvableDeps(base.Error):
     """No potential solution for a depset attribute."""
 
-    __slots__ = ("category", "package", "version", "attr", "profile",
-                 "keyword", "potentials")
+    __slots__ = (
+        "category", "package", "version", "attr", "profile", "keyword",
+        "potentials", "profile_status", "profile_deprecated",
+    )
 
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, attr, keyword, profile, horked):
+    def __init__(self, pkg, attr, keyword, profile, horked,
+                 profile_status, profile_deprecated):
         super().__init__()
         self._store_cpv(pkg)
         self.attr = attr
         self.profile = profile
         self.keyword = keyword
         self.potentials = tuple(map(str, stable_unique(horked)))
+        self.profile_status = profile_status
+        self.profile_deprecated = profile_deprecated
 
     @property
     def short_desc(self):
-        return \
-            f"nonsolvable depset({self.attr}) keyword({self.keyword}) " \
+        profile_status = 'deprecated ' if self.profile_deprecated else ''
+        profile_status += self.profile_status or 'custom'
+        return (
+            f"nonsolvable depset({self.attr}) keyword({self.keyword}) {profile_status}"
             f"profile ({self.profile}): solutions: [ {', '.join(self.potentials)} ]"
+        )
 
 
 class VisibilityReport(base.Template):
@@ -313,4 +321,6 @@ class VisibilityReport(base.Template):
                         # no matches.  not great, should collect them all
                         failures.update(required)
             if failures:
-                yield NonsolvableDeps(pkg, attr, profile.key, profile.name, list(failures))
+                yield NonsolvableDeps(
+                    pkg, attr, profile.key, profile.name, list(failures),
+                    profile.status, profile.deprecated)
