@@ -192,6 +192,18 @@ class NonsolvableDeps(base.Error):
         )
 
 
+class NonsolvableDepsInStable(NonsolvableDeps):
+    """No potential solution for dependency on stable profile."""
+
+
+class NonsolvableDepsInDev(NonsolvableDeps):
+    """No potential solution for dependency on dev profile."""
+
+
+class NonsolvableDepsInExp(NonsolvableDeps):
+    """No potential solution for dependency on exp profile."""
+
+
 class VisibilityReport(base.Template):
     """Visibility dependency scans.
 
@@ -204,13 +216,21 @@ class VisibilityReport(base.Template):
     required_addons = (
         addons.QueryCacheAddon, addons.ProfileAddon,
         addons.EvaluateDepSetAddon)
-    known_results = (VisibleVcsPkg, NonExistentDeps, NonsolvableDeps)
+    known_results = (
+        VisibleVcsPkg, NonExistentDeps, NonsolvableDeps,
+        NonsolvableDepsInStable, NonsolvableDepsInDev, NonsolvableDepsInExp,
+    )
 
     def __init__(self, options, query_cache, profiles, depset_cache):
         super().__init__(options)
         self.query_cache = query_cache.query_cache
         self.depset_cache = depset_cache
         self.profiles = profiles
+        self.report_cls_map = {
+            'stable': NonsolvableDepsInStable,
+            'dev': NonsolvableDepsInDev,
+            'exp': NonsolvableDepsInExp,
+        }
 
     def feed(self, pkg):
         # query_cache gets caching_iter partial repo searches shoved into it-
@@ -321,6 +341,7 @@ class VisibilityReport(base.Template):
                         # no matches.  not great, should collect them all
                         failures.update(required)
             if failures:
-                yield NonsolvableDeps(
+                cls = self.report_cls_map.get(profile.status, NonsolvableDeps)
+                yield cls(
                     pkg, attr, profile.key, profile.name, list(failures),
                     profile.status, profile.deprecated)
