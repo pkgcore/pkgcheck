@@ -1,4 +1,5 @@
 from pkgcore.ebuild.atom import atom
+from pkgcore.restrictions.packages import OrRestriction
 
 from snakeoil import klass
 from snakeoil.iterables import caching_iter
@@ -267,12 +268,16 @@ class VisibilityReport(base.Template):
         get_cached_query = self.query_cache.get
 
         csolutions = []
+        blockers = []
         for required in depset.iter_cnf_solutions():
             for node in required:
                 if node.blocks:
+                    blockers.extend(required)
                     break
             else:
                 csolutions.append(required)
+
+        blocked = OrRestriction(*blockers)
 
         for profile in profiles:
             failures = set()
@@ -283,7 +288,7 @@ class VisibilityReport(base.Template):
             cache = profile.cache
             provided = profile.provides_has_match
             insoluble = profile.insoluble
-            visible = profile.visible
+            visible = lambda x: profile.visible(x) and not blocked.match(x)
             for required in csolutions:
                 # scan all of the quickies, the caches...
                 for node in required:
@@ -301,8 +306,8 @@ class VisibilityReport(base.Template):
                         # all of it.
                         src = get_cached_query(strip_atom_use(node), ())
                         if node.use:
-                            src = (pkg for pkg in src if node.force_True(
-                                   FakeConfigurable(pkg, profile)))
+                            src = (FakeConfigurable(pkg, profile) for pkg in src)
+                            src = (pkg for pkg in src if node.force_True(pkg))
                         if any(True for pkg in src if visible(pkg)):
                             cache.add(node)
                             break
