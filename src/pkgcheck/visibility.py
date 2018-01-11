@@ -10,6 +10,8 @@ from . import base, addons
 
 
 class FakeConfigurable(object):
+    "Package wrapper binding profile data."""
+
     configurable = True
     __slots__ = ('use', 'iuse', '_forced_use', '_masked_use', '_pkg_use', '_raw_pkg', '_profile')
 
@@ -277,9 +279,18 @@ class VisibilityReport(base.Template):
             else:
                 csolutions.append(required)
 
-        blocked = OrRestriction(*blockers)
+        def restrict_use(blocker, profile):
+            """Restrict blocker atom USE flags to available profile flags."""
+            a = atom(str(blocker))
+            if blocker.use is None:
+                blocker_use = set()
+            else:
+                blocker_use = set(blocker.use)
+            object.__setattr__(a, 'use', tuple(blocker_use & profile.iuse_effective))
+            return a
 
         for profile in profiles:
+            blocked = OrRestriction(*(restrict_use(x, profile) for x in blockers))
             failures = set()
             # is it visible?  ie, is it masked?
             # if so, skip it.
