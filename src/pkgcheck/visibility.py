@@ -269,6 +269,9 @@ class VisibilityReport(base.Template):
     @staticmethod
     def restrict_use(blocker, profile):
         """Restrict blocker atom USE flags to available profile flags."""
+        if blocker.use is None:
+            return blocker
+
         a = atom(str(blocker))
         use_map = dict()
 
