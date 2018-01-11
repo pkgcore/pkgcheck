@@ -266,6 +266,26 @@ class VisibilityReport(base.Template):
             if profile.visible(pkg):
                 reporter.add_report(VisibleVcsPkg(pkg, profile.key, profile.name))
 
+    @staticmethod
+    def restrict_use(blocker, profile):
+        """Restrict blocker atom USE flags to available profile flags."""
+        a = atom(str(blocker))
+        use = set()
+
+        # strip USE flags
+        # TODO: move this to an atom attr
+        if blocker.use is not None:
+            for x in blocker.use:
+                u = x
+                if x[0] == '-':
+                    continue
+                if x[-3:] in ("(+)", "(-)"):
+                    u = u[:-3]
+                use.add(u)
+
+        object.__setattr__(a, 'use', frozenset(use & profile.use))
+        return a
+
     def process_depset(self, pkg, attr, depset, profiles, reporter):
         get_cached_query = self.query_cache.get
 
@@ -279,18 +299,8 @@ class VisibilityReport(base.Template):
             else:
                 csolutions.append(required)
 
-        def restrict_use(blocker, profile):
-            """Restrict blocker atom USE flags to available profile flags."""
-            a = atom(str(blocker))
-            if blocker.use is None:
-                blocker_use = set()
-            else:
-                blocker_use = set(blocker.use)
-            object.__setattr__(a, 'use', tuple(blocker_use & profile.iuse_effective))
-            return a
-
         for profile in profiles:
-            blocked = OrRestriction(*(restrict_use(x, profile) for x in blockers))
+            blocked = OrRestriction(*(self.restrict_use(x, profile) for x in blockers))
             failures = set()
             # is it visible?  ie, is it masked?
             # if so, skip it.
