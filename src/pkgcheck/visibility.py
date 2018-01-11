@@ -270,7 +270,7 @@ class VisibilityReport(base.Template):
     def restrict_use(blocker, profile):
         """Restrict blocker atom USE flags to available profile flags."""
         a = atom(str(blocker))
-        use = set()
+        use_map = dict()
 
         # strip USE flags
         # TODO: move this to an atom attr
@@ -281,9 +281,10 @@ class VisibilityReport(base.Template):
                     continue
                 if x[-3:] in ("(+)", "(-)"):
                     u = u[:-3]
-                use.add(u)
+                use_map[u] = x
 
-        object.__setattr__(a, 'use', frozenset(use & profile.use))
+        use = set(use_map.keys()) & profile.use
+        object.__setattr__(a, 'use', frozenset(use_map[x] for x in use))
         return a
 
     def process_depset(self, pkg, attr, depset, profiles, reporter):
