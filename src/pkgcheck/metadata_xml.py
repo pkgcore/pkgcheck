@@ -374,7 +374,8 @@ class base_check(base.Template):
         """Perform additional document structure checks."""
         # find all root descendant elements that are empty
         for el in doc.getroot().iterdescendants():
-            if not el.getchildren() and (el.text is None or not el.text.strip()):
+            if (not el.getchildren() and (el.text is None or not el.text.strip())
+                    and not el.tag == 'stabilize-allarches'):
                 yield partial(self.empty_element, el.tag, el.sourceline)
 
         for el in doc.findall('.//cat'):
