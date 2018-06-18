@@ -25,8 +25,9 @@ import sys
 libdir = os.path.abspath(os.path.join('..', 'build', 'lib'))
 if os.path.exists(libdir):
     sys.path.insert(0, libdir)
-sys.path.insert(1, os.path.abspath('..'))
-import pkgdist
+
+os.environ['PKGDIST_REPODIR'] = os.path.abspath('..')
+from snakeoil.dist import distutils_extensions as pkgdist
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
