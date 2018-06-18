@@ -142,31 +142,31 @@ class FakeProfile(object):
         self.masked_use = ChunkedDataDict()
         self.masked_use.update_from_stream(
             chunked_data(atom(k), *split_negations(v))
-            for k, v in masked_use.iteritems())
+            for k, v in masked_use.items())
         self.masked_use.freeze()
 
         self.stable_masked_use = ChunkedDataDict()
         self.stable_masked_use.update_from_stream(
             chunked_data(atom(k), *split_negations(v))
-            for k, v in stable_masked_use.iteritems())
+            for k, v in stable_masked_use.items())
         self.stable_masked_use.freeze()
 
         self.forced_use = ChunkedDataDict()
         self.forced_use.update_from_stream(
             chunked_data(atom(k), *split_negations(v))
-            for k, v in forced_use.iteritems())
+            for k, v in forced_use.items())
         self.forced_use.freeze()
 
         self.stable_forced_use = ChunkedDataDict()
         self.stable_forced_use.update_from_stream(
             chunked_data(atom(k), *split_negations(v))
-            for k, v in stable_forced_use.iteritems())
+            for k, v in stable_forced_use.items())
         self.stable_forced_use.freeze()
 
         self.pkg_use = ChunkedDataDict()
         self.pkg_use.update_from_stream(
             chunked_data(atom(k), *split_negations(v))
-            for k, v in pkg_use.iteritems())
+            for k, v in pkg_use.items())
         self.pkg_use.freeze()
 
         self.masks = tuple(map(atom, masks))

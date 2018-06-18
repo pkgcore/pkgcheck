@@ -38,7 +38,7 @@ class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
         os.makedirs(self.filesdir)
 
         # create specified files in FILESDIR
-        for fn, contents in files.iteritems():
+        for fn, contents in files.items():
             fileutils.write_file(pjoin(self.filesdir, fn), 'w', contents)
 
         return misc.FakeFilesDirPkg(pkg, repo=repo)

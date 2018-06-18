@@ -78,7 +78,7 @@ class HttpsAvailableCheck(base.Template):
             if matches is not None:
                 links[matches.group(1)].append(lineno + 1)
 
-        for link, lines in links.iteritems():
+        for link, lines in links.items():
             reporter.add_report(HttpsAvailable(pkg, link, lines))
 
 

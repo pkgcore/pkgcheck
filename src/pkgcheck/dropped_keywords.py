@@ -62,7 +62,7 @@ class DroppedKeywordsReport(Template):
             previous_arches = pkg_arches
 
         dropped = defaultdict(list)
-        for key, pkgs in changes.iteritems():
+        for key, pkgs in changes.items():
             if self.options.verbose:
                 # output all pkgs with dropped keywords in verbose mode
                 for pkg in pkgs:
@@ -71,5 +71,5 @@ class DroppedKeywordsReport(Template):
                 # only report the most recent pkg with dropped keywords
                 dropped[pkgs[-1]].append(key)
 
-        for pkg, keys in dropped.iteritems():
+        for pkg, keys in dropped.items():
             reporter.add_report(DroppedKeywords(pkg, keys))

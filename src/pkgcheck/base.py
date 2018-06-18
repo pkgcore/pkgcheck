@@ -30,7 +30,7 @@ versioned_feed = "cat/pkg-ver"
 ebuild_feed = "cat/pkg-ver+text"
 
 # The plugger needs to be able to compare those and know the highest one.
-version_scope, package_scope, category_scope, repository_scope = range(4)
+version_scope, package_scope, category_scope, repository_scope = list(range(4))
 max_scope = repository_scope
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
@@ -100,10 +100,8 @@ class set_documentation(type):
         return type.__new__(cls, name, bases, d)
 
 
-class Template(Addon):
+class Template(Addon, metaclass=set_documentation):
     """Base template for a check."""
-
-    __metaclass__ = set_documentation
 
     scope = 0
     # The plugger sorts based on this. Should be left alone except for
@@ -164,9 +162,7 @@ def collect_checks_classes(obj):
     return set(x.__class__ for x in collect_checks(obj))
 
 
-class Result(object):
-
-    __metaclass__ = set_documentation
+class Result(object, metaclass=set_documentation):
 
     __slots__ = ()
 
@@ -229,7 +225,7 @@ class Result(object):
         if attrs.difference(data) or len(attrs) != len(data):
             raise TypeError("can't restore %s due to data %r not being complete" %
                             (self.__class__, data))
-        for k, v in data.iteritems():
+        for k, v in data.items():
             setattr(self, k, v)
 
 
@@ -306,7 +302,7 @@ def convert_check_filter(tok):
             chunks = name.lower().split('.')
             if len(toklist) > len(chunks):
                 return False
-            for i in xrange(len(chunks)):
+            for i in range(len(chunks)):
                 if chunks[i:i + len(toklist)] == toklist:
                     return True
             return False
@@ -527,7 +523,7 @@ def plug(sinks, transforms, sources, debug=None):
     pipes = set()
     unprocessed = set(
         (frozenset((source.feed_type,)), source, frozenset(), source.cost)
-        for source in source_map.itervalues())
+        for source in source_map.values())
     if debug is not None:
         for pipe in unprocessed:
             debug('initial: %r', pipe)
@@ -593,7 +589,7 @@ def plug(sinks, transforms, sources, debug=None):
             if best_cost is not None and best_cost <= cost:
                 # No point in growing this further.
                 continue
-            for source, source_pipes in source_to_pipes.iteritems():
+            for source, source_pipes in source_to_pipes.items():
                 if source not in sources:
                     for new_visited, trans, new_cost in source_pipes:
                         unprocessed.add((
@@ -615,7 +611,7 @@ def plug(sinks, transforms, sources, debug=None):
             for trans in transforms
             if trans.source == feed_type and trans.scope <= scope)
         # Hacky: we modify this in place.
-        for i in reversed(xrange(len(good_sinks))):
+        for i in reversed(range(len(good_sinks))):
             sink = good_sinks[i]
             if sink.feed_type == feed_type and sink.scope <= source.scope:
                 children.append(sink)

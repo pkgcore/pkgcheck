@@ -3,7 +3,7 @@ from snakeoil.test import TestCase
 from pkgcheck import base
 
 
-dummies = list('dummy-%s' % (i,) for i in xrange(0, 10))
+dummies = list('dummy-%s' % (i,) for i in range(0, 10))
 
 
 class UtilitiesTest(TestCase):
@@ -98,10 +98,10 @@ def trans(source, dest, cost=10, scope=base.package_scope):
 
 sources = tuple(DummySource(dummy) for dummy in dummies)
 trans_everything = tuple(trans(source, target)
-                         for source in xrange(len(dummies))
-                         for target in xrange(len(dummies)))
-trans_up = tuple(trans(i, i + 1) for i in xrange(len(dummies) - 1))
-trans_down = tuple(trans(i + 1, i) for i in xrange(len(dummies) - 1))
+                         for source in range(len(dummies))
+                         for target in range(len(dummies)))
+trans_up = tuple(trans(i, i + 1) for i in range(len(dummies) - 1))
+trans_down = tuple(trans(i + 1, i) for i in range(len(dummies) - 1))
 sinks = tuple(DummySink(dummy) for dummy in dummies)
 
 
@@ -121,17 +121,17 @@ class PlugTest(TestCase):
         bad_sinks = kw.pop('bad_sinks', [])
         expected_pipes = set(expected_pipes)
         if kw:
-            raise TypeError('unsupported kwargs %r' % (kw.keys(),))
+            raise TypeError('unsupported kwargs %r' % (list(kw.keys()),))
         try:
             actual_bad_sinks, pipes = base.plug(sinks, transforms, sources)
         except KeyboardInterrupt:
             raise
         except Exception:
-            print
-            print 'Test erroring, rerunning in debug mode'
+            print()
+            print('Test erroring, rerunning in debug mode')
             # Rerun in debug mode.
             def _debug(message, *args):
-                print message % args
+                print(message % args)
             base.plug(sinks, transforms, sources, _debug)
             # Should not reach this since base.plug should raise again.
             raise

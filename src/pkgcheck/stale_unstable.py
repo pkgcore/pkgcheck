@@ -43,7 +43,7 @@ class StaleUnstableReport(addons.StableCheckAddon):
     required_addons = (addons.ArchesAddon,)
     known_results = (StaleUnstable,)
 
-    def __init__(self, options, arches, staleness=long(day*30)):
+    def __init__(self, options, arches, staleness=int(day*30)):
         super(StaleUnstableReport, self).__init__(options, arches)
         self.staleness = staleness
         self.start_time = None

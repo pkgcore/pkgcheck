@@ -2,7 +2,7 @@
 
 from collections import OrderedDict, defaultdict
 from functools import partial
-from itertools import chain, ifilter, ifilterfalse, imap
+from itertools import chain, filterfalse
 
 from snakeoil.containers import ProtectedSet
 from snakeoil.demandload import demandload
@@ -55,7 +55,7 @@ class ArchesAddon(base.Addon):
         group = parser.add_argument_group('arches')
         group.add_argument(
             '-a', '--arches', dest='selected_arches', metavar='ARCH',
-            action='extend_comma_toggle',
+            action='csv_negations',
             help='comma separated list of arches to enable/disable',
             docs="""
                 Comma separated list of arches to enable and disable.
@@ -126,7 +126,7 @@ class profile_data(object):
         # kindly don't change that in any modifications, it adds up.
         enabled = known_flags.intersection(self.forced_use.pull_data(pkg))
         immutable = enabled.union(
-            ifilter(known_flags.__contains__, self.masked_use.pull_data(pkg)))
+            filter(known_flags.__contains__, self.masked_use.pull_data(pkg)))
         force_disabled = self.masked_use.pull_data(pkg)
         if force_disabled:
             enabled = enabled.difference(force_disabled)
@@ -149,7 +149,7 @@ class ProfileAddon(base.Addon):
                 primarily for testing.
             """)
         group.add_argument(
-            '-p', '--profiles', metavar='PROFILE', action='extend_comma_toggle',
+            '-p', '--profiles', metavar='PROFILE', action='csv_negations',
             dest='profiles',
             help='comma separated list of profiles to enable/disable',
             docs="""
@@ -195,7 +195,7 @@ class ProfileAddon(base.Addon):
                 for x in profiles_obj.paths(s):
                     yield x
             else:
-                yield '/'.join(filter(None, s.split('/')))
+                yield '/'.join([_f for _f in s.split('/') if _f])
 
         disabled, enabled = selected_profiles
         disabled = set(disabled)
@@ -208,15 +208,15 @@ class ProfileAddon(base.Addon):
         ignore_deprecated = 'deprecated' not in enabled
 
         # expand status keywords, e.g. 'stable' -> set of stable profiles
-        disabled = set(chain.from_iterable(imap(norm_name, disabled)))
-        enabled = set(chain.from_iterable(imap(norm_name, enabled)))
+        disabled = set(chain.from_iterable(map(norm_name, disabled)))
+        enabled = set(chain.from_iterable(map(norm_name, enabled)))
 
         # If no profiles are enabled, then all that are defined in
         # profiles.desc are scanned except ones that are explicitly disabled.
         if not enabled:
             enabled = {
                 profile for profile, status in
-                chain.from_iterable(profiles_obj.arch_profiles.itervalues())}
+                chain.from_iterable(profiles_obj.arch_profiles.values())}
 
         profile_paths = enabled.difference(disabled)
 
@@ -348,7 +348,7 @@ class ProfileAddon(base.Addon):
                 values.ContainmentMatch(unstable_key))
 
         profile_evaluate_dict = {}
-        for key, profile_list in profile_filters.iteritems():
+        for key, profile_list in profile_filters.items():
             similar = profile_evaluate_dict[key] = []
             for profile in profile_list:
                 for existing in similar:
@@ -393,7 +393,7 @@ class ProfileAddon(base.Addon):
 
     def __iter__(self):
         """Iterate over all profile data objects."""
-        return chain.from_iterable(self.profile_filters.itervalues())
+        return chain.from_iterable(self.profile_filters.values())
 
     def __len__(self):
         return len([x for x in self])
@@ -437,7 +437,7 @@ class EvaluateDepSetAddon(base.Template):
             collapsed.setdefault((immutable, enabled), []).extend(profiles)
 
         return [(depset.evaluate_depset(k[1], tristate_filter=k[0]), v)
-                for k, v in collapsed.iteritems()]
+                for k, v in collapsed.items()]
 
 
 class StableCheckAddon(base.Template):
@@ -528,11 +528,11 @@ class UseAddon(base.Addon):
         for node in i:
             if isinstance(node, packages.Conditional):
                 # invert it; get only whats not in pkg.iuse
-                unstated.update(ifilterfalse(stated.__contains__, node.restriction.vals))
+                unstated.update(filterfalse(stated.__contains__, node.restriction.vals))
                 i.append(iflatten_instance(node.payload, skip_filter))
                 continue
             elif attr == 'required_use':
-                unstated.update(ifilterfalse(stated.__contains__, node.vals))
+                unstated.update(filterfalse(stated.__contains__, node.vals))
             yield node
 
         # implicit IUSE flags

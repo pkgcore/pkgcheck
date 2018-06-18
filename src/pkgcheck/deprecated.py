@@ -41,7 +41,7 @@ class DeprecatedEclass(Warning):
     def __init__(self, pkg, eclasses):
         super(DeprecatedEclass, self).__init__()
         self._store_cpv(pkg)
-        self.eclasses = tuple(sorted(eclasses.iteritems()))
+        self.eclasses = tuple(sorted(eclasses.items()))
 
     @property
     def short_desc(self):
@@ -146,5 +146,5 @@ class DeprecatedEclassReport(Template):
     def feed(self, pkg, reporter):
         bad = set(self.blacklist.keys()).intersection(pkg.inherited)
         if bad:
-            eclasses = ImmutableDict({old: new for old, new in self.blacklist.iteritems() if old in bad})
+            eclasses = ImmutableDict({old: new for old, new in self.blacklist.items() if old in bad})
             reporter.add_report(DeprecatedEclass(pkg, eclasses))

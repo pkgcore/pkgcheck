@@ -50,7 +50,7 @@ class UnstableOnlyReport(StableCheckAddon):
     def feed(self, pkgset, reporter):
         # stable, then unstable, then file
         unstable_arches = defaultdict(list)
-        for k, v in self.arch_restricts.iteritems():
+        for k, v in self.arch_restricts.items():
             stable = unstable = None
             for x in pkgset:
                 if v[0].match(x):
@@ -63,7 +63,7 @@ class UnstableOnlyReport(StableCheckAddon):
                 unstable_arches[unstable].append(k)
 
         # collapse reports by available versions
-        for pkgs in unstable_arches.iterkeys():
+        for pkgs in unstable_arches.keys():
             reporter.add_report(UnstableOnly(pkgs, unstable_arches[pkgs]))
 
     def finish(self, reporter):

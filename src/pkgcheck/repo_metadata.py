@@ -1,5 +1,5 @@
 from collections import defaultdict
-from itertools import ifilterfalse, chain, groupby
+from itertools import filterfalse, chain, groupby
 from operator import attrgetter, itemgetter
 
 from snakeoil import mappings
@@ -140,7 +140,7 @@ class PackageUpdatesCheck(base.Template):
         old_move_updates = {}
         old_slotmove_updates = {}
 
-        for pkg, updates in repo_updates.iteritems():
+        for pkg, updates in repo_updates.items():
             move_updates = [x for x in updates if x[0] == 'move']
             slotmove_updates = [x for x in updates if x[0] == 'slotmove']
 
@@ -164,7 +164,7 @@ class PackageUpdatesCheck(base.Template):
                     x = ('slotmove', str(pkg)[:-(len(pkg.slot) + 1)], pkg.slot, newslot)
                     old_slotmove_updates[pkg.key] = x
 
-        for pkg, v in multi_move_updates.iteritems():
+        for pkg, v in multi_move_updates.items():
             orig_pkg, moves = v
             # check for multi-move chains ending in removed packages
             if not self.repo.match(pkg):
@@ -175,7 +175,7 @@ class PackageUpdatesCheck(base.Template):
                 reporter.add_report(MultiMovePackageUpdate(orig_pkg, moves))
 
         # report remaining old updates
-        for pkg, move in chain(old_move_updates.iteritems(), old_slotmove_updates.iteritems()):
+        for pkg, move in chain(old_move_updates.items(), old_slotmove_updates.items()):
             reporter.add_report(OldPackageUpdate(pkg, move))
 
 class UnusedGlobalFlags(base.Warning):
@@ -397,8 +397,8 @@ class UnusedMirrorsCheck(base.Template):
     def start(self):
         master_mirrors = self.unused_master_mirrors = set()
         for repo in self.options.target_repo.masters:
-            master_mirrors.update(repo.mirrors.iterkeys())
-        self.unused_mirrors = set(self.options.target_repo.mirrors.iterkeys()) - master_mirrors
+            master_mirrors.update(repo.mirrors.keys())
+        self.unused_mirrors = set(self.options.target_repo.mirrors.keys()) - master_mirrors
 
         # determine unused mirrors across all master repos
         self.unused_in_master_mirrors = set()
@@ -476,8 +476,8 @@ class UnusedEclassesCheck(base.Template):
     def start(self):
         master_eclasses = self.unused_master_eclasses = set()
         for repo in self.options.target_repo.masters:
-            master_eclasses.update(repo.eclass_cache.eclasses.iterkeys())
-        self.unused_eclasses = set(self.options.target_repo.eclass_cache.eclasses.iterkeys()) - master_eclasses
+            master_eclasses.update(repo.eclass_cache.eclasses.keys())
+        self.unused_eclasses = set(self.options.target_repo.eclass_cache.eclasses.keys()) - master_eclasses
 
         # determine unused eclasses across all master repos
         self.unused_in_master_eclasses = set()
@@ -715,7 +715,7 @@ class ProfilesCheck(base.Template):
             if isinstance(d, misc.ChunkedDataDict):
                 d = vals.render_to_dict()
 
-            for _pkg, entries in d.iteritems():
+            for _pkg, entries in d.items():
                 for a, disabled, enabled in entries:
                     pkgs = self.repo.match(a)
                     if not pkgs:
@@ -734,7 +734,7 @@ class ProfilesCheck(base.Template):
         def _use(filename, vals):
             # TODO: give ChunkedDataDict some dict view methods
             d = vals.render_to_dict()
-            for _, entries in d.iteritems():
+            for _, entries in d.items():
                 for _, disabled, enabled in entries:
                     unknown_disabled = set(disabled) - self.available_iuse
                     unknown_enabled = set(enabled) - self.available_iuse
@@ -763,7 +763,7 @@ class ProfilesCheck(base.Template):
         for root, _dirs, files in os.walk(self.profiles_dir):
             if root not in self.non_profile_dirs:
                 profile = ProfileNode(root)
-                for f in set(files).intersection(file_parse_map.iterkeys()):
+                for f in set(files).intersection(file_parse_map.keys()):
                     attr, func = file_parse_map[f]
                     # catch badly formatted entries
                     # TODO: switch this to a patched logger catcher once
@@ -777,21 +777,21 @@ class ProfilesCheck(base.Template):
                         continue
                     func(f, vals)
 
-        for path, filenames in sorted(unknown_pkgs.iteritems()):
-            for filename, vals in filenames.iteritems():
+        for path, filenames in sorted(unknown_pkgs.items()):
+            for filename, vals in filenames.items():
                 reporter.add_report(UnknownProfilePackages(
                     pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
                     vals))
 
-        for path, filenames in sorted(unknown_pkg_use.iteritems()):
-            for filename, vals in filenames.iteritems():
+        for path, filenames in sorted(unknown_pkg_use.items()):
+            for filename, vals in filenames.items():
                 for pkg, flags in vals:
                     reporter.add_report(UnknownProfilePackageUse(
                         pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
                         pkg, flags))
 
-        for path, filenames in sorted(unknown_use.iteritems()):
-            for filename, vals in filenames.iteritems():
+        for path, filenames in sorted(unknown_use.items()):
+            for filename, vals in filenames.items():
                 reporter.add_report(UnknownProfileUse(
                     pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
                     vals))
@@ -814,7 +814,7 @@ class RepoProfilesReport(base.Template):
     def __init__(self, options, profile_filters):
         super(RepoProfilesReport, self).__init__(options)
         self.arches = options.target_repo.config.known_arches
-        self.profiles = options.target_repo.config.arch_profiles.itervalues()
+        self.profiles = iter(options.target_repo.config.arch_profiles.values())
         self.repo = options.target_repo
         self.profiles_dir = pjoin(self.repo.location, 'profiles')
         self.non_profile_dirs = profile_filters.non_profile_dirs
@@ -823,7 +823,7 @@ class RepoProfilesReport(base.Template):
         pass
 
     def finish(self, reporter):
-        category_dirs = set(ifilterfalse(
+        category_dirs = set(filterfalse(
             self.repo.false_categories.__contains__,
             (x for x in listdir_dirs(self.repo.location) if x[0] != '.')))
         unknown_categories = category_dirs.difference(self.repo.categories)
@@ -914,7 +914,7 @@ class LicenseGroupsCheck(base.Template):
         pass
 
     def finish(self, reporter):
-        for group, licenses in self.repo.licenses.groups.iteritems():
+        for group, licenses in self.repo.licenses.groups.items():
             unknown_licenses = set(licenses).difference(self.repo.licenses)
             if unknown_licenses:
                 reporter.add_report(UnknownLicenses(group, unknown_licenses))
@@ -1050,7 +1050,7 @@ class ManifestReport(base.Template):
             required_checksums = self.required_checksums[repo]
             pkgset = list(pkgset)
             pkg_manifest = pkgset[0].manifest
-            manifest_distfiles = set(pkg_manifest.distfiles.iterkeys())
+            manifest_distfiles = set(pkg_manifest.distfiles.keys())
             seen = set()
             for pkg in pkgset:
                 pkg.release_cached_data()
@@ -1076,11 +1076,11 @@ class ManifestReport(base.Template):
                     existing = self.seen_checksums.get(f_inst.filename)
                     if existing is None:
                         self.seen_checksums[f_inst.filename] = (
-                            [pkg.key], dict(f_inst.chksums.iteritems()))
+                            [pkg.key], dict(f_inst.chksums.items()))
                         continue
                     seen_pkgs, seen_chksums = existing
                     confl_checksums = []
-                    for chf_type, value in seen_chksums.iteritems():
+                    for chf_type, value in seen_chksums.items():
                         our_value = f_inst.chksums.get(chf_type)
                         if our_value is not None and our_value != value:
                             confl_checksums.append((chf_type, value, our_value))

@@ -45,7 +45,7 @@ environments just execute **tox** in the root directory of a repo or unpacked
 tarball. Otherwise, for a specific python version execute something similar to
 the following::
 
-    tox -e py27
+    tox -e py36
 
 Notes
 =====

@@ -16,7 +16,7 @@ class TestRedundantVersion(misc.ReportTestCase):
         check = redundant_ver(None, None)
         self.assertNoReport(check, [self.mk_pkg("0.7.1")])
         reports = self.assertReports(
-            check, [self.mk_pkg(x) for x in "0.7", "0.8", "0.9"])
+            check, [self.mk_pkg(x) for x in ("0.7", "0.8", "0.9")])
         self.assertEqual(
             [list(x.later_versions) for x in reports],
             [["0.9", "0.8"], ["0.9"]])

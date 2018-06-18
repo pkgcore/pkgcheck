@@ -21,7 +21,7 @@ class TestImlateReport(misc.ReportTestCase):
 
         self.assertNoReport(
             check,
-            [mk_pkg(str(x), "~x86 ~amd64") for x in xrange(10)])
+            [mk_pkg(str(x), "~x86 ~amd64") for x in range(10)])
 
         # assert single 0.9/0.8
         report = self.assertReports(

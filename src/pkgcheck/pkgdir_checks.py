@@ -14,9 +14,9 @@ demandload('errno', 'snakeoil.chksum:get_chksums')
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()
-allowed_filename_chars_set.update(chr(x) for x in xrange(ord('a'), ord('z')+1))
-allowed_filename_chars_set.update(chr(x) for x in xrange(ord('A'), ord('Z')+1))
-allowed_filename_chars_set.update(chr(x) for x in xrange(ord('0'), ord('9')+1))
+allowed_filename_chars_set.update(chr(x) for x in range(ord('a'), ord('z')+1))
+allowed_filename_chars_set.update(chr(x) for x in range(ord('A'), ord('Z')+1))
+allowed_filename_chars_set.update(chr(x) for x in range(ord('0'), ord('9')+1))
 allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 
 
@@ -224,7 +224,7 @@ class PkgDirReport(Template):
 
             if (filename.endswith(ebuild_ext) or filename in
                     ("Manifest", "metadata.xml")):
-                if os.stat(pjoin(base, filename)).st_mode & 0111:
+                if os.stat(pjoin(base, filename)).st_mode & 0o111:
                     reporter.add_report(ExecutableFile(pkg, filename))
 
             if filename.endswith(ebuild_ext):
@@ -257,7 +257,7 @@ class PkgDirReport(Template):
                     if fn not in self.ignore_dirs:
                         unprocessed_dirs.append(pjoin(cwd, fn))
                 elif stat.S_ISREG(st.st_mode):
-                    if st.st_mode & 0111:
+                    if st.st_mode & 0o111:
                         reporter.add_report(
                             ExecutableFile(pkg, pjoin(cwd, fn)))
                     if not fn.startswith("digest-"):
@@ -271,12 +271,12 @@ class PkgDirReport(Template):
                             reporter.add_report(Glep31Violation(pkg, pjoin(cwd, fn)))
 
         files_by_digest = defaultdict(list)
-        for size, files in files_by_size.iteritems():
+        for size, files in files_by_size.items():
             if len(files) > 1:
                 for f in files:
                     digest = get_chksums(pjoin(base, f), self.digest_algo)[0]
                     files_by_digest[digest].append(f)
 
-        for digest, files in files_by_digest.iteritems():
+        for digest, files in files_by_digest.items():
             if len(files) > 1:
                 reporter.add_report(DuplicateFiles(pkg, files))

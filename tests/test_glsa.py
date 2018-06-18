@@ -1,4 +1,4 @@
-from pkgcore.test.pkgsets.test_glsa import mk_glsa
+from pkgcore.test.misc import mk_glsa
 from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import TempDirMixin
 

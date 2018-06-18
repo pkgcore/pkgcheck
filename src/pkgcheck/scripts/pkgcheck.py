@@ -5,7 +5,7 @@ pkgcheck is a QA utility based on **pkgcore**\(5) similar to **repoman**\(1)
 from portage.
 """
 
-from __future__ import absolute_import
+
 
 import argparse
 from itertools import chain
@@ -67,14 +67,14 @@ main_options.add_argument(
 
 check_options = scan.add_argument_group('check selection')
 check_options.add_argument(
-    '-c', '--checks', metavar='CHECK', action='extend_comma_toggle', dest='selected_checks',
+    '-c', '--checks', metavar='CHECK', action='csv_negations', dest='selected_checks',
     help='limit checks to regex or package/class matching (comma-separated list)')
 check_options.add_argument(
     '-C', '--checkset', metavar='CHECKSET', action=commandline.StoreConfigObject,
     config_type='pkgcheck_checkset',
     help='preconfigured set of checks to run')
 check_options.add_argument(
-    '-k', '--keywords', metavar='KEYWORD', action='extend_comma_toggle', dest='selected_keywords',
+    '-k', '--keywords', metavar='KEYWORD', action='csv_negations', dest='selected_keywords',
     help='limit keywords to scan for (comma-separated list)',
     docs="""
         Comma separated list of keywords to enable and disable for
@@ -94,7 +94,7 @@ check_options.add_argument(
         Use 'pkgcheck show --keywords' or the list below to see available options.
     """)
 check_options.add_argument(
-    '-S', '--scopes', metavar='SCOPE', action='extend_comma_toggle', dest='selected_scopes',
+    '-S', '--scopes', metavar='SCOPE', action='csv_negations', dest='selected_scopes',
     help='limit keywords to scan for by scope (comma-separated list)',
     docs="""
         Comma separated list of scopes to enable and disable for scanning. Any
@@ -147,7 +147,7 @@ def _validate_args(parser, namespace):
             # The use of a dict here is a hack to deal with one
             # repo having multiple names in the configuration.
             candidates = {}
-            for name, suite in namespace.config.pkgcheck_suite.iteritems():
+            for name, suite in namespace.config.pkgcheck_suite.items():
                 repo = suite.target_repo
                 if repo is None:
                     continue
@@ -160,7 +160,7 @@ def _validate_args(parser, namespace):
         if namespace.target_repo is not None:
             # We have a repo, now find a suite matching it.
             candidates = list(
-                suite for suite in namespace.config.pkgcheck_suite.itervalues()
+                suite for suite in namespace.config.pkgcheck_suite.values()
                 if suite.target_repo is namespace.target_repo)
             if len(candidates) == 1:
                 namespace.guessed_suite = True
@@ -450,7 +450,7 @@ def _scan(options, out, err):
 
     transforms = list(get_plugins('transform', plugins))
     # XXX this is pretty horrible.
-    sinks = list(addon for addon in addons_map.itervalues()
+    sinks = list(addon for addon in addons_map.values()
                  if getattr(addon, 'feed_type', False))
 
     reporter.start()
@@ -621,7 +621,7 @@ def display_keywords(out, options):
         d.setdefault(scope_map[keyword.threshold], set()).add(keyword)
 
     if not options.verbose:
-        out.write('\n'.join(sorted(x.__name__ for s in d.itervalues() for x in s)), wrap=False)
+        out.write('\n'.join(sorted(x.__name__ for s in d.values() for x in s)), wrap=False)
     else:
         if not d:
             out.write(out.fg('red'), "No Documentation")
@@ -653,7 +653,7 @@ def display_checks(out, options):
         d.setdefault(x.__module__, []).append(x)
 
     if not options.verbose:
-        out.write('\n'.join(sorted(x.__name__ for s in d.itervalues() for x in s)), wrap=False)
+        out.write('\n'.join(sorted(x.__name__ for s in d.values() for x in s)), wrap=False)
     else:
         if not d:
             out.write(out.fg('red'), "No Documentation")
@@ -776,7 +776,7 @@ def _show(options, out, err):
     if options.reporters:
         display_reporters(
             out, options,
-            options.config.pkgcheck_reporter_factory.values(),
+            list(options.config.pkgcheck_reporter_factory.values()),
             list(get_plugins('reporter', plugins)))
 
     return 0

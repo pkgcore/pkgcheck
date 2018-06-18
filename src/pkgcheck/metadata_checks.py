@@ -78,7 +78,7 @@ class LicenseMetadataReport(base.Template):
                 pkg, 'license', "exception- %s" % e))
             del e
         else:
-            licenses = set(self.iuse_filter((basestring,), pkg, licenses, reporter))
+            licenses = set(self.iuse_filter((str,), pkg, licenses, reporter))
             if not licenses:
                 if pkg.category != 'virtual':
                     reporter.add_report(MetadataError(
@@ -151,7 +151,7 @@ class RequiredUSEMetadataReport(base.Template):
             return
 
         try:
-            for x in self.iuse_filter((basestring,), pkg, pkg.required_use, reporter):
+            for x in self.iuse_filter((str,), pkg, pkg.required_use, reporter):
                 pass
         except (KeyboardInterrupt, SystemExit):
             raise
@@ -187,13 +187,13 @@ class RequiredUSEMetadataReport(base.Template):
 
         if self.options.verbose:
             # report all failures with profile info in verbose mode
-            for node, profile_info in failures.iteritems():
+            for node, profile_info in failures.items():
                 for use, keyword, profile in profile_info:
                     reporter.add_report(RequiredUseDefaults(
                         pkg, node, use, keyword, profile))
         else:
             # only report one failure per REQUIRED_USE node in regular mode
-            for node in failures.iterkeys():
+            for node in failures.keys():
                 reporter.add_report(RequiredUseDefaults(pkg, node))
 
 
@@ -631,7 +631,7 @@ class RestrictsReport(base.Template):
 
     def feed(self, pkg, reporter):
         # ignore conditionals
-        i = self.iuse_filter((basestring,), pkg, pkg.restrict, reporter)
+        i = self.iuse_filter((str,), pkg, pkg.restrict, reporter)
         bad = set(i).difference(self.known_restricts)
         if bad:
             deprecated = set(

@@ -26,7 +26,7 @@ class base_test(TestCase):
         args, unknown_args = p.parse_known_args(args, namespace)
         self.assertEqual(unknown_args, [])
         orig_out, orig_err = None, None
-        for attr, val in preset_values.iteritems():
+        for attr, val in preset_values.items():
             setattr(args, attr, val)
         try:
                 if silence:
@@ -43,7 +43,7 @@ class base_test(TestCase):
                     sys.stderr.close()
                     sys.stderr = orig_err
 
-        for attr, val in settings.iteritems():
+        for attr, val in settings.items():
             self.assertEqual(getattr(args, attr), val,
                 msg="for args %r, %s must be %r, got %r" % (args, attr, val,
                     getattr(args, attr)))
@@ -164,12 +164,12 @@ class profile_mixin(mixins.TempDirMixin, base_test):
             self.assertTrue(ensure_dirs(pjoin(loc, profile)),
                             msg="failed creating profile %r" % profile)
         if arches is None:
-            arches = set(val[0] for val in profiles.itervalues())
+            arches = set(val[0] for val in profiles.values())
         write_file(pjoin(loc, 'arch.list'), 'w', "\n".join(arches))
         write_file(pjoin(loc, 'repo_name'), 'w', 'testing')
         write_file(pjoin(loc, 'eapi'), 'w', '5')
         with open(pjoin(loc, 'profiles.desc'), 'w') as fd:
-            for profile, vals in profiles.iteritems():
+            for profile, vals in profiles.items():
                 l = len(vals)
                 if l == 1 or not vals[1]:
                     fd.write("%s\t%s\tstable\n" % (vals[0], profile))
@@ -351,7 +351,7 @@ class TestProfileAddon(profile_mixin):
             # create a fresh tree for the profile work everytime.
             # do this, so that it's always a unique pathway- this sidesteps
             # any potential issues of ProfileNode instance caching.
-            path = pjoin(self.dir, 'foo', str(counter.next()))
+            path = pjoin(self.dir, 'foo', str(next(counter)))
             shutil.copytree(pjoin(self.dir, 'foo'), path, symlinks=True)
             return self.process_check(path, list(args))
 
