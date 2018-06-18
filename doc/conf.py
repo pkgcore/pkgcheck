@@ -65,7 +65,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = pkgdist.MODULE
+project = pkgdist.MODULE_NAME
 authors = ''
 copyright = '2006-2017, pkgcheck contributors'
 

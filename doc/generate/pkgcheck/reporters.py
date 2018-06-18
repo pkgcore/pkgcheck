@@ -1,8 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Output rst doc for defined pkgcheck reporters.
-
-from __future__ import print_function
 
 import sys
 from textwrap import dedent
@@ -13,7 +11,7 @@ from snakeoil.sequences import unstable_unique
 from pkgcheck import plugins
 
 
-def main(f=sys.stdout):
+def main(f=sys.stdout, **kwargs):
     def out(s, **kwargs):
         print(s, file=f, **kwargs)
 

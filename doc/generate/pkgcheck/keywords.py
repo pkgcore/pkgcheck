@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Output rst doc for defined pkgcheck keywords.
 
@@ -13,19 +13,14 @@ mode (e.g. \`pkgcheck --list-keywords -v\`) will colorize and sort the output
 into scopes.
 """
 
-from __future__ import print_function
-
-from itertools import chain
 import sys
 from textwrap import dedent
-
-from snakeoil.sequences import unstable_unique
 
 from pkgcheck import base
 from pkgcheck.scripts.pkgcheck import _known_keywords
 
 
-def main(f=sys.stdout):
+def main(f=sys.stdout, **kwargs):
     def out(s, **kwargs):
         print(s, file=f, **kwargs)
 

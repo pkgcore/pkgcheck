@@ -1,19 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Output rst doc for defined pkgcheck checks.
-
-from __future__ import print_function
 
 from collections import defaultdict
 import sys
 from textwrap import dedent
 
-from snakeoil.sequences import unstable_unique
-
 from pkgcheck.scripts.pkgcheck import _known_checks
 
 
-def main(f=sys.stdout):
+def main(f=sys.stdout, **kwargs):
     def out(s, **kwargs):
         print(s, file=f, **kwargs)
 
