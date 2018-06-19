@@ -93,7 +93,7 @@ def strip_atom_use(inst):
     if not inst.use:
         return inst
     if '=*' == inst.op:
-        s = '=%s*' % inst.cpvstr
+        s = f'={inst.cpvstr}*'
     else:
         s = inst.op + inst.cpvstr
     if inst.blocks:
@@ -101,7 +101,7 @@ def strip_atom_use(inst):
         if not inst.blocks_temp_ignorable:
             s = '!' + s
     if inst.slot:
-        s += ':%s' % inst.slot
+        s += f':{inst.slot}'
     return atom(s)
 
 
@@ -120,8 +120,7 @@ class VisibleVcsPkg(base.Error):
 
     @property
     def short_desc(self):
-        return "VCS version visible for arch %s, profile %s" % (
-            self.arch, self.profile)
+        return f"VCS version visible for arch {self.arch}, profile {self.profile}"
 
 
 class NonExistentDeps(base.Warning):
@@ -157,8 +156,7 @@ class UncheckableDep(base.Warning):
 
     @property
     def short_desc(self):
-        return "depset %s: could not be checked due to pkgcore limitation" % (
-            self.attr)
+        return f"depset {self.attr}: could not be checked due to pkgcore limitation"
 
 
 class NonsolvableDeps(base.Error):

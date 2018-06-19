@@ -8,7 +8,7 @@ class TestRedundantVersion(misc.ReportTestCase):
 
     def mk_pkg(self, ver, keywords=("x86", "amd64"), slot="0"):
         return misc.FakePkg(
-            "dev-util/diffball-%s" % ver,
+            f"dev-util/diffball-{ver}",
             data={"KEYWORDS": ' '.join(keywords), "SLOT": slot})
 
     def test_it(self):

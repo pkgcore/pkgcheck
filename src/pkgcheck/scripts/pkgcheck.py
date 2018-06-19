@@ -231,20 +231,16 @@ def _validate_args(parser, namespace):
             func = list(base.Whitelist([namespace.reporter]).filter(
                 get_plugins('reporter', plugins)))
             if not func:
+                available = ', '.join(sorted(
+                    x.__name__ for x in get_plugins('reporter', plugins)))
                 parser.error(
-                    "no reporter matches %r (available: %s)" % (
-                        namespace.reporter,
-                        ', '.join(sorted(x.__name__ for x in get_plugins('reporter', plugins)))
-                    )
-                )
+                    f"no reporter matches {namespace.reporter!r} "
+                    f"(available: {available})")
             elif len(func) > 1:
+                reporters = tuple(sorted(f"{x.__module__}.{x.__name__}" for x in func))
                 parser.error(
-                    "--reporter %r matched multiple reporters, "
-                    "must match one. %r" % (
-                        namespace.reporter,
-                        tuple(sorted("%s.%s" % (x.__module__, x.__name__) for x in func))
-                    )
-                )
+                    f"reporter {namespace.reporter!r} matched multiple reporters, "
+                    f"must match one. {reporters!r}")
             func = func[0]
         namespace.reporter = func
 
@@ -430,7 +426,7 @@ def _scan(options, out, err):
             raise
         except Exception:
             if options.debug:
-                err.write('instantiating %s' % (klass,))
+                err.write(f'instantiating {klass}')
             raise
         return res
 
@@ -439,8 +435,9 @@ def _scan(options, out, err):
         init_addon(addon)
 
     if options.verbose:
-        err.write("target repo: '%s' at '%s'" % (
-            options.target_repo.repo_id, options.target_repo.location))
+        err.write(
+            f"target repo: {options.target_repo.repo_id!r} "
+            f"at {options.target_repo.location!r}")
         err.write('base dirs: ', ', '.join(options.repo_bases))
         for filterer in options.limiters:
             err.write('limiter: ', filterer)
@@ -468,12 +465,9 @@ def _scan(options, out, err):
             really_bad, ignored = base.plug(sinks, transforms, [full_scope])
             really_bad = set(really_bad)
             assert bad_sinks >= really_bad, \
-                '%r unreachable with no limiters but reachable with?' % (
-                    really_bad - bad_sinks,)
+                f'{really_bad - bad_sinks} unreachable with no limiters but reachable with?'
             for sink in really_bad:
-                err.error(
-                    'sink %s could not be connected (missing transforms?)' % (
-                        sink,))
+                err.error(f'sink {sink} could not be connected (missing transforms?)')
             out_of_scope = bad_sinks - really_bad
             if options.verbose and out_of_scope:
                 err.warn('skipping repo checks (not a full repo scan)')
@@ -481,7 +475,7 @@ def _scan(options, out, err):
             out.write(out.fg('red'), ' * ', out.reset, 'No checks!')
         else:
             if options.debug:
-                err.write('Running %i tests' % (len(sinks) - len(bad_sinks),))
+                err.write(f'Running {len(sinks) - len(bad_sinks)} tests')
             for source, pipe in pipes:
                 pipe.start()
                 reporter.start_check(
@@ -525,20 +519,16 @@ def _replay_validate_args(parser, namespace):
         func = list(base.Whitelist([namespace.reporter]).filter(
             get_plugins('reporter', plugins)))
         if not func:
+            available = ', '.join(sorted(
+                x.__name__ for x in get_plugins('reporter', plugins)))
             parser.error(
-                "no reporter matches %r (available: %s)" % (
-                    namespace.reporter,
-                    ', '.join(sorted(x.__name__ for x in get_plugins('reporter', plugins)))
-                )
-            )
+                f"no reporter matches {namespace.reporter!r} "
+                f"(available: {available})")
         elif len(func) > 1:
+            reporters = tuple(sorted(f"{x.__module__}.{x.__name__}" for x in func))
             parser.error(
-                "--reporter %r matched multiple reporters, "
-                "must match one. %r" % (
-                    namespace.reporter,
-                    tuple(sorted("%s.%s" % (x.__module__, x.__name__) for x in func))
-                )
-            )
+                f"reporter {namespace.reporter!r} matched multiple reporters, "
+                f"must match one. {reporters!r}")
         func = func[0]
     namespace.reporter = func
 

@@ -162,7 +162,7 @@ class profile_mixin(mixins.TempDirMixin, base_test):
             write_file(pjoin(loc, 'metadata', 'layout.conf'), 'w', 'masters=')
         for profile in profiles:
             self.assertTrue(ensure_dirs(pjoin(loc, profile)),
-                            msg="failed creating profile %r" % profile)
+                            msg=f"failed creating profile {profile!r}")
         if arches is None:
             arches = set(val[0] for val in profiles.values())
         write_file(pjoin(loc, 'arch.list'), 'w', "\n".join(arches))
@@ -172,14 +172,14 @@ class profile_mixin(mixins.TempDirMixin, base_test):
             for profile, vals in profiles.items():
                 l = len(vals)
                 if l == 1 or not vals[1]:
-                    fd.write("%s\t%s\tstable\n" % (vals[0], profile))
+                    fd.write(f"{vals[0]}\t{profile}\tstable\n")
                 else:
-                    fd.write("%s\t%s\t%s\n" % (vals[0], profile, vals[1]))
+                    fd.write(f"{vals[0]}\t{profile}\t{vals[1]}\n")
                 if l == 3 and vals[2]:
                     with open(pjoin(loc, profile, 'deprecated'), 'w') as f:
                         f.write("foon\n#dar\n")
                 with open(pjoin(loc, profile, 'make.defaults'), 'w') as f:
-                    f.write("ARCH=%s\n" % vals[0])
+                    f.write(f"ARCH={vals[0]}\n")
                 with open(pjoin(loc, profile, 'eapi'), 'w') as f:
                     f.write('5')
 
@@ -364,19 +364,19 @@ class TestProfileAddon(profile_mixin):
         self.assertProfiles(check, 'ppc', 'default-linux/ppc')
 
         l = check.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': 'x86'}))
-        self.assertEqual(len(l), 1, msg="checking for profile collapsing: %r" % l)
-        self.assertEqual(len(l[0]), 2, msg="checking for proper # of profiles: %r" % l[0])
+        self.assertEqual(len(l), 1, msg=f"checking for profile collapsing: {l!r}")
+        self.assertEqual(len(l[0]), 2, msg=f"checking for proper # of profiles: {l[0]!r}")
         self.assertEqual(sorted(x.name for x in l[0]),
                          sorted(['default-linux', 'default-linux/x86']))
 
         # check keyword collapsing
         l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'ppc'}))
-        self.assertEqual(len(l), 1, msg="checking for profile collapsing: %r" % l)
-        self.assertEqual(len(l[0]), 1, msg="checking for proper # of profiles: " "%r" % l[0])
+        self.assertEqual(len(l), 1, msg=f"checking for profile collapsing: {l!r}")
+        self.assertEqual(len(l[0]), 1, msg=f"checking for proper # of profiles: {l[0]!r}")
         self.assertEqual(l[0][0].name, 'default-linux/ppc')
 
         l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'foon'}))
-        self.assertEqual(len(l), 0, msg="checking for profile collapsing: %r" % l)
+        self.assertEqual(len(l), 0, msg=f"checking for profile collapsing: {l!r}")
 
         # test collapsing reusing existing profile layout
         with open(pjoin(self.dir, 'foo', 'default-linux', 'use.mask'), 'w') as f:
@@ -427,7 +427,7 @@ class TestEvaluateDepSetAddon(profile_mixin):
         # since evaluate relies on it.
         self.addon_kls = addons.ProfileAddon
         profile_options = profile_mixin.process_check(
-            self, None, ['--profiles=%s' % ','.join(profiles)])
+            self, None, [f"--profiles={','.join(profiles)}"])
         self.addon_kls = self.orig_addon_kls
         profile_check = addons.ProfileAddon(profile_options)
 
@@ -452,7 +452,7 @@ class TestEvaluateDepSetAddon(profile_mixin):
 
         def get_rets(ver, attr, KEYWORDS="x86", **data):
             data["KEYWORDS"] = KEYWORDS
-            pkg = FakePkg("dev-util/diffball-%s" % ver, data=data)
+            pkg = FakePkg(f"dev-util/diffball-{ver}", data=data)
             return check.collapse_evaluate_depset(pkg, attr, getattr(pkg, attr))
 
         # few notes... for ensuring proper profiles came through, use
@@ -462,10 +462,10 @@ class TestEvaluateDepSetAddon(profile_mixin):
         # shouldn't return anything due to no profiles matching the keywords.
         self.assertEqual(get_rets("0.0.1", "depends", KEYWORDS="foon"), [])
         l = get_rets("0.0.2", "depends")
-        self.assertEqual(len(l), 1, msg="must collapse all profiles down "
-            "to one run: got %r" % l)
+        self.assertEqual(
+            len(l), 1, msg=f"must collapse all profiles down to one run: got {l!r}")
         self.assertEqual(sorted(x.name for x in l[0][1]), ['1', '2'],
-            msg="must have just two profiles: got %r" % l)
+            msg=f"must have just two profiles: got {l!r}")
         self.assertEqual(l[0][1][0].key, 'x86')
         self.assertEqual(l[0][1][1].key, 'x86')
 
@@ -473,13 +473,15 @@ class TestEvaluateDepSetAddon(profile_mixin):
             RDEPEND="x? ( dev-util/confcache ) foo? ( dev-util/foo ) "
             "bar? ( dev-util/bar ) !bar? ( dev-util/nobar ) x11-libs/xserver")
 
-        self.assertEqual(len(l), 2, msg="must collapse all profiles down "
-            "to 2 runs: got %r" % l)
+        self.assertEqual(
+            len(l), 2, msg=f"must collapse all profiles down to 2 runs: got {l!r}")
         profiles = sorted(x[1][0].name for x in l)
-        self.assertEqual(profiles[0], '1',
-            msg="got %r, expected single profile" % profiles[0])
-        self.assertEqual(profiles[1], '2',
-            msg="got %r, expected single profile" % profiles[1])
+        self.assertEqual(
+            profiles[0], '1',
+            msg=f"got {profiles[0]!r}, expected single profile")
+        self.assertEqual(
+            profiles[1], '2',
+            msg="got {profiles[1]!r}, expected single profile")
 
         # ordering is potentially random; thus pull out which depset result is
         # which based upon profile
@@ -499,16 +501,18 @@ class TestEvaluateDepSetAddon(profile_mixin):
         # then an empty.
         check.feed(None, None)
         l = get_rets("0.1", "rdepends")
-        self.assertEqual(len(l), 1,
-            msg="feed didn't clear the cache- should be len 1: %r" % l)
+        self.assertEqual(
+            len(l), 1,
+            msg="feed didn't clear the cache- should be len 1: {l!r}")
 
         check.feed(None, None)
 
         # ensure it handles arch right.
         l = get_rets("0", "depends", KEYWORDS="ppc x86")
-        self.assertEqual(len(l), 1, msg="should be len 1, got %r" % l)
-        self.assertEqual(sorted(x.name for x in l[0][1]), ["1", "2", "3"],
-            msg="should have 3 profiles of 1-3, got %r" % l[0][1])
+        self.assertEqual(len(l), 1, msg="should be len 1, got {l!r}")
+        self.assertEqual(
+            sorted(x.name for x in l[0][1]), ["1", "2", "3"],
+            msg="should have 3 profiles of 1-3, got {l[0][1]!r}")
 
         # ensure it's caching profile collapsing, iow, keywords for same ver
         # that's partially cached (single attr at least) should *not* change
@@ -516,13 +520,12 @@ class TestEvaluateDepSetAddon(profile_mixin):
 
         l = get_rets("0", "depends", KEYWORDS="ppc")
         self.assertEqual(sorted(x.name for x in l[0][1]), ['1', '2', '3'],
-            msg="should have 3 profiles, got %r\nthis indicates it's "
-            "re-identifying profiles every invocation, which is unwarranted "
-            % l[0][1])
+            msg=f"should have 3 profiles, got {l[0][1]!r}\nthis indicates it's "
+            "re-identifying profiles every invocation, which is unwarranted ")
 
         l = get_rets("1", "depends", KEYWORDS="ppc x86",
             DEPEND="ppc? ( dev-util/ppc ) !ppc? ( dev-util/x86 )")
-        self.assertEqual(len(l), 2, msg="should be len 2, got %r" % l)
+        self.assertEqual(len(l), 2, msg="should be len 2, got {l!r}")
 
         # same issue, figure out what is what
         l1 = [x[1] for x in l if str(x[0]).strip() == "dev-util/ppc"][0]

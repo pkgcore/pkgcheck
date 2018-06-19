@@ -38,12 +38,11 @@ class StrReporter(base.Reporter):
             self.first_report = False
         if result.threshold == base.versioned_feed:
             self.out.write(
-                "%s/%s-%s: %s" % (result.category, result.package, result.version, result.desc))
+                f"{result.category}/{result.package}-{result.version}: {result.desc}")
         elif result.threshold == base.package_feed:
-            self.out.write(
-                "%s/%s: %s" % (result.category, result.package, result.desc))
+            self.out.write(f"{result.category}/{result.package}: {result.desc}")
         elif result.threshold == base.category_feed:
-            self.out.write("%s: %s" % (result.category, result.desc))
+            self.out.write(f"{result.category}: {result.desc}")
         else:
             self.out.write(result.desc)
 
@@ -72,7 +71,7 @@ class FancyReporter(base.Reporter):
 
     def process_report(self, result):
         if result.threshold in (base.versioned_feed, base.package_feed):
-            key = '%s/%s' % (result.category, result.package)
+            key = f'{result.category}/{result.package}'
         elif result.threshold == base.category_feed:
             key = result.category
         else:
@@ -86,7 +85,7 @@ class FancyReporter(base.Reporter):
         self.out.later_prefix.append('    ')
         s = ''
         if result.threshold == base.versioned_feed:
-            s = "version %s: " % result.version
+            s = f"version {result.version}: "
         self.out.write(
             self.out.fg(result.color),
             result.__class__.__name__, self.out.reset,
@@ -263,8 +262,7 @@ def make_configurable_reporter_factory(klass):
             try:
                 f = open(dest, 'w')
             except EnvironmentError as e:
-                raise errors.ReporterInitError(
-                    'Cannot write to %r (%s)' % (dest, e))
+                raise errors.ReporterInitError(f'Cannot write to {dest!r} ({e})')
             return klass(formatters.PlainTextFormatter(f))
 
         return reporter_factory

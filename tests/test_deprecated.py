@@ -10,7 +10,7 @@ class TestDeprecatedEclass(misc.ReportTestCase):
 
     def mk_pkg(self, ver, eclasses):
         return misc.FakePkg(
-            "dev-util/diffball-%s" % ver,
+            f"dev-util/diffball-{ver}",
             data={"_eclasses_": {}.fromkeys(eclasses)})
 
     def test_it(self):

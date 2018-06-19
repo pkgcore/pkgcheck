@@ -142,7 +142,7 @@ class Transform(object):
         self.child.finish(reporter)
 
     def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.child)
+        return f'{self.__class__.__name__}({self.child!r})'
 
 
 def collect_checks(obj):
@@ -186,7 +186,7 @@ class Result(object, metaclass=set_documentation):
         try:
             return self.desc
         except NotImplementedError:
-            return "result from %s" % self.__class__.__name__
+            return f"result from {self.__class__.__name__}"
 
     @property
     def desc(self):
@@ -328,8 +328,7 @@ class Whitelist(_CheckSet):
     def filter(self, checks):
         return list(
             c for c in checks
-            if any(f('%s.%s' % (c.__module__, c.__name__))
-                   for f in self.patterns))
+            if any(p(f'{c.__module__}.{c.__name__}') for p in self.patterns))
 
 
 class Blacklist(_CheckSet):
@@ -341,8 +340,7 @@ class Blacklist(_CheckSet):
     def filter(self, checks):
         return list(
             c for c in checks
-            if not any(f('%s.%s' % (c.__module__, c.__name__))
-                       for f in self.patterns))
+            if not any(p(f'{c.__module__}.{c.__name__}') for p in self.patterns))
 
 
 def filter_update(objs, enabled=(), disabled=()):
@@ -434,8 +432,8 @@ class CheckRunner(object):
         return hash(frozenset(self.checks))
 
     def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(
-            sorted(str(check) for check in self.checks)))
+        checks = ', '.join(sorted(str(check) for check in self.checks))
+        return f'{self.__class__.__name__}({checks})'
 
 
 def plug(sinks, transforms, sources, debug=None):
@@ -622,5 +620,5 @@ def plug(sinks, transforms, sources, debug=None):
         (source, build_transform(source.scope, source.feed_type, transforms))
         for source, transforms in pipes_to_run)
 
-    assert not good_sinks, 'sinks left: %r' % (good_sinks,)
+    assert not good_sinks, f'sinks left: {good_sinks!r}'
     return bad_sinks, result

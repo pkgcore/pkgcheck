@@ -17,7 +17,7 @@ class DeprecatedEAPI(Warning):
 
     @property
     def short_desc(self):
-        return "uses deprecated EAPI %s" % (self.eapi,)
+        return f"uses deprecated EAPI {self.eapi}"
 
 
 class DeprecatedEAPIReport(Template):
@@ -48,10 +48,10 @@ class DeprecatedEclass(Warning):
         eclass_migration = []
         for old_eclass, new_eclass in self.eclasses:
             if new_eclass:
-                update_path = 'migrate to %s' % (new_eclass,)
+                update_path = f'migrate to {new_eclass}'
             else:
                 update_path = 'no replacement'
-            eclass_migration.append('%s (%s)' % (old_eclass, update_path))
+            eclass_migration.append(f'{old_eclass} ({update_path})')
 
         return "uses deprecated eclass%s: [ %s ]" % (
             pluralism(eclass_migration, plural='es'), ', '.join(eclass_migration))

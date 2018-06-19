@@ -177,8 +177,7 @@ class ProfileAddon(base.Addon):
         if profiles_dir is not None:
             profiles_dir = abspath(profiles_dir)
             if not os.path.isdir(profiles_dir):
-                parser.error(
-                    "profile-base doesn't exist or isn't a dir: %r" % (profiles_dir,))
+                parser.error(f"invalid profiles base: {profiles_dir!r}")
 
         selected_profiles = namespace.profiles
         if selected_profiles is None:
@@ -234,14 +233,13 @@ class ProfileAddon(base.Addon):
                 # Only throw errors if the profile was selected by the user, bad
                 # repo profiles will be caught during repo metadata scans.
                 if namespace.profiles is not None:
-                    parser.error('invalid profile: %r: %s' % (e.path, e.error))
+                    parser.error(f'invalid profile: {e.path!r}: {e.error}')
                 continue
             if ignore_deprecated and p.deprecated:
                 continue
             cached_profiles.append(p)
             if p.arch is None:
-                parser.error(
-                    "profile %r lacks arch settings, unable to use it" % (p.path,))
+                parser.error(f"profile {p.path!r} lacks arch settings, unable to use it")
             arch_profiles[p.arch].append((profile_path, p))
 
         namespace.arch_profiles = arch_profiles

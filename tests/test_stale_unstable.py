@@ -10,7 +10,7 @@ class TestStaleUnstableReport(misc.ReportTestCase):
 
     def mk_pkg(self, ver, keywords, mtime, slot='0'):
         return misc.FakeTimedPkg(
-            "dev-util/diffball-%s" % ver,
+            f"dev-util/diffball-{ver}",
             mtime, data={"KEYWORDS": keywords, "SLOT": slot})
 
     def test_it(self):

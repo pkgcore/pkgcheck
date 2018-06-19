@@ -55,7 +55,7 @@ class FakeFilesDirPkg(package):
         package.__init__(self, shared, factory(repo), cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
         object.__setattr__(self, "path", pjoin(
-            repo.location, cpv.category, cpv.package, '%s-%s.ebuild' % (cpv.package, cpv.fullver)))
+            repo.location, cpv.category, cpv.package, f'{cpv.package}-{cpv.fullver}.ebuild'))
 
 
 default_threshold_attrs = {
@@ -78,7 +78,7 @@ class ReportTestCase(TestCase):
     def assertNoReport(self, check, data, msg=""):
         l = []
         if msg:
-            msg = "%s: " % msg
+            msg = f"{msg}: "
         r = fake_reporter(lambda r: l.append(r))
         check.feed(data, r)
         self.assert_known_results(*l)
@@ -89,11 +89,13 @@ class ReportTestCase(TestCase):
     def assertReportSanity(self, *reports):
         for report in reports:
             attrs = self._threshold_attrs.get(report.threshold)
-            self.assertTrue(attrs, msg="unknown threshold on %r" % (report.__class__,))
+            self.assertTrue(attrs, msg=f"unknown threshold on {report.__class__!r}")
             for x in attrs:
                 self.assertTrue(
-                    hasattr(report, x), msg="threshold %s, missing attr %s: %r %s" %
-                        (report.threshold, x, report.__class__, report))
+                    hasattr(report, x),
+                    msg=f"threshold {report.threshold}, missing attr {x}: " \
+                        f"{report.__class__!r} {report}"
+                    )
 
     def assertReports(self, check, data):
         l = []
@@ -107,8 +109,7 @@ class ReportTestCase(TestCase):
         return l
 
     def assertIsInstance(self, obj, kls):
-        self.assertTrue(isinstance(obj, kls),
-                        msg="%r must be %r" % (obj, kls))
+        self.assertTrue(isinstance(obj, kls), msg=f"{obj!r} must be {kls!r}")
         return obj
 
     def assertReport(self, check, data):

@@ -29,7 +29,7 @@ class MetadataError(base.Error):
 
     @property
     def short_desc(self):
-        return "attr(%s): %s" % (self.attr, self.msg)
+        return f"attr({self.attr}): {self.msg}"
 
 
 class MissingLicense(base.Error):
@@ -68,14 +68,14 @@ class LicenseMetadataReport(base.Template):
             raise
         except (MetadataException, MalformedAtom, ValueError) as e:
             reporter.add_report(MetadataError(
-                pkg, 'license', "error- %s" % e))
+                pkg, 'license', f"error- {e}"))
             del e
         except Exception as e:
             logging.exception(
-                "unknown exception caught for pkg(%s) attr(%s): "
-                "type(%s), %s" % (pkg, 'license', type(e), e))
+                f"unknown exception caught for pkg({pkg}) attr('license'): "
+                f"type({type(e)}), {e}")
             reporter.add_report(MetadataError(
-                pkg, 'license', "exception- %s" % e))
+                pkg, 'license', f"exception- {e}"))
             del e
         else:
             licenses = set(self.iuse_filter((str,), pkg, licenses, reporter))
@@ -127,10 +127,10 @@ class RequiredUseDefaults(base.Warning):
     def short_desc(self):
         if not self.use:
             # collapsed version
-            return 'failed REQUIRED_USE: %s' % (self.required_use,)
+            return f'failed REQUIRED_USE: {self.required_use}'
         else:
-            return 'keyword: %s, profile: %s, default USE: [%s] -- failed REQUIRED_USE: %s' % (
-                self.keyword, self.profile, ', '.join(self.use), self.required_use)
+            return f'keyword: {self.keyword}, profile: {self.profile}, '\
+                f"default USE: [{', '.join(self.use)}] -- failed REQUIRED_USE: {self.required_use}"
 
 
 class RequiredUSEMetadataReport(base.Template):
@@ -157,14 +157,14 @@ class RequiredUSEMetadataReport(base.Template):
             raise
         except (MetadataException, ValueError) as e:
             reporter.add_report(MetadataError(
-                pkg, 'required_use', "error- %s" % e))
+                pkg, 'required_use', f"error- {e}"))
             del e
         except Exception as e:
             logging.exception(
                 "unknown exception caught for pkg(%s) attr(%s): "
                 "type(%s), %s" % (pkg, 'required_use', type(e), e))
             reporter.add_report(MetadataError(
-                pkg, 'required_use', "exception- %s" % e))
+                pkg, 'required_use', f"exception- {e}"))
             del e
 
         # check both stable/unstable profiles for stable KEYWORDS and only
@@ -335,14 +335,14 @@ class DependencyReport(base.Template):
                 raise
             except (MetadataException, MalformedAtom, ValueError) as e:
                 reporter.add_report(MetadataError(
-                    pkg, attr_name, "error- %s" % e))
+                    pkg, attr_name, f"error- {e}"))
                 del e
             except Exception as e:
                 logging.exception(
-                    "unknown exception caught for pkg(%s) attr(%s): "
-                    "type(%s), %s" % (pkg, attr_name, type(e), e))
+                    f"unknown exception caught for pkg({pkg}) attr({attr_name}): "
+                    f"type({type(e)}), {e}")
                 reporter.add_report(MetadataError(
-                    pkg, attr_name, "exception- %s" % e))
+                    pkg, attr_name, f"exception- {e}"))
                 del e
 
 
@@ -373,7 +373,7 @@ class InvalidKeywords(base.Warning):
 
     @property
     def short_desc(self):
-        return "invalid KEYWORDS: %s" % ', '.join(self.keywords)
+        return f"invalid KEYWORDS: {', '.join(self.keywords)}"
 
 
 class KeywordsReport(base.Template):
@@ -416,8 +416,8 @@ class MissingUri(base.Warning):
 
     @property
     def short_desc(self):
-        return "file %s is unfetchable- no URI available, and " \
-            "RESTRICT=fetch isn't set" % self.filename
+        return f"file {self.filename} is unfetchable- no URI available, and " \
+            "RESTRICT=fetch isn't set"
 
 
 class BadProto(base.Warning):
@@ -437,7 +437,7 @@ class BadProto(base.Warning):
 
     @property
     def short_desc(self):
-        return "file %s: bad protocol/uri: %r " % (self.filename, self.bad_uri)
+        return f"file {self.filename}.: bad protocol/uri: {self.bad_uri!r}"
 
 
 class BadFilename(base.Warning):
@@ -523,15 +523,12 @@ class SrcUriReport(base.Template):
             raise
         except (MetadataException, MalformedAtom, ValueError) as e:
             reporter.add_report(MetadataError(
-                pkg, 'fetchables', "error- %s" % e))
+                pkg, 'fetchables', f"error- {e}"))
             del e
         except Exception as e:
             logging.exception(
-                "unknown exception caught for pkg(%s): "
-                "type(%s), %s" % (pkg, type(e), e))
-            reporter.add_report(MetadataError(
-                pkg, 'fetchables',
-                "exception- %s" % e))
+                f"unknown exception caught for pkg({pkg}): type({type(e)}), {e}")
+            reporter.add_report(MetadataError(pkg, 'fetchables', f"exception- {e}"))
             del e
 
 
@@ -548,7 +545,7 @@ class CrappyDescription(base.Warning):
 
     @property
     def short_desc(self):
-        return "description needs improvement: %s" % self.msg
+        return f"description needs improvement: {self.msg}"
 
 
 class DescriptionReport(base.Template):
@@ -603,12 +600,11 @@ class BadRestricts(base.Warning):
     def short_desc(self):
         s = ''
         if self.restricts:
-            s = "unknown restricts: %s" % ", ".join(self.restricts)
+            s = f"unknown restricts: {', '.join(self.restricts)}"
         if self.deprecated:
             if s:
                 s += "; "
-            s += "deprecated (drop the 'no') [ %s ]" % ", ".join(
-                self.deprecated)
+            s += f"deprecated (drop the 'no') [ {', '.join(self.deprecated)} ]"
         return s
 
 

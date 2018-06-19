@@ -57,8 +57,7 @@ class iuse_options(TempDirMixin):
 
         fileutils.write_file(
             pjoin(base, "use.desc"), "w",
-            "\n".join("%s - %s" % (x, x)
-                      for x in kwds.pop("use_desc", ("foo", "bar"))))
+            "\n".join(f"{x} - {x}" for x in kwds.pop("use_desc", ("foo", "bar"))))
 
         fileutils.write_file(pjoin(base, 'repo_name'), 'w', 'monkeys')
         os.mkdir(pjoin(repo_base, 'metadata'))
@@ -341,7 +340,7 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
         self.assertIn("[dev-libs/foo]", r.msg)
 
     for x in attr_map:
-        locals()["test_%s" % x] = post_curry(generic_check, x)
+        locals()[f"test_{x}"] = post_curry(generic_check, x)
     del x
 
 
@@ -406,8 +405,8 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
 
         for x in self.check_kls.valid_protos:
             self.assertNoReport(
-                chk, self.mk_pkg("%s://dar.com/foon" % x),
-                msg="testing valid proto %s" % x)
+                chk, self.mk_pkg(f"{x}://dar.com/foon"),
+                msg=f"testing valid proto {x}")
 
         # grab a proto, and mangle it.
         bad_proto = list(self.check_kls.valid_protos)[0]
@@ -415,21 +414,21 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
             bad_proto += "s"
 
         r = self.assertIsInstance(
-            self.assertReport(chk, self.mk_pkg("%s://foon.com/foon" % bad_proto)),
+            self.assertReport(chk, self.mk_pkg(f"{bad_proto}://foon.com/foon")),
             metadata_checks.BadProto)
 
         self.assertEqual(r.filename, 'foon')
-        self.assertEqual(list(r.bad_uri), ['%s://foon.com/foon' % bad_proto])
+        self.assertEqual(list(r.bad_uri), [f'{bad_proto}://foon.com/foon'])
 
         # check collapsing.
 
         r = self.assertIsInstance(
             self.assertReport(
                 chk,
-                self.mk_pkg("%s://foon.com/foon %s://dar.com/foon" % (bad_proto, bad_proto))),
+                self.mk_pkg(f"{bad_proto}://foon.com/foon {bad_proto}://dar.com/foon")),
             metadata_checks.BadProto)
 
         self.assertEqual(r.filename, 'foon')
         self.assertEqual(
             list(r.bad_uri),
-            sorted(['%s://%s/foon' % (bad_proto, x) for x in ('foon.com', 'dar.com')]))
+            sorted([f'{bad_proto}://{x}/foon' for x in ('foon.com', 'dar.com')]))

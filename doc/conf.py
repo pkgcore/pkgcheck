@@ -254,13 +254,13 @@ bin_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 scripts = os.listdir(bin_path)
 
 generated_man_pages = [
-    ('%s.scripts.' % (project,) + s.replace('-', '_'), s) for s in scripts
+    (f"{project}.scripts.{s.replace('-', '_')}", s) for s in scripts
 ]
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/%s' % script, script, import_module(module).__doc__.strip().split('\n', 1)[0], [], 1)
+    (f'man/{script}', script, import_module(module).__doc__.strip().split('\n', 1)[0], [], 1)
     for module, script in generated_man_pages
 ]
 

@@ -66,7 +66,7 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
         fake_src.append("# This is our first fake ebuild\n")
         fake_src.append("\n")
         for src, dest in chain.from_iterable((absolute, relative, unhandled)):
-            fake_src.append("\tdosym %s %s\n" % (src, dest))
+            fake_src.append(f"\tdosym {src} {dest}\n")
         fake_src.append("# That's it for now\n")
 
         check = self.check_kls(options=None)

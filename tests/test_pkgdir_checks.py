@@ -32,7 +32,7 @@ class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
         else:
             category, PN = pkg.split(os.path.sep)
 
-        pkg = "%s/%s-0.7.1" % (category, PN)
+        pkg = f"{category}/{PN}-0.7.1"
         repo = FakeRepo(repo_id='repo', location=self.dir)
         self.filesdir = pjoin(repo.location, category, PN, 'files')
         os.makedirs(self.filesdir)
@@ -109,9 +109,9 @@ class TestMismatchedPN(PkgDirReportTest):
     def test_it(self):
         # multiple regular ebuilds
         pkg = self.mk_pkg()
-        touch(pjoin(os.path.dirname(pkg.path), '%s-0.ebuild' % pkg.package))
-        touch(pjoin(os.path.dirname(pkg.path), '%s-1.ebuild' % pkg.package))
-        touch(pjoin(os.path.dirname(pkg.path), '%s-2.ebuild' % pkg.package))
+        touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-0.ebuild'))
+        touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-1.ebuild'))
+        touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-2.ebuild'))
         self.assertNoReport(self.check, [pkg])
 
         # single, mismatched ebuild
@@ -123,8 +123,8 @@ class TestMismatchedPN(PkgDirReportTest):
 
         # multiple ebuilds, multiple mismatched
         pkg = self.mk_pkg()
-        touch(pjoin(os.path.dirname(pkg.path), '%s-0.ebuild' % pkg.package))
-        touch(pjoin(os.path.dirname(pkg.path), '%s-1.ebuild' % pkg.package))
+        touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-0.ebuild'))
+        touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-1.ebuild'))
         touch(pjoin(os.path.dirname(pkg.path), 'mismatched-0.ebuild'))
         touch(pjoin(os.path.dirname(pkg.path), 'abc-1.ebuild'))
         r = self.assertReport(self.check, [pkg])
@@ -138,7 +138,7 @@ class TestInvalidPN(PkgDirReportTest):
     def test_it(self):
         # regular ebuild
         pkg = self.mk_pkg()
-        touch(pjoin(os.path.dirname(pkg.path), '%s-0.ebuild' % pkg.package))
+        touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-0.ebuild'))
         self.assertNoReport(self.check, [pkg])
 
         # single, invalid ebuild

@@ -8,7 +8,7 @@ class TestImlateReport(misc.ReportTestCase):
 
     def mk_pkg(self, ver, keywords=""):
         return misc.FakePkg(
-            "dev-util/diffball-%s" % ver, data={"KEYWORDS": keywords})
+            f"dev-util/diffball-{ver}", data={"KEYWORDS": keywords})
 
     def test_it(self):
         mk_pkg = self.mk_pkg

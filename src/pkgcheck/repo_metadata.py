@@ -33,8 +33,7 @@ class MultiMovePackageUpdate(base.Warning):
 
     @property
     def short_desc(self):
-        return "'%s': multi-move update: %s" % (
-            self.pkg, ' -> '.join(self.moves))
+        return f"{self.pkg!r}: multi-move update: {' -> '.join(self.moves)}"
 
 
 class OldMultiMovePackageUpdate(MultiMovePackageUpdate):
@@ -56,8 +55,7 @@ class OldMultiMovePackageUpdate(MultiMovePackageUpdate):
 
     @property
     def short_desc(self):
-        return "'%s' unavailable: old multi-move update: %s" % (
-            self.pkg, ' -> '.join(self.moves))
+        return f"{self.pkg!r} unavailable: old multi-move update: {' -> '.join(self.moves)}"
 
 
 class OldPackageUpdate(base.Warning):
@@ -69,13 +67,12 @@ class OldPackageUpdate(base.Warning):
 
     def __init__(self, pkg, updates):
         super(OldPackageUpdate, self).__init__()
-        self.pkg = pkg
+        self.pkg = str(pkg)
         self.updates = tuple(map(str, updates))
 
     @property
     def short_desc(self):
-        return "'%s' unavailable: old update line: '%s'" % (
-            self.pkg, ' '.join(self.updates))
+        return f"{self.pkg!r} unavailable: old update line: {' '.join(self.updates)!r}"
 
 
 class MovedPackageUpdate(base.Warning):
@@ -516,7 +513,7 @@ class UnusedProfileDirs(base.Warning):
 
     @property
     def short_desc(self):
-        return "[ %s ]" % ', '.join(self.dirs)
+        return f"[ {', '.join(self.dirs)} ]"
 
 
 class UnknownProfileArches(base.Warning):
@@ -532,7 +529,7 @@ class UnknownProfileArches(base.Warning):
 
     @property
     def short_desc(self):
-        return "[ %s ]" % ', '.join(self.arches)
+        return f"[ {', '.join(self.arches)} ]"
 
 
 class ArchesWithoutProfiles(base.Warning):
@@ -548,7 +545,7 @@ class ArchesWithoutProfiles(base.Warning):
 
     @property
     def short_desc(self):
-        return "[ %s ]" % ', '.join(self.arches)
+        return f"[ {', '.join(self.arches)} ]"
 
 
 class UnknownProfileStatus(base.Warning):
@@ -564,7 +561,7 @@ class UnknownProfileStatus(base.Warning):
 
     @property
     def short_desc(self):
-        return "[ %s ]" % ', '.join(self.status)
+        return f"[ {', '.join(self.status)} ]"
 
 
 class NonexistentProfilePath(base.Warning):
@@ -599,7 +596,7 @@ class UnknownCategories(base.Warning):
 
     @property
     def short_desc(self):
-        return "[ %s ]" % ', '.join(self.categories)
+        return f"[ {', '.join(self.categories)} ]"
 
 
 class BadProfileEntry(base.Error):
@@ -616,7 +613,7 @@ class BadProfileEntry(base.Error):
 
     @property
     def short_desc(self):
-        return 'failed parsing %r: %s' % (self.path, self.error)
+        return f'failed parsing {self.path!r}: {self.error}'
 
 
 class UnknownProfilePackages(base.Warning):

@@ -79,8 +79,7 @@ class TreeVulnerabilitiesReport(base.Template):
                     else:
                         parser.error(
                             'multiple glsa sources is unsupported (detected '
-                            '%s and %s). Pick one with --glsa-dir.' % (
-                                glsa_loc, candidate))
+                            f'{glsa_loc!r} and {candidate!r}). Pick one with --glsa-dir.')
             if glsa_loc is None:
                 # form of 'optional' limiting; if they are using -c, force the
                 # error, else disable

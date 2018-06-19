@@ -34,7 +34,7 @@ class MissingFile(Error):
 
     @property
     def short_desc(self):
-        return "required file doesn't exist: %r" % (self.filename,)
+        return f"required file doesn't exist: {self.filename!r}"
 
 
 class MismatchedPN(Error):
@@ -105,7 +105,7 @@ class EmptyFile(Warning):
 
     @property
     def short_desc(self):
-        return 'empty file in FILESDIR: %r' % (self.filename,)
+        return f'empty file in FILESDIR: {self.filename!r}'
 
 
 class ExecutableFile(Warning):
@@ -122,7 +122,7 @@ class ExecutableFile(Warning):
 
     @property
     def short_desc(self):
-        return 'unnecessary executable bit: %r' % (self.filename,)
+        return f'unnecessary executable bit: {self.filename!r}'
 
 
 class SizeViolation(Warning):
@@ -140,8 +140,7 @@ class SizeViolation(Warning):
 
     @property
     def short_desc(self):
-        return '"%s" exceeds 20k in size; %s total' % (
-            self.filename, sizeof_fmt(self.size))
+        return f'{self.filename!r} exceeds 20k in size; {sizeof_fmt(self.size)} total'
 
 
 class Glep31Violation(Error):
@@ -159,7 +158,7 @@ class Glep31Violation(Error):
     @property
     def short_desc(self):
         return "filename contains char outside the allowed ranges defined " \
-               "by glep31: %r" % (self.filename,)
+               f"by glep31: {self.filename!r}"
 
 
 class InvalidUtf8(Error):
@@ -177,7 +176,7 @@ class InvalidUtf8(Error):
 
     @property
     def short_desc(self):
-        return "invalid utf8: %s: %r" % (self.err, self.filename)
+        return "invalid utf8: {self.err}: {self.filename!r}"
 
 
 def utf8_check(pkg, base, filename, reporter):
@@ -232,7 +231,7 @@ class PkgDirReport(Template):
 
                 pkg_name = os.path.basename(filename[:-len(ebuild_ext)])
                 try:
-                    pkg_atom = atom('=%s/%s' % (category, pkg_name))
+                    pkg_atom = atom(f'={category}/{pkg_name}')
                     if pkg_atom.package != os.path.basename(base):
                         mismatched.append(pkg_name)
                 except MalformedAtom:

@@ -12,7 +12,7 @@ class TestDroppedKeywords(misc.ReportTestCase):
 
     def mk_pkg(self, ver, keywords='', eclasses=()):
         return misc.FakePkg(
-            "dev-util/diffball-%s" % ver,
+            f"dev-util/diffball-{ver}",
             data={
                 "KEYWORDS": keywords,
                 "_eclasses_": eclasses,

@@ -96,7 +96,7 @@ class PortageInternals(base.Warning):
 
     @property
     def short_desc(self):
-        return "'%s' used on line %s" % (self.internal, self.line)
+        return f"{self.internal!r} used on line {self.line}"
 
 
 class PortageInternalsCheck(base.Template):
@@ -146,7 +146,7 @@ class AbsoluteSymlink(base.Warning):
 
     @property
     def short_desc(self):
-        return "'dosym %s ...' uses absolute path on line %s" % (self.abspath, self.line)
+        return f"'dosym {self.abspath} ...' uses absolute path on line {self.line}"
 
 
 class AbsoluteSymlinkCheck(base.Template):
@@ -187,7 +187,7 @@ class BadInsIntoDir(base.Warning):
 
     @property
     def short_desc(self):
-        return "ebuild uses insinto %s on line %s" % (self.insintodir, self.line)
+        return f"ebuild uses insinto {self.insintodir} on line {self.line}"
 
 
 class BadInsIntoCheck(base.Template):

@@ -47,13 +47,12 @@ class base_MissingXml(base.Error):
     @property
     def _label(self):
         if self.package is not None:
-            return "%s/%s" % (self.category, self.package)
+            return f"{self.category}/{self.package}"
         return self.category
 
     @property
     def short_desc(self):
-        return "%s is missing %s" % (
-            self._label, os.path.basename(self.filename))
+        return f"{self._label} is missing {os.path.basename(self.filename)}"
 
 
 class base_BadlyFormedXml(base.Warning):
@@ -71,13 +70,12 @@ class base_BadlyFormedXml(base.Warning):
     @property
     def _label(self):
         if self.package is not None:
-            return "%s/%s" % (self.category, self.package)
+            return f"{self.category}/{self.package}"
         return self.category
 
     @property
     def short_desc(self):
-        return "%s %s is not well formed xml" % (
-            self._label, os.path.basename(self.filename))
+        return f"{self._label} {os.path.basename(self.filename)} is not well formed xml"
 
 
 class base_InvalidXml(base.Error):
@@ -97,7 +95,7 @@ class base_InvalidXml(base.Error):
     @property
     def _label(self):
         if self.package is not None:
-            return "%s/%s" % (self.category, self.package)
+            return f"{self.category}/{self.package}"
         return self.category
 
     @staticmethod
@@ -129,7 +127,7 @@ class base_MetadataXmlInvalidPkgRef(base.Error):
     @property
     def _label(self):
         if self.package is not None:
-            return "%s/%s" % (self.category, self.package)
+            return f"{self.category}/{self.package}"
         return self.category
 
     @property
@@ -154,7 +152,7 @@ class base_MetadataXmlInvalidCatRef(base.Error):
     @property
     def _label(self):
         if self.package is not None:
-            return "%s/%s" % (self.category, self.package)
+            return f"{self.category}/{self.package}"
         return self.category
 
     @property
@@ -282,8 +280,7 @@ class MetadataXmlEmptyElement(base.Warning):
 
     @property
     def short_desc(self):
-        return "metadata.xml has empty element %r on line %s" % (
-            self.element, self.line)
+        return f"metadata.xml has empty element {self.element!r} on line {self.line}"
 
 
 class CatMetadataXmlEmptyElement(MetadataXmlEmptyElement):
@@ -313,7 +310,7 @@ class base_check(base.Template):
         try:
             parser.plugin.add_argument(
                 '--metadata-xsd',
-                help='location to cache %s' % (cls.xsd_url,))
+                help=f'location to cache {cls.xsd_url}')
             parser.plugin.add_argument(
                 '--metadata-xsd-required',
                 help="if metadata.xsd cannot be fetched (no connection for example), "

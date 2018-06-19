@@ -11,7 +11,7 @@ class TestVulnerabilitiesReport(TempDirMixin, misc.ReportTestCase):
     check_kls = vuln_report
 
     def mk_pkg(self, ver, key="dev-util/diffball"):
-        return misc.FakePkg("%s-%s" % (key, ver))
+        return misc.FakePkg(f"{key}-{ver}")
 
     def test_it(self):
         # single version, shouldn't yield.

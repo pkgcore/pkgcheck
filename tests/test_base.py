@@ -3,7 +3,7 @@ from snakeoil.test import TestCase
 from pkgcheck import base
 
 
-dummies = list('dummy-%s' % (i,) for i in range(0, 10))
+dummies = list(f'dummy-{i}' for i in range(0, 10))
 
 
 class UtilitiesTest(TestCase):
@@ -34,7 +34,7 @@ class DummySource(object):
         self.scope = scope
 
     def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self.feed_type)
+        return f'{self.__class__.__name__}({self.feed_type})'
 
 
 class DummySink(base.Template):
@@ -50,7 +50,7 @@ class DummySink(base.Template):
         self.scope = scope
 
     def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self.feed_type)
+        return f'{self.__class__.__name__}({self.feed_type})'
 
 
 def trans(source, dest, cost=10, scope=base.package_scope):
@@ -121,7 +121,7 @@ class PlugTest(TestCase):
         bad_sinks = kw.pop('bad_sinks', [])
         expected_pipes = set(expected_pipes)
         if kw:
-            raise TypeError('unsupported kwargs %r' % (list(kw.keys()),))
+            raise TypeError(f'unsupported kwargs {list(kw.keys())!r}')
         try:
             actual_bad_sinks, pipes = base.plug(sinks, transforms, sources)
         except KeyboardInterrupt:

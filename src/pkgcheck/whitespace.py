@@ -14,8 +14,7 @@ class base_whitespace(base.Warning):
 
     @property
     def lines_str(self):
-        return "line%s: %s" % (
-            pluralism(self.lines), ', '.join(str(x) for x in self.lines))
+        return f"line{pluralism(self.lines)}: {', '.join(str(x) for x in self.lines)}"
 
 
 class WhitespaceFound(base_whitespace):
@@ -31,8 +30,7 @@ class WhitespaceFound(base_whitespace):
 
     @property
     def short_desc(self):
-        return "ebuild has %s whitespace on %s" % (
-            self.leadtrail, self.lines_str)
+        return f"ebuild has {self.leadtrail} whitespace on {self.lines_str}"
 
 
 class WrongIndentFound(base_whitespace):
@@ -47,7 +45,7 @@ class WrongIndentFound(base_whitespace):
 
     @property
     def short_desc(self):
-        return "ebuild has whitespace in indentation on %s" % self.lines_str
+        return f"ebuild has whitespace in indentation on {self.lines_str}"
 
 
 class DoubleEmptyLine(base_whitespace):
@@ -62,7 +60,7 @@ class DoubleEmptyLine(base_whitespace):
 
     @property
     def short_desc(self):
-        return "ebuild has unneeded empty %s" % self.lines_str
+        return f"ebuild has unneeded empty {self.lines_str}"
 
 
 class TrailingEmptyLine(base.Warning):
