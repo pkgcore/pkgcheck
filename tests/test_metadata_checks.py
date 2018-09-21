@@ -25,22 +25,22 @@ class TestDescriptionReport(misc.ReportTestCase):
 
         self.assertNoReport(check, self.mk_pkg("a perfectly written package description"))
 
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(check, self.mk_pkg()),
             metadata_checks.CrappyDescription)
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(check, self.mk_pkg("based on eclass")),
             metadata_checks.CrappyDescription)
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(check, self.mk_pkg("diffball")),
             metadata_checks.CrappyDescription)
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(check, self.mk_pkg("dev-util/diffball")),
             metadata_checks.CrappyDescription)
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(check, self.mk_pkg("foon")),
             metadata_checks.CrappyDescription)
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(check, self.mk_pkg("s"*251)),
             metadata_checks.CrappyDescription)
 
@@ -83,7 +83,7 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"KEYWORDS": keywords})
 
     def test_stupid_keywords(self):
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(self.check, self.mk_pkg("-*")),
             metadata_checks.StupidKeywords)
         self.assertNoReport(
@@ -94,7 +94,7 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
             metadata_checks.StupidKeywords)
 
     def test_invalid_keywords(self):
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(self.check, self.mk_pkg("foo")),
             metadata_checks.InvalidKeywords)
         self.assertNoReport(
@@ -102,13 +102,13 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
             metadata_checks.InvalidKeywords)
 
     def test_unsorted_keywords(self):
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(self.check, self.mk_pkg("~amd64 -*")),
             metadata_checks.UnsortedKeywords)
         self.assertNoReport(
             self.check, self.mk_pkg("-* ~amd64"),
             metadata_checks.UnsortedKeywords)
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(self.check, self.mk_pkg("~amd64 ~amd64-fbsd ppc ~x86")),
             metadata_checks.UnsortedKeywords)
         self.assertNoReport(
@@ -159,13 +159,13 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
     def test_required_use(self):
         # bad syntax
         r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="| ( foo bar )"))
-        self.assertIsInstance(r, metadata_checks.MetadataError)
+        assert isinstance(r, metadata_checks.MetadataError)
 
         # useless constructs
         r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="foo? ( )"))
-        self.assertIsInstance(r, metadata_checks.MetadataError)
+        assert isinstance(r, metadata_checks.MetadataError)
         r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="|| ( )"))
-        self.assertIsInstance(r, metadata_checks.MetadataError)
+        assert isinstance(r, metadata_checks.MetadataError)
 
         # only supported in >= EAPI 5
         self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="?? ( foo bar )"))
@@ -173,10 +173,10 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
     def test_required_use_unstated_iuse(self):
         r = self.assertReport(self.check, self.mk_pkg(required_use="foo? ( blah )"))
-        self.assertIsInstance(r, addons.UnstatedIUSE)
+        assert isinstance(r, addons.UnstatedIUSE)
         assert r.flags == ("blah", "foo")
         r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
-        self.assertIsInstance(r, addons.UnstatedIUSE)
+        assert isinstance(r, addons.UnstatedIUSE)
         assert r.flags == ("blah",)
 
     def test_required_use_defaults(self):
@@ -187,7 +187,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
         # unsatisfied REQUIRED_USE
         r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="bar"))
-        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
+        assert isinstance(r, metadata_checks.RequiredUseDefaults)
         assert r.keyword == 'x86'
         assert r.profile == 'default/linux/x86'
         assert r.use == ()
@@ -198,7 +198,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="+foo bar", required_use="?? ( foo bar )"))
         self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo +bar", required_use="?? ( foo bar )"))
         r = self.assertReport(self.check, self.mk_pkg(eapi="5", iuse="+foo +bar", required_use="?? ( foo bar )"))
-        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
+        assert isinstance(r, metadata_checks.RequiredUseDefaults)
         assert r.use == ('bar', 'foo')
         assert str(r.required_use) == '?? ( contains [foo] contains [bar] )'
 
@@ -207,7 +207,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertNoReport(self.check, self.mk_pkg(iuse="foo +bar", required_use="^^ ( foo bar )"))
         self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="^^ ( foo bar )"))
         r = self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar", required_use="^^ ( foo bar )"))
-        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
+        assert isinstance(r, metadata_checks.RequiredUseDefaults)
         assert r.use == ('bar', 'foo')
         assert str(r.required_use) == '^^ ( contains [foo] contains [bar] )'
 
@@ -217,7 +217,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertReports(self.check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( bar baz )"))
         self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar baz", required_use="foo? ( bar baz )"))
         r = self.assertReport(self.check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( bar baz )"))
-        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
+        assert isinstance(r, metadata_checks.RequiredUseDefaults)
         assert r.use == ('baz', 'foo')
         # TODO: fix this output to show both required USE flags
         assert str(r.required_use) == 'contains [bar]'
@@ -228,7 +228,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertNoReport(self.check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( || ( bar baz ) )"))
         self.assertNoReport(self.check, self.mk_pkg(iuse="+foo +bar +baz", required_use="foo? ( || ( bar baz ) )"))
         r = self.assertReport(self.check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( || ( bar baz ) )"))
-        self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
+        assert isinstance(r, metadata_checks.RequiredUseDefaults)
         assert r.use == ('foo',)
         assert str(r.required_use) == '( contains [bar] || contains [baz] )'
 
@@ -295,7 +295,7 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
     def test_it(self):
         # should puke a metadata error for empty license
         chk = self.mk_check()
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(chk, self.mk_pkg()),
             metadata_checks.MetadataError)
         report = self.assertIsInstance(
@@ -396,13 +396,13 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
 
     def test_bad_filename(self):
         chk = self.mk_check()
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(chk, self.mk_pkg("https://foon.com/2.7.1.tar.gz")),
             metadata_checks.BadFilename)
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(chk, self.mk_pkg("https://foon.com/v2.7.1.zip")),
             metadata_checks.BadFilename)
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(chk, self.mk_pkg("https://foon.com/cb230f01fb288a0b9f0fc437545b97d06c846bd3.tar.gz")),
             metadata_checks.BadFilename)
 

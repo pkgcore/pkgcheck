@@ -73,7 +73,7 @@ class ReportTestCase(TestCase):
 
     def assert_known_results(self, *reports):
         for report in reports:
-            self.assertIn(report.__class__, self.check_kls.known_results)
+            assert report.__class__ in self.check_kls.known_results
 
     def assertNoReport(self, check, data, msg=""):
         l = []
@@ -82,42 +82,34 @@ class ReportTestCase(TestCase):
         r = fake_reporter(lambda r: l.append(r))
         check.feed(data, r)
         self.assert_known_results(*l)
-        self.assertEqual(
-            l, [], msg="%s%s" %
-            (msg, list(report.short_desc for report in l)))
+        assert l == [], f"{msg}{list(report.short_desc for report in l)}"
 
     def assertReportSanity(self, *reports):
         for report in reports:
             attrs = self._threshold_attrs.get(report.threshold)
-            self.assertTrue(attrs, msg=f"unknown threshold on {report.__class__!r}")
+            assert attrs, f"unknown threshold on {report.__class__!r}"
             for x in attrs:
-                self.assertTrue(
-                    hasattr(report, x),
-                    msg=f"threshold {report.threshold}, missing attr {x}: " \
-                        f"{report.__class__!r} {report}"
-                    )
+                assert hasattr(report, x), (
+                    f"threshold {report.threshold}, missing attr {x}: " \
+                    f"{report.__class__!r} {report}")
 
     def assertReports(self, check, data):
         l = []
         r = fake_reporter(lambda r: l.append(r))
         check.feed(data, r)
         self.assert_known_results(*l)
-        self.assertTrue(
-            l, msg="must get a report from %r %r, got none" %
-            (check, data))
+        assert l, f"must get a report from {check} {data}, got none"
         self.assertReportSanity(*l)
         return l
 
     def assertIsInstance(self, obj, kls):
-        self.assertTrue(isinstance(obj, kls), msg=f"{obj!r} must be {kls!r}")
+        assert isinstance(obj, kls), f"{obj!r} must be {kls!r}"
         return obj
 
     def assertReport(self, check, data):
         r = self.assertReports(check, data)
         self.assert_known_results(*r)
-        self.assertEqual(
-            len(r), 1, msg="expected one report, got %i: %r" %
-            (len(r), r))
+        assert len(r) == 1, f"expected one report, got {len(r)}: {r}"
         self.assertReportSanity(r[0])
         return r[0]
 

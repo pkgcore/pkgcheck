@@ -57,7 +57,7 @@ class TestDuplicateFilesReport(PkgDirReportTest):
 
         # filesdir with a duplicate
         r = self.assertReport(self.check, [self.mk_pkg({'test': 'abc', 'test2': 'abc'})])
-        self.assertIsInstance(r, pkgdir_checks.DuplicateFiles)
+        assert isinstance(r, pkgdir_checks.DuplicateFiles)
         assert r.files == ('files/test', 'files/test2')
         assert r.files == ('files/test', 'files/test2')
 
@@ -65,8 +65,8 @@ class TestDuplicateFilesReport(PkgDirReportTest):
         r = self.assertReports(self.check, [self.mk_pkg(
             {'test': 'abc', 'test2': 'abc', 'test3': 'bcd', 'test4': 'bcd', 'test5': 'zzz'})])
         assert len(r) == 2
-        self.assertIsInstance(r[0], pkgdir_checks.DuplicateFiles)
-        self.assertIsInstance(r[1], pkgdir_checks.DuplicateFiles)
+        assert isinstance(r[0], pkgdir_checks.DuplicateFiles)
+        assert isinstance(r[1], pkgdir_checks.DuplicateFiles)
         assert (
             tuple(sorted(x.files for x in r)) ==
             (('files/test', 'files/test2'), ('files/test3', 'files/test4'))
@@ -78,7 +78,7 @@ class TestEmptyFileReport(PkgDirReportTest):
 
     def test_it(self):
         # filesdir with an empty file
-        self.assertIsInstance(
+        assert isinstance(
             self.assertReport(self.check, [self.mk_pkg({'test': ''})]),
             pkgdir_checks.EmptyFile)
 
@@ -98,8 +98,8 @@ class TestEmptyFileReport(PkgDirReportTest):
         # two empty files
         r = self.assertReports(self.check, [self.mk_pkg({'test': '', 'test2': ''})])
         assert len(r) == 2
-        self.assertIsInstance(r[0], pkgdir_checks.EmptyFile)
-        self.assertIsInstance(r[1], pkgdir_checks.EmptyFile)
+        assert isinstance(r[0], pkgdir_checks.EmptyFile)
+        assert isinstance(r[1], pkgdir_checks.EmptyFile)
         assert sorted(x.filename for x in r) == ['files/test', 'files/test2']
 
 
@@ -118,7 +118,7 @@ class TestMismatchedPN(PkgDirReportTest):
         pkg = self.mk_pkg()
         touch(pjoin(os.path.dirname(pkg.path), 'mismatched-0.ebuild'))
         r = self.assertReport(self.check, [pkg])
-        self.assertIsInstance(r, pkgdir_checks.MismatchedPN)
+        assert isinstance(r, pkgdir_checks.MismatchedPN)
         assert r.ebuilds == ('mismatched-0',)
 
         # multiple ebuilds, multiple mismatched
@@ -128,7 +128,7 @@ class TestMismatchedPN(PkgDirReportTest):
         touch(pjoin(os.path.dirname(pkg.path), 'mismatched-0.ebuild'))
         touch(pjoin(os.path.dirname(pkg.path), 'abc-1.ebuild'))
         r = self.assertReport(self.check, [pkg])
-        self.assertIsInstance(r, pkgdir_checks.MismatchedPN)
+        assert isinstance(r, pkgdir_checks.MismatchedPN)
         assert r.ebuilds == ('abc-1', 'mismatched-0')
 
 
@@ -145,7 +145,7 @@ class TestInvalidPN(PkgDirReportTest):
         pkg = self.mk_pkg(pkg='sys-apps/invalid')
         touch(pjoin(os.path.dirname(pkg.path), 'invalid-0-foo.ebuild'))
         r = self.assertReport(self.check, [pkg])
-        self.assertIsInstance(r, pkgdir_checks.InvalidPN)
+        assert isinstance(r, pkgdir_checks.InvalidPN)
         assert r.ebuilds == ('invalid-0-foo',)
 
         # multiple ebuilds, multiple invalid
@@ -155,7 +155,7 @@ class TestInvalidPN(PkgDirReportTest):
         touch(pjoin(os.path.dirname(pkg.path), 'bar-0-foo1.ebuild'))
         touch(pjoin(os.path.dirname(pkg.path), 'bar-1-foo2.ebuild'))
         r = self.assertReport(self.check, [pkg])
-        self.assertIsInstance(r, pkgdir_checks.InvalidPN)
+        assert isinstance(r, pkgdir_checks.InvalidPN)
         assert r.ebuilds == ('bar-0-foo1', 'bar-1-foo2')
 
 
@@ -178,7 +178,7 @@ class TestSizeViolation(PkgDirReportTest):
             f.seek(1024*20)
             f.write('\0')
         r = self.assertReport(self.check, [pkg])
-        self.assertIsInstance(r, pkgdir_checks.SizeViolation)
+        assert isinstance(r, pkgdir_checks.SizeViolation)
         assert r.filename == 'files/over'
         assert r.size == 1024*20+1
 
@@ -193,8 +193,8 @@ class TestSizeViolation(PkgDirReportTest):
                 f.write('\0')
         r = self.assertReports(self.check, [pkg])
         assert len(r) == 2
-        self.assertIsInstance(r[0], pkgdir_checks.SizeViolation)
-        self.assertIsInstance(r[1], pkgdir_checks.SizeViolation)
+        assert isinstance(r[0], pkgdir_checks.SizeViolation)
+        assert isinstance(r[1], pkgdir_checks.SizeViolation)
         assert (
             tuple(sorted((x.filename, x.size) for x in r)) ==
             (('files/massive', 1024*100+1), ('files/over', 1024*20+1))
@@ -212,7 +212,7 @@ class TestExecutableFile(PkgDirReportTest):
         pkg = self.mk_pkg()
         touch(pkg.path, mode=0o777)
         r = self.assertReport(self.check, [pkg])
-        self.assertIsInstance(r, pkgdir_checks.ExecutableFile)
+        assert isinstance(r, pkgdir_checks.ExecutableFile)
         assert r.filename == os.path.basename(pkg.path)
 
         # executable Manifest and metadata
@@ -221,8 +221,8 @@ class TestExecutableFile(PkgDirReportTest):
         touch(pjoin(os.path.dirname(pkg.path), 'metadata.xml'), mode=0o744)
         r = self.assertReports(self.check, [pkg])
         assert len(r) == 2
-        self.assertIsInstance(r[0], pkgdir_checks.ExecutableFile)
-        self.assertIsInstance(r[1], pkgdir_checks.ExecutableFile)
+        assert isinstance(r[0], pkgdir_checks.ExecutableFile)
+        assert isinstance(r[1], pkgdir_checks.ExecutableFile)
         assert (
             tuple(sorted(x.filename for x in r)) ==
             ('Manifest', 'metadata.xml')
@@ -235,5 +235,5 @@ class TestExecutableFile(PkgDirReportTest):
         touch(pjoin(os.path.dirname(pkg.path), 'metadata.xml'))
         os.chmod(pjoin(os.path.dirname(pkg.path), 'files', 'foo.init'), 0o645)
         r = self.assertReport(self.check, [pkg])
-        self.assertIsInstance(r, pkgdir_checks.ExecutableFile)
+        assert isinstance(r, pkgdir_checks.ExecutableFile)
         assert r.filename == 'files/foo.init'

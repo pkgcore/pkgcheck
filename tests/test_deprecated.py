@@ -25,7 +25,7 @@ class TestDeprecatedEclass(misc.ReportTestCase):
         # one deprecated eclass
         eclasses = dict([next(iter(check.blacklist.items()))])
         r = self.assertReport(check, self.mk_pkg("0.1", eclasses))
-        self.assertIsInstance(r, deprecated.DeprecatedEclass)
+        assert isinstance(r, deprecated.DeprecatedEclass)
         assert r.eclasses == tuple(eclasses.items())
 
         # mix of deprecated and non-deprecated eclasses
@@ -40,5 +40,5 @@ class TestDeprecatedEclass(misc.ReportTestCase):
 
         # all known, deprecated eclasses
         r = self.assertReport(check, self.mk_pkg("0.1", check.blacklist))
-        self.assertIsInstance(r, deprecated.DeprecatedEclass)
+        assert isinstance(r, deprecated.DeprecatedEclass)
         assert r.eclasses == tuple(sorted(check.blacklist.items()))
