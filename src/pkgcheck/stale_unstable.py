@@ -17,7 +17,7 @@ class StaleUnstable(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, keywords, period):
-        super(StaleUnstable, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.slot = pkg.slot
         self.keywords = tuple(sorted(keywords))
@@ -44,7 +44,7 @@ class StaleUnstableReport(addons.StableCheckAddon):
     known_results = (StaleUnstable,)
 
     def __init__(self, options, arches, staleness=int(day*30)):
-        super(StaleUnstableReport, self).__init__(options, arches)
+        super().__init__(options, arches)
         self.staleness = staleness
         self.start_time = None
         self.arches = frozenset(x.lstrip("~") for x in options.arches)

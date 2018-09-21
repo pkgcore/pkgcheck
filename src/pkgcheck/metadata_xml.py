@@ -39,7 +39,7 @@ class base_MissingXml(base.Error):
     __attrs__ = __slots__
 
     def __init__(self, filename, category, package=None):
-        super(base_MissingXml, self).__init__()
+        super().__init__()
         self.category = category
         self.package = package
         self.filename = filename
@@ -62,7 +62,7 @@ class base_BadlyFormedXml(base.Warning):
     __attrs__ = __slots__
 
     def __init__(self, filename, category, package=None):
-        super(base_BadlyFormedXml, self).__init__()
+        super().__init__()
         self.category = category
         self.package = package
         self.filename = filename
@@ -86,7 +86,7 @@ class base_InvalidXml(base.Error):
 
     # message first so partial() can be easily applied
     def __init__(self, message, filename, category, package=None):
-        super(base_InvalidXml, self).__init__()
+        super().__init__()
         self.message = message
         self.category = category
         self.package = package
@@ -118,7 +118,7 @@ class base_MetadataXmlInvalidPkgRef(base.Error):
     __attrs__ = __slots__
 
     def __init__(self, pkgtext, filename, category, package=None):
-        super(base_MetadataXmlInvalidPkgRef, self).__init__()
+        super().__init__()
         self.category = category
         self.package = package
         self.filename = filename
@@ -143,7 +143,7 @@ class base_MetadataXmlInvalidCatRef(base.Error):
     __attrs__ = __slots__
 
     def __init__(self, cattext, filename, category, package=None):
-        super(base_MetadataXmlInvalidPkgRef, self).__init__()
+        super().__init__()
         self.category = category
         self.package = package
         self.filename = filename
@@ -231,7 +231,7 @@ class MetadataXmlIndentation(base.Warning):
     __attrs__ = __slots__
 
     def __init__(self, lines, filename, category, package=None):
-        super(MetadataXmlIndentation, self).__init__()
+        super().__init__()
         self.lines = lines
         self.filename = filename
         self.category = category
@@ -271,7 +271,7 @@ class MetadataXmlEmptyElement(base.Warning):
     __attrs__ = __slots__
 
     def __init__(self, element, line, filename, category, package=None):
-        super(MetadataXmlEmptyElement, self).__init__()
+        super().__init__()
         self.element = element
         self.line = line
         self.filename = filename
@@ -320,7 +320,7 @@ class base_check(base.Template):
             pass
 
     def __init__(self, options):
-        super(base_check, self).__init__(options)
+        super().__init__(options)
         self.repo_base = options.target_repo.location
         self.xsd_file = None
 

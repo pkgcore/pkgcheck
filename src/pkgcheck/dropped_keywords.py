@@ -11,7 +11,7 @@ class DroppedKeywords(Warning):
     threshold = versioned_feed
 
     def __init__(self, pkg, arches):
-        super(DroppedKeywords, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.arches = tuple(sorted(arches))
 

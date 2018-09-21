@@ -15,7 +15,7 @@ class UnstableOnly(Warning):
     threshold = package_feed
 
     def __init__(self, pkgs, arches):
-        super(UnstableOnly, self).__init__()
+        super().__init__()
         self._store_cp(pkgs[0])
         self.arches = arches
         self.versions = tuple(x.fullver for x in pkgs)
@@ -34,7 +34,7 @@ class UnstableOnlyReport(StableCheckAddon):
     known_results = (UnstableOnly,)
 
     def __init__(self, options, arches):
-        super(UnstableOnlyReport, self).__init__(options, arches)
+        super().__init__(options, arches)
         arches = set(x.strip().lstrip("~") for x in options.arches)
 
         # stable, then unstable, then file

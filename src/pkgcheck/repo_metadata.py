@@ -27,7 +27,7 @@ class MultiMovePackageUpdate(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, pkg, moves):
-        super(MultiMovePackageUpdate, self).__init__()
+        super().__init__()
         self.pkg = str(pkg)
         self.moves = tuple([self.pkg] + list(map(str, moves)))
 
@@ -49,7 +49,7 @@ class OldMultiMovePackageUpdate(MultiMovePackageUpdate):
     threshold = base.repository_feed
 
     def __init__(self, pkg, moves):
-        super(MultiMovePackageUpdate, self).__init__()
+        super().__init__()
         self.pkg = str(moves[-1])
         self.moves = tuple([str(pkg)] + list(map(str, moves)))
 
@@ -66,7 +66,7 @@ class OldPackageUpdate(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, pkg, updates):
-        super(OldPackageUpdate, self).__init__()
+        super().__init__()
         self.pkg = str(pkg)
         self.updates = tuple(map(str, updates))
 
@@ -83,7 +83,7 @@ class MovedPackageUpdate(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, error):
-        super(MovedPackageUpdate, self).__init__()
+        super().__init__()
         self.error = error
 
     @property
@@ -99,7 +99,7 @@ class BadPackageUpdate(base.Error):
     threshold = base.repository_feed
 
     def __init__(self, error):
-        super(BadPackageUpdate, self).__init__()
+        super().__init__()
         self.error = error
 
     @property
@@ -118,7 +118,7 @@ class PackageUpdatesCheck(base.Template):
     )
 
     def __init__(self, options):
-        super(PackageUpdatesCheck, self).__init__(options)
+        super().__init__(options)
         self.repo = options.target_repo
 
     def feed(self, pkg, reporter):
@@ -183,7 +183,7 @@ class UnusedGlobalFlags(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, flags):
-        super(UnusedGlobalFlags, self).__init__()
+        super().__init__()
         # tricky, but it works; atoms have the same attrs
         self.flags = tuple(sorted(flags))
 
@@ -204,7 +204,7 @@ class UnusedInMastersGlobalFlags(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, flags):
-        super(UnusedInMastersGlobalFlags, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.flags = tuple(sorted(flags))
 
@@ -223,7 +223,7 @@ class UnusedGlobalFlagsCheck(base.Template):
     known_results = (UnusedGlobalFlags, UnusedInMastersGlobalFlags)
 
     def __init__(self, options, iuse_handler):
-        super(UnusedGlobalFlagsCheck, self).__init__(options)
+        super().__init__(options)
         self.unused_flags = None
         self.iuse_handler = iuse_handler
 
@@ -264,7 +264,7 @@ class UnusedLicenses(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, licenses):
-        super(UnusedLicenses, self).__init__()
+        super().__init__()
         self.licenses = tuple(sorted(licenses))
 
     @property
@@ -283,7 +283,7 @@ class UnusedInMastersLicenses(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, licenses):
-        super(UnusedInMastersLicenses, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.licenses = tuple(sorted(licenses))
 
@@ -301,7 +301,7 @@ class UnusedLicensesCheck(base.Template):
     known_results = (UnusedLicenses, UnusedInMastersLicenses)
 
     def __init__(self, options):
-        super(UnusedLicensesCheck, self).__init__(options)
+        super().__init__(options)
         self.unused_licenses = None
 
     def start(self):
@@ -342,7 +342,7 @@ class UnusedMirrors(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, mirrors):
-        super(UnusedMirrors, self).__init__()
+        super().__init__()
         self.mirrors = tuple(sorted(mirrors))
 
     @property
@@ -361,7 +361,7 @@ class UnusedInMastersMirrors(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, mirrors):
-        super(UnusedInMastersMirrors, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.mirrors = tuple(sorted(mirrors))
 
@@ -380,7 +380,7 @@ class UnusedMirrorsCheck(base.Template):
     known_results = (UnusedMirrors, UnusedInMastersMirrors)
 
     def __init__(self, options, iuse_handler):
-        super(UnusedMirrorsCheck, self).__init__(options)
+        super().__init__(options)
         self.unused_mirrors = None
         self.iuse_filter = iuse_handler.get_filter('fetchables')
 
@@ -430,7 +430,7 @@ class UnusedEclasses(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, eclasses):
-        super(UnusedEclasses, self).__init__()
+        super().__init__()
         self.eclasses = tuple(sorted(eclasses))
 
     @property
@@ -449,7 +449,7 @@ class UnusedInMastersEclasses(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, eclasses):
-        super(UnusedInMastersEclasses, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.eclasses = tuple(sorted(eclasses))
 
@@ -467,7 +467,7 @@ class UnusedEclassesCheck(base.Template):
     known_results = (UnusedEclasses, UnusedInMastersEclasses)
 
     def __init__(self, options):
-        super(UnusedEclassesCheck, self).__init__(options)
+        super().__init__(options)
         self.unused_eclasses = None
 
     def start(self):
@@ -508,7 +508,7 @@ class UnusedProfileDirs(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, dirs):
-        super(UnusedProfileDirs, self).__init__()
+        super().__init__()
         self.dirs = tuple(sorted(dirs))
 
     @property
@@ -524,7 +524,7 @@ class UnknownProfileArches(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, arches):
-        super(UnknownProfileArches, self).__init__()
+        super().__init__()
         self.arches = arches
 
     @property
@@ -540,7 +540,7 @@ class ArchesWithoutProfiles(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, arches):
-        super(ArchesWithoutProfiles, self).__init__()
+        super().__init__()
         self.arches = arches
 
     @property
@@ -556,7 +556,7 @@ class UnknownProfileStatus(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, status):
-        super(UnknownProfileStatus, self).__init__()
+        super().__init__()
         self.status = status
 
     @property
@@ -572,7 +572,7 @@ class NonexistentProfilePath(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, path):
-        super(NonexistentProfilePath, self).__init__()
+        super().__init__()
         self.path = path
 
     @property
@@ -591,7 +591,7 @@ class UnknownCategories(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, categories):
-        super(UnknownCategories, self).__init__()
+        super().__init__()
         self.categories = categories
 
     @property
@@ -607,7 +607,7 @@ class BadProfileEntry(base.Error):
     threshold = base.repository_feed
 
     def __init__(self, path, error):
-        super(BadProfileEntry, self).__init__()
+        super().__init__()
         self.path = path
         self.error = error
 
@@ -624,7 +624,7 @@ class UnknownProfilePackages(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, path, packages):
-        super(UnknownProfilePackages, self).__init__()
+        super().__init__()
         self.path = path
         self.packages = tuple(str(x) for x in packages)
 
@@ -642,7 +642,7 @@ class UnknownProfilePackageUse(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, path, package, flags):
-        super(UnknownProfilePackageUse, self).__init__()
+        super().__init__()
         self.path = path
         self.package = str(package)
         self.flags = tuple(flags)
@@ -662,7 +662,7 @@ class UnknownProfileUse(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, path, flags):
-        super(UnknownProfileUse, self).__init__()
+        super().__init__()
         self.path = path
         self.flags = tuple(flags)
 
@@ -684,7 +684,7 @@ class ProfilesCheck(base.Template):
     )
 
     def __init__(self, options, profile_filters, iuse_handler):
-        super(ProfilesCheck, self).__init__(options)
+        super().__init__(options)
         self.repo = options.target_repo
         self.profiles_dir = pjoin(self.repo.location, 'profiles')
         self.non_profile_dirs = {
@@ -809,7 +809,7 @@ class RepoProfilesReport(base.Template):
         NonexistentProfilePath, UnknownProfileStatus, UnknownCategories)
 
     def __init__(self, options, profile_filters):
-        super(RepoProfilesReport, self).__init__(options)
+        super().__init__(options)
         self.arches = options.target_repo.config.known_arches
         self.profiles = iter(options.target_repo.config.arch_profiles.values())
         self.repo = options.target_repo
@@ -886,7 +886,7 @@ class UnknownLicenses(base.Warning):
     threshold = base.repository_feed
 
     def __init__(self, group, licenses):
-        super(UnknownLicenses, self).__init__()
+        super().__init__()
         self.group = group
         self.licenses = licenses
 
@@ -904,7 +904,7 @@ class LicenseGroupsCheck(base.Template):
     known_results = (UnknownLicenses,)
 
     def __init__(self, options):
-        super(LicenseGroupsCheck, self).__init__(options)
+        super().__init__(options)
         self.repo = options.target_repo
 
     def feed(self, pkg, reporter):
@@ -936,7 +936,7 @@ class ConflictingChksums(base.Error):
     _sorter = staticmethod(itemgetter(0))
 
     def __init__(self, pkg, filename, chksums, others):
-        super(ConflictingChksums, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.filename = filename
         self.chksums = tuple(sorted(reformat_chksums(chksums), key=self._sorter))
@@ -956,7 +956,7 @@ class MissingChksum(base.Warning):
                  'existing')
 
     def __init__(self, pkg, filename, missing, existing):
-        super(MissingChksum, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.filename, self.missing = filename, tuple(sorted(missing))
         self.existing = tuple(sorted(existing))
@@ -974,7 +974,7 @@ class MissingManifest(base.Error):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, files):
-        super(MissingManifest, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.files = tuple(sorted(files))
 
@@ -991,7 +991,7 @@ class UnknownManifest(base.Warning):
     threshold = base.package_feed
 
     def __init__(self, pkg, files):
-        super(UnknownManifest, self).__init__()
+        super().__init__()
         self._store_cp(pkg)
         self.files = tuple(sorted(files))
 
@@ -1008,7 +1008,7 @@ class UnnecessaryManifest(base.Warning):
     threshold = base.package_feed
 
     def __init__(self, pkg, files):
-        super(UnnecessaryManifest, self).__init__()
+        super().__init__()
         self._store_cp(pkg)
         self.files = tuple(sorted(files))
 
@@ -1035,7 +1035,7 @@ class ManifestReport(base.Template):
     repo_grabber = attrgetter("repo")
 
     def __init__(self, options, iuse_handler):
-        super(ManifestReport, self).__init__(options)
+        super().__init__(options)
         self.required_checksums = mappings.defaultdictkey(lambda repo: frozenset(
             repo.config.manifests.required_hashes if hasattr(repo, 'config') else ()))
         self.seen_checksums = {}

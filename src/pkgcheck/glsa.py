@@ -21,7 +21,7 @@ class VulnerablePackage(base.Error):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, glsa):
-        super(VulnerablePackage, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         arches = set()
         for v in collect_package_restrictions(glsa, ["keywords"]):
@@ -97,7 +97,7 @@ class TreeVulnerabilitiesReport(base.Template):
         namespace.glsa_location = abspath(glsa_loc)
 
     def __init__(self, options):
-        super(TreeVulnerabilitiesReport, self).__init__(options)
+        super().__init__(options)
         self.glsa_dir = options.glsa_location
         self.enabled = False
         self.vulns = {}

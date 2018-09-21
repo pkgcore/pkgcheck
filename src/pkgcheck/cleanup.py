@@ -10,7 +10,7 @@ class RedundantVersion(Warning):
     threshold = versioned_feed
 
     def __init__(self, pkg, higher_pkgs):
-        super(RedundantVersion, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.slot = pkg.slot
         self.later_versions = tuple(x.fullver for x in higher_pkgs)

@@ -113,7 +113,7 @@ class VisibleVcsPkg(base.Error):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, arch, profile):
-        super(VisibleVcsPkg, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.arch = arch.lstrip("~")
         self.profile = profile
@@ -131,7 +131,7 @@ class NonExistentDeps(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, attr, nonexistent_atoms):
-        super(NonExistentDeps, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.attr = attr
         self.atoms = tuple(str(x) for x in nonexistent_atoms)
@@ -150,7 +150,7 @@ class UncheckableDep(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, attr):
-        super(UncheckableDep, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.attr = attr
 
@@ -168,7 +168,7 @@ class NonsolvableDeps(base.Error):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, attr, keyword, profile, horked):
-        super(NonsolvableDeps, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.attr = attr
         self.profile = profile
@@ -197,7 +197,7 @@ class VisibilityReport(base.Template):
     known_results = (VisibleVcsPkg, NonExistentDeps, NonsolvableDeps)
 
     def __init__(self, options, query_cache, profiles, depset_cache):
-        super(VisibilityReport, self).__init__(options)
+        super().__init__(options)
         self.query_cache = query_cache.query_cache
         self.depset_cache = depset_cache
         self.profiles = profiles

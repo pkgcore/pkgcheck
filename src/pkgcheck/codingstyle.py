@@ -17,7 +17,7 @@ class HttpsAvailable(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, link, lines):
-        super(HttpsAvailable, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.link = link
         self.lines = tuple(lines)
@@ -61,7 +61,7 @@ class HttpsAvailableCheck(base.Template):
     )
 
     def __init__(self, options):
-        super(HttpsAvailableCheck, self).__init__(options)
+        super().__init__(options)
         # anchor the end of the URL so we don't get false positives,
         # e.g. http://github.com.foo.bar.com/
         self.regex = re.compile(r'.*(\bhttp://(%s)(\s|["\'/]|$))' % r'|'.join(self.SITES))
@@ -89,7 +89,7 @@ class PortageInternals(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, internal, line):
-        super(PortageInternals, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.internal = internal
         self.line = line
@@ -117,7 +117,7 @@ class PortageInternalsCheck(base.Template):
     )
 
     def __init__(self, options):
-        super(PortageInternalsCheck, self).__init__(options)
+        super().__init__(options)
         self.regex = re.compile(r'^(\s*|.*[|&{(]+\s*)\b(%s)\b' % r'|'.join(self.INTERNALS))
 
     def feed(self, entry, reporter):
@@ -139,7 +139,7 @@ class AbsoluteSymlink(base.Warning):
     __slots__ = ("category", "package", "version", "line", "abspath")
 
     def __init__(self, pkg, abspath, line):
-        super(AbsoluteSymlink, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.abspath = abspath
         self.line = line
@@ -158,7 +158,7 @@ class AbsoluteSymlinkCheck(base.Template):
     DIRS = ('bin', 'etc', 'lib', 'opt', 'sbin', 'srv', 'usr', 'var')
 
     def __init__(self, options):
-        super(AbsoluteSymlinkCheck, self).__init__(options)
+        super().__init__(options)
         self.regex = re.compile(r'^\s*dosym\s+["\']?(/(%s)\S*)' % r'|'.join(self.DIRS))
 
     def feed(self, entry, reporter):
@@ -180,7 +180,7 @@ class BadInsIntoDir(base.Warning):
     __slots__ = ("category", "package", "version", "line", "insintodir")
 
     def __init__(self, pkg, insintodir, line):
-        super(BadInsIntoDir, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.line = line
         self.insintodir = insintodir
@@ -202,7 +202,7 @@ class BadInsIntoCheck(base.Template):
     known_results = (BadInsIntoDir,)
 
     def __init__(self, options):
-        super(BadInsIntoCheck, self).__init__(options)
+        super().__init__(options)
         if self._bad_insinto is None:
             self._load_class_regex()
 

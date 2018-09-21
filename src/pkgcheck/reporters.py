@@ -29,7 +29,7 @@ class StrReporter(base.Reporter):
     priority = 0
 
     def __init__(self, *args, **kwargs):
-        super(StrReporter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.first_report = True
 
     def process_report(self, result):
@@ -66,7 +66,7 @@ class FancyReporter(base.Reporter):
     priority = 1
 
     def __init__(self, *args, **kwargs):
-        super(FancyReporter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.key = None
 
     def process_report(self, result):
@@ -120,7 +120,7 @@ class JsonReporter(base.Reporter):
     priority = -1000
 
     def __init__(self, *args, **kwargs):
-        super(JsonReporter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._json_dict = lambda: defaultdict(self._json_dict)
 
     def process_report(self, result):
@@ -174,7 +174,7 @@ class XmlReporter(base.Reporter):
     }
 
     def __init__(self, *args, **kwargs):
-        super(XmlReporter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def start(self):
         self.out.write('<checks>')
@@ -205,7 +205,7 @@ class PickleStream(base.Reporter):
 
         :type out: L{snakeoil.formatters.Formatter}.
         """
-        super(PickleStream, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.dump = pickling.dump
 
     def start(self):
@@ -236,7 +236,7 @@ class MultiplexReporter(base.Reporter):
     def __init__(self, reporters, *args, **kwargs):
         if len(reporters) < 2:
             raise ValueError("need at least two reporters")
-        super(MultiplexReporter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.reporters = tuple(reporters)
 
     def start(self):

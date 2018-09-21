@@ -93,7 +93,7 @@ class QueryCacheAddon(base.Template):
             }[namespace.query_caching_freq]
 
     def __init__(self, options):
-        super(QueryCacheAddon, self).__init__(options)
+        super().__init__(options)
         self.query_cache = {}
         # XXX this should be logging debug info
         self.feed_type = self.options.query_caching_freq
@@ -245,7 +245,7 @@ class ProfileAddon(base.Addon):
         namespace.arch_profiles = arch_profiles
 
     def __init__(self, options, arches=None):
-        super(ProfileAddon, self).__init__(options)
+        super().__init__(options)
 
         # non-profile dirs found in the profiles directory, generally only in
         # the gentoo repo, but could be in overlays as well
@@ -404,7 +404,7 @@ class EvaluateDepSetAddon(base.Template):
     priority = 1
 
     def __init__(self, options, profiles):
-        super(EvaluateDepSetAddon, self).__init__(options)
+        super().__init__(options)
         self.pkg_evaluate_depsets_cache = {}
         self.pkg_profiles_cache = {}
         self.profiles = profiles
@@ -444,7 +444,7 @@ class StableCheckAddon(base.Template):
     required_addons = (ArchesAddon,)
 
     def __init__(self, options, arches):
-        super(StableCheckAddon, self).__init__(options)
+        super().__init__(options)
         # use known stable arches if arches aren't specified
         if options.selected_arches is None:
             arches = set().union(*(repo.config.profiles.arches('stable')
@@ -462,7 +462,7 @@ class UnstatedIUSE(base.Error):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, attr, flags):
-        super(UnstatedIUSE, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.attr, self.flags = attr, tuple(flags)
 
@@ -478,7 +478,7 @@ class UseAddon(base.Addon):
     known_results = (UnstatedIUSE,)
 
     def __init__(self, options, profiles, silence_warnings=False):
-        super(UseAddon, self).__init__(options)
+        super().__init__(options)
 
         # common profile elements
         c_implicit_iuse = set()

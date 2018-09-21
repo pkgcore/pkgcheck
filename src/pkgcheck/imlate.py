@@ -12,7 +12,7 @@ class LaggingStable(Warning):
     threshold = versioned_feed
 
     def __init__(self, pkg, keywords):
-        super(LaggingStable, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.keywords = tuple(sorted(keywords))
         self.stable = tuple(str(arch) for arch in pkg.keywords
@@ -45,7 +45,7 @@ class ImlateReport(StableCheckAddon):
             """)
 
     def __init__(self, options, arches):
-        super(ImlateReport, self).__init__(options, arches)
+        super().__init__(options, arches)
         arches = frozenset(arch.strip().lstrip("~") for arch in options.arches)
         self.target_arches = frozenset(
             "~%s" % arch.strip().lstrip("~") for arch in arches)

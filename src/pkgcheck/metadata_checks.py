@@ -24,7 +24,7 @@ class MetadataError(base.Error):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, attr, msg):
-        super(MetadataError, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.attr, self.msg = attr, str(msg)
 
@@ -40,7 +40,7 @@ class MissingLicense(base.Error):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, licenses):
-        super(MissingLicense, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.licenses = tuple(sorted(licenses))
 
@@ -59,7 +59,7 @@ class LicenseMetadataReport(base.Template):
     required_addons = (addons.UseAddon, addons.ProfileAddon)
 
     def __init__(self, options, iuse_handler, profiles):
-        super(LicenseMetadataReport, self).__init__(options)
+        super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter('license')
 
     def feed(self, pkg, reporter):
@@ -98,7 +98,7 @@ class IUSEMetadataReport(base.Template):
     known_results = (MetadataError,) + addons.UseAddon.known_results
 
     def __init__(self, options, iuse_handler):
-        super(IUSEMetadataReport, self).__init__(options)
+        super().__init__(options)
         self.iuse_handler = iuse_handler
 
     def feed(self, pkg, reporter):
@@ -117,7 +117,7 @@ class RequiredUseDefaults(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, required_use, use=(), keyword=None, profile=None):
-        super(RequiredUseDefaults, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.required_use = str(required_use)
         self.use = tuple(sorted(use))
@@ -142,7 +142,7 @@ class RequiredUSEMetadataReport(base.Template):
     known_results = (MetadataError, RequiredUseDefaults) + addons.UseAddon.known_results
 
     def __init__(self, options, iuse_handler, profiles):
-        super(RequiredUSEMetadataReport, self).__init__(options)
+        super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter('required_use')
         self.profiles = profiles
 
@@ -206,7 +206,7 @@ class UnusedLocalFlags(base.Warning):
     threshold = base.package_feed
 
     def __init__(self, pkg, flags):
-        super(UnusedLocalFlags, self).__init__()
+        super().__init__()
         # tricky, but it works; atoms have the same attrs
         self._store_cp(pkg)
         self.flags = tuple(sorted(flags))
@@ -225,7 +225,7 @@ class UnusedLocalFlagsReport(base.Template):
     known_results = (UnusedLocalFlags,) + addons.UseAddon.known_results
 
     def __init__(self, options, use_handler):
-        super(UnusedLocalFlagsReport, self).__init__(options)
+        super().__init__(options)
         self.iuse_handler = use_handler
 
     def feed(self, pkgs, reporter):
@@ -246,7 +246,7 @@ class MissingSlotDep(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, dep, dep_slots):
-        super(MissingSlotDep, self).__init__()
+        super().__init__()
         self.dep = dep
         self.dep_slots = tuple(sorted(dep_slots))
         self._store_cpv(pkg)
@@ -265,7 +265,7 @@ class MissingSlotDepReport(base.Template):
     known_results = (MissingSlotDep,) + addons.UseAddon.known_results
 
     def __init__(self, options, iuse_handler):
-        super(MissingSlotDepReport, self).__init__(options)
+        super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
 
     def feed(self, pkg, reporter):
@@ -295,7 +295,7 @@ class DependencyReport(base.Template):
                   ("depends", "rdepends", "post_rdepends"))
 
     def __init__(self, options, iuse_handler):
-        super(DependencyReport, self).__init__(options)
+        super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
 
     def feed(self, pkg, reporter):
@@ -354,7 +354,7 @@ class StupidKeywords(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg):
-        super(StupidKeywords, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
 
     short_desc = (
@@ -368,7 +368,7 @@ class InvalidKeywords(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, keywords):
-        super(InvalidKeywords, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.keywords = tuple(keywords)
 
@@ -389,7 +389,7 @@ class UnsortedKeywords(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg):
-        super(UnsortedKeywords, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.keywords = tuple(pkg.keywords)
         self.sorted_keywords = tuple(pkg.sorted_keywords)
@@ -412,7 +412,7 @@ class MissingVirtualKeywords(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, keywords):
-        super(MissingVirtualKeywords, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.keywords = tuple(sort_keywords(keywords))
 
@@ -432,7 +432,7 @@ class KeywordsReport(base.Template):
     )
 
     def __init__(self, options, iuse_handler):
-        super(KeywordsReport, self).__init__(options)
+        super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
         self.valid_arches = self.options.target_repo.config.known_arches
         # Note: '*' and '~*' are portage-only special KEYWORDS atm, i.e. not
@@ -472,7 +472,7 @@ class MissingUri(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, filename):
-        super(MissingUri, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.filename = filename
 
@@ -492,7 +492,7 @@ class BadProto(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, filename, bad_uri):
-        super(BadProto, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.filename = filename
         self.bad_uri = tuple(sorted(bad_uri))
@@ -512,7 +512,7 @@ class BadFilename(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, filenames):
-        super(BadFilename, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.filenames = tuple(sorted(filenames))
 
@@ -536,7 +536,7 @@ class SrcUriReport(base.Template):
     valid_protos = frozenset(["http", "https", "ftp"])
 
     def __init__(self, options, iuse_handler):
-        super(SrcUriReport, self).__init__(options)
+        super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter('fetchables')
 
     def feed(self, pkg, reporter):
@@ -601,7 +601,7 @@ class BadDescription(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, msg):
-        super(BadDescription, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.msg = msg
 
@@ -651,7 +651,7 @@ class BadRestricts(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg, restricts, deprecated=None):
-        super(BadRestricts, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.restricts = restricts
         self.deprecated = deprecated
@@ -684,7 +684,7 @@ class RestrictsReport(base.Template):
         "restricts: %s" % ", ".join(sorted(known_restricts))
 
     def __init__(self, options, iuse_handler):
-        super(RestrictsReport, self).__init__(options)
+        super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter('restrict')
 
     def feed(self, pkg, reporter):

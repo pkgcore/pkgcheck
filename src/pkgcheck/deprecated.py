@@ -11,7 +11,7 @@ class DeprecatedEAPI(Warning):
     threshold = versioned_feed
 
     def __init__(self, pkg):
-        super(DeprecatedEAPI, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.eapi = str(pkg.eapi)
 
@@ -39,7 +39,7 @@ class DeprecatedEclass(Warning):
     threshold = versioned_feed
 
     def __init__(self, pkg, eclasses):
-        super(DeprecatedEclass, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.eclasses = tuple(sorted(eclasses.items()))
 

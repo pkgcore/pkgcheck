@@ -80,7 +80,7 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
     check_kls = metadata_checks.KeywordsReport
 
     def setUp(self):
-        super(TestKeywordsReport, self).setUp()
+        super().setUp()
         options = self.get_options()
         profiles = [misc.FakeProfile()]
         iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
@@ -149,7 +149,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
     check_kls = metadata_checks.RequiredUSEMetadataReport
 
     def setUp(self):
-        super(TestRequiredUSEMetadataReport, self).setUp()
+        super().setUp()
         options = self.get_options(verbose=1)
         profiles = {'x86': [misc.FakeProfile(name='default/linux/x86')]}
         self.check = metadata_checks.RequiredUSEMetadataReport(

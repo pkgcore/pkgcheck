@@ -23,7 +23,7 @@ class WhitespaceFound(base_whitespace):
     __slots__ = ("category", "package", "version", "lines", "leadtrail")
 
     def __init__(self, pkg, leadtrail, lines):
-        super(WhitespaceFound, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.lines = lines
         self.leadtrail = leadtrail
@@ -39,7 +39,7 @@ class WrongIndentFound(base_whitespace):
     __slots__ = ("category", "package", "version", "lines")
 
     def __init__(self, pkg, lines):
-        super(WrongIndentFound, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.lines = lines
 
@@ -54,7 +54,7 @@ class DoubleEmptyLine(base_whitespace):
     __slots__ = ("category", "package", "version", "lines")
 
     def __init__(self, pkg, lines):
-        super(DoubleEmptyLine, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
         self.lines = lines
 
@@ -71,7 +71,7 @@ class TrailingEmptyLine(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg):
-        super(TrailingEmptyLine, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
 
     short_desc = "ebuild has trailing blank line(s)"
@@ -85,7 +85,7 @@ class NoFinalNewline(base.Warning):
     threshold = base.versioned_feed
 
     def __init__(self, pkg):
-        super(NoFinalNewline, self).__init__()
+        super().__init__()
         self._store_cpv(pkg)
 
     short_desc = "ebuild lacks an ending newline"

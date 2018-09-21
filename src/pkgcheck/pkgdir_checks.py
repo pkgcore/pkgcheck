@@ -28,7 +28,7 @@ class MissingFile(Error):
     threshold = package_feed
 
     def __init__(self, pkg, filename):
-        super(MissingFile, self).__init__()
+        super().__init__()
         self._store_cp(pkg)
         self.filename = filename
 
@@ -45,7 +45,7 @@ class MismatchedPN(Error):
     threshold = package_feed
 
     def __init__(self, pkg, ebuilds):
-        super(MismatchedPN, self).__init__()
+        super().__init__()
         self._store_cp(pkg)
         self.ebuilds = tuple(sorted(ebuilds))
 
@@ -63,7 +63,7 @@ class InvalidPN(Error):
     threshold = package_feed
 
     def __init__(self, pkg, ebuilds):
-        super(InvalidPN, self).__init__()
+        super().__init__()
         self._store_cp(pkg)
         self.ebuilds = tuple(sorted(ebuilds))
 
@@ -81,7 +81,7 @@ class DuplicateFiles(Warning):
     threshold = package_feed
 
     def __init__(self, pkg, files):
-        super(DuplicateFiles, self).__init__()
+        super().__init__()
         self._store_cp(pkg)
         self.files = tuple(sorted(files))
 
@@ -99,7 +99,7 @@ class EmptyFile(Warning):
     threshold = package_feed
 
     def __init__(self, pkg, filename):
-        super(EmptyFile, self).__init__()
+        super().__init__()
         self._store_cp(pkg)
         self.filename = filename
 
@@ -116,7 +116,7 @@ class ExecutableFile(Warning):
     threshold = package_feed
 
     def __init__(self, pkg, filename):
-        super(ExecutableFile, self).__init__()
+        super().__init__()
         self._store_cp(pkg)
         self.filename = filename
 
@@ -133,7 +133,7 @@ class SizeViolation(Warning):
     threshold = package_feed
 
     def __init__(self, pkg, filename, size):
-        super(SizeViolation, self).__init__()
+        super().__init__()
         self._store_cp(pkg)
         self.filename = filename
         self.size = size
@@ -151,7 +151,7 @@ class Glep31Violation(Error):
     threshold = package_feed
 
     def __init__(self, pkg, filename):
-        super(Glep31Violation, self).__init__()
+        super().__init__()
         self._store_cp(pkg)
         self.filename = filename
 
@@ -169,7 +169,7 @@ class InvalidUtf8(Error):
     threshold = package_feed
 
     def __init__(self, pkg, filename, err):
-        super(InvalidUtf8, self).__init__()
+        super().__init__()
         self._store_cp(pkg)
         self.filename = filename
         self.err = err
