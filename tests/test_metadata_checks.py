@@ -26,9 +26,6 @@ class TestDescriptionReport(misc.ReportTestCase):
         self.assertNoReport(check, self.mk_pkg("a perfectly written package description"))
 
         assert isinstance(
-            self.assertReport(check, self.mk_pkg()),
-            metadata_checks.CrappyDescription)
-        assert isinstance(
             self.assertReport(check, self.mk_pkg("based on eclass")),
             metadata_checks.CrappyDescription)
         assert isinstance(
@@ -40,9 +37,19 @@ class TestDescriptionReport(misc.ReportTestCase):
         assert isinstance(
             self.assertReport(check, self.mk_pkg("foon")),
             metadata_checks.CrappyDescription)
+
+        # length-based checks
         assert isinstance(
-            self.assertReport(check, self.mk_pkg("s"*251)),
+            self.assertReport(check, self.mk_pkg()),
             metadata_checks.CrappyDescription)
+        assert isinstance(
+            self.assertReport(check, self.mk_pkg("s"*151)),
+            metadata_checks.CrappyDescription)
+        self.assertNoReport(check, self.mk_pkg("s"*150))
+        assert isinstance(
+            self.assertReport(check, self.mk_pkg("s"*9)),
+            metadata_checks.CrappyDescription)
+        self.assertNoReport(check, self.mk_pkg("s"*10))
 
 
 class iuse_options(TempDirMixin):

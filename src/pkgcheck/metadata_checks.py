@@ -613,7 +613,7 @@ class CrappyDescription(base.Warning):
 class DescriptionReport(base.Template):
     """DESCRIPTION checks.
 
-    Check on length (<=250), too short (<5), or generic (lifted from eclass or
+    Check on length (<=150), too short (<10), or generic (lifted from eclass or
     just using the package's name.
     """
 
@@ -636,10 +636,10 @@ class DescriptionReport(base.Template):
             if not l:
                 reporter.add_report(CrappyDescription(
                     pkg, "empty/unset"))
-            elif l > 250:
+            elif l > 150:
                 reporter.add_report(CrappyDescription(
-                    pkg, "over 250 chars in length, bit long"))
-            elif l < 5:
+                    pkg, "over 150 chars in length, bit long"))
+            elif l < 10:
                 reporter.add_report(CrappyDescription(
                     pkg, "under 10 chars in length- too short"))
 
