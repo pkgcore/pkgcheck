@@ -17,27 +17,23 @@ class TestRedundantVersion(misc.ReportTestCase):
         self.assertNoReport(check, [self.mk_pkg("0.7.1")])
         reports = self.assertReports(
             check, [self.mk_pkg(x) for x in ("0.7", "0.8", "0.9")])
-        self.assertEqual(
-            [list(x.later_versions) for x in reports],
+        assert (
+            [list(x.later_versions) for x in reports] ==
             [["0.9", "0.8"], ["0.9"]])
 
         # check slots.
         l = [self.mk_pkg("0.7"), self.mk_pkg("0.8", slot="1"),
              self.mk_pkg("0.9")]
         reports = self.assertReports(check, l)
-        self.assertEqual(
-            [list(x.later_versions) for x in reports],
-            [["0.9"]])
+        assert [list(x.later_versions) for x in reports] == [["0.9"]]
 
         l.append(self.mk_pkg("0.10", keywords=("x86", "amd64", "~sparc")))
         reports = self.assertReports(check, l)
-        self.assertEqual(
-            [list(x.later_versions) for x in reports],
+        assert (
+            [list(x.later_versions) for x in reports] ==
             [["0.10", "0.9"], ["0.10"]])
 
         l = [self.mk_pkg("0.1", keywords=("~x86", "~amd64")),
              self.mk_pkg("0.2", keywords=("x86", "~amd64", "~sparc"))]
         reports = self.assertReports(check, l)
-        self.assertEqual(
-            [list(x.later_versions) for x in reports],
-            [["0.2"]])
+        assert [list(x.later_versions) for x in reports] == [["0.2"]]

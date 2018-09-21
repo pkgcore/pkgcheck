@@ -27,9 +27,9 @@ class TestImlateReport(misc.ReportTestCase):
         report = self.assertReports(
             check,
             [mk_pkg("0.8", "~x86"), mk_pkg("0.9", "~x86 amd64")])
-        self.assertEqual(len(report), 1)
-        self.assertEqual(report[0].stable, ("amd64",))
-        self.assertEqual(report[0].version, "0.9")
+        assert len(report) == 1
+        assert report[0].stable == ("amd64",)
+        assert report[0].version == "0.9"
 
         # insert a 0.7 in; it should not show.
         # additionally, insert an arch we don't care about...
@@ -39,6 +39,6 @@ class TestImlateReport(misc.ReportTestCase):
             [mk_pkg("0.7", "~x86"),
              mk_pkg("0.8", "~x86 ~foo"), mk_pkg("0.9", "~x86 amd64"),
              mk_pkg("0.10", "foo")])
-        self.assertEqual(len(report), 1)
-        self.assertEqual(report[0].stable, ("amd64",))
-        self.assertEqual(report[0].version, "0.9")
+        assert len(report) == 1
+        assert report[0].stable == ("amd64",)
+        assert report[0].version == "0.9"

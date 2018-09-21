@@ -132,7 +132,7 @@ class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
         check.start()
         self.assertNoReport(check, self.mk_pkg("foo bar"))
         r = self.assertReport(check, self.mk_pkg("foo dar"))
-        self.assertEqual(r.attr, "iuse")
+        assert r.attr == "iuse"
         # arch flags must _not_ be in IUSE
         self.assertReport(check, self.mk_pkg("x86"))
 
@@ -174,10 +174,10 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
     def test_required_use_unstated_iuse(self):
         r = self.assertReport(self.check, self.mk_pkg(required_use="foo? ( blah )"))
         self.assertIsInstance(r, addons.UnstatedIUSE)
-        self.assertEqual(r.flags, ("blah", "foo"))
+        assert r.flags == ("blah", "foo")
         r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
         self.assertIsInstance(r, addons.UnstatedIUSE)
-        self.assertEqual(r.flags, ("blah",))
+        assert r.flags == ("blah",)
 
     def test_required_use_defaults(self):
         # simple, valid IUSE/REQUIRED_USE usage
@@ -188,10 +188,10 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         # unsatisfied REQUIRED_USE
         r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="bar"))
         self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
-        self.assertEqual(r.keyword, 'x86')
-        self.assertEqual(r.profile, 'default/linux/x86')
-        self.assertEqual(r.use, ())
-        self.assertEqual(str(r.required_use), 'contains [bar]')
+        assert r.keyword == 'x86'
+        assert r.profile == 'default/linux/x86'
+        assert r.use == ()
+        assert str(r.required_use) == 'contains [bar]'
 
         # at-most-one-of
         self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
@@ -199,8 +199,8 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo +bar", required_use="?? ( foo bar )"))
         r = self.assertReport(self.check, self.mk_pkg(eapi="5", iuse="+foo +bar", required_use="?? ( foo bar )"))
         self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
-        self.assertEqual(r.use, ('bar', 'foo'))
-        self.assertEqual(str(r.required_use), '?? ( contains [foo] contains [bar] )')
+        assert r.use == ('bar', 'foo')
+        assert str(r.required_use) == '?? ( contains [foo] contains [bar] )'
 
         # exactly-one-of
         self.assertNoReport(self.check, self.mk_pkg(iuse="+foo bar", required_use="^^ ( foo bar )"))
@@ -208,8 +208,8 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="^^ ( foo bar )"))
         r = self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar", required_use="^^ ( foo bar )"))
         self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
-        self.assertEqual(r.use, ('bar', 'foo'))
-        self.assertEqual(str(r.required_use), '^^ ( contains [foo] contains [bar] )')
+        assert r.use == ('bar', 'foo')
+        assert str(r.required_use) == '^^ ( contains [foo] contains [bar] )'
 
         # all-of
         self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( bar baz )"))
@@ -218,9 +218,9 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar baz", required_use="foo? ( bar baz )"))
         r = self.assertReport(self.check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( bar baz )"))
         self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
-        self.assertEqual(r.use, ('baz', 'foo'))
+        assert r.use == ('baz', 'foo')
         # TODO: fix this output to show both required USE flags
-        self.assertEqual(str(r.required_use), 'contains [bar]')
+        assert str(r.required_use) == 'contains [bar]'
 
         # any-of
         self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( || ( bar baz ) )"))
@@ -229,8 +229,8 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertNoReport(self.check, self.mk_pkg(iuse="+foo +bar +baz", required_use="foo? ( || ( bar baz ) )"))
         r = self.assertReport(self.check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( || ( bar baz ) )"))
         self.assertIsInstance(r, metadata_checks.RequiredUseDefaults)
-        self.assertEqual(r.use, ('foo',))
-        self.assertEqual(str(r.required_use), '( contains [bar] || contains [baz] )')
+        assert r.use == ('foo',)
+        assert str(r.required_use) == '( contains [bar] || contains [baz] )'
 
 
 def use_based():
@@ -290,7 +290,7 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
         r = self.assertIsInstance(
             self.assertReport(self.mk_check(), self.mk_pkg("|| (")),
             metadata_checks.MetadataError)
-        self.assertEqual(r.attr, 'license')
+        assert r.attr == 'license'
 
     def test_it(self):
         # should puke a metadata error for empty license
@@ -301,7 +301,7 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
         report = self.assertIsInstance(
             self.assertReport(chk, self.mk_pkg("foo")),
             metadata_checks.MissingLicense)
-        self.assertEqual(report.licenses, ('foo',))
+        assert report.licenses == ('foo',)
 
         chk = self.mk_check(['foo', 'foo2'])
         self.assertNoReport(chk, self.mk_pkg('foo'))
@@ -331,7 +331,7 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
         r = self.assertIsInstance(
             self.assertReport(self.mk_check(), mk_pkg("|| (")),
             metadata_checks.MetadataError)
-        self.assertEqual(r.attr, attr)
+        assert r.attr == attr
         if 'depend' not in attr:
             return
         self.assertNoReport(chk, mk_pkg("!dev-util/blah"))
@@ -392,7 +392,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
             self.assertReport(
                 self.mk_check(), self.mk_pkg("foon", disable_chksums=True)),
             metadata_checks.MetadataError)
-        self.assertEqual(r.attr, 'fetchables')
+        assert r.attr == 'fetchables'
 
     def test_bad_filename(self):
         chk = self.mk_check()
@@ -413,7 +413,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         r = self.assertIsInstance(
             self.assertReport(chk, self.mk_pkg("foon")),
             metadata_checks.MissingUri)
-        self.assertEqual(r.filename, 'foon')
+        assert r.filename == 'foon'
 
         # verify valid protos.
         self.assertTrue(
@@ -434,8 +434,8 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
             self.assertReport(chk, self.mk_pkg(f"{bad_proto}://foon.com/foon")),
             metadata_checks.BadProto)
 
-        self.assertEqual(r.filename, 'foon')
-        self.assertEqual(list(r.bad_uri), [f'{bad_proto}://foon.com/foon'])
+        assert r.filename == 'foon'
+        assert list(r.bad_uri) == [f'{bad_proto}://foon.com/foon']
 
         # check collapsing.
 
@@ -445,7 +445,5 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
                 self.mk_pkg(f"{bad_proto}://foon.com/foon {bad_proto}://dar.com/foon")),
             metadata_checks.BadProto)
 
-        self.assertEqual(r.filename, 'foon')
-        self.assertEqual(
-            list(r.bad_uri),
-            sorted([f'{bad_proto}://{x}/foon' for x in ('foon.com', 'dar.com')]))
+        assert r.filename == 'foon'
+        assert list(r.bad_uri) == sorted(f'{bad_proto}://{x}/foon' for x in ('foon.com', 'dar.com'))

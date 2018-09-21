@@ -24,7 +24,7 @@ class base_test(TestCase):
         p.plugin = p.add_argument_group('plugin options')
         self.addon_kls.mangle_argparser(p)
         args, unknown_args = p.parse_known_args(args, namespace)
-        self.assertEqual(unknown_args, [])
+        assert unknown_args == []
         orig_out, orig_err = None, None
         for attr, val in preset_values.items():
             setattr(args, attr, val)
@@ -85,10 +85,10 @@ class TestQueryCacheAddon(base_test):
         options = self.process_check([], silence=True)
         check = self.addon_kls(options)
         check.start()
-        self.assertEqual(check.feed_type, self.default_feed)
+        assert check.feed_type == self.default_feed
         check.query_cache["boobies"] = "hooray for"
         check.feed(None, None)
-        self.assertFalse(check.query_cache)
+        assert not check.query_cache
 
 
 class Test_profile_data(TestCase):
@@ -105,8 +105,8 @@ class Test_profile_data(TestCase):
             profile.use, profile.pkg_use, profile.masked_use, profile.forced_use, {}, set())
         pkg = FakePkg(cpv, data=data_override)
         immutable, enabled = profile_data.identify_use(pkg, set(known_flags))
-        self.assertEqual(immutable, set(required_immutable))
-        self.assertEqual(enabled, set(required_forced))
+        assert immutable == set(required_immutable)
+        assert enabled == set(required_forced)
 
     def test_identify_use(self):
         profile = FakeProfile()
@@ -210,9 +210,9 @@ class TestProfileAddon(profile_mixin):
         options = self.process_check(None, [], profiles=None)
         # override the default
         check = self.addon_kls(options)
-        self.assertEqual(sorted(check.official_arches), ['x86'])
-        self.assertEqual(sorted(check.desired_arches), ['x86'])
-        self.assertEqual(sorted(check.profile_evaluate_dict), ['x86', '~x86'])
+        assert sorted(check.official_arches) == ['x86']
+        assert sorted(check.desired_arches) == ['x86']
+        assert sorted(check.profile_evaluate_dict) == ['x86', '~x86']
         self.assertProfiles(check, 'x86', 'profile1', 'profile1/2')
 
     def test_fallback_defaults(self):
@@ -359,8 +359,8 @@ class TestProfileAddon(profile_mixin):
         check = self.addon_kls(options)
         # assert they're collapsed properly.
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
-        self.assertEqual(len(check.profile_evaluate_dict['x86']), 1)
-        self.assertEqual(len(check.profile_evaluate_dict['x86'][0]), 2)
+        assert len(check.profile_evaluate_dict['x86']) == 1
+        assert len(check.profile_evaluate_dict['x86'][0]) == 2
         self.assertProfiles(check, 'ppc', 'default-linux/ppc')
 
         l = check.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': 'x86'}))
@@ -373,7 +373,7 @@ class TestProfileAddon(profile_mixin):
         l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'ppc'}))
         self.assertEqual(len(l), 1, msg=f"checking for profile collapsing: {l!r}")
         self.assertEqual(len(l[0]), 1, msg=f"checking for proper # of profiles: {l[0]!r}")
-        self.assertEqual(l[0][0].name, 'default-linux/ppc')
+        assert l[0][0].name == 'default-linux/ppc'
 
         l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'foon'}))
         self.assertEqual(len(l), 0, msg=f"checking for profile collapsing: {l!r}")
@@ -384,14 +384,14 @@ class TestProfileAddon(profile_mixin):
         options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
-        self.assertEqual(len(check.profile_evaluate_dict['x86']), 2)
+        assert len(check.profile_evaluate_dict['x86']) == 2
 
         with open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.mask'), 'w') as f:
             f.write("lib")
         options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
-        self.assertEqual(len(check.profile_evaluate_dict['x86']), 1)
+        assert len(check.profile_evaluate_dict['x86']) == 1
 
         # test collapsing reusing existing profile layout
         with open(pjoin(self.dir, 'foo', 'default-linux', 'use.force'), 'w') as f:
@@ -399,14 +399,14 @@ class TestProfileAddon(profile_mixin):
         options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
-        self.assertEqual(len(check.profile_evaluate_dict['x86']), 2)
+        assert len(check.profile_evaluate_dict['x86']) == 2
 
         with open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.force'), 'w') as f:
             f.write("foo")
         options = run_check()
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
-        self.assertEqual(len(check.profile_evaluate_dict['x86']), 1)
+        assert len(check.profile_evaluate_dict['x86']) == 1
 
 
 class TestEvaluateDepSetAddon(profile_mixin):
@@ -460,14 +460,14 @@ class TestEvaluateDepSetAddon(profile_mixin):
         # if duplicates come through, *and* ensure proper profile collapsing
 
         # shouldn't return anything due to no profiles matching the keywords.
-        self.assertEqual(get_rets("0.0.1", "depends", KEYWORDS="foon"), [])
+        assert get_rets("0.0.1", "depends", KEYWORDS="foon") == []
         l = get_rets("0.0.2", "depends")
         self.assertEqual(
             len(l), 1, msg=f"must collapse all profiles down to one run: got {l!r}")
         self.assertEqual(sorted(x.name for x in l[0][1]), ['1', '2'],
             msg=f"must have just two profiles: got {l!r}")
-        self.assertEqual(l[0][1][0].key, 'x86')
-        self.assertEqual(l[0][1][1].key, 'x86')
+        assert l[0][1][0].key == 'x86'
+        assert l[0][1][1].key == 'x86'
 
         l = get_rets("0.1", "rdepends",
             RDEPEND="x? ( dev-util/confcache ) foo? ( dev-util/foo ) "
@@ -488,11 +488,13 @@ class TestEvaluateDepSetAddon(profile_mixin):
         l1 = [x for x in l if x[1][0].name == '1'][0]
         l2 = [x for x in l if x[1][0].name == '2'][0]
 
-        self.assertEqual(set(str(l1[0]).split()),
+        assert (
+            set(str(l1[0]).split()) ==
             set(['dev-util/confcache', 'dev-util/bar', 'dev-util/nobar',
                 'x11-libs/xserver']))
 
-        self.assertEqual(set(str(l2[0]).split()),
+        assert (
+            set(str(l2[0]).split()) ==
             set(['dev-util/confcache', 'dev-util/foo', 'dev-util/bar',
                 'x11-libs/xserver']))
 
@@ -531,8 +533,8 @@ class TestEvaluateDepSetAddon(profile_mixin):
         l1 = [x[1] for x in l if str(x[0]).strip() == "dev-util/ppc"][0]
         l2 = [x[1] for x in l if str(x[0]).strip() == "dev-util/x86"][0]
 
-        self.assertEqual(sorted(x.name for x in l1), ["3"])
-        self.assertEqual(sorted(x.name for x in l2), ["1", "2"])
+        assert sorted(x.name for x in l1) == ["3"]
+        assert sorted(x.name for x in l2) == ["1", "2"]
 
 
 class TestUseAddon(mixins.TempDirMixin, base_test):

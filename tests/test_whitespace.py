@@ -27,7 +27,7 @@ class TestStandardWhitespaces(WhitespaceCheckTest):
         fake_src.append("# That's it for now\n")
 
         report = self.assertReports(self.check,[fake_pkg,fake_src])
-        self.assertEqual(len(report), 4)
+        assert len(report) == 4
 
 
 class TestNoNewLineOnEnd(WhitespaceCheckTest):
@@ -39,7 +39,7 @@ class TestNoNewLineOnEnd(WhitespaceCheckTest):
         fake_src.append("# That's it for now")
 
         report = self.assertReports(self.check,[fake_pkg,fake_src])
-        self.assertEqual(len(report), 1)
+        assert len(report) == 1
 
 
 class TestTrailingNewLineOnEnd(WhitespaceCheckTest):
@@ -52,4 +52,4 @@ class TestTrailingNewLineOnEnd(WhitespaceCheckTest):
         fake_src.append("\n")
 
         report = self.assertReports(self.check,[fake_pkg,fake_src])
-        self.assertEqual(len(report), 1)
+        assert len(report) == 1

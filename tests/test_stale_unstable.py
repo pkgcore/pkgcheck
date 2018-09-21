@@ -53,4 +53,4 @@ class TestStaleUnstableReport(misc.ReportTestCase):
             check, [
                 self.mk_pkg("1.0", "amd64 x86 sparc", old),
                 self.mk_pkg("2.0", "~amd64 ~x86 ~sparc", old)])
-        self.assertEqual(report.keywords, ("~amd64", "~x86"))
+        assert report.keywords == ("~amd64", "~x86")

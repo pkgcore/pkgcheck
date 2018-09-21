@@ -36,7 +36,7 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
 
         reports = self.assertReports(check, [fake_pkg, fake_src])
         dirs = [x.insintodir for x in reports]
-        self.assertEqual(dirs, list(bad))
+        assert dirs == list(bad)
 
 
 class TestAbsoluteSymlink(misc.ReportTestCase):
@@ -73,5 +73,5 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
         reports = self.assertReports(check, [fake_pkg, fake_src])
         abspaths = [x.abspath for x in reports]
 
-        self.assertEqual(len(reports), len(absolute))
-        self.assertEqual(abspaths, [x[0].strip('"\'').split()[0] for x in absolute])
+        assert len(reports) == len(absolute)
+        assert abspaths == [x[0].strip('"\'').split()[0] for x in absolute]

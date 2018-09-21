@@ -26,7 +26,7 @@ class TestDroppedKeywords(misc.ReportTestCase):
         self.assertNoReport(check, [self.mk_pkg('1')])
         reports = self.assertReports(
             check, [self.mk_pkg("1", "x86 amd64"), self.mk_pkg("2")])
-        self.assertEqual(set(chain.from_iterable(x.arches for x in reports)), set(["x86", "amd64"]))
+        assert set(chain.from_iterable(x.arches for x in reports)) == set(["x86", "amd64"])
 
         # ensure it limits itself to just the arches we care about
         # check unstable at the same time;
@@ -68,8 +68,8 @@ class TestDroppedKeywords(misc.ReportTestCase):
             [self.mk_pkg("1", "x86 amd64"),
              self.mk_pkg("2"),
              self.mk_pkg("3")])
-        self.assertEqual(len(reports), 2)
-        self.assertEqual(set(x.version for x in reports), set(["2", "3"]))
+        assert len(reports) == 2
+        assert set(x.version for x in reports) == set(["2", "3"])
 
     def test_regular_mode(self):
         # regular mode outputs the most recent pkg with dropped keywords
@@ -81,5 +81,5 @@ class TestDroppedKeywords(misc.ReportTestCase):
             [self.mk_pkg("1", "x86 amd64"),
              self.mk_pkg("2"),
              self.mk_pkg("3")])
-        self.assertEqual(len(reports), 1)
-        self.assertEqual(reports[0].version, '3')
+        assert len(reports) == 1
+        assert reports[0].version == '3'

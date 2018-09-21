@@ -24,9 +24,9 @@ class TestVulnerabilitiesReport(TempDirMixin, misc.ReportTestCase):
         check.start()
         self.assertNoReport(check, self.mk_pkg("0.5.1"))
         r = self.assertReports(check, self.mk_pkg("0.5-r5"))
-        self.assertEqual(len(r), 1)
-        self.assertEqual(
-            (r[0].category, r[0].package, r[0].version),
+        assert len(r) == 1
+        assert (
+            (r[0].category, r[0].package, r[0].version) ==
             ("dev-util", "diffball", "0.5-r5"))
         self.assertReports(check, self.mk_pkg("1.0"))
         self.assertNoReport(check, self.mk_pkg("5", "dev-util/diffball2"))
