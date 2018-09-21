@@ -397,6 +397,12 @@ class UnsortedKeywords(base.Warning):
     def short_desc(self):
         return f"unsorted KEYWORDS: {', '.join(self.keywords)}"
 
+    @property
+    def long_desc(self):
+        return (
+            f"\n\tunsorted: {', '.join(self.keywords)}"
+            f"\n\tsorted: {', '.join(sort_keywords(self.keywords))}")
+
 
 class MissingVirtualKeywords(base.Warning):
     """Virtual packages with keywords missing from their dependencies."""
