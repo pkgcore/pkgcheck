@@ -53,6 +53,13 @@ main_options.add_argument(
     action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
     help='repo to pull packages from')
 main_options.add_argument(
+    '--filtered', action='store_true', default=False,
+    help="enable all license and visibility filtering for packages",
+    docs="""
+        Enable all package filtering mechanisms such as ACCEPT_KEYWORDS,
+        ACCEPT_LICENSE, and package.mask.
+    """)
+main_options.add_argument(
     '-s', '--suite', action=commandline.StoreConfigObject,
     config_type='pkgcheck_suite',
     help='specify the configuration suite to use')
@@ -215,6 +222,10 @@ def _validate_args(parser, namespace):
             target_repo = namespace.config.get_default('repo')
 
         namespace.target_repo = target_repo
+
+    # use filtered repo if filtering is enabled
+    if namespace.filtered:
+        namespace.target_repo = namespace.domain.ebuild_repos[str(namespace.target_repo)]
 
     if namespace.reporter is None:
         namespace.reporter = namespace.config.get_default(
