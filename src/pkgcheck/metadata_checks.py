@@ -388,10 +388,11 @@ class UnsortedKeywords(base.Warning):
     __slots__ = ('category', 'package', 'version', 'keywords')
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, keywords):
+    def __init__(self, pkg):
         super(UnsortedKeywords, self).__init__()
         self._store_cpv(pkg)
-        self.keywords = tuple(keywords)
+        self.keywords = tuple(pkg.keywords)
+        self.sorted_keywords = tuple(pkg.sorted_keywords)
 
     @property
     def short_desc(self):
@@ -401,7 +402,7 @@ class UnsortedKeywords(base.Warning):
     def long_desc(self):
         return (
             f"\n\tunsorted: {', '.join(self.keywords)}"
-            f"\n\tsorted: {', '.join(sort_keywords(self.keywords))}")
+            f"\n\tsorted: {', '.join(self.sorted_keywords)}")
 
 
 class MissingVirtualKeywords(base.Warning):
@@ -451,7 +452,7 @@ class KeywordsReport(base.Template):
             if invalid:
                 reporter.add_report(InvalidKeywords(pkg, invalid))
             if pkg.sorted_keywords != pkg.keywords:
-                reporter.add_report(UnsortedKeywords(pkg, pkg.keywords))
+                reporter.add_report(UnsortedKeywords(pkg))
             if pkg.category == 'virtual':
                 keywords = set()
                 rdepends = set(self.iuse_filter((atom,), pkg, pkg.rdepends, reporter))
