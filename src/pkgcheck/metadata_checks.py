@@ -376,11 +376,32 @@ class InvalidKeywords(base.Warning):
         return f"invalid KEYWORDS: {', '.join(self.keywords)}"
 
 
+class UnsortedKeywords(base.Warning):
+    """Packages with unsorted KEYWORDS.
+
+    KEYWORDS should be sorted in alphabetical order with prefix keywords (those
+    with hyphens in them, e.g. amd64-fbsd) after regular arches and globs (e.g. -*)
+    before them.
+    """
+
+    __slots__ = ('category', 'package', 'version', 'keywords')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, keywords):
+        super(UnsortedKeywords, self).__init__()
+        self._store_cpv(pkg)
+        self.keywords = tuple(keywords)
+
+    @property
+    def short_desc(self):
+        return f"unsorted KEYWORDS: {', '.join(self.keywords)}"
+
+
 class KeywordsReport(base.Template):
     """Check package keywords for sanity; empty keywords, and -* are flagged."""
 
     feed_type = base.versioned_feed
-    known_results = (StupidKeywords, InvalidKeywords, MetadataError)
+    known_results = (StupidKeywords, InvalidKeywords, UnsortedKeywords, MetadataError)
 
     def __init__(self, options):
         super(KeywordsReport, self).__init__(options)
@@ -401,6 +422,8 @@ class KeywordsReport(base.Template):
             invalid = set(pkg.keywords) - self.valid_keywords
             if invalid:
                 reporter.add_report(InvalidKeywords(pkg, invalid))
+            if pkg.sorted_keywords != pkg.keywords:
+                reporter.add_report(UnsortedKeywords(pkg, pkg.keywords))
 
 
 class MissingUri(base.Warning):

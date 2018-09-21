@@ -53,7 +53,7 @@ class iuse_options(TempDirMixin):
         os.mkdir(base)
         fileutils.write_file(
             pjoin(base, "arch.list"), 'w',
-            "\n".join(kwds.pop("arches", ("x86", "ppc", "amd64"))))
+            "\n".join(kwds.pop("arches", ("x86", "ppc", "amd64", "amd64-fbsd"))))
 
         fileutils.write_file(
             pjoin(base, "use.desc"), "w",
@@ -95,8 +95,22 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
             self.assertReport(self.check, self.mk_pkg("foo")),
             metadata_checks.InvalidKeywords)
         self.assertNoReport(
-            self.check, self.mk_pkg("-* * ~* -amd64 ~x86 ppc"),
+            self.check, self.mk_pkg("-* * ~* -amd64 ppc ~x86"),
             metadata_checks.InvalidKeywords)
+
+    def test_unsorted_keywords(self):
+        self.assertIsInstance(
+            self.assertReport(self.check, self.mk_pkg("~amd64 -*")),
+            metadata_checks.UnsortedKeywords)
+        self.assertNoReport(
+            self.check, self.mk_pkg("-* ~amd64"),
+            metadata_checks.UnsortedKeywords)
+        self.assertIsInstance(
+            self.assertReport(self.check, self.mk_pkg("~amd64 ~amd64-fbsd ppc ~x86")),
+            metadata_checks.UnsortedKeywords)
+        self.assertNoReport(
+            self.check, self.mk_pkg("~amd64 ppc ~x86 ~amd64-fbsd"),
+            metadata_checks.UnsortedKeywords)
 
 
 class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
