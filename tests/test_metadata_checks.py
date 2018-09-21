@@ -27,28 +27,28 @@ class TestDescriptionReport(misc.ReportTestCase):
 
         assert isinstance(
             self.assertReport(check, self.mk_pkg("based on eclass")),
-            metadata_checks.CrappyDescription)
+            metadata_checks.BadDescription)
         assert isinstance(
             self.assertReport(check, self.mk_pkg("diffball")),
-            metadata_checks.CrappyDescription)
+            metadata_checks.BadDescription)
         assert isinstance(
             self.assertReport(check, self.mk_pkg("dev-util/diffball")),
-            metadata_checks.CrappyDescription)
+            metadata_checks.BadDescription)
         assert isinstance(
             self.assertReport(check, self.mk_pkg("foon")),
-            metadata_checks.CrappyDescription)
+            metadata_checks.BadDescription)
 
         # length-based checks
         assert isinstance(
             self.assertReport(check, self.mk_pkg()),
-            metadata_checks.CrappyDescription)
+            metadata_checks.BadDescription)
         assert isinstance(
             self.assertReport(check, self.mk_pkg("s"*151)),
-            metadata_checks.CrappyDescription)
+            metadata_checks.BadDescription)
         self.assertNoReport(check, self.mk_pkg("s"*150))
         assert isinstance(
             self.assertReport(check, self.mk_pkg("s"*9)),
-            metadata_checks.CrappyDescription)
+            metadata_checks.BadDescription)
         self.assertNoReport(check, self.mk_pkg("s"*10))
 
 

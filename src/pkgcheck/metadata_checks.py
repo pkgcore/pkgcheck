@@ -594,14 +594,14 @@ class SrcUriReport(base.Template):
             del e
 
 
-class CrappyDescription(base.Warning):
+class BadDescription(base.Warning):
     """Package's description sucks in some fashion."""
 
     __slots__ = ("category", "package", "version", "msg")
     threshold = base.versioned_feed
 
     def __init__(self, pkg, msg):
-        super(CrappyDescription, self).__init__()
+        super(BadDescription, self).__init__()
         self._store_cpv(pkg)
         self.msg = msg
 
@@ -618,29 +618,29 @@ class DescriptionReport(base.Template):
     """
 
     feed_type = base.versioned_feed
-    known_results = (CrappyDescription,)
+    known_results = (BadDescription,)
 
     def feed(self, pkg, reporter):
         s = pkg.description.lower()
 
         if s.startswith("based on") and "eclass" in s:
-            reporter.add_report(CrappyDescription(
+            reporter.add_report(BadDescription(
                 pkg, "generic eclass defined description"))
 
         elif pkg.package == s or pkg.key == s:
-            reporter.add_report(CrappyDescription(
+            reporter.add_report(BadDescription(
                 pkg, "using the pkg name as the description isn't very helpful"))
 
         else:
             l = len(pkg.description)
             if not l:
-                reporter.add_report(CrappyDescription(
+                reporter.add_report(BadDescription(
                     pkg, "empty/unset"))
             elif l > 150:
-                reporter.add_report(CrappyDescription(
+                reporter.add_report(BadDescription(
                     pkg, "over 150 chars in length, bit long"))
             elif l < 10:
-                reporter.add_report(CrappyDescription(
+                reporter.add_report(BadDescription(
                     pkg, "under 10 chars in length- too short"))
 
 
