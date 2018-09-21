@@ -44,9 +44,8 @@ class base_test(TestCase):
                     sys.stderr = orig_err
 
         for attr, val in settings.items():
-            self.assertEqual(getattr(args, attr), val,
-                msg="for args %r, %s must be %r, got %r" % (args, attr, val,
-                    getattr(args, attr)))
+            assert getattr(args, attr) == val, (
+                f"for args {args!r}, {attr} must be {val!r}, got {getattr(args, attr)!r}")
         return args
 
 
@@ -198,8 +197,8 @@ class profile_mixin(mixins.TempDirMixin, base_test):
 class TestProfileAddon(profile_mixin):
 
     def assertProfiles(self, check, key, *profile_names):
-        self.assertEqual(
-            sorted(x.name for y in check.profile_evaluate_dict[key] for x in y),
+        assert (
+            sorted(x.name for y in check.profile_evaluate_dict[key] for x in y) ==
             sorted(profile_names))
 
     def test_defaults(self):
@@ -364,19 +363,18 @@ class TestProfileAddon(profile_mixin):
         self.assertProfiles(check, 'ppc', 'default-linux/ppc')
 
         l = check.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': 'x86'}))
-        self.assertEqual(len(l), 1, msg=f"checking for profile collapsing: {l!r}")
-        self.assertEqual(len(l[0]), 2, msg=f"checking for proper # of profiles: {l[0]!r}")
-        self.assertEqual(sorted(x.name for x in l[0]),
-                         sorted(['default-linux', 'default-linux/x86']))
+        assert len(l) == 1, f"checking for profile collapsing: {l!r}"
+        assert len(l[0]) == 2, f"checking for proper # of profiles: {l[0]!r}"
+        assert sorted(x.name for x in l[0]) == sorted(['default-linux', 'default-linux/x86'])
 
         # check keyword collapsing
         l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'ppc'}))
-        self.assertEqual(len(l), 1, msg=f"checking for profile collapsing: {l!r}")
-        self.assertEqual(len(l[0]), 1, msg=f"checking for proper # of profiles: {l[0]!r}")
+        assert len(l) == 1, f"checking for profile collapsing: {l!r}"
+        assert len(l[0]) == 1, f"checking for proper # of profiles: {l[0]!r}"
         assert l[0][0].name == 'default-linux/ppc'
 
         l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'foon'}))
-        self.assertEqual(len(l), 0, msg=f"checking for profile collapsing: {l!r}")
+        assert len(l) == 0, f"checking for profile collapsing: {l!r}"
 
         # test collapsing reusing existing profile layout
         with open(pjoin(self.dir, 'foo', 'default-linux', 'use.mask'), 'w') as f:
@@ -462,10 +460,8 @@ class TestEvaluateDepSetAddon(profile_mixin):
         # shouldn't return anything due to no profiles matching the keywords.
         assert get_rets("0.0.1", "depends", KEYWORDS="foon") == []
         l = get_rets("0.0.2", "depends")
-        self.assertEqual(
-            len(l), 1, msg=f"must collapse all profiles down to one run: got {l!r}")
-        self.assertEqual(sorted(x.name for x in l[0][1]), ['1', '2'],
-            msg=f"must have just two profiles: got {l!r}")
+        assert len(l) == 1, f"must collapse all profiles down to one run: got {l!r}"
+        assert sorted(x.name for x in l[0][1]) == ['1', '2'], f"must have just two profiles: got {l!r}"
         assert l[0][1][0].key == 'x86'
         assert l[0][1][1].key == 'x86'
 
@@ -473,15 +469,10 @@ class TestEvaluateDepSetAddon(profile_mixin):
             RDEPEND="x? ( dev-util/confcache ) foo? ( dev-util/foo ) "
             "bar? ( dev-util/bar ) !bar? ( dev-util/nobar ) x11-libs/xserver")
 
-        self.assertEqual(
-            len(l), 2, msg=f"must collapse all profiles down to 2 runs: got {l!r}")
+        assert len(l) == 2, f"must collapse all profiles down to 2 runs: got {l!r}"
         profiles = sorted(x[1][0].name for x in l)
-        self.assertEqual(
-            profiles[0], '1',
-            msg=f"got {profiles[0]!r}, expected single profile")
-        self.assertEqual(
-            profiles[1], '2',
-            msg="got {profiles[1]!r}, expected single profile")
+        assert profiles[0] == '1', f"got {profiles[0]!r}, expected single profile"
+        assert profiles[1] == '2', "got {profiles[1]!r}, expected single profile"
 
         # ordering is potentially random; thus pull out which depset result is
         # which based upon profile
@@ -503,31 +494,28 @@ class TestEvaluateDepSetAddon(profile_mixin):
         # then an empty.
         check.feed(None, None)
         l = get_rets("0.1", "rdepends")
-        self.assertEqual(
-            len(l), 1,
-            msg="feed didn't clear the cache- should be len 1: {l!r}")
+        assert len(l) == 1, f"feed didn't clear the cache- should be len 1: {l!r}"
 
         check.feed(None, None)
 
         # ensure it handles arch right.
         l = get_rets("0", "depends", KEYWORDS="ppc x86")
-        self.assertEqual(len(l), 1, msg="should be len 1, got {l!r}")
-        self.assertEqual(
-            sorted(x.name for x in l[0][1]), ["1", "2", "3"],
-            msg="should have 3 profiles of 1-3, got {l[0][1]!r}")
+        assert len(l) == 1, f"should be len 1, got {l!r}"
+        assert sorted(x.name for x in l[0][1]) == ["1", "2", "3"], (
+            f"should have 3 profiles of 1-3, got {l[0][1]!r}")
 
         # ensure it's caching profile collapsing, iow, keywords for same ver
         # that's partially cached (single attr at least) should *not* change
         # things.
 
         l = get_rets("0", "depends", KEYWORDS="ppc")
-        self.assertEqual(sorted(x.name for x in l[0][1]), ['1', '2', '3'],
-            msg=f"should have 3 profiles, got {l[0][1]!r}\nthis indicates it's "
+        assert sorted(x.name for x in l[0][1]) == ['1', '2', '3'], (
+            f"should have 3 profiles, got {l[0][1]!r}\nthis indicates it's "
             "re-identifying profiles every invocation, which is unwarranted ")
 
         l = get_rets("1", "depends", KEYWORDS="ppc x86",
             DEPEND="ppc? ( dev-util/ppc ) !ppc? ( dev-util/x86 )")
-        self.assertEqual(len(l), 2, msg="should be len 2, got {l!r}")
+        assert len(l) == 2, f"should be len 2, got {l!r}"
 
         # same issue, figure out what is what
         l1 = [x[1] for x in l if str(x[0]).strip() == "dev-util/ppc"][0]
