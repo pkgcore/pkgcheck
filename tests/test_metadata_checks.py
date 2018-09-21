@@ -74,7 +74,10 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
 
     def setUp(self):
         super(TestKeywordsReport, self).setUp()
-        self.check = metadata_checks.KeywordsReport(options=self.get_options())
+        options = self.get_options()
+        profiles = [misc.FakeProfile()]
+        iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
+        self.check = metadata_checks.KeywordsReport(options, iuse_handler)
 
     def mk_pkg(self, keywords=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"KEYWORDS": keywords})

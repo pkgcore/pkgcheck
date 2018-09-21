@@ -3,6 +3,7 @@ from operator import attrgetter
 import re
 
 from pkgcore.ebuild.atom import MalformedAtom, atom
+from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions.boolean import OrRestriction
@@ -11,7 +12,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from . import base, addons
-from .visibility import FakeConfigurable
+from .visibility import FakeConfigurable, strip_atom_use
 
 demandload('logging')
 
@@ -397,21 +398,42 @@ class UnsortedKeywords(base.Warning):
         return f"unsorted KEYWORDS: {', '.join(self.keywords)}"
 
 
+class MissingVirtualKeywords(base.Warning):
+    """Virtual packages with keywords missing from their dependencies."""
+
+    __slots__ = ('category', 'package', 'version', 'keywords')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, keywords):
+        super(MissingVirtualKeywords, self).__init__()
+        self._store_cpv(pkg)
+        self.keywords = tuple(sort_keywords(keywords))
+
+    @property
+    def short_desc(self):
+        return f"missing KEYWORDS: {', '.join(self.keywords)}"
+
+
 class KeywordsReport(base.Template):
     """Check package keywords for sanity; empty keywords, and -* are flagged."""
 
+    required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
-    known_results = (StupidKeywords, InvalidKeywords, UnsortedKeywords, MetadataError)
+    known_results = (
+        StupidKeywords, InvalidKeywords, UnsortedKeywords, MissingVirtualKeywords,
+        MetadataError,
+    )
 
-    def __init__(self, options):
+    def __init__(self, options, iuse_handler):
         super(KeywordsReport, self).__init__(options)
-        valid_arches = self.options.target_repo.config.known_arches
+        self.iuse_filter = iuse_handler.get_filter()
+        self.valid_arches = self.options.target_repo.config.known_arches
         # Note: '*' and '~*' are portage-only special KEYWORDS atm, i.e. not
         # in PMS or implemented in pkgcore.
         special_keywords = set(('-*', '*', '~*'))
-        stable_keywords = valid_arches
-        unstable_keywords = set('~' + x for x in valid_arches)
-        disabled_keywords = set('-' + x for x in valid_arches)
+        stable_keywords = self.valid_arches
+        unstable_keywords = set('~' + x for x in self.valid_arches)
+        disabled_keywords = set('-' + x for x in self.valid_arches)
         self.valid_keywords = (
             special_keywords | stable_keywords | unstable_keywords | disabled_keywords)
 
@@ -424,6 +446,16 @@ class KeywordsReport(base.Template):
                 reporter.add_report(InvalidKeywords(pkg, invalid))
             if pkg.sorted_keywords != pkg.keywords:
                 reporter.add_report(UnsortedKeywords(pkg, pkg.keywords))
+            if pkg.category == 'virtual':
+                keywords = set()
+                rdepends = set(self.iuse_filter((atom,), pkg, pkg.rdepends, reporter))
+                for x in rdepends:
+                    for p in self.options.search_repo.match(strip_atom_use(x)):
+                        keywords.update(p.keywords)
+                keywords = keywords | {f'~{x}' for x in keywords if x in self.valid_arches}
+                missing_keywords = set(pkg.keywords) - keywords
+                if missing_keywords:
+                    reporter.add_report(MissingVirtualKeywords(pkg, missing_keywords))
 
 
 class MissingUri(base.Warning):
