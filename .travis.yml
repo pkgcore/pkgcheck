@@ -59,11 +59,11 @@ jobs:
     script: python setup.py sdist
     after_success: tar -ztf dist/*.tar.gz | sort
     deploy:
-    provider: releases
-    api_key:
-      secure: LiWvebihdlkZ2nc0psCyLYcaGU3y2UehddndYYquYgDnKSGrpWo6uF2vg+YXzdEMeDc2BaEDrcu9OwUaCbXTuO2f2YPq9lom4GRDY1lD9kJBKXuAAArRzysijbd7HEEg119FLzkOvbHC1XW0Bi/mV37IHQ7pP2KU1rnbY5Ltby4=
-    file_glob: true
-    file: dist/*.tar.gz
-    skip_cleanup: true
-    on:
-      tags: true
+      provider: releases
+      api_key:
+        secure: LiWvebihdlkZ2nc0psCyLYcaGU3y2UehddndYYquYgDnKSGrpWo6uF2vg+YXzdEMeDc2BaEDrcu9OwUaCbXTuO2f2YPq9lom4GRDY1lD9kJBKXuAAArRzysijbd7HEEg119FLzkOvbHC1XW0Bi/mV37IHQ7pP2KU1rnbY5Ltby4=
+      file_glob: true
+      file: dist/*.tar.gz
+      skip_cleanup: true
+      on:
+        tags: true
