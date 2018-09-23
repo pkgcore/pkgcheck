@@ -1,7 +1,7 @@
 """
 pkgcore-based QA utility
 
-pkgcheck is a QA utility based on **pkgcore**\(5) similar to **repoman**\(1)
+pkgcheck is a QA utility based on **pkgcore**\\(5) similar to **repoman**\\(1)
 from portage.
 """
 
