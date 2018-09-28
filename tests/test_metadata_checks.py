@@ -363,6 +363,13 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
             metadata_checks.MetadataError)
         self.assertIn("[dev-libs/foo]", r.msg)
 
+        # check for missing revisions
+        r = self.assertIsInstance(
+            self.assertReport(
+                self.mk_check(),
+                mk_pkg(eapi='6', data="=dev-libs/foo-1")),
+            metadata_checks.MissingRevision)
+
     for x in attr_map:
         locals()[f"test_{x}"] = post_curry(generic_check, x)
     del x

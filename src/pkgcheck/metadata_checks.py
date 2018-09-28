@@ -283,11 +283,34 @@ class MissingSlotDepReport(base.Template):
                 reporter.add_report(MissingSlotDep(pkg, str(dep), dep_slots))
 
 
+class MissingRevision(base.Warning):
+    """Missing package revision in =cat/pkg dependencies.
+
+    If any revision of the package is acceptable, the '~' operator should be
+    used instead of '='. If only the initial revision of the dependency is
+    allowed, '-r0' can be appended when using the '=' operator.
+    """
+
+    __slots__ = ('category', 'package', 'version', 'dep', 'atom')
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, dep, atom):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.dep = dep
+        self.atom = str(atom)
+
+    @property
+    def short_desc(self):
+        return f"{self.dep}: {self.atom}: '=' operator used without revision"
+
+
 class DependencyReport(base.Template):
     """Check DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon,)
-    known_results = (MetadataError,) + addons.UseAddon.known_results
+    known_results = (MetadataError, MissingRevision) + addons.UseAddon.known_results
 
     feed_type = base.versioned_feed
 
@@ -321,6 +344,8 @@ class DependencyReport(base.Template):
                         reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
                     if x.blocks and x.slot_operator == '=':
                         slot_op_blockers.add(x.key)
+                    if x.op == '=' and x.revision is None:
+                        reporter.add_report(MissingRevision(pkg, attr_name, x))
 
                 if slot_op_or_blocks:
                     reporter.add_report(MetadataError(
