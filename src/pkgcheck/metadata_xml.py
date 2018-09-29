@@ -101,8 +101,7 @@ class base_InvalidXml(base.Error):
     @staticmethod
     def format_lxml_errors(error_log):
         for l in error_log:
-            yield 'line %d, col %d: (%s) %s' % (
-                l.line, l.column, l.type_name, l.message)
+            yield f'line {l.line}, col {l.column}: ({l.type_name}) {l.message}'
 
     @property
     def short_desc(self):

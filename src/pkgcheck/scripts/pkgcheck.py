@@ -551,11 +551,10 @@ def replay_stream(stream_handle, reporter, debug=None):
         if isinstance(item, base.StreamHeader):
             if debug:
                 if headers:
-                    debug.write("finished processing %i results for %s" %
-                                (count - last_count, headers[-1].criteria))
+                    debug.write(f"finished processing {count - last_count}"
+                                f"results for {headers[-1].criteria}")
                 last_count = count
-                debug.write("encountered new stream header for %s" %
-                            item.criteria)
+                debug.write(f"encountered new stream header for {item.criteria}")
             if headers:
                 reporter.end_check()
             reporter.start_check(item.checks, item.criteria)
@@ -565,9 +564,8 @@ def replay_stream(stream_handle, reporter, debug=None):
     if headers:
         reporter.end_check()
         if debug:
-            debug.write(
-                "finished processing %i results for %s" %
-                (count - last_count, headers[-1].criteria))
+            debug.write(f"finished processing {count - last_count}"
+                        f"results for {headers[-1].criteria}")
 
 
 @replay.bind_main_func
@@ -631,7 +629,7 @@ def display_keywords(out, options):
 
         scopes = ('version', 'package', 'category', 'repository')
         for scope in reversed(sorted(d)):
-            out.write(out.bold, "%s scope:" % scopes[scope].capitalize())
+            out.write(out.bold, f"{scopes[scope].capitalize()} scope:")
             out.write()
             keywords = sorted(d[scope], key=lambda x: x.__name__)
 
@@ -662,7 +660,7 @@ def display_checks(out, options):
             return
 
         for module_name in sorted(d):
-            out.write(out.bold, "%s:" % module_name)
+            out.write(out.bold, f"{module_name}:")
             out.write()
             l = d[module_name]
             l.sort(key=lambda x: x.__name__)
