@@ -573,7 +573,9 @@ class SrcUriReport(base.Template):
             fetchables = set(self.iuse_filter(
                 (fetchable,), pkg,
                 pkg._get_attr['fetchables'](
-                    pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True), reporter))
+                    pkg, allow_missing_checksums=True,
+                    ignore_unknown_mirrors=True, skip_default_mirrors=True),
+                reporter))
             for f_inst in fetchables:
                 if f_inst.filename in seen:
                     continue
