@@ -16,11 +16,11 @@ def run(script_name):
             [script_name.replace('-', '_')])
         script = import_module(script_module)
     except ImportError as e:
-        sys.stderr.write('Failed importing: %s!\n' % str(e))
+        python_version = '.'.join(map(str, sys.version_info[:3]))
+        sys.stderr.write(f'Failed importing: {e}!\n')
         sys.stderr.write(
             'Verify that pkgcheck and its deps are properly installed '
-            'and/or PYTHONPATH is set correctly for python %s.\n' %
-            ('.'.join(map(str, sys.version_info[:3])),))
+            f'and/or PYTHONPATH is set correctly for python {python_version}.\n')
         if '--debug' in sys.argv[1:]:
             raise
         sys.stderr.write('Add --debug to the commandline for a traceback.\n')

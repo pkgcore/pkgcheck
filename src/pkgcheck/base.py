@@ -223,8 +223,8 @@ class Result(object, metaclass=set_documentation):
     def __setstate__(self, data):
         attrs = set(getattr(self, '__attrs__', getattr(self, '__slots__', [])))
         if attrs.difference(data) or len(attrs) != len(data):
-            raise TypeError("can't restore %s due to data %r not being complete" %
-                            (self.__class__, data))
+            raise TypeError(
+                f"can't restore {self.__class__} due to data {data!r} not being complete")
         for k, v in data.items():
             setattr(self, k, v)
 
@@ -411,14 +411,14 @@ class CheckRunner(object):
             except (KeyboardInterrupt, SystemExit):
                 raise
             except Exception:
-                logging.exception('check %r raised', check)
+                logging.exception(f'check {check!r} raised')
 
     def finish(self, reporter):
         for check in self.checks:
             try:
                 check.finish(reporter)
             except Exception:
-                logging.exception('finishing check %r failed', check)
+                logging.exception(f'finishing check {check!r} failed')
 
     # The plugger tests use these.
     def __eq__(self, other):
@@ -524,7 +524,7 @@ def plug(sinks, transforms, sources, debug=None):
         for source in source_map.values())
     if debug is not None:
         for pipe in unprocessed:
-            debug('initial: %r', pipe)
+            debug(f'initial: {pipe!r}')
 
     # If we find a single pipeline driving all sinks we want to use it.
     # List of tuples of source, transforms.
@@ -555,8 +555,7 @@ def plug(sinks, transforms, sources, debug=None):
                     visited.union((transform.dest,)), source,
                     trans.union((transform,)), cost + transform.cost))
                 if debug is not None:
-                    debug(
-                        'growing %r for %r with %r', trans, source, transform)
+                    debug(f'growing {trans!r} for {source!r} with {transform!r}')
 
     if pipes_to_run is None:
         # No single pipe will drive everything, try combining pipes.

@@ -134,7 +134,7 @@ class NonExistentDeps(base.Warning):
         super().__init__()
         self._store_cpv(pkg)
         self.attr = attr
-        self.atoms = tuple(str(x) for x in nonexistent_atoms)
+        self.atoms = tuple(map(str, nonexistent_atoms))
 
     @property
     def short_desc(self):
@@ -173,13 +173,13 @@ class NonsolvableDeps(base.Error):
         self.attr = attr
         self.profile = profile
         self.keyword = keyword
-        self.potentials = tuple(str(x) for x in stable_unique(horked))
+        self.potentials = tuple(map(str, stable_unique(horked)))
 
     @property
     def short_desc(self):
-        return "nonsolvable depset(%s) keyword(%s) profile (%s): " \
-               "solutions: [ %s ]" % (self.attr, self.keyword, self.profile,
-                                      ', '.join(self.potentials))
+        return \
+            f"nonsolvable depset({self.attr}) keyword({self.keyword}) " \
+            f"profile ({self.profile}): solutions: [ {', '.join(self.potentials)} ]"
 
 
 class VisibilityReport(base.Template):

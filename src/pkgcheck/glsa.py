@@ -28,8 +28,7 @@ class VulnerablePackage(base.Error):
             if isinstance(v.restriction, values.ContainmentMatch):
                 arches.update(x.lstrip("~") for x in v.restriction.vals)
             else:
-                raise Exception("unexpected restriction sequence- %s in %s" %
-                                (v.restriction, glsa))
+                raise Exception(f"unexpected restriction sequence- {v.restriction} in {glsa}")
         keys = set(x.lstrip("~") for x in pkg.keywords if not x.startswith("-"))
         if arches:
             self.arches = tuple(sorted(arches.intersection(keys)))
@@ -66,8 +65,7 @@ class TreeVulnerabilitiesReport(base.Template):
         glsa_loc = namespace.glsa_location
         if glsa_loc is not None:
             if not os.path.isdir(glsa_loc):
-                parser.error(
-                    "--glsa-dir '%r' doesn't exist" % glsa_loc)
+                parser.error(f"--glsa-dir {glsa_loc!r} doesn't exist")
         else:
             if not namespace.repo_bases:
                 parser.error('a target repo or overlayed repo must be specified')
