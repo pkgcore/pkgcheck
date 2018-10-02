@@ -42,9 +42,9 @@ class UnstableOnlyReport(StableCheckAddon):
         for arch in arches:
             self.arch_restricts[arch] = [
                 packages.PackageRestriction(
-                    "keywords", values.ContainmentMatch(arch)),
+                    "keywords", values.ContainmentMatch2((arch,))),
                 packages.PackageRestriction(
-                    "keywords", values.ContainmentMatch("~%s" % arch))
+                    "keywords", values.ContainmentMatch2((f"~{arch}",)))
             ]
 
     def feed(self, pkgset, reporter):

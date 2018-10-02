@@ -25,7 +25,7 @@ class VulnerablePackage(base.Error):
         self._store_cpv(pkg)
         arches = set()
         for v in collect_package_restrictions(glsa, ["keywords"]):
-            if isinstance(v.restriction, values.ContainmentMatch):
+            if isinstance(v.restriction, values.ContainmentMatch2):
                 arches.update(x.lstrip("~") for x in v.restriction.vals)
             else:
                 raise Exception(f"unexpected restriction sequence- {v.restriction} in {glsa}")

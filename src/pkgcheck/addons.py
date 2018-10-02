@@ -268,10 +268,10 @@ class ProfileAddon(base.Addon):
                 continue
             stable_key = k.lstrip("~")
             unstable_key = "~" + stable_key
-            stable_r = packages.PackageRestriction("keywords",
-                values.ContainmentMatch(stable_key))
-            unstable_r = packages.PackageRestriction("keywords",
-                values.ContainmentMatch(stable_key, unstable_key))
+            stable_r = packages.PackageRestriction(
+                "keywords", values.ContainmentMatch2((stable_key,)))
+            unstable_r = packages.PackageRestriction(
+                "keywords", values.ContainmentMatch2((stable_key, unstable_key,)))
 
             default_masked_use = tuple(set(x for x in self.official_arches
                                            if x != stable_key))
@@ -342,8 +342,7 @@ class ProfileAddon(base.Addon):
 
             self.keywords_filter[stable_key] = stable_r
             self.keywords_filter[unstable_key] = packages.PackageRestriction(
-                "keywords",
-                values.ContainmentMatch(unstable_key))
+                "keywords", values.ContainmentMatch2((unstable_key,)))
 
         profile_evaluate_dict = {}
         for key, profile_list in profile_filters.items():

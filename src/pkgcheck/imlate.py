@@ -56,7 +56,7 @@ class ImlateReport(StableCheckAddon):
         self.source_arches = frozenset(
             arch.lstrip("~") for arch in source_arches)
         self.source_filter = packages.PackageRestriction(
-            "keywords", values.ContainmentMatch(*self.source_arches))
+            "keywords", values.ContainmentMatch2(self.source_arches))
 
     def feed(self, pkgset, reporter):
         fmatch = self.source_filter.match
