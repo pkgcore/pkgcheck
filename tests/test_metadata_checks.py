@@ -198,7 +198,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         assert r.keyword == 'x86'
         assert r.profile == 'default/linux/x86'
         assert r.use == ()
-        assert str(r.required_use) == 'contains [bar]'
+        assert str(r.required_use) == 'bar'
 
         # at-most-one-of
         self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
@@ -207,7 +207,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         r = self.assertReport(self.check, self.mk_pkg(eapi="5", iuse="+foo +bar", required_use="?? ( foo bar )"))
         assert isinstance(r, metadata_checks.RequiredUseDefaults)
         assert r.use == ('bar', 'foo')
-        assert str(r.required_use) == '?? ( contains [foo] contains [bar] )'
+        assert str(r.required_use) == 'at-most-one-of ( foo bar )'
 
         # exactly-one-of
         self.assertNoReport(self.check, self.mk_pkg(iuse="+foo bar", required_use="^^ ( foo bar )"))
@@ -216,7 +216,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         r = self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar", required_use="^^ ( foo bar )"))
         assert isinstance(r, metadata_checks.RequiredUseDefaults)
         assert r.use == ('bar', 'foo')
-        assert str(r.required_use) == '^^ ( contains [foo] contains [bar] )'
+        assert str(r.required_use) == 'exactly-one-of ( foo bar )'
 
         # all-of
         self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( bar baz )"))
@@ -227,7 +227,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         assert isinstance(r, metadata_checks.RequiredUseDefaults)
         assert r.use == ('baz', 'foo')
         # TODO: fix this output to show both required USE flags
-        assert str(r.required_use) == 'contains [bar]'
+        assert str(r.required_use) == 'bar'
 
         # any-of
         self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( || ( bar baz ) )"))
@@ -237,7 +237,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         r = self.assertReport(self.check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( || ( bar baz ) )"))
         assert isinstance(r, metadata_checks.RequiredUseDefaults)
         assert r.use == ('foo',)
-        assert str(r.required_use) == '( contains [bar] || contains [baz] )'
+        assert str(r.required_use) == '( bar || baz )'
 
 
 def use_based():
