@@ -253,17 +253,18 @@ class ProbableGlobalUSE(base.Warning):
 class ProbableUSE_EXPAND(base.Warning):
     """Local USE flag matches a USE_EXPAND group."""
 
-    __slots__ = ("category", "package", "flag")
+    __slots__ = ("category", "package", "flag", "group")
     threshold = base.package_feed
 
-    def __init__(self, pkg, flag):
+    def __init__(self, pkg, flag, group):
         super().__init__()
         self._store_cp(pkg)
         self.flag = flag
+        self.group = group
 
     @property
     def short_desc(self):
-        return f"local USE flag matches a USE_EXPAND group: {self.flag!r}"
+        return f"USE_EXPAND group {self.group!r} matches local USE flag: {self.flag!r}"
 
 
 class LocalUSECheck(base.Template):
@@ -300,7 +301,7 @@ class LocalUSECheck(base.Template):
             else:
                 for group in self.use_expand_groups:
                     if flag.startswith(f"{group}_"):
-                        reporter.add_report(ProbableUSE_EXPAND(pkg, flag))
+                        reporter.add_report(ProbableUSE_EXPAND(pkg, flag, group))
 
         unused = set(local_use)
         for pkg in pkgs:
