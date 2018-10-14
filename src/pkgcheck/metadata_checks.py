@@ -302,6 +302,7 @@ class LocalUSECheck(base.Template):
                 for group in self.use_expand_groups:
                     if flag.startswith(f"{group}_"):
                         reporter.add_report(ProbableUSE_EXPAND(pkg, flag, group))
+                        break
 
         unused = set(local_use)
         for pkg in pkgs:
