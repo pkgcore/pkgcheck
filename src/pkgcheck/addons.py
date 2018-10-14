@@ -495,7 +495,8 @@ class UseAddon(base.Addon):
             ((packages.AlwaysTrue, known_iuse),),
             ((packages.AlwaysTrue, known_iuse_expand),),
         )
-        self.global_iuse = frozenset(known_iuse | known_iuse_expand)
+        self.global_iuse = frozenset(known_iuse)
+        self.global_iuse_expand = frozenset(known_iuse_expand)
         self.unstated_iuse = frozenset(c_implicit_iuse)
         self.ignore = not (c_implicit_iuse or known_iuse or known_iuse_expand)
         if self.ignore and not silence_warnings:

@@ -184,7 +184,6 @@ class UnusedGlobalFlags(base.Warning):
 
     def __init__(self, flags):
         super().__init__()
-        # tricky, but it works; atoms have the same attrs
         self.flags = tuple(sorted(flags))
 
     @property
@@ -215,7 +214,7 @@ class UnusedInMastersGlobalFlags(base.Warning):
 
 
 class UnusedGlobalFlagsCheck(base.Template):
-    """Check for unused use.desc entries."""
+    """Check for unused global USE or USE_EXPAND flags."""
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
@@ -224,36 +223,38 @@ class UnusedGlobalFlagsCheck(base.Template):
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
-        self.unused_flags = None
+        self.unused_global_flags = None
         self.iuse_handler = iuse_handler
 
     def start(self):
         master_flags = self.unused_master_flags = set()
         for repo in self.options.target_repo.masters:
-            master_flags.update(x[1][0] for x in repo.config.use_desc)
-            master_flags.update(x[1][0] for x in repo.config.use_expand_desc)
-        self.unused_flags = set(self.iuse_handler.global_iuse - self.iuse_handler.unstated_iuse) - master_flags
+            master_flags.update(flag for matcher, (flag, desc) in repo.config.use_desc)
+        self.unused_global_flags = set(
+            self.iuse_handler.global_iuse - self.iuse_handler.unstated_iuse) - master_flags
 
         # determine unused flags across all master repos
         if master_flags:
             for repo in self.options.target_repo.masters:
                 for pkg in repo:
-                    self.unused_master_flags.difference_update(pkg.iuse_stripped)
+                    self.unused_master_flags.difference_update(
+                        pkg.iuse_stripped.difference(pkg.local_use.keys()))
 
     def feed(self, pkg, reporter):
-        self.unused_flags.difference_update(pkg.iuse_stripped)
+        non_local_use = pkg.iuse_stripped.difference(pkg.local_use.keys())
+        self.unused_global_flags.difference_update(non_local_use)
 
         # report flags used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_flags:
-            flags = self.unused_master_flags.intersection(pkg.iuse_stripped)
+            flags = self.unused_master_flags.intersection(non_local_use)
             if flags:
                 reporter.add_report(UnusedInMastersGlobalFlags(pkg, flags))
 
     def finish(self, reporter):
-        if self.unused_flags:
-            reporter.add_report(UnusedGlobalFlags(self.unused_flags))
+        if self.unused_global_flags:
+            reporter.add_report(UnusedGlobalFlags(self.unused_global_flags))
 
-        self.unused_flags = self.unused_master_flags = None
+        self.unused_global_flags = self.unused_master_flags = None
 
 
 class UnusedLicenses(base.Warning):
@@ -691,7 +692,8 @@ class ProfilesCheck(base.Template):
             pjoin(self.profiles_dir, x) for x in profile_filters.non_profile_dirs}
         local_iuse = {use for pkg, (use, desc) in self.repo.config.use_local_desc}
         self.available_iuse = frozenset(
-            local_iuse | iuse_handler.global_iuse | iuse_handler.unstated_iuse)
+            local_iuse | iuse_handler.global_iuse |
+            iuse_handler.global_iuse_expand | iuse_handler.unstated_iuse)
 
     def feed(self, pkg, reporter):
         pass
