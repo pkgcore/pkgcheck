@@ -9,6 +9,7 @@ from pkgcore.fetch import fetchable
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions.boolean import OrRestriction
 from snakeoil.demandload import demandload
+from snakeoil.osutils import pjoin, listdir_files
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
@@ -249,6 +250,22 @@ class ProbableGlobalUSEFlag(base.Warning):
         return f"local USE flag closely matches a global: {self.flag!r}"
 
 
+class ProbableUSE_EXPANDFlag(base.Warning):
+    """Local USE flag matches a USE_EXPAND group."""
+
+    __slots__ = ("category", "package", "flag")
+    threshold = base.package_feed
+
+    def __init__(self, pkg, flag):
+        super().__init__()
+        self._store_cp(pkg)
+        self.flag = flag
+
+    @property
+    def short_desc(self):
+        return f"local USE flag matches a USE_EXPAND group: {self.flag!r}"
+
+
 class LocalUSEFlagCheck(base.Template):
     """Check local USE flags in metadata.xml for various issues."""
 
@@ -256,6 +273,7 @@ class LocalUSEFlagCheck(base.Template):
     required_addons = (addons.UseAddon,)
     known_results = addons.UseAddon.known_results + (
         UnusedLocalUSEFlags, MatchingGlobalUSEFlag, ProbableGlobalUSEFlag,
+        ProbableUSE_EXPANDFlag,
     )
 
     def __init__(self, options, use_handler):
@@ -263,6 +281,10 @@ class LocalUSEFlagCheck(base.Template):
         self.iuse_handler = use_handler
         self.global_use = {
             flag: desc for matcher, (flag, desc) in options.target_repo.config.use_desc}
+
+        # TODO: add support to pkgcore for getting USE_EXPAND groups?
+        use_expand_base = pjoin(options.target_repo.config.profiles_base, 'desc') 
+        self.use_expand_groups = {x[:-5] for x in listdir_files(use_expand_base)}
 
     def feed(self, pkgs, reporter):
         pkg = pkgs[0]
@@ -275,6 +297,10 @@ class LocalUSEFlagCheck(base.Template):
                     reporter.add_report(MatchingGlobalUSEFlag(pkg, flag))
                 elif ratio >= 0.75:
                     reporter.add_report(ProbableGlobalUSEFlag(pkg, flag))
+            else:
+                for group in self.use_expand_groups:
+                    if flag.startswith(f"{group}_"):
+                        reporter.add_report(ProbableUSE_EXPANDFlag(pkg, flag))
 
         unused = set(local_use)
         for pkg in pkgs:
