@@ -200,7 +200,7 @@ class RequiredUSEMetadataReport(base.Template):
                 reporter.add_report(RequiredUseDefaults(pkg, node))
 
 
-class UnusedLocalUSEFlags(base.Warning):
+class UnusedLocalUSE(base.Warning):
     """Unused local USE flag(s)."""
 
     __slots__ = ("category", "package", "flags")
@@ -218,7 +218,7 @@ class UnusedLocalUSEFlags(base.Warning):
             pluralism(self.flags), ', '.join(self.flags))
 
 
-class MatchingGlobalUSEFlag(base.Error):
+class MatchingGlobalUSE(base.Error):
     """Local USE flag description matches a global USE flag."""
 
     __slots__ = ("category", "package", "flag")
@@ -234,7 +234,7 @@ class MatchingGlobalUSEFlag(base.Error):
         return f"local USE flag matches a global: {self.flag!r}"
 
 
-class ProbableGlobalUSEFlag(base.Warning):
+class ProbableGlobalUSE(base.Warning):
     """Local USE flag description closely matches a global USE flag."""
 
     __slots__ = ("category", "package", "flag")
@@ -250,7 +250,7 @@ class ProbableGlobalUSEFlag(base.Warning):
         return f"local USE flag closely matches a global: {self.flag!r}"
 
 
-class ProbableUSE_EXPANDFlag(base.Warning):
+class ProbableUSE_EXPAND(base.Warning):
     """Local USE flag matches a USE_EXPAND group."""
 
     __slots__ = ("category", "package", "flag")
@@ -266,14 +266,14 @@ class ProbableUSE_EXPANDFlag(base.Warning):
         return f"local USE flag matches a USE_EXPAND group: {self.flag!r}"
 
 
-class LocalUSEFlagCheck(base.Template):
+class LocalUSECheck(base.Template):
     """Check local USE flags in metadata.xml for various issues."""
 
     feed_type = base.package_feed
     required_addons = (addons.UseAddon,)
     known_results = addons.UseAddon.known_results + (
-        UnusedLocalUSEFlags, MatchingGlobalUSEFlag, ProbableGlobalUSEFlag,
-        ProbableUSE_EXPANDFlag,
+        UnusedLocalUSE, MatchingGlobalUSE, ProbableGlobalUSE,
+        ProbableUSE_EXPAND,
     )
 
     def __init__(self, options, use_handler):
@@ -294,19 +294,19 @@ class LocalUSEFlagCheck(base.Template):
             if flag in self.global_use:
                 ratio = difflib.SequenceMatcher(None, desc, self.global_use[flag]).ratio()
                 if ratio == 1.0:
-                    reporter.add_report(MatchingGlobalUSEFlag(pkg, flag))
+                    reporter.add_report(MatchingGlobalUSE(pkg, flag))
                 elif ratio >= 0.75:
-                    reporter.add_report(ProbableGlobalUSEFlag(pkg, flag))
+                    reporter.add_report(ProbableGlobalUSE(pkg, flag))
             else:
                 for group in self.use_expand_groups:
                     if flag.startswith(f"{group}_"):
-                        reporter.add_report(ProbableUSE_EXPANDFlag(pkg, flag))
+                        reporter.add_report(ProbableUSE_EXPAND(pkg, flag))
 
         unused = set(local_use)
         for pkg in pkgs:
             unused.difference_update(pkg.iuse_stripped)
         if unused:
-            reporter.add_report(UnusedLocalUSEFlags(pkg, unused))
+            reporter.add_report(UnusedLocalUSE(pkg, unused))
 
 
 class MissingSlotDep(base.Warning):
