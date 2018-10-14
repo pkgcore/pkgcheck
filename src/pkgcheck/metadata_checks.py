@@ -1,4 +1,5 @@
 from collections import defaultdict
+import difflib
 from operator import attrgetter
 import re
 
@@ -198,7 +199,7 @@ class RequiredUSEMetadataReport(base.Template):
                 reporter.add_report(RequiredUseDefaults(pkg, node))
 
 
-class UnusedLocalFlags(base.Warning):
+class UnusedLocalUSEFlags(base.Warning):
     """Unused local USE flag(s)."""
 
     __slots__ = ("category", "package", "flags")
@@ -207,7 +208,6 @@ class UnusedLocalFlags(base.Warning):
 
     def __init__(self, pkg, flags):
         super().__init__()
-        # tricky, but it works; atoms have the same attrs
         self._store_cp(pkg)
         self.flags = tuple(sorted(flags))
 
@@ -217,25 +217,70 @@ class UnusedLocalFlags(base.Warning):
             pluralism(self.flags), ', '.join(self.flags))
 
 
-class UnusedLocalFlagsReport(base.Template):
-    """Check for unused local USE flags in metadata.xml."""
+class MatchingGlobalUSEFlag(base.Error):
+    """Local USE flag description matches a global USE flag."""
+
+    __slots__ = ("category", "package", "flag")
+    threshold = base.package_feed
+
+    def __init__(self, pkg, flag):
+        super().__init__()
+        self._store_cp(pkg)
+        self.flag = flag
+
+    @property
+    def short_desc(self):
+        return f"local USE flag matches a global: {self.flag!r}"
+
+
+class ProbableGlobalUSEFlag(base.Warning):
+    """Local USE flag description closely matches a global USE flag."""
+
+    __slots__ = ("category", "package", "flag")
+    threshold = base.package_feed
+
+    def __init__(self, pkg, flag):
+        super().__init__()
+        self._store_cp(pkg)
+        self.flag = flag
+
+    @property
+    def short_desc(self):
+        return f"local USE flag closely matches a global: {self.flag!r}"
+
+
+class LocalUSEFlagCheck(base.Template):
+    """Check local USE flags in metadata.xml for various issues."""
 
     feed_type = base.package_feed
     required_addons = (addons.UseAddon,)
-    known_results = (UnusedLocalFlags,) + addons.UseAddon.known_results
+    known_results = addons.UseAddon.known_results + (
+        UnusedLocalUSEFlags, MatchingGlobalUSEFlag, ProbableGlobalUSEFlag,
+    )
 
     def __init__(self, options, use_handler):
         super().__init__(options)
         self.iuse_handler = use_handler
+        self.global_use = {
+            flag: desc for matcher, (flag, desc) in options.target_repo.config.use_desc}
 
     def feed(self, pkgs, reporter):
-        unused = set()
-        for pkg in pkgs:
-            unused.update(pkg.local_use)
+        pkg = pkgs[0]
+        local_use = pkg.local_use
+
+        for flag, desc in local_use.items():
+            if flag in self.global_use:
+                ratio = difflib.SequenceMatcher(None, desc, self.global_use[flag]).ratio()
+                if ratio == 1.0:
+                    reporter.add_report(MatchingGlobalUSEFlag(pkg, flag))
+                elif ratio >= 0.75:
+                    reporter.add_report(ProbableGlobalUSEFlag(pkg, flag))
+
+        unused = set(local_use)
         for pkg in pkgs:
             unused.difference_update(pkg.iuse_stripped)
         if unused:
-            reporter.add_report(UnusedLocalFlags(pkg, unused))
+            reporter.add_report(UnusedLocalUSEFlags(pkg, unused))
 
 
 class MissingSlotDep(base.Warning):
