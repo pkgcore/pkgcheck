@@ -968,6 +968,41 @@ class GlobalUSECheck(base.Template):
                 if flags:
                     reporter.add_report(UnusedInMastersGlobalUSE(pkg, flags))
 
+    @staticmethod
+    def _similar_flags(pkgs):
+        """Find groups of similar local USE flags by comparing descriptions."""
+        diffs = {}
+        # calculate USE flag description difference ratios
+        for i, (i_pkg, i_desc) in enumerate(pkgs):
+            for j, (j_pkg, j_desc) in enumerate(pkgs[i + 1:]):
+                diffs[(i, i + j + 1)] = SequenceMatcher(None, i_desc, j_desc).ratio()
+
+        # create an adjacency list using all closely matching flags pairs
+        similar = defaultdict(set)
+        for (i, j), r in diffs.items():
+            if r >= 0.75:
+                similar[i].add(j)
+                similar[j].add(i)
+
+        # not enough close matches found
+        if len(similar.keys()) < 5:
+            return []
+
+        # find the largest connected component
+        nodes = set(similar.keys())
+        components = []
+        while nodes:
+            visited = _dfs(similar, nodes.pop())
+            components.append(visited)
+            nodes -= visited
+
+        if len(components) > 1:
+            largest = max(components, key=len)
+        else:
+            largest = components[0]
+
+        return largest
+
     def finish(self, reporter):
         self.unused_master_flags = None
 
@@ -987,41 +1022,11 @@ class GlobalUSECheck(base.Template):
                 potential_globals[flag].append((pkg, desc))
 
         for flag, pkgs in sorted((k, v) for k, v in potential_globals.items() if len(v) >= 5):
-            diffs = {}
-            # calculate USE flag description difference ratios
-            for i, (i_pkg, i_desc) in enumerate(pkgs):
-                for j, (j_pkg, j_desc) in enumerate(pkgs[i + 1:]):
-                    diffs[(i, i + j + 1)] = SequenceMatcher(None, i_desc, j_desc).ratio()
-
-            # create an adjacency list using all closely matching flags pairs
-            similar = defaultdict(set)
-            for (i, j), r in diffs.items():
-                if r >= 0.75:
-                    similar[i].add(j)
-                    similar[j].add(i)
-
-            # not enough close matches found, continue to the next flag
-            if len(similar.keys()) < 5:
-                continue
-
-            # find the largest connected component
-            nodes = set(similar.keys())
-            components = []
-            while nodes:
-                node = nodes.pop()
-                visited = _dfs(similar, node)
-                components.append(visited)
-                nodes -= visited
-
-            if len(components) > 1:
-                largest = max(components, key=len)
-            else:
-                largest = components[0]
-
+            similar = self._similar_flags(pkgs)
             # if at least five local USE flags are similar, flag them as a
             # potential global USE flag
-            if len(largest) >= 5:
-                matching_pkgs = (pkgs[x][0] for x in largest)
+            if len(similar) >= 5:
+                matching_pkgs = (pkgs[x][0] for x in similar)
                 reporter.add_report(PotentialGlobalUSE(flag, matching_pkgs))
 
 
