@@ -984,8 +984,6 @@ class GlobalUSECheck(base.Template):
         local_use = set(pkgs[0].local_use.keys())
         for pkg in pkgs:
             pkg_global_use = pkg.iuse_stripped.difference(local_use)
-            # print(pkg)
-            # print(pkg_global_use)
             for flag in pkg_global_use:
                 self.global_flag_usage[flag].add(pkg.unversioned_atom)
 
