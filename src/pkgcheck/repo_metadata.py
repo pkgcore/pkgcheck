@@ -935,7 +935,7 @@ class PotentialLocalUSE(base.Warning):
     def short_desc(self):
         return (
             f"global USE flag {self.flag!r} is a potential local, "
-            f"used by {len(self.pkgs)} packages: {', '.join(self.pkgs)}")
+            f"used by {len(self.pkgs)} package{pluralism(len(self.pkgs))}: {', '.join(self.pkgs)}")
 
 
 class PotentialGlobalUSE(base.Warning):
