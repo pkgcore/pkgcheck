@@ -1,27 +1,15 @@
 import os
 
-from snakeoil import compatibility
 from snakeoil.demandload import demandload
 
 from . import base
-
-if compatibility.is_py3k:
-    urllib_path = 'urllib.request:urlopen'
-    demandload(
-        'urllib.request:urlopen',
-        'urllib:error@urllib_error')
-else:
-    # yes, this is a bit special.  We do this
-    # since the two parts we want, exist
-    # in different modules dependant on py2k/py3k.
-    demandload(
-        'urllib2@urllib_error',
-        'urllib2:urlopen')
 
 demandload(
     'argparse',
     'functools:partial',
     'itertools:chain',
+    'urllib.request:urlopen',
+    'urllib:error@urllib_error',
     'lxml:etree',
     'tempfile:NamedTemporaryFile',
     'pkgcore.ebuild.atom:atom',
