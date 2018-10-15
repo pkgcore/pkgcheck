@@ -1,4 +1,5 @@
 from collections import defaultdict
+from difflib import SequenceMatcher
 from itertools import filterfalse, chain, groupby
 from operator import attrgetter, itemgetter
 
@@ -917,6 +918,126 @@ class LicenseGroupsCheck(base.Template):
             unknown_licenses = set(licenses).difference(self.repo.licenses)
             if unknown_licenses:
                 reporter.add_report(UnknownLicenses(group, unknown_licenses))
+
+
+class PotentialLocalUSE(base.Warning):
+    """Global USE flag is a potential local USE flag."""
+
+    __slots__ = ("category", "pkgs", "flag")
+    threshold = base.repository_feed
+
+    def __init__(self, flag, pkgs):
+        super().__init__()
+        self.flag = flag
+        self.pkgs = tuple(sorted(map(str, pkgs)))
+
+    @property
+    def short_desc(self):
+        return (
+            f"global USE flag {self.flag!r} is a potential local, "
+            f"used by {len(self.pkgs)} packages: {', '.join(self.pkgs)}")
+
+
+class PotentialGlobalUSE(base.Warning):
+    """Local USE flag is a potential global USE flag."""
+
+    __slots__ = ("category", "pkgs", "flag")
+    threshold = base.repository_feed
+
+    def __init__(self, flag, pkgs):
+        super().__init__()
+        self.flag = flag
+        self.pkgs = tuple(sorted(map(str, pkgs)))
+
+    @property
+    def short_desc(self):
+        return (
+            f"local USE flag {self.flag!r} is a potential global "
+            f"used by {len(self.pkgs)} packages: {', '.join(self.pkgs)}")
+
+
+def _dfs(graph, start, visited=None):
+    if visited is None:
+        visited = set()
+    visited.add(start)
+    for node in graph[start] - visited:
+        _dfs(graph, node, visited)
+    return visited
+
+
+class GlobalUSECheck(base.Template):
+    """Check for USE flags that should be switched between locals and globals."""
+
+    feed_type = base.package_feed
+    scope = base.repository_scope
+    known_results = (PotentialLocalUSE, PotentialGlobalUSE)
+
+    def __init__(self, options):
+        super().__init__(options)
+        repo_config = options.target_repo.config
+        self.local_use = repo_config.use_local_desc
+        self.global_use = {flag: desc for matcher, (flag, desc) in repo_config.use_desc}
+        self.use_expand = {flag: desc for matcher, (flag, desc) in repo_config.use_expand_desc}
+        self.global_flag_usage = defaultdict(set)
+
+    def feed(self, pkgs, reporter):
+        local_use = set(pkgs[0].local_use.keys())
+        for pkg in pkgs:
+            pkg_global_use = pkg.iuse_stripped.difference(local_use)
+            # print(pkg)
+            # print(pkg_global_use)
+            for flag in pkg_global_use:
+                self.global_flag_usage[flag].add(pkg.unversioned_atom)
+
+    def finish(self, reporter):
+        for flag in self.global_use.keys():
+            pkgs = self.global_flag_usage[flag]
+            # global USE flags with no users are caught by UnusedGlobalFlags
+            if len(pkgs) > 0 and len(pkgs) < 5:
+                reporter.add_report(PotentialLocalUSE(flag, pkgs))
+
+        potential_globals = defaultdict(list)
+        for pkg, (flag, desc) in self.local_use:
+            if flag not in self.global_use:
+                potential_globals[flag].append((pkg, desc))
+
+        for flag, pkgs in sorted((k, v) for k, v in potential_globals.items() if len(v) >= 5):
+            diffs = {}
+            # calculate USE flag description difference ratios
+            for i, (i_pkg, i_desc) in enumerate(pkgs):
+                for j, (j_pkg, j_desc) in enumerate(pkgs[i + 1:]):
+                    diffs[(i, i + j + 1)] = SequenceMatcher(None, i_desc, j_desc).ratio()
+
+            # create an adjacency list using all closely matching flags pairs
+            similar = defaultdict(set)
+            for (i, j), r in diffs.items():
+                if r >= 0.75:
+                    similar[i].add(j)
+                    similar[j].add(i)
+
+            # not enough close matches found, continue to the next flag
+            if len(similar.keys()) < 5:
+                continue
+
+            # find the largest connected component
+            nodes = set(similar.keys())
+            components = []
+            while nodes:
+                node = nodes.pop()
+                visited = _dfs(similar, node)
+                components.append(visited)
+                nodes -= visited
+
+            if len(components) > 1:
+                largest = max(components, key=len)
+            else:
+                largest = components[0]
+
+            # if at least five local USE flags are similar, flag them as a
+            # potential global USE flag
+            if len(largest) >= 5:
+                matching_pkgs = (pkgs[x][0] for x in largest)
+                reporter.add_report(PotentialGlobalUSE(flag, matching_pkgs))
 
 
 def reformat_chksums(iterable):

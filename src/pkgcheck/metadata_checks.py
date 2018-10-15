@@ -1,5 +1,5 @@
 from collections import defaultdict
-import difflib
+from difflib import SequenceMatcher
 from operator import attrgetter
 import re
 
@@ -293,7 +293,7 @@ class LocalUSECheck(base.Template):
 
         for flag, desc in local_use.items():
             if flag in self.global_use:
-                ratio = difflib.SequenceMatcher(None, desc, self.global_use[flag]).ratio()
+                ratio = SequenceMatcher(None, desc, self.global_use[flag]).ratio()
                 if ratio == 1.0:
                     reporter.add_report(MatchingGlobalUSE(pkg, flag))
                 elif ratio >= 0.75:
