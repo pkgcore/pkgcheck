@@ -284,7 +284,7 @@ class LocalUSECheck(base.Template):
             flag: desc for matcher, (flag, desc) in options.target_repo.config.use_desc}
 
         # TODO: add support to pkgcore for getting USE_EXPAND groups?
-        use_expand_base = pjoin(options.target_repo.config.profiles_base, 'desc') 
+        use_expand_base = pjoin(options.target_repo.config.profiles_base, 'desc')
         self.use_expand_groups = {x[:-5] for x in listdir_files(use_expand_base)}
 
     def feed(self, pkgs, reporter):
@@ -380,11 +380,35 @@ class MissingRevision(base.Warning):
         return f"{self.dep}: {self.atom}: '=' operator used without revision"
 
 
+class MissingUseDepDefault(base.Warning):
+    """Package dependencies with USE dependencies missing defaults."""
+
+    __slots__ = ('category', 'package', 'version', 'attr', 'atom', 'flag', 'pkg_deps')
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, attr, atom, flag, pkg_deps):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.attr = attr
+        self.atom = str(atom)
+        self.pkg_deps = tuple(sorted(str(x.versioned_atom) for x in pkg_deps))
+        self.flag = flag
+
+    @property
+    def short_desc(self):
+        return (
+            f"{self.attr}: {self.atom}: USE flag dep {self.flag!r} missing default "
+            f"(matching package{_pl(self.pkg_deps)}: {', '.join(self.pkg_deps)})")
+
+
 class DependencyReport(base.Template):
     """Check DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon,)
-    known_results = (MetadataError, MissingRevision) + addons.UseAddon.known_results
+    known_results = (
+        MetadataError, MissingRevision, MissingUseDepDefault,
+        ) + addons.UseAddon.known_results
 
     feed_type = base.versioned_feed
 
@@ -394,26 +418,46 @@ class DependencyReport(base.Template):
     def __init__(self, options, iuse_handler):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
+        self.conditional_ops = {'?', '='}
+        self.use_defaults = {'(+)', '(-)'}
+
+    @staticmethod
+    def _flatten_or_restrictions(i):
+        for x in i:
+            if isinstance(x, OrRestriction):
+                for y in iflatten_instance(x, (atom_cls,)):
+                    yield (y, True)
+            else:
+                yield (x, False)
+
+    def _check_use_deps(self, attr, pkg, atom):
+        """Check dependencies for missing USE dep defaults."""
+        conditional_use = [
+            x for x in atom.use
+            if (x[-1] in self.conditional_ops and x[-4:-1] not in self.use_defaults)]
+        if conditional_use:
+            missing_use_deps = defaultdict(list)
+            for pkg_dep in self.options.search_repo.match(strip_atom_use(atom)):
+                for use in (x.strip('?=').lstrip('!') for x in conditional_use):
+                    if use not in pkg_dep.iuse_effective:
+                        missing_use_deps[use].append(pkg_dep)
+            return missing_use_deps
+        return {}
 
     def feed(self, pkg, reporter):
         for attr_name, getter in self.attrs:
             try:
-                def _flatten_or_restrictions(i):
-                    for x in i:
-                        if isinstance(x, OrRestriction):
-                            for y in iflatten_instance(x, (atom_cls,)):
-                                yield (y, True)
-                        else:
-                            yield (x, False)
-
                 slot_op_or_blocks = set()
                 slot_op_blockers = set()
 
                 i = self.iuse_filter(
                     (atom_cls, OrRestriction), pkg, getter(pkg), reporter, attr=attr_name)
-                for atom, in_or_restriction in _flatten_or_restrictions(i):
-                    # conditional_use = [
-                    # print(atom.use)
+                for atom, in_or_restriction in self._flatten_or_restrictions(i):
+                    if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
+                        missing_use_deps = self._check_use_deps(attr_name, pkg, atom)
+                        for use, pkg_deps in missing_use_deps.items():
+                            reporter.add_report(
+                                MissingUseDepDefault(pkg, attr_name, atom, use, pkg_deps))
                     if in_or_restriction and atom.slot_operator == '=':
                         slot_op_or_blocks.add(atom.key)
                     if atom.blocks and atom.match(pkg):
