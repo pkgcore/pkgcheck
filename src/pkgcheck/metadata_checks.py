@@ -432,15 +432,16 @@ class DependencyReport(base.Template):
 
     def _check_use_deps(self, attr, pkg, atom):
         """Check dependencies for missing USE dep defaults."""
-        conditional_use = [
+        conditional_use = (
             x for x in atom.use
-            if (x[-1] in self.conditional_ops and x[-4:-1] not in self.use_defaults)]
-        if conditional_use:
-            missing_use_deps = defaultdict(list)
+            if (x[-1] in self.conditional_ops and x[-4:-1] not in self.use_defaults))
+        stripped_use = [x.strip('?=').lstrip('!') for x in conditional_use]
+        if stripped_use:
+            missing_use_deps = defaultdict(set)
             for pkg_dep in self.options.search_repo.match(strip_atom_use(atom)):
-                for use in (x.strip('?=').lstrip('!') for x in conditional_use):
+                for use in stripped_use:
                     if use not in pkg_dep.iuse_effective:
-                        missing_use_deps[use].append(pkg_dep)
+                        missing_use_deps[use].add(pkg_dep)
             return missing_use_deps
         return {}
 
