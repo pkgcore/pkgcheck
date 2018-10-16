@@ -1061,8 +1061,9 @@ class ConflictingChksums(base.Error):
 
     @property
     def short_desc(self):
-        return "conflicts with (%s) for file %s chksum %s" % (
-            ', '.join(self.others), self.filename, self.chksums)
+        return (
+            f"conflicts with ({', '.join(self.others)}) "
+            "for file {self.filename!r} chksum {self.chksums}")
 
 
 class MissingChksum(base.Warning):
@@ -1080,8 +1081,9 @@ class MissingChksum(base.Warning):
 
     @property
     def short_desc(self):
-        return '"%s" missing required chksums: %s; has chksums: %s' % \
-            (self.filename, ', '.join(self.missing), ', '.join(self.existing))
+        return (
+            f"{self.filename!r} missing required chksums: "
+            f"{', '.join(self.missing)}; has chksums: {', '.join(self.existing)}")
 
 
 class MissingManifest(base.Error):

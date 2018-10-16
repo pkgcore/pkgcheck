@@ -164,8 +164,8 @@ class RequiredUSEMetadataReport(base.Template):
             del e
         except Exception as e:
             logging.exception(
-                "unknown exception caught for pkg(%s) attr(%s): "
-                "type(%s), %s" % (pkg, 'required_use', type(e), e))
+                f"unknown exception caught for {pkg!r} REQUIRED_USE: "
+                f"{type(e)}: {e}")
             reporter.add_report(MetadataError(
                 pkg, 'required_use', f"exception- {e}"))
             del e
@@ -326,8 +326,9 @@ class MissingSlotDep(base.Warning):
 
     @property
     def short_desc(self):
-        return "'%s' matches more than one slot: [ %s ]" % (
-            self.dep, ', '.join(self.dep_slots))
+        return (
+            f"{self.dep!r} matches more than one slot: "
+            f"[ {', '.join(self.dep_slots)} ]")
 
 
 class MissingSlotDepReport(base.Template):

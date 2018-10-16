@@ -25,8 +25,10 @@ class StaleUnstable(base.Warning):
 
     @property
     def short_desc(self):
-        return "slot(%s) no change in %i days for unstable keyword%s: [ %s ]" % (
-            self.slot, self.period, pluralism(self.keywords), ', '.join(self.keywords))
+        return (
+            f"slot({self.slot}) no change in {self.period} days for unstable "
+            "keyword%s: [ %s ]" % (pluralism(self.keywords), ', '.join(self.keywords))
+        )
 
 
 class StaleUnstableReport(addons.StableCheckAddon):
