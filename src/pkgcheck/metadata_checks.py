@@ -3,7 +3,7 @@ from difflib import SequenceMatcher
 from operator import attrgetter
 import re
 
-from pkgcore.ebuild.atom import MalformedAtom, atom
+from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable
 from pkgcore.package.errors import MetadataException
@@ -347,8 +347,8 @@ class MissingSlotDepReport(base.Template):
         if not pkg.eapi.options.sub_slotting:
             return
 
-        rdepends = set(self.iuse_filter((atom,), pkg, pkg.rdepends, reporter))
-        depends = set(self.iuse_filter((atom,), pkg, pkg.depends, reporter))
+        rdepends = set(self.iuse_filter((atom_cls,), pkg, pkg.rdepends, reporter))
+        depends = set(self.iuse_filter((atom_cls,), pkg, pkg.depends, reporter))
         # skip deps that are blockers or have explicit slots/slot operators
         for dep in (x for x in rdepends.intersection(depends) if not
                     (x.blocks or x.slot is not None or x.slot_operator is not None)):
@@ -401,7 +401,7 @@ class DependencyReport(base.Template):
                 def _flatten_or_restrictions(i):
                     for x in i:
                         if isinstance(x, OrRestriction):
-                            for y in iflatten_instance(x, (atom,)):
+                            for y in iflatten_instance(x, (atom_cls,)):
                                 yield (y, True)
                         else:
                             yield (x, False)
@@ -410,16 +410,18 @@ class DependencyReport(base.Template):
                 slot_op_blockers = set()
 
                 i = self.iuse_filter(
-                    (atom, OrRestriction), pkg, getter(pkg), reporter, attr=attr_name)
-                for x, in_or_restriction in _flatten_or_restrictions(i):
-                    if in_or_restriction and x.slot_operator == '=':
-                        slot_op_or_blocks.add(x.key)
-                    if x.blocks and x.match(pkg):
+                    (atom_cls, OrRestriction), pkg, getter(pkg), reporter, attr=attr_name)
+                for atom, in_or_restriction in _flatten_or_restrictions(i):
+                    # conditional_use = [
+                    # print(atom.use)
+                    if in_or_restriction and atom.slot_operator == '=':
+                        slot_op_or_blocks.add(atom.key)
+                    if atom.blocks and atom.match(pkg):
                         reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
-                    if x.blocks and x.slot_operator == '=':
-                        slot_op_blockers.add(x.key)
-                    if x.op == '=' and x.revision is None:
-                        reporter.add_report(MissingRevision(pkg, attr_name, x))
+                    if atom.blocks and atom.slot_operator == '=':
+                        slot_op_blockers.add(atom.key)
+                    if atom.op == '=' and atom.revision is None:
+                        reporter.add_report(MissingRevision(pkg, attr_name, atom))
 
                 if slot_op_or_blocks:
                     reporter.add_report(MetadataError(
@@ -554,7 +556,7 @@ class KeywordsReport(base.Template):
                 reporter.add_report(UnsortedKeywords(pkg))
             if pkg.category == 'virtual':
                 keywords = set()
-                rdepends = set(self.iuse_filter((atom,), pkg, pkg.rdepends, reporter))
+                rdepends = set(self.iuse_filter((atom_cls,), pkg, pkg.rdepends, reporter))
                 for x in rdepends:
                     for p in self.options.search_repo.match(strip_atom_use(x)):
                         keywords.update(p.keywords)
