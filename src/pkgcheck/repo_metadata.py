@@ -1007,23 +1007,31 @@ class GlobalUSECheck(base.Template):
         self.unused_master_flags = None
 
         unused_global_flags = []
+        potential_locals = []
         for flag in self.global_use.keys():
             pkgs = self.global_flag_usage[flag]
             if len(pkgs) == 0:
                 unused_global_flags.append(flag)
             elif len(pkgs) < 5:
-                reporter.add_report(PotentialLocalUSE(flag, pkgs))
+                potential_locals.append((flag, pkgs))
+
         if unused_global_flags:
             reporter.add_report(UnusedGlobalUSE(unused_global_flags))
+        for flag, pkgs in sorted(potential_locals, key=lambda x: len(x[1])):
+            reporter.add_report(PotentialLocalUSE(flag, pkgs))
 
-        potential_globals = defaultdict(list)
+        local_use = defaultdict(list)
         for pkg, (flag, desc) in self.local_use:
             if flag not in self.global_use:
-                potential_globals[flag].append((pkg, desc))
+                local_use[flag].append((pkg, desc))
 
-        for flag, pkgs in sorted((k, v) for k, v in potential_globals.items() if len(v) >= 5):
+        potential_globals = []
+        for flag, pkgs in sorted((k, v) for k, v in local_use.items() if len(v) >= 5):
             for matching_pkgs in self._similar_flags(pkgs):
-                reporter.add_report(PotentialGlobalUSE(flag, matching_pkgs))
+                potential_globals.append((flag, matching_pkgs))
+
+        for flag, pkgs in sorted(potential_globals, key=lambda x: len(x[1]), reverse=True):
+            reporter.add_report(PotentialGlobalUSE(flag, pkgs))
 
 
 def reformat_chksums(iterable):
