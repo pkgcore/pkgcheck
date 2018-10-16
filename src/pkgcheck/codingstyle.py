@@ -3,7 +3,7 @@
 from collections import defaultdict
 
 from snakeoil.demandload import demandload
-from snakeoil.strings import pluralism
+from snakeoil.strings import pluralism as _pl
 
 from . import base
 
@@ -25,7 +25,7 @@ class HttpsAvailable(base.Warning):
     @property
     def short_desc(self):
         return "'%s' link should use https:// on line%s: %s" % (
-            self.link, pluralism(self.lines), ', '.join(map(str, self.lines)))
+            self.link, _pl(self.lines), ', '.join(map(str, self.lines)))
 
 
 class HttpsAvailableCheck(base.Template):

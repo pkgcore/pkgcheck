@@ -5,6 +5,7 @@ from operator import attrgetter, itemgetter
 
 from snakeoil import mappings
 from snakeoil.demandload import demandload
+from snakeoil.strings import pluralism as _pl
 
 from . import base, addons
 
@@ -13,7 +14,6 @@ demandload(
     'snakeoil.contexts:patch',
     'snakeoil.osutils:listdir_dirs,pjoin',
     'snakeoil.sequences:iflatten_instance',
-    'snakeoil.strings:pluralism',
     'pkgcore.ebuild:atom,misc',
     'pkgcore.ebuild.profiles:ProfileNode,ProfileStack',
     'pkgcore:fetch',
@@ -211,7 +211,7 @@ class UnusedInMastersLicenses(base.Warning):
     @property
     def short_desc(self):
         return "unused license%s in master repo(s): %s" % (
-            pluralism(self.licenses), ', '.join(self.licenses))
+            _pl(self.licenses), ', '.join(self.licenses))
 
 
 class UnusedLicensesCheck(base.Template):
@@ -289,7 +289,7 @@ class UnusedInMastersMirrors(base.Warning):
     @property
     def short_desc(self):
         return "unused mirror%s in master repo(s): %s" % (
-            pluralism(self.mirrors), ', '.join(self.mirrors))
+            _pl(self.mirrors), ', '.join(self.mirrors))
 
 
 class UnusedMirrorsCheck(base.Template):
@@ -377,7 +377,7 @@ class UnusedInMastersEclasses(base.Warning):
     @property
     def short_desc(self):
         return "unused eclass%s in master repo(s): %s" % (
-            pluralism(self.eclasses, 'es'), ', '.join(self.eclasses))
+            _pl(self.eclasses, 'es'), ', '.join(self.eclasses))
 
 
 class UnusedEclassesCheck(base.Template):
@@ -552,7 +552,7 @@ class UnknownProfilePackages(base.Warning):
     @property
     def short_desc(self):
         return "%r: unknown package%s: [ %s ]" % (
-            self.path, pluralism(self.packages), ', '.join(map(repr, self.packages)))
+            self.path, _pl(self.packages), ', '.join(map(repr, self.packages)))
 
 
 class UnknownProfilePackageUse(base.Warning):
@@ -571,7 +571,7 @@ class UnknownProfilePackageUse(base.Warning):
     @property
     def short_desc(self):
         return "%r: unknown package USE flag%s: [ '%s[%s]' ]" % (
-            self.path, pluralism(self.flags), self.package,
+            self.path, _pl(self.flags), self.package,
             ','.join(self.flags))
 
 
@@ -590,7 +590,7 @@ class UnknownProfileUse(base.Warning):
     @property
     def short_desc(self):
         return "%r: unknown USE flag%s: [ %s ]" % (
-            self.path, pluralism(self.flags), ', '.join(map(repr, self.flags)))
+            self.path, _pl(self.flags), ', '.join(map(repr, self.flags)))
 
 
 class ProfilesCheck(base.Template):
@@ -815,7 +815,7 @@ class UnknownLicenses(base.Warning):
     @property
     def short_desc(self):
         return "license group %r has unknown license%s: [ %s ]" % (
-            self.group, pluralism(self.licenses), ', '.join(self.licenses))
+            self.group, _pl(self.licenses), ', '.join(self.licenses))
 
 
 class LicenseGroupsCheck(base.Template):
@@ -854,7 +854,7 @@ class PotentialLocalUSE(base.Warning):
     def short_desc(self):
         return (
             f"global USE flag {self.flag!r} is a potential local, "
-            f"used by {len(self.pkgs)} package{pluralism(len(self.pkgs))}: {', '.join(self.pkgs)}")
+            f"used by {len(self.pkgs)} package{_pl(len(self.pkgs))}: {', '.join(self.pkgs)}")
 
 
 class UnusedGlobalUSE(base.Warning):
@@ -871,7 +871,7 @@ class UnusedGlobalUSE(base.Warning):
     @property
     def short_desc(self):
         return "use.desc unused flag%s: %s" % (
-            pluralism(self.flags), ', '.join(self.flags))
+            _pl(self.flags), ', '.join(self.flags))
 
 
 class UnusedInMastersGlobalUSE(base.Warning):
@@ -892,7 +892,7 @@ class UnusedInMastersGlobalUSE(base.Warning):
     @property
     def short_desc(self):
         return "use.desc unused flag%s in master repo(s): %s" % (
-            pluralism(self.flags), ', '.join(self.flags))
+            _pl(self.flags), ', '.join(self.flags))
 
 
 class PotentialGlobalUSE(base.Warning):
@@ -1100,7 +1100,7 @@ class MissingManifest(base.Error):
     @property
     def short_desc(self):
         return "distfile%s missing from Manifest: [ %s ]" % (
-            pluralism(self.files), ', '.join(self.files),)
+            _pl(self.files), ', '.join(self.files),)
 
 
 class UnknownManifest(base.Warning):
@@ -1117,7 +1117,7 @@ class UnknownManifest(base.Warning):
     @property
     def short_desc(self):
         return "unknown distfile%s in Manifest: [ %s ]" % (
-            pluralism(self.files), ', '.join(self.files),)
+            _pl(self.files), ', '.join(self.files),)
 
 
 class UnnecessaryManifest(base.Warning):
@@ -1134,7 +1134,7 @@ class UnnecessaryManifest(base.Warning):
     @property
     def short_desc(self):
         return "unnecessary file%s in Manifest: [ %s ]" % (
-            pluralism(self.files), ', '.join(self.files),)
+            _pl(self.files), ', '.join(self.files),)
 
 
 class ManifestReport(base.Template):

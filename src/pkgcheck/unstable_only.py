@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from pkgcore.restrictions import packages, values
-from snakeoil.strings import pluralism
+from snakeoil.strings import pluralism as _pl
 
 from .addons import ArchesAddon, StableCheckAddon
 from .base import package_feed, Warning
@@ -23,7 +23,7 @@ class UnstableOnly(Warning):
     @property
     def short_desc(self):
         return "for arch%s: [ %s ], all versions are unstable: [ %s ]" % (
-            pluralism(self.arches, plural='es'), ', '.join(self.arches), ', '.join(self.versions))
+            _pl(self.arches, plural='es'), ', '.join(self.arches), ', '.join(self.versions))
 
 
 class UnstableOnlyReport(StableCheckAddon):

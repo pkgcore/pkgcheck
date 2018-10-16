@@ -1,6 +1,7 @@
 import os
 
 from snakeoil.demandload import demandload
+from snakeoil.strings import pluralism as _pl
 
 from . import base
 
@@ -16,7 +17,6 @@ demandload(
     'pkgcore.log:logger',
     'snakeoil.osutils:pjoin',
     'snakeoil:fileutils',
-    'snakeoil.strings:pluralism',
 )
 
 
@@ -231,7 +231,7 @@ class MetadataXmlIndentation(base.Warning):
     @property
     def long_desc(self):
         return "%s on line%s %s" % (
-            self.short_desc, pluralism(self.lines), ', '.join(str(x) for x in self.lines))
+            self.short_desc, _pl(self.lines), ', '.join(str(x) for x in self.lines))
 
 
 class CatMetadataXmlIndentation(MetadataXmlIndentation):

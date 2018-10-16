@@ -1,5 +1,5 @@
 from pkgcore.restrictions import packages, values
-from snakeoil.strings import pluralism
+from snakeoil.strings import pluralism as _pl
 
 from .addons import ArchesAddon, StableCheckAddon
 from .base import versioned_feed, package_feed, Warning
@@ -21,8 +21,8 @@ class LaggingStable(Warning):
     @property
     def short_desc(self):
         return "stabled arch%s: [ %s ], potential%s: [ %s ]" % (
-            pluralism(self.stable, plural='es'), ', '.join(self.stable),
-            pluralism(self.keywords), ', '.join(self.keywords))
+            _pl(self.stable, plural='es'), ', '.join(self.stable),
+            _pl(self.keywords), ', '.join(self.keywords))
 
 
 class ImlateReport(StableCheckAddon):

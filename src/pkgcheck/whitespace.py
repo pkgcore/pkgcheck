@@ -1,5 +1,5 @@
 from snakeoil.demandload import demand_compile_regexp
-from snakeoil.strings import pluralism
+from snakeoil.strings import pluralism as _pl
 
 from . import base
 
@@ -14,7 +14,7 @@ class base_whitespace(base.Warning):
 
     @property
     def lines_str(self):
-        return f"line{pluralism(self.lines)}: {', '.join(str(x) for x in self.lines)}"
+        return f"line{_pl(self.lines)}: {', '.join(str(x) for x in self.lines)}"
 
 
 class WhitespaceFound(base_whitespace):

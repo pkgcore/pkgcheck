@@ -1,4 +1,4 @@
-from snakeoil.strings import pluralism
+from snakeoil.strings import pluralism as _pl
 
 from .base import Template, package_feed, Warning, versioned_feed
 
@@ -18,7 +18,7 @@ class RedundantVersion(Warning):
     @property
     def short_desc(self):
         return "slot(%s) keywords are overshadowed by version%s: %s" % (
-            self.slot, pluralism(self.later_versions), ', '.join(self.later_versions))
+            self.slot, _pl(self.later_versions), ', '.join(self.later_versions))
 
 
 class RedundantVersionReport(Template):

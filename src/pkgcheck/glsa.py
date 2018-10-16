@@ -1,6 +1,7 @@
 import os
 
 from snakeoil.demandload import demandload
+from snakeoil.strings import pluralism as _pl
 
 from . import base
 
@@ -10,7 +11,6 @@ demandload(
     'pkgcore.restrictions:packages,values',
     'pkgcore.restrictions.util:collect_package_restrictions',
     'snakeoil.osutils:abspath,pjoin',
-    'snakeoil.strings:pluralism',
 )
 
 
@@ -40,7 +40,7 @@ class VulnerablePackage(base.Error):
     @property
     def short_desc(self):
         return "vulnerable via %s, keyword%s: %s" % (
-            self.glsa, pluralism(self.arches), ', '.join(self.arches))
+            self.glsa, _pl(self.arches), ', '.join(self.arches))
 
 
 class TreeVulnerabilitiesReport(base.Template):

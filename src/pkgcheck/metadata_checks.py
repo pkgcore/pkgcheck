@@ -11,7 +11,7 @@ from pkgcore.restrictions.boolean import OrRestriction
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files
 from snakeoil.sequences import iflatten_instance
-from snakeoil.strings import pluralism
+from snakeoil.strings import pluralism as _pl
 
 from . import base, addons
 from .visibility import FakeConfigurable, strip_atom_use
@@ -109,7 +109,7 @@ class IUSEMetadataReport(base.Template):
             if iuse:
                 reporter.add_report(MetadataError(
                     pkg, "iuse", "iuse unknown flag%s: [ %s ]" % (
-                        pluralism(iuse), ", ".join(iuse))))
+                        _pl(iuse), ", ".join(iuse))))
 
 
 class RequiredUseDefaults(base.Warning):
@@ -215,7 +215,7 @@ class UnusedLocalUSE(base.Warning):
     @property
     def short_desc(self):
         return "metadata.xml unused local USE flag%s: [ %s ]" % (
-            pluralism(self.flags), ', '.join(self.flags))
+            _pl(self.flags), ', '.join(self.flags))
 
 
 class MatchingGlobalUSE(base.Error):
@@ -617,7 +617,7 @@ class BadFilename(base.Warning):
 
     @property
     def short_desc(self):
-        return "bad filename%s: [ %s ]" % (pluralism(self.filenames), ', '.join(self.filenames))
+        return "bad filename%s: [ %s ]" % (_pl(self.filenames), ', '.join(self.filenames))
 
 
 class SrcUriReport(base.Template):

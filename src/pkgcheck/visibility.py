@@ -4,7 +4,7 @@ from pkgcore.restrictions.packages import OrRestriction
 from snakeoil import klass
 from snakeoil.iterables import caching_iter
 from snakeoil.sequences import stable_unique, iflatten_instance, iflatten_func
-from snakeoil.strings import pluralism
+from snakeoil.strings import pluralism as _pl
 
 from . import base, addons
 
@@ -139,7 +139,7 @@ class NonExistentDeps(base.Warning):
     @property
     def short_desc(self):
         return "depset %s: nonexistent dep%s: [ %s ]" % (
-            self.attr, pluralism(self.atoms), ', '.join(self.atoms))
+            self.attr, _pl(self.atoms), ', '.join(self.atoms))
 
 
 class UncheckableDep(base.Warning):

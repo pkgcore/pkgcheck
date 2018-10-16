@@ -16,6 +16,7 @@ from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.sequences import unstable_unique
+from snakeoil.strings import pluralism as _pl
 
 from .. import plugins, base, feeds
 
@@ -31,7 +32,6 @@ demandload(
     'snakeoil:pickling,formatters',
     'snakeoil.osutils:abspath',
     'snakeoil.sequences:iflatten_instance',
-    'snakeoil.strings:pluralism',
     'pkgcheck:errors',
 )
 
@@ -313,7 +313,7 @@ def _validate_args(parser, namespace):
         unknown_scopes = selected_scopes - set(base.known_scopes.keys())
         if unknown_scopes:
             parser.error('unknown scope%s: %s (available scopes: %s)' % (
-                pluralism(unknown_scopes), ', '.join(unknown_scopes), ', '.join(base.known_scopes.keys())))
+                _pl(unknown_scopes), ', '.join(unknown_scopes), ', '.join(base.known_scopes.keys())))
 
         # convert scopes to keyword lists
         disabled_keywords = [
@@ -346,7 +346,7 @@ def _validate_args(parser, namespace):
         unknown_keywords = selected_keywords - available_keywords
         if unknown_keywords:
             parser.error("unknown keyword%s: %s (use 'pkgcheck show --keywords' to show valid keywords)" % (
-                pluralism(unknown_keywords), ', '.join(unknown_keywords)))
+                _pl(unknown_keywords), ', '.join(unknown_keywords)))
 
         # filter outputted keywords
         namespace.enabled_keywords = base.filter_update(
@@ -365,7 +365,7 @@ def _validate_args(parser, namespace):
         unknown_checks = selected_checks - available_checks
         if unknown_checks:
             parser.error("unknown check%s: %r (use 'pkgcheck show --checks' to show valid checks)" % (
-                pluralism(unknown_checks), ', '.join(unknown_checks)))
+                _pl(unknown_checks), ', '.join(unknown_checks)))
     elif namespace.filtered_keywords is not None:
         # enable checks based on enabled keyword -> check mapping
         enabled_checks = []

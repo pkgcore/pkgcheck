@@ -2,7 +2,7 @@ from collections import defaultdict
 from itertools import chain
 import time
 
-from snakeoil.strings import pluralism
+from snakeoil.strings import pluralism as _pl
 
 from pkgcheck import addons, base
 
@@ -27,7 +27,7 @@ class StaleUnstable(base.Warning):
     def short_desc(self):
         return (
             f"slot({self.slot}) no change in {self.period} days for unstable "
-            "keyword%s: [ %s ]" % (pluralism(self.keywords), ', '.join(self.keywords))
+            "keyword%s: [ %s ]" % (_pl(self.keywords), ', '.join(self.keywords))
         )
 
 
