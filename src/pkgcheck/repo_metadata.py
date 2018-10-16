@@ -970,9 +970,9 @@ class GlobalUSECheck(base.Template):
 
     @staticmethod
     def _similar_flags(pkgs):
-        """Find groups of similar local USE flags by comparing descriptions."""
-        diffs = {}
+        """Yield groups of packages with similar local USE flag descriptions."""
         # calculate USE flag description difference ratios
+        diffs = {}
         for i, (i_pkg, i_desc) in enumerate(pkgs):
             for j, (j_pkg, j_desc) in enumerate(pkgs[i + 1:]):
                 diffs[(i, i + j + 1)] = SequenceMatcher(None, i_desc, j_desc).ratio()
@@ -986,9 +986,9 @@ class GlobalUSECheck(base.Template):
 
         # not enough close matches found
         if len(similar.keys()) < 5:
-            return []
+            return
 
-        # find the largest connected component
+        # determine groups of connected components
         nodes = set(similar.keys())
         components = []
         while nodes:
@@ -996,12 +996,12 @@ class GlobalUSECheck(base.Template):
             components.append(visited)
             nodes -= visited
 
-        if len(components) > 1:
-            largest = max(components, key=len)
-        else:
-            largest = components[0]
-
-        return largest
+        # Flag groups of five or more pkgs with similar local USE flags as a
+        # potential globals -- note that this can yield the same flag for
+        # multiple, distinct descriptions.
+        for component in components:
+            if len(component) >= 5:
+                yield [pkgs[i][0] for i in component]
 
     def finish(self, reporter):
         self.unused_master_flags = None
@@ -1022,11 +1022,7 @@ class GlobalUSECheck(base.Template):
                 potential_globals[flag].append((pkg, desc))
 
         for flag, pkgs in sorted((k, v) for k, v in potential_globals.items() if len(v) >= 5):
-            similar = self._similar_flags(pkgs)
-            # if at least five local USE flags are similar, flag them as a
-            # potential global USE flag
-            if len(similar) >= 5:
-                matching_pkgs = (pkgs[x][0] for x in similar)
+            for matching_pkgs in self._similar_flags(pkgs):
                 reporter.add_report(PotentialGlobalUSE(flag, matching_pkgs))
 
 
