@@ -160,8 +160,7 @@ class profile_mixin(mixins.TempDirMixin, base_test):
             os.mkdir(pjoin(loc, 'metadata'))
             write_file(pjoin(loc, 'metadata', 'layout.conf'), 'w', 'masters=')
         for profile in profiles:
-            self.assertTrue(ensure_dirs(pjoin(loc, profile)),
-                            msg=f"failed creating profile {profile!r}")
+            assert ensure_dirs(pjoin(loc, profile)), f"failed creating profile {profile!r}"
         if arches is None:
             arches = set(val[0] for val in profiles.values())
         write_file(pjoin(loc, 'arch.list'), 'w', "\n".join(arches))

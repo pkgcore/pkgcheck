@@ -430,9 +430,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         assert r.filename == 'foon'
 
         # verify valid protos.
-        self.assertTrue(
-            self.check_kls.valid_protos,
-            msg="valid_protos needs to have at least one protocol")
+        assert self.check_kls.valid_protos, "valid_protos needs to have at least one protocol"
 
         for x in self.check_kls.valid_protos:
             self.assertNoReport(
