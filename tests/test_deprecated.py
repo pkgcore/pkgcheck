@@ -22,11 +22,23 @@ class TestDeprecatedEclass(misc.ReportTestCase):
         # one non-deprecated eclass
         self.assertNoReport(check, self.mk_pkg("0.7.1", {'foobar': None}))
 
-        # one deprecated eclass
-        eclasses = dict([next(iter(check.blacklist.items()))])
+        # deprecated eclass with no replacement
+        eclass, replacement = next(
+            (k, v) for k, v in check.blacklist.items() if v == None)
+        eclasses = {eclass: replacement}
         r = self.assertReport(check, self.mk_pkg("0.1", eclasses))
         assert isinstance(r, deprecated.DeprecatedEclass)
         assert r.eclasses == tuple(eclasses.items())
+        assert f"uses deprecated eclass: [ {eclass} (no replacement) ]" == str(r)
+
+        # deprecated eclass with replacement
+        eclass, replacement = next(
+            (k, v) for k, v in check.blacklist.items() if v)
+        eclasses = {eclass: replacement}
+        r = self.assertReport(check, self.mk_pkg("0.1", eclasses))
+        assert isinstance(r, deprecated.DeprecatedEclass)
+        assert r.eclasses == tuple(eclasses.items())
+        assert f"uses deprecated eclass: [ {eclass} (migrate to {replacement}) ]" == str(r)
 
         # mix of deprecated and non-deprecated eclasses
         current = {str(x): None for x in range(3)}
