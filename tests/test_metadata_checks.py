@@ -245,7 +245,7 @@ def use_based():
     class use_based(iuse_options):
 
         def test_required_addons(self):
-            self.assertIn(addons.UseAddon, self.check_kls.required_addons)
+            assert addons.UseAddon in self.check_kls.required_addons
 
         def mk_check(self, **kwargs):
             options = self.get_options(**kwargs)
@@ -345,7 +345,7 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
         r = self.assertIsInstance(
             self.assertReport(self.mk_check(), mk_pkg("!dev-util/diffball")),
             metadata_checks.MetadataError)
-        self.assertIn("blocks itself", r.msg)
+        assert "blocks itself" in r.msg
 
         # check for := in || () blocks
         r = self.assertIsInstance(
@@ -353,7 +353,8 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
                 self.mk_check(),
                 mk_pkg(eapi='5', data="|| ( dev-libs/foo:= dev-libs/bar:= )")),
             metadata_checks.MetadataError)
-        self.assertIn("[dev-libs/bar, dev-libs/foo]", r.msg)
+        assert "= slot operator used inside || block" in r.msg
+        assert "[dev-libs/bar, dev-libs/foo]" in r.msg
 
         # check for := in blockers
         r = self.assertIsInstance(
@@ -361,7 +362,8 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
                 self.mk_check(),
                 mk_pkg(eapi='5', data="!dev-libs/foo:=")),
             metadata_checks.MetadataError)
-        self.assertIn("[dev-libs/foo]", r.msg)
+        assert "= slot operator used in blocker" in r.msg
+        assert "[dev-libs/foo]" in r.msg
 
         # check for missing revisions
         r = self.assertIsInstance(
