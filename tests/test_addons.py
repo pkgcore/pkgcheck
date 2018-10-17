@@ -144,10 +144,6 @@ class profile_mixin(mixins.TempDirMixin, base_test):
 
     addon_kls = addons.ProfileAddon
 
-    def setUp(self):
-        mixins.TempDirMixin.setUp(self)
-        base_test.setUp(self)
-
     def mk_profiles(self, profiles, base='profiles', arches=None):
         os.mkdir(pjoin(self.dir, 'metadata'))
         # write empty masters to suppress warnings
@@ -412,7 +408,7 @@ class TestEvaluateDepSetAddon(profile_mixin):
     orig_addon_kls = addon_kls
 
     def setUp(self):
-        profile_mixin.setUp(self)
+        super().setUp()
         with open(pjoin(self.dir, "arch.list"), "w") as f:
             f.write("\n".join(('amd64', 'ppc', 'x86')))
         self.addon_kls = self.orig_addon_kls

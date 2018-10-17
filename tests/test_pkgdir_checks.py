@@ -18,7 +18,7 @@ class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
     check_kls = pkgdir_checks.PkgDirReport
 
     def setUp(self):
-        TempDirMixin.setUp(self)
+        super().setUp()
         self.check = pkgdir_checks.PkgDirReport(None, None)
 
     def tearDown(self):
