@@ -15,8 +15,8 @@ class LaggingStable(Warning):
         super().__init__()
         self._store_cpv(pkg)
         self.keywords = tuple(sorted(keywords))
-        self.stable = tuple(str(arch) for arch in pkg.keywords
-                            if not arch[0] in ("~", "-"))
+        self.stable = tuple(sorted(str(arch) for arch in pkg.keywords
+                            if not arch[0] in ("~", "-")))
 
     @property
     def short_desc(self):
