@@ -34,6 +34,26 @@ class TestImlateReport(misc.ReportTestCase):
             mk_check(),
             [mk_pkg("0.9", "~mips amd64")])
 
+    def test_specified_stable_arches(self):
+        # pkg doesn't have any unstable arches we care about
+        r = self.assertNoReport(
+            mk_check(source_arches=('arm', 'arm64')),
+            [mk_pkg("0.9", "~x86 amd64")])
+
+        # pkg doesn't have any stable arches we care about
+        r = self.assertNoReport(
+            mk_check(source_arches=('arm64',)),
+            [mk_pkg("0.9", "~x86 amd64")])
+
+        # only flag arches we care about
+        r = self.assertReport(
+            mk_check(source_arches=('amd64',), selected_arches=('arm64',)),
+            [mk_pkg("0.9", "~arm64 ~x86 amd64")])
+        assert isinstance(r, imlate.LaggingStable)
+        assert r.stable == ("amd64",)
+        assert r.keywords == ("~arm64",)
+        assert r.version == "0.9"
+
     def test_single_keyword(self):
         r = self.assertReport(
             mk_check(),
