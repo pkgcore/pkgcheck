@@ -20,23 +20,6 @@ allowed_filename_chars_set.update(chr(x) for x in range(ord('0'), ord('9')+1))
 allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 
 
-class MissingFile(Error):
-    """Package is missing an expected file entry."""
-
-    __slots__ = ("category", "package", "filename")
-
-    threshold = package_feed
-
-    def __init__(self, pkg, filename):
-        super().__init__()
-        self._store_cp(pkg)
-        self.filename = filename
-
-    @property
-    def short_desc(self):
-        return f"required file doesn't exist: {self.filename!r}"
-
-
 class MismatchedPN(Error):
     """Ebuilds that have different names than their parent directory."""
 
