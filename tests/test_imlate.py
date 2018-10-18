@@ -8,7 +8,7 @@ def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None, source_arches
     return imlate.ImlateReport(
         misc.Options(selected_arches=selected_arches, arches=arches,
                      source_arches=source_arches),
-        None)
+        arches=None)
 
 
 def mk_pkg(ver, keywords=""):
