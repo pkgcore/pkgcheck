@@ -8,7 +8,6 @@ from pkgcore.repository.util import SimpleTree
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
-from snakeoil.test import TestCase
 
 from pkgcheck import base
 
@@ -67,7 +66,7 @@ default_threshold_attrs = {
 default_threshold_attrs[base.ebuild_feed] = default_threshold_attrs[base.versioned_feed]
 
 
-class ReportTestCase(TestCase):
+class ReportTestCase(object):
 
     _threshold_attrs = default_threshold_attrs.copy()
 

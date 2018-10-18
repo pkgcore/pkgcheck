@@ -1,8 +1,10 @@
+from snakeoil.test import TestCase
+
 from pkgcheck.test import misc
 from pkgcheck import whitespace
 
 
-class WhitespaceCheckTest(misc.ReportTestCase):
+class WhitespaceCheckTest(misc.ReportTestCase, TestCase):
     """Various whitespace related test support."""
 
     check_kls = whitespace.WhitespaceCheck
