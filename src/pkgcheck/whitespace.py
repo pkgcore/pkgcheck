@@ -25,7 +25,7 @@ class WhitespaceFound(base_whitespace):
     def __init__(self, pkg, leadtrail, lines):
         super().__init__()
         self._store_cpv(pkg)
-        self.lines = lines
+        self.lines = tuple(lines)
         self.leadtrail = leadtrail
 
     @property
@@ -41,7 +41,7 @@ class WrongIndentFound(base_whitespace):
     def __init__(self, pkg, lines):
         super().__init__()
         self._store_cpv(pkg)
-        self.lines = lines
+        self.lines = tuple(lines)
 
     @property
     def short_desc(self):
@@ -56,7 +56,7 @@ class DoubleEmptyLine(base_whitespace):
     def __init__(self, pkg, lines):
         super().__init__()
         self._store_cpv(pkg)
-        self.lines = lines
+        self.lines = tuple(lines)
 
     @property
     def short_desc(self):
