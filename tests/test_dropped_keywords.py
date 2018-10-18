@@ -18,11 +18,14 @@ class TestDroppedKeywords(misc.ReportTestCase):
                 "_eclasses_": eclasses,
             })
 
+    def mk_check(self, arches=('x86', 'amd64'), verbose=None):
+        return drop_keys(
+            misc.Options((("arches", arches),), verbose=verbose),
+            None)
+
     def test_it(self):
         # single version, shouldn't yield.
-        check = drop_keys(
-            misc.Options((("arches", ["x86", "amd64"]),), verbose=None),
-            None)
+        check = self.mk_check()
         self.assertNoReport(check, [self.mk_pkg('1')])
         reports = self.assertReports(
             check, [self.mk_pkg("1", "x86 amd64"), self.mk_pkg("2")])
@@ -60,9 +63,7 @@ class TestDroppedKeywords(misc.ReportTestCase):
 
     def test_verbose_mode(self):
         # verbose mode outputs a report per version with dropped keywords
-        check = drop_keys(
-            misc.Options((("arches", ["x86", "amd64"]),), verbose=1),
-            None)
+        check = self.mk_check(verbose=1)
         reports = self.assertReports(
             check,
             [self.mk_pkg("1", "x86 amd64"),
@@ -76,9 +77,7 @@ class TestDroppedKeywords(misc.ReportTestCase):
 
     def test_regular_mode(self):
         # regular mode outputs the most recent pkg with dropped keywords
-        check = drop_keys(
-            misc.Options((("arches", ["x86", "amd64"]),), verbose=None),
-            None)
+        check = self.mk_check()
         reports = self.assertReports(
             check,
             [self.mk_pkg("1", "x86 amd64"),
