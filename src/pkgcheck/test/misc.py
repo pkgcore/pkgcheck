@@ -71,7 +71,7 @@ class ReportTestCase(TestCase):
 
     _threshold_attrs = default_threshold_attrs.copy()
 
-    def assert_known_results(self, *reports):
+    def _assert_known_results(self, *reports):
         for report in reports:
             assert report.__class__ in self.check_kls.known_results
 
@@ -81,7 +81,7 @@ class ReportTestCase(TestCase):
             msg = f"{msg}: "
         r = fake_reporter(lambda r: l.append(r))
         check.feed(data, r)
-        self.assert_known_results(*l)
+        self._assert_known_results(*l)
         assert l == [], f"{msg}{list(report.short_desc for report in l)}"
 
     def assertReportSanity(self, *reports):
@@ -97,7 +97,7 @@ class ReportTestCase(TestCase):
         l = []
         r = fake_reporter(lambda r: l.append(r))
         check.feed(data, r)
-        self.assert_known_results(*l)
+        self._assert_known_results(*l)
         assert l, f"must get a report from {check} {data}, got none"
         self.assertReportSanity(*l)
         return l
@@ -108,7 +108,7 @@ class ReportTestCase(TestCase):
 
     def assertReport(self, check, data):
         r = self.assertReports(check, data)
-        self.assert_known_results(*r)
+        self._assert_known_results(*r)
         assert len(r) == 1, f"expected one report, got {len(r)}: {r}"
         self.assertReportSanity(r[0])
         return r[0]
