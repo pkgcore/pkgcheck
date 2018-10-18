@@ -26,7 +26,7 @@ class TestStandardWhitespaces(WhitespaceCheckTest):
         fake_src.append("\n")
         fake_src.append("# That's it for now\n")
 
-        report = self.assertReports(self.check,[fake_pkg,fake_src])
+        report = self.assertReports(self.check, [fake_pkg, fake_src])
         assert len(report) == 4
 
 
@@ -38,8 +38,9 @@ class TestNoNewLineOnEnd(WhitespaceCheckTest):
         fake_src.append("# This is our first fake ebuild\n")
         fake_src.append("# That's it for now")
 
-        report = self.assertReports(self.check,[fake_pkg,fake_src])
-        assert len(report) == 1
+        r = self.assertReport(self.check, [fake_pkg, fake_src])
+        assert isinstance(r, whitespace.NoFinalNewline)
+        assert 'lacks an ending newline' in str(r)
 
 
 class TestTrailingNewLineOnEnd(WhitespaceCheckTest):
@@ -51,5 +52,6 @@ class TestTrailingNewLineOnEnd(WhitespaceCheckTest):
         fake_src.append("# That's it for now\n")
         fake_src.append("\n")
 
-        report = self.assertReports(self.check,[fake_pkg,fake_src])
-        assert len(report) == 1
+        r = self.assertReport(self.check, [fake_pkg, fake_src])
+        assert isinstance(r, whitespace.TrailingEmptyLine)
+        assert 'trailing blank line(s)' in str(r)
