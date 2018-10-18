@@ -1,14 +1,14 @@
 from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism as _pl
 
-from .base import Template, versioned_feed, Warning
+from . import base
 
 
-class DeprecatedEAPI(Warning):
+class DeprecatedEAPI(base.Warning):
     """Package's EAPI is deprecated according to repo metadata."""
 
     __slots__ = ("category", "package", "version", "eapi")
-    threshold = versioned_feed
+    threshold = base.versioned_feed
 
     def __init__(self, pkg):
         super().__init__()
@@ -20,23 +20,41 @@ class DeprecatedEAPI(Warning):
         return f"uses deprecated EAPI {self.eapi}"
 
 
-class DeprecatedEAPIReport(Template):
-    """Scan for deprecated EAPIs."""
+class BannedEAPI(base.Error):
+    """Package's EAPI is banned according to repo metadata."""
 
-    feed_type = versioned_feed
+    __slots__ = ("category", "package", "version", "eapi")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.eapi = str(pkg.eapi)
+
+    @property
+    def short_desc(self):
+        return f"uses banned EAPI {self.eapi}"
+
+
+class PkgEAPIReport(base.Template):
+    """Scan for packages using banned or deprecated EAPIs."""
+
+    feed_type = base.versioned_feed
     known_results = (DeprecatedEAPI,)
 
-
     def feed(self, pkg, reporter):
-        if str(pkg.eapi) in pkg.repo.config.eapis_deprecated:
+        eapi_str = str(pkg.eapi)
+        if eapi_str in pkg.repo.config.eapis_banned:
+            reporter.add_report(BannedEAPI(pkg))
+        elif eapi_str in pkg.repo.config.eapis_deprecated:
             reporter.add_report(DeprecatedEAPI(pkg))
 
 
-class DeprecatedEclass(Warning):
+class DeprecatedEclass(base.Warning):
     """Package uses an eclass that is deprecated/abandoned."""
 
     __slots__ = ("category", "package", "version", "eclasses")
-    threshold = versioned_feed
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, eclasses):
         super().__init__()
@@ -57,9 +75,9 @@ class DeprecatedEclass(Warning):
             _pl(eclass_migration, plural='es'), ', '.join(eclass_migration))
 
 
-class DeprecatedEclassReport(Template):
+class DeprecatedEclassReport(base.Template):
 
-    feed_type = versioned_feed
+    feed_type = base.versioned_feed
     known_results = (DeprecatedEclass,)
 
     blacklist = ImmutableDict({

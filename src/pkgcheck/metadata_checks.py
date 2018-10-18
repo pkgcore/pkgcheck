@@ -112,6 +112,52 @@ class IUSEMetadataReport(base.Template):
                         _pl(iuse), ", ".join(iuse))))
 
 
+class DeprecatedEAPI(base.Warning):
+    """Package's EAPI is deprecated according to repo metadata."""
+
+    __slots__ = ("category", "package", "version", "eapi")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.eapi = str(pkg.eapi)
+
+    @property
+    def short_desc(self):
+        return f"uses deprecated EAPI {self.eapi}"
+
+
+class BannedEAPI(base.Error):
+    """Package's EAPI is banned according to repo metadata."""
+
+    __slots__ = ("category", "package", "version", "eapi")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.eapi = str(pkg.eapi)
+
+    @property
+    def short_desc(self):
+        return f"uses banned EAPI {self.eapi}"
+
+
+class PkgEAPIReport(base.Template):
+    """Scan for packages using banned or deprecated EAPIs."""
+
+    feed_type = base.versioned_feed
+    known_results = (DeprecatedEAPI,)
+
+    def feed(self, pkg, reporter):
+        eapi_str = str(pkg.eapi)
+        if eapi_str in pkg.repo.config.eapis_banned:
+            reporter.add_report(BannedEAPI(pkg))
+        elif eapi_str in pkg.repo.config.eapis_deprecated:
+            reporter.add_report(DeprecatedEAPI(pkg))
+
+
 class RequiredUseDefaults(base.Warning):
     """Default USE flag settings don't satisfy REQUIRED_USE."""
 

@@ -76,7 +76,6 @@ class TestStaleUnstableReport(misc.ReportTestCase):
             assert r.period == 30
             assert r.keywords == ('~amd64', '~x86')
 
-
     def test_outdated_multi_pkgs_verbose(self):
         reports = self.assertReports(
             mk_check(verbose=True), [
