@@ -59,7 +59,7 @@ class TestDuplicateFilesReport(PkgDirReportTest):
         r = self.assertReport(self.check, [self.mk_pkg({'test': 'abc', 'test2': 'abc'})])
         assert isinstance(r, pkgdir_checks.DuplicateFiles)
         assert r.files == ('files/test', 'files/test2')
-        assert r.files == ('files/test', 'files/test2')
+        assert "'files/test', 'files/test2'" in str(r)
 
         # two sets of duplicates and one unique
         r = self.assertReports(self.check, [self.mk_pkg(
@@ -90,10 +90,12 @@ class TestEmptyFileReport(PkgDirReportTest):
             self.assertReport(self.check, [self.mk_pkg({'test': 'asdfgh', 'test2': ''})]),
             pkgdir_checks.EmptyFile)
         assert r.filename == 'files/test2'
+        assert 'files/test2' in str(r)
         r = self.assertIsInstance(
             self.assertReport(self.check, [self.mk_pkg({'test': '', 'test2': 'asdfgh'})]),
             pkgdir_checks.EmptyFile)
         assert r.filename == 'files/test'
+        assert 'files/test' in str(r)
 
         # two empty files
         r = self.assertReports(self.check, [self.mk_pkg({'test': '', 'test2': ''})])
@@ -120,6 +122,7 @@ class TestMismatchedPN(PkgDirReportTest):
         r = self.assertReport(self.check, [pkg])
         assert isinstance(r, pkgdir_checks.MismatchedPN)
         assert r.ebuilds == ('mismatched-0',)
+        assert 'mismatched-0' in str(r)
 
         # multiple ebuilds, multiple mismatched
         pkg = self.mk_pkg()
@@ -130,6 +133,7 @@ class TestMismatchedPN(PkgDirReportTest):
         r = self.assertReport(self.check, [pkg])
         assert isinstance(r, pkgdir_checks.MismatchedPN)
         assert r.ebuilds == ('abc-1', 'mismatched-0')
+        assert 'abc-1, mismatched-0' in str(r)
 
 
 class TestInvalidPN(PkgDirReportTest):
@@ -147,6 +151,7 @@ class TestInvalidPN(PkgDirReportTest):
         r = self.assertReport(self.check, [pkg])
         assert isinstance(r, pkgdir_checks.InvalidPN)
         assert r.ebuilds == ('invalid-0-foo',)
+        assert 'invalid-0-foo' in str(r)
 
         # multiple ebuilds, multiple invalid
         pkg = self.mk_pkg(pkg='sys-apps/bar')
@@ -157,6 +162,7 @@ class TestInvalidPN(PkgDirReportTest):
         r = self.assertReport(self.check, [pkg])
         assert isinstance(r, pkgdir_checks.InvalidPN)
         assert r.ebuilds == ('bar-0-foo1', 'bar-1-foo2')
+        assert 'bar-0-foo1, bar-1-foo2' in str(r)
 
 
 class TestSizeViolation(PkgDirReportTest):
@@ -181,6 +187,7 @@ class TestSizeViolation(PkgDirReportTest):
         assert isinstance(r, pkgdir_checks.SizeViolation)
         assert r.filename == 'files/over'
         assert r.size == 1024*20+1
+        assert 'files/over' in str(r)
 
         # mix of files
         pkg = self.mk_pkg()
@@ -214,6 +221,7 @@ class TestExecutableFile(PkgDirReportTest):
         r = self.assertReport(self.check, [pkg])
         assert isinstance(r, pkgdir_checks.ExecutableFile)
         assert r.filename == os.path.basename(pkg.path)
+        assert os.path.basename(pkg.path) in str(r)
 
         # executable Manifest and metadata
         pkg = self.mk_pkg()
@@ -237,3 +245,4 @@ class TestExecutableFile(PkgDirReportTest):
         r = self.assertReport(self.check, [pkg])
         assert isinstance(r, pkgdir_checks.ExecutableFile)
         assert r.filename == 'files/foo.init'
+        assert 'files/foo.init' in str(r)
