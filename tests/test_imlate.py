@@ -1,44 +1,73 @@
 from pkgcheck.test import misc
-from pkgcheck.imlate import ImlateReport
+from pkgcheck import imlate
+
+
+def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None, source_arches=None):
+    if arches is None:
+        arches = selected_arches
+    return imlate.ImlateReport(
+        misc.Options(selected_arches=selected_arches, arches=arches,
+                     source_arches=source_arches),
+        None)
+
+
+def mk_pkg(ver, keywords=""):
+    return misc.FakePkg(f"dev-util/diffball-{ver}", data={"KEYWORDS": keywords})
 
 
 class TestImlateReport(misc.ReportTestCase):
 
-    check_kls = ImlateReport
+    check_kls = imlate.ImlateReport
 
-    def mk_pkg(self, ver, keywords=""):
-        return misc.FakePkg(
-            f"dev-util/diffball-{ver}", data={"KEYWORDS": keywords})
-
-    def test_it(self):
-        mk_pkg = self.mk_pkg
-        check = ImlateReport(
-            misc.Options(
-                selected_arches=("x86", "ppc", "amd64"),
-                arches=("x86", "ppc", "amd64"),
-                source_arches=("x86", "ppc", "amd64")),
-            None)
-
+    def test_all_unstable(self):
         self.assertNoReport(
-            check,
+            mk_check(),
             [mk_pkg(str(x), "~x86 ~amd64") for x in range(10)])
 
-        # assert single 0.9/0.8
-        report = self.assertReports(
-            check,
-            [mk_pkg("0.8", "~x86"), mk_pkg("0.9", "~x86 amd64")])
-        assert len(report) == 1
-        assert report[0].stable == ("amd64",)
-        assert report[0].version == "0.9"
+    def test_all_stable(self):
+        r = self.assertNoReport(
+            mk_check(),
+            [mk_pkg("0.9", "amd64 x86")])
 
-        # insert a 0.7 in; it should not show.
-        # additionally, insert an arch we don't care about...
+    def test_unselected_arch(self):
+        r = self.assertNoReport(
+            mk_check(),
+            [mk_pkg("0.9", "~mips amd64")])
 
-        report = self.assertReports(
-            check,
+    def test_single_keyword(self):
+        r = self.assertReport(
+            mk_check(),
+            [mk_pkg("0.9", "~x86 amd64")])
+        assert isinstance(r, imlate.LaggingStable)
+        assert r.stable == ("amd64",)
+        assert r.keywords == ("~x86",)
+        assert r.version == "0.9"
+        assert 'amd64' in str(r) and '~x86' in str(r)
+
+    def test_multiple_unstable_pkgs(self):
+        r = self.assertReport(
+            mk_check(),
             [mk_pkg("0.7", "~x86"),
-             mk_pkg("0.8", "~x86 ~foo"), mk_pkg("0.9", "~x86 amd64"),
-             mk_pkg("0.10", "foo")])
-        assert len(report) == 1
-        assert report[0].stable == ("amd64",)
-        assert report[0].version == "0.9"
+             mk_pkg("0.8", "~x86"),
+             mk_pkg("0.9", "~x86 amd64")])
+        assert r.stable == ("amd64",)
+        assert r.keywords == ("~x86",)
+        assert r.version == "0.9"
+
+    def test_multiple_stable_arches(self):
+        r = self.assertReport(
+            mk_check(),
+            [mk_pkg("0.7", "~x86 ~ppc"),
+             mk_pkg("0.9", "~x86 ppc amd64")])
+        assert r.stable == ("amd64", "ppc")
+        assert r.keywords == ("~x86",)
+        assert r.version == "0.9"
+
+    def test_multiple_potential_arches(self):
+        r = self.assertReport(
+            mk_check(),
+            [mk_pkg("0.7", "~x86"),
+             mk_pkg("0.9", "~x86 ~ppc amd64")])
+        assert r.stable == ("amd64",)
+        assert r.keywords == ("~ppc", "~x86",)
+        assert r.version == "0.9"
