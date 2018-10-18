@@ -32,25 +32,33 @@ class TestStaleUnstableReport(misc.ReportTestCase):
         # an outdated, but stable one
         self.assertNoReport(check, [self.mk_pkg("1.0", "x86", old)])
 
+        # an outdated, but unstable one
+        self.assertNoReport(check, [self.mk_pkg("1.0", "~x86", old)])
+
         # an outdated, partly unstable one
-        self.assertReport(
+        r = self.assertReport(
             check, [
                 self.mk_pkg("1.0", "amd64 x86", old),
                 self.mk_pkg("2.0", "~amd64 x86", old),
                 ]
             )
+        assert r.period == 30
+        assert r.keywords == ('~amd64',)
+        assert 'no change in 30 days' in str(r)
 
         # an outdated, fully unstable one
-        self.assertReport(
+        r = self.assertReport(
             check, [
                 self.mk_pkg("1.0", "amd64 x86", old),
                 self.mk_pkg("2.0", "~amd64 ~x86", old),
                 ]
             )
+        assert r.period == 30
+        assert r.keywords == ('~amd64', '~x86')
 
         # ensure it reports only specified arches.
-        report = self.assertReport(
+        r = self.assertReport(
             check, [
                 self.mk_pkg("1.0", "amd64 x86 sparc", old),
                 self.mk_pkg("2.0", "~amd64 ~x86 ~sparc", old)])
-        assert report.keywords == ("~amd64", "~x86")
+        assert r.keywords == ("~amd64", "~x86")
