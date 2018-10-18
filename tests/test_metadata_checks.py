@@ -294,9 +294,8 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
             repo=self.repo)
 
     def test_malformed(self):
-        r = self.assertIsInstance(
-            self.assertReport(self.mk_check(), self.mk_pkg("|| (")),
-            metadata_checks.MetadataError)
+        r = self.assertReport(self.mk_check(), self.mk_pkg("|| ("))
+        assert isinstance(r, metadata_checks.MetadataError)
         assert r.attr == 'license'
 
     def test_it(self):
@@ -305,10 +304,9 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
         assert isinstance(
             self.assertReport(chk, self.mk_pkg()),
             metadata_checks.MetadataError)
-        report = self.assertIsInstance(
-            self.assertReport(chk, self.mk_pkg("foo")),
-            metadata_checks.MissingLicense)
-        assert report.licenses == ('foo',)
+        r = self.assertReport(chk, self.mk_pkg("foo"))
+        assert isinstance(r, metadata_checks.MissingLicense)
+        assert r.licenses == ('foo',)
 
         chk = self.mk_check(['foo', 'foo2'])
         self.assertNoReport(chk, self.mk_pkg('foo'))
@@ -335,42 +333,37 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
         mk_pkg = partial(self.mk_pkg, attr)
         self.assertNoReport(chk, mk_pkg())
         self.assertNoReport(chk, mk_pkg("|| ( dev-util/foo ) dev-foo/bugger "))
-        r = self.assertIsInstance(
-            self.assertReport(self.mk_check(), mk_pkg("|| (")),
-            metadata_checks.MetadataError)
+        r = self.assertReport(self.mk_check(), mk_pkg("|| ("))
+        assert isinstance(r, metadata_checks.MetadataError)
         assert r.attr == attr
         if 'depend' not in attr:
             return
         self.assertNoReport(chk, mk_pkg("!dev-util/blah"))
-        r = self.assertIsInstance(
-            self.assertReport(self.mk_check(), mk_pkg("!dev-util/diffball")),
-            metadata_checks.MetadataError)
+        r = self.assertReport(self.mk_check(), mk_pkg("!dev-util/diffball"))
+        assert isinstance(r, metadata_checks.MetadataError)
         assert "blocks itself" in r.msg
 
         # check for := in || () blocks
-        r = self.assertIsInstance(
-            self.assertReport(
-                self.mk_check(),
-                mk_pkg(eapi='5', data="|| ( dev-libs/foo:= dev-libs/bar:= )")),
-            metadata_checks.MetadataError)
+        r = self.assertReport(
+            self.mk_check(),
+            mk_pkg(eapi='5', data="|| ( dev-libs/foo:= dev-libs/bar:= )"))
+        assert isinstance(r, metadata_checks.MetadataError)
         assert "= slot operator used inside || block" in r.msg
         assert "[dev-libs/bar, dev-libs/foo]" in r.msg
 
         # check for := in blockers
-        r = self.assertIsInstance(
-            self.assertReport(
-                self.mk_check(),
-                mk_pkg(eapi='5', data="!dev-libs/foo:=")),
-            metadata_checks.MetadataError)
+        r = self.assertReport(
+            self.mk_check(),
+            mk_pkg(eapi='5', data="!dev-libs/foo:="))
+        assert isinstance(r, metadata_checks.MetadataError)
         assert "= slot operator used in blocker" in r.msg
         assert "[dev-libs/foo]" in r.msg
 
         # check for missing revisions
-        r = self.assertIsInstance(
-            self.assertReport(
-                self.mk_check(),
-                mk_pkg(eapi='6', data="=dev-libs/foo-1")),
-            metadata_checks.MissingRevision)
+        r = self.assertReport(
+            self.mk_check(),
+            mk_pkg(eapi='6', data="=dev-libs/foo-1"))
+        assert isinstance(r, metadata_checks.MissingRevision)
 
     for x in attr_map:
         locals()[f"test_{x}"] = post_curry(generic_check, x)
@@ -404,10 +397,9 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
             parent=fake_parent())
 
     def test_malformed(self):
-        r = self.assertIsInstance(
-            self.assertReport(
-                self.mk_check(), self.mk_pkg("foon", disable_chksums=True)),
-            metadata_checks.MetadataError)
+        r = self.assertReport(
+            self.mk_check(), self.mk_pkg("foon", disable_chksums=True))
+        assert isinstance(r, metadata_checks.MetadataError)
         assert r.attr == 'fetchables'
 
     def test_bad_filename(self):
@@ -426,9 +418,8 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         chk = self.mk_check()
         # ensure it pukes about RESTRICT!=fetch, and no uri
 
-        r = self.assertIsInstance(
-            self.assertReport(chk, self.mk_pkg("foon")),
-            metadata_checks.MissingUri)
+        r = self.assertReport(chk, self.mk_pkg("foon"))
+        assert isinstance(r, metadata_checks.MissingUri)
         assert r.filename == 'foon'
 
         # verify valid protos.
@@ -444,20 +435,18 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         while bad_proto in self.check_kls.valid_protos:
             bad_proto += "s"
 
-        r = self.assertIsInstance(
-            self.assertReport(chk, self.mk_pkg(f"{bad_proto}://foon.com/foon")),
-            metadata_checks.BadProto)
+        r = self.assertReport(chk, self.mk_pkg(f"{bad_proto}://foon.com/foon"))
+        assert isinstance(r, metadata_checks.BadProto)
 
         assert r.filename == 'foon'
         assert list(r.bad_uri) == [f'{bad_proto}://foon.com/foon']
 
         # check collapsing.
 
-        r = self.assertIsInstance(
-            self.assertReport(
+        r = self.assertReport(
                 chk,
-                self.mk_pkg(f"{bad_proto}://foon.com/foon {bad_proto}://dar.com/foon")),
-            metadata_checks.BadProto)
+                self.mk_pkg(f"{bad_proto}://foon.com/foon {bad_proto}://dar.com/foon"))
+        assert isinstance(r, metadata_checks.BadProto)
 
         assert r.filename == 'foon'
         assert list(r.bad_uri) == sorted(f'{bad_proto}://{x}/foon' for x in ('foon.com', 'dar.com'))

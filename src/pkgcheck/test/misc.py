@@ -102,10 +102,6 @@ class ReportTestCase(TestCase):
         self.assertReportSanity(*l)
         return l
 
-    def assertIsInstance(self, obj, kls):
-        assert isinstance(obj, kls), f"{obj!r} must be {kls!r}"
-        return obj
-
     def assertReport(self, check, data):
         r = self.assertReports(check, data)
         self._assert_known_results(*r)

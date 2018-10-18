@@ -86,14 +86,12 @@ class TestEmptyFileReport(PkgDirReportTest):
         self.assertNoReport(self.check, [self.mk_pkg({'test': 'asdfgh'})])
 
         # a mix of both
-        r = self.assertIsInstance(
-            self.assertReport(self.check, [self.mk_pkg({'test': 'asdfgh', 'test2': ''})]),
-            pkgdir_checks.EmptyFile)
+        r = self.assertReport(self.check, [self.mk_pkg({'test': 'asdfgh', 'test2': ''})])
+        assert isinstance(r, pkgdir_checks.EmptyFile)
         assert r.filename == 'files/test2'
         assert 'files/test2' in str(r)
-        r = self.assertIsInstance(
-            self.assertReport(self.check, [self.mk_pkg({'test': '', 'test2': 'asdfgh'})]),
-            pkgdir_checks.EmptyFile)
+        r = self.assertReport(self.check, [self.mk_pkg({'test': '', 'test2': 'asdfgh'})])
+        assert isinstance(r, pkgdir_checks.EmptyFile)
         assert r.filename == 'files/test'
         assert 'files/test' in str(r)
 
