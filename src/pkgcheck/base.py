@@ -15,6 +15,7 @@ from collections import OrderedDict
 from operator import attrgetter
 
 from pkgcore.config import ConfigHint
+from pkgcore.package.errors import MetadataException
 from snakeoil.demandload import demandload
 
 demandload(
@@ -237,6 +238,22 @@ class Warning(Result):
     _level = 30
 
 
+class MetadataError(Error):
+    """Problem detected with a package's metadata."""
+
+    __slots__ = ("category", "package", "version", "attr", "msg")
+    threshold = versioned_feed
+
+    def __init__(self, pkg, attr, msg):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.attr, self.msg = attr, str(msg)
+
+    @property
+    def short_desc(self):
+        return f"attr({self.attr}): {self.msg}"
+
+
 class Reporter(object):
 
     def __init__(self, out, keywords=None, verbose=None):
@@ -397,6 +414,7 @@ class CheckRunner(object):
 
     def __init__(self, checks):
         self.checks = checks
+        self._metadata_errors = set()
 
     def start(self):
         for check in self.checks:
@@ -408,6 +426,12 @@ class CheckRunner(object):
         for check in self.checks:
             try:
                 check.feed(item, reporter)
+            except MetadataException as e:
+                exc_info = (e.pkg, e.error)
+                # only report distinct metadata errors
+                if exc_info not in self._metadata_errors:
+                    self._metadata_errors.add(exc_info)
+                    reporter.add_report(MetadataError(e.pkg, e.attr, e.error))
             except (KeyboardInterrupt, SystemExit):
                 raise
             except Exception:

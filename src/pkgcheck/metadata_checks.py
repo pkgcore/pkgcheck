@@ -6,7 +6,6 @@ import re
 from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable
-from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions.boolean import OrRestriction
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files
@@ -14,25 +13,10 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
 from . import base, addons
+from .base import MetadataError
 from .visibility import FakeConfigurable, strip_atom_use
 
 demandload('logging')
-
-
-class MetadataError(base.Error):
-    """Problem detected with a package's metadata."""
-
-    __slots__ = ("category", "package", "version", "attr", "msg")
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, attr, msg):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.attr, self.msg = attr, str(msg)
-
-    @property
-    def short_desc(self):
-        return f"attr({self.attr}): {self.msg}"
 
 
 class MissingLicense(base.Error):
@@ -65,31 +49,15 @@ class LicenseMetadataReport(base.Template):
         self.iuse_filter = iuse_handler.get_filter('license')
 
     def feed(self, pkg, reporter):
-        try:
-            licenses = pkg.license
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except (MetadataException, MalformedAtom, ValueError) as e:
-            reporter.add_report(MetadataError(
-                pkg, 'license', f"error- {e}"))
-            del e
-        except Exception as e:
-            logging.exception(
-                f"unknown exception caught for pkg({pkg}) attr('license'): "
-                f"type({type(e)}), {e}")
-            reporter.add_report(MetadataError(
-                pkg, 'license', f"exception- {e}"))
-            del e
+        licenses = set(self.iuse_filter((str,), pkg, pkg.license, reporter))
+        if not licenses:
+            if pkg.category != 'virtual':
+                reporter.add_report(MetadataError(
+                    pkg, "license", "no license defined"))
         else:
-            licenses = set(self.iuse_filter((str,), pkg, licenses, reporter))
-            if not licenses:
-                if pkg.category != 'virtual':
-                    reporter.add_report(MetadataError(
-                        pkg, "license", "no license defined"))
-            else:
-                licenses.difference_update(pkg.repo.licenses)
-                if licenses:
-                    reporter.add_report(MissingLicense(pkg, licenses))
+            licenses.difference_update(pkg.repo.licenses)
+            if licenses:
+                reporter.add_report(MissingLicense(pkg, licenses))
 
 
 class IUSEMetadataReport(base.Template):
@@ -157,6 +125,12 @@ class PkgEAPIReport(base.Template):
         elif eapi_str in pkg.repo.config.eapis_deprecated:
             reporter.add_report(DeprecatedEAPI(pkg))
 
+    def finish(self, reporter):
+        # report all masked pkgs due to invalid EAPIs
+        for atom, (attr, error) in self.options.target_repo._masked.items():
+            if attr == 'eapi':
+                reporter.add_report(MetadataError(atom, attr, error))
+
 
 class RequiredUseDefaults(base.Warning):
     """Default USE flag settings don't satisfy REQUIRED_USE."""
@@ -199,22 +173,9 @@ class RequiredUSEMetadataReport(base.Template):
         if not pkg.eapi.options.has_required_use:
             return
 
-        try:
-            for x in self.iuse_filter((str,), pkg, pkg.required_use, reporter):
-                pass
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except (MetadataException, ValueError) as e:
-            reporter.add_report(MetadataError(
-                pkg, 'required_use', f"error- {e}"))
-            del e
-        except Exception as e:
-            logging.exception(
-                f"unknown exception caught for {pkg!r} REQUIRED_USE: "
-                f"{type(e)}: {e}")
-            reporter.add_report(MetadataError(
-                pkg, 'required_use', f"exception- {e}"))
-            del e
+        # check REQUIRED_USE for invalid nodes
+        for x in self.iuse_filter((str,), pkg, pkg.required_use, reporter):
+            pass
 
         # check both stable/unstable profiles for stable KEYWORDS and only
         # unstable profiles for unstable KEYWORDS
@@ -493,50 +454,36 @@ class DependencyReport(base.Template):
 
     def feed(self, pkg, reporter):
         for attr_name, getter in self.attrs:
-            try:
-                slot_op_or_blocks = set()
-                slot_op_blockers = set()
+            slot_op_or_blocks = set()
+            slot_op_blockers = set()
 
-                i = self.iuse_filter(
-                    (atom_cls, OrRestriction), pkg, getter(pkg), reporter, attr=attr_name)
-                for atom, in_or_restriction in self._flatten_or_restrictions(i):
-                    if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
-                        missing_use_deps = self._check_use_deps(attr_name, pkg, atom)
-                        for use, pkg_deps in missing_use_deps.items():
-                            reporter.add_report(
-                                MissingUseDepDefault(pkg, attr_name, atom, use, pkg_deps))
-                    if in_or_restriction and atom.slot_operator == '=':
-                        slot_op_or_blocks.add(atom.key)
-                    if atom.blocks and atom.match(pkg):
-                        reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
-                    if atom.blocks and atom.slot_operator == '=':
-                        slot_op_blockers.add(atom.key)
-                    if atom.op == '=' and atom.revision is None:
-                        reporter.add_report(MissingRevision(pkg, attr_name, atom))
+            i = self.iuse_filter(
+                (atom_cls, OrRestriction), pkg, getter(pkg), reporter, attr=attr_name)
+            for atom, in_or_restriction in self._flatten_or_restrictions(i):
+                if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
+                    missing_use_deps = self._check_use_deps(attr_name, pkg, atom)
+                    for use, pkg_deps in missing_use_deps.items():
+                        reporter.add_report(
+                            MissingUseDepDefault(pkg, attr_name, atom, use, pkg_deps))
+                if in_or_restriction and atom.slot_operator == '=':
+                    slot_op_or_blocks.add(atom.key)
+                if atom.blocks and atom.match(pkg):
+                    reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
+                if atom.blocks and atom.slot_operator == '=':
+                    slot_op_blockers.add(atom.key)
+                if atom.op == '=' and atom.revision is None:
+                    reporter.add_report(MissingRevision(pkg, attr_name, atom))
 
-                if slot_op_or_blocks:
-                    reporter.add_report(MetadataError(
-                        pkg, attr_name,
-                        "= slot operator used inside || block: [%s]" %
-                        (', '.join(sorted(slot_op_or_blocks),))))
-                if slot_op_blockers:
-                    reporter.add_report(MetadataError(
-                        pkg, attr_name,
-                        "= slot operator used in blocker: [%s]" %
-                        (', '.join(sorted(slot_op_blockers),))))
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except (MetadataException, MalformedAtom, ValueError) as e:
+            if slot_op_or_blocks:
                 reporter.add_report(MetadataError(
-                    pkg, attr_name, f"error- {e}"))
-                del e
-            except Exception as e:
-                logging.exception(
-                    f"unknown exception caught for pkg({pkg}) attr({attr_name}): "
-                    f"type({type(e)}), {e}")
+                    pkg, attr_name,
+                    "= slot operator used inside || block: [%s]" %
+                    (', '.join(sorted(slot_op_or_blocks),))))
+            if slot_op_blockers:
                 reporter.add_report(MetadataError(
-                    pkg, attr_name, f"exception- {e}"))
-                del e
+                    pkg, attr_name,
+                    "= slot operator used in blocker: [%s]" %
+                    (', '.join(sorted(slot_op_blockers),))))
 
 
 class StupidKeywords(base.Warning):
@@ -732,60 +679,47 @@ class SrcUriReport(base.Template):
         self.iuse_filter = iuse_handler.get_filter('fetchables')
 
     def feed(self, pkg, reporter):
-        try:
-            lacks_uri = set()
-            # duplicate entries are possible.
-            seen = set()
-            bad_filenames = set()
-            fetchables = set(self.iuse_filter(
-                (fetchable,), pkg,
-                pkg._get_attr['fetchables'](
-                    pkg, allow_missing_checksums=True,
-                    ignore_unknown_mirrors=True, skip_default_mirrors=True),
-                reporter))
-            for f_inst in fetchables:
-                if f_inst.filename in seen:
-                    continue
-                seen.add(f_inst.filename)
+        lacks_uri = set()
+        # duplicate entries are possible.
+        seen = set()
+        bad_filenames = set()
+        fetchables = set(self.iuse_filter(
+            (fetchable,), pkg,
+            pkg._get_attr['fetchables'](
+                pkg, allow_missing_checksums=True,
+                ignore_unknown_mirrors=True, skip_default_mirrors=True),
+            reporter))
+        for f_inst in fetchables:
+            if f_inst.filename in seen:
+                continue
+            seen.add(f_inst.filename)
 
-                # Check for unspecific filenames of the form ${PV}.ext and
-                # v${PV}.ext prevalent in github tagged releases as well as
-                # archives named using only the raw git commit hash.
-                bad_filenames_re = r'^(v?%s|[0-9a-f]{40})\.%s$' % (pkg.PV, pkg.eapi.archive_suffixes_re)
-                if re.match(bad_filenames_re, f_inst.filename):
-                    bad_filenames.add(f_inst.filename)
+            # Check for unspecific filenames of the form ${PV}.ext and
+            # v${PV}.ext prevalent in github tagged releases as well as
+            # archives named using only the raw git commit hash.
+            bad_filenames_re = r'^(v?%s|[0-9a-f]{40})\.%s$' % (pkg.PV, pkg.eapi.archive_suffixes_re)
+            if re.match(bad_filenames_re, f_inst.filename):
+                bad_filenames.add(f_inst.filename)
 
-                if not f_inst.uri:
-                    lacks_uri.add(f_inst.filename)
-                else:
-                    bad = set()
-                    for x in f_inst.uri:
-                        i = x.find("://")
-                        if i == -1:
-                            lacks_uri.add(x)
-                        elif x[:i] not in self.valid_protos:
-                            bad.add(x)
-                    if bad:
-                        reporter.add_report(
-                            BadProto(pkg, f_inst.filename, bad))
-            if "fetch" not in pkg.restrict:
-                for x in sorted(lacks_uri):
-                    reporter.add_report(MissingUri(pkg, x))
+            if not f_inst.uri:
+                lacks_uri.add(f_inst.filename)
+            else:
+                bad = set()
+                for x in f_inst.uri:
+                    i = x.find("://")
+                    if i == -1:
+                        lacks_uri.add(x)
+                    elif x[:i] not in self.valid_protos:
+                        bad.add(x)
+                if bad:
+                    reporter.add_report(
+                        BadProto(pkg, f_inst.filename, bad))
+        if "fetch" not in pkg.restrict:
+            for x in sorted(lacks_uri):
+                reporter.add_report(MissingUri(pkg, x))
 
-            if bad_filenames:
-                reporter.add_report(BadFilename(pkg, bad_filenames))
-
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except (MetadataException, MalformedAtom, ValueError) as e:
-            reporter.add_report(MetadataError(
-                pkg, 'fetchables', f"error- {e}"))
-            del e
-        except Exception as e:
-            logging.exception(
-                f"unknown exception caught for pkg({pkg}): type({type(e)}), {e}")
-            reporter.add_report(MetadataError(pkg, 'fetchables', f"exception- {e}"))
-            del e
+        if bad_filenames:
+            reporter.add_report(BadFilename(pkg, bad_filenames))
 
 
 class BadDescription(base.Warning):

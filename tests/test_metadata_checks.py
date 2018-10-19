@@ -136,7 +136,6 @@ class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
         profiles = [misc.FakeProfile()]
         check = metadata_checks.IUSEMetadataReport(
             options, addons.UseAddon(options, profiles))
-        check.start()
         self.assertNoReport(check, self.mk_pkg("foo bar"))
         r = self.assertReport(check, self.mk_pkg("foo dar"))
         assert r.attr == "iuse"
@@ -154,7 +153,6 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         profiles = {'x86': [misc.FakeProfile(name='default/linux/x86')]}
         self.check = metadata_checks.RequiredUSEMetadataReport(
             options, addons.UseAddon(options, profiles['x86']), profiles)
-        self.check.start()
 
     def mk_pkg(self, eapi="4", iuse="", required_use="", keywords="x86"):
         return FakePkg(
@@ -252,7 +250,6 @@ def use_based():
             profiles = [misc.FakeProfile(iuse_effective=["x86"])]
             iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
             check = self.check_kls(options, iuse_handler)
-            check.start()
             return check
 
     return use_based
@@ -284,7 +281,6 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
         profiles = [misc.FakeProfile()]
         iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
         check = self.check_kls(options, iuse_handler, {})
-        check.start()
         return check
 
     def mk_pkg(self, license='', iuse=''):

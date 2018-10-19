@@ -79,7 +79,10 @@ class ReportTestCase(object):
         if msg:
             msg = f"{msg}: "
         r = fake_reporter(lambda r: l.append(r))
-        check.feed(data, r)
+        runner = base.CheckRunner([check])
+        runner.start()
+        runner.feed(data, r)
+        runner.finish(r)
         self._assert_known_results(*l)
         assert l == [], f"{msg}{list(report.short_desc for report in l)}"
 
@@ -95,7 +98,10 @@ class ReportTestCase(object):
     def assertReports(self, check, data):
         l = []
         r = fake_reporter(lambda r: l.append(r))
-        check.feed(data, r)
+        runner = base.CheckRunner([check])
+        runner.start()
+        runner.feed(data, r)
+        runner.finish(r)
         self._assert_known_results(*l)
         assert l, f"must get a report from {check} {data}, got none"
         self.assertReportSanity(*l)

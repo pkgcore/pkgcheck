@@ -21,7 +21,6 @@ class TestVulnerabilitiesReport(TempDirMixin, misc.ReportTestCase):
             f.write(mk_glsa(("dev-util/diffball", ([], [">0.7"]))))
         with open(pjoin(self.dir, "glsa-200611-02.xml"), "w") as f:
             f.write(mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
-        check.start()
         self.assertNoReport(check, self.mk_pkg("0.5.1"))
         r = self.assertReports(check, self.mk_pkg("0.5-r5"))
         assert len(r) == 1

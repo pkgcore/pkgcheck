@@ -12,7 +12,6 @@ def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None, verbose=None)
         options=misc.Options(
             selected_arches=selected_arches, arches=arches, verbose=verbose),
         arches=None)
-    check.start()
     return check
 
 
