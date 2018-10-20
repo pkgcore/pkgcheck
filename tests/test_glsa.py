@@ -3,7 +3,8 @@ import pytest
 from snakeoil.osutils import pjoin
 
 from pkgcheck.glsa import TreeVulnerabilitiesReport as vuln_report
-from pkgcheck.test import misc
+
+from . import misc
 
 
 def mk_pkg(ver, key="dev-util/diffball"):

@@ -2,7 +2,6 @@
 source = pkgcheck
 branch = True
 omit =
-	src/pkgcheck/test/*
 	*/_verinfo.py
 
 [paths]

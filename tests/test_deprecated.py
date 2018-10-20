@@ -1,7 +1,8 @@
 import random
 
 from pkgcheck import deprecated
-from pkgcheck.test import misc
+
+from . import misc
 
 
 def mk_pkg(ver, eclasses):

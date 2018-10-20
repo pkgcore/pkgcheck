@@ -9,7 +9,8 @@ from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcheck import pkgdir_checks
-from pkgcheck.test import misc
+
+from . import misc
 
 
 class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):

@@ -12,7 +12,8 @@ from snakeoil.osutils import pjoin, ensure_dirs
 from snakeoil.test import mixins, TestCase
 
 from pkgcheck import addons, base
-from pkgcheck.test.misc import FakePkg, FakeProfile, Options
+
+from .misc import FakePkg, FakeProfile, Options
 
 
 class base_test(TestCase):

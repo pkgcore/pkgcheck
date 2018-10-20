@@ -1,5 +1,6 @@
-from pkgcheck.test import misc
 from pkgcheck.cleanup import RedundantVersionReport as redundant_ver
+
+from . import misc
 
 
 class TestRedundantVersion(misc.ReportTestCase):

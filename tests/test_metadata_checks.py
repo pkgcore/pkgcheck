@@ -10,7 +10,8 @@ from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcheck import metadata_checks, addons
-from pkgcheck.test import misc
+
+from . import misc
 
 
 class TestDescriptionReport(misc.ReportTestCase):
