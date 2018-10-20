@@ -9,7 +9,8 @@ from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import TempDirMixin
 
-from pkgcheck import metadata_checks, addons
+from pkgcheck import addons
+from pkgcheck.checks import metadata_checks
 
 from . import misc
 

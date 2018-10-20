@@ -7,7 +7,7 @@ from snakeoil import mappings
 from snakeoil.demandload import demandload
 from snakeoil.strings import pluralism as _pl
 
-from . import base, addons
+from .. import base, addons
 
 demandload(
     'os',

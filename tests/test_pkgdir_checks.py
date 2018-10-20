@@ -8,7 +8,7 @@ from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import TempDirMixin
 
-from pkgcheck import pkgdir_checks
+from pkgcheck.checks import pkgdir_checks
 
 from . import misc
 

@@ -2,7 +2,7 @@ from pkgcore.test.misc import mk_glsa
 import pytest
 from snakeoil.osutils import pjoin
 
-from pkgcheck.glsa import TreeVulnerabilitiesReport as vuln_report
+from pkgcheck.checks.glsa import TreeVulnerabilitiesReport as vuln_report
 
 from . import misc
 

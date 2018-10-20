@@ -1,4 +1,4 @@
-from pkgcheck.cleanup import RedundantVersionReport as redundant_ver
+from pkgcheck.checks.cleanup import RedundantVersionReport as redundant_ver
 
 from . import misc
 

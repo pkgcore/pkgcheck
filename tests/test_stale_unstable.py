@@ -1,6 +1,6 @@
 import time
 
-from pkgcheck import stale_unstable
+from pkgcheck.checks import stale_unstable
 
 from . import misc
 

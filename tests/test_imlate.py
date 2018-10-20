@@ -1,4 +1,4 @@
-from pkgcheck import imlate
+from pkgcheck.checks import imlate
 
 from . import misc
 

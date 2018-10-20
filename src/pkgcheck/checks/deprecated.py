@@ -1,7 +1,7 @@
 from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism as _pl
 
-from . import base
+from .. import base
 
 
 class DeprecatedEclass(base.Warning):

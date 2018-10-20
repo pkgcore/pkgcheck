@@ -1,6 +1,6 @@
 from itertools import chain
 
-from pkgcheck.codingstyle import AbsoluteSymlinkCheck, BadInsIntoCheck
+from pkgcheck.checks.codingstyle import AbsoluteSymlinkCheck, BadInsIntoCheck
 
 from . import misc
 

@@ -1,6 +1,6 @@
 import random
 
-from pkgcheck import deprecated
+from pkgcheck.checks import deprecated
 
 from . import misc
 

@@ -12,8 +12,8 @@ from snakeoil.osutils import pjoin, listdir_files
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from . import base, addons
-from .base import MetadataError
+from .. import base, addons
+from ..base import MetadataError
 from .visibility import FakeConfigurable, strip_atom_use
 
 demandload('logging')

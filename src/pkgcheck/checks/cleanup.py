@@ -1,6 +1,6 @@
 from snakeoil.strings import pluralism as _pl
 
-from .base import Template, package_feed, Warning, versioned_feed
+from ..base import Template, package_feed, Warning, versioned_feed
 
 
 class RedundantVersion(Warning):

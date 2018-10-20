@@ -1,6 +1,6 @@
 from snakeoil.test import TestCase
 
-from pkgcheck import whitespace
+from pkgcheck.checks import whitespace
 
 from . import misc
 

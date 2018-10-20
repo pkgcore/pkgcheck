@@ -3,7 +3,7 @@ import os
 from snakeoil.demandload import demandload
 from snakeoil.strings import pluralism as _pl
 
-from . import base
+from .. import base
 
 demandload(
     'pkgcore.log:logger',

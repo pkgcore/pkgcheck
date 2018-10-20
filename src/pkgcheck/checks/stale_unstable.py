@@ -4,7 +4,7 @@ import time
 
 from snakeoil.strings import pluralism as _pl
 
-from pkgcheck import addons, base
+from .. import addons, base
 
 day = 24*3600
 
