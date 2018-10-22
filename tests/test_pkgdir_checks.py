@@ -6,24 +6,17 @@ from pkgcore.test.misc import FakeRepo
 from snakeoil import fileutils
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
-from snakeoil.test.mixins import TempDirMixin
 
 from pkgcheck.checks import pkgdir_checks
 
 from . import misc
 
 
-class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
+class PkgDirReportBase(misc.Tmpdir, misc.ReportTestCase):
     """Various FILESDIR related test support."""
 
     check_kls = pkgdir_checks.PkgDirReport
-
-    def setUp(self):
-        super().setUp()
-        self.check = pkgdir_checks.PkgDirReport(None, None)
-
-    def tearDown(self):
-        TempDirMixin.tearDown(self)
+    check = pkgdir_checks.PkgDirReport(None, None)
 
     def mk_pkg(self, files={}, pkg=None):
         if pkg is None:
@@ -44,12 +37,15 @@ class PkgDirReportTest(TempDirMixin, misc.ReportTestCase):
 
         return misc.FakeFilesDirPkg(pkg, repo=repo)
 
-    def test_it(self):
-        # no files
+
+class TestPkgDirReport(PkgDirReportBase):
+    """Base tests for the PkgDirReport check."""
+
+    def test_empty_dir(self):
         self.assertNoReport(self.check, [self.mk_pkg()])
 
 
-class TestDuplicateFilesReport(PkgDirReportTest):
+class TestDuplicateFiles(PkgDirReportBase):
     """Check DuplicateFiles results."""
 
     def test_it(self):
@@ -74,7 +70,7 @@ class TestDuplicateFilesReport(PkgDirReportTest):
         )
 
 
-class TestEmptyFileReport(PkgDirReportTest):
+class TestEmptyFile(PkgDirReportBase):
     """Check EmptyFile results."""
 
     def test_it(self):
@@ -104,7 +100,7 @@ class TestEmptyFileReport(PkgDirReportTest):
         assert sorted(x.filename for x in r) == ['files/test', 'files/test2']
 
 
-class TestMismatchedPN(PkgDirReportTest):
+class TestMismatchedPN(PkgDirReportBase):
     """Check MismatchedPN results."""
 
     def test_it(self):
@@ -135,7 +131,7 @@ class TestMismatchedPN(PkgDirReportTest):
         assert 'abc-1, mismatched-0' in str(r)
 
 
-class TestInvalidPN(PkgDirReportTest):
+class TestInvalidPN(PkgDirReportBase):
     """Check InvalidPN results."""
 
     def test_it(self):
@@ -164,7 +160,7 @@ class TestInvalidPN(PkgDirReportTest):
         assert 'bar-0-foo1, bar-1-foo2' in str(r)
 
 
-class TestSizeViolation(PkgDirReportTest):
+class TestSizeViolation(PkgDirReportBase):
     """Check SizeViolation results."""
 
     def test_it(self):
@@ -207,7 +203,7 @@ class TestSizeViolation(PkgDirReportTest):
         )
 
 
-class TestExecutableFile(PkgDirReportTest):
+class TestExecutableFile(PkgDirReportBase):
     """Check ExecutableFile results."""
 
     def test_it(self):
