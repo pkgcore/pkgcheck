@@ -1,12 +1,10 @@
-from snakeoil.test import TestCase
-
 from pkgcheck import base
 
 
 dummies = list(f'dummy-{i}' for i in range(0, 10))
 
 
-class UtilitiesTest(TestCase):
+class TestUtilities(object):
 
     def test_convert_check_filter(self):
         assert base.convert_check_filter('foo')('a.foO.b')
@@ -105,7 +103,7 @@ trans_down = tuple(trans(i + 1, i) for i in range(len(dummies) - 1))
 sinks = tuple(DummySink(dummy) for dummy in dummies)
 
 
-class PlugTest(TestCase):
+class TestPlug(object):
 
     def assertPipes(self, sinks, transforms, sources, *expected_pipes, **kw):
         """Check if the plug function yields the expected pipelines.

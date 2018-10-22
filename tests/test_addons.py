@@ -9,21 +9,20 @@ from pkgcore.restrictions import packages
 from pkgcore.util import commandline
 from snakeoil.fileutils import write_file
 from snakeoil.osutils import pjoin, ensure_dirs
-from snakeoil.test import mixins, TestCase
 
 from pkgcheck import addons, base
 
-from .misc import FakePkg, FakeProfile, Options
+from .misc import FakePkg, FakeProfile, Options, Tmpdir
 
 
-class base_test(TestCase):
+class ArgparseCheck(object):
 
-    addon_kls = None
-
-    def process_check(self, args, silence=False, preset_values={}, namespace=None, **settings):
+    def process_check(self, args, silence=False, preset_values={},
+                      namespace=None, addon_kls=None, **settings):
+        addon_kls = addon_kls if addon_kls is not None else self.addon_kls
         p = commandline.ArgumentParser(domain=False, color=False)
         p.plugin = p.add_argument_group('plugin options')
-        self.addon_kls.mangle_argparser(p)
+        addon_kls.mangle_argparser(p)
         args, unknown_args = p.parse_known_args(args, namespace)
         assert unknown_args == []
         orig_out, orig_err = None, None
@@ -34,7 +33,7 @@ class base_test(TestCase):
                     orig_out = sys.stdout
                     orig_err = sys.stderr
                     sys.stdout = sys.stderr = open("/dev/null", "w")
-                self.addon_kls.check_args(p, args)
+                addon_kls.check_args(p, args)
         finally:
             if silence:
                 if orig_out:
@@ -50,7 +49,7 @@ class base_test(TestCase):
         return args
 
 
-class TestArchesAddon(base_test):
+class TestArchesAddon(ArgparseCheck):
 
     addon_kls = addons.ArchesAddon
 
@@ -64,7 +63,7 @@ class TestArchesAddon(base_test):
         self.process_check([], arches=())
 
 
-class TestQueryCacheAddon(base_test):
+class TestQueryCacheAddon(ArgparseCheck):
 
     addon_kls = addons.QueryCacheAddon
     default_feed = base.package_feed
@@ -91,7 +90,7 @@ class TestQueryCacheAddon(base_test):
         assert not check.query_cache
 
 
-class Test_profile_data(TestCase):
+class Test_profile_data(object):
 
     def assertResults(self, profile, known_flags, required_immutable,
                       required_forced, cpv="dev-util/diffball-0.1",
@@ -141,7 +140,7 @@ class Test_profile_data(TestCase):
         self.assertResults(profile, ["lib", "bar"], ["lib"], [])
 
 
-class profile_mixin(mixins.TempDirMixin, base_test):
+class ProfilesMixin(ArgparseCheck, Tmpdir):
 
     addon_kls = addons.ProfileAddon
 
@@ -186,11 +185,11 @@ class profile_mixin(mixins.TempDirMixin, base_test):
             repo = repo_objs.RepoConfig(location=profiles_base, profiles_base='.')
         namespace.target_repo = Options(config=repo)
         namespace.search_repo = Options()
-        options = base_test.process_check(self, namespace=namespace, *args, **kwds)
+        options = ArgparseCheck.process_check(self, namespace=namespace, *args, **kwds)
         return options
 
 
-class TestProfileAddon(profile_mixin):
+class TestProfileAddon(ProfilesMixin):
 
     def assertProfiles(self, check, key, *profile_names):
         assert (
@@ -403,32 +402,24 @@ class TestProfileAddon(profile_mixin):
         assert len(check.profile_evaluate_dict['x86']) == 1
 
 
-class TestEvaluateDepSetAddon(profile_mixin):
+class TestEvaluateDepSetAddon(ProfilesMixin):
 
     addon_kls = addons.EvaluateDepSetAddon
-    orig_addon_kls = addon_kls
-
-    def setUp(self):
-        super().setUp()
-        with open(pjoin(self.dir, "arch.list"), "w") as f:
-            f.write("\n".join(('amd64', 'ppc', 'x86')))
-        self.addon_kls = self.orig_addon_kls
-
-    process_check = base_test.process_check
 
     def get_check(self, *profiles):
         # basically carefully tweak profileaddon to get ourself an instance
         # since evaluate relies on it.
-        self.addon_kls = addons.ProfileAddon
-        profile_options = profile_mixin.process_check(
-            self, None, [f"--profiles={','.join(profiles)}"])
-        self.addon_kls = self.orig_addon_kls
+        profile_options = self.process_check(
+            None, [f"--profiles={','.join(profiles)}"], addon_kls=addons.ProfileAddon)
         profile_check = addons.ProfileAddon(profile_options)
 
         # now we're good to go.
         return self.addon_kls(profile_options, profile_check)
 
     def test_it(self):
+        with open(pjoin(self.dir, "arch.list"), "w") as f:
+            f.write("\n".join(('amd64', 'ppc', 'x86')))
+
         self.mk_profiles({
             "1": ["x86"],
             "2": ["x86"],
@@ -521,7 +512,7 @@ class TestEvaluateDepSetAddon(profile_mixin):
         assert sorted(x.name for x in l2) == ["1", "2"]
 
 
-class TestUseAddon(mixins.TempDirMixin, base_test):
+class TestUseAddon(ArgparseCheck, Tmpdir):
 
     addon_kls = addons.UseAddon
 

@@ -9,6 +9,8 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
 
+import pytest
+
 from pkgcheck import base
 
 
@@ -169,3 +171,12 @@ class FakeProfile(object):
         self.use = set(use)
         self.key = arch
         self.name = name
+
+
+# TODO: move to snakeoil.test or somewhere more generic
+class Tmpdir(object):
+    """Provide access to a temporary directory across all test methods."""
+
+    @pytest.fixture(autouse=True)
+    def _create_tmpdir(self, tmpdir):
+        self.dir = str(tmpdir)

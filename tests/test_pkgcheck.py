@@ -1,10 +1,9 @@
 from pkgcore.test.scripts import helpers
-from snakeoil.test import TestCase
 
 from pkgcheck.scripts import pkgcheck
 
 
-class CommandlineTest(TestCase, helpers.ArgParseMixin):
+class TestCommandline(helpers.ArgParseMixin):
 
     _argparser = pkgcheck.scan
 
