@@ -14,7 +14,9 @@ import pytest
 from pkgcheck import base
 
 
+# TODO: merge this with the pkgcore-provided equivalent
 class FakePkg(package):
+
     def __init__(self, cpvstr, data=None, shared=None, parent=None):
         if data is None:
             data = {}
@@ -23,7 +25,7 @@ class FakePkg(package):
             data.setdefault(x, "")
 
         cpv = versioned_CPV(cpvstr)
-        package.__init__(self, shared, parent, cpv.category, cpv.package, cpv.fullver)
+        super().__init__(shared, parent, cpv.category, cpv.package, cpv.fullver)
         package.local_use = ImmutableDict()
         object.__setattr__(self, "data", data)
 
@@ -40,7 +42,7 @@ class FakeTimedPkg(package):
         if data is None:
             data = {}
         cpv = versioned_CPV(cpvstr)
-        package.__init__(self, shared, factory(repo), cpv.category, cpv.package, cpv.fullver)
+        super().__init__(shared, factory(repo), cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
         object.__setattr__(self, "_mtime_", mtime)
 
@@ -53,7 +55,7 @@ class FakeFilesDirPkg(package):
         if data is None:
             data = {}
         cpv = versioned_CPV(cpvstr)
-        package.__init__(self, shared, factory(repo), cpv.category, cpv.package, cpv.fullver)
+        super().__init__(shared, factory(repo), cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
         object.__setattr__(self, "path", pjoin(
             repo.location, cpv.category, cpv.package, f'{cpv.package}-{cpv.fullver}.ebuild'))
@@ -69,6 +71,7 @@ default_threshold_attrs[base.ebuild_feed] = default_threshold_attrs[base.version
 
 
 class ReportTestCase(object):
+    """Base class for verifying report generation."""
 
     _threshold_attrs = default_threshold_attrs.copy()
 
@@ -80,7 +83,7 @@ class ReportTestCase(object):
         l = []
         if msg:
             msg = f"{msg}: "
-        r = fake_reporter(lambda r: l.append(r))
+        r = FakeReporter(lambda r: l.append(r))
         runner = base.CheckRunner([check])
         runner.start()
         runner.feed(data, r)
@@ -99,7 +102,7 @@ class ReportTestCase(object):
 
     def assertReports(self, check, data):
         l = []
-        r = fake_reporter(lambda r: l.append(r))
+        r = FakeReporter(lambda r: l.append(r))
         runner = base.CheckRunner([check])
         runner.start()
         runner.feed(data, r)
@@ -117,7 +120,9 @@ class ReportTestCase(object):
         return r[0]
 
 
-class fake_reporter(object):
+class FakeReporter(object):
+    """Fake reporter instance that uses a callback for add_report()."""
+
     def __init__(self, callback):
         self.add_report = callback
 
