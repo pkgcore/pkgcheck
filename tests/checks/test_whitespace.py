@@ -7,9 +7,7 @@ class WhitespaceCheckTest(misc.ReportTestCase):
     """Various whitespace related test support."""
 
     check_kls = whitespace.WhitespaceCheck
-
-    def setup_method(self):
-        self.check = whitespace.WhitespaceCheck(None, None)
+    check = whitespace.WhitespaceCheck(None, None)
 
 
 class TestWhitespaceFound(WhitespaceCheckTest):
