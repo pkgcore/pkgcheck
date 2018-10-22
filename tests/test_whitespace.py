@@ -18,10 +18,11 @@ class TestWhitespaceFound(WhitespaceCheckTest):
 
     def test_leading(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
-        fake_src = []
-        fake_src.append("# This is our first fake ebuild\n")
-        fake_src.append(" # This line contains a leading whitespace\n")
-        fake_src.append("# That's it for now\n")
+        fake_src = [
+            "# This is our first fake ebuild\n",
+            " # This line contains a leading whitespace\n",
+            "# That's it for now\n",
+        ]
 
         r = self.assertReport(self.check, [fake_pkg, fake_src])
         assert isinstance(r, whitespace.WhitespaceFound)
@@ -30,10 +31,11 @@ class TestWhitespaceFound(WhitespaceCheckTest):
 
     def test_trailing(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
-        fake_src = []
-        fake_src.append("# This is our first fake ebuild\n")
-        fake_src.append("# This line contains a trailing whitespace \n")
-        fake_src.append("# That's it for now\n")
+        fake_src = [
+            "# This is our first fake ebuild\n",
+            "# This line contains a trailing whitespace \n",
+            "# That's it for now\n",
+        ]
 
         r = self.assertReport(self.check, [fake_pkg, fake_src])
         assert isinstance(r, whitespace.WhitespaceFound)
@@ -45,10 +47,11 @@ class TestWrongIndentFound(WhitespaceCheckTest):
 
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
-        fake_src = []
-        fake_src.append("# This is our first fake ebuild\n")
-        fake_src.append("\t \tBad indentation\n")
-        fake_src.append("# That's it for now\n")
+        fake_src = [
+            "# This is our first fake ebuild\n",
+            "\t \tBad indentation\n",
+            "# That's it for now\n",
+        ]
 
         r = self.assertReport(self.check, [fake_pkg, fake_src])
         assert isinstance(r, whitespace.WrongIndentFound)
@@ -60,11 +63,12 @@ class TestDoubleEmptyLine(WhitespaceCheckTest):
 
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
-        fake_src = []
-        fake_src.append("# This is our first fake ebuild\n")
-        fake_src.append("\n")
-        fake_src.append("\n")
-        fake_src.append("# That's it for now\n")
+        fake_src = [
+            "# This is our first fake ebuild\n",
+            "\n",
+            "\n",
+            "# That's it for now\n",
+        ]
 
         r = self.assertReport(self.check, [fake_pkg, fake_src])
         assert isinstance(r, whitespace.DoubleEmptyLine)
@@ -76,9 +80,10 @@ class TestNoNewLineOnEnd(WhitespaceCheckTest):
 
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
-        fake_src = []
-        fake_src.append("# This is our first fake ebuild\n")
-        fake_src.append("# That's it for now")
+        fake_src = [
+            "# This is our first fake ebuild\n",
+            "# That's it for now",
+        ]
 
         r = self.assertReport(self.check, [fake_pkg, fake_src])
         assert isinstance(r, whitespace.NoFinalNewline)
@@ -89,10 +94,11 @@ class TestTrailingNewLineOnEnd(WhitespaceCheckTest):
 
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
-        fake_src = []
-        fake_src.append("# This is our first fake ebuild\n")
-        fake_src.append("# That's it for now\n")
-        fake_src.append("\n")
+        fake_src = [
+            "# This is our first fake ebuild\n",
+            "# That's it for now\n",
+            "\n",
+        ]
 
         r = self.assertReport(self.check, [fake_pkg, fake_src])
         assert isinstance(r, whitespace.TrailingEmptyLine)
@@ -103,16 +109,17 @@ class TestMultiReport(WhitespaceCheckTest):
 
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
-        fake_src = []
-        fake_src.append("# This is our first fake ebuild\n")
-        fake_src.append(" # This line contains a leading whitespace\n")
-        fake_src.append("# This line contains a trailing whitespace \n")
-        fake_src.append("# This line contains a trailing tab\t\n")
-        fake_src.append("\t \t#The first whitey is bad...\n")
-        fake_src.append("\t\t #... the second one is fine\n")
-        fake_src.append("\n")
-        fake_src.append("\n")
-        fake_src.append("# That's it for now\n")
+        fake_src = [
+            "# This is our first fake ebuild\n",
+            " # This line contains a leading whitespace\n",
+            "# This line contains a trailing whitespace \n",
+            "# This line contains a trailing tab\t\n",
+            "\t \t#The first whitey is bad...\n",
+            "\t\t #... the second one is fine\n",
+            "\n",
+            "\n",
+            "# That's it for now\n",
+        ]
 
         reports = self.assertReports(self.check, [fake_pkg, fake_src])
         assert len(reports) == 4
