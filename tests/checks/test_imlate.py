@@ -1,6 +1,6 @@
 from pkgcheck.checks import imlate
 
-from . import misc
+from .. import misc
 
 
 def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None, source_arches=None):

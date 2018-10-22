@@ -9,7 +9,7 @@ from snakeoil.osutils import pjoin
 
 from pkgcheck.checks import pkgdir_checks
 
-from . import misc
+from .. import misc
 
 
 class PkgDirReportBase(misc.Tmpdir, misc.ReportTestCase):

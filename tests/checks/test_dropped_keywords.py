@@ -4,7 +4,7 @@ from pkgcore.ebuild.const import VCS_ECLASSES
 
 from pkgcheck.checks.dropped_keywords import DroppedKeywordsReport as drop_keys
 
-from . import misc
+from .. import misc
 
 
 class TestDroppedKeywords(misc.ReportTestCase):

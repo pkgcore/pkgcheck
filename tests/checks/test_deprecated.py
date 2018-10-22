@@ -2,7 +2,7 @@ import random
 
 from pkgcheck.checks import deprecated
 
-from . import misc
+from .. import misc
 
 
 def mk_pkg(ver, eclasses):

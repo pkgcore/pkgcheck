@@ -2,7 +2,7 @@ import time
 
 from pkgcheck.checks import stale_unstable
 
-from . import misc
+from .. import misc
 
 
 def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None, verbose=None):

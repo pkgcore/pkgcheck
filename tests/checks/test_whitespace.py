@@ -1,6 +1,6 @@
 from pkgcheck.checks import whitespace
 
-from . import misc
+from .. import misc
 
 
 class WhitespaceCheckTest(misc.ReportTestCase):

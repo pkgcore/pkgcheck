@@ -2,7 +2,7 @@ from itertools import chain
 
 from pkgcheck.checks.codingstyle import AbsoluteSymlinkCheck, BadInsIntoCheck
 
-from . import misc
+from .. import misc
 
 
 class TestBadInsIntoUsage(misc.ReportTestCase):

@@ -12,7 +12,7 @@ from snakeoil.test.mixins import TempDirMixin
 from pkgcheck import addons
 from pkgcheck.checks import metadata_checks
 
-from . import misc
+from .. import misc
 
 
 class TestDescriptionReport(misc.ReportTestCase):
