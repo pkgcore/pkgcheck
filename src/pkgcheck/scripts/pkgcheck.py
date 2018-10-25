@@ -398,7 +398,6 @@ def _validate_args(parser, namespace):
 
 @scan.bind_main_func
 def _scan(options, out, err):
-    """Do stuff."""
     if not options.repo_bases:
         err.write(
             'Warning: could not determine repo base for profiles, some checks will not work.')
@@ -415,9 +414,7 @@ def _scan(options, out, err):
         reporter = options.reporter(
             out, keywords=options.filtered_keywords, verbose=options.verbose)
     except errors.ReporterInitError as e:
-        err.write(
-            err.fg('red'), err.bold, '!!! ', err.reset,
-            'Error initializing reporter: ', e)
+        err.write(f'{scan.prog}: failed initializing reporter: {e}')
         return 1
 
     addons_map = {}
@@ -478,9 +475,8 @@ def _scan(options, out, err):
             out_of_scope = bad_sinks - really_bad
             if options.verbose and out_of_scope:
                 err.warn('skipping repo checks (not a full repo scan)')
-        if not pipes:
-            out.write(out.fg('red'), ' * ', out.reset, 'No checks!')
-        else:
+
+        if pipes:
             if options.debug:
                 err.write(f'Running {len(sinks) - len(bad_sinks)} tests')
             for source, pipe in pipes:
@@ -491,6 +487,8 @@ def _scan(options, out, err):
                     pipe.feed(thing, reporter)
                 pipe.finish(reporter)
                 reporter.end_check()
+        else:
+            err.write(f'{scan.prog}: no matching checks available for current scope')
 
     reporter.finish()
 
