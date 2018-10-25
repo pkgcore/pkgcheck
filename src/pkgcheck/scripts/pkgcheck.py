@@ -5,8 +5,6 @@ pkgcheck is a QA utility based on **pkgcore**\\(5) similar to **repoman**\\(1)
 from portage.
 """
 
-
-
 import argparse
 from itertools import chain
 
@@ -34,6 +32,7 @@ demandload(
     'snakeoil.sequences:iflatten_instance',
     'pkgcheck:errors',
 )
+
 
 argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))
 subparsers = argparser.add_subparsers(description="check applets", default='scan')
