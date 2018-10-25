@@ -41,7 +41,6 @@ subparsers = argparser.add_subparsers(description="check applets", default='scan
 # These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser('scan', description='scan targets for QA issues')
 scan.set_defaults(repo_bases=[])
-scan.set_defaults(guessed_target_repo=False)
 scan.set_defaults(guessed_suite=False)
 scan.set_defaults(default_suite=False)
 scan.add_argument(
@@ -411,9 +410,6 @@ def _scan(options, out, err):
             err.write('and fell back to the default.')
         else:
             err.write('using suite guessed from working directory')
-
-    if options.guessed_target_repo:
-        err.write('using repository guessed from working directory')
 
     try:
         reporter = options.reporter(
