@@ -424,14 +424,7 @@ def _scan(options, out, err):
         if res is not None:
             return res
         deps = list(init_addon(dep) for dep in klass.required_addons)
-        try:
-            res = addons_map[klass] = klass(options, *deps)
-        except KeyboardInterrupt:
-            raise
-        except Exception:
-            if options.debug:
-                err.write(f'instantiating {klass}')
-            raise
+        res = addons_map[klass] = klass(options, *deps)
         return res
 
     for addon in options.addons:
