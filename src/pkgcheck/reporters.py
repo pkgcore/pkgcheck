@@ -30,12 +30,12 @@ class StrReporter(base.Reporter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.first_report = True
+        self._first_report = True
 
     def process_report(self, result):
-        if self.first_report:
+        if self._first_report:
             self.out.write()
-            self.first_report = False
+            self._first_report = False
         if result.threshold == base.versioned_feed:
             self.out.write(
                 f"{result.category}/{result.package}-{result.version}: {result.desc}")
@@ -47,7 +47,7 @@ class StrReporter(base.Reporter):
             self.out.write(result.desc)
 
     def finish(self):
-        if not self.first_report:
+        if not self._first_report:
             self.out.write()
 
 
