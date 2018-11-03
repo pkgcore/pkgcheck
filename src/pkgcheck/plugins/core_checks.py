@@ -14,7 +14,7 @@ pkgcore_plugins = {
         codingstyle.AbsoluteSymlinkCheck,
         codingstyle.BadInsIntoCheck,
         codingstyle.HttpsAvailableCheck,
-        codingstyle.MissingSlashCheck,
+        codingstyle.PathVariablesCheck,
         codingstyle.PortageInternalsCheck,
         deprecated.DeprecatedEclassReport,
         dropped_keywords.DroppedKeywordsReport,

@@ -84,14 +84,14 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
 
 class TestMissingSlash(misc.ReportTestCase):
 
-    check_kls = codingstyle.MissingSlashCheck
+    check_kls = codingstyle.PathVariablesCheck
     check = check_kls(options=None)
 
-    def test_it(self):
+    def _exists_test(self, cls, suffix=''):
         for path_var in self.check_kls.variables:
             fake_src = [
                 "src_install() {\n",
-                f'   rm "${{{path_var}}}"a/random/file || die\n'
+                f'   rm "${{{path_var}{suffix}}}"a/random/file || die\n'
                 "}\n",
                 "\n",
             ]
@@ -101,6 +101,13 @@ class TestMissingSlash(misc.ReportTestCase):
                     self.assertNoReport(self.check, [fake_pkg, fake_src])
                 else:
                     r = self.assertReport(self.check, [fake_pkg, fake_src])
-                    assert r.variable == f'${{{path_var}}}'
-                    assert r.line == 2
+                    assert isinstance(r, cls)
+                    assert r.variable == f'${{{path_var}{suffix}}}'
+                    assert r.lines == (2,)
                     assert path_var in str(r)
+
+    def test_missing(self):
+        self._exists_test(codingstyle.MissingSlash)
+
+    def test_unnecessary(self):
+        self._exists_test(codingstyle.UnnecessarySlashStrip, suffix='%/')

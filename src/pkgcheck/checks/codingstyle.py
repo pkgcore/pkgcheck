@@ -134,30 +134,50 @@ class PortageInternalsCheck(base.Template):
 class MissingSlash(base.Error):
     """Ebuild uses a path variable missing a trailing slash."""
 
-    __slots__ = ("category", "package", "version", "variable", "line")
+    __slots__ = ("category", "package", "version", "variable", "lines")
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, variable, line):
+    def __init__(self, pkg, variable, lines):
         super().__init__()
         self._store_cpv(pkg)
         self.variable = variable
-        self.line = line
+        self.lines = tuple(lines)
 
     @property
     def short_desc(self):
-        return f"{self.variable} missing trailing slash on line {self.line}"
+        lines = ', '.join(map(str, self.lines))
+        return f"{self.variable} missing trailing slash on line{_pl(self.lines)}: {lines}"
 
 
-class MissingSlashCheck(base.Template):
-    """Scan ebuild for variables missing trailing slashes."""
+class UnnecessarySlashStrip(base.Warning):
+    """Ebuild uses a path variable that strips a nonexistent slash."""
+
+    __slots__ = ("category", "package", "version", "variable", "lines")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, variable, lines):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.variable = variable
+        self.lines = tuple(lines)
+
+    @property
+    def short_desc(self):
+        lines = ', '.join(map(str, self.lines))
+        return f"{self.variable} unnecessary slash strip on line{_pl(self.lines)}: {lines}"
+
+
+class PathVariablesCheck(base.Template):
+    """Scan ebuild for path variables with various issues."""
 
     feed_type = base.ebuild_feed
-    known_results = (MissingSlash,)
+    known_results = (MissingSlash, UnnecessarySlashStrip)
     variables = ('ROOT', 'EROOT', 'D', 'ED')
 
     def __init__(self, options):
         super().__init__(options)
-        self.regex = re.compile(r'(\${(%s)})"?\w' % r'|'.join(self.variables))
+        self.missing_regex = re.compile(r'(\${(%s)})"?\w' % r'|'.join(self.variables))
+        self.unnecessary_regex = re.compile(r'(\${(%s)%%/})' % r'|'.join(self.variables))
 
     def feed(self, entry, reporter):
         pkg, lines = entry
@@ -166,12 +186,23 @@ class MissingSlashCheck(base.Template):
         if pkg.eapi.options.trailing_slash:
             return
 
+        missing = defaultdict(list)
+        unnecessary = defaultdict(list)
+
         for lineno, line in enumerate(lines):
             if not line:
                 continue
-            matches = self.regex.search(line)
+            matches = self.missing_regex.search(line)
             if matches is not None:
-                reporter.add_report(MissingSlash(pkg, matches.group(1), lineno + 1))
+                missing[matches.group(1)].append(lineno + 1)
+            matches = self.unnecessary_regex.search(line)
+            if matches is not None:
+                unnecessary[matches.group(1)].append(lineno + 1)
+
+        for var, lines in missing.items():
+            reporter.add_report(MissingSlash(pkg, var, lines))
+        for var, lines in unnecessary.items():
+            reporter.add_report(UnnecessarySlashStrip(pkg, var, lines))
 
 
 class AbsoluteSymlink(base.Warning):
