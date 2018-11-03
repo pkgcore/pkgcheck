@@ -82,32 +82,50 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
         assert abspaths == [x[0].strip('"\'').split()[0] for x in absolute]
 
 
-class TestMissingSlash(misc.ReportTestCase):
+class TestPathVariablesCheck(misc.ReportTestCase):
 
     check_kls = codingstyle.PathVariablesCheck
     check = check_kls(options=None)
 
-    def _exists_test(self, cls, suffix=''):
+    def _found(self, cls, suffix=''):
+        # check single and multiple matches across all specified variables
+        for lines in (1, 2):
+            for path_var in self.check_kls.variables:
+                fake_src = ["src_install() {\n"]
+                for x in range(lines):
+                    fake_src.append(f'   rm "${{{path_var}{suffix}}}"a/file{x} || die\n')
+                fake_src.extend(["}\n", "\n"])
+                for eapi_str, eapi in EAPI.known_eapis.items():
+                    fake_pkg = misc.FakePkg("dev-util/diff-0.5", data={'EAPI': eapi_str})
+                    if eapi.options.trailing_slash:
+                        self.assertNoReport(self.check, [fake_pkg, fake_src])
+                    else:
+                        r = self.assertReport(self.check, [fake_pkg, fake_src])
+                        assert isinstance(r, cls)
+                        assert r.variable == f'${{{path_var}{suffix}}}'
+                        assert r.lines == tuple(x + 2 for x in range(lines))
+                        assert path_var in str(r)
+
+    def _unfound(self, cls, suffix=''):
         for path_var in self.check_kls.variables:
             fake_src = [
                 "src_install() {\n",
-                f'   rm "${{{path_var}{suffix}}}"a/random/file || die\n'
+                f'   rm "${{S}}"a/random/file || die\n',
                 "}\n",
                 "\n",
             ]
             for eapi_str, eapi in EAPI.known_eapis.items():
                 fake_pkg = misc.FakePkg("dev-util/diffball-0.5", data={'EAPI': eapi_str})
-                if eapi.options.trailing_slash:
-                    self.assertNoReport(self.check, [fake_pkg, fake_src])
-                else:
-                    r = self.assertReport(self.check, [fake_pkg, fake_src])
-                    assert isinstance(r, cls)
-                    assert r.variable == f'${{{path_var}{suffix}}}'
-                    assert r.lines == (2,)
-                    assert path_var in str(r)
+                self.assertNoReport(self.check, [fake_pkg, fake_src])
 
-    def test_missing(self):
-        self._exists_test(codingstyle.MissingSlash)
+    def test_missing_found(self):
+        self._found(codingstyle.MissingSlash)
 
-    def test_unnecessary(self):
-        self._exists_test(codingstyle.UnnecessarySlashStrip, suffix='%/')
+    def test_missing_unfound(self):
+        self._unfound(codingstyle.MissingSlash)
+
+    def test_unnecessary_found(self):
+        self._found(codingstyle.UnnecessarySlashStrip, suffix='%/')
+
+    def test_unnecessary_unfound(self):
+        self._unfound(codingstyle.UnnecessarySlashStrip, suffix='%/')
