@@ -1,13 +1,15 @@
 from itertools import chain
 
-from pkgcheck.checks.codingstyle import AbsoluteSymlinkCheck, BadInsIntoCheck
+from pkgcore.ebuild.eapi import EAPI
+
+from pkgcheck.checks import codingstyle
 
 from .. import misc
 
 
 class TestBadInsIntoUsage(misc.ReportTestCase):
 
-    check_kls = BadInsIntoCheck
+    check_kls = codingstyle.BadInsIntoCheck
 
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
@@ -43,7 +45,7 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
 
 class TestAbsoluteSymlink(misc.ReportTestCase):
 
-    check_kls = AbsoluteSymlinkCheck
+    check_kls = codingstyle.AbsoluteSymlinkCheck
 
     def test_it(self):
         absolute = (
@@ -78,3 +80,27 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
 
         assert len(reports) == len(absolute)
         assert abspaths == [x[0].strip('"\'').split()[0] for x in absolute]
+
+
+class TestMissingSlash(misc.ReportTestCase):
+
+    check_kls = codingstyle.MissingSlashCheck
+    check = check_kls(options=None)
+
+    def test_it(self):
+        for path_var in self.check_kls.variables:
+            fake_src = [
+                "src_install() {\n",
+                f'   rm "${{{path_var}}}"a/random/file || die\n'
+                "}\n",
+                "\n",
+            ]
+            for eapi_str, eapi in EAPI.known_eapis.items():
+                fake_pkg = misc.FakePkg("dev-util/diffball-0.5", data={'EAPI': eapi_str})
+                if eapi.options.trailing_slash:
+                    self.assertNoReport(self.check, [fake_pkg, fake_src])
+                else:
+                    r = self.assertReport(self.check, [fake_pkg, fake_src])
+                    assert r.variable == f'${{{path_var}}}'
+                    assert r.line == 2
+                    assert path_var in str(r)

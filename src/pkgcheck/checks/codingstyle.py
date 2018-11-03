@@ -131,6 +131,49 @@ class PortageInternalsCheck(base.Template):
                 reporter.add_report(PortageInternals(pkg, matches.group(2), lineno + 1))
 
 
+class MissingSlash(base.Error):
+    """Ebuild uses a path variable missing a trailing slash."""
+
+    __slots__ = ("category", "package", "version", "variable", "line")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, variable, line):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.variable = variable
+        self.line = line
+
+    @property
+    def short_desc(self):
+        return f"{self.variable} missing trailing slash on line {self.line}"
+
+
+class MissingSlashCheck(base.Template):
+    """Scan ebuild for variables missing trailing slashes."""
+
+    feed_type = base.ebuild_feed
+    known_results = (MissingSlash,)
+    variables = ('ROOT', 'EROOT', 'D', 'ED')
+
+    def __init__(self, options):
+        super().__init__(options)
+        self.regex = re.compile(r'(\${(%s)})"?\w' % r'|'.join(self.variables))
+
+    def feed(self, entry, reporter):
+        pkg, lines = entry
+
+        # skip EAPIs that don't require trailing slashes
+        if pkg.eapi.options.trailing_slash:
+            return
+
+        for lineno, line in enumerate(lines):
+            if not line:
+                continue
+            matches = self.regex.search(line)
+            if matches is not None:
+                reporter.add_report(MissingSlash(pkg, matches.group(1), lineno + 1))
+
+
 class AbsoluteSymlink(base.Warning):
     """Ebuild uses dosym with absolute paths instead of relative."""
 
