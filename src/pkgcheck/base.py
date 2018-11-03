@@ -431,7 +431,8 @@ class CheckRunner(object):
                 # only report distinct metadata errors
                 if exc_info not in self._metadata_errors:
                     self._metadata_errors.add(exc_info)
-                    reporter.add_report(MetadataError(e.pkg, e.attr, e.error))
+                    error_str = ': '.join(str(e.error).split('\n'))
+                    reporter.add_report(MetadataError(e.pkg, e.attr, error_str))
             except (KeyboardInterrupt, SystemExit):
                 raise
             except Exception:
