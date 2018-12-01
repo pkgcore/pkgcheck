@@ -59,8 +59,8 @@ class TreeVulnerabilitiesReport(base.Template):
             help="source directory for glsas; tries to autodetermine it, may "
                  "be required if no glsa dirs are known")
 
-    @staticmethod
-    def check_args(parser, namespace):
+    @classmethod
+    def check_args(cls, parser, namespace):
         namespace.glsa_enabled = True
         glsa_loc = namespace.glsa_location
         if glsa_loc is not None:
@@ -79,9 +79,9 @@ class TreeVulnerabilitiesReport(base.Template):
                             'multiple glsa sources is unsupported (detected '
                             f'{glsa_loc!r} and {candidate!r}). Pick one with --glsa-dir.')
             if glsa_loc is None:
-                # form of 'optional' limiting; if they are using -c, force the
-                # error, else disable
-                if namespace.selected_checks is not None:
+                # force the error if explicitly selected using -c/--checks
+                selected_checks = namespace.selected_checks
+                if selected_checks is not None and cls.__name__ in selected_checks[1]:
                     parser.error(
                         "--glsa-dir must be specified, couldn't find glsa source")
                 namespace.glsa_enabled = False
