@@ -5,7 +5,7 @@ pkgcheck
 .. include:: pkgcheck/_synopsis.rst
 .. include:: pkgcheck/_description.rst
 .. include:: pkgcheck/_options.rst
-.. include:: pmerge/_subcommands.rst
+.. include:: pkgcheck/_subcommands.rst
 
 .. include:: pkgcheck/keywords.rst
 .. include:: pkgcheck/checks.rst
