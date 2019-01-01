@@ -7,7 +7,7 @@ def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None, source_arches
     if arches is None:
         arches = selected_arches
     return imlate.ImlateReport(
-        misc.Options(selected_arches=selected_arches, arches=arches,
+        misc.Options(selected_arches=selected_arches, stable_arches=arches,
                      source_arches=source_arches),
         arches=None)
 

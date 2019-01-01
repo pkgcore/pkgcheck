@@ -451,7 +451,7 @@ class StableCheckAddon(base.Template):
         else:
             arches = set(options.arches)
 
-        options.arches = arches
+        options.stable_arches = arches
 
 
 class UnstatedIUSE(base.Error):

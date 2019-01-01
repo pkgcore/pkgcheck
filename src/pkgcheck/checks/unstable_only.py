@@ -3,16 +3,15 @@ from collections import defaultdict
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism as _pl
 
-from ..addons import ArchesAddon, StableCheckAddon
-from ..base import package_feed, Warning
+from .. import addons, base
 
 
-class UnstableOnly(Warning):
+class UnstableOnly(base.Warning):
     """Package/keywords that are strictly unstable."""
 
     __slots__ = ("category", "package", "versions", "arches")
 
-    threshold = package_feed
+    threshold = base.package_feed
 
     def __init__(self, pkgs, arches):
         super().__init__()
@@ -26,16 +25,16 @@ class UnstableOnly(Warning):
             _pl(self.arches, plural='es'), ', '.join(self.arches), ', '.join(self.versions))
 
 
-class UnstableOnlyReport(StableCheckAddon):
+class UnstableOnlyReport(base.Template):
     """Scan for packages that have just unstable keywords."""
 
-    feed_type = package_feed
-    required_addons = (ArchesAddon,)
+    feed_type = base.package_feed
+    required_addons = (addons.StableCheckAddon,)
     known_results = (UnstableOnly,)
 
     def __init__(self, options, arches):
         super().__init__(options, arches)
-        arches = set(x.strip().lstrip("~") for x in options.arches)
+        arches = set(x.strip().lstrip("~") for x in options.stable_arches)
 
         # stable, then unstable, then file
         self.arch_restricts = {}

@@ -1,15 +1,14 @@
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism as _pl
 
-from ..addons import ArchesAddon, StableCheckAddon
-from ..base import versioned_feed, package_feed, Warning
+from .. import addons, base
 
 
-class LaggingStable(Warning):
+class LaggingStable(base.Warning):
     """Arch that is behind another from a stabling standpoint."""
 
     __slots__ = ("category", "package", "version", "keywords", "stable")
-    threshold = versioned_feed
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, keywords):
         super().__init__()
@@ -25,11 +24,11 @@ class LaggingStable(Warning):
             _pl(self.keywords), ', '.join(self.keywords))
 
 
-class ImlateReport(StableCheckAddon):
+class ImlateReport(base.Template):
     """Scan for ebuilds that are lagging in stabilization."""
 
-    feed_type = package_feed
-    required_addons = (ArchesAddon,)
+    feed_type = base.package_feed
+    required_addons = (addons.StableCheckAddon,)
     known_results = (LaggingStable,)
 
     @staticmethod
@@ -46,13 +45,13 @@ class ImlateReport(StableCheckAddon):
 
     def __init__(self, options, arches):
         super().__init__(options, arches)
-        arches = frozenset(arch.strip().lstrip("~") for arch in options.arches)
+        arches = frozenset(arch.strip().lstrip("~") for arch in options.stable_arches)
         self.target_arches = frozenset(
             "~%s" % arch.strip().lstrip("~") for arch in arches)
 
         source_arches = options.source_arches
         if source_arches is None:
-            source_arches = options.arches
+            source_arches = options.stable_arches
         self.source_arches = frozenset(
             arch.lstrip("~") for arch in source_arches)
         self.source_filter = packages.PackageRestriction(

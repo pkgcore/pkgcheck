@@ -11,7 +11,7 @@ def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None, verbose=None)
 
     check = stale_unstable.StaleUnstableReport(
         options=misc.Options(
-            selected_arches=selected_arches, arches=arches, verbose=verbose),
+            selected_arches=selected_arches, stable_arches=arches, verbose=verbose),
         arches=None)
     return check
 

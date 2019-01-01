@@ -31,7 +31,7 @@ class StaleUnstable(base.Warning):
         )
 
 
-class StaleUnstableReport(addons.StableCheckAddon):
+class StaleUnstableReport(base.Template):
     """Ebuilds that have sat unstable with no changes for over a month.
 
     By default, only triggered for arches with stable profiles. To check
@@ -42,14 +42,14 @@ class StaleUnstableReport(addons.StableCheckAddon):
     Instead they'll be caught by the UnstableOnly check.
     """
     feed_type = base.package_feed
-    required_addons = (addons.ArchesAddon,)
+    required_addons = (addons.StableCheckAddon,)
     known_results = (StaleUnstable,)
 
     def __init__(self, options, arches, staleness=int(day*30)):
         super().__init__(options, arches)
         self.staleness = staleness
         self.start_time = None
-        self.arches = frozenset(x.lstrip("~") for x in options.arches)
+        self.arches = frozenset(x.lstrip("~") for x in options.stable_arches)
 
     def start(self):
         self.start_time = time.time()
