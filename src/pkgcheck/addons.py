@@ -437,21 +437,21 @@ class EvaluateDepSetAddon(base.Template):
                 for k, v in collapsed.items()]
 
 
-class StableCheckAddon(base.Template):
+class StableArchesAddon(base.Template):
     """Check relating to stable arches by default."""
 
     required_addons = (ArchesAddon,)
 
-    def __init__(self, options, arches):
+    def __init__(self, options, arches=None):
         super().__init__(options)
         # use known stable arches if arches aren't specified
         if options.selected_arches is None:
-            arches = set().union(*(repo.config.profiles.arches('stable')
+            stable_arches = set().union(*(repo.config.profiles.arches('stable')
                                    for repo in options.target_repo.trees))
         else:
-            arches = set(options.arches)
+            stable_arches = set(options.arches)
 
-        options.stable_arches = arches
+        options.stable_arches = stable_arches
 
 
 class UnstatedIUSE(base.Error):

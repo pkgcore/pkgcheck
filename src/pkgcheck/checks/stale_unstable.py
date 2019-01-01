@@ -42,11 +42,11 @@ class StaleUnstableReport(base.Template):
     Instead they'll be caught by the UnstableOnly check.
     """
     feed_type = base.package_feed
-    required_addons = (addons.StableCheckAddon,)
+    required_addons = (addons.StableArchesAddon,)
     known_results = (StaleUnstable,)
 
-    def __init__(self, options, arches, staleness=int(day*30)):
-        super().__init__(options, arches)
+    def __init__(self, options, stable_arches=None, staleness=int(day*30)):
+        super().__init__(options)
         self.staleness = staleness
         self.start_time = None
         self.arches = frozenset(x.lstrip("~") for x in options.stable_arches)

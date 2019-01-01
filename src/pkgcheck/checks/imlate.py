@@ -28,7 +28,7 @@ class ImlateReport(base.Template):
     """Scan for ebuilds that are lagging in stabilization."""
 
     feed_type = base.package_feed
-    required_addons = (addons.StableCheckAddon,)
+    required_addons = (addons.StableArchesAddon,)
     known_results = (LaggingStable,)
 
     @staticmethod
@@ -43,8 +43,8 @@ class ImlateReport(base.Template):
                 The default arches are all stable arches (unless --arches is specified).
             """)
 
-    def __init__(self, options, arches):
-        super().__init__(options, arches)
+    def __init__(self, options, stable_arches=None):
+        super().__init__(options)
         arches = frozenset(arch.strip().lstrip("~") for arch in options.stable_arches)
         self.target_arches = frozenset(
             "~%s" % arch.strip().lstrip("~") for arch in arches)

@@ -29,11 +29,11 @@ class UnstableOnlyReport(base.Template):
     """Scan for packages that have just unstable keywords."""
 
     feed_type = base.package_feed
-    required_addons = (addons.StableCheckAddon,)
+    required_addons = (addons.StableArchesAddon,)
     known_results = (UnstableOnly,)
 
-    def __init__(self, options, arches):
-        super().__init__(options, arches)
+    def __init__(self, options, stable_arches=None):
+        super().__init__(options)
         arches = set(x.strip().lstrip("~") for x in options.stable_arches)
 
         # stable, then unstable, then file
