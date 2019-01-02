@@ -411,7 +411,7 @@ def _scan(options, out, err):
 
     try:
         reporter = options.reporter(
-            out, keywords=options.filtered_keywords, verbose=options.verbose)
+            out, keywords=options.filtered_keywords, verbosity=options.verbosity)
     except errors.ReporterInitError as e:
         err.write(f'{scan.prog}: failed initializing reporter: {e}')
         return 1
@@ -430,7 +430,7 @@ def _scan(options, out, err):
         # Ignore the return value, we just need to populate addons_map.
         init_addon(addon)
 
-    if options.verbose:
+    if options.verbosity > 1:
         err.write(
             f"target repo: {options.target_repo.repo_id!r} "
             f"at {options.target_repo.location!r}")
@@ -465,7 +465,7 @@ def _scan(options, out, err):
             for sink in really_bad:
                 err.error(f'sink {sink} could not be connected (missing transforms?)')
             out_of_scope = bad_sinks - really_bad
-            if options.verbose and out_of_scope:
+            if options.verbosity > 1 and out_of_scope:
                 err.warn('skipping repo checks (not a full repo scan)')
 
         if pipes:
@@ -605,7 +605,7 @@ def display_keywords(out, options):
     for keyword in _known_keywords:
         d.setdefault(scope_map[keyword.threshold], set()).add(keyword)
 
-    if not options.verbose:
+    if options.verbosity < 1:
         out.write('\n'.join(sorted(x.__name__ for s in d.values() for x in s)), wrap=False)
     else:
         if not d:
@@ -637,7 +637,7 @@ def display_checks(out, options):
     for x in _known_checks:
         d.setdefault(x.__module__, []).append(x)
 
-    if not options.verbose:
+    if options.verbosity < 1:
         out.write('\n'.join(sorted(x.__name__ for s in d.values() for x in s)), wrap=False)
     else:
         if not d:
@@ -675,7 +675,7 @@ def display_checks(out, options):
 
 @decorate_forced_wrapping()
 def display_reporters(out, options, config_reporters, plugin_reporters):
-    if not options.verbose:
+    if options.verbosity < 1:
         out.write('\n'.join(sorted(x.__name__ for x in plugin_reporters)), wrap=False)
     else:
         if config_reporters:

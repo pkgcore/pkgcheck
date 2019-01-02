@@ -191,7 +191,7 @@ class Result(object, metaclass=set_documentation):
 
     @property
     def desc(self):
-        if getattr(self, '_verbose', False):
+        if getattr(self, '_verbosity', False):
             return self.long_desc
         return self.short_desc
 
@@ -256,22 +256,20 @@ class MetadataError(Error):
 
 class Reporter(object):
 
-    def __init__(self, out, keywords=None, verbose=None):
+    def __init__(self, out, keywords=None, verbosity=None):
         """Initialize
 
         :type out: L{snakeoil.formatters.Formatter}
         :param keywords: result keywords to report, other keywords will be skipped
         """
         self.out = out
-        if verbose is None:
-            verbose = False
-        self.verbose = verbose
+        self.verbosity = verbosity if verbosity is not None else 0
         self._filtered_keywords = set(keywords) if keywords is not None else keywords
 
     def add_report(self, result):
         # only process reports for keywords that are enabled
         if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
-            result._verbose = self.verbose
+            result._verbosity = self.verbosity
             self.process_report(result)
 
     def process_report(self, result):

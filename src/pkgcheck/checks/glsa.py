@@ -85,7 +85,7 @@ class TreeVulnerabilitiesReport(base.Template):
                     parser.error(
                         "--glsa-dir must be specified, couldn't find glsa source")
                 namespace.glsa_enabled = False
-                if namespace.verbose:
+                if namespace.verbosity > 0:
                     logger.warn(
                         "disabling GLSA checks due to no glsa source "
                         "being found, and the check not being explicitly enabled; "

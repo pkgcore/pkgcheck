@@ -195,7 +195,7 @@ class RequiredUSEMetadataReport(base.Template):
                     if not node.match(src.use):
                         failures[node].append((src.use, profile.key, profile.name))
 
-        if self.options.verbose:
+        if self.options.verbosity > 0:
             # report all failures with profile info in verbose mode
             for node, profile_info in failures.items():
                 for use, keyword, profile in profile_info:

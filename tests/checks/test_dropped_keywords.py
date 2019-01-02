@@ -19,9 +19,9 @@ class TestDroppedKeywords(misc.ReportTestCase):
                 "_eclasses_": eclasses,
             })
 
-    def mk_check(self, arches=('x86', 'amd64'), verbose=None):
+    def mk_check(self, arches=('x86', 'amd64'), verbosity=0):
         return drop_keys(
-            misc.Options((("arches", arches),), verbose=verbose),
+            misc.Options((("arches", arches),), verbosity=verbosity),
             None)
 
     def test_it(self):
@@ -64,7 +64,7 @@ class TestDroppedKeywords(misc.ReportTestCase):
 
     def test_verbose_mode(self):
         # verbose mode outputs a report per version with dropped keywords
-        check = self.mk_check(verbose=1)
+        check = self.mk_check(verbosity=1)
         reports = self.assertReports(
             check,
             [self.mk_pkg("1", "x86 amd64"),

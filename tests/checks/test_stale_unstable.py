@@ -5,13 +5,13 @@ from pkgcheck.checks import stale_unstable
 from .. import misc
 
 
-def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None, verbose=None):
+def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None, verbosity=0):
     if arches is None:
         arches = selected_arches
 
     check = stale_unstable.StaleUnstableReport(
         options=misc.Options(
-            selected_arches=selected_arches, stable_arches=arches, verbose=verbose))
+            selected_arches=selected_arches, stable_arches=arches, verbosity=verbosity))
     return check
 
 
@@ -63,7 +63,7 @@ class TestStaleUnstableReport(misc.ReportTestCase):
 
     def test_outdated_multi_pkgs_non_verbose(self):
         reports = self.assertReports(
-            mk_check(verbose=False), [
+            mk_check(verbosity=0), [
                 mk_pkg("1.0", "amd64 x86", self.old),
                 mk_pkg("2.0", "~amd64 ~x86", self.old),
                 mk_pkg("3.0", "~amd64 ~x86", self.old),
@@ -77,7 +77,7 @@ class TestStaleUnstableReport(misc.ReportTestCase):
 
     def test_outdated_multi_pkgs_verbose(self):
         reports = self.assertReports(
-            mk_check(verbose=True), [
+            mk_check(verbosity=1), [
                 mk_pkg("1.0", "amd64 x86", self.old),
                 mk_pkg("2.0", "~amd64 ~x86", self.old),
                 mk_pkg("3.0", "~amd64 ~x86", self.old),

@@ -73,7 +73,7 @@ class iuse_options(TempDirMixin):
         fileutils.write_file(
             pjoin(repo_base, 'metadata', 'layout.conf'), 'w', "masters = ")
         kwds['target_repo'] = repository._UnconfiguredTree(repo_base)
-        kwds['verbose'] = kwds.get('verbose', None)
+        kwds.setdefault('verbosity', 0)
         return misc.Options(**kwds)
 
 
@@ -151,7 +151,7 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
     def setUp(self):
         super().setUp()
-        options = self.get_options(verbose=1)
+        options = self.get_options(verbosity=1)
         profiles = {'x86': [misc.FakeProfile(name='default/linux/x86')]}
         self.check = metadata_checks.RequiredUSEMetadataReport(
             options, addons.UseAddon(options, profiles['x86']), profiles)

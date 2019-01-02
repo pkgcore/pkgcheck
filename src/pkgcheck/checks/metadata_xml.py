@@ -320,7 +320,7 @@ class base_check(base.Template):
             refetch = not os.path.isfile(read_path)
 
             if refetch:
-                if self.options.verbose:
+                if self.options.verbosity > 0:
                     logger.warn('metadata.xsd cannot be opened from %s, will refetch', read_path)
                 logger.info("fetching metdata.xsd from %s", self.xsd_url)
                 try:

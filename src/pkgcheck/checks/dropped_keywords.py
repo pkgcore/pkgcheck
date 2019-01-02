@@ -63,7 +63,7 @@ class DroppedKeywordsReport(Template):
 
         dropped = defaultdict(list)
         for key, pkgs in changes.items():
-            if self.options.verbose:
+            if self.options.verbosity > 0:
                 # output all pkgs with dropped keywords in verbose mode
                 for pkg in pkgs:
                     dropped[pkg].append(key)

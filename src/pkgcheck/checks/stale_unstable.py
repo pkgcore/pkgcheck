@@ -74,7 +74,7 @@ class StaleUnstableReport(base.Template):
                         stale_pkgs[slot].append((pkg, unstable, int(unchanged_time/day)))
 
         for slot, pkgs in sorted(stale_pkgs.items()):
-            if self.options.verbose:
+            if self.options.verbosity > 0:
                 # output all stale pkgs in verbose mode
                 for pkg_info in pkgs:
                     pkg, unstable, period = pkg_info
