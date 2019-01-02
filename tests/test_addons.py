@@ -445,16 +445,18 @@ class TestEvaluateDepSetAddon(ProfilesMixin):
         # if duplicates come through, *and* ensure proper profile collapsing
 
         # shouldn't return anything due to no profiles matching the keywords.
-        assert get_rets("0.0.1", "depends", KEYWORDS="foon") == []
-        l = get_rets("0.0.2", "depends")
+        assert get_rets("0.0.1", "depend", KEYWORDS="foon") == []
+        l = get_rets("0.0.2", "depend")
         assert len(l) == 1, f"must collapse all profiles down to one run: got {l!r}"
         assert sorted(x.name for x in l[0][1]) == ['1', '2'], f"must have just two profiles: got {l!r}"
         assert l[0][1][0].key == 'x86'
         assert l[0][1][1].key == 'x86'
 
-        l = get_rets("0.1", "rdepends",
+        l = get_rets(
+            "0.1", "rdepend",
             RDEPEND="x? ( dev-util/confcache ) foo? ( dev-util/foo ) "
-            "bar? ( dev-util/bar ) !bar? ( dev-util/nobar ) x11-libs/xserver")
+                    "bar? ( dev-util/bar ) !bar? ( dev-util/nobar ) x11-libs/xserver"
+        )
 
         assert len(l) == 2, f"must collapse all profiles down to 2 runs: got {l!r}"
         profiles = sorted(x[1][0].name for x in l)
@@ -480,13 +482,13 @@ class TestEvaluateDepSetAddon(ProfilesMixin):
         # results from a pkg/attr tuple from above would come through rather
         # then an empty.
         check.feed(None, None)
-        l = get_rets("0.1", "rdepends")
+        l = get_rets("0.1", "rdepend")
         assert len(l) == 1, f"feed didn't clear the cache- should be len 1: {l!r}"
 
         check.feed(None, None)
 
         # ensure it handles arch right.
-        l = get_rets("0", "depends", KEYWORDS="ppc x86")
+        l = get_rets("0", "depend", KEYWORDS="ppc x86")
         assert len(l) == 1, f"should be len 1, got {l!r}"
         assert sorted(x.name for x in l[0][1]) == ["1", "2", "3"], (
             f"should have 3 profiles of 1-3, got {l[0][1]!r}")
@@ -495,12 +497,12 @@ class TestEvaluateDepSetAddon(ProfilesMixin):
         # that's partially cached (single attr at least) should *not* change
         # things.
 
-        l = get_rets("0", "depends", KEYWORDS="ppc")
+        l = get_rets("0", "depend", KEYWORDS="ppc")
         assert sorted(x.name for x in l[0][1]) == ['1', '2', '3'], (
             f"should have 3 profiles, got {l[0][1]!r}\nthis indicates it's "
             "re-identifying profiles every invocation, which is unwarranted ")
 
-        l = get_rets("1", "depends", KEYWORDS="ppc x86",
+        l = get_rets("1", "depend", KEYWORDS="ppc x86",
             DEPEND="ppc? ( dev-util/ppc ) !ppc? ( dev-util/x86 )")
         assert len(l) == 2, f"should be len 2, got {l!r}"
 

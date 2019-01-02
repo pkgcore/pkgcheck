@@ -214,12 +214,10 @@ class VisibilityReport(base.Template):
             self.check_visibility_vcs(pkg, reporter)
 
         suppressed_depsets = []
-        for attr, depset in (("depends", pkg.depends),
-                             ("rdepends", pkg.rdepends),
-                             ("post_rdepends", pkg.post_rdepends)):
+        for attr in ("depend", "rdepend", "pdepend"):
             nonexistent = set()
             try:
-                for orig_node in visit_atoms(pkg, depset):
+                for orig_node in visit_atoms(pkg, getattr(pkg, attr)):
 
                     node = strip_atom_use(orig_node)
                     if node not in self.query_cache:
@@ -251,12 +249,11 @@ class VisibilityReport(base.Template):
 
         del nonexistent
 
-        for attr, depset in (("depends", pkg.depends),
-                             ("rdepends", pkg.rdepends),
-                             ("post_rdepends", pkg.post_rdepends)):
+        for attr in ("depend", "rdepend", "pdepend"):
             if attr in suppressed_depsets:
                 continue
-            for edepset, profiles in self.depset_cache.collapse_evaluate_depset(pkg, attr, depset):
+            for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
+                    pkg, attr, getattr(pkg, attr)):
                 self.process_depset(pkg, attr, edepset, profiles, reporter)
 
     def check_visibility_vcs(self, pkg, reporter):

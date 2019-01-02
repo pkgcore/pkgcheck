@@ -316,9 +316,8 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
     check_kls = metadata_checks.DependencyReport
 
     attr_map = dict(
-        (x, x.rstrip("s").upper())
-        for x in ("depends", "rdepends"))
-    attr_map['post_rdepends'] = 'PDEPEND'
+        (x, x.upper())
+        for x in ("depend", "rdepend", "pdepend"))
 
     def mk_pkg(self, attr, data='', eapi='0', iuse=''):
         return misc.FakePkg(

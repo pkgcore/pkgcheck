@@ -354,10 +354,10 @@ class MissingSlotDepReport(base.Template):
         if not pkg.eapi.options.sub_slotting:
             return
 
-        rdepends = set(self.iuse_filter((atom_cls,), pkg, pkg.rdepends, reporter))
-        depends = set(self.iuse_filter((atom_cls,), pkg, pkg.depends, reporter))
+        rdepend = set(self.iuse_filter((atom_cls,), pkg, pkg.rdepend, reporter))
+        depend = set(self.iuse_filter((atom_cls,), pkg, pkg.depend, reporter))
         # skip deps that are blockers or have explicit slots/slot operators
-        for dep in (x for x in rdepends.intersection(depends) if not
+        for dep in (x for x in rdepend.intersection(depend) if not
                     (x.blocks or x.slot is not None or x.slot_operator is not None)):
             dep_slots = set(x.slot for x in pkg.repo.itermatch(dep))
             if len(dep_slots) > 1:
@@ -420,7 +420,7 @@ class DependencyReport(base.Template):
     feed_type = base.versioned_feed
 
     attrs = tuple((x, attrgetter(x)) for x in
-                  ("depends", "rdepends", "post_rdepends"))
+                  ("depend", "rdepend", "pdepend"))
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
@@ -594,8 +594,8 @@ class KeywordsReport(base.Template):
                 reporter.add_report(UnsortedKeywords(pkg))
             if pkg.category == 'virtual':
                 keywords = set()
-                rdepends = set(self.iuse_filter((atom_cls,), pkg, pkg.rdepends, reporter))
-                for x in rdepends:
+                rdepend = set(self.iuse_filter((atom_cls,), pkg, pkg.rdepend, reporter))
+                for x in rdepend:
                     for p in self.options.search_repo.match(strip_atom_use(x)):
                         keywords.update(p.keywords)
                 keywords = keywords | {f'~{x}' for x in keywords if x in self.valid_arches}
