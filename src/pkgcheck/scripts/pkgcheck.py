@@ -471,6 +471,7 @@ def _scan(options, out, err):
         if pipes:
             if options.debug:
                 err.write(f'Running {len(sinks) - len(bad_sinks)} tests')
+            err.flush()
             for source, pipe in pipes:
                 pipe.start()
                 reporter.start_check(
