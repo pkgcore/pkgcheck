@@ -10,7 +10,7 @@ from snakeoil.strings import pluralism as _pl
 
 from ..base import Error, Warning, Template, package_feed
 
-demandload('errno', 'snakeoil.chksum:get_chksums')
+demandload('snakeoil.chksum:get_chksums')
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()
