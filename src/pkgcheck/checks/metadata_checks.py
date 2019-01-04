@@ -573,7 +573,7 @@ class KeywordsReport(base.Template):
     def __init__(self, options, iuse_handler):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
-        self.valid_arches = self.options.target_repo.config.known_arches
+        self.valid_arches = self.options.target_repo.known_arches
         # Note: '*' and '~*' are portage-only special KEYWORDS atm, i.e. not
         # in PMS or implemented in pkgcore.
         special_keywords = set(('-*', '*', '~*'))

@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 
-from pkgcore.ebuild import repo_objs
+from pkgcore.ebuild import repo_objs, repository
 from pkgcore.restrictions import packages
 from pkgcore.util import commandline
 from snakeoil.fileutils import write_file
@@ -180,10 +180,11 @@ class ProfilesMixin(ArgparseCheck, Tmpdir):
     def process_check(self, profiles_base, *args, **kwds):
         namespace = argparse.Namespace()
         if profiles_base is None:
-            repo = repo_objs.RepoConfig(location=self.dir)
+            repo_config = repo_objs.RepoConfig(location=self.dir)
         else:
-            repo = repo_objs.RepoConfig(location=profiles_base, profiles_base='.')
-        namespace.target_repo = Options(config=repo)
+            repo_config = repo_objs.RepoConfig(location=profiles_base, profiles_base='.')
+        namespace.target_repo = repository._UnconfiguredTree(
+            repo_config.location, repo_config=repo_config)
         namespace.search_repo = Options()
         options = ArgparseCheck.process_check(self, namespace=namespace, *args, **kwds)
         return options

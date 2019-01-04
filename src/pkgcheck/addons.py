@@ -28,7 +28,7 @@ class ArchesAddon(base.Addon):
         arches = namespace.selected_arches
         target_repo = getattr(namespace, "target_repo", None)
         if target_repo is not None:
-            all_arches = set().union(*(repo.config.known_arches for repo in target_repo.trees))
+            all_arches = target_repo.known_arches
         else:
             all_arches = set()
 
@@ -251,7 +251,7 @@ class ProfileAddon(base.Addon):
         # the gentoo repo, but could be in overlays as well
         self.non_profile_dirs = {'desc', 'updates'}
 
-        self.official_arches = options.target_repo.config.known_arches
+        self.official_arches = options.target_repo.known_arches
         self.desired_arches = getattr(self.options, 'arches', None)
         if self.desired_arches is None or self.options.selected_arches is None:
             # copy it to be safe

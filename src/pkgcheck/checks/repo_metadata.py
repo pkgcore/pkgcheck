@@ -732,7 +732,7 @@ class RepoProfilesReport(base.Template):
 
     def __init__(self, options, profile_filters):
         super().__init__(options)
-        self.arches = options.target_repo.config.known_arches
+        self.arches = options.target_repo.known_arches
         self.profiles = iter(options.target_repo.config.arch_profiles.values())
         self.repo = options.target_repo
         self.profiles_dir = pjoin(self.repo.location, 'profiles')
