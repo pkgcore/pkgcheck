@@ -292,7 +292,11 @@ class LocalUSECheck(base.Template):
 
         # TODO: add support to pkgcore for getting USE_EXPAND groups?
         use_expand_base = pjoin(options.target_repo.config.profiles_base, 'desc')
-        self.use_expand_groups = {x[:-5] for x in listdir_files(use_expand_base)}
+        self.use_expand_groups = set()
+        try:
+            self.use_expand_groups.update(x[:-5] for x in listdir_files(use_expand_base))
+        except FileNotFoundError:
+            pass
 
     def feed(self, pkgs, reporter):
         pkg = pkgs[0]
