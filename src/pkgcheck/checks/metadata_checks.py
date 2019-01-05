@@ -112,8 +112,8 @@ class BannedEAPI(base.Error):
         return f"uses banned EAPI {self.eapi}"
 
 
-class PkgEAPIReport(base.Template):
-    """Scan for packages using banned or deprecated EAPIs."""
+class MetadataReport(base.Template):
+    """Scan for packages with banned/deprecated EAPIs or bad metadata."""
 
     feed_type = base.versioned_feed
     known_results = (DeprecatedEAPI,)
@@ -126,10 +126,11 @@ class PkgEAPIReport(base.Template):
             reporter.add_report(DeprecatedEAPI(pkg))
 
     def finish(self, reporter):
-        # report all masked pkgs due to invalid EAPIs
-        for atom, (attr, error) in self.options.target_repo._masked.items():
-            if attr == 'eapi':
-                reporter.add_report(MetadataError(atom, attr, error))
+        # report all masked pkgs due to invalid EAPIs and other bad metadata
+        for pkg in self.options.target_repo._masked:
+            e = pkg.data
+            reporter.add_report(MetadataError(
+                pkg.versioned_atom, e.attr, e.msg(verbosity=reporter.verbosity)))
 
 
 class RequiredUseDefaults(base.Warning):
