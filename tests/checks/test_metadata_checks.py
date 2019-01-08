@@ -72,7 +72,7 @@ class iuse_options(TempDirMixin):
         os.mkdir(pjoin(repo_base, 'metadata'))
         fileutils.write_file(
             pjoin(repo_base, 'metadata', 'layout.conf'), 'w', "masters = ")
-        kwds['target_repo'] = repository._UnconfiguredTree(repo_base)
+        kwds['target_repo'] = repository.UnconfiguredTree(repo_base)
         kwds.setdefault('verbosity', 0)
         return misc.Options(**kwds)
 

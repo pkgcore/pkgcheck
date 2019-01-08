@@ -183,7 +183,7 @@ class ProfilesMixin(ArgparseCheck, Tmpdir):
             repo_config = repo_objs.RepoConfig(location=self.dir)
         else:
             repo_config = repo_objs.RepoConfig(location=profiles_base, profiles_base='.')
-        namespace.target_repo = repository._UnconfiguredTree(
+        namespace.target_repo = repository.UnconfiguredTree(
             repo_config.location, repo_config=repo_config)
         namespace.search_repo = Options()
         options = ArgparseCheck.process_check(self, namespace=namespace, *args, **kwds)
