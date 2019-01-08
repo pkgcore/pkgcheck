@@ -20,7 +20,6 @@ from snakeoil.demandload import demandload
 
 demandload(
     'itertools:chain',
-    'logging',
     're',
 )
 
@@ -416,8 +415,6 @@ class CheckRunner(object):
 
     def start(self):
         for check in self.checks:
-            # Intentionally not catching and logging exceptions:
-            # if we fail this early we may as well abort.
             check.start()
 
     def feed(self, item, reporter):
@@ -431,17 +428,10 @@ class CheckRunner(object):
                     self._metadata_errors.add(exc_info)
                     error_str = ': '.join(str(e.error).split('\n'))
                     reporter.add_report(MetadataError(e.pkg, e.attr, error_str))
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except Exception:
-                logging.exception(f'check {check!r} raised')
 
     def finish(self, reporter):
         for check in self.checks:
-            try:
-                check.finish(reporter)
-            except Exception:
-                logging.exception(f'finishing check {check!r} failed')
+            check.finish(reporter)
 
     # The plugger tests use these.
     def __eq__(self, other):
