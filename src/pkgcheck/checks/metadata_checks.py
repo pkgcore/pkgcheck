@@ -415,7 +415,7 @@ class MissingUseDepDefault(base.Warning):
 
 
 class DependencyReport(base.Template):
-    """Check DEPEND, RDEPEND, and PDEPEND."""
+    """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon,)
     known_results = (
@@ -425,7 +425,7 @@ class DependencyReport(base.Template):
     feed_type = base.versioned_feed
 
     attrs = tuple((x, attrgetter(x)) for x in
-                  ("depend", "rdepend", "pdepend"))
+                  ("bdepend", "depend", "rdepend", "pdepend"))
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)

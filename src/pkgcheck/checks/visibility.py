@@ -214,7 +214,7 @@ class VisibilityReport(base.Template):
             self.check_visibility_vcs(pkg, reporter)
 
         suppressed_depsets = []
-        for attr in ("depend", "rdepend", "pdepend"):
+        for attr in ("bdepend", "depend", "rdepend", "pdepend"):
             nonexistent = set()
             try:
                 for orig_node in visit_atoms(pkg, getattr(pkg, attr)):
@@ -249,7 +249,7 @@ class VisibilityReport(base.Template):
 
         del nonexistent
 
-        for attr in ("depend", "rdepend", "pdepend"):
+        for attr in ("bdepend", "depend", "rdepend", "pdepend"):
             if attr in suppressed_depsets:
                 continue
             for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
