@@ -258,7 +258,7 @@ class ProfileAddon(base.Addon):
             self.desired_arches = set(self.official_arches)
 
         self.global_insoluble = set()
-        profile_filters = {}
+        profile_filters = defaultdict(list)
 
         chunked_data_cache = {}
 
@@ -272,10 +272,8 @@ class ProfileAddon(base.Addon):
             unstable_r = packages.PackageRestriction(
                 "keywords", values.ContainmentMatch2((stable_key, unstable_key,)))
 
-            default_masked_use = tuple(set(x for x in self.official_arches
-                                           if x != stable_key))
-
-            profile_filters.update({stable_key: [], unstable_key: []})
+            default_masked_use = tuple(set(
+                x for x in self.official_arches if x != stable_key))
 
             for profile_name, profile in options.arch_profiles.get(k, []):
                 vfilter = domain.generate_filter(profile.masks, profile.unmasks)
