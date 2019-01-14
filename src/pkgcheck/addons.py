@@ -259,7 +259,6 @@ class ProfileAddon(base.Addon):
 
         self.global_insoluble = set()
         profile_filters = {}
-        self.keywords_filter = {}
 
         chunked_data_cache = {}
 
@@ -340,10 +339,6 @@ class ProfileAddon(base.Addon):
                     ProtectedSet(stable_cache),
                     unstable_insoluble))
 
-            self.keywords_filter[stable_key] = stable_r
-            self.keywords_filter[unstable_key] = packages.PackageRestriction(
-                "keywords", values.ContainmentMatch2((unstable_key,)))
-
         profile_evaluate_dict = {}
         for key, profile_list in profile_filters.items():
             similar = profile_evaluate_dict[key] = []
@@ -357,9 +352,6 @@ class ProfileAddon(base.Addon):
                     similar.append([profile])
 
         self.profile_evaluate_dict = profile_evaluate_dict
-        self.keywords_filter = OrderedDict(
-            (k, self.keywords_filter[k])
-            for k in sorted(self.keywords_filter))
         self.profile_filters = profile_filters
 
     def identify_profiles(self, pkg):
