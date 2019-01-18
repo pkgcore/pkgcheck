@@ -7,6 +7,7 @@ from itertools import chain, filterfalse
 
 from pkgcore import const
 from snakeoil.cli.arghparse import StoreBool
+from snakeoil.cli.exceptions import CliException
 from snakeoil.containers import ProtectedSet
 from snakeoil.demandload import demandload
 from snakeoil.iterables import expandable_chain
@@ -236,10 +237,15 @@ class ProfileAddon(base.Addon):
 
         # initialize cache dir
         cache_dir = pjoin(const.USER_CACHE_PATH, 'pkgcheck')
-        namespace.cache_file = pjoin(cache_dir, 'profile-cache')
+        namespace.cache_file = pjoin(cache_dir, 'profiles.pickle')
         if ((namespace.cache is None or namespace.cache) and
                 not os.path.exists(cache_dir)):
-            os.makedirs(cache_dir)
+            try:
+                os.makedirs(cache_dir)
+            except IOError as e:
+                raise CliException(
+                    f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
+        namespace.forced_cache = bool(namespace.cache)
 
         # We hold onto the profiles as we're going, due to the fact that
         # profile nodes are weakly cached; hold onto all for this loop, avoids
@@ -393,8 +399,15 @@ class ProfileAddon(base.Addon):
 
         # dump cached profile filters
         if options.cache:
-            with open(options.cache_file, 'wb+') as f:
-                pickle.dump(cached_profile_filters, f)
+            try:
+                with open(options.cache_file, 'wb+') as f:
+                    pickle.dump(cached_profile_filters, f)
+            except IOError as e:
+                msg = f'failed dumping profiles cache: {cache_file!r}: {e.strerror}'
+                if not options.forced_cache:
+                    logger.warn(msg)
+                else:
+                    raise CliException(msg)
 
         profile_evaluate_dict = {}
         for key, profile_list in profile_filters.items():
