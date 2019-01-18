@@ -1,9 +1,12 @@
 """Addon functionality shared by multiple checkers."""
 
 from collections import OrderedDict, defaultdict
+from copy import copy
 from functools import partial
 from itertools import chain, filterfalse
 
+from pkgcore import const
+from snakeoil.cli.arghparse import StoreBool
 from snakeoil.containers import ProtectedSet
 from snakeoil.demandload import demandload
 from snakeoil.iterables import expandable_chain
@@ -15,6 +18,7 @@ from . import base
 
 demandload(
     'os',
+    'pickle',
     'pkgcore.restrictions:packages,values',
     'pkgcore.ebuild:misc,domain,profiles,repo_objs',
     'pkgcore.log:logger',
@@ -149,6 +153,17 @@ class ProfileAddon(base.Addon):
                 primarily for testing.
             """)
         group.add_argument(
+            '--cache', action=StoreBool,
+            help="force profile filters cache refresh or disable cache usage",
+            docs="""
+                Significantly decreases profile load time by caching and reusing
+                the resulting filters rather than rebuilding them for each run.
+
+                Caches are used by default. In order to forcibly refresh them,
+                enable this option. Conversely, if caches are unwanted disable
+                this instead.
+            """)
+        group.add_argument(
             '-p', '--profiles', metavar='PROFILE', action='csv_negations',
             dest='profiles',
             help='comma separated list of profiles to enable/disable',
@@ -219,6 +234,13 @@ class ProfileAddon(base.Addon):
 
         profile_paths = enabled.difference(disabled)
 
+        # initialize cache dir
+        cache_dir = pjoin(const.USER_CACHE_PATH, 'pkgcheck')
+        namespace.cache_file = pjoin(cache_dir, 'profile-cache')
+        if ((namespace.cache is None or namespace.cache) and
+                not os.path.exists(cache_dir)):
+            os.makedirs(cache_dir)
+
         # We hold onto the profiles as we're going, due to the fact that
         # profile nodes are weakly cached; hold onto all for this loop, avoids
         # a lot of reparsing at the expense of slightly more memory usage
@@ -259,8 +281,16 @@ class ProfileAddon(base.Addon):
 
         self.global_insoluble = set()
         profile_filters = defaultdict(list)
-
         chunked_data_cache = {}
+        cached_profile_filters = {}
+
+        # try loading cached profile filters
+        if options.cache is None:
+            try:
+                with open(options.cache_file, 'rb') as f:
+                    cached_profile_filters = pickle.load(f)
+            except (EOFError, FileNotFoundError):
+                pass
 
         for k in self.desired_arches:
             if k.lstrip("~") not in self.desired_arches:
@@ -278,24 +308,48 @@ class ProfileAddon(base.Addon):
             for profile_name, profile in options.arch_profiles.get(k, []):
                 vfilter = domain.generate_filter(profile.masks, profile.unmasks)
 
-                immutable_flags = profile.masked_use.clone(unfreeze=True)
-                immutable_flags.add_bare_global((), default_masked_use)
-                immutable_flags.optimize(cache=chunked_data_cache)
+                cached_profile = cached_profile_filters.get(profile_name, None)
+                if cached_profile:
+                    immutable_flags = cached_profile[0]
+                    stable_immutable_flags = cached_profile[1]
+                    enabled_flags = cached_profile[2]
+                    stable_enabled_flags = cached_profile[3]
+                else:
+                    # force cache updates unless explicitly disabled
+                    if options.cache is None:
+                        options.cache = True
+
+                    immutable_flags = profile.masked_use.clone(unfreeze=True)
+                    immutable_flags.add_bare_global((), default_masked_use)
+                    immutable_flags.optimize(cache=chunked_data_cache)
+
+                    stable_immutable_flags = profile.stable_masked_use.clone(unfreeze=True)
+                    stable_immutable_flags.add_bare_global((), default_masked_use)
+                    stable_immutable_flags.optimize(cache=chunked_data_cache)
+
+                    enabled_flags = profile.forced_use.clone(unfreeze=True)
+                    enabled_flags.add_bare_global((), (stable_key,))
+                    enabled_flags.optimize(cache=chunked_data_cache)
+
+                    stable_enabled_flags = profile.stable_forced_use.clone(unfreeze=True)
+                    stable_enabled_flags.add_bare_global((), (stable_key,))
+                    stable_enabled_flags.optimize(cache=chunked_data_cache)
+
+                    if options.cache:
+                        # TODO: fix pickling ImmutableDict objects
+                        # Grab a shallow copy of each profile mapping before it gets
+                        # frozen to dump into the cache; otherwise loading the dumped dict
+                        # fails due to its immutability otherwise loading the dumped dict
+                        # currently fails due to its immutability.
+                        cached_profile_filters[profile_name] = (
+                            copy(immutable_flags), copy(stable_immutable_flags),
+                            copy(enabled_flags), copy(stable_enabled_flags),
+                        )
+
+                # make profile data mappings immutable
                 immutable_flags.freeze()
-
-                stable_immutable_flags = profile.stable_masked_use.clone(unfreeze=True)
-                stable_immutable_flags.add_bare_global((), default_masked_use)
-                stable_immutable_flags.optimize(cache=chunked_data_cache)
                 stable_immutable_flags.freeze()
-
-                enabled_flags = profile.forced_use.clone(unfreeze=True)
-                enabled_flags.add_bare_global((), (stable_key,))
-                enabled_flags.optimize(cache=chunked_data_cache)
                 enabled_flags.freeze()
-
-                stable_enabled_flags = profile.stable_forced_use.clone(unfreeze=True)
-                stable_enabled_flags.add_bare_global((), (stable_key,))
-                stable_enabled_flags.optimize(cache=chunked_data_cache)
                 stable_enabled_flags.freeze()
 
                 # used to interlink stable/unstable lookups so that if
@@ -336,6 +390,11 @@ class ProfileAddon(base.Addon):
                     immutable_flags, enabled_flags,
                     ProtectedSet(stable_cache),
                     unstable_insoluble))
+
+        # dump cached profile filters
+        if options.cache:
+            with open(options.cache_file, 'wb+') as f:
+                pickle.dump(cached_profile_filters, f)
 
         profile_evaluate_dict = {}
         for key, profile_list in profile_filters.items():
