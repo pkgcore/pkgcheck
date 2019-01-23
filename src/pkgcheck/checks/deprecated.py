@@ -1,10 +1,7 @@
-from snakeoil.demandload import demand_compile_regexp
 from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism as _pl
 
 from .. import base
-
-demand_compile_regexp('inherit_re', r'^\s*inherit\s(.*)$')
 
 
 class DeprecatedEclass(base.Warning):
@@ -34,7 +31,7 @@ class DeprecatedEclass(base.Warning):
 
 class DeprecatedEclassReport(base.Template):
 
-    feed_type = base.ebuild_feed
+    feed_type = base.versioned_feed
     known_results = (DeprecatedEclass,)
 
     blacklist = ImmutableDict({
@@ -120,15 +117,8 @@ class DeprecatedEclassReport(base.Template):
     __doc__ = "Scan for deprecated eclass usage.\n\ndeprecated eclasses: %s\n" % \
         ", ".join(sorted(blacklist))
 
-    def feed(self, entry, reporter):
-        pkg, lines = entry
-        deprecated = set()
-        for line in lines:
-            match = inherit_re.match(line)
-            if match is not None:
-                inherits = set(match.group(1).split())
-                deprecated.update(inherits.intersection(self.blacklist))
-
+    def feed(self, pkg, reporter):
+        deprecated = set(pkg.inherit).intersection(self.blacklist)
         if deprecated:
             eclasses = tuple((old, self.blacklist[old]) for old in sorted(deprecated))
             reporter.add_report(DeprecatedEclass(pkg, eclasses))

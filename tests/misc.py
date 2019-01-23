@@ -5,6 +5,7 @@ from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.misc import ChunkedDataDict, chunked_data
 from pkgcore.package.metadata import factory
 from pkgcore.repository.util import SimpleTree
+from snakeoil.data_source import text_data_source
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
@@ -17,7 +18,7 @@ from pkgcheck import base
 # TODO: merge this with the pkgcore-provided equivalent
 class FakePkg(package):
 
-    def __init__(self, cpvstr, data=None, shared=None, parent=None):
+    def __init__(self, cpvstr, data=None, shared=None, parent=None, ebuild=''):
         if data is None:
             data = {}
 
@@ -28,10 +29,15 @@ class FakePkg(package):
         super().__init__(shared, parent, cpv.category, cpv.package, cpv.fullver)
         package.local_use = ImmutableDict()
         object.__setattr__(self, "data", data)
+        object.__setattr__(self, "_ebuild", ebuild)
 
     @property
     def eapi(self):
         return get_eapi(self.data.get('EAPI', '0'))
+
+    @property
+    def ebuild(self):
+        return text_data_source(self._ebuild)
 
 
 class FakeTimedPkg(package):

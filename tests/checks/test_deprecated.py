@@ -5,8 +5,8 @@ from pkgcheck.checks import deprecated
 from .. import misc
 
 
-def mk_pkg(ver):
-    return misc.FakePkg(f"dev-util/diffball-{ver}")
+def mk_pkg(ver, fake_src):
+    return misc.FakePkg(f"dev-util/diffball-{ver}", ebuild=fake_src)
 
 
 class TestDeprecatedEclass(misc.ReportTestCase):
@@ -15,34 +15,32 @@ class TestDeprecatedEclass(misc.ReportTestCase):
     check = deprecated.DeprecatedEclassReport(None, None)
 
     def test_no_eclasses(self):
-        fake_src = [
-            "# This is a fake ebuild\n",
-            " # This line contains a leading whitespace\n",
-            "# That's it for now\n",
-        ]
-        self.assertNoReport(self.check, [mk_pkg("0.7.1"), fake_src])
+        fake_src = """
+            # This is a fake ebuild
+            # That's it for now
+        """
+        self.assertNoReport(self.check, mk_pkg("0.7.1", fake_src))
 
     def test_single_current_eclass(self):
-        fake_src = [
-            "# This is a fake ebuild\n",
-            "EAPI=7\n",
-            "\n",
-            "inherit git-r3\n",
-        ]
-        self.assertNoReport(self.check, [mk_pkg("0.7.1"), fake_src])
+        fake_src = """
+            # This is a fake ebuild
+            EAPI=7
+
+            inherit git-r3
+        """
+        self.assertNoReport(self.check, mk_pkg("0.7.1", fake_src))
 
     def test_deprecated_no_replacement(self):
         eclass = next(
             k for k, v in self.check.blacklist.items() if v == None)
 
-        fake_src = [
-            "# This is a fake ebuild\n",
-            "EAPI=2\n",
-            "\n",
-            f"inherit {eclass}\n",
-        ]
+        fake_src = f"""
+            # This is a fake ebuild
+            EAPI=2
+            inherit {eclass}
+        """
 
-        r = self.assertReport(self.check, [mk_pkg("0.1"), fake_src])
+        r = self.assertReport(self.check, mk_pkg("0.1", fake_src))
         assert isinstance(r, deprecated.DeprecatedEclass)
         assert r.eclasses == ((eclass, None),)
         assert f"uses deprecated eclass: [ {eclass} (no replacement) ]" == str(r)
@@ -51,14 +49,14 @@ class TestDeprecatedEclass(misc.ReportTestCase):
         eclass, replacement = next(
             (k, v) for k, v in self.check.blacklist.items() if v)
 
-        fake_src = [
-            "# This is a fake ebuild\n",
-            "EAPI=4\n",
-            "\n",
-            f"inherit {eclass}\n",
-        ]
+        fake_src = f"""
+            # This is a fake ebuild
+            EAPI=4
 
-        r = self.assertReport(self.check, [mk_pkg("0.1"), fake_src])
+            inherit {eclass}
+        """
+
+        r = self.assertReport(self.check, mk_pkg("0.1", fake_src))
         assert isinstance(r, deprecated.DeprecatedEclass)
         assert r.eclasses == ((eclass, replacement),)
         assert f"uses deprecated eclass: [ {eclass} (migrate to {replacement}) ]" == str(r)
@@ -67,25 +65,24 @@ class TestDeprecatedEclass(misc.ReportTestCase):
         eclass, replacement = next(
             (k, v) for k, v in self.check.blacklist.items() if v)
 
-        fake_src = [
-            "# This is a fake ebuild\n",
-            "EAPI=1\n",
-            "\n",
-            f"inherit git-r3 {eclass}\n",
-        ]
+        fake_src = f"""
+            # This is a fake ebuild
+            EAPI=1
 
-        r = self.assertReport(self.check, [mk_pkg("0.1"), fake_src])
+            inherit git-r3 {eclass}
+        """
+
+        r = self.assertReport(self.check, mk_pkg("0.1", fake_src))
         assert isinstance(r, deprecated.DeprecatedEclass)
         assert r.eclasses == ((eclass, replacement),)
         assert f"uses deprecated eclass: [ {eclass} (migrate to {replacement}) ]" == str(r)
 
     def test_all_known_deprecated(self):
-        fake_src = [
-            "# This is a fake ebuild\n",
-            "\n",
-            f"inherit {' '.join(self.check.blacklist.keys())}\n",
-        ]
+        fake_src = f"""
+            # This is a fake ebuild
+            inherit {' '.join(self.check.blacklist.keys())}
+        """
 
-        r = self.assertReport(self.check, [mk_pkg("0.1"), fake_src])
+        r = self.assertReport(self.check, mk_pkg("0.1", fake_src))
         assert isinstance(r, deprecated.DeprecatedEclass)
         assert r.eclasses == tuple(sorted(self.check.blacklist.items()))
