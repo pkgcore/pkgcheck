@@ -5,7 +5,7 @@ import re
 
 from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
 from pkgcore.ebuild.misc import sort_keywords
-from pkgcore.fetch import fetchable
+from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.restrictions.boolean import OrRestriction
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files
@@ -626,6 +626,24 @@ class MissingUri(base.Warning):
             "RESTRICT=fetch isn't set"
 
 
+class UnknownMirror(base.Error):
+    """URI uses an unknown mirror."""
+
+    __slots__ = ("category", "package", "version", "filename", "uri", "mirror")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, filename, uri, mirror):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.filename = filename
+        self.uri = uri
+        self.mirror = mirror
+
+    @property
+    def short_desc(self):
+        return f"file {self.filename}: unknown mirror {self.mirror!r} from URI {self.uri!r}"
+
+
 class BadProto(base.Warning):
     """URI uses an unsupported protocol.
 
@@ -643,7 +661,7 @@ class BadProto(base.Warning):
 
     @property
     def short_desc(self):
-        return f"file {self.filename}.: bad protocol/uri: {self.bad_uri!r}"
+        return f"file {self.filename}: bad protocol/uri: {self.bad_uri!r}"
 
 
 class BadFilename(base.Warning):
@@ -674,7 +692,7 @@ class SrcUriReport(base.Template):
 
     required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
-    known_results = (BadFilename, BadProto, MissingUri, MetadataError) + \
+    known_results = (BadFilename, BadProto, MissingUri, MetadataError, UnknownMirror) + \
         addons.UseAddon.known_results
 
     valid_protos = frozenset(["http", "https", "ftp"])
@@ -698,6 +716,14 @@ class SrcUriReport(base.Template):
             if f_inst.filename in seen:
                 continue
             seen.add(f_inst.filename)
+            
+            mirrors = f_inst.uri.visit_mirrors(treat_default_as_mirror=False)
+            unknown_mirrors = [
+                (m, sub_uri) for m, sub_uri in mirrors if isinstance(m, unknown_mirror)]
+            for mirror, sub_uri in unknown_mirrors:
+                uri = f"{mirror}/{sub_uri}"
+                reporter.add_report(
+                    UnknownMirror(pkg, f_inst.filename, uri, mirror.mirror_name))
 
             # Check for unspecific filenames of the form ${PV}.ext and
             # v${PV}.ext prevalent in github tagged releases as well as
