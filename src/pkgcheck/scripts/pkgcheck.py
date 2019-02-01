@@ -473,7 +473,7 @@ def _scan(options, out, err):
                 err.write(f'Running {len(sinks) - len(bad_sinks)} tests')
             err.flush()
             for source, pipe in pipes:
-                pipe.start()
+                pipe.start(reporter)
                 reporter.start_check(
                     list(base.collect_checks_classes(pipe)), filterer)
                 for thing in source.feed():

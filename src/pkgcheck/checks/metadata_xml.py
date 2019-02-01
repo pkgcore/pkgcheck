@@ -311,7 +311,7 @@ class base_check(base.Template):
         self.repo_base = options.target_repo.location
         self.xsd_file = None
 
-    def start(self):
+    def start(self, reporter):
         if base_check.schema is None:
             refetch = False
             write_path = read_path = self.options.metadata_xsd

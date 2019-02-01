@@ -51,7 +51,7 @@ class StaleUnstableReport(base.Template):
         self.start_time = None
         self.arches = frozenset(x.lstrip("~") for x in options.stable_arches)
 
-    def start(self):
+    def start(self, reporter):
         self.start_time = time.time()
 
     def feed(self, pkgset, reporter):

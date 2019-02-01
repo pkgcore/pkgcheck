@@ -225,7 +225,7 @@ class UnusedLicensesCheck(base.Template):
         super().__init__(options)
         self.unused_licenses = None
 
-    def start(self):
+    def start(self, reporter):
         master_licenses = self.unused_master_licenses = set()
         for repo in self.options.target_repo.masters:
             master_licenses.update(repo.licenses)
@@ -312,7 +312,7 @@ class UnusedMirrorsCheck(base.Template):
                 mirrors.append(m[0].mirror_name)
         return set(mirrors)
 
-    def start(self):
+    def start(self, reporter):
         master_mirrors = self.unused_master_mirrors = set()
         for repo in self.options.target_repo.masters:
             master_mirrors.update(repo.mirrors.keys())
@@ -391,7 +391,7 @@ class UnusedEclassesCheck(base.Template):
         super().__init__(options)
         self.unused_eclasses = None
 
-    def start(self):
+    def start(self, reporter):
         master_eclasses = self.unused_master_eclasses = set()
         for repo in self.options.target_repo.masters:
             master_eclasses.update(repo.eclass_cache.eclasses.keys())
@@ -943,7 +943,7 @@ class GlobalUSECheck(base.Template):
             flag: desc for matcher, (flag, desc) in options.target_repo.config.use_expand_desc}
         self.global_flag_usage = defaultdict(set)
 
-    def start(self):
+    def start(self, reporter):
         master_flags = self.unused_master_flags = set()
         for repo in self.options.target_repo.masters:
             master_flags.update(flag for matcher, (flag, desc) in repo.config.use_desc)

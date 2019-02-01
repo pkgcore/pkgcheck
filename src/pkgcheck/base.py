@@ -108,7 +108,7 @@ class Template(Addon, metaclass=set_documentation):
     # weird pseudo-checks like the cache wiper that influence other checks.
     priority = 0
 
-    def start(self):
+    def start(self, reporter):
         """Do startup here."""
 
     def feed(self, item, reporter):
@@ -130,9 +130,9 @@ class Transform(object):
     def __init__(self, child):
         self.child = child
 
-    def start(self):
+    def start(self, reporter):
         """Startup."""
-        self.child.start()
+        self.child.start(reporter)
 
     def feed(self, item, reporter):
         raise NotImplementedError
@@ -413,9 +413,17 @@ class CheckRunner(object):
         self.checks = checks
         self._metadata_errors = set()
 
-    def start(self):
+    def start(self, reporter):
         for check in self.checks:
-            check.start()
+            try:
+                check.start(reporter)
+            except MetadataException as e:
+                exc_info = (e.pkg, e.error)
+                # only report distinct metadata errors
+                if exc_info not in self._metadata_errors:
+                    self._metadata_errors.add(exc_info)
+                    error_str = ': '.join(str(e.error).split('\n'))
+                    reporter.add_report(MetadataError(e.pkg, e.attr, error_str))
 
     def feed(self, item, reporter):
         for check in self.checks:

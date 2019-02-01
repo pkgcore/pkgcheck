@@ -100,7 +100,7 @@ class TreeVulnerabilitiesReport(base.Template):
         self.enabled = False
         self.vulns = {}
 
-    def start(self):
+    def start(self, reporter):
         if not self.options.glsa_enabled:
             return
         # this is a bit brittle

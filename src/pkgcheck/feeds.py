@@ -37,8 +37,8 @@ class _Collapse(base.Transform):
     Override keyfunc in a subclass and set the C{transforms} attribute.
     """
 
-    def start(self):
-        base.Transform.start(self)
+    def start(self, reporter):
+        base.Transform.start(self, reporter)
         self.chunk = None
         self.key = None
 
@@ -88,8 +88,8 @@ class VersionToCategory(_Collapse):
 
 class _PackageOrCategoryToRepo(base.Transform):
 
-    def start(self):
-        base.Transform.start(self)
+    def start(self, reporter):
+        base.Transform.start(self, reporter)
         self.repo = []
 
     def feed(self, item, reporter):
@@ -124,8 +124,8 @@ class PackageToCategory(base.Transform):
     scope = base.category_scope
     cost = 10
 
-    def start(self):
-        base.Transform.start(self)
+    def start(self, reporter):
+        base.Transform.start(self, reporter)
         self.chunk = None
         self.category = None
 

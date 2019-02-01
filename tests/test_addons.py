@@ -83,7 +83,7 @@ class TestQueryCacheAddon(ArgparseCheck):
     def test_feed(self):
         options = self.process_check([], silence=True)
         check = self.addon_kls(options)
-        check.start()
+        check.start(None)
         assert check.feed_type == self.default_feed
         check.query_cache["boobies"] = "hooray for"
         check.feed(None, None)

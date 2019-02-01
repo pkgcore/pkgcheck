@@ -91,7 +91,7 @@ class ReportTestCase(object):
             msg = f"{msg}: "
         r = FakeReporter(lambda r: l.append(r))
         runner = base.CheckRunner([check])
-        runner.start()
+        runner.start(r)
         runner.feed(data, r)
         runner.finish(r)
         self._assert_known_results(*l)
@@ -110,7 +110,7 @@ class ReportTestCase(object):
         l = []
         r = FakeReporter(lambda r: l.append(r))
         runner = base.CheckRunner([check])
-        runner.start()
+        runner.start(r)
         runner.feed(data, r)
         runner.finish(r)
         self._assert_known_results(*l)
