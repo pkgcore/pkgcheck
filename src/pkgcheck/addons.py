@@ -235,6 +235,10 @@ class ProfileAddon(base.Addon):
 
         profile_paths = enabled.difference(disabled)
 
+        # only default to using cache when run without target args within a repo
+        if namespace.cache is None and namespace.default_target is None:
+            namespace.cache = False
+
         # initialize cache dir
         cache_dir = pjoin(const.USER_CACHE_PATH, 'pkgcheck')
         namespace.cache_file = pjoin(cache_dir, 'profiles.pickle')

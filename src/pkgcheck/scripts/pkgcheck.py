@@ -260,6 +260,7 @@ def _validate_args(parser, namespace):
 
     namespace.repo_bases = [abspath(repo.location) for repo in reversed(namespace.target_repo.trees)]
 
+    namespace.default_target = None
     if namespace.targets:
         repo = namespace.target_repo
 
@@ -296,7 +297,9 @@ def _validate_args(parser, namespace):
         if cwd not in namespace.target_repo:
             namespace.limiters = [packages.AlwaysTrue]
         else:
-            namespace.limiters = [packages.AndRestriction(*namespace.target_repo.path_restrict(cwd))]
+            namespace.limiters = [packages.AndRestriction(
+                *namespace.target_repo.path_restrict(cwd))]
+            namespace.default_target = cwd
 
     if namespace.checkset is None:
         namespace.checkset = namespace.config.get_default('pkgcheck_checkset')
