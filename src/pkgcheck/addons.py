@@ -7,7 +7,7 @@ from itertools import chain, filterfalse
 
 from pkgcore import const
 from snakeoil.cli.arghparse import StoreBool
-from snakeoil.cli.exceptions import CliException
+from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
 from snakeoil.demandload import demandload
 from snakeoil.iterables import expandable_chain
@@ -243,7 +243,7 @@ class ProfileAddon(base.Addon):
             try:
                 os.makedirs(cache_dir)
             except IOError as e:
-                raise CliException(
+                raise UserException(
                     f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
         namespace.forced_cache = bool(namespace.cache)
 
