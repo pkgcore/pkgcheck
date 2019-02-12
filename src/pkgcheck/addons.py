@@ -349,8 +349,7 @@ class ProfileAddon(base.Addon):
                         # TODO: fix pickling ImmutableDict objects
                         # Grab a shallow copy of each profile mapping before it gets
                         # frozen to dump into the cache; otherwise loading the dumped dict
-                        # fails due to its immutability otherwise loading the dumped dict
-                        # currently fails due to its immutability.
+                        # fails due to its immutability.
                         cached_profile_filters[profile_name] = (
                             copy(immutable_flags), copy(stable_immutable_flags),
                             copy(enabled_flags), copy(stable_enabled_flags),
