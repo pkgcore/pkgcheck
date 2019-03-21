@@ -136,25 +136,36 @@ class MetadataReport(base.Template):
 class RequiredUseDefaults(base.Warning):
     """Default USE flag settings don't satisfy REQUIRED_USE."""
 
-    __slots__ = ("category", "package", "version", "profile", "keyword", "required_use", "use")
+    __slots__ = (
+        "category", "package", "version", "profile", "num_profiles", "keyword",
+        "required_use", "use",
+    )
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, required_use, use=(), keyword=None, profile=None):
+    def __init__(self, pkg, required_use, use=(), keyword=None,
+                 profile=None, num_profiles=None):
         super().__init__()
         self._store_cpv(pkg)
         self.required_use = str(required_use)
         self.use = tuple(sorted(use))
         self.keyword = keyword
         self.profile = profile
+        self.num_profiles = num_profiles
 
     @property
     def short_desc(self):
         if not self.use:
             # collapsed version
-            return f'failed REQUIRED_USE: {self.required_use}'
+            return (
+                f'profile: {self.profile!r} ({self.num_profiles} total) '
+                f'failed REQUIRED_USE: {self.required_use}'
+            )
         else:
-            return f'keyword: {self.keyword}, profile: {self.profile}, '\
-                f"default USE: [{', '.join(self.use)}] -- failed REQUIRED_USE: {self.required_use}"
+            return (
+                f'keyword: {self.keyword}, profile: {self.profile}, '
+                f"default USE: [{', '.join(self.use)}] "
+                f'-- failed REQUIRED_USE: {self.required_use}'
+            )
 
 
 class RequiredUSEMetadataReport(base.Template):
@@ -204,8 +215,11 @@ class RequiredUSEMetadataReport(base.Template):
                         pkg, node, use, keyword, profile))
         else:
             # only report one failure per REQUIRED_USE node in regular mode
-            for node in failures.keys():
-                reporter.add_report(RequiredUseDefaults(pkg, node))
+            for node, profile_info in failures.items():
+                num_profiles = len(profile_info)
+                _use, _keyword, profile = profile_info[0]
+                reporter.add_report(RequiredUseDefaults(
+                    pkg, node, profile=profile, num_profiles=num_profiles))
 
 
 class UnusedLocalUSE(base.Warning):
