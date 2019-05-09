@@ -848,7 +848,7 @@ class RestrictsReport(base.Template):
     feed_type = base.versioned_feed
     known_restricts = frozenset((
         "binchecks", "bindist", "fetch", "installsources", "mirror",
-        "primaryuri", "splitdebug", "strip", "test", "userpriv",
+        "preserve-libs", "primaryuri", "splitdebug", "strip", "test", "userpriv",
     ))
 
     known_results = (BadRestricts,) + addons.UseAddon.known_results
