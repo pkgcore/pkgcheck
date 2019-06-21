@@ -760,11 +760,9 @@ class RepoProfilesReport(base.Template):
         root_profile_dirs = {'embedded'}
         available_profile_dirs = set()
         for root, _dirs, _files in os.walk(self.profiles_dir):
-            # skip deprecated profiles
-            if not os.path.exists(pjoin(root, 'deprecated')):
-                d = root[len(self.profiles_dir):].lstrip('/')
-                if d:
-                    available_profile_dirs.add(d)
+            d = root[len(self.profiles_dir):].lstrip('/')
+            if d:
+                available_profile_dirs.add(d)
         available_profile_dirs -= self.non_profile_dirs | root_profile_dirs
 
         def parents(path):
