@@ -938,7 +938,8 @@ class GlobalUSECheck(base.Template):
         self.global_use = {
             flag: desc for matcher, (flag, desc) in options.target_repo.config.use_desc}
         self.use_expand = {
-            flag: desc for matcher, (flag, desc) in options.target_repo.config.use_expand_desc}
+            flag: desc for flags in options.target_repo.config.use_expand_desc.values()
+            for flag, desc in flags}
         self.global_flag_usage = defaultdict(set)
 
     def start(self, reporter):

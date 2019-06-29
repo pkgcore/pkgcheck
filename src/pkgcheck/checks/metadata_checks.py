@@ -273,7 +273,7 @@ class ProbableGlobalUSE(base.Warning):
 
 
 class ProbableUSE_EXPAND(base.Warning):
-    """Local USE flag matches a USE_EXPAND group."""
+    """Local USE flag that isn't overridden matches a USE_EXPAND group."""
 
     __slots__ = ("category", "package", "flag", "group")
     threshold = base.package_feed
@@ -305,13 +305,10 @@ class LocalUSECheck(base.Template):
         self.global_use = {
             flag: desc for matcher, (flag, desc) in options.target_repo.config.use_desc}
 
-        # TODO: add support to pkgcore for getting USE_EXPAND groups?
-        use_expand_base = pjoin(options.target_repo.config.profiles_base, 'desc')
-        self.use_expand_groups = set()
-        try:
-            self.use_expand_groups.update(x[:-5] for x in listdir_files(use_expand_base))
-        except FileNotFoundError:
-            pass
+        self.use_expand_groups = dict()
+        for key in options.target_repo.config.use_expand_desc.keys():
+            self.use_expand_groups[f'{key}_'] = {
+                flag for flag, desc in options.target_repo.config.use_expand_desc[key]}
 
     def feed(self, pkgs, reporter):
         pkg = pkgs[0]
@@ -326,7 +323,8 @@ class LocalUSECheck(base.Template):
                     reporter.add_report(ProbableGlobalUSE(pkg, flag))
             else:
                 for group in self.use_expand_groups:
-                    if flag.startswith(f"{group}_"):
+                    if (flag.startswith(group) and
+                            flag not in self.use_expand_groups[group]):
                         reporter.add_report(ProbableUSE_EXPAND(pkg, flag, group))
                         break
 

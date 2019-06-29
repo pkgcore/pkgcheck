@@ -554,7 +554,9 @@ class UseAddon(base.Addon):
 
         for repo in options.target_repo.trees:
             known_iuse.update(flag for matcher, (flag, desc) in repo.config.use_desc)
-            known_iuse_expand.update(flag for matcher, (flag, desc) in repo.config.use_expand_desc)
+            known_iuse_expand.update(
+                flag for flags in repo.config.use_expand_desc.values()
+                for flag, desc in flags)
 
         self.collapsed_iuse = misc.non_incremental_collapsed_restrict_to_data(
             ((packages.AlwaysTrue, known_iuse),),
