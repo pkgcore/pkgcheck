@@ -297,13 +297,17 @@ class VisibilityReport(base.Template):
                     # hack to skip matching, conditional blockers
                     # e.g. a? ( x ) !a? ( !x )
                     if node in depset.node_conds:
-                        reg_node = atom(str(node).lstrip('!'))
-                        if reg_node in depset.node_conds:
+                        reg_node = atom(node.key)
+                        try:
+                            k, v = next((k, v) for k, v in depset.node_conds.items()
+                                if k != node and reg_node.match(k))
+                            use_reg = v[0]
                             use_block = depset.node_conds[node][0]
-                            use_reg = depset.node_conds[reg_node][0]
                             if (use_block.negate == (not use_reg.negate) and
                                     use_block.vals == use_reg.vals):
-                                continue
+                                break
+                        except StopIteration:
+                            pass
                     blockers.extend(required)
                     break
             else:
