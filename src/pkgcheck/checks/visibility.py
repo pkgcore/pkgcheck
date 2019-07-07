@@ -297,7 +297,7 @@ class VisibilityReport(base.Template):
                     # hack to skip matching, conditional blockers
                     # e.g. a? ( x ) !a? ( !x )
                     if node in depset.node_conds:
-                        reg_node = atom(node.op + node.cpvstr)
+                        reg_node = atom(str(node).lstrip('!'))
                         if reg_node in depset.node_conds:
                             use_block = depset.node_conds[node][0]
                             use_reg = depset.node_conds[reg_node][0]
