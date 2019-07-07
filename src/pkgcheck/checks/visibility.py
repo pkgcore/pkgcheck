@@ -252,9 +252,10 @@ class VisibilityReport(base.Template):
         for attr in ("bdepend", "depend", "rdepend", "pdepend"):
             if attr in suppressed_depsets:
                 continue
+            depset = getattr(pkg, attr)
             for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
-                    pkg, attr, getattr(pkg, attr)):
-                self.process_depset(pkg, attr, edepset, profiles, reporter)
+                    pkg, attr, depset):
+                self.process_depset(pkg, attr, depset, edepset, profiles, reporter)
 
     def check_visibility_vcs(self, pkg, reporter):
         for profile in self.profiles:
@@ -285,14 +286,24 @@ class VisibilityReport(base.Template):
         object.__setattr__(a, 'use', frozenset(use_map[x] for x in use))
         return a
 
-    def process_depset(self, pkg, attr, depset, profiles, reporter):
+    def process_depset(self, pkg, attr, depset, edepset, profiles, reporter):
         get_cached_query = self.query_cache.get
 
         csolutions = []
         blockers = []
-        for required in depset.iter_cnf_solutions():
+        for required in edepset.iter_cnf_solutions():
             for node in required:
                 if node.blocks:
+                    # hack to skip matching, conditional blockers
+                    # e.g. a? ( x ) !a? ( !x )
+                    if node in depset.node_conds:
+                        reg_node = atom(node.op + node.cpvstr)
+                        if reg_node in depset.node_conds:
+                            use_block = depset.node_conds[node][0]
+                            use_reg = depset.node_conds[reg_node][0]
+                            if (use_block.negate == (not use_reg.negate) and
+                                    use_block.vals == use_reg.vals):
+                                continue
                     blockers.extend(required)
                     break
             else:
