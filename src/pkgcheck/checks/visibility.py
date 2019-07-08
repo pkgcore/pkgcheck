@@ -233,7 +233,10 @@ class NonexistentBlocker(base.Warning):
 
     @property
     def short_desc(self):
-        return f"depset {self.attr}: blocker '{self.atom}' doesn't exist in repo history"
+        return (
+            f"depset {self.attr}: nonexistent blocker '{self.atom}': "
+            'no matches in repo history'
+        )
 
 
 class NonExistentDeps(base.Warning):
