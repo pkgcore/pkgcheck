@@ -262,59 +262,18 @@ class VisibilityReport(base.Template):
             if profile.visible(pkg):
                 reporter.add_report(VisibleVcsPkg(pkg, profile.key, profile.name))
 
-    @staticmethod
-    def restrict_use(blocker, profile):
-        """Restrict blocker atom USE flags to available profile flags."""
-        if blocker.use is None:
-            return blocker
-
-        a = atom(str(blocker))
-        use_map = dict()
-
-        # strip USE flags
-        # TODO: move this to an atom attr
-        if blocker.use is not None:
-            for x in blocker.use:
-                u = x
-                if x[0] == '-':
-                    continue
-                if x[-3:] in ("(+)", "(-)"):
-                    u = u[:-3]
-                use_map[u] = x
-
-        use = set(use_map.keys()) & profile.use
-        object.__setattr__(a, 'use', frozenset(use_map[x] for x in use))
-        return a
-
     def process_depset(self, pkg, attr, depset, edepset, profiles, reporter):
         get_cached_query = self.query_cache.get
 
         csolutions = []
-        blockers = []
         for required in edepset.iter_cnf_solutions():
             for node in required:
                 if node.blocks:
-                    # hack to skip matching, conditional blockers
-                    # e.g. a? ( x ) !a? ( !x )
-                    if node in depset.node_conds:
-                        reg_node = atom(node.key)
-                        try:
-                            k, v = next((k, v) for k, v in depset.node_conds.items()
-                                if k != node and reg_node.match(k))
-                            use_reg = v[0]
-                            use_block = depset.node_conds[node][0]
-                            if (use_block.negate == (not use_reg.negate) and
-                                    use_block.vals == use_reg.vals):
-                                break
-                        except StopIteration:
-                            pass
-                    blockers.extend(required)
                     break
             else:
                 csolutions.append(required)
 
         for profile in profiles:
-            blocked = OrRestriction(*(self.restrict_use(x, profile) for x in blockers))
             failures = set()
             # is it visible?  ie, is it masked?
             # if so, skip it.
@@ -323,7 +282,7 @@ class VisibilityReport(base.Template):
             cache = profile.cache
             provided = profile.provides_has_match
             insoluble = profile.insoluble
-            visible = lambda x: profile.visible(x) and not blocked.match(x)
+            visible = profile.visible
             for required in csolutions:
                 # scan all of the quickies, the caches...
                 for node in required:
