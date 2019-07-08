@@ -307,7 +307,7 @@ class LocalUSECheck(base.Template):
 
         self.use_expand_groups = dict()
         for key in options.target_repo.config.use_expand_desc.keys():
-            self.use_expand_groups[f'{key}_'] = {
+            self.use_expand_groups[key] = {
                 flag for flag, desc in options.target_repo.config.use_expand_desc[key]}
 
     def feed(self, pkgs, reporter):
@@ -323,9 +323,9 @@ class LocalUSECheck(base.Template):
                     reporter.add_report(ProbableGlobalUSE(pkg, flag))
             else:
                 for group in self.use_expand_groups:
-                    if (flag.startswith(group) and
+                    if (flag.startswith(f'{group}_') and
                             flag not in self.use_expand_groups[group]):
-                        reporter.add_report(ProbableUSE_EXPAND(pkg, flag, group))
+                        reporter.add_report(ProbableUSE_EXPAND(pkg, flag, group.upper()))
                         break
 
         unused = set(local_use)
