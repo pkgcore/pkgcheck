@@ -813,7 +813,7 @@ class DescriptionReport(base.Template):
                     pkg, "over 150 chars in length, bit long"))
             elif l < 10:
                 reporter.add_report(BadDescription(
-                    pkg, "under 10 chars in length- too short"))
+                    pkg, f"{pkg.description!r} under 10 chars in length- too short"))
 
 
 class BadRestricts(base.Warning):
