@@ -344,6 +344,7 @@ class VisibilityReport(base.Template):
         suppressed_depsets = []
         for attr in ("bdepend", "depend", "rdepend", "pdepend"):
             nonexistent = set()
+            outdated = set()
             try:
                 for orig_node in visit_atoms(pkg, getattr(pkg, attr)):
 
@@ -373,8 +374,7 @@ class VisibilityReport(base.Template):
                                         removal = datetime.strptime(removal, '%Y-%m-%d')
                                         years = round((today - removal).days / 365, 2)
                                         if years > 2:
-                                            reporter.add_report(
-                                                OutdatedBlocker(pkg, attr, node, years))
+                                            outdated.add((node, years))
                             else:
                                 nonexistent.add(node)
                                 self.query_cache[node] = ()
@@ -387,8 +387,11 @@ class VisibilityReport(base.Template):
                 suppressed_depsets.append(attr)
             if nonexistent:
                 reporter.add_report(NonExistentDeps(pkg, attr, nonexistent))
+            for node, years in outdated:
+                reporter.add_report(
+                    OutdatedBlocker(pkg, attr, node, years))
 
-        del nonexistent
+        del nonexistent, outdated
 
         for attr in ("bdepend", "depend", "rdepend", "pdepend"):
             if attr in suppressed_depsets:
