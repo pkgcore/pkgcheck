@@ -410,7 +410,7 @@ class ProfileAddon(base.Addon):
                 if not options.forced_cache:
                     logger.warn(msg)
                 else:
-                    raise CliException(msg)
+                    raise UserException(msg)
 
         profile_evaluate_dict = {}
         for key, profile_list in profile_filters.items():
