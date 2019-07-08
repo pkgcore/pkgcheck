@@ -136,7 +136,7 @@ class GitRepo(object):
             pkg_map = {}
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=self.path)
         line = process.stdout.readline().strip().decode()
-        while True:
+        while line:
             if not line.startswith('commit '):
                 raise RuntimeError(f'unknown git log output: {line!r}')
             commit = line[7:].strip()
@@ -160,8 +160,6 @@ class GitRepo(object):
                         a = atom(f'={category}/{pkg}')
                         pkg_map.setdefault(
                             category, {}).setdefault(pkgname, []).append((a.fullver, date))
-            if not line:
-                break
         return pkg_map
 
 
@@ -214,6 +212,28 @@ class OutdatedBlocker(base.Warning):
             f"depset {self.attr}: outdated blocker '{self.atom}': "
             f'last matching version removed {self.age} years ago'
         )
+
+
+class NonexistentBlocker(base.Warning):
+    """No matches for blocker dependency in repo history.
+
+    For the gentoo repo this means it was either removed before the CVS -> git
+    transition (which occurred around 2015-08-08) or it never existed at all.
+    """
+
+    __slots__ = ("category", "package", "version", "attr", "atom")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, attr, atom):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.attr = attr
+        self.atom = atom
+
+    @property
+    def short_desc(self):
+        return f"depset {self.attr}: blocker '{self.atom}' doesn't exist in repo history"
 
 
 class NonExistentDeps(base.Warning):
@@ -287,7 +307,10 @@ class VisibilityReport(base.Template):
     required_addons = (
         addons.QueryCacheAddon, addons.ProfileAddon,
         addons.EvaluateDepSetAddon)
-    known_results = (VisibleVcsPkg, OutdatedBlocker, NonExistentDeps, NonsolvableDeps)
+    known_results = (
+        VisibleVcsPkg, OutdatedBlocker, NonexistentBlocker,
+        NonExistentDeps, NonsolvableDeps
+    )
 
     def __init__(self, options, query_cache, profiles, depset_cache):
         super().__init__(options)
@@ -345,7 +368,8 @@ class VisibilityReport(base.Template):
         suppressed_depsets = []
         for attr in ("bdepend", "depend", "rdepend", "pdepend"):
             nonexistent = set()
-            outdated = set()
+            outdated_blockers = set()
+            nonexistent_blockers = set()
             try:
                 for orig_node in visit_atoms(pkg, getattr(pkg, attr)):
 
@@ -375,7 +399,9 @@ class VisibilityReport(base.Template):
                                         removal = datetime.strptime(removal, '%Y-%m-%d')
                                         years = round((today - removal).days / 365, 2)
                                         if years > 2:
-                                            outdated.add((node, years))
+                                            outdated_blockers.add((node, years))
+                                    else:
+                                        nonexistent_blockers.add(node)
                             else:
                                 nonexistent.add(node)
                                 self.query_cache[node] = ()
@@ -388,11 +414,12 @@ class VisibilityReport(base.Template):
                 suppressed_depsets.append(attr)
             if nonexistent:
                 reporter.add_report(NonExistentDeps(pkg, attr, nonexistent))
-            for node, years in outdated:
-                reporter.add_report(
-                    OutdatedBlocker(pkg, attr, node, years))
+            for node, years in outdated_blockers:
+                reporter.add_report(OutdatedBlocker(pkg, attr, node, years))
+            for node in nonexistent_blockers:
+                reporter.add_report(NonexistentBlocker(pkg, attr, node))
 
-        del nonexistent, outdated
+        del nonexistent, outdated_blockers, nonexistent_blockers
 
         for attr in ("bdepend", "depend", "rdepend", "pdepend"):
             if attr in suppressed_depsets:
