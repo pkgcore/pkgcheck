@@ -131,27 +131,31 @@ class GitRepo(object):
         self.commit = commit
 
     def _process_git_repo(self, pkg_map=None, commit=None):
-        cmd = ['git', 'log', '--diff-filter=D', '--summary', '--date=short', '--reverse']
-        if commit:
-            cmd.append(f'{commit}..')
         if pkg_map is None:
             pkg_map = {}
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=self.path)
-        line = process.stdout.readline().strip().decode()
+
+        cmd = ['git', 'log', '--diff-filter=D', '--summary', '--date=short', '--reverse']
+        if commit:
+            cmd.append(f'{commit}..origin/HEAD')
+        else:
+            cmd.append('origin/HEAD')
+        git_log = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=self.path)
+
+        line = git_log.stdout.readline().strip().decode()
         while line:
             if not line.startswith('commit '):
                 raise RuntimeError(f'unknown git log output: {line!r}')
             commit = line[7:].strip()
             # author
-            process.stdout.readline()
+            git_log.stdout.readline()
             # date
-            line = process.stdout.readline().strip().decode()
+            line = git_log.stdout.readline().strip().decode()
             if not line.startswith('Date:'):
                 raise RuntimeError(f'unknown git log output: {line!r}')
             date = line[5:].strip()
 
             while line and not line.startswith('commit '):
-                line = process.stdout.readline().decode()
+                line = git_log.stdout.readline().decode()
                 if line.startswith(' delete mode '):
                     path = line.rsplit(' ', 1)[1]
                     match = ebuild_regex.match(path)
@@ -345,7 +349,7 @@ class VisibilityReport(base.Template):
 
         for repo in options.target_repo.trees:
             ret, out = spawn_get_output(
-                ['git', 'rev-parse', 'HEAD'], cwd=repo.location)
+                ['git', 'rev-parse', 'origin/HEAD'], cwd=repo.location)
             if ret != 0:
                 break
             else:
