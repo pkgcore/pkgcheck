@@ -10,6 +10,7 @@ from pkgcore.restrictions.packages import OrRestriction
 
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
+from snakeoil.demandload import demand_compile_regexp
 from snakeoil.iterables import caching_iter
 from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import spawn_get_output
@@ -17,6 +18,8 @@ from snakeoil.sequences import stable_unique, iflatten_instance, iflatten_func
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, addons
+
+demand_compile_regexp('ebuild_regex', r'^(.*)/(.*)/(.*)\.ebuild$')
 
 
 class FakeConfigurable(object):
@@ -132,7 +135,6 @@ class GitRepo(object):
             cmd.append(f'{commit}..')
         if pkg_map is None:
             pkg_map = {}
-        ebuild_regex = re.compile(r'^(.*)/(.*)/(.*)\.ebuild$')
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=self.path)
         line = process.stdout.readline().strip().decode()
         while True:
