@@ -1,10 +1,12 @@
 from datetime import datetime
+import os
 import pickle
 import re
 import subprocess
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository.util import SimpleTree
+from pkgcore.repository import multiplex
 from pkgcore.restrictions.packages import OrRestriction
 
 from snakeoil import klass
@@ -163,15 +165,24 @@ class GitRepo(object):
         return pkg_map
 
 
-class HistoricalRepo(SimpleTree):
-
-    def _get_versions(self, cp_key):
-        return tuple(version for version, date in self.cpv_dict[cp_key[0]][cp_key[1]])
+class _RemovalRepo(object):
+    """Repository supporting determining when a package version was removed."""
 
     def removal_date(self, pkg):
         for version, date in self.cpv_dict[pkg.category][pkg.package]:
             if version == pkg.fullver:
                 return date
+
+
+class HistoricalRepo(SimpleTree, _RemovalRepo):
+    """Repository encapsulating historical data."""
+
+    def _get_versions(self, cp_key):
+        return tuple(version for version, date in self.cpv_dict[cp_key[0]][cp_key[1]])
+
+
+class HistoricalMultiplexRepo(multiplex.tree, _RemovalRepo):
+    """Multiplex-ed repo supporting historical queries across a repo and its masters."""
 
 
 class VisibleVcsPkg(base.Error):
@@ -321,39 +332,56 @@ class VisibilityReport(base.Template):
         self.depset_cache = depset_cache
         self.profiles = profiles
 
-        ret, out = spawn_get_output(
-            ['git', 'rev-parse', 'HEAD'], cwd=options.target_repo.location)
-        if ret != 0:
-            self.existence_repo = None
-        else:
-            commit = out[0].strip()
+        # initialize repos cache dir
+        cache_dir = pjoin(options.cache_dir, 'repos')
+        try:
+            os.makedirs(cache_dir, exist_ok=True)
+        except IOError as e:
+            raise UserException(
+                f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
 
-            # try loading historical repo data
-            cache_file = pjoin(options.cache_dir, 'git_repo.pickle')
-            cache_repo = True
-            try:
-                with open(cache_file, 'rb') as f:
-                    git_repo = pickle.load(f)
-                    if commit != git_repo.commit:
-                        git_repo.update(commit)
-                    else:
-                        cache_repo = False
-            except (EOFError, FileNotFoundError):
-                git_repo = GitRepo(options.target_repo.location, commit)
+        self.existence_repo = None
+        git_repos = []
 
-            self.existence_repo = HistoricalRepo(git_repo.pkg_map, repo_id='historical')
-            # dump historical repo data
-            if cache_repo:
+        for repo in options.target_repo.trees:
+            ret, out = spawn_get_output(
+                ['git', 'rev-parse', 'HEAD'], cwd=repo.location)
+            if ret != 0:
+                break
+            else:
+                commit = out[0].strip()
+
+                # try loading historical repo data
+                cache_file = pjoin(cache_dir, f'{repo.repo_id}.pickle')
+                cache_repo = True
                 try:
-                    with open(cache_file, 'wb+') as f:
-                        pickle.dump(git_repo, f)
-                except IOError as e:
-                    msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
-                    if not options.forced_cache:
-                        logger.warn(msg)
-                    else:
-                        raise UserException(msg)
+                    with open(cache_file, 'rb') as f:
+                        git_repo = pickle.load(f)
+                        if commit != git_repo.commit:
+                            git_repo.update(commit)
+                        else:
+                            cache_repo = False
+                except (EOFError, FileNotFoundError):
+                    git_repo = GitRepo(repo.location, commit)
 
+                git_repos.append(HistoricalRepo(
+                    git_repo.pkg_map, repo_id=f'{repo.repo_id}-history'))
+                # dump historical repo data
+                if cache_repo:
+                    try:
+                        with open(cache_file, 'wb+') as f:
+                            pickle.dump(git_repo, f)
+                    except IOError as e:
+                        msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
+                        if not options.forced_cache:
+                            logger.warn(msg)
+                        else:
+                            raise UserException(msg)
+        else:
+            if len(git_repos) > 1:
+                self.existence_repo = HistoricalMultiplexRepo(*git_repos)
+            elif len(git_repos) == 1:
+                self.existence_repo = git_repos[0]
 
     def feed(self, pkg, reporter):
         # query_cache gets caching_iter partial repo searches shoved into it-
