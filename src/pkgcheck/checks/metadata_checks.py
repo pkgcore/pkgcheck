@@ -76,8 +76,8 @@ class IUSEMetadataReport(base.Template):
             iuse = pkg.iuse_stripped.difference(self.iuse_handler.allowed_iuse(pkg))
             if iuse:
                 reporter.add_report(MetadataError(
-                    pkg, "iuse", "iuse unknown flag%s: [ %s ]" % (
-                        _pl(iuse), ", ".join(iuse))))
+                    pkg, "iuse", "IUSE unknown flag%s: [ %s ]" % (
+                        _pl(iuse), ", ".join(sorted(iuse)))))
 
 
 class DeprecatedEAPI(base.Warning):
