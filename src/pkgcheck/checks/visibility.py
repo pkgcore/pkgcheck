@@ -76,6 +76,9 @@ class FakeConfigurable(object):
     def changes_count(self):
         return 0
 
+    def __str__(self):
+        return str(self._raw_pkg)
+
     __getattr__ = klass.GetAttrProxy("_raw_pkg")
 
     def __setattr__(self, attr, val):
