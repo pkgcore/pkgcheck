@@ -360,13 +360,19 @@ class TestProfileAddon(ProfilesMixin):
         self.assertProfiles(check, 'ppc', 'default-linux/ppc')
 
         l = check.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': 'x86'}))
+        assert len(l) == 2, f"checking for profile collapsing: {l!r}"
+        assert len(l[0]) == 2, f"checking for proper # of profiles: {l[0]!r}"
+        assert sorted(x.name for x in l[0]) == sorted(['default-linux', 'default-linux/x86'])
+
+        # check arch vs ~arch runs (i.e. arch KEYWORDS should also trigger ~arch runs)
+        l = check.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': '~x86'}))
         assert len(l) == 1, f"checking for profile collapsing: {l!r}"
         assert len(l[0]) == 2, f"checking for proper # of profiles: {l[0]!r}"
         assert sorted(x.name for x in l[0]) == sorted(['default-linux', 'default-linux/x86'])
 
         # check keyword collapsing
         l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'ppc'}))
-        assert len(l) == 1, f"checking for profile collapsing: {l!r}"
+        assert len(l) == 2, f"checking for profile collapsing: {l!r}"
         assert len(l[0]) == 1, f"checking for proper # of profiles: {l[0]!r}"
         assert l[0][0].name == 'default-linux/ppc'
 
@@ -450,7 +456,8 @@ class TestEvaluateDepSetAddon(ProfilesMixin):
         assert get_rets("0.0.1", "depend", KEYWORDS="foon") == []
         l = get_rets("0.0.2", "depend")
         assert len(l) == 1, f"must collapse all profiles down to one run: got {l!r}"
-        assert sorted(x.name for x in l[0][1]) == ['1', '2'], f"must have just two profiles: got {l!r}"
+        assert len(l[0][1]) == 4, "must have four runs, (arch and ~arch for each profile)"
+        assert sorted(set(x.name for x in l[0][1])) == ['1', '2'], f"must have two profiles: got {l!r}"
         assert l[0][1][0].key == 'x86'
         assert l[0][1][1].key == 'x86'
 
@@ -460,10 +467,7 @@ class TestEvaluateDepSetAddon(ProfilesMixin):
                     "bar? ( dev-util/bar ) !bar? ( dev-util/nobar ) x11-libs/xserver"
         )
 
-        assert len(l) == 2, f"must collapse all profiles down to 2 runs: got {l!r}"
-        profiles = sorted(x[1][0].name for x in l)
-        assert profiles[0] == '1', f"got {profiles[0]!r}, expected single profile"
-        assert profiles[1] == '2', "got {profiles[1]!r}, expected single profile"
+        assert len(l) == 3, f"must collapse all profiles down to 3 runs: got {l!r}"
 
         # ordering is potentially random; thus pull out which depset result is
         # which based upon profile
@@ -492,15 +496,15 @@ class TestEvaluateDepSetAddon(ProfilesMixin):
         # ensure it handles arch right.
         l = get_rets("0", "depend", KEYWORDS="ppc x86")
         assert len(l) == 1, f"should be len 1, got {l!r}"
-        assert sorted(x.name for x in l[0][1]) == ["1", "2", "3"], (
-            f"should have 3 profiles of 1-3, got {l[0][1]!r}")
+        assert sorted(set(x.name for x in l[0][1])) == ["1", "2", "3"], (
+            f"should have three profiles of 1-3, got {l[0][1]!r}")
 
         # ensure it's caching profile collapsing, iow, keywords for same ver
         # that's partially cached (single attr at least) should *not* change
         # things.
 
         l = get_rets("0", "depend", KEYWORDS="ppc")
-        assert sorted(x.name for x in l[0][1]) == ['1', '2', '3'], (
+        assert sorted(set(x.name for x in l[0][1])) == ['1', '2', '3'], (
             f"should have 3 profiles, got {l[0][1]!r}\nthis indicates it's "
             "re-identifying profiles every invocation, which is unwarranted ")
 
@@ -512,8 +516,8 @@ class TestEvaluateDepSetAddon(ProfilesMixin):
         l1 = [x[1] for x in l if str(x[0]).strip() == "dev-util/ppc"][0]
         l2 = [x[1] for x in l if str(x[0]).strip() == "dev-util/x86"][0]
 
-        assert sorted(x.name for x in l1) == ["3"]
-        assert sorted(x.name for x in l2) == ["1", "2"]
+        assert sorted(set(x.name for x in l1)) == ["3"]
+        assert sorted(set(x.name for x in l2)) == ["1", "2"]
 
 
 class TestUseAddon(ArgparseCheck, Tmpdir):
