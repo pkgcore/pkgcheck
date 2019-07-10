@@ -434,7 +434,9 @@ class ProfileAddon(base.Addon):
         # yields groups of profiles; the 'groups' are grouped by the ability to share
         # the use processing across each of 'em.
         l = []
-        for key in set(pkg.keywords):
+        keywords = pkg.keywords
+        unstable_keywords = tuple(f'~{x}' for x in keywords if x[0] != '~')
+        for key in keywords + unstable_keywords:
             profile_grps = self.profile_evaluate_dict.get(key)
             if profile_grps is None:
                 continue
