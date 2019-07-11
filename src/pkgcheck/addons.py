@@ -5,7 +5,6 @@ from copy import copy
 from functools import partial
 from itertools import chain, filterfalse
 
-from pkgcore import const
 from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
@@ -154,8 +153,8 @@ class ProfileAddon(base.Addon):
                 primarily for testing.
             """)
         group.add_argument(
-            '--cache', action=StoreBool,
-            help="force profile filters cache refresh or disable cache usage",
+            '--profile-cache', action=StoreBool,
+            help="force profile cache refresh or disable cache usage",
             docs="""
                 Significantly decreases profile load time by caching and reusing
                 the resulting filters rather than rebuilding them for each run.
@@ -236,20 +235,19 @@ class ProfileAddon(base.Addon):
         profile_paths = enabled.difference(disabled)
 
         # only default to using cache when run without target args within a repo
-        if namespace.cache is None and namespace.default_target is None:
-            namespace.cache = False
+        if namespace.profile_cache is None and namespace.default_target is None:
+            namespace.profile_cache = False
 
         # initialize cache dir
-        namespace.cache_dir = pjoin(const.USER_CACHE_PATH, 'pkgcheck')
         namespace.cache_file = pjoin(namespace.cache_dir, 'profiles.pickle')
-        if ((namespace.cache is None or namespace.cache) and
+        if ((namespace.profile_cache is None or namespace.profile_cache) and
                 not os.path.exists(namespace.cache_dir)):
             try:
                 os.makedirs(namespace.cache_dir)
             except IOError as e:
                 raise UserException(
                     f'failed creating profiles cache: {namespace.cache_dir!r}: {e.strerror}')
-        namespace.forced_cache = bool(namespace.cache)
+        namespace.forced_cache = bool(namespace.profile_cache)
 
         # We hold onto the profiles as we're going, due to the fact that
         # profile nodes are weakly cached; hold onto all for this loop, avoids
@@ -295,7 +293,7 @@ class ProfileAddon(base.Addon):
         cached_profile_filters = {}
 
         # try loading cached profile filters
-        if options.cache is None:
+        if options.profile_cache is None:
             try:
                 with open(options.cache_file, 'rb') as f:
                     cached_profile_filters = pickle.load(f)
@@ -329,8 +327,8 @@ class ProfileAddon(base.Addon):
                     stable_enabled_flags = cached_profile[3]
                 else:
                     # force cache updates unless explicitly disabled
-                    if options.cache is None:
-                        options.cache = True
+                    if options.profile_cache is None:
+                        options.profile_cache = True
 
                     immutable_flags = profile.masked_use.clone(unfreeze=True)
                     immutable_flags.add_bare_global((), default_masked_use)
@@ -348,7 +346,7 @@ class ProfileAddon(base.Addon):
                     stable_enabled_flags.add_bare_global((), (stable_key,))
                     stable_enabled_flags.optimize(cache=chunked_data_cache)
 
-                    if options.cache:
+                    if options.profile_cache:
                         # TODO: fix pickling ImmutableDict objects
                         # Grab a shallow copy of each profile mapping before it gets
                         # frozen to dump into the cache; otherwise loading the dumped dict
@@ -404,7 +402,7 @@ class ProfileAddon(base.Addon):
                     unstable_insoluble))
 
         # dump cached profile filters
-        if options.cache:
+        if options.profile_cache:
             try:
                 with open(options.cache_file, 'wb+') as f:
                     pickle.dump(cached_profile_filters, f)
