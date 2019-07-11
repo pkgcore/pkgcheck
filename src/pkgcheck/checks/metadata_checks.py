@@ -609,19 +609,22 @@ class DependencyReport(base.Template):
                     except (EOFError, FileNotFoundError):
                         git_repo = GitRemovalRepo(repo.location, commit)
 
-                    git_repos.append(HistoricalRepo(
-                        git_repo.pkg_map, repo_id=f'{repo.repo_id}-history'))
-                    # dump historical repo data
-                    if cache_repo:
-                        try:
-                            with open(cache_file, 'wb+') as f:
-                                pickle.dump(git_repo, f)
-                        except IOError as e:
-                            msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
-                            if not options.forced_cache:
-                                logger.warn(msg)
-                            else:
-                                raise UserException(msg)
+                    # only enable repo queries if history was found, e.g. a
+                    # shallow clone with a depth of 1 won't have any history
+                    if git_repo.pkg_map:
+                        git_repos.append(HistoricalRepo(
+                            git_repo.pkg_map, repo_id=f'{repo.repo_id}-history'))
+                        # dump historical repo data
+                        if cache_repo:
+                            try:
+                                with open(cache_file, 'wb+') as f:
+                                    pickle.dump(git_repo, f)
+                            except IOError as e:
+                                msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
+                                if not options.forced_cache:
+                                    logger.warn(msg)
+                                else:
+                                    raise UserException(msg)
             else:
                 if len(git_repos) > 1:
                     self.existence_repo = HistoricalMultiplexRepo(*git_repos)
