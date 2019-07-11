@@ -597,7 +597,9 @@ class DependencyReport(base.Template):
                 else:
                     commit = out[0].strip()
 
-                    cache_file = pjoin(cache_dir, f'{repo.repo_id}.pickle')
+                    # handle duplicate repo IDs that are repo paths
+                    cache_file = repo.repo_id.lstrip(os.sep).replace(os.sep, '-')
+                    cache_file = pjoin(cache_dir, f'{cache_file}.pickle')
                     git_repo = None
                     cache_repo = True
                     if not options.git_cache:
