@@ -143,17 +143,14 @@ class GitAddon(base.Addon):
     def mangle_argparser(parser):
         group = parser.add_argument_group('git')
         group.add_argument(
-            '--git-cache', action=StoreBool,
-            help="force git repo cache refresh or disable cache usage",
+            '--git-disable', action='store_true',
+            help="disable checks that use git to parse repo logs")
+        group.add_argument(
+            '--git-cache', action='store_true',
+            help="force git repo cache refresh",
             docs="""
                 Parses a repo's git log and caches various historical information.
-
-                Disabling this forces checks relying on it to be disabled as well.
             """)
-
-    @staticmethod
-    def check_args(parser, namespace):
-        namespace.git_checks = (namespace.git_cache is None or namespace.git_cache)
 
 
 class ProfileAddon(base.Addon):

@@ -578,7 +578,7 @@ class DependencyReport(base.Template):
         self.today = datetime.today()
 
         self.existence_repo = None
-        if options.git_checks:
+        if not options.git_disable:
             # initialize repos cache dir
             cache_dir = pjoin(options.cache_dir, 'repos')
             try:
@@ -596,17 +596,22 @@ class DependencyReport(base.Template):
                 else:
                     commit = out[0].strip()
 
-                    # try loading historical repo data
                     cache_file = pjoin(cache_dir, f'{repo.repo_id}.pickle')
+                    git_repo = None
                     cache_repo = True
-                    try:
-                        with open(cache_file, 'rb') as f:
-                            git_repo = pickle.load(f)
-                            if commit != git_repo.commit:
-                                git_repo.update(commit)
-                            else:
-                                cache_repo = False
-                    except (EOFError, FileNotFoundError):
+                    if not options.git_cache:
+                        # try loading cached, historical repo data
+                        try:
+                            with open(cache_file, 'rb') as f:
+                                git_repo = pickle.load(f)
+                                if commit != git_repo.commit:
+                                    git_repo.update(commit)
+                                else:
+                                    cache_repo = False
+                        except (EOFError, FileNotFoundError):
+                            pass
+
+                    if git_repo is None:
                         git_repo = GitRemovalRepo(repo.location, commit)
 
                     # only enable repo queries if history was found, e.g. a
