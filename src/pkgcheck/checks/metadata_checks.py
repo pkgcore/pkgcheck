@@ -1,14 +1,22 @@
 from collections import defaultdict
+from datetime import datetime
 from difflib import SequenceMatcher
 from operator import attrgetter
+import os
+import pickle
 import re
+import subprocess
 
 from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
+from pkgcore.repository.util import SimpleTree
+from pkgcore.repository import multiplex
 from pkgcore.restrictions.boolean import OrRestriction
-from snakeoil.demandload import demandload
+from snakeoil.cli.exceptions import UserException
+from snakeoil.demandload import demandload, demand_compile_regexp
 from snakeoil.osutils import pjoin, listdir_files
+from snakeoil.process.spawn import spawn_get_output
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
@@ -17,6 +25,7 @@ from ..base import MetadataError
 from .visibility import FakeConfigurable, strip_atom_use
 
 demandload('logging')
+demand_compile_regexp('ebuild_regex', r'^(.*)/(.*)/(.*)\.ebuild$')
 
 
 class MissingLicense(base.Error):
@@ -426,12 +435,134 @@ class MissingUseDepDefault(base.Warning):
             f"(matching package{_pl(self.pkg_deps)}: {', '.join(self.pkg_deps)})")
 
 
+class OutdatedBlocker(base.Warning):
+    """Blocker dependency removed more than two years ago from the tree."""
+
+    __slots__ = ("category", "package", "version", "attr", "atom", "age")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, attr, atom, age):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.attr = attr
+        self.atom = atom
+        self.age = age
+
+    @property
+    def short_desc(self):
+        return (
+            f"depset {self.attr}: outdated blocker '{self.atom}': "
+            f'last matching version removed {self.age} years ago'
+        )
+
+
+class NonexistentBlocker(base.Warning):
+    """No matches for blocker dependency in repo history.
+
+    For the gentoo repo this means it was either removed before the CVS -> git
+    transition (which occurred around 2015-08-08) or it never existed at all.
+    """
+
+    __slots__ = ("category", "package", "version", "attr", "atom")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, attr, atom):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.attr = attr
+        self.atom = atom
+
+    @property
+    def short_desc(self):
+        return (
+            f"depset {self.attr}: nonexistent blocker '{self.atom}': "
+            'no matches in repo history'
+        )
+
+
+class GitRemovalRepo(object):
+    """Parse repository git logs to determine ebuild removal dates."""
+
+    def __init__(self, repo_path, commit):
+        self.path = repo_path
+        self.commit = commit
+        self.pkg_map = self._process_git_repo()
+
+    def update(self, commit):
+        self._process_git_repo(self.pkg_map, self.commit)
+        self.commit = commit
+
+    def _process_git_repo(self, pkg_map=None, commit=None):
+        if pkg_map is None:
+            pkg_map = {}
+
+        cmd = ['git', 'log', '--diff-filter=D', '--summary', '--date=short', '--reverse']
+        if commit:
+            cmd.append(f'{commit}..origin/HEAD')
+        else:
+            cmd.append('origin/HEAD')
+        git_log = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=self.path)
+
+        line = git_log.stdout.readline().strip().decode()
+        while line:
+            if not line.startswith('commit '):
+                raise RuntimeError(f'unknown git log output: {line!r}')
+            commit = line[7:].strip()
+            # author
+            git_log.stdout.readline()
+            # date
+            line = git_log.stdout.readline().strip().decode()
+            if not line.startswith('Date:'):
+                raise RuntimeError(f'unknown git log output: {line!r}')
+            date = line[5:].strip()
+
+            while line and not line.startswith('commit '):
+                line = git_log.stdout.readline().decode()
+                if line.startswith(' delete mode '):
+                    path = line.rsplit(' ', 1)[1]
+                    match = ebuild_regex.match(path)
+                    if match:
+                        category = match.group(1)
+                        pkgname = match.group(2)
+                        pkg = match.group(3)
+                        try:
+                            a = atom_cls(f'={category}/{pkg}')
+                            pkg_map.setdefault(
+                                category, {}).setdefault(pkgname, []).append((a.fullver, date))
+                        except MalformedAtom:
+                            pass
+        return pkg_map
+
+
+class _RemovalRepo(object):
+    """Repository supporting determining when a package version was removed."""
+
+    def removal_date(self, pkg):
+        for version, date in self.cpv_dict[pkg.category][pkg.package]:
+            if version == pkg.fullver:
+                return date
+
+
+class HistoricalRepo(SimpleTree, _RemovalRepo):
+    """Repository encapsulating historical data."""
+
+    def _get_versions(self, cp_key):
+        return tuple(version for version, date in self.cpv_dict[cp_key[0]][cp_key[1]])
+
+
+class HistoricalMultiplexRepo(multiplex.tree, _RemovalRepo):
+    """Multiplex-ed repo supporting historical queries across a repo and its masters."""
+
+
 class DependencyReport(base.Template):
     """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
-    required_addons = (addons.UseAddon,)
+    required_addons = (addons.UseAddon, addons.GitAddon)
     known_results = (
         MetadataError, MissingRevision, MissingUseDepDefault,
+        OutdatedBlocker, NonexistentBlocker,
         ) + addons.UseAddon.known_results
 
     feed_type = base.versioned_feed
@@ -439,11 +570,63 @@ class DependencyReport(base.Template):
     attrs = tuple((x, attrgetter(x)) for x in
                   ("bdepend", "depend", "rdepend", "pdepend"))
 
-    def __init__(self, options, iuse_handler):
+    def __init__(self, options, iuse_handler, _git_addon):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
         self.conditional_ops = {'?', '='}
         self.use_defaults = {'(+)', '(-)'}
+        self.today = datetime.today()
+
+        self.existence_repo = None
+        if options.git_checks:
+            # initialize repos cache dir
+            cache_dir = pjoin(options.cache_dir, 'repos')
+            try:
+                os.makedirs(cache_dir, exist_ok=True)
+            except IOError as e:
+                raise UserException(
+                    f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
+
+            git_repos = []
+            for repo in options.target_repo.trees:
+                ret, out = spawn_get_output(
+                    ['git', 'rev-parse', 'origin/HEAD'], cwd=repo.location)
+                if ret != 0:
+                    break
+                else:
+                    commit = out[0].strip()
+
+                    # try loading historical repo data
+                    cache_file = pjoin(cache_dir, f'{repo.repo_id}.pickle')
+                    cache_repo = True
+                    try:
+                        with open(cache_file, 'rb') as f:
+                            git_repo = pickle.load(f)
+                            if commit != git_repo.commit:
+                                git_repo.update(commit)
+                            else:
+                                cache_repo = False
+                    except (EOFError, FileNotFoundError):
+                        git_repo = GitRemovalRepo(repo.location, commit)
+
+                    git_repos.append(HistoricalRepo(
+                        git_repo.pkg_map, repo_id=f'{repo.repo_id}-history'))
+                    # dump historical repo data
+                    if cache_repo:
+                        try:
+                            with open(cache_file, 'wb+') as f:
+                                pickle.dump(git_repo, f)
+                        except IOError as e:
+                            msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
+                            if not options.forced_cache:
+                                logger.warn(msg)
+                            else:
+                                raise UserException(msg)
+            else:
+                if len(git_repos) > 1:
+                    self.existence_repo = HistoricalMultiplexRepo(*git_repos)
+                elif len(git_repos) == 1:
+                    self.existence_repo = git_repos[0]
 
     @staticmethod
     def _flatten_or_restrictions(i):
@@ -484,10 +667,24 @@ class DependencyReport(base.Template):
                             MissingUseDepDefault(pkg, attr_name, atom, use, pkg_deps))
                 if in_or_restriction and atom.slot_operator == '=':
                     slot_op_or_blocks.add(atom.key)
-                if atom.blocks and atom.match(pkg):
-                    reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
-                if atom.blocks and atom.slot_operator == '=':
-                    slot_op_blockers.add(atom.key)
+                if atom.blocks:
+                    if atom.match(pkg):
+                        reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
+                    elif atom.slot_operator == '=':
+                        slot_op_blockers.add(atom.key)
+                    elif self.existence_repo is not None:
+                        # check for outdated blockers (2+ years old)
+                        unblocked = atom_cls(str(atom).lstrip('!'))
+                        matches = self.existence_repo.match(unblocked)
+                        if matches:
+                            removal = max(
+                                self.existence_repo.removal_date(x) for x in matches)
+                            removal = datetime.strptime(removal, '%Y-%m-%d')
+                            years = round((self.today - removal).days / 365, 2)
+                            if years > 2:
+                                reporter.add_report(OutdatedBlocker(pkg, attr_name, atom, years))
+                        else:
+                            reporter.add_report(NonexistentBlocker(pkg, attr_name, atom))
                 if atom.op == '=' and atom.revision is None:
                     reporter.add_report(MissingRevision(pkg, attr_name, atom))
 

@@ -1,26 +1,11 @@
-from datetime import datetime
-import os
-import pickle
-import re
-import subprocess
-
-from pkgcore.ebuild.atom import atom
-from pkgcore.repository.util import SimpleTree
-from pkgcore.repository import multiplex
-from pkgcore.restrictions.packages import OrRestriction
+from pkgcore.ebuild.atom import atom as atom_cls
 
 from snakeoil import klass
-from snakeoil.cli.exceptions import UserException
-from snakeoil.demandload import demand_compile_regexp
 from snakeoil.iterables import caching_iter
-from snakeoil.osutils import pjoin
-from snakeoil.process.spawn import spawn_get_output
 from snakeoil.sequences import stable_unique, iflatten_instance, iflatten_func
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, addons
-
-demand_compile_regexp('ebuild_regex', r'^(.*)/(.*)/(.*)\.ebuild$')
 
 
 class FakeConfigurable(object):
@@ -89,11 +74,11 @@ class _BlockMemoryExhaustion(Exception):
 
 
 # This is fast path code, hence the seperated implementations.
-if getattr(atom, '_TRANSITIVE_USE_ATOM_BUG_IS_FIXED', False):
-    def _eapi2_flatten(val, atom_kls=atom, transitive_use_atom=atom._transitive_use_atom):
+if getattr(atom_cls, '_TRANSITIVE_USE_ATOM_BUG_IS_FIXED', False):
+    def _eapi2_flatten(val, atom_kls=atom_cls, transitive_use_atom=atom_cls._transitive_use_atom):
         return isinstance(val, atom_kls) and not isinstance(val, transitive_use_atom)
 else:
-    def _eapi2_flatten(val, atom_kls=atom, transitive_use_atom=atom._transitive_use_atom):
+    def _eapi2_flatten(val, atom_kls=atom_cls, transitive_use_atom=atom_cls._transitive_use_atom):
         if isinstance(val, transitive_use_atom):
             if len([x for x in val.use if x.endswith("?")]) > 16:
                 raise _BlockMemoryExhaustion(val)
@@ -102,7 +87,7 @@ else:
 
 def visit_atoms(pkg, stream):
     if not pkg.eapi.options.transitive_use_atoms:
-        return iflatten_instance(stream, atom)
+        return iflatten_instance(stream, atom_cls)
     return iflatten_func(stream, _eapi2_flatten)
 
 
@@ -119,77 +104,7 @@ def strip_atom_use(inst):
             s = '!' + s
     if inst.slot:
         s += f':{inst.slot}'
-    return atom(s)
-
-
-class GitRepo(object):
-
-    def __init__(self, repo_path, commit):
-        self.path = repo_path
-        self.commit = commit
-        self.pkg_map = self._process_git_repo()
-
-    def update(self, commit):
-        self._process_git_repo(self.pkg_map, self.commit)
-        self.commit = commit
-
-    def _process_git_repo(self, pkg_map=None, commit=None):
-        if pkg_map is None:
-            pkg_map = {}
-
-        cmd = ['git', 'log', '--diff-filter=D', '--summary', '--date=short', '--reverse']
-        if commit:
-            cmd.append(f'{commit}..origin/HEAD')
-        else:
-            cmd.append('origin/HEAD')
-        git_log = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=self.path)
-
-        line = git_log.stdout.readline().strip().decode()
-        while line:
-            if not line.startswith('commit '):
-                raise RuntimeError(f'unknown git log output: {line!r}')
-            commit = line[7:].strip()
-            # author
-            git_log.stdout.readline()
-            # date
-            line = git_log.stdout.readline().strip().decode()
-            if not line.startswith('Date:'):
-                raise RuntimeError(f'unknown git log output: {line!r}')
-            date = line[5:].strip()
-
-            while line and not line.startswith('commit '):
-                line = git_log.stdout.readline().decode()
-                if line.startswith(' delete mode '):
-                    path = line.rsplit(' ', 1)[1]
-                    match = ebuild_regex.match(path)
-                    if match:
-                        category = match.group(1)
-                        pkgname = match.group(2)
-                        pkg = match.group(3)
-                        a = atom(f'={category}/{pkg}')
-                        pkg_map.setdefault(
-                            category, {}).setdefault(pkgname, []).append((a.fullver, date))
-        return pkg_map
-
-
-class _RemovalRepo(object):
-    """Repository supporting determining when a package version was removed."""
-
-    def removal_date(self, pkg):
-        for version, date in self.cpv_dict[pkg.category][pkg.package]:
-            if version == pkg.fullver:
-                return date
-
-
-class HistoricalRepo(SimpleTree, _RemovalRepo):
-    """Repository encapsulating historical data."""
-
-    def _get_versions(self, cp_key):
-        return tuple(version for version, date in self.cpv_dict[cp_key[0]][cp_key[1]])
-
-
-class HistoricalMultiplexRepo(multiplex.tree, _RemovalRepo):
-    """Multiplex-ed repo supporting historical queries across a repo and its masters."""
+    return atom_cls(s)
 
 
 class VisibleVcsPkg(base.Error):
@@ -208,53 +123,6 @@ class VisibleVcsPkg(base.Error):
     @property
     def short_desc(self):
         return f"VCS version visible for arch {self.arch}, profile {self.profile}"
-
-
-class OutdatedBlocker(base.Warning):
-    """Blocker dependency removed more than two years ago from the tree."""
-
-    __slots__ = ("category", "package", "version", "attr", "atom", "age")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, attr, atom, age):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.attr = attr
-        self.atom = atom
-        self.age = age
-
-    @property
-    def short_desc(self):
-        return (
-            f"depset {self.attr}: outdated blocker '{self.atom}': "
-            f'last matching version removed {self.age} years ago'
-        )
-
-
-class NonexistentBlocker(base.Warning):
-    """No matches for blocker dependency in repo history.
-
-    For the gentoo repo this means it was either removed before the CVS -> git
-    transition (which occurred around 2015-08-08) or it never existed at all.
-    """
-
-    __slots__ = ("category", "package", "version", "attr", "atom")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, attr, atom):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.attr = attr
-        self.atom = atom
-
-    @property
-    def short_desc(self):
-        return (
-            f"depset {self.attr}: nonexistent blocker '{self.atom}': "
-            'no matches in repo history'
-        )
 
 
 class NonExistentDeps(base.Warning):
@@ -328,67 +196,13 @@ class VisibilityReport(base.Template):
     required_addons = (
         addons.QueryCacheAddon, addons.ProfileAddon,
         addons.EvaluateDepSetAddon)
-    known_results = (
-        VisibleVcsPkg, OutdatedBlocker, NonexistentBlocker,
-        NonExistentDeps, NonsolvableDeps
-    )
+    known_results = (VisibleVcsPkg, NonExistentDeps, NonsolvableDeps)
 
     def __init__(self, options, query_cache, profiles, depset_cache):
         super().__init__(options)
         self.query_cache = query_cache.query_cache
         self.depset_cache = depset_cache
         self.profiles = profiles
-
-        # initialize repos cache dir
-        cache_dir = pjoin(options.cache_dir, 'repos')
-        try:
-            os.makedirs(cache_dir, exist_ok=True)
-        except IOError as e:
-            raise UserException(
-                f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
-
-        self.existence_repo = None
-        git_repos = []
-
-        for repo in options.target_repo.trees:
-            ret, out = spawn_get_output(
-                ['git', 'rev-parse', 'origin/HEAD'], cwd=repo.location)
-            if ret != 0:
-                break
-            else:
-                commit = out[0].strip()
-
-                # try loading historical repo data
-                cache_file = pjoin(cache_dir, f'{repo.repo_id}.pickle')
-                cache_repo = True
-                try:
-                    with open(cache_file, 'rb') as f:
-                        git_repo = pickle.load(f)
-                        if commit != git_repo.commit:
-                            git_repo.update(commit)
-                        else:
-                            cache_repo = False
-                except (EOFError, FileNotFoundError):
-                    git_repo = GitRepo(repo.location, commit)
-
-                git_repos.append(HistoricalRepo(
-                    git_repo.pkg_map, repo_id=f'{repo.repo_id}-history'))
-                # dump historical repo data
-                if cache_repo:
-                    try:
-                        with open(cache_file, 'wb+') as f:
-                            pickle.dump(git_repo, f)
-                    except IOError as e:
-                        msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
-                        if not options.forced_cache:
-                            logger.warn(msg)
-                        else:
-                            raise UserException(msg)
-        else:
-            if len(git_repos) > 1:
-                self.existence_repo = HistoricalMultiplexRepo(*git_repos)
-            elif len(git_repos) == 1:
-                self.existence_repo = git_repos[0]
 
     def feed(self, pkg, reporter):
         # query_cache gets caching_iter partial repo searches shoved into it-
@@ -401,13 +215,9 @@ class VisibilityReport(base.Template):
             # vcs ebuild that better not be visible
             self.check_visibility_vcs(pkg, reporter)
 
-        today = datetime.today()
-
         suppressed_depsets = []
         for attr in ("bdepend", "depend", "rdepend", "pdepend"):
             nonexistent = set()
-            outdated_blockers = set()
-            nonexistent_blockers = set()
             try:
                 for orig_node in visit_atoms(pkg, getattr(pkg, attr)):
 
@@ -426,21 +236,7 @@ class VisibilityReport(base.Template):
                                 self.query_cache[node] = matches
                                 if orig_node is not node:
                                     self.query_cache[str(orig_node)] = matches
-                            elif node.blocks:
-                                # check for outdated blockers (2+ years old)
-                                if self.existence_repo is not None:
-                                    unblocked = atom(str(node).lstrip('!'))
-                                    matches = self.existence_repo.match(unblocked)
-                                    if matches:
-                                        removal = max(
-                                            self.existence_repo.removal_date(x) for x in matches)
-                                        removal = datetime.strptime(removal, '%Y-%m-%d')
-                                        years = round((today - removal).days / 365, 2)
-                                        if years > 2:
-                                            outdated_blockers.add((node, years))
-                                    else:
-                                        nonexistent_blockers.add(node)
-                            else:
+                            elif not node.blocks:
                                 nonexistent.add(node)
                                 self.query_cache[node] = ()
                                 self.profiles.global_insoluble.add(node)
@@ -452,12 +248,8 @@ class VisibilityReport(base.Template):
                 suppressed_depsets.append(attr)
             if nonexistent:
                 reporter.add_report(NonExistentDeps(pkg, attr, nonexistent))
-            for node, years in outdated_blockers:
-                reporter.add_report(OutdatedBlocker(pkg, attr, node, years))
-            for node in nonexistent_blockers:
-                reporter.add_report(NonexistentBlocker(pkg, attr, node))
 
-        del nonexistent, outdated_blockers, nonexistent_blockers
+        del nonexistent
 
         for attr in ("bdepend", "depend", "rdepend", "pdepend"):
             if attr in suppressed_depsets:
