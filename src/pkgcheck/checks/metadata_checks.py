@@ -25,7 +25,8 @@ from ..base import MetadataError
 from .visibility import FakeConfigurable, strip_atom_use
 
 demandload('logging')
-demand_compile_regexp('ebuild_regex', r'^(.*)/(.*)/(.*)\.ebuild$')
+# hacky ebuild path regex for git log parsing, proper atom validation is handled later
+demand_compile_regexp('ebuild_path_regex', r'^([^/]+)/([^/]+)/([^/]+)\.ebuild$')
 
 
 class MissingLicense(base.Error):
@@ -522,7 +523,7 @@ class GitRemovalRepo(object):
                 line = git_log.stdout.readline().decode()
                 if line.startswith(' delete mode '):
                     path = line.rsplit(' ', 1)[1]
-                    match = ebuild_regex.match(path)
+                    match = ebuild_path_regex.match(path)
                     if match:
                         category = match.group(1)
                         pkgname = match.group(2)
