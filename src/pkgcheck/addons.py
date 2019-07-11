@@ -137,6 +137,25 @@ class profile_data(object):
         return immutable, enabled
 
 
+class GitAddon(base.Addon):
+
+    @staticmethod
+    def mangle_argparser(parser):
+        group = parser.add_argument_group('git')
+        group.add_argument(
+            '--git-cache', action=StoreBool,
+            help="force git repo cache refresh or disable cache usage",
+            docs="""
+                Parses a repo's git log and caches various historical information.
+
+                Disabling this forces checks relying on it to be disabled as well.
+            """)
+
+    @staticmethod
+    def check_args(parser, namespace):
+        namespace.git_checks = (namespace.git_cache is None or namespace.git_cache)
+
+
 class ProfileAddon(base.Addon):
 
     required_addons = (ArchesAddon,)
