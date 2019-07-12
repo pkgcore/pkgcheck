@@ -758,6 +758,41 @@ class InvalidKeywords(base.Warning):
         return f"invalid KEYWORDS: {', '.join(self.keywords)}"
 
 
+class OverlappingKeywords(base.Warning):
+    """Packages having overlapping arch and ~arch KEYWORDS."""
+
+    __slots__ = ('category', 'package', 'version', 'keywords')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, keywords):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.keywords = []
+        for x in sorted(keywords):
+            self.keywords.extend([x, '~' + x])
+        self.keywords = tuple(self.keywords)
+
+    @property
+    def short_desc(self):
+        return f"overlapping KEYWORDS: {', '.join(self.keywords)}"
+
+
+class DuplicateKeywords(base.Warning):
+    """Packages having duplicate KEYWORDS."""
+
+    __slots__ = ('category', 'package', 'version', 'keywords')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, keywords):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.keywords = tuple(keywords)
+
+    @property
+    def short_desc(self):
+        return f"duplicate KEYWORDS: {', '.join(self.keywords)}"
+
+
 class UnsortedKeywords(base.Warning):
     """Packages with unsorted KEYWORDS.
 
@@ -808,8 +843,8 @@ class KeywordsReport(base.Template):
     required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
     known_results = (
-        StupidKeywords, InvalidKeywords, UnsortedKeywords, MissingVirtualKeywords,
-        MetadataError,
+        StupidKeywords, InvalidKeywords, OverlappingKeywords, DuplicateKeywords,
+        UnsortedKeywords, MissingVirtualKeywords, MetadataError,
     )
 
     def __init__(self, options, iuse_handler):
@@ -829,11 +864,33 @@ class KeywordsReport(base.Template):
         if len(pkg.keywords) == 1 and pkg.keywords[0] == "-*":
             reporter.add_report(StupidKeywords(pkg))
         else:
+            # check for invalid keywords
             invalid = set(pkg.keywords) - self.valid_keywords
             if invalid:
                 reporter.add_report(InvalidKeywords(pkg, invalid))
+
+            # check for overlapping keywords
+            unstable = {x[1:] for x in pkg.keywords if x[0] == '~'}
+            stable = {x for x in pkg.keywords if x[0] != '~'}
+            overlapping = unstable & stable
+            if overlapping:
+                reporter.add_report(OverlappingKeywords(pkg, overlapping))
+
+            # check for duplicate keywords
+            duplicates = set()
+            seen = set()
+            for x in pkg.keywords:
+                if x not in seen:
+                    seen.add(x)
+                else:
+                    duplicates.add(x)
+            if duplicates:
+                reporter.add_report(DuplicateKeywords(pkg, duplicates))
+
+            # check for unsorted keywords
             if pkg.sorted_keywords != pkg.keywords:
                 reporter.add_report(UnsortedKeywords(pkg))
+
             if pkg.category == 'virtual':
                 keywords = set()
                 rdepend = set(self.iuse_filter((atom_cls,), pkg, pkg.rdepend, reporter))

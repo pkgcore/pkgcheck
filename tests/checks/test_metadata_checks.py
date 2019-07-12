@@ -108,8 +108,30 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
             self.assertReport(self.check, self.mk_pkg("foo")),
             metadata_checks.InvalidKeywords)
         self.assertNoReport(
-            self.check, self.mk_pkg("-* * ~* -amd64 ppc ~x86"),
+            self.check, self.mk_pkg("-* -amd64 ppc ~x86"),
             metadata_checks.InvalidKeywords)
+        self.assertNoReport(
+            self.check, self.mk_pkg("* -amd64 ppc ~x86"),
+            metadata_checks.InvalidKeywords)
+        self.assertNoReport(
+            self.check, self.mk_pkg("~* -amd64 ppc ~x86"),
+            metadata_checks.InvalidKeywords)
+
+    def test_overlapping_keywords(self):
+        assert isinstance(
+            self.assertReport(self.check, self.mk_pkg("amd64 ~amd64")),
+            metadata_checks.OverlappingKeywords)
+        self.assertNoReport(
+            self.check, self.mk_pkg("~* ~amd64"),
+            metadata_checks.OverlappingKeywords)
+
+    def test_duplicate_keywords(self):
+        assert isinstance(
+            self.assertReport(self.check, self.mk_pkg("amd64 amd64")),
+            metadata_checks.DuplicateKeywords)
+        self.assertNoReport(
+            self.check, self.mk_pkg("~* ~amd64"),
+            metadata_checks.OverlappingKeywords)
 
     def test_unsorted_keywords(self):
         assert isinstance(
