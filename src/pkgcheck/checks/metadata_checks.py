@@ -692,7 +692,11 @@ class DependencyReport(base.Template):
                         slot_op_blockers.add(atom.key)
                     elif self.existence_repo is not None:
                         # check for outdated blockers (2+ years old)
-                        unblocked = atom_cls(f'{atom.op}{atom.cpvstr}')
+                        if atom.op == '=*':
+                            s = f"={atom.cpvstr}*"
+                        else:
+                            s = atom.op + atom.cpvstr
+                        unblocked = atom_cls(s)
                         matches = self.existence_repo.match(unblocked)
                         if matches:
                             removal = max(
