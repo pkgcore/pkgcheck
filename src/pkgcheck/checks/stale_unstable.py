@@ -78,19 +78,13 @@ class StaleUnstableReport(base.Template):
                         stale_pkgs[slot].append((pkg, unstable, int(unchanged_time/day)))
 
         for slot, pkgs in sorted(stale_pkgs.items()):
-            if self.options.verbosity > 0:
-                # output all stale pkgs in verbose mode
-                for pkg_info in pkgs:
-                    pkg, unstable, period = pkg_info
-                    reporter.add_report(StaleUnstable(pkg, unstable, period))
-            else:
-                # only report the most recent stale pkg for each slot
-                pkg, unstable, period = pkgs[-1]
-                # filter out pkgs with newer stable keywords that should be
-                # caught by LaggingStable
-                lagging = {
-                    x for x in unstable
-                    if pkg < stable_pkgs[slot].get(x.lstrip('~'), pkg)
-                }
-                if unstable and not lagging:
-                    reporter.add_report(StaleUnstable(pkg, unstable, period))
+            # only report the most recent stale pkg for each slot
+            pkg, unstable, period = pkgs[-1]
+            # filter out pkgs with newer stable keywords that should be
+            # caught by LaggingStable
+            lagging = {
+                x for x in unstable
+                if pkg < stable_pkgs[slot].get(x.lstrip('~'), pkg)
+            }
+            if unstable and not lagging:
+                reporter.add_report(StaleUnstable(pkg, unstable, period))

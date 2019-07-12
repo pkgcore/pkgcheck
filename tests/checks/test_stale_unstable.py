@@ -83,7 +83,7 @@ class TestStaleUnstableReport(misc.ReportTestCase):
                 mk_pkg("3.0", "~amd64 ~x86", self.old),
                 ]
             )
-        assert len(reports) == 2
+        assert len(reports) == 1
         for r in reports:
             assert isinstance(r, stale_unstable.StaleUnstable)
             assert r.period == 30
