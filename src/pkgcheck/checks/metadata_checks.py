@@ -767,14 +767,11 @@ class OverlappingKeywords(base.Warning):
     def __init__(self, pkg, keywords):
         super().__init__()
         self._store_cpv(pkg)
-        self.keywords = []
-        for x in sorted(keywords):
-            self.keywords.extend([x, '~' + x])
-        self.keywords = tuple(self.keywords)
+        self.keywords = tuple(sorted(zip(keywords, ('~' + x for x in keywords))))
 
     @property
     def short_desc(self):
-        return f"overlapping KEYWORDS: {', '.join(self.keywords)}"
+        return f"overlapping KEYWORDS: {', '.join(map(str, self.keywords))}"
 
 
 class DuplicateKeywords(base.Warning):
