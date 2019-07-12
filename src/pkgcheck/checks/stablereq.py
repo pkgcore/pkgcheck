@@ -67,8 +67,8 @@ class StableRequestCheck(base.Template):
             pkg_slotted[pkg.slot].append(pkg)
 
         pkg_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgset))
-        stable_pkg = bool(pkg_keywords.intersection(self.arches))
-        if stable_pkg:
+        stable_pkg_keywords = pkg_keywords.intersection(self.arches)
+        if stable_pkg_keywords:
             for slot, pkgs in sorted(pkg_slotted.items()):
                 slot_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgs))
                 stable_slot_keywords = slot_keywords.intersection(self.arches)
@@ -79,8 +79,7 @@ class StableRequestCheck(base.Template):
 
                     # stop scanning pkgs if one newer than 30 days has stable keywords
                     # from the stable arches set
-                    stable_keywords = set(pkg.keywords).intersection(self.arches)
-                    if stable_keywords:
+                    if set(pkg.keywords).intersection(self.arches):
                         break
 
                     try:
@@ -92,7 +91,11 @@ class StableRequestCheck(base.Template):
                     added = datetime.strptime(added, '%Y-%m-%d')
                     days_old = (self.today - added).days
                     if days_old >= 30:
-                        keywords = sorted('~' + x for x in stable_slot_keywords)
-                        if keywords:
-                            reporter.add_report(StableRequest(pkg, keywords, days_old))
-                            break
+                        pkg_stable_keywords = {x.lstrip('~') for x in pkg.keywords}
+                        if stable_slot_keywords:
+                            keywords = stable_slot_keywords.intersection(pkg_stable_keywords)
+                        else:
+                            keywords = stable_pkg_keywords.intersection(pkg_stable_keywords)
+                        keywords = sorted('~' + x for x in keywords)
+                        reporter.add_report(StableRequest(pkg, keywords, days_old))
+                        break
