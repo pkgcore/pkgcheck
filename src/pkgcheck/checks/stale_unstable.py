@@ -61,15 +61,19 @@ class StaleUnstableReport(base.Template):
 
         pkg_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgset))
         stale_pkgs = defaultdict(list)
+        stable_pkgs = defaultdict(dict)
         for slot, pkgs in sorted(pkg_slotted.items()):
             stable_keywords = pkg_keywords.intersection(self.arches)
             if stable_keywords:
-                target_keywords = set('~' + x for x in stable_keywords)
+                target_keywords = {f'~{x}' for x in stable_keywords}
                 for pkg in pkgs:
+                    stable = stable_keywords.intersection(pkg.keywords)
+                    stable_pkgs[slot].update((arch, pkg) for arch in stable)
                     unchanged_time = self.start_time - pkg._mtime_
+                    # other stable keywords override staleness check
                     if unchanged_time < self.staleness:
                         continue
-                    unstable = [arch for arch in pkg.keywords if arch in target_keywords]
+                    unstable = {arch for arch in target_keywords.intersection(pkg.keywords)}
                     if unstable:
                         stale_pkgs[slot].append((pkg, unstable, int(unchanged_time/day)))
 
@@ -82,4 +86,11 @@ class StaleUnstableReport(base.Template):
             else:
                 # only report the most recent stale pkg for each slot
                 pkg, unstable, period = pkgs[-1]
-                reporter.add_report(StaleUnstable(pkg, unstable, period))
+                # filter out pkgs with newer stable keywords that should be
+                # caught by LaggingStable
+                lagging = {
+                    x for x in unstable
+                    if pkg < stable_pkgs[slot].get(x.lstrip('~'), pkg)
+                }
+                if unstable and not lagging:
+                    reporter.add_report(StaleUnstable(pkg, unstable, period))
