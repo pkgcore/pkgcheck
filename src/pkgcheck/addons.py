@@ -163,7 +163,7 @@ class _ParseGitRepo(object):
         raise NotImplementedError
 
     def update(self, commit):
-        self._process_git_repo(self._pkg_map, self.commit)
+        self._process_git_repo(self.pkg_map, self.commit)
         self.commit = commit
 
     def _process_git_repo(self, pkg_map=None, commit=None):
@@ -324,14 +324,15 @@ class GitAddon(base.Addon):
                         try:
                             with open(cache_file, 'rb') as f:
                                 git_repo = pickle.load(f)
-                                if commit != git_repo.commit:
-                                    git_repo.update(commit)
-                                else:
-                                    cache_repo = False
                         except (EOFError, FileNotFoundError, AttributeError) as e:
                             pass
 
-                    if git_repo is None:
+                    if git_repo is not None:
+                        if commit != git_repo.commit:
+                            git_repo.update(commit)
+                        else:
+                            cache_repo = False
+                    else:
                         git_repo = repo_cls(repo, commit)
 
                     # only enable repo queries if history was found, e.g. a
