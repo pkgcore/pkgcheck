@@ -43,14 +43,13 @@ class StableRequestCheck(base.Template):
     Instead they'll be caught by the UnstableOnly check.
     """
     feed_type = base.package_feed
-    required_addons = (addons.StableArchesAddon, addons.GitAddon)
+    required_addons = (addons.GitAddon,)
     known_results = (StableRequest,)
 
-    def __init__(self, options, stable_arches=None, git_addon=None, staleness=int(day*30)):
+    def __init__(self, options, git_addon=None, staleness=int(day*30)):
         super().__init__(options)
         self.staleness = staleness
         self.start_time = None
-        self.arches = frozenset(x.lstrip("~") for x in options.stable_arches)
         self.today = datetime.today()
         self.added_repo = git_addon.cached_repo(addons.GitAddedRepo)
 
@@ -67,11 +66,11 @@ class StableRequestCheck(base.Template):
             pkg_slotted[pkg.slot].append(pkg)
 
         pkg_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgset))
-        stable_pkg_keywords = pkg_keywords.intersection(self.arches)
+        stable_pkg_keywords = {x for x in pkg_keywords if x[0] not in {'-', '~'}}
         if stable_pkg_keywords:
             for slot, pkgs in sorted(pkg_slotted.items()):
                 slot_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgs))
-                stable_slot_keywords = slot_keywords.intersection(self.arches)
+                stable_slot_keywords = slot_keywords.intersection(stable_pkg_keywords)
                 for pkg in reversed(pkgs):
                     # skip unkeyworded/live pkgs
                     if not pkg.keywords:
@@ -79,7 +78,7 @@ class StableRequestCheck(base.Template):
 
                     # stop scanning pkgs if one newer than 30 days has stable keywords
                     # from the stable arches set
-                    if set(pkg.keywords).intersection(self.arches):
+                    if set(pkg.keywords).intersection(stable_pkg_keywords):
                         break
 
                     try:

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from itertools import chain
 
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism as _pl
@@ -80,26 +81,26 @@ class ImlateReport(base.Template):
 
     def feed(self, pkgset, reporter):
         pkg_slotted = defaultdict(list)
-        potentials = set(self.stable_arches)
         for pkg in pkgset:
             pkg_slotted[pkg.slot].append(pkg)
-            for x in pkg.keywords:
-                if x[0] != '~':
-                    potentials.discard(x)
 
-        potentials = {'~' + x for x in potentials}
         fmatch = self.source_filter.match
-        remaining = set(self.target_arches)
         for slot, pkgs in sorted(pkg_slotted.items()):
+            slot_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgs))
+            stable_slot_keywords = {x for x in slot_keywords if x[0] != '~'}
+            potential_slot_stables = {'~' + x for x in stable_slot_keywords}
             for pkg in reversed(pkgs):
                 if not fmatch(pkg):
                     continue
-                unstable_keys = remaining.intersection(pkg.keywords)
-                if unstable_keys:
-                    potential_stables = unstable_keys & potentials
-                    lagging_stables = unstable_keys - potential_stables
-                    if potential_stables:
-                        reporter.add_report(PotentialStable(pkg, potential_stables))
-                    if lagging_stables:
-                        reporter.add_report(LaggingStable(pkg, lagging_stables))
-                    break
+
+                lagging_stables = potential_slot_stables.intersection(pkg.keywords)
+                if lagging_stables:
+                    reporter.add_report(LaggingStable(pkg, lagging_stables))
+
+                unstable_keywords = {x for x in pkg.keywords if x[0] == '~'}
+                potential_stables = self.target_arches.intersection(unstable_keywords)
+                potential_stables -= lagging_stables
+                if potential_stables:
+                    reporter.add_report(PotentialStable(pkg, potential_stables))
+
+                break
