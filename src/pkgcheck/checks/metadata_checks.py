@@ -616,7 +616,7 @@ class DependencyReport(base.Template):
                                     git_repo.update(commit)
                                 else:
                                     cache_repo = False
-                        except (EOFError, FileNotFoundError):
+                        except (EOFError, FileNotFoundError, AttributeError):
                             pass
 
                     if git_repo is None:
