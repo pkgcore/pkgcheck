@@ -12,7 +12,7 @@ def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None, source_arches
 
 
 def mk_pkg(ver, keywords=""):
-    return misc.FakePkg(f"dev-util/diffball-{ver}", data={"KEYWORDS": keywords})
+    return misc.FakePkg(f"dev-util/diffball-{ver}", data={"SLOT": "0", "KEYWORDS": keywords})
 
 
 class TestImlateReport(misc.ReportTestCase):
@@ -49,16 +49,27 @@ class TestImlateReport(misc.ReportTestCase):
         r = self.assertReport(
             mk_check(source_arches=('amd64',), selected_arches=('arm64',)),
             [mk_pkg("0.9", "~arm64 ~x86 amd64")])
-        assert isinstance(r, imlate.LaggingStable)
+        assert isinstance(r, imlate.PotentialStable)
         assert r.stable == ("amd64",)
         assert r.keywords == ("~arm64",)
         assert r.version == "0.9"
 
-    def test_single_keyword(self):
+    def test_lagging_keyword(self):
+        r = self.assertReport(
+            mk_check(),
+            [mk_pkg("0.8", "x86 amd64"),
+             mk_pkg("0.9", "x86 ~amd64")])
+        assert isinstance(r, imlate.LaggingStable)
+        assert r.stable == ("x86",)
+        assert r.keywords == ("~amd64",)
+        assert r.version == "0.9"
+        assert 'x86' in str(r) and '~amd64' in str(r)
+
+    def test_potential_keyword(self):
         r = self.assertReport(
             mk_check(),
             [mk_pkg("0.9", "~x86 amd64")])
-        assert isinstance(r, imlate.LaggingStable)
+        assert isinstance(r, imlate.PotentialStable)
         assert r.stable == ("amd64",)
         assert r.keywords == ("~x86",)
         assert r.version == "0.9"

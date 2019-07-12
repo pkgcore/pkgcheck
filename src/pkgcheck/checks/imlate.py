@@ -1,11 +1,13 @@
+from collections import defaultdict
+
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base
 
 
-class LaggingStable(base.Warning):
-    """Arch that is behind another from a stabling standpoint."""
+class PotentialStable(base.Warning):
+    """Stable arches with potential stable package candidates."""
 
     __slots__ = ("category", "package", "version", "keywords", "stable")
     threshold = base.versioned_feed
@@ -24,12 +26,31 @@ class LaggingStable(base.Warning):
             _pl(self.keywords), ', '.join(self.keywords))
 
 
+class LaggingStable(base.Warning):
+    """Stable arches for stabilized package that are lagging from a stabling standpoint."""
+
+    __slots__ = ("category", "package", "version", "keywords", "stable")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, keywords):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.keywords = tuple(sorted(keywords))
+        self.stable = tuple(sorted(str(arch) for arch in pkg.keywords
+                            if not arch[0] in ("~", "-")))
+
+    @property
+    def short_desc(self):
+        return "stabled arch%s: [ %s ], lagging: [ %s ]" % (
+            _pl(self.stable, plural='es'), ', '.join(self.stable), ', '.join(self.keywords))
+
+
 class ImlateReport(base.Template):
     """Scan for ebuilds that are lagging in stabilization."""
 
     feed_type = base.package_feed
     required_addons = (addons.StableArchesAddon,)
-    known_results = (LaggingStable,)
+    known_results = (PotentialStable, LaggingStable)
 
     @staticmethod
     def mangle_argparser(parser):
@@ -45,9 +66,9 @@ class ImlateReport(base.Template):
 
     def __init__(self, options, stable_arches=None):
         super().__init__(options)
-        arches = frozenset(arch.strip().lstrip("~") for arch in options.stable_arches)
+        self.stable_arches = frozenset(arch.strip().lstrip("~") for arch in options.stable_arches)
         self.target_arches = frozenset(
-            "~%s" % arch.strip().lstrip("~") for arch in arches)
+            "~%s" % arch.strip().lstrip("~") for arch in self.stable_arches)
 
         source_arches = options.source_arches
         if source_arches is None:
@@ -58,14 +79,27 @@ class ImlateReport(base.Template):
             "keywords", values.ContainmentMatch2(self.source_arches))
 
     def feed(self, pkgset, reporter):
+        pkg_slotted = defaultdict(list)
+        potentials = set(self.stable_arches)
+        for pkg in pkgset:
+            pkg_slotted[pkg.slot].append(pkg)
+            for x in pkg.keywords:
+                if x[0] != '~':
+                    potentials.discard(x)
+
+        potentials = {'~' + x for x in potentials}
         fmatch = self.source_filter.match
         remaining = set(self.target_arches)
-        for pkg in reversed(pkgset):
-            if not fmatch(pkg):
-                continue
-            unstable_keys = remaining.intersection(pkg.keywords)
-            if unstable_keys:
-                reporter.add_report(LaggingStable(pkg, unstable_keys))
-                remaining.difference_update(unstable_keys)
-                if not remaining:
+        for slot, pkgs in sorted(pkg_slotted.items()):
+            for pkg in reversed(pkgs):
+                if not fmatch(pkg):
+                    continue
+                unstable_keys = remaining.intersection(pkg.keywords)
+                if unstable_keys:
+                    potential_stables = unstable_keys & potentials
+                    lagging_stables = unstable_keys - potential_stables
+                    if potential_stables:
+                        reporter.add_report(PotentialStable(pkg, potential_stables))
+                    if lagging_stables:
+                        reporter.add_report(LaggingStable(pkg, lagging_stables))
                     break
