@@ -12,7 +12,7 @@ pkgcore_plugins = {
             }),
         'no-arch': basics.ConfigSectionFromStringDict({
             'class': 'pkgcheck.base.Blacklist',
-            'patterns': 'unstable_only stale_unstable imlate',
+            'patterns': 'unstable_only stablereq imlate',
             }),
         'all': basics.ConfigSectionFromStringDict({
             'class': 'pkgcheck.base.Blacklist',

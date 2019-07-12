@@ -59,7 +59,7 @@ class FancyReporter(base.Reporter):
         sys-apps/portage
           WrongIndentFound: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
           NonsolvableDeps: sys-apps/portage-2.1-r2: rdepend  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ >=app-misc/pax-utils-0.1.13 ]
-          StaleUnstableKeyword: sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86-fbsd ]
+          StableRequest: sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86 ]
     """
 
     # default report, akin to repoman

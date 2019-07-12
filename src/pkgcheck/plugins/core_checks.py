@@ -5,7 +5,7 @@ from .. import feeds, reporters
 from ..checks import (
     cleanup, codingstyle, deprecated, dropped_keywords, glsa,
     imlate, metadata_checks, metadata_xml, pkgdir_checks, repo_metadata,
-    stale_unstable, unstable_only, visibility, whitespace,
+    stablereq, unstable_only, visibility, whitespace,
 )
 
 pkgcore_plugins = {
@@ -43,7 +43,7 @@ pkgcore_plugins = {
         repo_metadata.UnusedEclassesCheck,
         repo_metadata.UnusedLicensesCheck,
         repo_metadata.UnusedMirrorsCheck,
-        stale_unstable.StaleUnstableReport,
+        stablereq.StableRequestCheck,
         unstable_only.UnstableOnlyReport,
         visibility.VisibilityReport,
         whitespace.WhitespaceCheck,

@@ -30,8 +30,9 @@ demandload(
     'pkgcore.log:logger',
 )
 
-# hacky ebuild path regex for git log parsing, proper atom validation is handled later
+# hacky ebuild path regexes for git log parsing, proper atom validation is handled later
 demand_compile_regexp('ebuild_path_regex', r'^([^/]+)/([^/]+)/([^/]+)\.ebuild$')
+demand_compile_regexp('ebuild_rename_regex', r'^([^/]+)/([^/]+)/{([^/]+)\.ebuild => ([^/]+)\.ebuild}$')
 
 
 class ArchesAddon(base.Addon):
@@ -158,8 +159,7 @@ class _ParseGitRepo(object):
     def _git_cmd(self):
         raise NotImplementedError
 
-    @property
-    def _git_line(self):
+    def _parse_line(self, line):
         raise NotImplementedError
 
     def update(self, commit):
@@ -192,19 +192,12 @@ class _ParseGitRepo(object):
 
             while line and not line.startswith('commit '):
                 line = git_log.stdout.readline().decode()
-                if line.startswith(self._git_line):
-                    path = line.rsplit(' ', 1)[1]
-                    match = ebuild_path_regex.match(path)
-                    if match:
-                        category = match.group(1)
-                        pkgname = match.group(2)
-                        pkg = match.group(3)
-                        try:
-                            a = atom_cls(f'={category}/{pkg}')
-                            pkg_map.setdefault(
-                                category, {}).setdefault(pkgname, []).append((a.fullver, date))
-                        except MalformedAtom:
-                            pass
+                atom = self._parse_line(line)
+                if atom is not None:
+                    pkg_map.setdefault(
+                        atom.category, {}).setdefault(
+                            atom.package, []).append((atom.fullver, date))
+
         return pkg_map
 
 
@@ -217,9 +210,17 @@ class GitRemovalRepo(_ParseGitRepo):
     def _git_cmd(self):
         return 'git log --diff-filter=D --summary --date=short --reverse'
 
-    @property
-    def _git_line(self):
-        return ' delete mode '
+    def _parse_line(self, line):
+        if line.startswith(' delete mode '):
+            path = line.rsplit(' ', 1)[1]
+            match = ebuild_path_regex.match(path)
+            if match:
+                category = match.group(1)
+                pkg = match.group(3)
+                try:
+                    return atom_cls(f'={category}/{pkg}')
+                except MalformedAtom:
+                    return None
 
 
 class GitAddedRepo(_ParseGitRepo):
@@ -229,11 +230,29 @@ class GitAddedRepo(_ParseGitRepo):
 
     @property
     def _git_cmd(self):
-        return 'git log --diff-filter=A --summary --date=short --reverse'
+        return 'git log --diff-filter=AR --summary --date=short --reverse'
 
-    @property
-    def _git_line(self):
-        return ' create mode '
+    def _parse_line(self, line):
+        if line.startswith(' create mode '):
+            path = line.rsplit(' ', 1)[1]
+            match = ebuild_path_regex.match(path)
+            if match:
+                category = match.group(1)
+                pkg = match.group(3)
+                try:
+                    return atom_cls(f'={category}/{pkg}')
+                except MalformedAtom:
+                    return None
+        elif line.startswith(' rename '):
+            path = line[8:].rsplit(' ', 1)[0]
+            match = ebuild_rename_regex.match(path)
+            if match:
+                category = match.group(1)
+                pkg = match.group(4)
+                try:
+                    return atom_cls(f'={category}/{pkg}')
+                except MalformedAtom:
+                    return None
 
 
 class _DateRepo(object):
