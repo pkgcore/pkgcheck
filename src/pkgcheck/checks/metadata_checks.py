@@ -586,7 +586,7 @@ class DependencyReport(base.Template):
         self.existence_repo = None
         if not options.git_disable:
             # initialize repos cache dir
-            cache_dir = pjoin(options.cache_dir, 'repos')
+            cache_dir = pjoin(base.CACHE_DIR, 'repos')
             try:
                 os.makedirs(cache_dir, exist_ok=True)
             except IOError as e:

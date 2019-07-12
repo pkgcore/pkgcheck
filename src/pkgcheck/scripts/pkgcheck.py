@@ -8,13 +8,12 @@ from portage.
 import argparse
 from itertools import chain
 
-from pkgcore import const
 from pkgcore.plugin import get_plugins, get_plugin
 from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
-from snakeoil.osutils import abspath, pjoin
+from snakeoil.osutils import abspath
 from snakeoil.sequences import unstable_unique
 from snakeoil.strings import pluralism as _pl
 
@@ -144,7 +143,6 @@ _known_keywords = tuple(sorted(
 def _validate_args(parser, namespace):
     namespace.enabled_checks = list(_known_checks)
     namespace.enabled_keywords = list(_known_keywords)
-    namespace.cache_dir = pjoin(const.USER_CACHE_PATH, 'pkgcheck')
     cwd = abspath(os.getcwd())
 
     if namespace.suite is None:

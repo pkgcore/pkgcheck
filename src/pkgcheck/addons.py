@@ -255,14 +255,14 @@ class ProfileAddon(base.Addon):
             namespace.profile_cache = False
 
         # initialize cache dir
-        namespace.cache_file = pjoin(namespace.cache_dir, 'profiles.pickle')
+        namespace.cache_file = pjoin(base.CACHE_DIR, 'profiles.pickle')
         if ((namespace.profile_cache is None or namespace.profile_cache) and
-                not os.path.exists(namespace.cache_dir)):
+                not os.path.exists(base.CACHE_DIR)):
             try:
-                os.makedirs(namespace.cache_dir)
+                os.makedirs(base.CACHE_DIR)
             except IOError as e:
                 raise UserException(
-                    f'failed creating profiles cache: {namespace.cache_dir!r}: {e.strerror}')
+                    f'failed creating profiles cache: {base.CACHE_DIR!r}: {e.strerror}')
         namespace.forced_cache = bool(namespace.profile_cache)
 
         # We hold onto the profiles as we're going, due to the fact that

@@ -14,9 +14,11 @@ identical to the input scope.
 from collections import OrderedDict
 from operator import attrgetter
 
+from pkgcore import const
 from pkgcore.config import ConfigHint
 from pkgcore.package.errors import MetadataException
 from snakeoil.demandload import demandload
+from snakeoil.osutils import pjoin
 
 demandload(
     'itertools:chain',
@@ -40,6 +42,8 @@ known_scopes = OrderedDict((
     ('pkg', package_feed),
     ('ver', versioned_feed),
 ))
+
+CACHE_DIR = pjoin(const.USER_CACHE_PATH, 'pkgcheck')
 
 
 class Addon(object):
