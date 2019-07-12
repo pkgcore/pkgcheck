@@ -312,6 +312,8 @@ class base_check(base.Template):
         self.xsd_file = None
 
     def start(self, reporter):
+        self.pkgref_cache = {}
+
         if base_check.schema is None:
             refetch = False
             write_path = read_path = self.options.metadata_xsd
@@ -352,8 +354,6 @@ class base_check(base.Template):
                     return
 
             base_check.schema = etree.XMLSchema(etree.parse(read_path))
-
-        self.pkgref_cache = {}
 
     def feed(self, thing, reporter):
         raise NotImplementedError(self.feed)
@@ -410,7 +410,7 @@ class base_check(base.Template):
 
         # note: while doc is available, do not pass it here as it may
         # trigger undefined behavior due to incorrect structure
-        if not self.schema.validate(doc):
+        if self.schema is not None and not self.schema.validate(doc):
             return (partial(self.invalid_error, self.schema.error_log),)
 
         return chain.from_iterable((self.check_doc(doc), self.check_whitespace(loc)))
