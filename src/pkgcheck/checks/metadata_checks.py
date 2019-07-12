@@ -667,6 +667,8 @@ class DependencyReport(base.Template):
         for attr_name, getter in self.attrs:
             slot_op_or_blocks = set()
             slot_op_blockers = set()
+            outdated_blockers = set()
+            nonexistent_blockers = set()
 
             i = self.iuse_filter(
                 (atom_cls, OrRestriction), pkg, getter(pkg), reporter, attr=attr_name)
@@ -693,9 +695,9 @@ class DependencyReport(base.Template):
                             removal = datetime.strptime(removal, '%Y-%m-%d')
                             years = round((self.today - removal).days / 365, 2)
                             if years > 2:
-                                reporter.add_report(OutdatedBlocker(pkg, attr_name, atom, years))
+                                outdated_blockers.add((attr_name, atom, years))
                         else:
-                            reporter.add_report(NonexistentBlocker(pkg, attr_name, atom))
+                            nonexistent_blockers.add((attr_name, atom))
                 if atom.op == '=' and atom.revision is None:
                     reporter.add_report(MissingRevision(pkg, attr_name, atom))
 
@@ -709,6 +711,11 @@ class DependencyReport(base.Template):
                     pkg, attr_name,
                     "= slot operator used in blocker: [%s]" %
                     (', '.join(sorted(slot_op_blockers),))))
+
+            for attr, atom, years in sorted(outdated_blockers):
+                reporter.add_report(OutdatedBlocker(pkg, attr, atom, years))
+            for attr, atom in sorted(nonexistent_blockers):
+                reporter.add_report(NonexistentBlocker(pkg, attr, atom))
 
 
 class StupidKeywords(base.Warning):
@@ -936,7 +943,7 @@ class SrcUriReport(base.Template):
             if f_inst.filename in seen:
                 continue
             seen.add(f_inst.filename)
-            
+
             mirrors = f_inst.uri.visit_mirrors(treat_default_as_mirror=False)
             unknown_mirrors = [
                 (m, sub_uri) for m, sub_uri in mirrors if isinstance(m, unknown_mirror)]
