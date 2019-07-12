@@ -348,8 +348,9 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
             data={'EAPI': eapi, 'IUSE': iuse, self.attr_map[attr]: data})
 
     def mk_check(self, **kwargs):
-        _git_addon = None
-        return super().mk_check(_git_addon, **kwargs)
+        options = self.get_options(**kwargs)
+        git_addon = addons.GitAddon(options)
+        return super().mk_check(git_addon, **kwargs)
 
     def generic_check(self, attr):
         # should puke a metadata error for empty license

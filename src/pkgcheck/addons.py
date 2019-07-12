@@ -4,25 +4,34 @@ from collections import OrderedDict, defaultdict
 from copy import copy
 from functools import partial
 from itertools import chain, filterfalse
+import os
+import pickle
+import shlex
+import subprocess
 
+from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
+from pkgcore.repository import multiplex
+from pkgcore.repository.util import SimpleTree
 from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
-from snakeoil.demandload import demandload
+from snakeoil.demandload import demandload, demand_compile_regexp
 from snakeoil.iterables import expandable_chain
 from snakeoil.osutils import abspath, listdir_files, pjoin
+from snakeoil.process.spawn import spawn_get_output
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
 from . import base
 
 demandload(
-    'os',
-    'pickle',
     'pkgcore.restrictions:packages,values',
     'pkgcore.ebuild:misc,domain,profiles,repo_objs',
     'pkgcore.log:logger',
 )
+
+# hacky ebuild path regex for git log parsing, proper atom validation is handled later
+demand_compile_regexp('ebuild_path_regex', r'^([^/]+)/([^/]+)/([^/]+)\.ebuild$')
 
 
 class ArchesAddon(base.Addon):
@@ -137,6 +146,116 @@ class profile_data(object):
         return immutable, enabled
 
 
+class _ParseGitRepo(object):
+    """Parse repository git logs."""
+
+    def __init__(self, repo, commit):
+        self.path = repo.location
+        self.commit = commit
+        self.pkg_map = self._process_git_repo()
+
+    @property
+    def _git_cmd(self):
+        raise NotImplementedError
+
+    @property
+    def _git_line(self):
+        raise NotImplementedError
+
+    def update(self, commit):
+        self._process_git_repo(self._pkg_map, self.commit)
+        self.commit = commit
+
+    def _process_git_repo(self, pkg_map=None, commit=None):
+        if pkg_map is None:
+            pkg_map = {}
+
+        cmd = shlex.split(self._git_cmd)
+        if commit:
+            cmd.append(f'{commit}..origin/HEAD')
+        else:
+            cmd.append('origin/HEAD')
+        git_log = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=self.path)
+
+        line = git_log.stdout.readline().strip().decode()
+        while line:
+            if not line.startswith('commit '):
+                raise RuntimeError(f'unknown git log output: {line!r}')
+            commit = line[7:].strip()
+            # author
+            git_log.stdout.readline()
+            # date
+            line = git_log.stdout.readline().strip().decode()
+            if not line.startswith('Date:'):
+                raise RuntimeError(f'unknown git log output: {line!r}')
+            date = line[5:].strip()
+
+            while line and not line.startswith('commit '):
+                line = git_log.stdout.readline().decode()
+                if line.startswith(self._git_line):
+                    path = line.rsplit(' ', 1)[1]
+                    match = ebuild_path_regex.match(path)
+                    if match:
+                        category = match.group(1)
+                        pkgname = match.group(2)
+                        pkg = match.group(3)
+                        try:
+                            a = atom_cls(f'={category}/{pkg}')
+                            pkg_map.setdefault(
+                                category, {}).setdefault(pkgname, []).append((a.fullver, date))
+                        except MalformedAtom:
+                            pass
+        return pkg_map
+
+
+class GitRemovalRepo(_ParseGitRepo):
+    """Parse repository git logs to determine ebuild removal dates."""
+
+    cache_suffix = '-removal'
+
+    @property
+    def _git_cmd(self):
+        return 'git log --diff-filter=D --summary --date=short --reverse'
+
+    @property
+    def _git_line(self):
+        return ' delete mode '
+
+
+class GitAddedRepo(_ParseGitRepo):
+    """Parse repository git logs to determine ebuild added dates."""
+
+    cache_suffix = '-added'
+
+    @property
+    def _git_cmd(self):
+        return 'git log --diff-filter=A --summary --date=short --reverse'
+
+    @property
+    def _git_line(self):
+        return ' create mode '
+
+
+class _DateRepo(object):
+    """Repository supporting determining when a package version was removed."""
+
+    def pkg_date(self, pkg):
+        for version, date in self.cpv_dict[pkg.category][pkg.package]:
+            if version == pkg.fullver:
+                return date
+
+
+class HistoricalRepo(SimpleTree, _DateRepo):
+    """Repository encapsulating historical data."""
+
+    def _get_versions(self, cp_key):
+        return tuple(version for version, date in self.cpv_dict[cp_key[0]][cp_key[1]])
+
+
+class HistoricalMultiplexRepo(multiplex.tree, _DateRepo):
+    """Multiplex repo supporting historical queries across a repo and its masters."""
+
+
 class GitAddon(base.Addon):
 
     @staticmethod
@@ -151,6 +270,71 @@ class GitAddon(base.Addon):
             docs="""
                 Parses a repo's git log and caches various historical information.
             """)
+
+    def cached_repo(self, repo_cls, target_repo=None):
+        repo = None
+        if target_repo is None:
+            target_repo = self.options.target_repo
+
+        if not self.options.git_disable:
+            # initialize repos cache dir
+            cache_dir = pjoin(base.CACHE_DIR, 'repos')
+            try:
+                os.makedirs(cache_dir, exist_ok=True)
+            except IOError as e:
+                raise UserException(
+                    f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
+
+            git_repos = []
+            for repo in target_repo.trees:
+                ret, out = spawn_get_output(
+                    ['git', 'rev-parse', 'origin/HEAD'], cwd=repo.location)
+                if ret != 0:
+                    break
+                else:
+                    commit = out[0].strip()
+
+                    # handle duplicate repo IDs that are repo paths
+                    cache_file = repo.repo_id.lstrip(os.sep).replace(os.sep, '-')
+                    cache_file = pjoin(
+                        cache_dir, f'{cache_file}{repo_cls.cache_suffix}.pickle')
+                    git_repo = None
+                    cache_repo = True
+                    if not self.options.git_cache:
+                        # try loading cached, historical repo data
+                        try:
+                            with open(cache_file, 'rb') as f:
+                                git_repo = pickle.load(f)
+                                if commit != git_repo.commit:
+                                    git_repo.update(commit)
+                                else:
+                                    cache_repo = False
+                        except (EOFError, FileNotFoundError, AttributeError) as e:
+                            pass
+
+                    if git_repo is None:
+                        git_repo = repo_cls(repo, commit)
+
+                    # only enable repo queries if history was found, e.g. a
+                    # shallow clone with a depth of 1 won't have any history
+                    if git_repo.pkg_map:
+                        git_repos.append(HistoricalRepo(
+                            git_repo.pkg_map, repo_id=f'{repo.repo_id}-history'))
+                        # dump historical repo data
+                        if cache_repo:
+                            try:
+                                with open(cache_file, 'wb+') as f:
+                                    pickle.dump(git_repo, f)
+                            except IOError as e:
+                                msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
+                                raise UserException(msg)
+            else:
+                if len(git_repos) > 1:
+                    repo = HistoricalMultiplexRepo(*git_repos)
+                elif len(git_repos) == 1:
+                    repo = git_repos[0]
+                    
+        return repo
 
 
 class ProfileAddon(base.Addon):
