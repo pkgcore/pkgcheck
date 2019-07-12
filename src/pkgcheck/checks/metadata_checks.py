@@ -42,6 +42,9 @@ class LicenseMetadataReport(base.Template):
         addons.UseAddon.known_results
     feed_type = base.versioned_feed
 
+    # categories for ebuilds that can lack LICENSE settings
+    unlicensed_categories = frozenset(['virtual', 'acct-group', 'acct-user'])
+
     required_addons = (addons.UseAddon, addons.ProfileAddon)
 
     def __init__(self, options, iuse_handler, profiles):
@@ -51,7 +54,7 @@ class LicenseMetadataReport(base.Template):
     def feed(self, pkg, reporter):
         licenses = set(self.iuse_filter((str,), pkg, pkg.license, reporter))
         if not licenses:
-            if pkg.category != 'virtual':
+            if pkg.category not in self.unlicensed_categories:
                 reporter.add_report(MetadataError(
                     pkg, "license", "no license defined"))
         else:
