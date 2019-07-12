@@ -115,11 +115,11 @@ ones. Examples::
 
   [no-arch-checks]
   class=pkgcheck.base.Blacklist
-  patterns=unstable_only stale_unstable imlate
+  patterns=unstable_only stablereq imlate
 
   [only-arch-checks]
   class=pkgcheck.base.Whitelist
-  patterns=unstable_only stale_unstable imlate
+  patterns=unstable_only stablereq imlate
 
 The first disables the three specified checks, the second enables only
 those three. For available names see ``pkgcheck show --checks``.
