@@ -186,7 +186,7 @@ class ProfilesMixin(ArgparseCheck, Tmpdir):
         namespace.target_repo = repository.UnconfiguredTree(
             repo_config.location, repo_config=repo_config)
         namespace.search_repo = Options()
-        namespace.cache = False
+        namespace.profile_cache = False
         options = ArgparseCheck.process_check(self, namespace=namespace, *args, **kwds)
         return options
 

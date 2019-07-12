@@ -74,6 +74,7 @@ class iuse_options(TempDirMixin):
             pjoin(repo_base, 'metadata', 'layout.conf'), 'w', "masters = ")
         kwds['target_repo'] = repository.UnconfiguredTree(repo_base)
         kwds.setdefault('verbosity', 0)
+        kwds.setdefault('git_disable', True)
         return misc.Options(**kwds)
 
 
@@ -247,11 +248,11 @@ def use_based():
         def test_required_addons(self):
             assert addons.UseAddon in self.check_kls.required_addons
 
-        def mk_check(self, **kwargs):
+        def mk_check(self, *args, **kwargs):
             options = self.get_options(**kwargs)
             profiles = [misc.FakeProfile(iuse_effective=["x86"])]
             iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
-            check = self.check_kls(options, iuse_handler)
+            check = self.check_kls(options, iuse_handler, *args)
             return check
 
     return use_based
@@ -323,6 +324,10 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
         return misc.FakePkg(
             'dev-util/diffball-2.7.1',
             data={'EAPI': eapi, 'IUSE': iuse, self.attr_map[attr]: data})
+
+    def mk_check(self, **kwargs):
+        _git_addon = None
+        return super().mk_check(_git_addon, **kwargs)
 
     def generic_check(self, attr):
         # should puke a metadata error for empty license
