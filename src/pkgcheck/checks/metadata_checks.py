@@ -697,16 +697,17 @@ class DependencyReport(base.Template):
                         else:
                             s = atom.op + atom.cpvstr
                         unblocked = atom_cls(s)
-                        matches = self.existence_repo.match(unblocked)
-                        if matches:
-                            removal = max(
-                                self.existence_repo.removal_date(x) for x in matches)
-                            removal = datetime.strptime(removal, '%Y-%m-%d')
-                            years = round((self.today - removal).days / 365, 2)
-                            if years > 2:
-                                outdated_blockers.add((attr_name, atom, years))
-                        else:
-                            nonexistent_blockers.add((attr_name, atom))
+                        if not self.options.search_repo.match(unblocked):
+                            matches = self.existence_repo.match(unblocked)
+                            if matches:
+                                removal = max(
+                                    self.existence_repo.removal_date(x) for x in matches)
+                                removal = datetime.strptime(removal, '%Y-%m-%d')
+                                years = round((self.today - removal).days / 365, 2)
+                                if years > 2:
+                                    outdated_blockers.add((attr_name, atom, years))
+                            else:
+                                nonexistent_blockers.add((attr_name, atom))
                 if atom.op == '=' and atom.revision is None:
                     reporter.add_report(MissingRevision(pkg, attr_name, atom))
 
