@@ -437,7 +437,10 @@ class MissingUseDepDefault(base.Warning):
 
 
 class OutdatedBlocker(base.Warning):
-    """Blocker dependency removed more than two years ago from the tree."""
+    """Blocker dependency removed more than two years ago from the tree.
+
+    Note that this ignores slot/subslot deps and USE deps in blocker atoms.
+    """
 
     __slots__ = ("category", "package", "version", "attr", "atom", "age")
 
@@ -463,6 +466,8 @@ class NonexistentBlocker(base.Warning):
 
     For the gentoo repo this means it was either removed before the CVS -> git
     transition (which occurred around 2015-08-08) or it never existed at all.
+
+    Note that this ignores slot/subslot deps and USE deps in blocker atoms.
     """
 
     __slots__ = ("category", "package", "version", "attr", "atom")
@@ -687,7 +692,7 @@ class DependencyReport(base.Template):
                         slot_op_blockers.add(atom.key)
                     elif self.existence_repo is not None:
                         # check for outdated blockers (2+ years old)
-                        unblocked = atom_cls(str(atom).lstrip('!'))
+                        unblocked = atom_cls(f'{atom.op}{atom.cpvstr}')
                         matches = self.existence_repo.match(unblocked)
                         if matches:
                             removal = max(
