@@ -570,25 +570,29 @@ def plug(sinks, transforms, sources, debug=None):
 
     # If we find a single pipeline driving all sinks we want to use it.
     # List of tuples of source, transforms.
-    pipes_to_run = None
+    pipes_to_run = []
     best_cost = None
     required_filters = set(sink_filter_types)
+    required_filters_costs = {}
     while unprocessed:
         pipe = unprocessed.pop()
         if pipe in pipes:
             continue
         pipes.add(pipe)
         visited, source, trans, cost = pipe
-        if visited >= sink_feed_types:
+        best_cost = required_filters_costs.get(source.filter_type, None)
+        if visited >= sink_feed_types and source.filter_type in required_filters:
+            required_filters.discard(source.filter_type)
             # Already reaches all sink types. Check if it is usable as
             # single pipeline:
             # if best_cost is None or cost < best_cost:
-            if (best_cost is None or cost < best_cost) and source.filter_type in required_filters:
-                pipes_to_run = [(source, trans)]
+            if best_cost is None or cost < best_cost:
+                pipes_to_run.append((source, trans))
+                required_filters_costs[source.filter_type] = cost
                 best_cost = cost
             # No point in growing this further: it already reaches everything.
             continue
-        if best_cost is not None and best_cost <= cost:
+        if not required_filters and (best_cost is not None and best_cost <= cost):
             # No point in growing this further.
             continue
         for transform in transforms:
@@ -601,7 +605,7 @@ def plug(sinks, transforms, sources, debug=None):
                 if debug is not None:
                     debug(f'growing {trans!r} for {source!r} with {transform!r}')
 
-    if pipes_to_run is None:
+    if not pipes_to_run:
         # No single pipe will drive everything, try combining pipes.
         # This is pretty stupid but effective. Map sources to
         # pipelines they drive, try combinations of sources (using a
