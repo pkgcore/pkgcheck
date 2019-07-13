@@ -43,6 +43,7 @@ class StableRequestCheck(base.Template):
     Instead they'll be caught by the UnstableOnly check.
     """
     feed_type = base.package_feed
+    filter_type = base.mask_filter
     required_addons = (addons.GitAddon,)
     known_results = (StableRequest,)
 
