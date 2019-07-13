@@ -113,7 +113,7 @@ class set_documentation(type):
 class Template(Addon, metaclass=set_documentation):
     """Base template for a check."""
 
-    scope = 0
+    scope = version_scope
     # The plugger sorts based on this. Should be left alone except for
     # weird pseudo-checks like the cache wiper that influence other checks.
     priority = 0
@@ -645,12 +645,14 @@ def plug(sinks, transforms, sources, debug=None):
     good_sinks.sort(key=attrgetter('priority'))
 
     def build_transform(scope, feed_type, filter_type, transforms):
-        children = list(
-            # Note this relies on the cheapest pipe not having
-            # any "loops" in its transforms.
-            trans(build_transform(scope, trans.dest, filter_type, transforms))
-            for trans in transforms
-            if trans.source == feed_type and trans.scope <= scope)
+        children = []
+        for transform in transforms:
+            if transform.source == feed_type and transform.scope <= scope:
+                # Note this relies on the cheapest pipe not having any "loops"
+                # in its transforms.
+                t = build_transform(scope, transform.dest, filter_type, transforms)
+                if t:
+                    children.append(transform(t))
         # Hacky: we modify this in place.
         for i in reversed(range(len(good_sinks))):
             sink = good_sinks[i]
@@ -658,11 +660,15 @@ def plug(sinks, transforms, sources, debug=None):
                     sink.filter_type == filter_type and sink.scope <= scope):
                 children.append(sink)
                 del good_sinks[i]
-        return CheckRunner(children)
+        if children:
+            return CheckRunner(children)
 
-    result = list(
-        (source, build_transform(source.scope, source.feed_type, source.filter_type, transforms))
-        for source, transforms in pipes_to_run)
+    result = []
+    for source, transforms in pipes_to_run:
+        transform = build_transform(
+            source.scope, source.feed_type, source.filter_type, transforms)
+        if transform:
+            result.append((source, transform))
 
     assert not good_sinks, f'sinks left: {good_sinks!r}'
     return bad_sinks, result
