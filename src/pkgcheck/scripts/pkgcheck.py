@@ -455,6 +455,7 @@ def _scan(options, out, err):
         sources = [
             feeds.RestrictedRepoSource(options, filterer),
             feeds.FilteredRepoSource(options, filterer),
+            feeds.GitCommitsRepoSource(options, filterer),
         ]
         bad_sinks, pipes = base.plug(sinks, transforms, sources, debug)
         if bad_sinks:
@@ -465,6 +466,7 @@ def _scan(options, out, err):
             full_scope = [
                 feeds.RestrictedRepoSource(options, packages.AlwaysTrue),
                 feeds.FilteredRepoSource(options, packages.AlwaysTrue),
+                feeds.GitCommitsRepoSource(options, packages.AlwaysTrue),
             ]
             really_bad, ignored = base.plug(sinks, transforms, full_scope)
             really_bad = set(really_bad)

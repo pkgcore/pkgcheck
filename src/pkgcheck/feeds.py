@@ -2,9 +2,10 @@
 
 from operator import attrgetter
 
-from pkgcore.restrictions import util
+from pkgcore.ebuild import restricts
+from pkgcore.restrictions import packages, util
 
-from . import base
+from . import addons, base
 
 
 class VersionToEbuild(base.Transform):
@@ -176,3 +177,16 @@ class FilteredRepoSource(RestrictedRepoSource):
         self.repo = self.options.domain.filter_repo(
             self.repo, pkg_masks=(), pkg_unmasks=(),
             pkg_accept_keywords=(), pkg_keywords=(), profile=False)
+
+
+class GitCommitsRepoSource(RestrictedRepoSource):
+
+    filter_type = base.git_filter
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        git_repo = addons.GitChangesRepo(self.repo)
+        self.repo = addons.HistoricalRepo(
+            git_repo.pkg_map, repo_id=f'{self.repo.repo_id}-commits')
+        if isinstance(self.limiter[0], restricts.RepositoryDep):
+            self.limiter = packages.AndRestriction(*self.limiter[1:])

@@ -9,6 +9,7 @@ import pickle
 import shlex
 import subprocess
 
+from pkgcore.ebuild import cpv
 from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
@@ -31,8 +32,9 @@ demandload(
 )
 
 # hacky ebuild path regexes for git log parsing, proper atom validation is handled later
-demand_compile_regexp('ebuild_path_regex', r'^([^/]+)/([^/]+)/([^/]+)\.ebuild$')
-demand_compile_regexp('ebuild_rename_regex', r'^([^/]+)/([^/]+)/{([^/]+)\.ebuild => ([^/]+)\.ebuild}$')
+_ebuild_path_regex = '([^/]+)/([^/]+)/([^/]+)\.ebuild'
+demand_compile_regexp('ebuild_ADM_regex', fr'^([ADM])\t{_ebuild_path_regex}$')
+demand_compile_regexp('ebuild_R_regex', fr'^(R)\d+\t{_ebuild_path_regex}\t{_ebuild_path_regex}$')
 
 
 class ArchesAddon(base.Addon):
@@ -160,7 +162,27 @@ class _ParseGitRepo(object):
         raise NotImplementedError
 
     def _parse_line(self, line):
-        raise NotImplementedError
+        # match initially added ebuilds
+        match = ebuild_ADM_regex.match(line)
+        if match:
+            status = match.group(1)
+            category = match.group(2)
+            pkg = match.group(4)
+            try:
+                return atom_cls(f'={category}/{pkg}'), status
+            except MalformedAtom:
+                return None
+
+        # match renamed ebuilds
+        match = ebuild_R_regex.match(line)
+        if match:
+            status = match.group(1)
+            category = match.group(5)
+            pkg = match.group(7)
+            try:
+                return atom_cls(f'={category}/{pkg}'), status
+            except MalformedAtom:
+                return None
 
     def update(self, commit):
         self._process_git_repo(self.pkg_map, self.commit)
@@ -172,7 +194,10 @@ class _ParseGitRepo(object):
 
         cmd = shlex.split(self._git_cmd)
         if commit:
-            cmd.append(f'{commit}..origin/HEAD')
+            if '..' in commit:
+                cmd.append(commit)
+            else:
+                cmd.append(f'{commit}..origin/HEAD')
         else:
             cmd.append('origin/HEAD')
         git_log = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=self.path)
@@ -192,35 +217,27 @@ class _ParseGitRepo(object):
 
             while line and not line.startswith('commit '):
                 line = git_log.stdout.readline().decode()
-                atom = self._parse_line(line)
-                if atom is not None:
+                parsed = self._parse_line(line)
+                if parsed is not None:
+                    atom, status = parsed
                     pkg_map.setdefault(
                         atom.category, {}).setdefault(
-                            atom.package, []).append((atom.fullver, date))
+                            atom.package, []).append((atom.fullver, date, status))
 
         return pkg_map
 
 
-class GitRemovalRepo(_ParseGitRepo):
-    """Parse repository git logs to determine ebuild removal dates."""
+class GitChangesRepo(_ParseGitRepo):
+    """Parse repository git logs to determine locally changed packages."""
 
-    cache_suffix = '-removal'
+    def __init__(self, repo):
+        self.path = repo.location
+        self.commit = 'origin/HEAD..master'
+        self.pkg_map = self._process_git_repo(commit=self.commit)
 
     @property
     def _git_cmd(self):
-        return 'git log --diff-filter=D --summary --date=short --reverse'
-
-    def _parse_line(self, line):
-        if line.startswith(' delete mode '):
-            path = line.rsplit(' ', 1)[1]
-            match = ebuild_path_regex.match(path)
-            if match:
-                category = match.group(1)
-                pkg = match.group(3)
-                try:
-                    return atom_cls(f'={category}/{pkg}')
-                except MalformedAtom:
-                    return None
+        return 'git log --diff-filter=ARM --name-status --date=short --reverse'
 
 
 class GitAddedRepo(_ParseGitRepo):
@@ -230,49 +247,38 @@ class GitAddedRepo(_ParseGitRepo):
 
     @property
     def _git_cmd(self):
-        return 'git log --diff-filter=AR --summary --date=short --reverse'
-
-    def _parse_line(self, line):
-        if line.startswith(' create mode '):
-            path = line.rsplit(' ', 1)[1]
-            match = ebuild_path_regex.match(path)
-            if match:
-                category = match.group(1)
-                pkg = match.group(3)
-                try:
-                    return atom_cls(f'={category}/{pkg}')
-                except MalformedAtom:
-                    return None
-        elif line.startswith(' rename '):
-            path = line[8:].rsplit(' ', 1)[0]
-            match = ebuild_rename_regex.match(path)
-            if match:
-                category = match.group(1)
-                pkg = match.group(4)
-                try:
-                    return atom_cls(f'={category}/{pkg}')
-                except MalformedAtom:
-                    return None
+        return 'git log --diff-filter=AR --name-status --date=short --reverse'
 
 
-class _DateRepo(object):
-    """Repository supporting determining when a package version was removed."""
+class GitRemovalRepo(_ParseGitRepo):
+    """Parse repository git logs to determine ebuild removal dates."""
 
-    def pkg_date(self, pkg):
-        for version, date in self.cpv_dict[pkg.category][pkg.package]:
-            if version == pkg.fullver:
-                return date
+    cache_suffix = '-removal'
+
+    @property
+    def _git_cmd(self):
+        return 'git log --diff-filter=D --name-status --date=short --reverse'
 
 
-class HistoricalRepo(SimpleTree, _DateRepo):
+class HistoricalPkg(cpv.versioned_CPV_cls):
+    """Fake packages encapsulating date and status parsed from git log."""
+
+    def __init__(self, cat, pkg, data, *args, **kwargs):
+        ver, date, status = data
+        super().__init__(cat, pkg, ver, *args, **kwargs)
+
+        # add additional date/status attrs
+        sf = object.__setattr__
+        sf(self, 'date', date)
+        sf(self, 'status', status)
+
+
+class HistoricalRepo(SimpleTree):
     """Repository encapsulating historical data."""
 
-    def _get_versions(self, cp_key):
-        return tuple(version for version, date in self.cpv_dict[cp_key[0]][cp_key[1]])
-
-
-class HistoricalMultiplexRepo(multiplex.tree, _DateRepo):
-    """Multiplex repo supporting historical queries across a repo and its masters."""
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('pkg_klass', HistoricalPkg)
+        super().__init__(*args, **kwargs)
 
 
 class GitAddon(base.Addon):
@@ -350,10 +356,10 @@ class GitAddon(base.Addon):
                                 raise UserException(msg)
             else:
                 if len(git_repos) > 1:
-                    repo = HistoricalMultiplexRepo(*git_repos)
+                    repo = multiplex.tree(*git_repos)
                 elif len(git_repos) == 1:
                     repo = git_repos[0]
-                    
+
         return repo
 
 

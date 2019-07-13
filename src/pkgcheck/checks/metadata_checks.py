@@ -559,8 +559,7 @@ class DependencyReport(base.Template):
                         if not self.options.search_repo.match(unblocked):
                             matches = self.existence_repo.match(unblocked)
                             if matches:
-                                removal = max(
-                                    self.existence_repo.pkg_date(x) for x in matches)
+                                removal = max(x.date for x in matches)
                                 removal = datetime.strptime(removal, '%Y-%m-%d')
                                 years = round((self.today - removal).days / 365, 2)
                                 if years > 2:

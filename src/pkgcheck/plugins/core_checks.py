@@ -3,7 +3,7 @@
 # Please keep the imports and plugins sorted.
 from .. import feeds, reporters
 from ..checks import (
-    cleanup, codingstyle, deprecated, dropped_keywords, glsa,
+    cleanup, codingstyle, deprecated, dropped_keywords, git_checks, glsa,
     imlate, metadata_checks, metadata_xml, pkgdir_checks, repo_metadata,
     stablereq, unstable_only, visibility, whitespace,
 )
@@ -18,6 +18,7 @@ pkgcore_plugins = {
         codingstyle.PortageInternalsCheck,
         deprecated.DeprecatedEclassReport,
         dropped_keywords.DroppedKeywordsReport,
+        git_checks.GitCommitsCheck,
         glsa.TreeVulnerabilitiesReport,
         imlate.ImlateReport,
         metadata_checks.DependencyReport,
