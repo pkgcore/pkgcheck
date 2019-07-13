@@ -147,13 +147,12 @@ class PackageToCategory(base.Transform):
         self.chunk = None
 
 
-class RestrictedRepoSource(object):
+class RestrictedRepoSource(base.GenericSource):
+    """Generic ebuild repository source."""
 
-    feed_type = base.versioned_feed
-    cost = 10
-
-    def __init__(self, repo, limiter):
-        self.repo = repo
+    def __init__(self, options, limiter):
+        self.options = options
+        self.repo = options.target_repo
         self.limiter = limiter
         for scope, attrs in ((base.version_scope, ['fullver', 'version', 'rev']),
                              (base.package_scope, ['package']),
@@ -165,3 +164,15 @@ class RestrictedRepoSource(object):
 
     def feed(self):
         return self.repo.itermatch(self.limiter, sorter=sorted)
+
+
+class FilteredRepoSource(RestrictedRepoSource):
+    """Repository source that uses profiles/package.mask to filter packages."""
+
+    filter_type = base.mask_filter
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.repo = self.options.domain.filter_repo(
+            self.repo, pkg_masks=(), pkg_unmasks=(),
+            pkg_accept_keywords=(), pkg_keywords=(), profile=False)

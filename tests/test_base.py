@@ -1,3 +1,5 @@
+import pytest
+
 from pkgcheck import base
 
 
@@ -17,15 +19,13 @@ class TestUtilities(object):
         assert not base.convert_check_filter('bar.foo')('foo.bar.baz')
 
 
-class DummySource(object):
+class DummySource(base.GenericSource):
 
     """Dummy source object just "producing" itself.
 
     You should use the instances in the L{sources} tuple instead of
     creating your own.
     """
-
-    cost = 10
 
     def __init__(self, dummy, scope=base.package_scope):
         self.feed_type = dummy
@@ -149,7 +149,7 @@ class TestPlug(object):
             message.extend(['', 'Got:'])
             for pipe in actual_pipes:
                 message.append(str(pipe))
-            self.fail('\n'.join(message))
+            pytest.fail('\n'.join(message))
         assert bad_sinks == actual_bad_sinks
 
     def test_plug(self):

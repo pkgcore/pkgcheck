@@ -25,11 +25,17 @@ demandload(
     're',
 )
 
+# source feed types
 repository_feed = "repo"
 category_feed = "cat"
 package_feed = "cat/pkg"
 versioned_feed = "cat/pkg-ver"
 ebuild_feed = "cat/pkg-ver+text"
+
+# repo filter types
+no_filter = 'none'
+mask_filter = 'mask'
+git_filter = 'git'
 
 # The plugger needs to be able to compare those and know the highest one.
 version_scope, package_scope, category_scope, repository_scope = list(range(4))
@@ -111,6 +117,8 @@ class Template(Addon, metaclass=set_documentation):
     # The plugger sorts based on this. Should be left alone except for
     # weird pseudo-checks like the cache wiper that influence other checks.
     priority = 0
+    # don't filter any feed items by default
+    filter_type = no_filter
 
     def start(self, reporter):
         """Do startup here."""
@@ -120,6 +128,14 @@ class Template(Addon, metaclass=set_documentation):
 
     def finish(self, reporter):
         """Do cleanup and omit final results here."""
+
+
+class GenericSource(object):
+    """Base template for a repository source."""
+
+    feed_type = versioned_feed
+    filter_type = no_filter
+    cost = 10
 
 
 class Transform(object):
@@ -532,17 +548,18 @@ def plug(sinks, transforms, sources, debug=None):
         return bad_sinks + good_sinks, ()
 
     # All types we need to reach.
-    sink_types = set(sink.feed_type for sink in good_sinks)
+    sink_feed_types = frozenset(sink.feed_type for sink in good_sinks)
+    sink_filter_types = frozenset(sink.filter_type for sink in good_sinks)
 
-    # Map from scope, source typename to cheapest source.
+    # Map from (scope, source typename, source filter typename) to cheapest source.
     source_map = {}
-    for new_source in sources:
-        current_source = source_map.get((new_source.scope,
-                                         new_source.feed_type))
-        if current_source is None or current_source.cost > new_source.cost:
-            source_map[new_source.scope, new_source.feed_type] = new_source
+    for source in sources:
+        current_source = source_map.get((source.scope,
+                                         source.feed_type))
+        if current_source is None or current_source.cost > source.cost:
+            source_map[source.scope, source.feed_type, source.filter_type] = source
 
-    # Tuples of (visited_types, source, transforms, price)
+    # tuples of (visited_types, source, transforms, price)
     pipes = set()
     unprocessed = set(
         (frozenset((source.feed_type,)), source, frozenset(), source.cost)
@@ -555,16 +572,18 @@ def plug(sinks, transforms, sources, debug=None):
     # List of tuples of source, transforms.
     pipes_to_run = None
     best_cost = None
+    required_filters = set(sink_filter_types)
     while unprocessed:
-        next = unprocessed.pop()
-        if next in pipes:
+        pipe = unprocessed.pop()
+        if pipe in pipes:
             continue
-        pipes.add(next)
-        visited, source, trans, cost = next
-        if visited >= sink_types:
+        pipes.add(pipe)
+        visited, source, trans, cost = pipe
+        if visited >= sink_feed_types:
             # Already reaches all sink types. Check if it is usable as
             # single pipeline:
-            if best_cost is None or cost < best_cost:
+            # if best_cost is None or cost < best_cost:
+            if (best_cost is None or cost < best_cost) and source.filter_type in required_filters:
                 pipes_to_run = [(source, trans)]
                 best_cost = cost
             # No point in growing this further: it already reaches everything.
@@ -597,12 +616,12 @@ def plug(sinks, transforms, sources, debug=None):
             for visited, source, trans, cost in pipes)
         done = set()
         while unprocessed:
-            next = unprocessed.pop()
-            if next in done:
+            pipe = unprocessed.pop()
+            if pipe in done:
                 continue
-            done.add(next)
-            visited, sources, seq, cost = next
-            if visited >= sink_types:
+            done.add(pipe)
+            visited, sources, seq, cost = pipe
+            if visited >= sink_feed_types:
                 # This combination reaches everything.
                 if best_cost is None or cost < best_cost:
                     pipes_to_run = seq
@@ -625,23 +644,24 @@ def plug(sinks, transforms, sources, debug=None):
 
     good_sinks.sort(key=attrgetter('priority'))
 
-    def build_transform(scope, feed_type, transforms):
+    def build_transform(scope, feed_type, filter_type, transforms):
         children = list(
             # Note this relies on the cheapest pipe not having
             # any "loops" in its transforms.
-            trans(build_transform(scope, trans.dest, transforms))
+            trans(build_transform(scope, trans.dest, filter_type, transforms))
             for trans in transforms
             if trans.source == feed_type and trans.scope <= scope)
         # Hacky: we modify this in place.
         for i in reversed(range(len(good_sinks))):
             sink = good_sinks[i]
-            if sink.feed_type == feed_type and sink.scope <= source.scope:
+            if (sink.feed_type == feed_type and
+                    sink.filter_type == filter_type and sink.scope <= scope):
                 children.append(sink)
                 del good_sinks[i]
         return CheckRunner(children)
 
     result = list(
-        (source, build_transform(source.scope, source.feed_type, transforms))
+        (source, build_transform(source.scope, source.feed_type, source.filter_type, transforms))
         for source, transforms in pipes_to_run)
 
     assert not good_sinks, f'sinks left: {good_sinks!r}'

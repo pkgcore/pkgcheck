@@ -452,16 +452,21 @@ def _scan(options, out, err):
     reporter.start()
 
     for filterer in options.limiters:
-        sources = [feeds.RestrictedRepoSource(options.target_repo, filterer)]
+        sources = [
+            feeds.RestrictedRepoSource(options, filterer),
+            feeds.FilteredRepoSource(options, filterer),
+        ]
         bad_sinks, pipes = base.plug(sinks, transforms, sources, debug)
         if bad_sinks:
             # We want to report the ones that would work if this was a
             # full repo scan separately from the ones that are
             # actually missing transforms.
             bad_sinks = set(bad_sinks)
-            full_scope = feeds.RestrictedRepoSource(
-                options.target_repo, packages.AlwaysTrue)
-            really_bad, ignored = base.plug(sinks, transforms, [full_scope])
+            full_scope = [
+                feeds.RestrictedRepoSource(options, packages.AlwaysTrue),
+                feeds.FilteredRepoSource(options, packages.AlwaysTrue),
+            ]
+            really_bad, ignored = base.plug(sinks, transforms, full_scope)
             really_bad = set(really_bad)
             assert bad_sinks >= really_bad, \
                 f'{really_bad - bad_sinks} unreachable with no limiters but reachable with?'
