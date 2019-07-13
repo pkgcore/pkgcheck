@@ -791,7 +791,7 @@ class RepoProfilesReport(base.Template):
         if unused_profile_dirs:
             reporter.add_report(UnusedProfileDirs(unused_profile_dirs))
 
-        if self.repo.repo_name == 'gentoo':
+        if self.repo.repo_id == 'gentoo':
             accepted_status = ('stable', 'dev', 'exp')
             unknown_status = profile_status.difference(accepted_status)
             if unknown_status:
