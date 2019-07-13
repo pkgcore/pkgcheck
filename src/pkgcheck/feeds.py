@@ -188,5 +188,12 @@ class GitCommitsRepoSource(RestrictedRepoSource):
         git_repo = addons.GitChangesRepo(self.repo)
         self.repo = addons.HistoricalRepo(
             git_repo.pkg_map, repo_id=f'{self.repo.repo_id}-commits')
-        if isinstance(self.limiter[0], restricts.RepositoryDep):
+
+        # Drop repo restriction if one exists as we're matching against a faked
+        # repo with a different repo_id.
+        try:
+            repo_limiter = self.limiter[0]
+        except TypeError:
+            repo_limiter = None
+        if isinstance(repo_limiter, restricts.RepositoryDep):
             self.limiter = packages.AndRestriction(*self.limiter[1:])
