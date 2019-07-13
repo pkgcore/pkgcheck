@@ -32,7 +32,7 @@ demandload(
 )
 
 # hacky ebuild path regexes for git log parsing, proper atom validation is handled later
-_ebuild_path_regex = '([^/]+)/([^/]+)/([^/]+)\.ebuild'
+_ebuild_path_regex = '([^/]+)/([^/]+)/([^/]+)\\.ebuild'
 demand_compile_regexp('ebuild_ADM_regex', fr'^([ADM])\t{_ebuild_path_regex}$')
 demand_compile_regexp('ebuild_R_regex', fr'^(R)\d+\t{_ebuild_path_regex}\t{_ebuild_path_regex}$')
 
