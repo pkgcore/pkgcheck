@@ -31,13 +31,14 @@ class GitCommitsCheck(base.Template):
         super().__init__(options)
 
     def feed(self, pkg, reporter):
-        # TODO: check copyright on new/modified ebuilds for gentoo repo
-        if pkg.status == 'A':
-            try:
-                match = self.options.target_repo.match(pkg.versioned_atom)[0]
-                stable_keywords = sorted(x for x in match.keywords if x[0] not in '~-')
-                if stable_keywords:
-                    reporter.add_report(DirectStableKeywords(pkg, stable_keywords))
-            except IndexError:
-                # weird situation where an ebuild was locally committed and then removed
-                pass
+        if self.options.target_repo.repo_id == 'gentoo':
+            # TODO: check copyright on new/modified ebuilds for gentoo repo
+            if pkg.status == 'A':
+                try:
+                    match = self.options.target_repo.match(pkg.versioned_atom)[0]
+                    stable_keywords = sorted(x for x in match.keywords if x[0] not in '~-')
+                    if stable_keywords:
+                        reporter.add_report(DirectStableKeywords(pkg, stable_keywords))
+                except IndexError:
+                    # weird situation where an ebuild was locally committed and then removed
+                    pass
