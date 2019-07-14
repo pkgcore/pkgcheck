@@ -152,16 +152,21 @@ class profile_data(object):
 class _ParseGitRepo(object):
     """Parse repository git logs."""
 
+    # git command to run on the targeted repo
+    _git_cmd = None
+
     def __init__(self, repo, commit):
         self.path = repo.location
         self.commit = commit
         self.pkg_map = self._process_git_repo()
 
-    @property
-    def _git_cmd(self):
-        raise NotImplementedError
+    def update(self, commit):
+        """Update an existing repo starting at a given commit hash."""
+        self._process_git_repo(self.pkg_map, self.commit)
+        self.commit = commit
 
-    def _parse_line(self, line):
+    def _parse_file_line(self, line):
+        """Pull atoms and status from file change lines."""
         # match initially added ebuilds
         match = ebuild_ADM_regex.match(line)
         if match:
@@ -184,14 +189,13 @@ class _ParseGitRepo(object):
             except MalformedAtom:
                 return None
 
-    def update(self, commit):
-        self._process_git_repo(self.pkg_map, self.commit)
-        self.commit = commit
-
     def _process_git_repo(self, pkg_map=None, commit=None):
+        """Parse git log output."""
         if pkg_map is None:
             pkg_map = {}
 
+        if self._git_cmd is None:
+            raise ValueError('missing git command to run')
         cmd = shlex.split(self._git_cmd)
         if commit:
             if '..' in commit:
@@ -205,19 +209,22 @@ class _ParseGitRepo(object):
         line = git_log.stdout.readline().strip().decode()
         while line:
             if not line.startswith('commit '):
-                raise RuntimeError(f'unknown git log output: {line!r}')
+                raise ValueError(
+                    f'unknown git log output: expecting commit hash, got {line!r}')
             commit = line[7:].strip()
             # author
             git_log.stdout.readline()
             # date
             line = git_log.stdout.readline().strip().decode()
             if not line.startswith('Date:'):
-                raise RuntimeError(f'unknown git log output: {line!r}')
+                raise ValueError(
+                    f'unknown git log output: expecting date, got {line!r}')
             date = line[5:].strip()
 
+            # summary and file changes
             while line and not line.startswith('commit '):
                 line = git_log.stdout.readline().decode()
-                parsed = self._parse_line(line)
+                parsed = self._parse_file_line(line)
                 if parsed is not None:
                     atom, status = parsed
                     pkg_map.setdefault(
@@ -230,34 +237,26 @@ class _ParseGitRepo(object):
 class GitChangesRepo(_ParseGitRepo):
     """Parse repository git logs to determine locally changed packages."""
 
+    _git_cmd = 'git log --diff-filter=ARM --name-status --date=short --reverse'
+
     def __init__(self, repo):
         self.path = repo.location
         self.commit = 'origin/HEAD..master'
         self.pkg_map = self._process_git_repo(commit=self.commit)
-
-    @property
-    def _git_cmd(self):
-        return 'git log --diff-filter=ARM --name-status --date=short --reverse'
 
 
 class GitAddedRepo(_ParseGitRepo):
     """Parse repository git logs to determine ebuild added dates."""
 
     cache_suffix = '-added'
-
-    @property
-    def _git_cmd(self):
-        return 'git log --diff-filter=AR --name-status --date=short --reverse'
+    _git_cmd = 'git log --diff-filter=AR --name-status --date=short --reverse'
 
 
 class GitRemovalRepo(_ParseGitRepo):
     """Parse repository git logs to determine ebuild removal dates."""
 
     cache_suffix = '-removal'
-
-    @property
-    def _git_cmd(self):
-        return 'git log --diff-filter=D --name-status --date=short --reverse'
+    _git_cmd = 'git log --diff-filter=D --name-status --date=short --reverse'
 
 
 class HistoricalPkg(cpv.versioned_CPV_cls):
