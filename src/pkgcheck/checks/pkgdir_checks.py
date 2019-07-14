@@ -8,7 +8,7 @@ from snakeoil.demandload import demandload
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism as _pl
 
-from ..base import Error, Warning, Template, package_feed
+from .. import base
 
 demandload('snakeoil.chksum:get_chksums')
 
@@ -20,12 +20,12 @@ allowed_filename_chars_set.update(chr(x) for x in range(ord('0'), ord('9')+1))
 allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 
 
-class MismatchedPN(Error):
+class MismatchedPN(base.Error):
     """Ebuilds that have different names than their parent directory."""
 
     __slots__ = ("category", "package", "ebuilds")
 
-    threshold = package_feed
+    threshold = base.package_feed
 
     def __init__(self, pkg, ebuilds):
         super().__init__()
@@ -38,12 +38,12 @@ class MismatchedPN(Error):
             _pl(self.ebuilds), ', '.join(self.ebuilds))
 
 
-class InvalidPN(Error):
+class InvalidPN(base.Error):
     """Ebuilds that have invalid package names."""
 
     __slots__ = ("category", "package", "ebuilds")
 
-    threshold = package_feed
+    threshold = base.package_feed
 
     def __init__(self, pkg, ebuilds):
         super().__init__()
@@ -56,12 +56,12 @@ class InvalidPN(Error):
             _pl(self.ebuilds), ', '.join(self.ebuilds))
 
 
-class DuplicateFiles(Warning):
+class DuplicateFiles(base.Warning):
     """Two or more identical files in FILESDIR."""
 
     __slots__ = ("category", "package", "files")
 
-    threshold = package_feed
+    threshold = base.package_feed
 
     def __init__(self, pkg, files):
         super().__init__()
@@ -74,12 +74,12 @@ class DuplicateFiles(Warning):
             ', '.join(map(repr, self.files)))
 
 
-class EmptyFile(Warning):
+class EmptyFile(base.Warning):
     """File in FILESDIR is empty."""
 
     __slots__ = ("category", "package", "filename")
 
-    threshold = package_feed
+    threshold = base.package_feed
 
     def __init__(self, pkg, filename):
         super().__init__()
@@ -91,12 +91,12 @@ class EmptyFile(Warning):
         return f'empty file in FILESDIR: {self.filename!r}'
 
 
-class ExecutableFile(Warning):
+class ExecutableFile(base.Warning):
     """File has executable bit, but doesn't need it."""
 
     __slots__ = ("category", "package", "filename")
 
-    threshold = package_feed
+    threshold = base.package_feed
 
     def __init__(self, pkg, filename):
         super().__init__()
@@ -108,12 +108,12 @@ class ExecutableFile(Warning):
         return f'unnecessary executable bit: {self.filename!r}'
 
 
-class SizeViolation(Warning):
+class SizeViolation(base.Warning):
     """File in $FILESDIR is too large (current limit is 20k)."""
 
     __slots__ = ("category", "package", "filename", "size")
 
-    threshold = package_feed
+    threshold = base.package_feed
 
     def __init__(self, pkg, filename, size):
         super().__init__()
@@ -126,12 +126,12 @@ class SizeViolation(Warning):
         return f'{self.filename!r} exceeds 20k in size; {sizeof_fmt(self.size)} total'
 
 
-class Glep31Violation(Error):
+class Glep31Violation(base.Error):
     """File doesn't abide by glep31 requirements."""
 
     __slots__ = ("category", "package", "filename")
 
-    threshold = package_feed
+    threshold = base.package_feed
 
     def __init__(self, pkg, filename):
         super().__init__()
@@ -144,12 +144,12 @@ class Glep31Violation(Error):
                f"by glep31: {self.filename!r}"
 
 
-class InvalidUtf8(Error):
+class InvalidUtf8(base.Error):
     """File isn't utf8 compliant."""
 
     __slots__ = ("category", "package", "filename", "err")
 
-    threshold = package_feed
+    threshold = base.package_feed
 
     def __init__(self, pkg, filename, err):
         super().__init__()
@@ -172,10 +172,10 @@ def utf8_check(pkg, base, filename, reporter):
         del e
 
 
-class PkgDirReport(Template):
+class PkgDirReport(base.Template):
     """Actual ebuild directory scans; file size, glep31 rule enforcement."""
 
-    feed_type = package_feed
+    feed_type = base.package_feed
 
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
     known_results = (
@@ -188,14 +188,14 @@ class PkgDirReport(Template):
 
     def feed(self, pkgset, reporter):
         pkg = pkgset[0]
-        base = os.path.dirname(pkg.path)
+        base_path = os.path.dirname(pkg.path)
         category = os.path.basename(
             os.path.dirname(os.path.dirname(pkg.path)))
         ebuild_ext = '.ebuild'
         mismatched = []
         invalid = []
         # note we don't use os.walk, we need size info also
-        for filename in listdir(base):
+        for filename in listdir(base_path):
             # while this may seem odd, written this way such that the
             # filtering happens all in the genexp.  if the result was being
             # handed to any, it's a frame switch each
@@ -206,16 +206,16 @@ class PkgDirReport(Template):
 
             if (filename.endswith(ebuild_ext) or filename in
                     ("Manifest", "metadata.xml")):
-                if os.stat(pjoin(base, filename)).st_mode & 0o111:
+                if os.stat(pjoin(base_path, filename)).st_mode & 0o111:
                     reporter.add_report(ExecutableFile(pkg, filename))
 
             if filename.endswith(ebuild_ext):
-                utf8_check(pkg, base, filename, reporter)
+                utf8_check(pkg, base_path, filename, reporter)
 
                 pkg_name = os.path.basename(filename[:-len(ebuild_ext)])
                 try:
                     pkg_atom = atom(f'={category}/{pkg_name}')
-                    if pkg_atom.package != os.path.basename(base):
+                    if pkg_atom.package != os.path.basename(base_path):
                         mismatched.append(pkg_name)
                 except MalformedAtom:
                     invalid.append(pkg_name)
@@ -225,14 +225,14 @@ class PkgDirReport(Template):
         if invalid:
             reporter.add_report(InvalidPN(pkg, invalid))
 
-        if not os.path.exists(pjoin(base, 'files')):
+        if not os.path.exists(pjoin(base_path, 'files')):
             return
         unprocessed_dirs = deque(["files"])
         files_by_size = defaultdict(list)
         while unprocessed_dirs:
             cwd = unprocessed_dirs.pop()
-            for fn in listdir(pjoin(base, cwd)):
-                afn = pjoin(base, cwd, fn)
+            for fn in listdir(pjoin(base_path, cwd)):
+                afn = pjoin(base_path, cwd, fn)
                 st = os.lstat(afn)
 
                 if stat.S_ISDIR(st.st_mode):
@@ -256,7 +256,7 @@ class PkgDirReport(Template):
         for size, files in files_by_size.items():
             if len(files) > 1:
                 for f in files:
-                    digest = get_chksums(pjoin(base, f), self.digest_algo)[0]
+                    digest = get_chksums(pjoin(base_path, f), self.digest_algo)[0]
                     files_by_digest[digest].append(f)
 
         for digest, files in files_by_digest.items():
