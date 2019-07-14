@@ -3,7 +3,7 @@ from collections import defaultdict, deque
 import os
 import stat
 
-from pkgcore.ebuild.atom import MalformedAtom, atom
+from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
 from snakeoil.demandload import demandload
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism as _pl
@@ -66,11 +66,11 @@ class EqualVersions(base.Error):
 
     __slots__ = ("category", "package", "versions")
 
-    threshold = base.package_feed
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, versions):
         super().__init__()
-        self._store_cp(pkg)
+        self._store_cpv(pkg)
         self.versions = tuple(sorted(versions))
 
     @property
@@ -236,7 +236,7 @@ class PkgDirReport(base.Template):
 
                 pkg_name = os.path.basename(filename[:-len(ebuild_ext)])
                 try:
-                    pkg_atom = atom(f'={category}/{pkg_name}')
+                    pkg_atom = atom_cls(f'={category}/{pkg_name}')
                     if pkg_atom.package != os.path.basename(base_path):
                         mismatched.append(pkg_name)
                 except MalformedAtom:
@@ -248,25 +248,16 @@ class PkgDirReport(base.Template):
             reporter.add_report(InvalidPN(pkg, invalid))
 
         # check for equal versions
-        equal_versions = []
-        equal = []
-        for i, pkg in enumerate(sorted(pkgset)):
+        equal_versions = defaultdict(set)
+        for i, pkg_a in enumerate(sorted(pkgset)):
             try:
-                pkg_a = pkg
                 pkg_b = pkgset[i + 1]
             except IndexError:
                 break
-
             if pkg_a.versioned_atom == pkg_b.versioned_atom:
-                if not equal:
-                    equal.append(pkg_a.fullver)
-                equal.append(pkg_b.fullver)
-            else:
-                if equal:
-                    equal_versions.append(equal)
-                    equal = []
-        for versions in equal_versions:
-            reporter.add_report(EqualVersions(pkg, versions))
+                equal_versions[pkg_a.versioned_atom].update([pkg_a.fullver, pkg_b.fullver])
+        for atom, versions in equal_versions.items():
+            reporter.add_report(EqualVersions(atom, versions))
 
         if not os.path.exists(pjoin(base_path, 'files')):
             return
