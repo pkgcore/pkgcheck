@@ -1,6 +1,46 @@
+from datetime import datetime
+
+from snakeoil.demandload import demand_compile_regexp
 from snakeoil.strings import pluralism as _pl
 
 from .. import base
+
+demand_compile_regexp(
+    'ebuild_copyright_regex',
+    r'^# Copyright (\d\d\d\d(-\d\d\d\d)?) .+')
+
+
+class InvalidCopyright(base.Warning):
+    """Changed ebuild with invalid copyright."""
+
+    __slots__ = ('category', 'package', 'version', 'line')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, line):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.line = line
+
+    @property
+    def short_desc(self):
+        return f'invalid copyright: {self.line!r}'
+
+
+class OutdatedCopyright(base.Warning):
+    """Changed ebuild with outdated copyright."""
+
+    __slots__ = ('category', 'package', 'version', 'year', 'line')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, year, line):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.year = year
+        self.line = line
+
+    @property
+    def short_desc(self):
+        return f'outdated copyright year {self.year!r}: {self.line!r}'
 
 
 class DirectStableKeywords(base.Error):
@@ -23,22 +63,47 @@ class DirectStableKeywords(base.Error):
 class GitCommitsCheck(base.Template):
     """Check unpushed git commits for various issues."""
 
-    feed_type = base.versioned_feed
+    feed_type = base.package_feed
     filter_type = base.git_filter
-    known_results = (DirectStableKeywords,)
+    known_results = (DirectStableKeywords, InvalidCopyright, OutdatedCopyright)
 
     def __init__(self, options):
         super().__init__(options)
+        self.today = datetime.today()
 
-    def feed(self, pkg, reporter):
-        if self.options.target_repo.repo_id == 'gentoo':
-            # TODO: check copyright on new/modified ebuilds for gentoo repo
-            if pkg.status == 'A':
+    def feed(self, pkgset, reporter):
+        invalid_copyrights = set()
+        outdated_copyrights = set()
+
+        for git_pkg in pkgset:
+            if self.options.target_repo.repo_id == 'gentoo':
                 try:
-                    match = self.options.target_repo.match(pkg.versioned_atom)[0]
-                    stable_keywords = sorted(x for x in match.keywords if x[0] not in '~-')
-                    if stable_keywords:
-                        reporter.add_report(DirectStableKeywords(pkg, stable_keywords))
+                    pkg = self.options.target_repo.match(git_pkg.versioned_atom)[0]
                 except IndexError:
                     # weird situation where an ebuild was locally committed and then removed
-                    pass
+                    return
+
+                # check copyright on new/modified ebuilds
+                try:
+                    line = next(pkg.ebuild.text_fileobj())
+                except StopIteration:
+                    # empty ebuild, should be caught by other checks
+                    return
+                copyright = ebuild_copyright_regex.match(line)
+                if copyright:
+                    year = copyright.group(1).split('-')[-1]
+                    if int(year) < self.today.year:
+                        outdated_copyrights.add((pkg, year, line))
+                else:
+                    invalid_copyrights.add((pkg, line))
+
+                # check for newly added ebuilds with stable keywords
+                if git_pkg.status == 'A':
+                    stable_keywords = sorted(x for x in pkg.keywords if x[0] not in '~-')
+                    if stable_keywords:
+                        reporter.add_report(DirectStableKeywords(pkg, stable_keywords))
+
+        for pkg, line in invalid_copyrights:
+            reporter.add_report(InvalidCopyright(pkg, line.strip('\n')))
+        for pkg, year, line in outdated_copyrights:
+            reporter.add_report(OutdatedCopyright(pkg, year, line.strip('\n')))
