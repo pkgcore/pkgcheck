@@ -56,6 +56,28 @@ class InvalidPN(base.Error):
             _pl(self.ebuilds), ', '.join(self.ebuilds))
 
 
+class EqualVersions(base.Error):
+    """Ebuilds that have equal versions.
+
+    For example, cat/pn-1.0.2, cat/pn-1.0.2-r0, cat/pn-1.0.2-r00 and
+    cat/pn-1.000.2 all have equal versions according to PMS and therefore
+    shouldn't exist in the same repository.
+    """
+
+    __slots__ = ("category", "package", "versions")
+
+    threshold = base.package_feed
+
+    def __init__(self, pkg, versions):
+        super().__init__()
+        self._store_cp(pkg)
+        self.versions = tuple(sorted(versions))
+
+    @property
+    def short_desc(self):
+        return f"equal package versions: [ {', '.join(map(repr, self.versions))} ]"
+
+
 class DuplicateFiles(base.Warning):
     """Two or more identical files in FILESDIR."""
 
@@ -180,7 +202,7 @@ class PkgDirReport(base.Template):
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
     known_results = (
         DuplicateFiles, EmptyFile, ExecutableFile, SizeViolation,
-        Glep31Violation, InvalidUtf8, MismatchedPN, InvalidPN,
+        Glep31Violation, InvalidUtf8, MismatchedPN, InvalidPN, EqualVersions,
     )
 
     # TODO: put some 'preferred algorithms by purpose' into snakeoil?
@@ -224,6 +246,27 @@ class PkgDirReport(base.Template):
             reporter.add_report(MismatchedPN(pkg, mismatched))
         if invalid:
             reporter.add_report(InvalidPN(pkg, invalid))
+
+        # check for equal versions
+        equal_versions = []
+        equal = []
+        for i, pkg in enumerate(sorted(pkgset)):
+            try:
+                pkg_a = pkg
+                pkg_b = pkgset[i + 1]
+            except IndexError:
+                break
+
+            if pkg_a.versioned_atom == pkg_b.versioned_atom:
+                if not equal:
+                    equal.append(pkg_a.fullver)
+                equal.append(pkg_b.fullver)
+            else:
+                if equal:
+                    equal_versions.append(equal)
+                    equal = []
+        for versions in equal_versions:
+            reporter.add_report(EqualVersions(pkg, versions))
 
         if not os.path.exists(pjoin(base_path, 'files')):
             return
