@@ -180,6 +180,11 @@ class FilteredRepoSource(RestrictedRepoSource):
 
 
 class GitCommitsRepoSource(RestrictedRepoSource):
+    """Repository source for locally changed packages in git history.
+
+    Parses local git log history to determine packages with changes that
+    haven't been pushed upstream yet.
+    """
 
     filter_type = base.git_filter
 

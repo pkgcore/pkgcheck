@@ -250,10 +250,12 @@ class Result(object, metaclass=set_documentation):
 
 
 class Error(Result):
+    """Result with an error priority level."""
     _level = 40
 
 
 class Warning(Result):
+    """Result with a warning priority level."""
     _level = 30
 
 
@@ -274,6 +276,7 @@ class MetadataError(Error):
 
 
 class Reporter(object):
+    """Generic result reporter."""
 
     def __init__(self, out, keywords=None, verbosity=None):
         """Initialize
@@ -286,25 +289,27 @@ class Reporter(object):
         self._filtered_keywords = set(keywords) if keywords is not None else keywords
 
     def add_report(self, result):
+        """Add a report result to be processed for output."""
         # only process reports for keywords that are enabled
         if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
             result._verbosity = self.verbosity
             self.process_report(result)
 
     def process_report(self, result):
+        """Render and output a report result.."""
         raise NotImplementedError(self.process_report)
 
     def start(self):
-        pass
+        """Initialize reporter output."""
 
     def start_check(self, source, target):
-        pass
+        """Initialize reporter check output."""
 
     def end_check(self):
-        pass
+        """Finalize reporter check output."""
 
     def finish(self):
-        pass
+        """Finalize reporter output."""
 
 
 def convert_check_filter(tok):
