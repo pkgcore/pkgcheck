@@ -358,19 +358,19 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
         mk_pkg = partial(self.mk_pkg, attr)
         self.assertNoReport(chk, mk_pkg())
         self.assertNoReport(chk, mk_pkg("|| ( dev-util/foo ) dev-foo/bugger "))
-        r = self.assertReport(self.mk_check(), mk_pkg("|| ("))
+        r = self.assertReport(chk, mk_pkg("|| ("))
         assert isinstance(r, metadata_checks.MetadataError)
         assert r.attr == attr
         if 'depend' not in attr:
             return
         self.assertNoReport(chk, mk_pkg("!dev-util/blah"))
-        r = self.assertReport(self.mk_check(), mk_pkg("!dev-util/diffball"))
+        r = self.assertReport(chk, mk_pkg("!dev-util/diffball"))
         assert isinstance(r, metadata_checks.MetadataError)
         assert "blocks itself" in r.msg
 
         # check for := in || () blocks
         r = self.assertReport(
-            self.mk_check(),
+            chk,
             mk_pkg(eapi='5', data="|| ( dev-libs/foo:= dev-libs/bar:= )"))
         assert isinstance(r, metadata_checks.MetadataError)
         assert "= slot operator used inside || block" in r.msg
@@ -378,15 +378,16 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
 
         # check for := in blockers
         r = self.assertReport(
-            self.mk_check(),
+            chk,
             mk_pkg(eapi='5', data="!dev-libs/foo:="))
         assert isinstance(r, metadata_checks.MetadataError)
         assert "= slot operator used in blocker" in r.msg
         assert "[dev-libs/foo]" in r.msg
 
         # check for missing revisions
+        self.assertNoReport(chk, mk_pkg("=dev-libs/foo-1-r0"))
         r = self.assertReport(
-            self.mk_check(),
+            chk,
             mk_pkg(eapi='6', data="=dev-libs/foo-1"))
         assert isinstance(r, metadata_checks.MissingRevision)
 
