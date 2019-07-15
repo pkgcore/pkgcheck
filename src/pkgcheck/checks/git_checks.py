@@ -3,7 +3,7 @@ from datetime import datetime
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.strings import pluralism as _pl
 
-from .. import base
+from .. import addons, base
 
 demand_compile_regexp(
     'ebuild_copyright_regex',
@@ -65,9 +65,10 @@ class GitCommitsCheck(base.Template):
 
     feed_type = base.package_feed
     filter_type = base.git_filter
+    required_addons = (addons.GitAddon,)
     known_results = (DirectStableKeywords, InvalidCopyright, OutdatedCopyright)
 
-    def __init__(self, options):
+    def __init__(self, options, git_addon):
         super().__init__(options)
         self.today = datetime.today()
 
