@@ -247,9 +247,9 @@ class PkgDirReport(base.Template):
         if invalid:
             reporter.add_report(InvalidPN(pkg, invalid))
 
-        # check for equal versions
+        # check for equal versions (assumes pkgset is sorted)
         equal_versions = defaultdict(set)
-        for i, pkg_a in enumerate(sorted(pkgset)):
+        for i, pkg_a in enumerate(pkgset):
             try:
                 pkg_b = pkgset[i + 1]
             except IndexError:
