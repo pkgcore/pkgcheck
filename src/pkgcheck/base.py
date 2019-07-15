@@ -521,8 +521,7 @@ def plug(sinks, transforms, sources, debug=None):
             feed_type = todo.pop()
             reachable.add(feed_type)
             for transform in feed_to_transforms.get(feed_type, ()):
-                if (transform.scope <= source.scope and
-                        transform.dest not in reachable):
+                if (transform.scope <= source.scope and transform.dest not in reachable):
                     todo.add(transform.dest)
         for feed_type in reachable:
             scope = best_scope.get(feed_type)
@@ -559,8 +558,7 @@ def plug(sinks, transforms, sources, debug=None):
     # Map from (scope, source typename, source filter typename) to cheapest source.
     source_map = {}
     for source in sources:
-        current_source = source_map.get((source.scope,
-                                         source.feed_type))
+        current_source = source_map.get((source.scope, source.feed_type))
         if current_source is None or current_source.cost > source.cost:
             source_map[source.scope, source.feed_type, source.filter_type] = source
 
