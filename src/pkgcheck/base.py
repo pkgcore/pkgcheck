@@ -103,14 +103,7 @@ class Addon(object):
         """
 
 
-class set_documentation(type):
-    def __new__(cls, name, bases, d):
-        if "__doc__" in d:
-            d.setdefault("documentation", d["__doc__"])
-        return type.__new__(cls, name, bases, d)
-
-
-class Template(Addon, metaclass=set_documentation):
+class Template(Addon):
     """Base template for a check."""
 
     scope = version_scope
@@ -188,7 +181,7 @@ def collect_checks_classes(obj):
     return set(x.__class__ for x in collect_checks(obj))
 
 
-class Result(object, metaclass=set_documentation):
+class Result(object):
 
     __slots__ = ()
 
