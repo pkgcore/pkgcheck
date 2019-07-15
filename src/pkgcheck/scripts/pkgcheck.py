@@ -6,6 +6,7 @@ from portage.
 """
 
 import argparse
+from functools import partial
 from itertools import chain
 
 from pkgcore.plugin import get_plugins, get_plugin
@@ -449,25 +450,22 @@ def _scan(options, out, err):
     sinks = list(addon for addon in addons_map.values()
                  if getattr(addon, 'feed_type', False))
 
+    raw_sources = []
+    for source in feeds.all_sources():
+        addons = [addons_map[x] for x in source.required_addons]
+        raw_sources.append(partial(source, options, *addons))
+
     reporter.start()
 
     for filterer in options.limiters:
-        sources = [
-            feeds.RestrictedRepoSource(options, filterer),
-            feeds.FilteredRepoSource(options, filterer),
-            feeds.GitCommitsRepoSource(options, filterer),
-        ]
+        sources = [source(filterer) for source in raw_sources]
         bad_sinks, pipes = base.plug(sinks, transforms, sources, debug)
         if bad_sinks:
             # We want to report the ones that would work if this was a
             # full repo scan separately from the ones that are
             # actually missing transforms.
             bad_sinks = set(bad_sinks)
-            full_scope = [
-                feeds.RestrictedRepoSource(options, packages.AlwaysTrue),
-                feeds.FilteredRepoSource(options, packages.AlwaysTrue),
-                feeds.GitCommitsRepoSource(options, packages.AlwaysTrue),
-            ]
+            full_scope = [source(packages.AlwaysTrue) for source in raw_sources]
             really_bad, ignored = base.plug(sinks, transforms, full_scope)
             really_bad = set(really_bad)
             assert bad_sinks >= really_bad, \

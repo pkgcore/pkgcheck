@@ -135,7 +135,13 @@ class GenericSource(object):
 
     feed_type = versioned_feed
     filter_type = no_filter
+    required_addons = ()
     cost = 10
+
+    def __init__(self, options, limiter):
+        self.options = options
+        self.repo = options.target_repo
+        self.limiter = limiter
 
 
 class Transform(object):
