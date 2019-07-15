@@ -600,7 +600,7 @@ class StupidKeywords(base.Warning):
         "keywords contain -*; use package.mask or empty keywords instead")
 
 
-class InvalidKeywords(base.Warning):
+class InvalidKeywords(base.Error):
     """Packages using invalid KEYWORDS."""
 
     __slots__ = ('category', 'package', 'version', 'keywords')
@@ -609,7 +609,7 @@ class InvalidKeywords(base.Warning):
     def __init__(self, pkg, keywords):
         super().__init__()
         self._store_cpv(pkg)
-        self.keywords = tuple(keywords)
+        self.keywords = tuple(sorted(keywords))
 
     @property
     def short_desc(self):
