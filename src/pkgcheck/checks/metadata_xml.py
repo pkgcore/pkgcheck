@@ -148,6 +148,21 @@ class base_MetadataXmlInvalidCatRef(base.Error):
             self._label, os.path.basename(self.filename), self.cattext)
 
 
+class MissingMaintainer(base.Warning):
+    """Package missing a maintainer (or maintainer-needed comment) in metadata.xml."""
+
+    __slots__ = ("category", "package")
+    threshold = base.package_feed
+
+    def __init__(self, pkg):
+        super().__init__()
+        self._store_cp(pkg)
+
+    @property
+    def short_desc(self):
+        return 'no package maintainer specified'
+
+
 class PkgMissingMetadataXml(base_MissingXml):
     """Package is missing metadata.xml."""
     __slots__ = ()
@@ -432,13 +447,18 @@ class PackageMetadataXmlCheck(base_check):
     known_results = (
         PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
-        PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement)
+        PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, MissingMaintainer)
 
     def feed(self, pkgs, reporter):
         # package with no ebuilds, skipping check
         if not pkgs:
             return
         pkg = pkgs[0]
+
+        # flag pkgs missing maintainer or maintainer-needed settings
+        if not pkg.maintainers:
+            reporter.add_report(MissingMaintainer(pkg))
+
         loc = pjoin(os.path.dirname(pkg.ebuild.path), "metadata.xml")
         for report in self.check_file(loc):
             reporter.add_report(report(loc, pkg.category, pkg.package))
