@@ -18,18 +18,15 @@ class PkgDirReportBase(misc.Tmpdir, misc.ReportTestCase):
     check_kls = pkgdir_checks.PkgDirReport
     check = pkgdir_checks.PkgDirReport(None, None)
 
-    def mk_pkg(self, files={}, pkg=None):
-        if pkg is None:
-            # generate random cat/PN
-            category = uuid.uuid4().hex
-            PN = uuid.uuid4().hex
-        else:
-            category, PN = pkg.split(os.path.sep)
+    def mk_pkg(self, files={}, category=None, package=None, version='0.7.1', revision=''):
+        # generate random cat/PN
+        category = uuid.uuid4().hex if category is None else category
+        package = uuid.uuid4().hex if package is None else package
 
-        pkg = f"{category}/{PN}-0.7.1"
+        pkg = f"{category}/{package}-{version}{revision}"
         repo = FakeRepo(repo_id='repo', location=self.dir)
-        self.filesdir = pjoin(repo.location, category, PN, 'files')
-        os.makedirs(self.filesdir)
+        self.filesdir = pjoin(repo.location, category, package, 'files')
+        os.makedirs(self.filesdir, exist_ok=True)
 
         # create specified files in FILESDIR
         for fn, contents in files.items():
@@ -141,7 +138,7 @@ class TestInvalidPN(PkgDirReportBase):
         self.assertNoReport(self.check, [pkg])
 
         # single, invalid ebuild
-        pkg = self.mk_pkg(pkg='sys-apps/invalid')
+        pkg = self.mk_pkg(category='sys-apps', package='invalid')
         touch(pjoin(os.path.dirname(pkg.path), 'invalid-0-foo.ebuild'))
         r = self.assertReport(self.check, [pkg])
         assert isinstance(r, pkgdir_checks.InvalidPN)
@@ -149,7 +146,7 @@ class TestInvalidPN(PkgDirReportBase):
         assert 'invalid-0-foo' in str(r)
 
         # multiple ebuilds, multiple invalid
-        pkg = self.mk_pkg(pkg='sys-apps/bar')
+        pkg = self.mk_pkg(category='sys-apps', package='bar')
         touch(pjoin(os.path.dirname(pkg.path), 'bar-0.ebuild'))
         touch(pjoin(os.path.dirname(pkg.path), 'bar-1.ebuild'))
         touch(pjoin(os.path.dirname(pkg.path), 'bar-0-foo1.ebuild'))
