@@ -566,7 +566,7 @@ class DependencyReport(base.Template):
                                     outdated_blockers.add((attr_name, atom, years))
                             else:
                                 nonexistent_blockers.add((attr_name, atom))
-                if atom.op == '=' and atom.revision == '':
+                if atom.op == '=' and not atom.revision:
                     reporter.add_report(MissingRevision(pkg, attr_name, atom))
 
             if slot_op_or_blocks:
