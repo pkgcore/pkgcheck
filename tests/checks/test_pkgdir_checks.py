@@ -181,6 +181,14 @@ class TestEqualVersions(PkgDirReportBase):
         assert r.version == '0'
         assert r.versions == ('0', '0-r0', '0-r000')
 
+        # unsorted, matching revisions
+        pkg_new_version = self.mk_pkg(
+            category=pkg_a.category, package=pkg_a.package, version='1')
+        r = self.assertReport(self.check, [pkg_b, pkg_new_version, pkg_c, pkg_a])
+        assert isinstance(r, pkgdir_checks.EqualVersions)
+        assert r.version == '0'
+        assert r.versions == ('0', '0-r0', '0-r000')
+
         # multiple, matching revisions with 0 prefixes
         pkg_d = self.mk_pkg(
             category=pkg_a.category, package=pkg_a.package, version='0', revision='-r1')

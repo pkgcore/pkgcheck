@@ -247,11 +247,12 @@ class PkgDirReport(base.Template):
         if invalid:
             reporter.add_report(InvalidPN(pkg, invalid))
 
-        # check for equal versions (assumes pkgset is sorted)
+        # check for equal versions
         equal_versions = defaultdict(set)
-        for i, pkg_a in enumerate(pkgset):
+        sorted_pkgset = sorted(pkgset)
+        for i, pkg_a in enumerate(sorted_pkgset):
             try:
-                pkg_b = pkgset[i + 1]
+                pkg_b = sorted_pkgset[i + 1]
             except IndexError:
                 break
             if pkg_a.versioned_atom == pkg_b.versioned_atom:
