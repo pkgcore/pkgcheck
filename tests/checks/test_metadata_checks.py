@@ -68,7 +68,7 @@ class iuse_options(TempDirMixin):
             pjoin(base, "use.desc"), "w",
             "\n".join(f"{x} - {x}" for x in kwds.pop("use_desc", ("foo", "bar"))))
 
-        fileutils.write_file(pjoin(base, 'repo_name'), 'w', 'monkeys')
+        fileutils.write_file(pjoin(base, 'repo_name'), 'w', kwds.pop('repo_name', 'monkeys'))
         os.mkdir(pjoin(repo_base, 'metadata'))
         fileutils.write_file(
             pjoin(repo_base, 'metadata', 'layout.conf'), 'w', "masters = ")
@@ -115,6 +115,18 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
             metadata_checks.InvalidKeywords)
         self.assertNoReport(
             self.check, self.mk_pkg("~* -amd64 ppc ~x86"),
+            metadata_checks.InvalidKeywords)
+
+        # check that * and ~* are flagged in gentoo repo
+        options = self.get_options(repo_name='gentoo')
+        profiles = [misc.FakeProfile()]
+        iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
+        check = metadata_checks.KeywordsReport(options, iuse_handler)
+        assert isinstance(
+            self.assertReport(check, self.mk_pkg("*")),
+            metadata_checks.InvalidKeywords)
+        assert isinstance(
+            self.assertReport(check, self.mk_pkg("~*")),
             metadata_checks.InvalidKeywords)
 
     def test_overlapping_keywords(self):

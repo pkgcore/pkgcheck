@@ -613,7 +613,7 @@ class InvalidKeywords(base.Warning):
 
     @property
     def short_desc(self):
-        return f"invalid KEYWORDS: {', '.join(self.keywords)}"
+        return f"invalid KEYWORDS: {', '.join(map(repr, self.keywords))}"
 
 
 class OverlappingKeywords(base.Warning):
@@ -706,14 +706,16 @@ class KeywordsReport(base.Template):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
         self.valid_arches = self.options.target_repo.known_arches
-        # Note: '*' and '~*' are portage-only special KEYWORDS atm, i.e. not
-        # in PMS or implemented in pkgcore.
-        special_keywords = set(('-*', '*', '~*'))
+        special_keywords = set(['-*'])
         stable_keywords = self.valid_arches
         unstable_keywords = set('~' + x for x in self.valid_arches)
         disabled_keywords = set('-' + x for x in self.valid_arches)
         self.valid_keywords = (
             special_keywords | stable_keywords | unstable_keywords | disabled_keywords)
+
+        # Note: '*' and '~*' are portage-only special KEYWORDS atm, i.e. not
+        # specified in PMS, so they don't belong in the main tree.
+        self.portage_keywords = set(['*', '~*'])
 
     def feed(self, pkg, reporter):
         if len(pkg.keywords) == 1 and pkg.keywords[0] == "-*":
@@ -721,6 +723,9 @@ class KeywordsReport(base.Template):
         else:
             # check for invalid keywords
             invalid = set(pkg.keywords) - self.valid_keywords
+            # portage-only KEYWORDS are allowed in overlays
+            if self.options.target_repo.repo_id != 'gentoo':
+                invalid -= self.portage_keywords
             if invalid:
                 reporter.add_report(InvalidKeywords(pkg, invalid))
 
