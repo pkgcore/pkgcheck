@@ -188,13 +188,12 @@ class GitCommitsRepoSource(RestrictedRepoSource):
     haven't been pushed upstream yet.
     """
 
+    required_addons = (addons.GitAddon,)
     filter_type = base.git_filter
 
-    def __init__(self, *args):
-        super().__init__(*args)
-        git_repo = addons.GitChangesRepo(self.repo)
-        self.repo = addons.HistoricalRepo(
-            git_repo.pkg_map, repo_id=f'{self.repo.repo_id}-commits')
+    def __init__(self, options, git_addon, limiter):
+        super().__init__(options, limiter)
+        self.repo = git_addon.commits_repo(addons.GitChangesRepo)
 
         # Drop repo restriction if one exists as we're matching against a faked
         # repo with a different repo_id.

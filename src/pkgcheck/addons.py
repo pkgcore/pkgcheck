@@ -13,6 +13,7 @@ from pkgcore.ebuild import cpv
 from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
+from pkgcore.test.misc import FakeRepo
 from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
@@ -358,6 +359,19 @@ class GitAddon(base.Addon):
                     repo = multiplex.tree(*git_repos)
                 elif len(git_repos) == 1:
                     repo = git_repos[0]
+
+        return repo
+
+    def commits_repo(self, repo_cls, target_repo=None):
+        if target_repo is None:
+            target_repo = self.options.target_repo
+
+        if not self.options.git_disable:
+            git_repo = repo_cls(target_repo)
+            repo = HistoricalRepo(
+                git_repo.pkg_map, repo_id=f'{target_repo.repo_id}-commits')
+        else:
+            repo = FakeRepo()
 
         return repo
 
