@@ -430,14 +430,11 @@ class base_check(base.Template):
         if self.schema is not None and not self.schema.validate(doc):
             yield partial(self.invalid_error, self.schema.error_log)
 
-        # check for missing maintainers
-        if pkg is not None:
-            if pkg.maintainers and pkg.maintainers[0].name == 'maintainer-needed':
-                for comment in doc.xpath('//comment()'):
-                    if comment.text.strip() == 'maintainer-needed':
-                        break
-                else:
-                    yield partial(MissingMaintainer)
+        # check for missing maintainer-needed comments in gentoo repo
+        if pkg is not None and pkg.repo.repo_id == 'gentoo' and not pkg.maintainers:
+            for comment in doc.xpath('//comment()'):
+                if comment.text.strip() == 'maintainer-needed':
+                    break
             else:
                 yield partial(MissingMaintainer)
 
