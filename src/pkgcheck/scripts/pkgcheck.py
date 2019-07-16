@@ -452,7 +452,7 @@ def _scan(options, out, err):
 
     raw_sources = []
     for source in feeds.all_sources():
-        addons = [addons_map[x] for x in source.required_addons]
+        addons = [addons_map.get(cls, cls(options)) for cls in source.required_addons]
         raw_sources.append(partial(source, options, *addons))
 
     reporter.start()
