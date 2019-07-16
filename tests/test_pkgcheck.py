@@ -1,13 +1,79 @@
-from pkgcore.test.scripts import helpers
+from functools import partial
+from unittest.mock import patch
 
-from pkgcheck.scripts import pkgcheck
+from pytest import raises
+
+from pkgcheck import __title__ as project
+from pkgcheck.scripts import run
 
 
-class TestCommandline(helpers.ArgParseMixin):
+def test_script_run(capfd):
+    """Test regular code path for running scripts."""
+    script = partial(run, project)
 
-    _argparser = pkgcheck.scan
+    with patch(f'{project}.scripts.import_module') as import_module:
+        import_module.side_effect = ImportError("baz module doesn't exist")
 
-    def test_parser(self):
-        self.assertError(
-            "argument -r/--repo: couldn't find repo 'spork'",
-            '-r', 'spork')
+        # default error path when script import fails
+        with patch('sys.argv', [project]):
+            with raises(SystemExit) as excinfo:
+                script()
+            assert excinfo.value.code == 1
+            out, err = capfd.readouterr()
+            err = err.strip().split('\n')
+            assert len(err) == 3
+            assert err[0] == "Failed importing: baz module doesn't exist!"
+            assert err[1].startswith(f"Verify that {project} and its deps")
+            assert err[2] == "Add --debug to the commandline for a traceback."
+
+        # running with --debug should raise an ImportError when there are issues
+        with patch('sys.argv', [project, '--debug']):
+            with raises(ImportError):
+                script()
+            out, err = capfd.readouterr()
+            err = err.strip().split('\n')
+            assert len(err) == 2
+            assert err[0] == "Failed importing: baz module doesn't exist!"
+            assert err[1].startswith(f"Verify that {project} and its deps")
+
+        import_module.reset_mock()
+
+
+class TestPkgcheckScan(object):
+
+    script = partial(run, project)
+
+    def test_unknown_repo(self, capfd):
+        for opt in ('-r', '--repo'):
+            with patch('sys.argv', ['scan', opt, 'foo']):
+                with raises(SystemExit) as excinfo:
+                    self.script()
+                assert excinfo.value.code == 2
+                out, err = capfd.readouterr()
+                err = err.strip().split('\n')
+                assert len(err) == 1
+                assert err[0].startswith(
+                    "pkgcheck scan: error: argument -r/--repo: couldn't find repo 'foo'")
+
+    def test_unknown_reporter(self, capfd):
+        for opt in ('-R', '--reporter'):
+            with patch('sys.argv', ['scan', opt, 'foo']):
+                with raises(SystemExit) as excinfo:
+                    self.script()
+                assert excinfo.value.code == 2
+                out, err = capfd.readouterr()
+                err = err.strip().split('\n')
+                assert len(err) == 1
+                assert err[0].startswith(
+                    "pkgcheck scan: error: no reporter matches 'foo'")
+
+    def test_unknown_scope(self, capfd):
+        for opt in ('-S', '--scopes'):
+            with patch('sys.argv', ['scan', opt, 'foo']):
+                with raises(SystemExit) as excinfo:
+                    self.script()
+                assert excinfo.value.code == 2
+                out, err = capfd.readouterr()
+                err = err.strip().split('\n')
+                assert len(err) == 1
+                assert err[0].startswith("pkgcheck scan: error: unknown scope: 'foo'")
