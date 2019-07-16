@@ -20,6 +20,7 @@ from snakeoil.containers import ProtectedSet
 from snakeoil.demandload import demandload, demand_compile_regexp
 from snakeoil.iterables import expandable_chain
 from snakeoil.osutils import abspath, listdir_files, pjoin
+from snakeoil.process import find_binary, CommandNotFound
 from snakeoil.process.spawn import spawn_get_output
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
@@ -295,6 +296,15 @@ class GitAddon(base.Addon):
             docs="""
                 Parses a repo's git log and caches various historical information.
             """)
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        # disable git support if git isn't installed
+        if not self.options.git_disable:
+            try:
+                find_binary('git')
+            except CommandNotFound:
+                self.options.git_disable = True
 
     def cached_repo(self, repo_cls, target_repo=None):
         repo = None
