@@ -419,16 +419,16 @@ class base_check(base.Template):
         try:
             doc = etree.parse(loc)
         except (IOError, OSError):
-            return (self.missing_error,)
+            yield self.missing_error
         except etree.XMLSyntaxError:
-            return (self.misformed_error,)
+            yield self.misformed_error
 
         # note: while doc is available, do not pass it here as it may
         # trigger undefined behavior due to incorrect structure
         if self.schema is not None and not self.schema.validate(doc):
-            return (partial(self.invalid_error, self.schema.error_log),)
+            yield partial(self.invalid_error, self.schema.error_log)
 
-        return chain.from_iterable((self.check_doc(doc), self.check_whitespace(loc)))
+        yield from chain.from_iterable((self.check_doc(doc), self.check_whitespace(loc)))
 
 
 class PackageMetadataXmlCheck(base_check):
