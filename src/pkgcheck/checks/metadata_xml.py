@@ -151,12 +151,14 @@ class base_MetadataXmlInvalidCatRef(base.Error):
 class MissingMaintainer(base.Warning):
     """Package missing a maintainer (or maintainer-needed comment) in metadata.xml."""
 
-    __slots__ = ("category", "package")
+    __slots__ = ("category", "package", "filename")
     threshold = base.package_feed
 
-    def __init__(self, pkg):
+    def __init__(self, filename, category, package):
         super().__init__()
-        self._store_cp(pkg)
+        self.filename = filename
+        self.category = category
+        self.package = package
 
     @property
     def short_desc(self):
@@ -415,7 +417,7 @@ class base_check(base.Template):
         if indents:
             yield partial(self.indent_error, indents)
 
-    def check_file(self, loc):
+    def check_file(self, loc, pkg=None):
         try:
             doc = etree.parse(loc)
         except (IOError, OSError):
@@ -427,6 +429,17 @@ class base_check(base.Template):
         # trigger undefined behavior due to incorrect structure
         if self.schema is not None and not self.schema.validate(doc):
             yield partial(self.invalid_error, self.schema.error_log)
+
+        # check for missing maintainers
+        if pkg is not None:
+            if pkg.maintainers and pkg.maintainers[0].name == 'maintainer-needed':
+                for comment in doc.xpath('//comment()'):
+                    if comment.text.strip() == 'maintainer-needed':
+                        break
+                else:
+                    yield partial(MissingMaintainer)
+            else:
+                yield partial(MissingMaintainer)
 
         yield from chain.from_iterable((self.check_doc(doc), self.check_whitespace(loc)))
 
@@ -455,12 +468,8 @@ class PackageMetadataXmlCheck(base_check):
             return
         pkg = pkgs[0]
 
-        # flag pkgs missing maintainer or maintainer-needed settings
-        if not pkg.maintainers:
-            reporter.add_report(MissingMaintainer(pkg))
-
         loc = pjoin(os.path.dirname(pkg.ebuild.path), "metadata.xml")
-        for report in self.check_file(loc):
+        for report in self.check_file(loc, pkg):
             reporter.add_report(report(loc, pkg.category, pkg.package))
 
 
