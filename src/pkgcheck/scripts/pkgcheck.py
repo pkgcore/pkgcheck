@@ -44,6 +44,8 @@ scan = subparsers.add_parser('scan', description='scan targets for QA issues')
 scan.set_defaults(repo_bases=[])
 scan.set_defaults(guessed_suite=False)
 scan.set_defaults(default_suite=False)
+# TODO: rework pkgcore's config system to allow more lazy loading
+scan.set_defaults(profile_override='fake')
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
