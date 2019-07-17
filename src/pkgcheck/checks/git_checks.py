@@ -88,7 +88,7 @@ class GitCommitsCheck(base.Template):
     def __init__(self, options, git_addon):
         super().__init__(options)
         self.today = datetime.today()
-        self.added_repo = git_addon.cached_repo(addons.GitAddedRepo)
+        self.added_repo = git_addon.commits_repo(addons.GitAddedRepo)
 
     def feed(self, pkgset, reporter):
         invalid_copyrights = set()
@@ -124,9 +124,8 @@ class GitCommitsCheck(base.Template):
                         reporter.add_report(DirectStableKeywords(pkg, stable_keywords))
 
                     # pkg was just added to the tree
-                    newly_added = all(
-                        x.date == pkg.date
-                        for x in self.added_repo.match(git_pkg.unversioned_atom))
+                    added_pkgs = self.added_repo.match(git_pkg.unversioned_atom)
+                    newly_added = all(x.date == added_pkgs[0].date for x in added_pkgs)
 
                     # check for no maintainers
                     if newly_added and not pkg.maintainers:

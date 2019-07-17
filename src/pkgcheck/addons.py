@@ -157,10 +157,14 @@ class _ParseGitRepo(object):
     # git command to run on the targeted repo
     _git_cmd = None
 
-    def __init__(self, repo, commit):
+    def __init__(self, repo, commit=None):
         self.path = repo.location
-        self.commit = commit
-        self.pkg_map = self._process_git_repo()
+        if commit is None:
+            self.commit = 'origin/HEAD..master'
+            self.pkg_map = self._process_git_repo(commit=self.commit)
+        else:
+            self.commit = commit
+            self.pkg_map = self._process_git_repo()
 
     def update(self, commit):
         """Update an existing repo starting at a given commit hash."""
@@ -240,11 +244,6 @@ class GitChangesRepo(_ParseGitRepo):
     """Parse repository git logs to determine locally changed packages."""
 
     _git_cmd = 'git log --diff-filter=ARM --name-status --date=short --reverse'
-
-    def __init__(self, repo):
-        self.path = repo.location
-        self.commit = 'origin/HEAD..master'
-        self.pkg_map = self._process_git_repo(commit=self.commit)
 
 
 class GitAddedRepo(_ParseGitRepo):
