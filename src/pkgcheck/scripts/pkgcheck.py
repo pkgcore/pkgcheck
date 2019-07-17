@@ -9,12 +9,13 @@ import argparse
 from functools import partial
 from itertools import chain
 
+from pkgcore import const
 from pkgcore.plugin import get_plugins, get_plugin
 from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
-from snakeoil.osutils import abspath
+from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import unstable_unique
 from snakeoil.strings import pluralism as _pl
 
@@ -46,7 +47,7 @@ scan.set_defaults(repo_bases=[])
 scan.set_defaults(guessed_suite=False)
 scan.set_defaults(default_suite=False)
 # TODO: rework pkgcore's config system to allow more lazy loading
-scan.set_defaults(profile_override='fake')
+scan.set_defaults(profile_override=pjoin(const.DATA_PATH, 'fakerepo/profiles/default'))
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
