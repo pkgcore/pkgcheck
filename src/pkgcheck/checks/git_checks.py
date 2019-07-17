@@ -60,17 +60,35 @@ class DirectStableKeywords(base.Error):
             _pl(self.keywords), ', '.join(self.keywords))
 
 
+class NoMaintainer(base.Error):
+    """Newly added package with no specified maintainer."""
+
+    __slots__ = ('category', 'package')
+    threshold = base.package_feed
+
+    def __init__(self, pkg):
+        super().__init__()
+        self._store_cp(pkg)
+
+    @property
+    def short_desc(self):
+        return 'directly committed with no package maintainer'
+
+
 class GitCommitsCheck(base.Template):
     """Check unpushed git commits for various issues."""
 
     feed_type = base.package_feed
     filter_type = base.git_filter
     required_addons = (addons.GitAddon,)
-    known_results = (DirectStableKeywords, InvalidCopyright, OutdatedCopyright)
+    known_results = (
+        DirectStableKeywords, NoMaintainer, InvalidCopyright, OutdatedCopyright,
+    )
 
     def __init__(self, options, git_addon):
         super().__init__(options)
         self.today = datetime.today()
+        self.added_repo = git_addon.cached_repo(addons.GitAddedRepo)
 
     def feed(self, pkgset, reporter):
         invalid_copyrights = set()
@@ -98,11 +116,21 @@ class GitCommitsCheck(base.Template):
                 else:
                     invalid_copyrights.add((pkg, line))
 
-                # check for newly added ebuilds with stable keywords
+                # checks for newly added ebuilds
                 if git_pkg.status == 'A':
+                    # check for stable keywords
                     stable_keywords = sorted(x for x in pkg.keywords if x[0] not in '~-')
                     if stable_keywords:
                         reporter.add_report(DirectStableKeywords(pkg, stable_keywords))
+
+                    # pkg was just added to the tree
+                    newly_added = all(
+                        x.date == pkg.date
+                        for x in self.added_repo.match(git_pkg.unversioned_atom))
+
+                    # check for no maintainers
+                    if newly_added and not pkg.maintainers:
+                        reporter.add_report(NoMaintainer(pkg))
 
         for pkg, line in invalid_copyrights:
             reporter.add_report(InvalidCopyright(pkg, line.strip('\n')))
