@@ -417,28 +417,33 @@ class base_check(base.Template):
         if indents:
             yield partial(self.indent_error, indents)
 
-    def check_file(self, loc, pkg=None):
+    def check_file(self, loc, repo, pkg=None):
         try:
             doc = etree.parse(loc)
         except (IOError, OSError):
-            yield self.missing_error
+            # it's only an error when missing in the main gentoo repo
+            if repo.repo_id == 'gentoo':
+                return (self.missing_error,)
+            return ()
         except etree.XMLSyntaxError:
-            yield self.misformed_error
+            return (self.misformed_error,)
 
         # note: while doc is available, do not pass it here as it may
         # trigger undefined behavior due to incorrect structure
         if self.schema is not None and not self.schema.validate(doc):
-            yield partial(self.invalid_error, self.schema.error_log)
+            return (partial(self.invalid_error, self.schema.error_log),)
 
         # check for missing maintainer-needed comments in gentoo repo
+        maintainers = []
         if pkg is not None and pkg.repo.repo_id == 'gentoo' and not pkg.maintainers:
             for comment in doc.xpath('//comment()'):
                 if comment.text.strip() == 'maintainer-needed':
                     break
             else:
-                yield partial(MissingMaintainer)
+                maintainers.append(partial(MissingMaintainer))
 
-        yield from chain.from_iterable((self.check_doc(doc), self.check_whitespace(loc)))
+        keywords = (maintainers, self.check_doc(doc), self.check_whitespace(loc))
+        return chain.from_iterable(keywords)
 
 
 class PackageMetadataXmlCheck(base_check):
@@ -466,7 +471,7 @@ class PackageMetadataXmlCheck(base_check):
         pkg = pkgs[0]
 
         loc = pjoin(os.path.dirname(pkg.ebuild.path), "metadata.xml")
-        for report in self.check_file(loc, pkg):
+        for report in self.check_file(loc, pkg.repo, pkg):
             reporter.add_report(report(loc, pkg.category, pkg.package))
 
 
@@ -494,7 +499,7 @@ class CategoryMetadataXmlCheck(base_check):
             return
         pkg = pkgs[0]
         loc = os.path.join(self.repo_base, pkg.category, "metadata.xml")
-        for report in self.check_file(loc):
+        for report in self.check_file(loc, pkg.repo):
             reporter.add_report(report(loc, pkg.category))
 
 
