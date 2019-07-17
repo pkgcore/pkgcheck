@@ -148,8 +148,8 @@ class base_MetadataXmlInvalidCatRef(base.Error):
             self._label, os.path.basename(self.filename), self.cattext)
 
 
-class MissingMaintainer(base.Warning):
-    """Package missing a maintainer (or maintainer-needed comment) in metadata.xml."""
+class EmptyMaintainer(base.Warning):
+    """Package with neither a maintainer or maintainer-needed comment in metadata.xml."""
 
     __slots__ = ("category", "package", "filename")
     threshold = base.package_feed
@@ -162,7 +162,7 @@ class MissingMaintainer(base.Warning):
 
     @property
     def short_desc(self):
-        return 'no package maintainer specified'
+        return 'no package maintainer or maintainer-needed comment specified'
 
 
 class PkgMissingMetadataXml(base_MissingXml):
@@ -440,7 +440,7 @@ class base_check(base.Template):
                 if comment.text.strip() == 'maintainer-needed':
                     break
             else:
-                maintainers.append(partial(MissingMaintainer))
+                maintainers.append(partial(EmptyMaintainer))
 
         keywords = (maintainers, self.check_doc(doc), self.check_whitespace(loc))
         return chain.from_iterable(keywords)
@@ -462,7 +462,7 @@ class PackageMetadataXmlCheck(base_check):
     known_results = (
         PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
-        PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, MissingMaintainer)
+        PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, EmptyMaintainer)
 
     def feed(self, pkgs, reporter):
         # package with no ebuilds, skipping check
