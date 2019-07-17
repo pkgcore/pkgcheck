@@ -30,6 +30,7 @@ demandload(
     'pkgcore.restrictions.values:StrExactMatch',
     'pkgcore.repository:multiplex',
     'snakeoil:pickling,formatters',
+    'snakeoil.log:suppress_logging',
     'snakeoil.sequences:iflatten_instance',
     'pkgcheck:errors',
 )
@@ -210,11 +211,16 @@ def _validate_args(parser, namespace):
                 target = os.path.dirname(target)
             target_dir = target
 
-        # determine target repo from the target directory
-        for repo in namespace.domain.ebuild_repos_raw:
-            if target_dir in repo:
-                target_repo = repo
-                break
+        with suppress_logging():
+            # determine target repo from the target directory
+            for repo in namespace.domain.ebuild_repos_raw:
+                if target_dir in repo:
+                    target_repo = repo
+                    break
+            else:
+                # determine if CWD is inside an unconfigured repo
+                target_repo = namespace.domain.find_repo(
+                    target_dir, config=namespace.config, configure=False)
 
         # fallback to the default repo
         if target_repo is None:
