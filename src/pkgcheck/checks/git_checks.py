@@ -60,8 +60,8 @@ class DirectStableKeywords(base.Error):
             _pl(self.keywords), ', '.join(self.keywords))
 
 
-class NoMaintainer(base.Error):
-    """Newly added package with no specified maintainer."""
+class DirectNoMaintainer(base.Error):
+    """Directly added, new package with no specified maintainer."""
 
     __slots__ = ('category', 'package')
     threshold = base.package_feed
@@ -82,7 +82,7 @@ class GitCommitsCheck(base.Template):
     filter_type = base.git_filter
     required_addons = (addons.GitAddon,)
     known_results = (
-        DirectStableKeywords, NoMaintainer, InvalidCopyright, OutdatedCopyright,
+        DirectStableKeywords, DirectNoMaintainer, InvalidCopyright, OutdatedCopyright,
     )
 
     def __init__(self, options, git_addon):
@@ -130,7 +130,7 @@ class GitCommitsCheck(base.Template):
 
                     # check for no maintainers
                     if newly_added and not pkg.maintainers:
-                        reporter.add_report(NoMaintainer(pkg))
+                        reporter.add_report(DirectNoMaintainer(pkg))
 
         for pkg, line in invalid_copyrights:
             reporter.add_report(InvalidCopyright(pkg, line.strip('\n')))
