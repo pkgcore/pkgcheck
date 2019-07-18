@@ -166,8 +166,8 @@ class Glep31Violation(base.Error):
                f"by glep31: {self.filename!r}"
 
 
-class InvalidUtf8(base.Error):
-    """File isn't utf8 compliant."""
+class InvalidUTF8(base.Error):
+    """File isn't UTF-8 compliant."""
 
     __slots__ = ("category", "package", "filename", "err")
 
@@ -181,7 +181,7 @@ class InvalidUtf8(base.Error):
 
     @property
     def short_desc(self):
-        return "invalid utf8: {self.err}: {self.filename!r}"
+        return f"invalid UTF-8: {self.err}: {self.filename!r}"
 
 
 def utf8_check(pkg, base, filename, reporter):
@@ -190,7 +190,7 @@ def utf8_check(pkg, base, filename, reporter):
             pjoin(base, filename), mode="rb",
             encoding="utf8", buffering=8192).read()
     except UnicodeDecodeError as e:
-        reporter.add_report(InvalidUtf8(pkg, filename, str(e)))
+        reporter.add_report(InvalidUTF8(pkg, filename, str(e)))
         del e
 
 
@@ -202,7 +202,7 @@ class PkgDirReport(base.Template):
     ignore_dirs = set(["cvs", ".svn", ".bzr"])
     known_results = (
         DuplicateFiles, EmptyFile, ExecutableFile, SizeViolation,
-        Glep31Violation, InvalidUtf8, MismatchedPN, InvalidPN, EqualVersions,
+        Glep31Violation, InvalidUTF8, MismatchedPN, InvalidPN, EqualVersions,
     )
 
     # TODO: put some 'preferred algorithms by purpose' into snakeoil?
