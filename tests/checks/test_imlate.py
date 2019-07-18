@@ -105,3 +105,17 @@ class TestImlateReport(misc.ReportTestCase):
         assert r.stable == ("amd64",)
         assert r.keywords == ("~ppc", "~x86",)
         assert r.version == "0.9"
+
+    def test_drop_newer_slot_stables(self):
+        selected_arches=("x86", "amd64")
+        all_arches=("x86", "amd64", "arm64")
+        r = self.assertReport(
+            mk_check(selected_arches=selected_arches, arches=all_arches),
+            [mk_pkg("0.7", "amd64 x86 ~arm64"),
+             mk_pkg("0.8", "amd64 ~x86 ~arm64"),
+             mk_pkg("0.9", "~amd64 ~x86 arm64")]
+        )
+        assert isinstance(r, imlate.LaggingStable)
+        assert r.stable == ('amd64',)
+        assert r.keywords == ('~x86',)
+        assert r.version == '0.8'
