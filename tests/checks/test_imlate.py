@@ -107,7 +107,7 @@ class TestImlateReport(misc.ReportTestCase):
         assert r.keywords == ("~ppc", "~x86",)
         assert r.version == "0.9"
 
-    def test_multiple_slots(self):
+    def test_multiple_lagging_slots(self):
         r = self.assertReports(
             mk_check(),
             [mk_pkg("0.7", slot="0", keywords="x86 ppc"),
@@ -121,6 +121,23 @@ class TestImlateReport(misc.ReportTestCase):
         assert r[0].keywords == ("~x86",)
         assert r[0].version == "0.9"
         assert isinstance(r[1], imlate.LaggingStable)
+        assert r[1].slot == "1"
+        assert r[1].stable == ("x86",)
+        assert r[1].keywords == ("~ppc",)
+        assert r[1].version == "1.2"
+
+    def test_multiple_potential_slots(self):
+        r = self.assertReports(
+            mk_check(),
+             [mk_pkg("0.9", slot="0", keywords="x86 ~ppc"),
+              mk_pkg("1.2", slot="1", keywords="x86 ~ppc")])
+        assert len(r) == 2
+        assert isinstance(r[0], imlate.PotentialStable)
+        assert r[0].slot == "0"
+        assert r[0].stable == ("x86",)
+        assert r[0].keywords == ("~ppc",)
+        assert r[0].version == "0.9"
+        assert isinstance(r[1], imlate.PotentialStable)
         assert r[1].slot == "1"
         assert r[1].stable == ("x86",)
         assert r[1].keywords == ("~ppc",)

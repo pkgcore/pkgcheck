@@ -10,20 +10,21 @@ from .. import addons, base
 class PotentialStable(base.Warning):
     """Stable arches with potential stable package candidates."""
 
-    __slots__ = ("category", "package", "version", "keywords", "stable")
+    __slots__ = ("category", "package", "version", "slot", "keywords", "stable")
     threshold = base.versioned_feed
 
     def __init__(self, pkg, keywords):
         super().__init__()
         self._store_cpv(pkg)
+        self.slot = pkg.slot
         self.keywords = tuple(sorted(keywords))
         self.stable = tuple(sorted(str(arch) for arch in pkg.keywords
                             if not arch[0] in ("~", "-")))
 
     @property
     def short_desc(self):
-        return "stabled arch%s: [ %s ], potential%s: [ %s ]" % (
-            _pl(self.stable, plural='es'), ', '.join(self.stable),
+        return "slot(%s), stabled arch%s: [ %s ], potential%s: [ %s ]" % (
+            self.slot, _pl(self.stable, plural='es'), ', '.join(self.stable),
             _pl(self.keywords), ', '.join(self.keywords))
 
 
