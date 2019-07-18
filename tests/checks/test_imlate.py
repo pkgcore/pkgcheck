@@ -14,8 +14,9 @@ def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None,
                      stable_arches=stable_arches, source_arches=source_arches))
 
 
-def mk_pkg(ver, keywords=""):
-    return misc.FakePkg(f"dev-util/diffball-{ver}", data={"SLOT": "0", "KEYWORDS": keywords})
+def mk_pkg(ver, keywords="", slot="0"):
+    return misc.FakePkg(
+        f"dev-util/diffball-{ver}", data={"SLOT": slot, "KEYWORDS": keywords})
 
 
 class TestImlateReport(misc.ReportTestCase):
@@ -105,6 +106,25 @@ class TestImlateReport(misc.ReportTestCase):
         assert r.stable == ("amd64",)
         assert r.keywords == ("~ppc", "~x86",)
         assert r.version == "0.9"
+
+    def test_multiple_slots(self):
+        r = self.assertReports(
+            mk_check(),
+            [mk_pkg("0.7", slot="0", keywords="x86 ppc"),
+             mk_pkg("0.9", slot="0", keywords="~x86 ppc"),
+             mk_pkg("1.0", slot="1", keywords="x86 ppc"),
+             mk_pkg("1.2", slot="1", keywords="x86 ~ppc")])
+        assert len(r) == 2
+        assert isinstance(r[0], imlate.LaggingStable)
+        assert r[0].slot == "0"
+        assert r[0].stable == ("ppc",)
+        assert r[0].keywords == ("~x86",)
+        assert r[0].version == "0.9"
+        assert isinstance(r[1], imlate.LaggingStable)
+        assert r[1].slot == "1"
+        assert r[1].stable == ("x86",)
+        assert r[1].keywords == ("~ppc",)
+        assert r[1].version == "1.2"
 
     def test_drop_newer_slot_stables(self):
         selected_arches=("x86", "amd64")
