@@ -30,20 +30,22 @@ class PotentialStable(base.Warning):
 class LaggingStable(base.Warning):
     """Stable arches for stabilized package that are lagging from a stabling standpoint."""
 
-    __slots__ = ("category", "package", "version", "keywords", "stable")
+    __slots__ = ("category", "package", "version", "slot", "keywords", "stable")
     threshold = base.versioned_feed
 
     def __init__(self, pkg, keywords):
         super().__init__()
         self._store_cpv(pkg)
+        self.slot = pkg.slot
         self.keywords = tuple(sorted(keywords))
         self.stable = tuple(sorted(str(arch) for arch in pkg.keywords
                             if not arch[0] in ("~", "-")))
 
     @property
     def short_desc(self):
-        return "stabled arch%s: [ %s ], lagging: [ %s ]" % (
-            _pl(self.stable, plural='es'), ', '.join(self.stable), ', '.join(self.keywords))
+        return "slot(%s), stabled arch%s: [ %s ], lagging: [ %s ]" % (
+            self.slot, _pl(self.stable, plural='es'),
+            ', '.join(self.stable), ', '.join(self.keywords))
 
 
 class ImlateReport(base.Template):
