@@ -3,12 +3,15 @@ from pkgcheck.checks import imlate
 from .. import misc
 
 
-def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None, source_arches=None):
+def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None,
+             stable_arches=None, source_arches=None):
     if arches is None:
         arches = selected_arches
+    if stable_arches is None:
+        stable_arches = selected_arches
     return imlate.ImlateReport(
-        misc.Options(selected_arches=selected_arches, stable_arches=arches,
-                     source_arches=source_arches))
+        misc.Options(selected_arches=selected_arches, arches=arches,
+                     stable_arches=stable_arches, source_arches=source_arches))
 
 
 def mk_pkg(ver, keywords=""):

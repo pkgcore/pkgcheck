@@ -67,6 +67,7 @@ class ImlateReport(base.Template):
 
     def __init__(self, options, stable_arches=None):
         super().__init__(options)
+        self.all_arches = frozenset(options.arches)
         self.stable_arches = frozenset(arch.strip().lstrip("~") for arch in options.stable_arches)
         self.target_arches = frozenset(
             "~%s" % arch.strip().lstrip("~") for arch in self.stable_arches)
@@ -87,13 +88,17 @@ class ImlateReport(base.Template):
         fmatch = self.source_filter.match
         for slot, pkgs in sorted(pkg_slotted.items()):
             slot_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgs))
-            stable_slot_keywords = {x for x in slot_keywords if x[0] != '~'}
+            stable_slot_keywords = self.all_arches.intersection(slot_keywords)
             potential_slot_stables = {'~' + x for x in stable_slot_keywords}
+            newer_slot_stables = set()
             for pkg in reversed(pkgs):
+                # only consider pkgs with keywords that contain the targeted arches
                 if not fmatch(pkg):
+                    newer_slot_stables.update(self.all_arches.intersection(pkg.keywords))
                     continue
 
                 lagging_stables = potential_slot_stables.intersection(pkg.keywords)
+                lagging_stables -= {'~' + x for x in newer_slot_stables}
                 if lagging_stables:
                     reporter.add_report(LaggingStable(pkg, lagging_stables))
 
