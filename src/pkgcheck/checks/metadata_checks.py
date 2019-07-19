@@ -19,6 +19,23 @@ from ..base import MetadataError
 from .visibility import FakeConfigurable, strip_atom_use
 
 
+class UnstatedIUSE(base.Error):
+    """pkg is reliant on conditionals that aren't in IUSE"""
+
+    __slots__ = ("category", "package", "version", "attr", "flags")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, attr, flags):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.attr, self.flags = attr, tuple(flags)
+
+    @property
+    def short_desc(self):
+        return "attr(%s) uses unstated flags: [ %s ]" % \
+            (self.attr, ', '.join(self.flags))
+
+
 class MissingLicense(base.Error):
     """Used license(s) have no matching license file(s)."""
 
@@ -38,8 +55,7 @@ class MissingLicense(base.Error):
 class LicenseMetadataReport(base.Template):
     """LICENSE validity checks."""
 
-    known_results = (MetadataError, MissingLicense) + \
-        addons.UseAddon.known_results
+    known_results = (MetadataError, MissingLicense, UnstatedIUSE)
     feed_type = base.versioned_feed
 
     # categories for ebuilds that can lack LICENSE settings
@@ -51,16 +67,19 @@ class LicenseMetadataReport(base.Template):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter('license')
 
-    def feed(self, pkg, reporter):
-        licenses = set(self.iuse_filter((str,), pkg, pkg.license, reporter))
+    def feed(self, pkg):
+        licenses, unstated = self.iuse_filter((str,), pkg, pkg.license)
+        if unstated:
+            yield UnstatedIUSE(pkg, 'license', sorted(unstated))
+
+        licenses = set(licenses)
         if not licenses:
             if pkg.category not in self.unlicensed_categories:
-                reporter.add_report(MetadataError(
-                    pkg, "license", "no license defined"))
+                yield MetadataError(pkg, "license", "no license defined")
         else:
             licenses.difference_update(pkg.repo.licenses)
             if licenses:
-                reporter.add_report(MissingLicense(pkg, licenses))
+                yield MissingLicense(pkg, licenses)
 
 
 class IUSEMetadataReport(base.Template):
@@ -68,19 +87,19 @@ class IUSEMetadataReport(base.Template):
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon,)
-    known_results = (MetadataError,) + addons.UseAddon.known_results
+    known_results = (MetadataError, UnstatedIUSE)
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
         self.iuse_handler = iuse_handler
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         if not self.iuse_handler.ignore:
             iuse = pkg.iuse_stripped.difference(self.iuse_handler.allowed_iuse(pkg))
             if iuse:
-                reporter.add_report(MetadataError(
+                yield MetadataError(
                     pkg, "iuse", "IUSE unknown flag%s: [ %s ]" % (
-                        _pl(iuse), ", ".join(sorted(iuse)))))
+                        _pl(iuse), ", ".join(sorted(iuse))))
 
 
 class DeprecatedEAPI(base.Warning):
@@ -121,19 +140,19 @@ class MetadataReport(base.Template):
     feed_type = base.versioned_feed
     known_results = (DeprecatedEAPI,)
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         eapi_str = str(pkg.eapi)
         if eapi_str in pkg.repo.config.eapis_banned:
-            reporter.add_report(BannedEAPI(pkg))
+            yield BannedEAPI(pkg)
         elif eapi_str in pkg.repo.config.eapis_deprecated:
-            reporter.add_report(DeprecatedEAPI(pkg))
+            yield DeprecatedEAPI(pkg)
 
-    def finish(self, reporter):
+    def finish(self):
         # report all masked pkgs due to invalid EAPIs and other bad metadata
         for pkg in self.options.target_repo._masked:
             e = pkg.data
-            reporter.add_report(MetadataError(
-                pkg.versioned_atom, e.attr, e.msg(verbosity=reporter.verbosity)))
+            yield MetadataError(
+                pkg.versioned_atom, e.attr, e.msg(verbosity=self.options.verbosity))
 
 
 class RequiredUseDefaults(base.Warning):
@@ -176,21 +195,22 @@ class RequiredUSEMetadataReport(base.Template):
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon, addons.ProfileAddon)
-    known_results = (MetadataError, RequiredUseDefaults) + addons.UseAddon.known_results
+    known_results = (MetadataError, RequiredUseDefaults, UnstatedIUSE)
 
     def __init__(self, options, iuse_handler, profiles):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter('required_use')
         self.profiles = profiles
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         # only run the check for EAPI 4 and above
         if not pkg.eapi.options.has_required_use:
             return
 
         # check REQUIRED_USE for invalid nodes
-        for x in self.iuse_filter((str,), pkg, pkg.required_use, reporter):
-            pass
+        nodes, unstated = self.iuse_filter((str,), pkg, pkg.required_use)
+        if unstated:
+            yield UnstatedIUSE(pkg, 'required_use', sorted(unstated))
 
         # check both stable/unstable profiles for stable KEYWORDS and only
         # unstable profiles for unstable KEYWORDS
@@ -214,15 +234,14 @@ class RequiredUSEMetadataReport(base.Template):
             # report all failures with profile info in verbose mode
             for node, profile_info in failures.items():
                 for use, keyword, profile in profile_info:
-                    reporter.add_report(RequiredUseDefaults(
-                        pkg, node, use, keyword, profile))
+                    yield RequiredUseDefaults(pkg, node, use, keyword, profile)
         else:
             # only report one failure per REQUIRED_USE node in regular mode
             for node, profile_info in failures.items():
                 num_profiles = len(profile_info)
                 _use, _keyword, profile = profile_info[0]
-                reporter.add_report(RequiredUseDefaults(
-                    pkg, node, profile=profile, num_profiles=num_profiles))
+                yield RequiredUseDefaults(
+                    pkg, node, profile=profile, num_profiles=num_profiles)
 
 
 class UnusedLocalUSE(base.Warning):
@@ -297,9 +316,9 @@ class LocalUSECheck(base.Template):
 
     feed_type = base.package_feed
     required_addons = (addons.UseAddon,)
-    known_results = addons.UseAddon.known_results + (
+    known_results = (
         UnusedLocalUSE, MatchingGlobalUSE, ProbableGlobalUSE,
-        ProbableUSE_EXPAND,
+        ProbableUSE_EXPAND, UnstatedIUSE,
     )
 
     def __init__(self, options, use_handler):
@@ -313,7 +332,7 @@ class LocalUSECheck(base.Template):
             self.use_expand_groups[key] = {
                 flag for flag, desc in options.target_repo.config.use_expand_desc[key]}
 
-    def feed(self, pkgs, reporter):
+    def feed(self, pkgs):
         pkg = pkgs[0]
         local_use = pkg.local_use
 
@@ -321,21 +340,21 @@ class LocalUSECheck(base.Template):
             if flag in self.global_use:
                 ratio = SequenceMatcher(None, desc, self.global_use[flag]).ratio()
                 if ratio == 1.0:
-                    reporter.add_report(MatchingGlobalUSE(pkg, flag))
+                    yield MatchingGlobalUSE(pkg, flag)
                 elif ratio >= 0.75:
-                    reporter.add_report(ProbableGlobalUSE(pkg, flag))
+                    yield ProbableGlobalUSE(pkg, flag)
             else:
                 for group in self.use_expand_groups:
                     if (flag.startswith(f'{group}_') and
                             flag not in self.use_expand_groups[group]):
-                        reporter.add_report(ProbableUSE_EXPAND(pkg, flag, group.upper()))
+                        yield ProbableUSE_EXPAND(pkg, flag, group.upper())
                         break
 
         unused = set(local_use)
         for pkg in pkgs:
             unused.difference_update(pkg.iuse_stripped)
         if unused:
-            reporter.add_report(UnusedLocalUSE(pkg, unused))
+            yield UnusedLocalUSE(pkg, unused)
 
 
 class MissingSlotDep(base.Warning):
@@ -363,25 +382,26 @@ class MissingSlotDepReport(base.Template):
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon,)
-    known_results = (MissingSlotDep,) + addons.UseAddon.known_results
+    known_results = (MissingSlotDep,)
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         # only run the check for EAPI 5 and above
         if not pkg.eapi.options.sub_slotting:
             return
 
-        rdepend = set(self.iuse_filter((atom_cls,), pkg, pkg.rdepend, reporter))
-        depend = set(self.iuse_filter((atom_cls,), pkg, pkg.depend, reporter))
+        rdepend, _ = self.iuse_filter((atom_cls,), pkg, pkg.rdepend)
+        depend, _ = self.iuse_filter((atom_cls,), pkg, pkg.depend)
+
         # skip deps that are blockers or have explicit slots/slot operators
-        for dep in (x for x in rdepend.intersection(depend) if not
+        for dep in (x for x in set(rdepend).intersection(depend) if not
                     (x.blocks or x.slot is not None or x.slot_operator is not None)):
             dep_slots = set(x.slot for x in pkg.repo.itermatch(dep))
             if len(dep_slots) > 1:
-                reporter.add_report(MissingSlotDep(pkg, str(dep), dep_slots))
+                yield MissingSlotDep(pkg, str(dep), dep_slots)
 
 
 class MissingRevision(base.Warning):
@@ -487,8 +507,8 @@ class DependencyReport(base.Template):
     required_addons = (addons.UseAddon, addons.GitAddon)
     known_results = (
         MetadataError, MissingRevision, MissingUseDepDefault,
-        OutdatedBlocker, NonexistentBlocker,
-        ) + addons.UseAddon.known_results
+        OutdatedBlocker, NonexistentBlocker, UnstatedIUSE,
+    )
 
     feed_type = base.versioned_feed
 
@@ -527,26 +547,28 @@ class DependencyReport(base.Template):
             return missing_use_deps
         return {}
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         for attr_name, getter in self.attrs:
             slot_op_or_blocks = set()
             slot_op_blockers = set()
             outdated_blockers = set()
             nonexistent_blockers = set()
 
-            i = self.iuse_filter(
-                (atom_cls, OrRestriction), pkg, getter(pkg), reporter, attr=attr_name)
-            for atom, in_or_restriction in self._flatten_or_restrictions(i):
+            nodes, unstated = self.iuse_filter(
+                (atom_cls, OrRestriction), pkg, getter(pkg), attr=attr_name)
+            if unstated:
+                yield UnstatedIUSE(pkg, attr_name, sorted(unstated))
+
+            for atom, in_or_restriction in self._flatten_or_restrictions(nodes):
                 if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
                     missing_use_deps = self._check_use_deps(attr_name, pkg, atom)
                     for use, pkg_deps in missing_use_deps.items():
-                        reporter.add_report(
-                            MissingUseDepDefault(pkg, attr_name, atom, use, pkg_deps))
+                        yield MissingUseDepDefault(pkg, attr_name, atom, use, pkg_deps)
                 if in_or_restriction and atom.slot_operator == '=':
                     slot_op_or_blocks.add(atom.key)
                 if atom.blocks:
                     if atom.match(pkg):
-                        reporter.add_report(MetadataError(pkg, attr_name, "blocks itself"))
+                        yield MetadataError(pkg, attr_name, "blocks itself")
                     elif atom.slot_operator == '=':
                         slot_op_blockers.add(atom.key)
                     elif self.existence_repo is not None:
@@ -567,23 +589,23 @@ class DependencyReport(base.Template):
                             else:
                                 nonexistent_blockers.add((attr_name, atom))
                 if atom.op == '=' and not atom.revision:
-                    reporter.add_report(MissingRevision(pkg, attr_name, atom))
+                    yield MissingRevision(pkg, attr_name, atom)
 
             if slot_op_or_blocks:
-                reporter.add_report(MetadataError(
+                yield MetadataError(
                     pkg, attr_name,
                     "= slot operator used inside || block: [%s]" %
-                    (', '.join(sorted(slot_op_or_blocks),))))
+                    (', '.join(sorted(slot_op_or_blocks),)))
             if slot_op_blockers:
-                reporter.add_report(MetadataError(
+                yield MetadataError(
                     pkg, attr_name,
                     "= slot operator used in blocker: [%s]" %
-                    (', '.join(sorted(slot_op_blockers),))))
+                    (', '.join(sorted(slot_op_blockers),)))
 
             for attr, atom, years in sorted(outdated_blockers):
-                reporter.add_report(OutdatedBlocker(pkg, attr, atom, years))
+                yield OutdatedBlocker(pkg, attr, atom, years)
             for attr, atom in sorted(nonexistent_blockers):
-                reporter.add_report(NonexistentBlocker(pkg, attr, atom))
+                yield NonexistentBlocker(pkg, attr, atom)
 
 
 class StupidKeywords(base.Warning):
@@ -717,9 +739,9 @@ class KeywordsReport(base.Template):
         # specified in PMS, so they don't belong in the main tree.
         self.portage_keywords = set(['*', '~*'])
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         if len(pkg.keywords) == 1 and pkg.keywords[0] == "-*":
-            reporter.add_report(StupidKeywords(pkg))
+            yield StupidKeywords(pkg)
         else:
             # check for invalid keywords
             invalid = set(pkg.keywords) - self.valid_keywords
@@ -727,14 +749,14 @@ class KeywordsReport(base.Template):
             if self.options.target_repo.repo_id != 'gentoo':
                 invalid -= self.portage_keywords
             if invalid:
-                reporter.add_report(InvalidKeywords(pkg, invalid))
+                yield InvalidKeywords(pkg, invalid)
 
             # check for overlapping keywords
             unstable = {x[1:] for x in pkg.keywords if x[0] == '~'}
             stable = {x for x in pkg.keywords if x[0] != '~'}
             overlapping = unstable & stable
             if overlapping:
-                reporter.add_report(OverlappingKeywords(pkg, overlapping))
+                yield OverlappingKeywords(pkg, overlapping)
 
             # check for duplicate keywords
             duplicates = set()
@@ -745,22 +767,22 @@ class KeywordsReport(base.Template):
                 else:
                     duplicates.add(x)
             if duplicates:
-                reporter.add_report(DuplicateKeywords(pkg, duplicates))
+                yield DuplicateKeywords(pkg, duplicates)
 
             # check for unsorted keywords
             if pkg.sorted_keywords != pkg.keywords:
-                reporter.add_report(UnsortedKeywords(pkg))
+                yield UnsortedKeywords(pkg)
 
             if pkg.category == 'virtual':
                 keywords = set()
-                rdepend = set(self.iuse_filter((atom_cls,), pkg, pkg.rdepend, reporter))
-                for x in rdepend:
+                rdepend, _ = self.iuse_filter((atom_cls,), pkg, pkg.rdepend)
+                for x in set(rdepend):
                     for p in self.options.search_repo.match(strip_atom_use(x)):
                         keywords.update(p.keywords)
                 keywords = keywords | {f'~{x}' for x in keywords if x in self.valid_arches}
                 missing_keywords = set(pkg.keywords) - keywords
                 if missing_keywords:
-                    reporter.add_report(MissingVirtualKeywords(pkg, missing_keywords))
+                    yield MissingVirtualKeywords(pkg, missing_keywords)
 
 
 class MissingUri(base.Warning):
@@ -846,8 +868,8 @@ class SrcUriReport(base.Template):
 
     required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
-    known_results = (BadFilename, BadProto, MissingUri, MetadataError, UnknownMirror) + \
-        addons.UseAddon.known_results
+    known_results = (
+        BadFilename, BadProto, MissingUri, MetadataError, UnknownMirror, UnstatedIUSE)
 
     valid_protos = frozenset(["http", "https", "ftp"])
 
@@ -855,17 +877,18 @@ class SrcUriReport(base.Template):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter('fetchables')
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         lacks_uri = set()
         # duplicate entries are possible.
         seen = set()
         bad_filenames = set()
-        fetchables = set(self.iuse_filter(
+        fetchables, unstated = self.iuse_filter(
             (fetchable,), pkg,
             pkg._get_attr['fetchables'](
                 pkg, allow_missing_checksums=True,
-                ignore_unknown_mirrors=True, skip_default_mirrors=True),
-            reporter))
+                ignore_unknown_mirrors=True, skip_default_mirrors=True))
+        if unstated:
+            yield UnstatedIUSE(pkg, 'fetchables', sorted(unstated))
         for f_inst in fetchables:
             if f_inst.filename in seen:
                 continue
@@ -876,8 +899,7 @@ class SrcUriReport(base.Template):
                 (m, sub_uri) for m, sub_uri in mirrors if isinstance(m, unknown_mirror)]
             for mirror, sub_uri in unknown_mirrors:
                 uri = f"{mirror}/{sub_uri}"
-                reporter.add_report(
-                    UnknownMirror(pkg, f_inst.filename, uri, mirror.mirror_name))
+                yield UnknownMirror(pkg, f_inst.filename, uri, mirror.mirror_name)
 
             # Check for unspecific filenames of the form ${PV}.ext and
             # v${PV}.ext prevalent in github tagged releases as well as
@@ -898,14 +920,13 @@ class SrcUriReport(base.Template):
                     elif x[:i] not in self.valid_protos:
                         bad.add(x)
                 if bad:
-                    reporter.add_report(
-                        BadProto(pkg, f_inst.filename, bad))
+                    yield BadProto(pkg, f_inst.filename, bad)
         if "fetch" not in pkg.restrict:
             for x in sorted(lacks_uri):
-                reporter.add_report(MissingUri(pkg, x))
+                yield MissingUri(pkg, x)
 
         if bad_filenames:
-            reporter.add_report(BadFilename(pkg, bad_filenames))
+            yield BadFilename(pkg, bad_filenames)
 
 
 class BadDescription(base.Warning):
@@ -934,28 +955,25 @@ class DescriptionReport(base.Template):
     feed_type = base.versioned_feed
     known_results = (BadDescription,)
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         s = pkg.description.lower()
 
         if s.startswith("based on") and "eclass" in s:
-            reporter.add_report(BadDescription(
-                pkg, "generic eclass defined description"))
+            yield BadDescription(pkg, "generic eclass defined description")
 
         elif pkg.package == s or pkg.key == s:
-            reporter.add_report(BadDescription(
-                pkg, "using the pkg name as the description isn't very helpful"))
+            yield BadDescription(
+                pkg, "using the pkg name as the description isn't very helpful")
 
         else:
             l = len(pkg.description)
             if not l:
-                reporter.add_report(BadDescription(
-                    pkg, "empty/unset"))
+                yield BadDescription(pkg, "empty/unset")
             elif l > 150:
-                reporter.add_report(BadDescription(
-                    pkg, "over 150 chars in length, bit long"))
+                yield BadDescription(pkg, "over 150 chars in length, bit long")
             elif l < 10:
-                reporter.add_report(BadDescription(
-                    pkg, f"{pkg.description!r} under 10 chars in length- too short"))
+                yield BadDescription(
+                    pkg, f"{pkg.description!r} under 10 chars in length- too short")
 
 
 class BadRestricts(base.Warning):
@@ -991,7 +1009,7 @@ class RestrictsReport(base.Template):
         "primaryuri", "splitdebug", "strip", "test", "userpriv",
     ))
 
-    known_results = (BadRestricts,) + addons.UseAddon.known_results
+    known_results = (BadRestricts, UnstatedIUSE)
     required_addons = (addons.UseAddon,)
 
     __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \
@@ -1001,12 +1019,13 @@ class RestrictsReport(base.Template):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter('restrict')
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         # ignore conditionals
-        i = self.iuse_filter((str,), pkg, pkg.restrict, reporter)
-        bad = set(i).difference(self.known_restricts)
+        restricts, unstated = self.iuse_filter((str,), pkg, pkg.restrict)
+        if unstated:
+            yield UnstatedIUSE(pkg, 'restrict', sorted(unstated))
+        bad = set(restricts).difference(self.known_restricts)
         if bad:
             deprecated = set(
                 x for x in bad if x.startswith("no") and x[2:] in self.known_restricts)
-            reporter.add_report(BadRestricts(
-                pkg, bad.difference(deprecated), deprecated))
+            yield BadRestricts(pkg, bad.difference(deprecated), deprecated)

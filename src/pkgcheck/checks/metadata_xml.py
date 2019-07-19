@@ -328,7 +328,7 @@ class base_check(base.Template):
         self.repo_base = options.target_repo.location
         self.xsd_file = None
 
-    def start(self, reporter):
+    def start(self):
         self.pkgref_cache = {}
 
         if base_check.schema is None:
@@ -372,7 +372,7 @@ class base_check(base.Template):
 
             base_check.schema = etree.XMLSchema(etree.parse(read_path))
 
-    def feed(self, thing, reporter):
+    def feed(self, thing):
         raise NotImplementedError(self.feed)
 
     def check_doc(self, doc):
@@ -464,7 +464,7 @@ class PackageMetadataXmlCheck(base_check):
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
         PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, EmptyMaintainer)
 
-    def feed(self, pkgs, reporter):
+    def feed(self, pkgs):
         # package with no ebuilds, skipping check
         if not pkgs:
             return
@@ -472,7 +472,7 @@ class PackageMetadataXmlCheck(base_check):
 
         loc = pjoin(os.path.dirname(pkg.ebuild.path), "metadata.xml")
         for report in self.check_file(loc, pkg.repo, pkg):
-            reporter.add_report(report(loc, pkg.category, pkg.package))
+            yield report(loc, pkg.category, pkg.package)
 
 
 class CategoryMetadataXmlCheck(base_check):
@@ -493,14 +493,14 @@ class CategoryMetadataXmlCheck(base_check):
         CatMetadataXmlInvalidPkgRef, CatMetadataXmlInvalidCatRef,
         CatMetadataXmlIndentation, CatMetadataXmlEmptyElement)
 
-    def feed(self, pkgs, reporter):
+    def feed(self, pkgs):
         # empty category, skipping check
         if not pkgs:
             return
         pkg = pkgs[0]
         loc = os.path.join(self.repo_base, pkg.category, "metadata.xml")
         for report in self.check_file(loc, pkg.repo):
-            reporter.add_report(report(loc, pkg.category))
+            yield report(loc, pkg.category)
 
 
 def noop_validator(loc):

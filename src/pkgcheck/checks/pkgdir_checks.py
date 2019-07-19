@@ -184,13 +184,13 @@ class InvalidUTF8(base.Error):
         return f"invalid UTF-8: {self.err}: {self.filename!r}"
 
 
-def utf8_check(pkg, base, filename, reporter):
+def utf8_check(pkg, base, filename):
     try:
         codecs.open(
             pjoin(base, filename), mode="rb",
             encoding="utf8", buffering=8192).read()
     except UnicodeDecodeError as e:
-        reporter.add_report(InvalidUTF8(pkg, filename, str(e)))
+        yield InvalidUTF8(pkg, filename, str(e))
         del e
 
 
@@ -208,7 +208,7 @@ class PkgDirReport(base.Template):
     # TODO: put some 'preferred algorithms by purpose' into snakeoil?
     digest_algo = 'sha256'
 
-    def feed(self, pkgset, reporter):
+    def feed(self, pkgset):
         pkg = pkgset[0]
         base_path = os.path.dirname(pkg.path)
         category = os.path.basename(
@@ -224,15 +224,15 @@ class PkgDirReport(base.Template):
             # char, which adds up.
 
             if any(True for x in filename if x not in allowed_filename_chars_set):
-                reporter.add_report(Glep31Violation(pkg, filename))
+                yield Glep31Violation(pkg, filename)
 
             if (filename.endswith(ebuild_ext) or filename in
                     ("Manifest", "metadata.xml")):
                 if os.stat(pjoin(base_path, filename)).st_mode & 0o111:
-                    reporter.add_report(ExecutableFile(pkg, filename))
+                    yield ExecutableFile(pkg, filename)
 
             if filename.endswith(ebuild_ext):
-                utf8_check(pkg, base_path, filename, reporter)
+                utf8_check(pkg, base_path, filename)
 
                 pkg_name = os.path.basename(filename[:-len(ebuild_ext)])
                 try:
@@ -243,9 +243,9 @@ class PkgDirReport(base.Template):
                     invalid.append(pkg_name)
 
         if mismatched:
-            reporter.add_report(MismatchedPN(pkg, mismatched))
+            yield MismatchedPN(pkg, mismatched)
         if invalid:
-            reporter.add_report(InvalidPN(pkg, invalid))
+            yield InvalidPN(pkg, invalid)
 
         # check for equal versions
         equal_versions = defaultdict(set)
@@ -258,7 +258,7 @@ class PkgDirReport(base.Template):
             if pkg_a.versioned_atom == pkg_b.versioned_atom:
                 equal_versions[pkg_a.versioned_atom].update([pkg_a.fullver, pkg_b.fullver])
         for atom, versions in equal_versions.items():
-            reporter.add_report(EqualVersions(atom, versions))
+            yield EqualVersions(atom, versions)
 
         if not os.path.exists(pjoin(base_path, 'files')):
             return
@@ -275,17 +275,16 @@ class PkgDirReport(base.Template):
                         unprocessed_dirs.append(pjoin(cwd, fn))
                 elif stat.S_ISREG(st.st_mode):
                     if st.st_mode & 0o111:
-                        reporter.add_report(
-                            ExecutableFile(pkg, pjoin(cwd, fn)))
+                        yield ExecutableFile(pkg, pjoin(cwd, fn))
                     if not fn.startswith("digest-"):
                         if st.st_size == 0:
-                            reporter.add_report(EmptyFile(pkg, pjoin(cwd, fn)))
+                            yield EmptyFile(pkg, pjoin(cwd, fn))
                         else:
                             files_by_size[st.st_size].append(pjoin(cwd, fn))
                             if st.st_size > 20480:
-                                reporter.add_report(SizeViolation(pkg, pjoin(cwd, fn), st.st_size))
+                                yield SizeViolation(pkg, pjoin(cwd, fn), st.st_size)
                         if any(True for x in fn if x not in allowed_filename_chars_set):
-                            reporter.add_report(Glep31Violation(pkg, pjoin(cwd, fn)))
+                            yield Glep31Violation(pkg, pjoin(cwd, fn))
 
         files_by_digest = defaultdict(list)
         for size, files in files_by_size.items():
@@ -296,4 +295,4 @@ class PkgDirReport(base.Template):
 
         for digest, files in files_by_digest.items():
             if len(files) > 1:
-                reporter.add_report(DuplicateFiles(pkg, files))
+                yield DuplicateFiles(pkg, files)

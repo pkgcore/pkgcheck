@@ -31,7 +31,7 @@ class DroppedKeywordsReport(Template):
         Template.__init__(self, options)
         self.arches = frozenset(options.arches)
 
-    def feed(self, pkgset, reporter):
+    def feed(self, pkgset):
         # skip live ebuilds otherwise they're flagged
         pkgset = [pkg for pkg in pkgset if not pkg.live]
 
@@ -72,4 +72,4 @@ class DroppedKeywordsReport(Template):
                 dropped[pkgs[-1]].append(key)
 
         for pkg, keys in dropped.items():
-            reporter.add_report(DroppedKeywords(pkg, keys))
+            yield DroppedKeywords(pkg, keys)

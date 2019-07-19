@@ -100,7 +100,7 @@ class TreeVulnerabilitiesReport(base.Template):
         self.enabled = False
         self.vulns = {}
 
-    def start(self, reporter):
+    def start(self):
         if not self.options.glsa_enabled:
             return
         # this is a bit brittle
@@ -111,12 +111,12 @@ class TreeVulnerabilitiesReport(base.Template):
             else:
                 self.vulns.setdefault(r[0].key, []).append(r[1])
 
-    def finish(self, reporter):
+    def finish(self):
         self.vulns.clear()
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         if not self.options.glsa_enabled:
             return
         for vuln in self.vulns.get(pkg.key, []):
             if vuln.match(pkg):
-                reporter.add_report(VulnerablePackage(pkg, vuln))
+                yield VulnerablePackage(pkg, vuln)

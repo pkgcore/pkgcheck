@@ -2,6 +2,7 @@
 
 from pkgcore.config import configurable
 from snakeoil import formatters
+from snakeoil.decorators import coroutine
 from snakeoil.demandload import demandload
 
 from . import base
@@ -32,19 +33,22 @@ class StrReporter(base.Reporter):
         super().__init__(*args, **kwargs)
         self._first_report = True
 
-    def process_report(self, result):
-        if self._first_report:
-            self.out.write()
-            self._first_report = False
-        if result.threshold == base.versioned_feed:
-            self.out.write(
-                f"{result.category}/{result.package}-{result.version}: {result.desc}")
-        elif result.threshold == base.package_feed:
-            self.out.write(f"{result.category}/{result.package}: {result.desc}")
-        elif result.threshold == base.category_feed:
-            self.out.write(f"{result.category}: {result.desc}")
-        else:
-            self.out.write(result.desc)
+    @coroutine
+    def process_report(self):
+        while True:
+            result = (yield)
+            if self._first_report:
+                self.out.write()
+                self._first_report = False
+            if result.threshold == base.versioned_feed:
+                self.out.write(
+                    f"{result.category}/{result.package}-{result.version}: {result.desc}")
+            elif result.threshold == base.package_feed:
+                self.out.write(f"{result.category}/{result.package}: {result.desc}")
+            elif result.threshold == base.category_feed:
+                self.out.write(f"{result.category}: {result.desc}")
+            else:
+                self.out.write(result.desc)
 
     def finish(self):
         if not self._first_report:
@@ -69,29 +73,32 @@ class FancyReporter(base.Reporter):
         super().__init__(*args, **kwargs)
         self.key = None
 
-    def process_report(self, result):
-        if result.threshold in (base.versioned_feed, base.package_feed):
-            key = f'{result.category}/{result.package}'
-        elif result.threshold == base.category_feed:
-            key = result.category
-        else:
-            key = 'repo'
+    @coroutine
+    def process_report(self):
+        while True:
+            result = (yield)
+            if result.threshold in (base.versioned_feed, base.package_feed):
+                key = f'{result.category}/{result.package}'
+            elif result.threshold == base.category_feed:
+                key = result.category
+            else:
+                key = 'repo'
 
-        if key != self.key:
-            self.out.write()
-            self.out.write(self.out.bold, key)
-            self.key = key
-        self.out.first_prefix.append('  ')
-        self.out.later_prefix.append('    ')
-        s = ''
-        if result.threshold == base.versioned_feed:
-            s = f"version {result.version}: "
-        self.out.write(
-            self.out.fg(result.color),
-            result.__class__.__name__, self.out.reset,
-            ': ', s, result.desc)
-        self.out.first_prefix.pop()
-        self.out.later_prefix.pop()
+            if key != self.key:
+                self.out.write()
+                self.out.write(self.out.bold, key)
+                self.key = key
+            self.out.first_prefix.append('  ')
+            self.out.later_prefix.append('    ')
+            s = ''
+            if result.threshold == base.versioned_feed:
+                s = f"version {result.version}: "
+            self.out.write(
+                self.out.fg(result.color),
+                result.__class__.__name__, self.out.reset,
+                ': ', s, result.desc)
+            self.out.first_prefix.pop()
+            self.out.later_prefix.pop()
 
 
 class NullReporter(base.Reporter):
@@ -102,7 +109,8 @@ class NullReporter(base.Reporter):
     def __init__(self, *args, **kwargs):
         pass
 
-    def process_report(self, result):
+    @coroutine
+    def process_report(self):
         pass
 
 
@@ -123,25 +131,28 @@ class JsonReporter(base.Reporter):
         super().__init__(*args, **kwargs)
         self._json_dict = lambda: defaultdict(self._json_dict)
 
-    def process_report(self, result):
-        data = self._json_dict()
+    @coroutine
+    def process_report(self):
+        while True:
+            result = (yield)
+            data = self._json_dict()
 
-        if result.threshold == base.repository_feed:
-            d = data
-        elif result.threshold == base.category_feed:
-            d = data[result.category]
-        elif result.threshold == base.package_feed:
-            d = data[result.category][result.package]
-        else:
-            # versioned or ebuild feed
-            d = data[result.category][result.package][result.version]
+            if result.threshold == base.repository_feed:
+                d = data
+            elif result.threshold == base.category_feed:
+                d = data[result.category]
+            elif result.threshold == base.package_feed:
+                d = data[result.category][result.package]
+            else:
+                # versioned or ebuild feed
+                d = data[result.category][result.package][result.version]
 
-        name = result.__class__.__name__
-        d['_' + result.level][name] = [result.desc]
+            name = result.__class__.__name__
+            d['_' + result.level][name] = [result.desc]
 
-        self.out.write(json.dumps(data))
-        # flush output so partial objects aren't written
-        self.out.stream.flush()
+            self.out.write(json.dumps(data))
+            # flush output so partial objects aren't written
+            self.out.stream.flush()
 
 
 class XmlReporter(base.Reporter):
@@ -179,12 +190,15 @@ class XmlReporter(base.Reporter):
     def start(self):
         self.out.write('<checks>')
 
-    def process_report(self, result):
-        d = dict((k, getattr(result, k, '')) for k in
-                 ("category", "package", "version"))
-        d["class"] = xml_escape(result.__class__.__name__)
-        d["msg"] = xml_escape(result.desc)
-        self.out.write(self.threshold_map[result.threshold] % d)
+    @coroutine
+    def process_report(self):
+        while True:
+            result = (yield)
+            d = dict((k, getattr(result, k, '')) for k in
+                    ("category", "package", "version"))
+            d["class"] = xml_escape(result.__class__.__name__)
+            d["msg"] = xml_escape(result.desc)
+            self.out.write(self.threshold_map[result.threshold] % d)
 
     def finish(self):
         self.out.write('</checks>')
@@ -215,11 +229,14 @@ class PickleStream(base.Reporter):
     def start_check(self, checks, target):
         self.dump(base.StreamHeader(checks, target), self.out)
 
-    def process_report(self, result):
-        try:
-            self.dump(result, self.out, self.protocol)
-        except TypeError as t:
-            raise TypeError(result, str(t))
+    @coroutine
+    def process_report(self):
+        while True:
+            result = (yield)
+            try:
+                self.dump(result, self.out, self.protocol)
+            except TypeError as t:
+                raise TypeError(result, str(t))
 
 
 class BinaryPickleStream(PickleStream):
@@ -243,9 +260,12 @@ class MultiplexReporter(base.Reporter):
         for x in self.reporters:
             x.start()
 
-    def process_report(self, result):
-        for x in self.reporters:
-            x.process_report(result)
+    @coroutine
+    def process_report(self):
+        while True:
+            result = (yield)
+            for x in self.reporters:
+                x.process(result)
 
     def finish(self):
         for x in self.reporters:

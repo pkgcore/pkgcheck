@@ -122,17 +122,20 @@ class PackageUpdatesCheck(base.Template):
         super().__init__(options)
         self.repo = options.target_repo
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         pass
 
-    def finish(self, reporter):
-        report_bad_updates = lambda x: reporter.add_report(BadPackageUpdate(x))
-        report_old_updates = lambda x: reporter.add_report(MovedPackageUpdate(x))
+    def finish(self):
+        update_reports = []
+        report_bad_updates = lambda x: update_reports.append(BadPackageUpdate(x))
+        report_old_updates = lambda x: update_reports.append(MovedPackageUpdate(x))
 
         # convert log warnings/errors into reports
         with patch('pkgcore.log.logger.error', report_bad_updates), \
                 patch('pkgcore.log.logger.warning', report_old_updates):
             repo_updates = self.repo.config.updates
+
+        yield from update_reports
 
         multi_move_updates = {}
         old_move_updates = {}
@@ -166,15 +169,15 @@ class PackageUpdatesCheck(base.Template):
             orig_pkg, moves = v
             # check for multi-move chains ending in removed packages
             if not self.repo.match(pkg):
-                reporter.add_report(OldMultiMovePackageUpdate(orig_pkg, moves))
+                yield OldMultiMovePackageUpdate(orig_pkg, moves)
                 # don't generate duplicate old report
                 old_move_updates.pop(pkg, None)
             else:
-                reporter.add_report(MultiMovePackageUpdate(orig_pkg, moves))
+                yield MultiMovePackageUpdate(orig_pkg, moves)
 
         # report remaining old updates
         for pkg, move in chain(old_move_updates.items(), old_slotmove_updates.items()):
-            reporter.add_report(OldPackageUpdate(pkg, move))
+            yield OldPackageUpdate(pkg, move)
 
 
 class UnusedLicenses(base.Warning):
@@ -225,7 +228,7 @@ class UnusedLicensesCheck(base.Template):
         super().__init__(options)
         self.unused_licenses = None
 
-    def start(self, reporter):
+    def start(self):
         master_licenses = self.unused_master_licenses = set()
         for repo in self.options.target_repo.masters:
             master_licenses.update(repo.licenses)
@@ -238,7 +241,7 @@ class UnusedLicensesCheck(base.Template):
                 for pkg in repo:
                     self.unused_master_licenses.difference_update(iflatten_instance(pkg.license))
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         pkg_licenses = set(iflatten_instance(pkg.license))
         self.unused_licenses.difference_update(pkg_licenses)
 
@@ -246,11 +249,11 @@ class UnusedLicensesCheck(base.Template):
         if self.unused_master_licenses:
             licenses = self.unused_master_licenses & pkg_licenses
             if licenses:
-                reporter.add_report(UnusedInMastersLicenses(pkg, licenses))
+                yield UnusedInMastersLicenses(pkg, licenses)
 
-    def finish(self, reporter):
+    def finish(self):
         if self.unused_licenses:
-            reporter.add_report(UnusedLicenses(self.unused_licenses))
+            yield UnusedLicenses(self.unused_licenses)
 
         self.unused_licenses = self.unused_master_licenses = None
 
@@ -305,14 +308,15 @@ class UnusedMirrorsCheck(base.Template):
         self.unused_mirrors = None
         self.iuse_filter = iuse_handler.get_filter('fetchables')
 
-    def _get_mirrors(self, pkg, reporter=None):
+    def _get_mirrors(self, pkg):
         mirrors = []
-        for f in self.iuse_filter((fetch.fetchable,), pkg, pkg.fetchables):
+        fetchables, _ = self.iuse_filter((fetch.fetchable,), pkg, pkg.fetchables)
+        for f in fetchables:
             for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
                 mirrors.append(m[0].mirror_name)
         return set(mirrors)
 
-    def start(self, reporter):
+    def start(self):
         master_mirrors = self.unused_master_mirrors = set()
         for repo in self.options.target_repo.masters:
             master_mirrors.update(repo.mirrors.keys())
@@ -325,7 +329,7 @@ class UnusedMirrorsCheck(base.Template):
                 for pkg in repo:
                     self.unused_master_mirrors.difference_update(self._get_mirrors(pkg))
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         pkg_mirrors = self._get_mirrors(pkg)
         if self.unused_mirrors:
             self.unused_mirrors.difference_update(pkg_mirrors)
@@ -334,11 +338,11 @@ class UnusedMirrorsCheck(base.Template):
         if self.unused_master_mirrors:
             mirrors = self.unused_master_mirrors & pkg_mirrors
             if mirrors:
-                reporter.add_report(UnusedInMastersMirrors(pkg, mirrors))
+                yield UnusedInMastersMirrors(pkg, mirrors)
 
-    def finish(self, reporter):
+    def finish(self):
         if self.unused_mirrors:
-            reporter.add_report(UnusedMirrors(self.unused_mirrors))
+            yield UnusedMirrors(self.unused_mirrors)
 
         self.unused_mirrors = self.unused_master_mirrors = None
 
@@ -391,7 +395,7 @@ class UnusedEclassesCheck(base.Template):
         super().__init__(options)
         self.unused_eclasses = None
 
-    def start(self, reporter):
+    def start(self):
         master_eclasses = self.unused_master_eclasses = set()
         for repo in self.options.target_repo.masters:
             master_eclasses.update(repo.eclass_cache.eclasses.keys())
@@ -404,7 +408,7 @@ class UnusedEclassesCheck(base.Template):
                 for pkg in repo:
                     self.unused_master_eclasses.difference_update(pkg.inherited)
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         pkg_eclasses = set(pkg.inherited)
         self.unused_eclasses.difference_update(pkg_eclasses)
 
@@ -412,11 +416,11 @@ class UnusedEclassesCheck(base.Template):
         if self.unused_master_eclasses:
             eclasses = self.unused_master_eclasses & pkg_eclasses
             if eclasses:
-                reporter.add_report(UnusedInMastersEclasses(pkg, eclasses))
+                yield UnusedInMastersEclasses(pkg, eclasses)
 
-    def finish(self, reporter):
+    def finish(self):
         if self.unused_eclasses:
-            reporter.add_report(UnusedEclasses(self.unused_eclasses))
+            yield UnusedEclasses(self.unused_eclasses)
 
         self.unused_eclasses = self.unused_master_eclasses = None
 
@@ -615,10 +619,10 @@ class ProfilesCheck(base.Template):
             local_iuse | iuse_handler.global_iuse |
             iuse_handler.global_iuse_expand | iuse_handler.unstated_iuse)
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         pass
 
-    def finish(self, reporter):
+    def finish(self):
         unknown_pkgs = defaultdict(lambda: defaultdict(list))
         unknown_pkg_use = defaultdict(lambda: defaultdict(list))
         unknown_use = defaultdict(lambda: defaultdict(list))
@@ -690,30 +694,30 @@ class ProfilesCheck(base.Template):
                     try:
                         vals = getattr(profile, attr)
                     except Exception as e:
-                        reporter.add_report(BadProfileEntry(
+                        yield BadProfileEntry(
                             pjoin(root[len(self.profiles_dir):].lstrip('/'), e.filename),
-                            e.error))
+                            e.error)
                         continue
                     func(f, vals)
 
         for path, filenames in sorted(unknown_pkgs.items()):
             for filename, vals in filenames.items():
-                reporter.add_report(UnknownProfilePackages(
+                yield UnknownProfilePackages(
                     pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
-                    vals))
+                    vals)
 
         for path, filenames in sorted(unknown_pkg_use.items()):
             for filename, vals in filenames.items():
                 for pkg, flags in vals:
-                    reporter.add_report(UnknownProfilePackageUse(
+                    yield UnknownProfilePackageUse(
                         pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
-                        pkg, flags))
+                        pkg, flags)
 
         for path, filenames in sorted(unknown_use.items()):
             for filename, vals in filenames.items():
-                reporter.add_report(UnknownProfileUse(
+                yield UnknownProfileUse(
                     pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
-                    vals))
+                    vals)
 
 
 class RepoProfilesReport(base.Template):
@@ -738,24 +742,24 @@ class RepoProfilesReport(base.Template):
         self.profiles_dir = pjoin(self.repo.location, 'profiles')
         self.non_profile_dirs = profile_filters.non_profile_dirs
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         pass
 
-    def finish(self, reporter):
+    def finish(self):
         category_dirs = set(filterfalse(
             self.repo.false_categories.__contains__,
             (x for x in listdir_dirs(self.repo.location) if x[0] != '.')))
         unknown_categories = category_dirs.difference(self.repo.categories)
         if unknown_categories:
-            reporter.add_report(UnknownCategories(unknown_categories))
+            yield UnknownCategories(unknown_categories)
 
         unknown_arches = self.repo.config.profiles.arches().difference(self.arches)
         arches_without_profiles = self.arches.difference(self.repo.config.profiles.arches())
 
         if unknown_arches:
-            reporter.add_report(UnknownProfileArches(unknown_arches))
+            yield UnknownProfileArches(unknown_arches)
         if arches_without_profiles:
-            reporter.add_report(ArchesWithoutProfiles(arches_without_profiles))
+            yield ArchesWithoutProfiles(arches_without_profiles)
 
         root_profile_dirs = {'embedded'}
         available_profile_dirs = set()
@@ -784,18 +788,18 @@ class RepoProfilesReport(base.Template):
             for x in ProfileStack(pjoin(self.profiles_dir, path)).stack:
                 seen_profile_dirs.update(parents(x.path[len(self.profiles_dir):]))
             if not os.path.exists(pjoin(self.profiles_dir, path)):
-                reporter.add_report(NonexistentProfilePath(path))
+                yield NonexistentProfilePath(path)
             profile_status.add(status)
 
         unused_profile_dirs = available_profile_dirs - seen_profile_dirs
         if unused_profile_dirs:
-            reporter.add_report(UnusedProfileDirs(unused_profile_dirs))
+            yield UnusedProfileDirs(unused_profile_dirs)
 
         if self.repo.repo_id == 'gentoo':
             accepted_status = ('stable', 'dev', 'exp')
             unknown_status = profile_status.difference(accepted_status)
             if unknown_status:
-                reporter.add_report(UnknownProfileStatus(unknown_status))
+                yield UnknownProfileStatus(unknown_status)
 
 
 class UnknownLicenses(base.Warning):
@@ -827,14 +831,14 @@ class LicenseGroupsCheck(base.Template):
         super().__init__(options)
         self.repo = options.target_repo
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         pass
 
-    def finish(self, reporter):
+    def finish(self):
         for group, licenses in self.repo.licenses.groups.items():
             unknown_licenses = set(licenses).difference(self.repo.licenses)
             if unknown_licenses:
-                reporter.add_report(UnknownLicenses(group, unknown_licenses))
+                yield UnknownLicenses(group, unknown_licenses)
 
 
 class PotentialLocalUSE(base.Warning):
@@ -942,7 +946,7 @@ class GlobalUSECheck(base.Template):
             for flag, desc in flags}
         self.global_flag_usage = defaultdict(set)
 
-    def start(self, reporter):
+    def start(self):
         master_flags = self.unused_master_flags = set()
         for repo in self.options.target_repo.masters:
             master_flags.update(flag for matcher, (flag, desc) in repo.config.use_desc)
@@ -954,7 +958,7 @@ class GlobalUSECheck(base.Template):
                     self.unused_master_flags.difference_update(
                         pkg.iuse_stripped.difference(pkg.local_use.keys()))
 
-    def feed(self, pkgs, reporter):
+    def feed(self, pkgs):
         local_use = set(pkgs[0].local_use.keys())
         for pkg in pkgs:
             pkg_global_use = pkg.iuse_stripped.difference(local_use)
@@ -965,7 +969,7 @@ class GlobalUSECheck(base.Template):
             if self.unused_master_flags:
                 flags = self.unused_master_flags.intersection(non_local_use)
                 if flags:
-                    reporter.add_report(UnusedInMastersGlobalUSE(pkg, flags))
+                    yield UnusedInMastersGlobalUSE(pkg, flags)
 
     @staticmethod
     def _similar_flags(pkgs):
@@ -1002,7 +1006,7 @@ class GlobalUSECheck(base.Template):
             if len(component) >= 5:
                 yield [pkgs[i][0] for i in component]
 
-    def finish(self, reporter):
+    def finish(self):
         self.unused_master_flags = None
 
         unused_global_flags = []
@@ -1015,9 +1019,9 @@ class GlobalUSECheck(base.Template):
                 potential_locals.append((flag, pkgs))
 
         if unused_global_flags:
-            reporter.add_report(UnusedGlobalUSE(unused_global_flags))
+            yield UnusedGlobalUSE(unused_global_flags)
         for flag, pkgs in sorted(potential_locals, key=lambda x: len(x[1])):
-            reporter.add_report(PotentialLocalUSE(flag, pkgs))
+            yield PotentialLocalUSE(flag, pkgs)
 
         local_use = defaultdict(list)
         for pkg, (flag, desc) in self.local_use:
@@ -1030,7 +1034,7 @@ class GlobalUSECheck(base.Template):
                 potential_globals.append((flag, matching_pkgs))
 
         for flag, pkgs in sorted(potential_globals, key=lambda x: len(x[1]), reverse=True):
-            reporter.add_report(PotentialGlobalUSE(flag, pkgs))
+            yield PotentialGlobalUSE(flag, pkgs)
 
 
 def reformat_chksums(iterable):
@@ -1181,7 +1185,7 @@ class ManifestReport(base.Template):
         self.seen_checksums = {}
         self.iuse_filter = iuse_handler.get_filter('fetchables')
 
-    def feed(self, full_pkgset, reporter):
+    def feed(self, full_pkgset):
         # sort it by repo.
         for repo, pkgset in groupby(full_pkgset, self.repo_grabber):
             preferred_checksums = self.preferred_checksums[repo]
@@ -1192,27 +1196,27 @@ class ManifestReport(base.Template):
             seen = set()
             for pkg in pkgset:
                 pkg.release_cached_data()
-                fetchables = set(self.iuse_filter(
+                fetchables, _ = self.iuse_filter(
                     (fetch.fetchable,), pkg,
                     pkg._get_attr['fetchables'](
-                        pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True)))
+                        pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True))
+                fetchables = set(fetchables)
                 pkg.release_cached_data()
 
                 fetchable_files = set(f.filename for f in fetchables)
                 missing_manifests = fetchable_files.difference(manifest_distfiles)
                 if missing_manifests:
-                    reporter.add_report(MissingManifest(pkg, missing_manifests))
+                    yield MissingManifest(pkg, missing_manifests)
 
                 for f_inst in fetchables:
                     if f_inst.filename in seen:
                         continue
                     missing = required_checksums.difference(f_inst.chksums)
                     if f_inst.filename not in missing_manifests and missing:
-                        reporter.add_report(MissingChksum(
-                            pkg, f_inst.filename, missing, f_inst.chksums))
+                        yield MissingChksum(pkg, f_inst.filename, missing, f_inst.chksums)
                     elif f_inst.chksums and preferred_checksums != frozenset(f_inst.chksums):
-                        reporter.add_report(DeprecatedChksum(
-                            pkg, f_inst.filename, preferred_checksums, f_inst.chksums))
+                        yield DeprecatedChksum(
+                            pkg, f_inst.filename, preferred_checksums, f_inst.chksums)
                     seen.add(f_inst.filename)
                     existing = self.seen_checksums.get(f_inst.filename)
                     if existing is None:
@@ -1226,8 +1230,8 @@ class ManifestReport(base.Template):
                         if our_value is not None and our_value != value:
                             confl_checksums.append((chf_type, value, our_value))
                     if confl_checksums:
-                        reporter.add_report(ConflictingChksums(
-                            pkg, f_inst.filename, confl_checksums, seen_pkgs))
+                        yield ConflictingChksums(
+                            pkg, f_inst.filename, confl_checksums, seen_pkgs)
                     else:
                         seen_chksums.update(f_inst.chksums)
                         seen_pkgs.append(pkg)
@@ -1237,8 +1241,8 @@ class ManifestReport(base.Template):
                 for attr in ('aux_files', 'ebuilds', 'misc'):
                     unnecessary_manifests.extend(getattr(pkg_manifest, attr, []))
                 if unnecessary_manifests:
-                    reporter.add_report(UnnecessaryManifest(pkgset[0], unnecessary_manifests))
+                    yield UnnecessaryManifest(pkgset[0], unnecessary_manifests)
 
             unknown_manifests = manifest_distfiles.difference(seen)
             if unknown_manifests:
-                reporter.add_report(UnknownManifest(pkgset[0], unknown_manifests))
+                yield UnknownManifest(pkgset[0], unknown_manifests)

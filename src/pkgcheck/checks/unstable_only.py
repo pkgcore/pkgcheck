@@ -46,7 +46,7 @@ class UnstableOnlyReport(base.Template):
                     "keywords", values.ContainmentMatch2((f"~{arch}",)))
             ]
 
-    def feed(self, pkgset, reporter):
+    def feed(self, pkgset):
         # stable, then unstable, then file
         unstable_arches = defaultdict(list)
         for k, v in self.arch_restricts.items():
@@ -63,7 +63,7 @@ class UnstableOnlyReport(base.Template):
 
         # collapse reports by available versions
         for pkgs in unstable_arches.keys():
-            reporter.add_report(UnstableOnly(pkgs, unstable_arches[pkgs]))
+            yield UnstableOnly(pkgs, unstable_arches[pkgs])
 
-    def finish(self, reporter):
+    def finish(self):
         self.arch_restricts.clear()

@@ -83,7 +83,7 @@ class ImlateReport(base.Template):
         self.source_filter = packages.PackageRestriction(
             "keywords", values.ContainmentMatch2(self.source_arches))
 
-    def feed(self, pkgset, reporter):
+    def feed(self, pkgset):
         pkg_slotted = defaultdict(list)
         for pkg in pkgset:
             pkg_slotted[pkg.slot].append(pkg)
@@ -103,12 +103,12 @@ class ImlateReport(base.Template):
                 lagging_stables = potential_slot_stables.intersection(pkg.keywords)
                 lagging_stables -= {'~' + x for x in newer_slot_stables}
                 if lagging_stables:
-                    reporter.add_report(LaggingStable(pkg, lagging_stables))
+                    yield LaggingStable(pkg, lagging_stables)
 
                 unstable_keywords = {x for x in pkg.keywords if x[0] == '~'}
                 potential_stables = self.target_arches.intersection(unstable_keywords)
                 potential_stables -= lagging_stables
                 if potential_stables:
-                    reporter.add_report(PotentialStable(pkg, potential_stables))
+                    yield PotentialStable(pkg, potential_stables)
 
                 break

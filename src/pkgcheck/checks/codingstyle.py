@@ -66,7 +66,7 @@ class HttpsAvailableCheck(base.Template):
         # e.g. http://github.com.foo.bar.com/
         self.regex = re.compile(r'.*(\bhttp://(%s)(\s|["\'/]|$))' % r'|'.join(self.SITES))
 
-    def feed(self, entry, reporter):
+    def feed(self, entry):
         pkg, lines = entry
         links = defaultdict(list)
 
@@ -79,7 +79,7 @@ class HttpsAvailableCheck(base.Template):
                 links[matches.group(1)].append(lineno + 1)
 
         for link, lines in links.items():
-            reporter.add_report(HttpsAvailable(pkg, link, lines))
+            yield HttpsAvailable(pkg, link, lines)
 
 
 class PortageInternals(base.Warning):
@@ -120,7 +120,7 @@ class PortageInternalsCheck(base.Template):
         super().__init__(options)
         self.regex = re.compile(r'^(\s*|.*[|&{(]+\s*)\b(%s)\b' % r'|'.join(self.INTERNALS))
 
-    def feed(self, entry, reporter):
+    def feed(self, entry):
         pkg, lines = entry
         for lineno, line in enumerate(lines):
             if not line:
@@ -128,7 +128,7 @@ class PortageInternalsCheck(base.Template):
             # searching for multiple matches on a single line is too slow
             matches = self.regex.match(line)
             if matches is not None:
-                reporter.add_report(PortageInternals(pkg, matches.group(2), lineno + 1))
+                yield PortageInternals(pkg, matches.group(2), lineno + 1)
 
 
 class MissingSlash(base.Error):
@@ -179,7 +179,7 @@ class PathVariablesCheck(base.Template):
         self.missing_regex = re.compile(r'(\${(%s)})"?\w' % r'|'.join(self.variables))
         self.unnecessary_regex = re.compile(r'(\${(%s)%%/})' % r'|'.join(self.variables))
 
-    def feed(self, entry, reporter):
+    def feed(self, entry):
         pkg, lines = entry
 
         # skip EAPIs that don't require trailing slashes
@@ -200,9 +200,9 @@ class PathVariablesCheck(base.Template):
                 unnecessary[matches.group(1)].append(lineno + 1)
 
         for var, lines in missing.items():
-            reporter.add_report(MissingSlash(pkg, var, lines))
+            yield MissingSlash(pkg, var, lines)
         for var, lines in unnecessary.items():
-            reporter.add_report(UnnecessarySlashStrip(pkg, var, lines))
+            yield UnnecessarySlashStrip(pkg, var, lines)
 
 
 class AbsoluteSymlink(base.Warning):
@@ -235,15 +235,14 @@ class AbsoluteSymlinkCheck(base.Template):
         super().__init__(options)
         self.regex = re.compile(r'^\s*dosym\s+["\']?(/(%s)\S*)' % r'|'.join(self.DIRS))
 
-    def feed(self, entry, reporter):
+    def feed(self, entry):
         pkg, lines = entry
         for lineno, line in enumerate(lines):
             if not line:
                 continue
             matches = self.regex.match(line)
             if matches is not None:
-                reporter.add_report(
-                    AbsoluteSymlink(pkg, matches.groups()[0], lineno + 1))
+                yield AbsoluteSymlink(pkg, matches.groups()[0], lineno + 1)
 
 
 class BadInsIntoDir(base.Warning):
@@ -293,7 +292,7 @@ class BadInsIntoCheck(base.Template):
         s = s.replace("/", "/+")
         cls._bad_insinto = re.compile("insinto[ \t]+(/+(?:%s))(?:$|[/ \t])" % s)
 
-    def feed(self, entry, reporter):
+    def feed(self, entry):
         pkg, lines = entry
 
         badf = self._bad_insinto.search
@@ -302,5 +301,4 @@ class BadInsIntoCheck(base.Template):
                 continue
             matches = badf(line)
             if matches is not None:
-                reporter.add_report(
-                    BadInsIntoDir(pkg, matches.groups()[0], lineno + 1))
+                yield BadInsIntoDir(pkg, matches.groups()[0], lineno + 1)

@@ -90,7 +90,7 @@ class GitCommitsCheck(base.Template):
         self.today = datetime.today()
         self.added_repo = git_addon.commits_repo(addons.GitAddedRepo)
 
-    def feed(self, pkgset, reporter):
+    def feed(self, pkgset):
         invalid_copyrights = set()
         outdated_copyrights = set()
 
@@ -121,7 +121,7 @@ class GitCommitsCheck(base.Template):
                     # check for stable keywords
                     stable_keywords = sorted(x for x in pkg.keywords if x[0] not in '~-')
                     if stable_keywords:
-                        reporter.add_report(DirectStableKeywords(pkg, stable_keywords))
+                        yield DirectStableKeywords(pkg, stable_keywords)
 
                     # pkg was just added to the tree
                     added_pkgs = self.added_repo.match(git_pkg.unversioned_atom)
@@ -129,9 +129,9 @@ class GitCommitsCheck(base.Template):
 
                     # check for no maintainers
                     if newly_added and not pkg.maintainers:
-                        reporter.add_report(DirectNoMaintainer(pkg))
+                        yield DirectNoMaintainer(pkg)
 
         for pkg, line in invalid_copyrights:
-            reporter.add_report(InvalidCopyright(pkg, line.strip('\n')))
+            yield InvalidCopyright(pkg, line.strip('\n'))
         for pkg, year, line in outdated_copyrights:
-            reporter.add_report(OutdatedCopyright(pkg, year, line.strip('\n')))
+            yield OutdatedCopyright(pkg, year, line.strip('\n'))

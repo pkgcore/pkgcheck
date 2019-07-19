@@ -34,7 +34,7 @@ class RedundantVersionReport(Template):
     feed_type = package_feed
     known_results = (RedundantVersion,)
 
-    def feed(self, pkgset, reporter):
+    def feed(self, pkgset):
         if len(pkgset) == 1:
             return
 
@@ -68,4 +68,4 @@ class RedundantVersionReport(Template):
                 bad.append((pkg, matches))
 
         for pkg, matches in reversed(bad):
-            reporter.add_report(RedundantVersion(pkg, matches))
+            yield RedundantVersion(pkg, matches)

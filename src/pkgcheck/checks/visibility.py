@@ -204,7 +204,7 @@ class VisibilityReport(base.Template):
         self.depset_cache = depset_cache
         self.profiles = profiles
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         # query_cache gets caching_iter partial repo searches shoved into it-
         # reason is simple, it's likely that versions of this pkg probably
         # use similar deps- so we're forcing those packages that were
@@ -213,7 +213,7 @@ class VisibilityReport(base.Template):
 
         if pkg.live:
             # vcs ebuild that better not be visible
-            self.check_visibility_vcs(pkg, reporter)
+            self.check_visibility_vcs(pkg)
 
         suppressed_depsets = []
         for attr in ("bdepend", "depend", "rdepend", "pdepend"):
@@ -244,10 +244,10 @@ class VisibilityReport(base.Template):
                         nonexistent.add(node)
 
             except _BlockMemoryExhaustion as e:
-                reporter.add_report(UncheckableDep(pkg, attr))
+                yield UncheckableDep(pkg, attr)
                 suppressed_depsets.append(attr)
             if nonexistent:
-                reporter.add_report(NonExistentDeps(pkg, attr, nonexistent))
+                yield NonExistentDeps(pkg, attr, nonexistent)
 
         del nonexistent
 
@@ -257,14 +257,14 @@ class VisibilityReport(base.Template):
             depset = getattr(pkg, attr)
             for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
                     pkg, attr, depset):
-                self.process_depset(pkg, attr, depset, edepset, profiles, reporter)
+                self.process_depset(pkg, attr, depset, edepset, profiles)
 
-    def check_visibility_vcs(self, pkg, reporter):
+    def check_visibility_vcs(self, pkg):
         for profile in self.profiles:
             if profile.visible(pkg):
-                reporter.add_report(VisibleVcsPkg(pkg, profile.key, profile.name))
+                yield VisibleVcsPkg(pkg, profile.key, profile.name)
 
-    def process_depset(self, pkg, attr, depset, edepset, profiles, reporter):
+    def process_depset(self, pkg, attr, depset, edepset, profiles):
         get_cached_query = self.query_cache.get
 
         csolutions = []
@@ -313,5 +313,4 @@ class VisibilityReport(base.Template):
                         # no matches.  not great, should collect them all
                         failures.update(required)
             if failures:
-                reporter.add_report(NonsolvableDeps(
-                    pkg, attr, profile.key, profile.name, list(failures)))
+                yield NonsolvableDeps(pkg, attr, profile.key, profile.name, list(failures))

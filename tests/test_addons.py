@@ -83,10 +83,10 @@ class TestQueryCacheAddon(ArgparseCheck):
     def test_feed(self):
         options = self.process_check([], silence=True)
         check = self.addon_kls(options)
-        check.start(None)
+        check.start()
         assert check.feed_type == self.default_feed
         check.query_cache["boobies"] = "hooray for"
-        check.feed(None, None)
+        check.feed(None)
         assert not check.query_cache
 
 
@@ -487,11 +487,11 @@ class TestEvaluateDepSetAddon(ProfilesMixin):
         # test feed wiping, using an empty depset; if it didn't clear, then
         # results from a pkg/attr tuple from above would come through rather
         # then an empty.
-        check.feed(None, None)
+        check.feed(None)
         l = get_rets("0.1", "rdepend")
         assert len(l) == 1, f"feed didn't clear the cache- should be len 1: {l!r}"
 
-        check.feed(None, None)
+        check.feed(None)
 
         # ensure it handles arch right.
         l = get_rets("0", "depend", KEYWORDS="ppc x86")

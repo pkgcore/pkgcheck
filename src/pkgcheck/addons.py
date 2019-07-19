@@ -116,7 +116,7 @@ class QueryCacheAddon(base.Template):
         # XXX this should be logging debug info
         self.feed_type = self.options.query_caching_freq
 
-    def feed(self, item, reporter):
+    def feed(self, item):
         # XXX as should this.
         self.query_cache.clear()
 
@@ -724,7 +724,7 @@ class EvaluateDepSetAddon(base.Template):
         self.pkg_profiles_cache = {}
         self.profiles = profiles
 
-    def feed(self, item, reporter):
+    def feed(self, item):
         self.pkg_evaluate_depsets_cache.clear()
         self.pkg_profiles_cache.clear()
 
@@ -770,27 +770,9 @@ class StableArchesAddon(base.Template):
         options.stable_arches = stable_arches
 
 
-class UnstatedIUSE(base.Error):
-    """pkg is reliant on conditionals that aren't in IUSE"""
-    __slots__ = ("category", "package", "version", "attr", "flags")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, attr, flags):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.attr, self.flags = attr, tuple(flags)
-
-    @property
-    def short_desc(self):
-        return "attr(%s) uses unstated flags: [ %s ]" % \
-            (self.attr, ', '.join(self.flags))
-
-
 class UseAddon(base.Addon):
 
     required_addons = (ProfileAddon,)
-    known_results = (UnstatedIUSE,)
 
     def __init__(self, options, profiles, silence_warnings=False):
         super().__init__(options)
@@ -832,27 +814,28 @@ class UseAddon(base.Addon):
         return self.use_validate
 
     @staticmethod
-    def fake_use_validate(klasses, pkg, seq, reporter, attr=None):
+    def fake_use_validate(klasses, pkg, seq, attr=None):
         return iflatten_instance(seq, klasses)
 
-    def use_validate(self, klasses, pkg, seq, reporter=None, attr=None):
+    def use_validate(self, klasses, pkg, seq, attr=None):
         skip_filter = (packages.Conditional,) + klasses
         unstated = set()
         stated = pkg.iuse_stripped
 
-        i = expandable_chain(iflatten_instance(seq, skip_filter))
-        for node in i:
-            if isinstance(node, packages.Conditional):
-                # invert it; get only whats not in pkg.iuse
-                unstated.update(filterfalse(stated.__contains__, node.restriction.vals))
-                i.append(iflatten_instance(node.payload, skip_filter))
-                continue
-            elif attr == 'required_use':
-                unstated.update(filterfalse(stated.__contains__, node.vals))
-            yield node
+        def _nodes():
+            i = expandable_chain(iflatten_instance(seq, skip_filter))
+            for node in i:
+                if isinstance(node, packages.Conditional):
+                    # invert it; get only whats not in pkg.iuse
+                    unstated.update(filterfalse(stated.__contains__, node.restriction.vals))
+                    i.append(iflatten_instance(node.payload, skip_filter))
+                    continue
+                elif attr == 'required_use':
+                    unstated.update(filterfalse(stated.__contains__, node.vals))
+                yield node
 
-        # implicit IUSE flags
-        if reporter is not None and attr is not None:
+        nodes = tuple(_nodes())
+        if attr is not None:
             unstated.difference_update(self.unstated_iuse)
-            if unstated:
-                reporter.add_report(UnstatedIUSE(pkg, attr, sorted(unstated)))
+
+        return nodes, unstated

@@ -17,6 +17,7 @@ from operator import attrgetter
 from pkgcore import const
 from pkgcore.config import ConfigHint
 from pkgcore.package.errors import MetadataException
+from snakeoil.decorators import coroutine
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin
 
@@ -113,13 +114,13 @@ class Template(Addon):
     # don't filter any feed items by default
     filter_type = no_filter
 
-    def start(self, reporter):
+    def start(self):
         """Do startup here."""
 
-    def feed(self, item, reporter):
+    def feed(self, item):
         raise NotImplementedError
 
-    def finish(self, reporter):
+    def finish(self):
         """Do cleanup and omit final results here."""
 
 
@@ -149,16 +150,16 @@ class Transform(object):
     def __init__(self, child):
         self.child = child
 
-    def start(self, reporter):
+    def start(self):
         """Startup."""
-        self.child.start(reporter)
+        yield from self.child.start()
 
-    def feed(self, item, reporter):
+    def feed(self, item):
         raise NotImplementedError
 
-    def finish(self, reporter):
+    def finish(self):
         """Clean up."""
-        self.child.finish(reporter)
+        yield from self.child.finish()
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.child!r})'
@@ -287,14 +288,22 @@ class Reporter(object):
         self.verbosity = verbosity if verbosity is not None else 0
         self._filtered_keywords = set(keywords) if keywords is not None else keywords
 
-    def add_report(self, result):
+        # initialize result processing coroutines
+        self.report = self.add_report().send
+        self.process = self.process_report().send
+
+    @coroutine
+    def add_report(self):
         """Add a report result to be processed for output."""
         # only process reports for keywords that are enabled
-        if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
-            result._verbosity = self.verbosity
-            self.process_report(result)
+        while True:
+            result = (yield)
+            if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
+                result._verbosity = self.verbosity
+                self.process(result)
 
-    def process_report(self, result):
+    @coroutine
+    def process_report(self):
         """Render and output a report result.."""
         raise NotImplementedError(self.process_report)
 
@@ -437,33 +446,39 @@ class CheckRunner(object):
         self.checks = checks
         self._metadata_errors = set()
 
-    def start(self, reporter):
+    def start(self):
         for check in self.checks:
             try:
-                check.start(reporter)
+                reports = check.start()
+                if reports is not None:
+                    yield from reports
             except MetadataException as e:
                 exc_info = (e.pkg, e.error)
                 # only report distinct metadata errors
                 if exc_info not in self._metadata_errors:
                     self._metadata_errors.add(exc_info)
                     error_str = ': '.join(str(e.error).split('\n'))
-                    reporter.add_report(MetadataError(e.pkg, e.attr, error_str))
+                    yield MetadataError(e.pkg, e.attr, error_str)
 
-    def feed(self, item, reporter):
+    def feed(self, item):
         for check in self.checks:
             try:
-                check.feed(item, reporter)
+                reports = check.feed(item)
+                if reports is not None:
+                    yield from reports
             except MetadataException as e:
                 exc_info = (e.pkg, e.error)
                 # only report distinct metadata errors
                 if exc_info not in self._metadata_errors:
                     self._metadata_errors.add(exc_info)
                     error_str = ': '.join(str(e.error).split('\n'))
-                    reporter.add_report(MetadataError(e.pkg, e.attr, error_str))
+                    yield MetadataError(e.pkg, e.attr, error_str)
 
-    def finish(self, reporter):
+    def finish(self):
         for check in self.checks:
-            check.finish(reporter)
+            reports = check.finish()
+            if reports is not None:
+                yield from reports
 
     # The plugger tests use these.
     def __eq__(self, other):

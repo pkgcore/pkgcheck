@@ -494,12 +494,15 @@ def _scan(options, out, err):
                 err.write(f'Running {len(sinks) - len(bad_sinks)} tests')
             err.flush()
             for source, pipe in pipes:
-                pipe.start(reporter)
+                for result in pipe.start():
+                    reporter.report(result)
                 reporter.start_check(
                     list(base.collect_checks_classes(pipe)), filterer)
-                for thing in source.feed():
-                    pipe.feed(thing, reporter)
-                pipe.finish(reporter)
+                for item in source.feed():
+                    for result in pipe.feed(item):
+                        reporter.report(result)
+                for result in pipe.finish():
+                    reporter.report(result)
                 reporter.end_check()
         else:
             err.write(f'{scan.prog}: no matching checks available for current scope')

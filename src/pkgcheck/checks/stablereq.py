@@ -54,10 +54,10 @@ class StableRequestCheck(base.Template):
         self.today = datetime.today()
         self.added_repo = git_addon.cached_repo(addons.GitAddedRepo)
 
-    def start(self, reporter):
+    def start(self):
         self.start_time = time.time()
 
-    def feed(self, pkgset, reporter):
+    def feed(self, pkgset):
         # disable check when git repo parsing is disabled
         if self.added_repo is None:
             return
@@ -96,5 +96,5 @@ class StableRequestCheck(base.Template):
                         else:
                             keywords = stable_pkg_keywords.intersection(pkg_stable_keywords)
                         keywords = sorted('~' + x for x in keywords)
-                        reporter.add_report(StableRequest(pkg, keywords, days_old))
+                        yield StableRequest(pkg, keywords, days_old)
                         break

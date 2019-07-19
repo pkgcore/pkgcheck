@@ -117,8 +117,8 @@ class DeprecatedEclassReport(base.Template):
     __doc__ = "Scan for deprecated eclass usage.\n\ndeprecated eclasses: %s\n" % \
         ", ".join(sorted(blacklist))
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         deprecated = set(pkg.inherit).intersection(self.blacklist)
         if deprecated:
             eclasses = tuple((old, self.blacklist[old]) for old in sorted(deprecated))
-            reporter.add_report(DeprecatedEclass(pkg, eclasses))
+            yield DeprecatedEclass(pkg, eclasses)

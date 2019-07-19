@@ -89,11 +89,13 @@ class ReportTestCase(object):
         l = []
         if msg:
             msg = f"{msg}: "
-        r = FakeReporter(lambda r: l.append(r))
         runner = base.CheckRunner([check])
-        runner.start(r)
-        runner.feed(data, r)
-        runner.finish(r)
+        reports = runner.start()
+        if reports is not None: l.extend(reports)
+        reports = runner.feed(data)
+        if reports is not None: l.extend(reports)
+        reports = runner.finish()
+        if reports is not None: l.extend(reports)
         self._assert_known_results(*l)
         assert l == [], f"{msg}{list(report.short_desc for report in l)}"
 
@@ -108,11 +110,13 @@ class ReportTestCase(object):
 
     def assertReports(self, check, data):
         l = []
-        r = FakeReporter(lambda r: l.append(r))
         runner = base.CheckRunner([check])
-        runner.start(r)
-        runner.feed(data, r)
-        runner.finish(r)
+        reports = runner.start()
+        if reports is not None: l.extend(reports)
+        reports = runner.feed(data)
+        if reports is not None: l.extend(reports)
+        reports = runner.finish()
+        if reports is not None: l.extend(reports)
         self._assert_known_results(*l)
         assert l, f"must get a report from {check} {data}, got none"
         self.assertReportSanity(*l)
@@ -124,13 +128,6 @@ class ReportTestCase(object):
         assert len(r) == 1, f"expected one report, got {len(r)}: {r}"
         self.assertReportSanity(r[0])
         return r[0]
-
-
-class FakeReporter(object):
-    """Fake reporter instance that uses a callback for add_report()."""
-
-    def __init__(self, callback):
-        self.add_report = callback
 
 
 class Options(dict):

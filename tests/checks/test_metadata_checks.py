@@ -215,10 +215,10 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
     def test_required_use_unstated_iuse(self):
         r = self.assertReport(self.check, self.mk_pkg(required_use="foo? ( blah )"))
-        assert isinstance(r, addons.UnstatedIUSE)
+        assert isinstance(r, metadata_checks.UnstatedIUSE)
         assert r.flags == ("blah", "foo")
         r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
-        assert isinstance(r, addons.UnstatedIUSE)
+        assert isinstance(r, metadata_checks.UnstatedIUSE)
         assert r.flags == ("blah",)
 
     def test_required_use_defaults(self):

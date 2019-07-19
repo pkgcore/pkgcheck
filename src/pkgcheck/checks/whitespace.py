@@ -99,7 +99,7 @@ class WhitespaceCheck(base.Template):
         WhitespaceFound, WrongIndentFound, DoubleEmptyLine,
         TrailingEmptyLine, NoFinalNewline)
 
-    def feed(self, entry, reporter):
+    def feed(self, entry):
         pkg, lines = entry
         lastlineempty = False
         trailing = []
@@ -121,18 +121,16 @@ class WhitespaceCheck(base.Template):
             else:
                 lastlineempty = True
         if trailing:
-            reporter.add_report(
-                WhitespaceFound(pkg, "trailing", trailing))
+            yield WhitespaceFound(pkg, "trailing", trailing)
         if leading:
-            reporter.add_report(
-                WhitespaceFound(pkg, "leading", leading))
+            yield WhitespaceFound(pkg, "leading", leading)
         if indent:
-            reporter.add_report(WrongIndentFound(pkg, indent))
+            yield WrongIndentFound(pkg, indent)
         if double_empty:
-            reporter.add_report(DoubleEmptyLine(pkg, double_empty))
+            yield DoubleEmptyLine(pkg, double_empty)
         if lastlineempty:
-            reporter.add_report(TrailingEmptyLine(pkg))
+            yield TrailingEmptyLine(pkg)
 
         # Dealing with empty ebuilds is just paranoia
         if lines and not lines[-1].endswith('\n'):
-            reporter.add_report(NoFinalNewline(pkg))
+            yield NoFinalNewline(pkg)

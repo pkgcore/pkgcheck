@@ -20,8 +20,8 @@ class VersionToEbuild(base.Transform):
     scope = base.version_scope
     cost = 20
 
-    def feed(self, pkg, reporter):
-        self.child.feed((pkg, tuple(pkg.ebuild.text_fileobj())), reporter)
+    def feed(self, pkg):
+        yield from self.child.feed((pkg, tuple(pkg.ebuild.text_fileobj())))
 
 
 class EbuildToVersion(base.Transform):
@@ -32,8 +32,8 @@ class EbuildToVersion(base.Transform):
     scope = base.version_scope
     cost = 5
 
-    def feed(self, pair, reporter):
-        self.child.feed(pair[0], reporter)
+    def feed(self, pair):
+        yield from self.child.feed(pair[0])
 
 
 class _Collapse(base.Transform):
@@ -42,15 +42,15 @@ class _Collapse(base.Transform):
     Override keyfunc in a subclass and set the C{transforms} attribute.
     """
 
-    def start(self, reporter):
-        base.Transform.start(self, reporter)
+    def start(self):
+        yield from super().start()
         self.chunk = None
         self.key = None
 
     def keyfunc(self, pkg):
         raise NotImplementedError(self.keyfunc)
 
-    def feed(self, pkg, reporter):
+    def feed(self, pkg):
         key = self.keyfunc(pkg)
         if key == self.key:
             # New version for our current package.
@@ -58,15 +58,15 @@ class _Collapse(base.Transform):
         else:
             # Package change.
             if self.chunk is not None:
-                self.child.feed(tuple(self.chunk), reporter)
+                yield from self.child.feed(tuple(self.chunk))
             self.chunk = [pkg]
             self.key = key
 
-    def finish(self, reporter):
+    def finish(self):
         # Deal with empty runs.
         if self.chunk is not None:
-            self.child.feed(tuple(self.chunk), reporter)
-        base.Transform.finish(self, reporter)
+            yield from self.child.feed(tuple(self.chunk))
+        yield from super().finish()
         self.chunk = None
         self.key = None
 
@@ -93,16 +93,16 @@ class VersionToCategory(_Collapse):
 
 class _PackageOrCategoryToRepo(base.Transform):
 
-    def start(self, reporter):
-        base.Transform.start(self, reporter)
+    def start(self):
+        yield from super().start()
         self.repo = []
 
-    def feed(self, item, reporter):
+    def feed(self, item):
         self.repo.append(item)
 
-    def finish(self, reporter):
-        self.child.feed(self.repo, reporter)
-        base.Transform.finish(self, reporter)
+    def finish(self):
+        yield from self.child.feed(self.repo)
+        yield from super().finish()
         self.repo = None
 
 
@@ -129,25 +129,25 @@ class PackageToCategory(base.Transform):
     scope = base.category_scope
     cost = 10
 
-    def start(self, reporter):
-        base.Transform.start(self, reporter)
+    def start(self):
+        yield from super().start()
         self.chunk = None
         self.category = None
 
-    def feed(self, item, reporter):
+    def feed(self, item):
         category = item[0].category
         if category == self.category:
             self.chunk.extend(item)
         else:
             if self.chunk is not None:
-                self.child.feed(tuple(self.chunk), reporter)
+                yield from self.child.feed(tuple(self.chunk))
             self.chunk = list(item)
             self.category = category
 
-    def finish(self, reporter):
+    def finish(self):
         if self.chunk is not None:
-            self.child.feed(tuple(self.chunk), reporter)
-        base.Transform.finish(self, reporter)
+            yield from self.child.feed(tuple(self.chunk))
+        yield from super().finish()
         self.category = None
         self.chunk = None
 
@@ -166,7 +166,7 @@ class RestrictedRepoSource(base.GenericSource):
         self.scope = base.repository_scope
 
     def feed(self):
-        return self.repo.itermatch(self.limiter, sorter=sorted)
+        yield from self.repo.itermatch(self.limiter, sorter=sorted)
 
 
 class FilteredRepoSource(RestrictedRepoSource):
