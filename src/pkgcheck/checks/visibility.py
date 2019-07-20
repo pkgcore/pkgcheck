@@ -187,8 +187,9 @@ class NonsolvableDeps(base.Error):
         profile_status = 'deprecated ' if self.profile_deprecated else ''
         profile_status += self.profile_status or 'custom'
         return (
-            f"nonsolvable depset({self.attr}) keyword({self.keyword}) {profile_status}"
-            f"profile ({self.profile}): solutions: [ {', '.join(self.potentials)} ]"
+            f"nonsolvable depset({self.attr}) keyword({self.keyword}) "
+            f"{profile_status} profile ({self.profile}): "
+            f"solutions: [ {', '.join(self.potentials)} ]"
         )
 
 
