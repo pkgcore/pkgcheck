@@ -432,12 +432,13 @@ class StreamHeader(object):
 
     def __init__(self, checks, criteria):
         self.checks = sorted((x for x in checks if x.known_results),
-                             key=lambda x: x.__name__)
+                             key=attrgetter('__name__'))
         self.known_results = set()
         for x in checks:
             self.known_results.update(x.known_results)
 
-        self.known_results = tuple(sorted(self.known_results))
+        self.known_results = tuple(
+            sorted(self.known_results, key=attrgetter('__name__')))
         self.criteria = str(criteria)
 
 

@@ -10,8 +10,9 @@ from . import base
 demandload(
     'collections:defaultdict',
     'json',
+    'pickle',
     'xml.sax.saxutils:escape@xml_escape',
-    'snakeoil:currying,pickling',
+    'snakeoil:currying',
     'pkgcheck:errors',
 )
 
@@ -214,27 +215,19 @@ class PickleStream(base.Reporter):
     priority = -1001
     protocol = 0
 
-    def __init__(self, *args, **kwargs):
-        """Initialize.
-
-        :type out: L{snakeoil.formatters.Formatter}.
-        """
-        super().__init__(*args, **kwargs)
-        self.dump = pickling.dump
-
     def start(self):
         self.out.wrap = False
         self.out.autoline = False
 
     def start_check(self, checks, target):
-        self.dump(base.StreamHeader(checks, target), self.out)
+        pickle.dump(base.StreamHeader(checks, target), self.out.stream)
 
     @coroutine
     def process_report(self):
         while True:
             result = (yield)
             try:
-                self.dump(result, self.out, self.protocol)
+                pickle.dump(result, self.out.stream, self.protocol)
             except TypeError as t:
                 raise TypeError(result, str(t))
 

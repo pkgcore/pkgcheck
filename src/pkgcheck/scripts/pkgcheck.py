@@ -529,7 +529,7 @@ replay = subparsers.add_parser(
         reporter.
     """)
 replay.add_argument(
-    dest='pickle_file', type=argparse.FileType(), help='pickled results file')
+    dest='pickle_file', type=argparse.FileType('rb'), help='pickled results file')
 replay.add_argument(
     dest='reporter', help='python namespace path reporter to replay it into')
 replay.add_argument(
@@ -571,7 +571,7 @@ def replay_stream(stream_handle, reporter, debug=None):
             reporter.start_check(item.checks, item.criteria)
             headers.append(item)
             continue
-        reporter.add_report(item)
+        reporter.report(item)
     if headers:
         reporter.end_check()
         if debug:
