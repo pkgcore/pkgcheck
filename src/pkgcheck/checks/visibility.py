@@ -312,8 +312,9 @@ class VisibilityReport(base.Template):
                     # only report one failure per depset per profile type in regular mode
                     for failures, profiles in profile_failures.items():
                         for profile_status, cls in self.report_cls_map.items():
-                            status_profiles = sorted(profiles.get(profile_status, ()),
-                                                    key=attrgetter('key', 'name'))
+                            status_profiles = sorted(
+                                profiles.get(profile_status, ()),
+                                key=attrgetter('key', 'name'))
                             if status_profiles:
                                 profile = status_profiles[0]
                                 yield cls(
