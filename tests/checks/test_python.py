@@ -180,6 +180,11 @@ class TestPythonReport(misc.ReportTestCase):
                                          '  python_targets_python2_7 ) '
                                          'python_single_target_python3_6? ( '
                                          '  python_targets_python3_6 )'))
+        self.assertNoReport(self.check,
+            self.mk_pkg(_eclasses_=['python-any-r1'],
+                        DEPEND='|| ( '
+                               '  dev-lang/python:2.7 '
+                               '  dev-lang/python:3.6 )'))
 
     def test_single_use_mismatch(self):
         assert isinstance(
@@ -427,3 +432,22 @@ class TestPythonReport(misc.ReportTestCase):
                                          'python_single_target_python3_6? ( '
                                          '  python_targets_python3_6 )')),
             python.PythonMissingDeps)
+
+    def test_runtime_dep_in_any_r1(self):
+        assert isinstance(
+            self.assertReport(self.check,
+                self.mk_pkg(_eclasses_=['python-any-r1'],
+                            RDEPEND='|| ( '
+                                    '  dev-lang/python:2.7 '
+                                    '  dev-lang/python:3.6 )')),
+            python.PythonRuntimeDepInAnyR1)
+        assert isinstance(
+            self.assertReport(self.check,
+                self.mk_pkg(_eclasses_=['python-any-r1'],
+                            DEPEND='|| ( '
+                                   '  dev-lang/python:2.7 '
+                                   '  dev-lang/python:3.6 )',
+                            RDEPEND='|| ( '
+                                    '  dev-lang/python:2.7 '
+                                    '  dev-lang/python:3.6 )')),
+            python.PythonRuntimeDepInAnyR1)
