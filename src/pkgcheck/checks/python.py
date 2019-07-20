@@ -1,6 +1,6 @@
 from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions.boolean import OrRestriction, JustOneRestriction
-from pkgcore.restrictions import values
+from pkgcore.restrictions import packages, values
 
 from snakeoil.sequences import iflatten_instance
 
@@ -82,6 +82,24 @@ class PythonMissingRequiredUSE(base.Warning):
                 "in REQUIRED_USE")
 
 
+class PythonMissingDeps(base.Warning):
+    """Package is missing PYTHON_DEPS."""
+
+    __slots__ = ("category", "package", "version", "dep_type")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, dep_type):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.dep_type = dep_type
+
+    @property
+    def short_desc(self):
+        return ("Python package is missing ${PYTHON_DEPS} "
+                f"in {self.dep_type}")
+
+
 class PythonReport(base.Template):
     """Python eclass issue scans.
 
@@ -91,7 +109,7 @@ class PythonReport(base.Template):
 
     feed_type = base.versioned_feed
     known_results = (MissingPythonEclass, PythonSingleUseMismatch,
-                     PythonMissingRequiredUSE)
+                     PythonMissingRequiredUSE, PythonMissingDeps)
 
     @staticmethod
     def get_python_eclass(pkg):
@@ -128,6 +146,25 @@ class PythonReport(base.Template):
                 if flags == matched:
                     # we found PYTHON_REQUIRED_USE, terminate
                     return True
+        return False
+
+    def check_depend(self, depend, flags, prefix):
+        for token in self.scan_tree_recursively(depend, atom):
+            matched = set()
+            for x in token:
+                # we are looking for USE-conditional on appropriate target
+                # flag, with dep on some interpreter
+                if not isinstance(x, packages.Conditional):
+                    continue
+                flag = next(iter(x.restriction.vals))
+                if not flag.startswith(prefix):
+                    continue
+                if not any(y.key in INTERPRETERS for y in x
+                                                 if isinstance(y, atom)):
+                    continue
+                matched.add(flag[len(prefix):])
+            if matched == flags:
+                return True
         return False
 
     def feed(self, pkg):
@@ -169,3 +206,5 @@ class PythonReport(base.Template):
                 req_use_args = (s_flags, IUSE_PREFIX_S, JustOneRestriction)
             if not self.check_required_use(pkg.required_use, *req_use_args):
                 yield PythonMissingRequiredUSE(pkg)
+            if not self.check_depend(pkg.rdepend, *(req_use_args[:2])):
+                yield PythonMissingDeps(pkg, 'RDEPEND')
