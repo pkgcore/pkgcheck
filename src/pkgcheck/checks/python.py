@@ -100,6 +100,26 @@ class PythonMissingDeps(base.Warning):
                 f"in {self.dep_type}")
 
 
+class PythonRuntimeDepInAnyR1(base.Warning):
+    """Package depends on Python at runtime but uses any-r1 eclass."""
+
+    __slots__ = ("category", "package", "version", "dep_type", "dep")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, dep_type, dep):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.dep_type = dep_type
+        self.dep = dep
+
+    @property
+    def short_desc(self):
+        return (f"Package inherits python-any-r1 but has {self.dep_type} "
+                f"on {self.dep}; python-r1 or python-single-r1 should "
+                f"be used instead")
+
+
 class PythonReport(base.Template):
     """Python eclass issue scans.
 
@@ -109,7 +129,8 @@ class PythonReport(base.Template):
 
     feed_type = base.versioned_feed
     known_results = (MissingPythonEclass, PythonSingleUseMismatch,
-                     PythonMissingRequiredUSE, PythonMissingDeps)
+                     PythonMissingRequiredUSE, PythonMissingDeps,
+                     PythonRuntimeDepInAnyR1)
 
     @staticmethod
     def get_python_eclass(pkg):
@@ -208,3 +229,9 @@ class PythonReport(base.Template):
                 yield PythonMissingRequiredUSE(pkg)
             if not self.check_depend(pkg.rdepend, *(req_use_args[:2])):
                 yield PythonMissingDeps(pkg, 'RDEPEND')
+        else:  # python-any-r1
+            for attr in ("rdepend", "pdepend"):
+                for p in iflatten_instance(getattr(pkg, attr), atom):
+                    if p.key in INTERPRETERS:
+                        yield PythonRuntimeDepInAnyR1(pkg, attr, p)
+                        break
