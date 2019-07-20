@@ -1,4 +1,6 @@
 from pkgcore.ebuild.atom import atom
+from pkgcore.restrictions.boolean import OrRestriction, JustOneRestriction
+from pkgcore.restrictions import values
 
 from snakeoil.sequences import iflatten_instance
 
@@ -63,6 +65,23 @@ class PythonSingleUseMismatch(base.Warning):
                 f"PYTHON_SINGLE_TARGET={self.single_flags}")
 
 
+class PythonMissingRequiredUSE(base.Warning):
+    """Package is missing PYTHON_REQUIRED_USE."""
+
+    __slots__ = ("category", "package", "version")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg):
+        super().__init__()
+        self._store_cpv(pkg)
+
+    @property
+    def short_desc(self):
+        return ("Python package is missing ${PYTHON_REQUIRED_USE} "
+                "in REQUIRED_USE")
+
+
 class PythonReport(base.Template):
     """Python eclass issue scans.
 
@@ -71,7 +90,8 @@ class PythonReport(base.Template):
     """
 
     feed_type = base.versioned_feed
-    known_results = (MissingPythonEclass, PythonSingleUseMismatch)
+    known_results = (MissingPythonEclass, PythonSingleUseMismatch,
+                     PythonMissingRequiredUSE)
 
     @staticmethod
     def get_python_eclass(pkg):
@@ -79,6 +99,36 @@ class PythonReport(base.Template):
         # all three eclasses block one another
         assert(len(eclasses) <= 1)
         return eclasses.pop() if eclasses else None
+
+    def scan_tree_recursively(self, deptree, expected_cls):
+        for x in deptree:
+            if not isinstance(x, expected_cls):
+                for y in self.scan_tree_recursively(x, expected_cls):
+                    yield y
+        yield deptree
+
+    def check_required_use(self, requse, flags, prefix, container_cls):
+        for token in self.scan_tree_recursively(requse,
+                                                values.ContainmentMatch2):
+            # pkgcore collapses single flag in ||/^^, so expect top-level flags
+            # when len(flags) == 1
+            if len(flags) > 1 and not isinstance(token, container_cls):
+                continue
+            matched = set()
+            for x in token:
+                if not isinstance(x, values.ContainmentMatch2):
+                    continue
+                name = next(iter(x.vals))
+                if name.startswith(prefix):
+                    matched.add(name[len(prefix):])
+                elif isinstance(token, container_cls):
+                    # skip the ||/^^ if it contains at least one foreign flag
+                    break
+            else:
+                if flags == matched:
+                    # we found PYTHON_REQUIRED_USE, terminate
+                    return True
+        return False
 
     def feed(self, pkg):
         eclass = self.get_python_eclass(pkg)
@@ -108,6 +158,14 @@ class PythonReport(base.Template):
 
             # python-single-r1 should have matching PT and PST
             # (except when there is only one impl, whereas PST is not generated)
+            got_single_impl = len(flags) == 1 and len(s_flags) == 0
             if (eclass == 'python-single-r1' and flags != s_flags
-                    and (len(flags) > 1 or len(s_flags) > 0)):
+                    and not got_single_impl):
                 yield PythonSingleUseMismatch(pkg, flags, s_flags)
+
+            if eclass == 'python-r1' or got_single_impl:
+                req_use_args = (flags, IUSE_PREFIX, OrRestriction)
+            else:
+                req_use_args = (s_flags, IUSE_PREFIX_S, JustOneRestriction)
+            if not self.check_required_use(pkg.required_use, *req_use_args):
+                yield PythonMissingRequiredUSE(pkg)
