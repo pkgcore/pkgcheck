@@ -88,34 +88,38 @@ class TestPkgcheckShow(object):
         with patch('sys.argv', [project, 'show', '--keywords']):
             with raises(SystemExit) as excinfo:
                 self.script()
-            assert excinfo.value.code == 0
             out, err = capsys.readouterr()
+            assert not err
             out = out.strip().split('\n')
             assert len(out) == len(pkgcheck._known_keywords)
+            assert excinfo.value.code == 0
 
     def test_show_checks(self, capsys):
         with patch('sys.argv', [project, 'show', '--checks']):
             with raises(SystemExit) as excinfo:
                 self.script()
-            assert excinfo.value.code == 0
             out, err = capsys.readouterr()
+            assert not err
             out = out.strip().split('\n')
             assert len(out) == len(pkgcheck._known_checks)
+            assert excinfo.value.code == 0
 
     def test_show_scopes(self, capsys):
         with patch('sys.argv', [project, 'show', '--scopes']):
             with raises(SystemExit) as excinfo:
                 self.script()
-            assert excinfo.value.code == 0
             out, err = capsys.readouterr()
+            assert not err
             out = out.strip().split('\n')
             assert len(out) == len(base.known_scopes)
+            assert excinfo.value.code == 0
 
     def test_show_reporters(self, capsys):
         with patch('sys.argv', [project, 'show', '--reporters']):
             with raises(SystemExit) as excinfo:
                 self.script()
-            assert excinfo.value.code == 0
             out, err = capsys.readouterr()
+            assert not err
             out = out.strip().split('\n')
             assert len(out) == len(list(get_plugins('reporter', plugins)))
+            assert excinfo.value.code == 0
