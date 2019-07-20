@@ -146,33 +146,103 @@ class TestPythonReport(misc.ReportTestCase):
                 self.mk_pkg(PDEPEND='dev-python/pypy')),
             python.MissingPythonEclass)
 
-    def test_single_use_mismatch(self):
+    def test_valid_packages(self):
         self.assertNoReport(self.check,
                 self.mk_pkg(_eclasses_=['python-r1'],
                             IUSE='python_targets_python2_7 '
-                                 'python_targets_python3_6'))
+                                 'python_targets_python3_6',
+                            REQUIRED_USE='|| ( python_targets_python2_7 '
+                                         '     python_targets_python3_6 )'))
         # python-single-r1 with one implementation does not use PST
         self.assertNoReport(self.check,
                 self.mk_pkg(_eclasses_=['python-single-r1'],
-                            IUSE='python_targets_python2_7'))
+                            IUSE='python_targets_python2_7',
+                            REQUIRED_USE='python_targets_python2_7'))
         self.assertNoReport(self.check,
                 self.mk_pkg(_eclasses_=['python-single-r1'],
                             IUSE='python_targets_python2_7 '
                                  'python_targets_python3_6 '
                                  'python_single_target_python2_7 '
-                                 'python_single_target_python3_6'))
+                                 'python_single_target_python3_6',
+                            REQUIRED_USE='^^ ( python_single_target_python2_7 '
+                                         '     python_single_target_python3_6 ) '
+                                         'python_single_target_python2_7? ( '
+                                         '  python_targets_python2_7 ) '
+                                         'python_single_target_python3_6? ( '
+                                         '  python_targets_python3_6 )'))
+
+    def test_single_use_mismatch(self):
+        assert isinstance(
+            self.assertReport(self.check,
+                self.mk_pkg(_eclasses_=['python-single-r1'],
+                            IUSE='python_targets_python2_7 '
+                                 'python_targets_python3_6 '
+                                 'python_single_target_python2_7',
+                            REQUIRED_USE='python_single_target_python2_7 '
+                                         'python_single_target_python2_7? ( '
+                                         '  python_targets_python2_7 )')),
+            python.PythonSingleUseMismatch)
+        assert isinstance(
+            self.assertReport(self.check,
+                self.mk_pkg(_eclasses_=['python-single-r1'],
+                            IUSE='python_targets_python2_7 '
+                                 'python_single_target_python2_7 '
+                                 'python_single_target_python3_6',
+                            REQUIRED_USE='^^ ( python_single_target_python2_7 '
+                                         '  python_single_target_python3_6 )')),
+            python.PythonSingleUseMismatch)
+
+    def test_missing_required_use(self):
+        assert isinstance(
+            self.assertReport(self.check,
+                self.mk_pkg(_eclasses_=['python-r1'],
+                            IUSE='python_targets_python2_7 '
+                                 'python_targets_python3_6')),
+            python.PythonMissingRequiredUSE)
+        # incomplete REQUIRED_USE (e.g. use of python_gen_useflags)
+        assert isinstance(
+            self.assertReport(self.check,
+                self.mk_pkg(_eclasses_=['python-r1'],
+                            IUSE='python_targets_python2_7 '
+                                 'python_targets_python3_6',
+                            REQUIRED_USE='|| ( python_targets_python2_7 )')),
+            python.PythonMissingRequiredUSE)
+        assert isinstance(
+            self.assertReport(self.check,
+                self.mk_pkg(_eclasses_=['python-r1'],
+                            IUSE='python_targets_python2_7 '
+                                 'python_targets_python3_6 '
+                                 'python_targets_python3_7',
+                            REQUIRED_USE='|| ( python_targets_python3_6 '
+                                         '  python_targets_python3_7 )')),
+            python.PythonMissingRequiredUSE)
 
         assert isinstance(
             self.assertReport(self.check,
                 self.mk_pkg(_eclasses_=['python-single-r1'],
                             IUSE='python_targets_python2_7 '
                                  'python_targets_python3_6 '
-                                 'python_single_target_python2_7')),
-            python.PythonSingleUseMismatch)
+                                 'python_single_target_python2_7 '
+                                 'python_single_target_python3_6')),
+            python.PythonMissingRequiredUSE)
+        # incomplete REQUIRED_USE
         assert isinstance(
             self.assertReport(self.check,
                 self.mk_pkg(_eclasses_=['python-single-r1'],
                             IUSE='python_targets_python2_7 '
+                                 'python_targets_python3_6 '
                                  'python_single_target_python2_7 '
-                                 'python_single_target_python3_6')),
-            python.PythonSingleUseMismatch)
+                                 'python_single_target_python3_6',
+                            REQUIRED_USE='^^ ( python_single_target_python2_7 )')),
+            python.PythonMissingRequiredUSE)
+        # || instead of ^^ in python-single-r1
+        assert isinstance(
+            self.assertReport(self.check,
+                self.mk_pkg(_eclasses_=['python-single-r1'],
+                            IUSE='python_targets_python2_7 '
+                                 'python_targets_python3_6 '
+                                 'python_single_target_python2_7 '
+                                 'python_single_target_python3_6',
+                            REQUIRED_USE='|| ( python_targets_python2_7 '
+                                         '  python_targets_python3_6 )')),
+            python.PythonMissingRequiredUSE)
