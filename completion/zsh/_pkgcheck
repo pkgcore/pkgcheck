@@ -92,9 +92,10 @@ case $state in
       (show)
         _arguments -C -A '-*' \
           $common_output_args \
-          '--keywords[print available warning/error keywords and exit]' \
-          '--checks[print what checks are available to run and exit]' \
-          '--reporters[print known reporters and exit]' \
+          '--keywords[how available warning/error keywords]' \
+          '--checks[show available checks]' \
+          '--reporters[show available reporters]' \
+          '--scopes[show available keyword/check scopes]' \
           && ret=0
         ;;
       (*)
