@@ -333,10 +333,10 @@ def _validate_args(parser, namespace):
         # convert scopes to keyword lists
         disabled_keywords = [
             k.__name__ for s in disabled_scopes for k in _known_keywords
-            if k.threshold == base.known_scopes[s]]
+            if k.threshold == base.known_scopes[s].threshold]
         enabled_keywords = [
             k.__name__ for s in enabled_scopes for k in _known_keywords
-            if k.threshold == base.known_scopes[s]]
+            if k.threshold == base.known_scopes[s].threshold]
 
         # filter outputted keywords
         namespace.enabled_keywords = base.filter_update(
@@ -638,7 +638,7 @@ def display_keywords(out, options):
             out.write()
             return
 
-        scopes = ('version', 'package', 'category', 'repository')
+        scopes = tuple(x.desc for x in reversed(base.known_scopes.values()))
         for scope in reversed(sorted(d)):
             out.write(out.bold, f"{scopes[scope].capitalize()} scope:")
             out.write()
@@ -768,6 +768,14 @@ list_options.add_argument(
         each check.
     """)
 list_options.add_argument(
+    '--scopes', action='store_true', default=False,
+    help='show available keyword/check scopes',
+    docs="""
+        List all available keyword and check scopes.
+
+        Use -v/--verbose to show scope descriptions.
+    """)
+list_options.add_argument(
     '--reporters', action='store_true', default=False,
     help='show available reporters',
     docs="""
@@ -782,6 +790,13 @@ def _show(options, out, err):
 
     if options.checks:
         display_checks(out, options)
+
+    if options.scopes:
+        if options.verbosity < 1:
+            out.write('\n'.join(base.known_scopes.keys()))
+        else:
+            for name, scope in base.known_scopes.items():
+                out.write(f'{name} -- {scope.desc} scope')
 
     if options.reporters:
         display_reporters(

@@ -11,7 +11,7 @@ minimally accepted scope, and for transforms the output scope is
 identical to the input scope.
 """
 
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from operator import attrgetter
 
 from pkgcore import const
@@ -43,11 +43,12 @@ version_scope, package_scope, category_scope, repository_scope = list(range(4))
 max_scope = repository_scope
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
+_Scope = namedtuple("Scope", ["threshold", "desc"])
 known_scopes = OrderedDict((
-    ('repo', repository_feed),
-    ('cat', category_feed),
-    ('pkg', package_feed),
-    ('ver', versioned_feed),
+    ('repo', _Scope(repository_feed, 'repository')),
+    ('cat', _Scope(category_feed, 'category')),
+    ('pkg', _Scope(package_feed, 'package')),
+    ('ver', _Scope(versioned_feed, 'version')),
 ))
 
 CACHE_DIR = pjoin(const.USER_CACHE_PATH, 'pkgcheck')
