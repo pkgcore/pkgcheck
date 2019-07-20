@@ -37,6 +37,7 @@ pkgcore_plugins = {
         pkgdir_checks.PkgDirReport,
         repo_metadata.GlobalUSECheck,
         repo_metadata.LicenseGroupsCheck,
+        repo_metadata.ManifestConflictCheck,
         repo_metadata.ManifestReport,
         repo_metadata.PackageUpdatesCheck,
         repo_metadata.ProfilesCheck,
