@@ -5,11 +5,12 @@ from pkgcore import const
 from pytest import raises
 from snakeoil.osutils import pjoin
 
-from pkgcheck import __title__ as project
-from pkgcheck.scripts import run
+from pkgcheck import base, plugins, __title__ as project
+from pkgcore.plugin import get_plugins
+from pkgcheck.scripts import run, pkgcheck
 
 
-def test_script_run(capfd):
+def test_script_run(capsys):
     """Test regular code path for running scripts."""
     script = partial(run, project)
 
@@ -21,7 +22,7 @@ def test_script_run(capfd):
             with raises(SystemExit) as excinfo:
                 script()
             assert excinfo.value.code == 1
-            out, err = capfd.readouterr()
+            out, err = capsys.readouterr()
             err = err.strip().split('\n')
             assert len(err) == 3
             assert err[0] == "Failed importing: baz module doesn't exist!"
@@ -32,7 +33,7 @@ def test_script_run(capfd):
         with patch('sys.argv', [project, '--debug']):
             with raises(ImportError):
                 script()
-            out, err = capfd.readouterr()
+            out, err = capsys.readouterr()
             err = err.strip().split('\n')
             assert len(err) == 2
             assert err[0] == "Failed importing: baz module doesn't exist!"
@@ -46,34 +47,75 @@ class TestPkgcheckScan(object):
     script = partial(run, project)
     fakerepo = pjoin(const.DATA_PATH, 'fakerepo')
 
-    def test_unknown_repo(self, capfd):
+    def test_unknown_repo(self, capsys):
         for opt in ('-r', '--repo'):
-            with patch('sys.argv', ['scan', opt, 'foo']):
+            with patch('sys.argv', [project, 'scan', opt, 'foo']):
                 with raises(SystemExit) as excinfo:
                     self.script()
                 assert excinfo.value.code == 2
-                out, err = capfd.readouterr()
+                out, err = capsys.readouterr()
                 err = err.strip().split('\n')
                 assert err[-1].startswith(
                     "pkgcheck scan: error: argument -r/--repo: couldn't find repo 'foo'")
 
-    def test_unknown_reporter(self, capfd):
+    def test_unknown_reporter(self, capsys):
         for opt in ('-R', '--reporter'):
-            with patch('sys.argv', ['scan', opt, 'foo', '--repo', self.fakerepo]):
+            with patch('sys.argv', [project, 'scan', opt, 'foo', '--repo', self.fakerepo]):
                 with raises(SystemExit) as excinfo:
                     self.script()
                 assert excinfo.value.code == 2
-                out, err = capfd.readouterr()
+                out, err = capsys.readouterr()
                 err = err.strip().split('\n')
                 assert err[-1].startswith(
                     "pkgcheck scan: error: no reporter matches 'foo'")
 
-    def test_unknown_scope(self, capfd):
+    def test_unknown_scope(self, capsys):
         for opt in ('-S', '--scopes'):
-            with patch('sys.argv', ['scan', opt, 'foo', '--repo', self.fakerepo]):
+            with patch('sys.argv', [project, 'scan', opt, 'foo', '--repo', self.fakerepo]):
                 with raises(SystemExit) as excinfo:
                     self.script()
                 assert excinfo.value.code == 2
-                out, err = capfd.readouterr()
+                out, err = capsys.readouterr()
                 err = err.strip().split('\n')
                 assert err[-1].startswith("pkgcheck scan: error: unknown scope: 'foo'")
+
+
+class TestPkgcheckShow(object):
+
+    script = partial(run, project)
+
+    def test_show_keywords(self, capsys):
+        with patch('sys.argv', [project, 'show', '--keywords']):
+            with raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 0
+            out, err = capsys.readouterr()
+            out = out.strip().split('\n')
+            assert len(out) == len(pkgcheck._known_keywords)
+
+    def test_show_checks(self, capsys):
+        with patch('sys.argv', [project, 'show', '--checks']):
+            with raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 0
+            out, err = capsys.readouterr()
+            out = out.strip().split('\n')
+            assert len(out) == len(pkgcheck._known_checks)
+
+    def test_show_scopes(self, capsys):
+        with patch('sys.argv', [project, 'show', '--scopes']):
+            with raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 0
+            out, err = capsys.readouterr()
+            out = out.strip().split('\n')
+            assert len(out) == len(base.known_scopes)
+
+    def test_show_reporters(self, capsys):
+        with patch('sys.argv', [project, 'show', '--reporters']):
+            with raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 0
+            out, err = capsys.readouterr()
+            out = out.strip().split('\n')
+            assert len(out) == len(list(get_plugins('reporter', plugins)))
