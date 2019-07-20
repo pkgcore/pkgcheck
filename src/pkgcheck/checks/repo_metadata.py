@@ -1171,7 +1171,7 @@ class ManifestReport(base.Template):
     feed_type = base.package_feed
     known_results = (
         MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
-        ConflictingChksums, DeprecatedChksum,
+        DeprecatedChksum,
     )
 
     repo_grabber = attrgetter("repo")
@@ -1182,7 +1182,6 @@ class ManifestReport(base.Template):
             repo.config.manifests.hashes if hasattr(repo, 'config') else ()))
         self.required_checksums = mappings.defaultdictkey(lambda repo: frozenset(
             repo.config.manifests.required_hashes if hasattr(repo, 'config') else ()))
-        self.seen_checksums = {}
         self.iuse_filter = iuse_handler.get_filter('fetchables')
 
     def feed(self, full_pkgset):
@@ -1218,23 +1217,6 @@ class ManifestReport(base.Template):
                         yield DeprecatedChksum(
                             pkg, f_inst.filename, preferred_checksums, f_inst.chksums)
                     seen.add(f_inst.filename)
-                    existing = self.seen_checksums.get(f_inst.filename)
-                    if existing is None:
-                        self.seen_checksums[f_inst.filename] = (
-                            [pkg.key], dict(f_inst.chksums.items()))
-                        continue
-                    seen_pkgs, seen_chksums = existing
-                    confl_checksums = []
-                    for chf_type, value in seen_chksums.items():
-                        our_value = f_inst.chksums.get(chf_type)
-                        if our_value is not None and our_value != value:
-                            confl_checksums.append((chf_type, value, our_value))
-                    if confl_checksums:
-                        yield ConflictingChksums(
-                            pkg, f_inst.filename, confl_checksums, seen_pkgs)
-                    else:
-                        seen_chksums.update(f_inst.chksums)
-                        seen_pkgs.append(pkg)
 
             if pkg_manifest.thin:
                 unnecessary_manifests = []
@@ -1246,3 +1228,44 @@ class ManifestReport(base.Template):
             unknown_manifests = manifest_distfiles.difference(seen)
             if unknown_manifests:
                 yield UnknownManifest(pkgset[0], unknown_manifests)
+
+
+class ManifestConflictCheck(base.Template):
+    """Conflicting checksum check.
+
+    Verify that two Manifest files do not contain conflicting checksums
+    for the same filename.
+    """
+
+    scope = base.repository_scope
+    feed_type = base.package_feed
+    known_results = (ConflictingChksums,)
+
+    repo_grabber = attrgetter("repo")
+
+    def __init__(self, options):
+        super().__init__(options)
+        self.seen_checksums = {}
+
+    def feed(self, full_pkgset):
+        # sort it by repo.
+        for repo, pkgset in groupby(full_pkgset, self.repo_grabber):
+            pkg = next(iter(pkgset))
+            for filename, chksums in pkg.manifest.distfiles.items():
+                existing = self.seen_checksums.get(filename)
+                if existing is None:
+                    self.seen_checksums[filename] = (
+                        [pkg.key], dict(chksums.items()))
+                    continue
+                seen_pkgs, seen_chksums = existing
+                confl_checksums = []
+                for chf_type, value in seen_chksums.items():
+                    our_value = chksums.get(chf_type)
+                    if our_value is not None and our_value != value:
+                        confl_checksums.append((chf_type, value, our_value))
+                if confl_checksums:
+                    yield ConflictingChksums(
+                        pkg, filename, confl_checksums, seen_pkgs)
+                else:
+                    seen_chksums.update(chksums)
+                    seen_pkgs.append(pkg)
