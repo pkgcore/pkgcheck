@@ -39,6 +39,8 @@ demandload(
 
 
 argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))
+# TODO: rework pkgcore's config system to allow more lazy loading
+argparser.set_defaults(profile_override=pjoin(const.DATA_PATH, 'fakerepo/profiles/default'))
 subparsers = argparser.add_subparsers(description="check applets", default='scan')
 
 # These are all set based on other options, so have no default setting.
@@ -46,8 +48,6 @@ scan = subparsers.add_parser('scan', description='scan targets for QA issues')
 scan.set_defaults(repo_bases=[])
 scan.set_defaults(guessed_suite=False)
 scan.set_defaults(default_suite=False)
-# TODO: rework pkgcore's config system to allow more lazy loading
-scan.set_defaults(profile_override=pjoin(const.DATA_PATH, 'fakerepo/profiles/default'))
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
