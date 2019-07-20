@@ -235,3 +235,12 @@ class PythonReport(base.Template):
                     if p.key in INTERPRETERS:
                         yield PythonRuntimeDepInAnyR1(pkg, attr, p)
                         break
+            for attr in ("depend", "bdepend"):
+                for p in iflatten_instance(getattr(pkg, attr), atom):
+                    if p.key in INTERPRETERS:
+                        break
+                else:
+                    continue
+                break
+            else:
+                yield PythonMissingDeps(pkg, 'DEPEND')
