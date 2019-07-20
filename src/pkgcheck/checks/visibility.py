@@ -241,7 +241,7 @@ class VisibilityReport(base.Template):
 
         if pkg.live:
             # vcs ebuild that better not be visible
-            self.check_visibility_vcs(pkg)
+            yield from self.check_visibility_vcs(pkg)
 
         suppressed_depsets = []
         for attr in ("bdepend", "depend", "rdepend", "pdepend"):
@@ -285,7 +285,7 @@ class VisibilityReport(base.Template):
             depset = getattr(pkg, attr)
             for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
                     pkg, attr, depset):
-                self.process_depset(pkg, attr, depset, edepset, profiles)
+                yield from self.process_depset(pkg, attr, depset, edepset, profiles)
 
     def check_visibility_vcs(self, pkg):
         for profile in self.profiles:
