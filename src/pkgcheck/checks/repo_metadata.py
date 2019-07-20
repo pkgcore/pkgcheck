@@ -1102,7 +1102,7 @@ class ConflictingChksums(base.Error):
     def short_desc(self):
         return (
             f"conflicts with ({', '.join(self.others)}) "
-            "for file {self.filename!r} chksum {self.chksums}")
+            f"for file {self.filename!r} chksum {self.chksums}")
 
 
 class MissingChksum(base.Warning):
