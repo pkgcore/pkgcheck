@@ -200,7 +200,7 @@ class NonsolvableDepsInDev(NonsolvableDeps):
     """No potential solution for dependency on dev profile."""
 
 
-class NonsolvableDepsInExp(NonsolvableDeps):
+class NonsolvableDepsInExp(base.Warning, NonsolvableDeps):
     """No potential solution for dependency on exp profile."""
 
 
