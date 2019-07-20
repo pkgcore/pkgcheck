@@ -1168,6 +1168,7 @@ class ManifestReport(base.Template):
     """
 
     required_addons = (addons.UseAddon,)
+    scope = base.repository_scope
     feed_type = base.package_feed
     known_results = (
         MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
