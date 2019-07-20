@@ -145,3 +145,34 @@ class TestPythonReport(misc.ReportTestCase):
             self.assertReport(self.check,
                 self.mk_pkg(PDEPEND='dev-python/pypy')),
             python.MissingPythonEclass)
+
+    def test_single_use_mismatch(self):
+        self.assertNoReport(self.check,
+                self.mk_pkg(_eclasses_=['python-r1'],
+                            IUSE='python_targets_python2_7 '
+                                 'python_targets_python3_6'))
+        # python-single-r1 with one implementation does not use PST
+        self.assertNoReport(self.check,
+                self.mk_pkg(_eclasses_=['python-single-r1'],
+                            IUSE='python_targets_python2_7'))
+        self.assertNoReport(self.check,
+                self.mk_pkg(_eclasses_=['python-single-r1'],
+                            IUSE='python_targets_python2_7 '
+                                 'python_targets_python3_6 '
+                                 'python_single_target_python2_7 '
+                                 'python_single_target_python3_6'))
+
+        assert isinstance(
+            self.assertReport(self.check,
+                self.mk_pkg(_eclasses_=['python-single-r1'],
+                            IUSE='python_targets_python2_7 '
+                                 'python_targets_python3_6 '
+                                 'python_single_target_python2_7')),
+            python.PythonSingleUseMismatch)
+        assert isinstance(
+            self.assertReport(self.check,
+                self.mk_pkg(_eclasses_=['python-single-r1'],
+                            IUSE='python_targets_python2_7 '
+                                 'python_single_target_python2_7 '
+                                 'python_single_target_python3_6')),
+            python.PythonSingleUseMismatch)

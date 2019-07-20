@@ -19,6 +19,9 @@ INTERPRETERS = (
     'virtual/pypy3',
 )
 
+IUSE_PREFIX = 'python_targets_'
+IUSE_PREFIX_S = 'python_single_target_'
+
 
 class MissingPythonEclass(base.Warning):
     """Package depends on Python but does not use the eclasses."""
@@ -40,6 +43,26 @@ class MissingPythonEclass(base.Warning):
                 f"{self.eclass} instead of {self.dep_type} on {self.dep}")
 
 
+class PythonSingleUseMismatch(base.Warning):
+    """Package has mismatched PYTHON_SINGLE & PYTHON_TARGETS flags."""
+
+    __slots__ = ("category", "package", "version", "flags", "single_flags")
+
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, flags, single_flags):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.flags = tuple(sorted(flags))
+        self.single_flags = tuple(sorted(single_flags))
+
+    @property
+    def short_desc(self):
+        return (f"Python package has mismatched Python flags in IUSE: "
+                f"PYTHON_TARGETS={self.flags} but "
+                f"PYTHON_SINGLE_TARGET={self.single_flags}")
+
+
 class PythonReport(base.Template):
     """Python eclass issue scans.
 
@@ -48,7 +71,7 @@ class PythonReport(base.Template):
     """
 
     feed_type = base.versioned_feed
-    known_results = (MissingPythonEclass,)
+    known_results = (MissingPythonEclass, PythonSingleUseMismatch)
 
     @staticmethod
     def get_python_eclass(pkg):
@@ -76,3 +99,15 @@ class PythonReport(base.Template):
                 else:
                     recomm = "python-any-r1"
                 yield MissingPythonEclass(pkg, recomm, *highest_found)
+        elif eclass in ('python-r1', 'python-single-r1'):
+            # grab Python implementations from IUSE
+            flags = set([x[len(IUSE_PREFIX):] for x in pkg.iuse
+                                              if x.startswith(IUSE_PREFIX)])
+            s_flags = set([x[len(IUSE_PREFIX_S):] for x in pkg.iuse
+                                                  if x.startswith(IUSE_PREFIX_S)])
+
+            # python-single-r1 should have matching PT and PST
+            # (except when there is only one impl, whereas PST is not generated)
+            if (eclass == 'python-single-r1' and flags != s_flags
+                    and (len(flags) > 1 or len(s_flags) > 0)):
+                yield PythonSingleUseMismatch(pkg, flags, s_flags)
