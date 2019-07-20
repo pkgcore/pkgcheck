@@ -1,3 +1,6 @@
+from collections import defaultdict
+from operator import attrgetter
+
 from pkgcore.ebuild.atom import atom as atom_cls
 
 from snakeoil import klass
@@ -166,29 +169,31 @@ class NonsolvableDeps(base.Error):
 
     __slots__ = (
         "category", "package", "version", "attr", "profile", "keyword",
-        "potentials", "profile_status", "profile_deprecated",
+        "potentials", "profile_status", "profile_deprecated", "num_profiles",
     )
 
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, attr, keyword, profile, horked,
-                 profile_status, profile_deprecated):
+    def __init__(self, pkg, attr, keyword, profile, deps,
+                 profile_status, profile_deprecated, num_profiles=None):
         super().__init__()
         self._store_cpv(pkg)
         self.attr = attr
         self.profile = profile
         self.keyword = keyword
-        self.potentials = tuple(map(str, stable_unique(horked)))
+        self.potentials = tuple(deps)
         self.profile_status = profile_status
         self.profile_deprecated = profile_deprecated
+        self.num_profiles = num_profiles
 
     @property
     def short_desc(self):
         profile_status = 'deprecated ' if self.profile_deprecated else ''
         profile_status += self.profile_status or 'custom'
+        num_profiles = f' ({self.num_profiles} total)' if self.num_profiles is not None else ''
         return (
             f"nonsolvable depset({self.attr}) keyword({self.keyword}) "
-            f"{profile_status} profile ({self.profile}): "
+            f"{profile_status} profile ({self.profile}){num_profiles}: "
             f"solutions: [ {', '.join(self.potentials)} ]"
         )
 
@@ -284,9 +289,36 @@ class VisibilityReport(base.Template):
             if attr in suppressed_depsets:
                 continue
             depset = getattr(pkg, attr)
+            profile_failures = defaultdict(lambda: defaultdict(set))
             for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
                     pkg, attr, depset):
-                yield from self.process_depset(pkg, attr, depset, edepset, profiles)
+                for profile, failures in self.process_depset(
+                        pkg, attr, depset, edepset, profiles):
+                    failures = tuple(map(str, stable_unique(failures)))
+                    profile_failures[failures][profile.status].add(profile)
+
+            if profile_failures:
+                if self.options.verbosity > 0:
+                    # report all failures across all profiles in verbose mode
+                    for failures, profiles in profile_failures.items():
+                        for profile_status, cls in self.report_cls_map.items():
+                            for profile in sorted(
+                                    profiles.get(profile_status, ()),
+                                    key=attrgetter('key', 'name')):
+                                yield cls(
+                                    pkg, attr, profile.key, profile.name, list(failures),
+                                    profile_status, profile.deprecated)
+                else:
+                    # only report one failure per depset per profile type in regular mode
+                    for failures, profiles in profile_failures.items():
+                        for profile_status, cls in self.report_cls_map.items():
+                            status_profiles = sorted(profiles.get(profile_status, ()),
+                                                    key=attrgetter('key', 'name'))
+                            if status_profiles:
+                                profile = status_profiles[0]
+                                yield cls(
+                                    pkg, attr, profile.key, profile.name, list(failures),
+                                    profile_status, profile.deprecated, len(status_profiles))
 
     def check_visibility_vcs(self, pkg):
         for profile in self.profiles:
@@ -339,10 +371,7 @@ class VisibilityReport(base.Template):
                         else:
                             insoluble.add(node)
                     else:
-                        # no matches.  not great, should collect them all
+                        # no matches. not great, should collect them all
                         failures.update(required)
             if failures:
-                cls = self.report_cls_map.get(profile.status, NonsolvableDeps)
-                yield cls(
-                    pkg, attr, profile.key, profile.name, list(failures),
-                    profile.status, profile.deprecated)
+                yield profile, failures
