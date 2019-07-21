@@ -85,24 +85,54 @@ class TestPkgcheckShow(object):
     script = partial(run, project)
 
     def test_show_keywords(self, capsys):
+        # regular mode
         with patch('sys.argv', [project, 'show', '--keywords']):
             with raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not err
             out = out.strip().split('\n')
+            regular_output = out
             assert len(out) == len(pkgcheck._known_keywords)
             assert excinfo.value.code == 0
 
+        # verbose mode
+        with patch('sys.argv', [project, 'show', '--keywords', '-v']):
+            with raises(SystemExit) as excinfo:
+                self.script()
+            out, err = capsys.readouterr()
+            assert not err
+            out = out.strip().split('\n')
+            verbose_output = out
+            assert excinfo.value.code == 0
+
+        # verbose output shows much more info
+        assert len(regular_output) < len(verbose_output)
+
     def test_show_checks(self, capsys):
+        # regular mode
         with patch('sys.argv', [project, 'show', '--checks']):
             with raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not err
             out = out.strip().split('\n')
+            regular_output = out
             assert len(out) == len(pkgcheck._known_checks)
             assert excinfo.value.code == 0
+
+        # verbose mode
+        with patch('sys.argv', [project, 'show', '--checks', '-v']):
+            with raises(SystemExit) as excinfo:
+                self.script()
+            out, err = capsys.readouterr()
+            assert not err
+            out = out.strip().split('\n')
+            verbose_output = out
+            assert excinfo.value.code == 0
+
+        # verbose output shows much more info
+        assert len(regular_output) < len(verbose_output)
 
     def test_show_scopes(self, capsys):
         with patch('sys.argv', [project, 'show', '--scopes']):
@@ -115,14 +145,29 @@ class TestPkgcheckShow(object):
             assert excinfo.value.code == 0
 
     def test_show_reporters(self, capsys):
+        # regular mode
         with patch('sys.argv', [project, 'show', '--reporters']):
             with raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not err
             out = out.strip().split('\n')
+            regular_output = out
             assert len(out) == len(list(get_plugins('reporter', plugins)))
             assert excinfo.value.code == 0
+
+        # verbose mode
+        with patch('sys.argv', [project, 'show', '--reporters', '-v']):
+            with raises(SystemExit) as excinfo:
+                self.script()
+            out, err = capsys.readouterr()
+            assert not err
+            out = out.strip().split('\n')
+            verbose_output = out
+            assert excinfo.value.code == 0
+
+        # verbose output shows much more info
+        assert len(regular_output) < len(verbose_output)
 
 
 class TestPkgcheckReplay(object):
