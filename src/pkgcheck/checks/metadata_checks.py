@@ -19,23 +19,6 @@ from ..base import MetadataError
 from .visibility import FakeConfigurable, strip_atom_use
 
 
-class UnstatedIUSE(base.Error):
-    """pkg is reliant on conditionals that aren't in IUSE"""
-
-    __slots__ = ("category", "package", "version", "attr", "flags")
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, attr, flags):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.attr, self.flags = attr, tuple(flags)
-
-    @property
-    def short_desc(self):
-        return "attr(%s) uses unstated flags: [ %s ]" % \
-            (self.attr, ', '.join(self.flags))
-
-
 class MissingLicense(base.Error):
     """Used license(s) have no matching license file(s)."""
 
@@ -55,7 +38,7 @@ class MissingLicense(base.Error):
 class LicenseMetadataReport(base.Template):
     """LICENSE validity checks."""
 
-    known_results = (MetadataError, MissingLicense, UnstatedIUSE)
+    known_results = (MetadataError, MissingLicense, addons.UnstatedIUSE)
     feed_type = base.versioned_feed
 
     # categories for ebuilds that can lack LICENSE settings
@@ -69,8 +52,7 @@ class LicenseMetadataReport(base.Template):
 
     def feed(self, pkg):
         licenses, unstated = self.iuse_filter((str,), pkg, pkg.license)
-        if unstated:
-            yield UnstatedIUSE(pkg, 'license', sorted(unstated))
+        yield from unstated
 
         licenses = set(licenses)
         if not licenses:
@@ -87,7 +69,7 @@ class IUSEMetadataReport(base.Template):
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon,)
-    known_results = (MetadataError, UnstatedIUSE)
+    known_results = (MetadataError, addons.UnstatedIUSE)
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
@@ -195,7 +177,7 @@ class RequiredUSEMetadataReport(base.Template):
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon, addons.ProfileAddon)
-    known_results = (MetadataError, RequiredUseDefaults, UnstatedIUSE)
+    known_results = (MetadataError, RequiredUseDefaults, addons.UnstatedIUSE)
 
     def __init__(self, options, iuse_handler, profiles):
         super().__init__(options)
@@ -209,8 +191,7 @@ class RequiredUSEMetadataReport(base.Template):
 
         # check REQUIRED_USE for invalid nodes
         nodes, unstated = self.iuse_filter((str,), pkg, pkg.required_use)
-        if unstated:
-            yield UnstatedIUSE(pkg, 'required_use', sorted(unstated))
+        yield from unstated
 
         # check both stable/unstable profiles for stable KEYWORDS and only
         # unstable profiles for unstable KEYWORDS
@@ -318,7 +299,7 @@ class LocalUSECheck(base.Template):
     required_addons = (addons.UseAddon,)
     known_results = (
         UnusedLocalUSE, MatchingGlobalUSE, ProbableGlobalUSE,
-        ProbableUSE_EXPAND, UnstatedIUSE,
+        ProbableUSE_EXPAND, addons.UnstatedIUSE,
     )
 
     def __init__(self, options, use_handler):
@@ -507,7 +488,7 @@ class DependencyReport(base.Template):
     required_addons = (addons.UseAddon, addons.GitAddon)
     known_results = (
         MetadataError, MissingRevision, MissingUseDepDefault,
-        OutdatedBlocker, NonexistentBlocker, UnstatedIUSE,
+        OutdatedBlocker, NonexistentBlocker, addons.UnstatedIUSE,
     )
 
     feed_type = base.versioned_feed
@@ -556,8 +537,7 @@ class DependencyReport(base.Template):
 
             nodes, unstated = self.iuse_filter(
                 (atom_cls, OrRestriction), pkg, getter(pkg), attr=attr_name)
-            if unstated:
-                yield UnstatedIUSE(pkg, attr_name, sorted(unstated))
+            yield from unstated
 
             for atom, in_or_restriction in self._flatten_or_restrictions(nodes):
                 if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
@@ -869,7 +849,9 @@ class SrcUriReport(base.Template):
     required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
     known_results = (
-        BadFilename, BadProto, MissingUri, MetadataError, UnknownMirror, UnstatedIUSE)
+        BadFilename, BadProto, MissingUri, MetadataError,
+        UnknownMirror, addons.UnstatedIUSE,
+    )
 
     valid_protos = frozenset(["http", "https", "ftp"])
 
@@ -887,8 +869,7 @@ class SrcUriReport(base.Template):
             pkg._get_attr['fetchables'](
                 pkg, allow_missing_checksums=True,
                 ignore_unknown_mirrors=True, skip_default_mirrors=True))
-        if unstated:
-            yield UnstatedIUSE(pkg, 'fetchables', sorted(unstated))
+        yield from unstated
         for f_inst in fetchables:
             if f_inst.filename in seen:
                 continue
@@ -1009,7 +990,7 @@ class RestrictsReport(base.Template):
         "primaryuri", "splitdebug", "strip", "test", "userpriv",
     ))
 
-    known_results = (BadRestricts, UnstatedIUSE)
+    known_results = (BadRestricts, addons.UnstatedIUSE)
     required_addons = (addons.UseAddon,)
 
     __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \
@@ -1022,8 +1003,7 @@ class RestrictsReport(base.Template):
     def feed(self, pkg):
         # ignore conditionals
         restricts, unstated = self.iuse_filter((str,), pkg, pkg.restrict)
-        if unstated:
-            yield UnstatedIUSE(pkg, 'restrict', sorted(unstated))
+        yield from unstated
         bad = set(restricts).difference(self.known_restricts)
         if bad:
             deprecated = set(

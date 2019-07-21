@@ -781,6 +781,35 @@ class StableArchesAddon(base.Template):
         options.stable_arches = stable_arches
 
 
+class UnstatedIUSE(base.Error):
+    """Package is reliant on conditionals that aren't in IUSE."""
+
+    __slots__ = (
+        "category", "package", "version", "attr",
+        "profile", "flags", "num_profiles",
+    )
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, attr, profile, flags, num_profiles=None):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.attr = attr
+        self.profile = profile
+        self.flags = tuple(flags)
+        self.num_profiles = num_profiles
+
+    @property
+    def short_desc(self):
+        if self.num_profiles is not None:
+            num_profiles = f' ({self.num_profiles} total)'
+        else:
+            num_profiles = ''
+        return (
+            f"attr({self.attr}): profile {self.profile!r}{num_profiles}: "
+            f"unstated flag{_pl(self.flags)}: [ {', '.join(self.flags)} ]"
+        )
+
+
 class UseAddon(base.Addon):
 
     required_addons = (ProfileAddon,)
@@ -806,6 +835,7 @@ class UseAddon(base.Addon):
             ((packages.AlwaysTrue, known_iuse),),
             ((packages.AlwaysTrue, known_iuse_expand),),
         )
+        self.profiles = profiles
         self.global_iuse = frozenset(known_iuse)
         self.global_iuse_expand = frozenset(known_iuse_expand)
         self.unstated_iuse = frozenset(c_implicit_iuse)
@@ -845,8 +875,25 @@ class UseAddon(base.Addon):
                     unstated.update(filterfalse(stated.__contains__, node.vals))
                 yield node
 
+        # iterate through parsed nodes to force unstated IUSE resolution
         nodes = tuple(_nodes())
-        if attr is not None:
-            unstated.difference_update(self.unstated_iuse)
 
-        return nodes, unstated
+        # find profiles with unstated IUSE
+        profiles_unstated = defaultdict(set)
+        if attr is not None:
+            for p in self.profiles:
+                profile_unstated = unstated - p.iuse_effective
+                if profile_unstated:
+                    profiles_unstated[tuple(sorted(profile_unstated))].add(p.name)
+
+        def _profiles_unstated():
+            for unstated, profiles in profiles_unstated.items():
+                profiles = sorted(profiles)
+                if self.options.verbosity > 0:
+                    for p in profiles:
+                        yield UnstatedIUSE(pkg, attr, p, unstated)
+                else:
+                    num_profiles = len(profiles)
+                    yield UnstatedIUSE(pkg, attr, profiles[0], unstated, num_profiles)
+
+        return nodes, _profiles_unstated()
