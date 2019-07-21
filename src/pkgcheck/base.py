@@ -73,7 +73,6 @@ class Addon(object):
     """
 
     required_addons = ()
-    known_results = []
 
     def __init__(self, options, *args):
         """Initialize.
@@ -114,6 +113,7 @@ class Template(Addon):
     priority = 0
     # don't filter any feed items by default
     filter_type = no_filter
+    known_results = ()
 
     def start(self):
         """Do startup here."""
