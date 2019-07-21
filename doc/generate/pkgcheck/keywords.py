@@ -6,11 +6,7 @@
 Keywords
 ========
 
-List of result keywords that can be produced by pkgcheck separated by scope.
-
-Use \`pkgcheck --list-keywords\` to see the list. Note that running in verbose
-mode (e.g. \`pkgcheck --list-keywords -v\`) will colorize and sort the output
-into scopes.
+List of result keywords that can be produced by pkgcheck.
 """
 
 import sys

@@ -2,6 +2,18 @@
 #
 # Output rst doc for defined pkgcheck checks.
 
+"""
+Checks
+======
+
+List of checks that can be selected to run.
+
+By default, all checks that operate at the current scope or below will be run.
+In other words, if running inside a package directory in a repo, only checks
+that operate at a package or version scope will be run. On the other hand, when
+running against an entire repo, all defined checks will be run.
+"""
+
 from collections import defaultdict
 import sys
 from textwrap import dedent
@@ -26,8 +38,6 @@ def main(f=sys.stdout, **kwargs):
     d = defaultdict(set)
     for check in _known_checks:
         d[check.scope].add(check)
-
-    _rst_header('=', 'Checks', newline=False)
 
     scopes = ('version', 'package', 'category', 'repository')
     for scope in reversed(sorted(d)):
