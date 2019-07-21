@@ -105,13 +105,18 @@ class Addon(object):
 
 
 class Template(Addon):
-    """Base template for a check."""
+    """Base template for a check.
+
+    :cvar scope: scope relative to the package repository the check runs under
+    :cvar priority: priority level of the check which plugger sorts by --
+        should be left alone except for weird pseudo-checks like the cache
+        wiper that influence other checks
+    :cvar filter_type: filtering of feed items (by default there are no filters)
+    :cvar known_results: result keywords the check can possibly yield
+    """
 
     scope = version_scope
-    # The plugger sorts based on this. Should be left alone except for
-    # weird pseudo-checks like the cache wiper that influence other checks.
     priority = 0
-    # don't filter any feed items by default
     filter_type = no_filter
     known_results = ()
 
