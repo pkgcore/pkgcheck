@@ -505,6 +505,28 @@ class NonexistentProfilePath(base.Warning):
         return self.path
 
 
+class LaggingProfileEAPI(base.Warning):
+    """Profile has an EAPI that is older than one of its parents."""
+
+    __slots__ = ('profile', 'profile_eapi', 'parent', 'parent_eapi')
+
+    threshold = base.repository_feed
+
+    def __init__(self, profile, parent):
+        super().__init__()
+        self.profile = profile.name
+        self.profile_eapi = profile.eapi
+        self.parent = parent.name
+        self.parent_eapi = parent.eapi
+
+    @property
+    def short_desc(self):
+        return (
+            f'{self.profile!r} profile has EAPI {self.profile_eapi}, '
+            f'{self.parent!r} parent has EAPI {self.parent_eapi}'
+        )
+
+
 class UnknownCategories(base.Warning):
     """Category directories that aren't listed in a repo's categories.
 
@@ -732,7 +754,9 @@ class RepoProfilesReport(base.Template):
     scope = base.repository_scope
     known_results = (
         UnknownProfileArches, ArchesWithoutProfiles, UnusedProfileDirs,
-        NonexistentProfilePath, UnknownProfileStatus, UnknownCategories)
+        NonexistentProfilePath, UnknownProfileStatus, UnknownCategories,
+        LaggingProfileEAPI,
+    )
 
     def __init__(self, options, profile_filters):
         super().__init__(options)
@@ -769,11 +793,11 @@ class RepoProfilesReport(base.Template):
                 available_profile_dirs.add(d)
         available_profile_dirs -= self.non_profile_dirs | root_profile_dirs
 
-        def parents(path):
+        def dir_parents(path):
             """Yield all directory path parents excluding the root directory.
 
             Example:
-            >>> list(parents('/root/foo/bar/baz'))
+            >>> list(dir_parents('/root/foo/bar/baz'))
             ['root/foo/bar', 'root/foo', 'root']
             """
             path = os.path.normpath(path.strip('/'))
@@ -784,12 +808,24 @@ class RepoProfilesReport(base.Template):
 
         seen_profile_dirs = set()
         profile_status = set()
+        lagging_profile_eapi = defaultdict(list)
         for path, status in chain.from_iterable(self.profiles):
-            for x in ProfileStack(pjoin(self.profiles_dir, path)).stack:
-                seen_profile_dirs.update(parents(x.path[len(self.profiles_dir):]))
+            profile = ProfileStack(pjoin(self.profiles_dir, path))
+            for parent in profile.stack:
+                seen_profile_dirs.update(
+                    dir_parents(parent.path[len(self.profiles_dir):]))
+
+                # flag lagging profile EAPIs -- assumes EAPIs are sequentially
+                # numbered which should be the case for the gentoo repo
+                if (self.repo.repo_id == 'gentoo' and
+                        str(profile.eapi) < str(parent.eapi)):
+                    lagging_profile_eapi[profile].append(parent)
             if not os.path.exists(pjoin(self.profiles_dir, path)):
                 yield NonexistentProfilePath(path)
             profile_status.add(status)
+
+        for profile, parents in lagging_profile_eapi.items():
+            yield LaggingProfileEAPI(profile, parents[-1])
 
         unused_profile_dirs = available_profile_dirs - seen_profile_dirs
         if unused_profile_dirs:
