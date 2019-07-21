@@ -8,6 +8,7 @@ from portage.
 import argparse
 from functools import partial
 from itertools import chain
+from operator import attrgetter
 
 from pkgcore import const
 from pkgcore.plugin import get_plugins, get_plugin
@@ -138,11 +139,11 @@ for addon in all_addons:
 # XXX hack...
 _known_checks = tuple(sorted(
     unstable_unique(get_plugins('check', plugins)),
-    key=lambda x: x.__name__))
+    key=attrgetter('__name__')))
 _known_keywords = tuple(sorted(
     unstable_unique(chain.from_iterable(
     check.known_results for check in _known_checks)),
-    key=lambda x: x.__name__))
+    key=attrgetter('__name__')))
 
 
 @scan.bind_final_check
@@ -637,7 +638,7 @@ def display_keywords(out, options):
         for scope in reversed(sorted(d)):
             out.write(out.bold, f"{scopes[scope].capitalize()} scope:")
             out.write()
-            keywords = sorted(d[scope], key=lambda x: x.__name__)
+            keywords = sorted(d[scope], key=attrgetter('__name__'))
 
             try:
                 out.first_prefix.append('  ')
@@ -664,7 +665,7 @@ def display_checks(out, options):
             out.write(out.bold, f"{module_name}:")
             out.write()
             l = d[module_name]
-            l.sort(key=lambda x: x.__name__)
+            l.sort(key=attrgetter('__name__'))
 
             try:
                 out.first_prefix.append('  ')
@@ -677,7 +678,7 @@ def display_checks(out, options):
                     # output result types that each check can generate
                     if check.known_results:
                         results = []
-                        for r in sorted(check.known_results, key=lambda x: x.__name__):
+                        for r in sorted(check.known_results, key=attrgetter('__name__')):
                             results.extend([out.fg(r.color.__get__(r)), r.__name__, out.reset, ', '])
                         results.pop()
                         out.write(*(['  (known results: '] + results + [')']))
@@ -700,7 +701,7 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
             out.later_prefix.append('  ')
             try:
                 # sorting here is random
-                for reporter in sorted(config_reporters, key=lambda x: x.__name__):
+                for reporter in sorted(config_reporters, key=attrgetter('__name__')):
                     key = options.config.get_section_name(reporter)
                     if not key:
                         continue
@@ -719,7 +720,7 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
                 out.first_prefix.append('  ')
                 out.later_prefix.append('  ')
             try:
-                for reporter in sorted(plugin_reporters, key=lambda x: x.__name__):
+                for reporter in sorted(plugin_reporters, key=attrgetter('__name__')):
                     out.write(out.bold, out.fg('yellow'), reporter.__name__)
                     dump_docstring(out, reporter, prefix='  ')
                     out.write()
