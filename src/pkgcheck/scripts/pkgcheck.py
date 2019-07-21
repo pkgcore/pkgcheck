@@ -633,11 +633,6 @@ def display_keywords(out, options):
     if options.verbosity < 1:
         out.write('\n'.join(sorted(x.__name__ for s in d.values() for x in s)), wrap=False)
     else:
-        if not d:
-            out.write(out.fg('red'), "No Documentation")
-            out.write()
-            return
-
         scopes = tuple(x.desc for x in reversed(base.known_scopes.values()))
         for scope in reversed(sorted(d)):
             out.write(out.bold, f"{scopes[scope].capitalize()} scope:")
@@ -665,11 +660,6 @@ def display_checks(out, options):
     if options.verbosity < 1:
         out.write('\n'.join(sorted(x.__name__ for s in d.values() for x in s)), wrap=False)
     else:
-        if not d:
-            out.write(out.fg('red'), "No Documentation")
-            out.write()
-            return
-
         for module_name in sorted(d):
             out.write(out.bold, f"{module_name}:")
             out.write()
