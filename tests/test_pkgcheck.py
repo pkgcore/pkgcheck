@@ -2,11 +2,12 @@ from functools import partial
 from unittest.mock import patch
 
 from pkgcore import const
+from pkgcore.plugin import get_plugins
+from pkgcore.util.commandline import Tool
 from pytest import raises
 from snakeoil.osutils import pjoin
 
 from pkgcheck import base, plugins, __title__ as project
-from pkgcore.plugin import get_plugins
 from pkgcheck.scripts import run, pkgcheck
 
 
@@ -45,7 +46,17 @@ def test_script_run(capsys):
 class TestPkgcheckScan(object):
 
     script = partial(run, project)
+    tool = Tool(pkgcheck.argparser)
     fakerepo = pjoin(const.DATA_PATH, 'fakerepo')
+
+    def test_missing_default_repo(self, capsys, tmp_path):
+        self.tool.parser.set_defaults(override_config=str(tmp_path))
+        with raises(SystemExit) as excinfo:
+            options, _ = self.tool.parse_args([])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        err = err.strip().split('\n')
+        assert err[-1].startswith('pkgcheck scan: error: failed instantiating default repo')
 
     def test_unknown_repo(self, capsys):
         for opt in ('-r', '--repo'):
@@ -78,6 +89,26 @@ class TestPkgcheckScan(object):
                 out, err = capsys.readouterr()
                 err = err.strip().split('\n')
                 assert err[-1].startswith("pkgcheck scan: error: unknown scope: 'foo'")
+
+    def test_missing_scope(self, capsys):
+        for opt in ('-S', '--scopes'):
+            with patch('sys.argv', [project, 'scan', opt]):
+                with raises(SystemExit) as excinfo:
+                    self.script()
+                assert excinfo.value.code == 2
+                out, err = capsys.readouterr()
+                err = err.strip().split('\n')
+                assert err[0] == (
+                    'pkgcheck scan: error: argument -S/--scopes: expected one argument')
+
+    def test_empty_repo(self, capsys):
+        # no reports should be generated
+        with patch('sys.argv', [project, 'scan', self.fakerepo]):
+            with raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 0
+            out, err = capsys.readouterr()
+            assert out == err == ''
 
 
 class TestPkgcheckShow(object):
