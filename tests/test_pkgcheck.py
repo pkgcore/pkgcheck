@@ -123,3 +123,22 @@ class TestPkgcheckShow(object):
             out = out.strip().split('\n')
             assert len(out) == len(list(get_plugins('reporter', plugins)))
             assert excinfo.value.code == 0
+
+
+class TestPkgcheckReplay(object):
+
+    script = partial(run, project)
+
+    def test_missing_reporter_arg(self, capsys, tmp_path):
+        pickle_file = tmp_path / 'empty.pickle'
+        pickle_file.touch()
+        with patch('sys.argv', [project, 'replay', str(pickle_file)]):
+            with raises(SystemExit) as excinfo:
+                self.script()
+            out, err = capsys.readouterr()
+            assert not out
+            err = err.strip().split('\n')
+            assert len(err) == 1
+            assert err[0] == (
+                'pkgcheck replay: error: the following arguments are required: reporter')
+            assert excinfo.value.code == 2
