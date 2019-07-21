@@ -93,7 +93,7 @@ class TestPkgcheckShow(object):
             assert not err
             out = out.strip().split('\n')
             regular_output = out
-            assert len(out) == len(pkgcheck._known_keywords)
+            assert out == sorted(x.__name__ for x in pkgcheck._known_keywords)
             assert excinfo.value.code == 0
 
         # verbose mode
@@ -118,7 +118,7 @@ class TestPkgcheckShow(object):
             assert not err
             out = out.strip().split('\n')
             regular_output = out
-            assert len(out) == len(pkgcheck._known_checks)
+            assert out == sorted(x.__name__ for x in pkgcheck._known_checks)
             assert excinfo.value.code == 0
 
         # verbose mode
@@ -141,7 +141,7 @@ class TestPkgcheckShow(object):
             out, err = capsys.readouterr()
             assert not err
             out = out.strip().split('\n')
-            assert len(out) == len(base.known_scopes)
+            assert out == list(base.known_scopes)
             assert excinfo.value.code == 0
 
     def test_show_reporters(self, capsys):
@@ -153,7 +153,7 @@ class TestPkgcheckShow(object):
             assert not err
             out = out.strip().split('\n')
             regular_output = out
-            assert len(out) == len(list(get_plugins('reporter', plugins)))
+            assert out == sorted(x.__name__ for x in get_plugins('reporter', plugins))
             assert excinfo.value.code == 0
 
         # verbose mode
