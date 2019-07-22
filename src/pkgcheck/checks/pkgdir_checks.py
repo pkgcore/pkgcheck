@@ -199,7 +199,7 @@ class PkgDirReport(base.Template):
 
     feed_type = base.package_feed
 
-    ignore_dirs = set(["cvs", ".svn", ".bzr"])
+    ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
     known_results = (
         DuplicateFiles, EmptyFile, ExecutableFile, SizeViolation,
         Glep31Violation, InvalidUTF8, MismatchedPN, InvalidPN, EqualVersions,
@@ -260,31 +260,26 @@ class PkgDirReport(base.Template):
         for atom, versions in equal_versions.items():
             yield EqualVersions(atom, versions)
 
-        if not os.path.exists(pjoin(base_path, 'files')):
-            return
-        unprocessed_dirs = deque(["files"])
         files_by_size = defaultdict(list)
-        while unprocessed_dirs:
-            cwd = unprocessed_dirs.pop()
-            for fn in listdir(pjoin(base_path, cwd)):
-                afn = pjoin(base_path, cwd, fn)
-                st = os.lstat(afn)
-
-                if stat.S_ISDIR(st.st_mode):
-                    if fn not in self.ignore_dirs:
-                        unprocessed_dirs.append(pjoin(cwd, fn))
-                elif stat.S_ISREG(st.st_mode):
-                    if st.st_mode & 0o111:
-                        yield ExecutableFile(pkg, pjoin(cwd, fn))
-                    if not fn.startswith("digest-"):
-                        if st.st_size == 0:
-                            yield EmptyFile(pkg, pjoin(cwd, fn))
-                        else:
-                            files_by_size[st.st_size].append(pjoin(cwd, fn))
-                            if st.st_size > 20480:
-                                yield SizeViolation(pkg, pjoin(cwd, fn), st.st_size)
-                        if any(True for x in fn if x not in allowed_filename_chars_set):
-                            yield Glep31Violation(pkg, pjoin(cwd, fn))
+        base_path_len = len(base_path) + 1
+        for root, dirs, files in os.walk(pjoin(base_path, 'files')):
+            # don't visit any ignored directories
+            for d in self.ignore_dirs.intersection(dirs):
+                dirs.remove(d)
+            base_dir = root[base_path_len:]
+            for file_name in files:
+                file_stat = os.lstat(pjoin(root, file_name))
+                if stat.S_ISREG(file_stat.st_mode):
+                    if file_stat.st_mode & 0o111:
+                        yield ExecutableFile(pkg, pjoin(base_dir, file_name))
+                    if file_stat.st_size == 0:
+                        yield EmptyFile(pkg, pjoin(base_dir, file_name))
+                    else:
+                        files_by_size[file_stat.st_size].append(pjoin(base_dir, file_name))
+                        if file_stat.st_size > 20480:
+                            yield SizeViolation(pkg, pjoin(base_dir, file_name), file_stat.st_size)
+                    if any(True for char in file_name if char not in allowed_filename_chars_set):
+                        yield Glep31Violation(pkg, pjoin(base_dir, file_name))
 
         files_by_digest = defaultdict(list)
         for size, files in files_by_size.items():
