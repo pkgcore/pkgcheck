@@ -1,5 +1,5 @@
 import codecs
-from collections import defaultdict, deque
+from collections import defaultdict
 import os
 import stat
 
