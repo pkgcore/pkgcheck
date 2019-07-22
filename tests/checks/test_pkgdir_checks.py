@@ -45,17 +45,16 @@ class TestPkgDirReport(PkgDirReportBase):
 class TestDuplicateFiles(PkgDirReportBase):
     """Check DuplicateFiles results."""
 
-    def test_it(self):
-        # filesdir with two unique files
+    def test_unique_files(self):
         self.assertNoReport(self.check, [self.mk_pkg({'test': 'abc', 'test2': 'bcd'})])
 
-        # filesdir with a duplicate
+    def test_single_duplicate(self):
         r = self.assertReport(self.check, [self.mk_pkg({'test': 'abc', 'test2': 'abc'})])
         assert isinstance(r, pkgdir_checks.DuplicateFiles)
         assert r.files == ('files/test', 'files/test2')
         assert "'files/test', 'files/test2'" in str(r)
 
-        # two sets of duplicates and one unique
+    def test_multiple_duplicates(self):
         r = self.assertReports(self.check, [self.mk_pkg(
             {'test': 'abc', 'test2': 'abc', 'test3': 'bcd', 'test4': 'bcd', 'test5': 'zzz'})])
         assert len(r) == 2
@@ -70,16 +69,22 @@ class TestDuplicateFiles(PkgDirReportBase):
 class TestEmptyFile(PkgDirReportBase):
     """Check EmptyFile results."""
 
-    def test_it(self):
-        # filesdir with an empty file
+    def test_nonempty_file(self):
+        self.assertNoReport(self.check, [self.mk_pkg({'test': 'asdfgh'})])
+
+    def test_single_empty_file(self):
         assert isinstance(
             self.assertReport(self.check, [self.mk_pkg({'test': ''})]),
             pkgdir_checks.EmptyFile)
 
-        # filesdir with a non-empty file
-        self.assertNoReport(self.check, [self.mk_pkg({'test': 'asdfgh'})])
+    def test_multiple_empty_files(self):
+        r = self.assertReports(self.check, [self.mk_pkg({'test': '', 'test2': ''})])
+        assert len(r) == 2
+        assert isinstance(r[0], pkgdir_checks.EmptyFile)
+        assert isinstance(r[1], pkgdir_checks.EmptyFile)
+        assert sorted(x.filename for x in r) == ['files/test', 'files/test2']
 
-        # a mix of both
+    def test_mixture_of_files(self):
         r = self.assertReport(self.check, [self.mk_pkg({'test': 'asdfgh', 'test2': ''})])
         assert isinstance(r, pkgdir_checks.EmptyFile)
         assert r.filename == 'files/test2'
@@ -89,26 +94,18 @@ class TestEmptyFile(PkgDirReportBase):
         assert r.filename == 'files/test'
         assert 'files/test' in str(r)
 
-        # two empty files
-        r = self.assertReports(self.check, [self.mk_pkg({'test': '', 'test2': ''})])
-        assert len(r) == 2
-        assert isinstance(r[0], pkgdir_checks.EmptyFile)
-        assert isinstance(r[1], pkgdir_checks.EmptyFile)
-        assert sorted(x.filename for x in r) == ['files/test', 'files/test2']
-
 
 class TestMismatchedPN(PkgDirReportBase):
     """Check MismatchedPN results."""
 
-    def test_it(self):
-        # multiple regular ebuilds
+    def test_multiple_regular_ebuilds(self):
         pkg = self.mk_pkg()
         touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-0.ebuild'))
         touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-1.ebuild'))
         touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-2.ebuild'))
         self.assertNoReport(self.check, [pkg])
 
-        # single, mismatched ebuild
+    def test_single_mismatched_ebuild(self):
         pkg = self.mk_pkg()
         touch(pjoin(os.path.dirname(pkg.path), 'mismatched-0.ebuild'))
         r = self.assertReport(self.check, [pkg])
@@ -116,7 +113,7 @@ class TestMismatchedPN(PkgDirReportBase):
         assert r.ebuilds == ('mismatched-0',)
         assert 'mismatched-0' in str(r)
 
-        # multiple ebuilds, multiple mismatched
+    def test_multiple_mismatched_ebuilds(self):
         pkg = self.mk_pkg()
         touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-0.ebuild'))
         touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-1.ebuild'))
@@ -131,13 +128,12 @@ class TestMismatchedPN(PkgDirReportBase):
 class TestInvalidPN(PkgDirReportBase):
     """Check InvalidPN results."""
 
-    def test_it(self):
-        # regular ebuild
+    def test_regular_ebuild(self):
         pkg = self.mk_pkg()
         touch(pjoin(os.path.dirname(pkg.path), f'{pkg.package}-0.ebuild'))
         self.assertNoReport(self.check, [pkg])
 
-        # single, invalid ebuild
+    def test_single_invalid_ebuild(self):
         pkg = self.mk_pkg(category='sys-apps', package='invalid')
         touch(pjoin(os.path.dirname(pkg.path), 'invalid-0-foo.ebuild'))
         r = self.assertReport(self.check, [pkg])
@@ -145,7 +141,7 @@ class TestInvalidPN(PkgDirReportBase):
         assert r.ebuilds == ('invalid-0-foo',)
         assert 'invalid-0-foo' in str(r)
 
-        # multiple ebuilds, multiple invalid
+    def test_multiple_invalid_ebuilds(self):
         pkg = self.mk_pkg(category='sys-apps', package='bar')
         touch(pjoin(os.path.dirname(pkg.path), 'bar-0.ebuild'))
         touch(pjoin(os.path.dirname(pkg.path), 'bar-1.ebuild'))
@@ -205,8 +201,7 @@ class TestEqualVersions(PkgDirReportBase):
 class TestSizeViolation(PkgDirReportBase):
     """Check SizeViolation results."""
 
-    def test_it(self):
-        # files under the 20k limit
+    def test_files_under_20k_size_limit(self):
         pkg = self.mk_pkg()
         for name, size in (('small', 1024*10),
                            ('limit', 1024*20-1)):
@@ -215,7 +210,7 @@ class TestSizeViolation(PkgDirReportBase):
                 f.write('\0')
         self.assertNoReport(self.check, [pkg])
 
-        # single file one byte over the 20k limit
+    def test_single_file_over_limit(self):
         pkg = self.mk_pkg()
         with open(pjoin(self.filesdir, 'over'), 'w') as f:
             f.seek(1024*20)
@@ -226,7 +221,7 @@ class TestSizeViolation(PkgDirReportBase):
         assert r.size == 1024*20+1
         assert 'files/over' in str(r)
 
-        # mix of files
+    def test_multiple_files_over_limit(self):
         pkg = self.mk_pkg()
         for name, size in (('small', 1024*10),
                            ('limit', 1024*20-1),
@@ -248,11 +243,10 @@ class TestSizeViolation(PkgDirReportBase):
 class TestExecutableFile(PkgDirReportBase):
     """Check ExecutableFile results."""
 
-    def test_it(self):
-        # non-empty filesdir
+    def test_non_empty_filesdir(self):
         self.assertNoReport(self.check, [self.mk_pkg({'test': 'asdfgh'})])
 
-        # executable ebuild
+    def test_executable_ebuild(self):
         pkg = self.mk_pkg()
         touch(pkg.path, mode=0o777)
         r = self.assertReport(self.check, [pkg])
@@ -260,7 +254,7 @@ class TestExecutableFile(PkgDirReportBase):
         assert r.filename == os.path.basename(pkg.path)
         assert os.path.basename(pkg.path) in str(r)
 
-        # executable Manifest and metadata
+    def test_executable_manifest_and_metadata(self):
         pkg = self.mk_pkg()
         touch(pjoin(os.path.dirname(pkg.path), 'Manifest'), mode=0o755)
         touch(pjoin(os.path.dirname(pkg.path), 'metadata.xml'), mode=0o744)
@@ -273,7 +267,7 @@ class TestExecutableFile(PkgDirReportBase):
             ('Manifest', 'metadata.xml')
         )
 
-        # mix of regular files and executable FILESDIR file
+    def test_executable_filesdir_file(self):
         pkg = self.mk_pkg({'foo.init': 'blah'})
         touch(pkg.path)
         touch(pjoin(os.path.dirname(pkg.path), 'Manifest'))
