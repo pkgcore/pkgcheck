@@ -252,14 +252,14 @@ class GitChangesRepo(_ParseGitRepo):
 class GitAddedRepo(_ParseGitRepo):
     """Parse repository git logs to determine ebuild added dates."""
 
-    cache_suffix = '-added'
+    cache_name = 'git-added'
     _git_cmd = 'git log --diff-filter=AR --name-status --date=short --reverse'
 
 
 class GitRemovalRepo(_ParseGitRepo):
     """Parse repository git logs to determine ebuild removal dates."""
 
-    cache_suffix = '-removal'
+    cache_name = 'git-removal'
     _git_cmd = 'git log --diff-filter=D --name-status --date=short --reverse'
 
 
@@ -314,14 +314,6 @@ class GitAddon(base.Addon):
             target_repo = self.options.target_repo
 
         if not self.options.git_disable:
-            # initialize repos cache dir
-            cache_dir = pjoin(base.CACHE_DIR, 'repos')
-            try:
-                os.makedirs(cache_dir, exist_ok=True)
-            except IOError as e:
-                raise UserException(
-                    f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
-
             git_repos = []
             for repo in target_repo.trees:
                 ret, out = spawn_get_output(
@@ -331,10 +323,15 @@ class GitAddon(base.Addon):
                 else:
                     commit = out[0].strip()
 
-                    # handle duplicate repo IDs that are repo paths
-                    cache_file = repo.repo_id.lstrip(os.sep).replace(os.sep, '-')
-                    cache_file = pjoin(
-                        cache_dir, f'{cache_file}{repo_cls.cache_suffix}.pickle')
+                    # initialize cache file location
+                    cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id)
+                    cache_file = pjoin(cache_dir, f'{repo_cls.cache_name}.pickle')
+                    try:
+                        os.makedirs(cache_dir, exist_ok=True)
+                    except IOError as e:
+                        raise UserException(
+                            f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
+
                     git_repo = None
                     cache_repo = True
                     if not self.options.git_cache:
@@ -485,19 +482,18 @@ class ProfileAddon(base.Addon):
 
         profile_paths = enabled.difference(disabled)
 
+        # initialize cache file location
+        cache_dir = pjoin(base.CACHE_DIR, 'repos', namespace.target_repo.repo_id)
+        namespace.cache_file = pjoin(cache_dir, 'profiles.pickle')
+        try:
+            os.makedirs(cache_dir, exist_ok=True)
+        except IOError as e:
+            raise UserException(
+                f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
+
         # only default to using cache when run without target args within a repo
         if namespace.profile_cache is None and namespace.default_target is None:
             namespace.profile_cache = False
-
-        # initialize cache dir
-        namespace.cache_file = pjoin(base.CACHE_DIR, 'profiles.pickle')
-        if ((namespace.profile_cache is None or namespace.profile_cache) and
-                not os.path.exists(base.CACHE_DIR)):
-            try:
-                os.makedirs(base.CACHE_DIR)
-            except IOError as e:
-                raise UserException(
-                    f'failed creating profiles cache: {base.CACHE_DIR!r}: {e.strerror}')
         namespace.forced_cache = bool(namespace.profile_cache)
 
         # We hold onto the profiles as we're going, due to the fact that
@@ -666,7 +662,7 @@ class ProfileAddon(base.Addon):
                 with open(options.cache_file, 'wb+') as f:
                     pickle.dump(cached_profile_filters, f)
             except IOError as e:
-                msg = f'failed dumping profiles cache: {cache_file!r}: {e.strerror}'
+                msg = f'failed dumping profiles cache: {options.cache_file!r}: {e.strerror}'
                 if not options.forced_cache:
                     logger.warn(msg)
                 else:
