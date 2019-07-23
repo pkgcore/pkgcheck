@@ -107,6 +107,7 @@ class DeprecatedEclassReport(base.Template):
         'ruby-gnome2': 'ruby-ng-gnome2',
         'tla': None,
         'ltprune': None,
+        'user': 'GLEP 81',
         'vim': None,
         'webapp-apache': None,
         'x-modular': 'xorg-2',
