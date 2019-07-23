@@ -403,7 +403,8 @@ def _validate_args(parser, namespace):
     namespace.addons = set()
 
     for check in namespace.enabled_checks:
-        add_addon(check, namespace.addons)
+        if not check.skip(namespace):
+            add_addon(check, namespace.addons)
     try:
         for addon in namespace.addons:
             addon.check_args(parser, namespace)

@@ -120,6 +120,11 @@ class Template(Addon):
     filter_type = no_filter
     known_results = ()
 
+    @classmethod
+    def skip(cls, namespace):
+        """Conditionally skip check when running all enabled checks."""
+        return False
+
     def start(self):
         """Do startup here."""
 
