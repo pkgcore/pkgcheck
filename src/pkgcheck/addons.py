@@ -519,7 +519,10 @@ class ProfileAddon(base.Addon):
                 continue
             cached_profiles.append(p)
             if p.arch is None:
-                parser.error(f"profile {p.path!r} lacks arch settings, unable to use it")
+                logger.warn(
+                    f"profile: {namespace.target_repo.repo_id}:{p.name}: "
+                    "lacks arch settings, skipping")
+                continue
             arch_profiles[p.arch].append((profile_path, p,
                 profile_status_map.get(profile_path)))
 
