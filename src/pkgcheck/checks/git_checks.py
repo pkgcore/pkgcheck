@@ -75,7 +75,7 @@ class DirectNoMaintainer(base.Error):
         return 'directly committed with no package maintainer'
 
 
-class GitCommitsCheck(base.Template):
+class GitCommitsCheck(base.DefaultRepoCheck):
     """Check unpushed git commits for various issues."""
 
     feed_type = base.package_feed
@@ -95,41 +95,40 @@ class GitCommitsCheck(base.Template):
         outdated_copyrights = set()
 
         for git_pkg in pkgset:
-            if self.options.target_repo.repo_id == 'gentoo':
-                try:
-                    pkg = self.options.target_repo.match(git_pkg.versioned_atom)[0]
-                except IndexError:
-                    # weird situation where an ebuild was locally committed and then removed
-                    return
+            try:
+                pkg = self.options.target_repo.match(git_pkg.versioned_atom)[0]
+            except IndexError:
+                # weird situation where an ebuild was locally committed and then removed
+                return
 
-                # check copyright on new/modified ebuilds
-                try:
-                    line = next(pkg.ebuild.text_fileobj())
-                except StopIteration:
-                    # empty ebuild, should be caught by other checks
-                    return
-                copyright = ebuild_copyright_regex.match(line)
-                if copyright:
-                    year = copyright.group(1).split('-')[-1]
-                    if int(year) < self.today.year:
-                        outdated_copyrights.add((pkg, year, line))
-                else:
-                    invalid_copyrights.add((pkg, line))
+            # check copyright on new/modified ebuilds
+            try:
+                line = next(pkg.ebuild.text_fileobj())
+            except StopIteration:
+                # empty ebuild, should be caught by other checks
+                return
+            copyright = ebuild_copyright_regex.match(line)
+            if copyright:
+                year = copyright.group(1).split('-')[-1]
+                if int(year) < self.today.year:
+                    outdated_copyrights.add((pkg, year, line))
+            else:
+                invalid_copyrights.add((pkg, line))
 
-                # checks for newly added ebuilds
-                if git_pkg.status == 'A':
-                    # check for stable keywords
-                    stable_keywords = sorted(x for x in pkg.keywords if x[0] not in '~-')
-                    if stable_keywords:
-                        yield DirectStableKeywords(pkg, stable_keywords)
+            # checks for newly added ebuilds
+            if git_pkg.status == 'A':
+                # check for stable keywords
+                stable_keywords = sorted(x for x in pkg.keywords if x[0] not in '~-')
+                if stable_keywords:
+                    yield DirectStableKeywords(pkg, stable_keywords)
 
-                    # pkg was just added to the tree
-                    added_pkgs = self.added_repo.match(git_pkg.unversioned_atom)
-                    newly_added = all(x.date == added_pkgs[0].date for x in added_pkgs)
+                # pkg was just added to the tree
+                added_pkgs = self.added_repo.match(git_pkg.unversioned_atom)
+                newly_added = all(x.date == added_pkgs[0].date for x in added_pkgs)
 
-                    # check for no maintainers
-                    if newly_added and not pkg.maintainers:
-                        yield DirectNoMaintainer(pkg)
+                # check for no maintainers
+                if newly_added and not pkg.maintainers:
+                    yield DirectNoMaintainer(pkg)
 
         for pkg, line in invalid_copyrights:
             yield InvalidCopyright(pkg, line.strip('\n'))

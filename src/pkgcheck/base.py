@@ -24,6 +24,7 @@ from snakeoil.osutils import pjoin
 demandload(
     'itertools:chain',
     're',
+    'pkgcore.log:logger',
 )
 
 # source feed types
@@ -133,6 +134,17 @@ class Template(Addon):
 
     def finish(self):
         """Do cleanup and omit final results here."""
+
+
+class DefaultRepoCheck(Template):
+    """Check that is only valid when run against the default repo."""
+
+    _default_repo = 'gentoo'
+
+    @classmethod
+    def skip(cls, namespace):
+        logger.info(f'skipping {cls.__name__}, not running against default repo')
+        return namespace.target_repo.repo_id != cls._default_repo
 
 
 class GenericSource(object):
