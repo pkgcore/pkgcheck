@@ -699,6 +699,7 @@ class ProfilesCheck(base.Template):
             'use.stable.force': ('use_stable_force', _use),
             'use.mask': ('use_mask', _use),
             'use.stable.mask': ('use_stable_mask', _use),
+            'parent': ('parents', lambda *args: None),
         }
 
         profile_reports = []
