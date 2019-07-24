@@ -4,8 +4,8 @@
 from .. import feeds, reporters
 from ..checks import (
     cleanup, codingstyle, deprecated, dropped_keywords, git_checks, glsa,
-    imlate, metadata_checks, metadata_xml, pkgdir_checks, repo_metadata,
-    stablereq, unstable_only, visibility, whitespace,
+    imlate, metadata_checks, metadata_xml, pkgdir_checks, profile_checks,
+    repo_metadata, stablereq, unstable_only, visibility, whitespace,
 )
 
 pkgcore_plugins = {
@@ -35,13 +35,13 @@ pkgcore_plugins = {
         metadata_xml.CategoryMetadataXmlCheck,
         metadata_xml.PackageMetadataXmlCheck,
         pkgdir_checks.PkgDirReport,
+        profile_checks.ProfilesCheck,
+        profile_checks.RepoProfilesReport,
         repo_metadata.GlobalUSECheck,
         repo_metadata.LicenseGroupsCheck,
         repo_metadata.ManifestConflictCheck,
         repo_metadata.ManifestReport,
         repo_metadata.PackageUpdatesCheck,
-        repo_metadata.ProfilesCheck,
-        repo_metadata.RepoProfilesReport,
         repo_metadata.UnusedEclassesCheck,
         repo_metadata.UnusedLicensesCheck,
         repo_metadata.UnusedMirrorsCheck,
