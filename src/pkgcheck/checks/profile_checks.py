@@ -90,6 +90,26 @@ class UnknownProfileUse(base.Warning):
             self.path, _pl(self.flags), ', '.join(map(repr, self.flags)))
 
 
+class UnknownProfilePackageKeywords(base.Warning):
+    """Profile files include package keywords that don't exist."""
+
+    __slots__ = ("path", "package", "keywords")
+
+    threshold = base.repository_feed
+
+    def __init__(self, path, package, keywords):
+        super().__init__()
+        self.path = path
+        self.package = str(package)
+        self.keywords = tuple(keywords)
+
+    @property
+    def short_desc(self):
+        return "%r: unknown package keyword%s: %s: [ %s ]" % (
+            self.path, _pl(self.keywords), self.package,
+            ', '.join(map(repr, self.keywords)))
+
+
 class ProfileWarning(base.LogWarning):
     """Badly formatted data in various profile files."""
 
@@ -114,7 +134,7 @@ class ProfilesCheck(base.Template):
     scope = base.repository_scope
     known_results = (
         UnknownProfilePackages, UnknownProfilePackageUse, UnknownProfileUse,
-        BadProfileEntry, ProfileWarning, ProfileError,
+        UnknownProfilePackageKeywords, BadProfileEntry, ProfileWarning, ProfileError,
     )
 
     def __init__(self, options, iuse_handler):
@@ -128,6 +148,14 @@ class ProfilesCheck(base.Template):
             local_iuse | iuse_handler.global_iuse |
             iuse_handler.global_iuse_expand | iuse_handler.unstated_iuse)
 
+        # TODO: move this and the same support in metadata_checks.KeywordsReport to a shared addon
+        special_keywords = {'-*'}
+        stable_keywords = self.options.target_repo.known_arches
+        unstable_keywords = {'~' + x for x in stable_keywords}
+        disabled_keywords = {'-' + x for x in chain(stable_keywords, unstable_keywords)}
+        self.valid_keywords = (
+            special_keywords | stable_keywords | unstable_keywords | disabled_keywords)
+
     def feed(self, pkg):
         pass
 
@@ -135,11 +163,18 @@ class ProfilesCheck(base.Template):
         unknown_pkgs = defaultdict(lambda: defaultdict(list))
         unknown_pkg_use = defaultdict(lambda: defaultdict(list))
         unknown_use = defaultdict(lambda: defaultdict(list))
+        unknown_keywords = defaultdict(lambda: defaultdict(list))
 
         def _pkg_atoms(filename, vals):
             for a in iflatten_instance(vals, atom.atom):
                 if not self.repo.match(a):
                     unknown_pkgs[profile.path][filename].append(a)
+
+        def _pkg_keywords(filename, vals):
+            for atom, keywords in vals:
+                invalid = set(keywords) - self.valid_keywords
+                if invalid:
+                    unknown_keywords[profile.path][filename].append((atom, invalid))
 
         def _pkg_use(filename, vals):
             # TODO: give ChunkedDataDict some dict view methods
@@ -198,6 +233,10 @@ class ProfilesCheck(base.Template):
             'use.stable.mask': ('use_stable_mask', _use),
             'parent': ('parents', lambda *args: None),
             'deprecated': ('deprecated', _deprecated),
+
+            # non-PMS files
+            'package.keywords': ('keywords', _pkg_keywords),
+            'package.accept_keywords': ('accept_keywords', _pkg_keywords),
         }
 
         profile_reports = []
@@ -239,6 +278,13 @@ class ProfilesCheck(base.Template):
                 yield UnknownProfileUse(
                     pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
                     vals)
+
+        for path, filenames in sorted(unknown_keywords.items()):
+            for filename, vals in filenames.items():
+                for pkg, keywords in vals:
+                    yield UnknownProfilePackageKeywords(
+                        pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
+                        pkg, keywords)
 
 
 class UnusedProfileDirs(base.Warning):
