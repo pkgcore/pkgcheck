@@ -161,7 +161,7 @@ class _ParseGitRepo(object):
     _git_cmd = None
 
     def __init__(self, repo, commit=None):
-        self.path = repo.location
+        self.location = repo.location
         if commit is None:
             self.commit = 'origin/HEAD..master'
             self.pkg_map = self._process_git_repo(commit=self.commit)
@@ -213,7 +213,7 @@ class _ParseGitRepo(object):
                 cmd.append(f'{commit}..origin/HEAD')
         else:
             cmd.append('origin/HEAD')
-        git_log = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=self.path)
+        git_log = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=self.location)
 
         line = git_log.stdout.readline().strip().decode()
         while line:
@@ -342,7 +342,8 @@ class GitAddon(base.Addon):
                         except (EOFError, FileNotFoundError, AttributeError) as e:
                             pass
 
-                    if git_repo is not None:
+                    if (git_repo is not None and
+                            repo.location == getattr(git_repo, 'location', None)):
                         if commit != git_repo.commit:
                             git_repo.update(commit)
                         else:
