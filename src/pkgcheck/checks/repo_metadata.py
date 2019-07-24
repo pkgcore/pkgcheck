@@ -5,6 +5,7 @@ from operator import attrgetter, itemgetter
 
 from snakeoil import mappings
 from snakeoil.demandload import demandload
+from snakeoil.log import suppress_logging
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, addons
@@ -813,16 +814,18 @@ class RepoProfilesReport(base.Template):
         profile_status = set()
         lagging_profile_eapi = defaultdict(list)
         for path, status in chain.from_iterable(self.profiles):
-            profile = profiles_mod.ProfileStack(pjoin(self.profiles_dir, path))
-            for parent in profile.stack:
-                seen_profile_dirs.update(
-                    dir_parents(parent.path[len(self.profiles_dir):]))
+            # suppress profile warning/error logs that should be caught by ProfilesCheck
+            with suppress_logging():
+                profile = profiles_mod.ProfileStack(pjoin(self.profiles_dir, path))
+                for parent in profile.stack:
+                    seen_profile_dirs.update(
+                        dir_parents(parent.path[len(self.profiles_dir):]))
 
-                # flag lagging profile EAPIs -- assumes EAPIs are sequentially
-                # numbered which should be the case for the gentoo repo
-                if (self.repo.repo_id == 'gentoo' and
-                        str(profile.eapi) < str(parent.eapi)):
-                    lagging_profile_eapi[profile].append(parent)
+                    # flag lagging profile EAPIs -- assumes EAPIs are sequentially
+                    # numbered which should be the case for the gentoo repo
+                    if (self.repo.repo_id == 'gentoo' and
+                            str(profile.eapi) < str(parent.eapi)):
+                        lagging_profile_eapi[profile].append(parent)
             if not os.path.exists(pjoin(self.profiles_dir, path)):
                 yield NonexistentProfilePath(path)
             profile_status.add(status)
