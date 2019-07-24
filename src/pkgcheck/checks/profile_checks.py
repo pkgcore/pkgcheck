@@ -177,6 +177,12 @@ class ProfilesCheck(base.Template):
                         unknown_use[profile.path][filename].extend(
                             unknown_enabled)
 
+        def _deprecated(filename, vals):
+            # make sure replacement profile exists
+            if vals is not None:
+                replacement, msg = vals
+                _ProfileNode(pjoin(self.profiles_dir, replacement))
+
         file_parse_map = {
             'packages': ('packages', _pkg_atoms),
             'package.mask': ('masks', _pkg_atoms),
@@ -191,6 +197,7 @@ class ProfilesCheck(base.Template):
             'use.mask': ('use_mask', _use),
             'use.stable.mask': ('use_stable_mask', _use),
             'parent': ('parents', lambda *args: None),
+            'deprecated': ('deprecated', _deprecated),
         }
 
         profile_reports = []
@@ -202,17 +209,15 @@ class ProfilesCheck(base.Template):
                 profile = _ProfileNode(root)
                 for f in set(files).intersection(file_parse_map.keys()):
                     attr, func = file_parse_map[f]
+                    file_path = pjoin(root[len(self.profiles_dir) + 1:], f)
                     try:
                         # convert log warnings/errors into reports
                         with patch('pkgcore.log.logger.error', report_profile_errors), \
                                 patch('pkgcore.log.logger.warning', report_profile_warnings):
                             vals = getattr(profile, attr)
+                        func(f, vals)
                     except profiles_mod.ProfileError as e:
-                        yield BadProfileEntry(
-                            pjoin(root[len(self.profiles_dir):].lstrip('/'), e.filename),
-                            e.error)
-                        continue
-                    func(f, vals)
+                        yield BadProfileEntry(file_path, str(e))
 
         yield from profile_reports
 
