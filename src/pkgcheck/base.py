@@ -282,6 +282,24 @@ class Warning(Result):
     _level = 30
 
 
+class LogError(Error):
+    """Error caught from a logger instance."""
+
+    __slots__ = ("msg",)
+
+    def __init__(self, msg):
+        super().__init__()
+        self.msg = msg
+
+    @property
+    def short_desc(self):
+        return self.msg
+
+
+class LogWarning(Warning, LogError):
+    """Warning caught from a logger instance."""
+
+
 class MetadataError(Error):
     """Problem detected with a package's metadata."""
 

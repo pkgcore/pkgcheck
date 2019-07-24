@@ -76,36 +76,16 @@ class OldPackageUpdate(base.Warning):
         return f"{self.pkg!r} unavailable: old update line: {' '.join(self.updates)!r}"
 
 
-class MovedPackageUpdate(base.Warning):
+class MovedPackageUpdate(base.LogWarning):
     """Entry for package already moved in profiles/updates files."""
 
-    __slots__ = ("error",)
-
     threshold = base.repository_feed
 
-    def __init__(self, error):
-        super().__init__()
-        self.error = error
 
-    @property
-    def short_desc(self):
-        return self.error
-
-
-class BadPackageUpdate(base.Error):
+class BadPackageUpdate(base.LogError):
     """Badly formatted package update in profiles/updates files."""
 
-    __slots__ = ("error",)
-
     threshold = base.repository_feed
-
-    def __init__(self, error):
-        super().__init__()
-        self.error = error
-
-    @property
-    def short_desc(self):
-        return self.error
 
 
 class PackageUpdatesCheck(base.Template):
