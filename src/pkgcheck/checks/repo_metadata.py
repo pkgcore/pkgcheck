@@ -599,6 +599,10 @@ class UnknownProfileUse(base.Warning):
             self.path, _pl(self.flags), ', '.join(map(repr, self.flags)))
 
 
+class _ProfileNode(profiles_mod.ProfileNode):
+    """Re-inherited to disable instance caching."""
+
+
 class ProfilesCheck(base.Template):
     """Scan repo profiles for unknown flags/packages."""
 
@@ -687,7 +691,7 @@ class ProfilesCheck(base.Template):
 
         for root, _dirs, files in os.walk(self.profiles_dir):
             if root not in self.non_profile_dirs:
-                profile = ProfileNode(root)
+                profile = _ProfileNode(root)
                 for f in set(files).intersection(file_parse_map.keys()):
                     attr, func = file_parse_map[f]
                     # catch badly formatted entries
