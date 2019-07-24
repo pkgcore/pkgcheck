@@ -622,7 +622,7 @@ class UnknownProfileUse(base.Warning):
 class ProfilesCheck(base.Template):
     """Scan repo profiles for unknown flags/packages."""
 
-    required_addons = (addons.ProfileAddon, addons.UseAddon)
+    required_addons = (addons.UseAddon,)
     feed_type = base.repository_feed
     scope = base.repository_scope
     known_results = (
@@ -630,12 +630,12 @@ class ProfilesCheck(base.Template):
         UnknownProfilePackageUse, UnknownProfileUse,
     )
 
-    def __init__(self, options, profile_filters, iuse_handler):
+    def __init__(self, options, iuse_handler):
         super().__init__(options)
         self.repo = options.target_repo
         self.profiles_dir = pjoin(self.repo.location, 'profiles')
         self.non_profile_dirs = {
-            pjoin(self.profiles_dir, x) for x in profile_filters.non_profile_dirs}
+            pjoin(self.profiles_dir, x) for x in addons.ProfileAddon.non_profile_dirs}
         local_iuse = {use for pkg, (use, desc) in self.repo.config.use_local_desc}
         self.available_iuse = frozenset(
             local_iuse | iuse_handler.global_iuse |

@@ -391,6 +391,10 @@ class ProfileAddon(base.Addon):
 
     required_addons = (ArchesAddon,)
 
+    # non-profile dirs found in the profiles directory, generally only in
+    # the gentoo repo, but could be in overlays as well
+    non_profile_dirs = frozenset(['desc', 'updates'])
+
     @staticmethod
     def mangle_argparser(parser):
         group = parser.add_argument_group('profiles')
@@ -531,10 +535,6 @@ class ProfileAddon(base.Addon):
 
     def __init__(self, options, arches=None):
         super().__init__(options)
-
-        # non-profile dirs found in the profiles directory, generally only in
-        # the gentoo repo, but could be in overlays as well
-        self.non_profile_dirs = {'desc', 'updates'}
 
         self.official_arches = options.target_repo.known_arches
         self.desired_arches = getattr(self.options, 'arches', None)
