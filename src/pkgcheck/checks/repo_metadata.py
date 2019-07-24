@@ -15,7 +15,7 @@ demandload(
     'snakeoil.osutils:listdir_dirs,pjoin',
     'snakeoil.sequences:iflatten_instance',
     'pkgcore.ebuild:atom,misc',
-    'pkgcore.ebuild.profiles:ProfileNode,ProfileStack',
+    'pkgcore.ebuild:profiles@profiles_mod',
     'pkgcore:fetch',
 )
 
@@ -599,6 +599,18 @@ class UnknownProfileUse(base.Warning):
             self.path, _pl(self.flags), ', '.join(map(repr, self.flags)))
 
 
+class ProfileWarning(base.LogWarning):
+    """Badly formatted data in various profile files."""
+
+    threshold = base.repository_feed
+
+
+class ProfileError(base.LogError):
+    """Erroneously formatted data in various profile files."""
+
+    threshold = base.repository_feed
+
+
 class _ProfileNode(profiles_mod.ProfileNode):
     """Re-inherited to disable instance caching."""
 
@@ -610,8 +622,8 @@ class ProfilesCheck(base.Template):
     feed_type = base.repository_feed
     scope = base.repository_scope
     known_results = (
-        BadProfileEntry, UnknownProfilePackages,
-        UnknownProfilePackageUse, UnknownProfileUse,
+        UnknownProfilePackages, UnknownProfilePackageUse, UnknownProfileUse,
+        BadProfileEntry, ProfileWarning, ProfileError,
     )
 
     def __init__(self, options, iuse_handler):
@@ -689,22 +701,28 @@ class ProfilesCheck(base.Template):
             'use.stable.mask': ('use_stable_mask', _use),
         }
 
+        profile_reports = []
+        report_profile_warnings = lambda x: profile_reports.append(ProfileWarning(x))
+        report_profile_errors = lambda x: profile_reports.append(ProfileError(x))
+
         for root, _dirs, files in os.walk(self.profiles_dir):
             if root not in self.non_profile_dirs:
                 profile = _ProfileNode(root)
                 for f in set(files).intersection(file_parse_map.keys()):
                     attr, func = file_parse_map[f]
-                    # catch badly formatted entries
-                    # TODO: switch this to a patched logger catcher once
-                    # pkgcore is updated to log and ignore bad entries
                     try:
-                        vals = getattr(profile, attr)
-                    except Exception as e:
+                        # convert log warnings/errors into reports
+                        with patch('pkgcore.log.logger.error', report_profile_errors), \
+                                patch('pkgcore.log.logger.warning', report_profile_warnings):
+                            vals = getattr(profile, attr)
+                    except profiles_mod.ProfileError as e:
                         yield BadProfileEntry(
                             pjoin(root[len(self.profiles_dir):].lstrip('/'), e.filename),
                             e.error)
                         continue
                     func(f, vals)
+
+        yield from profile_reports
 
         for path, filenames in sorted(unknown_pkgs.items()):
             for filename, vals in filenames.items():
@@ -794,7 +812,7 @@ class RepoProfilesReport(base.Template):
         profile_status = set()
         lagging_profile_eapi = defaultdict(list)
         for path, status in chain.from_iterable(self.profiles):
-            profile = ProfileStack(pjoin(self.profiles_dir, path))
+            profile = profiles_mod.ProfileStack(pjoin(self.profiles_dir, path))
             for parent in profile.stack:
                 seen_profile_dirs.update(
                     dir_parents(parent.path[len(self.profiles_dir):]))
