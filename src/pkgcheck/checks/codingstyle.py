@@ -302,3 +302,60 @@ class BadInsIntoCheck(base.Template):
             matches = badf(line)
             if matches is not None:
                 yield BadInsIntoDir(pkg, matches.groups()[0], lineno)
+
+
+class ObsoleteUri(base.Warning):
+    """URI used is obsolete.
+
+    The URI used to fetch distfile is obsolete and can be replaced
+    by something more modern.
+    """
+
+    __slots__ = ("category", "package", "version", "line", "uri", "replacement")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, line, uri, replacement):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.line = line
+        self.uri = uri
+        self.replacement = replacement
+
+    @property
+    def short_desc(self):
+        return (f"Package uses obsolete fetch URI: {self.uri} on line "
+                f"{self.line}; should be replaced by: {self.replacement}")
+
+
+class ObsoleteUriCheck(base.Template):
+    """Scan ebuild for obsolete URIs."""
+
+    feed_type = base.ebuild_feed
+    known_results = (ObsoleteUri,)
+
+    REGEXPS = (
+        (r'.*\b(?P<uri>(https?://github\.com/.*?/.*?/)(?:tar|zip)ball(\S*))',
+         r'\2archive\3.tar.gz'),
+        (r'.*\b(?P<uri>(https?://gitlab\.com/.*?/.*?/)repository/archive\.(tar|tar\.gz|tar\.bz2|zip)\?ref=(\S*))',
+         r'\2-/archive/\4.\3'),
+    )
+
+    def __init__(self, options):
+        super().__init__(options)
+        self.regexes = []
+        for regexp, repl in self.REGEXPS:
+            self.regexes.append((re.compile(regexp), repl))
+
+    def feed(self, entry):
+        pkg, lines = entry
+        links = defaultdict(list)
+
+        for lineno, line in enumerate(lines, 1):
+            if not line or line.startswith('#'):
+                continue
+            # searching for multiple matches on a single line is too slow
+            for regexp, repl in self.regexes:
+                matches = regexp.match(line)
+                if matches is not None:
+                    uri = matches.group('uri')
+                    yield ObsoleteUri(pkg, lineno, uri, regexp.sub(repl, uri))

@@ -129,3 +129,89 @@ class TestPathVariablesCheck(misc.ReportTestCase):
 
     def test_unnecessary_unfound(self):
         self._unfound(codingstyle.UnnecessarySlashStrip, suffix='%/')
+
+
+class TestObsoleteUri(misc.ReportTestCase):
+
+    check_kls = codingstyle.ObsoleteUriCheck
+
+    def test_github_archive_uri(self):
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
+        uri = 'https://github.com/foo/bar/archive/${PV}.tar.gz'
+        fake_src = [
+            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
+        ]
+        self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
+
+    def test_github_tarball_uri(self):
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
+        uri = 'https://github.com/foo/bar/tarball/${PV}'
+        fake_src = [
+            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
+        ]
+
+        r = self.assertReport(self.check_kls(options=None),
+                              [fake_pkg, fake_src])
+        assert r.uri == uri
+        assert (r.replacement ==
+                'https://github.com/foo/bar/archive/${PV}.tar.gz')
+
+    def test_github_zipball_uri(self):
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
+        uri = 'https://github.com/foo/bar/zipball/${PV}'
+        fake_src = [
+            f'SRC_URI="{uri} -> ${{P}}.zip"\n'
+        ]
+
+        r = self.assertReport(self.check_kls(options=None),
+                              [fake_pkg, fake_src])
+        assert r.uri == uri
+        assert (r.replacement ==
+                'https://github.com/foo/bar/archive/${PV}.tar.gz')
+
+    def test_gitlab_archive_uri(self):
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
+        uri = 'https://gitlab.com/foo/bar/-/archive/${PV}.tar.gz'
+        fake_src = [
+            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
+        ]
+        self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
+
+    def test_gitlab_tar_gz_uri(self):
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
+        uri = 'https://gitlab.com/foo/bar/repository/archive.tar.gz?ref=${PV}'
+        fake_src = [
+            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
+        ]
+
+        r = self.assertReport(self.check_kls(options=None),
+                              [fake_pkg, fake_src])
+        assert r.uri == uri
+        assert (r.replacement ==
+                'https://gitlab.com/foo/bar/-/archive/${PV}.tar.gz')
+
+    def test_gitlab_tar_bz2_uri(self):
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
+        uri = 'https://gitlab.com/foo/bar/repository/archive.tar.bz2?ref=${PV}'
+        fake_src = [
+            f'SRC_URI="{uri} -> ${{P}}.tar.bz2"\n'
+        ]
+
+        r = self.assertReport(self.check_kls(options=None),
+                              [fake_pkg, fake_src])
+        assert r.uri == uri
+        assert (r.replacement ==
+                'https://gitlab.com/foo/bar/-/archive/${PV}.tar.bz2')
+
+    def test_gitlab_zip_uri(self):
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
+        uri = 'https://gitlab.com/foo/bar/repository/archive.zip?ref=${PV}'
+        fake_src = [
+            f'SRC_URI="{uri} -> ${{P}}.zip"\n'
+        ]
+
+        r = self.assertReport(self.check_kls(options=None),
+                              [fake_pkg, fake_src])
+        assert r.uri == uri
+        assert (r.replacement ==
+                'https://gitlab.com/foo/bar/-/archive/${PV}.zip')
