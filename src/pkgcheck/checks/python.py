@@ -41,12 +41,14 @@ class MissingPythonEclass(base.Warning):
 
     @property
     def short_desc(self):
-        return (f"Python package not using proper eclass, should use "
-                f"{self.eclass} instead of {self.dep_type} on {self.dep}")
+        return (
+            f'improper eclass used with {self.dep_type}="{self.dep}" -- '
+            f"use {self.eclass} instead"
+        )
 
 
 class PythonSingleUseMismatch(base.Warning):
-    """Package has mismatched PYTHON_SINGLE & PYTHON_TARGETS flags."""
+    """Package has mismatched PYTHON_SINGLE and PYTHON_TARGETS flags."""
 
     __slots__ = ("category", "package", "version", "flags", "single_flags")
 
@@ -60,9 +62,11 @@ class PythonSingleUseMismatch(base.Warning):
 
     @property
     def short_desc(self):
-        return (f"Python package has mismatched Python flags in IUSE: "
-                f"PYTHON_TARGETS={self.flags} but "
-                f"PYTHON_SINGLE_TARGET={self.single_flags}")
+        return (
+            "mismatched flags in IUSE: "
+            f"PYTHON_TARGETS={self.flags} but "
+            f"PYTHON_SINGLE_TARGET={self.single_flags}"
+        )
 
 
 class PythonMissingRequiredUSE(base.Warning):
@@ -78,8 +82,7 @@ class PythonMissingRequiredUSE(base.Warning):
 
     @property
     def short_desc(self):
-        return ("Python package is missing ${PYTHON_REQUIRED_USE} "
-                "in REQUIRED_USE")
+        return "REQUIRED_USE missing ${PYTHON_REQUIRED_USE}"
 
 
 class PythonMissingDeps(base.Warning):
@@ -96,8 +99,7 @@ class PythonMissingDeps(base.Warning):
 
     @property
     def short_desc(self):
-        return ("Python package is missing ${PYTHON_DEPS} "
-                f"in {self.dep_type}")
+        return f'missing {self.dep_type}="${{PYTHON_DEPS}}"'
 
 
 class PythonRuntimeDepInAnyR1(base.Warning):
@@ -115,9 +117,10 @@ class PythonRuntimeDepInAnyR1(base.Warning):
 
     @property
     def short_desc(self):
-        return (f"Package inherits python-any-r1 but has {self.dep_type} "
-                f"on {self.dep}; python-r1 or python-single-r1 should "
-                f"be used instead")
+        return (
+            f'inherits python-any-r1 with {self.dep_type}="{self.dep}" -- '
+            "use python-r1 or python-single-r1 instead"
+        )
 
 
 class PythonReport(base.Template):
