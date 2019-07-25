@@ -9,7 +9,7 @@ class TestPythonReport(misc.ReportTestCase):
     check_kls = python.PythonReport
 
     def mk_pkg(self, **kwargs):
-        kwargs['EAPI'] = '7'
+        kwargs.setdefault('EAPI', '7')
         return misc.FakePkg("app-foo/bar-1", data=kwargs)
 
     def test_missing_eclass_depend(self):
