@@ -115,6 +115,18 @@ class TestPkgcheckShow(object):
 
     script = partial(run, project)
 
+    def test_show_no_args(self, capsys):
+        # defaults to outputting keywords list if no option is passed
+        with patch('sys.argv', [project, 'show']):
+            with raises(SystemExit) as excinfo:
+                self.script()
+            out, err = capsys.readouterr()
+            assert not err
+            out = out.strip().split('\n')
+            regular_output = out
+            assert out == sorted(x.__name__ for x in pkgcheck._known_keywords)
+            assert excinfo.value.code == 0
+
     def test_show_keywords(self, capsys):
         # regular mode
         with patch('sys.argv', [project, 'show', '--keywords']):
