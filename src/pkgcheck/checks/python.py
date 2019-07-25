@@ -36,7 +36,7 @@ class MissingPythonEclass(base.Warning):
         super().__init__()
         self._store_cpv(pkg)
         self.eclass = eclass
-        self.dep_type = dep_type
+        self.dep_type = dep_type.upper()
         self.dep = dep
 
     @property
@@ -95,7 +95,7 @@ class PythonMissingDeps(base.Warning):
     def __init__(self, pkg, dep_type):
         super().__init__()
         self._store_cpv(pkg)
-        self.dep_type = dep_type
+        self.dep_type = dep_type.upper()
 
     @property
     def short_desc(self):
@@ -112,7 +112,7 @@ class PythonRuntimeDepInAnyR1(base.Warning):
     def __init__(self, pkg, dep_type, dep):
         super().__init__()
         self._store_cpv(pkg)
-        self.dep_type = dep_type
+        self.dep_type = dep_type.upper()
         self.dep = dep
 
     @property
