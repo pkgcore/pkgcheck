@@ -5,8 +5,8 @@ from .. import misc
 
 class TestPythonReport(misc.ReportTestCase):
 
-    check = python.PythonReport(None)
-    check_kls = python.PythonReport
+    check = python.PythonCheck(None)
+    check_kls = python.PythonCheck
 
     def mk_pkg(self, **kwargs):
         kwargs.setdefault('EAPI', '7')

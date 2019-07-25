@@ -123,8 +123,8 @@ class PythonRuntimeDepInAnyR1(base.Warning):
         )
 
 
-class PythonReport(base.Template):
-    """Python eclass issue scans.
+class PythonCheck(base.Template):
+    """Python eclass checks.
 
     Check whether Python eclasses are used for Python packages, and whether
     they don't suffer from common mistakes.

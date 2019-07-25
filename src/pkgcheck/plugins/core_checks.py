@@ -39,7 +39,7 @@ pkgcore_plugins = {
         pkgdir_checks.PkgDirCheck,
         profile_checks.ProfilesCheck,
         profile_checks.RepoProfilesCheck,
-        python.PythonReport,
+        python.PythonCheck,
         repo_metadata.GlobalUSECheck,
         repo_metadata.LicenseGroupsCheck,
         repo_metadata.ManifestConflictCheck,
