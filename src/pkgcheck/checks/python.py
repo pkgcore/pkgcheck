@@ -131,15 +131,19 @@ class PythonReport(base.Template):
     """
 
     feed_type = base.versioned_feed
-    known_results = (MissingPythonEclass, PythonSingleUseMismatch,
-                     PythonMissingRequiredUSE, PythonMissingDeps,
-                     PythonRuntimeDepInAnyR1)
+    known_results = (
+        MissingPythonEclass, PythonSingleUseMismatch, PythonMissingRequiredUSE,
+        PythonMissingDeps, PythonRuntimeDepInAnyR1, base.MetadataError,
+    )
 
     @staticmethod
     def get_python_eclass(pkg):
         eclasses = set(ECLASSES).intersection(pkg.inherited)
-        # all three eclasses block one another
-        assert(len(eclasses) <= 1)
+        # All three eclasses block one another, but check and throw an error
+        # just in case it isn't caught when sourcing the ebuild.
+        if len(eclasses) > 1:
+            raise ValueError(
+                f"python eclasses are mutually exclusive: [ {', '.join(eclasses)} ]")
         return eclasses.pop() if eclasses else None
 
     def scan_tree_recursively(self, deptree, expected_cls):
@@ -192,7 +196,11 @@ class PythonReport(base.Template):
         return False
 
     def feed(self, pkg):
-        eclass = self.get_python_eclass(pkg)
+        try:
+            eclass = self.get_python_eclass(pkg)
+        except ValueError as e:
+            yield base.MetadataError(pkg, 'data', str(e))
+            return
 
         if eclass is None:
             # check whether we should be using one
