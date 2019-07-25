@@ -107,17 +107,17 @@ class WhitespaceCheck(base.Template):
         indent = []
         double_empty = []
 
-        for lineno, line in enumerate(lines):
+        for lineno, line in enumerate(lines, 1):
             if line != '\n':
                 lastlineempty = False
                 if line[-2:-1] == ' ' or line[-2:-1] == '\t':
-                    trailing.append(lineno + 1)
+                    trailing.append(lineno)
                 elif line[0] == ' ':
-                    leading.append(lineno + 1)
+                    leading.append(lineno)
                 if indent_regexp.match(line):
-                    indent.append(lineno + 1)
+                    indent.append(lineno)
             elif lastlineempty:
-                double_empty.append(lineno + 1)
+                double_empty.append(lineno)
             else:
                 lastlineempty = True
         if trailing:

@@ -407,13 +407,13 @@ class base_check(base.Template):
         orig_indent = None
         indents = set()
         with open(loc) as f:
-            for lineno, line in enumerate(f):
+            for lineno, line in enumerate(f, 1):
                 for i in line[:-len(line.lstrip())]:
                     if i != orig_indent:
                         if orig_indent is None:
                             orig_indent = i
                         else:
-                            indents.update([lineno + 1])
+                            indents.update([lineno])
         if indents:
             yield partial(self.indent_error, indents)
 

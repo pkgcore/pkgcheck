@@ -70,13 +70,13 @@ class HttpsAvailableCheck(base.Template):
         pkg, lines = entry
         links = defaultdict(list)
 
-        for lineno, line in enumerate(lines):
+        for lineno, line in enumerate(lines, 1):
             if not line:
                 continue
             # searching for multiple matches on a single line is too slow
             matches = self.regex.match(line)
             if matches is not None:
-                links[matches.group(1)].append(lineno + 1)
+                links[matches.group(1)].append(lineno)
 
         for link, lines in links.items():
             yield HttpsAvailable(pkg, link, lines)
@@ -122,13 +122,13 @@ class PortageInternalsCheck(base.Template):
 
     def feed(self, entry):
         pkg, lines = entry
-        for lineno, line in enumerate(lines):
+        for lineno, line in enumerate(lines, 1):
             if not line:
                 continue
             # searching for multiple matches on a single line is too slow
             matches = self.regex.match(line)
             if matches is not None:
-                yield PortageInternals(pkg, matches.group(2), lineno + 1)
+                yield PortageInternals(pkg, matches.group(2), lineno)
 
 
 class MissingSlash(base.Error):
@@ -189,15 +189,15 @@ class PathVariablesCheck(base.Template):
         missing = defaultdict(list)
         unnecessary = defaultdict(list)
 
-        for lineno, line in enumerate(lines):
+        for lineno, line in enumerate(lines, 1):
             if not line:
                 continue
             matches = self.missing_regex.search(line)
             if matches is not None:
-                missing[matches.group(1)].append(lineno + 1)
+                missing[matches.group(1)].append(lineno)
             matches = self.unnecessary_regex.search(line)
             if matches is not None:
-                unnecessary[matches.group(1)].append(lineno + 1)
+                unnecessary[matches.group(1)].append(lineno)
 
         for var, lines in missing.items():
             yield MissingSlash(pkg, var, lines)
@@ -237,12 +237,12 @@ class AbsoluteSymlinkCheck(base.Template):
 
     def feed(self, entry):
         pkg, lines = entry
-        for lineno, line in enumerate(lines):
+        for lineno, line in enumerate(lines, 1):
             if not line:
                 continue
             matches = self.regex.match(line)
             if matches is not None:
-                yield AbsoluteSymlink(pkg, matches.groups()[0], lineno + 1)
+                yield AbsoluteSymlink(pkg, matches.groups()[0], lineno)
 
 
 class BadInsIntoDir(base.Warning):
@@ -296,9 +296,9 @@ class BadInsIntoCheck(base.Template):
         pkg, lines = entry
 
         badf = self._bad_insinto.search
-        for lineno, line in enumerate(lines):
+        for lineno, line in enumerate(lines, 1):
             if not line:
                 continue
             matches = badf(line)
             if matches is not None:
-                yield BadInsIntoDir(pkg, matches.groups()[0], lineno + 1)
+                yield BadInsIntoDir(pkg, matches.groups()[0], lineno)
