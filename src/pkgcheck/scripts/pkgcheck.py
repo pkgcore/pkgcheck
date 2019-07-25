@@ -740,7 +740,8 @@ def display_reporters(out, options, config_reporters, plugin_reporters):
 
 show = subparsers.add_parser('show', description='show various pkgcheck info')
 list_options = show.add_argument_group('list options')
-list_options.add_argument(
+output_types = list_options.add_mutually_exclusive_group()
+output_types.add_argument(
     '--keywords', action='store_true', default=False,
     help='show available warning/error keywords',
     docs="""
@@ -750,7 +751,7 @@ list_options.add_argument(
         (repository, category, package, or version) along with their
         descriptions.
     """)
-list_options.add_argument(
+output_types.add_argument(
     '--checks', action='store_true', default=False,
     help='show available checks',
     docs="""
@@ -759,7 +760,7 @@ list_options.add_argument(
         Use -v/--verbose to show descriptions and possible keyword results for
         each check.
     """)
-list_options.add_argument(
+output_types.add_argument(
     '--scopes', action='store_true', default=False,
     help='show available keyword/check scopes',
     docs="""
@@ -767,7 +768,7 @@ list_options.add_argument(
 
         Use -v/--verbose to show scope descriptions.
     """)
-list_options.add_argument(
+output_types.add_argument(
     '--reporters', action='store_true', default=False,
     help='show available reporters',
     docs="""
@@ -777,6 +778,13 @@ list_options.add_argument(
     """)
 @show.bind_main_func
 def _show(options, out, err):
+    # default to showing keywords if no output option is selected
+    list_option_selected = any(
+        getattr(options, attr) for attr in
+        ('keywords', 'checks', 'scopes', 'reporters'))
+    if not list_option_selected:
+        options.keywords = True
+
     if options.keywords:
         display_keywords(out, options)
 
