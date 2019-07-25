@@ -334,10 +334,13 @@ class ObsoleteUriCheck(base.Template):
     known_results = (ObsoleteUri,)
 
     REGEXPS = (
-        (r'.*\b(?P<uri>(https?://github\.com/.*?/.*?/)(?:tar|zip)ball(\S*))',
-         r'\2archive\3.tar.gz'),
-        (r'.*\b(?P<uri>(https?://gitlab\.com/.*?/.*?/)repository/archive\.(tar|tar\.gz|tar\.bz2|zip)\?ref=(\S*))',
-         r'\2-/archive/\4.\3'),
+        (r'.*\b(?P<uri>(?P<prefix>https?://github\.com/.*?/.*?/)'
+         r'(?:tar|zip)ball(?P<ref>\S*))',
+         r'\g<prefix>archive\g<ref>.tar.gz'),
+        (r'.*\b(?P<uri>(?P<prefix>https?://gitlab\.com/.*?/(?P<pkg>.*?)/)'
+         r'repository/archive\.(?P<format>tar|tar\.gz|tar\.bz2|zip)'
+         r'\?ref=(?P<ref>\S*))',
+         r'\g<prefix>-/archive/\g<ref>/\g<pkg>-\g<ref>.\g<format>'),
     )
 
     def __init__(self, options):

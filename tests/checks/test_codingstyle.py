@@ -170,9 +170,9 @@ class TestObsoleteUri(misc.ReportTestCase):
                 'https://github.com/foo/bar/archive/${PV}.tar.gz')
 
     def test_gitlab_archive_uri(self):
-        uri = 'https://gitlab.com/foo/bar/-/archive/${PV}.tar.gz'
+        uri = 'https://gitlab.com/foo/bar/-/archive/${PV}/${P}.tar.gz'
         fake_src = [
-            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
+            f'SRC_URI="{uri}"\n'
         ]
         self.assertNoReport(self.check_kls(options=None), [self.fake_pkg, fake_src])
 
@@ -187,7 +187,7 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert r.line == 1
         assert r.uri == uri
         assert (r.replacement ==
-                'https://gitlab.com/foo/bar/-/archive/${PV}.tar.gz')
+                'https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.tar.gz')
 
     def test_gitlab_tar_bz2_uri(self):
         uri = 'https://gitlab.com/foo/bar/repository/archive.tar.bz2?ref=${PV}'
@@ -200,7 +200,7 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert r.line == 1
         assert r.uri == uri
         assert (r.replacement ==
-                'https://gitlab.com/foo/bar/-/archive/${PV}.tar.bz2')
+                'https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.tar.bz2')
 
     def test_gitlab_zip_uri(self):
         uri = 'https://gitlab.com/foo/bar/repository/archive.zip?ref=${PV}'
@@ -213,4 +213,4 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert r.line == 1
         assert r.uri == uri
         assert (r.replacement ==
-                'https://gitlab.com/foo/bar/-/archive/${PV}.zip')
+                'https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.zip')
