@@ -654,7 +654,7 @@ class UnsortedKeywords(base.Warning):
     """Packages with unsorted KEYWORDS.
 
     KEYWORDS should be sorted in alphabetical order with prefix keywords (those
-    with hyphens in them, e.g. amd64-fbsd) after regular arches and globs (e.g. -*)
+    with hyphens in them, e.g. amd64-fbsd) after regular arches and globs (e.g. ``-*``)
     before them.
     """
 
