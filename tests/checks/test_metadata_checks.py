@@ -488,3 +488,17 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
 
         assert r.filename == 'foon'
         assert list(r.bad_uri) == sorted(f'{bad_proto}://{x}/foon' for x in ('foon.com', 'dar.com'))
+
+    def test_tarball_available_github(self):
+        chk = self.mk_check()
+        uri = "https://github.com/foo/bar/archive/v1.2.3.zip"
+        r = self.assertReport(chk, self.mk_pkg(uri))
+        assert isinstance(r, metadata_checks.TarballAvailable)
+        assert r.uris == (uri,)
+
+    def test_tarball_available_gitlab(self):
+        chk = self.mk_check()
+        uri = "https://gitlab.com/foo/bar/-/archive/v1.2.3/bar-v1.2.3.zip"
+        r = self.assertReport(chk, self.mk_pkg(uri))
+        assert isinstance(r, metadata_checks.TarballAvailable)
+        assert r.uris == (uri,)

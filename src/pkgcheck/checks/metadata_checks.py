@@ -839,6 +839,27 @@ class BadFilename(base.Warning):
         return "bad filename%s: [ %s ]" % (_pl(self.filenames), ', '.join(self.filenames))
 
 
+class TarballAvailable(base.Warning):
+    """URI uses .zip archive when .tar* is available.
+
+    Tarballs should be preferred over zip archives due to better compression
+    and no extra unpack dependencies.
+    """
+
+    __slots__ = ("category", "package", "version", "uris")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, uris):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.uris = tuple(sorted(uris))
+
+    @property
+    def short_desc(self):
+        return (f"zip archive{_pl(self.uris)} used when tarball available: "
+                f"[ {' '.join(self.uris)} ]")
+
+
 class SrcUriReport(base.Template):
     """SRC_URI related checks.
 
@@ -849,7 +870,7 @@ class SrcUriReport(base.Template):
     required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
     known_results = (
-        BadFilename, BadProto, MissingUri, MetadataError,
+        BadFilename, BadProto, MissingUri, MetadataError, TarballAvailable,
         UnknownMirror, addons.UnstatedIUSE,
     )
 
@@ -858,12 +879,16 @@ class SrcUriReport(base.Template):
     def __init__(self, options, iuse_handler):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter('fetchables')
+        self.zip_to_tar_re = re.compile(
+            r'https?://(github\.com/.*?/.*?/archive/.+\.zip|'
+                      r'gitlab\.com/.*?/.*?/-/archive/.+\.zip)')
 
     def feed(self, pkg):
         lacks_uri = set()
         # duplicate entries are possible.
         seen = set()
         bad_filenames = set()
+        tarball_available = set()
         fetchables, unstated = self.iuse_filter(
             (fetchable,), pkg,
             pkg._get_attr['fetchables'](
@@ -900,6 +925,8 @@ class SrcUriReport(base.Template):
                         lacks_uri.add(x)
                     elif x[:i] not in self.valid_protos:
                         bad.add(x)
+                    elif self.zip_to_tar_re.match(x):
+                        tarball_available.add(x)
                 if bad:
                     yield BadProto(pkg, f_inst.filename, bad)
         if "fetch" not in pkg.restrict:
@@ -908,6 +935,8 @@ class SrcUriReport(base.Template):
 
         if bad_filenames:
             yield BadFilename(pkg, bad_filenames)
+        if tarball_available:
+            yield TarballAvailable(pkg, tarball_available)
 
 
 class BadDescription(base.Warning):
