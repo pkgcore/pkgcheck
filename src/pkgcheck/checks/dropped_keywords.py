@@ -20,7 +20,7 @@ class DroppedKeywords(Warning):
         return ', '.join(self.arches)
 
 
-class DroppedKeywordsReport(Template):
+class DroppedKeywordsCheck(Template):
     """Scan packages for keyword dropping across versions."""
 
     feed_type = package_feed

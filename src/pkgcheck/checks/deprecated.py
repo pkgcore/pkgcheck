@@ -29,7 +29,7 @@ class DeprecatedEclass(base.Warning):
             _pl(eclass_migration, plural='es'), ', '.join(eclass_migration))
 
 
-class DeprecatedEclassReport(base.Template):
+class DeprecatedEclassCheck(base.Template):
 
     feed_type = base.versioned_feed
     known_results = (DeprecatedEclass,)

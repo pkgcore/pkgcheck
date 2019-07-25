@@ -21,7 +21,7 @@ class RedundantVersion(Warning):
             self.slot, _pl(self.later_versions), ', '.join(self.later_versions))
 
 
-class RedundantVersionReport(Template):
+class RedundantVersionCheck(Template):
     """Scan for overshadowed package versions.
 
     Scan for versions that are likely shadowed by later versions from a

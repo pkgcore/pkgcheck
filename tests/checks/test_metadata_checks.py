@@ -17,13 +17,13 @@ from .. import misc
 
 class TestDescriptionReport(misc.ReportTestCase):
 
-    check_kls = metadata_checks.DescriptionReport
+    check_kls = metadata_checks.DescriptionCheck
 
     def mk_pkg(self, desc=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"DESCRIPTION": desc})
 
     def test_it(self):
-        check = metadata_checks.DescriptionReport(None, None)
+        check = metadata_checks.DescriptionCheck(None, None)
 
         self.assertNoReport(check, self.mk_pkg("a perfectly written package description"))
 
@@ -80,14 +80,14 @@ class iuse_options(TempDirMixin):
 
 class TestKeywordsReport(iuse_options, misc.ReportTestCase):
 
-    check_kls = metadata_checks.KeywordsReport
+    check_kls = metadata_checks.KeywordsCheck
 
     def setUp(self):
         super().setUp()
         options = self.get_options()
         profiles = [misc.FakeProfile()]
         iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
-        self.check = metadata_checks.KeywordsReport(options, iuse_handler)
+        self.check = metadata_checks.KeywordsCheck(options, iuse_handler)
 
     def mk_pkg(self, keywords=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"KEYWORDS": keywords})
@@ -121,7 +121,7 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
         options = self.get_options(repo_name='gentoo')
         profiles = [misc.FakeProfile()]
         iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
-        check = metadata_checks.KeywordsReport(options, iuse_handler)
+        check = metadata_checks.KeywordsCheck(options, iuse_handler)
         assert isinstance(
             self.assertReport(check, self.mk_pkg("*")),
             metadata_checks.InvalidKeywords)
@@ -162,7 +162,7 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
 
 class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
-    check_kls = metadata_checks.IUSEMetadataReport
+    check_kls = metadata_checks.IUSEMetadataCheck
 
     def mk_pkg(self, iuse=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"IUSE": iuse})
@@ -171,7 +171,7 @@ class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
         # verify behaviour when use.* data isn't available
         options = self.get_options()
         profiles = [misc.FakeProfile()]
-        check = metadata_checks.IUSEMetadataReport(
+        check = metadata_checks.IUSEMetadataCheck(
             options, addons.UseAddon(options, profiles))
         self.assertNoReport(check, self.mk_pkg("foo bar"))
         r = self.assertReport(check, self.mk_pkg("foo dar"))
@@ -182,13 +182,13 @@ class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
 class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
-    check_kls = metadata_checks.RequiredUSEMetadataReport
+    check_kls = metadata_checks.RequiredUSEMetadataCheck
 
     def setUp(self):
         super().setUp()
         options = self.get_options(verbosity=1)
         profiles = {'x86': [misc.FakeProfile(name='default/linux/x86')]}
-        self.check = metadata_checks.RequiredUSEMetadataReport(
+        self.check = metadata_checks.RequiredUSEMetadataCheck(
             options, addons.UseAddon(options, profiles['x86']), profiles)
 
     def mk_pkg(self, eapi="4", iuse="", required_use="", keywords="x86"):
@@ -294,7 +294,7 @@ def use_based():
 
 class TestRestrictsReport(use_based(), misc.ReportTestCase):
 
-    check_kls = metadata_checks.RestrictsReport
+    check_kls = metadata_checks.RestrictsCheck
 
     def mk_pkg(self, restrict=''):
         return misc.FakePkg(
@@ -310,7 +310,7 @@ class TestRestrictsReport(use_based(), misc.ReportTestCase):
 
 class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
 
-    check_kls = metadata_checks.LicenseMetadataReport
+    check_kls = metadata_checks.LicenseMetadataCheck
 
     def mk_check(self, licenses=(), **kwargs):
         self.repo = FakeRepo(repo_id='test', licenses=licenses)
@@ -348,7 +348,7 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
 
 class TestDependencyReport(use_based(), misc.ReportTestCase):
 
-    check_kls = metadata_checks.DependencyReport
+    check_kls = metadata_checks.DependencyCheck
 
     attr_map = dict(
         (x, x.upper())
@@ -410,7 +410,7 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
 
 class TestSrcUriReport(use_based(), misc.ReportTestCase):
 
-    check_kls = metadata_checks.SrcUriReport
+    check_kls = metadata_checks.SrcUriCheck
 
     def mk_pkg(self, src_uri='', default_chksums={"size": 100},
                iuse='', disable_chksums=False):

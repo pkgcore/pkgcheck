@@ -760,7 +760,7 @@ class UnnecessaryManifest(base.Warning):
             _pl(self.files), ', '.join(self.files),)
 
 
-class ManifestReport(base.Template):
+class ManifestCheck(base.Template):
     """Manifest related checks.
 
     Verify that the Manifest file exists, doesn't have missing or

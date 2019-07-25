@@ -210,7 +210,7 @@ class NonsolvableDepsInExp(base.Warning, NonsolvableDeps):
     """No potential solution for dependency on exp profile."""
 
 
-class VisibilityReport(base.Template):
+class VisibilityCheck(base.Template):
     """Visibility dependency scans.
 
     Check that at least one solution is possible for a pkg, checking all

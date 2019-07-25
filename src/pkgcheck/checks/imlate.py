@@ -49,7 +49,7 @@ class LaggingStable(base.Warning):
             ', '.join(self.stable), ', '.join(self.keywords))
 
 
-class ImlateReport(base.Template):
+class ImlateCheck(base.Template):
     """Scan for ebuilds that are lagging in stabilization."""
 
     feed_type = base.package_feed

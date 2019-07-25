@@ -148,7 +148,7 @@ class ProfilesCheck(base.Template):
             local_iuse | iuse_handler.global_iuse |
             iuse_handler.global_iuse_expand | iuse_handler.unstated_iuse)
 
-        # TODO: move this and the same support in metadata_checks.KeywordsReport to a shared addon
+        # TODO: move this and the same support in metadata_checks.KeywordsCheck to a shared addon
         special_keywords = {'-*'}
         stable_keywords = self.options.target_repo.known_arches
         unstable_keywords = {'~' + x for x in stable_keywords}
@@ -408,7 +408,7 @@ class UnknownCategories(base.Warning):
         return f"[ {', '.join(self.categories)} ]"
 
 
-class RepoProfilesReport(base.Template):
+class RepoProfilesCheck(base.Template):
     """Scan repo for various profiles directory issues.
 
     Including unknown arches in profiles, arches without profiles, and unknown

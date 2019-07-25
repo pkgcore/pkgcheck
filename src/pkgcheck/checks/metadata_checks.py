@@ -35,7 +35,7 @@ class MissingLicense(base.Error):
         return ', '.join(self.licenses)
 
 
-class LicenseMetadataReport(base.Template):
+class LicenseMetadataCheck(base.Template):
     """LICENSE validity checks."""
 
     known_results = (MetadataError, MissingLicense, addons.UnstatedIUSE)
@@ -64,7 +64,7 @@ class LicenseMetadataReport(base.Template):
                 yield MissingLicense(pkg, licenses)
 
 
-class IUSEMetadataReport(base.Template):
+class IUSEMetadataCheck(base.Template):
     """IUSE validity checks."""
 
     feed_type = base.versioned_feed
@@ -116,7 +116,7 @@ class BannedEAPI(base.Error):
         return f"uses banned EAPI {self.eapi}"
 
 
-class MetadataReport(base.Template):
+class MetadataCheck(base.Template):
     """Scan for packages with banned/deprecated EAPIs or bad metadata."""
 
     feed_type = base.versioned_feed
@@ -172,7 +172,7 @@ class RequiredUseDefaults(base.Warning):
             )
 
 
-class RequiredUSEMetadataReport(base.Template):
+class RequiredUSEMetadataCheck(base.Template):
     """REQUIRED_USE validity checks."""
 
     feed_type = base.versioned_feed
@@ -358,7 +358,7 @@ class MissingSlotDep(base.Warning):
             f"[ {', '.join(self.dep_slots)} ]")
 
 
-class MissingSlotDepReport(base.Template):
+class MissingSlotDepCheck(base.Template):
     """Check for missing slot dependencies."""
 
     feed_type = base.versioned_feed
@@ -482,7 +482,7 @@ class NonexistentBlocker(base.Warning):
         )
 
 
-class DependencyReport(base.Template):
+class DependencyCheck(base.Template):
     """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon, addons.GitAddon)
@@ -694,7 +694,7 @@ class MissingVirtualKeywords(base.Warning):
         return f"missing KEYWORDS: {', '.join(self.keywords)}"
 
 
-class KeywordsReport(base.Template):
+class KeywordsCheck(base.Template):
     """Check package keywords for sanity; empty keywords, and -* are flagged."""
 
     required_addons = (addons.UseAddon,)
@@ -860,7 +860,7 @@ class TarballAvailable(base.Warning):
                 f"[ {' '.join(self.uris)} ]")
 
 
-class SrcUriReport(base.Template):
+class SrcUriCheck(base.Template):
     """SRC_URI related checks.
 
     Verify that URIs are valid, fetchable, using a supported protocol, and
@@ -955,7 +955,7 @@ class BadDescription(base.Warning):
         return f"description needs improvement: {self.msg}"
 
 
-class DescriptionReport(base.Template):
+class DescriptionCheck(base.Template):
     """DESCRIPTION checks.
 
     Check on length (<=150), too short (<10), or generic (lifted from eclass or
@@ -1012,7 +1012,7 @@ class BadRestricts(base.Warning):
         return s
 
 
-class RestrictsReport(base.Template):
+class RestrictsCheck(base.Template):
     feed_type = base.versioned_feed
     known_restricts = frozenset((
         "binchecks", "bindist", "fetch", "installsources", "mirror",

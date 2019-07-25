@@ -11,8 +11,8 @@ def mk_pkg(ver, fake_src):
 
 class TestDeprecatedEclass(misc.ReportTestCase):
 
-    check_kls = deprecated.DeprecatedEclassReport
-    check = deprecated.DeprecatedEclassReport(None, None)
+    check_kls = deprecated.DeprecatedEclassCheck
+    check = deprecated.DeprecatedEclassCheck(None, None)
 
     def test_no_eclasses(self):
         fake_src = """

@@ -9,7 +9,7 @@ def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None,
         arches = selected_arches
     if stable_arches is None:
         stable_arches = selected_arches
-    return imlate.ImlateReport(
+    return imlate.ImlateCheck(
         misc.Options(selected_arches=selected_arches, arches=arches,
                      stable_arches=stable_arches, source_arches=source_arches))
 
@@ -21,7 +21,7 @@ def mk_pkg(ver, keywords="", slot="0"):
 
 class TestImlateReport(misc.ReportTestCase):
 
-    check_kls = imlate.ImlateReport
+    check_kls = imlate.ImlateCheck
 
     def test_all_unstable(self):
         self.assertNoReport(

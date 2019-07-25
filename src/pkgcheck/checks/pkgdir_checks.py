@@ -194,7 +194,7 @@ def utf8_check(pkg, base, filename):
         del e
 
 
-class PkgDirReport(base.Template):
+class PkgDirCheck(base.Template):
     """Actual ebuild directory scans; file size, glep31 rule enforcement."""
 
     feed_type = base.package_feed

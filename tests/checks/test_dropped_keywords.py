@@ -2,7 +2,7 @@ from itertools import chain
 
 from pkgcore.ebuild.const import VCS_ECLASSES
 
-from pkgcheck.checks.dropped_keywords import DroppedKeywordsReport as drop_keys
+from pkgcheck.checks.dropped_keywords import DroppedKeywordsCheck as drop_keys
 
 from .. import misc
 

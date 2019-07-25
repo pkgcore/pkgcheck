@@ -15,8 +15,8 @@ from .. import misc
 class PkgDirReportBase(misc.Tmpdir, misc.ReportTestCase):
     """Various FILESDIR related test support."""
 
-    check_kls = pkgdir_checks.PkgDirReport
-    check = pkgdir_checks.PkgDirReport(None, None)
+    check_kls = pkgdir_checks.PkgDirCheck
+    check = pkgdir_checks.PkgDirCheck(None, None)
 
     def mk_pkg(self, files={}, category=None, package=None, version='0.7.1', revision=''):
         # generate random cat/PN
