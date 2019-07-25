@@ -492,3 +492,11 @@ class TestPythonReport(misc.ReportTestCase):
                             '  dev-lang/python:2.7 '
                             '  dev-lang/python:3.6 )')),
             python.PythonRuntimeDepInAnyR1)
+
+        # shouldn't trigger for blockers
+        self.assertNoReport(
+            self.check,
+            self.mk_pkg(
+                _eclasses_=['python-any-r1'],
+                DEPEND='!dev-python/pypy3-bin:0',
+                RDEPEND='!dev-python/pypy3-bin:0'))

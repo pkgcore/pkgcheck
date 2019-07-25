@@ -243,7 +243,7 @@ class PythonCheck(base.Template):
         else:  # python-any-r1
             for attr in ("rdepend", "pdepend"):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
-                    if p.key in INTERPRETERS:
+                    if not p.blocks and p.key in INTERPRETERS:
                         yield PythonRuntimeDepInAnyR1(pkg, attr, p)
                         break
             for attr in ("depend", "bdepend"):
