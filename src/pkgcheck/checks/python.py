@@ -82,7 +82,7 @@ class PythonMissingRequiredUSE(base.Warning):
 
     @property
     def short_desc(self):
-        return "REQUIRED_USE missing ${PYTHON_REQUIRED_USE}"
+        return 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"'
 
 
 class PythonMissingDeps(base.Warning):
