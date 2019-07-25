@@ -8,10 +8,10 @@ from .. import base, addons
 
 
 # NB: distutils-r1 inherits one of the first two
-ECLASSES = ('python-r1', 'python-single-r1', 'python-any-r1')
+ECLASSES = frozenset(['python-r1', 'python-single-r1', 'python-any-r1'])
 
 # NB: dev-java/jython omitted as not supported by the eclasses atm
-INTERPRETERS = (
+INTERPRETERS = frozenset([
     'dev-lang/python',
     'dev-python/pypy',
     'dev-python/pypy3',
@@ -19,7 +19,7 @@ INTERPRETERS = (
     'dev-python/pypy3-bin',
     'virtual/pypy',
     'virtual/pypy3',
-)
+])
 
 IUSE_PREFIX = 'python_targets_'
 IUSE_PREFIX_S = 'python_single_target_'
@@ -134,7 +134,7 @@ class PythonReport(base.Template):
 
     @staticmethod
     def get_python_eclass(pkg):
-        eclasses = set(pkg.inherited).intersection(ECLASSES)
+        eclasses = set(ECLASSES).intersection(pkg.inherited)
         # all three eclasses block one another
         assert(len(eclasses) <= 1)
         return eclasses.pop() if eclasses else None
