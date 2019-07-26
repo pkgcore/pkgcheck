@@ -206,11 +206,13 @@ class XmlReporter(base.Reporter):
 
 
 class PickleStream(base.Reporter):
-    """Generate a stream of pickled objects.
+    """Generate a stream of pickled objects using the original pickling protocol.
 
-    For each specific target for checks, a header is pickled
-    detailing the checks used, possible results, and search
-    criteria.
+    For each specific target for checks, a header is pickled detailing the
+    checks used, possible results, and search criteria.
+
+    This reporter uses the original "human-readable" protocol that is backwards
+    compatible with earlier versions of Python.
     """
     priority = -1001
     protocol = 0
@@ -233,9 +235,13 @@ class PickleStream(base.Reporter):
 
 
 class BinaryPickleStream(PickleStream):
-    """Dump a binary pickle stream (highest protocol).
+    """Dump a binary pickle stream using the highest pickling protocol.
 
-    For details of the stream, see PickleStream.
+    Unlike PickleStream which uses the most compatible pickling protocol
+    available, this uses the newest version so it won't be compatible with
+    older versions of Python.
+
+    For more details of the stream, see PickleStream.
     """
     priority = -1002
     protocol = -1
