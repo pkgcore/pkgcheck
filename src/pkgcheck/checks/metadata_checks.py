@@ -159,9 +159,13 @@ class RequiredUseDefaults(base.Warning):
     @property
     def short_desc(self):
         if not self.use:
+            if self.num_profiles > 1:
+                num_profiles = f' ({self.num_profiles} total)'
+            else:
+                num_profiles = ''
             # collapsed version
             return (
-                f'profile: {self.profile!r} ({self.num_profiles} total) '
+                f'profile: {self.profile!r}{num_profiles} '
                 f'failed REQUIRED_USE: {self.required_use}'
             )
         else:
