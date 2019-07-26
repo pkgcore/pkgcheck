@@ -450,7 +450,8 @@ class ProfileAddon(base.Addon):
 
         selected_profiles = namespace.profiles
         if selected_profiles is None:
-            selected_profiles = ((), ())
+            # disable exp profiles by default if no profiles are selected
+            selected_profiles = (('exp',), ())
 
         if profiles_dir:
             profiles_obj = repo_objs.BundledProfiles(profiles_dir)
