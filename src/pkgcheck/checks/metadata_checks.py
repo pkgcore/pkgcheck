@@ -159,7 +159,7 @@ class RequiredUseDefaults(base.Warning):
     @property
     def short_desc(self):
         if not self.use:
-            if self.num_profiles > 1:
+            if self.num_profiles is not None and self.num_profiles > 1:
                 num_profiles = f' ({self.num_profiles} total)'
             else:
                 num_profiles = ''
