@@ -186,14 +186,18 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
     def setUp(self):
         super().setUp()
-        options = self.get_options(verbosity=1)
-        profiles = {'x86': [misc.FakeProfile(name='default/linux/x86')]}
-        self.check = metadata_checks.RequiredUSEMetadataCheck(
-            options, addons.UseAddon(options, profiles['x86']), profiles)
+        self.check = self.mk_check()
 
-    def mk_pkg(self, eapi="4", iuse="", required_use="", keywords="x86"):
+    def mk_check(self, masks=()):
+        options = self.get_options(verbosity=1)
+        profiles = {'x86': [misc.FakeProfile(name='default/linux/x86', masks=masks)]}
+        check = self.check_kls(options, addons.UseAddon(options, profiles['x86']), profiles)
+        return check
+
+    def mk_pkg(self, cpvstr="dev-util/diffball-0.7.1", eapi="4", iuse="",
+               required_use="", keywords="x86"):
         return FakePkg(
-            "dev-util/diffball-0.7.1",
+            cpvstr,
             eapi=eapi,
             iuse=iuse.split(),
             data={"REQUIRED_USE": required_use, "KEYWORDS": keywords})
@@ -226,6 +230,11 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar"))
         self.assertNoReport(self.check, self.mk_pkg(iuse="+foo", required_use="foo"))
         self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar", required_use="foo? ( bar )"))
+
+        # pkgs masked by the related profile aren't checked
+        self.assertNoReport(
+            self.mk_check(masks=('>=dev-util/diffball-8.0',)),
+            self.mk_pkg(cpvstr="dev-util/diffball-8.0", iuse="foo bar", required_use="bar"))
 
         # unsatisfied REQUIRED_USE
         r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="bar"))

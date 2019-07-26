@@ -1,3 +1,4 @@
+from pkgcore.ebuild import domain
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.eapi import get_eapi
@@ -179,6 +180,9 @@ class FakeProfile(object):
         self.use = set(use)
         self.key = arch
         self.name = name
+
+        vfilter = domain.generate_filter(self.masks, self.unmasks)
+        self.visible = vfilter.match
 
 
 # TODO: move to snakeoil.test or somewhere more generic

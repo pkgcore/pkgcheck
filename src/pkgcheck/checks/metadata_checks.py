@@ -210,10 +210,12 @@ class RequiredUSEMetadataCheck(base.Template):
         failures = defaultdict(list)
         for keyword in keywords:
             for profile in self.profiles.get(keyword, ()):
-                src = FakeConfigurable(pkg, profile)
-                for node in pkg.required_use.evaluate_depset(src.use):
-                    if not node.match(src.use):
-                        failures[node].append((src.use, profile.key, profile.name))
+                # skip packages masked by the profile
+                if profile.visible(pkg):
+                    src = FakeConfigurable(pkg, profile)
+                    for node in pkg.required_use.evaluate_depset(src.use):
+                        if not node.match(src.use):
+                            failures[node].append((src.use, profile.key, profile.name))
 
         if self.options.verbosity > 0:
             # report all failures with profile info in verbose mode
