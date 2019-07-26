@@ -1,4 +1,5 @@
 from functools import partial
+from itertools import combinations
 import os
 import tempfile
 
@@ -511,3 +512,73 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, self.mk_pkg(uri))
         assert isinstance(r, metadata.TarballAvailable)
         assert r.uris == (uri,)
+
+
+class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
+
+    check_kls = metadata.MissingUnpackerDepCheck
+
+    def mk_pkg(self, exts, **data):
+        if isinstance(exts, str):
+            exts = [exts]
+
+        class fake_repo:
+            def _get_digests(self, pkg, allow_missing=False):
+                chksums = {f'diffball-2.7.1{ext}': {'size': 100} for ext in exts}
+                return False, chksums
+
+        data['SRC_URI'] = ' '.join(
+            f'https://foo.com/diffball-2.7.1{ext}' for ext in exts)
+        return FakePkg(
+            'dev-util/diffball-2.7.1', data=data, eapi='7', repo=fake_repo())
+
+    def test_without_dep(self):
+        for ext, unpackers in self.check_kls.known_unpackers.items():
+            pkg = self.mk_pkg(ext)
+            r = self.assertReport(self.mk_check(), pkg)
+            assert isinstance(r, metadata.MissingUnpackerDep)
+            assert r.filenames == (f'diffball-2.7.1{ext}',)
+            assert r.unpackers == tuple(
+                sorted(map(str, self.check_kls.known_unpackers[ext])))
+
+    def test_with_dep(self):
+        for ext, unpackers in self.check_kls.known_unpackers.items():
+            for dep_type in ('DEPEND', 'BDEPEND'):
+                for unpacker in unpackers:
+                    kwargs = {dep_type: unpacker.cpvstr}
+                    pkg = self.mk_pkg(ext, **kwargs)
+                    self.assertNoReport(self.mk_check(), pkg)
+
+    def test_rar_with_or_dep(self):
+        self.assertNoReport(
+            self.mk_check(),
+            self.mk_pkg('.rar', DEPEND='|| ( app-arch/rar app-arch/unrar )'))
+
+    def test_without_multiple_unpackers(self):
+        for combination in combinations(self.check_kls.known_unpackers.items(), 2):
+            exts = list(x[0] for x in combination)
+            unpackers = list(x[1] for x in combination)
+            pkg = self.mk_pkg(exts)
+            reports = self.assertReports(self.mk_check(), pkg)
+            if len(reports) == 1:
+                # some combinations are for extensions that share the same
+                # unpacker so they will be combined in one report
+                assert len(set(unpackers)) == 1
+                r = reports[0]
+                assert isinstance(r, metadata.MissingUnpackerDep)
+                assert r.filenames == tuple(sorted(f'diffball-2.7.1{ext}' for ext in exts))
+                assert r.unpackers == tuple(sorted(map(str, unpackers[0])))
+            else:
+                assert len(reports) == 2
+                for i, r in enumerate(reports):
+                    assert isinstance(r, metadata.MissingUnpackerDep)
+                    assert r.filenames == (f'diffball-2.7.1{exts[i]}',)
+                    assert r.unpackers == tuple(sorted(map(str, unpackers[i])))
+
+    def test_with_multiple_unpackers_one_missing(self):
+        r = self.assertReport(
+            self.mk_check(),
+            self.mk_pkg(['.zip', '.7z'], DEPEND='app-arch/unzip'))
+        assert isinstance(r, metadata.MissingUnpackerDep)
+        assert r.filenames == (f'diffball-2.7.1.7z',)
+        assert r.unpackers == ('app-arch/p7zip',)

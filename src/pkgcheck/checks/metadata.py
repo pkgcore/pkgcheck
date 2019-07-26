@@ -5,11 +5,13 @@ from operator import attrgetter
 import os
 import re
 
+from pkgcore.ebuild import eapi
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.restrictions.boolean import OrRestriction
 from snakeoil.demandload import demandload
+from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import listdir_files
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
@@ -1044,3 +1046,91 @@ class RestrictsCheck(base.Template):
             deprecated = set(
                 x for x in bad if x.startswith("no") and x[2:] in self.known_restricts)
             yield BadRestricts(pkg, bad.difference(deprecated), deprecated)
+
+
+class MissingUnpackerDep(base.Warning):
+    """Missing dependency on a required unpacker package.
+
+    Package uses an archive format for which an unpacker is not provided by the
+    system set, and lacks an explicit dependency on the unpacker package.
+
+    """
+
+    __slots__ = ("category", "package", "version", "eapi", "filenames", "unpackers")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, filenames, unpackers):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.eapi = str(pkg.eapi)
+        self.filenames = tuple(sorted(filenames))
+        self.unpackers = tuple(sorted(map(str, unpackers)))
+
+    @property
+    def short_desc(self):
+        # determine proper dep type from pkg EAPI
+        eapi_obj = eapi.get_eapi(self.eapi)
+        if 'BDEPEND' in eapi_obj.metadata_keys:
+            dep_type = 'BDEPEND'
+        else:
+            dep_type = 'DEPEND'
+
+        if len(self.unpackers) == 1:
+            bdepend_dep = self.unpackers[0]
+        else:
+            bdepend_dep = f"|| ( {' '.join(self.unpackers)} )"
+
+        return (
+            f'missing {dep_type}="{bdepend_dep}" '
+            f"for SRC_URI archive{_pl(self.filenames)}: "
+            f"[ {', '.join(self.filenames)} ]"
+        )
+
+
+class MissingUnpackerDepCheck(base.Template):
+    """Check whether package is missing unpacker dependencies."""
+
+    feed_type = base.versioned_feed
+
+    known_results = (MissingUnpackerDep,)
+    required_addons = (addons.UseAddon,)
+
+    known_unpackers = ImmutableDict({
+        '.zip': frozenset([atom_cls('app-arch/unzip')]),
+        '.jar': frozenset([atom_cls('app-arch/unzip')]),
+        '.7z': frozenset([atom_cls('app-arch/p7zip')]),
+        '.rar': frozenset([atom_cls('app-arch/rar'), atom_cls('app-arch/unrar')]),
+        '.lha': frozenset([atom_cls('app-arch/lha')]),
+        '.lzh': frozenset([atom_cls('app-arch/lha')]),
+    })
+
+    def __init__(self, options, iuse_handler):
+        super().__init__(options)
+        self.dep_filter = iuse_handler.get_filter()
+        self.fetch_filter = iuse_handler.get_filter('fetchables')
+
+    def feed(self, pkg):
+        # ignore conditionals
+        fetchables, _ = self.fetch_filter((fetchable,), pkg,
+            pkg._get_attr['fetchables'](
+                pkg, allow_missing_checksums=True,
+                ignore_unknown_mirrors=True, skip_default_mirrors=True))
+
+        missing_unpackers = defaultdict(set)
+
+        # scan for fetchables that require unpackers not in the system set
+        for f in fetchables:
+            _, ext = os.path.splitext(f.filename.lower())
+            if ext in self.known_unpackers:
+                missing_unpackers[self.known_unpackers[ext]].add(f.filename)
+
+        # toss all the potentially missing unpackers that properly include deps
+        if missing_unpackers:
+            for dep_type in ('bdepend', 'depend'):
+                deps, _ = self.dep_filter((atom_cls,), pkg, getattr(pkg, dep_type))
+                for unpackers in list(missing_unpackers.keys()):
+                    if unpackers.intersection(deps):
+                        missing_unpackers.pop(unpackers, None)
+
+        for unpackers, filenames in missing_unpackers.items():
+            yield MissingUnpackerDep(pkg, filenames, unpackers)
