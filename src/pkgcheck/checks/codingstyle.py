@@ -192,12 +192,12 @@ class PathVariablesCheck(base.Template):
         for lineno, line in enumerate(lines, 1):
             if not line:
                 continue
-            matches = self.missing_regex.search(line)
-            if matches is not None:
-                missing[matches.group(1)].append(lineno)
-            matches = self.unnecessary_regex.search(line)
-            if matches is not None:
-                unnecessary[matches.group(1)].append(lineno)
+            match = self.missing_regex.search(line)
+            if match is not None:
+                missing[match.group(1)].append(lineno)
+            match = self.unnecessary_regex.search(line)
+            if match is not None:
+                unnecessary[match.group(1)].append(lineno)
 
         for var, lines in missing.items():
             yield MissingSlash(pkg, var, lines)
