@@ -511,3 +511,47 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, self.mk_pkg(uri))
         assert isinstance(r, metadata.TarballAvailable)
         assert r.uris == (uri,)
+
+
+class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
+
+    check_kls = metadata.MissingUnpackerDepCheck
+
+    def mk_pkg(self, ext, **data):
+        class fake_repo:
+            def _get_digests(self, pkg, allow_missing=False):
+                return False, {f'diffball-2.7.1{ext}': {'size': 100}}
+
+        data['SRC_URI'] = f'https://example.com/diffball-2.7.1{ext}'
+        return FakePkg('dev-util/diffball-2.7.1', data=data, eapi='7',
+                       repo=fake_repo())
+
+    def test_zip_without_dep(self):
+        assert isinstance(self.assertReport(
+                self.mk_check(), self.mk_pkg('.zip')),
+            metadata.MissingUnpackerDep)
+
+    def test_zip_with_dep(self):
+        self.assertNoReport(self.mk_check(), self.mk_pkg('.zip',
+            DEPEND='app-arch/unzip'))
+
+    def test_zip_with_bdep(self):
+        self.assertNoReport(self.mk_check(), self.mk_pkg('.zip',
+            BDEPEND='app-arch/unzip'))
+
+    def test_rar_without_dep(self):
+        assert isinstance(self.assertReport(
+                self.mk_check(), self.mk_pkg('.rar')),
+            metadata.MissingUnpackerDep)
+
+    def test_rar_with_dep(self):
+        self.assertNoReport(self.mk_check(), self.mk_pkg('.rar',
+            DEPEND='|| ( app-arch/rar app-arch/unrar )'))
+
+    def test_rar_with_rar_dep(self):
+        self.assertNoReport(self.mk_check(), self.mk_pkg('.rar',
+            DEPEND='app-arch/rar'))
+
+    def test_rar_with_unrar_dep(self):
+        self.assertNoReport(self.mk_check(), self.mk_pkg('.rar',
+            DEPEND='app-arch/unrar'))

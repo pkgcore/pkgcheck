@@ -10,6 +10,7 @@ from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.restrictions.boolean import OrRestriction
 from snakeoil.demandload import demandload
+from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import listdir_files
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
@@ -1044,3 +1045,85 @@ class RestrictsCheck(base.Template):
             deprecated = set(
                 x for x in bad if x.startswith("no") and x[2:] in self.known_restricts)
             yield BadRestricts(pkg, bad.difference(deprecated), deprecated)
+
+
+class MissingUnpackerDep(base.Warning):
+    """Package is missing dependency on unpacker.
+
+    Package is using an archive format for which unpacker is not provided
+    by the system set, and lacks explicit dependency on the unpacker. """
+
+    __slots__ = ("category", "package", "version", "formats", "unpackers")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, formats, unpackers):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.formats = tuple(sorted(formats))
+        self.unpackers = tuple(sorted(unpackers))
+
+    @property
+    def short_desc(self):
+        return (f"Package is using file formats: {', '.join(self.formats)} "
+                f"in SRC_URI but is missing bdepend on unpackers: "
+                f"{' '.join(str(x) for x in self.unpackers)}")
+
+
+class MissingUnpackerDepCheck(base.Template):
+    """Check whether package is missing unpacker dependencies."""
+
+    feed_type = base.versioned_feed
+
+    known_results = (MissingUnpackerDep,)
+    required_addons = (addons.UseAddon,)
+
+    unpackers = ImmutableDict({
+        '.zip': ('app-arch/unzip',),
+        '.jar': ('app-arch/unzip',),
+        '.7z': ('app-arch/p7zip',),
+        '.rar': ('app-arch/rar', 'app-arch/unrar'),
+        '.lha': ('app-arch/lha',),
+        '.lzh': ('app-arch/lha',),
+    })
+
+    def __init__(self, options, iuse_handler):
+        super().__init__(options)
+        self.dep_filter = iuse_handler.get_filter()
+        self.fetch_filter = iuse_handler.get_filter('fetchables')
+
+    def feed(self, pkg):
+        # ignore conditionals
+        fetchables, _ = self.fetch_filter((fetchable,), pkg,
+            pkg._get_attr['fetchables'](
+                pkg, allow_missing_checksums=True,
+                ignore_unknown_mirrors=True, skip_default_mirrors=True))
+
+        # formats is used as definitive list of formats for which deps
+        # are missing (since format may allow multiple rem_unpackers)
+        rem_formats = set()
+        # rem_unpackers are used to optimize dep checks
+        rem_unpackers = set()
+        for f in fetchables:
+            _, ext = os.path.splitext(f.filename.lower())
+            if ext in self.unpackers:
+                rem_formats.add(ext)
+                rem_unpackers.update(self.unpackers[ext])
+
+        if rem_formats:
+            for dep_type in ('bdepend', 'depend'):
+                depend, _ = self.dep_filter((atom_cls,), pkg,
+                                            getattr(pkg, dep_type))
+                for d in depend:
+                    if not d.blocks and d.key in rem_unpackers:
+                        for k, v in self.unpackers.items():
+                            if d.key in v:
+                                rem_formats.discard(k)
+                                rem_unpackers.discard(d.key)
+                        if not rem_formats:
+                            break
+
+        if rem_formats:
+            rem_unpackers = set()
+            for f in rem_formats:
+                rem_unpackers.add(OrRestriction(*self.unpackers[f]))
+            yield MissingUnpackerDep(pkg, rem_formats, rem_unpackers)

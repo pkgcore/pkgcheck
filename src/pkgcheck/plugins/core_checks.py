@@ -32,6 +32,7 @@ pkgcore_plugins = {
         metadata.LocalUSECheck,
         metadata.MetadataCheck,
         metadata.MissingSlotDepCheck,
+        metadata.MissingUnpackerDepCheck,
         metadata.RestrictsCheck,
         metadata.SrcUriCheck,
         metadata_xml.CategoryMetadataXmlCheck,
