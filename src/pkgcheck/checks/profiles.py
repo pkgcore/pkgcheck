@@ -148,7 +148,7 @@ class ProfilesCheck(base.Template):
             local_iuse | iuse_handler.global_iuse |
             iuse_handler.global_iuse_expand | iuse_handler.unstated_iuse)
 
-        # TODO: move this and the same support in metadata_checks.KeywordsCheck to a shared addon
+        # TODO: move this and the same support in metadata.KeywordsCheck to a shared addon
         special_keywords = {'-*'}
         stable_keywords = self.options.target_repo.known_arches
         unstable_keywords = {'~' + x for x in stable_keywords}
