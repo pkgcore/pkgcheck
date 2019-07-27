@@ -12,7 +12,7 @@ demandload(
     'snakeoil.contexts:patch',
     'snakeoil.osutils:listdir_dirs,pjoin',
     'snakeoil.sequences:iflatten_instance',
-    'pkgcore.ebuild:atom,misc',
+    'pkgcore.ebuild:atom,misc,repo_objs',
     'pkgcore.ebuild:profiles@profiles_mod',
 )
 
@@ -303,22 +303,6 @@ class UnusedProfileDirs(base.Warning):
         return f"[ {', '.join(self.dirs)} ]"
 
 
-class UnknownProfileArches(base.Warning):
-    """Unknown arches used in profiles."""
-
-    __slots__ = ("arches",)
-
-    threshold = base.repository_feed
-
-    def __init__(self, arches):
-        super().__init__()
-        self.arches = arches
-
-    @property
-    def short_desc(self):
-        return f"[ {', '.join(self.arches)} ]"
-
-
 class ArchesWithoutProfiles(base.Warning):
     """Arches without corresponding profile listings."""
 
@@ -333,22 +317,6 @@ class ArchesWithoutProfiles(base.Warning):
     @property
     def short_desc(self):
         return f"[ {', '.join(self.arches)} ]"
-
-
-class UnknownProfileStatus(base.Warning):
-    """Unknown status used for profiles."""
-
-    __slots__ = ("status",)
-
-    threshold = base.repository_feed
-
-    def __init__(self, status):
-        super().__init__()
-        self.status = status
-
-    @property
-    def short_desc(self):
-        return f"[ {', '.join(self.status)} ]"
 
 
 class NonexistentProfilePath(base.Warning):
@@ -419,18 +387,20 @@ class RepoProfilesCheck(base.Template):
     feed_type = base.repository_feed
     scope = base.repository_scope
     known_results = (
-        UnknownProfileArches, ArchesWithoutProfiles, UnusedProfileDirs,
-        NonexistentProfilePath, UnknownProfileStatus, UnknownCategories,
-        LaggingProfileEAPI,
+        ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,
+        UnknownCategories, LaggingProfileEAPI,
+        ProfileError, ProfileWarning,
     )
 
-    def __init__(self, options, profile_filters):
+    # known profile status types for the gentoo repo
+    known_profile_statuses = frozenset(['stable', 'dev', 'exp'])
+
+    def __init__(self, options, profile_addon):
         super().__init__(options)
         self.arches = options.target_repo.known_arches
-        self.profiles = iter(options.target_repo.config.arch_profiles.values())
         self.repo = options.target_repo
         self.profiles_dir = pjoin(self.repo.location, 'profiles')
-        self.non_profile_dirs = profile_filters.non_profile_dirs
+        self.non_profile_dirs = profile_addon.non_profile_dirs
 
     def feed(self, pkg):
         pass
@@ -443,11 +413,8 @@ class RepoProfilesCheck(base.Template):
         if unknown_categories:
             yield UnknownCategories(unknown_categories)
 
-        unknown_arches = self.repo.config.profiles.arches().difference(self.arches)
         arches_without_profiles = self.arches.difference(self.repo.config.profiles.arches())
 
-        if unknown_arches:
-            yield UnknownProfileArches(unknown_arches)
         if arches_without_profiles:
             yield ArchesWithoutProfiles(arches_without_profiles)
 
@@ -472,17 +439,38 @@ class RepoProfilesCheck(base.Template):
                 dirname, _basename = os.path.split(path)
                 path = dirname.rstrip('/')
 
+        profile_reports = []
+        report_profile_warnings = lambda x: profile_reports.append(ProfileWarning(x))
+        report_profile_errors = lambda x: profile_reports.append(ProfileError(x))
+
+        # don't check for acceptable profile statuses on overlays
+        if self.repo.repo_id == 'gentoo':
+            known_profile_statuses = self.known_profile_statuses
+        else:
+            known_profile_statuses = None
+
+        # forcibly parse profiles.desc and convert log warnings/errors into reports
+        profiles_obj = repo_objs.BundledProfiles(self.profiles_dir)
+        # TODO: provide easier access to the function underlying a jitted attribute
+        arch_profiles = getattr(repo_objs.BundledProfiles, 'arch_profiles').function
+        with patch('pkgcore.log.logger.error', report_profile_errors), \
+                patch('pkgcore.log.logger.warning', report_profile_warnings):
+            profiles = arch_profiles(
+                profiles_obj,
+                known_status=known_profile_statuses, known_arch=self.arches)
+
+        yield from profile_reports
+
         seen_profile_dirs = set()
         profile_status = set()
         lagging_profile_eapi = defaultdict(list)
-        for path, status in chain.from_iterable(self.profiles):
+        for path, status in chain.from_iterable(iter(profiles.values())):
             # suppress profile warning/error logs that should be caught by ProfilesCheck
             with suppress_logging():
                 profile = profiles_mod.ProfileStack(pjoin(self.profiles_dir, path))
                 for parent in profile.stack:
                     seen_profile_dirs.update(
                         dir_parents(parent.path[len(self.profiles_dir):]))
-
                     # flag lagging profile EAPIs -- assumes EAPIs are sequentially
                     # numbered which should be the case for the gentoo repo
                     if (self.repo.repo_id == 'gentoo' and
@@ -498,9 +486,3 @@ class RepoProfilesCheck(base.Template):
         unused_profile_dirs = available_profile_dirs - seen_profile_dirs
         if unused_profile_dirs:
             yield UnusedProfileDirs(unused_profile_dirs)
-
-        if self.repo.repo_id == 'gentoo':
-            accepted_status = ('stable', 'dev', 'exp')
-            unknown_status = profile_status.difference(accepted_status)
-            if unknown_status:
-                yield UnknownProfileStatus(unknown_status)
