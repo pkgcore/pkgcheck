@@ -320,7 +320,7 @@ class ArchesWithoutProfiles(base.Warning):
 
 
 class NonexistentProfilePath(base.Warning):
-    """Specified profile path doesn't exist."""
+    """Specified profile path in profiles.desc doesn't exist."""
 
     __slots__ = ("path",)
 
@@ -376,6 +376,20 @@ class UnknownCategories(base.Warning):
         return f"[ {', '.join(self.categories)} ]"
 
 
+def dir_parents(path):
+    """Yield all directory path parents excluding the root directory.
+
+    Example:
+    >>> list(dir_parents('/root/foo/bar/baz'))
+    ['root/foo/bar', 'root/foo', 'root']
+    """
+    path = os.path.normpath(path.strip('/'))
+    while path:
+        yield path
+        dirname, _basename = os.path.split(path)
+        path = dirname.rstrip('/')
+
+
 class RepoProfilesCheck(base.Template):
     """Scan repo for various profiles directory issues.
 
@@ -414,7 +428,6 @@ class RepoProfilesCheck(base.Template):
             yield UnknownCategories(unknown_categories)
 
         arches_without_profiles = self.arches.difference(self.repo.config.profiles.arches())
-
         if arches_without_profiles:
             yield ArchesWithoutProfiles(arches_without_profiles)
 
@@ -425,19 +438,6 @@ class RepoProfilesCheck(base.Template):
             if d:
                 available_profile_dirs.add(d)
         available_profile_dirs -= self.non_profile_dirs | root_profile_dirs
-
-        def dir_parents(path):
-            """Yield all directory path parents excluding the root directory.
-
-            Example:
-            >>> list(dir_parents('/root/foo/bar/baz'))
-            ['root/foo/bar', 'root/foo', 'root']
-            """
-            path = os.path.normpath(path.strip('/'))
-            while path:
-                yield path
-                dirname, _basename = os.path.split(path)
-                path = dirname.rstrip('/')
 
         profile_reports = []
         report_profile_warnings = lambda x: profile_reports.append(ProfileWarning(x))
@@ -467,7 +467,11 @@ class RepoProfilesCheck(base.Template):
         for path, status in chain.from_iterable(iter(profiles.values())):
             # suppress profile warning/error logs that should be caught by ProfilesCheck
             with suppress_logging():
-                profile = profiles_mod.ProfileStack(pjoin(self.profiles_dir, path))
+                try:
+                    profile = profiles_mod.ProfileStack(pjoin(self.profiles_dir, path))
+                except profiles_mod.ProfileError:
+                    yield NonexistentProfilePath(path)
+                    continue
                 for parent in profile.stack:
                     seen_profile_dirs.update(
                         dir_parents(parent.path[len(self.profiles_dir):]))
@@ -476,8 +480,6 @@ class RepoProfilesCheck(base.Template):
                     if (self.repo.repo_id == 'gentoo' and
                             str(profile.eapi) < str(parent.eapi)):
                         lagging_profile_eapi[profile].append(parent)
-            if not os.path.exists(pjoin(self.profiles_dir, path)):
-                yield NonexistentProfilePath(path)
             profile_status.add(status)
 
         for profile, parents in lagging_profile_eapi.items():
