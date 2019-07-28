@@ -399,7 +399,7 @@ class RepoProfilesCheck(base.Template):
         super().__init__(options)
         self.arches = options.target_repo.known_arches
         self.repo = options.target_repo
-        self.profiles_dir = pjoin(self.repo.location, 'profiles')
+        self.profiles_dir = self.repo.config.profiles_base
         self.non_profile_dirs = profile_addon.non_profile_dirs
 
     def feed(self, pkg):
