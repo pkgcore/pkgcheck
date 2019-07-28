@@ -476,14 +476,9 @@ class ProfileAddon(base.Addon):
         disabled = disabled.difference(toggled)
         ignore_deprecated = 'deprecated' not in enabled
 
-        # hide profiles.desc parsing errors/warnings that will be caught in profile checks
-        with suppress_logging():
-            # expand status keywords, e.g. 'stable' -> set of stable profiles
-            disabled = set(chain.from_iterable(map(norm_name, disabled)))
-            enabled = set(chain.from_iterable(map(norm_name, enabled)))
-
-            profile_status_map = dict(chain.from_iterable(
-                profiles_obj.arch_profiles.values()))
+        # expand status keywords, e.g. 'stable' -> set of stable profiles
+        disabled = set(chain.from_iterable(map(norm_name, disabled)))
+        enabled = set(chain.from_iterable(map(norm_name, enabled)))
 
         # If no profiles are enabled, then all that are defined in
         # profiles.desc are scanned except ones that are explicitly disabled.
@@ -513,6 +508,9 @@ class ProfileAddon(base.Addon):
         # a lot of reparsing at the expense of slightly more memory usage
         # temporarily.
         cached_profiles = []
+
+        profile_status_map = dict(chain.from_iterable(
+            profiles_obj.arch_profiles.values()))
 
         arch_profiles = defaultdict(list)
         for profile_path in profile_paths:
