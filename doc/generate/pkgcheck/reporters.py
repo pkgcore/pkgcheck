@@ -44,9 +44,10 @@ def main(f=sys.stdout, **kwargs):
 
         _rst_header('-', reporter.__name__)
         if summary:
-            out('\n' + ' '.join(dedent(summary).strip().split('\n')))
+            out('\n' + dedent(summary).strip())
             if explanation:
-                out('\n' + '\n'.join(dedent(explanation).strip().split('\n')))
+                explanation = '\n'.join(dedent(explanation).strip().split('\n'))
+                out('\n' + explanation)
 
 
 if __name__ == '__main__':

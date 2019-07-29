@@ -14,9 +14,10 @@ that operate at a package or version scope will be run. On the other hand, when
 running against an entire repo, all defined checks will be run.
 """
 
+from operator import attrgetter
 from collections import defaultdict
 import sys
-from textwrap import dedent
+from textwrap import dedent, TextWrapper
 
 from pkgcheck import base
 from pkgcheck.scripts.pkgcheck import _known_checks
@@ -36,6 +37,8 @@ def main(f=sys.stdout, **kwargs):
     if __doc__ is not None:
         out(__doc__.strip())
 
+    wrapper = TextWrapper(width=85)
+
     for i, scope in enumerate(base.known_scopes.values()):
         _rst_header('-', scope.desc.capitalize() + ' scope')
 
@@ -52,10 +55,14 @@ def main(f=sys.stdout, **kwargs):
 
             _rst_header('^', check.__name__)
             if summary:
-                out('\n' + ' '.join(dedent(summary).strip().split('\n')))
+                out('\n' + dedent(summary).strip())
                 if explanation:
-                    out('\n' + ' '.join(dedent(explanation).strip().split('\n')))
-                out('\n\n(known results: %s)' % ', '.join((r.__name__ for r in sorted(check.known_results, key=lambda x: x.__name__))))
+                    explanation = '\n'.join(dedent(explanation).strip().split('\n'))
+                    out('\n' + explanation)
+                known_results = ', '.join(
+                    r.__name__ for r in
+                    sorted(check.known_results, key=attrgetter('__name__')))
+                out('\n' + '\n'.join(wrapper.wrap(f"(known results: {known_results})")))
 
 
 if __name__ == '__main__':
