@@ -8,6 +8,9 @@ from .. import addons, base
 demand_compile_regexp(
     'ebuild_copyright_regex',
     r'^# Copyright (\d\d\d\d(-\d\d\d\d)?) .+')
+demand_compile_regexp(
+    'old_gentoo_copyright_regex',
+    r'^# Copyright (\d\d\d\d(-\d\d\d\d)?) Gentoo Foundation')
 
 
 class InvalidCopyright(base.Warning):
@@ -41,6 +44,26 @@ class OutdatedCopyright(base.Warning):
     @property
     def short_desc(self):
         return f'outdated copyright year {self.year!r}: {self.line!r}'
+
+
+class OldGentooCopyright(base.Warning):
+    """Changed ebuild with old Gentoo copyright.
+
+    Previously ebuilds assigned copyright to the Gentoo Foundation by default.
+    Now that's been changed to Gentoo Authors in GLEP 76.
+    """
+
+    __slots__ = ('category', 'package', 'version', 'line')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, line):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.line = line
+
+    @property
+    def short_desc(self):
+        return f'old copyright, update to "Gentoo Authors": {self.line!r}'
 
 
 class DirectStableKeywords(base.Error):
@@ -82,7 +105,8 @@ class GitCommitsCheck(base.DefaultRepoCheck):
     filter_type = base.git_filter
     required_addons = (addons.GitAddon,)
     known_results = (
-        DirectStableKeywords, DirectNoMaintainer, InvalidCopyright, OutdatedCopyright,
+        DirectStableKeywords, DirectNoMaintainer,
+        InvalidCopyright, OutdatedCopyright, OldGentooCopyright,
     )
 
     def __init__(self, options, git_addon):
@@ -109,6 +133,8 @@ class GitCommitsCheck(base.DefaultRepoCheck):
                 year = copyright.group(1).split('-')[-1]
                 if int(year) < self.today.year:
                     yield OutdatedCopyright(pkg, year, line.strip('\n'))
+                if old_gentoo_copyright_regex.match(line):
+                    yield OldGentooCopyright(pkg, line.strip('\n'))
             else:
                 yield InvalidCopyright(pkg, line.strip('\n'))
 
