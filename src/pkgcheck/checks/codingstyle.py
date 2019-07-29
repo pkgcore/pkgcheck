@@ -167,30 +167,94 @@ class UnnecessarySlashStrip(base.Warning):
         return f"{self.variable} unnecessary slash strip on line{_pl(self.lines)}: {lines}"
 
 
+class DoublePrefixInPath(base.Error):
+    """Ebuild uses two consecutive paths including EPREFIX.
+
+    Ebuild combines two path variables (or a variable and a getter), both
+    of which include EPREFIX, resulting in double prefixing.  This is the case
+    when combining many pkg-config-based or alike getters with ED or EROOT.
+
+    For example, '${ED}$(python_get_sitedir)' should be replaced
+    with '${D}$(python_get_sitedir)'.
+    """
+
+    __slots__ = ("category", "package", "version", "variable", "lines")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, variable, lines):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.variable = variable
+        self.lines = tuple(lines)
+
+    @property
+    def short_desc(self):
+        lines = ', '.join(map(str, self.lines))
+        return (f"{self.variable} concatenates two variables containing "
+                f"EPREFIX on line{_pl(self.lines)}: {lines}")
+
+
 class PathVariablesCheck(base.Template):
     """Scan ebuild for path variables with various issues."""
 
     feed_type = base.ebuild_feed
-    known_results = (MissingSlash, UnnecessarySlashStrip)
-    variables = ('ROOT', 'EROOT', 'D', 'ED')
+    known_results = (MissingSlash, UnnecessarySlashStrip, DoublePrefixInPath)
+    prefixed_variables = ('EROOT', 'ED')
+    variables = ('ROOT', 'D') + prefixed_variables
+    prefixed_getters = (
+        # bash-completion-r1.eclass
+        'get_bashcompdir', 'get_bashhelpersdir',
+        # db-use.eclass
+        'db_includedir',
+        # golang-base.eclass
+        'get_golibdir_gopath',
+        # llvm.eclass
+        'get_llvm_prefix',
+        # python-utils-r1.eclass
+        'python_get_sitedir', 'python_get_includedir',
+        'python_get_library_path', 'python_get_scriptdir',
+        # qmake-utils.eclass
+        'qt4_get_bindir', 'qt5_get_bindir',
+        # s6.eclass
+        's6_get_servicedir',
+        # systemd.eclass
+        'systemd_get_systemunitdir', 'systemd_get_userunitdir',
+        'systemd_get_utildir', 'systemd_get_systemgeneratordir',
+    )
+    prefixed_rhs_variables = (
+        # catch silly ${ED}${EPREFIX} mistake ;-)
+        'EPREFIX',
+        # python-utils-r1.eclass
+        'PYTHON', 'PYTHON_SITEDIR', 'PYTHON_INCLUDEDIR', 'PYTHON_LIBPATH',
+        'PYTHON_CONFIG', 'PYTHON_SCRIPTDIR',
+    )
 
     def __init__(self, options):
         super().__init__(options)
         self.missing_regex = re.compile(r'(\${(%s)})"?\w' % r'|'.join(self.variables))
         self.unnecessary_regex = re.compile(r'(\${(%s)%%/})' % r'|'.join(self.variables))
+        self.double_prefix_regex = re.compile(r'(\${(%s)(%%/)?}/?\$(\((%s)\)|{(%s)}))'
+                % (r'|'.join(self.prefixed_variables + ('EPREFIX',)),
+                   r'|'.join(self.prefixed_getters),
+                   r'|'.join(self.prefixed_rhs_variables)))
 
     def feed(self, entry):
         pkg, lines = entry
 
-        # skip EAPIs that don't require trailing slashes
-        if pkg.eapi.options.trailing_slash:
-            return
-
         missing = defaultdict(list)
         unnecessary = defaultdict(list)
+        double_prefix = defaultdict(list)
 
         for lineno, line in enumerate(lines, 1):
             if not line:
+                continue
+
+            match = self.double_prefix_regex.search(line)
+            if match is not None:
+                double_prefix[match.group(1)].append(lineno)
+
+            # skip EAPIs that don't require trailing slashes
+            if pkg.eapi.options.trailing_slash:
                 continue
             match = self.missing_regex.search(line)
             if match is not None:
@@ -203,6 +267,8 @@ class PathVariablesCheck(base.Template):
             yield MissingSlash(pkg, var, lines)
         for var, lines in unnecessary.items():
             yield UnnecessarySlashStrip(pkg, var, lines)
+        for var, lines in double_prefix.items():
+            yield DoublePrefixInPath(pkg, var, lines)
 
 
 class AbsoluteSymlink(base.Warning):
