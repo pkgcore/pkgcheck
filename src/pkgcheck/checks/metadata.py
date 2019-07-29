@@ -377,7 +377,7 @@ class MissingSlotDep(base.Warning):
 
     Please verify whether the package works with all the dependency slots.
     If only one slot is actually acceptable, specify it explicitly. If multiple
-    slots are acceptable, please use either ':=' or explicit ':\*' slot operator.
+    slots are acceptable, please use either ``:=`` or explicit ``:*`` slot operator.
     The operators are described in detail in the devmanual [#]_.
 
     .. [#] https://devmanual.gentoo.org/general-concepts/dependencies/#slot-dependencies
@@ -430,13 +430,13 @@ class MissingSlotDepCheck(base.Template):
 class MissingPackageRevision(base.Warning):
     """Missing package revision in =cat/pkg dependencies.
 
-    The dependency string uses the '=' operator without specifying a revision.
-    This means that only '-r0' of the dependency will be matched, and newer
+    The dependency string uses the ``=`` operator without specifying a revision.
+    This means that only ``-r0`` of the dependency will be matched, and newer
     revisions of the same ebuild will not be accepted.
 
-    If any revision of the package is acceptable, the '~' operator should be
-    used instead of '='. If only the initial revision of the dependency is
-    allowed, '-r0' should be appended in order to make the intent explicit.
+    If any revision of the package is acceptable, the ``~`` operator should be
+    used instead of ``=``. If only the initial revision of the dependency is
+    allowed, ``-r0`` should be appended in order to make the intent explicit.
     """
 
     __slots__ = ('category', 'package', 'version', 'dep', 'atom')
@@ -869,7 +869,7 @@ class BadProto(base.Warning):
 class BadFilename(base.Warning):
     """URI uses unspecific or poor filename(s).
 
-    Archive filenames should be disambiguated using '->' to rename them.
+    Archive filenames should be disambiguated using ``->`` to rename them.
     """
 
     __slots__ = ("category", "package", "version", "filenames")
@@ -1091,7 +1091,6 @@ class MissingUnpackerDep(base.Warning):
 
     Package uses an archive format for which an unpacker is not provided by the
     system set, and lacks an explicit dependency on the unpacker package.
-
     """
 
     __slots__ = ("category", "package", "version", "eapi", "filenames", "unpackers")
