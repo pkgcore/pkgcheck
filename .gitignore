@@ -1,4 +1,4 @@
-pkgcheck/plugins/plugincache
+src/pkgcheck/plugins/plugincache
 _trial_temp
 *.pyc
 *.pyo
