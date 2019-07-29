@@ -298,13 +298,13 @@ class ProbableUSE_EXPAND(base.Warning):
 
     The local USE flag starts with a prefix reserved to USE_EXPAND group,
     yet it is not a globally defined member of this group. According
-    to the standing policy [1], all possible values for each USE_EXPAND
+    to the standing policy [#]_, all possible values for each USE_EXPAND
     must be defined and documented globally.
 
     This warning can be fixed via moving the local flag description
     into appropriate profiles/desc file.
 
-    [1] https://devmanual.gentoo.org/general-concepts/use-flags/index.html
+    .. [#] https://devmanual.gentoo.org/general-concepts/use-flags/index.html
     """
 
     __slots__ = ("category", "package", "flag", "group")
@@ -378,9 +378,9 @@ class MissingSlotDep(base.Warning):
     Please verify whether the package works with all the dependency slots.
     If only one slot is actually acceptable, specify it explicitly. If multiple
     slots are acceptable, please use either ':=' or explicit ':\*' slot operator.
-    The operators are described in detail in devmanual [1].
+    The operators are described in detail in devmanual [#]_.
 
-    [1] https://devmanual.gentoo.org/general-concepts/dependencies/index.html#slot-dependencies
+    .. [#] https://devmanual.gentoo.org/general-concepts/dependencies/index.html#slot-dependencies
     """
 
     __slots__ = ('category', 'package', 'version', 'dep', 'dep_slots')
