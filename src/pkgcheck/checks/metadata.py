@@ -406,12 +406,12 @@ class MissingPackageRevision(base.Warning):
     def __init__(self, pkg, dep, atom):
         super().__init__()
         self._store_cpv(pkg)
-        self.dep = dep
+        self.dep = dep.upper()
         self.atom = str(atom)
 
     @property
     def short_desc(self):
-        return f"{self.dep}: {self.atom}: '=' operator used without revision"
+        return f'{self.dep}="{self.atom}": "=" operator used without package revision'
 
 
 class MissingUseDepDefault(base.Warning):
