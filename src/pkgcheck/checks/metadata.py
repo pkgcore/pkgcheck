@@ -391,7 +391,7 @@ class MissingSlotDepCheck(base.Template):
                 yield MissingSlotDep(pkg, str(dep), dep_slots)
 
 
-class MissingRevision(base.Warning):
+class MissingPackageRevision(base.Warning):
     """Missing package revision in =cat/pkg dependencies.
 
     If any revision of the package is acceptable, the '~' operator should be
@@ -493,7 +493,7 @@ class DependencyCheck(base.Template):
 
     required_addons = (addons.UseAddon, addons.GitAddon)
     known_results = (
-        MetadataError, MissingRevision, MissingUseDepDefault,
+        MetadataError, MissingPackageRevision, MissingUseDepDefault,
         OutdatedBlocker, NonexistentBlocker, addons.UnstatedIUSE,
     )
 
@@ -575,7 +575,7 @@ class DependencyCheck(base.Template):
                             else:
                                 nonexistent_blockers.add((attr_name, atom))
                 if atom.op == '=' and not atom.revision:
-                    yield MissingRevision(pkg, attr_name, atom)
+                    yield MissingPackageRevision(pkg, attr_name, atom)
 
             if slot_op_or_blocks:
                 yield MetadataError(
