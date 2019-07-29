@@ -293,7 +293,7 @@ class ProbableGlobalUSE(base.Warning):
         return f"local USE flag closely matches a global: {self.flag!r}"
 
 
-class ProbableUSE_EXPAND(base.Warning):
+class ProbableUseExpand(base.Warning):
     """Local USE flag that isn't overridden matches a USE_EXPAND group.
 
     The local USE flag starts with a prefix reserved to USE_EXPAND group,
@@ -328,7 +328,7 @@ class LocalUSECheck(base.Template):
     required_addons = (addons.UseAddon,)
     known_results = (
         UnusedLocalUSE, MatchingGlobalUSE, ProbableGlobalUSE,
-        ProbableUSE_EXPAND, addons.UnstatedIUSE,
+        ProbableUseExpand, addons.UnstatedIUSE,
     )
 
     def __init__(self, options, use_handler):
@@ -357,7 +357,7 @@ class LocalUSECheck(base.Template):
                 for group in self.use_expand_groups:
                     if (flag.startswith(f'{group}_') and
                             flag not in self.use_expand_groups[group]):
-                        yield ProbableUSE_EXPAND(pkg, flag, group.upper())
+                        yield ProbableUseExpand(pkg, flag, group.upper())
                         break
 
         unused = set(local_use)
