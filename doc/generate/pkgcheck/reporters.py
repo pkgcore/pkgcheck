@@ -2,6 +2,7 @@
 #
 # Output rst doc for defined pkgcheck reporters.
 
+from operator import attrgetter
 import sys
 from textwrap import dedent
 
@@ -27,7 +28,7 @@ def main(f=sys.stdout, **kwargs):
 
     reporters = sorted(unstable_unique(
         get_plugins('reporter', plugins)),
-        key=lambda x: x.__name__)
+        key=attrgetter('__name__'))
 
     _rst_header('=', 'Reporters', newline=False)
 
@@ -41,11 +42,11 @@ def main(f=sys.stdout, **kwargs):
         else:
             summary = None
 
-        out('\n{}'.format(reporter.__name__))
+        _rst_header('-', reporter.__name__)
         if summary:
-            out('\t' + ' '.join(dedent(summary).strip().split('\n')))
+            out('\n' + ' '.join(dedent(summary).strip().split('\n')))
             if explanation:
-                out('\n\t' + '\n\t'.join(dedent(explanation).strip().split('\n')))
+                out('\n' + '\n'.join(dedent(explanation).strip().split('\n')))
 
 
 if __name__ == '__main__':
