@@ -130,6 +130,49 @@ class TestPathVariablesCheck(misc.ReportTestCase):
     def test_unnecessary_unfound(self):
         self._unfound(codingstyle.UnnecessarySlashStrip, suffix='%/')
 
+    def test_double_prefix_found(self):
+        fake_src = [
+            'src_install() {\n',
+            '    cp foo.py "${ED}$(python_get_sitedir)"\n',
+            # test non-match
+            '    cp foo.py "${D%/}$(python_get_sitedir)"\n',
+            # test slash-strip
+            '    cp foo.py "${ED%/}$(python_get_sitedir)"\n',
+            # test extra slash
+            '    cp foo.py "${ED}/$(python_get_sitedir)"\n',
+            # test variable variant
+            '    cp foo.py "${ED}${PYTHON_SITEDIR}"\n',
+            # test silly mistake
+            '    cp foo "${ED}${EPREFIX}/foo/bar"\n',
+            '}\n'
+        ]
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
+        r = self.assertReports(self.check, [fake_pkg, fake_src])
+        cls = codingstyle.DoublePrefixInPath
+        expected_results = (
+            ('${ED}$(python_get_sitedir)', 2),
+            ('${ED%/}$(python_get_sitedir)', 4),
+            ('${ED}/$(python_get_sitedir)', 5),
+            ('${ED}${PYTHON_SITEDIR}', 6),
+            ('${ED}${EPREFIX}', 7),
+        )
+        assert len(r) == len(expected_results)
+        for res, exp in zip(r, expected_results):
+            assert isinstance(res, cls)
+            assert res.variable == exp[0]
+            assert res.lines == (exp[1],)
+            assert exp[0] in str(res)
+
+    def test_double_prefix_unfound(self):
+        fake_src = [
+            'src_install() {\n',
+            '    cp foo.py "${D}$(python_get_sitedir)"\n'
+            '    cp foo "${D}${EPREFIX}/foo/bar"\n'
+            '}\n'
+        ]
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
+        self.assertNoReport(self.check, [fake_pkg, fake_src])
+
 
 class TestObsoleteUri(misc.ReportTestCase):
 
