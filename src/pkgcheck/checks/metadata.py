@@ -140,7 +140,17 @@ class MetadataCheck(base.Template):
 
 
 class RequiredUseDefaults(base.Warning):
-    """Default USE flag settings don't satisfy REQUIRED_USE."""
+    """Default USE flag settings don't satisfy REQUIRED_USE.
+
+    The REQUIRED_USE constraints specified in the ebuild are not satisfied
+    by the default USE flags used in one or more profiles. This means that
+    users on those profiles may be unable to install the package out of the box,
+    without having to modify package.use.
+
+    This warning is usually fixed via using IUSE defaults to enable one
+    of the needed flags, modifying package.use in the most relevant profiles
+    or modifying REQUIRED_USE.
+    """
 
     __slots__ = (
         "category", "package", "version", "profile", "num_profiles", "keyword",
@@ -284,7 +294,18 @@ class ProbableGlobalUSE(base.Warning):
 
 
 class ProbableUSE_EXPAND(base.Warning):
-    """Local USE flag that isn't overridden matches a USE_EXPAND group."""
+    """Local USE flag that isn't overridden matches a USE_EXPAND group.
+
+    The local USE flag starts with a prefix reserved to USE_EXPAND group,
+    yet it is not a globally defined member of this group. According
+    to the standing policy [1], all possible values for each USE_EXPAND
+    must be defined and documented globally.
+
+    This warning can be fixed via moving the local flag description
+    into appropriate profiles/desc file.
+
+    [1] https://devmanual.gentoo.org/general-concepts/use-flags/index.html
+    """
 
     __slots__ = ("category", "package", "flag", "group")
     threshold = base.package_feed
@@ -347,7 +368,20 @@ class LocalUSECheck(base.Template):
 
 
 class MissingSlotDep(base.Warning):
-    """Missing slot value in dependencies."""
+    """Missing slot value in dependencies.
+
+    The package dependency does not specify a slot but the target package
+    has multiple slots. The behavior for satisfying this kind of dependency
+    is not strictly defined, and may result in either any or the newest package
+    slot being accepted.
+
+    Please verify whether the package works with all the dependency slots.
+    If only one slot is actually acceptable, specify it explicitly. If multiple
+    slots are acceptable, please use either ':=' or explicit ':*' slot operator.
+    The operators are described in detail in devmanual [1].
+
+    [1] https://devmanual.gentoo.org/general-concepts/dependencies/index.html#slot-dependencies
+    """
 
     __slots__ = ('category', 'package', 'version', 'dep', 'dep_slots')
 
@@ -396,9 +430,13 @@ class MissingSlotDepCheck(base.Template):
 class MissingPackageRevision(base.Warning):
     """Missing package revision in =cat/pkg dependencies.
 
+    The dependency string uses '=' operator without specifying a revision
+    This means that only '-r0' of the dependency will be matched, and newer
+    revisions of the same ebuild will not be accepted.
+
     If any revision of the package is acceptable, the '~' operator should be
     used instead of '='. If only the initial revision of the dependency is
-    allowed, '-r0' can be appended when using the '=' operator.
+    allowed, '-r0' should be appended in order to make the intent explicit.
     """
 
     __slots__ = ('category', 'package', 'version', 'dep', 'atom')
