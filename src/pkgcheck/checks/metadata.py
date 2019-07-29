@@ -1070,18 +1070,15 @@ class MissingUnpackerDep(base.Warning):
     def short_desc(self):
         # determine proper dep type from pkg EAPI
         eapi_obj = eapi.get_eapi(self.eapi)
-        if 'BDEPEND' in eapi_obj.metadata_keys:
-            dep_type = 'BDEPEND'
-        else:
-            dep_type = 'DEPEND'
+        dep_type = 'BDEPEND' if 'BDEPEND' in eapi_obj.metadata_keys else 'DEPEND'
 
         if len(self.unpackers) == 1:
-            bdepend_dep = self.unpackers[0]
+            dep = self.unpackers[0]
         else:
-            bdepend_dep = f"|| ( {' '.join(self.unpackers)} )"
+            dep = f"|| ( {' '.join(self.unpackers)} )"
 
         return (
-            f'missing {dep_type}="{bdepend_dep}" '
+            f'missing {dep_type}="{dep}" '
             f"for SRC_URI archive{_pl(self.filenames)}: "
             f"[ {', '.join(self.filenames)} ]"
         )
@@ -1095,7 +1092,7 @@ class MissingUnpackerDepCheck(base.Template):
     known_results = (MissingUnpackerDep,)
     required_addons = (addons.UseAddon,)
 
-    known_unpackers = ImmutableDict({
+    non_system_unpackers = ImmutableDict({
         '.zip': frozenset([atom_cls('app-arch/unzip')]),
         '.jar': frozenset([atom_cls('app-arch/unzip')]),
         '.7z': frozenset([atom_cls('app-arch/p7zip')]),
@@ -1121,8 +1118,8 @@ class MissingUnpackerDepCheck(base.Template):
         # scan for fetchables that require unpackers not in the system set
         for f in fetchables:
             _, ext = os.path.splitext(f.filename.lower())
-            if ext in self.known_unpackers:
-                missing_unpackers[self.known_unpackers[ext]].add(f.filename)
+            if ext in self.non_system_unpackers:
+                missing_unpackers[self.non_system_unpackers[ext]].add(f.filename)
 
         # toss all the potentially missing unpackers that properly include deps
         if missing_unpackers:

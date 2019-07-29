@@ -518,7 +518,7 @@ class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
 
     check_kls = metadata.MissingUnpackerDepCheck
 
-    def mk_pkg(self, exts, **data):
+    def mk_pkg(self, exts, eapi='7', **data):
         if isinstance(exts, str):
             exts = [exts]
 
@@ -530,19 +530,30 @@ class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
         data['SRC_URI'] = ' '.join(
             f'https://foo.com/diffball-2.7.1{ext}' for ext in exts)
         return FakePkg(
-            'dev-util/diffball-2.7.1', data=data, eapi='7', repo=fake_repo())
+            'dev-util/diffball-2.7.1', data=data, eapi=eapi, repo=fake_repo())
+
+    def test_with_system_dep(self):
+        self.assertNoReport(self.mk_check(), self.mk_pkg('.tar.gz'))
+
+    def test_keyword_output(self):
+        # unpacker deps go in BDEPEND in EAPI >= 7
+        r = self.assertReport(self.mk_check(), self.mk_pkg('.jar', eapi='7'))
+        assert 'missing BDEPEND="app-arch/unzip"' in str(r)
+        # and in DEPEND for EAPI < 7
+        r = self.assertReport(self.mk_check(), self.mk_pkg('.jar', eapi='6'))
+        assert 'missing DEPEND="app-arch/unzip"' in str(r)
 
     def test_without_dep(self):
-        for ext, unpackers in self.check_kls.known_unpackers.items():
+        for ext, unpackers in self.check_kls.non_system_unpackers.items():
             pkg = self.mk_pkg(ext)
             r = self.assertReport(self.mk_check(), pkg)
             assert isinstance(r, metadata.MissingUnpackerDep)
             assert r.filenames == (f'diffball-2.7.1{ext}',)
             assert r.unpackers == tuple(
-                sorted(map(str, self.check_kls.known_unpackers[ext])))
+                sorted(map(str, self.check_kls.non_system_unpackers[ext])))
 
     def test_with_dep(self):
-        for ext, unpackers in self.check_kls.known_unpackers.items():
+        for ext, unpackers in self.check_kls.non_system_unpackers.items():
             for dep_type in ('DEPEND', 'BDEPEND'):
                 for unpacker in unpackers:
                     kwargs = {dep_type: unpacker.cpvstr}
@@ -555,7 +566,7 @@ class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
             self.mk_pkg('.rar', DEPEND='|| ( app-arch/rar app-arch/unrar )'))
 
     def test_without_multiple_unpackers(self):
-        for combination in combinations(self.check_kls.known_unpackers.items(), 2):
+        for combination in combinations(self.check_kls.non_system_unpackers.items(), 2):
             exts = list(x[0] for x in combination)
             unpackers = list(x[1] for x in combination)
             pkg = self.mk_pkg(exts)
