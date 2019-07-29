@@ -378,7 +378,7 @@ class MissingSlotDep(base.Warning):
     Please verify whether the package works with all the dependency slots.
     If only one slot is actually acceptable, specify it explicitly. If multiple
     slots are acceptable, please use either ':=' or explicit ':\*' slot operator.
-    The operators are described in detail in devmanual [#]_.
+    The operators are described in detail in the devmanual [#]_.
 
     .. [#] https://devmanual.gentoo.org/general-concepts/dependencies/index.html#slot-dependencies
     """
@@ -430,7 +430,7 @@ class MissingSlotDepCheck(base.Template):
 class MissingPackageRevision(base.Warning):
     """Missing package revision in =cat/pkg dependencies.
 
-    The dependency string uses '=' operator without specifying a revision
+    The dependency string uses the '=' operator without specifying a revision.
     This means that only '-r0' of the dependency will be matched, and newer
     revisions of the same ebuild will not be accepted.
 
