@@ -405,12 +405,12 @@ class TestDependencyReport(use_based(), misc.ReportTestCase):
         assert "= slot operator used in blocker" in r.msg
         assert "[dev-libs/foo]" in r.msg
 
-        # check for missing revisions
+        # check for missing package revisions
         self.assertNoReport(chk, mk_pkg("=dev-libs/foo-1-r0"))
         r = self.assertReport(
             chk,
             mk_pkg(eapi='6', data="=dev-libs/foo-1"))
-        assert isinstance(r, metadata.MissingRevision)
+        assert isinstance(r, metadata.MissingPackageRevision)
 
     for x in attr_map:
         locals()[f"test_{x}"] = post_curry(generic_check, x)
