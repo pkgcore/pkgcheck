@@ -91,9 +91,6 @@ class GitCommitsCheck(base.DefaultRepoCheck):
         self.added_repo = git_addon.commits_repo(addons.GitAddedRepo)
 
     def feed(self, pkgset):
-        invalid_copyrights = set()
-        outdated_copyrights = set()
-
         for git_pkg in pkgset:
             try:
                 pkg = self.options.target_repo.match(git_pkg.versioned_atom)[0]
@@ -111,9 +108,9 @@ class GitCommitsCheck(base.DefaultRepoCheck):
             if copyright:
                 year = copyright.group(1).split('-')[-1]
                 if int(year) < self.today.year:
-                    outdated_copyrights.add((pkg, year, line))
+                    yield OutdatedCopyright(pkg, year, line.strip('\n'))
             else:
-                invalid_copyrights.add((pkg, line))
+                yield InvalidCopyright(pkg, line.strip('\n'))
 
             # checks for newly added ebuilds
             if git_pkg.status == 'A':
@@ -129,8 +126,3 @@ class GitCommitsCheck(base.DefaultRepoCheck):
                 # check for no maintainers
                 if newly_added and not pkg.maintainers:
                     yield DirectNoMaintainer(pkg)
-
-        for pkg, line in invalid_copyrights:
-            yield InvalidCopyright(pkg, line.strip('\n'))
-        for pkg, year, line in outdated_copyrights:
-            yield OutdatedCopyright(pkg, year, line.strip('\n'))
