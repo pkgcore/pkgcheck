@@ -304,7 +304,7 @@ class ProbableUseExpand(base.Warning):
     This warning can be fixed via moving the local flag description
     into appropriate profiles/desc file.
 
-    .. [#] https://devmanual.gentoo.org/general-concepts/use-flags/index.html
+    .. [#] https://devmanual.gentoo.org/general-concepts/use-flags/
     """
 
     __slots__ = ("category", "package", "flag", "group")
@@ -380,7 +380,7 @@ class MissingSlotDep(base.Warning):
     slots are acceptable, please use either ':=' or explicit ':\*' slot operator.
     The operators are described in detail in the devmanual [#]_.
 
-    .. [#] https://devmanual.gentoo.org/general-concepts/dependencies/index.html#slot-dependencies
+    .. [#] https://devmanual.gentoo.org/general-concepts/dependencies/#slot-dependencies
     """
 
     __slots__ = ('category', 'package', 'version', 'dep', 'dep_slots')
