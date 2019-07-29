@@ -39,10 +39,6 @@ no_filter = 'none'
 mask_filter = 'mask'
 git_filter = 'git'
 
-# The plugger needs to be able to compare those and know the highest one.
-version_scope, package_scope, category_scope, repository_scope = list(range(4))
-max_scope = repository_scope
-
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
 _Scope = namedtuple("Scope", ["threshold", "desc"])
 known_scopes = OrderedDict((
@@ -51,6 +47,10 @@ known_scopes = OrderedDict((
     ('pkg', _Scope(package_feed, 'package')),
     ('ver', _Scope(versioned_feed, 'version')),
 ))
+
+# The plugger needs to be able to compare those and know the highest one.
+version_scope, package_scope, category_scope, repository_scope = list(range(len(known_scopes)))
+max_scope = repository_scope
 
 CACHE_DIR = pjoin(const.USER_CACHE_PATH, 'pkgcheck')
 
