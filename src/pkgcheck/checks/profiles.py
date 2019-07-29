@@ -140,9 +140,9 @@ class ProfilesCheck(base.Template):
     def __init__(self, options, iuse_handler):
         super().__init__(options)
         self.repo = options.target_repo
-        self.profiles_dir = pjoin(self.repo.location, 'profiles')
-        self.non_profile_dirs = {
-            pjoin(self.profiles_dir, x) for x in addons.ProfileAddon.non_profile_dirs}
+        self.profiles_dir = self.repo.config.profiles_base
+        self.non_profile_dirs = frozenset(
+            pjoin(self.profiles_dir, x) for x in addons.ProfileAddon.non_profile_dirs)
         local_iuse = {use for pkg, (use, desc) in self.repo.config.use_local_desc}
         self.available_iuse = frozenset(
             local_iuse | iuse_handler.global_iuse |
