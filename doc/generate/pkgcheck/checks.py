@@ -18,6 +18,7 @@ from collections import defaultdict
 import sys
 from textwrap import dedent
 
+from pkgcheck import base
 from pkgcheck.scripts.pkgcheck import _known_checks
 
 
@@ -35,15 +36,10 @@ def main(f=sys.stdout, **kwargs):
     if __doc__ is not None:
         out(__doc__.strip())
 
-    d = defaultdict(set)
-    for check in _known_checks:
-        d[check.scope].add(check)
+    for i, scope in enumerate(base.known_scopes.values()):
+        _rst_header('-', scope.desc.capitalize() + ' scope')
 
-    scopes = ('version', 'package', 'category', 'repository')
-    for scope in reversed(sorted(d)):
-        _rst_header('-', scopes[scope].capitalize() + ' scope')
-        checks = sorted(d[scope], key=lambda x: x.__name__)
-
+        checks = (x for x in _known_checks if x.scope == i)
         for check in checks:
             if check.__doc__ is not None:
                 try:
@@ -54,12 +50,12 @@ def main(f=sys.stdout, **kwargs):
             else:
                 summary = None
 
-            out('\n{}'.format(check.__name__))
+            _rst_header('^', check.__name__)
             if summary:
-                out('\t' + ' '.join(dedent(summary).strip().split('\n')))
+                out('\n' + ' '.join(dedent(summary).strip().split('\n')))
                 if explanation:
-                    out('\n\t' + ' '.join(dedent(explanation).strip().split('\n')))
-                out('\n\n\t(known results: %s)' % ', '.join((r.__name__ for r in sorted(check.known_results, key=lambda x: x.__name__))))
+                    out('\n' + ' '.join(dedent(explanation).strip().split('\n')))
+                out('\n\n(known results: %s)' % ', '.join((r.__name__ for r in sorted(check.known_results, key=lambda x: x.__name__))))
 
 
 if __name__ == '__main__':

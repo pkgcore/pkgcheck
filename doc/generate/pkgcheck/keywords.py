@@ -30,22 +30,10 @@ def main(f=sys.stdout, **kwargs):
     if __doc__ is not None:
         out(__doc__.strip())
 
-    scope_map = {
-        base.versioned_feed: base.version_scope,
-        base.package_feed: base.package_scope,
-        base.category_feed: base.category_scope,
-        base.repository_feed: base.repository_scope,
-    }
+    for scope in base.known_scopes.values():
+        _rst_header('-', scope.desc.capitalize() + ' scope')
 
-    d = {}
-    for keyword in _known_keywords:
-        d.setdefault(scope_map[keyword.threshold], set()).add(keyword)
-
-    scopes = ('version', 'package', 'category', 'repository')
-    for scope in reversed(sorted(d)):
-        _rst_header('-', scopes[scope].capitalize() + ' scope')
-        keywords = sorted(d[scope], key=lambda x: x.__name__)
-
+        keywords = (x for x in _known_keywords if x.threshold == scope.threshold)
         for keyword in keywords:
             if keyword.__doc__ is not None:
                 try:
@@ -56,11 +44,11 @@ def main(f=sys.stdout, **kwargs):
             else:
                 summary = None
 
-            out('\n{}'.format(keyword.__name__))
+            _rst_header('^', keyword.__name__)
             if summary:
-                out('\t' + ' '.join(dedent(summary).strip().split('\n')))
+                out('\n' + ' '.join(dedent(summary).strip().split('\n')))
                 if explanation:
-                    out('\n\t' + ' '.join(dedent(explanation).strip().split('\n')))
+                    out('\n' + ' '.join(dedent(explanation).strip().split('\n')))
 
 
 if __name__ == '__main__':
