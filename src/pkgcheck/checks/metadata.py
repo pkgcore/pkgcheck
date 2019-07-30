@@ -490,7 +490,7 @@ class OutdatedBlocker(base.Warning):
         super().__init__()
         self._store_cpv(pkg)
         self.attr = attr.upper()
-        self.atom = atom
+        self.atom = str(atom)
         self.age = age
 
     @property
@@ -518,7 +518,7 @@ class NonexistentBlocker(base.Warning):
         super().__init__()
         self._store_cpv(pkg)
         self.attr = attr.upper()
-        self.atom = atom
+        self.atom = str(atom)
 
     @property
     def short_desc(self):
