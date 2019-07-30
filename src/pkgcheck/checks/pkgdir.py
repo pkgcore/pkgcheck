@@ -1,4 +1,3 @@
-import codecs
 from collections import defaultdict
 import os
 import stat
@@ -184,16 +183,6 @@ class InvalidUTF8(base.Error):
         return f"invalid UTF-8: {self.err}: {self.filename!r}"
 
 
-def utf8_check(pkg, base, filename):
-    try:
-        codecs.open(
-            pjoin(base, filename), mode="rb",
-            encoding="utf8", buffering=8192).read()
-    except UnicodeDecodeError as e:
-        yield InvalidUTF8(pkg, filename, str(e))
-        del e
-
-
 class PkgDirCheck(base.Template):
     """Actual ebuild directory scans; file size, glep31 rule enforcement."""
 
@@ -232,7 +221,11 @@ class PkgDirCheck(base.Template):
                     yield ExecutableFile(pkg, filename)
 
             if filename.endswith(ebuild_ext):
-                utf8_check(pkg, base_path, filename)
+                try:
+                    with open(pjoin(base_path, filename), mode='rb') as f:
+                        f.read(8192).decode()
+                except UnicodeDecodeError as e:
+                    yield InvalidUTF8(pkg, filename, str(e))
 
                 pkg_name = os.path.basename(filename[:-len(ebuild_ext)])
                 try:
