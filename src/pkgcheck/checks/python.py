@@ -26,7 +26,15 @@ IUSE_PREFIX_S = 'python_single_target_'
 
 
 class MissingPythonEclass(base.Warning):
-    """Package depends on Python but does not use the eclasses."""
+    """Package depends on Python but does not use the eclasses.
+
+    All packages depending on Python are required to use one of the following
+    python eclasses: python-r1, python-single-r1, or python-any-r1. For
+    documentation on choosing the correct eclass, please see the Python project
+    wiki page on eclasses [#]_.
+
+    .. [#] https://wiki.gentoo.org/wiki/Project:Python/Eclasses
+    """
 
     __slots__ = ("category", "package", "version", "eclass", "dep_type", "dep")
 
@@ -48,7 +56,13 @@ class MissingPythonEclass(base.Warning):
 
 
 class PythonSingleUseMismatch(base.Warning):
-    """Package has mismatched PYTHON_SINGLE and PYTHON_TARGETS flags."""
+    """Package has mismatched PYTHON_SINGLE_TARGET and PYTHON_TARGETS flags.
+
+    The package declares both PYTHON_SINGLE_TARGET and PYTHON_TARGETS flags but
+    each includes a different set of supported Python implementations. This
+    either indicates a bug in the eclasses or the package is manually changing
+    the flags.
+    """
 
     __slots__ = ("category", "package", "version", "flags", "single_flags")
 
@@ -70,7 +84,12 @@ class PythonSingleUseMismatch(base.Warning):
 
 
 class PythonMissingRequiredUSE(base.Warning):
-    """Package is missing PYTHON_REQUIRED_USE."""
+    """Package is missing PYTHON_REQUIRED_USE.
+
+    The python-r1 and python-single-r1 eclasses require the packages to
+    explicitly specify `REQUIRED_USE=${PYTHON_REQUIRED_USE}`. If Python is used
+    conditionally, it can be wrapped in appropriate USE conditionals.
+    """
 
     __slots__ = ("category", "package", "version")
 
@@ -86,7 +105,15 @@ class PythonMissingRequiredUSE(base.Warning):
 
 
 class PythonMissingDeps(base.Warning):
-    """Package is missing PYTHON_DEPS."""
+    """Package is missing PYTHON_DEPS.
+
+    The python-r1 and python-single-r1 eclasses require the packages
+    to explicitly reference `${PYTHON_DEPS}` in RDEPEND (and DEPEND,
+    if necessary); python-any-r1 requires it in DEPEND.
+
+    If Python is used conditionally, the dependency can be wrapped
+    in appropriate USE conditionals.
+    """
 
     __slots__ = ("category", "package", "version", "dep_type")
 
@@ -103,7 +130,14 @@ class PythonMissingDeps(base.Warning):
 
 
 class PythonRuntimeDepInAnyR1(base.Warning):
-    """Package depends on Python at runtime but uses any-r1 eclass."""
+    """Package depends on Python at runtime but uses any-r1 eclass.
+
+    The python-any-r1 eclass is meant to be used purely for build-time
+    dependencies on Python. However, this package lists Python as a runtime
+    dependency. If this is intentional, the package needs to switch to
+    python-r1 or python-single-r1 eclass, otherwise the runtime dependency
+    should be removed.
+    """
 
     __slots__ = ("category", "package", "version", "dep_type", "dep")
 
