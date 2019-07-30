@@ -489,15 +489,15 @@ class OutdatedBlocker(base.Warning):
     def __init__(self, pkg, attr, atom, age):
         super().__init__()
         self._store_cpv(pkg)
-        self.attr = attr
+        self.attr = attr.upper()
         self.atom = atom
         self.age = age
 
     @property
     def short_desc(self):
         return (
-            f"depset {self.attr}: outdated blocker '{self.atom}': "
-            f'last matching version removed {self.age} years ago'
+            f'outdated blocker {self.attr}="{self.atom}": '
+            f'last match removed {self.age} years ago'
         )
 
 
@@ -517,13 +517,13 @@ class NonexistentBlocker(base.Warning):
     def __init__(self, pkg, attr, atom):
         super().__init__()
         self._store_cpv(pkg)
-        self.attr = attr
+        self.attr = attr.upper()
         self.atom = atom
 
     @property
     def short_desc(self):
         return (
-            f"depset {self.attr}: nonexistent blocker '{self.atom}': "
+            f'nonexistent blocker {self.attr}="{self.atom}": '
             'no matches in repo history'
         )
 
