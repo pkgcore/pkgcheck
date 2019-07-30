@@ -11,7 +11,7 @@ demandload("re")
 
 
 class HttpsAvailable(base.Warning):
-    """Ebuild contains a http:// link that should use https:// instead."""
+    """Ebuild contains an ``http://`` link that should use ``https://`` instead."""
 
     __slots__ = ("category", "package", "version", "link", "lines")
     threshold = base.versioned_feed
@@ -29,7 +29,7 @@ class HttpsAvailable(base.Warning):
 
 
 class HttpsAvailableCheck(base.Template):
-    """Scan ebuild for http:// links that should use https://."""
+    """Scan ebuild for ``http://`` links that should use ``https://``."""
 
     feed_type = base.ebuild_feed
     known_results = (HttpsAvailable,)
@@ -171,11 +171,11 @@ class DoublePrefixInPath(base.Error):
     """Ebuild uses two consecutive paths including EPREFIX.
 
     Ebuild combines two path variables (or a variable and a getter), both
-    of which include EPREFIX, resulting in double prefixing.  This is the case
+    of which include EPREFIX, resulting in double prefixing. This is the case
     when combining many pkg-config-based or alike getters with ED or EROOT.
 
-    For example, '${ED}$(python_get_sitedir)' should be replaced
-    with '${D}$(python_get_sitedir)'.
+    For example, ``${ED}$(python_get_sitedir)`` should be replaced
+    with ``${D}$(python_get_sitedir)``.
     """
 
     __slots__ = ("category", "package", "version", "variable", "lines")
