@@ -36,7 +36,7 @@ _printable_ascii = _control_chars + bytes(range(32, 127))
 _printable_high_ascii = bytes(range(127, 256))
 
 
-def is_binary(path, blocksize=512):
+def is_binary(path, blocksize=1024):
     """Check if a given file is binary or not.
 
     Uses a simplified version of the Perl detection algorithm, based roughly on
