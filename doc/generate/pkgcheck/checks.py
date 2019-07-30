@@ -60,7 +60,7 @@ def main(f=sys.stdout, **kwargs):
                     explanation = '\n'.join(dedent(explanation).strip().split('\n'))
                     out('\n' + explanation)
                 known_results = ', '.join(
-                    r.__name__ for r in
+                    f'`{r.__name__}`_' for r in
                     sorted(check.known_results, key=attrgetter('__name__')))
                 out('\n' + '\n'.join(wrapper.wrap(f"(known results: {known_results})")))
 
