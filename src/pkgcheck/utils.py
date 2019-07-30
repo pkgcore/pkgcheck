@@ -81,27 +81,30 @@ def is_binary(path, blocksize=1024):
         (nontext_ratio1 > 0.8 and nontext_ratio2 > 0.8)
     )
 
-    # then check for binary for possible encoding detection with chardet
-    detected_encoding = chardet.detect(byte_str)
+    decodable = False
+    try:
+        byte_str.decode()
+        decodable = True
+    except UnicodeDecodeError:
+        # guess character encoding using chardet
+        detected_encoding = chardet.detect(byte_str)
+        if (detected_encoding['confidence'] > 0.8 and detected_encoding['encoding'] != 'ascii'):
+            try:
+                byte_str.decode(encoding=detected_encoding['encoding'])
+                decodable = True
+            except LookupError:
+                pass
+            except UnicodeDecodeError:
+                pass
 
     # finally use all the checks to decide binary or text
-    decodable_as_unicode = False
-    if (detected_encoding['confidence'] > 0.9 and detected_encoding['encoding'] != 'ascii'):
-        try:
-            byte_str.decode(encoding=detected_encoding['encoding'])
-            decodable_as_unicode = True
-        except LookupError:
-            pass
-        except UnicodeDecodeError:
-            pass
-
     if is_likely_binary:
-        if decodable_as_unicode:
+        if decodable:
             return False
         else:
             return True
     else:
-        if decodable_as_unicode:
+        if decodable:
             return False
         else:
             # check for NULL bytes
