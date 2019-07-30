@@ -464,7 +464,7 @@ class MissingUseDepDefault(base.Warning):
     def __init__(self, pkg, attr, atom, flag, pkg_deps):
         super().__init__()
         self._store_cpv(pkg)
-        self.attr = attr
+        self.attr = attr.upper()
         self.atom = str(atom)
         self.pkg_deps = tuple(sorted(str(x.versioned_atom) for x in pkg_deps))
         self.flag = flag
@@ -472,8 +472,8 @@ class MissingUseDepDefault(base.Warning):
     @property
     def short_desc(self):
         return (
-            f"{self.attr}: {self.atom}: USE flag dep {self.flag!r} missing default "
-            f"(matching package{_pl(self.pkg_deps)}: {', '.join(self.pkg_deps)})")
+            f'{self.attr}="{self.atom}": USE flag {self.flag!r} missing from '
+            f"package{_pl(self.pkg_deps)}: [ {', '.join(self.pkg_deps)} ]")
 
 
 class OutdatedBlocker(base.Warning):
