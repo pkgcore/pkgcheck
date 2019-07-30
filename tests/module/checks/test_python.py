@@ -498,5 +498,5 @@ class TestPythonReport(misc.ReportTestCase):
             self.check,
             self.mk_pkg(
                 _eclasses_=['python-any-r1'],
-                DEPEND='!dev-python/pypy3-bin:0',
+                DEPEND='dev-lang/python:2.7',
                 RDEPEND='!dev-python/pypy3-bin:0'))

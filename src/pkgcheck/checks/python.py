@@ -241,7 +241,7 @@ class PythonCheck(base.Template):
             highest_found = None
             for attr in ("bdepend", "depend", "rdepend", "pdepend"):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
-                    if p.key in INTERPRETERS:
+                    if not p.blocks and p.key in INTERPRETERS:
                         highest_found = (attr, p)
                         # break scanning packages, go to next attr
                         break
@@ -282,7 +282,7 @@ class PythonCheck(base.Template):
                         break
             for attr in ("depend", "bdepend"):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
-                    if p.key in INTERPRETERS:
+                    if not p.blocks and p.key in INTERPRETERS:
                         break
                 else:
                     continue
