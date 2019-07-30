@@ -121,8 +121,10 @@ class JsonReporter(base.Reporter):
     """Dump a json feed of reports.
 
     Note that the format is newline-delimited JSON with each line being related
-    to a separate report. To merge the objects together something like jq can
+    to a separate report. To merge the objects together a tool such as jq can
     be leveraged similar to the following:
+
+    .. code::
 
         jq -c -s 'reduce.[]as$x({};.*$x)' orig.json > new.json
     """
@@ -239,11 +241,11 @@ class PickleStream(base.Reporter):
 class BinaryPickleStream(PickleStream):
     """Dump a binary pickle stream using the highest pickling protocol.
 
-    Unlike PickleStream which uses the most compatible pickling protocol
+    Unlike `PickleStream`_ which uses the most compatible pickling protocol
     available, this uses the newest version so it won't be compatible with
     older versions of Python.
 
-    For more details of the stream, see PickleStream.
+    For more details of the stream, see `PickleStream`_.
     """
     priority = -1002
     protocol = -1
