@@ -56,7 +56,8 @@ class RepoDirCheck(base.DefaultRepoCheck):
     scope = base.repository_scope
     known_results = (BinaryFile,)
 
-    ignored_dirs = frozenset(['.git'])
+    # repo root level directories that are ignored
+    ignored_root_dirs = frozenset(['.git'])
 
     def __init__(self, options):
         super().__init__(options)
@@ -76,8 +77,8 @@ class RepoDirCheck(base.DefaultRepoCheck):
 
     def _insert_files(self, queue, processes, sentinel=None):
         for root, dirs, files in os.walk(self.repo.location):
-            for d in self.ignored_dirs.intersection(dirs):
-                dirs.remove(d)
+            if root == self.repo.location:
+                dirs[:] = [d for d in dirs if d not in self.ignored_root_dirs]
             for f in files:
                 queue.put(pjoin(root, f))
         for i in range(processes):
