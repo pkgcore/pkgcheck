@@ -153,6 +153,33 @@ class TestInvalidPN(PkgDirReportBase):
         assert 'bar-0-foo1, bar-1-foo2' in str(r)
 
 
+class TestInvalidUTF8(PkgDirReportBase):
+    """Check InvalidUTF8 results."""
+
+    def test_ascii_ebuild(self):
+        pkg = self.mk_pkg()
+        ebuild_path = pjoin(os.path.dirname(pkg.path), f'{pkg.package}-0.ebuild')
+        with open(ebuild_path, 'w') as f:
+            f.write('EAPI=7\nDESCRIPTION="foobar"\n')
+        self.assertNoReport(self.check, [pkg])
+
+    def test_utf8_ebuild(self):
+        pkg = self.mk_pkg()
+        ebuild_path = pjoin(os.path.dirname(pkg.path), f'{pkg.package}-0.ebuild')
+        with open(ebuild_path, 'w') as f:
+            f.write('EAPI=6\nDESCRIPTION="fóóbár"\n')
+        self.assertNoReport(self.check, [pkg])
+
+    def test_latin1_ebuild(self):
+        pkg = self.mk_pkg()
+        ebuild_path = pjoin(os.path.dirname(pkg.path), f'{pkg.package}-0.ebuild')
+        with open(ebuild_path, 'w', encoding='latin-1') as f:
+            f.write('EAPI=5\nDESCRIPTION="fôòbår"\n')
+        r = self.assertReport(self.check, [pkg])
+        assert isinstance(r, pkgdir.InvalidUTF8)
+        assert r.filename == f'{pkg.package}-0.ebuild'
+
+
 class TestEqualVersions(PkgDirReportBase):
     """Check EqualVersions results."""
 
