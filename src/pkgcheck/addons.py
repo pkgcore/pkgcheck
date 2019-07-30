@@ -219,16 +219,20 @@ class _ParseGitRepo(object):
         line = git_log.stdout.readline().strip().decode()
         while line:
             if not line.startswith('commit '):
-                raise ValueError(
+                logger.error(
+                    f'skipping git checks: '
                     f'unknown git log output: expecting commit hash, got {line!r}')
+                return {}
             commit = line[7:].strip()
             # author
             git_log.stdout.readline()
             # date
             line = git_log.stdout.readline().strip().decode()
             if not line.startswith('Date:'):
-                raise ValueError(
+                logger.error(
+                    f'skipping git checks: '
                     f'unknown git log output: expecting date, got {line!r}')
+                return {}
             date = line[5:].strip()
 
             # summary and file changes
