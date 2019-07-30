@@ -27,12 +27,12 @@ class BinaryFile(base.Error):
 class IteratorQueue(object):
     """Iterator based on an output queue fed by a thread/process pool."""
 
-    def __init__(self, queue, inserter, pool, sentinel=None, running=None):
+    def __init__(self, queue, inserter, pool, sentinel=None, processes=None):
         self.queue = queue
         self.inserter = inserter
         self.pool = pool
         self.sentinel = sentinel
-        self.running = running if running is not None else cpu_count()
+        self.processes = processes if processes is not None else cpu_count()
 
     def __iter__(self):
         return self
@@ -40,8 +40,8 @@ class IteratorQueue(object):
     def __next__(self):
         result = self.queue.get()
         if result is self.sentinel:
-            self.running -= 1
-            if self.running == 0:
+            self.processes -= 1
+            if self.processes == 0:
                 self.inserter.join()
                 self.pool.join()
                 raise StopIteration
@@ -74,23 +74,24 @@ class RepoDirCheck(base.DefaultRepoCheck):
             elif is_binary(path):
                 results.put(BinaryFile(path[len(self.repo.location) + 1:]))
 
-    def _insert_files(self, queue, sentinel=None):
+    def _insert_files(self, queue, processes, sentinel=None):
         for root, dirs, files in os.walk(self.repo.location):
             for d in self.ignored_dirs.intersection(dirs):
                 dirs.remove(d)
             for f in files:
                 queue.put(pjoin(root, f))
-        for i in range(cpu_count()):
+        for i in range(processes):
             queue.put(sentinel)
 
     def finish(self):
         path_queue = Queue()
         results_queue = Queue()
+        processes = cpu_count()
         # producer walks the repo directory, queuing file paths to check
-        p = Process(target=self._insert_files, args=(path_queue,))
+        p = Process(target=self._insert_files, args=(path_queue, processes))
         p.start()
         # consumers pull paths from the queue, perform binary checks, and queue
         # reports on a positive results
-        pool = Pool(cpu_count(), self._scan_file, (path_queue, results_queue))
+        pool = Pool(processes, self._scan_file, (path_queue, results_queue))
         pool.close()
-        return IteratorQueue(results_queue, p, pool)
+        return IteratorQueue(results_queue, p, pool, processes=processes)
