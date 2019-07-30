@@ -313,6 +313,16 @@ class GitAddon(base.Addon):
             except CommandNotFound:
                 self.options.git_disable = True
 
+    def get_commit_hash(self, repo_location, commit='origin/HEAD'):
+        """Retrieve a git repo's commit hash for a specific commit object."""
+        ret, out = spawn_get_output(
+            ['git', 'rev-parse', commit], cwd=repo_location)
+        if ret != 0:
+            raise ValueError(
+                f'failed retrieving {commit} commit hash '
+                f'for git repo: {repo_location}')
+        return out[0].strip()
+
     def cached_repo(self, repo_cls, target_repo=None):
         repo = None
         if target_repo is None:
@@ -321,54 +331,52 @@ class GitAddon(base.Addon):
         if not self.options.git_disable:
             git_repos = []
             for repo in target_repo.trees:
-                ret, out = spawn_get_output(
-                    ['git', 'rev-parse', 'origin/HEAD'], cwd=repo.location)
-                if ret != 0:
+                try:
+                    commit = self.get_commit_hash(repo.location)
+                except ValueError:
                     break
-                else:
-                    commit = out[0].strip()
 
-                    # initialize cache file location
-                    cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id)
-                    cache_file = pjoin(cache_dir, f'{repo_cls.cache_name}.pickle')
+                # initialize cache file location
+                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id)
+                cache_file = pjoin(cache_dir, f'{repo_cls.cache_name}.pickle')
+                try:
+                    os.makedirs(cache_dir, exist_ok=True)
+                except IOError as e:
+                    raise UserException(
+                        f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
+
+                git_repo = None
+                cache_repo = True
+                if not self.options.git_cache:
+                    # try loading cached, historical repo data
                     try:
-                        os.makedirs(cache_dir, exist_ok=True)
-                    except IOError as e:
-                        raise UserException(
-                            f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
+                        with open(cache_file, 'rb') as f:
+                            git_repo = pickle.load(f)
+                    except (EOFError, FileNotFoundError, AttributeError) as e:
+                        pass
 
-                    git_repo = None
-                    cache_repo = True
-                    if not self.options.git_cache:
-                        # try loading cached, historical repo data
-                        try:
-                            with open(cache_file, 'rb') as f:
-                                git_repo = pickle.load(f)
-                        except (EOFError, FileNotFoundError, AttributeError) as e:
-                            pass
-
-                    if (git_repo is not None and
-                            repo.location == getattr(git_repo, 'location', None)):
-                        if commit != git_repo.commit:
-                            git_repo.update(commit)
-                        else:
-                            cache_repo = False
+                if (git_repo is not None and
+                        repo.location == getattr(git_repo, 'location', None)):
+                    if commit != git_repo.commit:
+                        git_repo.update(commit)
                     else:
-                        git_repo = repo_cls(repo, commit)
+                        cache_repo = False
+                else:
+                    git_repo = repo_cls(repo, commit)
 
-                    # only enable repo queries if history was found, e.g. a
-                    # shallow clone with a depth of 1 won't have any history
-                    if git_repo.pkg_map:
-                        git_repos.append(HistoricalRepo(
-                            git_repo.pkg_map, repo_id=f'{repo.repo_id}-history'))
-                        # dump historical repo data
-                        if cache_repo:
-                            try:
-                                with open(cache_file, 'wb+') as f:
-                                    pickle.dump(git_repo, f)
-                            except IOError as e:
-                                msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
-                                raise UserException(msg)
+                # only enable repo queries if history was found, e.g. a
+                # shallow clone with a depth of 1 won't have any history
+                if git_repo.pkg_map:
+                    git_repos.append(HistoricalRepo(
+                        git_repo.pkg_map, repo_id=f'{repo.repo_id}-history'))
+                    # dump historical repo data
+                    if cache_repo:
+                        try:
+                            with open(cache_file, 'wb+') as f:
+                                pickle.dump(git_repo, f)
+                        except IOError as e:
+                            msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
+                            raise UserException(msg)
             else:
                 if len(git_repos) > 1:
                     repo = multiplex.tree(*git_repos)
@@ -381,12 +389,23 @@ class GitAddon(base.Addon):
         if target_repo is None:
             target_repo = self.options.target_repo
 
+        repo = FakeRepo()
+
         if not self.options.git_disable:
+            try:
+                origin = self.get_commit_hash(target_repo.location)
+                master = self.get_commit_hash(target_repo.location, commit='master')
+            except ValueError as e:
+                logger.debug(f'skipping git commit checks: {e}')
+                return repo
+
+            # skip git checks, no local commits found
+            if origin == master:
+                return repo
+
             git_repo = repo_cls(target_repo)
             repo = HistoricalRepo(
                 git_repo.pkg_map, repo_id=f'{target_repo.repo_id}-commits')
-        else:
-            repo = FakeRepo()
 
         return repo
 
