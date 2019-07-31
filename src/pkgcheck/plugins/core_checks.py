@@ -4,7 +4,7 @@
 from .. import feeds, reporters
 from ..checks import (
     cleanup, codingstyle, deprecated, dropped_keywords, git, glsa,
-    imlate, metadata, metadata_xml, pkgdir, python,
+    imlate, metadata, metadata_xml, overlays, pkgdir, python,
     profiles, repo, repo_metadata, stablereq, unstable_only, visibility,
     whitespace,
 )
@@ -37,6 +37,7 @@ pkgcore_plugins = {
         metadata.SrcUriCheck,
         metadata_xml.CategoryMetadataXmlCheck,
         metadata_xml.PackageMetadataXmlCheck,
+        overlays.UnusedInMastersCheck,
         pkgdir.PkgDirCheck,
         profiles.ProfilesCheck,
         profiles.RepoProfilesCheck,

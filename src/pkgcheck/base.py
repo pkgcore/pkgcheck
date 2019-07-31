@@ -147,6 +147,15 @@ class DefaultRepoCheck(Template):
         return namespace.target_repo.repo_id != cls._default_repo
 
 
+class OverlayRepoCheck(Template):
+    """Check that is only valid when run against an overlay repo."""
+
+    @classmethod
+    def skip(cls, namespace):
+        logger.info(f'skipping {cls.__name__}, not running against overlay repo')
+        return not namespace.target_repo.masters
+
+
 class GenericSource(object):
     """Base template for a repository source."""
 

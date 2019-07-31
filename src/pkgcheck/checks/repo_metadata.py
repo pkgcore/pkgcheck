@@ -173,66 +173,29 @@ class UnusedLicenses(base.Warning):
         return ', '.join(self.licenses)
 
 
-class UnusedInMastersLicenses(base.Warning):
-    """Licenses detected that are unused in the master repo(s).
-
-    In other words, they're likely to be removed so should be copied to the overlay.
-    """
-
-    __slots__ = ("category", "package", "version", "licenses")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, licenses):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.licenses = tuple(sorted(licenses))
-
-    @property
-    def short_desc(self):
-        return "unused license%s in master repo(s): %s" % (
-            _pl(self.licenses), ', '.join(self.licenses))
-
-
 class UnusedLicensesCheck(base.Template):
     """Check for unused license files."""
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    known_results = (UnusedLicenses, UnusedInMastersLicenses)
+    known_results = (UnusedLicenses,)
 
     def __init__(self, options):
         super().__init__(options)
         self.unused_licenses = None
 
     def start(self):
-        master_licenses = self.unused_master_licenses = set()
+        master_licenses = set()
         for repo in self.options.target_repo.masters:
             master_licenses.update(repo.licenses)
         self.unused_licenses = set(self.options.target_repo.licenses) - master_licenses
 
-        # determine unused licenses across all master repos
-        self.unused_in_master_licenses = set()
-        if master_licenses:
-            for repo in self.options.target_repo.masters:
-                for pkg in repo:
-                    self.unused_master_licenses.difference_update(iflatten_instance(pkg.license))
-
     def feed(self, pkg):
-        pkg_licenses = set(iflatten_instance(pkg.license))
-        self.unused_licenses.difference_update(pkg_licenses)
-
-        # report licenses used in the pkg but not in any pkg from the master repo(s)
-        if self.unused_master_licenses:
-            licenses = self.unused_master_licenses & pkg_licenses
-            if licenses:
-                yield UnusedInMastersLicenses(pkg, licenses)
+        self.unused_licenses.difference_update(iflatten_instance(pkg.license))
 
     def finish(self):
         if self.unused_licenses:
             yield UnusedLicenses(self.unused_licenses)
-
-        self.unused_licenses = self.unused_master_licenses = None
 
 
 class UnusedMirrors(base.Warning):
@@ -251,38 +214,13 @@ class UnusedMirrors(base.Warning):
         return ', '.join(self.mirrors)
 
 
-class UnusedInMastersMirrors(base.Warning):
-    """Mirrors detected that are unused in the master repo(s).
-
-    In other words, they're likely to be removed so should be copied to the overlay.
-    """
-
-    __slots__ = ("category", "package", "version", "mirrors")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, mirrors):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.mirrors = tuple(sorted(mirrors))
-
-    @property
-    def short_desc(self):
-        return "unused mirror%s in master repo(s): %s" % (
-            _pl(self.mirrors), ', '.join(self.mirrors))
-
-
-class UnusedMirrorsCheck(base.Template):
+class _MirrorsCheck(base.Template):
     """Check for unused mirrors."""
 
     required_addons = (addons.UseAddon,)
-    feed_type = base.versioned_feed
-    scope = base.repository_scope
-    known_results = (UnusedMirrors, UnusedInMastersMirrors)
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
-        self.unused_mirrors = None
         self.iuse_filter = iuse_handler.get_filter('fetchables')
 
     def _get_mirrors(self, pkg):
@@ -293,35 +231,27 @@ class UnusedMirrorsCheck(base.Template):
                 mirrors.append(m[0].mirror_name)
         return set(mirrors)
 
+
+class UnusedMirrorsCheck(_MirrorsCheck):
+    """Check for unused mirrors."""
+
+    feed_type = base.versioned_feed
+    scope = base.repository_scope
+    known_results = (UnusedMirrors,)
+
     def start(self):
-        master_mirrors = self.unused_master_mirrors = set()
+        master_mirrors = set()
         for repo in self.options.target_repo.masters:
             master_mirrors.update(repo.mirrors.keys())
         self.unused_mirrors = set(self.options.target_repo.mirrors.keys()) - master_mirrors
 
-        # determine unused mirrors across all master repos
-        self.unused_in_master_mirrors = set()
-        if master_mirrors:
-            for repo in self.options.target_repo.masters:
-                for pkg in repo:
-                    self.unused_master_mirrors.difference_update(self._get_mirrors(pkg))
-
     def feed(self, pkg):
-        pkg_mirrors = self._get_mirrors(pkg)
         if self.unused_mirrors:
-            self.unused_mirrors.difference_update(pkg_mirrors)
-
-        # report mirrors used in the pkg but not in any pkg from the master repo(s)
-        if self.unused_master_mirrors:
-            mirrors = self.unused_master_mirrors & pkg_mirrors
-            if mirrors:
-                yield UnusedInMastersMirrors(pkg, mirrors)
+            self.unused_mirrors.difference_update(self._get_mirrors(pkg))
 
     def finish(self):
         if self.unused_mirrors:
             yield UnusedMirrors(self.unused_mirrors)
-
-        self.unused_mirrors = self.unused_master_mirrors = None
 
 
 class UnusedEclasses(base.Warning):
@@ -340,66 +270,30 @@ class UnusedEclasses(base.Warning):
         return ', '.join(self.eclasses)
 
 
-class UnusedInMastersEclasses(base.Warning):
-    """Eclasses detected that are unused in the master repo(s).
-
-    In other words, they're likely to be removed so should be copied to the overlay.
-    """
-
-    __slots__ = ("category", "package", "version", "eclasses")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, eclasses):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.eclasses = tuple(sorted(eclasses))
-
-    @property
-    def short_desc(self):
-        return "unused eclass%s in master repo(s): %s" % (
-            _pl(self.eclasses, 'es'), ', '.join(self.eclasses))
-
-
 class UnusedEclassesCheck(base.Template):
     """Check for unused eclasses."""
 
     feed_type = base.versioned_feed
     scope = base.repository_scope
-    known_results = (UnusedEclasses, UnusedInMastersEclasses)
+    known_results = (UnusedEclasses,)
 
     def __init__(self, options):
         super().__init__(options)
         self.unused_eclasses = None
 
     def start(self):
-        master_eclasses = self.unused_master_eclasses = set()
+        master_eclasses = set()
         for repo in self.options.target_repo.masters:
             master_eclasses.update(repo.eclass_cache.eclasses.keys())
-        self.unused_eclasses = set(self.options.target_repo.eclass_cache.eclasses.keys()) - master_eclasses
-
-        # determine unused eclasses across all master repos
-        self.unused_in_master_eclasses = set()
-        if master_eclasses:
-            for repo in self.options.target_repo.masters:
-                for pkg in repo:
-                    self.unused_master_eclasses.difference_update(pkg.inherited)
+        self.unused_eclasses = set(
+            self.options.target_repo.eclass_cache.eclasses.keys()) - master_eclasses
 
     def feed(self, pkg):
-        pkg_eclasses = set(pkg.inherited)
-        self.unused_eclasses.difference_update(pkg_eclasses)
-
-        # report eclasses used in the pkg but not in any pkg from the master repo(s)
-        if self.unused_master_eclasses:
-            eclasses = self.unused_master_eclasses & pkg_eclasses
-            if eclasses:
-                yield UnusedInMastersEclasses(pkg, eclasses)
+        self.unused_eclasses.difference_update(pkg.inherited)
 
     def finish(self):
         if self.unused_eclasses:
             yield UnusedEclasses(self.unused_eclasses)
-
-        self.unused_eclasses = self.unused_master_eclasses = None
 
 
 class UnknownLicenses(base.Warning):
@@ -476,27 +370,6 @@ class UnusedGlobalUSE(base.Warning):
             _pl(self.flags), ', '.join(self.flags))
 
 
-class UnusedInMastersGlobalUSE(base.Warning):
-    """Global USE flags detected that are unused in the master repo(s).
-
-    In other words, they're likely to be removed so should be copied to the overlay.
-    """
-
-    __slots__ = ("category", "package", "version", "flags")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg, flags):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.flags = tuple(sorted(flags))
-
-    @property
-    def short_desc(self):
-        return "use.desc unused flag%s in master repo(s): %s" % (
-            _pl(self.flags), ', '.join(self.flags))
-
-
 class PotentialGlobalUSE(base.Warning):
     """Local USE flag is a potential global USE flag."""
 
@@ -530,10 +403,7 @@ class GlobalUSECheck(base.Template):
     feed_type = base.package_feed
     scope = base.repository_scope
     required_addons = (addons.UseAddon,)
-    known_results = (
-        PotentialLocalUSE, PotentialGlobalUSE,
-        UnusedGlobalUSE, UnusedInMastersGlobalUSE,
-    )
+    known_results = (PotentialLocalUSE, PotentialGlobalUSE, UnusedGlobalUSE)
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
@@ -547,16 +417,9 @@ class GlobalUSECheck(base.Template):
         self.global_flag_usage = defaultdict(set)
 
     def start(self):
-        master_flags = self.unused_master_flags = set()
+        master_flags = set()
         for repo in self.options.target_repo.masters:
             master_flags.update(flag for matcher, (flag, desc) in repo.config.use_desc)
-
-        # determine unused flags across all master repos
-        if master_flags:
-            for repo in self.options.target_repo.masters:
-                for pkg in repo:
-                    self.unused_master_flags.difference_update(
-                        pkg.iuse_stripped.difference(pkg.local_use.keys()))
 
     def feed(self, pkgs):
         local_use = set(pkgs[0].local_use.keys())
@@ -564,12 +427,6 @@ class GlobalUSECheck(base.Template):
             pkg_global_use = pkg.iuse_stripped.difference(local_use)
             for flag in pkg_global_use:
                 self.global_flag_usage[flag].add(pkg.unversioned_atom)
-
-            # report flags used in the pkg but not in any pkg from the master repo(s)
-            if self.unused_master_flags:
-                flags = self.unused_master_flags.intersection(non_local_use)
-                if flags:
-                    yield UnusedInMastersGlobalUSE(pkg, flags)
 
     @staticmethod
     def _similar_flags(pkgs):
@@ -607,8 +464,6 @@ class GlobalUSECheck(base.Template):
                 yield [pkgs[i][0] for i in component]
 
     def finish(self):
-        self.unused_master_flags = None
-
         unused_global_flags = []
         potential_locals = []
         for flag in self.global_use.keys():
