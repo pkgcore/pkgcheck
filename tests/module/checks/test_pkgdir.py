@@ -159,7 +159,7 @@ class TestInvalidUTF8(PkgDirReportBase):
     def test_ascii_ebuild(self):
         pkg = self.mk_pkg()
         ebuild_path = pjoin(os.path.dirname(pkg.path), f'{pkg.package}-0.ebuild')
-        with open(ebuild_path, 'w') as f:
+        with open(ebuild_path, 'w', encoding='ascii') as f:
             f.write('EAPI=7\nDESCRIPTION="foobar"\n')
         self.assertNoReport(self.check, [pkg])
 
