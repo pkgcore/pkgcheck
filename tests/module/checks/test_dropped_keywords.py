@@ -1,7 +1,5 @@
 from itertools import chain
 
-from pkgcore.ebuild.const import VCS_ECLASSES
-
 from pkgcheck.checks.dropped_keywords import DroppedKeywordsCheck as drop_keys
 
 from .. import misc
@@ -11,10 +9,11 @@ class TestDroppedKeywords(misc.ReportTestCase):
 
     check_kls = drop_keys
 
-    def mk_pkg(self, ver, keywords='', eclasses=()):
+    def mk_pkg(self, ver, keywords='', eclasses=(), **kwargs):
         return misc.FakePkg(
             f"dev-util/diffball-{ver}",
             data={
+                **kwargs,
                 "KEYWORDS": keywords,
                 "_eclasses_": eclasses,
             })
@@ -56,11 +55,10 @@ class TestDroppedKeywords(misc.ReportTestCase):
                 self.mk_pkg("2", key)])
 
         # ensure it doesn't flag live ebuilds
-        for eclass in VCS_ECLASSES:
-            self.assertNoReport(
-                check,
-                [self.mk_pkg("1", "x86 amd64"),
-                self.mk_pkg("9999", "", eclasses=(eclass,))])
+        self.assertNoReport(
+            check,
+            [self.mk_pkg("1", "x86 amd64"),
+            self.mk_pkg("9999", "", PROPERTIES='live')])
 
     def test_verbose_mode(self):
         # verbose mode outputs a report per version with dropped keywords
