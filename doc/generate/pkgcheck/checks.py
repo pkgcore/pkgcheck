@@ -15,9 +15,10 @@ running against an entire repo, all defined checks will be run.
 """
 
 from operator import attrgetter
-from collections import defaultdict
 import sys
 from textwrap import dedent, TextWrapper
+
+from snakeoil.strings import pluralism as _pl
 
 from pkgcheck import base
 from pkgcheck.scripts.pkgcheck import _known_checks
@@ -62,7 +63,8 @@ def main(f=sys.stdout, **kwargs):
                 known_results = ', '.join(
                     f'`{r.__name__}`_' for r in
                     sorted(check.known_results, key=attrgetter('__name__')))
-                out('\n' + '\n'.join(wrapper.wrap(f"(known results: {known_results})")))
+                out('\n' + '\n'.join(wrapper.wrap(
+                    f"(known result{_pl(check.known_results)}: {known_results})")))
 
 
 if __name__ == '__main__':

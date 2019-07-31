@@ -9,11 +9,14 @@ Keywords
 List of result keywords that can be produced by pkgcheck.
 """
 
+from collections import defaultdict
 import sys
 from textwrap import dedent
 
+from snakeoil.strings import pluralism as _pl
+
 from pkgcheck import base
-from pkgcheck.scripts.pkgcheck import _known_keywords
+from pkgcheck.scripts.pkgcheck import _known_checks, _known_keywords
 
 
 def main(f=sys.stdout, **kwargs):
@@ -29,6 +32,11 @@ def main(f=sys.stdout, **kwargs):
     # add module docstring to output doc
     if __doc__ is not None:
         out(__doc__.strip())
+
+    related_checks = defaultdict(set)
+    for check in _known_checks:
+        for keyword in check.known_results:
+            related_checks[keyword].add(check.__name__)
 
     for scope in base.known_scopes.values():
         _rst_header('-', scope.desc.capitalize() + ' scope')
@@ -50,6 +58,9 @@ def main(f=sys.stdout, **kwargs):
                 if explanation:
                     explanation = '\n'.join(dedent(explanation).strip().split('\n'))
                     out('\n' + explanation)
+                checks = ', '.join(
+                    f'`{c}`_' for c in sorted(related_checks[keyword]))
+                out('\n' + f"(related check{_pl(related_checks[keyword])}: {checks})")
 
 
 if __name__ == '__main__':
