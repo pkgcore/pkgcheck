@@ -1,5 +1,3 @@
-from multiprocessing import cpu_count, Queue, Process
-from multiprocessing.pool import Pool
 import os
 
 from snakeoil.osutils import pjoin
@@ -24,31 +22,6 @@ class BinaryFile(base.Error):
         return f"binary file found in repository: {self.path!r}"
 
 
-class IteratorQueue(object):
-    """Iterator based on an output queue fed by a thread/process pool."""
-
-    def __init__(self, queue, inserter, pool, sentinel=None, processes=None):
-        self.queue = queue
-        self.inserter = inserter
-        self.pool = pool
-        self.sentinel = sentinel
-        self.processes = processes if processes is not None else cpu_count()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        result = self.queue.get()
-        if result is self.sentinel:
-            self.processes -= 1
-            if self.processes == 0:
-                self.inserter.join()
-                self.pool.join()
-                raise StopIteration
-            return self.__next__()
-        return result
-
-
 class RepoDirCheck(base.DefaultRepoCheck):
     """Scan all files in the repository for issues."""
 
@@ -62,37 +35,18 @@ class RepoDirCheck(base.DefaultRepoCheck):
     def __init__(self, options):
         super().__init__(options)
         self.repo = options.target_repo
+        self.ignored_paths = {
+            pjoin(self.repo.location, x) for x in self.ignored_root_dirs}
+        self.dirs = [self.repo.location]
 
     def feed(self, pkg):
         pass
 
-    def _scan_file(self, paths, results, sentinel=None):
-        while True:
-            path = paths.get()
-            if path is sentinel:
-                results.put(sentinel)
-                return
-            elif is_binary(path):
-                results.put(BinaryFile(path[len(self.repo.location) + 1:]))
-
-    def _insert_files(self, queue, processes, sentinel=None):
-        for root, dirs, files in os.walk(self.repo.location):
-            if root == self.repo.location:
-                dirs[:] = [d for d in dirs if d not in self.ignored_root_dirs]
-            for f in files:
-                queue.put(pjoin(root, f))
-        for i in range(processes):
-            queue.put(sentinel)
-
     def finish(self):
-        path_queue = Queue()
-        results_queue = Queue()
-        processes = cpu_count()
-        # producer walks the repo directory, queuing file paths to check
-        p = Process(target=self._insert_files, args=(path_queue, processes))
-        p.start()
-        # consumers pull paths from the queue, perform binary checks, and queue
-        # reports on a positive results
-        pool = Pool(processes, self._scan_file, (path_queue, results_queue))
-        pool.close()
-        return IteratorQueue(results_queue, p, pool, processes=processes)
+        while self.dirs:
+            for entry in os.scandir(self.dirs.pop()):
+                if entry.is_dir(follow_symlinks=False):
+                    if entry.path not in self.ignored_paths:
+                        self.dirs.append(entry.path)
+                elif is_binary(entry.path):
+                    yield BinaryFile(entry.path[len(self.repo.location) + 1:])
