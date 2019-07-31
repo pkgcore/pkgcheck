@@ -560,8 +560,6 @@ def plug(sinks, transforms, sources, debug=None):
     # point, which should be fairly easy since we only care about
     # their type and scope).
 
-    assert sinks
-
     feed_to_transforms = {}
     for transform in transforms:
         feed_to_transforms.setdefault(transform.source, []).append(transform)

@@ -465,6 +465,10 @@ def _scan(options, out, err):
     sinks = list(addon for addon in addons_map.values()
                  if getattr(addon, 'feed_type', False))
 
+    if not sinks:
+        err.write(f'{scan.prog}: no matching checks available for current scope')
+        return
+
     raw_sources = []
     for source in feeds.all_sources():
         addons = [addons_map.get(cls, cls(options)) for cls in source.required_addons]
@@ -491,23 +495,20 @@ def _scan(options, out, err):
             if options.verbosity > 1 and out_of_scope:
                 err.warn('skipping repo checks (not a full repo scan)')
 
-        if pipes:
-            if options.debug:
-                err.write(f'Running {len(sinks) - len(bad_sinks)} tests')
-            err.flush()
-            for source, pipe in pipes:
-                for result in pipe.start():
+        if options.debug:
+            err.write(f'Running {len(sinks) - len(bad_sinks)} tests')
+        err.flush()
+        for source, pipe in pipes:
+            for result in pipe.start():
+                reporter.report(result)
+            reporter.start_check(
+                list(base.collect_checks_classes(pipe)), filterer)
+            for item in source.feed():
+                for result in pipe.feed(item):
                     reporter.report(result)
-                reporter.start_check(
-                    list(base.collect_checks_classes(pipe)), filterer)
-                for item in source.feed():
-                    for result in pipe.feed(item):
-                        reporter.report(result)
-                for result in pipe.finish():
-                    reporter.report(result)
-                reporter.end_check()
-        else:
-            err.write(f'{scan.prog}: no matching checks available for current scope')
+            for result in pipe.finish():
+                reporter.report(result)
+            reporter.end_check()
 
     reporter.finish()
 
