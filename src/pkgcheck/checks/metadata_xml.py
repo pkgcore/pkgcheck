@@ -193,6 +193,28 @@ class MaintainerWithoutProxy(base.Warning):
                 f"as a proxy: [{', '.join(self.maintainers)}]")
 
 
+class StaleProxyMaintProject(base.Warning):
+    """Package lists proxy-maint project but has no proxied maintainers.
+
+    The package explicitly lists proxy-maint@g.o as the only maintainer.
+    Most likely, this means that the proxied maintainer has been removed
+    but proxy-maint was left over.
+    """
+
+    __slots__ = ("category", "package", "filename")
+    threshold = base.package_feed
+
+    def __init__(self, filename, category, package):
+        super().__init__()
+        self.filename = filename
+        self.category = category
+        self.package = package
+
+    @property
+    def short_desc(self):
+        return "Package has proxy-maint project but no proxied maintainers"
+
+
 class PkgMissingMetadataXml(base_MissingXml):
     """Package is missing metadata.xml."""
     __slots__ = ()
@@ -470,6 +492,10 @@ class base_check(base.Template):
                            for m in pkg.maintainers):
                     maintainers.append(partial(
                         MaintainerWithoutProxy, pkg.maintainers))
+                elif (len(pkg.maintainers) == 1 and
+                      any(m.email == 'proxy-maint@gentoo.org'
+                          for m in pkg.maintainers)):
+                    maintainers.append(partial(StaleProxyMaintProject))
             else:
                 if not any(c.text.strip() == 'maintainer-needed'
                            for c in doc.xpath('//comment()')):
