@@ -471,10 +471,8 @@ class base_check(base.Template):
                     maintainers.append(partial(
                         MaintainerWithoutProxy, pkg.maintainers))
             else:
-                for comment in doc.xpath('//comment()'):
-                    if comment.text.strip() == 'maintainer-needed':
-                        break
-                else:
+                if not any(c.text.strip() == 'maintainer-needed'
+                           for c in doc.xpath('//comment()')):
                     maintainers.append(partial(EmptyMaintainer))
 
         keywords = (maintainers, self.check_doc(doc), self.check_whitespace(loc))
