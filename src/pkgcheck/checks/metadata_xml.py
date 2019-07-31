@@ -7,6 +7,7 @@ from .. import base
 
 demandload(
     'argparse',
+    'email.utils:formataddr',
     'functools:partial',
     'itertools:chain',
     'urllib.request:urlopen',
@@ -163,6 +164,33 @@ class EmptyMaintainer(base.Warning):
     @property
     def short_desc(self):
         return 'no package maintainer or maintainer-needed comment specified'
+
+
+class MaintainerWithoutProxy(base.Warning):
+    """Package has a proxied maintainer without a proxy.
+
+    All package maintainers have non-@gentoo.org e-mail addresses. Most likely,
+    this means that the package is maintained by a proxied maintainer but there
+    is no explicit proxy (developer or project) listed. This means no Gentoo
+    developer will be CC-ed on bug reports, and most likely no developer
+    oversees the proxied maintainer's activity.
+    """
+
+    __slots__ = ("category", "package", "filename", "maintainers")
+    threshold = base.package_feed
+
+    def __init__(self, maintainers, filename, category, package):
+        super().__init__()
+        self.maintainers = tuple(formataddr((m.name, m.email)) for m in maintainers)
+        self.filename = filename
+        self.category = category
+        self.package = package
+
+    @property
+    def short_desc(self):
+        return (
+            f"proxied maintainer{_pl(self.maintainers)} missing proxy dev/project: "
+            f"[ {', '.join(self.maintainers)} ]")
 
 
 class PkgMissingMetadataXml(base_MissingXml):
@@ -434,13 +462,20 @@ class base_check(base.Template):
             return (partial(self.invalid_error, self.schema.error_log),)
 
         # check for missing maintainer-needed comments in gentoo repo
+        # and incorrect maintainers
         maintainers = []
-        if pkg is not None and pkg.repo.repo_id == 'gentoo' and not pkg.maintainers:
-            for comment in doc.xpath('//comment()'):
-                if comment.text.strip() == 'maintainer-needed':
-                    break
+        if pkg is not None and pkg.repo.repo_id == 'gentoo':
+            if pkg.maintainers:
+                if not any(m.email.endswith('@gentoo.org')
+                           for m in pkg.maintainers):
+                    maintainers.append(partial(
+                        MaintainerWithoutProxy, pkg.maintainers))
             else:
-                maintainers.append(partial(EmptyMaintainer))
+                for comment in doc.xpath('//comment()'):
+                    if comment.text.strip() == 'maintainer-needed':
+                        break
+                else:
+                    maintainers.append(partial(EmptyMaintainer))
 
         keywords = (maintainers, self.check_doc(doc), self.check_whitespace(loc))
         return chain.from_iterable(keywords)
