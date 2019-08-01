@@ -1,14 +1,13 @@
 from collections import defaultdict
 
-from ..addons import ArchesAddon
-from ..base import Template, package_feed, versioned_feed, Warning
+from .. import addons, base
 
 
-class DroppedKeywords(Warning):
+class DroppedKeywords(base.Warning):
     """Arch keywords dropped during version bumping."""
 
     __slots__ = ("arches", "category", "package", "version")
-    threshold = versioned_feed
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, arches):
         super().__init__()
@@ -20,15 +19,15 @@ class DroppedKeywords(Warning):
         return ', '.join(self.arches)
 
 
-class DroppedKeywordsCheck(Template):
+class DroppedKeywordsCheck(base.Template):
     """Scan packages for keyword dropping across versions."""
 
-    feed_type = package_feed
-    required_addons = (ArchesAddon,)
+    feed_type = base.package_feed
+    required_addons = (addons.ArchesAddon,)
     known_results = (DroppedKeywords,)
 
     def __init__(self, options, arches):
-        Template.__init__(self, options)
+        super().__init__(options)
         self.arches = frozenset(options.arches)
 
     def feed(self, pkgset):

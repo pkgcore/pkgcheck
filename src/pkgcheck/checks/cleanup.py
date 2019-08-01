@@ -1,13 +1,13 @@
 from snakeoil.strings import pluralism as _pl
 
-from ..base import Template, package_feed, Warning, versioned_feed
+from .. import base
 
 
-class RedundantVersion(Warning):
+class RedundantVersion(base.Warning):
     """Redundant version(s) of a package in a specific slot."""
 
     __slots__ = ("category", "package", "version", "slot", "later_versions")
-    threshold = versioned_feed
+    threshold = base.versioned_feed
 
     def __init__(self, pkg, higher_pkgs):
         super().__init__()
@@ -21,7 +21,7 @@ class RedundantVersion(Warning):
             self.slot, _pl(self.later_versions), ', '.join(self.later_versions))
 
 
-class RedundantVersionCheck(Template):
+class RedundantVersionCheck(base.Template):
     """Scan for overshadowed package versions.
 
     Scan for versions that are likely shadowed by later versions from a
@@ -32,7 +32,7 @@ class RedundantVersionCheck(Template):
     pkga-1 can potentially be removed.
     """
 
-    feed_type = package_feed
+    feed_type = base.package_feed
     known_results = (RedundantVersion,)
 
     def feed(self, pkgset):
