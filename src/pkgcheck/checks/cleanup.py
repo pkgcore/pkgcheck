@@ -25,7 +25,8 @@ class RedundantVersionCheck(Template):
     """Scan for overshadowed package versions.
 
     Scan for versions that are likely shadowed by later versions from a
-    keywords standpoint (ignoring -9999 versioned packages)
+    keywords standpoint (ignoring live packages that erroneously have
+    keywords).
 
     Example: pkga-1 is keyworded amd64, pkga-2 is amd64.
     pkga-1 can potentially be removed.
