@@ -128,8 +128,8 @@ class VisibleVcsPkg(base.Error):
         return f"VCS version visible for arch {self.arch}, profile {self.profile}"
 
 
-class NonExistentDeps(base.Warning):
-    """No matches exist for a depset element."""
+class NonexistentDeps(base.Warning):
+    """No matches exist for a package dependency."""
 
     __slots__ = ("category", "package", "version", "attr", "atoms")
 
@@ -138,13 +138,15 @@ class NonExistentDeps(base.Warning):
     def __init__(self, pkg, attr, nonexistent_atoms):
         super().__init__()
         self._store_cpv(pkg)
-        self.attr = attr
+        self.attr = attr.upper()
         self.atoms = tuple(map(str, nonexistent_atoms))
 
     @property
     def short_desc(self):
-        return "depset %s: nonexistent dep%s: [ %s ]" % (
-            self.attr, _pl(self.atoms), ', '.join(self.atoms))
+        return (
+            f"{self.attr}: nonexistent package{_pl(self.atoms)}: "
+            f"[ {', '.join(self.atoms)} ]"
+        )
 
 
 class UncheckableDep(base.Warning):
@@ -223,7 +225,7 @@ class VisibilityCheck(base.Template):
         addons.QueryCacheAddon, addons.ProfileAddon,
         addons.EvaluateDepSetAddon)
     known_results = (
-        VisibleVcsPkg, NonExistentDeps, NonsolvableDeps,
+        VisibleVcsPkg, NonexistentDeps, NonsolvableDeps,
         NonsolvableDepsInStable, NonsolvableDepsInDev, NonsolvableDepsInExp,
     )
 
@@ -281,7 +283,7 @@ class VisibilityCheck(base.Template):
                 yield UncheckableDep(pkg, attr)
                 suppressed_depsets.append(attr)
             if nonexistent:
-                yield NonExistentDeps(pkg, attr, nonexistent)
+                yield NonexistentDeps(pkg, attr, nonexistent)
 
         del nonexistent
 
