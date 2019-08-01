@@ -2,7 +2,9 @@ from importlib import import_module
 import inspect
 import pkgutil
 
-from pkgcheck import base, checks
+from pkgcore.plugin import get_plugins
+
+from pkgcheck import base, checks, plugins
 
 
 def find_classes(module, parent_cls):
@@ -22,13 +24,18 @@ def find_classes(module, parent_cls):
                 yield name, cls
 
 
+_known_checks = []
 _known_keywords = set()
+
 
 def test_checks():
     """Scan through all public checks and verify various aspects."""
     for name, cls in find_classes(checks, base.Template):
         assert cls.known_results, f"check class {name!r} doesn't define known results"
         _known_keywords.update(cls.known_results)
+        _known_checks.append(cls)
+    # verify all checks are defined in plugins.core_checks
+    assert set(_known_checks) == set(get_plugins('check', plugins))
 
 
 def test_keywords():
