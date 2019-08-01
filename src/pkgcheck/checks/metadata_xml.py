@@ -521,7 +521,8 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
     known_results = (
         PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
-        PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, EmptyMaintainer)
+        PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, EmptyMaintainer,
+        MaintainerWithoutProxy, StaleProxyMaintProject)
 
     def feed(self, pkgs):
         # package with no ebuilds, skipping check
