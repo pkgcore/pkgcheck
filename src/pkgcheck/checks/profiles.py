@@ -427,7 +427,9 @@ class RepoProfilesCheck(base.Template):
         if unknown_categories:
             yield UnknownCategories(unknown_categories)
 
-        arches_without_profiles = self.arches.difference(self.repo.config.profiles.arches())
+        arches_without_profiles = set(self.arches)
+        for repo in self.options.target_repo.trees:
+            arches_without_profiles.difference_update(repo.config.profiles.arches())
         if arches_without_profiles:
             yield ArchesWithoutProfiles(arches_without_profiles)
 
