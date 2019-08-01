@@ -182,7 +182,7 @@ class RequiredUseDefaults(base.Warning):
             )
         else:
             return (
-                f'keyword: {self.keyword}, profile: {self.profile}, '
+                f'keyword: {self.keyword}, profile: {self.profile!r}, '
                 f"default USE: [{', '.join(self.use)}] "
                 f'-- failed REQUIRED_USE: {self.required_use}'
             )

@@ -3,7 +3,7 @@ from itertools import combinations
 import os
 import tempfile
 
-from pkgcore.ebuild import repository
+from pkgcore.ebuild import eapi, repository
 from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
 from snakeoil.currying import post_curry
@@ -189,19 +189,42 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
         super().setUp()
         self.check = self.mk_check()
 
-    def mk_check(self, masks=()):
-        options = self.get_options(verbosity=1)
-        profiles = {'x86': [misc.FakeProfile(name='default/linux/x86', masks=masks)]}
+    def mk_check(self, masks=(), verbosity=1, profiles=None):
+        if profiles is None:
+            profiles = {'x86': [misc.FakeProfile(name='default/linux/x86', masks=masks)]}
+        options = self.get_options(verbosity=verbosity)
         check = self.check_kls(options, addons.UseAddon(options, profiles['x86']), profiles)
         return check
 
     def mk_pkg(self, cpvstr="dev-util/diffball-0.7.1", eapi="4", iuse="",
-               required_use="", keywords="x86"):
+               required_use="", keywords="~amd64 x86"):
         return FakePkg(
             cpvstr,
             eapi=eapi,
             iuse=iuse.split(),
             data={"REQUIRED_USE": required_use, "KEYWORDS": keywords})
+
+    def test_unsupported_eapis(self):
+        for eapi_str, eapi_obj in eapi.EAPI.known_eapis.items():
+            if not eapi_obj.options.has_required_use:
+                pkg = self.mk_pkg(eapi=eapi_str, required_use="foo? ( blah )")
+                self.assertNoReport(self.check, pkg)
+
+    def test_multireport_verbosity(self):
+        profiles = {
+            'x86': [
+                misc.FakeProfile(name='default/linux/x86', masks=()),
+                misc.FakeProfile(name='default/linux/x86/foo', masks=())]
+        }
+        # non-verbose mode should only one failure per node
+        check = self.mk_check(verbosity=0, profiles=profiles)
+        r = self.assertReport(check, self.mk_pkg(iuse="+foo bar", required_use="bar"))
+        assert "profile: 'default/linux/x86' (2 total) failed REQUIRED_USE: bar" == str(r)
+        # while verbose mode should report both
+        check = self.mk_check(verbosity=1, profiles=profiles)
+        r = self.assertReports(check, self.mk_pkg(iuse="+foo bar", required_use="bar"))
+        assert "keyword: x86, profile: 'default/linux/x86', default USE: [foo] " in str(r[0])
+        assert "keyword: x86, profile: 'default/linux/x86/foo', default USE: [foo]" in str(r[1])
 
     def test_required_use(self):
         # bad syntax
