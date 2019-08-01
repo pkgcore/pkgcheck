@@ -89,7 +89,8 @@ class UnusedInMastersGlobalUSE(base.Warning):
             _pl(self.flags), ', '.join(self.flags))
 
 
-class UnusedInMastersCheck(repo_metadata._MirrorsCheck, base.OverlayRepoCheck):
+class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
+                           base.OverlayRepoCheck, base.ExplicitlyEnabledCheck):
     """Check for various metadata that may be removed from master repos."""
 
     feed_type = base.versioned_feed

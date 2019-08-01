@@ -143,8 +143,10 @@ class DefaultRepoCheck(Template):
 
     @classmethod
     def skip(cls, namespace):
-        logger.info(f'skipping {cls.__name__}, not running against default repo')
-        return namespace.target_repo.repo_id != cls._default_repo
+        skip = namespace.target_repo.repo_id != cls._default_repo
+        if skip:
+            logger.info(f'skipping {cls.__name__}, not running against default repo')
+        return skip or super().skip(namespace)
 
 
 class OverlayRepoCheck(Template):
@@ -152,8 +154,25 @@ class OverlayRepoCheck(Template):
 
     @classmethod
     def skip(cls, namespace):
-        logger.info(f'skipping {cls.__name__}, not running against overlay repo')
-        return not namespace.target_repo.masters
+        skip = not namespace.target_repo.masters
+        if skip:
+            logger.info(f'skipping {cls.__name__}, not running against overlay repo')
+        return skip or super().skip(namespace)
+
+
+class ExplicitlyEnabledCheck(Template):
+    """Check that is only valid when explicitly enabled."""
+
+    @classmethod
+    def skip(cls, namespace):
+        if namespace.selected_checks is not None:
+            disabled, enabled = namespace.selected_checks
+        else:
+            disabled, enabled = (), ()
+        skip = cls.__name__ not in enabled
+        if skip:
+            logger.info(f'skipping {cls.__name__}, not explicitly enabled')
+        return skip or super().skip(namespace)
 
 
 class GenericSource(object):
