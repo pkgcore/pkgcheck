@@ -6,7 +6,7 @@ from .. import base
 demand_compile_regexp('indent_regexp', '^\t* \t+')
 
 
-class base_whitespace(base.Warning):
+class _Whitespace(base.Warning):
 
     threshold = base.versioned_feed
 
@@ -17,7 +17,7 @@ class base_whitespace(base.Warning):
         return f"line{_pl(self.lines)}: {', '.join(str(x) for x in self.lines)}"
 
 
-class WhitespaceFound(base_whitespace):
+class WhitespaceFound(_Whitespace):
     """Leading or trailing whitespace found."""
 
     __slots__ = ("category", "package", "version", "lines", "leadtrail")
@@ -33,7 +33,7 @@ class WhitespaceFound(base_whitespace):
         return f"ebuild has {self.leadtrail} whitespace on {self.lines_str}"
 
 
-class WrongIndentFound(base_whitespace):
+class WrongIndentFound(_Whitespace):
     """Incorrect indentation whitespace found."""
 
     __slots__ = ("category", "package", "version", "lines")
@@ -48,7 +48,7 @@ class WrongIndentFound(base_whitespace):
         return f"ebuild has whitespace in indentation on {self.lines_str}"
 
 
-class DoubleEmptyLine(base_whitespace):
+class DoubleEmptyLine(_Whitespace):
     """Unneeded blank lines found."""
 
     __slots__ = ("category", "package", "version", "lines")

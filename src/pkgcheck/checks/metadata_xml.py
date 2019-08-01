@@ -21,7 +21,7 @@ demandload(
 )
 
 
-class base_MissingXml(base.Error):
+class _MissingXml(base.Error):
     """Required XML file is missing."""
 
     __slots__ = ('category', 'package', 'filename')
@@ -44,7 +44,7 @@ class base_MissingXml(base.Error):
         return f"{self._label} is missing {os.path.basename(self.filename)}"
 
 
-class base_BadlyFormedXml(base.Warning):
+class _BadlyFormedXml(base.Warning):
     """XML isn't well formed."""
 
     __slots__ = ("category", "package", "filename")
@@ -67,7 +67,7 @@ class base_BadlyFormedXml(base.Warning):
         return f"{self._label} {os.path.basename(self.filename)} is not well formed xml"
 
 
-class base_InvalidXml(base.Error):
+class _InvalidXml(base.Error):
     """XML fails XML Schema validation."""
 
     __slots__ = ("category", "package", "filename")
@@ -99,7 +99,7 @@ class base_InvalidXml(base.Error):
             '\n'.join(self.format_lxml_errors(self.message)))
 
 
-class base_MetadataXmlInvalidPkgRef(base.Error):
+class _MetadataXmlInvalidPkgRef(base.Error):
     """metadata.xml <pkg/> references unknown/invalid package."""
 
     __slots__ = ("category", "package", "filename")
@@ -124,7 +124,7 @@ class base_MetadataXmlInvalidPkgRef(base.Error):
             self._label, os.path.basename(self.filename), self.pkgtext)
 
 
-class base_MetadataXmlInvalidCatRef(base.Error):
+class _MetadataXmlInvalidCatRef(base.Error):
     """metadata.xml <cat/> references unknown/invalid category"""
 
     __slots__ = ("category", "package", "filename")
@@ -215,67 +215,67 @@ class StaleProxyMaintProject(base.Warning):
         return "proxy-maint maintainer with no proxies"
 
 
-class PkgMissingMetadataXml(base_MissingXml):
+class PkgMissingMetadataXml(_MissingXml):
     """Package is missing metadata.xml."""
     __slots__ = ()
     threshold = base.package_feed
 
 
-class CatMissingMetadataXml(base_MissingXml):
+class CatMissingMetadataXml(_MissingXml):
     """Category is missing metadata.xml."""
     __slots__ = ()
     threshold = base.category_feed
 
 
-class PkgInvalidXml(base_InvalidXml):
+class PkgInvalidXml(_InvalidXml):
     """Invalid package metadata.xml."""
     __slots__ = ()
     threshold = base.package_feed
 
 
-class CatInvalidXml(base_InvalidXml):
+class CatInvalidXml(_InvalidXml):
     """Invalid category metadata.xml."""
     __slots__ = ()
     threshold = base.category_feed
 
 
-class PkgBadlyFormedXml(base_BadlyFormedXml):
+class PkgBadlyFormedXml(_BadlyFormedXml):
     """Badly formed package metadata.xml."""
     __slots__ = ()
     threshold = base.package_feed
 
 
-class CatBadlyFormedXml(base_BadlyFormedXml):
+class CatBadlyFormedXml(_BadlyFormedXml):
     """Badly formed category metadata.xml."""
     __slots__ = ()
     threshold = base.category_feed
 
 
-class PkgMetadataXmlInvalidPkgRef(base_MetadataXmlInvalidPkgRef):
+class PkgMetadataXmlInvalidPkgRef(_MetadataXmlInvalidPkgRef):
     """Invalid package reference in package metadata.xml."""
     __slots__ = ()
     threshold = base.package_feed
 
 
-class CatMetadataXmlInvalidPkgRef(base_MetadataXmlInvalidPkgRef):
+class CatMetadataXmlInvalidPkgRef(_MetadataXmlInvalidPkgRef):
     """Invalid package reference in category metadata.xml."""
     __slots__ = ()
     threshold = base.category_feed
 
 
-class PkgMetadataXmlInvalidCatRef(base_MetadataXmlInvalidCatRef):
+class PkgMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef):
     """Invalid category reference in package metadata.xml."""
     __slots__ = ()
     threshold = base.package_feed
 
 
-class CatMetadataXmlInvalidCatRef(base_MetadataXmlInvalidCatRef):
+class CatMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef):
     """Invalid category reference in category metadata.xml."""
     __slots__ = ()
     threshold = base.category_feed
 
 
-class MetadataXmlIndentation(base.Warning):
+class _MetadataXmlIndentation(base.Warning):
     """Inconsistent indentation in metadata.xml file.
 
     Either all tabs or all spaces should be used, not a mixture of both.
@@ -301,7 +301,7 @@ class MetadataXmlIndentation(base.Warning):
             self.short_desc, _pl(self.lines), ', '.join(str(x) for x in self.lines))
 
 
-class CatMetadataXmlIndentation(MetadataXmlIndentation):
+class CatMetadataXmlIndentation(_MetadataXmlIndentation):
     """Inconsistent indentation in category metadata.xml file.
 
     Either all tabs or all spaces should be used, not a mixture of both.
@@ -309,7 +309,7 @@ class CatMetadataXmlIndentation(MetadataXmlIndentation):
     __slots__ = ()
     threshold = base.category_feed
 
-class PkgMetadataXmlIndentation(MetadataXmlIndentation):
+class PkgMetadataXmlIndentation(_MetadataXmlIndentation):
     """Inconsistent indentation in package metadata.xml file.
 
     Either all tabs or all spaces should be used, not a mixture of both.
@@ -318,7 +318,7 @@ class PkgMetadataXmlIndentation(MetadataXmlIndentation):
     threshold = base.package_feed
 
 
-class MetadataXmlEmptyElement(base.Warning):
+class _MetadataXmlEmptyElement(base.Warning):
     """Empty element in metadata.xml file."""
 
     __slots__ = ("category", "package", "filename", "line", "element")
@@ -337,13 +337,13 @@ class MetadataXmlEmptyElement(base.Warning):
         return f"metadata.xml has empty element {self.element!r} on line {self.line}"
 
 
-class CatMetadataXmlEmptyElement(MetadataXmlEmptyElement):
+class CatMetadataXmlEmptyElement(_MetadataXmlEmptyElement):
     """Empty element in category metadata.xml file."""
     __slots__ = ()
     threshold = base.category_feed
 
 
-class PkgMetadataXmlEmptyElement(MetadataXmlEmptyElement):
+class PkgMetadataXmlEmptyElement(_MetadataXmlEmptyElement):
     """Empty element in package metadata.xml file."""
     __slots__ = ()
     threshold = base.package_feed

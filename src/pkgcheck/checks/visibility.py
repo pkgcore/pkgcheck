@@ -225,7 +225,7 @@ class VisibilityCheck(base.Template):
         addons.QueryCacheAddon, addons.ProfileAddon,
         addons.EvaluateDepSetAddon)
     known_results = (
-        VisibleVcsPkg, NonexistentDeps, NonsolvableDeps,
+        VisibleVcsPkg, NonexistentDeps, NonsolvableDeps, UncheckableDep,
         NonsolvableDepsInStable, NonsolvableDepsInDev, NonsolvableDepsInExp,
     )
 
