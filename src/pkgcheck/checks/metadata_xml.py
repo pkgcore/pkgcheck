@@ -349,7 +349,7 @@ class PkgMetadataXmlEmptyElement(MetadataXmlEmptyElement):
     threshold = base.package_feed
 
 
-class base_check(base.Template):
+class _XmlBaseCheck(base.Template):
     """Base class for metadata.xml scans."""
 
     xsd_url = "https://www.gentoo.org/xml-schema/metadata.xsd"
@@ -381,7 +381,7 @@ class base_check(base.Template):
     def start(self):
         self.pkgref_cache = {}
 
-        if base_check.schema is None:
+        if _XmlBaseCheck.schema is None:
             refetch = False
             write_path = read_path = self.options.metadata_xsd
             if write_path is None:
@@ -420,7 +420,7 @@ class base_check(base.Template):
                     self.validator = noop_validator
                     return
 
-            base_check.schema = etree.XMLSchema(etree.parse(read_path))
+            _XmlBaseCheck.schema = etree.XMLSchema(etree.parse(read_path))
 
     def feed(self, thing):
         raise NotImplementedError(self.feed)
@@ -505,7 +505,7 @@ class base_check(base.Template):
         return chain.from_iterable(keywords)
 
 
-class PackageMetadataXmlCheck(base_check):
+class PackageMetadataXmlCheck(_XmlBaseCheck):
     """Package level metadata.xml scans."""
 
     feed_type = base.package_feed
@@ -534,7 +534,7 @@ class PackageMetadataXmlCheck(base_check):
             yield report(loc, pkg.category, pkg.package)
 
 
-class CategoryMetadataXmlCheck(base_check):
+class CategoryMetadataXmlCheck(_XmlBaseCheck):
     """Category level metadata.xml scans."""
 
     feed_type = base.category_feed
