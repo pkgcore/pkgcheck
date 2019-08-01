@@ -379,6 +379,50 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
         self.assertNoReport(chk, self.mk_pkg('foo', 'foo2'))
 
 
+class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
+
+    check_kls = metadata.MissingSlotDepCheck
+
+    def mk_check(self, pkgs=None, **kwargs):
+        if pkgs is None:
+            pkgs = (
+                FakePkg('dev-libs/foo-0', slot='0'),
+                FakePkg('dev-libs/foo-1', slot='1'),
+            )
+        self.repo = FakeRepo(pkgs=pkgs, repo_id='test')
+        options = self.get_options(**kwargs)
+        profiles = [misc.FakeProfile()]
+        iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
+        check = self.check_kls(options, iuse_handler)
+        return check
+
+    def mk_pkg(self, eapi='5', rdepend='', depend=''):
+        return FakePkg(
+            'dev-util/diffball-2.7.1', eapi=eapi,
+            data={'RDEPEND': rdepend, 'DEPEND': depend},
+            repo=self.repo)
+
+    def test_no_deps(self):
+        self.assertNoReport(self.mk_check(), self.mk_pkg())
+
+    def test_unsupported_eapis(self):
+        # EAPIs lacking slot operator deps shouldn't trigger reports
+        for eapi_str, eapi_obj in eapi.EAPI.known_eapis.items():
+            if not eapi_obj.options.sub_slotting:
+                self.assertNoReport(
+                    self.mk_check(), self.mk_pkg(
+                        eapi=eapi_str, rdepend='dev-lbs/foo', depend='dev-libs/foo'))
+
+    def test_supported_eapis(self):
+        for eapi_str, eapi_obj in eapi.EAPI.known_eapis.items():
+            if eapi_obj.options.sub_slotting:
+                r = self.assertReport(
+                    self.mk_check(), self.mk_pkg(
+                        eapi=eapi_str, rdepend='dev-libs/foo', depend='dev-libs/foo'))
+                assert isinstance(r, metadata.MissingSlotDep)
+
+
+
 class TestDependencyReport(use_based(), misc.ReportTestCase):
 
     check_kls = metadata.DependencyCheck
