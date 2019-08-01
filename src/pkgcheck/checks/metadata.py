@@ -122,7 +122,7 @@ class MetadataCheck(base.Template):
     """Scan for packages with banned/deprecated EAPIs or bad metadata."""
 
     feed_type = base.versioned_feed
-    known_results = (DeprecatedEAPI,)
+    known_results = (DeprecatedEAPI, BannedEAPI)
 
     def feed(self, pkg):
         eapi_str = str(pkg.eapi)
