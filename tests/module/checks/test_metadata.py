@@ -388,6 +388,7 @@ class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
             pkgs = (
                 FakePkg('dev-libs/foo-0', slot='0'),
                 FakePkg('dev-libs/foo-1', slot='1'),
+                FakePkg('dev-libs/bar-2', slot='2'),
             )
         self.repo = FakeRepo(pkgs=pkgs, repo_id='test')
         options = self.get_options(**kwargs)
@@ -401,9 +402,6 @@ class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
             'dev-util/diffball-2.7.1', eapi=eapi,
             data={'RDEPEND': rdepend, 'DEPEND': depend},
             repo=self.repo)
-
-    def test_no_deps(self):
-        self.assertNoReport(self.mk_check(), self.mk_pkg())
 
     def test_unsupported_eapis(self):
         # EAPIs lacking slot operator deps shouldn't trigger reports
@@ -420,7 +418,14 @@ class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
                     self.mk_check(), self.mk_pkg(
                         eapi=eapi_str, rdepend='dev-libs/foo', depend='dev-libs/foo'))
                 assert isinstance(r, metadata.MissingSlotDep)
+                assert "'dev-libs/foo' matches more than one slot: [ 0, 1 ]" == str(r)
 
+    def test_no_deps(self):
+        self.assertNoReport(self.mk_check(), self.mk_pkg())
+
+    def test_single_slot_dep(self):
+        self.assertNoReport(
+            self.mk_check(), self.mk_pkg(rdepend='dev-libs/bar', depend='dev-libs/bar'))
 
 
 class TestDependencyReport(use_based(), misc.ReportTestCase):
