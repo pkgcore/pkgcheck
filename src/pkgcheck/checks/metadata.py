@@ -986,7 +986,7 @@ class SrcUriCheck(base.Template):
 
 
 class BadDescription(base.Warning):
-    """Package's description sucks in some fashion."""
+    """Package's description is bad for some reason."""
 
     __slots__ = ("category", "package", "version", "msg")
     threshold = base.versioned_feed
@@ -998,7 +998,7 @@ class BadDescription(base.Warning):
 
     @property
     def short_desc(self):
-        return f"description needs improvement: {self.msg}"
+        return f"bad DESCRIPTION: {self.msg}"
 
 
 class DescriptionCheck(base.Template):
@@ -1027,6 +1027,51 @@ class DescriptionCheck(base.Template):
             elif l < 10:
                 yield BadDescription(
                     pkg, f"{pkg.description!r} under 10 chars in length- too short")
+
+
+class BadHomepage(base.Warning):
+    """Package's homepage is bad for some reason."""
+
+    __slots__ = ("category", "package", "version", "msg")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, msg):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.msg = msg
+
+    @property
+    def short_desc(self):
+        return f"bad HOMEPAGE: {self.msg}"
+
+
+class HomepageCheck(base.Template):
+    """HOMEPAGE checks."""
+
+    feed_type = base.versioned_feed
+    known_results = (BadHomepage,)
+
+    # categories for ebuilds that should lack HOMEPAGE
+    missing_categories = frozenset(['virtual', 'acct-group', 'acct-user'])
+
+    def feed(self, pkg):
+        if not pkg.homepage:
+            if pkg.category not in self.missing_categories:
+                yield BadHomepage(pkg, "empty/unset")
+        else:
+            if pkg.category in self.missing_categories:
+                yield BadHomepage(
+                    pkg, f"packages in category {pkg.category!r} shouldn't define HOMEPAGE")
+            else:
+                for homepage in pkg.homepage:
+                    i = homepage.find("://")
+                    if i == -1:
+                        yield BadHomepage(pkg, f"HOMEPAGE={homepage!r} lacks protocol")
+                    elif homepage[:i] not in SrcUriCheck.valid_protos:
+                        yield BadHomepage(
+                            pkg,
+                            f"HOMEPAGE={homepage!r} uses unsupported "
+                            f"protocol {homepage[:i]!r}")
 
 
 class BadRestricts(base.Warning):

@@ -25,6 +25,7 @@ pkgcore_plugins = {
         imlate.ImlateCheck,
         metadata.DependencyCheck,
         metadata.DescriptionCheck,
+        metadata.HomepageCheck,
         metadata.IUSEMetadataCheck,
         metadata.RequiredUSEMetadataCheck,
         metadata.KeywordsCheck,

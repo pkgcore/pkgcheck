@@ -55,6 +55,45 @@ class TestDescriptionReport(misc.ReportTestCase):
         self.assertNoReport(check, self.mk_pkg("s"*10))
 
 
+class TestHomepageCheck(misc.ReportTestCase):
+
+    check_kls = metadata.HomepageCheck
+    check = metadata.HomepageCheck(None, None)
+
+    def mk_pkg(self, homepage=""):
+        return misc.FakePkg("dev-util/diffball-0.7.1", data={"HOMEPAGE": homepage})
+
+    def test_regular(self):
+        self.assertNoReport(self.check, self.mk_pkg("https://foobar.com"))
+
+    def test_multiple(self):
+        pkg = self.mk_pkg("https://foobar.com http://foob.org")
+        assert len(pkg.homepage) == 2
+        self.assertNoReport(self.check, pkg)
+
+    def test_unset(self):
+        r = self.assertReport(self.check, self.mk_pkg())
+        isinstance(r, metadata.BadHomepage)
+        assert 'empty/unset' in str(r)
+
+    def test_no_protocol(self):
+        r = self.assertReport(self.check, self.mk_pkg('foobar.com'))
+        isinstance(r, metadata.BadHomepage)
+        assert 'lacks protocol' in str(r)
+
+    def test_unsupported_protocol(self):
+        r = self.assertReport(self.check, self.mk_pkg('htp://foobar.com'))
+        isinstance(r, metadata.BadHomepage)
+        assert "uses unsupported protocol 'htp'" in str(r)
+
+    def test_missing_categories(self):
+        for category in self.check_kls.missing_categories:
+            pkg = misc.FakePkg(f"{category}/foo-1", data={"HOMEPAGE": "http://foo.com"})
+            r = self.assertReport(self.check, pkg)
+            isinstance(r, metadata.BadHomepage)
+            assert f"packages in category '{category}' shouldn't define HOMEPAGE" in str(r)
+
+
 class iuse_options(TempDirMixin):
 
     def get_options(self, **kwds):
