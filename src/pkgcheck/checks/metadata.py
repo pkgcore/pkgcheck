@@ -1013,14 +1013,11 @@ class DescriptionCheck(base.Template):
 
     def feed(self, pkg):
         s = pkg.description.lower()
-
         if s.startswith("based on") and "eclass" in s:
             yield BadDescription(pkg, "generic eclass defined description")
-
         elif pkg.package == s or pkg.key == s:
             yield BadDescription(
                 pkg, "using the pkg name as the description isn't very helpful")
-
         else:
             l = len(pkg.description)
             if not l:
