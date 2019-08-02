@@ -34,13 +34,29 @@ class MissingLicense(base.Error):
 
     @property
     def short_desc(self):
-        return ', '.join(self.licenses)
+        licenses = ', '.join(self.licenses)
+        return f"no matching license{_pl(self.licenses)}: [ {licenses} ]"
+
+
+class UnnecessaryLicense(base.Warning):
+    """LICENSE defined for package that is license-less."""
+
+    __slots__ = ("category", "package", "version")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg):
+        super().__init__()
+        self._store_cpv(pkg)
+
+    @property
+    def short_desc(self):
+        return f"{self.category!r} packages shouldn't define LICENSE"
 
 
 class LicenseMetadataCheck(base.Template):
     """LICENSE validity checks."""
 
-    known_results = (MetadataError, MissingLicense, addons.UnstatedIUSE)
+    known_results = (MetadataError, MissingLicense, UnnecessaryLicense, addons.UnstatedIUSE)
     feed_type = base.versioned_feed
 
     # categories for ebuilds that can lack LICENSE settings
@@ -64,6 +80,8 @@ class LicenseMetadataCheck(base.Template):
             licenses.difference_update(pkg.repo.licenses)
             if licenses:
                 yield MissingLicense(pkg, licenses)
+            elif pkg.category in self.unlicensed_categories:
+                yield UnnecessaryLicense(pkg)
 
 
 class IUSEMetadataCheck(base.Template):
@@ -1061,7 +1079,7 @@ class HomepageCheck(base.Template):
         else:
             if pkg.category in self.missing_categories:
                 yield BadHomepage(
-                    pkg, f"packages in category {pkg.category!r} shouldn't define HOMEPAGE")
+                    pkg, f"{pkg.category!r} packages shouldn't define HOMEPAGE")
             else:
                 for homepage in pkg.homepage:
                     i = homepage.find("://")

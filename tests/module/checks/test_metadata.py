@@ -91,7 +91,7 @@ class TestHomepageCheck(misc.ReportTestCase):
             pkg = misc.FakePkg(f"{category}/foo-1", data={"HOMEPAGE": "http://foo.com"})
             r = self.assertReport(self.check, pkg)
             isinstance(r, metadata.BadHomepage)
-            assert f"packages in category '{category}' shouldn't define HOMEPAGE" in str(r)
+            assert f"'{category}' packages shouldn't define HOMEPAGE" in str(r)
 
 
 class iuse_options(TempDirMixin):
@@ -380,7 +380,7 @@ class TestRestrictsReport(use_based(), misc.ReportTestCase):
         self.assertReport(check, self.mk_pkg('x86? ( pkgcore )'))
 
 
-class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
+class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
 
     check_kls = metadata.LicenseMetadataCheck
 
@@ -403,19 +403,38 @@ class TestLicenseMetadataReport(use_based(), misc.ReportTestCase):
         assert isinstance(r, metadata.MetadataError)
         assert r.attr == 'license'
 
-    def test_it(self):
-        # should puke a metadata error for empty license
-        chk = self.mk_check()
-        assert isinstance(
-            self.assertReport(chk, self.mk_pkg()),
-            metadata.MetadataError)
-        r = self.assertReport(chk, self.mk_pkg("foo"))
+    def test_empty(self):
+        r = self.assertReport(self.mk_check(), self.mk_pkg())
+        assert isinstance(r, metadata.MetadataError)
+
+    def test_single_missing(self):
+        r = self.assertReport(self.mk_check(), self.mk_pkg("foo"))
         assert isinstance(r, metadata.MissingLicense)
         assert r.licenses == ('foo',)
+        assert 'no matching license: [ foo ]' == str(r)
 
+    def test_multiple_existing(self):
         chk = self.mk_check(['foo', 'foo2'])
         self.assertNoReport(chk, self.mk_pkg('foo'))
         self.assertNoReport(chk, self.mk_pkg('foo', 'foo2'))
+
+    def test_multiple_missing(self):
+        chk = self.mk_check(['foo', 'foo2'])
+        r = self.assertReport(chk, self.mk_pkg('|| ( foo foo3 foo4 )'))
+        assert isinstance(r, metadata.MissingLicense)
+        assert r.licenses == ('foo3', 'foo4')
+        assert 'no matching licenses: [ foo3, foo4 ]' == str(r)
+
+    def test_unlicensed_categories(self):
+        check = self.mk_check(['foo'])
+        for category in self.check_kls.unlicensed_categories:
+            pkg = FakePkg(
+                f'{category}/diffball-2.7.1',
+                data={'LICENSE': 'foo'},
+                repo=self.repo)
+            r = self.assertReport(check, pkg)
+            assert isinstance(r, metadata.UnnecessaryLicense)
+            assert f"{category!r} packages shouldn't define LICENSE" in str(r)
 
 
 class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
