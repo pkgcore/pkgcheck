@@ -428,13 +428,17 @@ class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
     def test_unlicensed_categories(self):
         check = self.mk_check(['foo'])
         for category in self.check_kls.unlicensed_categories:
-            pkg = FakePkg(
-                f'{category}/diffball-2.7.1',
-                data={'LICENSE': 'foo'},
-                repo=self.repo)
-            r = self.assertReport(check, pkg)
-            assert isinstance(r, metadata.UnnecessaryLicense)
-            assert f"{category!r} packages shouldn't define LICENSE" in str(r)
+            for license in ('foo', ''):
+                pkg = FakePkg(
+                    f'{category}/diffball-2.7.1',
+                    data={'LICENSE': license},
+                    repo=self.repo)
+                if license:
+                    r = self.assertReport(check, pkg)
+                    assert isinstance(r, metadata.UnnecessaryLicense)
+                    assert f"{category!r} packages shouldn't define LICENSE" in str(r)
+                else:
+                    self.assertNoReport(check, pkg)
 
 
 class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
