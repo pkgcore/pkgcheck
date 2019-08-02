@@ -7,7 +7,6 @@ from .. import base
 
 demandload(
     'argparse',
-    'email.utils:formataddr',
     'functools:partial',
     'itertools:chain',
     'urllib.request:urlopen',
@@ -181,7 +180,7 @@ class MaintainerWithoutProxy(base.Warning):
 
     def __init__(self, maintainers, filename, category, package):
         super().__init__()
-        self.maintainers = tuple(formataddr((m.name, m.email)) for m in maintainers)
+        self.maintainers = tuple(maintainers)
         self.filename = filename
         self.category = category
         self.package = package
@@ -190,7 +189,7 @@ class MaintainerWithoutProxy(base.Warning):
     def short_desc(self):
         return (
             f"proxied maintainer{_pl(self.maintainers)} missing proxy dev/project: "
-            f"[ {', '.join(self.maintainers)} ]")
+            f"[ {', '.join(map(str, self.maintainers))} ]")
 
 
 class StaleProxyMaintProject(base.Warning):
