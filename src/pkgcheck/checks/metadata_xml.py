@@ -215,6 +215,43 @@ class StaleProxyMaintProject(base.Warning):
         return "proxy-maint maintainer with no proxies"
 
 
+class InvalidProjectMaintainer(base.Warning):
+    """Package specifying non-existing project as maintainer."""
+
+    __slots__ = ("category", "package", "filename", "project")
+    threshold = base.package_feed
+
+    def __init__(self, project, filename, category, package):
+        super().__init__()
+        self.project = project
+        self.filename = filename
+        self.category = category
+        self.package = package
+
+    @property
+    def short_desc(self):
+        return (f'project {self.project} that is specified as maintainer '
+                 'does not exist')
+
+
+class PersonMaintainerMatchesProject(base.Warning):
+    """A person-type maintainer matches existing projects."""
+
+    __slots__ = ("category", "package", "filename", "email")
+    threshold = base.package_feed
+
+    def __init__(self, email, filename, category, package):
+        super().__init__()
+        self.email = email
+        self.filename = filename
+        self.category = category
+        self.package = package
+
+    @property
+    def short_desc(self):
+        return f'Maintainer {self.email} of type="person" matches a project'
+
+
 class PkgMissingMetadataXml(_MissingXml):
     """Package is missing metadata.xml."""
     __slots__ = ()
@@ -501,6 +538,17 @@ class _XmlBaseCheck(base.Template):
                            for c in doc.xpath('//comment()')):
                     maintainers.append(partial(EmptyMaintainer))
 
+            # check project="" validity only if we have projects.xml available
+            projects = frozenset(pkg.repo.projects_xml.projects.keys())
+            if projects:
+                for m in pkg.maintainers:
+                    if m.maint_type == 'project' and m.email not in projects:
+                        maintainers.append(partial(InvalidProjectMaintainer,
+                                                   m.email))
+                    elif m.maint_type == 'person' and m.email in projects:
+                        maintainers.append(partial(
+                            PersonMaintainerMatchesProject, m.email))
+
         keywords = (maintainers, self.check_doc(doc), self.check_whitespace(loc))
         return chain.from_iterable(keywords)
 
@@ -522,7 +570,8 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
         PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
         PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, EmptyMaintainer,
-        MaintainerWithoutProxy, StaleProxyMaintProject)
+        MaintainerWithoutProxy, StaleProxyMaintProject,
+        InvalidProjectMaintainer, PersonMaintainerMatchesProject)
 
     def feed(self, pkgs):
         # package with no ebuilds, skipping check
