@@ -3,7 +3,7 @@
 # Please keep the imports and plugins sorted.
 from .. import feeds, reporters
 from ..checks import (
-    cleanup, codingstyle, deprecated, dropped_keywords, git, glsa,
+    acct, cleanup, codingstyle, deprecated, dropped_keywords, git, glsa,
     imlate, metadata, metadata_xml, overlays, pkgdir, python,
     profiles, repo, repo_metadata, stablereq, unstable_only, visibility,
     whitespace,
@@ -11,6 +11,7 @@ from ..checks import (
 
 pkgcore_plugins = {
     'check': [
+        acct.AcctCheck,
         cleanup.RedundantVersionCheck,
         codingstyle.AbsoluteSymlinkCheck,
         codingstyle.BadInsIntoCheck,
