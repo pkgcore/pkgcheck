@@ -109,12 +109,10 @@ class NullReporter(base.Reporter):
 
     priority = -10000000
 
-    def __init__(self, *args, **kwargs):
-        pass
-
     @coroutine
-    def process_report(self):
-        pass
+    def _process_report(self):
+        while True:
+            result = (yield)
 
 
 class JsonReporter(base.Reporter):
