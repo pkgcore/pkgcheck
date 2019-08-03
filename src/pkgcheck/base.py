@@ -358,11 +358,11 @@ class Reporter(object):
         self._filtered_keywords = set(keywords) if keywords is not None else keywords
 
         # initialize result processing coroutines
-        self.report = self.add_report().send
-        self.process = self.process_report().send
+        self.report = self._add_report().send
+        self.process = self._process_report().send
 
     @coroutine
-    def add_report(self):
+    def _add_report(self):
         """Add a report result to be processed for output."""
         # only process reports for keywords that are enabled
         while True:
@@ -372,9 +372,9 @@ class Reporter(object):
                 self.process(result)
 
     @coroutine
-    def process_report(self):
+    def _process_report(self):
         """Render and output a report result.."""
-        raise NotImplementedError(self.process_report)
+        raise NotImplementedError(self._process_report)
 
     def start(self):
         """Initialize reporter output."""

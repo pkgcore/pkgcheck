@@ -35,7 +35,7 @@ class StrReporter(base.Reporter):
         self._first_report = True
 
     @coroutine
-    def process_report(self):
+    def _process_report(self):
         while True:
             result = (yield)
             if self._first_report:
@@ -75,7 +75,7 @@ class FancyReporter(base.Reporter):
         self.key = None
 
     @coroutine
-    def process_report(self):
+    def _process_report(self):
         while True:
             result = (yield)
             if result.threshold in (base.versioned_feed, base.package_feed):
@@ -137,7 +137,7 @@ class JsonReporter(base.Reporter):
         self._json_dict = lambda: defaultdict(self._json_dict)
 
     @coroutine
-    def process_report(self):
+    def _process_report(self):
         while True:
             result = (yield)
             data = self._json_dict()
@@ -196,7 +196,7 @@ class XmlReporter(base.Reporter):
         self.out.write('<checks>')
 
     @coroutine
-    def process_report(self):
+    def _process_report(self):
         while True:
             result = (yield)
             d = dict((k, getattr(result, k, '')) for k in
@@ -229,7 +229,7 @@ class PickleStream(base.Reporter):
         pickle.dump(base.StreamHeader(checks, target), self.out.stream)
 
     @coroutine
-    def process_report(self):
+    def _process_report(self):
         while True:
             result = (yield)
             try:
@@ -264,7 +264,7 @@ class MultiplexReporter(base.Reporter):
             x.start()
 
     @coroutine
-    def process_report(self):
+    def _process_report(self):
         while True:
             result = (yield)
             for x in self.reporters:
