@@ -71,7 +71,7 @@ class HttpsAvailableCheck(base.Template):
         links = defaultdict(list)
 
         for lineno, line in enumerate(lines, 1):
-            if not line:
+            if not line.strip():
                 continue
             # searching for multiple matches on a single line is too slow
             matches = self.regex.match(line)
@@ -123,7 +123,7 @@ class PortageInternalsCheck(base.Template):
     def feed(self, entry):
         pkg, lines = entry
         for lineno, line in enumerate(lines, 1):
-            if not line:
+            if not line.strip():
                 continue
             # searching for multiple matches on a single line is too slow
             matches = self.regex.match(line)
@@ -249,7 +249,7 @@ class PathVariablesCheck(base.Template):
         double_prefix = defaultdict(list)
 
         for lineno, line in enumerate(lines, 1):
-            if not line:
+            if not line.strip():
                 continue
 
             match = self.double_prefix_regex.search(line)
@@ -307,7 +307,7 @@ class AbsoluteSymlinkCheck(base.Template):
     def feed(self, entry):
         pkg, lines = entry
         for lineno, line in enumerate(lines, 1):
-            if not line:
+            if not line.strip():
                 continue
             matches = self.regex.match(line)
             if matches is not None:
@@ -366,7 +366,7 @@ class BadInsIntoCheck(base.Template):
 
         badf = self._bad_insinto.search
         for lineno, line in enumerate(lines, 1):
-            if not line:
+            if not line.strip():
                 continue
             matches = badf(line)
             if matches is not None:
@@ -423,7 +423,7 @@ class ObsoleteUriCheck(base.Template):
         links = defaultdict(list)
 
         for lineno, line in enumerate(lines, 1):
-            if not line or line.startswith('#'):
+            if not line.strip() or line.startswith('#'):
                 continue
             # searching for multiple matches on a single line is too slow
             for regexp, repl in self.regexes:
