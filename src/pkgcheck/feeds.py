@@ -193,7 +193,7 @@ class GitCommitsRepoSource(RestrictedRepoSource):
 
     def __init__(self, options, git_addon, limiter):
         super().__init__(options, limiter)
-        self.repo = git_addon.commits_repo(addons.GitChangesRepo)
+        self.repo = git_addon.commits_repo(addons.GitChangedRepo)
 
         # Drop repo restriction if one exists as we're matching against a faked
         # repo with a different repo_id.

@@ -248,25 +248,25 @@ class _ParseGitRepo(object):
         return pkg_map
 
 
-class GitChangesRepo(_ParseGitRepo):
-    """Parse repository git logs to determine locally changed packages."""
+class GitChangedRepo(_ParseGitRepo):
+    """Parse repository git log to determine locally changed packages."""
 
     _git_cmd = ('git log --diff-filter=ARM --name-status --pretty=medium '
                 '--date=short --reverse')
 
 
 class GitAddedRepo(_ParseGitRepo):
-    """Parse repository git logs to determine ebuild added dates."""
+    """Parse repository git log to determine ebuild added dates."""
 
     cache_name = 'git-added'
     _git_cmd = ('git log --diff-filter=AR --name-status --pretty=medium '
                 '--date=short --reverse')
 
 
-class GitRemovalRepo(_ParseGitRepo):
-    """Parse repository git logs to determine ebuild removal dates."""
+class GitRemovedRepo(_ParseGitRepo):
+    """Parse repository git log to determine ebuild removal dates."""
 
-    cache_name = 'git-removal'
+    cache_name = 'git-removed'
     _git_cmd = ('git log --diff-filter=D --name-status --pretty=medium '
                 '--date=short --reverse')
 

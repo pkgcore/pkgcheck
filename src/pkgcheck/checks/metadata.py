@@ -566,7 +566,7 @@ class DependencyCheck(base.Template):
         self.conditional_ops = {'?', '='}
         self.use_defaults = {'(+)', '(-)'}
         self.today = datetime.today()
-        self.existence_repo = git_addon.cached_repo(addons.GitRemovalRepo)
+        self.existence_repo = git_addon.cached_repo(addons.GitRemovedRepo)
 
     @staticmethod
     def _flatten_or_restrictions(i):
