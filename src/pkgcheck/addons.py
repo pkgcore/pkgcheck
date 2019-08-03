@@ -251,21 +251,24 @@ class _ParseGitRepo(object):
 class GitChangesRepo(_ParseGitRepo):
     """Parse repository git logs to determine locally changed packages."""
 
-    _git_cmd = 'git log --diff-filter=ARM --name-status --date=short --reverse'
+    _git_cmd = ('git log --diff-filter=ARM --name-status --pretty=medium '
+                '--date=short --reverse')
 
 
 class GitAddedRepo(_ParseGitRepo):
     """Parse repository git logs to determine ebuild added dates."""
 
     cache_name = 'git-added'
-    _git_cmd = 'git log --diff-filter=AR --name-status --date=short --reverse'
+    _git_cmd = ('git log --diff-filter=AR --name-status --pretty=medium '
+                '--date=short --reverse')
 
 
 class GitRemovalRepo(_ParseGitRepo):
     """Parse repository git logs to determine ebuild removal dates."""
 
     cache_name = 'git-removal'
-    _git_cmd = 'git log --diff-filter=D --name-status --date=short --reverse'
+    _git_cmd = ('git log --diff-filter=D --name-status --pretty=medium '
+                '--date=short --reverse')
 
 
 class HistoricalPkg(cpv.versioned_CPV_cls):
