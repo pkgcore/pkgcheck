@@ -46,17 +46,7 @@ def test_script_run(capsys):
 class TestPkgcheckScan(object):
 
     script = partial(run, project)
-    tool = Tool(pkgcheck.argparser)
     fakerepo = pjoin(const.DATA_PATH, 'fakerepo')
-
-    def test_missing_default_repo(self, capsys, tmp_path):
-        self.tool.parser.set_defaults(override_config=str(tmp_path))
-        with raises(SystemExit) as excinfo:
-            options, _ = self.tool.parse_args([])
-        assert excinfo.value.code == 2
-        out, err = capsys.readouterr()
-        err = err.strip().split('\n')
-        assert err[-1].startswith('pkgcheck scan: error: failed instantiating default repo')
 
     def test_unknown_repo(self, capsys):
         for opt in ('-r', '--repo'):
