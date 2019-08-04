@@ -49,10 +49,7 @@ class MissingPythonEclass(base.Warning):
 
     @property
     def short_desc(self):
-        return (
-            f'improper eclass used with {self.dep_type}="{self.dep}" -- '
-            f"use {self.eclass} instead"
-        )
+        return f'missing {self.eclass} eclass usage for {self.dep_type}="{self.dep}"'
 
 
 class PythonSingleUseMismatch(base.Warning):
