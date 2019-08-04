@@ -10,6 +10,7 @@ from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.restrictions.boolean import OrRestriction
+from pkgcore.restrictions.packages import Conditional
 from snakeoil.demandload import demandload
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import listdir_files
@@ -1144,6 +1145,53 @@ class RestrictsCheck(base.Template):
             deprecated = set(
                 x for x in bad if x.startswith("no") and x[2:] in self.known_restricts)
             yield BadRestricts(pkg, bad.difference(deprecated), deprecated)
+
+
+class MissingConditionalTestRestrict(base.Warning):
+    """Missing ``RESTRICT="!test? ( test )"``.
+
+    Traditionally, it was assumed that ``IUSE=test`` is a special flag that is
+    implicitly enabled when running ``src_test()`` is enabled. However, this is
+    not standarized and packages need to explicitly specify
+    ``RESTRICT="!test? ( test )"`` in order to guarantee that test phase will
+    be skipped when the flag is disabled and therefore test dependencies may
+    not be installed.
+    """
+
+    __slots__ = ("category", "package", "version")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg):
+        super().__init__()
+        self._store_cpv(pkg)
+
+    @property
+    def short_desc(self):
+        return 'missing RESTRICT="!test? ( test )" in package having IUSE=test'
+
+
+class ConditionalTestRestrictCheck(base.Template):
+    """Check whether packages specify RESTRICT="!test? ( test )"."""
+
+    feed_type = base.versioned_feed
+    known_results = (MissingConditionalTestRestrict,)
+
+    def feed(self, pkg):
+        if 'test' not in pkg.iuse:
+            return
+
+        # if the package has unconditional restriction, additional conditional
+        # is unnecessary
+        if 'test' in pkg.restrict:
+            return
+
+        # otherwise, it should have top-level "!test? ( test )"
+        if any(isinstance(r, Conditional) and r.restriction.vals == {'test'} and
+               r.restriction.negate and 'test' in r.payload
+               for r in pkg.restrict):
+            return
+
+        yield MissingConditionalTestRestrict(pkg)
 
 
 class MissingUnpackerDep(base.Warning):
