@@ -25,6 +25,7 @@ pkgcore_plugins = {
         git.GitCommitsCheck,
         glsa.TreeVulnerabilitiesCheck,
         imlate.ImlateCheck,
+        metadata.ConditionalTestRestrictCheck,
         metadata.DependencyCheck,
         metadata.DescriptionCheck,
         metadata.HomepageCheck,

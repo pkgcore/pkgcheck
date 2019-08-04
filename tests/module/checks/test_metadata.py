@@ -385,6 +385,39 @@ class TestRestrictsReport(use_based(), misc.ReportTestCase):
         self.assertReport(check, self.mk_pkg('x86? ( pkgcore )'))
 
 
+class TestConditionalTestRestrictCheck(misc.ReportTestCase):
+
+    check_kls = metadata.ConditionalTestRestrictCheck
+
+    def mk_pkg(self, iuse='', restrict=''):
+        return misc.FakePkg(
+            'dev-util/diffball-2.7.1', data={'IUSE': iuse, 'RESTRICT': restrict})
+
+    def test_it(self):
+        check = self.check_kls(None)
+        self.assertNoReport(check, self.mk_pkg())
+        self.assertNoReport(check, self.mk_pkg(
+            iuse='test', restrict='!test? ( test )'))
+        # unconditional restriction is fine too
+        self.assertNoReport(check, self.mk_pkg(iuse='test', restrict='test'))
+        self.assertNoReport(check, self.mk_pkg(restrict='test'))
+        # more RESTRICTs
+        self.assertNoReport(check, self.mk_pkg(iuse='foo test',
+            restrict='foo? ( strip ) !test? ( test ) bindist'))
+
+        # missing entirely
+        self.assertReport(check, self.mk_pkg(iuse='test'))
+        # 'test' present in other condition
+        self.assertReport(check, self.mk_pkg(
+            iuse='foo test', restrict='!foo? ( test )'))
+        # correct restriction inside another condition
+        self.assertReport(check, self.mk_pkg(
+            iuse='foo test', restrict='!foo? ( !test? ( test ) )'))
+        # USE condition gotten the other way around
+        self.assertReport(check, self.mk_pkg(
+            iuse='test', restrict='test? ( test )'))
+
+
 class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
 
     check_kls = metadata.LicenseMetadataCheck
