@@ -1,14 +1,31 @@
 from functools import partial
+import textwrap
 from unittest.mock import patch
 
 from pkgcore import const
 from pkgcore.plugin import get_plugins
 from pkgcore.util.commandline import Tool
-from pytest import raises
+import pytest
 from snakeoil.osutils import pjoin
 
 from pkgcheck import base, checks, plugins, __title__ as project
 from pkgcheck.scripts import run, pkgcheck
+
+
+@pytest.fixture
+def fakeconfig(tmp_path):
+    """Generate a portage config that sets the default repo to pkgcore's fakerepo."""
+    fakeconfig = str(tmp_path)
+    repos_conf = tmp_path / 'repos.conf'
+    fakerepo = pjoin(const.DATA_PATH, 'fakerepo')
+    with open(repos_conf, 'w') as f:
+        f.write(textwrap.dedent(f"""\
+            [DEFAULT]
+            main-repo = fakerepo
+
+            [fakerepo]
+            location = {fakerepo}"""))
+    return fakeconfig
 
 
 def test_script_run(capsys):
@@ -20,7 +37,7 @@ def test_script_run(capsys):
 
         # default error path when script import fails
         with patch('sys.argv', [project]):
-            with raises(SystemExit) as excinfo:
+            with pytest.raises(SystemExit) as excinfo:
                 script()
             assert excinfo.value.code == 1
             out, err = capsys.readouterr()
@@ -32,7 +49,7 @@ def test_script_run(capsys):
 
         # running with --debug should raise an ImportError when there are issues
         with patch('sys.argv', [project, '--debug']):
-            with raises(ImportError):
+            with pytest.raises(ImportError):
                 script()
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
@@ -45,8 +62,11 @@ def test_script_run(capsys):
 
 class TestPkgcheckScanParseArgs(object):
 
-    tool = Tool(pkgcheck.argparser)
-    args = ['scan', '--repo', pjoin(const.DATA_PATH, 'fakerepo')]
+    @pytest.fixture(autouse=True)
+    def _setup(self, fakeconfig):
+        self.tool = Tool(pkgcheck.argparser)
+        self.tool.parser.set_defaults(override_config=fakeconfig)
+        self.args = ['scan']
 
     def test_skipped_checks(self):
         options, _func = self.tool.parse_args(self.args)
@@ -69,12 +89,15 @@ class TestPkgcheckScanParseArgs(object):
 class TestPkgcheckScan(object):
 
     script = partial(run, project)
-    fakerepo = pjoin(const.DATA_PATH, 'fakerepo')
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, fakeconfig):
+        self.args = [project, '--config', fakeconfig, 'scan']
 
     def test_unknown_repo(self, capsys):
         for opt in ('-r', '--repo'):
-            with patch('sys.argv', [project, 'scan', opt, 'foo']):
-                with raises(SystemExit) as excinfo:
+            with patch('sys.argv', self.args + [opt, 'foo']):
+                with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 assert excinfo.value.code == 2
                 out, err = capsys.readouterr()
@@ -84,8 +107,8 @@ class TestPkgcheckScan(object):
 
     def test_unknown_reporter(self, capsys):
         for opt in ('-R', '--reporter'):
-            with patch('sys.argv', [project, 'scan', opt, 'foo', '--repo', self.fakerepo]):
-                with raises(SystemExit) as excinfo:
+            with patch('sys.argv', self.args + [opt, 'foo']):
+                with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 assert excinfo.value.code == 2
                 out, err = capsys.readouterr()
@@ -95,8 +118,8 @@ class TestPkgcheckScan(object):
 
     def test_unknown_scope(self, capsys):
         for opt in ('-S', '--scopes'):
-            with patch('sys.argv', [project, 'scan', opt, 'foo', '--repo', self.fakerepo]):
-                with raises(SystemExit) as excinfo:
+            with patch('sys.argv', self.args + [opt, 'foo']):
+                with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 assert excinfo.value.code == 2
                 out, err = capsys.readouterr()
@@ -105,8 +128,8 @@ class TestPkgcheckScan(object):
 
     def test_missing_scope(self, capsys):
         for opt in ('-S', '--scopes'):
-            with patch('sys.argv', [project, 'scan', opt]):
-                with raises(SystemExit) as excinfo:
+            with patch('sys.argv', self.args + [opt]):
+                with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 assert excinfo.value.code == 2
                 out, err = capsys.readouterr()
@@ -115,9 +138,9 @@ class TestPkgcheckScan(object):
                     'pkgcheck scan: error: argument -S/--scopes: expected one argument')
 
     def test_empty_repo(self, capsys):
-        # no reports should be generated
-        with patch('sys.argv', [project, 'scan', self.fakerepo]):
-            with raises(SystemExit) as excinfo:
+        # no reports should be generated since the default repo is empty
+        with patch('sys.argv', self.args):
+            with pytest.raises(SystemExit) as excinfo:
                 self.script()
             assert excinfo.value.code == 0
             out, err = capsys.readouterr()
@@ -128,10 +151,14 @@ class TestPkgcheckShow(object):
 
     script = partial(run, project)
 
+    @pytest.fixture(autouse=True)
+    def _setup(self, fakeconfig):
+        self.args = [project, '--config', fakeconfig, 'show']
+
     def test_show_no_args(self, capsys):
         # defaults to outputting keywords list if no option is passed
-        with patch('sys.argv', [project, 'show']):
-            with raises(SystemExit) as excinfo:
+        with patch('sys.argv', self.args):
+            with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not err
@@ -142,8 +169,8 @@ class TestPkgcheckShow(object):
 
     def test_show_keywords(self, capsys):
         # regular mode
-        with patch('sys.argv', [project, 'show', '--keywords']):
-            with raises(SystemExit) as excinfo:
+        with patch('sys.argv', self.args + ['--keywords']):
+            with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not err
@@ -153,8 +180,8 @@ class TestPkgcheckShow(object):
             assert excinfo.value.code == 0
 
         # verbose mode
-        with patch('sys.argv', [project, 'show', '--keywords', '-v']):
-            with raises(SystemExit) as excinfo:
+        with patch('sys.argv', self.args + ['--keywords', '-v']):
+            with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not err
@@ -167,8 +194,8 @@ class TestPkgcheckShow(object):
 
     def test_show_checks(self, capsys):
         # regular mode
-        with patch('sys.argv', [project, 'show', '--checks']):
-            with raises(SystemExit) as excinfo:
+        with patch('sys.argv', self.args + ['--checks']):
+            with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not err
@@ -178,8 +205,8 @@ class TestPkgcheckShow(object):
             assert excinfo.value.code == 0
 
         # verbose mode
-        with patch('sys.argv', [project, 'show', '--checks', '-v']):
-            with raises(SystemExit) as excinfo:
+        with patch('sys.argv', self.args + ['--checks', '-v']):
+            with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not err
@@ -191,8 +218,8 @@ class TestPkgcheckShow(object):
         assert len(regular_output) < len(verbose_output)
 
     def test_show_scopes(self, capsys):
-        with patch('sys.argv', [project, 'show', '--scopes']):
-            with raises(SystemExit) as excinfo:
+        with patch('sys.argv', self.args + ['--scopes']):
+            with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not err
@@ -202,8 +229,8 @@ class TestPkgcheckShow(object):
 
     def test_show_reporters(self, capsys):
         # regular mode
-        with patch('sys.argv', [project, 'show', '--reporters']):
-            with raises(SystemExit) as excinfo:
+        with patch('sys.argv', self.args + ['--reporters']):
+            with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not err
@@ -213,8 +240,8 @@ class TestPkgcheckShow(object):
             assert excinfo.value.code == 0
 
         # verbose mode
-        with patch('sys.argv', [project, 'show', '--reporters', '-v']):
-            with raises(SystemExit) as excinfo:
+        with patch('sys.argv', self.args + ['--reporters', '-v']):
+            with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not err
@@ -230,11 +257,15 @@ class TestPkgcheckReplay(object):
 
     script = partial(run, project)
 
+    @pytest.fixture(autouse=True)
+    def _setup(self, fakeconfig):
+        self.args = [project, '--config', fakeconfig, 'replay']
+
     def test_missing_reporter_arg(self, capsys, tmp_path):
         pickle_file = tmp_path / 'empty.pickle'
         pickle_file.touch()
-        with patch('sys.argv', [project, 'replay', str(pickle_file)]):
-            with raises(SystemExit) as excinfo:
+        with patch('sys.argv', self.args + [str(pickle_file)]):
+            with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
             assert not out
