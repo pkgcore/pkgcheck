@@ -39,7 +39,10 @@ demandload(
 )
 
 
-argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))
+pkgcore_config_opts = commandline.ArgumentParser()
+argparser = commandline.ArgumentParser(
+    suppress=True, description=__doc__, parents=(pkgcore_config_opts,),
+    script=(__file__, __name__))
 # TODO: rework pkgcore's config system to allow more lazy loading
 argparser.set_defaults(profile_override=pjoin(const.DATA_PATH, 'fakerepo/profiles/default'))
 subparsers = argparser.add_subparsers(description="check applets", default='scan')
