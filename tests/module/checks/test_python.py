@@ -9,9 +9,9 @@ class TestPythonReport(misc.ReportTestCase):
     check = python.PythonCheck(None)
     check_kls = python.PythonCheck
 
-    def mk_pkg(self, **kwargs):
+    def mk_pkg(self, cpv="app-foo/bar-1", **kwargs):
         kwargs.setdefault('EAPI', '7')
-        return misc.FakePkg("app-foo/bar-1", data=kwargs)
+        return misc.FakePkg(cpv, data=kwargs)
 
     def test_multiple_eclasses(self):
         r = self.assertReport(
@@ -103,6 +103,12 @@ class TestPythonReport(misc.ReportTestCase):
         assert isinstance(
             self.assertReport(self.check, self.mk_pkg(RDEPEND='dev-python/pypy')),
             python.MissingPythonEclass)
+
+        # special exception: virtual/pypy
+        self.assertNoReport(self.check, self.mk_pkg(cpv='virtual/pypy-4.1',
+            RDEPEND='|| ( dev-python/pypy:0/41 dev-python/pypy-bin:0/41 )'))
+        self.assertNoReport(self.check, self.mk_pkg(cpv='virtual/pypy3-4.1',
+            RDEPEND='|| ( dev-python/pypy3:0/41 dev-python/pypy3-bin:0/41 )'))
 
     def test_missing_eclass_pdepend(self):
         self.assertNoReport(
