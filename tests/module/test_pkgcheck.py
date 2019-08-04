@@ -1,4 +1,5 @@
 from functools import partial
+from io import StringIO
 import textwrap
 from unittest.mock import patch
 
@@ -84,6 +85,15 @@ class TestPkgcheckScanParseArgs(object):
         options, _func = self.tool.parse_args(self.args + ['-c=-PkgDirCheck'])
         assert options.enabled_checks
         assert checks.pkgdir.PkgDirCheck not in options.enabled_checks
+
+    def test_targets(self):
+        options, _func = self.tool.parse_args(self.args + ['dev-util/foo'])
+        assert options.targets == ['dev-util/foo']
+
+    def test_stdin_targets(self):
+        with patch('sys.stdin', StringIO('dev-util/foo')):
+            options, _func = self.tool.parse_args(self.args + ['-'])
+            assert list(options.targets) == ['dev-util/foo']
 
 
 class TestPkgcheckScan(object):
