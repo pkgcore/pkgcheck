@@ -7,7 +7,7 @@ from pkgcore.util.commandline import Tool
 from pytest import raises
 from snakeoil.osutils import pjoin
 
-from pkgcheck import base, plugins, __title__ as project
+from pkgcheck import base, checks, plugins, __title__ as project
 from pkgcheck.scripts import run, pkgcheck
 
 
@@ -41,6 +41,29 @@ def test_script_run(capsys):
             assert err[1].startswith(f"Verify that {project} and its deps")
 
         import_module.reset_mock()
+
+
+class TestPkgcheckScanParseArgs(object):
+
+    tool = Tool(pkgcheck.argparser)
+    args = ['scan', '--repo', pjoin(const.DATA_PATH, 'fakerepo')]
+
+    def test_skipped_checks(self):
+        options, _func = self.tool.parse_args(self.args)
+        assert options.enabled_checks
+        # some checks should always be skipped by default
+        assert set(options.enabled_checks) != set(pkgcheck._known_checks)
+
+    def test_enabled_check(self):
+        options, _func = self.tool.parse_args(self.args + ['-c', 'PkgDirCheck'])
+        assert options.enabled_checks == [checks.pkgdir.PkgDirCheck]
+
+    def test_disabled_check(self):
+        options, _func = self.tool.parse_args(self.args)
+        assert checks.pkgdir.PkgDirCheck in options.enabled_checks
+        options, _func = self.tool.parse_args(self.args + ['-c=-PkgDirCheck'])
+        assert options.enabled_checks
+        assert checks.pkgdir.PkgDirCheck not in options.enabled_checks
 
 
 class TestPkgcheckScan(object):
