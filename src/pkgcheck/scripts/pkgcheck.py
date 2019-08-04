@@ -397,14 +397,17 @@ def _validate_args(parser, namespace):
         blacklist = base.Blacklist(disabled_checks)
         namespace.enabled_checks = list(blacklist.filter(namespace.enabled_checks))
 
+    # skip checks that may be disabled
+    namespace.enabled_checks = [
+        c for c in namespace.enabled_checks if not c.skip(namespace)]
+
     if not namespace.enabled_checks:
         parser.error('no active checks')
 
     namespace.addons = set()
 
     for check in namespace.enabled_checks:
-        if not check.skip(namespace):
-            add_addon(check, namespace.addons)
+        add_addon(check, namespace.addons)
     try:
         for addon in namespace.addons:
             addon.check_args(parser, namespace)
