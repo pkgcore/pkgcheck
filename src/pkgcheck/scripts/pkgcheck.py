@@ -50,8 +50,6 @@ subparsers = argparser.add_subparsers(description="check applets", default='scan
 # These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser('scan', description='scan targets for QA issues')
 scan.set_defaults(repo_bases=[])
-scan.set_defaults(guessed_suite=False)
-scan.set_defaults(default_suite=False)
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
@@ -67,10 +65,6 @@ main_options.add_argument(
         Enable all package filtering mechanisms such as ACCEPT_KEYWORDS,
         ACCEPT_LICENSE, and package.mask.
     """)
-main_options.add_argument(
-    '-s', '--suite', action=commandline.StoreConfigObject,
-    config_type='pkgcheck_suite',
-    help='specify the configuration suite to use')
 main_options.add_argument(
     '-R', '--reporter', action='store', default=None,
     help='use a non-default reporter',
@@ -155,60 +149,8 @@ def _validate_args(parser, namespace):
     namespace.enabled_keywords = list(_known_keywords)
     cwd = abspath(os.getcwd())
 
-    if namespace.suite is None:
-        # No suite explicitly specified. Use the repo to guess the suite.
-        if namespace.target_repo is None:
-            # Not specified either. Try to find a repo our cwd is in.
-            # The use of a dict here is a hack to deal with one
-            # repo having multiple names in the configuration.
-            candidates = {}
-            for name, suite in namespace.config.pkgcheck_suite.items():
-                repo = suite.target_repo
-                if repo is None:
-                    continue
-                repo_base = getattr(repo, 'location', None)
-                if repo_base is not None and cwd.startswith(repo_base):
-                    candidates[repo] = name
-            if len(candidates) == 1:
-                namespace.guessed_suite = True
-                namespace.target_repo = tuple(candidates)[0]
-        if namespace.target_repo is not None:
-            # We have a repo, now find a suite matching it.
-            candidates = list(
-                suite for suite in namespace.config.pkgcheck_suite.values()
-                if suite.target_repo is namespace.target_repo)
-            if len(candidates) == 1:
-                namespace.guessed_suite = True
-                namespace.suite = candidates[0]
-        if namespace.suite is None:
-            # If we have multiple candidates or no candidates we
-            # fall back to the default suite.
-            namespace.suite = namespace.config.get_default('pkgcheck_suite')
-            namespace.default_suite = namespace.suite is not None
-    if namespace.suite is not None:
-        # We have a suite. Lift defaults from it for values that
-        # were not set explicitly:
-        if namespace.checkset is None:
-            namespace.checkset = namespace.suite.checkset
-        # If we were called with no atoms we want to force
-        # cwd-based detection.
-        if namespace.target_repo is None:
-            if namespace.targets:
-                namespace.target_repo = namespace.suite.target_repo
-            elif namespace.suite.target_repo is not None:
-                # No atoms were passed in, so we want to guess
-                # what to scan based on cwd below. That only makes
-                # sense if we are inside the target repo. We still
-                # want to pick the suite's target repo if we are
-                # inside it, in case there is more than one repo
-                # definition with a base that contains our dir.
-                repo_base = getattr(namespace.suite.target_repo, 'location', None)
-                if repo_base is not None and cwd.startswith(repo_base):
-                    namespace.target_repo = namespace.suite.target_repo
-
     if namespace.target_repo is None:
-        # We have no target repo (not explicitly passed, not from a suite, not
-        # from an earlier guess at the target_repo) so try to guess one.
+        # we have no target repo so try to guess one
         target_repo = None
         target_dir = cwd
 
@@ -426,13 +368,6 @@ def _scan(options, out, err):
         err.write(
             'Warning: could not determine repo base for profiles, some checks will not work.')
         err.write()
-
-    if options.guessed_suite:
-        if options.default_suite:
-            err.write('Tried to guess a suite to use but got multiple matches')
-            err.write('and fell back to the default.')
-        else:
-            err.write('using suite guessed from working directory')
 
     try:
         reporter = options.reporter(

@@ -61,47 +61,6 @@ Configuration
 No configuration is required, but some configuration makes ``pkgcheck``
 easier to use.
 
-Suites
-------
-
-With no configuration it will try to guess the repository to use based
-on your working directory and the list of repositories pkgcore knows
-about. This will usually not quite work because the same location
-often has multiple "repositories" with a slightly different
-configuration and ``pkgcheck`` cannot guess which one to use.
-
-Defining "suites" in the configuration solves this ambiguity. A
-"suite" contains a target repository, optionally a source repository
-to use as a base and optionally a set of checks to run. If there is a
-single suite with a target repository containing the current directory
-it is used. So with the following suite definition in
-``~/.config/pkgcore/pkgcore.conf``::
-
-  [pkgcheck-gentoo-suite]
-  class=pkgcheck.base.Suite
-  target_repo=gentoo
-
-you can run ``pkgcheck scan`` with no further arguments inside your portage
-directory and it will do the right thing.
-
-Make sure the target repo properly specifies its masters in
-metadata/layout.conf if it's meant to be an overlay, otherwise many errors are
-likely to be produced relating to missing licenses, categories, dependencies,
-etc.
-
-Finally, you can define a different checkset per suite::
-
-  [pkgcheck-gentoo-suite]
-  class=pkgcheck.base.Suite
-  target_repo=gentoo
-  checkset=no-arch-checks
-
-This disables checks that are not interesting unless you can set
-stable keywords for this suite. See Checksets_ for more information.
-
-Instead of relying on the working directory to pick the right suite
-you can specify one explicitly with ``pkgcheck scan -s/--suite``.
-
 Checksets
 ---------
 

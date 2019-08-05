@@ -11,6 +11,5 @@ pkgcore_plugins = {
         reporters.multiplex_reporter,
         base.Whitelist,
         base.Blacklist,
-        base.Suite,
         ],
     }

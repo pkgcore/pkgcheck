@@ -483,19 +483,6 @@ class Scope(object):
         return list(c for c in checks if c.scope in self.scopes)
 
 
-class Suite(object):
-
-    pkgcore_config_type = ConfigHint({
-        'target_repo': 'ref:repo',
-        'checkset': 'ref:pkgcheck_checkset'},
-        typename='pkgcheck_suite'
-    )
-
-    def __init__(self, target_repo, checkset=None):
-        self.target_repo = target_repo
-        self.checkset = checkset
-
-
 class StreamHeader(object):
 
     def __init__(self, checks, criteria):

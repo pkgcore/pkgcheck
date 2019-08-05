@@ -53,7 +53,6 @@ case $state in
         scan_opts=(
           {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_repos'
           {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter (defined in pkgcore's config)]"
-          {'(--suite)-s','(-s)--suite'}'[specify the configuration suite to use]'
         )
 
         check_opts=(
