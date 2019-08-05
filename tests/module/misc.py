@@ -103,10 +103,9 @@ class ReportTestCase(object):
     def assertReportSanity(self, *reports):
         for report in reports:
             attrs = self._threshold_attrs.get(report.threshold)
-            assert attrs, f"unknown threshold on {report.__class__!r}"
-            for x in attrs:
-                assert hasattr(report, x), (
-                    f"threshold {report.threshold}, missing attr {x}: " \
+            for attr in attrs:
+                assert hasattr(report, attr), (
+                    f"threshold {report.threshold}, missing attr {attr}: " \
                     f"{report.__class__!r} {report}")
 
     def assertReports(self, check, data):
