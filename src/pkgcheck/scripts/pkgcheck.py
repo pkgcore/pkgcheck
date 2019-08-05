@@ -39,7 +39,7 @@ demandload(
 )
 
 
-pkgcore_config_opts = commandline.ArgumentParser()
+pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
 argparser = commandline.ArgumentParser(
     suppress=True, description=__doc__, parents=(pkgcore_config_opts,),
     script=(__file__, __name__))
