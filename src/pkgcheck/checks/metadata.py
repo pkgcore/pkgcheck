@@ -1119,30 +1119,30 @@ class BadRestricts(base.Warning):
 
 
 class RestrictsCheck(base.Template):
-    feed_type = base.versioned_feed
-    known_restricts = frozenset((
-        "binchecks", "bindist", "fetch", "installsources", "mirror",
-        "primaryuri", "splitdebug", "strip", "test", "userpriv",
-    ))
+    """Check for valid RESTRICT settings."""
 
+    feed_type = base.versioned_feed
     known_results = (BadRestricts, addons.UnstatedIUSE)
     required_addons = (addons.UseAddon,)
-
-    __doc__ = "check over RESTRICT, looking for unknown restricts\nvalid " \
-        "restricts: %s" % ", ".join(sorted(known_restricts))
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter('restrict')
 
+        # pull allowed RESTRICT values from a repo and its masters
+        allowed_restricts = []
+        for repo in options.target_repo.trees:
+            allowed_restricts.extend(options.target_repo.config.restrict_allowed)
+        self.allowed_restricts = frozenset(allowed_restricts)
+
     def feed(self, pkg):
         # ignore conditionals
         restricts, unstated = self.iuse_filter((str,), pkg, pkg.restrict)
         yield from unstated
-        bad = set(restricts).difference(self.known_restricts)
+        bad = set(restricts).difference(self.allowed_restricts)
         if bad:
             deprecated = set(
-                x for x in bad if x.startswith("no") and x[2:] in self.known_restricts)
+                x for x in bad if x.startswith("no") and x[2:] in self.allowed_restricts)
             yield BadRestricts(pkg, bad.difference(deprecated), deprecated)
 
 

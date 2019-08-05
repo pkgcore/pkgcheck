@@ -2,6 +2,7 @@ from functools import partial
 from itertools import combinations
 import os
 import tempfile
+import textwrap
 
 from pkgcore.ebuild import eapi, repository
 from pkgcore.test.misc import FakePkg, FakeRepo
@@ -110,8 +111,12 @@ class iuse_options(TempDirMixin):
 
         fileutils.write_file(pjoin(base, 'repo_name'), 'w', kwds.pop('repo_name', 'monkeys'))
         os.mkdir(pjoin(repo_base, 'metadata'))
-        fileutils.write_file(
-            pjoin(repo_base, 'metadata', 'layout.conf'), 'w', "masters = ")
+        with open(pjoin(repo_base, 'metadata', 'layout.conf'), 'w') as f:
+            f.write(textwrap.dedent("""\
+                masters =
+                properties-allowed = interactive live
+                restrict-allowed = binchecks bindist fetch installsources mirror preserve-libs primaryuri splitdebug strip test userpriv
+            """))
         kwds['target_repo'] = repository.UnconfiguredTree(repo_base)
         kwds.setdefault('verbosity', 0)
         kwds.setdefault('git_disable', True)
