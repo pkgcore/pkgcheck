@@ -23,7 +23,7 @@ class MissingAccountIdentifier(base.Warning):
 
 
 class ConflictingAccountIdentifiers(base.Error):
-    """Same UID/GID is used by two different users/groups."""
+    """Same UID/GID is used by multiple packages."""
 
     __slots__ = ("kind", "identifier", "pkgs")
 
