@@ -1,12 +1,15 @@
 from functools import partial
 from io import StringIO
+import os
 import textwrap
 from unittest.mock import patch
 
 from pkgcore import const
+from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.plugin import get_plugins
 from pkgcore.util.commandline import Tool
 import pytest
+from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
 from pkgcheck import base, checks, plugins, __title__ as project
@@ -27,6 +30,19 @@ def fakeconfig(tmp_path):
             [fakerepo]
             location = {fakerepo}"""))
     return fakeconfig
+
+
+@pytest.fixture
+def fakedrepo(tmp_path):
+    """Generate a stub repo."""
+    fakedrepo = str(tmp_path)
+    os.makedirs(pjoin(fakedrepo, 'profiles'))
+    os.makedirs(pjoin(fakedrepo, 'metadata'))
+    with open(pjoin(fakedrepo, 'profiles', 'repo_name'), 'w') as f:
+        f.write('fakedrepo\n')
+    with open(pjoin(fakedrepo, 'metadata', 'layout.conf'), 'w') as f:
+        f.write('masters =\n')
+    return fakedrepo
 
 
 def test_script_run(capsys):
@@ -88,12 +104,35 @@ class TestPkgcheckScanParseArgs(object):
 
     def test_targets(self):
         options, _func = self.tool.parse_args(self.args + ['dev-util/foo'])
-        assert options.targets == ['dev-util/foo']
+        assert list(options.limiters) == [atom_cls('dev-util/foo')]
 
     def test_stdin_targets(self):
         with patch('sys.stdin', StringIO('dev-util/foo')):
             options, _func = self.tool.parse_args(self.args + ['-'])
-            assert list(options.targets) == ['dev-util/foo']
+            assert list(options.limiters) == [atom_cls('dev-util/foo')]
+
+    def test_invalid_targets(self, capsys):
+        with pytest.raises(SystemExit) as excinfo:
+            options, _func = self.tool.parse_args(self.args + ['dev-util/f$o'])
+            # force target parsing
+            list(options.limiters)
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        err = err.strip()
+        assert err == "pkgcheck scan: error: invalid package atom: 'dev-util/f$o'"
+
+    def test_path_target_repo(self, fakedrepo):
+        # dir path
+        options, _func = self.tool.parse_args(self.args + [fakedrepo])
+        assert options.targets == [fakedrepo]
+        assert options.target_repo.repo_id == 'fakedrepo'
+        # file path
+        os.makedirs(pjoin(fakedrepo, 'dev-util', 'foo'))
+        ebuild_path = pjoin(fakedrepo, 'dev-util', 'foo', 'foo-0.ebuild')
+        touch(ebuild_path)
+        options, _func = self.tool.parse_args(self.args + [ebuild_path])
+        assert options.targets == [ebuild_path]
+        assert options.target_repo.repo_id == 'fakedrepo'
 
 
 class TestPkgcheckScan(object):
