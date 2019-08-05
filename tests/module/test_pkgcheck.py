@@ -5,10 +5,12 @@ import textwrap
 from unittest.mock import patch
 
 from pkgcore import const
-from pkgcore.ebuild.atom import atom as atom_cls
+from pkgcore.ebuild import restricts, atom
 from pkgcore.plugin import get_plugins
+from pkgcore.restrictions import packages
 from pkgcore.util.commandline import Tool
 import pytest
+from snakeoil.contexts import chdir
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
@@ -104,12 +106,12 @@ class TestPkgcheckScanParseArgs(object):
 
     def test_targets(self):
         options, _func = self.tool.parse_args(self.args + ['dev-util/foo'])
-        assert list(options.limiters) == [atom_cls('dev-util/foo')]
+        assert list(options.limiters) == [atom.atom('dev-util/foo')]
 
     def test_stdin_targets(self):
         with patch('sys.stdin', StringIO('dev-util/foo')):
             options, _func = self.tool.parse_args(self.args + ['-'])
-            assert list(options.limiters) == [atom_cls('dev-util/foo')]
+            assert list(options.limiters) == [atom.atom('dev-util/foo')]
 
     def test_invalid_targets(self, capsys):
         with pytest.raises(SystemExit) as excinfo:
@@ -124,15 +126,34 @@ class TestPkgcheckScanParseArgs(object):
     def test_path_target_repo(self, fakedrepo):
         # dir path
         options, _func = self.tool.parse_args(self.args + [fakedrepo])
-        assert options.targets == [fakedrepo]
         assert options.target_repo.repo_id == 'fakedrepo'
+        assert list(options.limiters) == [
+            packages.AndRestriction(restricts.RepositoryDep('fakedrepo'))]
+
         # file path
         os.makedirs(pjoin(fakedrepo, 'dev-util', 'foo'))
         ebuild_path = pjoin(fakedrepo, 'dev-util', 'foo', 'foo-0.ebuild')
         touch(ebuild_path)
         options, _func = self.tool.parse_args(self.args + [ebuild_path])
-        assert options.targets == [ebuild_path]
+        restrictions = [
+            restricts.RepositoryDep('fakedrepo'),
+            restricts.CategoryDep('dev-util'),
+            restricts.PackageDep('foo'),
+            restricts.VersionMatch('=', '0'),
+        ]
+        assert list(options.limiters) == [packages.AndRestriction(*restrictions)]
         assert options.target_repo.repo_id == 'fakedrepo'
+
+        # cwd path
+        with chdir(pjoin(fakedrepo, 'dev-util', 'foo')):
+            options, _func = self.tool.parse_args(self.args)
+            assert options.target_repo.repo_id == 'fakedrepo'
+            restrictions = [
+                restricts.RepositoryDep('fakedrepo'),
+                restricts.CategoryDep('dev-util'),
+                restricts.PackageDep('foo'),
+            ]
+            assert list(options.limiters) == [packages.AndRestriction(*restrictions)]
 
 
 class TestPkgcheckScan(object):
