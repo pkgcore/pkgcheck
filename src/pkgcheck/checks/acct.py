@@ -1,8 +1,6 @@
-import re
-
 from collections import defaultdict
-from itertools import groupby
-from operator import attrgetter, itemgetter
+from itertools import chain
+import re
 
 from .. import base
 
@@ -21,34 +19,30 @@ class MissingAccountIdentifier(base.Warning):
 
     @property
     def short_desc(self):
-        return (
-            f"unable to determine the value of {self.var} variable")
+        return f"unable to determine the value of {self.var} variable"
 
 
-class ConflictingAccountIdentifier(base.Error):
+class ConflictingAccountIdentifiers(base.Error):
     """Same UID/GID is used by two different users/groups."""
 
-    __slots__ = ("category", "package", "version", "kind", "identifier", "others")
+    __slots__ = ("kind", "identifier", "pkgs")
 
-    threshold = base.versioned_feed
+    threshold = base.repository_feed
 
-    _sorter = staticmethod(itemgetter(0))
-
-    def __init__(self, pkg, kind, identifier, others):
+    def __init__(self, kind, identifier, pkgs):
         super().__init__()
-        self._store_cpv(pkg)
         self.kind = kind
         self.identifier = identifier
-        self.others = tuple(sorted(p.cpvstr for p in others))
+        self.pkgs = tuple(sorted(p.cpvstr for p in pkgs))
 
     @property
     def short_desc(self):
         return (
-            f"{self.kind} id {self.identifier} is already used by other "
-            f"{self.kind}: ({', '.join(self.others)})")
+            f"conflicting {self.kind} id {self.identifier} usage: "
+            f"[ {', '.join(self.pkgs)} ]")
 
 
-class OutOfRangeAccountIdentifier(base.Error):
+class OutsideRangeAccountIdentifier(base.Error):
     """UID/GID outside allowed allocation range."""
 
     __slots__ = ("category", "package", "version", "kind", "identifier")
@@ -64,23 +58,23 @@ class OutOfRangeAccountIdentifier(base.Error):
     @property
     def short_desc(self):
         return (
-            f"{self.kind} id {self.identifier} is outside the permitted "
+            f"{self.kind} id {self.identifier} outside permitted "
             f"static allocation range (0..499, 60001+)")
 
 
 class AcctCheck(base.Template):
-    """Check for acct-* packages.
+    """Various checks for acct-* packages.
 
     Verify that acct-* packages do not use conflicting, invalid or out-of-range
     UIDs/GIDs.
     """
 
     scope = base.repository_scope
-    feed_type = base.package_feed
-    known_results = (MissingAccountIdentifier, ConflictingAccountIdentifier,
-                     OutOfRangeAccountIdentifier)
-
-    repo_grabber = attrgetter("repo")
+    feed_type = base.versioned_feed
+    known_results = (
+        MissingAccountIdentifier, ConflictingAccountIdentifiers,
+        OutsideRangeAccountIdentifier,
+    )
 
     def __init__(self, options):
         super().__init__(options)
@@ -88,45 +82,39 @@ class AcctCheck(base.Template):
             r'ACCT_(?P<var>USER|GROUP)_ID=(?P<quot>[\'"]?)(?P<id>[0-9]+)(?P=quot)')
         self.seen_uids = defaultdict(lambda: defaultdict(list))
         self.seen_gids = defaultdict(lambda: defaultdict(list))
+        self.category_map = {
+            'acct-user': (self.seen_uids, 'USER', (65534,)),
+            'acct-group': (self.seen_gids, 'GROUP', (65533, 65534)),
+        }
 
-    def feed(self, full_pkgset):
-        # TODO: can we filter this earlier?
-        if full_pkgset[0].category == 'acct-user':
-            expected_var = 'USER'
-            seen_var = self.seen_uids
-            extra_allowed_ids = (65534,)
-        elif full_pkgset[0].category == 'acct-group':
-            expected_var = 'GROUP'
-            seen_var = self.seen_gids
-            extra_allowed_ids = (65533, 65534)
-        else:
+    def feed(self, pkg):
+        # TODO: use a custom restriction source to filter pkg input
+        try:
+            seen_id_map, expected_var, extra_allowed_ids = self.category_map[pkg.category]
+        except KeyError:
             return
 
-        # sort it by repo.
-        for repo, pkgset in groupby(full_pkgset, self.repo_grabber):
-            for pkg in pkgset:
-                for l in pkg.ebuild.text_fileobj():
-                    m = self.id_re.match(l)
-                    if m is not None:
-                        if m.group('var') == expected_var:
-                            found_id = m.group('id')
-                            break
-                else:
-                    yield MissingAccountIdentifier(pkg,
-                        f"ACCT_{expected_var}_ID")
-                    continue
+        for l in pkg.ebuild.text_fileobj():
+            m = self.id_re.match(l)
+            if m is not None:
+                if m.group('var') == expected_var:
+                    found_id = int(m.group('id'))
+                    break
+        else:
+            return (MissingAccountIdentifier(pkg, f"ACCT_{expected_var}_ID"),)
 
-                seen_list = seen_var[repo][found_id]
-                for other in seen_list:
-                    # ignore other versions of the same package
-                    if pkg.key != other.key:
-                        yield ConflictingAccountIdentifier(
-                            pkg, expected_var.lower(), found_id, seen_list)
-                seen_list.append(pkg)
+        # all UIDs/GIDs must be in <500, with special exception
+        # of nobody/nogroup which use 65534/65533
+        if found_id >= 500 and found_id not in extra_allowed_ids:
+            return (OutsideRangeAccountIdentifier(pkg, expected_var.lower(), found_id),)
 
-                found_id = int(found_id)
-                # all UIDs/GIDs must be in <500, with special exception
-                # of nobody/nogroup which use 65534/65533
-                if found_id >= 500 and found_id not in extra_allowed_ids:
-                    yield OutOfRangeAccountIdentifier(
-                        pkg, expected_var.lower(), found_id)
+        seen_id_map[found_id][pkg.key].append(pkg)
+
+    def finish(self):
+        # report overlapping ID usage
+        for seen, expected_var, _ids in self.category_map.values():
+            for found_id, pkgs in sorted(seen.items()):
+                if len(pkgs) > 1:
+                    conflicting_pkgs = chain.from_iterable(pkgs.values())
+                    yield ConflictingAccountIdentifiers(
+                        expected_var.lower(), found_id, conflicting_pkgs)
