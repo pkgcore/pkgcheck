@@ -136,6 +136,26 @@ class TestPkgcheckScan(object):
                 err = err.strip().split('\n')
                 assert err[-1].startswith("pkgcheck scan: error: unknown scope: 'foo'")
 
+    def test_unknown_check(self, capsys):
+        for opt in ('-c', '--checks'):
+            with patch('sys.argv', self.args + [opt, 'foo']):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                assert excinfo.value.code == 2
+                out, err = capsys.readouterr()
+                err = err.strip().split('\n')
+                assert err[-1].startswith("pkgcheck scan: error: unknown check: 'foo'")
+
+    def test_unknown_keyword(self, capsys):
+        for opt in ('-k', '--keywords'):
+            with patch('sys.argv', self.args + [opt, 'foo']):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                assert excinfo.value.code == 2
+                out, err = capsys.readouterr()
+                err = err.strip().split('\n')
+                assert err[-1].startswith("pkgcheck scan: error: unknown keyword: 'foo'")
+
     def test_missing_scope(self, capsys):
         for opt in ('-S', '--scopes'):
             with patch('sys.argv', self.args + [opt]):
@@ -155,6 +175,15 @@ class TestPkgcheckScan(object):
             assert excinfo.value.code == 0
             out, err = capsys.readouterr()
             assert out == err == ''
+
+    def test_no_active_checks(self, capsys):
+        with patch('sys.argv', self.args + ['-c', 'UnusedInMastersCheck']):
+            with pytest.raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[-1].startswith("pkgcheck scan: error: no active checks")
 
 
 class TestPkgcheckShow(object):
