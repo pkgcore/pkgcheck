@@ -1,3 +1,7 @@
+from itertools import chain
+
+import pytest
+
 from pkgcore.ebuild import domain
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
@@ -10,8 +14,6 @@ from snakeoil.data_source import text_data_source
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
-
-import pytest
 
 from pkgcheck import base
 
@@ -86,17 +88,18 @@ class ReportTestCase(object):
         for report in reports:
             assert report.__class__ in self.check_kls.known_results
 
-    def assertNoReport(self, check, data, msg=""):
+    def assertNoReport(self, check, data, msg="", iterate=False):
         l = []
         if msg:
             msg = f"{msg}: "
         runner = base.CheckRunner([check])
-        reports = runner.start()
-        if reports is not None: l.extend(reports)
-        reports = runner.feed(data)
-        if reports is not None: l.extend(reports)
-        reports = runner.finish()
-        if reports is not None: l.extend(reports)
+        l.extend(runner.start())
+        if iterate:
+            reports = chain.from_iterable(runner.feed(item) for item in data)
+        else:
+            reports = runner.feed(data)
+        l.extend(reports)
+        l.extend(runner.finish())
         self._assert_known_results(*l)
         assert l == [], f"{msg}{list(report.short_desc for report in l)}"
 
@@ -108,22 +111,23 @@ class ReportTestCase(object):
                     f"threshold {report.threshold}, missing attr {attr}: " \
                     f"{report.__class__!r} {report}")
 
-    def assertReports(self, check, data):
+    def assertReports(self, check, data, iterate=False):
         l = []
         runner = base.CheckRunner([check])
-        reports = runner.start()
-        if reports is not None: l.extend(reports)
-        reports = runner.feed(data)
-        if reports is not None: l.extend(reports)
-        reports = runner.finish()
-        if reports is not None: l.extend(reports)
+        l.extend(runner.start())
+        if iterate:
+            reports = chain.from_iterable(runner.feed(item) for item in data)
+        else:
+            reports = runner.feed(data)
+        l.extend(reports)
+        l.extend(runner.finish())
         self._assert_known_results(*l)
         assert l, f"must get a report from {check} {data}, got none"
         self.assertReportSanity(*l)
         return l
 
-    def assertReport(self, check, data):
-        r = self.assertReports(check, data)
+    def assertReport(self, check, data, iterate=False):
+        r = self.assertReports(check, data, iterate=iterate)
         self._assert_known_results(*r)
         assert len(r) == 1, f"expected one report, got {len(r)}: {r}"
         self.assertReportSanity(r[0])
