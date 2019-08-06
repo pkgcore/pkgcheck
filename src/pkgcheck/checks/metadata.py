@@ -1132,7 +1132,7 @@ class RestrictsCheck(base.Template):
         # pull allowed RESTRICT values from a repo and its masters
         allowed_restricts = []
         for repo in options.target_repo.trees:
-            allowed_restricts.extend(options.target_repo.config.restrict_allowed)
+            allowed_restricts.extend(repo.config.restrict_allowed)
         self.allowed_restricts = frozenset(allowed_restricts)
 
     def feed(self, pkg):
