@@ -237,6 +237,19 @@ class TestPkgcheckScanParseArgs(object):
             assert err[-1].startswith("pkgcheck scan: error: no active checks")
 
 
+class TestPkgcheck(object):
+
+    script = partial(run, project)
+
+    def test_version(self, capsys):
+        with patch('sys.argv', [project, '--version']):
+            with pytest.raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 0
+            out, err = capsys.readouterr()
+            assert out.startswith(project)
+
+
 class TestPkgcheckScan(object):
 
     script = partial(run, project)
