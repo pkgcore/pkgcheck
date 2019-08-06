@@ -92,9 +92,7 @@ def is_binary(path, blocksize=1024):
             try:
                 byte_str.decode(encoding=detected_encoding['encoding'])
                 decodable = True
-            except LookupError:
-                pass
-            except UnicodeDecodeError:
+            except (UnicodeDecodeError, LookupError):
                 pass
 
     # finally use all the checks to decide binary or text
