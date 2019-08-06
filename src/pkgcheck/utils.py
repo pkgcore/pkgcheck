@@ -1,7 +1,7 @@
 import chardet
 
 
-# is_binary() is pulled from https://github.com/audreyr/binaryornot
+# based on https://github.com/audreyr/binaryornot
 #
 # Copyright (c) 2013, Audrey Roy
 # All rights reserved.
@@ -64,7 +64,7 @@ def is_binary(path, blocksize=1024):
     # Now check for a high percentage of ASCII control characters
     # Binary if control chars are > 30% of the string
     low_chars = byte_str.translate(None, _printable_ascii)
-    nontext_ratio1 = float(len(low_chars)) / float(len(byte_str))
+    nontext_ratio1 = len(low_chars) / len(byte_str)
 
     # and check for a low percentage of high ASCII characters:
     # Binary if high ASCII chars are < 5% of the string
@@ -74,7 +74,7 @@ def is_binary(path, blocksize=1024):
     # of these without finding an invalid sequence is actually lower than the
     # chance of the first three bytes randomly being the UTF-8 BOM.
     high_chars = byte_str.translate(None, _printable_high_ascii)
-    nontext_ratio2 = float(len(high_chars)) / float(len(byte_str))
+    nontext_ratio2 = len(high_chars) / len(byte_str)
 
     is_likely_binary = (
         (nontext_ratio1 > 0.3 and nontext_ratio2 < 0.05) or
@@ -104,8 +104,7 @@ def is_binary(path, blocksize=1024):
     else:
         if decodable:
             return False
-        else:
+        elif b'\x00' in byte_str or b'\xff' in byte_str:
             # check for NULL bytes
-            if b'\x00' in byte_str or b'\xff' in byte_str:
-                return True
+            return True
         return False
