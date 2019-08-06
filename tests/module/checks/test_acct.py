@@ -23,6 +23,12 @@ ACCT_{self.kind.upper()}_ID="{identifier}"
 '''
         return misc.FakePkg(f'acct-{self.kind}/{name}-{version}', ebuild=ebuild)
 
+    def test_unmatching_pkgs(self):
+        pkgs = (misc.FakePkg('dev-util/foo-0'),
+                misc.FakePkg('dev-util/bar-1'))
+        check = self.mk_check(pkgs)
+        self.assertNoReport(check, pkgs, iterate=True)
+
     def test_correct_ids(self):
         pkgs = (self.mk_pkg('foo', 100),
                 self.mk_pkg('bar', 200),
@@ -36,6 +42,7 @@ ACCT_{self.kind.upper()}_ID="{identifier}"
         r = self.assertReport(check, pkg)
         assert isinstance(r, acct.MissingAccountIdentifier)
         assert r.var == f'ACCT_{self.kind.upper()}_ID'
+        assert r.var in str(r)
 
     def test_conflicting_ids(self):
         pkgs = (self.mk_pkg('foo', 100),
@@ -45,6 +52,8 @@ ACCT_{self.kind.upper()}_ID="{identifier}"
         assert isinstance(r, acct.ConflictingAccountIdentifiers)
         assert r.kind == self.kind
         assert r.identifier == 100
+        assert r.pkgs == (f'acct-{self.kind}/bar-1', f'acct-{self.kind}/foo-1')
+        assert f'conflicting {self.kind} id 100 usage: ' in str(r)
 
     def test_self_nonconflicting_ids(self):
         pkgs = (self.mk_pkg('foo', 100),
@@ -59,6 +68,7 @@ ACCT_{self.kind.upper()}_ID="{identifier}"
         assert isinstance(r, acct.OutsideRangeAccountIdentifier)
         assert r.kind == self.kind
         assert r.identifier == 500
+        assert f'{self.kind} id 500 outside permitted' in str(r)
 
     def test_sysadmin_assignment_range(self):
         pkg = self.mk_pkg('foo', 1000)
