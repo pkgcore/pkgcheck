@@ -381,7 +381,10 @@ class ObsoleteUri(base.Warning):
     """URI used is obsolete.
 
     The URI used to fetch distfile is obsolete and can be replaced
-    by something more modern.
+    by something more modern. Note that the modern replacement usually
+    results in different file contents, so you need to rename it (to
+    avoid mirror collisions with the old file) and update the ebuild
+    (for example, by removing no longer necessary vcs-snapshot.eclass).
     """
 
     __slots__ = ("category", "package", "version", "line", "uri", "replacement")
