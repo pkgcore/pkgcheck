@@ -160,6 +160,72 @@ class TestPkgcheckScanParseArgs(object):
             ]
             assert list(options.limiters) == [packages.AndRestriction(*restrictions)]
 
+    def test_unknown_repo(self, capsys):
+        for opt in ('-r', '--repo'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _func = self.tool.parse_args(self.args + [opt, 'foo'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[-1].startswith(
+                "pkgcheck scan: error: argument -r/--repo: couldn't find repo 'foo'")
+
+    def test_unknown_reporter(self, capsys):
+        for opt in ('-R', '--reporter'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _func = self.tool.parse_args(self.args + [opt, 'foo'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[-1].startswith(
+                "pkgcheck scan: error: no reporter matches 'foo'")
+
+    def test_unknown_scope(self, capsys):
+        for opt in ('-S', '--scopes'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _func = self.tool.parse_args(self.args + [opt, 'foo'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[-1].startswith("pkgcheck scan: error: unknown scope: 'foo'")
+
+    def test_unknown_check(self, capsys):
+        for opt in ('-c', '--checks'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _func = self.tool.parse_args(self.args + [opt, 'foo'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[-1].startswith("pkgcheck scan: error: unknown check: 'foo'")
+
+    def test_unknown_keyword(self, capsys):
+        for opt in ('-k', '--keywords'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _func = self.tool.parse_args(self.args + [opt, 'foo'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[-1].startswith("pkgcheck scan: error: unknown keyword: 'foo'")
+
+    def test_missing_scope(self, capsys):
+        for opt in ('-S', '--scopes'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _func = self.tool.parse_args(self.args + [opt])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[0] == (
+                'pkgcheck scan: error: argument -S/--scopes: expected one argument')
+
+    def test_no_active_checks(self, capsys):
+            args = self.args + ['-c', 'UnusedInMastersCheck']
+            with pytest.raises(SystemExit) as excinfo:
+                options, _func = self.tool.parse_args(args)
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[-1].startswith("pkgcheck scan: error: no active checks")
+
 
 class TestPkgcheckScan(object):
 
@@ -169,69 +235,6 @@ class TestPkgcheckScan(object):
     def _setup(self, fakeconfig):
         self.args = [project, '--config', fakeconfig, 'scan']
 
-    def test_unknown_repo(self, capsys):
-        for opt in ('-r', '--repo'):
-            with patch('sys.argv', self.args + [opt, 'foo']):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                assert excinfo.value.code == 2
-                out, err = capsys.readouterr()
-                err = err.strip().split('\n')
-                assert err[-1].startswith(
-                    "pkgcheck scan: error: argument -r/--repo: couldn't find repo 'foo'")
-
-    def test_unknown_reporter(self, capsys):
-        for opt in ('-R', '--reporter'):
-            with patch('sys.argv', self.args + [opt, 'foo']):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                assert excinfo.value.code == 2
-                out, err = capsys.readouterr()
-                err = err.strip().split('\n')
-                assert err[-1].startswith(
-                    "pkgcheck scan: error: no reporter matches 'foo'")
-
-    def test_unknown_scope(self, capsys):
-        for opt in ('-S', '--scopes'):
-            with patch('sys.argv', self.args + [opt, 'foo']):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                assert excinfo.value.code == 2
-                out, err = capsys.readouterr()
-                err = err.strip().split('\n')
-                assert err[-1].startswith("pkgcheck scan: error: unknown scope: 'foo'")
-
-    def test_unknown_check(self, capsys):
-        for opt in ('-c', '--checks'):
-            with patch('sys.argv', self.args + [opt, 'foo']):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                assert excinfo.value.code == 2
-                out, err = capsys.readouterr()
-                err = err.strip().split('\n')
-                assert err[-1].startswith("pkgcheck scan: error: unknown check: 'foo'")
-
-    def test_unknown_keyword(self, capsys):
-        for opt in ('-k', '--keywords'):
-            with patch('sys.argv', self.args + [opt, 'foo']):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                assert excinfo.value.code == 2
-                out, err = capsys.readouterr()
-                err = err.strip().split('\n')
-                assert err[-1].startswith("pkgcheck scan: error: unknown keyword: 'foo'")
-
-    def test_missing_scope(self, capsys):
-        for opt in ('-S', '--scopes'):
-            with patch('sys.argv', self.args + [opt]):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                assert excinfo.value.code == 2
-                out, err = capsys.readouterr()
-                err = err.strip().split('\n')
-                assert err[0] == (
-                    'pkgcheck scan: error: argument -S/--scopes: expected one argument')
-
     def test_empty_repo(self, capsys):
         # no reports should be generated since the default repo is empty
         with patch('sys.argv', self.args):
@@ -240,15 +243,6 @@ class TestPkgcheckScan(object):
             assert excinfo.value.code == 0
             out, err = capsys.readouterr()
             assert out == err == ''
-
-    def test_no_active_checks(self, capsys):
-        with patch('sys.argv', self.args + ['-c', 'UnusedInMastersCheck']):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            assert excinfo.value.code == 2
-            out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert err[-1].startswith("pkgcheck scan: error: no active checks")
 
 
 class TestPkgcheckShow(object):
