@@ -123,7 +123,12 @@ class TestPkgcheckScanParseArgs(object):
         err = err.strip()
         assert err == "pkgcheck scan: error: invalid package atom: 'dev-util/f$o'"
 
-    def test_path_target_repo(self, fakedrepo):
+    def test_selected_targets(self, fakedrepo):
+        # selected repo
+        options, _func = self.tool.parse_args(self.args + ['-r', 'fakerepo'])
+        assert options.target_repo.repo_id == 'fakerepo'
+        assert options.limiters == [packages.AlwaysTrue]
+
         # dir path
         options, _func = self.tool.parse_args(self.args + [fakedrepo])
         assert options.target_repo.repo_id == 'fakedrepo'
