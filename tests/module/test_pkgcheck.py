@@ -207,6 +207,16 @@ class TestPkgcheckScanParseArgs(object):
             err = err.strip().split('\n')
             assert err[-1].startswith("pkgcheck scan: error: unknown keyword: 'foo'")
 
+    def test_selected_keywords(self):
+        for opt in ('-k', '--keywords'):
+            options, _func = self.tool.parse_args(self.args + [opt, 'InvalidPN'])
+            result_cls = next(
+                x for x in pkgcheck._known_keywords if x.__name__ == 'InvalidPN')
+            assert options.enabled_keywords == [result_cls]
+            check = next(
+                x for x in pkgcheck._known_checks if result_cls in x.known_results)
+            assert options.enabled_checks == [check]
+
     def test_missing_scope(self, capsys):
         for opt in ('-S', '--scopes'):
             with pytest.raises(SystemExit) as excinfo:
