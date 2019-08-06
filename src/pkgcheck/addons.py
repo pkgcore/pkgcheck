@@ -873,7 +873,9 @@ class UseAddon(base.Addon):
                         'use.desc, use.local.desc were found ')
 
     def allowed_iuse(self, pkg):
-        return self.collapsed_iuse.pull_data(pkg).union(pkg.local_use)
+        # metadata_xml checks catch xml issues, suppress warning/error logs here
+        with suppress_logging():
+            return self.collapsed_iuse.pull_data(pkg).union(pkg.local_use)
 
     def get_filter(self, attr=None):
         if self.ignore:
