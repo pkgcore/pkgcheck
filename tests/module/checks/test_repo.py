@@ -41,12 +41,13 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         self.assertNoReport(check, [])
 
     def test_ignored_root_dirs(self):
-        check = self.mk_check()
-        bin_path = pjoin(self.repo.location, '.git', 'foo')
-        os.makedirs(os.path.dirname(bin_path))
-        with open(bin_path, 'wb') as f:
-            f.write(b'\xd3\xad\xbe\xef')
-        self.assertNoReport(check, [])
+        for d in self.check_kls.ignored_root_dirs:
+            check = self.mk_check()
+            bin_path = pjoin(self.repo.location, d, 'foo')
+            os.makedirs(os.path.dirname(bin_path))
+            with open(bin_path, 'wb') as f:
+                f.write(b'\xd3\xad\xbe\xef')
+            self.assertNoReport(check, [])
 
     def test_null_bytes(self):
         check = self.mk_check()
