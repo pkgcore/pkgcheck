@@ -1139,6 +1139,11 @@ class RestrictsCheck(base.Template):
         # ignore conditionals
         restricts, unstated = self.iuse_filter((str,), pkg, pkg.restrict)
         yield from unstated
+
+        # skip check if target repo or its masters don't define allowed RESTRICT values
+        if not self.allowed_restricts:
+            return
+
         bad = set(restricts).difference(self.allowed_restricts)
         if bad:
             deprecated = set(
