@@ -377,7 +377,10 @@ class ObsoleteUri(base.Warning):
     """URI used is obsolete.
 
     The URI used to fetch distfile is obsolete and can be replaced
-    by something more modern.
+    by something more modern. Note that the modern replacement usually
+    results in different file contents, so you need to rename it (to
+    avoid mirror collisions with the old file) and update the ebuild
+    (for example, by removing no longer necessary vcs-snapshot.eclass).
     """
 
     __slots__ = ("category", "package", "version", "line", "uri", "replacement")
@@ -392,8 +395,9 @@ class ObsoleteUri(base.Warning):
 
     @property
     def short_desc(self):
-        return (f"obsolete fetch URI: {self.uri} on line "
-                f"{self.line}, should be replaced by: {self.replacement}")
+        return (f"obsolete fetch URI: {self.uri} on line {self.line}, ebuild "
+                f"should be updated to use new archive: {self.replacement}; "
+                 "distfile needs to be renamed to avoid collision")
 
 
 class ObsoleteUriCheck(base.Template):
