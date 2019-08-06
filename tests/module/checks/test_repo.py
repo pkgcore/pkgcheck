@@ -2,6 +2,7 @@ import os
 
 from pkgcore.ebuild import atom
 from pkgcore.test.misc import FakeRepo
+from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
 from pkgcheck.checks import repo
@@ -21,11 +22,23 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
     def mk_pkg(self, cpvstr):
         pkg = atom.atom(cpvstr)
         filesdir = pjoin(self.repo.location, pkg.category, pkg.package, 'files')
-        os.makedirs(filesdir)
+        os.makedirs(filesdir, exist_ok=True)
         return filesdir
 
     def test_empty_repo(self):
         self.assertNoReport(self.mk_check(), [])
+
+    def test_empty_file(self):
+        check = self.mk_check()
+        bin_path = pjoin(self.repo.location, 'foo')
+        touch(bin_path)
+        self.assertNoReport(check, [])
+
+    def test_regular_file(self):
+        check = self.mk_check()
+        with open(pjoin(self.repo.location, 'foo'), 'w') as f:
+            f.write('bar')
+        self.assertNoReport(check, [])
 
     def test_ignored_root_dirs(self):
         check = self.mk_check()
@@ -35,10 +48,18 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
             f.write(b'\xd3\xad\xbe\xef')
         self.assertNoReport(check, [])
 
+    def test_null_bytes(self):
+        check = self.mk_check()
+        with open(pjoin(self.repo.location, 'foo'), 'wb') as f:
+            f.write(b'foo\x00\xffbar')
+        r = self.assertReport(check, [])
+        assert isinstance(r, repo.BinaryFile)
+        assert r.path == 'foo'
+        assert "'foo'" in str(r)
+
     def test_root_dir_binary(self):
         check = self.mk_check()
         bin_path = pjoin(self.repo.location, 'foo')
-        os.makedirs(os.path.dirname(bin_path), exist_ok=True)
         with open(bin_path, 'wb') as f:
             f.write(b'\xd3\xad\xbe\xef')
         r = self.assertReport(check, [])
@@ -57,8 +78,6 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         assert "'dev-util/foo/files/foo'" in str(r)
 
     def test_non_utf8_encodings(self):
-        check = self.mk_check()
-        filesdir = self.mk_pkg('dev-util/foo')
         # non-english languages courtesy of google translate mangling
         langs = (
             ("example text that shouldn't trigger", 'ascii'),
@@ -74,6 +93,8 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
             ('不應觸發的示例文本', 'gb18030'), # traditional chinese
         )
         for text, encoding in langs:
-            with open(pjoin(filesdir, 'foo'), 'wb') as f:
-                f.write(text.encode(encoding=encoding))
+            check = self.mk_check()
+            with open(pjoin(self.repo.location, 'foo'), 'wb') as f:
+                data = text.encode(encoding)
+                f.write(data)
             self.assertNoReport(check, [])
