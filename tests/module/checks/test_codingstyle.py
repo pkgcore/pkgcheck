@@ -79,7 +79,9 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
         abspaths = [x.abspath for x in reports]
 
         assert len(reports) == len(absolute)
-        assert abspaths == [x[0].strip('"\'').split()[0] for x in absolute]
+        assert abspaths == [x[0] for x in absolute]
+        for r, abspath in zip(reports, absolute):
+            assert abspath[0] in str(r)
 
 
 class TestPathVariablesCheck(misc.ReportTestCase):

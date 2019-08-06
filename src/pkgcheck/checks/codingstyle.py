@@ -302,7 +302,7 @@ class AbsoluteSymlinkCheck(base.Template):
 
     def __init__(self, options):
         super().__init__(options)
-        self.regex = re.compile(r'^\s*dosym\s+["\']?(/(%s)\S*)' % r'|'.join(self.DIRS))
+        self.regex = re.compile(r'^\s*dosym\s+((["\'])?/(%s)(?(2).*?\2|\S*))' % r'|'.join(self.DIRS))
 
     def feed(self, entry):
         pkg, lines = entry
