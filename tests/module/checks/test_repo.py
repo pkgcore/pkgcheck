@@ -59,47 +59,21 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
     def test_non_utf8_encodings(self):
         check = self.mk_check()
         filesdir = self.mk_pkg('dev-util/foo')
-        # english -- (other languages courtesy of google translate mangling)
-        with open(pjoin(filesdir, 'foo'), 'wb') as f:
-            f.write(b"example text that shouldn't trigger")
-        self.assertNoReport(check, [])
-        # arabic
-        with open(pjoin(filesdir, 'foo'), 'wb') as f:
-            f.write('نص المثال الذي لا ينبغي أن يؤدي'.encode(encoding='cp1256'))
-        self.assertNoReport(check, [])
-        # russian
-        with open(pjoin(filesdir, 'foo'), 'wb') as f:
-            f.write('пример текста, который не должен срабатывать'.encode(encoding='koi8_r'))
-        self.assertNoReport(check, [])
-        # hindi
-        with open(pjoin(filesdir, 'foo'), 'wb') as f:
-            f.write('उदाहरण पाठ जो ट्रिगर नहीं होना चाहिए'.encode(encoding='utf-16'))
-        self.assertNoReport(check, [])
-        # urdu
-        with open(pjoin(filesdir, 'foo'), 'wb') as f:
-            f.write('مثال کے متن جو ٹرگر نہ ہوں۔'.encode(encoding='utf-16'))
-        self.assertNoReport(check, [])
-        # burmese
-        with open(pjoin(filesdir, 'foo'), 'wb') as f:
-            f.write('ဖြစ်ပေါ်မပေးသင့်ကြောင်းဥပမာစာသား'.encode(encoding='utf-32'))
-        self.assertNoReport(check, [])
-        # nepali
-        with open(pjoin(filesdir, 'foo'), 'wb') as f:
-            f.write('उदाहरण पाठ जुन ट्रिगर हुँदैन'.encode(encoding='utf-32'))
-        self.assertNoReport(check, [])
-        # japanese
-        with open(pjoin(filesdir, 'foo'), 'wb') as f:
-            f.write('トリガーするべきではないテキストの例'.encode(encoding='shift_jis'))
-        self.assertNoReport(check, [])
-        # korean
-        with open(pjoin(filesdir, 'foo'), 'wb') as f:
-            f.write('트리거해서는 안되는 예제 텍스트'.encode(encoding='cp949'))
-        self.assertNoReport(check, [])
-        # simplified chinese
-        with open(pjoin(filesdir, 'foo'), 'wb') as f:
-            f.write('不应触发的示例文本'.encode(encoding='gb2312'))
-        self.assertNoReport(check, [])
-        # traditional chinese
-        with open(pjoin(filesdir, 'foo'), 'wb') as f:
-            f.write('不應觸發的示例文本'.encode(encoding='gb18030'))
-        self.assertNoReport(check, [])
+        # non-english languages courtesy of google translate mangling
+        langs = (
+            ("example text that shouldn't trigger", 'ascii'),
+            ('نص المثال الذي لا ينبغي أن يؤدي', 'cp1256'), # arabic
+            ('пример текста, который не должен срабатывать', 'koi8_r'), # russian
+            ('उदाहरण पाठ जो ट्रिगर नहीं होना चाहिए', 'utf-16'), # hindi
+            ('مثال کے متن جو ٹرگر نہ ہوں۔', 'utf-16'), # urdu
+            ('ဖြစ်ပေါ်မပေးသင့်ကြောင်းဥပမာစာသား', 'utf-32'), # burmese
+            ('उदाहरण पाठ जुन ट्रिगर हुँदैन', 'utf-32'), # nepali
+            ('トリガーするべきではないテキストの例', 'shift_jis'), # japanese
+            ('트리거해서는 안되는 예제 텍스트', 'cp949'), # korean
+            ('不应触发的示例文本', 'gb2312'), # simplified chinese
+            ('不應觸發的示例文本', 'gb18030'), # traditional chinese
+        )
+        for text, encoding in langs:
+            with open(pjoin(filesdir, 'foo'), 'wb') as f:
+                f.write(text.encode(encoding=encoding))
+            self.assertNoReport(check, [])
