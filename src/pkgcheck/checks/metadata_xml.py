@@ -46,14 +46,15 @@ class _MissingXml(base.Error):
 class _BadlyFormedXml(base.Warning):
     """XML isn't well formed."""
 
-    __slots__ = ("category", "package", "filename")
+    __slots__ = ("category", "package", "error", "filename")
     __attrs__ = __slots__
 
-    def __init__(self, filename, category, package=None):
+    def __init__(self, error, filename, category, package=None):
         super().__init__()
         self.category = category
         self.package = package
         self.filename = filename
+        self.error = error
 
     @property
     def _label(self):
@@ -63,7 +64,7 @@ class _BadlyFormedXml(base.Warning):
 
     @property
     def short_desc(self):
-        return f"{self._label} {os.path.basename(self.filename)} is not well formed xml"
+        return f"{self._label} {os.path.basename(self.filename)} is not well formed xml: {self.error}"
 
 
 class _InvalidXml(base.Error):
@@ -474,8 +475,8 @@ class _XmlBaseCheck(base.Template):
             if repo.repo_id == 'gentoo':
                 return (self.missing_error,)
             return ()
-        except etree.XMLSyntaxError:
-            return (self.misformed_error,)
+        except etree.XMLSyntaxError as e:
+            return (partial(self.misformed_error, str(e)),)
 
         # note: while doc is available, do not pass it here as it may
         # trigger undefined behavior due to incorrect structure
