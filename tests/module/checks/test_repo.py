@@ -1,4 +1,5 @@
 import os
+from unittest import mock
 
 from pkgcore.ebuild import atom
 from pkgcore.test.misc import FakeRepo
@@ -39,6 +40,14 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         with open(pjoin(self.repo.location, 'foo'), 'w') as f:
             f.write('bar')
         self.assertNoReport(check, [])
+
+    def test_unreadable_file(self):
+        check = self.mk_check()
+        with open(pjoin(self.repo.location, 'foo'), 'w') as f:
+            f.write('bar')
+        with mock.patch('pkgcheck.utils.open') as mocked_open:
+            mocked_open.side_effect = IOError('fake exception')
+            self.assertNoReport(check, [])
 
     def test_ignored_root_dirs(self):
         for d in self.check_kls.ignored_root_dirs:
