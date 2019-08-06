@@ -41,6 +41,8 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
         reports = self.assertReports(check, [fake_pkg, fake_src])
         dirs = [x.insintodir for x in reports]
         assert dirs == list(bad)
+        for r, path in zip(reports, bad):
+            assert path in str(r)
 
 
 class TestAbsoluteSymlink(misc.ReportTestCase):
