@@ -4,7 +4,7 @@ import os
 import textwrap
 from unittest.mock import patch
 
-from pkgcore import const
+from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import restricts, atom
 from pkgcore.plugin import get_plugins
 from pkgcore.restrictions import packages
@@ -20,31 +20,31 @@ from pkgcheck.scripts import run, pkgcheck
 
 @pytest.fixture
 def fakeconfig(tmp_path):
-    """Generate a portage config that sets the default repo to pkgcore's fakerepo."""
+    """Generate a portage config that sets the default repo to pkgcore's stubrepo."""
     fakeconfig = str(tmp_path)
     repos_conf = tmp_path / 'repos.conf'
-    fakerepo = pjoin(const.DATA_PATH, 'fakerepo')
+    stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
     with open(repos_conf, 'w') as f:
         f.write(textwrap.dedent(f"""\
             [DEFAULT]
-            main-repo = fakerepo
+            main-repo = stubrepo
 
-            [fakerepo]
-            location = {fakerepo}"""))
+            [stubrepo]
+            location = {stubrepo}"""))
     return fakeconfig
 
 
 @pytest.fixture
-def fakedrepo(tmp_path):
+def fakerepo(tmp_path):
     """Generate a stub repo."""
-    fakedrepo = str(tmp_path)
-    os.makedirs(pjoin(fakedrepo, 'profiles'))
-    os.makedirs(pjoin(fakedrepo, 'metadata'))
-    with open(pjoin(fakedrepo, 'profiles', 'repo_name'), 'w') as f:
-        f.write('fakedrepo\n')
-    with open(pjoin(fakedrepo, 'metadata', 'layout.conf'), 'w') as f:
+    fakerepo = str(tmp_path)
+    os.makedirs(pjoin(fakerepo, 'profiles'))
+    os.makedirs(pjoin(fakerepo, 'metadata'))
+    with open(pjoin(fakerepo, 'profiles', 'repo_name'), 'w') as f:
+        f.write('fakerepo\n')
+    with open(pjoin(fakerepo, 'metadata', 'layout.conf'), 'w') as f:
         f.write('masters =\n')
-    return fakedrepo
+    return fakerepo
 
 
 def test_script_run(capsys):
@@ -123,38 +123,38 @@ class TestPkgcheckScanParseArgs(object):
         err = err.strip()
         assert err == "pkgcheck scan: error: invalid package atom: 'dev-util/f$o'"
 
-    def test_selected_targets(self, fakedrepo):
+    def test_selected_targets(self, fakerepo):
         # selected repo
-        options, _func = self.tool.parse_args(self.args + ['-r', 'fakerepo'])
-        assert options.target_repo.repo_id == 'fakerepo'
+        options, _func = self.tool.parse_args(self.args + ['-r', 'stubrepo'])
+        assert options.target_repo.repo_id == 'stubrepo'
         assert options.limiters == [packages.AlwaysTrue]
 
         # dir path
-        options, _func = self.tool.parse_args(self.args + [fakedrepo])
-        assert options.target_repo.repo_id == 'fakedrepo'
+        options, _func = self.tool.parse_args(self.args + [fakerepo])
+        assert options.target_repo.repo_id == 'fakerepo'
         assert list(options.limiters) == [
-            packages.AndRestriction(restricts.RepositoryDep('fakedrepo'))]
+            packages.AndRestriction(restricts.RepositoryDep('fakerepo'))]
 
         # file path
-        os.makedirs(pjoin(fakedrepo, 'dev-util', 'foo'))
-        ebuild_path = pjoin(fakedrepo, 'dev-util', 'foo', 'foo-0.ebuild')
+        os.makedirs(pjoin(fakerepo, 'dev-util', 'foo'))
+        ebuild_path = pjoin(fakerepo, 'dev-util', 'foo', 'foo-0.ebuild')
         touch(ebuild_path)
         options, _func = self.tool.parse_args(self.args + [ebuild_path])
         restrictions = [
-            restricts.RepositoryDep('fakedrepo'),
+            restricts.RepositoryDep('fakerepo'),
             restricts.CategoryDep('dev-util'),
             restricts.PackageDep('foo'),
             restricts.VersionMatch('=', '0'),
         ]
         assert list(options.limiters) == [packages.AndRestriction(*restrictions)]
-        assert options.target_repo.repo_id == 'fakedrepo'
+        assert options.target_repo.repo_id == 'fakerepo'
 
         # cwd path
-        with chdir(pjoin(fakedrepo, 'dev-util', 'foo')):
+        with chdir(pjoin(fakerepo, 'dev-util', 'foo')):
             options, _func = self.tool.parse_args(self.args)
-            assert options.target_repo.repo_id == 'fakedrepo'
+            assert options.target_repo.repo_id == 'fakerepo'
             restrictions = [
-                restricts.RepositoryDep('fakedrepo'),
+                restricts.RepositoryDep('fakerepo'),
                 restricts.CategoryDep('dev-util'),
                 restricts.PackageDep('foo'),
             ]

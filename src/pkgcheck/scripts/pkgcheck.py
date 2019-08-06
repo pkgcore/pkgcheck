@@ -10,7 +10,7 @@ from functools import partial
 from itertools import chain
 from operator import attrgetter
 
-from pkgcore import const
+from pkgcore import const as pkgcore_const
 from pkgcore.plugin import get_plugins, get_plugin
 from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
@@ -44,7 +44,7 @@ argparser = commandline.ArgumentParser(
     suppress=True, description=__doc__, parents=(pkgcore_config_opts,),
     script=(__file__, __name__))
 # TODO: rework pkgcore's config system to allow more lazy loading
-argparser.set_defaults(profile_override=pjoin(const.DATA_PATH, 'fakerepo/profiles/default'))
+argparser.set_defaults(profile_override=pjoin(pkgcore_const.DATA_PATH, 'stubrepo/profiles/default'))
 subparsers = argparser.add_subparsers(description="check applets")
 
 # These are all set based on other options, so have no default setting.
