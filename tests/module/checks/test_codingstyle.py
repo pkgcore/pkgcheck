@@ -268,10 +268,8 @@ class TestCopyright(misc.ReportTestCase):
 
     check_kls = codingstyle.CopyrightCheck
 
-    def mk_pkg(self, repo_id='gentoo'):
-        class fake_parent:
-            _parent_repo = FakeRepo(repo_id=repo_id)
-        return misc.FakePkg("dev-util/diffball-0.5", parent=fake_parent)
+    def mk_pkg(self):
+        return misc.FakePkg("dev-util/diffball-0.5")
 
     def test_good_copyright(self):
         good_copyrights = [
@@ -338,14 +336,3 @@ class TestCopyright(misc.ReportTestCase):
             r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
             assert isinstance(r, codingstyle.NonGentooAuthorsCopyright)
             assert line.strip() in str(r)
-
-    def test_non_gentoo_authors_copyright_outside_gentoo(self):
-        """Ebuilds in external repos have no copyright standards enforced."""
-        good_copyrights = [
-            '# Copyright 1999-2019 D. E. Veloper\n',
-            '# Copyright 2019 辣鸡汤\n',
-        ]
-        fake_pkg = self.mk_pkg(repo_id='test')
-        for line in good_copyrights:
-            fake_src = [line]
-            self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])

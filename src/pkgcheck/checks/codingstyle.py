@@ -509,7 +509,7 @@ class NonGentooAuthorsCopyright(base.Warning):
         return f'copyright line must state "Gentoo Authors": {self.line!r}'
 
 
-class CopyrightCheck(base.Template):
+class CopyrightCheck(base.GentooRepoCheck):
     """Scan ebuild for incorrect copyright header."""
 
     feed_type = base.ebuild_feed
@@ -529,6 +529,5 @@ class CopyrightCheck(base.Template):
                 if copyright.group('holder') == 'Gentoo Foundation':
                     yield OldGentooCopyright(pkg, line)
                 # Gentoo policy requires 'Gentoo Authors'
-                elif (pkg.repo.repo_id == 'gentoo' and
-                      copyright.group('holder') != 'Gentoo Authors'):
+                elif copyright.group('holder') != 'Gentoo Authors':
                     yield NonGentooAuthorsCopyright(pkg, line)
