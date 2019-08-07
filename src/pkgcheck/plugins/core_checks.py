@@ -15,6 +15,7 @@ pkgcore_plugins = {
         cleanup.RedundantVersionCheck,
         codingstyle.AbsoluteSymlinkCheck,
         codingstyle.BadInsIntoCheck,
+        codingstyle.CopyrightCheck,
         codingstyle.HttpsAvailableCheck,
         codingstyle.ObsoleteUriCheck,
         codingstyle.PathVariablesCheck,
