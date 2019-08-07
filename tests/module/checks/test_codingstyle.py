@@ -261,3 +261,65 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert r.uri == uri
         assert (r.replacement ==
                 'https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.zip')
+
+
+class TestCopyright(misc.ReportTestCase):
+
+    check_kls = codingstyle.CopyrightCheck
+    fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
+
+    def test_good_copyright(self):
+        good_copyrights = [
+            '# Copyright 1999-2019 Gentoo Authors\n',
+            '# Copyright 2019 Gentoo Authors\n',
+            '# Copyright 2010-2017 Gentoo Authors\n',
+        ]
+        for line in good_copyrights:
+            fake_src = [line]
+            self.assertNoReport(self.check_kls(options=None),
+                                [self.fake_pkg, fake_src])
+
+    def test_invalid_copyright(self):
+        bad_copyrights = [
+            '# Copyright (c) 1999-2019 Gentoo Authors\n',
+            '# Copyright Gentoo Authors\n',
+            '# Gentoo Authors\n',
+            '# Here is entirely random text\n',
+            '\n',
+        ]
+        for line in bad_copyrights:
+            fake_src = [line]
+            r = self.assertReport(self.check_kls(options=None),
+                                  [self.fake_pkg, fake_src])
+            assert isinstance(r, codingstyle.InvalidCopyright)
+
+    def test_new_foundation_copyright(self):
+        """
+        Test that Foundation copyright on new ebuilds triggers the report.
+        """
+        bad_copyrights = [
+            '# Copyright 1999-2019 Gentoo Foundation\n',
+            '# Copyright 2019 Gentoo Foundation\n',
+            '# Copyright 3125 Gentoo Foundation\n',
+            '# Copyright 2010-2021 Gentoo Foundation\n',
+        ]
+        for line in bad_copyrights:
+            fake_src = [line]
+            r = self.assertReport(self.check_kls(options=None),
+                                  [self.fake_pkg, fake_src])
+            assert isinstance(r, codingstyle.OldGentooCopyright)
+
+    def test_old_foundation_copyright(self):
+        """
+        Test that Foundation copyright on old ebuilds does not trigger false
+        positives.
+        """
+        good_copyrights = [
+            '# Copyright 1999-2018 Gentoo Foundation\n',
+            '# Copyright 2016 Gentoo Foundation\n',
+            '# Copyright 2010-2017 Gentoo Foundation\n',
+        ]
+        for line in good_copyrights:
+            fake_src = [line]
+            self.assertNoReport(self.check_kls(options=None),
+                                [self.fake_pkg, fake_src])

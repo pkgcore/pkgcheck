@@ -2,12 +2,16 @@
 
 from collections import defaultdict
 
-from snakeoil.demandload import demandload
+from snakeoil.demandload import demandload, demand_compile_regexp
 from snakeoil.strings import pluralism as _pl
 
 from .. import base
 
 demandload("re")
+
+demand_compile_regexp(
+    'ebuild_copyright_regex',
+    r'^# Copyright (?P<begin>\d{4}-)?(?P<end>\d{4}) (?P<holder>.+)$')
 
 
 class HttpsAvailable(base.Warning):
@@ -431,3 +435,73 @@ class ObsoleteUriCheck(base.Template):
                 if matches is not None:
                     uri = matches.group('uri')
                     yield ObsoleteUri(pkg, lineno, uri, regexp.sub(repl, uri))
+
+
+class InvalidCopyright(base.Warning):
+    """Ebuild with invalid copyright.
+
+    The ebuild does not start with a valid copyright line. Each ebuild must
+    start with a copyright line of the form:
+
+        # Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]... [and others]
+
+    Ebuilds in the Gentoo repository must use:
+
+        # Copyright YEARS Gentoo Authors
+    """
+
+    __slots__ = ('category', 'package', 'version', 'line')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, line):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.line = line
+
+    @property
+    def short_desc(self):
+        return f'invalid copyright: {self.line!r}'
+
+
+class OldGentooCopyright(base.Warning):
+    """Ebuild with old Gentoo Foundation copyright.
+
+    The ebuild still assigns copyright to the Gentoo Foundation even though
+    it has been committed after the new copyright policy was approved
+    (2018-10-21).
+
+    The ebuilds in Gentoo repository must use 'Gentoo Authors' instead. Ebuilds
+    in other repositories may specify an explicit copyright holder instead.
+    """
+
+    __slots__ = ('category', 'package', 'version', 'line')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, line):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.line = line
+
+    @property
+    def short_desc(self):
+        return f'old copyright, update to "Gentoo Authors": {self.line!r}'
+
+
+class CopyrightCheck(base.Template):
+    """Scan ebuild for incorrect copyright header."""
+
+    feed_type = base.ebuild_feed
+    known_results = (InvalidCopyright, OldGentooCopyright)
+
+    def feed(self, entry):
+        pkg, lines = entry
+        if lines:
+            line = lines[0].strip()
+            copyright = ebuild_copyright_regex.match(line)
+            if copyright is None:
+                yield InvalidCopyright(pkg, line)
+            # Copyright policy is active since 2018-10-21, so it applies
+            # to all ebuilds committed in 2019 and later
+            elif int(copyright.group('end')) >= 2019:
+                if copyright.group('holder') == 'Gentoo Foundation':
+                    yield OldGentooCopyright(pkg, line)
