@@ -22,7 +22,7 @@ class BinaryFile(base.Error):
         return f"binary file found in repository: {self.path!r}"
 
 
-class RepoDirCheck(base.DefaultRepoCheck):
+class RepoDirCheck(base.GentooRepoCheck):
     """Scan all files in the repository for issues."""
 
     feed_type = base.repository_feed

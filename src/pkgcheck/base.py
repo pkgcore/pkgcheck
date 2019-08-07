@@ -136,16 +136,14 @@ class Template(Addon):
         """Do cleanup and omit final results here."""
 
 
-class DefaultRepoCheck(Template):
-    """Check that is only valid when run against the default repo."""
-
-    _default_repo = 'gentoo'
+class GentooRepoCheck(Template):
+    """Check that is only valid when run against the gentoo repo."""
 
     @classmethod
     def skip(cls, namespace):
-        skip = namespace.target_repo.repo_id != cls._default_repo
+        skip = namespace.target_repo.repo_id != 'gentoo'
         if skip:
-            logger.info(f'skipping {cls.__name__}, not running against default repo')
+            logger.info(f'skipping {cls.__name__}, not running against gentoo repo')
         return skip or super().skip(namespace)
 
 

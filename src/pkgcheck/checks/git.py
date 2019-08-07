@@ -59,7 +59,7 @@ class DirectNoMaintainer(base.Error):
         return 'directly committed with no package maintainer'
 
 
-class GitCommitsCheck(base.DefaultRepoCheck):
+class GitCommitsCheck(base.GentooRepoCheck):
     """Check unpushed git commits for various issues."""
 
     feed_type = base.package_feed

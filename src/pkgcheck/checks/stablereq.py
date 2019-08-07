@@ -32,7 +32,7 @@ class StableRequest(base.Warning):
         )
 
 
-class StableRequestCheck(base.DefaultRepoCheck):
+class StableRequestCheck(base.GentooRepoCheck):
     """Ebuilds that have sat unstable with no changes for over a month.
 
     By default, only triggered for arches with stable profiles. To check

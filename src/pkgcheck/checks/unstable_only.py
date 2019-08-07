@@ -25,7 +25,7 @@ class UnstableOnly(base.Warning):
             _pl(self.arches, plural='es'), ', '.join(self.arches), ', '.join(self.versions))
 
 
-class UnstableOnlyCheck(base.DefaultRepoCheck):
+class UnstableOnlyCheck(base.GentooRepoCheck):
     """Scan for packages that have just unstable keywords."""
 
     feed_type = base.package_feed
