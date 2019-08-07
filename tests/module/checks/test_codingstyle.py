@@ -1,6 +1,7 @@
 from itertools import chain
 
 from pkgcore.ebuild.eapi import EAPI
+from pkgcore.test.misc import FakeRepo
 
 from pkgcheck.checks import codingstyle
 
@@ -266,7 +267,12 @@ class TestObsoleteUri(misc.ReportTestCase):
 class TestCopyright(misc.ReportTestCase):
 
     check_kls = codingstyle.CopyrightCheck
-    fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
+
+    def mk_pkg(self, repo_id='gentoo'):
+        class fake_parent:
+            _parent_repo = FakeRepo(repo_id=repo_id)
+
+        return misc.FakePkg("dev-util/diffball-0.5", parent=fake_parent)
 
     def test_good_copyright(self):
         good_copyrights = [
@@ -274,10 +280,11 @@ class TestCopyright(misc.ReportTestCase):
             '# Copyright 2019 Gentoo Authors\n',
             '# Copyright 2010-2017 Gentoo Authors\n',
         ]
+        fake_pkg = self.mk_pkg()
         for line in good_copyrights:
             fake_src = [line]
             self.assertNoReport(self.check_kls(options=None),
-                                [self.fake_pkg, fake_src])
+                                [fake_pkg, fake_src])
 
     def test_invalid_copyright(self):
         bad_copyrights = [
@@ -287,10 +294,11 @@ class TestCopyright(misc.ReportTestCase):
             '# Here is entirely random text\n',
             '\n',
         ]
+        fake_pkg = self.mk_pkg()
         for line in bad_copyrights:
             fake_src = [line]
             r = self.assertReport(self.check_kls(options=None),
-                                  [self.fake_pkg, fake_src])
+                                  [fake_pkg, fake_src])
             assert isinstance(r, codingstyle.InvalidCopyright)
 
     def test_new_foundation_copyright(self):
@@ -303,10 +311,11 @@ class TestCopyright(misc.ReportTestCase):
             '# Copyright 3125 Gentoo Foundation\n',
             '# Copyright 2010-2021 Gentoo Foundation\n',
         ]
+        fake_pkg = self.mk_pkg()
         for line in bad_copyrights:
             fake_src = [line]
             r = self.assertReport(self.check_kls(options=None),
-                                  [self.fake_pkg, fake_src])
+                                  [fake_pkg, fake_src])
             assert isinstance(r, codingstyle.OldGentooCopyright)
 
     def test_old_foundation_copyright(self):
@@ -319,7 +328,37 @@ class TestCopyright(misc.ReportTestCase):
             '# Copyright 2016 Gentoo Foundation\n',
             '# Copyright 2010-2017 Gentoo Foundation\n',
         ]
+        fake_pkg = self.mk_pkg()
         for line in good_copyrights:
             fake_src = [line]
             self.assertNoReport(self.check_kls(options=None),
-                                [self.fake_pkg, fake_src])
+                                [fake_pkg, fake_src])
+
+    def test_non_gentoo_authors_copyright_in_gentoo(self):
+        """
+        Test that ::gentoo ebuilds enforce 'Gentoo Authors'.
+        """
+        bad_copyrights = [
+            '# Copyright 1999-2019 D. E. Veloper\n',
+            '# Copyright 2019 辣鸡汤\n',
+        ]
+        fake_pkg = self.mk_pkg()
+        for line in bad_copyrights:
+            fake_src = [line]
+            r = self.assertReport(self.check_kls(options=None),
+                                  [fake_pkg, fake_src])
+            assert isinstance(r, codingstyle.NonGentooAuthorsCopyright)
+
+    def test_non_gentoo_authors_copyright_outside_gentoo(self):
+        """
+        Test that ::gentoo ebuilds enforce 'Gentoo Authors'.
+        """
+        good_copyrights = [
+            '# Copyright 1999-2019 D. E. Veloper\n',
+            '# Copyright 2019 辣鸡汤\n',
+        ]
+        fake_pkg = self.mk_pkg(repo_id='test')
+        for line in good_copyrights:
+            fake_src = [line]
+            self.assertNoReport(self.check_kls(options=None),
+                                [fake_pkg, fake_src])
