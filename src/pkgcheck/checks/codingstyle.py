@@ -487,11 +487,34 @@ class OldGentooCopyright(base.Warning):
         return f'old copyright, update to "Gentoo Authors": {self.line!r}'
 
 
+class NonGentooAuthorsCopyright(base.Warning):
+    """Ebuild with copyright stating owner other than "Gentoo Authors".
+
+    The ebuild specifies explicit copyright owner, while the Gentoo repository
+    policy specifies that all ebuilds must use "Gentoo Authors". If the owner
+    is not listed in metadata/AUTHORS, addition can be requested via
+    bugs.gentoo.org.
+    """
+
+    __slots__ = ('category', 'package', 'version', 'line')
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg, line):
+        super().__init__()
+        self._store_cpv(pkg)
+        self.line = line
+
+    @property
+    def short_desc(self):
+        return f'copyright line must state "Gentoo Authors": {self.line!r}'
+
+
 class CopyrightCheck(base.Template):
     """Scan ebuild for incorrect copyright header."""
 
     feed_type = base.ebuild_feed
-    known_results = (InvalidCopyright, OldGentooCopyright)
+    known_results = (
+        InvalidCopyright, OldGentooCopyright, NonGentooAuthorsCopyright)
 
     def feed(self, entry):
         pkg, lines = entry
@@ -505,3 +528,7 @@ class CopyrightCheck(base.Template):
             elif int(copyright.group('end')) >= 2019:
                 if copyright.group('holder') == 'Gentoo Foundation':
                     yield OldGentooCopyright(pkg, line)
+                # Gentoo policy requires 'Gentoo Authors'
+                elif (pkg.repo.repo_id == 'gentoo' and
+                      copyright.group('holder') != 'Gentoo Authors'):
+                    yield NonGentooAuthorsCopyright(pkg, line)
