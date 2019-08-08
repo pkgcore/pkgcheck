@@ -498,15 +498,10 @@ def _replay_validate_args(parser, namespace):
     namespace.reporter = func
 
 
-def replay_stream(stream_handle, reporter, debug=None):
+def replay_stream(stream_handle, reporter):
     headers = []
-    last_count = 0
     for count, item in enumerate(pickling.iter_stream(stream_handle)):
         if isinstance(item, base.StreamHeader):
-            if debug:
-                if headers:
-                    debug.write(f"finished processing {count - last_count}")
-                last_count = count
             if headers:
                 reporter.end_check()
             reporter.start_check(item.checks)
@@ -515,18 +510,13 @@ def replay_stream(stream_handle, reporter, debug=None):
         reporter.report(item)
     if headers:
         reporter.end_check()
-        if debug:
-            debug.write(f"finished processing {count - last_count}")
 
 
 @replay.bind_main_func
 def _replay(options, out, err):
     if options.out:
         out = formatters.get_formatter(open(options.out, 'w'))
-    debug = None
-    if options.debug:
-        debug = err
-    replay_stream(options.pickle_file, options.reporter(out), debug=debug)
+    replay_stream(options.pickle_file, options.reporter(out))
     return 0
 
 
