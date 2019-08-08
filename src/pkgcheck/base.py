@@ -377,7 +377,7 @@ class Reporter(object):
     def start(self):
         """Initialize reporter output."""
 
-    def start_check(self, source, target):
+    def start_check(self, source):
         """Initialize reporter check output."""
 
     def end_check(self):
@@ -483,7 +483,7 @@ class Scope(object):
 
 class StreamHeader(object):
 
-    def __init__(self, checks, criteria):
+    def __init__(self, checks):
         self.checks = sorted((x for x in checks if x.known_results),
                              key=attrgetter('__name__'))
         self.known_results = set()
@@ -492,7 +492,6 @@ class StreamHeader(object):
 
         self.known_results = tuple(
             sorted(self.known_results, key=attrgetter('__name__')))
-        self.criteria = str(criteria)
 
 
 class CheckRunner(object):

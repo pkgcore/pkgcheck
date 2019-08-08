@@ -442,8 +442,7 @@ def _scan(options, out, err):
         for source, pipe in pipes:
             for result in pipe.start():
                 reporter.report(result)
-            reporter.start_check(
-                list(base.collect_checks_classes(pipe)), filterer)
+            reporter.start_check(list(base.collect_checks_classes(pipe)))
             for item in source.feed():
                 for result in pipe.feed(item):
                     reporter.report(result)
@@ -506,21 +505,18 @@ def replay_stream(stream_handle, reporter, debug=None):
         if isinstance(item, base.StreamHeader):
             if debug:
                 if headers:
-                    debug.write(f"finished processing {count - last_count}"
-                                f"results for {headers[-1].criteria}")
+                    debug.write(f"finished processing {count - last_count}")
                 last_count = count
-                debug.write(f"encountered new stream header for {item.criteria}")
             if headers:
                 reporter.end_check()
-            reporter.start_check(item.checks, item.criteria)
+            reporter.start_check(item.checks)
             headers.append(item)
             continue
         reporter.report(item)
     if headers:
         reporter.end_check()
         if debug:
-            debug.write(f"finished processing {count - last_count}"
-                        f"results for {headers[-1].criteria}")
+            debug.write(f"finished processing {count - last_count}")
 
 
 @replay.bind_main_func

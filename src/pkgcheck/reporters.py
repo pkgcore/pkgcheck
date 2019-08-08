@@ -223,8 +223,8 @@ class PickleStream(base.Reporter):
         self.out.wrap = False
         self.out.autoline = False
 
-    def start_check(self, checks, target):
-        pickle.dump(base.StreamHeader(checks, target), self.out.stream)
+    def start_check(self, checks):
+        pickle.dump(base.StreamHeader(checks), self.out.stream)
 
     @coroutine
     def _process_report(self):
