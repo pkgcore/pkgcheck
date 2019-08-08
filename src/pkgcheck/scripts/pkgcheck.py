@@ -498,9 +498,14 @@ def _replay_validate_args(parser, namespace):
     namespace.reporter = func
 
 
-def replay_stream(stream_handle, reporter):
+@replay.bind_main_func
+def _replay(options, out, err):
+    if options.out:
+        out = formatters.get_formatter(open(options.out, 'w'))
+    reporter = options.reporter(out)
+
     headers = []
-    for count, item in enumerate(pickling.iter_stream(stream_handle)):
+    for count, item in enumerate(pickling.iter_stream(options.pickle_file)):
         if isinstance(item, base.StreamHeader):
             if headers:
                 reporter.end_check()
@@ -511,12 +516,6 @@ def replay_stream(stream_handle, reporter):
     if headers:
         reporter.end_check()
 
-
-@replay.bind_main_func
-def _replay(options, out, err):
-    if options.out:
-        out = formatters.get_formatter(open(options.out, 'w'))
-    replay_stream(options.pickle_file, options.reporter(out))
     return 0
 
 
