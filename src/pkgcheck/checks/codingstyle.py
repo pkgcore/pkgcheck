@@ -424,7 +424,6 @@ class ObsoleteUriCheck(base.Template):
 
     def feed(self, entry):
         pkg, lines = entry
-        links = defaultdict(list)
 
         for lineno, line in enumerate(lines, 1):
             if not line.strip() or line.startswith('#'):
