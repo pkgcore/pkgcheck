@@ -612,34 +612,28 @@ class ProfileAddon(base.Addon):
                             immutable_flags = profile.masked_use.clone(unfreeze=True)
                             immutable_flags.add_bare_global((), default_masked_use)
                             immutable_flags.optimize(cache=chunked_data_cache)
+                            immutable_flags.freeze()
 
                             stable_immutable_flags = profile.stable_masked_use.clone(unfreeze=True)
                             stable_immutable_flags.add_bare_global((), default_masked_use)
                             stable_immutable_flags.optimize(cache=chunked_data_cache)
+                            stable_immutable_flags.freeze()
 
                             enabled_flags = profile.forced_use.clone(unfreeze=True)
                             enabled_flags.add_bare_global((), (stable_key,))
                             enabled_flags.optimize(cache=chunked_data_cache)
+                            enabled_flags.freeze()
 
                             stable_enabled_flags = profile.stable_forced_use.clone(unfreeze=True)
                             stable_enabled_flags.add_bare_global((), (stable_key,))
                             stable_enabled_flags.optimize(cache=chunked_data_cache)
+                            stable_enabled_flags.freeze()
 
                             if options.profile_cache:
-                                # TODO: fix pickling ImmutableDict objects
-                                # Grab a shallow copy of each profile mapping before it gets
-                                # frozen to dump into the cache; otherwise loading the dumped dict
-                                # fails due to its immutability.
                                 cached_profile_filters[profile_name] = (
-                                    vfilter, copy(immutable_flags), copy(stable_immutable_flags),
-                                    copy(enabled_flags), copy(stable_enabled_flags),
+                                    vfilter, immutable_flags, stable_immutable_flags,
+                                    enabled_flags, stable_enabled_flags,
                                 )
-
-                        # make profile data mappings immutable
-                        immutable_flags.freeze()
-                        stable_immutable_flags.freeze()
-                        enabled_flags.freeze()
-                        stable_enabled_flags.freeze()
 
                         # used to interlink stable/unstable lookups so that if
                         # unstable says it's not visible, stable doesn't try
