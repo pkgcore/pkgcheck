@@ -342,11 +342,6 @@ class GitAddon(base.Addon):
                 # initialize cache file location
                 cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id)
                 cache_file = pjoin(cache_dir, f'{repo_cls.cache_name}.pickle')
-                try:
-                    os.makedirs(cache_dir, exist_ok=True)
-                except IOError as e:
-                    raise UserException(
-                        f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
 
                 git_repo = None
                 cache_repo = True
@@ -375,6 +370,7 @@ class GitAddon(base.Addon):
                     # dump historical repo data
                     if cache_repo:
                         try:
+                            os.makedirs(os.path.dirname(cache_file), exist_ok=True)
                             with open(cache_file, 'wb+') as f:
                                 pickle.dump(git_repo, f)
                         except IOError as e:
@@ -518,11 +514,6 @@ class ProfileAddon(base.Addon):
         # initialize cache file location
         cache_dir = pjoin(base.CACHE_DIR, 'repos', namespace.target_repo.repo_id)
         namespace.cache_file = pjoin(cache_dir, 'profiles.pickle')
-        try:
-            os.makedirs(cache_dir, exist_ok=True)
-        except IOError as e:
-            raise UserException(
-                f'failed creating profiles cache: {cache_dir!r}: {e.strerror}')
 
         # only default to using cache when run without target args within a repo
         if namespace.profile_cache is None and namespace.default_target is None:
@@ -695,6 +686,7 @@ class ProfileAddon(base.Addon):
         # dump cached profile filters
         if options.profile_cache:
             try:
+                os.makedirs(os.path.dirname(options.cache_file), exist_ok=True)
                 with open(options.cache_file, 'wb+') as f:
                     pickle.dump(cached_profile_filters, f)
             except IOError as e:
