@@ -570,7 +570,8 @@ class ProfileAddon(base.Addon):
             try:
                 with open(options.cache_file, 'rb') as f:
                     cached_profile_filters = pickle.load(f)
-            except TypeError:
+            except TypeError as e:
+                logger.debug('forced profile cache regeneration: %s', e)
                 # probably unmodifiable dict due to pkgcore issues, regenerate it
                 os.remove(options.cache_file)
             except (EOFError, FileNotFoundError):
