@@ -600,94 +600,97 @@ class ProfileAddon(base.Addon):
                     x for x in self.official_arches if x != stable_key))
 
                 for profile_name, profile, profile_status in options.arch_profiles.get(k, []):
-                    cached_profile = cached_profile_filters.get(profile_name, None)
-                    if cached_profile:
-                        vfilter = cached_profile[0]
-                        immutable_flags = cached_profile[1]
-                        stable_immutable_flags = cached_profile[2]
-                        enabled_flags = cached_profile[3]
-                        stable_enabled_flags = cached_profile[4]
-                    else:
-                        # force cache updates unless explicitly disabled
-                        if options.profile_cache is None:
-                            options.profile_cache = True
+                    try:
+                        cached_profile = cached_profile_filters.get(profile_name, None)
+                        if cached_profile:
+                            vfilter = cached_profile[0]
+                            immutable_flags = cached_profile[1]
+                            stable_immutable_flags = cached_profile[2]
+                            enabled_flags = cached_profile[3]
+                            stable_enabled_flags = cached_profile[4]
+                        else:
+                            # force cache updates unless explicitly disabled
+                            if options.profile_cache is None:
+                                options.profile_cache = True
 
-                        vfilter = domain.generate_filter(profile.masks, profile.unmasks)
+                            vfilter = domain.generate_filter(profile.masks, profile.unmasks)
 
-                        immutable_flags = profile.masked_use.clone(unfreeze=True)
-                        immutable_flags.add_bare_global((), default_masked_use)
-                        immutable_flags.optimize(cache=chunked_data_cache)
+                            immutable_flags = profile.masked_use.clone(unfreeze=True)
+                            immutable_flags.add_bare_global((), default_masked_use)
+                            immutable_flags.optimize(cache=chunked_data_cache)
 
-                        stable_immutable_flags = profile.stable_masked_use.clone(unfreeze=True)
-                        stable_immutable_flags.add_bare_global((), default_masked_use)
-                        stable_immutable_flags.optimize(cache=chunked_data_cache)
+                            stable_immutable_flags = profile.stable_masked_use.clone(unfreeze=True)
+                            stable_immutable_flags.add_bare_global((), default_masked_use)
+                            stable_immutable_flags.optimize(cache=chunked_data_cache)
 
-                        enabled_flags = profile.forced_use.clone(unfreeze=True)
-                        enabled_flags.add_bare_global((), (stable_key,))
-                        enabled_flags.optimize(cache=chunked_data_cache)
+                            enabled_flags = profile.forced_use.clone(unfreeze=True)
+                            enabled_flags.add_bare_global((), (stable_key,))
+                            enabled_flags.optimize(cache=chunked_data_cache)
 
-                        stable_enabled_flags = profile.stable_forced_use.clone(unfreeze=True)
-                        stable_enabled_flags.add_bare_global((), (stable_key,))
-                        stable_enabled_flags.optimize(cache=chunked_data_cache)
+                            stable_enabled_flags = profile.stable_forced_use.clone(unfreeze=True)
+                            stable_enabled_flags.add_bare_global((), (stable_key,))
+                            stable_enabled_flags.optimize(cache=chunked_data_cache)
 
-                        if options.profile_cache:
-                            # TODO: fix pickling ImmutableDict objects
-                            # Grab a shallow copy of each profile mapping before it gets
-                            # frozen to dump into the cache; otherwise loading the dumped dict
-                            # fails due to its immutability.
-                            cached_profile_filters[profile_name] = (
-                                vfilter, copy(immutable_flags), copy(stable_immutable_flags),
-                                copy(enabled_flags), copy(stable_enabled_flags),
-                            )
+                            if options.profile_cache:
+                                # TODO: fix pickling ImmutableDict objects
+                                # Grab a shallow copy of each profile mapping before it gets
+                                # frozen to dump into the cache; otherwise loading the dumped dict
+                                # fails due to its immutability.
+                                cached_profile_filters[profile_name] = (
+                                    vfilter, copy(immutable_flags), copy(stable_immutable_flags),
+                                    copy(enabled_flags), copy(stable_enabled_flags),
+                                )
 
-                    # make profile data mappings immutable
-                    immutable_flags.freeze()
-                    stable_immutable_flags.freeze()
-                    enabled_flags.freeze()
-                    stable_enabled_flags.freeze()
+                        # make profile data mappings immutable
+                        immutable_flags.freeze()
+                        stable_immutable_flags.freeze()
+                        enabled_flags.freeze()
+                        stable_enabled_flags.freeze()
 
-                    # used to interlink stable/unstable lookups so that if
-                    # unstable says it's not visible, stable doesn't try
-                    # if stable says something is visible, unstable doesn't try.
-                    stable_cache = set()
-                    unstable_insoluble = ProtectedSet(self.global_insoluble)
+                        # used to interlink stable/unstable lookups so that if
+                        # unstable says it's not visible, stable doesn't try
+                        # if stable says something is visible, unstable doesn't try.
+                        stable_cache = set()
+                        unstable_insoluble = ProtectedSet(self.global_insoluble)
 
-                    # finalize enabled USE flags
-                    use = set()
-                    misc.incremental_expansion(use, profile.use, 'while expanding USE')
+                        # finalize enabled USE flags
+                        use = set()
+                        misc.incremental_expansion(use, profile.use, 'while expanding USE')
 
-                    # few notes.  for filter, ensure keywords is last, on the
-                    # offchance a non-metadata based restrict foregos having to
-                    # access the metadata.
-                    # note that the cache/insoluble are inversly paired;
-                    # stable cache is usable for unstable, but not vice versa.
-                    # unstable insoluble is usable for stable, but not vice versa
+                        # few notes.  for filter, ensure keywords is last, on the
+                        # offchance a non-metadata based restrict foregos having to
+                        # access the metadata.
+                        # note that the cache/insoluble are inversly paired;
+                        # stable cache is usable for unstable, but not vice versa.
+                        # unstable insoluble is usable for stable, but not vice versa
+                        profile_filters[stable_key].append(profile_data(
+                            profile_name, stable_key,
+                            profile.provides_repo,
+                            packages.AndRestriction(vfilter, stable_r),
+                            profile.iuse_effective,
+                            use,
+                            profile.pkg_use,
+                            stable_immutable_flags, stable_enabled_flags,
+                            stable_cache,
+                            ProtectedSet(unstable_insoluble),
+                            profile_status,
+                            profile.deprecated is not None))
 
-                    profile_filters[stable_key].append(profile_data(
-                        profile_name, stable_key,
-                        profile.provides_repo,
-                        packages.AndRestriction(vfilter, stable_r),
-                        profile.iuse_effective,
-                        use,
-                        profile.pkg_use,
-                        stable_immutable_flags, stable_enabled_flags,
-                        stable_cache,
-                        ProtectedSet(unstable_insoluble),
-                        profile_status,
-                        profile.deprecated is not None))
-
-                    profile_filters[unstable_key].append(profile_data(
-                        profile_name, unstable_key,
-                        profile.provides_repo,
-                        packages.AndRestriction(vfilter, unstable_r),
-                        profile.iuse_effective,
-                        use,
-                        profile.pkg_use,
-                        immutable_flags, enabled_flags,
-                        ProtectedSet(stable_cache),
-                        unstable_insoluble,
-                        profile_status,
-                        profile.deprecated is not None))
+                        profile_filters[unstable_key].append(profile_data(
+                            profile_name, unstable_key,
+                            profile.provides_repo,
+                            packages.AndRestriction(vfilter, unstable_r),
+                            profile.iuse_effective,
+                            use,
+                            profile.pkg_use,
+                            immutable_flags, enabled_flags,
+                            ProtectedSet(stable_cache),
+                            unstable_insoluble,
+                            profile_status,
+                            profile.deprecated is not None))
+                    except profiles.ProfileError:
+                        # unsupported EAPI or other issue, profile checks will catch this
+                        continue
 
         # dump cached profile filters
         if options.profile_cache:
