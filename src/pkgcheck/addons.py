@@ -600,18 +600,19 @@ class ProfileAddon(base.Addon):
                     x for x in self.official_arches if x != stable_key))
 
                 for profile_name, profile, profile_status in options.arch_profiles.get(k, []):
-                    vfilter = domain.generate_filter(profile.masks, profile.unmasks)
-
                     cached_profile = cached_profile_filters.get(profile_name, None)
                     if cached_profile:
-                        immutable_flags = cached_profile[0]
-                        stable_immutable_flags = cached_profile[1]
-                        enabled_flags = cached_profile[2]
-                        stable_enabled_flags = cached_profile[3]
+                        vfilter = cached_profile[0]
+                        immutable_flags = cached_profile[1]
+                        stable_immutable_flags = cached_profile[2]
+                        enabled_flags = cached_profile[3]
+                        stable_enabled_flags = cached_profile[4]
                     else:
                         # force cache updates unless explicitly disabled
                         if options.profile_cache is None:
                             options.profile_cache = True
+
+                        vfilter = domain.generate_filter(profile.masks, profile.unmasks)
 
                         immutable_flags = profile.masked_use.clone(unfreeze=True)
                         immutable_flags.add_bare_global((), default_masked_use)
@@ -635,7 +636,7 @@ class ProfileAddon(base.Addon):
                             # frozen to dump into the cache; otherwise loading the dumped dict
                             # fails due to its immutability.
                             cached_profile_filters[profile_name] = (
-                                copy(immutable_flags), copy(stable_immutable_flags),
+                                vfilter, copy(immutable_flags), copy(stable_immutable_flags),
                                 copy(enabled_flags), copy(stable_enabled_flags),
                             )
 
