@@ -215,41 +215,42 @@ class StaleProxyMaintProject(base.Warning):
         return "proxy-maint maintainer with no proxies"
 
 
-class InvalidProjectMaintainer(base.Warning):
-    """Package specifying non-existing project as maintainer."""
+class NonexistentProjectMaintainer(base.Warning):
+    """Package specifying nonexistent project as a maintainer."""
 
-    __slots__ = ("category", "package", "filename", "project")
+    __slots__ = ("category", "package", "filename", "emails")
     threshold = base.package_feed
 
-    def __init__(self, project, filename, category, package):
+    def __init__(self, emails, filename, category, package):
         super().__init__()
-        self.project = project
+        self.emails = tuple(emails)
         self.filename = filename
         self.category = category
         self.package = package
 
     @property
     def short_desc(self):
-        return (f'project {self.project} that is specified as maintainer '
-                 'does not exist')
+        emails = ', '.join(sorted(self.emails))
+        return f'nonexistent project maintainer{_pl(self.emails)}: [ {emails} ]'
 
 
-class PersonMaintainerMatchesProject(base.Warning):
-    """A person-type maintainer matches existing projects."""
+class WrongMaintainerType(base.Warning):
+    """A person-type maintainer matches an existing project."""
 
-    __slots__ = ("category", "package", "filename", "email")
+    __slots__ = ("category", "package", "filename", "emails")
     threshold = base.package_feed
 
-    def __init__(self, email, filename, category, package):
+    def __init__(self, emails, filename, category, package):
         super().__init__()
-        self.email = email
+        self.emails = tuple(emails)
         self.filename = filename
         self.category = category
         self.package = package
 
     @property
     def short_desc(self):
-        return f'Maintainer {self.email} of type="person" matches a project'
+        emails = ', '.join(sorted(self.emails))
+        return f'project maintainer{_pl(self.emails)} with type="person": [ {emails} ]'
 
 
 class PkgMissingMetadataXml(_MissingXml):
@@ -538,16 +539,20 @@ class _XmlBaseCheck(base.Template):
                            for c in doc.xpath('//comment()')):
                     maintainers.append(partial(EmptyMaintainer))
 
-            # check project="" validity only if we have projects.xml available
-            projects = frozenset(pkg.repo.projects_xml.projects.keys())
+            # check maintainer validity
+            projects = frozenset(pkg.repo.projects_xml.projects)
             if projects:
+                nonexistent = []
+                wrong_maintainers = []
                 for m in pkg.maintainers:
                     if m.maint_type == 'project' and m.email not in projects:
-                        maintainers.append(partial(InvalidProjectMaintainer,
-                                                   m.email))
+                        nonexistent.append(m.email)
                     elif m.maint_type == 'person' and m.email in projects:
-                        maintainers.append(partial(
-                            PersonMaintainerMatchesProject, m.email))
+                        wrong_maintainers.append(m.email)
+                if nonexistent:
+                    maintainers.append(partial(NonexistentProjectMaintainer, nonexistent))
+                if wrong_maintainers:
+                    maintainers.append(partial(WrongMaintainerType, wrong_maintainers))
 
         keywords = (maintainers, self.check_doc(doc), self.check_whitespace(loc))
         return chain.from_iterable(keywords)
@@ -571,7 +576,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
         PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, EmptyMaintainer,
         MaintainerWithoutProxy, StaleProxyMaintProject,
-        InvalidProjectMaintainer, PersonMaintainerMatchesProject)
+        NonexistentProjectMaintainer, WrongMaintainerType)
 
     def feed(self, pkgs):
         # package with no ebuilds, skipping check
