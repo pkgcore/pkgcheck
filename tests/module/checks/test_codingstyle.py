@@ -149,6 +149,11 @@ class TestPathVariablesCheck(misc.ReportTestCase):
             '    cp foo.py "${ED}${PYTHON_SITEDIR}"\n',
             # test silly mistake
             '    cp foo "${ED}${EPREFIX}/foo/bar"\n',
+            # function variants
+            '    insinto "$(python_get_sitedir)"\n',
+            '    exeinto "${EPREFIX}/foo/bar"\n',
+            '    fowners foo:bar "$(python_get_sitedir)/foo/bar.py"\n',
+            '    dodir /foo/bar "${EPREFIX}"/bar/baz\n',
             '}\n'
         ]
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
@@ -160,6 +165,10 @@ class TestPathVariablesCheck(misc.ReportTestCase):
             ('${ED}/$(python_get_sitedir)', 5),
             ('${ED}${PYTHON_SITEDIR}', 6),
             ('${ED}${EPREFIX}', 7),
+            ('insinto "$(python_get_sitedir)', 8),
+            ('exeinto "${EPREFIX}', 9),
+            ('fowners foo:bar "$(python_get_sitedir)', 10),
+            ('dodir /foo/bar "${EPREFIX}', 11),
         )
         assert len(r) == len(expected_results)
         for res, exp in zip(r, expected_results):
@@ -171,8 +180,14 @@ class TestPathVariablesCheck(misc.ReportTestCase):
     def test_double_prefix_unfound(self):
         fake_src = [
             'src_install() {\n',
-            '    cp foo.py "${D}$(python_get_sitedir)"\n'
-            '    cp foo "${D}${EPREFIX}/foo/bar"\n'
+            '    cp foo.py "${D}$(python_get_sitedir)"\n',
+            '    cp foo "${D}${EPREFIX}/foo/bar"\n',
+            '    insinto /foo/bar\n',
+            # potential false positives: stripping prefix
+            '    insinto "${MYVAR#${EPREFIX}}"\n',
+            '    insinto "${MYVAR#"${EPREFIX}"}"\n',
+            # combined commands
+            '    dodir /etc/env.d && echo "FOO=${EPREFIX}"\n',
             '}\n'
         ]
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
