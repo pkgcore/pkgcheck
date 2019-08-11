@@ -203,6 +203,15 @@ class PathVariablesCheck(base.Template):
 
     feed_type = base.ebuild_feed
     known_results = (MissingSlash, UnnecessarySlashStrip, DoublePrefixInPath)
+    prefixed_dir_functions = (
+        'into', 'insinto', 'exeinto',
+        'dodir', 'keepdir',
+        'fowners', 'fperms',
+        # java-pkg-2
+        'java-pkg_jarinto', 'java-pkg_sointo',
+        # python-utils-r1
+        'python_scriptinto', 'python_moduleinto',
+    )
     prefixed_variables = ('EROOT', 'ED')
     variables = ('ROOT', 'D') + prefixed_variables
     # TODO: add variables to mark this status in the eclasses in order to pull
@@ -244,6 +253,16 @@ class PathVariablesCheck(base.Template):
                 r'|'.join(self.prefixed_variables + ('EPREFIX',)),
                 r'|'.join(self.prefixed_getters),
                 r'|'.join(self.prefixed_rhs_variables)))
+        self.double_prefix_func_regex = re.compile(
+            r'\b(%s)\s[^&|;]*\$(\((%s)\)|{(%s)})' % (
+                r'|'.join(self.prefixed_dir_functions),
+                r'|'.join(self.prefixed_getters),
+                r'|'.join(self.prefixed_rhs_variables)))
+        # do not catch ${foo#${EPREFIX}} and likes
+        self.double_prefix_func_false_positive_regex = re.compile(
+            r'.*?[#]["]?\$(\((%s)\)|{(%s)})' % (
+                r'|'.join(self.prefixed_getters),
+                r'|'.join(self.prefixed_rhs_variables)))
 
     def feed(self, entry):
         pkg, lines = entry
@@ -259,6 +278,11 @@ class PathVariablesCheck(base.Template):
             match = self.double_prefix_regex.search(line)
             if match is not None:
                 double_prefix[match.group(1)].append(lineno)
+            match = self.double_prefix_func_regex.search(line)
+            if (match is not None and
+                    self.double_prefix_func_false_positive_regex.match(
+                        match.group(0)) is None):
+                double_prefix[match.group(0)].append(lineno)
 
             # skip EAPIs that don't require trailing slashes
             if pkg.eapi.options.trailing_slash:
