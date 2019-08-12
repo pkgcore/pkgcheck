@@ -631,7 +631,12 @@ class ProfileAddon(base.Addon):
                         files = profile_data.get(profile_name, None)
                         cached_profile = cached_profile_filters.get(profile_name, {})
                         try:
-                            outdated = files != cached_profile.get('files', ())
+                            try:
+                                outdated = files != cached_profile.get('files', ())
+                            except AttributeError:
+                                # force refresh of outdated cache format
+                                outdated = True
+
                             if outdated:
                                 # force cache updates unless explicitly disabled
                                 if options.profile_cache is None:
