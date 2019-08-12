@@ -97,7 +97,7 @@ class Test_profile_data(object):
                       key_override=None, data_override=None):
         if key_override is None:
             key = profile.key
-        profile_data = addons.profile_data(
+        profile_data = addons.ProfileData(
             "test-profile", key_override,
             profile.provides_repo,
             packages.AlwaysFalse, profile.iuse_effective,

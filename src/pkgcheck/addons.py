@@ -8,6 +8,7 @@ import os
 import pickle
 import shlex
 import subprocess
+import stat
 
 from pkgcore.ebuild import cpv
 from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
@@ -17,6 +18,7 @@ from pkgcore.test.misc import FakeRepo
 from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
+from snakeoil.decorators import coroutine
 from snakeoil.demandload import demandload, demand_compile_regexp
 from snakeoil.iterables import expandable_chain
 from snakeoil.log import suppress_logging
@@ -122,7 +124,7 @@ class QueryCacheAddon(base.Template):
         self.query_cache.clear()
 
 
-class profile_data(object):
+class ProfileData(object):
 
     def __init__(self, profile_name, key, provides, vfilter,
                  iuse_effective, use, pkg_use, masked_use, forced_use, lookup_cache, insoluble,
@@ -516,7 +518,8 @@ class ProfileAddon(base.Addon):
         namespace.cache_file = pjoin(cache_dir, 'profiles.pickle')
 
         # only default to using cache when run without target args within a repo
-        if namespace.profile_cache is None and namespace.default_target is None:
+        if (profiles_dir is not None or
+                (namespace.profile_cache is None and namespace.default_target is None)):
             namespace.profile_cache = False
         namespace.forced_cache = bool(namespace.profile_cache)
 
@@ -551,8 +554,40 @@ class ProfileAddon(base.Addon):
 
         namespace.arch_profiles = arch_profiles
 
+    @coroutine
+    def _profile_data(self):
+        """Given a profile object, return its file set and most recent mtime."""
+        cache = {}
+        while True:
+            profile = (yield)
+            profile_mtime = 0
+            profile_files = []
+            for node in profile.stack:
+                mtime, files = cache.get(node.path, (0, []))
+                if not mtime:
+                    for f in os.listdir(node.path):
+                        p = pjoin(node.path, f)
+                        files.append(p)
+                        st_obj = os.lstat(p)
+                        if stat.S_ISREG(st_obj.st_mode) and st_obj.st_mtime > mtime:
+                            mtime = st_obj.st_mtime
+                    cache[node.path] = (mtime, files)
+                if mtime > profile_mtime:
+                    profile_mtime = mtime
+                profile_files.extend(files)
+            yield profile_mtime, frozenset(profile_files)
+
     def __init__(self, options, arches=None):
         super().__init__(options)
+
+        # determine profile age and file sets to check cache viability
+        profile_data = {}
+        gen_profile_data = self._profile_data()
+        for name, profile, status in chain.from_iterable(options.arch_profiles.values()):
+            mtime, files = gen_profile_data.send(profile)
+            profile_data[name] = (mtime, files)
+            next(gen_profile_data)
+        del gen_profile_data
 
         self.official_arches = options.target_repo.known_arches
         self.desired_arches = getattr(self.options, 'arches', None)
@@ -570,8 +605,6 @@ class ProfileAddon(base.Addon):
             try:
                 with open(options.cache_file, 'rb') as f:
                     cached_profile_filters = pickle.load(f)
-                # skip rewriting cache
-                options.profile_cache = False
             except TypeError as e:
                 logger.debug('forced profile cache regeneration: %s', e)
                 # probably unmodifiable dict due to pkgcore issues, regenerate it
@@ -595,18 +628,22 @@ class ProfileAddon(base.Addon):
 
                 for profile_name, profile, profile_status in options.arch_profiles.get(k, []):
                     try:
-                        cached_profile = cached_profile_filters.get(profile_name, None)
-                        if cached_profile:
-                            vfilter = cached_profile[0]
-                            immutable_flags = cached_profile[1]
-                            stable_immutable_flags = cached_profile[2]
-                            enabled_flags = cached_profile[3]
-                            stable_enabled_flags = cached_profile[4]
-                        else:
-                            # force cache updates unless explicitly disabled
-                            if options.profile_cache is None:
-                                options.profile_cache = True
+                        files = profile_data.get(profile_name, None)
+                        cached_profile = cached_profile_filters.get(profile_name, {})
+                        try:
+                            outdated = files != cached_profile.get('files', ())
+                            if outdated:
+                                # force cache updates unless explicitly disabled
+                                if options.profile_cache is None:
+                                    options.profile_cache = True
+                                raise KeyError
 
+                            vfilter = cached_profile['vfilter']
+                            immutable_flags = cached_profile['immutable_flags']
+                            stable_immutable_flags = cached_profile['stable_immutable_flags']
+                            enabled_flags = cached_profile['enabled_flags']
+                            stable_enabled_flags = cached_profile['stable_enabled_flags']
+                        except KeyError:
                             vfilter = domain.generate_filter(profile.masks, profile.unmasks)
 
                             immutable_flags = profile.masked_use.clone(unfreeze=True)
@@ -629,11 +666,15 @@ class ProfileAddon(base.Addon):
                             stable_enabled_flags.optimize(cache=chunked_data_cache)
                             stable_enabled_flags.freeze()
 
-                            if options.profile_cache:
-                                cached_profile_filters[profile_name] = (
-                                    vfilter, immutable_flags, stable_immutable_flags,
-                                    enabled_flags, stable_enabled_flags,
-                                )
+                            if options.profile_cache or outdated:
+                                cached_profile_filters[profile_name] = {
+                                    'files': files,
+                                    'vfilter': vfilter,
+                                    'immutable_flags': immutable_flags,
+                                    'stable_immutable_flags': stable_immutable_flags,
+                                    'enabled_flags': enabled_flags,
+                                    'stable_enabled_flags': stable_enabled_flags,
+                                }
 
                         # used to interlink stable/unstable lookups so that if
                         # unstable says it's not visible, stable doesn't try
@@ -651,7 +692,7 @@ class ProfileAddon(base.Addon):
                         # note that the cache/insoluble are inversly paired;
                         # stable cache is usable for unstable, but not vice versa.
                         # unstable insoluble is usable for stable, but not vice versa
-                        profile_filters[stable_key].append(profile_data(
+                        profile_filters[stable_key].append(ProfileData(
                             profile_name, stable_key,
                             profile.provides_repo,
                             packages.AndRestriction(vfilter, stable_r),
@@ -664,7 +705,7 @@ class ProfileAddon(base.Addon):
                             profile_status,
                             profile.deprecated is not None))
 
-                        profile_filters[unstable_key].append(profile_data(
+                        profile_filters[unstable_key].append(ProfileData(
                             profile_name, unstable_key,
                             profile.provides_repo,
                             packages.AndRestriction(vfilter, unstable_r),
