@@ -629,11 +629,12 @@ class ProfileAddon(base.Addon):
                 for profile_name, profile, profile_status in options.arch_profiles.get(k, []):
                     try:
                         files = profile_data.get(profile_name, None)
-                        cached_profile = cached_profile_filters.get(profile_name, {})
+                        outdated = False
                         try:
                             try:
+                                cached_profile = cached_profile_filters[profile_name]
                                 outdated = files != cached_profile.get('files', ())
-                            except AttributeError:
+                            except (AttributeError, TypeError):
                                 # force refresh of outdated cache format
                                 outdated = True
 
