@@ -55,7 +55,7 @@ reporter_opts.add_argument(
     docs="""
         Select a reporter to use for output.
 
-        Use 'pkgcheck show --reporters' to see available options.
+        Use ``pkgcheck show --reporters`` to see available options.
     """)
 @reporter_opts.bind_parse_priority(20)
 def _setup_reporter(namespace):
@@ -124,17 +124,16 @@ check_options.add_argument(
         scanning. Any keywords specified in this fashion will be the
         only keywords that get reported, skipping any disabled keywords.
 
-        To specify disabled keywords prefix them with '-'. Note that when
+        To specify disabled keywords prefix them with ``-``. Note that when
         starting the argument list with a disabled keyword an equals sign must
-        be used, e.g. -k=-keyword, otherwise the disabled keyword argument is
+        be used, e.g. ``-k=-keyword``, otherwise the disabled keyword argument is
         treated as an option.
 
-        The special arguments of 'errors' and 'warnings' correspond to the
+        The special arguments of ``errors`` and ``warnings`` correspond to the
         lists of error and warning keywords, respectively. Therefore, to only
-        scan for errors and ignore all QA warnings use the 'errors' argument to
-        -k/--keywords.
+        scan for errors and ignore all QA warnings use ``-k errors``.
 
-        Use 'pkgcheck show --keywords' or the list below to see available options.
+        Use ``pkgcheck show --keywords`` or the list below to see available options.
     """)
 check_options.add_argument(
     '-S', '--scopes', metavar='SCOPE', action='csv_negations', dest='selected_scopes',
@@ -142,11 +141,11 @@ check_options.add_argument(
     docs="""
         Comma separated list of scopes to enable and disable for scanning. Any
         scopes specified in this fashion will affect the keywords that get
-        reported. For example, running pkgcheck with only the 'repo' scope
+        reported. For example, running pkgcheck with only the repo scope
         enabled will cause only repo-level keywords to be scanned for and
         reported.
 
-        To specify disabled scopes prefix them with '-' the same as for
+        To specify disabled scopes prefix them with ``-`` similar to the
         -k/--keywords option.
 
         Available scopes: %s
