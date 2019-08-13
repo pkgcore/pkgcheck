@@ -1,5 +1,6 @@
 import os
 
+from snakeoil.cli.exceptions import UserException
 from snakeoil.demandload import demandload
 from snakeoil.strings import pluralism as _pl
 
@@ -401,9 +402,6 @@ class _XmlBaseCheck(base.Template):
     def mangle_argparser(cls, parser):
         try:
             parser.plugin.add_argument(
-                '--metadata-xsd',
-                help=f'location to cache {cls.xsd_url}')
-            parser.plugin.add_argument(
                 '--metadata-xsd-required',
                 help="if metadata.xsd cannot be fetched (no connection for example), "
                      "treat it as a failure rather than warning and ignoring.")
@@ -414,51 +412,46 @@ class _XmlBaseCheck(base.Template):
     def __init__(self, options):
         super().__init__(options)
         self.repo_base = options.target_repo.location
-        self.xsd_file = None
-
-    def start(self):
         self.pkgref_cache = {}
 
-        if _XmlBaseCheck.schema is None:
-            refetch = False
-            write_path = read_path = self.options.metadata_xsd
-            if write_path is None:
-                read_path = pjoin(self.repo_base, 'metadata', 'xml-schema', 'metadata.xsd')
-            refetch = not os.path.isfile(read_path)
+        # try to use repo-bundled version of metadata.xsd otherwise cache it ourselves
+        # TODO: add mtime check for refetching old file
+        metadata_xsd = pjoin(self.repo_base, 'metadata', 'xml-schema', 'metadata.xsd')
+        if not os.path.isfile(metadata_xsd):
+            cache_dir = pjoin(
+                base.CACHE_DIR, 'repos', self.options.target_repo.repo_id)
+            metadata_xsd = pjoin(cache_dir, os.path.basename(self.xsd_url))
+        self.metadata_xsd = metadata_xsd
 
-            if refetch:
+    def start(self):
+        if _XmlBaseCheck.schema is None:
+            if not os.path.isfile(self.metadata_xsd):
                 if self.options.verbosity > 0:
-                    logger.warn('metadata.xsd cannot be opened from %s, will refetch', read_path)
-                logger.info("fetching metdata.xsd from %s", self.xsd_url)
+                    logger.warn(
+                        'metadata.xsd cannot be opened from '
+                        f'{self.metadata_xsd!r}, will refetch')
+                logger.info(f"fetching metdata.xsd from {self.xsd_url}")
                 try:
                     xsd_data = urlopen(self.xsd_url).read()
                 except urllib_error.URLError as e:
                     if self.options.metadata_xsd_required:
-                        raise Exception(
-                            "failed fetching xsd from %s: reason %s. "
-                            "Due to --metadata-xsd-required in use, bailing" %
-                            (self.xsd_url, e.reason))
+                        raise UserException(
+                            f"failed fetching xsd from {self.xsd_url}: {e.reason}")
                     logger.warn(
                         "failed fetching XML Schema from %s: reason %s", self.xsd_url, e.reason)
                     self.validator = noop_validator
                     return
-                if write_path is None:
-                    self.xsd_file = NamedTemporaryFile()
-                    write_path = read_path = self.xsd_file.name
                 try:
-                    fileutils.write_file(write_path, 'wb', xsd_data)
+                    fileutils.write_file(self.metadata_xsd, 'wb', xsd_data)
                 except EnvironmentError as e:
+                    msg = f"failed saving XML Schema to {self.metadata_xsd!r}: {e}"
                     if self.options.metadata_xsd_required:
-                        raise Exception(
-                            "failed saving XML Schema to %s: reason %s. "
-                            "Due to --metadata-xsd-required in use, bailing" %
-                            (write_path, e))
-                    logger.warn("failed writing XML Schema to %s: reason %s.  Disabling check." %
-                                (write_path, e))
+                        raise UserException(msg)
+                    logger.warn(f'skipping check, {msg}')
                     self.validator = noop_validator
                     return
 
-            _XmlBaseCheck.schema = etree.XMLSchema(etree.parse(read_path))
+            _XmlBaseCheck.schema = etree.XMLSchema(etree.parse(self.metadata_xsd))
 
     def feed(self, thing):
         raise NotImplementedError(self.feed)
