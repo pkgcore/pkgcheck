@@ -258,9 +258,11 @@ class TestPkgcheckScan(object):
     def _setup(self, fakeconfig):
         self.args = [project, '--config', fakeconfig, 'scan']
 
-    def test_empty_repo(self, capsys):
+    def test_empty_repo(self, capsys, tmp_path):
         # no reports should be generated since the default repo is empty
-        with patch('sys.argv', self.args):
+        cache_dir = str(tmp_path)
+        with patch('sys.argv', self.args), \
+                patch('pkgcheck.base.CACHE_DIR', cache_dir):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             assert excinfo.value.code == 0
