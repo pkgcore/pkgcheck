@@ -22,7 +22,6 @@ from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin
 
 demandload(
-    'itertools:chain',
     're',
     'pkgcore.log:logger',
 )
