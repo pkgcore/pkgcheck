@@ -1,3 +1,4 @@
+import pickle
 import sys
 
 from snakeoil.formatters import PlainTextFormatter
@@ -84,3 +85,34 @@ class TestXmlReporter(BaseReporter):
     reporter_cls = reporters.XmlReporter
     add_report_output = """<checks>\n<result><class>ProfileWarning</class><msg>profile warning</msg></result>\n</checks>\n"""
     filtered_report_output = """<checks>\n<result><class>ProfileError</class><msg>profile error</msg></result>\n</checks>\n"""
+
+
+class TestPickleStream(BaseReporter):
+
+    reporter_cls = reporters.PickleStream
+
+    def test_add_report(self, capsysbinary):
+        self.reporter = self.mk_reporter()
+        self.reporter.start()
+        self.reporter.report(self.log_warning)
+        self.reporter.finish()
+        out, err = capsysbinary.readouterr()
+        assert not err
+        result = pickle.loads(out)
+        assert result == self.log_warning
+
+    def test_filtered_report(self, capsysbinary):
+        self.reporter = self.mk_reporter(keywords=(ProfileError,))
+        self.reporter.start()
+        self.reporter.report(self.log_warning)
+        self.reporter.report(self.log_error)
+        self.reporter.finish()
+        out, err = capsysbinary.readouterr()
+        assert not err
+        result = pickle.loads(out)
+        assert result == self.log_error
+
+
+class TestBinaryPickleStream(TestPickleStream):
+
+    reporter_cls = reporters.BinaryPickleStream
