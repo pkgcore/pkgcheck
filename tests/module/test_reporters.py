@@ -27,15 +27,19 @@ class BaseReporter(object):
 
     def test_add_report(self, capsys):
         self.reporter = self.mk_reporter()
+        self.reporter.start()
         self.reporter.report(self.log_warning)
+        self.reporter.finish()
         out, err = capsys.readouterr()
         assert not err
         assert out == self.add_report_output
 
     def test_filtered_report(self, capsys):
         self.reporter = self.mk_reporter(keywords=(ProfileError,))
+        self.reporter.start()
         self.reporter.report(self.log_warning)
         self.reporter.report(self.log_error)
+        self.reporter.finish()
         out, err = capsys.readouterr()
         assert not err
         assert out == self.filtered_report_output
@@ -44,12 +48,8 @@ class BaseReporter(object):
 class TestStrReporter(BaseReporter):
 
     reporter_cls = reporters.StrReporter
-    add_report_output = """
-profile warning
-"""
-    filtered_report_output = """
-profile error
-"""
+    add_report_output = """\nprofile warning\n\n"""
+    filtered_report_output = """\nprofile error\n\n"""
 
 
 class TestFancyReporter(BaseReporter):
@@ -82,5 +82,5 @@ class TestJsonReporter(BaseReporter):
 class TestXmlReporter(BaseReporter):
 
     reporter_cls = reporters.XmlReporter
-    add_report_output = """<result><class>ProfileWarning</class><msg>profile warning</msg></result>\n"""
-    filtered_report_output = """<result><class>ProfileError</class><msg>profile error</msg></result>\n"""
+    add_report_output = """<checks>\n<result><class>ProfileWarning</class><msg>profile warning</msg></result>\n</checks>\n"""
+    filtered_report_output = """<checks>\n<result><class>ProfileError</class><msg>profile error</msg></result>\n</checks>\n"""
