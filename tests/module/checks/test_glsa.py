@@ -13,14 +13,12 @@ def mk_pkg(ver, key="dev-util/diffball"):
 
 @pytest.fixture
 def check(tmpdir):
-    check = vuln_report(
-        misc.Options(glsa_location=str(tmpdir), glsa_enabled=True))
-
     with open(pjoin(str(tmpdir), "glsa-200611-01.xml"), "w") as f:
         f.write(mk_glsa(("dev-util/diffball", ([], [">0.7"]))))
     with open(pjoin(str(tmpdir), "glsa-200611-02.xml"), "w") as f:
         f.write(mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
-    return check
+    return vuln_report(
+        misc.Options(glsa_location=str(tmpdir), glsa_enabled=True))
 
 
 class TestVulnerabilitiesReport(misc.ReportTestCase):

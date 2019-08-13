@@ -96,24 +96,18 @@ class TreeVulnerabilitiesCheck(base.Template):
 
     def __init__(self, options):
         super().__init__(options)
-        self.glsa_dir = options.glsa_location
-        self.enabled = False
-        self.vulns = {}
 
-    def start(self):
-        if not self.options.glsa_enabled:
-            return
         # this is a bit brittle
-        for r in GlsaDirSet(self.glsa_dir):
-            if len(r) > 2:
-                self.vulns.setdefault(
-                    r[0].key, []).append(packages.AndRestriction(*r[1:]))
-            else:
-                self.vulns.setdefault(r[0].key, []).append(r[1])
+        self.vulns = {}
+        if self.options.glsa_enabled:
+            for r in GlsaDirSet(options.glsa_location):
+                if len(r) > 2:
+                    self.vulns.setdefault(
+                        r[0].key, []).append(packages.AndRestriction(*r[1:]))
+                else:
+                    self.vulns.setdefault(r[0].key, []).append(r[1])
 
     def feed(self, pkg):
-        if not self.options.glsa_enabled:
-            return
         for vuln in self.vulns.get(pkg.key, []):
             if vuln.match(pkg):
                 yield VulnerablePackage(pkg, vuln)
