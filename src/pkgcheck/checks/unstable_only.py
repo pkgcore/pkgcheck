@@ -64,6 +64,3 @@ class UnstableOnlyCheck(base.GentooRepoCheck):
         # collapse reports by available versions
         for pkgs in unstable_arches.keys():
             yield UnstableOnly(pkgs, unstable_arches[pkgs])
-
-    def finish(self):
-        self.arch_restricts.clear()

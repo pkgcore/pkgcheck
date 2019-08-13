@@ -111,9 +111,6 @@ class TreeVulnerabilitiesCheck(base.Template):
             else:
                 self.vulns.setdefault(r[0].key, []).append(r[1])
 
-    def finish(self):
-        self.vulns.clear()
-
     def feed(self, pkg):
         if not self.options.glsa_enabled:
             return
