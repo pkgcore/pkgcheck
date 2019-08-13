@@ -13,7 +13,7 @@ day = 24*3600
 class StableRequest(base.Warning):
     """Unstable package added over thirty days ago that could be stabilized."""
 
-    __slots__ = ("category", "package", "version", "keywords", "period")
+    __slots__ = ("category", "package", "version", "keywords", "period", "slot")
 
     threshold = base.versioned_feed
 
