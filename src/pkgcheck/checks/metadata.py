@@ -238,16 +238,13 @@ class RequiredUSEMetadataCheck(base.Template):
                     pkg, node, profile=profile, num_profiles=num_profiles)
 
 
-class UnusedLocalUSE(base.Warning):
+class UnusedLocalUSE(base.PackageResult, base.Warning):
     """Unused local USE flag(s)."""
 
-    __slots__ = ("category", "package", "flags")
-
-    threshold = base.package_feed
+    __slots__ = ('flags',)
 
     def __init__(self, pkg, flags):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.flags = tuple(sorted(flags))
 
     @property
@@ -256,15 +253,13 @@ class UnusedLocalUSE(base.Warning):
             _pl(self.flags), ', '.join(self.flags))
 
 
-class MatchingGlobalUSE(base.Error):
+class MatchingGlobalUSE(base.PackageResult, base.Error):
     """Local USE flag description matches a global USE flag."""
 
-    __slots__ = ("category", "package", "flag")
-    threshold = base.package_feed
+    __slots__ = ('flag',)
 
     def __init__(self, pkg, flag):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.flag = flag
 
     @property
@@ -272,15 +267,13 @@ class MatchingGlobalUSE(base.Error):
         return f"local USE flag matches a global: {self.flag!r}"
 
 
-class ProbableGlobalUSE(base.Warning):
+class ProbableGlobalUSE(base.PackageResult, base.Warning):
     """Local USE flag description closely matches a global USE flag."""
 
-    __slots__ = ("category", "package", "flag")
-    threshold = base.package_feed
+    __slots__ = ('flag',)
 
     def __init__(self, pkg, flag):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.flag = flag
 
     @property
@@ -288,7 +281,7 @@ class ProbableGlobalUSE(base.Warning):
         return f"local USE flag closely matches a global: {self.flag!r}"
 
 
-class ProbableUseExpand(base.Warning):
+class ProbableUseExpand(base.PackageResult, base.Warning):
     """Local USE flag that isn't overridden matches a USE_EXPAND group.
 
     The local USE flag starts with a prefix reserved to USE_EXPAND group,
@@ -302,12 +295,10 @@ class ProbableUseExpand(base.Warning):
     .. [#] https://devmanual.gentoo.org/general-concepts/use-flags/
     """
 
-    __slots__ = ("category", "package", "flag", "group")
-    threshold = base.package_feed
+    __slots__ = ('flag', 'group')
 
     def __init__(self, pkg, flag, group):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.flag = flag
         self.group = group
 

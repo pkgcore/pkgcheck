@@ -6,16 +6,13 @@ from snakeoil.strings import pluralism as _pl
 from .. import addons, base
 
 
-class UnstableOnly(base.Warning):
+class UnstableOnly(base.PackageResult, base.Warning):
     """Package/keywords that are strictly unstable."""
 
-    __slots__ = ("category", "package", "versions", "arches")
-
-    threshold = base.package_feed
+    __slots__ = ('versions', 'arches')
 
     def __init__(self, pkgs, arches):
-        super().__init__()
-        self._store_cp(pkgs[0])
+        super().__init__(pkgs[0])
         self.arches = arches
         self.versions = tuple(x.fullver for x in pkgs)
 

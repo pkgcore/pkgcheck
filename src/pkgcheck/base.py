@@ -255,10 +255,6 @@ class Result(SlotsPicklingMixin, metaclass=generic_equality):
     def long_desc(self):
         return self.short_desc
 
-    def _store_cp(self, pkg):
-        self.category = pkg.category
-        self.package = pkg.package
-
 
 class Error(Result):
     """Result with an error priority level."""
@@ -270,16 +266,27 @@ class Warning(Result):
     _level = 30
 
 
-class VersionedResult(Result):
-    """Result related to a specific version of a package."""
+class PackageResult(Result):
+    """Result related to a specific package."""
 
-    __slots__ = ('category', 'package', 'version')
-    threshold = versioned_feed
+    __slots__ = ('category', 'package')
+    threshold = package_feed
 
     def __init__(self, pkg):
         super().__init__()
         self.category = pkg.category
         self.package = pkg.package
+
+
+class VersionedResult(PackageResult):
+    """Result related to a specific version of a package."""
+
+    __slots__ = ('version',)
+    threshold = versioned_feed
+
+    def __init__(self, pkg):
+        super().__init__(pkg)
+        self.version = pkg.fullver
 
 
 class LogError(Error):

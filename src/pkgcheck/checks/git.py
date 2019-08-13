@@ -40,15 +40,8 @@ class DirectStableKeywords(base.VersionedResult, base.Error):
             _pl(self.keywords), ', '.join(self.keywords))
 
 
-class DirectNoMaintainer(base.Error):
+class DirectNoMaintainer(base.PackageResult, base.Error):
     """Directly added, new package with no specified maintainer."""
-
-    __slots__ = ('category', 'package')
-    threshold = base.package_feed
-
-    def __init__(self, pkg):
-        super().__init__()
-        self._store_cp(pkg)
 
     @property
     def short_desc(self):

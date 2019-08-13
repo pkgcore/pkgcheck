@@ -19,16 +19,13 @@ allowed_filename_chars_set.update(chr(x) for x in range(ord('0'), ord('9')+1))
 allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 
 
-class MismatchedPN(base.Error):
+class MismatchedPN(base.PackageResult, base.Error):
     """Ebuilds that have different names than their parent directory."""
 
-    __slots__ = ("category", "package", "ebuilds")
-
-    threshold = base.package_feed
+    __slots__ = ('ebuilds',)
 
     def __init__(self, pkg, ebuilds):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.ebuilds = tuple(sorted(ebuilds))
 
     @property
@@ -37,16 +34,13 @@ class MismatchedPN(base.Error):
             _pl(self.ebuilds), ', '.join(self.ebuilds))
 
 
-class InvalidPN(base.Error):
+class InvalidPN(base.PackageResult, base.Error):
     """Ebuilds that have invalid package names."""
 
-    __slots__ = ("category", "package", "ebuilds")
-
-    threshold = base.package_feed
+    __slots__ = ('ebuilds',)
 
     def __init__(self, pkg, ebuilds):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.ebuilds = tuple(sorted(ebuilds))
 
     @property
@@ -55,7 +49,7 @@ class InvalidPN(base.Error):
             _pl(self.ebuilds), ', '.join(self.ebuilds))
 
 
-class EqualVersions(base.Error):
+class EqualVersions(base.PackageResult, base.Error):
     """Ebuilds that have equal versions.
 
     For example, cat/pn-1.0.2, cat/pn-1.0.2-r0, cat/pn-1.0.2-r00 and
@@ -63,13 +57,10 @@ class EqualVersions(base.Error):
     shouldn't exist in the same repository.
     """
 
-    __slots__ = ("category", "package", "versions")
-
-    threshold = base.package_feed
+    __slots__ = ('versions',)
 
     def __init__(self, pkg, versions):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.versions = tuple(sorted(versions))
 
     @property
@@ -77,16 +68,13 @@ class EqualVersions(base.Error):
         return f"equal package versions: [ {', '.join(map(repr, self.versions))} ]"
 
 
-class DuplicateFiles(base.Warning):
+class DuplicateFiles(base.PackageResult, base.Warning):
     """Two or more identical files in FILESDIR."""
 
-    __slots__ = ("category", "package", "files")
-
-    threshold = base.package_feed
+    __slots__ = ('files',)
 
     def __init__(self, pkg, files):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.files = tuple(sorted(files))
 
     @property
@@ -95,16 +83,13 @@ class DuplicateFiles(base.Warning):
             ', '.join(map(repr, self.files)))
 
 
-class EmptyFile(base.Warning):
+class EmptyFile(base.PackageResult, base.Warning):
     """File in FILESDIR is empty."""
 
-    __slots__ = ("category", "package", "filename")
-
-    threshold = base.package_feed
+    __slots__ = ('filename',)
 
     def __init__(self, pkg, filename):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.filename = filename
 
     @property
@@ -112,16 +97,13 @@ class EmptyFile(base.Warning):
         return f'empty file in FILESDIR: {self.filename!r}'
 
 
-class ExecutableFile(base.Warning):
+class ExecutableFile(base.PackageResult, base.Warning):
     """File has executable bit, but doesn't need it."""
 
-    __slots__ = ("category", "package", "filename")
-
-    threshold = base.package_feed
+    __slots__ = ('filename',)
 
     def __init__(self, pkg, filename):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.filename = filename
 
     @property
@@ -129,16 +111,13 @@ class ExecutableFile(base.Warning):
         return f'unnecessary executable bit: {self.filename!r}'
 
 
-class SizeViolation(base.Warning):
+class SizeViolation(base.PackageResult, base.Warning):
     """File in $FILESDIR is too large (current limit is 20k)."""
 
-    __slots__ = ("category", "package", "filename", "size")
-
-    threshold = base.package_feed
+    __slots__ = ('filename', 'size')
 
     def __init__(self, pkg, filename, size):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.filename = filename
         self.size = size
 
@@ -147,16 +126,13 @@ class SizeViolation(base.Warning):
         return f'{self.filename!r} exceeds 20k in size; {sizeof_fmt(self.size)} total'
 
 
-class Glep31Violation(base.Error):
+class Glep31Violation(base.PackageResult, base.Error):
     """File doesn't abide by glep31 requirements."""
 
-    __slots__ = ("category", "package", "filename")
-
-    threshold = base.package_feed
+    __slots__ = ('filename',)
 
     def __init__(self, pkg, filename):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.filename = filename
 
     @property
@@ -165,16 +141,13 @@ class Glep31Violation(base.Error):
                f"by glep31: {self.filename!r}"
 
 
-class InvalidUTF8(base.Error):
+class InvalidUTF8(base.PackageResult, base.Error):
     """File isn't UTF-8 compliant."""
 
-    __slots__ = ("category", "package", "filename", "err")
-
-    threshold = base.package_feed
+    __slots__ = ('filename', 'err')
 
     def __init__(self, pkg, filename, err):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.filename = filename
         self.err = err
 

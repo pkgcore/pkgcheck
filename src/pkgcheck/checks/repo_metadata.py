@@ -571,15 +571,13 @@ class MissingManifest(base.VersionedResult, base.Error):
             _pl(self.files), ', '.join(self.files),)
 
 
-class UnknownManifest(base.Warning):
+class UnknownManifest(base.PackageResult, base.Warning):
     """Manifest entries not matching any SRC_URI targets."""
 
-    __slots__ = ("category", "package", "files")
-    threshold = base.package_feed
+    __slots__ = ('files',)
 
     def __init__(self, pkg, files):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.files = tuple(sorted(files))
 
     @property
@@ -588,15 +586,13 @@ class UnknownManifest(base.Warning):
             _pl(self.files), ', '.join(self.files),)
 
 
-class UnnecessaryManifest(base.Warning):
+class UnnecessaryManifest(base.PackageResult, base.Warning):
     """Manifest entries for non-DIST targets on a repo with thin manifests enabled."""
 
-    __slots__ = ("category", "package", "files")
-    threshold = base.package_feed
+    __slots__ = ('files',)
 
     def __init__(self, pkg, files):
-        super().__init__()
-        self._store_cp(pkg)
+        super().__init__(pkg)
         self.files = tuple(sorted(files))
 
     @property
