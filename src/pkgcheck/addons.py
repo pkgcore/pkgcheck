@@ -432,7 +432,7 @@ class ProfileAddon(base.Addon):
             """)
         group.add_argument(
             '--profile-cache', action=StoreBool,
-            help="force profile cache refresh or disable cache usage",
+            help="forcibly enable/disable profile cache usage",
             docs="""
                 Significantly decreases profile load time by caching and reusing
                 the resulting filters rather than rebuilding them for each run.
