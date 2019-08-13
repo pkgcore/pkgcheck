@@ -138,37 +138,37 @@ class PortageInternalsCheck(base.Template):
 class MissingSlash(base.Error):
     """Ebuild uses a path variable missing a trailing slash."""
 
-    __slots__ = ("category", "package", "version", "variable", "lines")
+    __slots__ = ("category", "package", "version", "match", "lines")
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, variable, lines):
+    def __init__(self, pkg, match, lines):
         super().__init__()
         self._store_cpv(pkg)
-        self.variable = variable
+        self.match = match
         self.lines = tuple(lines)
 
     @property
     def short_desc(self):
         lines = ', '.join(map(str, self.lines))
-        return f"{self.variable} missing trailing slash on line{_pl(self.lines)}: {lines}"
+        return f"{self.match} missing trailing slash on line{_pl(self.lines)}: {lines}"
 
 
 class UnnecessarySlashStrip(base.Warning):
     """Ebuild uses a path variable that strips a nonexistent slash."""
 
-    __slots__ = ("category", "package", "version", "variable", "lines")
+    __slots__ = ("category", "package", "version", "match", "lines")
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, variable, lines):
+    def __init__(self, pkg, match, lines):
         super().__init__()
         self._store_cpv(pkg)
-        self.variable = variable
+        self.match = match
         self.lines = tuple(lines)
 
     @property
     def short_desc(self):
         lines = ', '.join(map(str, self.lines))
-        return f"{self.variable} unnecessary slash strip on line{_pl(self.lines)}: {lines}"
+        return f"{self.match} unnecessary slash strip on line{_pl(self.lines)}: {lines}"
 
 
 class DoublePrefixInPath(base.Error):
@@ -182,19 +182,19 @@ class DoublePrefixInPath(base.Error):
     with ``${D}$(python_get_sitedir)``.
     """
 
-    __slots__ = ("category", "package", "version", "variable", "lines")
+    __slots__ = ("category", "package", "version", "match", "lines")
     threshold = base.versioned_feed
 
-    def __init__(self, pkg, variable, lines):
+    def __init__(self, pkg, match, lines):
         super().__init__()
         self._store_cpv(pkg)
-        self.variable = variable
+        self.match = match
         self.lines = tuple(lines)
 
     @property
     def short_desc(self):
         lines = ', '.join(map(str, self.lines))
-        return (f"{self.variable} concatenates two variables containing "
+        return (f"{self.match} concatenates two variables containing "
                 f"EPREFIX on line{_pl(self.lines)}: {lines}")
 
 
@@ -294,12 +294,12 @@ class PathVariablesCheck(base.Template):
             if match is not None:
                 unnecessary[match.group(1)].append(lineno)
 
-        for var, lines in missing.items():
-            yield MissingSlash(pkg, var, lines)
-        for var, lines in unnecessary.items():
-            yield UnnecessarySlashStrip(pkg, var, lines)
-        for var, lines in double_prefix.items():
-            yield DoublePrefixInPath(pkg, var, lines)
+        for match, lines in missing.items():
+            yield MissingSlash(pkg, match, lines)
+        for match, lines in unnecessary.items():
+            yield UnnecessarySlashStrip(pkg, match, lines)
+        for match, lines in double_prefix.items():
+            yield DoublePrefixInPath(pkg, match, lines)
 
 
 class AbsoluteSymlink(base.Warning):

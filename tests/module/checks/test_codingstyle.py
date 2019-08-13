@@ -107,7 +107,7 @@ class TestPathVariablesCheck(misc.ReportTestCase):
                     else:
                         r = self.assertReport(self.check, [fake_pkg, fake_src])
                         assert isinstance(r, cls)
-                        assert r.variable == f'${{{path_var}{suffix}}}'
+                        assert r.match == f'${{{path_var}{suffix}}}'
                         assert r.lines == tuple(x + 2 for x in range(lines))
                         assert path_var in str(r)
 
@@ -173,7 +173,7 @@ class TestPathVariablesCheck(misc.ReportTestCase):
         assert len(r) == len(expected_results)
         for res, exp in zip(r, expected_results):
             assert isinstance(res, cls)
-            assert res.variable == exp[0]
+            assert res.match == exp[0]
             assert res.lines == (exp[1],)
             assert exp[0] in str(res)
 
