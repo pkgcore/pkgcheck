@@ -655,6 +655,7 @@ class ProfileAddon(base.Addon):
                             pkg_use = cached_profile['pkg_use']
                             iuse_effective = cached_profile['iuse_effective']
                             use = cached_profile['use']
+                            provides_repo = cached_profile['provides_repo']
                         except KeyError:
                             vfilter = domain.generate_filter(profile.masks, profile.unmasks)
 
@@ -680,6 +681,7 @@ class ProfileAddon(base.Addon):
 
                             pkg_use = profile.pkg_use
                             iuse_effective = profile.iuse_effective
+                            provides_repo = profile.provides_repo
 
                             # finalize enabled USE flags
                             use = set()
@@ -698,6 +700,7 @@ class ProfileAddon(base.Addon):
                                     'pkg_use': pkg_use,
                                     'iuse_effective': iuse_effective,
                                     'use': use,
+                                    'provides_repo': provides_repo,
                                 }
 
                         # used to interlink stable/unstable lookups so that if
@@ -714,7 +717,7 @@ class ProfileAddon(base.Addon):
                         # unstable insoluble is usable for stable, but not vice versa
                         profile_filters[stable_key].append(ProfileData(
                             profile_name, stable_key,
-                            profile.provides_repo,
+                            provides_repo,
                             packages.AndRestriction(vfilter, stable_r),
                             iuse_effective,
                             use,
@@ -727,7 +730,7 @@ class ProfileAddon(base.Addon):
 
                         profile_filters[unstable_key].append(ProfileData(
                             profile_name, unstable_key,
-                            profile.provides_repo,
+                            provides_repo,
                             packages.AndRestriction(vfilter, unstable_r),
                             iuse_effective,
                             use,
