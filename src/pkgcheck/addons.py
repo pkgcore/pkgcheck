@@ -612,6 +612,7 @@ class ProfileAddon(base.Addon):
             except (EOFError, FileNotFoundError):
                 pass
 
+        cached_profile_updates = False
         with suppress_logging():
             for k in self.desired_arches:
                 if k.lstrip("~") not in self.desired_arches:
@@ -629,19 +630,15 @@ class ProfileAddon(base.Addon):
                 for profile_name, profile, profile_status in options.arch_profiles.get(k, []):
                     try:
                         files = profile_data.get(profile_name, None)
-                        outdated = False
                         try:
                             try:
-                                cached_profile = cached_profile_filters[profile_name]
+                                cached_profile = cached_profile_filters.get(profile_name, {})
                                 outdated = files != cached_profile.get('files', ())
                             except (AttributeError, TypeError):
                                 # force refresh of outdated cache format
                                 outdated = True
 
                             if outdated:
-                                # force cache updates unless explicitly disabled
-                                if options.profile_cache is None:
-                                    options.profile_cache = True
                                 raise KeyError
 
                             vfilter = cached_profile['vfilter']
@@ -672,7 +669,9 @@ class ProfileAddon(base.Addon):
                             stable_enabled_flags.optimize(cache=chunked_data_cache)
                             stable_enabled_flags.freeze()
 
-                            if options.profile_cache or outdated:
+                            if (options.profile_cache or
+                                    (options.profile_cache is None and outdated)):
+                                cached_profile_updates = True
                                 cached_profile_filters[profile_name] = {
                                     'files': files,
                                     'vfilter': vfilter,
@@ -727,8 +726,8 @@ class ProfileAddon(base.Addon):
                         # unsupported EAPI or other issue, profile checks will catch this
                         continue
 
-        # dump cached profile filters
-        if options.profile_cache:
+        # dump updated profile filters
+        if cached_profile_updates:
             try:
                 os.makedirs(os.path.dirname(options.cache_file), exist_ok=True)
                 with open(options.cache_file, 'wb+') as f:
