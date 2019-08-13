@@ -640,9 +640,10 @@ class ProfileAddon(base.Addon):
                                 cached_profile = cached_profile_filters.get(profile_name, {})
                                 outdated = files != cached_profile.get('files', ())
                             except (AttributeError, TypeError):
-                                # force refresh of outdated cache format
+                                # force refresh of old cache format
                                 outdated = True
 
+                            # force refresh of outdated cache entry or old cache format
                             if outdated:
                                 raise KeyError
 
@@ -651,6 +652,8 @@ class ProfileAddon(base.Addon):
                             stable_immutable_flags = cached_profile['stable_immutable_flags']
                             enabled_flags = cached_profile['enabled_flags']
                             stable_enabled_flags = cached_profile['stable_enabled_flags']
+                            pkg_use = cached_profile['pkg_use']
+                            iuse_effective = cached_profile['iuse_effective']
                         except KeyError:
                             vfilter = domain.generate_filter(profile.masks, profile.unmasks)
 
@@ -674,8 +677,10 @@ class ProfileAddon(base.Addon):
                             stable_enabled_flags.optimize(cache=chunked_data_cache)
                             stable_enabled_flags.freeze()
 
-                            if (options.profile_cache or
-                                    (options.profile_cache is None and outdated)):
+                            pkg_use = profile.pkg_use
+                            iuse_effective = profile.iuse_effective
+
+                            if options.profile_cache or options.profile_cache is None:
                                 cached_profile_updates = True
                                 cached_profile_filters[profile_name] = {
                                     'files': files,
@@ -684,6 +689,8 @@ class ProfileAddon(base.Addon):
                                     'stable_immutable_flags': stable_immutable_flags,
                                     'enabled_flags': enabled_flags,
                                     'stable_enabled_flags': stable_enabled_flags,
+                                    'pkg_use': pkg_use,
+                                    'iuse_effective': iuse_effective,
                                 }
 
                         # used to interlink stable/unstable lookups so that if
@@ -706,9 +713,9 @@ class ProfileAddon(base.Addon):
                             profile_name, stable_key,
                             profile.provides_repo,
                             packages.AndRestriction(vfilter, stable_r),
-                            profile.iuse_effective,
+                            iuse_effective,
                             use,
-                            profile.pkg_use,
+                            pkg_use,
                             stable_immutable_flags, stable_enabled_flags,
                             stable_cache,
                             ProtectedSet(unstable_insoluble),
@@ -719,9 +726,9 @@ class ProfileAddon(base.Addon):
                             profile_name, unstable_key,
                             profile.provides_repo,
                             packages.AndRestriction(vfilter, unstable_r),
-                            profile.iuse_effective,
+                            iuse_effective,
                             use,
-                            profile.pkg_use,
+                            pkg_use,
                             immutable_flags, enabled_flags,
                             ProtectedSet(stable_cache),
                             unstable_insoluble,
