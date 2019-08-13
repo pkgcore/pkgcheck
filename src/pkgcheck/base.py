@@ -19,6 +19,7 @@ from pkgcore.config import ConfigHint
 from pkgcore.package.errors import MetadataException
 from snakeoil.decorators import coroutine
 from snakeoil.demandload import demandload
+from snakeoil.klass import generic_equality
 from snakeoil.osutils import pjoin
 
 demandload(
@@ -213,9 +214,10 @@ class Transform(object):
         return f'{self.__class__.__name__}({self.child!r})'
 
 
-class Result(object):
+class Result(object, metaclass=generic_equality):
 
     __slots__ = ()
+    __attr_comparison__ = __slots__
 
     # level values match those used in logging module
     _level = 20
