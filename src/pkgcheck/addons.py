@@ -452,11 +452,12 @@ class ProfileAddon(base.Addon):
                 only profiles that get scanned, skipping any disabled profiles.
                 In addition, if no profiles are explicitly enabled, all
                 profiles defined in the target repo's profiles.desc file will be
-                scanned.
+                scanned except those marked as experimental (exp).
 
-                To specify disabled profiles prefix them with ``-``. Note that
-                when starting the argument list with a disabled profile an
-                equals sign must be used, e.g. ``-p=-path/to/profile``,
+                To specify disabled profiles prefix them with ``-`` which
+                removes the from the list of profiles to be considered. Note
+                that when starting the argument list with a disabled profile an
+                equals sign must be used, e.g.  ``-p=-path/to/profile``,
                 otherwise the disabled profile argument is treated as an
                 option.
 
@@ -512,9 +513,7 @@ class ProfileAddon(base.Addon):
         # If no profiles are enabled, then all that are defined in
         # profiles.desc are scanned except ones that are explicitly disabled.
         if not enabled:
-            enabled = {
-                profile for profile, status in
-                chain.from_iterable(profiles_obj.arch_profiles.values())}
+            enabled = set(profiles_obj.paths())
 
         profile_paths = enabled.difference(disabled)
 
