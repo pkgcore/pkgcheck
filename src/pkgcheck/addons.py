@@ -654,6 +654,7 @@ class ProfileAddon(base.Addon):
                             stable_enabled_flags = cached_profile['stable_enabled_flags']
                             pkg_use = cached_profile['pkg_use']
                             iuse_effective = cached_profile['iuse_effective']
+                            use = cached_profile['use']
                         except KeyError:
                             vfilter = domain.generate_filter(profile.masks, profile.unmasks)
 
@@ -680,6 +681,11 @@ class ProfileAddon(base.Addon):
                             pkg_use = profile.pkg_use
                             iuse_effective = profile.iuse_effective
 
+                            # finalize enabled USE flags
+                            use = set()
+                            misc.incremental_expansion(use, profile.use, 'while expanding USE')
+                            use = frozenset(use)
+
                             if options.profile_cache or options.profile_cache is None:
                                 cached_profile_updates = True
                                 cached_profile_filters[profile_name] = {
@@ -691,6 +697,7 @@ class ProfileAddon(base.Addon):
                                     'stable_enabled_flags': stable_enabled_flags,
                                     'pkg_use': pkg_use,
                                     'iuse_effective': iuse_effective,
+                                    'use': use,
                                 }
 
                         # used to interlink stable/unstable lookups so that if
@@ -698,10 +705,6 @@ class ProfileAddon(base.Addon):
                         # if stable says something is visible, unstable doesn't try.
                         stable_cache = set()
                         unstable_insoluble = ProtectedSet(self.global_insoluble)
-
-                        # finalize enabled USE flags
-                        use = set()
-                        misc.incremental_expansion(use, profile.use, 'while expanding USE')
 
                         # few notes.  for filter, ensure keywords is last, on the
                         # offchance a non-metadata based restrict foregos having to
