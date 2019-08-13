@@ -8,7 +8,6 @@ pkgcore_plugins = {
         reporters.fancy_reporter,
         reporters.picklestream_reporter,
         reporters.binarypicklestream_reporter,
-        reporters.multiplex_reporter,
         base.Whitelist,
         base.Blacklist,
         ],
