@@ -193,7 +193,6 @@ class TestEqualVersions(PkgDirReportBase):
             category=pkg_a.category, package=pkg_a.package, version='0', revision='-r0')
         r = self.assertReport(self.check, [pkg_a, pkg_b])
         assert isinstance(r, pkgdir.EqualVersions)
-        assert r.version == '0'
         assert r.versions == ('0', '0-r0')
 
         # multiple, matching revisions
@@ -201,7 +200,6 @@ class TestEqualVersions(PkgDirReportBase):
             category=pkg_a.category, package=pkg_a.package, version='0', revision='-r000')
         r = self.assertReport(self.check, [pkg_a, pkg_b, pkg_c])
         assert isinstance(r, pkgdir.EqualVersions)
-        assert r.version == '0'
         assert r.versions == ('0', '0-r0', '0-r000')
 
         # unsorted, matching revisions
@@ -209,7 +207,6 @@ class TestEqualVersions(PkgDirReportBase):
             category=pkg_a.category, package=pkg_a.package, version='1')
         r = self.assertReport(self.check, [pkg_b, pkg_new_version, pkg_c, pkg_a])
         assert isinstance(r, pkgdir.EqualVersions)
-        assert r.version == '0'
         assert r.versions == ('0', '0-r0', '0-r000')
 
         # multiple, matching revisions with 0 prefixes
@@ -221,7 +218,6 @@ class TestEqualVersions(PkgDirReportBase):
             category=pkg_a.category, package=pkg_a.package, version='0', revision='-r001')
         r = self.assertReport(self.check, [pkg_d, pkg_e, pkg_f])
         assert isinstance(r, pkgdir.EqualVersions)
-        assert r.version == '0-r1'
         assert r.versions == ('0-r001', '0-r01', '0-r1')
 
 

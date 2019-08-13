@@ -65,11 +65,11 @@ class EqualVersions(base.Error):
 
     __slots__ = ("category", "package", "versions")
 
-    threshold = base.versioned_feed
+    threshold = base.package_feed
 
     def __init__(self, pkg, versions):
         super().__init__()
-        self._store_cpv(pkg)
+        self._store_cp(pkg)
         self.versions = tuple(sorted(versions))
 
     @property
