@@ -402,7 +402,7 @@ class _XmlBaseCheck(base.Template):
     def mangle_argparser(cls, parser):
         try:
             parser.plugin.add_argument(
-                '--metadata-xsd-required',
+                '--metadata-xsd-required', action='store_true',
                 help="if metadata.xsd cannot be fetched (no connection for example), "
                      "treat it as a failure rather than warning and ignoring.")
         except argparse.ArgumentError:
