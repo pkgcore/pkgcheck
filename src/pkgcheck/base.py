@@ -214,23 +214,6 @@ class Transform(object):
         return f'{self.__class__.__name__}({self.child!r})'
 
 
-def collect_checks(obj):
-    if isinstance(obj, Transform):
-        i = collect_checks(obj.child)
-    elif isinstance(obj, CheckRunner):
-        i = chain(*map(collect_checks, obj.checks))
-    elif isinstance(obj, Addon):
-        i = [obj]
-    else:
-        i = chain(*map(collect_checks, obj))
-    for x in i:
-        yield x
-
-
-def collect_checks_classes(obj):
-    return set(x.__class__ for x in collect_checks(obj))
-
-
 class Result(object):
 
     __slots__ = ()
@@ -374,14 +357,8 @@ class Reporter(object):
         """Render and output a report result.."""
         raise NotImplementedError(self._process_report)
 
-    def start(self):
+    def start(self, checks):
         """Initialize reporter output."""
-
-    def start_check(self, source):
-        """Initialize reporter check output."""
-
-    def end_check(self):
-        """Finalize reporter check output."""
 
     def finish(self):
         """Finalize reporter output."""

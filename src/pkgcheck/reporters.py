@@ -190,7 +190,7 @@ class XmlReporter(base.Reporter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def start(self):
+    def start(self, checks):
         self.out.write('<checks>')
 
     @coroutine
@@ -219,11 +219,9 @@ class PickleStream(base.Reporter):
     priority = -1001
     protocol = 0
 
-    def start(self):
+    def start(self, checks):
         self.out.wrap = False
         self.out.autoline = False
-
-    def start_check(self, checks):
         pickle.dump(base.StreamHeader(checks), self.out.stream)
 
     @coroutine
@@ -257,9 +255,9 @@ class MultiplexReporter(base.Reporter):
         super().__init__(*args, **kwargs)
         self.reporters = tuple(reporters)
 
-    def start(self):
+    def start(self, checks):
         for x in self.reporters:
-            x.start()
+            x.start(checks)
 
     @coroutine
     def _process_report(self):

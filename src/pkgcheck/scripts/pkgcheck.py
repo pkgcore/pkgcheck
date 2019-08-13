@@ -415,7 +415,7 @@ def _scan(options, out, err):
         addons = [addons_map.get(cls, cls(options)) for cls in source.required_addons]
         raw_sources.append(partial(source, options, *addons))
 
-    reporter.start()
+    reporter.start(options.enabled_checks)
 
     for filterer in options.limiters:
         sources = [source(filterer) for source in raw_sources]
@@ -442,13 +442,11 @@ def _scan(options, out, err):
         for source, pipe in pipes:
             for result in pipe.start():
                 reporter.report(result)
-            reporter.start_check(list(base.collect_checks_classes(pipe)))
             for item in source.feed():
                 for result in pipe.feed(item):
                     reporter.report(result)
             for result in pipe.finish():
                 reporter.report(result)
-            reporter.end_check()
 
     reporter.finish()
 
@@ -504,17 +502,11 @@ def _replay(options, out, err):
         out = formatters.get_formatter(open(options.out, 'w'))
     reporter = options.reporter(out)
 
-    headers = []
     for count, item in enumerate(pickling.iter_stream(options.pickle_file)):
         if isinstance(item, base.StreamHeader):
-            if headers:
-                reporter.end_check()
-            reporter.start_check(item.checks)
-            headers.append(item)
+            reporter.start(item.checks)
             continue
         reporter.report(item)
-    if headers:
-        reporter.end_check()
 
     return 0
 
