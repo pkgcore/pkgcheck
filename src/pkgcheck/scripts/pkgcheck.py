@@ -473,8 +473,6 @@ replay.add_argument(
     dest='pickle_file', type=argparse.FileType('rb'), help='pickled results file')
 replay.add_argument(
     dest='reporter', help='python namespace path reporter to replay it into')
-replay.add_argument(
-    '--out', default=None, help='redirect reporters output to a file')
 @replay.bind_final_check
 def _replay_validate_args(parser, namespace):
     func = namespace.config.pkgcheck_reporter_factory.get(namespace.reporter)
@@ -498,16 +496,13 @@ def _replay_validate_args(parser, namespace):
 
 @replay.bind_main_func
 def _replay(options, out, err):
-    if options.out:
-        out = formatters.get_formatter(open(options.out, 'w'))
     reporter = options.reporter(out)
-
     for count, item in enumerate(pickling.iter_stream(options.pickle_file)):
         if isinstance(item, base.StreamHeader):
             reporter.start(item.checks)
             continue
         reporter.report(item)
-
+    reporter.finish()
     return 0
 
 
