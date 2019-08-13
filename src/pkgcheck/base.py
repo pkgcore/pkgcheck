@@ -356,7 +356,7 @@ class Reporter(object):
         """Render and output a report result.."""
         raise NotImplementedError(self._process_report)
 
-    def start(self, checks):
+    def start(self):
         """Initialize reporter output."""
 
     def finish(self):
@@ -455,19 +455,6 @@ class Scope(object):
 
     def filter(self, checks):
         return list(c for c in checks if c.scope in self.scopes)
-
-
-class StreamHeader(object):
-
-    def __init__(self, checks):
-        self.checks = sorted((x for x in checks if x.known_results),
-                             key=attrgetter('__name__'))
-        self.known_results = set()
-        for x in checks:
-            self.known_results.update(x.known_results)
-
-        self.known_results = tuple(
-            sorted(self.known_results, key=attrgetter('__name__')))
 
 
 class CheckRunner(object):
