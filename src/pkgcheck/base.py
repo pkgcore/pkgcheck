@@ -19,7 +19,7 @@ from pkgcore.config import ConfigHint
 from pkgcore.package.errors import MetadataException
 from snakeoil.decorators import coroutine
 from snakeoil.demandload import demandload
-from snakeoil.klass import generic_equality
+from snakeoil.klass import SlotsPicklingMixin, generic_equality
 from snakeoil.osutils import pjoin
 
 demandload(
@@ -214,7 +214,7 @@ class Transform(object):
         return f'{self.__class__.__name__}({self.child!r})'
 
 
-class Result(object, metaclass=generic_equality):
+class Result(SlotsPicklingMixin, metaclass=generic_equality):
 
     __slots__ = ()
     __attr_comparison__ = __slots__
@@ -262,24 +262,6 @@ class Result(object, metaclass=generic_equality):
     def _store_cpv(self, pkg):
         self._store_cp(pkg)
         self.version = pkg.fullver
-
-    def __getstate__(self):
-        attrs = getattr(self, '__attrs__', getattr(self, '__slots__', None))
-        if attrs:
-            try:
-                return dict((k, getattr(self, k)) for k in attrs)
-            except AttributeError as a:
-                # rethrow so we at least know the class
-                raise AttributeError(self.__class__, str(a))
-        return object.__getstate__(self)
-
-    def __setstate__(self, data):
-        attrs = set(getattr(self, '__attrs__', getattr(self, '__slots__', [])))
-        if attrs.difference(data) or len(attrs) != len(data):
-            raise TypeError(
-                f"can't restore {self.__class__} due to data {data!r} not being complete")
-        for k, v in data.items():
-            setattr(self, k, v)
 
 
 class Error(Result):
