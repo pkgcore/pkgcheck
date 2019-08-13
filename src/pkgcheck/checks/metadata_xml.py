@@ -414,22 +414,28 @@ class _XmlBaseCheck(base.Template):
         self.repo_base = options.target_repo.location
         self.pkgref_cache = {}
 
+    def start(self):
         # try to use repo-bundled version of metadata.xsd otherwise cache it ourselves
         # TODO: add mtime check for refetching old file
         metadata_xsd = pjoin(self.repo_base, 'metadata', 'xml-schema', 'metadata.xsd')
         if not os.path.isfile(metadata_xsd):
-            cache_dir = pjoin(
-                base.CACHE_DIR, 'repos', self.options.target_repo.repo_id)
+            cache_dir = pjoin(base.CACHE_DIR, 'repos', self.options.target_repo.repo_id)
             metadata_xsd = pjoin(cache_dir, os.path.basename(self.xsd_url))
-        self.metadata_xsd = metadata_xsd
+            try:
+                os.makedirs(cache_dir, exist_ok=True)
+            except IOError:
+                msg = f'failed creating cache dir: {cache_dir!r}'
+                if self.options.metadata_xsd_required:
+                    raise UserException(msg)
+                logger.warn(f'skipping check, {msg}')
+                return
 
-    def start(self):
         if _XmlBaseCheck.schema is None:
-            if not os.path.isfile(self.metadata_xsd):
+            if not os.path.isfile(metadata_xsd):
                 if self.options.verbosity > 0:
                     logger.warn(
                         'metadata.xsd cannot be opened from '
-                        f'{self.metadata_xsd!r}, will refetch')
+                        f'{metadata_xsd!r}, will refetch')
                 logger.info(f"fetching metdata.xsd from {self.xsd_url}")
                 try:
                     xsd_data = urlopen(self.xsd_url).read()
@@ -442,16 +448,16 @@ class _XmlBaseCheck(base.Template):
                     self.validator = noop_validator
                     return
                 try:
-                    fileutils.write_file(self.metadata_xsd, 'wb', xsd_data)
+                    fileutils.write_file(metadata_xsd, 'wb', xsd_data)
                 except EnvironmentError as e:
-                    msg = f"failed saving XML Schema to {self.metadata_xsd!r}: {e}"
+                    msg = f"failed saving XML Schema to {metadata_xsd!r}: {e}"
                     if self.options.metadata_xsd_required:
                         raise UserException(msg)
                     logger.warn(f'skipping check, {msg}')
                     self.validator = noop_validator
                     return
 
-            _XmlBaseCheck.schema = etree.XMLSchema(etree.parse(self.metadata_xsd))
+            _XmlBaseCheck.schema = etree.XMLSchema(etree.parse(metadata_xsd))
 
     def feed(self, thing):
         raise NotImplementedError(self.feed)
