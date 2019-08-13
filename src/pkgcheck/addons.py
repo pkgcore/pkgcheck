@@ -454,15 +454,18 @@ class ProfileAddon(base.Addon):
                 profiles defined in the target repo's profiles.desc file will be
                 scanned.
 
-                To specify disabled profiles prefix them with '-'. Note that
+                To specify disabled profiles prefix them with ``-``. Note that
                 when starting the argument list with a disabled profile an
-                equals sign must be used, e.g. -p=-path/to/profile, otherwise
-                the disabled profile argument is treated as an option.
+                equals sign must be used, e.g. ``-p=-path/to/profile``,
+                otherwise the disabled profile argument is treated as an
+                option.
 
-                The special keywords of stable, dev, exp, and deprecated correspond to the
-                lists of stable, development, experimental, and deprecated profiles,
-                respectively. Therefore, to only scan all stable profiles
-                pass the 'stable' argument to --profiles.
+                The special keywords of ``stable``, ``dev``, ``exp``, and
+                ``deprecated`` correspond to the lists of stable, development,
+                experimental, and deprecated profiles, respectively. Therefore,
+                to only scan all stable profiles pass the ``stable`` argument
+                to --profiles. Additionally the keyword ``all`` can be used to
+                scan all defined profiles in the target repo.
             """)
 
     @staticmethod
@@ -486,8 +489,9 @@ class ProfileAddon(base.Addon):
         def norm_name(s):
             """Expand status keywords and format paths."""
             if s in ('dev', 'exp', 'stable', 'deprecated'):
-                for x in profiles_obj.paths(s):
-                    yield x
+                yield from profiles_obj.paths(status=s)
+            elif s == 'all':
+                yield from profiles_obj.paths()
             else:
                 yield '/'.join([_f for _f in s.split('/') if _f])
 
