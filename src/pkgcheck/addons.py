@@ -517,9 +517,8 @@ class ProfileAddon(base.Addon):
         cache_dir = pjoin(base.CACHE_DIR, 'repos', namespace.target_repo.repo_id)
         namespace.cache_file = pjoin(cache_dir, 'profiles.pickle')
 
-        # only default to using cache when run without target args within a repo
-        if (profiles_dir is not None or
-                (namespace.profile_cache is None and namespace.default_target is None)):
+        # disable profile cache usage for custom profiles directories
+        if profiles_dir is not None:
             namespace.profile_cache = False
         namespace.forced_cache = bool(namespace.profile_cache)
 
