@@ -15,6 +15,7 @@ from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
 from pkgcore.test.misc import FakeRepo
+from snakeoil import klass, mappings
 from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
@@ -554,7 +555,7 @@ class ProfileAddon(base.Addon):
         namespace.arch_profiles = arch_profiles
 
     @coroutine
-    def _profile_data(self):
+    def _profile_files(self):
         """Given a profile object, return its file set and most recent mtime."""
         cache = {}
         while True:
@@ -576,17 +577,22 @@ class ProfileAddon(base.Addon):
                 profile_files.extend(files)
             yield profile_mtime, frozenset(profile_files)
 
+    @klass.jit_attr
+    def profile_data(self):
+        """Mapping of profile age and file sets used to check cache viability."""
+        data = {}
+        if self.options.profile_cache is None or self.options.profile_cache:
+            gen_profile_data = self._profile_files()
+            for name, profile, status in chain.from_iterable(
+                    self.options.arch_profiles.values()):
+                mtime, files = gen_profile_data.send(profile)
+                data[name] = (mtime, files)
+                next(gen_profile_data)
+            del gen_profile_data
+        return mappings.ImmutableDict(data)
+
     def __init__(self, options, arches=None):
         super().__init__(options)
-
-        # determine profile age and file sets to check cache viability
-        profile_data = {}
-        gen_profile_data = self._profile_data()
-        for name, profile, status in chain.from_iterable(options.arch_profiles.values()):
-            mtime, files = gen_profile_data.send(profile)
-            profile_data[name] = (mtime, files)
-            next(gen_profile_data)
-        del gen_profile_data
 
         self.official_arches = options.target_repo.known_arches
         self.desired_arches = getattr(self.options, 'arches', None)
@@ -628,7 +634,7 @@ class ProfileAddon(base.Addon):
 
                 for profile_name, profile, profile_status in options.arch_profiles.get(k, []):
                     try:
-                        files = profile_data.get(profile_name, None)
+                        files = self.profile_data.get(profile_name, None)
                         try:
                             try:
                                 cached_profile = cached_profile_filters.get(profile_name, {})
