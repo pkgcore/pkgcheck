@@ -533,3 +533,41 @@ class CopyrightCheck(base.GentooRepoCheck):
                 # Gentoo policy requires 'Gentoo Authors'
                 elif copyright.group('holder') != 'Gentoo Authors':
                     yield NonGentooAuthorsCopyright(pkg, line)
+
+
+class HomepageInSrcUri(base.Warning):
+    """${HOMEPAGE} is referenced in SRC_URI.
+
+    SRC_URI is built on top of ${HOMEPAGE}.  This is discouraged since
+    HOMEPAGE is multi-valued by design, and is subject to potential
+    changes that should not accidentally affect SRC_URI.
+    """
+
+    __slots__ = ("category", "package", "version")
+    threshold = base.versioned_feed
+
+    def __init__(self, pkg):
+        super().__init__()
+        self._store_cpv(pkg)
+
+    @property
+    def short_desc(self):
+        return f"${{HOMEPAGE}} found in SRC_URI"
+
+
+class HomepageInSrcUriCheck(base.Template):
+    """Scan ebuild for HOMEPAGE in SRC_URI."""
+
+    feed_type = base.ebuild_feed
+    known_results = (HomepageInSrcUri,)
+
+    def __init__(self, options):
+        super().__init__(options)
+        self.regex = re.compile(r'^\s*SRC_URI="[^"]*[$]{HOMEPAGE}', re.M|re.S)
+
+    def feed(self, entry):
+        pkg, lines = entry
+
+        match = self.regex.search(''.join(lines))
+        if match is not None:
+            yield HomepageInSrcUri(pkg)

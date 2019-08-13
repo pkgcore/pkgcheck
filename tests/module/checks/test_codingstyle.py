@@ -336,3 +336,39 @@ class TestCopyright(misc.ReportTestCase):
             r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
             assert isinstance(r, codingstyle.NonGentooAuthorsCopyright)
             assert line.strip() in str(r)
+
+
+class TestHomepageInSrcUri(misc.ReportTestCase):
+
+    check_kls = codingstyle.HomepageInSrcUriCheck
+
+    def mk_pkg(self):
+        return misc.FakePkg("dev-util/diffball-0.5")
+
+    def test_single_line(self):
+        fake_pkg = self.mk_pkg()
+        fake_src = ['HOMEPAGE="https://example.com/"\n',
+                    'SRC_URI="${HOMEPAGE}/${P}.tar.bz2"\n']
+        r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
+        assert isinstance(r, codingstyle.HomepageInSrcUri)
+
+    def test_multi_line(self):
+        fake_pkg = self.mk_pkg()
+        fake_src = ['HOMEPAGE="https://example.com/"\n',
+                    'SRC_URI="https://example.org/${P}-manpages.tar.bz2\n',
+                    '\t${HOMEPAGE}/${P}.tar.bz2"\n']
+        r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
+        assert isinstance(r, codingstyle.HomepageInSrcUri)
+
+    def test_no_match(self):
+        fake_pkg = self.mk_pkg()
+        fake_src = ['HOMEPAGE="https://example.com/"\n',
+                    'SRC_URI="https://example.com/${P}.tar.bz2"\n']
+        self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
+
+    def test_no_false_positive(self):
+        fake_pkg = self.mk_pkg()
+        fake_src = ['HOMEPAGE="https://example.com/"\n',
+                    'SRC_URI="https://example.com/${P}.tar.bz2"\n',
+                    '# ${HOMEPAGE} must not be used here\n']
+        self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
