@@ -27,7 +27,7 @@ IUSE_PREFIX = 'python_targets_'
 IUSE_PREFIX_S = 'python_single_target_'
 
 
-class MissingPythonEclass(base.Warning):
+class MissingPythonEclass(base.VersionedResult, base.Warning):
     """Package depends on Python but does not use the eclasses.
 
     All packages depending on Python are required to use one of the following
@@ -38,13 +38,10 @@ class MissingPythonEclass(base.Warning):
     .. [#] https://wiki.gentoo.org/wiki/Project:Python/Eclasses
     """
 
-    __slots__ = ("category", "package", "version", "eclass", "dep_type", "dep")
-
-    threshold = base.versioned_feed
+    __slots__ = ("eclass", "dep_type", "dep")
 
     def __init__(self, pkg, eclass, dep_type, dep):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.eclass = eclass
         self.dep_type = dep_type.upper()
         self.dep = dep
@@ -54,7 +51,7 @@ class MissingPythonEclass(base.Warning):
         return f'missing {self.eclass} eclass usage for {self.dep_type}="{self.dep}"'
 
 
-class PythonSingleUseMismatch(base.Warning):
+class PythonSingleUseMismatch(base.VersionedResult, base.Warning):
     """Package has mismatched PYTHON_SINGLE_TARGET and PYTHON_TARGETS flags.
 
     The package declares both PYTHON_SINGLE_TARGET and PYTHON_TARGETS flags but
@@ -63,13 +60,10 @@ class PythonSingleUseMismatch(base.Warning):
     the flags.
     """
 
-    __slots__ = ("category", "package", "version", "flags", "single_flags")
-
-    threshold = base.versioned_feed
+    __slots__ = ("flags", "single_flags")
 
     def __init__(self, pkg, flags, single_flags):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.flags = tuple(sorted(flags))
         self.single_flags = tuple(sorted(single_flags))
 
@@ -82,7 +76,7 @@ class PythonSingleUseMismatch(base.Warning):
         )
 
 
-class PythonMissingRequiredUSE(base.Warning):
+class PythonMissingRequiredUSE(base.VersionedResult, base.Warning):
     """Package is missing PYTHON_REQUIRED_USE.
 
     The python-r1 and python-single-r1 eclasses require the packages to
@@ -90,20 +84,12 @@ class PythonMissingRequiredUSE(base.Warning):
     conditionally, it can be wrapped in appropriate USE conditionals.
     """
 
-    __slots__ = ("category", "package", "version")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg):
-        super().__init__()
-        self._store_cpv(pkg)
-
     @property
     def short_desc(self):
         return 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"'
 
 
-class PythonMissingDeps(base.Warning):
+class PythonMissingDeps(base.VersionedResult, base.Warning):
     """Package is missing PYTHON_DEPS.
 
     The python-r1 and python-single-r1 eclasses require the packages
@@ -114,13 +100,10 @@ class PythonMissingDeps(base.Warning):
     in appropriate USE conditionals.
     """
 
-    __slots__ = ("category", "package", "version", "dep_type")
-
-    threshold = base.versioned_feed
+    __slots__ = ('dep_type',)
 
     def __init__(self, pkg, dep_type):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.dep_type = dep_type.upper()
 
     @property
@@ -128,7 +111,7 @@ class PythonMissingDeps(base.Warning):
         return f'missing {self.dep_type}="${{PYTHON_DEPS}}"'
 
 
-class PythonRuntimeDepInAnyR1(base.Warning):
+class PythonRuntimeDepInAnyR1(base.VersionedResult, base.Warning):
     """Package depends on Python at runtime but uses any-r1 eclass.
 
     The python-any-r1 eclass is meant to be used purely for build-time
@@ -138,13 +121,10 @@ class PythonRuntimeDepInAnyR1(base.Warning):
     should be removed.
     """
 
-    __slots__ = ("category", "package", "version", "dep_type", "dep")
-
-    threshold = base.versioned_feed
+    __slots__ = ('dep_type', 'dep')
 
     def __init__(self, pkg, dep_type, dep):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.dep_type = dep_type.upper()
         self.dep = dep
 

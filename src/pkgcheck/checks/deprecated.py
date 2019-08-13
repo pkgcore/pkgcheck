@@ -4,15 +4,13 @@ from snakeoil.strings import pluralism as _pl
 from .. import base
 
 
-class DeprecatedEclass(base.Warning):
+class DeprecatedEclass(base.VersionedResult, base.Warning):
     """Package uses an eclass that is deprecated/abandoned."""
 
-    __slots__ = ("category", "package", "version", "eclasses")
-    threshold = base.versioned_feed
+    __slots__ = ('eclasses',)
 
     def __init__(self, pkg, eclasses):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.eclasses = eclasses
 
     @property

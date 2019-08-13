@@ -5,19 +5,16 @@ from . import repo_metadata
 from .. import base, addons
 
 
-class UnusedInMastersLicenses(base.Warning):
+class UnusedInMastersLicenses(base.VersionedResult, base.Warning):
     """Licenses detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
     """
 
-    __slots__ = ("category", "package", "version", "licenses")
-
-    threshold = base.versioned_feed
+    __slots__ = ('licenses',)
 
     def __init__(self, pkg, licenses):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.licenses = tuple(sorted(licenses))
 
     @property
@@ -26,19 +23,16 @@ class UnusedInMastersLicenses(base.Warning):
             _pl(self.licenses), ', '.join(self.licenses))
 
 
-class UnusedInMastersMirrors(base.Warning):
+class UnusedInMastersMirrors(base.VersionedResult, base.Warning):
     """Mirrors detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
     """
 
-    __slots__ = ("category", "package", "version", "mirrors")
-
-    threshold = base.versioned_feed
+    __slots__ = ('mirrors',)
 
     def __init__(self, pkg, mirrors):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.mirrors = tuple(sorted(mirrors))
 
     @property
@@ -47,19 +41,16 @@ class UnusedInMastersMirrors(base.Warning):
             _pl(self.mirrors), ', '.join(self.mirrors))
 
 
-class UnusedInMastersEclasses(base.Warning):
+class UnusedInMastersEclasses(base.VersionedResult, base.Warning):
     """Eclasses detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
     """
 
-    __slots__ = ("category", "package", "version", "eclasses")
-
-    threshold = base.versioned_feed
+    __slots__ = ('eclasses',)
 
     def __init__(self, pkg, eclasses):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.eclasses = tuple(sorted(eclasses))
 
     @property
@@ -68,19 +59,16 @@ class UnusedInMastersEclasses(base.Warning):
             _pl(self.eclasses, plural='es'), ', '.join(self.eclasses))
 
 
-class UnusedInMastersGlobalUSE(base.Warning):
+class UnusedInMastersGlobalUSE(base.VersionedResult, base.Warning):
     """Global USE flags detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
     """
 
-    __slots__ = ("category", "package", "version", "flags")
-
-    threshold = base.versioned_feed
+    __slots__ = ('flags',)
 
     def __init__(self, pkg, flags):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.flags = tuple(sorted(flags))
 
     @property

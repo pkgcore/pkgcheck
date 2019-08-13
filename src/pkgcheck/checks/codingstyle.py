@@ -14,15 +14,13 @@ demand_compile_regexp(
     r'^# Copyright (?P<begin>\d{4}-)?(?P<end>\d{4}) (?P<holder>.+)$')
 
 
-class HttpsAvailable(base.Warning):
+class HttpsAvailable(base.VersionedResult, base.Warning):
     """Ebuild contains an ``http://`` link that should use ``https://`` instead."""
 
-    __slots__ = ("category", "package", "version", "link", "lines")
-    threshold = base.versioned_feed
+    __slots__ = ('link', 'lines')
 
     def __init__(self, pkg, link, lines):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.link = link
         self.lines = tuple(lines)
 
@@ -86,15 +84,13 @@ class HttpsAvailableCheck(base.Template):
             yield HttpsAvailable(pkg, link, lines)
 
 
-class PortageInternals(base.Warning):
+class PortageInternals(base.VersionedResult, base.Warning):
     """Ebuild uses a function or variable internal to portage."""
 
-    __slots__ = ("category", "package", "version", "internal", "line")
-    threshold = base.versioned_feed
+    __slots__ = ('internal', 'line')
 
     def __init__(self, pkg, internal, line):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.internal = internal
         self.line = line
 
@@ -135,15 +131,13 @@ class PortageInternalsCheck(base.Template):
                 yield PortageInternals(pkg, matches.group(2), lineno)
 
 
-class MissingSlash(base.Error):
+class MissingSlash(base.VersionedResult, base.Error):
     """Ebuild uses a path variable missing a trailing slash."""
 
-    __slots__ = ("category", "package", "version", "match", "lines")
-    threshold = base.versioned_feed
+    __slots__ = ('match', 'lines')
 
     def __init__(self, pkg, match, lines):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.match = match
         self.lines = tuple(lines)
 
@@ -153,15 +147,13 @@ class MissingSlash(base.Error):
         return f"{self.match} missing trailing slash on line{_pl(self.lines)}: {lines}"
 
 
-class UnnecessarySlashStrip(base.Warning):
+class UnnecessarySlashStrip(base.VersionedResult, base.Warning):
     """Ebuild uses a path variable that strips a nonexistent slash."""
 
-    __slots__ = ("category", "package", "version", "match", "lines")
-    threshold = base.versioned_feed
+    __slots__ = ('match', 'lines')
 
     def __init__(self, pkg, match, lines):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.match = match
         self.lines = tuple(lines)
 
@@ -171,7 +163,7 @@ class UnnecessarySlashStrip(base.Warning):
         return f"{self.match} unnecessary slash strip on line{_pl(self.lines)}: {lines}"
 
 
-class DoublePrefixInPath(base.Error):
+class DoublePrefixInPath(base.VersionedResult, base.Error):
     """Ebuild uses two consecutive paths including EPREFIX.
 
     Ebuild combines two path variables (or a variable and a getter), both
@@ -182,12 +174,10 @@ class DoublePrefixInPath(base.Error):
     with ``${D}$(python_get_sitedir)``.
     """
 
-    __slots__ = ("category", "package", "version", "match", "lines")
-    threshold = base.versioned_feed
+    __slots__ = ('match', 'lines')
 
     def __init__(self, pkg, match, lines):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.match = match
         self.lines = tuple(lines)
 
@@ -302,16 +292,13 @@ class PathVariablesCheck(base.Template):
             yield DoublePrefixInPath(pkg, match, lines)
 
 
-class AbsoluteSymlink(base.Warning):
+class AbsoluteSymlink(base.VersionedResult, base.Warning):
     """Ebuild uses dosym with absolute paths instead of relative."""
 
-    threshold = base.versioned_feed
-
-    __slots__ = ("category", "package", "version", "line", "abspath")
+    __slots__ = ('line', 'abspath')
 
     def __init__(self, pkg, abspath, line):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.abspath = abspath
         self.line = line
 
@@ -342,16 +329,13 @@ class AbsoluteSymlinkCheck(base.Template):
                 yield AbsoluteSymlink(pkg, matches.groups()[0], lineno)
 
 
-class BadInsIntoDir(base.Warning):
+class BadInsIntoDir(base.VersionedResult, base.Warning):
     """Ebuild uses insinto where more compact commands exist."""
 
-    threshold = base.versioned_feed
-
-    __slots__ = ("category", "package", "version", "line", "insintodir")
+    __slots__ = ('line', 'insintodir')
 
     def __init__(self, pkg, insintodir, line):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.line = line
         self.insintodir = insintodir
 
@@ -401,7 +385,7 @@ class BadInsIntoCheck(base.Template):
                 yield BadInsIntoDir(pkg, matches.groups()[0], lineno)
 
 
-class ObsoleteUri(base.Warning):
+class ObsoleteUri(base.VersionedResult, base.Warning):
     """URI used is obsolete.
 
     The URI used to fetch distfile is obsolete and can be replaced
@@ -411,12 +395,10 @@ class ObsoleteUri(base.Warning):
     (for example, by removing no longer necessary vcs-snapshot.eclass).
     """
 
-    __slots__ = ("category", "package", "version", "line", "uri", "replacement")
-    threshold = base.versioned_feed
+    __slots__ = ('line', 'uri', 'replacement')
 
     def __init__(self, pkg, line, uri, replacement):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.line = line
         self.uri = uri
         self.replacement = replacement
@@ -463,7 +445,7 @@ class ObsoleteUriCheck(base.Template):
                     yield ObsoleteUri(pkg, lineno, uri, regexp.sub(repl, uri))
 
 
-class InvalidCopyright(base.Warning):
+class InvalidCopyright(base.VersionedResult, base.Warning):
     """Ebuild with invalid copyright.
 
     The ebuild does not start with a valid copyright line. Each ebuild must
@@ -476,12 +458,10 @@ class InvalidCopyright(base.Warning):
         # Copyright YEARS Gentoo Authors
     """
 
-    __slots__ = ('category', 'package', 'version', 'line')
-    threshold = base.versioned_feed
+    __slots__ = ('line',)
 
     def __init__(self, pkg, line):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.line = line
 
     @property
@@ -489,7 +469,7 @@ class InvalidCopyright(base.Warning):
         return f'invalid copyright: {self.line!r}'
 
 
-class OldGentooCopyright(base.Warning):
+class OldGentooCopyright(base.VersionedResult, base.Warning):
     """Ebuild with old Gentoo Foundation copyright.
 
     The ebuild still assigns copyright to the Gentoo Foundation even though
@@ -500,12 +480,10 @@ class OldGentooCopyright(base.Warning):
     in other repositories may specify an explicit copyright holder instead.
     """
 
-    __slots__ = ('category', 'package', 'version', 'line')
-    threshold = base.versioned_feed
+    __slots__ = ('line',)
 
     def __init__(self, pkg, line):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.line = line
 
     @property
@@ -513,7 +491,7 @@ class OldGentooCopyright(base.Warning):
         return f'old copyright, update to "Gentoo Authors": {self.line!r}'
 
 
-class NonGentooAuthorsCopyright(base.Warning):
+class NonGentooAuthorsCopyright(base.VersionedResult, base.Warning):
     """Ebuild with copyright stating owner other than "Gentoo Authors".
 
     The ebuild specifies explicit copyright owner, while the Gentoo repository
@@ -522,12 +500,10 @@ class NonGentooAuthorsCopyright(base.Warning):
     bugs.gentoo.org.
     """
 
-    __slots__ = ('category', 'package', 'version', 'line')
-    threshold = base.versioned_feed
+    __slots__ = ('line',)
 
     def __init__(self, pkg, line):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.line = line
 
     @property
@@ -559,20 +535,13 @@ class CopyrightCheck(base.GentooRepoCheck):
                     yield NonGentooAuthorsCopyright(pkg, line)
 
 
-class HomepageInSrcUri(base.Warning):
+class HomepageInSrcUri(base.VersionedResult, base.Warning):
     """${HOMEPAGE} is referenced in SRC_URI.
 
     SRC_URI is built on top of ${HOMEPAGE}. This is discouraged since HOMEPAGE
     is multi-valued by design, and is subject to potential changes that should
     not accidentally affect SRC_URI.
     """
-
-    __slots__ = ("category", "package", "version")
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg):
-        super().__init__()
-        self._store_cpv(pkg)
 
     @property
     def short_desc(self):

@@ -22,15 +22,13 @@ from ..base import MetadataError
 from .visibility import FakeConfigurable, strip_atom_use
 
 
-class MissingLicense(base.Error):
+class MissingLicense(base.VersionedResult, base.Error):
     """Used license(s) have no matching license file(s)."""
 
-    __slots__ = ("category", "package", "version", "licenses")
-    threshold = base.versioned_feed
+    __slots__ = ('licenses',)
 
     def __init__(self, pkg, licenses):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.licenses = tuple(sorted(licenses))
 
     @property
@@ -39,15 +37,8 @@ class MissingLicense(base.Error):
         return f"no matching license{_pl(self.licenses)}: [ {licenses} ]"
 
 
-class UnnecessaryLicense(base.Warning):
+class UnnecessaryLicense(base.VersionedResult, base.Warning):
     """LICENSE defined for package that is license-less."""
-
-    __slots__ = ("category", "package", "version")
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg):
-        super().__init__()
-        self._store_cpv(pkg)
 
     @property
     def short_desc(self):
@@ -105,15 +96,13 @@ class IUSEMetadataCheck(base.Template):
                         _pl(iuse), ", ".join(sorted(iuse))))
 
 
-class DeprecatedEAPI(base.Warning):
+class DeprecatedEAPI(base.VersionedResult, base.Warning):
     """Package's EAPI is deprecated according to repo metadata."""
 
-    __slots__ = ("category", "package", "version", "eapi")
-    threshold = base.versioned_feed
+    __slots__ = ('eapi',)
 
     def __init__(self, pkg):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.eapi = str(pkg.eapi)
 
     @property
@@ -121,16 +110,8 @@ class DeprecatedEAPI(base.Warning):
         return f"uses deprecated EAPI {self.eapi}"
 
 
-class BannedEAPI(base.Error):
+class BannedEAPI(DeprecatedEAPI, base.Error):
     """Package's EAPI is banned according to repo metadata."""
-
-    __slots__ = ("category", "package", "version", "eapi")
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.eapi = str(pkg.eapi)
 
     @property
     def short_desc(self):
@@ -158,7 +139,7 @@ class MetadataCheck(base.Template):
                 pkg.versioned_atom, e.attr, e.msg(verbosity=self.options.verbosity))
 
 
-class RequiredUseDefaults(base.Warning):
+class RequiredUseDefaults(base.VersionedResult, base.Warning):
     """Default USE flag settings don't satisfy REQUIRED_USE.
 
     The REQUIRED_USE constraints specified in the ebuild are not satisfied
@@ -171,16 +152,11 @@ class RequiredUseDefaults(base.Warning):
     or modifying REQUIRED_USE.
     """
 
-    __slots__ = (
-        "category", "package", "version", "profile", "num_profiles", "keyword",
-        "required_use", "use",
-    )
-    threshold = base.versioned_feed
+    __slots__ = ("required_use", "use", "keyword", "profile", "num_profiles")
 
     def __init__(self, pkg, required_use, use=(), keyword=None,
                  profile=None, num_profiles=None):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.required_use = str(required_use)
         self.use = tuple(sorted(use))
         self.keyword = keyword
@@ -386,7 +362,7 @@ class LocalUSECheck(base.Template):
             yield UnusedLocalUSE(pkg, unused)
 
 
-class MissingSlotDep(base.Warning):
+class MissingSlotDep(base.VersionedResult, base.Warning):
     """Missing slot value in dependencies.
 
     The package dependency does not specify a slot but the target package
@@ -402,15 +378,12 @@ class MissingSlotDep(base.Warning):
     .. [#] https://devmanual.gentoo.org/general-concepts/dependencies/#slot-dependencies
     """
 
-    __slots__ = ('category', 'package', 'version', 'dep', 'dep_slots')
-
-    threshold = base.versioned_feed
+    __slots__ = ('dep', 'dep_slots')
 
     def __init__(self, pkg, dep, dep_slots):
-        super().__init__()
+        super().__init__(pkg)
         self.dep = dep
         self.dep_slots = tuple(sorted(dep_slots))
-        self._store_cpv(pkg)
 
     @property
     def short_desc(self):
@@ -446,7 +419,7 @@ class MissingSlotDepCheck(base.Template):
                 yield MissingSlotDep(pkg, str(dep), dep_slots)
 
 
-class MissingPackageRevision(base.Warning):
+class MissingPackageRevision(base.VersionedResult, base.Warning):
     """Missing package revision in =cat/pkg dependencies.
 
     The dependency string uses the ``=`` operator without specifying a revision.
@@ -458,13 +431,10 @@ class MissingPackageRevision(base.Warning):
     allowed, ``-r0`` should be appended in order to make the intent explicit.
     """
 
-    __slots__ = ('category', 'package', 'version', 'dep', 'atom')
-
-    threshold = base.versioned_feed
+    __slots__ = ('dep', 'atom')
 
     def __init__(self, pkg, dep, atom):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.dep = dep.upper()
         self.atom = str(atom)
 
@@ -473,16 +443,13 @@ class MissingPackageRevision(base.Warning):
         return f'{self.dep}="{self.atom}": "=" operator used without package revision'
 
 
-class MissingUseDepDefault(base.Warning):
+class MissingUseDepDefault(base.VersionedResult, base.Warning):
     """Package dependencies with USE dependencies missing defaults."""
 
-    __slots__ = ('category', 'package', 'version', 'attr', 'atom', 'flag', 'pkg_deps')
-
-    threshold = base.versioned_feed
+    __slots__ = ('attr', 'atom', 'flag', 'pkg_deps')
 
     def __init__(self, pkg, attr, atom, flag, pkg_deps):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(cpv)
         self.attr = attr.upper()
         self.atom = str(atom)
         self.pkg_deps = tuple(sorted(str(x.versioned_atom) for x in pkg_deps))
@@ -495,19 +462,16 @@ class MissingUseDepDefault(base.Warning):
             f"package{_pl(self.pkg_deps)}: [ {', '.join(self.pkg_deps)} ]")
 
 
-class OutdatedBlocker(base.Warning):
+class OutdatedBlocker(base.VersionedResult, base.Warning):
     """Blocker dependency removed more than two years ago from the tree.
 
     Note that this ignores slot/subslot deps and USE deps in blocker atoms.
     """
 
-    __slots__ = ("category", "package", "version", "attr", "atom", "age")
-
-    threshold = base.versioned_feed
+    __slots__ = ("attr", "atom", "age")
 
     def __init__(self, pkg, attr, atom, age):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.attr = attr.upper()
         self.atom = str(atom)
         self.age = age
@@ -520,7 +484,7 @@ class OutdatedBlocker(base.Warning):
         )
 
 
-class NonexistentBlocker(base.Warning):
+class NonexistentBlocker(base.VersionedResult, base.Warning):
     """No matches for blocker dependency in repo history.
 
     For the gentoo repo this means it was either removed before the CVS -> git
@@ -529,13 +493,10 @@ class NonexistentBlocker(base.Warning):
     Note that this ignores slot/subslot deps and USE deps in blocker atoms.
     """
 
-    __slots__ = ("category", "package", "version", "attr", "atom")
-
-    threshold = base.versioned_feed
+    __slots__ = ("attr", "atom")
 
     def __init__(self, pkg, attr, atom):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.attr = attr.upper()
         self.atom = str(atom)
 
@@ -653,29 +614,20 @@ class DependencyCheck(base.Template):
                 yield NonexistentBlocker(pkg, attr, atom)
 
 
-class StupidKeywords(base.Warning):
+class StupidKeywords(base.VersionedResult, base.Warning):
     """Packages using ``-*``; use package.mask instead."""
-
-    __slots__ = ('category', 'package', 'version')
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg):
-        super().__init__()
-        self._store_cpv(pkg)
 
     short_desc = (
         "keywords contain -*; use package.mask or empty keywords instead")
 
 
-class InvalidKeywords(base.Error):
+class InvalidKeywords(base.VersionedResult, base.Error):
     """Packages using invalid KEYWORDS."""
 
-    __slots__ = ('category', 'package', 'version', 'keywords')
-    threshold = base.versioned_feed
+    __slots__ = ('keywords',)
 
     def __init__(self, pkg, keywords):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.keywords = tuple(sorted(keywords))
 
     @property
@@ -683,15 +635,13 @@ class InvalidKeywords(base.Error):
         return f"invalid KEYWORDS: {', '.join(map(repr, self.keywords))}"
 
 
-class OverlappingKeywords(base.Warning):
+class OverlappingKeywords(base.VersionedResult, base.Warning):
     """Packages having overlapping arch and ~arch KEYWORDS."""
 
-    __slots__ = ('category', 'package', 'version', 'keywords')
-    threshold = base.versioned_feed
+    __slots__ = ('keywords',)
 
     def __init__(self, pkg, keywords):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.keywords = tuple(sorted(zip(keywords, ('~' + x for x in keywords))))
 
     @property
@@ -699,15 +649,13 @@ class OverlappingKeywords(base.Warning):
         return f"overlapping KEYWORDS: {', '.join(map(str, self.keywords))}"
 
 
-class DuplicateKeywords(base.Warning):
+class DuplicateKeywords(base.VersionedResult, base.Warning):
     """Packages having duplicate KEYWORDS."""
 
-    __slots__ = ('category', 'package', 'version', 'keywords')
-    threshold = base.versioned_feed
+    __slots__ = ('keywords',)
 
     def __init__(self, pkg, keywords):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.keywords = tuple(keywords)
 
     @property
@@ -715,7 +663,7 @@ class DuplicateKeywords(base.Warning):
         return f"duplicate KEYWORDS: {', '.join(self.keywords)}"
 
 
-class UnsortedKeywords(base.Warning):
+class UnsortedKeywords(base.VersionedResult, base.Warning):
     """Packages with unsorted KEYWORDS.
 
     KEYWORDS should be sorted in alphabetical order with prefix keywords (those
@@ -723,12 +671,10 @@ class UnsortedKeywords(base.Warning):
     before them.
     """
 
-    __slots__ = ('category', 'package', 'version', 'keywords')
-    threshold = base.versioned_feed
+    __slots__ = ('keywords',)
 
     def __init__(self, pkg):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.keywords = tuple(pkg.keywords)
         self.sorted_keywords = tuple(pkg.sorted_keywords)
 
@@ -743,15 +689,13 @@ class UnsortedKeywords(base.Warning):
             f"\n\tsorted: {', '.join(self.sorted_keywords)}")
 
 
-class MissingVirtualKeywords(base.Warning):
+class MissingVirtualKeywords(base.VersionedResult, base.Warning):
     """Virtual packages with keywords missing from their dependencies."""
 
-    __slots__ = ('category', 'package', 'version', 'keywords')
-    threshold = base.versioned_feed
+    __slots__ = ('keywords',)
 
     def __init__(self, pkg, keywords):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.keywords = tuple(sort_keywords(keywords))
 
     @property
@@ -830,15 +774,13 @@ class KeywordsCheck(base.Template):
                     yield MissingVirtualKeywords(pkg, missing_keywords)
 
 
-class MissingUri(base.Warning):
+class MissingUri(base.VersionedResult, base.Warning):
     """RESTRICT=fetch isn't set, yet no full URI exists."""
 
-    __slots__ = ("category", "package", "version", "filename")
-    threshold = base.versioned_feed
+    __slots__ = ('filename',)
 
     def __init__(self, pkg, filename):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.filename = filename
 
     @property
@@ -847,15 +789,13 @@ class MissingUri(base.Warning):
             "RESTRICT=fetch isn't set"
 
 
-class UnknownMirror(base.Error):
+class UnknownMirror(base.VersionedResult, base.Error):
     """URI uses an unknown mirror."""
 
-    __slots__ = ("category", "package", "version", "filename", "uri", "mirror")
-    threshold = base.versioned_feed
+    __slots__ = ("filename", "uri", "mirror")
 
     def __init__(self, pkg, filename, uri, mirror):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.filename = filename
         self.uri = uri
         self.mirror = mirror
@@ -865,18 +805,16 @@ class UnknownMirror(base.Error):
         return f"file {self.filename}: unknown mirror {self.mirror!r} from URI {self.uri!r}"
 
 
-class BadProto(base.Warning):
+class BadProto(base.VersionedResult, base.Warning):
     """URI uses an unsupported protocol.
 
     Valid protocols are currently: http, https, and ftp
     """
 
-    __slots__ = ("category", "package", "version", "filename", "bad_uri")
-    threshold = base.versioned_feed
+    __slots__ = ("filename", "bad_uri")
 
     def __init__(self, pkg, filename, bad_uri):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.filename = filename
         self.bad_uri = tuple(sorted(bad_uri))
 
@@ -885,18 +823,16 @@ class BadProto(base.Warning):
         return f"file {self.filename}: bad protocol/uri: {self.bad_uri!r}"
 
 
-class BadFilename(base.Warning):
+class BadFilename(base.VersionedResult, base.Warning):
     """URI uses unspecific or poor filename(s).
 
     Archive filenames should be disambiguated using ``->`` to rename them.
     """
 
-    __slots__ = ("category", "package", "version", "filenames")
-    threshold = base.versioned_feed
+    __slots__ = ('filenames',)
 
     def __init__(self, pkg, filenames):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.filenames = tuple(sorted(filenames))
 
     @property
@@ -904,19 +840,17 @@ class BadFilename(base.Warning):
         return "bad filename%s: [ %s ]" % (_pl(self.filenames), ', '.join(self.filenames))
 
 
-class TarballAvailable(base.Warning):
+class TarballAvailable(base.VersionedResult, base.Warning):
     """URI uses .zip archive when .tar* is available.
 
     Tarballs should be preferred over zip archives due to better compression
     and no extra unpack dependencies.
     """
 
-    __slots__ = ("category", "package", "version", "uris")
-    threshold = base.versioned_feed
+    __slots__ = ('uris',)
 
     def __init__(self, pkg, uris):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.uris = tuple(sorted(uris))
 
     @property
@@ -1004,15 +938,13 @@ class SrcUriCheck(base.Template):
             yield TarballAvailable(pkg, tarball_available)
 
 
-class BadDescription(base.Warning):
+class BadDescription(base.VersionedResult, base.Warning):
     """Package's description is bad for some reason."""
 
-    __slots__ = ("category", "package", "version", "msg")
-    threshold = base.versioned_feed
+    __slots__ = ('msg',)
 
     def __init__(self, pkg, msg):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.msg = msg
 
     @property
@@ -1048,15 +980,13 @@ class DescriptionCheck(base.Template):
                     pkg, f"{pkg.description!r} under 10 chars in length- too short")
 
 
-class BadHomepage(base.Warning):
+class BadHomepage(base.VersionedResult, base.Warning):
     """Package's homepage is bad for some reason."""
 
-    __slots__ = ("category", "package", "version", "msg")
-    threshold = base.versioned_feed
+    __slots__ = ('msg',)
 
     def __init__(self, pkg, msg):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.msg = msg
 
     @property
@@ -1093,15 +1023,13 @@ class HomepageCheck(base.Template):
                             f"protocol {homepage[:i]!r}")
 
 
-class BadRestricts(base.Warning):
+class BadRestricts(base.VersionedResult, base.Warning):
     """Package's RESTRICT metadata has unknown/deprecated entries."""
 
-    __slots__ = ("category", "package", "version", "restricts", "deprecated")
-    threshold = base.versioned_feed
+    __slots__ = ("restricts", "deprecated")
 
     def __init__(self, pkg, restricts, deprecated=None):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.restricts = restricts
         self.deprecated = deprecated
         if not restricts and not deprecated:
@@ -1152,7 +1080,7 @@ class RestrictsCheck(base.Template):
             yield BadRestricts(pkg, bad.difference(deprecated), deprecated)
 
 
-class MissingConditionalTestRestrict(base.Warning):
+class MissingConditionalTestRestrict(base.VersionedResult, base.Warning):
     """Missing ``RESTRICT="!test? ( test )"``.
 
     Traditionally, it was assumed that ``IUSE=test`` is a special flag that is
@@ -1162,13 +1090,6 @@ class MissingConditionalTestRestrict(base.Warning):
     be skipped when the flag is disabled and therefore test dependencies may
     not be installed.
     """
-
-    __slots__ = ("category", "package", "version")
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg):
-        super().__init__()
-        self._store_cpv(pkg)
 
     @property
     def short_desc(self):
@@ -1198,19 +1119,17 @@ class ConditionalTestRestrictCheck(base.Template):
         yield MissingConditionalTestRestrict(pkg)
 
 
-class MissingUnpackerDep(base.Warning):
+class MissingUnpackerDep(base.VersionedResult, base.Warning):
     """Missing dependency on a required unpacker package.
 
     Package uses an archive format for which an unpacker is not provided by the
     system set, and lacks an explicit dependency on the unpacker package.
     """
 
-    __slots__ = ("category", "package", "version", "eapi", "filenames", "unpackers")
-    threshold = base.versioned_feed
+    __slots__ = ("eapi", "filenames", "unpackers")
 
     def __init__(self, pkg, filenames, unpackers):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.eapi = str(pkg.eapi)
         self.filenames = tuple(sorted(filenames))
         self.unpackers = tuple(sorted(map(str, unpackers)))

@@ -7,15 +7,13 @@ from snakeoil.strings import pluralism as _pl
 from .. import addons, base
 
 
-class PotentialStable(base.Warning):
+class PotentialStable(base.VersionedResult, base.Warning):
     """Stable arches with potential stable package candidates."""
 
-    __slots__ = ("category", "package", "version", "slot", "keywords", "stable")
-    threshold = base.versioned_feed
+    __slots__ = ("slot", "keywords", "stable")
 
     def __init__(self, pkg, keywords):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.slot = pkg.slot
         self.keywords = tuple(sorted(keywords))
         self.stable = tuple(sorted(str(arch) for arch in pkg.keywords
@@ -28,15 +26,13 @@ class PotentialStable(base.Warning):
             _pl(self.keywords), ', '.join(self.keywords))
 
 
-class LaggingStable(base.Warning):
+class LaggingStable(base.VersionedResult, base.Warning):
     """Stable arches for stabilized package that are lagging from a stabling standpoint."""
 
-    __slots__ = ("category", "package", "version", "slot", "keywords", "stable")
-    threshold = base.versioned_feed
+    __slots__ = ("slot", "keywords", "stable")
 
     def __init__(self, pkg, keywords):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.slot = pkg.slot
         self.keywords = tuple(sorted(keywords))
         self.stable = tuple(sorted(str(arch) for arch in pkg.keywords

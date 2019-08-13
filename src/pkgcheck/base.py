@@ -259,10 +259,6 @@ class Result(SlotsPicklingMixin, metaclass=generic_equality):
         self.category = pkg.category
         self.package = pkg.package
 
-    def _store_cpv(self, pkg):
-        self._store_cp(pkg)
-        self.version = pkg.fullver
-
 
 class Error(Result):
     """Result with an error priority level."""
@@ -272,6 +268,18 @@ class Error(Result):
 class Warning(Result):
     """Result with a warning priority level."""
     _level = 30
+
+
+class VersionedResult(Result):
+    """Result related to a specific version of a package."""
+
+    __slots__ = ('category', 'package', 'version')
+    threshold = versioned_feed
+
+    def __init__(self, pkg):
+        super().__init__()
+        self.category = pkg.category
+        self.package = pkg.package
 
 
 class LogError(Error):
@@ -292,15 +300,13 @@ class LogWarning(Warning, LogError):
     """Warning caught from a logger instance."""
 
 
-class MetadataError(Error):
+class MetadataError(VersionedResult, Error):
     """Problem detected with a package's metadata."""
 
-    __slots__ = ("category", "package", "version", "attr", "msg")
-    threshold = versioned_feed
+    __slots__ = ('attr', 'msg')
 
     def __init__(self, pkg, attr, msg):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.attr, self.msg = attr, str(msg)
 
     @property

@@ -14,15 +14,13 @@ demandload(
 )
 
 
-class VulnerablePackage(base.Error):
+class VulnerablePackage(base.VersionedResult, base.Error):
     """Packages marked as vulnerable by GLSAs."""
 
-    __slots__ = ("category", "package", "version", "arches", "glsa")
-    threshold = base.versioned_feed
+    __slots__ = ("arches", "glsa")
 
     def __init__(self, pkg, glsa):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         arches = set()
         for v in collect_package_restrictions(glsa, ["keywords"]):
             if isinstance(v.restriction, values.ContainmentMatch2):

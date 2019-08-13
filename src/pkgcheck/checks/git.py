@@ -10,15 +10,13 @@ demand_compile_regexp(
     r'^# Copyright (\d\d\d\d(-\d\d\d\d)?) .+')
 
 
-class OutdatedCopyright(base.Warning):
+class OutdatedCopyright(base.VersionedResult, base.Warning):
     """Changed ebuild with outdated copyright."""
 
-    __slots__ = ('category', 'package', 'version', 'year', 'line')
-    threshold = base.versioned_feed
+    __slots__ = ('year', 'line')
 
     def __init__(self, pkg, year, line):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.year = year
         self.line = line
 
@@ -27,15 +25,13 @@ class OutdatedCopyright(base.Warning):
         return f'outdated copyright year {self.year!r}: {self.line!r}'
 
 
-class DirectStableKeywords(base.Error):
+class DirectStableKeywords(base.VersionedResult, base.Error):
     """Newly committed ebuild with stable keywords."""
 
-    __slots__ = ('category', 'package', 'version', 'keywords')
-    threshold = base.versioned_feed
+    __slots__ = ('keywords',)
 
     def __init__(self, pkg, keywords):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.keywords = tuple(keywords)
 
     @property

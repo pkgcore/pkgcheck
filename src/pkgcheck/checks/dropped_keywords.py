@@ -3,15 +3,13 @@ from collections import defaultdict
 from .. import addons, base
 
 
-class DroppedKeywords(base.Warning):
+class DroppedKeywords(base.VersionedResult, base.Warning):
     """Arch keywords dropped during version bumping."""
 
-    __slots__ = ("arches", "category", "package", "version")
-    threshold = base.versioned_feed
+    __slots__ = ('arches',)
 
     def __init__(self, pkg, arches):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.arches = tuple(sorted(arches))
 
     @property

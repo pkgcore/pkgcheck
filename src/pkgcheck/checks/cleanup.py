@@ -3,15 +3,13 @@ from snakeoil.strings import pluralism as _pl
 from .. import base
 
 
-class RedundantVersion(base.Warning):
+class RedundantVersion(base.VersionedResult, base.Warning):
     """Redundant version(s) of a package in a specific slot."""
 
-    __slots__ = ("category", "package", "version", "slot", "later_versions")
-    threshold = base.versioned_feed
+    __slots__ = ("slot", "later_versions")
 
     def __init__(self, pkg, higher_pkgs):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.slot = pkg.slot
         self.later_versions = tuple(x.fullver for x in higher_pkgs)
 

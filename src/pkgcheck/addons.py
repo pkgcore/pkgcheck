@@ -869,18 +869,13 @@ class StableArchesAddon(base.Template):
         options.stable_arches = stable_arches
 
 
-class UnstatedIUSE(base.Error):
+class UnstatedIUSE(base.VersionedResult, base.Error):
     """Package is reliant on conditionals that aren't in IUSE."""
 
-    __slots__ = (
-        "category", "package", "version", "attr",
-        "profile", "flags", "num_profiles",
-    )
-    threshold = base.versioned_feed
+    __slots__ = ("attr", "profile", "flags", "num_profiles")
 
     def __init__(self, pkg, attr, profile, flags, num_profiles=None):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.attr = attr
         self.profile = profile
         self.flags = tuple(flags)

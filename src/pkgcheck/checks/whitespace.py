@@ -6,9 +6,7 @@ from .. import base
 demand_compile_regexp('indent_regexp', '^\t* \t+')
 
 
-class _Whitespace(base.Warning):
-
-    threshold = base.versioned_feed
+class _Whitespace(base.VersionedResult, base.Warning):
 
     __slots__ = ()
 
@@ -20,11 +18,10 @@ class _Whitespace(base.Warning):
 class WhitespaceFound(_Whitespace):
     """Leading or trailing whitespace found."""
 
-    __slots__ = ("category", "package", "version", "lines", "leadtrail")
+    __slots__ = ('lines', 'leadtrail')
 
     def __init__(self, pkg, leadtrail, lines):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.lines = tuple(lines)
         self.leadtrail = leadtrail
 
@@ -36,11 +33,10 @@ class WhitespaceFound(_Whitespace):
 class WrongIndentFound(_Whitespace):
     """Incorrect indentation whitespace found."""
 
-    __slots__ = ("category", "package", "version", "lines")
+    __slots__ = ('lines',)
 
     def __init__(self, pkg, lines):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.lines = tuple(lines)
 
     @property
@@ -51,11 +47,10 @@ class WrongIndentFound(_Whitespace):
 class DoubleEmptyLine(_Whitespace):
     """Unneeded blank lines found."""
 
-    __slots__ = ("category", "package", "version", "lines")
+    __slots__ = ('lines',)
 
     def __init__(self, pkg, lines):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.lines = tuple(lines)
 
     @property
@@ -63,30 +58,14 @@ class DoubleEmptyLine(_Whitespace):
         return f"ebuild has unneeded empty {self.lines_str}"
 
 
-class TrailingEmptyLine(base.Warning):
+class TrailingEmptyLine(base.VersionedResult, base.Warning):
     """Unneeded trailing blank lines found."""
-
-    __slots__ = ("category", "package", "version")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg):
-        super().__init__()
-        self._store_cpv(pkg)
 
     short_desc = "ebuild has trailing blank line(s)"
 
 
-class NoFinalNewline(base.Warning):
+class NoFinalNewline(base.VersionedResult, base.Warning):
     """Ebuild's last line does not have a final newline."""
-
-    __slots__ = ("category", "package", "version")
-
-    threshold = base.versioned_feed
-
-    def __init__(self, pkg):
-        super().__init__()
-        self._store_cpv(pkg)
 
     short_desc = "ebuild lacks an ending newline"
 

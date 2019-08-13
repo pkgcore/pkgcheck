@@ -500,19 +500,15 @@ def reformat_chksums(iterable):
             yield chf, "%x" % val1, "%x" % val2
 
 
-class ConflictingChksums(base.Error):
+class ConflictingChksums(base.VersionedResult, base.Error):
     """Checksum conflict detected between two files."""
 
-    __slots__ = ("category", "package", "version",
-                 "filename", "chksums", "others")
-
-    threshold = base.versioned_feed
+    __slots__ = ('filename', 'chksums', 'others')
 
     _sorter = staticmethod(itemgetter(0))
 
     def __init__(self, pkg, filename, chksums, others):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.filename = filename
         self.chksums = tuple(sorted(reformat_chksums(chksums), key=self._sorter))
         self.others = tuple(sorted(others))
@@ -524,17 +520,15 @@ class ConflictingChksums(base.Error):
             f"for file {self.filename!r} chksum {self.chksums}")
 
 
-class MissingChksum(base.Warning):
+class MissingChksum(base.VersionedResult, base.Warning):
     """A file in the chksum data lacks required checksums."""
 
-    threshold = base.versioned_feed
-    __slots__ = ('category', 'package', 'version', 'filename', 'missing',
-                 'existing')
+    __slots__ = ('filename', 'missing', 'existing')
 
     def __init__(self, pkg, filename, missing, existing):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.filename, self.missing = filename, tuple(sorted(missing))
+        super().__init__(pkg)
+        self.filename = filename
+        self.missing = tuple(sorted(missing))
         self.existing = tuple(sorted(existing))
 
     @property
@@ -544,17 +538,15 @@ class MissingChksum(base.Warning):
             f"{', '.join(self.missing)}; has chksums: {', '.join(self.existing)}")
 
 
-class DeprecatedChksum(base.Warning):
+class DeprecatedChksum(base.VersionedResult, base.Warning):
     """A file in the chksum data does not use modern checksum set."""
 
-    threshold = base.versioned_feed
-    __slots__ = ('category', 'package', 'version', 'filename', 'expected',
-                 'existing')
+    __slots__ = ('filename', 'expected', 'existing')
 
     def __init__(self, pkg, filename, expected, existing):
-        super().__init__()
-        self._store_cpv(pkg)
-        self.filename, self.expected = filename, tuple(sorted(expected))
+        super().__init__(pkg)
+        self.filename = filename
+        self.expected = tuple(sorted(expected))
         self.existing = tuple(sorted(existing))
 
     @property
@@ -564,15 +556,13 @@ class DeprecatedChksum(base.Warning):
             f"{', '.join(self.existing)}; expected {', '.join(self.expected)}")
 
 
-class MissingManifest(base.Error):
+class MissingManifest(base.VersionedResult, base.Error):
     """SRC_URI targets missing from Manifest file."""
 
-    __slots__ = ("category", "package", "version", "files")
-    threshold = base.versioned_feed
+    __slots__ = ('files',)
 
     def __init__(self, pkg, files):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.files = tuple(sorted(files))
 
     @property

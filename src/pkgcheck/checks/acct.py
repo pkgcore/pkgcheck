@@ -5,16 +5,13 @@ import re
 from .. import base
 
 
-class MissingAccountIdentifier(base.Warning):
+class MissingAccountIdentifier(base.VersionedResult, base.Warning):
     """UID/GID can not be found in account package."""
 
-    __slots__ = ("category", "package", "version", "var")
-
-    threshold = base.versioned_feed
+    __slots__ = ('var',)
 
     def __init__(self, pkg, var):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.var = var
 
     @property
@@ -42,16 +39,13 @@ class ConflictingAccountIdentifiers(base.Error):
             f"[ {', '.join(self.pkgs)} ]")
 
 
-class OutsideRangeAccountIdentifier(base.Error):
+class OutsideRangeAccountIdentifier(base.VersionedResult, base.Error):
     """UID/GID outside allowed allocation range."""
 
-    __slots__ = ("category", "package", "version", "kind", "identifier")
-
-    threshold = base.versioned_feed
+    __slots__ = ("kind", "identifier")
 
     def __init__(self, pkg, kind, identifier):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.kind = kind
         self.identifier = identifier
 

@@ -110,16 +110,13 @@ def strip_atom_use(inst):
     return atom_cls(s)
 
 
-class VisibleVcsPkg(base.Error):
+class VisibleVcsPkg(base.VersionedResult, base.Error):
     """Package is VCS-based, but visible."""
 
-    __slots__ = ("category", "package", "version", "profile", "arch")
-
-    threshold = base.versioned_feed
+    __slots__ = ('profile', 'arch')
 
     def __init__(self, pkg, arch, profile):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.arch = arch.lstrip("~")
         self.profile = profile
 
@@ -128,16 +125,13 @@ class VisibleVcsPkg(base.Error):
         return f"VCS version visible for arch {self.arch}, profile {self.profile}"
 
 
-class NonexistentDeps(base.Warning):
+class NonexistentDeps(base.VersionedResult, base.Warning):
     """No matches exist for a package dependency."""
 
-    __slots__ = ("category", "package", "version", "attr", "atoms")
-
-    threshold = base.versioned_feed
+    __slots__ = ('attr', 'atoms')
 
     def __init__(self, pkg, attr, nonexistent_atoms):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.attr = attr.upper()
         self.atoms = tuple(map(str, nonexistent_atoms))
 
@@ -149,16 +143,13 @@ class NonexistentDeps(base.Warning):
         )
 
 
-class UncheckableDep(base.Warning):
+class UncheckableDep(base.VersionedResult, base.Warning):
     """Given dependency cannot be checked due to the number of transitive use deps in it."""
 
-    __slots__ = ("category", "package", "version", "attr")
-
-    threshold = base.versioned_feed
+    __slots__ = ('attr',)
 
     def __init__(self, pkg, attr):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.attr = attr
 
     @property
@@ -166,20 +157,17 @@ class UncheckableDep(base.Warning):
         return f"depset {self.attr}: could not be checked due to pkgcore limitation"
 
 
-class NonsolvableDeps(base.Error):
+class NonsolvableDeps(base.VersionedResult, base.Error):
     """No potential solution for a depset attribute."""
 
     __slots__ = (
-        "category", "package", "version", "attr", "profile", "keyword",
-        "potentials", "profile_status", "profile_deprecated", "num_profiles",
+        "attr", "profile", "keyword", "potentials",
+        "profile_status", "profile_deprecated", "num_profiles",
     )
-
-    threshold = base.versioned_feed
 
     def __init__(self, pkg, attr, keyword, profile, deps,
                  profile_status, profile_deprecated, num_profiles=None):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.attr = attr
         self.profile = profile
         self.keyword = keyword

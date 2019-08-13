@@ -10,16 +10,13 @@ from .. import addons, base
 day = 24*3600
 
 
-class StableRequest(base.Warning):
+class StableRequest(base.VersionedResult, base.Warning):
     """Unstable package added over thirty days ago that could be stabilized."""
 
-    __slots__ = ("category", "package", "version", "keywords", "period", "slot")
-
-    threshold = base.versioned_feed
+    __slots__ = ("keywords", "period", "slot")
 
     def __init__(self, pkg, keywords, period):
-        super().__init__()
-        self._store_cpv(pkg)
+        super().__init__(pkg)
         self.slot = pkg.slot
         self.keywords = tuple(keywords)
         self.period = period
