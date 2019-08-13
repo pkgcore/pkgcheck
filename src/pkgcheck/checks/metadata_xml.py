@@ -25,7 +25,6 @@ class _MissingXml(base.Error):
     """Required XML file is missing."""
 
     __slots__ = ('category', 'package', 'filename')
-    __attrs__ = __slots__
 
     def __init__(self, filename, category, package=None):
         super().__init__()
@@ -48,7 +47,6 @@ class _BadlyFormedXml(base.Warning):
     """XML isn't well formed."""
 
     __slots__ = ("category", "package", "error", "filename")
-    __attrs__ = __slots__
 
     def __init__(self, error, filename, category, package=None):
         super().__init__()
@@ -72,7 +70,6 @@ class _InvalidXml(base.Error):
     """XML fails XML Schema validation."""
 
     __slots__ = ("category", "package", "filename")
-    __attrs__ = __slots__
 
     # message first so partial() can be easily applied
     def __init__(self, message, filename, category, package=None):
@@ -104,7 +101,6 @@ class _MetadataXmlInvalidPkgRef(base.Error):
     """metadata.xml <pkg/> references unknown/invalid package."""
 
     __slots__ = ("category", "package", "filename")
-    __attrs__ = __slots__
 
     def __init__(self, pkgtext, filename, category, package=None):
         super().__init__()
@@ -129,7 +125,6 @@ class _MetadataXmlInvalidCatRef(base.Error):
     """metadata.xml <cat/> references unknown/invalid category"""
 
     __slots__ = ("category", "package", "filename")
-    __attrs__ = __slots__
 
     def __init__(self, cattext, filename, category, package=None):
         super().__init__()
@@ -321,7 +316,6 @@ class _MetadataXmlIndentation(base.Warning):
     """
 
     __slots__ = ("category", "package", "filename", "lines")
-    __attrs__ = __slots__
 
     def __init__(self, lines, filename, category, package=None):
         super().__init__()
@@ -361,7 +355,6 @@ class _MetadataXmlEmptyElement(base.Warning):
     """Empty element in metadata.xml file."""
 
     __slots__ = ("category", "package", "filename", "line", "element")
-    __attrs__ = __slots__
 
     def __init__(self, element, line, filename, category, package=None):
         super().__init__()
