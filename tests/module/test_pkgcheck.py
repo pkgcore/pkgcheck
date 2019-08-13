@@ -384,10 +384,8 @@ class TestPkgcheckReplay(object):
     def _setup(self, fakeconfig):
         self.args = [project, '--config', fakeconfig, 'replay']
 
-    def test_missing_reporter_arg(self, capsys, tmp_path):
-        pickle_file = tmp_path / 'empty.pickle'
-        pickle_file.touch()
-        with patch('sys.argv', self.args + [str(pickle_file)]):
+    def test_missing_file_arg(self, capsys):
+        with patch('sys.argv', self.args):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
@@ -395,5 +393,5 @@ class TestPkgcheckReplay(object):
             err = err.strip().split('\n')
             assert len(err) == 1
             assert err[0] == (
-                'pkgcheck replay: error: the following arguments are required: reporter')
+                'pkgcheck replay: error: the following arguments are required: pickle_file')
             assert excinfo.value.code == 2

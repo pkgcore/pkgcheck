@@ -47,8 +47,50 @@ argparser = commandline.ArgumentParser(
 argparser.set_defaults(profile_override=pjoin(pkgcore_const.DATA_PATH, 'stubrepo/profiles/default'))
 subparsers = argparser.add_subparsers(description="check applets")
 
+
+reporter_opts = commandline.ArgumentParser(suppress=True)
+reporter_opts.add_argument(
+    '-R', '--reporter', action='store', default=None,
+    help='use a non-default reporter',
+    docs="""
+        Select a reporter to use for output.
+
+        Use 'pkgcheck show --reporters' to see available options.
+    """)
+@reporter_opts.bind_parse_priority(20)
+def _setup_reporter(namespace):
+    if namespace.reporter is None:
+        namespace.reporter = namespace.config.get_default(
+            'pkgcheck_reporter_factory')
+        if namespace.reporter is None:
+            namespace.reporter = get_plugin('reporter', plugins)
+        if namespace.reporter is None:
+            argparser.error(
+                'no config defined reporter found, nor any default '
+                'plugin based reporters')
+    else:
+        func = namespace.config.pkgcheck_reporter_factory.get(namespace.reporter)
+        if func is None:
+            func = list(base.Whitelist([namespace.reporter]).filter(
+                get_plugins('reporter', plugins)))
+            if not func:
+                available = ', '.join(sorted(
+                    x.__name__ for x in get_plugins('reporter', plugins)))
+                argparser.error(
+                    f"no reporter matches {namespace.reporter!r} "
+                    f"(available: {available})")
+            elif len(func) > 1:
+                reporters = tuple(sorted(f"{x.__module__}.{x.__name__}" for x in func))
+                argparser.error(
+                    f"reporter {namespace.reporter!r} matched multiple reporters, "
+                    f"must match one. {reporters!r}")
+            func = func[0]
+        namespace.reporter = func
+
+
 # These are all set based on other options, so have no default setting.
-scan = subparsers.add_parser('scan', description='scan targets for QA issues')
+scan = subparsers.add_parser(
+    'scan', parents=(reporter_opts,), description='scan targets for QA issues')
 scan.set_defaults(repo_bases=[])
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
@@ -64,14 +106,6 @@ main_options.add_argument(
     docs="""
         Enable all package filtering mechanisms such as ACCEPT_KEYWORDS,
         ACCEPT_LICENSE, and package.mask.
-    """)
-main_options.add_argument(
-    '-R', '--reporter', action='store', default=None,
-    help='use a non-default reporter',
-    docs="""
-        Select a reporter to use for scan output.
-
-        Use 'pkgcheck show --reporters' to see available options.
     """)
 
 check_options = scan.add_argument_group('check selection')
@@ -184,34 +218,6 @@ def _validate_args(parser, namespace):
     # use filtered repo if filtering is enabled
     if namespace.filtered:
         namespace.target_repo = namespace.domain.ebuild_repos[str(namespace.target_repo)]
-
-    if namespace.reporter is None:
-        namespace.reporter = namespace.config.get_default(
-            'pkgcheck_reporter_factory')
-        if namespace.reporter is None:
-            namespace.reporter = get_plugin('reporter', plugins)
-        if namespace.reporter is None:
-            parser.error(
-                'no config defined reporter found, nor any default '
-                'plugin based reporters')
-    else:
-        func = namespace.config.pkgcheck_reporter_factory.get(namespace.reporter)
-        if func is None:
-            func = list(base.Whitelist([namespace.reporter]).filter(
-                get_plugins('reporter', plugins)))
-            if not func:
-                available = ', '.join(sorted(
-                    x.__name__ for x in get_plugins('reporter', plugins)))
-                parser.error(
-                    f"no reporter matches {namespace.reporter!r} "
-                    f"(available: {available})")
-            elif len(func) > 1:
-                reporters = tuple(sorted(f"{x.__module__}.{x.__name__}" for x in func))
-                parser.error(
-                    f"reporter {namespace.reporter!r} matched multiple reporters, "
-                    f"must match one. {reporters!r}")
-            func = func[0]
-        namespace.reporter = func
 
     # search_repo is a multiplex of target_repo and its masters, make sure
     # they're configured properly in metadata/layout.conf. This is used for
@@ -457,7 +463,7 @@ def _scan(options, out, err):
 
 
 replay = subparsers.add_parser(
-    'replay',
+    'replay', parents=(reporter_opts,),
     description='replay results streams',
     docs="""
         Replay previous results streams from pkgcheck, feeding the results into
@@ -471,27 +477,6 @@ replay = subparsers.add_parser(
     """)
 replay.add_argument(
     dest='pickle_file', type=argparse.FileType('rb'), help='pickled results file')
-replay.add_argument(
-    dest='reporter', help='python namespace path reporter to replay it into')
-@replay.bind_final_check
-def _replay_validate_args(parser, namespace):
-    func = namespace.config.pkgcheck_reporter_factory.get(namespace.reporter)
-    if func is None:
-        func = list(base.Whitelist([namespace.reporter]).filter(
-            get_plugins('reporter', plugins)))
-        if not func:
-            available = ', '.join(sorted(
-                x.__name__ for x in get_plugins('reporter', plugins)))
-            parser.error(
-                f"no reporter matches {namespace.reporter!r} "
-                f"(available: {available})")
-        elif len(func) > 1:
-            reporters = tuple(sorted(f"{x.__module__}.{x.__name__}" for x in func))
-            parser.error(
-                f"reporter {namespace.reporter!r} matched multiple reporters, "
-                f"must match one. {reporters!r}")
-        func = func[0]
-    namespace.reporter = func
 
 
 @replay.bind_main_func
