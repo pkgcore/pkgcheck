@@ -261,11 +261,15 @@ class Result(SlotsPicklingMixin, metaclass=generic_equality):
 
 class Error(Result):
     """Result with an error priority level."""
+
+    __slots__ = ()
     _level = 40
 
 
 class Warning(Result):
     """Result with a warning priority level."""
+
+    __slots__ = ()
     _level = 30
 
 
@@ -317,7 +321,8 @@ class MetadataError(VersionedResult, Error):
 
     def __init__(self, pkg, attr, msg):
         super().__init__(pkg)
-        self.attr, self.msg = attr, str(msg)
+        self.attr = attr
+        self.msg = str(msg)
 
     @property
     def short_desc(self):
