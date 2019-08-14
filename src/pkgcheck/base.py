@@ -216,8 +216,8 @@ class Transform(object):
 
 class Result(SlotsPicklingMixin, metaclass=generic_equality):
 
-    __slots__ = ('_verbosity')
-    __attr_comparison__ = __slots__
+    __slots__ = ('_verbosity',)
+    __attr_comparison__ = '__slots__'
 
     # level values match those used in logging module
     _level = 20
