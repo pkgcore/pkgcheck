@@ -543,7 +543,14 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
             'dev-util/diffball-2.7.1',
             data={'EAPI': eapi, 'IUSE': iuse, self.attr_map[attr]: data})
 
-    def mk_check(self, **kwargs):
+    def mk_check(self, pkgs=None, **kwargs):
+        if pkgs is None:
+            pkgs = (
+                FakePkg('dev-libs/foo-0', slot='0', iuse=('bar',)),
+                FakePkg('dev-libs/foo-1', slot='1', iuse=('bar', 'baz')),
+                FakePkg('dev-libs/bar-2', slot='2'),
+            )
+        kwargs['search_repo'] = FakeRepo(pkgs=pkgs, repo_id='test')
         options = self.get_options(**kwargs)
         git_addon = addons.GitAddon(options)
         return super().mk_check(git_addon, **kwargs)
@@ -586,6 +593,50 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
             chk,
             mk_pkg(eapi='6', data="=dev-libs/foo-1"))
         assert isinstance(r, metadata.MissingPackageRevision)
+        assert f'{attr.upper()}="=dev-libs/foo-1"' in str(r)
+
+        # MissingUseDepDefault checks
+
+        # USE flag exists on all matching pkgs
+        self.assertNoReport(chk, mk_pkg(eapi='4', data='dev-libs/foo[bar?]'))
+
+        # USE flag doesn't exist but has proper default
+        self.assertNoReport(chk, mk_pkg(eapi='4', data='dev-libs/bar[foo(-)?]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', data='dev-libs/bar[foo(+)=]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', data='dev-libs/bar[!foo(-)?]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', data='!dev-libs/bar[!foo(+)?]'))
+
+        # matching pkg doesn't have any USE flags
+        r = self.assertReport(chk, mk_pkg(eapi='4', data='dev-libs/bar[foo?]'))
+        assert isinstance(r, metadata.MissingUseDepDefault)
+        assert r.atom == 'dev-libs/bar[foo?]'
+        assert r.pkg_deps == ('=dev-libs/bar-2',)
+        assert r.flag == 'foo'
+        assert "USE flag 'foo' missing" in str(r)
+
+        # blocker triggers result as well
+        r = self.assertReport(chk, mk_pkg(eapi='4', data='!dev-libs/bar[foo?]'))
+        assert isinstance(r, metadata.MissingUseDepDefault)
+        assert r.atom == '!dev-libs/bar[foo?]'
+        assert r.pkg_deps == ('=dev-libs/bar-2',)
+        assert r.flag == 'foo'
+        assert "USE flag 'foo' missing" in str(r)
+
+        # USE flag missing on one of multiple matches
+        r = self.assertReport(chk, mk_pkg(eapi='4', data='dev-libs/foo[baz?]'))
+        assert isinstance(r, metadata.MissingUseDepDefault)
+        assert r.atom == 'dev-libs/foo[baz?]'
+        assert r.pkg_deps == ('=dev-libs/foo-0',)
+        assert r.flag == 'baz'
+        assert "USE flag 'baz' missing" in str(r)
+
+        # USE flag missing on all matches
+        r = self.assertReport(chk, mk_pkg(eapi='4', data='dev-libs/foo[blah?]'))
+        assert isinstance(r, metadata.MissingUseDepDefault)
+        assert r.atom == 'dev-libs/foo[blah?]'
+        assert r.pkg_deps == ('=dev-libs/foo-0', '=dev-libs/foo-1')
+        assert r.flag == 'blah'
+        assert "USE flag 'blah' missing" in str(r)
 
     for x in attr_map:
         locals()[f"test_{x}"] = post_curry(generic_check, x)
