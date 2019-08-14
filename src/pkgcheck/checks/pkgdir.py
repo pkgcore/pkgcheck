@@ -65,7 +65,7 @@ class EqualVersions(base.PackageResult, base.Error):
 
     @property
     def short_desc(self):
-        return f"equal package versions: [ {', '.join(map(repr, self.versions))} ]"
+        return f"equal package versions: [ {', '.join(self.versions)} ]"
 
 
 class DuplicateFiles(base.PackageResult, base.Warning):

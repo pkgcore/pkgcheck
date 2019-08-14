@@ -194,6 +194,7 @@ class TestEqualVersions(PkgDirReportBase):
         r = self.assertReport(self.check, [pkg_a, pkg_b])
         assert isinstance(r, pkgdir.EqualVersions)
         assert r.versions == ('0', '0-r0')
+        assert '[ 0, 0-r0 ]' in str(r)
 
         # multiple, matching revisions
         pkg_c = self.mk_pkg(
@@ -201,6 +202,7 @@ class TestEqualVersions(PkgDirReportBase):
         r = self.assertReport(self.check, [pkg_a, pkg_b, pkg_c])
         assert isinstance(r, pkgdir.EqualVersions)
         assert r.versions == ('0', '0-r0', '0-r000')
+        assert '[ 0, 0-r0, 0-r000 ]' in str(r)
 
         # unsorted, matching revisions
         pkg_new_version = self.mk_pkg(
@@ -208,6 +210,7 @@ class TestEqualVersions(PkgDirReportBase):
         r = self.assertReport(self.check, [pkg_b, pkg_new_version, pkg_c, pkg_a])
         assert isinstance(r, pkgdir.EqualVersions)
         assert r.versions == ('0', '0-r0', '0-r000')
+        assert '[ 0, 0-r0, 0-r000 ]' in str(r)
 
         # multiple, matching revisions with 0 prefixes
         pkg_d = self.mk_pkg(
@@ -219,6 +222,7 @@ class TestEqualVersions(PkgDirReportBase):
         r = self.assertReport(self.check, [pkg_d, pkg_e, pkg_f])
         assert isinstance(r, pkgdir.EqualVersions)
         assert r.versions == ('0-r001', '0-r01', '0-r1')
+        assert '[ 0-r001, 0-r01, 0-r1 ]' in str(r)
 
 
 class TestSizeViolation(PkgDirReportBase):
