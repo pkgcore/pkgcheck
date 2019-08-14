@@ -778,8 +778,7 @@ class MissingUri(base.VersionedResult, base.Warning):
 
     @property
     def short_desc(self):
-        return f"file {self.filename} is unfetchable- no URI available, and " \
-            "RESTRICT=fetch isn't set"
+        return f'unfetchable file: {self.filename!r}'
 
 
 class UnknownMirror(base.VersionedResult, base.Error):

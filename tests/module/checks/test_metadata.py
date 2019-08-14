@@ -758,6 +758,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, self.mk_pkg("foon"))
         assert isinstance(r, metadata.MissingUri)
         assert r.filename == 'foon'
+        assert "unfetchable file: 'foon'" == str(r)
 
         # verify valid protos.
         assert self.check_kls.valid_protos, "valid_protos needs to have at least one protocol"
