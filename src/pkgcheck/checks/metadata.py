@@ -758,9 +758,11 @@ class KeywordsCheck(base.Template):
                 rdepend, _ = self.iuse_filter((atom_cls,), pkg, pkg.rdepend)
                 for x in set(rdepend):
                     for p in self.options.search_repo.match(strip_atom_use(x)):
-                        keywords.update(p.keywords)
-                keywords = keywords | {f'~{x}' for x in keywords if x in self.valid_arches}
-                missing_keywords = set(pkg.keywords) - keywords
+                        keywords.update(
+                            x for x in p.keywords if x.lstrip('~') in self.valid_arches)
+                pkg_keywords = set(pkg.keywords)
+                pkg_keywords.update(f'~{x}' for x in pkg.keywords if x[0] != '~')
+                missing_keywords = keywords - pkg_keywords
                 if missing_keywords:
                     yield MissingVirtualKeywords(pkg, missing_keywords)
 
