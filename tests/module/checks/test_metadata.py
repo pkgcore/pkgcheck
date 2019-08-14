@@ -123,7 +123,7 @@ class iuse_options(TempDirMixin):
         return misc.Options(**kwds)
 
 
-class TestKeywordsReport(iuse_options, misc.ReportTestCase):
+class TestKeywordsCheck(iuse_options, misc.ReportTestCase):
 
     check_kls = metadata.KeywordsCheck
 
@@ -136,6 +136,9 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
 
     def mk_pkg(self, keywords=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"KEYWORDS": keywords})
+
+    def test_no_keywords(self):
+        self.assertNoReport(self.check, self.mk_pkg())
 
     def test_stupid_keywords(self):
         # regular keywords
