@@ -647,7 +647,7 @@ class DuplicateKeywords(base.VersionedResult, base.Warning):
 
     def __init__(self, pkg, keywords):
         super().__init__(pkg)
-        self.keywords = tuple(keywords)
+        self.keywords = tuple(sort_keywords(keywords))
 
     @property
     def short_desc(self):
