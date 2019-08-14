@@ -26,8 +26,10 @@ class HttpsAvailable(base.VersionedResult, base.Warning):
 
     @property
     def short_desc(self):
-        return "'%s' link should use https:// on line%s: %s" % (
-            self.link, _pl(self.lines), ', '.join(map(str, self.lines)))
+        return (
+            f"{self.link!r} should use https:// on line{_pl(self.lines)}: "
+            f"{', '.join(map(str, self.lines))}"
+        )
 
 
 class HttpsAvailableCheck(base.Template):
