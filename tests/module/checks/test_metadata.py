@@ -129,13 +129,19 @@ class TestKeywordsCheck(iuse_options, misc.ReportTestCase):
 
     def setUp(self):
         super().setUp()
-        options = self.get_options()
+        pkgs = (
+            FakePkg('dev-libs/foo-0', keywords=('amd64', '~x86')),
+            FakePkg('dev-libs/foo-1', keywords=('-*', 'ppc')),
+            FakePkg('dev-libs/bar-2', keywords=()),
+        )
+        search_repo = FakeRepo(pkgs=pkgs)
+        options = self.get_options(search_repo=search_repo)
         profiles = [misc.FakeProfile()]
         iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
         self.check = metadata.KeywordsCheck(options, iuse_handler)
 
-    def mk_pkg(self, keywords=""):
-        return misc.FakePkg("dev-util/diffball-0.7.1", data={"KEYWORDS": keywords})
+    def mk_pkg(self, keywords='', cpv='dev-util/diffball-0.7.1', rdepend=''):
+        return misc.FakePkg(cpv, data={'KEYWORDS': keywords, 'RDEPEND': rdepend})
 
     def test_no_keywords(self):
         self.assertNoReport(self.check, self.mk_pkg())
@@ -238,6 +244,29 @@ class TestKeywordsCheck(iuse_options, misc.ReportTestCase):
         assert isinstance(r, metadata.UnsortedKeywords)
         assert r.keywords == ('~amd64', '~amd64-fbsd', 'ppc', '~x86')
         assert r.sorted_keywords == ('~amd64', 'ppc', '~x86', '~amd64-fbsd')
+
+    def test_missing_virtual_keywords(self):
+        # non-virtuals don't trigger
+        pkg = self.mk_pkg(cpv='dev-util/foo-0', rdepend='=dev-libs/foo-0')
+        self.assertNoReport(self.check, pkg)
+
+        # matching pkg with no keywords
+        pkg = self.mk_pkg(cpv='virtual/foo-0', rdepend='dev-libs/bar')
+        self.assertNoReport(self.check, pkg)
+
+        # single pkg match
+        pkg = self.mk_pkg(cpv='virtual/foo-0', rdepend='=dev-libs/foo-0')
+        r = self.assertReport(self.check, pkg)
+        assert isinstance(r, metadata.MissingVirtualKeywords)
+        assert r.keywords == ('amd64', '~x86')
+        assert 'missing KEYWORDS: amd64, ~x86' == str(r)
+
+        # multiple pkg match
+        pkg = self.mk_pkg(cpv='virtual/foo-0', rdepend='dev-libs/foo')
+        r = self.assertReport(self.check, pkg)
+        assert isinstance(r, metadata.MissingVirtualKeywords)
+        assert r.keywords == ('amd64', 'ppc', '~x86')
+        assert 'missing KEYWORDS: amd64, ppc, ~x86' == str(r)
 
 
 class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
