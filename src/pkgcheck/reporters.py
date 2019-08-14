@@ -244,36 +244,3 @@ class BinaryPickleStream(PickleStream):
     """
     priority = -1002
     protocol = -1
-
-
-def make_configurable_reporter_factory(klass):
-    @configurable({'dest': 'str'}, typename='pkgcheck_reporter_factory')
-    def configurable_reporter_factory(dest=None):
-        if dest is None:
-            return klass
-
-        def reporter_factory(out):
-            try:
-                f = open(dest, 'w')
-            except EnvironmentError as e:
-                raise errors.ReporterInitError(f'Cannot write to {dest!r} ({e})')
-            return klass(formatters.PlainTextFormatter(f))
-
-        return reporter_factory
-    return configurable_reporter_factory
-
-
-json_reporter = make_configurable_reporter_factory(JsonReporter)
-json_reporter.__name__ = 'json_reporter'
-xml_reporter = make_configurable_reporter_factory(XmlReporter)
-xml_reporter.__name__ = 'xml_reporter'
-plain_reporter = make_configurable_reporter_factory(StrReporter)
-plain_reporter.__name__ = 'plain_reporter'
-fancy_reporter = make_configurable_reporter_factory(FancyReporter)
-fancy_reporter.__name__ = 'fancy_reporter'
-picklestream_reporter = make_configurable_reporter_factory(PickleStream)
-picklestream_reporter.__name__ = 'picklestream_reporter'
-binarypicklestream_reporter = make_configurable_reporter_factory(BinaryPickleStream)
-binarypicklestream_reporter.__name__ = 'binarypicklestream_reporter'
-null_reporter = make_configurable_reporter_factory(NullReporter)
-null_reporter.__name__ = 'null'

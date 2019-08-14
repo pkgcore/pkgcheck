@@ -60,31 +60,24 @@ reporter_opts.add_argument(
 @reporter_opts.bind_parse_priority(20)
 def _setup_reporter(namespace):
     if namespace.reporter is None:
-        namespace.reporter = namespace.config.get_default(
-            'pkgcheck_reporter_factory')
+        namespace.reporter = get_plugin('reporter', plugins)
         if namespace.reporter is None:
-            namespace.reporter = get_plugin('reporter', plugins)
-        if namespace.reporter is None:
-            argparser.error(
-                'no config defined reporter found, nor any default '
-                'plugin based reporters')
+            argparser.error('no reporters available')
     else:
-        func = namespace.config.pkgcheck_reporter_factory.get(namespace.reporter)
-        if func is None:
-            func = list(base.Whitelist([namespace.reporter]).filter(
-                get_plugins('reporter', plugins)))
-            if not func:
-                available = ', '.join(sorted(
-                    x.__name__ for x in get_plugins('reporter', plugins)))
-                argparser.error(
-                    f"no reporter matches {namespace.reporter!r} "
-                    f"(available: {available})")
-            elif len(func) > 1:
-                reporters = tuple(sorted(f"{x.__module__}.{x.__name__}" for x in func))
-                argparser.error(
-                    f"reporter {namespace.reporter!r} matched multiple reporters, "
-                    f"must match one. {reporters!r}")
-            func = func[0]
+        func = list(base.Whitelist([namespace.reporter]).filter(
+            get_plugins('reporter', plugins)))
+        if not func:
+            available = ', '.join(sorted(
+                x.__name__ for x in get_plugins('reporter', plugins)))
+            argparser.error(
+                f"no reporter matches {namespace.reporter!r} "
+                f"(available: {available})")
+        elif len(func) > 1:
+            reporters = tuple(sorted(f"{x.__module__}.{x.__name__}" for x in func))
+            argparser.error(
+                f"reporter {namespace.reporter!r} matched multiple reporters, "
+                f"must match one. {reporters!r}")
+        func = func[0]
         namespace.reporter = func
 
 
@@ -587,50 +580,18 @@ def display_checks(out, options):
 
 
 @decorate_forced_wrapping()
-def display_reporters(out, options, config_reporters, plugin_reporters):
+def display_reporters(out, options, reporters):
     if options.verbosity < 1:
-        out.write('\n'.join(sorted(x.__name__ for x in plugin_reporters)), wrap=False)
+        out.write('\n'.join(sorted(x.__name__ for x in reporters)), wrap=False)
     else:
-        if config_reporters:
-            out.write("configured reporters:")
-            out.write()
-            out.first_prefix.append('  ')
-            out.later_prefix.append('  ')
-            try:
-                # sorting here is random
-                for reporter in sorted(config_reporters, key=attrgetter('__name__')):
-                    key = options.config.get_section_name(reporter)
-                    if not key:
-                        continue
-                    out.write(out.bold, key)
-                    dump_docstring(out, reporter, prefix='  ')
-                    out.write()
-            finally:
-                out.first_prefix.pop()
-                out.later_prefix.pop()
-
-        if plugin_reporters:
-            if config_reporters:
-                out.write()
-                out.write("plugin reporters:")
-                out.write()
-                out.first_prefix.append('  ')
-                out.later_prefix.append('  ')
-            try:
-                for reporter in sorted(plugin_reporters, key=attrgetter('__name__')):
-                    out.write(out.bold, out.fg('yellow'), reporter.__name__)
-                    dump_docstring(out, reporter, prefix='  ')
-                    out.write()
-            finally:
-                if config_reporters:
-                    out.first_prefix.pop()
-                    out.later_prefix.pop()
-
-        if not plugin_reporters and not config_reporters:
-            out.write(
-                out.fg("red"), "Warning", out.fg(""),
-                " no reporters detected; pkgcheck won't "
-                "run correctly without a reporter to use!")
+        out.write()
+        out.write("reporters:")
+        out.write()
+        out.first_prefix.append('  ')
+        out.later_prefix.append('  ')
+        for reporter in sorted(reporters, key=attrgetter('__name__')):
+            out.write(out.bold, out.fg('yellow'), reporter.__name__)
+            dump_docstring(out, reporter, prefix='  ')
             out.write()
 
 
@@ -695,9 +656,6 @@ def _show(options, out, err):
                 out.write(f'{name} -- {scope.desc} scope')
 
     if options.reporters:
-        display_reporters(
-            out, options,
-            list(options.config.pkgcheck_reporter_factory.values()),
-            list(get_plugins('reporter', plugins)))
+        display_reporters(out, options, list(get_plugins('reporter', plugins)))
 
     return 0
