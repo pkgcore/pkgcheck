@@ -217,9 +217,15 @@ class _ParseGitRepo(object):
                 cmd.append(f'{commit}..origin/HEAD')
         else:
             cmd.append('origin/HEAD')
-        git_log = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=self.location)
 
-        line = git_log.stdout.readline().strip().decode()
+        git_log = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.location)
+        line = git_log.stdout.readline().decode().strip()
+        if git_log.poll():
+            error = git_log.stderr.read().decode().strip()
+            logger.warning(f'skipping git checks: {error}')
+            return {}
+
         while line:
             if not line.startswith('commit '):
                 logger.error(
@@ -230,7 +236,7 @@ class _ParseGitRepo(object):
             # author
             git_log.stdout.readline()
             # date
-            line = git_log.stdout.readline().strip().decode()
+            line = git_log.stdout.readline().decode().strip()
             if not line.startswith('Date:'):
                 logger.error(
                     f'skipping git checks: '
