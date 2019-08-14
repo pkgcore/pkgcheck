@@ -216,13 +216,19 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
         assert r.keywords == ('~amd64', '-*')
         assert r.sorted_keywords == ('-*', '~amd64')
         assert 'unsorted KEYWORDS: ~amd64, -*' == str(r)
+        # verbose output
+        r._verbosity = 1
+        assert '\n\tunsorted: ~amd64, -*\n\tsorted: -*, ~amd64' == str(r)
 
         # keywords should be sorted alphabetically by arch
-        r = self.assertReport(self.check, self.mk_pkg('~ppc ~amd64'))
+        r = self.assertReport(self.check, self.mk_pkg('ppc ~amd64'))
         assert isinstance(r, metadata.UnsortedKeywords)
-        assert r.keywords == ('~ppc', '~amd64')
-        assert r.sorted_keywords == ('~amd64', '~ppc')
-        assert 'unsorted KEYWORDS: ~ppc, ~amd64' == str(r)
+        assert r.keywords == ('ppc', '~amd64')
+        assert r.sorted_keywords == ('~amd64', 'ppc')
+        assert 'unsorted KEYWORDS: ppc, ~amd64' == str(r)
+        # verbose output
+        r._verbosity = 1
+        assert '\n\tunsorted: ppc, ~amd64\n\tsorted: ~amd64, ppc' == str(r)
 
         # prefix keywords should come after regular keywords
         r = self.assertReport(self.check, self.mk_pkg('~amd64 ~amd64-fbsd ppc ~x86'))
