@@ -50,6 +50,7 @@ class StrReporter(base.Reporter):
                 self.out.write(f"{result.category}: {result.desc}")
             else:
                 self.out.write(result.desc)
+            self.out.stream.flush()
 
     def finish(self):
         if not self._first_report:
@@ -100,7 +101,6 @@ class FancyReporter(base.Reporter):
                 ': ', s, result.desc)
             self.out.first_prefix.pop()
             self.out.later_prefix.pop()
-            # flush output so partial objects aren't written
             self.out.stream.flush()
 
 
