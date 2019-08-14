@@ -528,15 +528,17 @@ class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
             self.mk_check(), self.mk_pkg(rdepend='dev-libs/bar', depend='dev-libs/bar'))
 
 
-class TestDependencyReport(use_based(), misc.ReportTestCase):
+class TestDependencyCheck(use_based(), misc.ReportTestCase):
 
     check_kls = metadata.DependencyCheck
 
     attr_map = dict(
         (x, x.upper())
-        for x in ("depend", "rdepend", "pdepend"))
+        for x in ("depend", "rdepend", "pdepend", "bdepend"))
 
     def mk_pkg(self, attr, data='', eapi='0', iuse=''):
+        if attr == 'bdepend':
+            eapi = '7'
         return misc.FakePkg(
             'dev-util/diffball-2.7.1',
             data={'EAPI': eapi, 'IUSE': iuse, self.attr_map[attr]: data})
