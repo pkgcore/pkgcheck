@@ -178,6 +178,7 @@ class TestInvalidUTF8(PkgDirReportBase):
         r = self.assertReport(self.check, [pkg])
         assert isinstance(r, pkgdir.InvalidUTF8)
         assert r.filename == f'{pkg.package}-0.ebuild'
+        assert r.filename in str(r)
 
 
 class TestEqualVersions(PkgDirReportBase):
