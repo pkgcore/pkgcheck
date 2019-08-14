@@ -440,7 +440,7 @@ class MissingUseDepDefault(base.VersionedResult, base.Warning):
     __slots__ = ('attr', 'atom', 'flag', 'pkg_deps')
 
     def __init__(self, pkg, attr, atom, flag, pkg_deps):
-        super().__init__(cpv)
+        super().__init__(pkg)
         self.attr = attr.upper()
         self.atom = str(atom)
         self.pkg_deps = tuple(sorted(str(x.versioned_atom) for x in pkg_deps))
