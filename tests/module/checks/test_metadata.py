@@ -741,15 +741,37 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
 
     def test_bad_filename(self):
         chk = self.mk_check()
-        assert isinstance(
-            self.assertReport(chk, self.mk_pkg("https://foon.com/2.7.1.tar.gz")),
-            metadata.BadFilename)
-        assert isinstance(
-            self.assertReport(chk, self.mk_pkg("https://foon.com/v2.7.1.zip")),
-            metadata.BadFilename)
-        assert isinstance(
-            self.assertReport(chk, self.mk_pkg("https://foon.com/cb230f01fb288a0b9f0fc437545b97d06c846bd3.tar.gz")),
-            metadata.BadFilename)
+
+        # regular filename
+        self.assertNoReport(chk, self.mk_pkg("https://foon.com/foon-2.7.1.tar.gz"))
+
+        # PN filename
+        r = self.assertReport(chk, self.mk_pkg("https://foon.com/diffball.tar.gz"))
+        assert isinstance(r, metadata.BadFilename)
+        assert r.filenames == ('diffball.tar.gz',)
+        assert 'bad filename: [ diffball.tar.gz ]' == str(r)
+
+        # PV filename
+        r = self.assertReport(chk, self.mk_pkg("https://foon.com/2.7.1.tar.gz"))
+        assert isinstance(r, metadata.BadFilename)
+        assert r.filenames == ('2.7.1.tar.gz',)
+        assert 'bad filename: [ 2.7.1.tar.gz ]' == str(r)
+
+        # github-style PV filename
+        r = self.assertReport(chk, self.mk_pkg("https://foon.com/v2.7.1.zip"))
+        assert isinstance(r, metadata.BadFilename)
+        assert r.filenames == ('v2.7.1.zip',)
+        assert 'bad filename: [ v2.7.1.zip ]' == str(r)
+
+        # github-style commit snapshot filename
+        r = self.assertReport(chk, self.mk_pkg("https://foon.com/cb230f01fb288a0b9f0fc437545b97d06c846bd3.tar.gz"))
+        assert isinstance(r, metadata.BadFilename)
+
+        # multiple bad filenames
+        r = self.assertReport(chk, self.mk_pkg("https://foon.com/2.7.1.tar.gz https://foon.com/diffball.zip"))
+        assert isinstance(r, metadata.BadFilename)
+        assert r.filenames == ('2.7.1.tar.gz', 'diffball.zip')
+        assert 'bad filenames: [ 2.7.1.tar.gz, diffball.zip ]' == str(r)
 
     def test_it(self):
         chk = self.mk_check()

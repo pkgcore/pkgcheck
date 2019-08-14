@@ -830,7 +830,8 @@ class BadFilename(base.VersionedResult, base.Warning):
 
     @property
     def short_desc(self):
-        return "bad filename%s: [ %s ]" % (_pl(self.filenames), ', '.join(self.filenames))
+        filenames = ', '.join(self.filenames)
+        return f'bad filename{_pl(self.filenames)}: [ {filenames} ]'
 
 
 class TarballAvailable(base.VersionedResult, base.Warning):
@@ -899,11 +900,13 @@ class SrcUriCheck(base.Template):
                 uri = f"{mirror}/{sub_uri}"
                 yield UnknownMirror(pkg, f_inst.filename, uri, mirror.mirror_name)
 
-            # Check for unspecific filenames of the form ${PV}.ext and
-            # v${PV}.ext prevalent in github tagged releases as well as
-            # archives named using only the raw git commit hash.
-            bad_filenames_re = r'^(v?%s|[0-9a-f]{40})%s' % (
-                pkg.PV, pkg.eapi.archive_suffixes_re.pattern)
+            # Check for unspecific filenames of the form ${PN}.ext, ${PV}.ext,
+            # and v${PV}.ext as well as archives named using only the raw git
+            # commit hash.
+            PN = re.escape(pkg.PN)
+            PV = re.escape(pkg.PV)
+            exts = pkg.eapi.archive_suffixes_re.pattern
+            bad_filenames_re = rf'^({PN}|v?{PV}|[0-9a-f]{{40}}){exts}'
             if re.match(bad_filenames_re, f_inst.filename):
                 bad_filenames.add(f_inst.filename)
 
