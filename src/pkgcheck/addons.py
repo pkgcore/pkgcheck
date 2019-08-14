@@ -365,10 +365,15 @@ class GitAddon(base.Addon):
                 if (git_repo is not None and
                         repo.location == getattr(git_repo, 'location', None)):
                     if commit != git_repo.commit:
+                        logger.debug(
+                            'updating %s repo: %s -> %s',
+                            repo_cls.cache_name, git_repo.commit[:10], commit[:10])
                         git_repo.update(commit)
                     else:
                         cache_repo = False
                 else:
+                    logger.debug(
+                        'creating %s repo: %s', repo_cls.cache_name, commit[:10])
                     git_repo = repo_cls(repo, commit)
 
                 # only enable repo queries if history was found, e.g. a
