@@ -662,7 +662,7 @@ class UnsortedKeywords(base.VersionedResult, base.Warning):
     before them.
     """
 
-    __slots__ = ('keywords',)
+    __slots__ = ('keywords', 'sorted_keywords')
 
     def __init__(self, pkg):
         super().__init__(pkg)
