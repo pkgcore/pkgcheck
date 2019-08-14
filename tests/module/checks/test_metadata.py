@@ -138,71 +138,97 @@ class TestKeywordsReport(iuse_options, misc.ReportTestCase):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"KEYWORDS": keywords})
 
     def test_stupid_keywords(self):
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg("-*")),
-            metadata.StupidKeywords)
-        self.assertNoReport(
-            self.check, self.mk_pkg("-* ~x86"),
-            metadata.StupidKeywords)
-        self.assertNoReport(
-            self.check, self.mk_pkg("ppc"),
-            metadata.StupidKeywords)
+        # regular keywords
+        self.assertNoReport(self.check, self.mk_pkg("ppc"))
+        # masked all except a single arch
+        self.assertNoReport(self.check, self.mk_pkg("-* ~x86"))
+        # all keywords masked
+        r = self.assertReport(self.check, self.mk_pkg("-*"))
+        assert isinstance(r, metadata.StupidKeywords)
+        assert 'keywords contain -*' in str(r)
 
     def test_invalid_keywords(self):
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg("foo")),
-            metadata.InvalidKeywords)
-        self.assertNoReport(
-            self.check, self.mk_pkg("-* -amd64 ppc ~x86"),
-            metadata.InvalidKeywords)
-        self.assertNoReport(
-            self.check, self.mk_pkg("* -amd64 ppc ~x86"),
-            metadata.InvalidKeywords)
-        self.assertNoReport(
-            self.check, self.mk_pkg("~* -amd64 ppc ~x86"),
-            metadata.InvalidKeywords)
+        # regular keywords
+        self.assertNoReport(self.check, self.mk_pkg("-* -amd64 ppc ~x86"))
+        self.assertNoReport(self.check, self.mk_pkg("* -amd64 ppc ~x86"))
+        self.assertNoReport(self.check, self.mk_pkg("~* -amd64 ppc ~x86"))
+
+        # unknown keyword
+        r = self.assertReport(self.check, self.mk_pkg("foo"))
+        assert isinstance(r, metadata.InvalidKeywords)
+        assert r.keywords == ('foo',)
+        assert "invalid KEYWORDS: 'foo'" == str(r)
 
         # check that * and ~* are flagged in gentoo repo
         options = self.get_options(repo_name='gentoo')
         profiles = [misc.FakeProfile()]
         iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
         check = metadata.KeywordsCheck(options, iuse_handler)
-        assert isinstance(
-            self.assertReport(check, self.mk_pkg("*")),
-            metadata.InvalidKeywords)
-        assert isinstance(
-            self.assertReport(check, self.mk_pkg("~*")),
-            metadata.InvalidKeywords)
+        r = self.assertReport(check, self.mk_pkg("*"))
+        assert isinstance(r, metadata.InvalidKeywords)
+        assert r.keywords == ('*',)
+        assert "invalid KEYWORDS: '*'" == str(r)
+        r = self.assertReport(check, self.mk_pkg("~*"))
+        assert isinstance(r, metadata.InvalidKeywords)
+        assert r.keywords == ('~*',)
+        assert "invalid KEYWORDS: '~*'" == str(r)
 
     def test_overlapping_keywords(self):
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg("amd64 ~amd64")),
-            metadata.OverlappingKeywords)
-        self.assertNoReport(
-            self.check, self.mk_pkg("~* ~amd64"),
-            metadata.OverlappingKeywords)
+        # regular keywords
+        self.assertNoReport(self.check, self.mk_pkg("~* ~amd64"))
+
+        # overlapping stable and unstable keywords
+        r = self.assertReport(self.check, self.mk_pkg("amd64 ~amd64"))
+        assert isinstance(r, metadata.OverlappingKeywords)
+        assert r.keywords == (('amd64', '~amd64'),)
+        assert "overlapping KEYWORDS: ('amd64', '~amd64')" == str(r)
+
+        # multiple overlapping sets
+        r = self.assertReport(self.check, self.mk_pkg("amd64 ~amd64 ~x86 x86"))
+        assert isinstance(r, metadata.OverlappingKeywords)
+        assert r.keywords == (('amd64', '~amd64'), ('x86', '~x86'))
 
     def test_duplicate_keywords(self):
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg("amd64 amd64")),
-            metadata.DuplicateKeywords)
-        self.assertNoReport(
-            self.check, self.mk_pkg("~* ~amd64"),
-            metadata.OverlappingKeywords)
+        # regular keywords
+        self.assertNoReport(self.check, self.mk_pkg("~* ~amd64"))
+
+        # single duplicate
+        r = self.assertReport(self.check, self.mk_pkg("amd64 amd64"))
+        assert isinstance(r, metadata.DuplicateKeywords)
+        assert r.keywords == ('amd64',)
+        assert 'duplicate KEYWORDS: amd64' == str(r)
+
+        # multiple duplicates
+        r = self.assertReport(self.check, self.mk_pkg("-* -* amd64 amd64 ~x86 ~x86"))
+        assert isinstance(r, metadata.DuplicateKeywords)
+        assert r.keywords == ('-*', 'amd64', '~x86')
 
     def test_unsorted_keywords(self):
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg("~amd64 -*")),
-            metadata.UnsortedKeywords)
-        self.assertNoReport(
-            self.check, self.mk_pkg("-* ~amd64"),
-            metadata.UnsortedKeywords)
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg("~amd64 ~amd64-fbsd ppc ~x86")),
-            metadata.UnsortedKeywords)
-        self.assertNoReport(
-            self.check, self.mk_pkg("~amd64 ppc ~x86 ~amd64-fbsd"),
-            metadata.UnsortedKeywords)
+        # regular keywords
+        self.assertNoReport(self.check, self.mk_pkg('-* ~amd64'))
+
+        # prefix keywords come after regular keywords
+        self.assertNoReport(self.check, self.mk_pkg('~amd64 ppc ~x86 ~amd64-fbsd'))
+
+        # masks should come before regular keywords
+        r = self.assertReport(self.check, self.mk_pkg('~amd64 -*'))
+        assert isinstance(r, metadata.UnsortedKeywords)
+        assert r.keywords == ('~amd64', '-*')
+        assert r.sorted_keywords == ('-*', '~amd64')
+        assert 'unsorted KEYWORDS: ~amd64, -*' == str(r)
+
+        # keywords should be sorted alphabetically by arch
+        r = self.assertReport(self.check, self.mk_pkg('~ppc ~amd64'))
+        assert isinstance(r, metadata.UnsortedKeywords)
+        assert r.keywords == ('~ppc', '~amd64')
+        assert r.sorted_keywords == ('~amd64', '~ppc')
+        assert 'unsorted KEYWORDS: ~ppc, ~amd64' == str(r)
+
+        # prefix keywords should come after regular keywords
+        r = self.assertReport(self.check, self.mk_pkg('~amd64 ~amd64-fbsd ppc ~x86'))
+        assert isinstance(r, metadata.UnsortedKeywords)
+        assert r.keywords == ('~amd64', '~amd64-fbsd', 'ppc', '~x86')
+        assert r.sorted_keywords == ('~amd64', 'ppc', '~x86', '~amd64-fbsd')
 
 
 class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
