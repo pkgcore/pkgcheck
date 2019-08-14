@@ -775,9 +775,10 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
 
         r = self.assertReport(chk, self.mk_pkg(f"{bad_proto}://foon.com/foon"))
         assert isinstance(r, metadata.BadProto)
+        assert f"file 'foon': bad protocol/uri: '{bad_proto}://foon.com/foon'" == str(r)
 
         assert r.filename == 'foon'
-        assert list(r.bad_uri) == [f'{bad_proto}://foon.com/foon']
+        assert r.bad_uris == (f'{bad_proto}://foon.com/foon',)
 
         # check collapsing.
 
@@ -787,7 +788,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         assert isinstance(r, metadata.BadProto)
 
         assert r.filename == 'foon'
-        assert list(r.bad_uri) == sorted(f'{bad_proto}://{x}/foon' for x in ('foon.com', 'dar.com'))
+        assert list(r.bad_uris) == sorted(f'{bad_proto}://{x}/foon' for x in ('foon.com', 'dar.com'))
 
     def test_tarball_available_github(self):
         chk = self.mk_check()

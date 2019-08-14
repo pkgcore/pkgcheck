@@ -803,16 +803,17 @@ class BadProto(base.VersionedResult, base.Warning):
     Valid protocols are currently: http, https, and ftp
     """
 
-    __slots__ = ("filename", "bad_uri")
+    __slots__ = ('filename', 'bad_uris')
 
-    def __init__(self, pkg, filename, bad_uri):
+    def __init__(self, pkg, filename, bad_uris):
         super().__init__(pkg)
         self.filename = filename
-        self.bad_uri = tuple(sorted(bad_uri))
+        self.bad_uris = tuple(sorted(bad_uris))
 
     @property
     def short_desc(self):
-        return f"file {self.filename}: bad protocol/uri: {self.bad_uri!r}"
+        uris = ', '.join(map(repr, self.bad_uris))
+        return f'file {self.filename!r}: bad protocol/uri{_pl(self.bad_uris)}: {uris}'
 
 
 class BadFilename(base.VersionedResult, base.Warning):
