@@ -216,7 +216,7 @@ class Transform(object):
 
 class Result(SlotsPicklingMixin, metaclass=generic_equality):
 
-    __slots__ = ()
+    __slots__ = ('_verbosity')
     __attr_comparison__ = __slots__
 
     # level values match those used in logging module
@@ -226,6 +226,9 @@ class Result(SlotsPicklingMixin, metaclass=generic_equality):
         30: ('warning', 'yellow'),
         20: ('info', 'green'),
     }
+
+    def __init__(self):
+        self._verbosity = 0
 
     @property
     def color(self):
