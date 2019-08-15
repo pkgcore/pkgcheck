@@ -37,8 +37,8 @@ class VulnerablePackage(base.VersionedResult, base.Error):
 
     @property
     def short_desc(self):
-        return "vulnerable via %s, keyword%s: %s" % (
-            self.glsa, _pl(self.arches), ', '.join(self.arches))
+        arches = ', '.join(self.arches)
+        return f'vulnerable via {self.glsa}, keyword{_pl(self.arches)}: {arches}'
 
 
 class TreeVulnerabilitiesCheck(base.Template):

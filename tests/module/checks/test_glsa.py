@@ -2,7 +2,7 @@ from pkgcore.test.misc import mk_glsa
 import pytest
 from snakeoil.osutils import pjoin
 
-from pkgcheck.checks.glsa import TreeVulnerabilitiesCheck as vuln_report
+from pkgcheck.checks import glsa
 
 from .. import misc
 
@@ -17,22 +17,25 @@ def check(tmpdir):
         f.write(mk_glsa(("dev-util/diffball", ([], [">0.7"]))))
     with open(pjoin(str(tmpdir), "glsa-200611-02.xml"), "w") as f:
         f.write(mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
-    return vuln_report(
+    return glsa.TreeVulnerabilitiesCheck(
         misc.Options(glsa_location=str(tmpdir), glsa_enabled=True))
 
 
 class TestVulnerabilitiesReport(misc.ReportTestCase):
 
-    check_kls = vuln_report
+    check_kls = glsa.TreeVulnerabilitiesCheck
 
     def test_non_matching(self, check):
         self.assertNoReport(check, mk_pkg("0.5.1"))
+        self.assertNoReport(check, mk_pkg("5", "dev-util/diffball2"))
 
     def test_matching(self, check):
-        r = self.assertReports(check, mk_pkg("0.5-r5"))
-        assert len(r) == 1
+        r = self.assertReport(check, mk_pkg("0.5-r5"))
+        assert isinstance(r, glsa.VulnerablePackage)
         assert (
-            (r[0].category, r[0].package, r[0].version) ==
+            (r.category, r.package, r.version) ==
             ("dev-util", "diffball", "0.5-r5"))
+        assert 'vulnerable via glsa(200611-02)' in str(r)
+
+        # multiple glsa matches
         self.assertReports(check, mk_pkg("1.0"))
-        self.assertNoReport(check, mk_pkg("5", "dev-util/diffball2"))
