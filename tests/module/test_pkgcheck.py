@@ -47,6 +47,14 @@ def fakerepo(tmp_path):
     return fakerepo
 
 
+@pytest.fixture
+def tool(fakeconfig):
+    """Generate a tool utility for running pkgcheck."""
+    tool = Tool(pkgcheck.argparser)
+    tool.parser.set_defaults(override_config=fakeconfig)
+    return tool
+
+
 def test_script_run(capsys):
     """Test regular code path for running scripts."""
     script = partial(run, project)
@@ -82,9 +90,8 @@ def test_script_run(capsys):
 class TestPkgcheckScanParseArgs(object):
 
     @pytest.fixture(autouse=True)
-    def _setup(self, fakeconfig):
-        self.tool = Tool(pkgcheck.argparser)
-        self.tool.parser.set_defaults(override_config=fakeconfig)
+    def _setup(self, tool):
+        self.tool = tool
         self.args = ['scan']
 
     def test_skipped_checks(self):
