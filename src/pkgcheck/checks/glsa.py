@@ -1,5 +1,6 @@
 import os
 
+from snakeoil.cli.arghparse import existent_dir
 from snakeoil.demandload import demandload
 from snakeoil.strings import pluralism as _pl
 
@@ -53,7 +54,7 @@ class TreeVulnerabilitiesCheck(base.Template):
     @staticmethod
     def mangle_argparser(parser):
         parser.plugin.add_argument(
-            "--glsa-dir", dest='glsa_location',
+            "--glsa-dir", dest='glsa_location', type=existent_dir,
             help="source directory for glsas; tries to autodetermine it, may "
                  "be required if no glsa dirs are known")
 
@@ -61,33 +62,30 @@ class TreeVulnerabilitiesCheck(base.Template):
     def check_args(cls, parser, namespace):
         namespace.glsa_enabled = True
         glsa_loc = namespace.glsa_location
-        if glsa_loc is not None:
-            if not os.path.isdir(glsa_loc):
-                parser.error(f"--glsa-dir {glsa_loc!r} doesn't exist")
-        else:
-            if not namespace.repo_bases:
-                parser.error('a target repo or overlayed repo must be specified')
-            for repo_base in namespace.repo_bases:
-                candidate = pjoin(repo_base, "metadata", "glsa")
-                if os.path.isdir(candidate):
-                    if glsa_loc is None:
-                        glsa_loc = candidate
-                    else:
-                        parser.error(
-                            'multiple glsa sources is unsupported (detected '
-                            f'{glsa_loc!r} and {candidate!r}). Pick one with --glsa-dir.')
-            if glsa_loc is None:
+        if glsa_loc is None:
+            glsa_dirs = []
+            for repo in namespace.target_repo.trees:
+                path = pjoin(repo.location, 'metadata', 'glsa')
+                if os.path.isdir(path):
+                    glsa_dirs.append(path)
+            if len(glsa_dirs) > 1:
+                glsa_dirs = ', '.join(map(repr, glsa_dirs))
+                parser.error(
+                    '--glsa-dir needs to be specified to select one of '
+                    f'multiple glsa sources: {glsa_dirs}')
+
+            try:
+                glsa_loc = glsa_dirs[0]
+            except IndexError:
                 # force the error if explicitly selected using -c/--checks
                 selected_checks = namespace.selected_checks
                 if selected_checks is not None and cls.__name__ in selected_checks[1]:
-                    parser.error(
-                        "--glsa-dir must be specified, couldn't find glsa source")
+                    parser.error('no available glsa source, --glsa-dir must be specified')
                 namespace.glsa_enabled = False
                 if namespace.verbosity > 0:
                     logger.warn(
                         "disabling GLSA checks due to no glsa source "
-                        "being found, and the check not being explicitly enabled; "
-                        "this behaviour may change")
+                        "being found, and the check not being explicitly enabled")
                 return
 
         namespace.glsa_location = abspath(glsa_loc)
