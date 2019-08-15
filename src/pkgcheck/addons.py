@@ -260,7 +260,7 @@ class _ParseGitRepo(object):
 class GitChangedRepo(_ParseGitRepo):
     """Parse repository git log to determine locally changed packages."""
 
-    _git_cmd = ('git log --diff-filter=ARM --name-status --pretty=medium '
+    _git_cmd = ('git log --diff-filter=ARMD --name-status --pretty=medium '
                 '--date=short --reverse')
 
 
