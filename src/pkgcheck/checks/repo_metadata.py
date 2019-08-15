@@ -34,7 +34,7 @@ class MultiMovePackageUpdate(base.Warning):
         return f"{self.pkg!r}: multi-move update: {' -> '.join(self.moves)}"
 
 
-class OldMultiMovePackageUpdate(MultiMovePackageUpdate):
+class OldMultiMovePackageUpdate(base.Warning):
     """Old entry for removed package moved multiple times in profiles/updates files.
 
     This means that the reported pkg has been moved at least three times and
