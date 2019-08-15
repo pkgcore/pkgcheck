@@ -73,13 +73,22 @@ class TestPackageUpdatesCheck(misc.Tmpdir, misc.ReportTestCase):
         assert isinstance(r, repo_metadata.BadPackageUpdate)
         assert "file '1Q-2020': empty line 1" == str(r)
 
-    def test_extra_whitespae(self):
-        # whitespace prefix
+    def test_extra_whitespace(self):
+        pkgs = ('dev-util/foo-0', 'dev-util/bar-1')
         for update in (' move dev-util/foo dev-util/bar',  # prefix
                       'move dev-util/foo dev-util/bar '):  # suffix
             updates = {'1Q-2020': [update]}
-            pkgs = ('dev-util/foo-0', 'dev-util/bar-1')
             r = self.assertReport(self.mk_check(pkgs=pkgs, **updates), [])
             assert isinstance(r, repo_metadata.BadPackageUpdate)
             assert 'extra whitespace' in str(r)
             assert 'on line 1' in str(r)
+
+    def test_old_pkg_update(self):
+        pkgs = ('dev-util/blah-0', 'dev-libs/foon-1')
+        for update in ('move dev-util/foo dev-util/bar',  # old pkg move
+                       'slotmove dev-util/bar 0 1'):  # old slot move
+            updates = {'1Q-2020': [update]}
+            r = self.assertReport(self.mk_check(pkgs=pkgs, **updates), [])
+            assert isinstance(r, repo_metadata.OldPackageUpdate)
+            assert r.pkg == 'dev-util/bar'
+            assert "'dev-util/bar' unavailable" in str(r)
