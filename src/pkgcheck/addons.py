@@ -440,7 +440,7 @@ class GitAddon(base.Addon):
         return repo
 
 
-class _Profiles_Cache(mappings.ImmutableDict):
+class _ProfilesCache(mappings.ImmutableDict):
     """Class used to encapsulate cached profile data."""
 
     def __init__(self, *args, **kwargs):
@@ -798,7 +798,7 @@ class ProfileAddon(base.Addon):
             try:
                 os.makedirs(os.path.dirname(options.cache_file), exist_ok=True)
                 with open(options.cache_file, 'wb+') as f:
-                    pickle.dump(_Profiles_Cache(cached_profiles), f)
+                    pickle.dump(_ProfilesCache(cached_profiles), f)
             except IOError as e:
                 msg = f'failed dumping profiles cache: {options.cache_file!r}: {e.strerror}'
                 if not options.forced_cache:
