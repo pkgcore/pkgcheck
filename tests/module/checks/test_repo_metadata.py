@@ -76,7 +76,7 @@ class TestPackageUpdatesCheck(misc.Tmpdir, misc.ReportTestCase):
     def test_extra_whitespace(self):
         pkgs = ('dev-util/foo-0', 'dev-util/bar-1')
         for update in (' move dev-util/foo dev-util/bar',  # prefix
-                      'move dev-util/foo dev-util/bar '):  # suffix
+                       'move dev-util/foo dev-util/bar '):  # suffix
             updates = {'1Q-2020': [update]}
             r = self.assertReport(self.mk_check(pkgs=pkgs, **updates), [])
             assert isinstance(r, repo_metadata.BadPackageUpdate)
@@ -92,3 +92,23 @@ class TestPackageUpdatesCheck(misc.Tmpdir, misc.ReportTestCase):
             assert isinstance(r, repo_metadata.OldPackageUpdate)
             assert r.pkg == 'dev-util/bar'
             assert "'dev-util/bar' unavailable" in str(r)
+
+    def test_old_multimove_pkg_update(self):
+        update = ['move dev-util/foo dev-util/bar', 'move dev-util/bar dev-util/blah']
+        pkgs = ('dev-util/blaz-0', 'dev-libs/foon-1')
+        updates = {'1Q-2020': update}
+        r = self.assertReport(self.mk_check(pkgs=pkgs, **updates), [])
+        assert isinstance(r, repo_metadata.OldMultiMovePackageUpdate)
+        assert r.pkg == 'dev-util/blah'
+        assert r.moves == ('dev-util/foo', 'dev-util/bar', 'dev-util/blah')
+        assert "'dev-util/blah' unavailable" in str(r)
+
+    def test_multimove_pkg_update(self):
+        update = ['move dev-util/foo dev-util/bar', 'move dev-util/bar dev-util/blah']
+        pkgs = ('dev-util/blah-0', 'dev-libs/foon-1')
+        updates = {'1Q-2020': update}
+        r = self.assertReport(self.mk_check(pkgs=pkgs, **updates), [])
+        assert isinstance(r, repo_metadata.MultiMovePackageUpdate)
+        assert r.pkg == 'dev-util/foo'
+        assert r.moves == ('dev-util/foo', 'dev-util/bar', 'dev-util/blah')
+        assert "'dev-util/foo': multi-move update" in str(r)
