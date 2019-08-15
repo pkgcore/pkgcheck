@@ -4,7 +4,7 @@ import os
 import tempfile
 import textwrap
 
-from pkgcore.ebuild import eapi, repository
+from pkgcore.ebuild import eapi, repository, repo_objs
 from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
 from snakeoil.currying import post_curry
@@ -287,6 +287,64 @@ class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
         assert r.attr == "iuse"
         # arch flags must _not_ be in IUSE
         self.assertReport(check, self.mk_pkg("x86"))
+
+
+class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
+
+    check_kls = metadata.MetadataCheck
+
+    def mk_check(self, deprecated=(), banned=()):
+        # TODO: switch to using a repo fixture when available
+        os.makedirs(pjoin(self.dir, 'profiles'))
+        os.makedirs(pjoin(self.dir, 'metadata'))
+        with open(pjoin(self.dir, 'profiles', 'repo_name'), 'w') as f:
+            f.write('fake\n')
+        with open(pjoin(self.dir, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('masters =\n')
+            f.write(f"eapis-deprecated = {' '.join(deprecated)}\n")
+            f.write(f"eapis-banned = {' '.join(banned)}\n")
+        repo_config = repo_objs.RepoConfig(location=self.dir)
+        repo = repository.UnconfiguredTree(
+            repo_config.location, repo_config=repo_config)
+        repo.config = repo_config
+        options = misc.Options(target_repo=repo)
+        return self.check_kls(options)
+
+    def mk_pkg(self, eapi):
+        return misc.FakePkg('dev-util/diffball-2.7.1', data={'EAPI': eapi})
+
+    def test_repo_with_no_settings(self):
+        check = self.mk_check()
+        for eapi_str in eapi.EAPI.known_eapis.keys():
+            self.assertNoReport(check, self.mk_pkg(eapi=eapi_str))
+
+    def test_latest_eapi(self):
+        check = self.mk_check(deprecated=('0', '2', '4', '5'), banned=('1', '3',))
+        latest_eapi = list(eapi.EAPI.known_eapis)[-1]
+        self.assertNoReport(check, self.mk_pkg(eapi=latest_eapi))
+
+    def test_deprecated_eapi(self):
+        deprecated = ('0', '2', '4', '5')
+        banned = ('1', '3')
+        check = self.mk_check(deprecated=deprecated, banned=banned)
+        for eapi_str in deprecated:
+            r = self.assertReport(check, self.mk_pkg(eapi=eapi_str))
+            assert isinstance(r, metadata.DeprecatedEAPI)
+            assert r.eapi == eapi_str
+            assert f'uses deprecated EAPI {eapi_str}' == str(r)
+
+    def test_banned_eapi(self):
+        deprecated = ('0', '2', '4', '5')
+        banned = ('1', '3')
+        check = self.mk_check(deprecated=deprecated, banned=banned)
+        for eapi_str in banned:
+            r = self.assertReport(check, self.mk_pkg(eapi=eapi_str))
+            assert isinstance(r, metadata.BannedEAPI)
+            assert r.eapi == eapi_str
+            assert f'uses banned EAPI {eapi_str}' == str(r)
+
+    # TODO: will need to iterating over repo pkgs in order for masks to trigger
+    #def test_unknown_eapis(self):
 
 
 class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):

@@ -122,13 +122,13 @@ class MetadataCheck(base.Template):
     """Scan for packages with banned/deprecated EAPIs or bad metadata."""
 
     feed_type = base.versioned_feed
-    known_results = (DeprecatedEAPI, BannedEAPI)
+    known_results = (DeprecatedEAPI, BannedEAPI, MetadataError)
 
     def feed(self, pkg):
         eapi_str = str(pkg.eapi)
-        if eapi_str in pkg.repo.config.eapis_banned:
+        if eapi_str in self.options.target_repo.config.eapis_banned:
             yield BannedEAPI(pkg)
-        elif eapi_str in pkg.repo.config.eapis_deprecated:
+        elif eapi_str in self.options.target_repo.config.eapis_deprecated:
             yield DeprecatedEAPI(pkg)
 
     def finish(self):
