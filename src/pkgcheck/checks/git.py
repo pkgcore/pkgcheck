@@ -51,7 +51,7 @@ class DirectStableKeywords(base.VersionedResult, base.Error):
 
 
 class DroppedUnstableKeywords(base.PackageResult, base.Warning):
-    """Stable keywords dropped from package."""
+    """Unstable keywords dropped from package."""
 
     __slots__ = ('keywords', 'commit')
     status = 'unstable'
@@ -102,7 +102,7 @@ class GitCommitsCheck(base.GentooRepoCheck):
         self.valid_arches = self.options.target_repo.known_arches
         self.added_repo = git_addon.commits_repo(addons.GitAddedRepo)
 
-    def removal_check(self, pkgset):
+    def removal_checks(self, pkgset):
         removed = [pkg for pkg in pkgset if pkg.status == 'D']
         if not removed:
             return
@@ -152,7 +152,7 @@ class GitCommitsCheck(base.GentooRepoCheck):
 
     def feed(self, pkgset):
         # check for issues due to pkg removals
-        yield from self.removal_check(pkgset)
+        yield from self.removal_checks(pkgset)
 
         for git_pkg in pkgset:
             try:
