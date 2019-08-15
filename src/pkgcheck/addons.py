@@ -252,7 +252,7 @@ class _ParseGitRepo(object):
                     atom, status = parsed
                     pkg_map.setdefault(
                         atom.category, {}).setdefault(
-                            atom.package, []).append((atom.fullver, date, status))
+                            atom.package, []).append((atom.fullver, date, status, commit))
 
         return pkg_map
 
@@ -284,13 +284,14 @@ class HistoricalPkg(cpv.versioned_CPV_cls):
     """Fake packages encapsulating date and status parsed from git log."""
 
     def __init__(self, cat, pkg, data, *args, **kwargs):
-        ver, date, status = data
+        ver, date, status, commit = data
         super().__init__(cat, pkg, ver, *args, **kwargs)
 
         # add additional date/status attrs
         sf = object.__setattr__
         sf(self, 'date', date)
         sf(self, 'status', status)
+        sf(self, 'commit', commit)
 
 
 class HistoricalRepo(SimpleTree):
