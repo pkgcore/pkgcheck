@@ -367,13 +367,15 @@ class GitAddon(base.Addon):
                             git_repo = pickle.load(f)
                     except FileNotFoundError as e:
                         pass
-                    except (EOFError, AttributeError):
+                    except (EOFError, AttributeError, TypeError) as e:
+                        logger.debug('forcing git repo cache regen: %s', e)
                         os.remove(cache_file)
                         git_repo = None
 
-                # remove outdated repo caches
+                # force outdated cache regen
                 if (git_repo is not None and
                         getattr(git_repo, 'cache_version', None) != self.cache_version):
+                    logger.debug('forcing git repo cache regen due to outdated version')
                     os.remove(cache_file)
                     git_repo = None
 
@@ -438,6 +440,14 @@ class GitAddon(base.Addon):
         return repo
 
 
+class _Profiles_Cache(mappings.ImmutableDict):
+    """Class used to encapsulate cached profile data."""
+
+    def __init__(self, *args, **kwargs):
+        self.cache_version = ProfileAddon.cache_version
+        super().__init__(*args, **kwargs)
+
+
 class ProfileAddon(base.Addon):
 
     required_addons = (ArchesAddon,)
@@ -445,6 +455,9 @@ class ProfileAddon(base.Addon):
     # non-profile dirs found in the profiles directory, generally only in
     # the gentoo repo, but could be in overlays as well
     non_profile_dirs = frozenset(['desc', 'updates'])
+
+    # used to check profile cache compatibility
+    cache_version = 1
 
     @staticmethod
     def mangle_argparser(parser):
@@ -632,19 +645,26 @@ class ProfileAddon(base.Addon):
         self.global_insoluble = set()
         profile_filters = defaultdict(list)
         chunked_data_cache = {}
-        cached_profile_filters = {}
+        cached_profiles = {}
 
         # try loading cached profile filters
         if options.profile_cache is None:
             try:
                 with open(options.cache_file, 'rb') as f:
-                    cached_profile_filters = pickle.load(f)
-            except TypeError as e:
-                logger.debug('forced profile cache regeneration: %s', e)
+                    cached_profiles = pickle.load(f)
+            except FileNotFoundError as e:
+                pass
+            except (EOFError, AttributeError, TypeError) as e:
+                logger.debug('forcing profile cache regen: %s', e)
                 # probably unmodifiable dict due to pkgcore issues, regenerate it
                 os.remove(options.cache_file)
-            except (EOFError, FileNotFoundError):
-                pass
+
+            # force outdated cache regen
+            if (cached_profiles and
+                    getattr(cached_profiles, 'cache_version', None) != self.cache_version):
+                logger.debug('forcing profile cache regen due to outdated version')
+                os.remove(options.cache_file)
+                cached_profiles = {}
 
         cached_profile_updates = False
         with suppress_logging():
@@ -666,7 +686,7 @@ class ProfileAddon(base.Addon):
                         files = self.profile_data.get(profile_name, None)
                         try:
                             try:
-                                cached_profile = cached_profile_filters.get(profile_name, {})
+                                cached_profile = cached_profiles.get(profile_name, {})
                                 outdated = files != cached_profile.get('files', ())
                             except (AttributeError, TypeError):
                                 # force refresh of old cache format
@@ -719,7 +739,7 @@ class ProfileAddon(base.Addon):
 
                             if options.profile_cache or options.profile_cache is None:
                                 cached_profile_updates = True
-                                cached_profile_filters[profile_name] = {
+                                cached_profiles[profile_name] = {
                                     'files': files,
                                     'vfilter': vfilter,
                                     'immutable_flags': immutable_flags,
@@ -778,7 +798,7 @@ class ProfileAddon(base.Addon):
             try:
                 os.makedirs(os.path.dirname(options.cache_file), exist_ok=True)
                 with open(options.cache_file, 'wb+') as f:
-                    pickle.dump(cached_profile_filters, f)
+                    pickle.dump(_Profiles_Cache(cached_profiles), f)
             except IOError as e:
                 msg = f'failed dumping profiles cache: {options.cache_file!r}: {e.strerror}'
                 if not options.forced_cache:
