@@ -186,8 +186,8 @@ class DoublePrefixInPath(base.VersionedResult, base.Error):
     @property
     def short_desc(self):
         lines = ', '.join(map(str, self.lines))
-        return (f"{self.match}: concatenates two variables containing "
-                f"EPREFIX on line{_pl(self.lines)} {lines}")
+        return (f"{self.match}: concatenates two paths containing EPREFIX "
+                f"on line{_pl(self.lines)} {lines}")
 
 
 class PathVariablesCheck(base.Template):
