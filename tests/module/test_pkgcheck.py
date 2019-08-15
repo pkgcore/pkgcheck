@@ -1,14 +1,11 @@
 from functools import partial
 from io import StringIO
 import os
-import textwrap
 from unittest.mock import patch
 
-from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import restricts, atom
 from pkgcore.plugin import get_plugins
 from pkgcore.restrictions import packages
-from pkgcore.util.commandline import Tool
 import pytest
 from snakeoil.contexts import chdir
 from snakeoil.fileutils import touch
@@ -17,42 +14,7 @@ from snakeoil.osutils import pjoin
 from pkgcheck import base, checks, plugins, __title__ as project
 from pkgcheck.scripts import run, pkgcheck
 
-
-@pytest.fixture
-def fakeconfig(tmp_path):
-    """Generate a portage config that sets the default repo to pkgcore's stubrepo."""
-    fakeconfig = str(tmp_path)
-    repos_conf = tmp_path / 'repos.conf'
-    stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
-    with open(repos_conf, 'w') as f:
-        f.write(textwrap.dedent(f"""\
-            [DEFAULT]
-            main-repo = stubrepo
-
-            [stubrepo]
-            location = {stubrepo}"""))
-    return fakeconfig
-
-
-@pytest.fixture
-def fakerepo(tmp_path):
-    """Generate a stub repo."""
-    fakerepo = str(tmp_path)
-    os.makedirs(pjoin(fakerepo, 'profiles'))
-    os.makedirs(pjoin(fakerepo, 'metadata'))
-    with open(pjoin(fakerepo, 'profiles', 'repo_name'), 'w') as f:
-        f.write('fakerepo\n')
-    with open(pjoin(fakerepo, 'metadata', 'layout.conf'), 'w') as f:
-        f.write('masters =\n')
-    return fakerepo
-
-
-@pytest.fixture
-def tool(fakeconfig):
-    """Generate a tool utility for running pkgcheck."""
-    tool = Tool(pkgcheck.argparser)
-    tool.parser.set_defaults(override_config=fakeconfig)
-    return tool
+from .misc import fakeconfig, fakerepo, tool
 
 
 def test_script_run(capsys):

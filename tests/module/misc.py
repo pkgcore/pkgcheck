@@ -1,7 +1,11 @@
 from itertools import chain
+import os
+import textwrap
 
 import pytest
 
+from pkgcore import const as pkgcore_const
+from pkgcore.util.commandline import Tool
 from pkgcore.ebuild import domain
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
@@ -16,6 +20,7 @@ from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
 
 from pkgcheck import base
+from pkgcheck.scripts import pkgcheck
 
 
 # TODO: merge this with the pkgcore-provided equivalent
@@ -195,3 +200,40 @@ class Tmpdir(object):
     @pytest.fixture(autouse=True)
     def _create_tmpdir(self, tmpdir):
         self.dir = str(tmpdir)
+
+
+@pytest.fixture
+def fakeconfig(tmp_path):
+    """Generate a portage config that sets the default repo to pkgcore's stubrepo."""
+    fakeconfig = str(tmp_path)
+    repos_conf = tmp_path / 'repos.conf'
+    stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
+    with open(repos_conf, 'w') as f:
+        f.write(textwrap.dedent(f"""\
+            [DEFAULT]
+            main-repo = stubrepo
+
+            [stubrepo]
+            location = {stubrepo}"""))
+    return fakeconfig
+
+
+@pytest.fixture
+def fakerepo(tmp_path):
+    """Generate a stub repo."""
+    fakerepo = str(tmp_path)
+    os.makedirs(pjoin(fakerepo, 'profiles'))
+    os.makedirs(pjoin(fakerepo, 'metadata'))
+    with open(pjoin(fakerepo, 'profiles', 'repo_name'), 'w') as f:
+        f.write('fakerepo\n')
+    with open(pjoin(fakerepo, 'metadata', 'layout.conf'), 'w') as f:
+        f.write('masters =\n')
+    return fakerepo
+
+
+@pytest.fixture
+def tool(fakeconfig):
+    """Generate a tool utility for running pkgcheck."""
+    tool = Tool(pkgcheck.argparser)
+    tool.parser.set_defaults(override_config=fakeconfig)
+    return tool
