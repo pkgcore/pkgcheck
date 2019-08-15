@@ -498,11 +498,10 @@ def dump_docstring(out, obj, prefix=None):
         if firstline:
             out.write(firstline)
         if len(lines) > 1:
-            if firstline:
-                out.write()
             for line in textwrap.dedent('\n'.join(lines[1:])).split('\n'):
-                if line:
-                    out.write(line)
+                out.write(line)
+        else:
+            out.write()
     finally:
         if prefix is not None:
             out.first_prefix.pop()
@@ -536,7 +535,6 @@ def display_keywords(out, options):
                 for keyword in keywords:
                     out.write(out.fg(keyword.color.__get__(keyword)), keyword.__name__, out.reset, ':')
                     dump_docstring(out, keyword, prefix='  ')
-                    out.write()
             finally:
                 out.first_prefix.pop()
                 out.later_prefix.pop()
@@ -563,7 +561,6 @@ def display_checks(out, options):
                 for check in l:
                     out.write(out.fg('yellow'), check.__name__, out.reset, ':')
                     dump_docstring(out, check, prefix='  ')
-                    out.write()
 
                     # output result types that each check can generate
                     if check.known_results:
@@ -592,7 +589,6 @@ def display_reporters(out, options, reporters):
         for reporter in sorted(reporters, key=attrgetter('__name__')):
             out.write(out.bold, out.fg('yellow'), reporter.__name__)
             dump_docstring(out, reporter, prefix='  ')
-            out.write()
 
 
 show = subparsers.add_parser('show', description='show various pkgcheck info')
