@@ -84,7 +84,6 @@ def _setup_reporter(namespace):
 # These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser(
     'scan', parents=(reporter_opts,), description='scan targets for QA issues')
-scan.set_defaults(repo_bases=[])
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
@@ -215,8 +214,6 @@ def _validate_args(parser, namespace):
     # they're configured properly in metadata/layout.conf. This is used for
     # things like visibility checks (it is passed to the checkers in "start").
     namespace.search_repo = multiplex.tree(*namespace.target_repo.trees)
-
-    namespace.repo_bases = [abspath(repo.location) for repo in reversed(namespace.target_repo.trees)]
 
     namespace.default_target = None
     if namespace.targets:
@@ -362,11 +359,6 @@ def _validate_args(parser, namespace):
 
 @scan.bind_main_func
 def _scan(options, out, err):
-    if not options.repo_bases:
-        err.write(
-            'Warning: could not determine repo base for profiles, some checks will not work.')
-        err.write()
-
     try:
         reporter = options.reporter(
             out, keywords=options.filtered_keywords, verbosity=options.verbosity)
@@ -392,7 +384,6 @@ def _scan(options, out, err):
         err.write(
             f"target repo: {options.target_repo.repo_id!r} "
             f"at {options.target_repo.location!r}")
-        err.write('base dirs: ', ', '.join(options.repo_bases))
         for filterer in options.limiters:
             err.write('limiter: ', filterer)
         debug = logging.debug
