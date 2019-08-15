@@ -166,6 +166,8 @@ class _ParseGitRepo(object):
 
     def __init__(self, repo, commit=None):
         self.location = repo.location
+        self.cache_version = GitAddon.cache_version
+
         if commit is None:
             self.commit = 'origin/HEAD..master'
             self.pkg_map = self._process_git_repo(commit=self.commit)
@@ -304,6 +306,9 @@ class HistoricalRepo(SimpleTree):
 
 class GitAddon(base.Addon):
 
+    # used to check repo cache compatibility
+    cache_version = 1
+
     @staticmethod
     def mangle_argparser(parser):
         group = parser.add_argument_group('git')
@@ -360,8 +365,17 @@ class GitAddon(base.Addon):
                     try:
                         with open(cache_file, 'rb') as f:
                             git_repo = pickle.load(f)
-                    except (EOFError, FileNotFoundError, AttributeError) as e:
+                    except FileNotFoundError as e:
                         pass
+                    except (EOFError, AttributeError):
+                        os.remove(cache_file)
+                        git_repo = None
+
+                # remove outdated repo caches
+                if (git_repo is not None and
+                        getattr(git_repo, 'cache_version', None) != self.cache_version):
+                    os.remove(cache_file)
+                    git_repo = None
 
                 if (git_repo is not None and
                         repo.location == getattr(git_repo, 'location', None)):
