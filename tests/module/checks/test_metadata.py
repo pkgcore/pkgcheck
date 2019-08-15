@@ -304,9 +304,7 @@ class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
             f.write(f"eapis-deprecated = {' '.join(deprecated)}\n")
             f.write(f"eapis-banned = {' '.join(banned)}\n")
         repo_config = repo_objs.RepoConfig(location=self.dir)
-        repo = repository.UnconfiguredTree(
-            repo_config.location, repo_config=repo_config)
-        repo.config = repo_config
+        repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
         options = misc.Options(target_repo=repo)
         return self.check_kls(options)
 
