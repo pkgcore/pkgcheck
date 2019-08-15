@@ -8,7 +8,6 @@ from tempfile import TemporaryDirectory
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.log import logger
-from snakeoil.contexts import chdir
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
@@ -123,15 +122,15 @@ class GitCommitsCheck(base.GentooRepoCheck):
             with open(pjoin(repo_dir, 'profiles', 'categories'), 'w') as f:
                 f.write(f'{pkg.category}\n')
 
-            with chdir(self.repo.location):
-                old_files = subprocess.Popen(
-                    git_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                with tarfile.open(mode='r|', fileobj=old_files.stdout) as tar:
-                    tar.extractall(path=repo_dir)
-                if old_files.poll():
-                    error = old_files.stderr.read().decode().strip()
-                    logger.warning(f'skipping git removal checks: {error}')
-                    return
+            old_files = subprocess.Popen(
+                git_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                cwd=self.repo.location)
+            with tarfile.open(mode='r|', fileobj=old_files.stdout) as tar:
+                tar.extractall(path=repo_dir)
+            if old_files.poll():
+                error = old_files.stderr.read().decode().strip()
+                logger.warning(f'skipping git removal checks: {error}')
+                return
 
             old_repo = UnconfiguredTree(repo_dir)
             old_keywords = set(chain.from_iterable(
