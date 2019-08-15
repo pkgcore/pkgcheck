@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from pkgcore.ebuild import repository, repo_objs
+from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.test.misc import FakePkg
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
@@ -36,9 +36,7 @@ class TestPackageUpdatesCheck(misc.Tmpdir, misc.ReportTestCase):
             os.makedirs(os.path.dirname(pkg_path), exist_ok=True)
             touch(pkg_path)
 
-        repo_config = repo_objs.RepoConfig(location=repo_dir)
-        repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
-        options = misc.Options(target_repo=repo)
+        options = misc.Options(target_repo=UnconfiguredTree(repo_dir))
         return self.check_kls(options)
 
     def test_no_updates(self):
