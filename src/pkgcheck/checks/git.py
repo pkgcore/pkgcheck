@@ -1,6 +1,16 @@
 from datetime import datetime
+from itertools import chain
+import os
+import subprocess
+import tarfile
+from tempfile import TemporaryDirectory
 
+from pkgcore.ebuild.repository import UnconfiguredTree
+from pkgcore.ebuild.misc import sort_keywords
+from pkgcore.log import logger
+from snakeoil.contexts import chdir
 from snakeoil.demandload import demand_compile_regexp
+from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base
@@ -40,6 +50,32 @@ class DirectStableKeywords(base.VersionedResult, base.Error):
             _pl(self.keywords), ', '.join(self.keywords))
 
 
+class DroppedUnstableKeywords(base.PackageResult, base.Warning):
+    """Stable keywords dropped from package."""
+
+    __slots__ = ('keywords', 'commit')
+    status = 'unstable'
+
+    def __init__(self, pkg, keywords, commit):
+        super().__init__(pkg)
+        self.keywords = tuple(sort_keywords(keywords))
+        self.commit = commit
+
+    @property
+    def short_desc(self):
+        keywords = ', '.join(self.keywords)
+        return (
+            f"commit {self.commit[:10]} (or later) dropped {self.status} "
+            f"keyword{_pl(self.keywords)}: [ {keywords} ]"
+        )
+
+
+class DroppedStableKeywords(base.Error, DroppedUnstableKeywords):
+    """Stable keywords dropped from package."""
+
+    status = 'stable'
+
+
 class DirectNoMaintainer(base.PackageResult, base.Error):
     """Directly added, new package with no specified maintainer."""
 
@@ -56,18 +92,71 @@ class GitCommitsCheck(base.GentooRepoCheck):
     required_addons = (addons.GitAddon,)
     known_results = (
         DirectStableKeywords, DirectNoMaintainer,
-        OutdatedCopyright,
+        OutdatedCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
     )
 
     def __init__(self, options, git_addon):
         super().__init__(options)
         self.today = datetime.today()
+        self.repo = self.options.target_repo
+        self.valid_arches = self.options.target_repo.known_arches
         self.added_repo = git_addon.commits_repo(addons.GitAddedRepo)
 
+    def removal_check(self, pkgset):
+        removed = [pkg for pkg in pkgset if pkg.status == 'D']
+        if not removed:
+            return
+
+        pkg = removed[0]
+        commit = removed[0].commit
+        paths = ' '.join([pjoin(pkg.category, pkg.package), 'eclass'])
+        git_cmd = f'git archive {commit}~1 {paths}'
+
+        with TemporaryDirectory() as repo_dir:
+            # set up some basic repo files so pkgcore doesn't complain
+            os.makedirs(pjoin(repo_dir, 'metadata'))
+            with open(pjoin(repo_dir, 'metadata', 'layout.conf'), 'w') as f:
+                f.write('masters =\n')
+            os.makedirs(pjoin(repo_dir, 'profiles'))
+            with open(pjoin(repo_dir, 'profiles', 'repo_name'), 'w') as f:
+                f.write('old-repo\n')
+            with open(pjoin(repo_dir, 'profiles', 'categories'), 'w') as f:
+                f.write(f'{pkg.category}\n')
+
+            with chdir(self.repo.location):
+                old_files = subprocess.Popen(
+                    git_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                with tarfile.open(mode='r|', fileobj=old_files.stdout) as tar:
+                    tar.extractall(path=repo_dir)
+                if old_files.poll():
+                    error = old_files.stderr.read().decode().strip()
+                    logger.warning(f'skipping git removal checks: {error}')
+                    return
+
+            old_repo = UnconfiguredTree(repo_dir)
+            old_keywords = set(chain.from_iterable(
+                pkg.keywords for pkg in old_repo.match(pkg.unversioned_atom)))
+            new_keywords = set(chain.from_iterable(
+                pkg.keywords for pkg in self.repo.match(pkg.unversioned_atom))) 
+
+            dropped_keywords = old_keywords - new_keywords
+            dropped_stable_keywords = dropped_keywords & self.valid_arches
+            dropped_unstable_keywords = {
+                x for x in dropped_keywords if x[0] == '~' and x[1:] in self.valid_arches}
+
+            if dropped_stable_keywords:
+                yield DroppedStableKeywords(pkg, dropped_stable_keywords, commit)
+            if dropped_unstable_keywords:
+                yield DroppedUnstableKeywords(pkg, dropped_unstable_keywords, commit)
+
+
     def feed(self, pkgset):
+        # check for issues due to pkg removals
+        yield from self.removal_check(pkgset)
+
         for git_pkg in pkgset:
             try:
-                pkg = self.options.target_repo.match(git_pkg.versioned_atom)[0]
+                pkg = self.repo.match(git_pkg.versioned_atom)[0]
             except IndexError:
                 # weird situation where an ebuild was locally committed and then removed
                 return
