@@ -1,0 +1,68 @@
+from functools import partial
+from importlib import import_module
+import os
+
+from snakeoil import mappings
+from snakeoil.demandload import demandload
+
+from . import __title__, base
+
+demandload(
+    'inspect',
+    'pkgutil',
+)
+
+
+try:
+    # This is a file written during installation;
+    # if it exists, we defer to it. If it doesn't, then we're
+    # running from a git checkout or a tarball.
+    from . import _const as _defaults
+except ImportError:
+    _defaults = object()
+
+
+def _find_modules(module):
+    if getattr(module, '__path__', False):
+        for imp, name, _ in pkgutil.walk_packages(module.__path__, module.__name__ + '.'):
+            # skip "private" modules
+            if name.rsplit('.', 1)[1][0] == '_':
+                continue
+            try:
+                yield import_module(name)
+            except ImportError as e:
+                raise Exception(f'failed importing {name!r}: {e}')
+    else:
+        yield module
+
+
+def _find_obj_classes(module_name, matching_cls):
+    module = import_module(f'.{module_name}', __title__)
+    classes = []
+    for m in _find_modules(module):
+        for name, cls in inspect.getmembers(m):
+            if (inspect.isclass(cls) and issubclass(cls, matching_cls)
+                    and cls.__name__[0] != '_'):
+                classes.append((cls.__name__, cls))
+    return tuple(sorted(classes))
+
+
+def _GET_VALS(attr, func):
+    try:
+        result = getattr(_defaults, attr)
+    except AttributeError:
+        result = func()
+    return result
+
+
+try:
+    KEYWORDS = mappings.ImmutableDict(_GET_VALS(
+        'KEYWORDS', partial(_find_obj_classes, 'checks', base.Result)))
+    CHECKS = mappings.ImmutableDict(_GET_VALS(
+        'CHECKS', partial(_find_obj_classes, 'checks', base.Template)))
+    TRANSFORMS = mappings.ImmutableDict(_GET_VALS(
+        'TRANSFORMS', partial(_find_obj_classes, 'feeds', base.Transform)))
+    REPORTERS = mappings.ImmutableDict(_GET_VALS(
+        'REPORTERS', partial(_find_obj_classes, 'reporters', base.Reporter)))
+except SyntaxError as e:
+    raise SyntaxError(f'invalid syntax: {e.filename}, line {e.lineno}')
