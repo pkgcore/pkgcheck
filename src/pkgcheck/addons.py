@@ -1,6 +1,6 @@
 """Addon functionality shared by multiple checkers."""
 
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict, UserDict, defaultdict
 from copy import copy
 from functools import partial
 from itertools import chain, filterfalse
@@ -440,12 +440,12 @@ class GitAddon(base.Addon):
         return repo
 
 
-class _ProfilesCache(mappings.ImmutableDict):
+class _ProfilesCache(UserDict):
     """Class used to encapsulate cached profile data."""
 
     def __init__(self, *args, **kwargs):
-        self.cache_version = ProfileAddon.cache_version
         super().__init__(*args, **kwargs)
+        self.cache_version = ProfileAddon.cache_version
 
 
 class ProfileAddon(base.Addon):
