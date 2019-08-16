@@ -34,7 +34,6 @@ demandload(
     'snakeoil:pickling,formatters',
     'snakeoil.log:suppress_logging',
     'snakeoil.sequences:iflatten_instance',
-    'pkgcheck:errors',
 )
 
 
@@ -341,12 +340,8 @@ def _validate_args(parser, namespace):
 
 @scan.bind_main_func
 def _scan(options, out, err):
-    try:
-        reporter = options.reporter(
-            out, keywords=options.filtered_keywords, verbosity=options.verbosity)
-    except errors.ReporterInitError as e:
-        err.write(f'{scan.prog}: failed initializing reporter: {e}')
-        return 1
+    reporter = options.reporter(
+        out, keywords=options.filtered_keywords, verbosity=options.verbosity)
 
     addons_map = {}
 

@@ -14,7 +14,6 @@ demandload(
     'pickle',
     'xml.sax.saxutils:escape@xml_escape',
     'snakeoil:currying',
-    'pkgcheck:errors',
 )
 
 
