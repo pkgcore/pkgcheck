@@ -365,19 +365,16 @@ class GitAddon(base.Addon):
                     try:
                         with open(cache_file, 'rb') as f:
                             git_repo = pickle.load(f)
+                        if git_repo.cache_version != self.cache_version:
+                            logger.debug('forcing git repo cache regen due to outdated version')
+                            os.remove(cache_file)
+                            git_repo = None
                     except FileNotFoundError as e:
                         pass
                     except (EOFError, AttributeError, TypeError) as e:
                         logger.debug('forcing git repo cache regen: %s', e)
                         os.remove(cache_file)
                         git_repo = None
-
-                # force outdated cache regen
-                if (git_repo is not None and
-                        getattr(git_repo, 'cache_version', None) != self.cache_version):
-                    logger.debug('forcing git repo cache regen due to outdated version')
-                    os.remove(cache_file)
-                    git_repo = None
 
                 if (git_repo is not None and
                         repo.location == getattr(git_repo, 'location', None)):
@@ -652,17 +649,14 @@ class ProfileAddon(base.Addon):
             try:
                 with open(options.cache_file, 'rb') as f:
                     cached_profiles = pickle.load(f)
+                if cached_profiles.cache_version != self.cache_version:
+                    logger.debug('forcing profile cache regen due to outdated version')
+                    os.remove(options.cache_file)
+                    cached_profiles = {}
             except FileNotFoundError as e:
                 pass
             except (EOFError, AttributeError, TypeError) as e:
                 logger.debug('forcing profile cache regen: %s', e)
-                # probably unmodifiable dict due to pkgcore issues, regenerate it
-                os.remove(options.cache_file)
-
-            # force outdated cache regen
-            if (cached_profiles and
-                    getattr(cached_profiles, 'cache_version', None) != self.cache_version):
-                logger.debug('forcing profile cache regen due to outdated version')
                 os.remove(options.cache_file)
                 cached_profiles = {}
 
