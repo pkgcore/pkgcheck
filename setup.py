@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 from distutils import log
+from distutils.command import install_data as dst_install_data
 from distutils.util import byte_compile
 import os
 import sys
@@ -11,6 +12,9 @@ from setuptools import setup
 
 from snakeoil.dist import distutils_extensions as pkgdist
 pkgdist_setup, pkgdist_cmds = pkgdist.setup()
+
+with pkgdist.syspath(pkgdist.PACKAGEDIR):
+    from pkgcheck import const
 
 
 class install(pkgdist.install):
@@ -44,9 +48,6 @@ def write_obj_lists(python_base, install_prefix):
     path = os.path.join(python_base, pkgdist.MODULE_NAME, "_const.py")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     log.info(f'writing config to {path!r}')
-
-    with pkgdist.syspath(pkgdist.PACKAGEDIR):
-        from pkgcheck import const
 
     # hack to drop quotes on modules in generated files
     class _kls(object):
@@ -84,6 +85,28 @@ def write_obj_lists(python_base, install_prefix):
         byte_compile([path], optimize=2, prefix=python_base)
 
 
+class install_data(dst_install_data.install_data):
+    """Generate data files for install.
+
+    Currently this includes keyword, check, and reporter name lists.
+    """
+
+    def run(self):
+        self.__generate_files()
+        super().run()
+
+    def __generate_files(self):
+        os.makedirs(os.path.join(pkgdist.REPODIR, '.generated'), exist_ok=True)
+        files = []
+        for obj in ('KEYWORDS', 'CHECKS', 'REPORTERS'):
+            log.info(f'Generating {obj.lower()} list')
+            path = os.path.join(pkgdist.REPODIR, '.generated', obj.lower())
+            with open(path, 'w') as f:
+                f.write('\n'.join(getattr(const, obj).keys()) + '\n')
+            files.append(os.path.join('.generated', obj.lower()))
+        self.data_files.append(('share/pkgcheck', files))
+
+
 setup(**dict(pkgdist_setup,
     license='BSD',
     author='Brian Harring, Tim Harder',
@@ -95,6 +118,7 @@ setup(**dict(pkgdist_setup,
     cmdclass=dict(
         pkgdist_cmds,
         test=pkgdist.pytest,
+        install_data=install_data,
         install=install,
         ),
     classifiers=[
