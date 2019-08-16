@@ -1,5 +1,7 @@
 """Basic reporters and reporter factories."""
 
+from collections import defaultdict
+
 from pkgcore.config import configurable
 from snakeoil import formatters
 from snakeoil.decorators import coroutine
@@ -8,7 +10,6 @@ from snakeoil.demandload import demandload
 from . import base
 
 demandload(
-    'collections:defaultdict',
     'json',
     'pickle',
     'xml.sax.saxutils:escape@xml_escape',

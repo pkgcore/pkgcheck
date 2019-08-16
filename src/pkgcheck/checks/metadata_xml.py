@@ -1,6 +1,10 @@
+import argparse
+from functools import partial
+from itertools import chain
 import os
 
 from pkgcore import const as pkgcore_const
+from pkgcore.ebuild.atom import atom
 from snakeoil.cli.exceptions import UserException
 from snakeoil.demandload import demandload
 from snakeoil.strings import pluralism as _pl
@@ -8,14 +12,9 @@ from snakeoil.strings import pluralism as _pl
 from .. import base
 
 demandload(
-    'argparse',
-    'functools:partial',
-    'itertools:chain',
     'urllib.request:urlopen',
     'urllib:error@urllib_error',
     'lxml:etree',
-    'tempfile:NamedTemporaryFile',
-    'pkgcore.ebuild.atom:atom',
     'pkgcore.log:logger',
     'snakeoil.osutils:pjoin',
     'snakeoil:fileutils',
