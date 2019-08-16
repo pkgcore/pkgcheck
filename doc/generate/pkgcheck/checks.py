@@ -20,8 +20,7 @@ from textwrap import dedent, TextWrapper
 
 from snakeoil.strings import pluralism as _pl
 
-from pkgcheck import base
-from pkgcheck.scripts.pkgcheck import _known_checks
+from pkgcheck import base, const
 
 
 def main(f=sys.stdout, **kwargs):
@@ -43,7 +42,7 @@ def main(f=sys.stdout, **kwargs):
     for i, scope in enumerate(base.known_scopes.values()):
         _rst_header('-', scope.desc.capitalize() + ' scope')
 
-        checks = (x for x in _known_checks if x.scope == i)
+        checks = (x for x in const.CHECKS.values() if x.scope == i)
         for check in checks:
             if check.__doc__ is not None:
                 try:

@@ -2,14 +2,10 @@
 #
 # Output rst doc for defined pkgcheck reporters.
 
-from operator import attrgetter
 import sys
 from textwrap import dedent
 
-from pkgcore.plugin import get_plugins
-from snakeoil.sequences import unstable_unique
-
-from pkgcheck import plugins
+from pkgcheck import const
 
 
 def main(f=sys.stdout, **kwargs):
@@ -26,13 +22,9 @@ def main(f=sys.stdout, **kwargs):
     if __doc__ is not None:
         out(__doc__.strip())
 
-    reporters = sorted(unstable_unique(
-        get_plugins('reporter', plugins)),
-        key=attrgetter('__name__'))
-
     _rst_header('=', 'Reporters', newline=False)
 
-    for reporter in reporters:
+    for reporter in const.REPORTERS.values():
         if reporter.__doc__ is not None:
             try:
                 summary, explanation = reporter.__doc__.split('\n', 1)

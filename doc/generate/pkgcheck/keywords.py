@@ -15,8 +15,7 @@ from textwrap import dedent
 
 from snakeoil.strings import pluralism as _pl
 
-from pkgcheck import base
-from pkgcheck.scripts.pkgcheck import _known_checks, _known_keywords
+from pkgcheck import base, const
 
 
 def main(f=sys.stdout, **kwargs):
@@ -34,14 +33,14 @@ def main(f=sys.stdout, **kwargs):
         out(__doc__.strip())
 
     related_checks = defaultdict(set)
-    for check in _known_checks:
+    for check in const.CHECKS.values():
         for keyword in check.known_results:
             related_checks[keyword].add(check.__name__)
 
     for scope in base.known_scopes.values():
         _rst_header('-', scope.desc.capitalize() + ' scope')
 
-        keywords = (x for x in _known_keywords if x.threshold == scope.threshold)
+        keywords = (x for x in const.KEYWORDS.values() if x.threshold == scope.threshold)
         for keyword in keywords:
             if keyword.__doc__ is not None:
                 try:

@@ -20,7 +20,7 @@ from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import unstable_unique
 from snakeoil.strings import pluralism as _pl
 
-from .. import plugins, base, feeds
+from .. import plugins, base, feeds, const
 
 demandload(
     'logging',
@@ -158,20 +158,11 @@ for check in get_plugins('check', plugins):
 for addon in all_addons:
     addon.mangle_argparser(scan)
 
-# XXX hack...
-_known_checks = tuple(sorted(
-    unstable_unique(get_plugins('check', plugins)),
-    key=attrgetter('__name__')))
-_known_keywords = tuple(sorted(
-    unstable_unique(chain.from_iterable(
-    check.known_results for check in _known_checks)),
-    key=attrgetter('__name__')))
-
 
 @scan.bind_final_check
 def _validate_args(parser, namespace):
-    namespace.enabled_checks = list(_known_checks)
-    namespace.enabled_keywords = list(_known_keywords)
+    namespace.enabled_checks = list(const.CHECKS.values())
+    namespace.enabled_keywords = list(const.KEYWORDS.values())
     cwd = abspath(os.getcwd())
 
     if namespace.target_repo is None:
@@ -273,10 +264,10 @@ def _validate_args(parser, namespace):
 
         # convert scopes to keyword lists
         disabled_keywords = [
-            k.__name__ for s in disabled_scopes for k in _known_keywords
+            k.__name__ for s in disabled_scopes for k in const.KEYWORDS.values()
             if k.threshold == base.known_scopes[s].threshold]
         enabled_keywords = [
-            k.__name__ for s in enabled_scopes for k in _known_keywords
+            k.__name__ for s in enabled_scopes for k in const.KEYWORDS.values()
             if k.threshold == base.known_scopes[s].threshold]
 
         # filter outputted keywords
@@ -286,8 +277,8 @@ def _validate_args(parser, namespace):
     if namespace.selected_keywords is not None:
         disabled_keywords, enabled_keywords = namespace.selected_keywords
 
-        errors = (x.__name__ for x in _known_keywords if issubclass(x, base.Error))
-        warnings = (x.__name__ for x in _known_keywords if issubclass(x, base.Warning))
+        errors = (k for k, v in const.KEYWORDS.items() if issubclass(v, base.Error))
+        warnings = (k for k, v in const.KEYWORDS.items() if issubclass(v, base.Warning))
 
         alias_map = {'errors': errors, 'warnings': warnings}
         replace_aliases = lambda x: alias_map.get(x, [x])
@@ -298,7 +289,7 @@ def _validate_args(parser, namespace):
 
         # validate selected keywords
         selected_keywords = set(disabled_keywords + enabled_keywords)
-        available_keywords = set(x.__name__ for x in _known_keywords)
+        available_keywords = set(const.KEYWORDS.keys())
         unknown_keywords = selected_keywords - available_keywords
         if unknown_keywords:
             parser.error("unknown keyword%s: %s (use 'pkgcheck show --keywords' to show valid keywords)" % (
@@ -309,7 +300,7 @@ def _validate_args(parser, namespace):
             namespace.enabled_keywords, enabled_keywords, disabled_keywords)
 
     namespace.filtered_keywords = set(namespace.enabled_keywords)
-    if namespace.filtered_keywords == set(_known_keywords):
+    if namespace.filtered_keywords == set(const.KEYWORDS.values()):
         namespace.filtered_keywords = None
 
     disabled_checks, enabled_checks = ((), ())
@@ -317,7 +308,7 @@ def _validate_args(parser, namespace):
         disabled_checks, enabled_checks = namespace.selected_checks
         # validate selected checks
         selected_checks = set(disabled_checks + enabled_checks)
-        available_checks = set(x.__name__ for x in _known_checks)
+        available_checks = set(const.CHECKS.keys())
         unknown_checks = selected_checks - available_checks
         if unknown_checks:
             parser.error("unknown check%s: %s (use 'pkgcheck show --checks' to show valid checks)" % (
@@ -325,9 +316,9 @@ def _validate_args(parser, namespace):
     elif namespace.filtered_keywords is not None:
         # enable checks based on enabled keyword -> check mapping
         enabled_checks = []
-        for check in _known_checks:
-            if namespace.filtered_keywords.intersection(check.known_results):
-                enabled_checks.append(check.__name__)
+        for check, cls in const.CHECKS.items():
+            if namespace.filtered_keywords.intersection(cls.known_results):
+                enabled_checks.append(check)
 
     # filter checks to run
     if enabled_checks:
@@ -508,7 +499,7 @@ def display_keywords(out, options):
         base.category_feed: base.category_scope,
         base.repository_feed: base.repository_scope,
     }
-    for keyword in _known_keywords:
+    for keyword in const.KEYWORDS.values():
         d.setdefault(scope_map[keyword.threshold], set()).add(keyword)
 
     if options.verbosity < 1:
@@ -534,7 +525,7 @@ def display_keywords(out, options):
 @decorate_forced_wrapping()
 def display_checks(out, options):
     d = {}
-    for x in _known_checks:
+    for x in const.CHECKS.values():
         d.setdefault(x.__module__, []).append(x)
 
     if options.verbosity < 1:

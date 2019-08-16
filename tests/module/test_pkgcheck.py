@@ -11,7 +11,7 @@ from snakeoil.contexts import chdir
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
-from pkgcheck import base, checks, plugins, __title__ as project
+from pkgcheck import base, checks, const, plugins, __title__ as project
 from pkgcheck.scripts import run, pkgcheck
 
 from .misc import fakeconfig, fakerepo, tool
@@ -60,7 +60,7 @@ class TestPkgcheckScanParseArgs(object):
         options, _func = self.tool.parse_args(self.args)
         assert options.enabled_checks
         # some checks should always be skipped by default
-        assert set(options.enabled_checks) != set(pkgcheck._known_checks)
+        assert set(options.enabled_checks) != set(const.CHECKS.values())
 
     def test_enabled_check(self):
         options, _func = self.tool.parse_args(self.args + ['-c', 'PkgDirCheck'])
@@ -179,11 +179,9 @@ class TestPkgcheckScanParseArgs(object):
     def test_selected_keywords(self):
         for opt in ('-k', '--keywords'):
             options, _func = self.tool.parse_args(self.args + [opt, 'InvalidPN'])
-            result_cls = next(
-                x for x in pkgcheck._known_keywords if x.__name__ == 'InvalidPN')
+            result_cls = next(v for k, v in const.KEYWORDS.items() if k == 'InvalidPN')
             assert options.enabled_keywords == [result_cls]
-            check = next(
-                x for x in pkgcheck._known_checks if result_cls in x.known_results)
+            check = next(x for x in const.CHECKS.values() if result_cls in x.known_results)
             assert options.enabled_checks == [check]
 
     def test_missing_scope(self, capsys):
@@ -256,7 +254,7 @@ class TestPkgcheckShow(object):
             assert not err
             out = out.strip().split('\n')
             regular_output = out
-            assert out == sorted(x.__name__ for x in pkgcheck._known_keywords)
+            assert out == sorted(const.KEYWORDS.keys())
             assert excinfo.value.code == 0
 
     def test_show_keywords(self, capsys):
@@ -268,7 +266,7 @@ class TestPkgcheckShow(object):
             assert not err
             out = out.strip().split('\n')
             regular_output = out
-            assert out == sorted(x.__name__ for x in pkgcheck._known_keywords)
+            assert out == sorted(const.KEYWORDS.keys())
             assert excinfo.value.code == 0
 
         # verbose mode
@@ -293,7 +291,7 @@ class TestPkgcheckShow(object):
             assert not err
             out = out.strip().split('\n')
             regular_output = out
-            assert out == sorted(x.__name__ for x in pkgcheck._known_checks)
+            assert out == sorted(const.CHECKS.keys())
             assert excinfo.value.code == 0
 
         # verbose mode
