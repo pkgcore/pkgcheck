@@ -11,7 +11,6 @@ from itertools import chain
 from operator import attrgetter
 
 from pkgcore import const as pkgcore_const
-from pkgcore.plugin import get_plugins, get_plugin
 from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
@@ -20,7 +19,7 @@ from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import unstable_unique
 from snakeoil.strings import pluralism as _pl
 
-from .. import plugins, base, feeds, const
+from .. import base, feeds, const
 
 demandload(
     'logging',
@@ -60,15 +59,14 @@ reporter_opts.add_argument(
 @reporter_opts.bind_parse_priority(20)
 def _setup_reporter(namespace):
     if namespace.reporter is None:
-        namespace.reporter = get_plugin('reporter', plugins)
-        if namespace.reporter is None:
-            argparser.error('no reporters available')
+        reporters = sorted(
+            const.REPORTERS.values(), key=attrgetter('priority'), reverse=True)
+        namespace.reporter = reporters[0]
     else:
         func = list(base.Whitelist([namespace.reporter]).filter(
-            get_plugins('reporter', plugins)))
+            const.REPORTERS.values()))
         if not func:
-            available = ', '.join(sorted(
-                x.__name__ for x in get_plugins('reporter', plugins)))
+            available = ', '.join(const.REPORTERS.keys())
             argparser.error(
                 f"no reporter matches {namespace.reporter!r} "
                 f"(available: {available})")
@@ -153,7 +151,7 @@ def add_addon(addon, addon_set):
 
 all_addons = set()
 scan.plugin = scan.add_argument_group('plugin options')
-for check in get_plugins('check', plugins):
+for check in const.CHECKS.values():
     add_addon(check, all_addons)
 for addon in all_addons:
     addon.mangle_argparser(scan)
@@ -381,7 +379,7 @@ def _scan(options, out, err):
     else:
         debug = None
 
-    transforms = list(get_plugins('transform', plugins))
+    transforms = list(const.TRANSFORMS.values())
     # XXX this is pretty horrible.
     sinks = list(addon for addon in addons_map.values()
                  if getattr(addon, 'feed_type', False))
@@ -634,6 +632,6 @@ def _show(options, out, err):
                 out.write(f'{name} -- {scope.desc} scope')
 
     if options.reporters:
-        display_reporters(out, options, list(get_plugins('reporter', plugins)))
+        display_reporters(out, options, list(const.REPORTERS.values()))
 
     return 0

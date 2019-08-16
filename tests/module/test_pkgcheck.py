@@ -4,14 +4,13 @@ import os
 from unittest.mock import patch
 
 from pkgcore.ebuild import restricts, atom
-from pkgcore.plugin import get_plugins
 from pkgcore.restrictions import packages
 import pytest
 from snakeoil.contexts import chdir
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
-from pkgcheck import base, checks, const, plugins, __title__ as project
+from pkgcheck import base, checks, const, __title__ as project
 from pkgcheck.scripts import run, pkgcheck
 
 from .misc import fakeconfig, fakerepo, tool
@@ -326,7 +325,7 @@ class TestPkgcheckShow(object):
             assert not err
             out = out.strip().split('\n')
             regular_output = out
-            assert out == sorted(x.__name__ for x in get_plugins('reporter', plugins))
+            assert out == sorted(const.REPORTERS.keys())
             assert excinfo.value.code == 0
 
         # verbose mode
