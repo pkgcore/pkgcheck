@@ -13,10 +13,6 @@ from setuptools import setup
 from snakeoil.dist import distutils_extensions as pkgdist
 pkgdist_setup, pkgdist_cmds = pkgdist.setup()
 
-with pkgdist.syspath(pkgdist.PACKAGEDIR):
-    from pkgcheck import const
-
-
 class install(pkgdist.install):
     """Install wrapper to generate and install pkgcheck-related files."""
 
@@ -55,6 +51,9 @@ def write_obj_lists(python_base, install_prefix):
             self.module = module
         def __repr__(self):
             return self.module
+
+    with pkgdist.syspath(pkgdist.PACKAGEDIR):
+        from pkgcheck import const
 
     modules = defaultdict(set)
     objs = defaultdict(list)
@@ -96,6 +95,9 @@ class install_data(dst_install_data.install_data):
         super().run()
 
     def __generate_files(self):
+        with pkgdist.syspath(pkgdist.PACKAGEDIR):
+            from pkgcheck import const
+
         os.makedirs(os.path.join(pkgdist.REPODIR, '.generated'), exist_ok=True)
         files = []
         for obj in ('KEYWORDS', 'CHECKS', 'REPORTERS'):
