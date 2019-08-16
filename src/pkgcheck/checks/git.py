@@ -156,7 +156,7 @@ class GitCommitsCheck(base.GentooRepoCheck):
 
     @jit_attr
     def removal_repo(self):
-        """Create a removal repo or update it with new packages."""
+        """Create a repository of packages removed from git."""
         return _RemovalRepo(self.repo)
 
     def removal_checks(self, removed):
