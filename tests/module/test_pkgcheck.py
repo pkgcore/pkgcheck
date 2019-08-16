@@ -3,6 +3,7 @@ from io import StringIO
 import os
 from unittest.mock import patch
 
+from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import restricts, atom
 from pkgcore.restrictions import packages
 import pytest
@@ -117,7 +118,7 @@ class TestPkgcheckScanParseArgs(object):
         assert list(options.limiters) == [packages.AndRestriction(*restrictions)]
         assert options.target_repo.repo_id == 'fakerepo'
 
-        # cwd path
+        # cwd path in unconfigured repo
         with chdir(pjoin(fakerepo, 'dev-util', 'foo')):
             options, _func = self.tool.parse_args(self.args)
             assert options.target_repo.repo_id == 'fakerepo'
@@ -127,6 +128,14 @@ class TestPkgcheckScanParseArgs(object):
                 restricts.PackageDep('foo'),
             ]
             assert list(options.limiters) == [packages.AndRestriction(*restrictions)]
+
+        # cwd path in configured repo
+        stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
+        with chdir(stubrepo):
+            options, _func = self.tool.parse_args(self.args)
+            assert options.target_repo.repo_id == 'stubrepo'
+            assert list(options.limiters) == [
+                packages.AndRestriction(restricts.RepositoryDep('stubrepo'))]
 
     def test_unknown_repo(self, capsys):
         for opt in ('-r', '--repo'):
