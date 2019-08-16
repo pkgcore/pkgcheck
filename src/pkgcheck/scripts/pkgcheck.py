@@ -63,20 +63,13 @@ def _setup_reporter(namespace):
             const.REPORTERS.values(), key=attrgetter('priority'), reverse=True)
         namespace.reporter = reporters[0]
     else:
-        func = list(base.Whitelist([namespace.reporter]).filter(
-            const.REPORTERS.values()))
-        if not func:
+        try:
+            namespace.reporter = const.REPORTERS[namespace.reporter]
+        except KeyError:
             available = ', '.join(const.REPORTERS.keys())
             argparser.error(
                 f"no reporter matches {namespace.reporter!r} "
                 f"(available: {available})")
-        elif len(func) > 1:
-            reporters = tuple(sorted(f"{x.__module__}.{x.__name__}" for x in func))
-            argparser.error(
-                f"reporter {namespace.reporter!r} matched multiple reporters, "
-                f"must match one. {reporters!r}")
-        func = func[0]
-        namespace.reporter = func
 
 
 # These are all set based on other options, so have no default setting.
