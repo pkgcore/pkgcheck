@@ -4,6 +4,73 @@ SHELL_LIB=$(python -c 'from pkgcore import const; print(const.LIBDIR_PATH)')/she
 source "${SHELL_LIB}" || print "$0: failed to load '${SHELL_LIB}'" >&2
 unset SHELL_LIB
 
+# keywords provided by pkgcheck
+#
+# optional args
+#  -p       print the output instead of using completion
+_keywords() {
+  typeset -A opts
+  zparseopts -E -A opts p
+
+  if [[ -f /usr/share/pkgcheck/keywords ]]; then
+    _keywords=(${(f)"$(</usr/share/pkgcheck/keywords)"})
+  elif ( [[ ${+_keywords} -eq 0 ]] || _cache_invalid pkgcheck_keywords ) && ! _retrieve_cache pkgcheck_keywords; then
+    _keywords=(${${(f)"$(pkgcheck show --keywords)"}})
+    _store_cache pkgcheck_keywords _keywords
+  fi
+
+  if [[ -n ${compstate} ]] && [[ -z ${opts[(I)-p]} ]]; then
+    _describe -t keywords 'keywords' _keywords
+  else
+    print ${_keywords}
+  fi
+}
+
+# checks provided by pkgcheck
+#
+# optional args
+#  -p       print the output instead of using completion
+_checks() {
+  typeset -A opts
+  zparseopts -E -A opts p
+
+  if [[ -f /usr/share/pkgcheck/checks ]]; then
+    _checks=(${(f)"$(</usr/share/pkgcheck/checks)"})
+  elif ( [[ ${+_checks} -eq 0 ]] || _cache_invalid pkgcheck_checks ) && ! _retrieve_cache pkgcheck_checks; then
+    _checks=(${${(f)"$(pkgcheck show --checks)"}})
+    _store_cache pkgcheck_checks _checks
+  fi
+
+  if [[ -n ${compstate} ]] && [[ -z ${opts[(I)-p]} ]]; then
+    _describe -t checks 'checks' _checks
+  else
+    print ${_checks}
+  fi
+}
+
+# reporters provided by pkgcheck
+#
+# optional args
+#  -p       print the output instead of using completion
+_reporters() {
+  typeset -A opts
+  zparseopts -E -A opts p
+
+  if [[ -f /usr/share/pkgcheck/reporters ]]; then
+    _reporters=(${(f)"$(</usr/share/pkgcheck/reporters)"})
+  elif ( [[ ${+_reporters} -eq 0 ]] || _cache_invalid pkgcheck_reporters ) && ! _retrieve_cache pkgcheck_reporters; then
+    _reporters=(${${(f)"$(pkgcheck show --reporters)"}})
+    _store_cache pkgcheck_reporters _reporters
+  fi
+
+  if [[ -n ${compstate} ]] && [[ -z ${opts[(I)-p]} ]]; then
+    _describe -t reporters 'reporters' _reporters
+  else
+    print ${_reporters}
+  fi
+}
+
+
 typeset -a common_pkgcore_args common_output_args
 local curcontext=$curcontext state state_descr line ret=1
 
@@ -52,13 +119,13 @@ case $state in
 
         scan_opts=(
           {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_repos'
-          {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter (defined in pkgcore's config)]"
+          {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter]:reporters:_reporters"
         )
 
         check_opts=(
-          {'(--checks)-c','(-c)--checks'}'[comma separated list of checks to enable/disable]'
+          {'(--checks)-c','(-c)--checks'}'[comma separated list of checks to enable/disable]:checks:{_values -s , checks $(_checks -p)}'
           {'(--checkset)-C','(-C)--checkset'}'[preconfigured set of checks to run]'
-          {'(--keywords)-k','(-k)--keywords'}'[comma separated list of keywords to enable/disable]'
+          {'(--keywords)-k','(-k)--keywords'}'[comma separated list of keywords to enable/disable]:keywords:{_values -s , keywords $(_keywords -p)}'
           {'(--scopes)-S','(-S)--scopes'}'[comma separated list of keyword scopes to enable/disable]'
         )
 
