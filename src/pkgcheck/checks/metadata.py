@@ -12,6 +12,7 @@ from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.restrictions.boolean import OrRestriction
 from pkgcore.restrictions.packages import Conditional
 from snakeoil.demandload import demandload
+from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import listdir_files
 from snakeoil.sequences import iflatten_instance
@@ -519,7 +520,11 @@ class DependencyCheck(base.Template):
         self.conditional_ops = {'?', '='}
         self.use_defaults = {'(+)', '(-)'}
         self.today = datetime.today()
-        self.existence_repo = git_addon.cached_repo(addons.GitRemovedRepo)
+        self._git_addon = git_addon
+
+    @jit_attr
+    def existence_repo(self):
+        return self._git_addon.cached_repo(addons.GitRemovedRepo)
 
     @staticmethod
     def _flatten_or_restrictions(i):

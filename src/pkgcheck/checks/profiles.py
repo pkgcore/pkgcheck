@@ -3,6 +3,7 @@ from itertools import filterfalse, chain
 import os
 
 from snakeoil.demandload import demandload
+from snakeoil.klass import jit_attr
 from snakeoil.log import suppress_logging
 from snakeoil.strings import pluralism as _pl
 
@@ -140,13 +141,10 @@ class ProfilesCheck(base.Template):
     def __init__(self, options, iuse_handler):
         super().__init__(options)
         self.repo = options.target_repo
+        self.iuse_handler = iuse_handler
         self.profiles_dir = self.repo.config.profiles_base
         self.non_profile_dirs = frozenset(
             pjoin(self.profiles_dir, x) for x in addons.ProfileAddon.non_profile_dirs)
-        local_iuse = {use for pkg, (use, desc) in self.repo.config.use_local_desc}
-        self.available_iuse = frozenset(
-            local_iuse | iuse_handler.global_iuse |
-            iuse_handler.global_iuse_expand | iuse_handler.unstated_iuse)
 
         # TODO: move this and the same support in metadata.KeywordsCheck to a shared addon
         special_keywords = {'-*'}
@@ -155,6 +153,13 @@ class ProfilesCheck(base.Template):
         disabled_keywords = {'-' + x for x in chain(stable_keywords, unstable_keywords)}
         self.valid_keywords = (
             special_keywords | stable_keywords | unstable_keywords | disabled_keywords)
+
+    @jit_attr
+    def available_iuse(self):
+        local_iuse = {use for pkg, (use, desc) in self.repo.config.use_local_desc}
+        return frozenset(
+            local_iuse | self.iuse_handler.global_iuse |
+            self.iuse_handler.global_iuse_expand | self.iuse_handler.unstated_iuse)
 
     def feed(self, pkg):
         pass

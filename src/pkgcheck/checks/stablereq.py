@@ -3,6 +3,7 @@ from datetime import datetime
 from itertools import chain
 import time
 
+from snakeoil.klass import jit_attr
 from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base
@@ -49,7 +50,11 @@ class StableRequestCheck(base.GentooRepoCheck):
         self.staleness = staleness
         self.start_time = None
         self.today = datetime.today()
-        self.added_repo = git_addon.cached_repo(addons.GitAddedRepo)
+        self._git_addon = git_addon
+
+    @jit_attr
+    def added_repo(self):
+        return self._git_addon.cached_repo(addons.GitAddedRepo)
 
     def start(self):
         self.start_time = time.time()

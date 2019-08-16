@@ -5,6 +5,7 @@ from operator import attrgetter, itemgetter
 
 from snakeoil import mappings
 from snakeoil.demandload import demandload
+from snakeoil.klass import jit_attr
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, addons
@@ -407,14 +408,22 @@ class GlobalUSECheck(base.Template):
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
-        self.iuse_handler = iuse_handler
-        self.local_use = options.target_repo.config.use_local_desc
-        self.global_use = {
-            flag: desc for matcher, (flag, desc) in options.target_repo.config.use_desc}
-        self.use_expand = {
-            flag: desc for flags in options.target_repo.config.use_expand_desc.values()
-            for flag, desc in flags}
         self.global_flag_usage = defaultdict(set)
+        self.repo = options.target_repo
+
+    @jit_attr
+    def local_use(self):
+        return self.repo.config.use_local_desc
+
+    @jit_attr
+    def global_use(self):
+        return {flag: desc for matcher, (flag, desc) in self.repo.config.use_desc}
+
+    @jit_attr
+    def use_expand(self):
+        return {
+            flag: desc for flags in self.repo.config.use_expand_desc.values()
+            for flag, desc in flags}
 
     def start(self):
         master_flags = set()
