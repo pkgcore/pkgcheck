@@ -7,8 +7,10 @@ from tempfile import TemporaryDirectory
 
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.ebuild.misc import sort_keywords
+from pkgcore.exceptions import PkgcoreException
 from pkgcore.log import logger
 from snakeoil.demandload import demand_compile_regexp
+from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
@@ -83,6 +85,57 @@ class DirectNoMaintainer(base.PackageResult, base.Error):
         return 'directly committed with no package maintainer'
 
 
+class _RemovalRepo(UnconfiguredTree):
+    """Repository of removed packages stored in a temporary directory."""
+
+    def __init__(self, repo):
+        self.__parent_repo = repo
+        self.__tmpdir = TemporaryDirectory()
+        self.__created = False
+        repo_dir = self.__tmpdir.name
+
+        # set up some basic repo files so pkgcore doesn't complain
+        os.makedirs(pjoin(repo_dir, 'metadata'))
+        with open(pjoin(repo_dir, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('masters =\n')
+        os.makedirs(pjoin(repo_dir, 'profiles'))
+        with open(pjoin(repo_dir, 'profiles', 'repo_name'), 'w') as f:
+            f.write('old-repo\n')
+        super().__init__(repo_dir)
+
+    def __call__(self, pkgs):
+        """Update the repo with a given sequence of packages."""
+        self._populate(pkgs, eclasses=(not self.__created))
+        if self.__created:
+            # notify the repo object that new pkgs were added
+            for pkg in pkgs:
+                self.notify_add_package(pkg)
+        self.__created = True
+        return self
+
+    def _populate(self, pkgs, eclasses=False):
+        """Populate the repo with a given sequence of historical packages."""
+        pkg = pkgs[0]
+        commit = pkgs[0].commit
+
+        paths = [pjoin(pkg.category, pkg.package)]
+        if eclasses:
+            paths.append('eclass')
+        git_cmd = f"git archive {commit}~1 {' '.join(paths)}"
+
+        old_files = subprocess.Popen(
+            git_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            cwd=self.__parent_repo.location)
+        with tarfile.open(mode='r|', fileobj=old_files.stdout) as tar:
+            tar.extractall(path=self.location)
+        if old_files.poll():
+            error = old_files.stderr.read().decode().strip()
+            raise PkgcoreException(error)
+
+    def __del__(self):
+        self.__tmpdir.cleanup()
+
+
 class GitCommitsCheck(base.GentooRepoCheck):
     """Check unpushed git commits for various issues."""
 
@@ -101,57 +154,41 @@ class GitCommitsCheck(base.GentooRepoCheck):
         self.valid_arches = self.options.target_repo.known_arches
         self.added_repo = git_addon.commits_repo(addons.GitAddedRepo)
 
-    def removal_checks(self, pkgset):
-        removed = [pkg for pkg in pkgset if pkg.status == 'D']
-        if not removed:
-            return
+    @jit_attr
+    def removal_repo(self):
+        """Create a removal repo or update it with new packages."""
+        return _RemovalRepo(self.repo)
 
+    def removal_checks(self, removed):
+        """Check for issues due to package removals."""
         pkg = removed[0]
         commit = removed[0].commit
-        paths = ' '.join([pjoin(pkg.category, pkg.package), 'eclass'])
-        git_cmd = f'git archive {commit}~1 {paths}'
 
-        with TemporaryDirectory() as repo_dir:
-            # set up some basic repo files so pkgcore doesn't complain
-            os.makedirs(pjoin(repo_dir, 'metadata'))
-            with open(pjoin(repo_dir, 'metadata', 'layout.conf'), 'w') as f:
-                f.write('masters =\n')
-            os.makedirs(pjoin(repo_dir, 'profiles'))
-            with open(pjoin(repo_dir, 'profiles', 'repo_name'), 'w') as f:
-                f.write('old-repo\n')
-            with open(pjoin(repo_dir, 'profiles', 'categories'), 'w') as f:
-                f.write(f'{pkg.category}\n')
+        try:
+            removal_repo = self.removal_repo(removed)
+        except PkgcoreException as e:
+            logger.warning(f'skipping git removal checks: {e}')
+            return
 
-            old_files = subprocess.Popen(
-                git_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                cwd=self.repo.location)
-            with tarfile.open(mode='r|', fileobj=old_files.stdout) as tar:
-                tar.extractall(path=repo_dir)
-            if old_files.poll():
-                error = old_files.stderr.read().decode().strip()
-                logger.warning(f'skipping git removal checks: {error}')
-                return
+        old_keywords = set(chain.from_iterable(
+            pkg.keywords for pkg in removal_repo.match(pkg.unversioned_atom)))
+        new_keywords = set(chain.from_iterable(
+            pkg.keywords for pkg in self.repo.match(pkg.unversioned_atom)))
 
-            old_repo = UnconfiguredTree(repo_dir)
-            old_keywords = set(chain.from_iterable(
-                pkg.keywords for pkg in old_repo.match(pkg.unversioned_atom)))
-            new_keywords = set(chain.from_iterable(
-                pkg.keywords for pkg in self.repo.match(pkg.unversioned_atom))) 
+        dropped_keywords = old_keywords - new_keywords
+        dropped_stable_keywords = dropped_keywords & self.valid_arches
+        dropped_unstable_keywords = {
+            x for x in dropped_keywords if x[0] == '~' and x[1:] in self.valid_arches}
 
-            dropped_keywords = old_keywords - new_keywords
-            dropped_stable_keywords = dropped_keywords & self.valid_arches
-            dropped_unstable_keywords = {
-                x for x in dropped_keywords if x[0] == '~' and x[1:] in self.valid_arches}
-
-            if dropped_stable_keywords:
-                yield DroppedStableKeywords(pkg, dropped_stable_keywords, commit)
-            if dropped_unstable_keywords:
-                yield DroppedUnstableKeywords(pkg, dropped_unstable_keywords, commit)
-
+        if dropped_stable_keywords:
+            yield DroppedStableKeywords(pkg, dropped_stable_keywords, commit)
+        if dropped_unstable_keywords:
+            yield DroppedUnstableKeywords(pkg, dropped_unstable_keywords, commit)
 
     def feed(self, pkgset):
-        # check for issues due to pkg removals
-        yield from self.removal_checks(pkgset)
+        removed = [pkg for pkg in pkgset if pkg.status == 'D']
+        if removed:
+            yield from self.removal_checks(removed)
 
         for git_pkg in pkgset:
             try:
