@@ -109,7 +109,8 @@ class install_data(dst_install_data.install_data):
 
 setup(**dict(pkgdist_setup,
     license='BSD',
-    author='Brian Harring, Tim Harder',
+    author='Tim Harder',
+    author_email='radhermit@gmail.com',
     description='pkgcore-based QA utility',
     url='https://github.com/pkgcore/pkgcheck',
     data_files=list(
