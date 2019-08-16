@@ -31,17 +31,10 @@ class StrReporter(base.Reporter):
     # simple reporter; fallback default
     priority = 0
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._first_report = True
-
     @coroutine
     def _process_report(self):
         while True:
             result = (yield)
-            if self._first_report:
-                self.out.write()
-                self._first_report = False
             if result.threshold == base.versioned_feed:
                 self.out.write(
                     f"{result.category}/{result.package}-{result.version}: {result.desc}")
@@ -52,10 +45,6 @@ class StrReporter(base.Reporter):
             else:
                 self.out.write(result.desc)
             self.out.stream.flush()
-
-    def finish(self):
-        if not self._first_report:
-            self.out.write()
 
 
 class FancyReporter(base.Reporter):

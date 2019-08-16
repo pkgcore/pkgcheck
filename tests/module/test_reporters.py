@@ -49,8 +49,8 @@ class BaseReporter(object):
 class TestStrReporter(BaseReporter):
 
     reporter_cls = reporters.StrReporter
-    add_report_output = """\nprofile warning\n\n"""
-    filtered_report_output = """\nprofile error\n\n"""
+    add_report_output = """profile warning\n"""
+    filtered_report_output = """profile error\n"""
 
 
 class TestFancyReporter(BaseReporter):
