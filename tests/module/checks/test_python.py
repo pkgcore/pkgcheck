@@ -26,9 +26,10 @@ class TestPythonReport(misc.ReportTestCase):
             self.mk_pkg(_eclasses_=['python-any-r1'], DEPEND='dev-lang/python'))
         self.assertNoReport(self.check, self.mk_pkg(DEPEND='dev-foo/frobnicate'))
 
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg(DEPEND='dev-lang/python')),
-            python.MissingPythonEclass)
+        r = self.assertReport(self.check, self.mk_pkg(DEPEND='dev-lang/python'))
+        assert isinstance(r, python.MissingPythonEclass)
+        assert 'missing python-any-r1 eclass usage for DEPEND="dev-lang/python"' == str(r)
+
         assert isinstance(
             self.assertReport(self.check, self.mk_pkg(DEPEND='dev-lang/python:2.7')),
             python.MissingPythonEclass)
@@ -83,9 +84,10 @@ class TestPythonReport(misc.ReportTestCase):
             self.mk_pkg(_eclasses_=['python-single-r1'], RDEPEND='dev-lang/python:2.7'))
         self.assertNoReport(self.check, self.mk_pkg(RDEPEND='dev-foo/frobnicate'))
 
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg(RDEPEND='dev-lang/python')),
-            python.MissingPythonEclass)
+        r = self.assertReport(self.check, self.mk_pkg(RDEPEND='dev-lang/python'))
+        assert isinstance(r, python.MissingPythonEclass)
+        assert 'missing python-r1 or python-single-r1 eclass' in str(r)
+
         assert isinstance(
             self.assertReport(self.check, self.mk_pkg(RDEPEND='dev-lang/python:2.7')),
             python.MissingPythonEclass)
@@ -198,50 +200,50 @@ class TestPythonReport(misc.ReportTestCase):
                                 '  dev-lang/python:3.6 )'))
 
     def test_single_use_mismatch(self):
-        assert isinstance(
-            self.assertReport(
-                self.check,
-                self.mk_pkg(
-                    _eclasses_=['python-single-r1'],
-                    IUSE='python_targets_python2_7 '
-                         'python_targets_python3_6 '
-                         'python_single_target_python2_7',
-                    RDEPEND='python_single_target_python2_7? ( '
-                            '  dev-lang/python:2.7 )',
-                    REQUIRED_USE='python_single_target_python2_7 '
-                                 'python_single_target_python2_7? ( '
-                                 '  python_targets_python2_7 )')),
-            python.PythonSingleUseMismatch)
+        r = self.assertReport(
+            self.check,
+            self.mk_pkg(
+                _eclasses_=['python-single-r1'],
+                IUSE='python_targets_python2_7 '
+                     'python_targets_python3_6 '
+                     'python_single_target_python2_7',
+                RDEPEND='python_single_target_python2_7? ( '
+                        '  dev-lang/python:2.7 )',
+                REQUIRED_USE='python_single_target_python2_7 '
+                             'python_single_target_python2_7? ( '
+                             '  python_targets_python2_7 )'))
+        assert isinstance(r, python.PythonSingleUseMismatch)
+        assert 'mismatched flags in IUSE: PYTHON_TARGETS=( python2_7 python3_6 )' in str(r)
 
-        assert isinstance(
-            self.assertReport(
-                self.check,
-                self.mk_pkg(
-                    _eclasses_=['python-single-r1'],
-                    IUSE='python_targets_python2_7 '
-                         'python_single_target_python2_7 '
-                         'python_single_target_python3_6',
-                    RDEPEND='python_single_target_python2_7? ( '
-                            '  dev-lang/python:2.7 ) '
-                            'python_single_target_python3_6? ( '
-                            '  dev-lang/python:3.6 )',
-                    REQUIRED_USE='^^ ( python_single_target_python2_7 '
-                                 '  python_single_target_python3_6 )')),
-            python.PythonSingleUseMismatch)
+        r = self.assertReport(
+            self.check,
+            self.mk_pkg(
+                _eclasses_=['python-single-r1'],
+                IUSE='python_targets_python2_7 '
+                     'python_single_target_python2_7 '
+                     'python_single_target_python3_6',
+                RDEPEND='python_single_target_python2_7? ( '
+                        '  dev-lang/python:2.7 ) '
+                        'python_single_target_python3_6? ( '
+                        '  dev-lang/python:3.6 )',
+                REQUIRED_USE='^^ ( python_single_target_python2_7 '
+                             '  python_single_target_python3_6 )'))
+        assert isinstance(r, python.PythonSingleUseMismatch)
+        assert 'mismatched flags in IUSE: PYTHON_TARGETS=( python2_7 )' in str(r)
 
     def test_missing_required_use(self):
-        assert isinstance(
-            self.assertReport(
-                self.check,
-                self.mk_pkg(
-                    _eclasses_=['python-r1'],
-                    IUSE='python_targets_python2_7 '
-                         'python_targets_python3_6',
-                    RDEPEND='python_targets_python2_7? ( '
-                            '  dev-lang/python:2.7 ) '
-                            'python_targets_python3_6? ( '
-                            '  dev-lang/python:3.6 )')),
-            python.PythonMissingRequiredUSE)
+        r = self.assertReport(
+            self.check,
+            self.mk_pkg(
+                _eclasses_=['python-r1'],
+                IUSE='python_targets_python2_7 '
+                     'python_targets_python3_6',
+                RDEPEND='python_targets_python2_7? ( '
+                        '  dev-lang/python:2.7 ) '
+                        'python_targets_python3_6? ( '
+                        '  dev-lang/python:3.6 )'))
+        assert isinstance(r, python.PythonMissingRequiredUSE)
+        assert 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"' == str(r)
 
         # incomplete REQUIRED_USE (e.g. use of python_gen_useflags)
         assert isinstance(
@@ -257,6 +259,7 @@ class TestPythonReport(misc.ReportTestCase):
                             '  dev-lang/python:3.6 )',
                     REQUIRED_USE='|| ( python_targets_python2_7 )')),
             python.PythonMissingRequiredUSE)
+
         assert isinstance(
             self.assertReport(
                 self.check,
@@ -326,30 +329,30 @@ class TestPythonReport(misc.ReportTestCase):
             python.PythonMissingRequiredUSE)
 
     def test_missing_deps(self):
-        assert isinstance(
-            self.assertReport(
-                self.check,
-                self.mk_pkg(
-                    _eclasses_=['python-r1'],
-                    IUSE='python_targets_python2_7 '
-                         'python_targets_python3_6',
-                    REQUIRED_USE='|| ( python_targets_python2_7 '
-                                 '     python_targets_python3_6 )')),
-            python.PythonMissingDeps)
+        r = self.assertReport(
+            self.check,
+            self.mk_pkg(
+                _eclasses_=['python-r1'],
+                IUSE='python_targets_python2_7 '
+                     'python_targets_python3_6',
+                REQUIRED_USE='|| ( python_targets_python2_7 '
+                             '     python_targets_python3_6 )'))
+        assert isinstance(r, python.PythonMissingDeps)
+        assert 'missing RDEPEND="${PYTHON_DEPS}"' == str(r)
 
         # incomplete deps
-        assert isinstance(
-            self.assertReport(
-                self.check,
-                self.mk_pkg(
-                    _eclasses_=['python-r1'],
-                    IUSE='python_targets_python2_7 '
-                         'python_targets_python3_6',
-                    RDEPEND='python_targets_python2_7? ( '
-                            '  dev-lang/python:2.7 )',
-                    REQUIRED_USE='|| ( python_targets_python2_7 '
-                                 '     python_targets_python3_6 )')),
-            python.PythonMissingDeps)
+        r = self.assertReport(
+            self.check,
+            self.mk_pkg(
+                _eclasses_=['python-r1'],
+                IUSE='python_targets_python2_7 '
+                     'python_targets_python3_6',
+                RDEPEND='python_targets_python2_7? ( '
+                        '  dev-lang/python:2.7 )',
+                REQUIRED_USE='|| ( python_targets_python2_7 '
+                             '     python_targets_python3_6 )'))
+        assert isinstance(r, python.PythonMissingDeps)
+        assert 'missing RDEPEND="${PYTHON_DEPS}"' == str(r)
 
         # check that irrelevant dep with same USE conditional does not wrongly
         # satisfy the check
@@ -494,18 +497,18 @@ class TestPythonReport(misc.ReportTestCase):
             python.PythonMissingDeps)
 
     def test_runtime_dep_in_any_r1(self):
-        assert isinstance(
-            self.assertReport(
-                self.check,
-                self.mk_pkg(
-                    _eclasses_=['python-any-r1'],
-                    DEPEND='|| ( '
-                           '  dev-lang/python:2.7 '
-                           '  dev-lang/python:3.6 )',
-                    RDEPEND='|| ( '
-                            '  dev-lang/python:2.7 '
-                            '  dev-lang/python:3.6 )')),
-            python.PythonRuntimeDepInAnyR1)
+        r = self.assertReport(
+            self.check,
+            self.mk_pkg(
+                _eclasses_=['python-any-r1'],
+                DEPEND='|| ( '
+                       '  dev-lang/python:2.7 '
+                       '  dev-lang/python:3.6 )',
+                RDEPEND='|| ( '
+                        '  dev-lang/python:2.7 '
+                        '  dev-lang/python:3.6 )'))
+        assert isinstance(r, python.PythonRuntimeDepInAnyR1)
+        assert 'inherits python-any-r1 with RDEPEND="dev-lang/python:2.7"' in str(r)
 
         # shouldn't trigger for blockers
         self.assertNoReport(
