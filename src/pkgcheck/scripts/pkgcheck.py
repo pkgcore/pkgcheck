@@ -26,7 +26,6 @@ demandload(
     'os',
     'sys',
     'textwrap',
-    'pkgcore.config:errors@config_errors',
     'pkgcore.ebuild:repository',
     'pkgcore.restrictions:packages',
     'pkgcore.restrictions.values:StrExactMatch',
@@ -180,10 +179,7 @@ def _validate_args(parser, namespace):
 
         # fallback to the default repo
         if target_repo is None:
-            try:
-                target_repo = namespace.config.get_default('repo')
-            except config_errors.ConfigurationError as e:
-                parser.error(str(e))
+            target_repo = namespace.config.get_default('repo')
 
         namespace.target_repo = target_repo
 
