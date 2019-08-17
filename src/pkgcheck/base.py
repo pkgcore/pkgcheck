@@ -239,10 +239,7 @@ class Result(SlotsPicklingMixin, metaclass=generic_equality):
         return self._level_to_desc[self._level][0]
 
     def __str__(self):
-        try:
-            return self.desc
-        except NotImplementedError:
-            return f"result from {self.__class__.__name__}"
+        return self.desc
 
     @property
     def desc(self):
