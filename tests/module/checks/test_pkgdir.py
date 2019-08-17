@@ -12,7 +12,7 @@ from pkgcheck.checks import pkgdir
 from .. import misc
 
 
-class PkgDirReportBase(misc.Tmpdir, misc.ReportTestCase):
+class PkgDirCheckBase(misc.Tmpdir, misc.ReportTestCase):
     """Various FILESDIR related test support."""
 
     check_kls = pkgdir.PkgDirCheck
@@ -35,14 +35,14 @@ class PkgDirReportBase(misc.Tmpdir, misc.ReportTestCase):
         return misc.FakeFilesDirPkg(pkg, repo=repo)
 
 
-class TestPkgDirReport(PkgDirReportBase):
-    """Base tests for the PkgDirReport check."""
+class TestPkgDirCheck(PkgDirCheckBase):
+    """Base tests for the PkgDirCheck."""
 
     def test_empty_dir(self):
         self.assertNoReport(self.check, [self.mk_pkg()])
 
 
-class TestDuplicateFiles(PkgDirReportBase):
+class TestDuplicateFiles(PkgDirCheckBase):
     """Check DuplicateFiles results."""
 
     def test_unique_files(self):
@@ -66,7 +66,7 @@ class TestDuplicateFiles(PkgDirReportBase):
         )
 
 
-class TestEmptyFile(PkgDirReportBase):
+class TestEmptyFile(PkgDirCheckBase):
     """Check EmptyFile results."""
 
     def test_nonempty_file(self):
@@ -95,7 +95,7 @@ class TestEmptyFile(PkgDirReportBase):
         assert 'files/test' in str(r)
 
 
-class TestMismatchedPN(PkgDirReportBase):
+class TestMismatchedPN(PkgDirCheckBase):
     """Check MismatchedPN results."""
 
     def test_multiple_regular_ebuilds(self):
@@ -125,7 +125,7 @@ class TestMismatchedPN(PkgDirReportBase):
         assert 'abc-1, mismatched-0' in str(r)
 
 
-class TestInvalidPN(PkgDirReportBase):
+class TestInvalidPN(PkgDirCheckBase):
     """Check InvalidPN results."""
 
     def test_regular_ebuild(self):
@@ -153,7 +153,7 @@ class TestInvalidPN(PkgDirReportBase):
         assert 'bar-0-foo1, bar-1-foo2' in str(r)
 
 
-class TestInvalidUTF8(PkgDirReportBase):
+class TestInvalidUTF8(PkgDirCheckBase):
     """Check InvalidUTF8 results."""
 
     def test_ascii_ebuild(self):
@@ -181,7 +181,7 @@ class TestInvalidUTF8(PkgDirReportBase):
         assert r.filename in str(r)
 
 
-class TestEqualVersions(PkgDirReportBase):
+class TestEqualVersions(PkgDirCheckBase):
     """Check EqualVersions results."""
 
     def test_it(self):
@@ -226,7 +226,7 @@ class TestEqualVersions(PkgDirReportBase):
         assert '[ 0-r001, 0-r01, 0-r1 ]' in str(r)
 
 
-class TestSizeViolation(PkgDirReportBase):
+class TestSizeViolation(PkgDirCheckBase):
     """Check SizeViolation results."""
 
     def test_files_under_20k_size_limit(self):
@@ -268,7 +268,7 @@ class TestSizeViolation(PkgDirReportBase):
         )
 
 
-class TestExecutableFile(PkgDirReportBase):
+class TestExecutableFile(PkgDirCheckBase):
     """Check ExecutableFile results."""
 
     def test_non_empty_filesdir(self):
