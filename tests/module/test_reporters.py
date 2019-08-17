@@ -6,7 +6,7 @@ from pkgcore.test.misc import FakePkg
 from snakeoil.formatters import PlainTextFormatter
 
 from pkgcheck import base, reporters
-from pkgcheck.checks import pkgdir, profiles, metadata
+from pkgcheck.checks import pkgdir, profiles, metadata, metadata_xml
 
 
 class BaseReporter(object):
@@ -19,6 +19,7 @@ class BaseReporter(object):
         self.log_warning = profiles.ProfileWarning('profile warning')
         self.log_error = profiles.ProfileError('profile error')
         pkg = FakePkg('dev-libs/foo-0')
+        self.category_result = metadata_xml.CatMissingMetadataXml('metadata.xml', 'dev-libs')
         self.package_result = pkgdir.InvalidPN(pkg, ('foo',))
         self.versioned_result = metadata.BadFilename(pkg, ('0.tar.gz',))
         return reporter
@@ -35,6 +36,7 @@ class BaseReporter(object):
         self.reporter = self.mk_reporter()
         self.reporter.start()
         self.reporter.report(self.log_warning)
+        self.reporter.report(self.category_result)
         self.reporter.report(self.package_result)
         self.reporter.report(self.versioned_result)
         self.reporter.finish()
@@ -58,6 +60,7 @@ class TestStrReporter(BaseReporter):
     reporter_cls = reporters.StrReporter
     add_report_output = dedent("""\
         profile warning
+        dev-libs: dev-libs is missing metadata.xml
         dev-libs/foo: invalid package name: [ foo ]
         dev-libs/foo-0: bad filename: [ 0.tar.gz ]
     """)
@@ -70,6 +73,9 @@ class TestFancyReporter(BaseReporter):
     add_report_output = dedent("""
         repo
           ProfileWarning: profile warning
+
+        dev-libs
+          CatMissingMetadataXml: dev-libs is missing metadata.xml
 
         dev-libs/foo
           InvalidPN: invalid package name: [ foo ]
@@ -93,6 +99,7 @@ class TestJsonReporter(BaseReporter):
     reporter_cls = reporters.JsonReporter
     add_report_output = dedent("""\
         {"_warning": {"ProfileWarning": ["profile warning"]}}
+        {"dev-libs": {"_error": {"CatMissingMetadataXml": ["dev-libs is missing metadata.xml"]}}}
         {"dev-libs": {"foo": {"_error": {"InvalidPN": ["invalid package name: [ foo ]"]}}}}
         {"dev-libs": {"foo": {"0": {"_warning": {"BadFilename": ["bad filename: [ 0.tar.gz ]"]}}}}}
     """)
@@ -107,6 +114,7 @@ class TestXmlReporter(BaseReporter):
     add_report_output = dedent("""\
         <checks>
         <result><class>ProfileWarning</class><msg>profile warning</msg></result>
+        <result><category>dev-libs</category><class>CatMissingMetadataXml</class><msg>dev-libs is missing metadata.xml</msg></result>
         <result><category>dev-libs</category><package>foo</package><class>InvalidPN</class><msg>invalid package name: [ foo ]</msg></result>
         <result><category>dev-libs</category><package>foo</package><version>0</version><class>BadFilename</class><msg>bad filename: [ 0.tar.gz ]</msg></result>
         </checks>
@@ -124,7 +132,7 @@ class TestPickleStream(BaseReporter):
 
     def test_add_report(self, capsysbinary):
         self.reporter = self.mk_reporter()
-        for result in (self.log_warning, self.log_error,
+        for result in (self.log_warning, self.log_error, self.category_result,
                        self.package_result, self.versioned_result):
             self.reporter.start()
             self.reporter.report(result)
