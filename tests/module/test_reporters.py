@@ -1,10 +1,12 @@
 import pickle
 import sys
+from textwrap import dedent
 
+from pkgcore.test.misc import FakePkg
 from snakeoil.formatters import PlainTextFormatter
 
 from pkgcheck import base, reporters
-from pkgcheck.checks.profiles import ProfileWarning, ProfileError
+from pkgcheck.checks import pkgdir, profiles, metadata
 
 
 class BaseReporter(object):
@@ -14,8 +16,11 @@ class BaseReporter(object):
     def mk_reporter(self, **kwargs):
         out = PlainTextFormatter(sys.stdout)
         reporter = self.reporter_cls(out=out, **kwargs)
-        self.log_warning = ProfileWarning('profile warning')
-        self.log_error = ProfileError('profile error')
+        self.log_warning = profiles.ProfileWarning('profile warning')
+        self.log_error = profiles.ProfileError('profile error')
+        pkg = FakePkg('dev-libs/foo-0')
+        self.package_result = pkgdir.InvalidPN(pkg, ('foo',))
+        self.versioned_result = metadata.BadFilename(pkg, ('0.tar.gz',))
         return reporter
 
     @property
@@ -30,13 +35,15 @@ class BaseReporter(object):
         self.reporter = self.mk_reporter()
         self.reporter.start()
         self.reporter.report(self.log_warning)
+        self.reporter.report(self.package_result)
+        self.reporter.report(self.versioned_result)
         self.reporter.finish()
         out, err = capsys.readouterr()
         assert not err
         assert out == self.add_report_output
 
     def test_filtered_report(self, capsys):
-        self.reporter = self.mk_reporter(keywords=(ProfileError,))
+        self.reporter = self.mk_reporter(keywords=(profiles.ProfileError,))
         self.reporter.start()
         self.reporter.report(self.log_warning)
         self.reporter.report(self.log_error)
@@ -49,21 +56,29 @@ class BaseReporter(object):
 class TestStrReporter(BaseReporter):
 
     reporter_cls = reporters.StrReporter
-    add_report_output = """profile warning\n"""
+    add_report_output = dedent("""\
+        profile warning
+        dev-libs/foo: invalid package name: [ foo ]
+        dev-libs/foo-0: bad filename: [ 0.tar.gz ]
+    """)
     filtered_report_output = """profile error\n"""
 
 
 class TestFancyReporter(BaseReporter):
 
     reporter_cls = reporters.FancyReporter
-    add_report_output = """
-repo
-  ProfileWarning: profile warning
-"""
-    filtered_report_output = """
-repo
-  ProfileError: profile error
-"""
+    add_report_output = dedent("""
+        repo
+          ProfileWarning: profile warning
+
+        dev-libs/foo
+          InvalidPN: invalid package name: [ foo ]
+          BadFilename: version 0: bad filename: [ 0.tar.gz ]
+    """)
+    filtered_report_output = dedent("""
+        repo
+          ProfileError: profile error
+    """)
 
 
 class TestNullReporter(BaseReporter):
@@ -76,15 +91,31 @@ class TestNullReporter(BaseReporter):
 class TestJsonReporter(BaseReporter):
 
     reporter_cls = reporters.JsonReporter
-    add_report_output = """{"_warning": {"ProfileWarning": ["profile warning"]}}\n"""
-    filtered_report_output = """{"_error": {"ProfileError": ["profile error"]}}\n"""
+    add_report_output = dedent("""\
+        {"_warning": {"ProfileWarning": ["profile warning"]}}
+        {"dev-libs": {"foo": {"_error": {"InvalidPN": ["invalid package name: [ foo ]"]}}}}
+        {"dev-libs": {"foo": {"0": {"_warning": {"BadFilename": ["bad filename: [ 0.tar.gz ]"]}}}}}
+    """)
+    filtered_report_output = dedent("""\
+        {"_error": {"ProfileError": ["profile error"]}}
+    """)
 
 
 class TestXmlReporter(BaseReporter):
 
     reporter_cls = reporters.XmlReporter
-    add_report_output = """<checks>\n<result><class>ProfileWarning</class><msg>profile warning</msg></result>\n</checks>\n"""
-    filtered_report_output = """<checks>\n<result><class>ProfileError</class><msg>profile error</msg></result>\n</checks>\n"""
+    add_report_output = dedent("""\
+        <checks>
+        <result><class>ProfileWarning</class><msg>profile warning</msg></result>
+        <result><category>dev-libs</category><package>foo</package><class>InvalidPN</class><msg>invalid package name: [ foo ]</msg></result>
+        <result><category>dev-libs</category><package>foo</package><version>0</version><class>BadFilename</class><msg>bad filename: [ 0.tar.gz ]</msg></result>
+        </checks>
+    """)
+    filtered_report_output = dedent("""\
+        <checks>
+        <result><class>ProfileError</class><msg>profile error</msg></result>
+        </checks>
+    """)
 
 
 class TestPickleStream(BaseReporter):
@@ -93,16 +124,18 @@ class TestPickleStream(BaseReporter):
 
     def test_add_report(self, capsysbinary):
         self.reporter = self.mk_reporter()
-        self.reporter.start()
-        self.reporter.report(self.log_warning)
-        self.reporter.finish()
-        out, err = capsysbinary.readouterr()
-        assert not err
-        result = pickle.loads(out)
-        assert result == self.log_warning
+        for result in (self.log_warning, self.log_error,
+                       self.package_result, self.versioned_result):
+            self.reporter.start()
+            self.reporter.report(result)
+            self.reporter.finish()
+            out, err = capsysbinary.readouterr()
+            assert not err
+            unpickled_result = pickle.loads(out)
+            assert unpickled_result == result
 
     def test_filtered_report(self, capsysbinary):
-        self.reporter = self.mk_reporter(keywords=(ProfileError,))
+        self.reporter = self.mk_reporter(keywords=(profiles.ProfileError,))
         self.reporter.start()
         self.reporter.report(self.log_warning)
         self.reporter.report(self.log_error)
