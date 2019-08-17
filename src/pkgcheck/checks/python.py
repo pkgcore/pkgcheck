@@ -69,10 +69,12 @@ class PythonSingleUseMismatch(base.VersionedResult, base.Warning):
 
     @property
     def short_desc(self):
+        flags = ' '.join(self.flags)
+        single_flags = ' '.join(self.single_flags)
         return (
             "mismatched flags in IUSE: "
-            f"PYTHON_TARGETS={self.flags} but "
-            f"PYTHON_SINGLE_TARGET={self.single_flags}"
+            f"PYTHON_TARGETS=( {flags} ) but "
+            f"PYTHON_SINGLE_TARGET=( {single_flags} )"
         )
 
 
