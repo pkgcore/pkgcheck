@@ -3,6 +3,7 @@ import sys
 from textwrap import dedent
 
 from pkgcore.test.misc import FakePkg
+import pytest
 from snakeoil.formatters import PlainTextFormatter
 
 from pkgcheck import base, reporters
@@ -126,6 +127,14 @@ class TestXmlReporter(BaseReporter):
     """)
 
 
+class UnPickleableResult(base.Result):
+
+    __slots__ = ('func',)
+
+    def __init__(self):
+        self.func = lambda x: x
+
+
 class TestPickleStream(BaseReporter):
 
     reporter_cls = reporters.PickleStream
@@ -152,6 +161,14 @@ class TestPickleStream(BaseReporter):
         assert not err
         result = pickle.loads(out)
         assert result == self.log_error
+
+    def test_unpickleable_result(self):
+        result = UnPickleableResult()
+        reporter = self.mk_reporter()
+        with pytest.raises(TypeError):
+            reporter.start()
+            reporter.report(result)
+            reporter.finish()
 
 
 class TestBinaryPickleStream(TestPickleStream):

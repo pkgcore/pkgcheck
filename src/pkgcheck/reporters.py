@@ -218,8 +218,8 @@ class PickleStream(base.Reporter):
             result = (yield)
             try:
                 pickle.dump(result, self.out.stream, self.protocol)
-            except TypeError as t:
-                raise TypeError(result, str(t))
+            except (AttributeError, TypeError) as e:
+                raise TypeError(result, str(e))
 
 
 class BinaryPickleStream(PickleStream):
