@@ -451,8 +451,7 @@ def dump_docstring(out, obj, prefix=None):
         out.later_prefix.append(prefix)
     try:
         if obj.__doc__ is None:
-            out.write("no documentation")
-            return
+            raise ValueError('no docs for {obj!r}')
 
         # Docstrings start with an unindented line. Everything
         # else is consistently indented.
