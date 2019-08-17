@@ -351,9 +351,6 @@ class BadInsIntoCheck(base.Template):
 
     feed_type = base.ebuild_feed
     _bad_insinto = None
-    _bad_etc = ("conf", "env", "init", "pam")
-    _bad_cron = ("hourly", "daily", "weekly", "d")
-    _bad_paths = ("/usr/share/applications",)
 
     known_results = (BadInsIntoDir,)
 
@@ -364,16 +361,17 @@ class BadInsIntoCheck(base.Template):
 
     @classmethod
     def _load_class_regex(cls):
+        bad_etc = ("conf", "env", "init", "pam")
+        bad_cron = ("hourly", "daily", "weekly", "d")
+        bad_paths = ("/usr/share/applications",)
+
         patterns = []
-        if cls._bad_etc:
-            patterns.append("etc/(?:%s).d" % "|".join(cls._bad_etc))
-        if cls._bad_cron:
-            patterns.append("etc/cron.(?:%s)" % "|".join(cls._bad_cron))
-        if cls._bad_paths:
-            patterns.extend(x.strip("/") for x in cls._bad_paths)
+        patterns.append("etc/(?:%s).d" % "|".join(bad_etc))
+        patterns.append("etc/cron.(?:%s)" % "|".join(bad_cron))
+        patterns.extend(x.strip("/") for x in bad_paths)
         s = "|".join(patterns)
         s = s.replace("/", "/+")
-        cls._bad_insinto = re.compile("insinto[ \t]+(/+(?:%s))(?:$|[/ \t])" % s)
+        cls._bad_insinto = re.compile(rf'insinto[ \t]+(/+(?:{s}))(?:$|[/ \t])')
 
     def feed(self, entry):
         pkg, lines = entry
