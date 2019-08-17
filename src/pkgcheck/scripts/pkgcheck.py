@@ -526,13 +526,12 @@ def display_checks(out, options):
                     dump_docstring(out, check, prefix='  ')
 
                     # output result types that each check can generate
-                    if check.known_results:
-                        results = []
-                        for r in sorted(check.known_results, key=attrgetter('__name__')):
-                            results.extend([out.fg(r.color.__get__(r)), r.__name__, out.reset, ', '])
-                        results.pop()
-                        out.write(*(['  (known results: '] + results + [')']))
-                        out.write()
+                    results = []
+                    for r in sorted(check.known_results, key=attrgetter('__name__')):
+                        results.extend([out.fg(r.color.__get__(r)), r.__name__, out.reset, ', '])
+                    results.pop()
+                    out.write(*(['  (known results: '] + results + [')']))
+                    out.write()
 
             finally:
                 out.first_prefix.pop()
