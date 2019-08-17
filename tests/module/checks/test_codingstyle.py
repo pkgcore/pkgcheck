@@ -373,6 +373,11 @@ class TestCopyright(misc.ReportTestCase):
     def mk_pkg(self):
         return misc.FakePkg("dev-util/diffball-0.5")
 
+    def test_empty_file(self):
+        fake_src = []
+        fake_pkg = self.mk_pkg()
+        self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
+
     def test_good_copyright(self):
         good_copyrights = [
             '# Copyright 1999-2019 Gentoo Authors\n',
