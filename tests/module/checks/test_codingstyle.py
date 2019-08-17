@@ -300,6 +300,7 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert r.uri == uri
         assert (r.replacement ==
                 'https://github.com/foo/bar/archive/${PV}.tar.gz')
+        assert uri in str(r)
 
     def test_github_zipball_uri(self):
         uri = 'https://github.com/foo/bar/zipball/${PV}'
@@ -313,6 +314,7 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert r.uri == uri
         assert (r.replacement ==
                 'https://github.com/foo/bar/archive/${PV}.tar.gz')
+        assert uri in str(r)
 
     def test_gitlab_archive_uri(self):
         uri = 'https://gitlab.com/foo/bar/-/archive/${PV}/${P}.tar.gz'
@@ -333,6 +335,7 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert r.uri == uri
         assert (r.replacement ==
                 'https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.tar.gz')
+        assert uri in str(r)
 
     def test_gitlab_tar_bz2_uri(self):
         uri = 'https://gitlab.com/foo/bar/repository/archive.tar.bz2?ref=${PV}'
@@ -346,6 +349,7 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert r.uri == uri
         assert (r.replacement ==
                 'https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.tar.bz2')
+        assert uri in str(r)
 
     def test_gitlab_zip_uri(self):
         uri = 'https://gitlab.com/foo/bar/repository/archive.zip?ref=${PV}'
@@ -359,6 +363,7 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert r.uri == uri
         assert (r.replacement ==
                 'https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.zip')
+        assert uri in str(r)
 
 
 class TestCopyright(misc.ReportTestCase):
