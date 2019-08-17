@@ -279,6 +279,15 @@ class TestObsoleteUri(misc.ReportTestCase):
         ]
         self.assertNoReport(self.check_kls(options=None), [self.fake_pkg, fake_src])
 
+    def test_commented_github_tarball_uri(self):
+        uri = 'https://github.com/foo/bar/tarball/${PV}'
+        fake_src = [
+            '# github tarball\n',
+            '\n',
+            f'# {uri}\n'
+        ]
+        self.assertNoReport(self.check_kls(options=None), [self.fake_pkg, fake_src])
+
     def test_github_tarball_uri(self):
         uri = 'https://github.com/foo/bar/tarball/${PV}'
         fake_src = [
