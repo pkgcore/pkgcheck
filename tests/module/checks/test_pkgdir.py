@@ -26,7 +26,12 @@ class PkgDirCheckBase(misc.Tmpdir, misc.ReportTestCase):
         pkg = f"{category}/{package}-{version}{revision}"
         repo = FakeRepo(repo_id='repo', location=self.dir)
         self.filesdir = pjoin(repo.location, category, package, 'files')
-        os.makedirs(self.filesdir, exist_ok=True)
+        # create files dir with random empty subdir
+        os.makedirs(pjoin(self.filesdir, uuid.uuid4().hex), exist_ok=True)
+
+        # create dirs that should be ignored
+        for d in self.check_kls.ignore_dirs:
+            os.makedirs(pjoin(self.filesdir, d), exist_ok=True)
 
         # create specified files in FILESDIR
         for fn, contents in files.items():
