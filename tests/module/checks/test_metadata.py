@@ -698,12 +698,12 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         (x, x.upper())
         for x in ("depend", "rdepend", "pdepend", "bdepend"))
 
-    def mk_pkg(self, attr, data='', eapi='0', iuse=''):
+    def mk_pkg(self, attr, depset='', eapi='0', iuse=''):
         if attr == 'bdepend':
             eapi = '7'
         return misc.FakePkg(
             'dev-util/diffball-2.7.1',
-            data={'EAPI': eapi, 'IUSE': iuse, self.attr_map[attr]: data})
+            data={'EAPI': eapi, 'IUSE': iuse, self.attr_map[attr]: depset})
 
     def mk_check(self, pkgs=None, **kwargs):
         if pkgs is None:
@@ -721,55 +721,58 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         # should puke a metadata error for empty license
         chk = self.mk_check()
         mk_pkg = partial(self.mk_pkg, attr)
+
+        # various regular depsets
         self.assertNoReport(chk, mk_pkg())
+        self.assertNoReport(chk, mk_pkg('dev-util/foo'))
         self.assertNoReport(chk, mk_pkg("|| ( dev-util/foo ) dev-foo/bugger "))
+        self.assertNoReport(chk, mk_pkg("!dev-util/blah"))
+
+        # invalid depset syntax
         r = self.assertReport(chk, mk_pkg("|| ("))
         assert isinstance(r, metadata.MetadataError)
         assert r.attr == attr
+
         if 'depend' not in attr:
             return
-        self.assertNoReport(chk, mk_pkg("!dev-util/blah"))
+
+        # pkg blocking itself
         r = self.assertReport(chk, mk_pkg("!dev-util/diffball"))
         assert isinstance(r, metadata.MetadataError)
         assert "blocks itself" in r.msg
 
         # check for := in || () blocks
-        r = self.assertReport(
-            chk,
-            mk_pkg(eapi='5', data="|| ( dev-libs/foo:= dev-libs/bar:= )"))
+        pkg = mk_pkg(eapi='5', depset="|| ( dev-libs/foo:= dev-libs/bar:= )")
+        r = self.assertReport(chk, pkg)
         assert isinstance(r, metadata.MetadataError)
         assert "= slot operator used inside || block" in r.msg
         assert "[dev-libs/bar, dev-libs/foo]" in r.msg
 
         # check for := in blockers
-        r = self.assertReport(
-            chk,
-            mk_pkg(eapi='5', data="!dev-libs/foo:="))
+        r = self.assertReport(chk, mk_pkg(eapi='5', depset="!dev-libs/foo:="))
         assert isinstance(r, metadata.MetadataError)
         assert "= slot operator used in blocker" in r.msg
         assert "[dev-libs/foo]" in r.msg
 
         # check for missing package revisions
         self.assertNoReport(chk, mk_pkg("=dev-libs/foo-1-r0"))
-        r = self.assertReport(
-            chk,
-            mk_pkg(eapi='6', data="=dev-libs/foo-1"))
+        r = self.assertReport(chk, mk_pkg(eapi='6', depset="=dev-libs/foo-1"))
         assert isinstance(r, metadata.MissingPackageRevision)
         assert f'{attr.upper()}="=dev-libs/foo-1"' in str(r)
 
         # MissingUseDepDefault checks
 
         # USE flag exists on all matching pkgs
-        self.assertNoReport(chk, mk_pkg(eapi='4', data='dev-libs/foo[bar?]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[bar?]'))
 
         # USE flag doesn't exist but has proper default
-        self.assertNoReport(chk, mk_pkg(eapi='4', data='dev-libs/bar[foo(-)?]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', data='dev-libs/bar[foo(+)=]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', data='dev-libs/bar[!foo(-)?]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', data='!dev-libs/bar[!foo(+)?]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo(-)?]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo(+)=]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[!foo(-)?]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='!dev-libs/bar[!foo(+)?]'))
 
         # matching pkg doesn't have any USE flags
-        r = self.assertReport(chk, mk_pkg(eapi='4', data='dev-libs/bar[foo?]'))
+        r = self.assertReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo?]'))
         assert isinstance(r, metadata.MissingUseDepDefault)
         assert r.atom == 'dev-libs/bar[foo?]'
         assert r.pkg_deps == ('=dev-libs/bar-2',)
@@ -777,7 +780,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         assert "USE flag 'foo' missing" in str(r)
 
         # blocker triggers result as well
-        r = self.assertReport(chk, mk_pkg(eapi='4', data='!dev-libs/bar[foo?]'))
+        r = self.assertReport(chk, mk_pkg(eapi='4', depset='!dev-libs/bar[foo?]'))
         assert isinstance(r, metadata.MissingUseDepDefault)
         assert r.atom == '!dev-libs/bar[foo?]'
         assert r.pkg_deps == ('=dev-libs/bar-2',)
@@ -785,7 +788,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         assert "USE flag 'foo' missing" in str(r)
 
         # USE flag missing on one of multiple matches
-        r = self.assertReport(chk, mk_pkg(eapi='4', data='dev-libs/foo[baz?]'))
+        r = self.assertReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[baz?]'))
         assert isinstance(r, metadata.MissingUseDepDefault)
         assert r.atom == 'dev-libs/foo[baz?]'
         assert r.pkg_deps == ('=dev-libs/foo-0',)
@@ -793,7 +796,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         assert "USE flag 'baz' missing" in str(r)
 
         # USE flag missing on all matches
-        r = self.assertReport(chk, mk_pkg(eapi='4', data='dev-libs/foo[blah?]'))
+        r = self.assertReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[blah?]'))
         assert isinstance(r, metadata.MissingUseDepDefault)
         assert r.atom == 'dev-libs/foo[blah?]'
         assert r.pkg_deps == ('=dev-libs/foo-0', '=dev-libs/foo-1')
