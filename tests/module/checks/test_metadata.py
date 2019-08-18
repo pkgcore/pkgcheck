@@ -847,7 +847,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
 
         r = self.assertReport(chk, self.mk_pkg("foon"))
         assert isinstance(r, metadata.MissingUri)
-        assert r.filename == 'foon'
+        assert r.filenames == ('foon',)
         assert "unfetchable file: 'foon'" == str(r)
 
         # verify valid protos.

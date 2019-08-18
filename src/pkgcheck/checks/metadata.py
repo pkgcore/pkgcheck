@@ -776,15 +776,16 @@ class KeywordsCheck(base.Template):
 class MissingUri(base.VersionedResult, base.Warning):
     """RESTRICT=fetch isn't set, yet no full URI exists."""
 
-    __slots__ = ('filename',)
+    __slots__ = ('filenames',)
 
-    def __init__(self, pkg, filename):
+    def __init__(self, pkg, filenames):
         super().__init__(pkg)
-        self.filename = filename
+        self.filenames = tuple(sorted(filenames))
 
     @property
     def short_desc(self):
-        return f'unfetchable file: {self.filename!r}'
+        filenames = ', '.join(map(repr, self.filenames))
+        return f'unfetchable file{_pl(self.filenames)}: {filenames}'
 
 
 class UnknownMirror(base.VersionedResult, base.Error):
@@ -932,10 +933,9 @@ class SrcUriCheck(base.Template):
                         tarball_available.add(x)
                 if bad:
                     yield BadProto(pkg, f_inst.filename, bad)
-        if "fetch" not in pkg.restrict:
-            for x in sorted(lacks_uri):
-                yield MissingUri(pkg, x)
 
+        if lacks_uri:
+            yield MissingUri(pkg, lacks_uri)
         if bad_filenames:
             yield BadFilename(pkg, bad_filenames)
         if tarball_available:
