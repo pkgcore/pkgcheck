@@ -760,6 +760,17 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         assert isinstance(r, metadata.MissingPackageRevision)
         assert f'{attr.upper()}="=dev-libs/foo-1"' in str(r)
 
+        # unstated IUSE
+        r = self.assertReport(chk, mk_pkg(depset='foo? ( dev-libs/foo )'))
+        assert isinstance(r, addons.UnstatedIUSE)
+        assert 'unstated flag: [ foo ]' in str(r)
+        # known IUSE
+        self.assertNoReport(chk, mk_pkg(depset='foo? ( dev-libs/foo )', iuse='foo'))
+        # multiple unstated IUSE
+        r = self.assertReport(chk, mk_pkg(depset='foo? ( !bar? ( dev-libs/foo ) )'))
+        assert isinstance(r, addons.UnstatedIUSE)
+        assert 'unstated flags: [ bar, foo ]' in str(r)
+
         # MissingUseDepDefault checks
 
         # USE flag exists on all matching pkgs
