@@ -20,6 +20,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, addons
+from ..addons import UnstatedIUSE
 from ..base import MetadataError
 from .visibility import FakeConfigurable, strip_atom_use
 
@@ -50,7 +51,7 @@ class UnnecessaryLicense(base.VersionedResult, base.Warning):
 class LicenseMetadataCheck(base.Template):
     """LICENSE validity checks."""
 
-    known_results = (MetadataError, MissingLicense, UnnecessaryLicense, addons.UnstatedIUSE)
+    known_results = (MetadataError, MissingLicense, UnnecessaryLicense, UnstatedIUSE)
     feed_type = base.versioned_feed
 
     # categories for ebuilds that can lack LICENSE settings
@@ -83,7 +84,7 @@ class IUSEMetadataCheck(base.Template):
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon,)
-    known_results = (MetadataError, addons.UnstatedIUSE)
+    known_results = (MetadataError, UnstatedIUSE)
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
@@ -190,7 +191,7 @@ class RequiredUSEMetadataCheck(base.Template):
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon, addons.ProfileAddon)
-    known_results = (MetadataError, RequiredUseDefaults, addons.UnstatedIUSE)
+    known_results = (MetadataError, RequiredUseDefaults, UnstatedIUSE)
 
     def __init__(self, options, iuse_handler, profiles):
         super().__init__(options)
@@ -316,7 +317,7 @@ class LocalUSECheck(base.Template):
     required_addons = (addons.UseAddon,)
     known_results = (
         UnusedLocalUSE, MatchingGlobalUSE, ProbableGlobalUSE,
-        ProbableUseExpand, addons.UnstatedIUSE,
+        ProbableUseExpand, UnstatedIUSE,
     )
 
     def __init__(self, options, use_handler):
@@ -507,7 +508,7 @@ class DependencyCheck(base.Template):
     required_addons = (addons.UseAddon, addons.GitAddon)
     known_results = (
         MetadataError, MissingPackageRevision, MissingUseDepDefault,
-        OutdatedBlocker, NonexistentBlocker, addons.UnstatedIUSE,
+        OutdatedBlocker, NonexistentBlocker, UnstatedIUSE,
     )
 
     feed_type = base.versioned_feed
@@ -871,7 +872,7 @@ class SrcUriCheck(base.Template):
     feed_type = base.versioned_feed
     known_results = (
         BadFilename, BadProto, MissingUri, MetadataError, TarballAvailable,
-        UnknownMirror, addons.UnstatedIUSE,
+        UnknownMirror, UnstatedIUSE,
     )
 
     valid_protos = frozenset(["http", "https", "ftp"])
@@ -1055,7 +1056,7 @@ class RestrictsCheck(base.Template):
     """Check for valid RESTRICT settings."""
 
     feed_type = base.versioned_feed
-    known_results = (BadRestricts, addons.UnstatedIUSE)
+    known_results = (BadRestricts, UnstatedIUSE)
     required_addons = (addons.UseAddon,)
 
     def __init__(self, options, iuse_handler):
