@@ -1,5 +1,6 @@
 from functools import partial
 from itertools import combinations
+from operator import attrgetter
 import os
 import tempfile
 import textwrap
@@ -866,11 +867,42 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
         assert isinstance(r, metadata.MetadataError)
         assert r.attr == 'fetchables'
 
-    def test_bad_filename(self):
+    def test_regular_src_uri(self):
+        chk = self.mk_check()
+        # single file
+        self.assertNoReport(chk, self.mk_pkg(src_uri='https://foon.com/foon-2.7.1.tar.gz'))
+        # single file, multiple uris
+        self.assertNoReport(chk, self.mk_pkg(
+            src_uri='https://foo.com/a-0.tar.gz https://bar.com/a-0.tar.gz'))
+        # multiple files, multiple uris
+        self.assertNoReport(chk, self.mk_pkg(
+            src_uri="""
+                https://foo.com/a-0.tar.gz https://bar.com/a-0.tar.gz
+                https://blah.org/b-1.zip https://boo.net/boo-10.tar.xz
+            """))
+
+    def test_unknown_mirror(self):
         chk = self.mk_check()
 
-        # regular filename
-        self.assertNoReport(chk, self.mk_pkg("https://foon.com/foon-2.7.1.tar.gz"))
+        # single mirror
+        r = self.assertReport(chk, self.mk_pkg('mirror://foo/a-0.gz https://foo.com/a-0.gz'))
+        assert isinstance(r, metadata.UnknownMirror)
+        assert r.filename == 'a-0.gz'
+        assert r.uri == 'mirror://foo/a-0.gz'
+        assert r.mirror == 'foo'
+        assert "unknown mirror 'foo'" in str(r)
+
+        # multiple mirrors
+        pkg = self.mk_pkg('mirror://foo/a-0.gz mirror://bar/a-0.gz https://foo.com/a-0.gz')
+        reports = self.assertReports(chk, pkg)
+        for mirror, r in zip(('bar', 'foo'), sorted(reports, key=attrgetter('mirror'))):
+            assert r.filename == 'a-0.gz'
+            assert r.uri == f'mirror://{mirror}/a-0.gz'
+            assert r.mirror == mirror
+            assert f"unknown mirror '{mirror}'" in str(r)
+
+    def test_bad_filename(self):
+        chk = self.mk_check()
 
         # PN filename
         r = self.assertReport(chk, self.mk_pkg("https://foon.com/diffball.tar.gz"))
@@ -902,6 +934,12 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
 
     def test_missing_uri(self):
         chk = self.mk_check()
+
+        # mangled protocol
+        r = self.assertReport(chk, self.mk_pkg('http:/foo/foo-0.tar.gz'))
+        assert isinstance(r, metadata.MissingUri)
+        assert r.filenames == ('http:/foo/foo-0.tar.gz',)
+        assert "unfetchable file: 'http:/foo/foo-0.tar.gz'" == str(r)
 
         # no URI and RESTRICT doesn't contain 'fetch'
         r = self.assertReport(chk, self.mk_pkg('foon'))
