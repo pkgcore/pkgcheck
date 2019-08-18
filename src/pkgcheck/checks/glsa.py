@@ -6,9 +6,9 @@ from snakeoil.strings import pluralism as _pl
 from pkgcore.pkgsets.glsa import GlsaDirSet
 
 from .. import base
+from ..log import logger
 
 demandload(
-    'pkgcore.log:logger',
     'pkgcore.restrictions:packages,values',
     'pkgcore.restrictions.util:collect_package_restrictions',
     'snakeoil.osutils:abspath,pjoin',

@@ -30,11 +30,11 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
 from . import base
+from .log import logger
 
 demandload(
     'pkgcore.restrictions:packages,values',
     'pkgcore.ebuild:misc,domain,profiles,repo_objs',
-    'pkgcore.log:logger',
 )
 
 # hacky ebuild path regexes for git log parsing, proper atom validation is handled later

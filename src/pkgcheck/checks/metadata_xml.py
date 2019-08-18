@@ -10,12 +10,12 @@ from snakeoil.demandload import demandload
 from snakeoil.strings import pluralism as _pl
 
 from .. import base
+from ..log import logger
 
 demandload(
     'urllib.request:urlopen',
     'urllib:error@urllib_error',
     'lxml:etree',
-    'pkgcore.log:logger',
     'snakeoil.osutils:pjoin',
     'snakeoil:fileutils',
 )

@@ -13,19 +13,17 @@ identical to the input scope.
 
 from collections import OrderedDict, namedtuple
 from operator import attrgetter
+import re
 
 from pkgcore import const
 from pkgcore.config import ConfigHint
 from pkgcore.package.errors import MetadataException
 from snakeoil.decorators import coroutine
-from snakeoil.demandload import demandload
 from snakeoil.klass import SlotsPicklingMixin, generic_equality
 from snakeoil.osutils import pjoin
 
-demandload(
-    're',
-    'pkgcore.log:logger',
-)
+from .log import logger
+
 
 # source feed types
 repository_feed = "repo"

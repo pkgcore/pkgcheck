@@ -8,13 +8,13 @@ from tempfile import TemporaryDirectory
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.exceptions import PkgcoreException
-from pkgcore.log import logger
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base
+from ..log import logger
 
 demand_compile_regexp(
     'ebuild_copyright_regex',
