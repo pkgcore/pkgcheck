@@ -692,7 +692,7 @@ class ProfileAddon(base.Addon):
                     use = cached_profile['use']
                     provides_repo = cached_profile['provides_repo']
                 except KeyError:
-                    logger.debug(f'profile regen: {profile_name}')
+                    logger.debug('profile regen: %s', profile_name)
                     with suppress_logging():
                         try:
                             vfilter = domain.generate_filter(profile.masks, profile.unmasks)
