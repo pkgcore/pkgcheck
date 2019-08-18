@@ -1,6 +1,6 @@
 """Addon functionality shared by multiple checkers."""
 
-from collections import OrderedDict, UserDict, defaultdict
+from collections import OrderedDict, UserDict, defaultdict, deque
 from copy import copy
 from functools import partial
 from itertools import chain, filterfalse
@@ -21,7 +21,6 @@ from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
 from snakeoil.decorators import coroutine
 from snakeoil.demandload import demandload, demand_compile_regexp
-from snakeoil.iterables import expandable_chain
 from snakeoil.log import suppress_logging
 from snakeoil.osutils import abspath, listdir_files, pjoin
 from snakeoil.process import find_binary, CommandNotFound
@@ -981,23 +980,21 @@ class UseAddon(base.Addon):
 
     def use_validate(self, klasses, pkg, seq, attr=None):
         skip_filter = (packages.Conditional,) + klasses
+        nodes = deque(iflatten_instance(seq, skip_filter))
         unstated = set()
         stated = pkg.iuse_stripped
 
-        def _nodes():
-            i = expandable_chain(iflatten_instance(seq, skip_filter))
-            for node in i:
-                if isinstance(node, packages.Conditional):
-                    # invert it; get only whats not in pkg.iuse
-                    unstated.update(filterfalse(stated.__contains__, node.restriction.vals))
-                    i.append(iflatten_instance(node.payload, skip_filter))
-                    continue
-                elif attr == 'required_use':
-                    unstated.update(filterfalse(stated.__contains__, node.vals))
-                yield node
-
-        # iterate through parsed nodes to force unstated IUSE resolution
-        nodes = tuple(_nodes())
+        vals = []
+        while nodes:
+            node = nodes.popleft()
+            if isinstance(node, packages.Conditional):
+                # invert it; get only whats not in pkg.iuse
+                unstated.update(filterfalse(stated.__contains__, node.restriction.vals))
+                nodes.extend(iflatten_instance(node.payload, skip_filter))
+                continue
+            elif attr == 'required_use':
+                unstated.update(filterfalse(stated.__contains__, node.vals))
+            vals.append(node)
 
         # find profiles with unstated IUSE
         profiles_unstated = defaultdict(set)
@@ -1017,4 +1014,4 @@ class UseAddon(base.Addon):
                     num_profiles = len(profiles)
                     yield UnstatedIUSE(pkg, attr, profiles[0], unstated, num_profiles)
 
-        return nodes, _profiles_unstated()
+        return tuple(vals), _profiles_unstated()
