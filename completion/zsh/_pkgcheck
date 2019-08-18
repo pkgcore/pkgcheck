@@ -148,11 +148,13 @@ case $state in
           $scan_opts \
           $check_opts \
           $plugin_opts \
+          '*:target' \
           && ret=0
         ;;
       (replay)
         _arguments -C -A '-*' \
           $common_output_args \
+          '*:pickled results:_files' \
           && ret=0
         ;;
       (show)
