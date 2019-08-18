@@ -779,7 +779,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
 
     check_kls = metadata.SrcUriCheck
 
-    def mk_pkg(self, src_uri='', default_chksums={"size": 100},
+    def mk_pkg(self, src_uri='', restrict='', default_chksums={"size": 100},
                iuse='', disable_chksums=False):
         class fake_repo:
             def __init__(self, default_chksums):
@@ -798,7 +798,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
 
         return misc.FakePkg(
             'dev-util/diffball-2.7.1',
-            data={'SRC_URI': src_uri, 'IUSE': iuse},
+            data={'SRC_URI': src_uri, 'IUSE': iuse, 'RESTRICT': restrict},
             parent=fake_parent())
 
     def test_malformed(self):
@@ -841,14 +841,33 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         assert r.filenames == ('2.7.1.tar.gz', 'diffball.zip')
         assert 'bad filenames: [ 2.7.1.tar.gz, diffball.zip ]' == str(r)
 
-    def test_it(self):
+    def test_missing_uri(self):
         chk = self.mk_check()
-        # ensure it pukes about RESTRICT!=fetch, and no uri
 
-        r = self.assertReport(chk, self.mk_pkg("foon"))
+        # no URI and RESTRICT doesn't contain 'fetch'
+        r = self.assertReport(chk, self.mk_pkg('foon'))
         assert isinstance(r, metadata.MissingUri)
         assert r.filenames == ('foon',)
         assert "unfetchable file: 'foon'" == str(r)
+
+        # no URI and RESTRICT contains 'fetch'
+        self.assertNoReport(chk, self.mk_pkg('foon', restrict='fetch'))
+
+        # conditional URI and conditional RESTRICT containing 'fetch'
+        pkg = self.mk_pkg(src_uri='foo? ( bar )', iuse='foo', restrict='foo? ( fetch )')
+        self.assertNoReport(chk, pkg)
+        # negated
+        pkg = self.mk_pkg(src_uri='!foo? ( bar )', iuse='foo', restrict='!foo? ( fetch )')
+        self.assertNoReport(chk, pkg)
+        # multi-level conditional
+        pkg = self.mk_pkg(
+            iuse='foo bar',
+            src_uri='foo? ( bar? ( blah ) )',
+            restrict='foo? ( bar? ( fetch ) )')
+        self.assertNoReport(chk, pkg)
+
+    def test_it(self):
+        chk = self.mk_check()
 
         # verify valid protos.
         assert self.check_kls.valid_protos, "valid_protos needs to have at least one protocol"
