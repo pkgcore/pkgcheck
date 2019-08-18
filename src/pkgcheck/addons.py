@@ -978,7 +978,7 @@ class UseAddon(base.Addon):
     def fake_use_validate(klasses, pkg, seq, attr=None):
         return iflatten_instance(seq, klasses)
 
-    def flatten_restricts(self, nodes, skip_filter, stated, unstated, attr, restricts=None):
+    def _flatten_restricts(self, nodes, skip_filter, stated, unstated, attr, restricts=None):
         for node in nodes:
             k = node
             v = restricts if restricts is not None else []
@@ -986,7 +986,7 @@ class UseAddon(base.Addon):
                 # invert it; get only whats not in pkg.iuse
                 unstated.update(filterfalse(stated.__contains__, node.restriction.vals))
                 v.append(node.restriction)
-                yield from self.flatten_restricts(
+                yield from self._flatten_restricts(
                     iflatten_instance(node.payload, skip_filter),
                     skip_filter, stated, unstated, attr, v)
                 continue
@@ -1000,7 +1000,7 @@ class UseAddon(base.Addon):
         unstated = set()
         stated = pkg.iuse_stripped
 
-        vals = dict(self.flatten_restricts(nodes, skip_filter, stated, unstated, attr))
+        vals = dict(self._flatten_restricts(nodes, skip_filter, stated, unstated, attr))
 
         # find profiles with unstated IUSE
         profiles_unstated = defaultdict(set)
