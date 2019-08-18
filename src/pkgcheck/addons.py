@@ -38,9 +38,10 @@ demandload(
 )
 
 # hacky ebuild path regexes for git log parsing, proper atom validation is handled later
-_ebuild_path_regex = '([^/]+)/([^/]+)/([^/]+)\\.ebuild'
-demand_compile_regexp('ebuild_ADM_regex', fr'^([ADM])\t{_ebuild_path_regex}$')
-demand_compile_regexp('ebuild_R_regex', fr'^(R)\d+\t{_ebuild_path_regex}\t{_ebuild_path_regex}$')
+_ebuild_path_regex_raw = '([^/]+)/([^/]+)/([^/]+)\\.ebuild'
+_ebuild_path_regex = '(?P<category>[^/]+)/(?P<PN>[^/]+)/(?P<P>[^/]+)\\.ebuild'
+demand_compile_regexp('ebuild_ADM_regex', fr'^(?P<status>[ADM])\t{_ebuild_path_regex}$')
+demand_compile_regexp('ebuild_R_regex', fr'^(?P<status>R)\d+\t{_ebuild_path_regex_raw}\t{_ebuild_path_regex}$')
 
 
 class ArchesAddon(base.Addon):
@@ -185,9 +186,9 @@ class _ParseGitRepo(object):
         # match initially added ebuilds
         match = ebuild_ADM_regex.match(line)
         if match:
-            status = match.group(1)
-            category = match.group(2)
-            pkg = match.group(4)
+            status = match.group('status')
+            category = match.group('category')
+            pkg = match.group('P')
             try:
                 return atom_cls(f'={category}/{pkg}'), status
             except MalformedAtom:
@@ -196,9 +197,9 @@ class _ParseGitRepo(object):
         # match renamed ebuilds
         match = ebuild_R_regex.match(line)
         if match:
-            status = match.group(1)
-            category = match.group(5)
-            pkg = match.group(7)
+            status = match.group('status')
+            category = match.group('category')
+            pkg = match.group('P')
             try:
                 return atom_cls(f'={category}/{pkg}'), status
             except MalformedAtom:
