@@ -107,8 +107,7 @@ this in your configuration::
   default=true
 
 To use a non-default reporter use ``pkgcheck scan -R/--reporter``. To see the
-reporters available use ``pconfig configurables
-pkgcheck_reporter_factory``.
+reporters available use ``pkgcheck show --reporters``.
 
 
 .. _`Installing python modules`: http://docs.python.org/inst/
