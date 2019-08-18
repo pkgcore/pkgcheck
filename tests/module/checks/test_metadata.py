@@ -530,6 +530,21 @@ class TestRestrictsCheck(use_based(), misc.ReportTestCase):
         assert isinstance(r, metadata.BadRestricts)
         assert 'unknown restricts: bar, boo' == str(r)
 
+    def test_unstated_iuse(self):
+        check = self.mk_check()
+        # no IUSE
+        self.assertNoReport(check, self.mk_pkg(restrict='foo'))
+        # conditional with IUSE defined
+        self.assertNoReport(check, self.mk_pkg(restrict='foo? ( bar )', iuse='foo'))
+        # conditional missing IUSE
+        r = self.assertReport(check, self.mk_pkg(restrict='foo? ( bar )'))
+        assert isinstance(r, addons.UnstatedIUSE)
+        assert 'unstated flag: [ foo ]' in str(r)
+        # multiple missing IUSE
+        r = self.assertReport(check, self.mk_pkg(restrict='foo? ( bar ) boo? ( blah )'))
+        assert isinstance(r, addons.UnstatedIUSE)
+        assert 'unstated flags: [ boo, foo ]' in str(r)
+
 
 class TestConditionalTestRestrictCheck(misc.ReportTestCase):
 
