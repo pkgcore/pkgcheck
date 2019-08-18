@@ -104,7 +104,7 @@ class TestHomepageCheck(misc.ReportTestCase):
 
 class IUSE_Options(TempDirMixin):
 
-    def get_options(self, properties=(), restricts=(), **kwds):
+    def get_options(self, properties=(), restrict=(), **kwds):
         repo_base = tempfile.mkdtemp(dir=self.dir)
         base = pjoin(repo_base, 'profiles')
         os.mkdir(base)
@@ -122,7 +122,7 @@ class IUSE_Options(TempDirMixin):
             f.write(textwrap.dedent(f"""\
                 masters =
                 properties-allowed = {' '.join(properties)}
-                restrict-allowed = {' '.join(restricts)}
+                restrict-allowed = {' '.join(restrict)}
             """))
         kwds['target_repo'] = repository.UnconfiguredTree(repo_base)
         kwds.setdefault('verbosity', 0)
@@ -512,46 +512,51 @@ class TestRestrictsCheck(use_based(), misc.ReportTestCase):
 
     check_kls = metadata.RestrictsCheck
 
-    def mk_pkg(self, restrict='', iuse=''):
+    def mk_pkg(self, restrict='', properties='', iuse=''):
         return misc.FakePkg(
-            'dev-util/diffball-2.7.1', data={'IUSE': iuse, 'RESTRICT': restrict})
+            'dev-util/diffball-2.7.1',
+            data={'IUSE': iuse, 'RESTRICT': restrict, 'PROPERTIES': properties})
 
-    def test_no_allowed_restricts(self):
-        # repo or its masters don't define any allowed RESTRICT values so anything goes
-        check = self.mk_check()
-        self.assertNoReport(check, self.mk_pkg(restrict='foo'))
-        self.assertNoReport(check, self.mk_pkg(restrict='foo? ( bar )', iuse='foo'))
+    def test_no_allowed(self):
+        for attr in ('properties', 'restrict'):
+            # repo or its masters don't define any allowed values so anything goes
+            check = self.mk_check()
+            self.assertNoReport(check, self.mk_pkg(**{attr: 'foo'}))
+            self.assertNoReport(check, self.mk_pkg(**{attr: 'foo? ( bar )', 'iuse': 'foo'}))
 
-    def test_allowed_restricts(self):
-        check = self.mk_check(restricts=('foo',))
-        # allowed RESTRICT
-        self.assertNoReport(check, self.mk_pkg(restrict='foo'))
+    def test_allowed(self):
+        for attr, result in (('properties', metadata.UnknownProperties),
+                             ('restrict', metadata.BadRestricts)):
+            check = self.mk_check(**{attr: ('foo',)})
+            # allowed
+            self.assertNoReport(check, self.mk_pkg(**{attr: 'foo'}))
 
-        # unknown RESTRICT
-        r = self.assertReport(check, self.mk_pkg(restrict='bar'))
-        assert isinstance(r, metadata.BadRestricts)
-        assert 'unknown restrict: bar' == str(r)
+            # unknown
+            r = self.assertReport(check, self.mk_pkg(**{attr: 'bar'}))
+            assert isinstance(r, result)
+            assert f'unknown {attr.upper()}="bar"' == str(r)
 
-        # unknown multiple, conditional RESTRICTs
-        pkg = self.mk_pkg(restrict='baz? ( foo bar boo )', iuse='baz')
-        r = self.assertReport(check, pkg)
-        assert isinstance(r, metadata.BadRestricts)
-        assert 'unknown restricts: bar, boo' == str(r)
+            # unknown multiple, conditional
+            pkg = self.mk_pkg(**{attr: 'baz? ( foo bar boo )', 'iuse': 'baz'})
+            r = self.assertReport(check, pkg)
+            assert isinstance(r, result)
+            assert f'unknown {attr.upper()}="bar boo"' == str(r)
 
     def test_unstated_iuse(self):
-        check = self.mk_check()
-        # no IUSE
-        self.assertNoReport(check, self.mk_pkg(restrict='foo'))
-        # conditional with IUSE defined
-        self.assertNoReport(check, self.mk_pkg(restrict='foo? ( bar )', iuse='foo'))
-        # conditional missing IUSE
-        r = self.assertReport(check, self.mk_pkg(restrict='foo? ( bar )'))
-        assert isinstance(r, addons.UnstatedIUSE)
-        assert 'unstated flag: [ foo ]' in str(r)
-        # multiple missing IUSE
-        r = self.assertReport(check, self.mk_pkg(restrict='foo? ( bar ) boo? ( blah )'))
-        assert isinstance(r, addons.UnstatedIUSE)
-        assert 'unstated flags: [ boo, foo ]' in str(r)
+        for attr in ('properties', 'restrict'):
+            check = self.mk_check()
+            # no IUSE
+            self.assertNoReport(check, self.mk_pkg(**{attr: 'foo'}))
+            # conditional with IUSE defined
+            self.assertNoReport(check, self.mk_pkg(**{attr: 'foo? ( bar )', 'iuse': 'foo'}))
+            # conditional missing IUSE
+            r = self.assertReport(check, self.mk_pkg(**{attr: 'foo? ( bar )'}))
+            assert isinstance(r, addons.UnstatedIUSE)
+            assert 'unstated flag: [ foo ]' in str(r)
+            # multiple missing IUSE
+            r = self.assertReport(check, self.mk_pkg(**{attr: 'foo? ( bar ) boo? ( blah )'}))
+            assert isinstance(r, addons.UnstatedIUSE)
+            assert 'unstated flags: [ boo, foo ]' in str(r)
 
 
 class TestConditionalTestRestrictCheck(misc.ReportTestCase):

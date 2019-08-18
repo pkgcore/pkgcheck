@@ -1039,36 +1039,62 @@ class BadRestricts(base.VersionedResult, base.Warning):
 
     @property
     def short_desc(self):
-        return f"unknown restrict{_pl(self.restricts)}: {', '.join(self.restricts)}"
+        restricts = ' '.join(self.restricts)
+        return f'unknown RESTRICT="{restricts}"'
+
+
+class UnknownProperties(base.VersionedResult, base.Warning):
+    """Package's PROPERTIES metadata has unknown entries."""
+
+    __slots__ = ('properties',)
+
+    def __init__(self, pkg, properties):
+        super().__init__(pkg)
+        self.properties = tuple(sorted(properties))
+
+    @property
+    def short_desc(self):
+        properties = ' '.join(self.properties)
+        return f'unknown PROPERTIES="{properties}"'
+
 
 
 class RestrictsCheck(base.Template):
     """Check for valid RESTRICT settings."""
 
     feed_type = base.versioned_feed
-    known_results = (BadRestricts, UnstatedIUSE)
+    known_results = (BadRestricts, UnknownProperties, UnstatedIUSE)
     required_addons = (addons.UseAddon,)
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
-        self.iuse_filter = iuse_handler.get_filter('restrict')
+        self.restrict_filter = iuse_handler.get_filter('restrict')
+        self.properties_filter = iuse_handler.get_filter('properties')
 
-        # pull allowed RESTRICT values from a repo and its masters
+        # pull allowed RESTRICT/PROPERTIES values from a repo and its masters
         allowed_restricts = []
+        allowed_properties = []
         for repo in options.target_repo.trees:
             allowed_restricts.extend(repo.config.restrict_allowed)
+            allowed_properties.extend(repo.config.properties_allowed)
         self.allowed_restricts = frozenset(allowed_restricts)
+        self.allowed_properties = frozenset(allowed_properties)
 
     def feed(self, pkg):
-        # ignore conditionals
-        restricts, unstated = self.iuse_filter((str,), pkg, pkg.restrict)
+        restricts, unstated = self.restrict_filter((str,), pkg, pkg.restrict)
+        yield from unstated
+        properties, unstated = self.properties_filter((str,), pkg, pkg.properties)
         yield from unstated
 
-        # skip if target repo or its masters don't define allowed RESTRICT values
+        # skip if target repo or its masters don't define allowed values
         if self.allowed_restricts:
             bad = set(restricts).difference(self.allowed_restricts)
             if bad:
                 yield BadRestricts(pkg, bad)
+        if self.allowed_properties:
+            unknown = set(properties).difference(self.allowed_properties)
+            if unknown:
+                yield UnknownProperties(pkg, unknown)
 
 
 class MissingConditionalTestRestrict(base.VersionedResult, base.Warning):
