@@ -417,7 +417,7 @@ class TestRequiredUSEMetadataReport(IUSE_Options, misc.ReportTestCase):
         self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="?? ( foo bar )"))
         self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
 
-    def test_required_use_unstated_iuse(self):
+    def test_unstated_iuse(self):
         r = self.assertReport(self.check, self.mk_pkg(required_use="foo? ( blah )"))
         assert isinstance(r, addons.UnstatedIUSE)
         assert r.flags == ("blah", "foo")
@@ -590,6 +590,22 @@ class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
     def test_empty(self):
         r = self.assertReport(self.mk_check(), self.mk_pkg())
         assert isinstance(r, metadata.MetadataError)
+
+    def test_unstated_iuse(self):
+        chk = self.mk_check(licenses=('BSD',))
+
+        # no IUSE
+        self.assertNoReport(chk, self.mk_pkg('BSD'))
+
+        # conditional URI with related IUSE
+        pkg = self.mk_pkg(license='foo? ( BSD )', iuse='foo')
+        self.assertNoReport(chk, pkg)
+
+        # conditional URI with missing IUSE
+        pkg = self.mk_pkg(license='foo? ( BSD )')
+        r = self.assertReport(chk, pkg)
+        assert isinstance(r, addons.UnstatedIUSE)
+        assert 'unstated flag: [ foo ]' in str(r)
 
     def test_single_missing(self):
         r = self.assertReport(self.mk_check(), self.mk_pkg("foo"))
