@@ -2,7 +2,6 @@ import argparse
 import itertools
 import os
 import shutil
-import sys
 
 from pkgcore.ebuild import repo_objs, repository
 from pkgcore.restrictions import packages
@@ -17,7 +16,7 @@ from .misc import FakePkg, FakeProfile, Options, Tmpdir
 
 class ArgparseCheck(object):
 
-    def process_check(self, args, silence=False, preset_values={},
+    def process_check(self, args, preset_values={},
                       namespace=None, addon_kls=None, **settings):
         addon_kls = addon_kls if addon_kls is not None else self.addon_kls
         p = commandline.ArgumentParser(domain=False, color=False)
@@ -28,21 +27,7 @@ class ArgparseCheck(object):
         orig_out, orig_err = None, None
         for attr, val in preset_values.items():
             setattr(args, attr, val)
-        try:
-                if silence:
-                    orig_out = sys.stdout
-                    orig_err = sys.stderr
-                    sys.stdout = sys.stderr = open("/dev/null", "w")
-                addon_kls.check_args(p, args)
-        finally:
-            if silence:
-                if orig_out:
-                    sys.stdout.close()
-                    sys.stdout = orig_out
-                if orig_err:
-                    sys.stderr.close()
-                    sys.stderr = orig_err
-
+        addon_kls.check_args(p, args)
         for attr, val in settings.items():
             assert getattr(args, attr) == val, (
                 f"for args {args!r}, {attr} must be {val!r}, got {getattr(args, attr)!r}")
@@ -72,20 +57,17 @@ class TestQueryCacheAddon(ArgparseCheck):
         for val, ret in (('version', base.versioned_feed),
                          ('package', base.package_feed),
                          ('category', base.repository_feed)):
-            self.process_check(
-                ['--reset-caching-per', val],
-                query_caching_freq=ret, silence=True)
+            self.process_check(['--reset-caching-per', val], query_caching_freq=ret)
 
     def test_default(self):
-        self.process_check(
-            [], silence=True, query_caching_freq=self.default_feed)
+        self.process_check([], query_caching_freq=self.default_feed)
 
     def test_feed(self):
-        options = self.process_check([], silence=True)
+        options = self.process_check([])
         check = self.addon_kls(options)
         check.start()
         assert check.feed_type == self.default_feed
-        check.query_cache["boobies"] = "hooray for"
+        check.query_cache['foo'] = 'bar'
         check.feed(None)
         assert not check.query_cache
 
