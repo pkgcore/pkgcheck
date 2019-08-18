@@ -1,4 +1,4 @@
-"""Basic reporters and reporter factories."""
+"""Basic result reporters."""
 
 from collections import defaultdict
 
