@@ -1,6 +1,6 @@
 """Addon functionality shared by multiple checkers."""
 
-from collections import OrderedDict, UserDict, defaultdict, deque
+from collections import OrderedDict, UserDict, defaultdict
 from copy import copy
 from functools import partial
 from itertools import chain, filterfalse
@@ -978,23 +978,29 @@ class UseAddon(base.Addon):
     def fake_use_validate(klasses, pkg, seq, attr=None):
         return iflatten_instance(seq, klasses)
 
-    def use_validate(self, klasses, pkg, seq, attr=None):
-        skip_filter = (packages.Conditional,) + klasses
-        nodes = deque(iflatten_instance(seq, skip_filter))
-        unstated = set()
-        stated = pkg.iuse_stripped
-
-        vals = []
-        while nodes:
-            node = nodes.popleft()
+    def flatten_restricts(self, nodes, skip_filter, stated, unstated, attr, restricts=None):
+        for node in nodes:
+            k = node
+            v = restricts if restricts is not None else []
             if isinstance(node, packages.Conditional):
                 # invert it; get only whats not in pkg.iuse
                 unstated.update(filterfalse(stated.__contains__, node.restriction.vals))
-                nodes.extend(iflatten_instance(node.payload, skip_filter))
+                v.append(node.restriction)
+                yield from self.flatten_restricts(
+                    iflatten_instance(node.payload, skip_filter),
+                    skip_filter, stated, unstated, attr, v)
                 continue
             elif attr == 'required_use':
                 unstated.update(filterfalse(stated.__contains__, node.vals))
-            vals.append(node)
+            yield k, tuple(v)
+
+    def use_validate(self, klasses, pkg, seq, attr=None):
+        skip_filter = (packages.Conditional,) + klasses
+        nodes = iflatten_instance(seq, skip_filter)
+        unstated = set()
+        stated = pkg.iuse_stripped
+
+        vals = dict(self.flatten_restricts(nodes, skip_filter, stated, unstated, attr))
 
         # find profiles with unstated IUSE
         profiles_unstated = defaultdict(set)
@@ -1014,4 +1020,4 @@ class UseAddon(base.Addon):
                     num_profiles = len(profiles)
                     yield UnstatedIUSE(pkg, attr, profiles[0], unstated, num_profiles)
 
-        return tuple(vals), _profiles_unstated()
+        return vals, _profiles_unstated()
