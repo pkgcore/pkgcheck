@@ -95,7 +95,7 @@ class TestHomepageCheck(misc.ReportTestCase):
             assert f"'{category}' packages shouldn't define HOMEPAGE" in str(r)
 
 
-class iuse_options(TempDirMixin):
+class IUSE_Options(TempDirMixin):
 
     def get_options(self, **kwds):
         repo_base = tempfile.mkdtemp(dir=self.dir)
@@ -123,7 +123,7 @@ class iuse_options(TempDirMixin):
         return misc.Options(**kwds)
 
 
-class TestKeywordsCheck(iuse_options, misc.ReportTestCase):
+class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
 
     check_kls = metadata.KeywordsCheck
 
@@ -269,7 +269,7 @@ class TestKeywordsCheck(iuse_options, misc.ReportTestCase):
         assert 'missing KEYWORDS: amd64, ppc, ~x86' == str(r)
 
 
-class TestIUSEMetadataReport(iuse_options, misc.ReportTestCase):
+class TestIUSEMetadataReport(IUSE_Options, misc.ReportTestCase):
 
     check_kls = metadata.IUSEMetadataCheck
 
@@ -357,7 +357,7 @@ class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
         assert "attr(eapi): EAPI 'blah' is not supported" == str(r)
 
 
-class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
+class TestRequiredUSEMetadataReport(IUSE_Options, misc.ReportTestCase):
 
     check_kls = metadata.RequiredUSEMetadataCheck
 
@@ -485,8 +485,8 @@ class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
 
 
 def use_based():
-    # hidden to keep the test runner from finding it.
-    class use_based(iuse_options):
+    # hidden to keep the test runner from finding it
+    class UseBased(IUSE_Options):
 
         def test_required_addons(self):
             assert addons.UseAddon in self.check_kls.required_addons
@@ -498,10 +498,10 @@ def use_based():
             check = self.check_kls(options, iuse_handler, *args)
             return check
 
-    return use_based
+    return UseBased
 
 
-class TestRestrictsReport(use_based(), misc.ReportTestCase):
+class TestRestrictsCheck(use_based(), misc.Tmpdir, misc.ReportTestCase):
 
     check_kls = metadata.RestrictsCheck
 
