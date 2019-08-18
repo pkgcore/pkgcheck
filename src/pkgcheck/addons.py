@@ -677,15 +677,9 @@ class ProfileAddon(base.Addon):
             for profile_name, profile, profile_status in options.arch_profiles.get(k, []):
                 files = self.profile_data.get(profile_name, None)
                 try:
-                    try:
-                        cached_profile = cached_profiles.get(profile_name, {})
-                        outdated = files != cached_profile.get('files', ())
-                    except (AttributeError, TypeError):
-                        # force refresh of old cache format
-                        outdated = True
-
-                    # force refresh of outdated cache entry or old cache format
-                    if outdated:
+                    cached_profile = cached_profiles[profile_name]
+                    if files != cached_profile['files']:
+                        # force refresh of outdated cache entry
                         raise KeyError
 
                     vfilter = cached_profile['vfilter']
