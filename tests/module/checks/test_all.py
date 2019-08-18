@@ -13,5 +13,5 @@ def test_keywords():
     """Scan through all public result keywords and verify various aspects."""
     for name, cls in const.KEYWORDS.items():
         assert cls in _known_keywords, f"result class {name!r} not used by any checks"
-    # verify the set of dynamically scanned keywords is equal to the total result set
-    assert set(const.KEYWORDS) == {x.__name__ for x in _known_keywords}
+    # verify dynamically scanned keywords are equal to the known results set
+    assert set(const.KEYWORDS.values()) == _known_keywords
