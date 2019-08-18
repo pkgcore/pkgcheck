@@ -775,7 +775,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
     del x
 
 
-class TestSrcUriReport(use_based(), misc.ReportTestCase):
+class TestSrcUriCheck(use_based(), misc.ReportTestCase):
 
     check_kls = metadata.SrcUriCheck
 
@@ -866,7 +866,23 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
             restrict='foo? ( bar? ( fetch ) )')
         self.assertNoReport(chk, pkg)
 
-    def test_it(self):
+    def test_unstated_iuse(self):
+        chk = self.mk_check()
+
+        # no IUSE
+        self.assertNoReport(chk, self.mk_pkg('https://foo.com/foo-0.tar.gz'))
+
+        # conditional URI with related IUSE
+        pkg = self.mk_pkg(src_uri='foo? ( https://foo.com/foo-0.tar.gz )', iuse='foo')
+        self.assertNoReport(chk, pkg)
+
+        # conditional URI with missing IUSE
+        pkg = self.mk_pkg(src_uri='foo? ( https://foo.com/foo-0.tar.gz )')
+        r = self.assertReport(chk, pkg)
+        assert isinstance(r, addons.UnstatedIUSE)
+        assert 'unstated flag: [ foo ]' in str(r)
+
+    def test_bad_proto(self):
         chk = self.mk_check()
 
         # verify valid protos.
@@ -877,7 +893,7 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
                 chk, self.mk_pkg(f"{x}://dar.com/foon"),
                 msg=f"testing valid proto {x}")
 
-        # grab a proto, and mangle it.
+        # grab a proto and mangle it
         bad_proto = list(self.check_kls.valid_protos)[0]
         while bad_proto in self.check_kls.valid_protos:
             bad_proto += "s"
@@ -885,19 +901,16 @@ class TestSrcUriReport(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, self.mk_pkg(f"{bad_proto}://foon.com/foon"))
         assert isinstance(r, metadata.BadProto)
         assert f"file 'foon': bad protocol/uri: '{bad_proto}://foon.com/foon'" == str(r)
-
         assert r.filename == 'foon'
         assert r.bad_uris == (f'{bad_proto}://foon.com/foon',)
 
-        # check collapsing.
-
-        r = self.assertReport(
-                chk,
-                self.mk_pkg(f"{bad_proto}://foon.com/foon {bad_proto}://dar.com/foon"))
+        # check collapsing
+        pkg = self.mk_pkg(f"{bad_proto}://foon.com/foon {bad_proto}://dar.com/foon")
+        r = self.assertReport(chk, pkg)
         assert isinstance(r, metadata.BadProto)
-
         assert r.filename == 'foon'
-        assert list(r.bad_uris) == sorted(f'{bad_proto}://{x}/foon' for x in ('foon.com', 'dar.com'))
+        assert list(r.bad_uris) == sorted(
+            f'{bad_proto}://{x}/foon' for x in ('foon.com', 'dar.com'))
 
     def test_tarball_available_github(self):
         chk = self.mk_check()
