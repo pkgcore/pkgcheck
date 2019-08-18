@@ -11,7 +11,7 @@ from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import TempDirMixin
 
-from pkgcheck import addons
+from pkgcheck import addons, base
 from pkgcheck.checks import metadata
 
 from .. import misc
@@ -304,8 +304,8 @@ class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
             f.write(f"eapis-deprecated = {' '.join(deprecated)}\n")
             f.write(f"eapis-banned = {' '.join(banned)}\n")
         repo_config = repo_objs.RepoConfig(location=self.dir)
-        repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
-        options = misc.Options(target_repo=repo)
+        self.repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
+        options = misc.Options(target_repo=self.repo, verbosity=False)
         return self.check_kls(options)
 
     def mk_pkg(self, eapi):
@@ -341,8 +341,20 @@ class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
             assert r.eapi == eapi_str
             assert f'uses banned EAPI {eapi_str}' == str(r)
 
-    # TODO: will need to iterating over repo pkgs in order for masks to trigger
-    #def test_unknown_eapis(self):
+    def test_unknown_eapis(self):
+        deprecated = ('0', '2', '4', '5')
+        banned = ('1', '3')
+        check = self.mk_check(deprecated=deprecated, banned=banned)
+
+        pkg_path = pjoin(self.repo.location, 'dev-util', 'foo')
+        os.makedirs(pkg_path)
+        with open(pjoin(pkg_path, 'foo-0.ebuild'), 'w') as f:
+            f.write(textwrap.dedent("""\
+                EAPI=blah
+            """))
+        r = self.assertReport(check, list(self.repo), iterate=True)
+        assert isinstance(r, base.MetadataError)
+        assert "attr(eapi): EAPI 'blah' is not supported" == str(r)
 
 
 class TestRequiredUSEMetadataReport(iuse_options, misc.ReportTestCase):
