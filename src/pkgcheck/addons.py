@@ -932,7 +932,7 @@ class UseAddon(base.Addon):
 
     required_addons = (ProfileAddon,)
 
-    def __init__(self, options, profiles, silence_warnings=False):
+    def __init__(self, options, profiles):
         super().__init__(options)
 
         # common profile elements
@@ -958,9 +958,9 @@ class UseAddon(base.Addon):
         self.global_iuse_expand = frozenset(known_iuse_expand)
         self.unstated_iuse = frozenset(c_implicit_iuse)
         self.ignore = not (c_implicit_iuse or known_iuse or known_iuse_expand)
-        if self.ignore and not silence_warnings:
+        if self.ignore:
             logger.warn('disabling use/iuse validity checks since no usable '
-                        'use.desc, use.local.desc were found ')
+                        'use.desc and use.local.desc were found')
 
     def allowed_iuse(self, pkg):
         # metadata_xml checks catch xml issues, suppress warning/error logs here

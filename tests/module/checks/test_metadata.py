@@ -137,7 +137,7 @@ class TestKeywordsCheck(iuse_options, misc.ReportTestCase):
         search_repo = FakeRepo(pkgs=pkgs)
         options = self.get_options(search_repo=search_repo)
         profiles = [misc.FakeProfile()]
-        iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
+        iuse_handler = addons.UseAddon(options, profiles)
         self.check = metadata.KeywordsCheck(options, iuse_handler)
 
     def mk_pkg(self, keywords='', cpv='dev-util/diffball-0.7.1', rdepend=''):
@@ -171,7 +171,7 @@ class TestKeywordsCheck(iuse_options, misc.ReportTestCase):
         # check that * and ~* are flagged in gentoo repo
         options = self.get_options(repo_name='gentoo')
         profiles = [misc.FakeProfile()]
-        iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
+        iuse_handler = addons.UseAddon(options, profiles)
         check = metadata.KeywordsCheck(options, iuse_handler)
         r = self.assertReport(check, self.mk_pkg("*"))
         assert isinstance(r, metadata.InvalidKeywords)
@@ -494,7 +494,7 @@ def use_based():
         def mk_check(self, *args, **kwargs):
             options = self.get_options(**kwargs)
             profiles = [misc.FakeProfile(iuse_effective=["x86"])]
-            iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
+            iuse_handler = addons.UseAddon(options, profiles)
             check = self.check_kls(options, iuse_handler, *args)
             return check
 
@@ -558,7 +558,7 @@ class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
         self.repo = FakeRepo(repo_id='test', licenses=licenses)
         options = self.get_options(**kwargs)
         profiles = [misc.FakeProfile()]
-        iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
+        iuse_handler = addons.UseAddon(options, profiles)
         check = self.check_kls(options, iuse_handler, {})
         return check
 
@@ -625,7 +625,7 @@ class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
         self.repo = FakeRepo(pkgs=pkgs, repo_id='test')
         options = self.get_options(**kwargs)
         profiles = [misc.FakeProfile()]
-        iuse_handler = addons.UseAddon(options, profiles, silence_warnings=True)
+        iuse_handler = addons.UseAddon(options, profiles)
         check = self.check_kls(options, iuse_handler)
         return check
 
