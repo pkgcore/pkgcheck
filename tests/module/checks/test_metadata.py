@@ -97,7 +97,7 @@ class TestHomepageCheck(misc.ReportTestCase):
 
 class IUSE_Options(TempDirMixin):
 
-    def get_options(self, **kwds):
+    def get_options(self, properties=(), restricts=(), **kwds):
         repo_base = tempfile.mkdtemp(dir=self.dir)
         base = pjoin(repo_base, 'profiles')
         os.mkdir(base)
@@ -112,10 +112,10 @@ class IUSE_Options(TempDirMixin):
         fileutils.write_file(pjoin(base, 'repo_name'), 'w', kwds.pop('repo_name', 'monkeys'))
         os.mkdir(pjoin(repo_base, 'metadata'))
         with open(pjoin(repo_base, 'metadata', 'layout.conf'), 'w') as f:
-            f.write(textwrap.dedent("""\
+            f.write(textwrap.dedent(f"""\
                 masters =
-                properties-allowed = interactive live
-                restrict-allowed = binchecks bindist fetch installsources mirror preserve-libs primaryuri splitdebug strip test userpriv
+                properties-allowed = {' '.join(properties)}
+                restrict-allowed = {' '.join(restricts)}
             """))
         kwds['target_repo'] = repository.UnconfiguredTree(repo_base)
         kwds.setdefault('verbosity', 0)
@@ -501,20 +501,34 @@ def use_based():
     return UseBased
 
 
-class TestRestrictsCheck(use_based(), misc.Tmpdir, misc.ReportTestCase):
+class TestRestrictsCheck(use_based(), misc.ReportTestCase):
 
     check_kls = metadata.RestrictsCheck
 
-    def mk_pkg(self, restrict=''):
+    def mk_pkg(self, restrict='', iuse=''):
         return misc.FakePkg(
-            'dev-util/diffball-2.7.1', data={'RESTRICT': restrict})
+            'dev-util/diffball-2.7.1', data={'IUSE': iuse, 'RESTRICT': restrict})
 
-    def test_it(self):
+    def test_no_allowed_restricts(self):
         check = self.mk_check()
-        self.assertNoReport(check, self.mk_pkg('primaryuri userpriv'))
-        self.assertNoReport(check, self.mk_pkg('primaryuri x86? ( userpriv )'))
-        self.assertReport(check, self.mk_pkg('pkgcore'))
-        self.assertReport(check, self.mk_pkg('x86? ( pkgcore )'))
+        self.assertNoReport(check, self.mk_pkg(restrict='foo'))
+        self.assertNoReport(check, self.mk_pkg(restrict='foo? ( bar )', iuse='foo'))
+
+    def test_allowed_restricts(self):
+        check = self.mk_check(restricts=('foo',))
+        # allowed RESTRICT
+        self.assertNoReport(check, self.mk_pkg(restrict='foo'))
+
+        # unknown RESTRICT
+        r = self.assertReport(check, self.mk_pkg(restrict='bar'))
+        assert isinstance(r, metadata.BadRestricts)
+        assert 'unknown restrict: bar' == str(r)
+
+        # unknown multiple, conditional RESTRICTs
+        pkg = self.mk_pkg(restrict='baz? ( foo bar boo )', iuse='baz')
+        r = self.assertReport(check, pkg)
+        assert isinstance(r, metadata.BadRestricts)
+        assert 'unknown restricts: bar, boo' == str(r)
 
 
 class TestConditionalTestRestrictCheck(misc.ReportTestCase):

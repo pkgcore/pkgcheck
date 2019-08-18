@@ -1035,8 +1035,8 @@ class BadRestricts(base.VersionedResult, base.Warning):
 
     def __init__(self, pkg, restricts, deprecated=None):
         super().__init__(pkg)
-        self.restricts = restricts
-        self.deprecated = deprecated
+        self.restricts = tuple(sorted(restricts))
+        self.deprecated = tuple(sorted(deprecated))
         if not restricts and not deprecated:
             raise TypeError("deprecated or restricts must not be empty")
 
@@ -1044,7 +1044,7 @@ class BadRestricts(base.VersionedResult, base.Warning):
     def short_desc(self):
         s = ''
         if self.restricts:
-            s = f"unknown restricts: {', '.join(self.restricts)}"
+            s = f"unknown restrict{_pl(self.restricts)}: {', '.join(self.restricts)}"
         if self.deprecated:
             if s:
                 s += "; "
