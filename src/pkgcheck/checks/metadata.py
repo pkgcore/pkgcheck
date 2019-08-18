@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 from difflib import SequenceMatcher
+from itertools import chain
 from operator import attrgetter
 import os
 import re
@@ -893,7 +894,7 @@ class SrcUriCheck(base.Template):
                 pkg, allow_missing_checksums=True,
                 ignore_unknown_mirrors=True, skip_default_mirrors=True))
         yield from unstated
-        for f_inst in fetchables:
+        for f_inst, restrictions in fetchables.items():
             if f_inst.filename in seen:
                 continue
             seen.add(f_inst.filename)
@@ -915,7 +916,9 @@ class SrcUriCheck(base.Template):
             if re.match(bad_filenames_re, f_inst.filename):
                 bad_filenames.add(f_inst.filename)
 
-            if not f_inst.uri:
+            restricts = frozenset(chain.from_iterable(
+                x.vals for x in restrictions if not x.negate))
+            if not f_inst.uri and 'fetch' not in pkg.restrict.evaluate_depset(restricts):
                 lacks_uri.add(f_inst.filename)
             else:
                 bad = set()
