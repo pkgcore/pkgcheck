@@ -661,45 +661,45 @@ class ProfileAddon(base.Addon):
                 cached_profiles = {}
 
         cached_profile_updates = False
-        with suppress_logging():
-            for k in self.desired_arches:
-                if k.lstrip("~") not in self.desired_arches:
-                    continue
-                stable_key = k.lstrip("~")
-                unstable_key = "~" + stable_key
-                stable_r = packages.PackageRestriction(
-                    "keywords", values.ContainmentMatch2((stable_key,)))
-                unstable_r = packages.PackageRestriction(
-                    "keywords", values.ContainmentMatch2((stable_key, unstable_key,)))
+        for k in self.desired_arches:
+            if k.lstrip("~") not in self.desired_arches:
+                continue
+            stable_key = k.lstrip("~")
+            unstable_key = "~" + stable_key
+            stable_r = packages.PackageRestriction(
+                "keywords", values.ContainmentMatch2((stable_key,)))
+            unstable_r = packages.PackageRestriction(
+                "keywords", values.ContainmentMatch2((stable_key, unstable_key,)))
 
-                default_masked_use = tuple(set(
-                    x for x in self.official_arches if x != stable_key))
+            default_masked_use = tuple(set(
+                x for x in self.official_arches if x != stable_key))
 
-                for profile_name, profile, profile_status in options.arch_profiles.get(k, []):
+            for profile_name, profile, profile_status in options.arch_profiles.get(k, []):
+                files = self.profile_data.get(profile_name, None)
+                try:
                     try:
-                        files = self.profile_data.get(profile_name, None)
+                        cached_profile = cached_profiles.get(profile_name, {})
+                        outdated = files != cached_profile.get('files', ())
+                    except (AttributeError, TypeError):
+                        # force refresh of old cache format
+                        outdated = True
+
+                    # force refresh of outdated cache entry or old cache format
+                    if outdated:
+                        raise KeyError
+
+                    vfilter = cached_profile['vfilter']
+                    immutable_flags = cached_profile['immutable_flags']
+                    stable_immutable_flags = cached_profile['stable_immutable_flags']
+                    enabled_flags = cached_profile['enabled_flags']
+                    stable_enabled_flags = cached_profile['stable_enabled_flags']
+                    pkg_use = cached_profile['pkg_use']
+                    iuse_effective = cached_profile['iuse_effective']
+                    use = cached_profile['use']
+                    provides_repo = cached_profile['provides_repo']
+                except KeyError:
+                    with suppress_logging():
                         try:
-                            try:
-                                cached_profile = cached_profiles.get(profile_name, {})
-                                outdated = files != cached_profile.get('files', ())
-                            except (AttributeError, TypeError):
-                                # force refresh of old cache format
-                                outdated = True
-
-                            # force refresh of outdated cache entry or old cache format
-                            if outdated:
-                                raise KeyError
-
-                            vfilter = cached_profile['vfilter']
-                            immutable_flags = cached_profile['immutable_flags']
-                            stable_immutable_flags = cached_profile['stable_immutable_flags']
-                            enabled_flags = cached_profile['enabled_flags']
-                            stable_enabled_flags = cached_profile['stable_enabled_flags']
-                            pkg_use = cached_profile['pkg_use']
-                            iuse_effective = cached_profile['iuse_effective']
-                            use = cached_profile['use']
-                            provides_repo = cached_profile['provides_repo']
-                        except KeyError:
                             vfilter = domain.generate_filter(profile.masks, profile.unmasks)
 
                             immutable_flags = profile.masked_use.clone(unfreeze=True)
@@ -730,62 +730,62 @@ class ProfileAddon(base.Addon):
                             use = set()
                             misc.incremental_expansion(use, profile.use, 'while expanding USE')
                             use = frozenset(use)
+                        except profiles.ProfileError:
+                            # unsupported EAPI or other issue, profile checks will catch this
+                            continue
 
-                            if options.profile_cache or options.profile_cache is None:
-                                cached_profile_updates = True
-                                cached_profiles[profile_name] = {
-                                    'files': files,
-                                    'vfilter': vfilter,
-                                    'immutable_flags': immutable_flags,
-                                    'stable_immutable_flags': stable_immutable_flags,
-                                    'enabled_flags': enabled_flags,
-                                    'stable_enabled_flags': stable_enabled_flags,
-                                    'pkg_use': pkg_use,
-                                    'iuse_effective': iuse_effective,
-                                    'use': use,
-                                    'provides_repo': provides_repo,
-                                }
+                    if options.profile_cache or options.profile_cache is None:
+                        cached_profile_updates = True
+                        cached_profiles[profile_name] = {
+                            'files': files,
+                            'vfilter': vfilter,
+                            'immutable_flags': immutable_flags,
+                            'stable_immutable_flags': stable_immutable_flags,
+                            'enabled_flags': enabled_flags,
+                            'stable_enabled_flags': stable_enabled_flags,
+                            'pkg_use': pkg_use,
+                            'iuse_effective': iuse_effective,
+                            'use': use,
+                            'provides_repo': provides_repo,
+                        }
 
-                        # used to interlink stable/unstable lookups so that if
-                        # unstable says it's not visible, stable doesn't try
-                        # if stable says something is visible, unstable doesn't try.
-                        stable_cache = set()
-                        unstable_insoluble = ProtectedSet(self.global_insoluble)
+                # used to interlink stable/unstable lookups so that if
+                # unstable says it's not visible, stable doesn't try
+                # if stable says something is visible, unstable doesn't try.
+                stable_cache = set()
+                unstable_insoluble = ProtectedSet(self.global_insoluble)
 
-                        # few notes.  for filter, ensure keywords is last, on the
-                        # offchance a non-metadata based restrict foregos having to
-                        # access the metadata.
-                        # note that the cache/insoluble are inversly paired;
-                        # stable cache is usable for unstable, but not vice versa.
-                        # unstable insoluble is usable for stable, but not vice versa
-                        profile_filters[stable_key].append(ProfileData(
-                            profile_name, stable_key,
-                            provides_repo,
-                            packages.AndRestriction(vfilter, stable_r),
-                            iuse_effective,
-                            use,
-                            pkg_use,
-                            stable_immutable_flags, stable_enabled_flags,
-                            stable_cache,
-                            ProtectedSet(unstable_insoluble),
-                            profile_status,
-                            profile.deprecated is not None))
+                # few notes.  for filter, ensure keywords is last, on the
+                # offchance a non-metadata based restrict foregos having to
+                # access the metadata.
+                # note that the cache/insoluble are inversly paired;
+                # stable cache is usable for unstable, but not vice versa.
+                # unstable insoluble is usable for stable, but not vice versa
+                profile_filters[stable_key].append(ProfileData(
+                    profile_name, stable_key,
+                    provides_repo,
+                    packages.AndRestriction(vfilter, stable_r),
+                    iuse_effective,
+                    use,
+                    pkg_use,
+                    stable_immutable_flags, stable_enabled_flags,
+                    stable_cache,
+                    ProtectedSet(unstable_insoluble),
+                    profile_status,
+                    profile.deprecated is not None))
 
-                        profile_filters[unstable_key].append(ProfileData(
-                            profile_name, unstable_key,
-                            provides_repo,
-                            packages.AndRestriction(vfilter, unstable_r),
-                            iuse_effective,
-                            use,
-                            pkg_use,
-                            immutable_flags, enabled_flags,
-                            ProtectedSet(stable_cache),
-                            unstable_insoluble,
-                            profile_status,
-                            profile.deprecated is not None))
-                    except profiles.ProfileError:
-                        # unsupported EAPI or other issue, profile checks will catch this
-                        continue
+                profile_filters[unstable_key].append(ProfileData(
+                    profile_name, unstable_key,
+                    provides_repo,
+                    packages.AndRestriction(vfilter, unstable_r),
+                    iuse_effective,
+                    use,
+                    pkg_use,
+                    immutable_flags, enabled_flags,
+                    ProtectedSet(stable_cache),
+                    unstable_insoluble,
+                    profile_status,
+                    profile.deprecated is not None))
 
         # dump updated profile filters
         if cached_profile_updates:
