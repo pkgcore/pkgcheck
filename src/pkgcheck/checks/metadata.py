@@ -84,7 +84,7 @@ class IUSEMetadataCheck(base.Template):
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon,)
-    known_results = (MetadataError, UnstatedIUSE)
+    known_results = (MetadataError,)
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
