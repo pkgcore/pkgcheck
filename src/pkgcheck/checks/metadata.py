@@ -1029,27 +1029,17 @@ class HomepageCheck(base.Template):
 
 
 class BadRestricts(base.VersionedResult, base.Warning):
-    """Package's RESTRICT metadata has unknown/deprecated entries."""
+    """Package's RESTRICT metadata has unknown entries."""
 
-    __slots__ = ("restricts", "deprecated")
+    __slots__ = ('restricts',)
 
-    def __init__(self, pkg, restricts, deprecated=None):
+    def __init__(self, pkg, restricts):
         super().__init__(pkg)
         self.restricts = tuple(sorted(restricts))
-        self.deprecated = tuple(sorted(deprecated))
-        if not restricts and not deprecated:
-            raise TypeError("deprecated or restricts must not be empty")
 
     @property
     def short_desc(self):
-        s = ''
-        if self.restricts:
-            s = f"unknown restrict{_pl(self.restricts)}: {', '.join(self.restricts)}"
-        if self.deprecated:
-            if s:
-                s += "; "
-            s += f"deprecated (drop the 'no') [ {', '.join(self.deprecated)} ]"
-        return s
+        return f"unknown restrict{_pl(self.restricts)}: {', '.join(self.restricts)}"
 
 
 class RestrictsCheck(base.Template):
@@ -1074,15 +1064,11 @@ class RestrictsCheck(base.Template):
         restricts, unstated = self.iuse_filter((str,), pkg, pkg.restrict)
         yield from unstated
 
-        # skip check if target repo or its masters don't define allowed RESTRICT values
-        if not self.allowed_restricts:
-            return
-
-        bad = set(restricts).difference(self.allowed_restricts)
-        if bad:
-            deprecated = set(
-                x for x in bad if x.startswith("no") and x[2:] in self.allowed_restricts)
-            yield BadRestricts(pkg, bad.difference(deprecated), deprecated)
+        # skip if target repo or its masters don't define allowed RESTRICT values
+        if self.allowed_restricts:
+            bad = set(restricts).difference(self.allowed_restricts)
+            if bad:
+                yield BadRestricts(pkg, bad)
 
 
 class MissingConditionalTestRestrict(base.VersionedResult, base.Warning):

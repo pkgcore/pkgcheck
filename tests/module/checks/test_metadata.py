@@ -517,6 +517,7 @@ class TestRestrictsCheck(use_based(), misc.ReportTestCase):
             'dev-util/diffball-2.7.1', data={'IUSE': iuse, 'RESTRICT': restrict})
 
     def test_no_allowed_restricts(self):
+        # repo or its masters don't define any allowed RESTRICT values so anything goes
         check = self.mk_check()
         self.assertNoReport(check, self.mk_pkg(restrict='foo'))
         self.assertNoReport(check, self.mk_pkg(restrict='foo? ( bar )', iuse='foo'))
