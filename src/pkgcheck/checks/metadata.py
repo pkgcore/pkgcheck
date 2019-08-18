@@ -15,7 +15,6 @@ from pkgcore.restrictions.packages import Conditional
 from snakeoil.demandload import demandload
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
-from snakeoil.osutils import listdir_files
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
@@ -1056,7 +1055,6 @@ class UnknownProperties(base.VersionedResult, base.Warning):
     def short_desc(self):
         properties = ' '.join(self.properties)
         return f'unknown PROPERTIES="{properties}"'
-
 
 
 class RestrictsCheck(base.Template):
