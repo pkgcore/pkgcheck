@@ -44,17 +44,19 @@ class TestDescriptionReport(misc.ReportTestCase):
             metadata.BadDescription)
 
         # length-based checks
-        assert isinstance(
-            self.assertReport(check, self.mk_pkg()),
-            metadata.BadDescription)
-        assert isinstance(
-            self.assertReport(check, self.mk_pkg("s"*151)),
-            metadata.BadDescription)
-        self.assertNoReport(check, self.mk_pkg("s"*150))
-        assert isinstance(
-            self.assertReport(check, self.mk_pkg("s"*9)),
-            metadata.BadDescription)
-        self.assertNoReport(check, self.mk_pkg("s"*10))
+        r = self.assertReport(check, self.mk_pkg())
+        assert isinstance(r, metadata.BadDescription)
+        assert 'bad DESCRIPTION: empty/unset' == str(r)
+
+        self.assertNoReport(check, self.mk_pkg('s' * 150))
+        r = self.assertReport(check, self.mk_pkg('s' * 151))
+        assert isinstance(r, metadata.BadDescription)
+        assert 'over 150 chars in length' in str(r)
+
+        self.assertNoReport(check, self.mk_pkg('s' * 10))
+        r = self.assertReport(check, self.mk_pkg('s' * 9))
+        assert isinstance(r, metadata.BadDescription)
+        assert 'under 10 chars in length' in str(r)
 
 
 class TestHomepageCheck(misc.ReportTestCase):
@@ -62,8 +64,8 @@ class TestHomepageCheck(misc.ReportTestCase):
     check_kls = metadata.HomepageCheck
     check = metadata.HomepageCheck(None, None)
 
-    def mk_pkg(self, homepage=""):
-        return misc.FakePkg("dev-util/diffball-0.7.1", data={"HOMEPAGE": homepage})
+    def mk_pkg(self, homepage='', cpvstr='dev-util/diffball-0.7.1'):
+        return misc.FakePkg(cpvstr, data={"HOMEPAGE": homepage})
 
     def test_regular(self):
         self.assertNoReport(self.check, self.mk_pkg("https://foobar.com"))
@@ -77,6 +79,10 @@ class TestHomepageCheck(misc.ReportTestCase):
         r = self.assertReport(self.check, self.mk_pkg())
         isinstance(r, metadata.BadHomepage)
         assert 'empty/unset' in str(r)
+
+        # categories of pkgs allowed to skip HOMEPAGE
+        for cat in self.check_kls.missing_categories:
+            self.assertNoReport(self.check, self.mk_pkg(cpvstr=f'{cat}/foo-0'))
 
     def test_no_protocol(self):
         r = self.assertReport(self.check, self.mk_pkg('foobar.com'))
@@ -568,16 +574,27 @@ class TestConditionalTestRestrictCheck(misc.ReportTestCase):
             restrict='foo? ( strip ) !test? ( test ) bindist'))
 
         # missing entirely
-        self.assertReport(check, self.mk_pkg(iuse='test'))
+        r = self.assertReport(check, self.mk_pkg(iuse='test'))
+        assert isinstance(r, metadata.MissingConditionalTestRestrict)
+        assert 'RESTRICT="!test? ( test )"' in str(r)
+
         # 'test' present in other condition
-        self.assertReport(check, self.mk_pkg(
+        r = self.assertReport(check, self.mk_pkg(
             iuse='foo test', restrict='!foo? ( test )'))
+        assert isinstance(r, metadata.MissingConditionalTestRestrict)
+        assert 'RESTRICT="!test? ( test )"' in str(r)
+
         # correct restriction inside another condition
-        self.assertReport(check, self.mk_pkg(
+        r = self.assertReport(check, self.mk_pkg(
             iuse='foo test', restrict='!foo? ( !test? ( test ) )'))
+        assert isinstance(r, metadata.MissingConditionalTestRestrict)
+        assert 'RESTRICT="!test? ( test )"' in str(r)
+
         # USE condition gotten the other way around
-        self.assertReport(check, self.mk_pkg(
+        r = self.assertReport(check, self.mk_pkg(
             iuse='test', restrict='test? ( test )'))
+        assert isinstance(r, metadata.MissingConditionalTestRestrict)
+        assert 'RESTRICT="!test? ( test )"' in str(r)
 
 
 class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
@@ -1015,6 +1032,7 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, self.mk_pkg(uri))
         assert isinstance(r, metadata.TarballAvailable)
         assert r.uris == (uri,)
+        assert '[ https://github.com/foo/bar/archive/v1.2.3.zip ]' in str(r)
 
     def test_tarball_available_gitlab(self):
         chk = self.mk_check()
@@ -1022,6 +1040,7 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, self.mk_pkg(uri))
         assert isinstance(r, metadata.TarballAvailable)
         assert r.uris == (uri,)
+        assert 'zip archive used when tarball available' in str(r)
 
 
 class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
