@@ -68,7 +68,7 @@ class HttpsAvailableCheck(base.Template):
         super().__init__(options)
         # anchor the end of the URL so we don't get false positives,
         # e.g. http://github.com.foo.bar.com/
-        self.regex = re.compile(r'.*(\bhttp://(%s)(\s|["\'/]|$))' % r'|'.join(self.SITES))
+        self.regex = re.compile(r'.*(?P<uri>\bhttp://(%s)(\s|["\'/]|$))' % r'|'.join(self.SITES))
 
     def feed(self, entry):
         pkg, lines = entry
@@ -80,7 +80,7 @@ class HttpsAvailableCheck(base.Template):
             # searching for multiple matches on a single line is too slow
             matches = self.regex.match(line)
             if matches is not None:
-                links[matches.group(1)].append(lineno)
+                links[matches.group('uri')].append(lineno)
 
         for link, lines in links.items():
             yield HttpsAvailable(pkg, link, lines)
@@ -120,7 +120,8 @@ class PortageInternalsCheck(base.Template):
 
     def __init__(self, options):
         super().__init__(options)
-        self.regex = re.compile(r'^(\s*|.*[|&{(]+\s*)\b(%s)\b' % r'|'.join(self.INTERNALS))
+        self.regex = re.compile(
+            r'^(\s*|.*[|&{(]+\s*)\b(?P<internal>%s)\b' % r'|'.join(self.INTERNALS))
 
     def feed(self, entry):
         pkg, lines = entry
@@ -130,7 +131,7 @@ class PortageInternalsCheck(base.Template):
             # searching for multiple matches on a single line is too slow
             matches = self.regex.match(line)
             if matches is not None:
-                yield PortageInternals(pkg, matches.group(2), lineno)
+                yield PortageInternals(pkg, matches.group('internal'), lineno)
 
 
 class MissingSlash(base.VersionedResult, base.Error):
