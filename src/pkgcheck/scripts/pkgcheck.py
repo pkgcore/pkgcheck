@@ -8,7 +8,7 @@ from portage.
 import argparse
 from functools import partial
 from itertools import chain
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 
 from pkgcore import const as pkgcore_const
 from pkgcore.util import commandline, parserestrict
@@ -401,14 +401,9 @@ def _scan(options, out, err):
         if options.debug:
             err.write(f'Running {len(sinks) - len(bad_sinks)} tests')
         err.flush()
-        for source, pipe in pipes:
-            for result in pipe.start():
-                reporter.report(result)
-            for item in source.feed():
-                for result in pipe.feed(item):
-                    reporter.report(result)
-            for result in pipe.finish():
-                reporter.report(result)
+
+        for result in Pipeline(pipes).run():
+            reporter.report(result)
 
     reporter.finish()
 
@@ -416,6 +411,57 @@ def _scan(options, out, err):
     # results not get the final message shoved in midway
     out.stream.flush()
     return 0
+
+
+class CollapsedPipes(object):
+    """Collapse and iterate over multiple sources in a sorted fashion."""
+
+    def __init__(self, pipes):
+        self.pipes = [(iter(source), pipe) for source, pipe in pipes]
+        self._cache = {}
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if not self.pipes:
+            raise StopIteration
+
+        i = 0
+        while i < len(self.pipes):
+            source, pipe = self.pipes[i]
+            try:
+                self._cache[pipe]
+            except KeyError:
+                try:
+                    self._cache[pipe] = next(source)
+                except StopIteration:
+                    self.pipes.pop(i)
+                    continue
+            i += 1
+
+        if not self._cache:
+            raise StopIteration
+
+        l = sorted(self._cache.items(), key=itemgetter(1))
+        pipe, item = l[0]
+        del self._cache[pipe]
+        return item, pipe
+
+
+class Pipeline(object):
+
+    def __init__(self, pipes):
+        self.collapsed = CollapsedPipes(pipes)
+        self.pipes = tuple(x[1] for x in pipes)
+
+    def run(self):
+        for pipe in self.pipes:
+            yield from pipe.start()
+        for item, pipe in self.collapsed:
+            yield from pipe.feed(item)
+        for pipe in self.pipes:
+            yield from pipe.finish()
 
 
 replay = subparsers.add_parser(
