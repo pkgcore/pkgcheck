@@ -34,7 +34,8 @@ class TestPackageUpdatesCheck(misc.Tmpdir, misc.ReportTestCase):
             pkg_path = pjoin(
                 repo_dir, pkg.category, pkg.package, f'{pkg.package}-{pkg.fullver}.ebuild')
             os.makedirs(os.path.dirname(pkg_path), exist_ok=True)
-            touch(pkg_path)
+            with open(pkg_path, 'w') as f:
+                f.write('SLOT=0\n')
 
         options = misc.Options(target_repo=UnconfiguredTree(repo_dir))
         return self.check_kls(options)
