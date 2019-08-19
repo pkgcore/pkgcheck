@@ -18,6 +18,7 @@ import re
 from pkgcore import const
 from pkgcore.config import ConfigHint
 from pkgcore.package.errors import MetadataException
+from pkgcore.restrictions import util
 from snakeoil.decorators import coroutine
 from snakeoil.klass import SlotsPicklingMixin, generic_equality
 from snakeoil.osutils import pjoin
@@ -31,11 +32,6 @@ category_feed = "cat"
 package_feed = "cat/pkg"
 versioned_feed = "cat/pkg-ver"
 ebuild_feed = "cat/pkg-ver+text"
-
-# repo filter types
-no_filter = 'none'
-mask_filter = 'mask'
-git_filter = 'git'
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
 _Scope = namedtuple("Scope", ["threshold", "desc"])
@@ -103,6 +99,30 @@ class Addon(object):
         """
 
 
+class GenericSource(object):
+    """Base template for a repository source."""
+
+    required_addons = ()
+    feed_type = versioned_feed
+    cost = 10
+
+    def __init__(self, options, limiter):
+        self.options = options
+        self.repo = options.target_repo
+        self.limiter = limiter
+
+        for scope, attrs in ((version_scope, ['fullver', 'version', 'rev']),
+                             (package_scope, ['package']),
+                             (category_scope, ['category'])):
+            if any(util.collect_package_restrictions(self.limiter, attrs)):
+                self.scope = scope
+                return
+        self.scope = repository_scope
+
+    def __iter__(self):
+        return self.repo.itermatch(self.limiter, sorter=sorted)
+
+
 class Template(Addon):
     """Base template for a check.
 
@@ -110,13 +130,13 @@ class Template(Addon):
     :cvar priority: priority level of the check which plugger sorts by --
         should be left alone except for weird pseudo-checks like the cache
         wiper that influence other checks
-    :cvar filter_type: filtering of feed items (by default there are no filters)
+    :cvar source_type: source of feed items
     :cvar known_results: result keywords the check can possibly yield
     """
 
     scope = version_scope
     priority = 0
-    filter_type = no_filter
+    source_type = GenericSource
     known_results = ()
 
     @classmethod
@@ -169,20 +189,6 @@ class ExplicitlyEnabledCheck(Template):
         if skip:
             logger.info(f'skipping {cls.__name__}, not explicitly enabled')
         return skip or super().skip(namespace)
-
-
-class GenericSource(object):
-    """Base template for a repository source."""
-
-    feed_type = versioned_feed
-    filter_type = no_filter
-    required_addons = ()
-    cost = 10
-
-    def __init__(self, options, limiter):
-        self.options = options
-        self.repo = options.target_repo
-        self.limiter = limiter
 
 
 class Transform(object):
@@ -585,20 +591,12 @@ def plug(sinks, transforms, sources, debug=None):
 
     # All types we need to reach.
     sink_feed_types = frozenset(sink.feed_type for sink in good_sinks)
-    sink_filter_types = frozenset(sink.filter_type for sink in good_sinks)
-
-    # Map from (scope, source typename, source filter typename) to cheapest source.
-    source_map = {}
-    for source in sources:
-        current_source = source_map.get((source.scope, source.feed_type))
-        if current_source is None or current_source.cost > source.cost:
-            source_map[source.scope, source.feed_type, source.filter_type] = source
 
     # tuples of (visited_types, source, transforms, price)
     pipes = set()
     unprocessed = set(
         (frozenset((source.feed_type,)), source, frozenset(), source.cost)
-        for source in source_map.values())
+        for source in sources)
     if debug is not None:
         for pipe in unprocessed:
             debug(f'initial: {pipe!r}')
@@ -607,27 +605,24 @@ def plug(sinks, transforms, sources, debug=None):
     # List of tuples of source, transforms.
     pipes_to_run = []
     best_cost = None
-    required_filters = set(sink_filter_types)
-    required_filters_costs = {}
+    required_source_costs = {}
     while unprocessed:
         pipe = unprocessed.pop()
         if pipe in pipes:
             continue
         pipes.add(pipe)
         visited, source, trans, cost = pipe
-        best_cost = required_filters_costs.get(source.filter_type, None)
-        if visited >= sink_feed_types and source.filter_type in required_filters:
-            required_filters.discard(source.filter_type)
+        best_cost = required_source_costs.get(source.__class__, None)
+        if visited >= sink_feed_types:
             # Already reaches all sink types. Check if it is usable as
             # single pipeline:
-            # if best_cost is None or cost < best_cost:
             if best_cost is None or cost < best_cost:
                 pipes_to_run.append((source, trans))
-                required_filters_costs[source.filter_type] = cost
+                required_source_costs[source.__class__] = cost
                 best_cost = cost
             # No point in growing this further: it already reaches everything.
             continue
-        if not required_filters and (best_cost is not None and best_cost <= cost):
+        if best_cost is not None and best_cost <= cost:
             # No point in growing this further.
             continue
         for transform in transforms:
@@ -683,20 +678,20 @@ def plug(sinks, transforms, sources, debug=None):
 
     good_sinks.sort(key=attrgetter('priority'))
 
-    def build_transform(scope, feed_type, filter_type, transforms):
+    def build_transform(scope, feed_type, source_type, transforms):
         children = []
         for transform in transforms:
             if transform.source == feed_type and transform.scope <= scope:
                 # Note this relies on the cheapest pipe not having any "loops"
                 # in its transforms.
-                t = build_transform(scope, transform.dest, filter_type, transforms)
+                t = build_transform(scope, transform.dest, source_type, transforms)
                 if t:
                     children.append(transform(t))
         # Hacky: we modify this in place.
         for i in reversed(range(len(good_sinks))):
             sink = good_sinks[i]
             if (sink.feed_type == feed_type and
-                    sink.filter_type == filter_type and sink.scope <= scope):
+                    sink.source_type == source_type and sink.scope <= scope):
                 children.append(sink)
                 del good_sinks[i]
         if children:
@@ -705,7 +700,7 @@ def plug(sinks, transforms, sources, debug=None):
     result = []
     for source, transforms in pipes_to_run:
         transform = build_transform(
-            source.scope, source.feed_type, source.filter_type, transforms)
+            source.scope, source.feed_type, source.__class__, transforms)
         if transform:
             result.append((source, transform))
 

@@ -43,6 +43,8 @@ class DummySink(base.Template):
     creating your own.
     """
 
+    source_type = DummySource
+
     def __init__(self, dummy, scope=base.package_scope):
         self.feed_type = dummy
         self.scope = scope

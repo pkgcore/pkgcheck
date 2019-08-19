@@ -13,7 +13,7 @@ from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base
+from .. import base, addons, sources
 from ..log import logger
 
 demand_compile_regexp(
@@ -140,7 +140,7 @@ class GitCommitsCheck(base.GentooRepoCheck):
     """Check unpushed git commits for various issues."""
 
     feed_type = base.package_feed
-    filter_type = base.git_filter
+    source_type = sources.GitCommitsRepoSource
     required_addons = (addons.GitAddon,)
     known_results = (
         DirectStableKeywords, DirectNoMaintainer,

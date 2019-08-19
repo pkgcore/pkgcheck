@@ -5,7 +5,7 @@ from itertools import chain
 from snakeoil.klass import jit_attr
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base
+from .. import addons, base, sources
 
 day = 24*3600
 
@@ -40,7 +40,7 @@ class StableRequestCheck(base.GentooRepoCheck):
     Instead they'll be caught by the UnstableOnly check.
     """
     feed_type = base.package_feed
-    filter_type = base.mask_filter
+    source_type = sources.FilteredRepoSource
     required_addons = (addons.GitAddon,)
     known_results = (StableRequest,)
 

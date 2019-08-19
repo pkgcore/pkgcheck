@@ -1,15 +1,8 @@
-"""Feed classes: pass groups of packages to other addons."""
+"""Package feed transformations."""
 
 from operator import attrgetter
-import sys
 
-from pkgcore.ebuild import restricts
-from pkgcore.restrictions import packages, util
-from snakeoil.demandload import demandload
-
-from . import addons, base
-
-demandload('inspect')
+from . import base
 
 
 class VersionToEbuild(base.Transform):
@@ -150,63 +143,3 @@ class PackageToCategory(base.Transform):
         yield from super().finish()
         self.category = None
         self.chunk = None
-
-
-class RestrictedRepoSource(base.GenericSource):
-    """Generic ebuild repository source."""
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        for scope, attrs in ((base.version_scope, ['fullver', 'version', 'rev']),
-                             (base.package_scope, ['package']),
-                             (base.category_scope, ['category'])):
-            if any(util.collect_package_restrictions(self.limiter, attrs)):
-                self.scope = scope
-                return
-        self.scope = base.repository_scope
-
-    def __iter__(self):
-        return self.repo.itermatch(self.limiter, sorter=sorted)
-
-
-class FilteredRepoSource(RestrictedRepoSource):
-    """Repository source that uses profiles/package.mask to filter packages."""
-
-    filter_type = base.mask_filter
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.repo = self.options.domain.filter_repo(
-            self.repo, pkg_masks=(), pkg_unmasks=(),
-            pkg_accept_keywords=(), pkg_keywords=(), profile=False)
-
-
-class GitCommitsRepoSource(RestrictedRepoSource):
-    """Repository source for locally changed packages in git history.
-
-    Parses local git log history to determine packages with changes that
-    haven't been pushed upstream yet.
-    """
-
-    required_addons = (addons.GitAddon,)
-    filter_type = base.git_filter
-
-    def __init__(self, options, git_addon, limiter):
-        super().__init__(options, limiter)
-        self.repo = git_addon.commits_repo(addons.GitChangedRepo)
-
-        # Drop repo restriction if one exists as we're matching against a faked
-        # repo with a different repo_id.
-        try:
-            repo_limiter = self.limiter[0]
-        except TypeError:
-            repo_limiter = None
-        if isinstance(repo_limiter, restricts.RepositoryDep):
-            self.limiter = packages.AndRestriction(*self.limiter[1:])
-
-
-def all_sources():
-    """Iterator that yields all defined source classes."""
-    for name, cls in inspect.getmembers(sys.modules[__name__]):
-        if inspect.isclass(cls) and issubclass(cls, base.GenericSource):
-            yield cls

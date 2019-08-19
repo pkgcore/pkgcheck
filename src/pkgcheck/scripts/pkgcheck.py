@@ -377,7 +377,8 @@ def _scan(options, out, err):
         return
 
     raw_sources = []
-    for source in feeds.all_sources():
+    required_sources = {check.source_type for check in options.enabled_checks}
+    for source in required_sources:
         addons = [addons_map.get(cls, cls(options)) for cls in source.required_addons]
         raw_sources.append(partial(source, options, *addons))
 
