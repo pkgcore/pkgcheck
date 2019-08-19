@@ -436,6 +436,10 @@ class CollapsedPipes(object):
         if not self.pipes:
             raise StopIteration
 
+        if len(self.pipes) == 1:
+            source, pipe = self.pipes[0]
+            return next(source), pipe
+
         i = 0
         while i < len(self.pipes):
             source, pipe = self.pipes[i]
