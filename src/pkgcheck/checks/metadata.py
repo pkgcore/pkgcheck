@@ -10,15 +10,15 @@ from pkgcore.ebuild import eapi
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
+from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import OrRestriction
-from pkgcore.restrictions.packages import Conditional
 from snakeoil.demandload import demandload
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, addons
+from .. import addons, base, sources
 from ..addons import UnstatedIUSE
 from ..base import MetadataError
 from .visibility import FakeConfigurable, strip_atom_use
@@ -189,6 +189,10 @@ class RequiredUSEMetadataCheck(base.Template):
     """REQUIRED_USE validity checks."""
 
     feed_type = base.versioned_feed
+    # only run the check for EAPI 4 and above
+    source = (sources.RestrictionRepoSource, (
+        packages.PackageRestriction('eapi', values.GetAttrRestriction(
+                'options.has_required_use', values.FunctionRestriction(bool))),))
     required_addons = (addons.UseAddon, addons.ProfileAddon)
     known_results = (MetadataError, RequiredUseDefaults, UnstatedIUSE)
 
@@ -198,10 +202,6 @@ class RequiredUSEMetadataCheck(base.Template):
         self.profiles = profiles
 
     def feed(self, pkg):
-        # only run the check for EAPI 4 and above
-        if not pkg.eapi.options.has_required_use:
-            return
-
         # check REQUIRED_USE for invalid nodes
         nodes, unstated = self.iuse_filter((str,), pkg, pkg.required_use)
         yield from unstated
@@ -389,6 +389,10 @@ class MissingSlotDepCheck(base.Template):
     """Check for missing slot dependencies."""
 
     feed_type = base.versioned_feed
+    # only run the check for EAPI 5 and above
+    source = (sources.RestrictionRepoSource, (
+        packages.PackageRestriction('eapi', values.GetAttrRestriction(
+                'options.sub_slotting', values.FunctionRestriction(bool))),))
     required_addons = (addons.UseAddon,)
     known_results = (MissingSlotDep,)
 
@@ -397,10 +401,6 @@ class MissingSlotDepCheck(base.Template):
         self.iuse_filter = iuse_handler.get_filter()
 
     def feed(self, pkg):
-        # only run the check for EAPI 5 and above
-        if not pkg.eapi.options.sub_slotting:
-            return
-
         rdepend, _ = self.iuse_filter((atom_cls,), pkg, pkg.rdepend)
         depend, _ = self.iuse_filter((atom_cls,), pkg, pkg.depend)
 
@@ -1127,7 +1127,7 @@ class ConditionalTestRestrictCheck(base.Template):
             return
 
         # otherwise, it should have top-level "!test? ( test )"
-        if any(isinstance(r, Conditional) and r.restriction.vals == {'test'} and
+        if any(isinstance(r, packages.Conditional) and r.restriction.vals == {'test'} and
                r.restriction.negate and 'test' in r.payload for r in pkg.restrict):
             return
 
