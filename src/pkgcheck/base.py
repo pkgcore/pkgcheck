@@ -253,6 +253,9 @@ class Result(SlotsPicklingMixin, metaclass=generic_equality):
     def long_desc(self):
         return self.short_desc
 
+    def __lt__(self, other):
+        return self.__class__.__name__ < other.__class__.__name__
+
 
 class Error(Result):
     """Result with an error priority level."""
