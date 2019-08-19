@@ -165,8 +165,8 @@ class RestrictedRepoSource(base.GenericSource):
                 return
         self.scope = base.repository_scope
 
-    def feed(self):
-        yield from self.repo.itermatch(self.limiter, sorter=sorted)
+    def __iter__(self):
+        return self.repo.itermatch(self.limiter, sorter=sorted)
 
 
 class FilteredRepoSource(RestrictedRepoSource):
