@@ -59,7 +59,7 @@ class OutsideRangeAccountIdentifier(base.VersionedResult, base.Error):
             f"static allocation range (0..499, 60001+)")
 
 
-class AcctCheck(base.Template):
+class AcctCheck(base.Check):
     """Various checks for acct-* packages.
 
     Verify that acct-* packages do not use conflicting, invalid or out-of-range

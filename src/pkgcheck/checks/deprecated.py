@@ -27,7 +27,7 @@ class DeprecatedEclass(base.VersionedResult, base.Warning):
             _pl(eclass_migration, plural='es'), ', '.join(eclass_migration))
 
 
-class DeprecatedEclassCheck(base.Template):
+class DeprecatedEclassCheck(base.Check):
 
     feed_type = base.versioned_feed
     known_results = (DeprecatedEclass,)

@@ -70,7 +70,7 @@ class NoFinalNewline(base.VersionedResult, base.Warning):
     short_desc = "ebuild lacks an ending newline"
 
 
-class WhitespaceCheck(base.Template):
+class WhitespaceCheck(base.Check):
     """Scan ebuild for useless whitespace."""
 
     feed_type = base.ebuild_feed

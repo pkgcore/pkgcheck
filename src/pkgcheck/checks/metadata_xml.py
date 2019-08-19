@@ -381,7 +381,7 @@ class PkgMetadataXmlEmptyElement(_MetadataXmlEmptyElement):
     threshold = base.package_feed
 
 
-class _XmlBaseCheck(base.Template):
+class _XmlBaseCheck(base.Check):
     """Base class for metadata.xml scans."""
 
     xsd_url = "https://www.gentoo.org/xml-schema/metadata.xsd"

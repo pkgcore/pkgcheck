@@ -42,7 +42,7 @@ class VulnerablePackage(base.VersionedResult, base.Error):
         return f'vulnerable via {self.glsa}, keyword{_pl(self.arches)}: {arches}'
 
 
-class TreeVulnerabilitiesCheck(base.Template):
+class TreeVulnerabilitiesCheck(base.Check):
     """Scan for vulnerable ebuilds in the tree.
 
     Requires a GLSA directory for vulnerability info.

@@ -47,7 +47,7 @@ class UnnecessaryLicense(base.VersionedResult, base.Warning):
         return f"{self.category!r} packages shouldn't define LICENSE"
 
 
-class LicenseMetadataCheck(base.Template):
+class LicenseMetadataCheck(base.Check):
     """LICENSE validity checks."""
 
     known_results = (MetadataError, MissingLicense, UnnecessaryLicense, UnstatedIUSE)
@@ -78,7 +78,7 @@ class LicenseMetadataCheck(base.Template):
                 yield UnnecessaryLicense(pkg)
 
 
-class IUSEMetadataCheck(base.Template):
+class IUSEMetadataCheck(base.Check):
     """IUSE validity checks."""
 
     feed_type = base.versioned_feed
@@ -120,7 +120,7 @@ class BannedEAPI(DeprecatedEAPI, base.Error):
         return f"uses banned EAPI {self.eapi}"
 
 
-class MetadataCheck(base.Template):
+class MetadataCheck(base.Check):
     """Scan for packages with banned/deprecated EAPIs or bad metadata."""
 
     feed_type = base.versioned_feed
@@ -185,7 +185,7 @@ class RequiredUseDefaults(base.VersionedResult, base.Warning):
             )
 
 
-class RequiredUSEMetadataCheck(base.Template):
+class RequiredUSEMetadataCheck(base.Check):
     """REQUIRED_USE validity checks."""
 
     feed_type = base.versioned_feed
@@ -309,7 +309,7 @@ class ProbableUseExpand(base.PackageResult, base.Warning):
         return f"USE_EXPAND group {self.group!r} matches local USE flag: {self.flag!r}"
 
 
-class LocalUSECheck(base.Template):
+class LocalUSECheck(base.Check):
     """Check local USE flags in metadata.xml for various issues."""
 
     feed_type = base.package_feed
@@ -385,7 +385,7 @@ class MissingSlotDep(base.VersionedResult, base.Warning):
             f"[ {', '.join(self.dep_slots)} ]")
 
 
-class MissingSlotDepCheck(base.Template):
+class MissingSlotDepCheck(base.Check):
     """Check for missing slot dependencies."""
 
     feed_type = base.versioned_feed
@@ -501,7 +501,7 @@ class NonexistentBlocker(base.VersionedResult, base.Warning):
         )
 
 
-class DependencyCheck(base.Template):
+class DependencyCheck(base.Check):
     """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon, addons.GitAddon)
@@ -700,7 +700,7 @@ class MissingVirtualKeywords(base.VersionedResult, base.Warning):
         return f"missing KEYWORDS: {', '.join(self.keywords)}"
 
 
-class KeywordsCheck(base.Template):
+class KeywordsCheck(base.Check):
     """Check package keywords for sanity; empty keywords, and -* are flagged."""
 
     required_addons = (addons.UseAddon,)
@@ -860,7 +860,7 @@ class TarballAvailable(base.VersionedResult, base.Warning):
                 f"[ {' '.join(self.uris)} ]")
 
 
-class SrcUriCheck(base.Template):
+class SrcUriCheck(base.Check):
     """SRC_URI related checks.
 
     Verify that URIs are valid, fetchable, using a supported protocol, and
@@ -956,7 +956,7 @@ class BadDescription(base.VersionedResult, base.Warning):
         return f"bad DESCRIPTION: {self.msg}"
 
 
-class DescriptionCheck(base.Template):
+class DescriptionCheck(base.Check):
     """DESCRIPTION checks.
 
     Check on length (<=150), too short (<10), or generic (lifted from eclass or
@@ -998,7 +998,7 @@ class BadHomepage(base.VersionedResult, base.Warning):
         return f"bad HOMEPAGE: {self.msg}"
 
 
-class HomepageCheck(base.Template):
+class HomepageCheck(base.Check):
     """HOMEPAGE checks."""
 
     feed_type = base.versioned_feed
@@ -1057,7 +1057,7 @@ class UnknownProperties(base.VersionedResult, base.Warning):
         return f'unknown PROPERTIES="{properties}"'
 
 
-class RestrictsCheck(base.Template):
+class RestrictsCheck(base.Check):
     """Check for valid RESTRICT settings."""
 
     feed_type = base.versioned_feed
@@ -1111,7 +1111,7 @@ class MissingConditionalTestRestrict(base.VersionedResult, base.Warning):
         return 'missing RESTRICT="!test? ( test )" with IUSE=test'
 
 
-class ConditionalTestRestrictCheck(base.Template):
+class ConditionalTestRestrictCheck(base.Check):
     """Check whether packages specify RESTRICT="!test? ( test )"."""
 
     feed_type = base.versioned_feed
@@ -1167,7 +1167,7 @@ class MissingUnpackerDep(base.VersionedResult, base.Warning):
         )
 
 
-class MissingUnpackerDepCheck(base.Template):
+class MissingUnpackerDepCheck(base.Check):
     """Check whether package is missing unpacker dependencies."""
 
     feed_type = base.versioned_feed

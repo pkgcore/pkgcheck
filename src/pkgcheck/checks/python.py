@@ -138,7 +138,7 @@ class PythonRuntimeDepInAnyR1(base.VersionedResult, base.Warning):
         )
 
 
-class PythonCheck(base.Template):
+class PythonCheck(base.Check):
     """Python eclass checks.
 
     Check whether Python eclasses are used for Python packages, and whether

@@ -123,26 +123,19 @@ class GenericSource(object):
         return self.repo.itermatch(self.limiter, sorter=sorted)
 
 
-class Template(Addon):
-    """Base template for a check.
+class Feed(Addon):
+    """Base template for addon iterating over an item feed.
 
     :cvar scope: scope relative to the package repository the check runs under
     :cvar priority: priority level of the check which plugger sorts by --
         should be left alone except for weird pseudo-checks like the cache
         wiper that influence other checks
     :cvar source: source of feed items
-    :cvar known_results: result keywords the check can possibly yield
     """
 
     scope = version_scope
     priority = 0
     source = GenericSource
-    known_results = ()
-
-    @classmethod
-    def skip(cls, namespace):
-        """Conditionally skip check when running all enabled checks."""
-        return False
 
     def start(self):
         """Do startup here."""
@@ -154,7 +147,23 @@ class Template(Addon):
         """Do cleanup and omit final results here."""
 
 
-class GentooRepoCheck(Template):
+class Check(Feed):
+    """Base template for a check.
+
+    :cvar scope: scope relative to the package repository the check runs under
+    :cvar source: source of feed items
+    :cvar known_results: result keywords the check can possibly yield
+    """
+
+    known_results = ()
+
+    @classmethod
+    def skip(cls, namespace):
+        """Conditionally skip check when running all enabled checks."""
+        return False
+
+
+class GentooRepoCheck(Check):
     """Check that is only valid when run against the gentoo repo."""
 
     @classmethod
@@ -165,7 +174,7 @@ class GentooRepoCheck(Template):
         return skip or super().skip(namespace)
 
 
-class OverlayRepoCheck(Template):
+class OverlayRepoCheck(Check):
     """Check that is only valid when run against an overlay repo."""
 
     @classmethod
@@ -176,7 +185,7 @@ class OverlayRepoCheck(Template):
         return skip or super().skip(namespace)
 
 
-class ExplicitlyEnabledCheck(Template):
+class ExplicitlyEnabledCheck(Check):
     """Check that is only valid when explicitly enabled."""
 
     @classmethod

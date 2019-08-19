@@ -59,7 +59,7 @@ try:
     KEYWORDS = mappings.ImmutableDict(_GET_VALS(
         'KEYWORDS', partial(_find_obj_classes, 'checks', base.Result)))
     CHECKS = mappings.ImmutableDict(_GET_VALS(
-        'CHECKS', partial(_find_obj_classes, 'checks', base.Template)))
+        'CHECKS', partial(_find_obj_classes, 'checks', base.Check)))
     TRANSFORMS = mappings.ImmutableDict(_GET_VALS(
         'TRANSFORMS', partial(_find_obj_classes, 'feeds', base.Transform)))
     REPORTERS = mappings.ImmutableDict(_GET_VALS(

@@ -32,7 +32,7 @@ class HttpsAvailable(base.VersionedResult, base.Warning):
         )
 
 
-class HttpsAvailableCheck(base.Template):
+class HttpsAvailableCheck(base.Check):
     """Scan ebuild for ``http://`` links that should use ``https://``."""
 
     feed_type = base.ebuild_feed
@@ -101,7 +101,7 @@ class PortageInternals(base.VersionedResult, base.Warning):
         return f"{self.internal!r} used on line {self.line}"
 
 
-class PortageInternalsCheck(base.Template):
+class PortageInternalsCheck(base.Check):
     """Scan ebuild for portage internals usage."""
 
     feed_type = base.ebuild_feed
@@ -191,7 +191,7 @@ class DoublePrefixInPath(base.VersionedResult, base.Error):
                 f"on line{_pl(self.lines)} {lines}")
 
 
-class PathVariablesCheck(base.Template):
+class PathVariablesCheck(base.Check):
     """Scan ebuild for path variables with various issues."""
 
     feed_type = base.ebuild_feed
@@ -310,7 +310,7 @@ class AbsoluteSymlink(base.VersionedResult, base.Warning):
         return f"'dosym {self.abspath} ...' uses absolute path on line {self.line}"
 
 
-class AbsoluteSymlinkCheck(base.Template):
+class AbsoluteSymlinkCheck(base.Check):
     """Scan ebuild for dosym absolute path usage instead of relative."""
 
     feed_type = base.ebuild_feed
@@ -347,7 +347,7 @@ class BadInsIntoDir(base.VersionedResult, base.Warning):
         return f"ebuild uses insinto {self.insintodir} on line {self.line}"
 
 
-class BadInsIntoCheck(base.Template):
+class BadInsIntoCheck(base.Check):
     """Scan ebuild for bad insinto usage."""
 
     feed_type = base.ebuild_feed
@@ -410,7 +410,7 @@ class ObsoleteUri(base.VersionedResult, base.Warning):
                 f"{self.line}, should be replaced by: {self.replacement}")
 
 
-class ObsoleteUriCheck(base.Template):
+class ObsoleteUriCheck(base.Check):
     """Scan ebuild for obsolete URIs."""
 
     feed_type = base.ebuild_feed
@@ -549,7 +549,7 @@ class HomepageInSrcUri(base.VersionedResult, base.Warning):
         return "${HOMEPAGE} in SRC_URI"
 
 
-class HomepageInSrcUriCheck(base.Template):
+class HomepageInSrcUriCheck(base.Check):
     """Scan ebuild for ${HOMEPAGE} in SRC_URI."""
 
     feed_type = base.ebuild_feed

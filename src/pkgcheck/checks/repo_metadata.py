@@ -86,7 +86,7 @@ class BadPackageUpdate(base.LogError):
     threshold = base.repository_feed
 
 
-class PackageUpdatesCheck(base.Template):
+class PackageUpdatesCheck(base.Check):
     """Scan profiles/updates/* for outdated entries and other issues."""
 
     feed_type = base.repository_feed
@@ -174,7 +174,7 @@ class UnusedLicenses(base.Warning):
         return ', '.join(self.licenses)
 
 
-class UnusedLicensesCheck(base.Template):
+class UnusedLicensesCheck(base.Check):
     """Check for unused license files."""
 
     feed_type = base.versioned_feed
@@ -215,7 +215,7 @@ class UnusedMirrors(base.Warning):
         return ', '.join(self.mirrors)
 
 
-class _MirrorsCheck(base.Template):
+class _MirrorsCheck(base.Check):
     """Check for unused mirrors."""
 
     required_addons = (addons.UseAddon,)
@@ -271,7 +271,7 @@ class UnusedEclasses(base.Warning):
         return ', '.join(self.eclasses)
 
 
-class UnusedEclassesCheck(base.Template):
+class UnusedEclassesCheck(base.Check):
     """Check for unused eclasses."""
 
     feed_type = base.versioned_feed
@@ -315,7 +315,7 @@ class UnknownLicenses(base.Warning):
             self.group, _pl(self.licenses), ', '.join(self.licenses))
 
 
-class LicenseGroupsCheck(base.Template):
+class LicenseGroupsCheck(base.Check):
     """Scan license groups for unknown licenses."""
 
     feed_type = base.repository_feed
@@ -398,7 +398,7 @@ def _dfs(graph, start, visited=None):
     return visited
 
 
-class GlobalUSECheck(base.Template):
+class GlobalUSECheck(base.Check):
     """Check global USE and USE_EXPAND flags for various issues."""
 
     feed_type = base.package_feed
@@ -610,7 +610,7 @@ class UnnecessaryManifest(base.PackageResult, base.Warning):
             _pl(self.files), ', '.join(self.files),)
 
 
-class ManifestCheck(base.Template):
+class ManifestCheck(base.Check):
     """Manifest related checks.
 
     Verify that the Manifest file exists, doesn't have missing or
@@ -680,7 +680,7 @@ class ManifestCheck(base.Template):
                 yield UnknownManifest(pkgset[0], unknown_manifests)
 
 
-class ManifestConflictCheck(base.Template):
+class ManifestConflictCheck(base.Check):
     """Conflicting checksum check.
 
     Verify that two Manifest files do not contain conflicting checksums

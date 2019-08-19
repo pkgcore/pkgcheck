@@ -35,7 +35,7 @@ class DummySource(base.GenericSource):
         return f'{self.__class__.__name__}({self.feed_type})'
 
 
-class DummySink(base.Template):
+class DummySink(base.Check):
 
     """Dummy sink object just yielding every fed to it with itself appended.
 

@@ -17,7 +17,7 @@ class DroppedKeywords(base.VersionedResult, base.Warning):
         return ', '.join(self.arches)
 
 
-class DroppedKeywordsCheck(base.Template):
+class DroppedKeywordsCheck(base.Check):
     """Scan packages for keyword dropping across versions."""
 
     feed_type = base.package_feed

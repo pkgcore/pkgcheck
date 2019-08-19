@@ -127,7 +127,7 @@ class _ProfileNode(profiles_mod.ProfileNode):
     """Re-inherited to disable instance caching."""
 
 
-class ProfilesCheck(base.Template):
+class ProfilesCheck(base.Check):
     """Scan repo profiles for unknown flags/packages."""
 
     required_addons = (addons.UseAddon,)
@@ -395,7 +395,7 @@ def dir_parents(path):
         path = dirname.rstrip('/')
 
 
-class RepoProfilesCheck(base.Template):
+class RepoProfilesCheck(base.Check):
     """Scan repo for various profiles directory issues.
 
     Including unknown arches in profiles, arches without profiles, and unknown

@@ -156,7 +156,7 @@ class InvalidUTF8(base.PackageResult, base.Error):
         return f"invalid UTF-8: {self.err}: {self.filename!r}"
 
 
-class PkgDirCheck(base.Template):
+class PkgDirCheck(base.Check):
     """Actual ebuild directory scans; file size, glep31 rule enforcement."""
 
     feed_type = base.package_feed

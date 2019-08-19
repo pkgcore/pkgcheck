@@ -93,7 +93,7 @@ class ArchesAddon(base.Addon):
             """)
 
 
-class QueryCacheAddon(base.Template):
+class QueryCacheAddon(base.Feed):
 
     priority = 1
 
@@ -846,7 +846,7 @@ class ProfileAddon(base.Addon):
         return len([x for x in self])
 
 
-class EvaluateDepSetAddon(base.Template):
+class EvaluateDepSetAddon(base.Feed):
 
     required_addons = (ProfileAddon,)
     feed_type = base.versioned_feed
@@ -887,7 +887,7 @@ class EvaluateDepSetAddon(base.Template):
                 for k, v in collapsed.items()]
 
 
-class StableArchesAddon(base.Template):
+class StableArchesAddon(base.Addon):
     """Check relating to stable arches by default."""
 
     required_addons = (ArchesAddon,)
