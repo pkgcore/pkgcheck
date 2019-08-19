@@ -40,7 +40,7 @@ class StableRequestCheck(base.GentooRepoCheck):
     Instead they'll be caught by the UnstableOnly check.
     """
     feed_type = base.package_feed
-    source_type = sources.FilteredRepoSource
+    source = sources.FilteredRepoSource
     required_addons = (addons.GitAddon,)
     known_results = (StableRequest,)
 

@@ -376,23 +376,29 @@ def _scan(options, out, err):
         err.write(f'{scan.prog}: no matching checks available for current scope')
         return
 
-    raw_sources = []
-    required_sources = {check.source_type for check in options.enabled_checks}
+    raw_sources = {}
+    required_sources = {check.source for check in options.enabled_checks}
     for source in required_sources:
-        addons = [addons_map.get(cls, cls(options)) for cls in source.required_addons]
-        raw_sources.append(partial(source, options, *addons))
+        if isinstance(source, tuple):
+            source_cls, args = source
+        else:
+            source_cls = source
+            args = ()
+        addons = [addons_map.get(cls, cls(options)) for cls in source_cls.required_addons]
+        raw_sources[source] = partial(source_cls, *args, options, *addons)
 
     reporter.start()
 
     for filterer in options.limiters:
-        sources = [source(filterer) for source in raw_sources]
+        sources = {raw: source(filterer) for raw, source in raw_sources.items()}
         bad_sinks, pipes = base.plug(sinks, transforms, sources, debug)
         if bad_sinks:
             # We want to report the ones that would work if this was a
             # full repo scan separately from the ones that are
             # actually missing transforms.
             bad_sinks = set(bad_sinks)
-            full_scope = [source(packages.AlwaysTrue) for source in raw_sources]
+            full_scope = {
+                raw: source(packages.AlwaysTrue) for raw, source in raw_sources.items()}
             really_bad, ignored = base.plug(sinks, transforms, full_scope)
             really_bad = set(really_bad)
             assert bad_sinks >= really_bad, \

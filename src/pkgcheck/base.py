@@ -130,13 +130,13 @@ class Template(Addon):
     :cvar priority: priority level of the check which plugger sorts by --
         should be left alone except for weird pseudo-checks like the cache
         wiper that influence other checks
-    :cvar source_type: source of feed items
+    :cvar source: source of feed items
     :cvar known_results: result keywords the check can possibly yield
     """
 
     scope = version_scope
     priority = 0
-    source_type = GenericSource
+    source = GenericSource
     known_results = ()
 
     @classmethod
@@ -531,7 +531,7 @@ def plug(sinks, transforms, sources, debug=None):
 
     :param sinks: Sequence of check instances.
     :param transforms: Sequence of transform classes.
-    :param sources: Sequence of source instances.
+    :param sources: Dict of raw sources to source instances.
     :param debug: A logging function or C{None}.
     :return: a sequence of sinks that are unreachable (out of scope or
         missing sources/transforms of the right type),
@@ -550,7 +550,7 @@ def plug(sinks, transforms, sources, debug=None):
 
     # Map from typename to best scope
     best_scope = {}
-    for source in sources:
+    for source in sources.values():
         # (not particularly clever, if we get a ton of sources this
         # should be optimized to do less duplicate work).
         reachable = set()
@@ -580,23 +580,14 @@ def plug(sinks, transforms, sources, debug=None):
         # No point in continuing.
         return bad_sinks, ()
 
-    # Throw out all sources with a scope lower than the least required scope.
-    # Does not check transform requirements, may not be very useful.
-    lowest_required_scope = min(sink.scope for sink in good_sinks)
-    highest_required_scope = max(sink.scope for sink in good_sinks)
-    sources = list(s for s in sources if s.scope >= lowest_required_scope)
-    if not sources:
-        # No usable sources, abort.
-        return bad_sinks + good_sinks, ()
-
     # All types we need to reach.
     sink_feed_types = frozenset(sink.feed_type for sink in good_sinks)
 
     # tuples of (visited_types, source, transforms, price)
     pipes = set()
     unprocessed = set(
-        (frozenset((source.feed_type,)), source, frozenset(), source.cost)
-        for source in sources)
+        (frozenset((source.feed_type,)), raw, source, frozenset(), source.cost)
+        for raw, source in sources.items())
     if debug is not None:
         for pipe in unprocessed:
             debug(f'initial: {pipe!r}')
@@ -611,14 +602,14 @@ def plug(sinks, transforms, sources, debug=None):
         if pipe in pipes:
             continue
         pipes.add(pipe)
-        visited, source, trans, cost = pipe
-        best_cost = required_source_costs.get(source.__class__, None)
+        visited, raw, source, trans, cost = pipe
+        best_cost = required_source_costs.get(raw, None)
         if visited >= sink_feed_types:
             # Already reaches all sink types. Check if it is usable as
             # single pipeline:
             if best_cost is None or cost < best_cost:
-                pipes_to_run.append((source, trans))
-                required_source_costs[source.__class__] = cost
+                pipes_to_run.append((raw, source, trans))
+                required_source_costs[raw] = cost
                 best_cost = cost
             # No point in growing this further: it already reaches everything.
             continue
@@ -630,7 +621,7 @@ def plug(sinks, transforms, sources, debug=None):
                     transform.source in visited and
                     transform.dest not in visited):
                 unprocessed.add((
-                    visited.union((transform.dest,)), source,
+                    visited.union((transform.dest,)), raw, source,
                     trans.union((transform,)), cost + transform.cost))
                 if debug is not None:
                     debug(f'growing {trans!r} for {source!r} with {transform!r}')
@@ -691,16 +682,16 @@ def plug(sinks, transforms, sources, debug=None):
         for i in reversed(range(len(good_sinks))):
             sink = good_sinks[i]
             if (sink.feed_type == feed_type and
-                    sink.source_type == source_type and sink.scope <= scope):
+                    sink.source == source_type and sink.scope <= scope):
                 children.append(sink)
                 del good_sinks[i]
         if children:
             return CheckRunner(children)
 
     result = []
-    for source, transforms in pipes_to_run:
+    for source_type, source, transforms in pipes_to_run:
         transform = build_transform(
-            source.scope, source.feed_type, source.__class__, transforms)
+            source.scope, source.feed_type, source_type, transforms)
         if transform:
             result.append((source, transform))
 

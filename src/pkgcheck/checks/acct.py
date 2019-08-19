@@ -1,5 +1,4 @@
 from collections import defaultdict
-from functools import partial
 from itertools import chain
 import re
 
@@ -69,10 +68,8 @@ class AcctCheck(base.Template):
 
     scope = base.repository_scope
     feed_type = base.versioned_feed
-    source_type = partial(
-        sources.RestrictionRepoSource,
-        packages.OrRestriction(*(
-            restricts.CategoryDep('acct-user'), restricts.CategoryDep('acct-group'))))
+    source = (sources.RestrictionRepoSource, (packages.OrRestriction(*(
+            restricts.CategoryDep('acct-user'), restricts.CategoryDep('acct-group'))),))
     known_results = (
         MissingAccountIdentifier, ConflictingAccountIdentifiers,
         OutsideRangeAccountIdentifier,

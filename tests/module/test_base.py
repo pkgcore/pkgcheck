@@ -43,7 +43,7 @@ class DummySink(base.Template):
     creating your own.
     """
 
-    source_type = DummySource
+    source = DummySource
 
     def __init__(self, dummy, scope=base.package_scope):
         self.feed_type = dummy
@@ -159,13 +159,13 @@ class TestPlug(object):
         self.assertPipes(
             [sinks[2]],
             trans_everything,
-            [sources[0]],
+            {DummySource: sources[0]},
             (sources[0], base.CheckRunner([
                 trans(0, 2)(base.CheckRunner([sinks[2]]))])))
         self.assertPipes(
             [sinks[2]],
             trans_up,
-            [sources[0]],
+            {DummySource: sources[0]},
             (sources[0], base.CheckRunner([
                 trans(0, 1)(base.CheckRunner([
                     trans(1, 2)(base.CheckRunner([sinks[2]])),
@@ -175,12 +175,12 @@ class TestPlug(object):
         self.assertPipes(
             [sinks[0]],
             trans_everything,
-            [sources[0]],
+            {DummySource: sources[0]},
             (sources[0], base.CheckRunner([sinks[0]])))
         self.assertPipes(
             [sinks[0]],
             [],
-            [sources[0]],
+            {DummySource: sources[0]},
             (sources[0], base.CheckRunner([sinks[0]])))
 
     @pytest.mark.skip('skipped until refactored for plug() changes')
@@ -188,12 +188,12 @@ class TestPlug(object):
         self.assertPipes(
             [sinks[3]],
             trans_everything,
-            sources,
+            {DummySource: v for v in sources},
             (sources[3], base.CheckRunner([sinks[3]])))
         self.assertPipes(
             [sinks[2], sinks[4]],
             [trans(1, 2), trans(3, 4), trans(4, 5)],
-            [sources[1], sources[3]],
+            {DummySource: sources[1], DummySource: sources[3]},
             (sources[1], base.CheckRunner([trans(1, 2)(base.CheckRunner([
                 sinks[2]]))])),
             (sources[3], base.CheckRunner([trans(3, 4)(base.CheckRunner([
@@ -204,21 +204,21 @@ class TestPlug(object):
         self.assertPipes(
             [sinks[1], sinks[0]],
             trans_up,
-            [sources[0]],
+            {DummySource: sources[0]},
             (sources[0], base.CheckRunner([
                 sinks[0],
                 trans(0, 1)(base.CheckRunner([sinks[1]]))])))
         self.assertPipes(
             [sinks[1], sinks[0]],
             trans_everything,
-            [sources[0]],
+            {DummySource: sources[0]},
             (sources[0], base.CheckRunner([
                 sinks[0],
                 trans(0, 1)(base.CheckRunner([sinks[1]]))])))
         self.assertPipes(
             [sinks[2], sinks[0]],
             trans_up,
-            [sources[0]],
+            {DummySource: sources[0]},
             (sources[0], base.CheckRunner([
                 sinks[0],
                 trans(0, 1)(base.CheckRunner([
@@ -227,7 +227,7 @@ class TestPlug(object):
         self.assertPipes(
             [sinks[2], sinks[1]],
             trans_up,
-            [sources[0]],
+            {DummySource: sources[0]},
             (sources[0], base.CheckRunner([trans(0, 1)(base.CheckRunner([
                 sinks[1],
                 trans(1, 2)(base.CheckRunner([sinks[2]])),
@@ -237,7 +237,7 @@ class TestPlug(object):
         self.assertPipes(
             [sinks[1], sinks[2], sinks[3]],
             [trans(1, 2), trans(1, 3)],
-            [sources[1]],
+            {DummySource: sources[1]},
             (sources[1], base.CheckRunner([
                 sinks[1],
                 trans(1, 2)(base.CheckRunner([sinks[2]])),
@@ -246,7 +246,7 @@ class TestPlug(object):
         self.assertPipes(
             [sinks[1], sinks[2], sinks[3]],
             [trans(0, 1), trans(1, 2), trans(1, 3)],
-            [sources[0]],
+            {DummySource: sources[0]},
             (sources[0], base.CheckRunner([
                 trans(0, 1)(base.CheckRunner([
                     sinks[1],
@@ -256,7 +256,7 @@ class TestPlug(object):
         self.assertPipes(
             [sinks[0], sinks[1], sinks[2]],
             (trans(1, 2),) + trans_down,
-            [sources[1]],
+            {DummySource: sources[1]},
             (sources[1], base.CheckRunner([
                 sinks[1],
                 trans(1, 2)(base.CheckRunner([sinks[2]])),
@@ -271,7 +271,7 @@ class TestPlug(object):
         self.assertPipes(
             [sink1, sink2, sink3],
             [trans(1, 2), trans(2, 3)],
-            [source],
+            {DummySource: source},
             (source, base.CheckRunner([
                 sink1,
                 trans(1, 2)(base.CheckRunner([
@@ -286,7 +286,7 @@ class TestPlug(object):
         self.assertPipes(
             [sinks[2]],
             [trans_slow, trans_fast],
-            [sources[1]],
+            {DummySource: sources[1]},
             (sources[1], base.CheckRunner([
                 trans_slow(base.CheckRunner([sinks[2]]))])))
         source = DummySource(dummies[1], scope=base.repository_scope)
