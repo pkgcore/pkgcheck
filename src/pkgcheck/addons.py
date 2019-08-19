@@ -976,7 +976,7 @@ class UseAddon(base.Addon):
 
     @staticmethod
     def fake_use_validate(klasses, pkg, seq, attr=None):
-        return iflatten_instance(seq, klasses)
+        return {k: () for k in iflatten_instance(seq, klasses)}, ()
 
     def _flatten_restricts(self, nodes, skip_filter, stated, unstated, attr, restricts=None):
         for node in nodes:
