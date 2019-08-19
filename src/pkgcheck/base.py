@@ -27,14 +27,14 @@ from .log import logger
 
 
 # source feed types
-repository_feed = "repo"
-category_feed = "cat"
-package_feed = "cat/pkg"
-versioned_feed = "cat/pkg-ver"
-ebuild_feed = "cat/pkg-ver+text"
+repository_feed = 'repo'
+category_feed = 'cat'
+package_feed = 'cat/pkg'
+versioned_feed = 'cat/pkg-ver'
+ebuild_feed = 'cat/pkg-ver+text'
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
-_Scope = namedtuple("Scope", ["threshold", "desc"])
+_Scope = namedtuple('Scope', ['threshold', 'desc'])
 known_scopes = OrderedDict((
     ('repo', _Scope(repository_feed, 'repository')),
     ('cat', _Scope(category_feed, 'category')),
@@ -120,7 +120,14 @@ class GenericSource(object):
         self.scope = repository_scope
 
     def __iter__(self):
-        return self.repo.itermatch(self.limiter, sorter=sorted)
+        yield from self.repo.itermatch(self.limiter, sorter=sorted)
+
+
+class EmptySource(GenericSource):
+    """Empty source meant for skipping feed."""
+
+    def __iter__(self):
+        yield from ()
 
 
 class Feed(Addon):
@@ -145,6 +152,17 @@ class Feed(Addon):
 
     def finish(self):
         """Do cleanup and omit final results here."""
+
+
+class EmptyFeed(Feed):
+    """Empty feed that skips the object feeding phase."""
+
+    source = EmptySource
+
+    # required for tests since they manually run the checks instead of
+    # constructing pipelines
+    def feed(self, item):
+        pass
 
 
 class Check(Feed):
