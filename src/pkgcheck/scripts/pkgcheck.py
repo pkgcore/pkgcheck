@@ -431,10 +431,13 @@ class CollapsedPipes(object):
         while i < len(self.pipes):
             source, pipe = self.pipes[i]
             try:
-                self._cache.setdefault(pipe, next(source))
-            except StopIteration:
-                self.pipes.pop(i)
-                continue
+                self._cache[pipe]
+            except KeyError:
+                try:
+                    self._cache[pipe] = next(source)
+                except StopIteration:
+                    self.pipes.pop(i)
+                    continue
             i += 1
 
         if not self._cache:
