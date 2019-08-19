@@ -1,8 +1,12 @@
 from collections import defaultdict
+from functools import partial
 from itertools import chain
 import re
 
-from .. import base
+from pkgcore.ebuild import restricts
+from pkgcore.restrictions import packages
+
+from .. import base, sources
 
 
 class MissingAccountIdentifier(base.VersionedResult, base.Warning):
@@ -65,6 +69,10 @@ class AcctCheck(base.Template):
 
     scope = base.repository_scope
     feed_type = base.versioned_feed
+    source_type = partial(
+        sources.RestrictionRepoSource,
+        packages.OrRestriction(*(
+            restricts.CategoryDep('acct-user'), restricts.CategoryDep('acct-group'))))
     known_results = (
         MissingAccountIdentifier, ConflictingAccountIdentifiers,
         OutsideRangeAccountIdentifier,
@@ -82,7 +90,6 @@ class AcctCheck(base.Template):
         }
 
     def feed(self, pkg):
-        # TODO: use a custom restriction source to filter pkg input
         try:
             seen_id_map, expected_var, extra_allowed_ids = self.category_map[pkg.category]
         except KeyError:
