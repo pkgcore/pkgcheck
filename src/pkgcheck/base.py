@@ -653,44 +653,6 @@ def plug(sinks, transforms, sources, debug=None):
                 if debug is not None:
                     debug(f'growing {trans!r} for {source!r} with {transform!r}')
 
-    if not pipes_to_run:
-        # No single pipe will drive everything, try combining pipes.
-        # This is pretty stupid but effective. Map sources to
-        # pipelines they drive, try combinations of sources (using a
-        # source more than once in a combination makes no sense since
-        # we also have the "combined" pipeline in pipes).
-        source_to_pipes = {}
-        for visited, source, trans, cost in pipes:
-            source_to_pipes.setdefault(source, []).append(
-                (visited, trans, cost))
-        unprocessed = set(
-            (visited, frozenset([source]), ((source, trans),), cost)
-            for visited, source, trans, cost in pipes)
-        done = set()
-        while unprocessed:
-            pipe = unprocessed.pop()
-            if pipe in done:
-                continue
-            done.add(pipe)
-            visited, sources, seq, cost = pipe
-            if visited >= sink_feed_types:
-                # This combination reaches everything.
-                if best_cost is None or cost < best_cost:
-                    pipes_to_run = seq
-                    best_cost = cost
-                # No point in growing this further.
-            if best_cost is not None and best_cost <= cost:
-                # No point in growing this further.
-                continue
-            for source, source_pipes in source_to_pipes.items():
-                if source not in sources:
-                    for new_visited, trans, new_cost in source_pipes:
-                        unprocessed.add((
-                            visited.union(new_visited),
-                            sources.union([source]),
-                            seq + ((source, trans),),
-                            cost + new_cost))
-
     # Just an assert since unreachable sinks should have been thrown away.
     assert pipes_to_run, 'did not find a solution?'
 
