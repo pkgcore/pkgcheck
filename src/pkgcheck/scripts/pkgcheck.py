@@ -368,9 +368,7 @@ def _scan(options, out, err):
         debug = None
 
     transforms = list(const.TRANSFORMS.values())
-    # XXX this is pretty horrible.
-    sinks = list(addon for addon in addons_map.values()
-                 if getattr(addon, 'feed_type', False))
+    sinks = [x for x in addons_map.values() if isinstance(x, base.Check)]
 
     if not sinks:
         err.write(f'{scan.prog}: no matching checks available for current scope')
