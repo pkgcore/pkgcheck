@@ -42,9 +42,9 @@ known_scopes = OrderedDict((
     ('ver', _Scope(versioned_feed, 'version')),
 ))
 
-# The plugger needs to be able to compare those and know the highest one.
-version_scope, package_scope, category_scope, repository_scope = list(range(len(known_scopes)))
-max_scope = repository_scope
+# The plugger needs to be able to compare scopes.
+for i, scope in enumerate(reversed(known_scopes.values())):
+    globals()[f'{scope.desc}_scope'] = i
 
 CACHE_DIR = pjoin(const.USER_CACHE_PATH, 'pkgcheck')
 
