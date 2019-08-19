@@ -86,7 +86,7 @@ class BadPackageUpdate(base.LogError):
     threshold = base.repository_feed
 
 
-class PackageUpdatesCheck(base.Check):
+class PackageUpdatesCheck(base.Check, base.EmptyFeed):
     """Scan profiles/updates/* for outdated entries and other issues."""
 
     feed_type = base.repository_feed
@@ -99,9 +99,6 @@ class PackageUpdatesCheck(base.Check):
     def __init__(self, options):
         super().__init__(options)
         self.repo = options.target_repo
-
-    def feed(self, pkg):
-        pass
 
     def finish(self):
         update_reports = []
@@ -315,7 +312,7 @@ class UnknownLicenses(base.Warning):
             self.group, _pl(self.licenses), ', '.join(self.licenses))
 
 
-class LicenseGroupsCheck(base.Check):
+class LicenseGroupsCheck(base.Check, base.EmptyFeed):
     """Scan license groups for unknown licenses."""
 
     feed_type = base.repository_feed
@@ -325,9 +322,6 @@ class LicenseGroupsCheck(base.Check):
     def __init__(self, options):
         super().__init__(options)
         self.repo = options.target_repo
-
-    def feed(self, pkg):
-        pass
 
     def finish(self):
         for group, licenses in self.repo.licenses.groups.items():

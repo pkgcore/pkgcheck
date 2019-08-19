@@ -22,7 +22,7 @@ class BinaryFile(base.Error):
         return f"binary file found in repository: {self.path!r}"
 
 
-class RepoDirCheck(base.GentooRepoCheck):
+class RepoDirCheck(base.GentooRepoCheck, base.EmptyFeed):
     """Scan all files in the repository for issues."""
 
     feed_type = base.repository_feed
@@ -38,9 +38,6 @@ class RepoDirCheck(base.GentooRepoCheck):
         self.ignored_paths = {
             pjoin(self.repo.location, x) for x in self.ignored_root_dirs}
         self.dirs = [self.repo.location]
-
-    def feed(self, pkg):
-        pass
 
     def finish(self):
         while self.dirs:

@@ -127,7 +127,7 @@ class _ProfileNode(profiles_mod.ProfileNode):
     """Re-inherited to disable instance caching."""
 
 
-class ProfilesCheck(base.Check):
+class ProfilesCheck(base.Check, base.EmptyFeed):
     """Scan repo profiles for unknown flags/packages."""
 
     required_addons = (addons.UseAddon,)
@@ -160,9 +160,6 @@ class ProfilesCheck(base.Check):
         return frozenset(
             local_iuse | self.iuse_handler.global_iuse |
             self.iuse_handler.global_iuse_expand | self.iuse_handler.unstated_iuse)
-
-    def feed(self, pkg):
-        pass
 
     def finish(self):
         unknown_pkgs = defaultdict(lambda: defaultdict(list))
@@ -395,7 +392,7 @@ def dir_parents(path):
         path = dirname.rstrip('/')
 
 
-class RepoProfilesCheck(base.Check):
+class RepoProfilesCheck(base.Check, base.EmptyFeed):
     """Scan repo for various profiles directory issues.
 
     Including unknown arches in profiles, arches without profiles, and unknown
@@ -420,9 +417,6 @@ class RepoProfilesCheck(base.Check):
         self.repo = options.target_repo
         self.profiles_dir = self.repo.config.profiles_base
         self.non_profile_dirs = profile_addon.non_profile_dirs
-
-    def feed(self, pkg):
-        pass
 
     def finish(self):
         category_dirs = set(filterfalse(
