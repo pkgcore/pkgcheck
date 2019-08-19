@@ -161,7 +161,7 @@ def _validate_args(parser, namespace):
 
         # pull a target directory from target args if they're path-based
         if namespace.targets and os.path.exists(namespace.targets[0]):
-            target = namespace.targets[0]
+            target = os.path.abspath(namespace.targets[0])
             if os.path.isfile(target):
                 target = os.path.dirname(target)
             target_dir = target
@@ -177,9 +177,13 @@ def _validate_args(parser, namespace):
                 target_repo = namespace.domain.find_repo(
                     target_dir, config=namespace.config, configure=False)
 
-        # fallback to the default repo
         if target_repo is None:
+            # fallback to the default repo
             target_repo = namespace.config.get_default('repo')
+        elif len(namespace.targets) == 1 and (
+                os.path.abspath(namespace.targets[0]) == target_repo.location):
+            # reset targets so the entire repo is scanned
+            namespace.targets = []
 
         namespace.target_repo = target_repo
 

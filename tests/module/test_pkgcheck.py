@@ -104,8 +104,7 @@ class TestPkgcheckScanParseArgs(object):
         # dir path
         options, _func = self.tool.parse_args(self.args + [fakerepo])
         assert options.target_repo.repo_id == 'fakerepo'
-        assert list(options.limiters) == [
-            packages.AndRestriction(restricts.RepositoryDep('fakerepo'))]
+        assert options.limiters == [packages.AlwaysTrue]
 
         # file path
         os.makedirs(pjoin(fakerepo, 'dev-util', 'foo'))
