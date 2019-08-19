@@ -6,6 +6,14 @@ from pkgcore.restrictions import packages
 from . import addons, base
 
 
+class RestrictionRepoSource(base.GenericSource):
+    """Ebuild repository source supporting custom restrictions."""
+
+    def __init__(self, restriction, *args):
+        super().__init__(*args)
+        self.limiter = packages.AndRestriction(*(self.limiter, restriction))
+
+
 class FilteredRepoSource(base.GenericSource):
     """Repository source that uses profiles/package.mask to filter packages."""
 
