@@ -148,7 +148,7 @@ case $state in
           $scan_opts \
           $check_opts \
           $plugin_opts \
-          '*:target' \
+          '*:target:_files' \
           && ret=0
         ;;
       (replay)
