@@ -198,7 +198,6 @@ def _validate_args(parser, namespace):
     # things like visibility checks (it is passed to the checkers in "start").
     namespace.search_repo = multiplex.tree(*namespace.target_repo.trees)
 
-    namespace.default_target = None
     if namespace.targets:
         repo = namespace.target_repo
 
@@ -237,7 +236,6 @@ def _validate_args(parser, namespace):
         else:
             namespace.limiters = [packages.AndRestriction(
                 *namespace.target_repo.path_restrict(cwd))]
-            namespace.default_target = cwd
 
     if namespace.checkset is None:
         namespace.checkset = namespace.config.get_default('pkgcheck_checkset')
