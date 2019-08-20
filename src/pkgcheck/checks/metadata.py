@@ -12,7 +12,6 @@ from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import OrRestriction
-from snakeoil.demandload import demandload
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
