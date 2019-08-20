@@ -70,6 +70,27 @@ _reporters() {
   fi
 }
 
+# scopes provided by pkgcheck
+#
+# optional args
+#  -p       print the output instead of using completion
+_scopes() {
+  typeset -A opts
+  zparseopts -E -A opts p
+
+  if [[ -f /usr/share/pkgcheck/scopes ]]; then
+    _scopes=(${(f)"$(</usr/share/pkgcheck/scopes)"})
+  elif ( [[ ${+_scopes} -eq 0 ]] || _cache_invalid pkgcheck_scopes ) && ! _retrieve_cache pkgcheck_scopes; then
+    _scopes=(${${(f)"$(pkgcheck show --scopes)"}})
+    _store_cache pkgcheck_scopes _scopes
+  fi
+
+  if [[ -n ${compstate} ]] && [[ -z ${opts[(I)-p]} ]]; then
+    _describe -t scopes 'scopes' _scopes
+  else
+    print ${_scopes}
+  fi
+}
 
 typeset -a common_pkgcore_args common_output_args
 local curcontext=$curcontext state state_descr line ret=1
@@ -126,7 +147,7 @@ case $state in
           {'(--checks)-c','(-c)--checks'}'[comma separated list of checks to enable/disable]:checks:{_values -s , checks $(_checks -p)}'
           {'(--checkset)-C','(-C)--checkset'}'[preconfigured set of checks to run]'
           {'(--keywords)-k','(-k)--keywords'}'[comma separated list of keywords to enable/disable]:keywords:{_values -s , keywords $(_keywords -p)}'
-          {'(--scopes)-s','(-s)--scopes'}'[comma separated list of keyword scopes to enable/disable]'
+          {'(--scopes)-s','(-s)--scopes'}'[comma separated list of keyword scopes to enable/disable]:scopes:{_values -s . scopes $(_scopes -p)}'
         )
 
         arch_opts=(
