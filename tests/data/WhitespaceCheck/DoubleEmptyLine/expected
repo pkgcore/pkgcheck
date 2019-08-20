@@ -1,0 +1,2 @@
+WhitespaceCheck/DoubleEmptyLine
+  DoubleEmptyLine: version 0: ebuild has unneeded empty line: 4

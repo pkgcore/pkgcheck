@@ -1,0 +1,6 @@
+diff -Naur standalone/profiles/license_groups fixed/profiles/license_groups
+--- standalone/profiles/license_groups	2019-08-21 03:07:57.289878209 -0600
++++ fixed/profiles/license_groups	2019-08-21 03:08:40.481050795 -0600
+@@ -1 +1 @@
+-GROUP BSD unknown
++GROUP BSD

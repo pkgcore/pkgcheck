@@ -1,0 +1,7 @@
+--- standalone/WhitespaceCheck/TrailingEmptyLine/TrailingEmptyLine-0.ebuild
++++ fixed/WhitespaceCheck/TrailingEmptyLine/TrailingEmptyLine-0.ebuild
+@@ -2,4 +2,3 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-

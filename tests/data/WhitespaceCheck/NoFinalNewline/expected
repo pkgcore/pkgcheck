@@ -1,0 +1,2 @@
+WhitespaceCheck/NoFinalNewline
+  NoFinalNewline: version 0: ebuild lacks an ending newline

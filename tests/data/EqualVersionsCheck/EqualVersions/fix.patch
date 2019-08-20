@@ -1,0 +1,16 @@
+diff -Naur standalone/EqualVersionsCheck/EqualVersions/EqualVersions-0-r0.ebuild fixed/EqualVersionsCheck/EqualVersions/EqualVersions-0-r0.ebuild
+--- standalone/EqualVersionsCheck/EqualVersions/EqualVersions-0-r0.ebuild	2019-08-20 18:54:59.099260828 -0600
++++ fixed/EqualVersionsCheck/EqualVersions/EqualVersions-0-r0.ebuild	1969-12-31 17:00:00.000000000 -0700
+@@ -1,4 +0,0 @@
+-DESCRIPTION="Ebuilds that have equal versions"
+-HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SLOT="0"
+-LICENSE="BSD"
+diff -Naur standalone/EqualVersionsCheck/EqualVersions/EqualVersions-0-r01.ebuild fixed/EqualVersionsCheck/EqualVersions/EqualVersions-0-r01.ebuild
+--- standalone/EqualVersionsCheck/EqualVersions/EqualVersions-0-r01.ebuild	2019-08-20 18:54:59.099260828 -0600
++++ fixed/EqualVersionsCheck/EqualVersions/EqualVersions-0-r01.ebuild	1969-12-31 17:00:00.000000000 -0700
+@@ -1,4 +0,0 @@
+-DESCRIPTION="Ebuilds that have equal versions"
+-HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SLOT="0"
+-LICENSE="BSD"

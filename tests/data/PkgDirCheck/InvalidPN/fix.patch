@@ -1,0 +1,16 @@
+diff -Naur standalone/PkgDirCheck/InvalidPN/InvalidPN-0.ebuild fixed/PkgDirCheck/InvalidPN/InvalidPN-0.ebuild
+--- standalone/PkgDirCheck/InvalidPN/InvalidPN-0.ebuild	1969-12-31 17:00:00.000000000 -0700
++++ fixed/PkgDirCheck/InvalidPN/InvalidPN-0.ebuild	2019-08-20 18:54:59.098260825 -0600
+@@ -0,0 +1,4 @@
++DESCRIPTION="Ebuilds that have invalid package names"
++HOMEPAGE="https://github.com/pkgcore/pkgcheck"
++SLOT="0"
++LICENSE="BSD"
+diff -Naur standalone/PkgDirCheck/InvalidPN/InvalidPN-bad.ebuild fixed/PkgDirCheck/InvalidPN/InvalidPN-bad.ebuild
+--- standalone/PkgDirCheck/InvalidPN/InvalidPN-bad.ebuild	2019-08-20 18:54:59.098260825 -0600
++++ fixed/PkgDirCheck/InvalidPN/InvalidPN-bad.ebuild	1969-12-31 17:00:00.000000000 -0700
+@@ -1,4 +0,0 @@
+-DESCRIPTION="Ebuilds that have invalid package names"
+-HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SLOT="0"
+-LICENSE="BSD"

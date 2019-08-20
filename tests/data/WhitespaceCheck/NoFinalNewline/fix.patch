@@ -1,0 +1,9 @@
+--- standalone/WhitespaceCheck/NoFinalNewline/NoFinalNewline-0.ebuild
++++ fixed/WhitespaceCheck/NoFinalNewline/NoFinalNewline-0.ebuild
+@@ -1,4 +1,4 @@
+ DESCRIPTION="Ebuild lacks an ending newline"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+-LICENSE="BSD"
+\ No newline at end of file
++LICENSE="BSD"

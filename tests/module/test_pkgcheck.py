@@ -1,11 +1,15 @@
 from functools import partial
 from io import StringIO
 import os
+import shlex
+import shutil
+import subprocess
 import tempfile
 from unittest.mock import patch
 
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import restricts, atom
+from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.restrictions import packages
 import pytest
 from snakeoil.contexts import chdir
@@ -232,19 +236,143 @@ class TestPkgcheckScan(object):
     script = partial(run, project)
 
     @pytest.fixture(autouse=True)
-    def _setup(self, fakeconfig):
+    def _setup(self, fakeconfig, tmp_path):
         self.args = [project, '--config', fakeconfig, 'scan']
+        self.cache_dir = str(tmp_path)
+        self.testdir = os.path.dirname(os.path.dirname(__file__))
 
     def test_empty_repo(self, capsys, tmp_path):
         # no reports should be generated since the default repo is empty
-        cache_dir = str(tmp_path)
         with patch('sys.argv', self.args), \
-                patch('pkgcheck.base.CACHE_DIR', cache_dir):
+                patch('pkgcheck.base.CACHE_DIR', self.cache_dir):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             assert excinfo.value.code == 0
             out, err = capsys.readouterr()
             assert out == err == ''
+
+    results = []
+    for name, cls in const.CHECKS.items():
+        for result in cls.known_results:
+            results.append((name, result))
+
+    def test_pkgcheck_test_repos(self):
+        """Make sure the test repos are up to date check/result naming wise."""
+        # grab custom targets
+        custom_targets = set()
+        for root, _dirs, files in os.walk(pjoin(self.testdir, 'data')):
+            for f in files:
+                if f == 'target':
+                    with open(pjoin(root, f)) as target:
+                        custom_targets.add(target.read().strip())
+
+        # all pkgs that aren't custom targets must be check/keyword
+        for repo_dir in os.listdir(pjoin(self.testdir, 'repos')):
+            repo = UnconfiguredTree(pjoin(self.testdir, 'repos', repo_dir))
+            results = set((name, cls.__name__) for name, cls in self.results)
+            for cat, pkgs in sorted(repo.packages.items()):
+                for pkg in sorted(pkgs):
+                    if f'{cat}/{pkg}' not in custom_targets:
+                        assert (cat, pkg) in results
+
+    def test_pkgcheck_test_data(self):
+        """Make sure the test data is up to date check/result naming wise."""
+        for check in os.listdir(pjoin(self.testdir, 'data')):
+            assert check in const.CHECKS
+            for keyword in os.listdir(pjoin(self.testdir, f'data/{check}')):
+                assert keyword in const.KEYWORDS
+
+    @pytest.mark.parametrize('check, result', results)
+    def test_pkgcheck_scan(self, check, result, capsys, tmp_path):
+        # run pkgcheck against test pkgs in bundled repo, verifying result output
+        keyword = result.__name__
+        expected_path = pjoin(self.testdir, f'data/{check}/{keyword}/expected')
+        if not os.path.exists(expected_path):
+            pytest.skip('expected test data not available')
+
+        # determine what repo the test requires
+        try:
+            repo = open(pjoin(self.testdir, f'data/{check}/{keyword}/repo')).read()
+        except FileNotFoundError:
+            repo = 'standalone'
+        repo_dir = pjoin(self.testdir, 'repos', repo)
+
+        # determine what test target to use
+        try:
+            target = open(pjoin(self.testdir, f'data/{check}/{keyword}/target'))
+            args = shlex.split(target.read())
+        except FileNotFoundError:
+            if result.threshold in (base.package_feed, base.versioned_feed):
+                args = [f'{check}/{keyword}']
+            elif result.threshold in base.category_feed:
+                args = [f'{keyword}/*']
+            elif result.threshold in base.repository_feed:
+                args = ['-k', keyword]
+
+        with patch('sys.argv', self.args + ['-r', repo_dir] + args), \
+                patch('pkgcheck.base.CACHE_DIR', self.cache_dir):
+            with pytest.raises(SystemExit) as excinfo:
+                self.script()
+            out, err = capsys.readouterr()
+            assert err == ''
+            assert excinfo.value.code == 0
+            with open(expected_path) as expected:
+                assert out == expected.read()
+
+    @pytest.mark.parametrize('check, result', results)
+    def test_pkgcheck_scan_fix(self, check, result, capsys, tmp_path):
+        # apply fixes to pkgs, verifying the related results are fixed
+        keyword = result.__name__
+
+        def _patch(fix):
+            with open(fix) as f:
+                p = subprocess.run(['patch', '-p1'], cwd=fixed_repo, stdin=f)
+                p.check_returncode()
+
+        def _script(fix):
+            p = subprocess.run([fix], cwd=fixed_repo)
+            p.check_returncode()
+
+        fix_map = {
+            'fix.patch': _patch,
+            'fix.sh': _script,
+        }
+
+        for f, func in fix_map.items():
+            fix = pjoin(self.testdir, f'data/{check}/{keyword}/{f}')
+            if os.path.exists(fix):
+                break
+        else:
+            pytest.skip('fix not available')
+
+        # determine what repo the test requires
+        try:
+            repo = open(pjoin(self.testdir, f'data/{check}/{keyword}/repo')).read()
+        except FileNotFoundError:
+            repo = 'standalone'
+
+        repo_dir = pjoin(self.testdir, 'repos', repo)
+
+        if result.threshold in (base.package_feed, base.versioned_feed):
+            args = [f'{check}/{keyword}']
+        elif result.threshold in base.category_feed:
+            args = [f'{keyword}/*']
+        elif result.threshold in base.repository_feed:
+            args = ['-k', keyword]
+
+        # apply a fix if one exists and make sure the related result doesn't appear
+        fixed_repo = str(tmp_path / f'fixed-{repo}')
+        shutil.copytree(repo_dir, fixed_repo)
+        func(fix)
+        with patch('sys.argv', self.args + ['-r', fixed_repo] + args), \
+                patch('pkgcheck.base.CACHE_DIR', self.cache_dir):
+            with pytest.raises(SystemExit) as excinfo:
+                self.script()
+            out, err = capsys.readouterr()
+            assert err == ''
+            assert out == ''
+            assert excinfo.value.code == 0
+        shutil.rmtree(fixed_repo)
 
 
 class TestPkgcheckShow(object):

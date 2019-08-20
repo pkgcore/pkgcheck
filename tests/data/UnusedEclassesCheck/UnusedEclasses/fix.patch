@@ -1,0 +1,5 @@
+diff -Naur standalone/eclass/unused.eclass fixed/eclass/unused.eclass
+--- standalone/eclass/unused.eclass	2019-08-20 21:55:31.340002988 -0600
++++ fixed/eclass/unused.eclass	1969-12-31 17:00:00.000000000 -0700
+@@ -1 +0,0 @@
+-# unused

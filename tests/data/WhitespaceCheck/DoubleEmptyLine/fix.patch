@@ -1,0 +1,9 @@
+--- standalone/WhitespaceCheck/DoubleEmptyLine/DoubleEmptyLine-0.ebuild
++++ fixed/WhitespaceCheck/DoubleEmptyLine/DoubleEmptyLine-0.ebuild
+@@ -1,6 +1,5 @@
+ DESCRIPTION="Ebuild has unneeded empty lines"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ 
+-
+ SLOT="0"
+ LICENSE="BSD"

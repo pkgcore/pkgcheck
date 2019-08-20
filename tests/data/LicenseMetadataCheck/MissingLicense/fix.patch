@@ -1,0 +1,5 @@
+diff -Naur standalone/licenses/missing fixed/licenses/missing
+--- standalone/licenses/missing	1969-12-31 17:00:00.000000000 -0700
++++ fixed/licenses/missing	2019-08-21 15:37:16.136975626 -0600
+@@ -0,0 +1 @@
++added missing license
