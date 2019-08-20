@@ -214,15 +214,15 @@ def _validate_args(parser, namespace):
 
         def limiters():
             for target in namespace.targets:
-                try:
-                    yield parserestrict.parse_match(target)
-                except parserestrict.ParseError as e:
-                    if os.path.exists(target):
-                        try:
-                            yield repo.path_restrict(target)
-                        except ValueError as e:
-                            parser.error(e)
-                    else:
+                if os.path.exists(target):
+                    try:
+                        yield repo.path_restrict(target)
+                    except ValueError as e:
+                        parser.error(e)
+                else:
+                    try:
+                        yield parserestrict.parse_match(target)
+                    except parserestrict.ParseError as e:
                         parser.error(e)
         namespace.limiters = limiters()
     else:
