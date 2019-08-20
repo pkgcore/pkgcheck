@@ -152,7 +152,13 @@ for addon in all_addons:
 def _validate_args(parser, namespace):
     namespace.enabled_checks = list(const.CHECKS.values())
     namespace.enabled_keywords = list(const.KEYWORDS.values())
-    cwd = abspath(os.getcwd())
+
+    # Get the current working directory for repo detection and restriction
+    # creation, fallback to the root dir if it's be removed out from under us.
+    try:
+        cwd = abspath(os.getcwd())
+    except FileNotFoundError as e:
+        cwd = '/'
 
     if namespace.target_repo is None:
         # we have no target repo so try to guess one
