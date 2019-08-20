@@ -495,34 +495,34 @@ class Scope(object):
         return list(c for c in checks if c.scope in self.scopes)
 
 
-class CollapsedPipes(object):
-    """Collapse and iterate over multiple sources in a sorted fashion."""
+class InterleavedSources(object):
+    """Iterate over multiple sources, interleaving them in sorted fashion."""
 
-    def __init__(self, pipes):
-        self.pipes = [(iter(source), pipe) for source, pipe in pipes]
+    def __init__(self, sources):
+        self.sources = sources
         self._cache = {}
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        if not self.pipes:
+        if not self.sources:
             raise StopIteration
 
-        if len(self.pipes) == 1:
-            source, pipe = self.pipes[0]
-            return next(source), pipe
+        if len(self.sources) == 1:
+            source, pipe_idx = self.sources[0]
+            return next(source), pipe_idx
 
         i = 0
-        while i < len(self.pipes):
-            source, pipe = self.pipes[i]
+        while i < len(self.sources):
+            source, pipe_idx = self.sources[i]
             try:
-                self._cache[pipe]
+                self._cache[pipe_idx]
             except KeyError:
                 try:
-                    self._cache[pipe] = next(source)
+                    self._cache[pipe_idx] = next(source)
                 except StopIteration:
-                    self.pipes.pop(i)
+                    self.sources.pop(i)
                     continue
             i += 1
 
@@ -530,22 +530,23 @@ class CollapsedPipes(object):
             raise StopIteration
 
         l = sorted(self._cache.items(), key=itemgetter(1))
-        pipe, item = l[0]
-        del self._cache[pipe]
-        return item, pipe
+        pipe_idx, item = l[0]
+        del self._cache[pipe_idx]
+        return item, pipe_idx
 
 
 class Pipeline(object):
 
     def __init__(self, pipes):
-        self.collapsed = CollapsedPipes(pipes)
+        sources = [(iter(source), i) for i, (source, pipe) in enumerate(pipes)]
+        self.interleaved = InterleavedSources(sources)
         self.pipes = tuple(x[1] for x in pipes)
 
     def run(self):
         for pipe in self.pipes:
             yield from pipe.start()
-        for item, pipe in self.collapsed:
-            yield from pipe.feed(item)
+        for item, i in self.interleaved:
+            yield from self.pipes[i].feed(item)
         for pipe in self.pipes:
             yield from pipe.finish()
 
