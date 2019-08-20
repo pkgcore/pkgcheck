@@ -71,7 +71,7 @@ class TestStrReporter(BaseReporter):
 class TestFancyReporter(BaseReporter):
 
     reporter_cls = reporters.FancyReporter
-    add_report_output = dedent("""
+    add_report_output = dedent("""\
         repo
           ProfileWarning: profile warning
 
@@ -82,7 +82,7 @@ class TestFancyReporter(BaseReporter):
           InvalidPN: invalid package name: [ foo ]
           BadFilename: version 0: bad filename: [ 0.tar.gz ]
     """)
-    filtered_report_output = dedent("""
+    filtered_report_output = dedent("""\
         repo
           ProfileError: profile error
     """)

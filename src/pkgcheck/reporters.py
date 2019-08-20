@@ -71,7 +71,8 @@ class FancyReporter(base.Reporter):
                 key = 'repo'
 
             if key != self.key:
-                self.out.write()
+                if self.key is not None:
+                    self.out.write()
                 self.out.write(self.out.bold, key)
                 self.key = key
             self.out.first_prefix.append('  ')
