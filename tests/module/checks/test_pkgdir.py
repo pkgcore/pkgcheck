@@ -2,6 +2,8 @@ import os
 import tempfile
 import uuid
 
+import pytest
+
 from pkgcore.test.misc import FakeRepo
 from snakeoil import fileutils
 from snakeoil.fileutils import touch
@@ -12,11 +14,16 @@ from pkgcheck.checks import pkgdir
 from .. import misc
 
 
-class PkgDirCheckBase(misc.Tmpdir, misc.ReportTestCase):
+class PkgDirCheckBase(misc.ReportTestCase):
     """Various FILESDIR related test support."""
 
     check_kls = pkgdir.PkgDirCheck
-    check = pkgdir.PkgDirCheck(None, None)
+
+    @pytest.fixture(autouse=True)
+    def _create_repo(self, tmpdir):
+        self.repo = FakeRepo(repo_id='repo', location=str(tmpdir))
+        options = misc.Options(target_repo=self.repo)
+        self.check = self.check_kls(options)
 
     def mk_pkg(self, files={}, category=None, package=None, version='0.7.1', revision=''):
         # generate random cat/PN
@@ -24,20 +31,19 @@ class PkgDirCheckBase(misc.Tmpdir, misc.ReportTestCase):
         package = uuid.uuid4().hex if package is None else package
 
         pkg = f"{category}/{package}-{version}{revision}"
-        repo = FakeRepo(repo_id='repo', location=self.dir)
-        self.filesdir = pjoin(repo.location, category, package, 'files')
+        self.filesdir = pjoin(self.repo.location, category, package, 'files')
         # create files dir with random empty subdir
         os.makedirs(pjoin(self.filesdir, uuid.uuid4().hex), exist_ok=True)
 
         # create dirs that should be ignored
-        for d in self.check_kls.ignore_dirs:
+        for d in getattr(self.check_kls, 'ignore_dirs', ()):
             os.makedirs(pjoin(self.filesdir, d), exist_ok=True)
 
         # create specified files in FILESDIR
         for fn, contents in files.items():
             fileutils.write_file(pjoin(self.filesdir, fn), 'w', contents)
 
-        return misc.FakeFilesDirPkg(pkg, repo=repo)
+        return misc.FakeFilesDirPkg(pkg, repo=self.repo)
 
 
 class TestPkgDirCheck(PkgDirCheckBase):
@@ -54,7 +60,8 @@ class TestDuplicateFiles(PkgDirCheckBase):
         self.assertNoReport(self.check, [self.mk_pkg({'test': 'abc', 'test2': 'bcd'})])
 
     def test_single_duplicate(self):
-        r = self.assertReport(self.check, [self.mk_pkg({'test': 'abc', 'test2': 'abc'})])
+        pkg = self.mk_pkg({'test': 'abc', 'test2': 'abc'})
+        r = self.assertReport(self.check, [pkg])
         assert isinstance(r, pkgdir.DuplicateFiles)
         assert r.files == ('files/test', 'files/test2')
         assert "'files/test', 'files/test2'" in str(r)
@@ -188,6 +195,8 @@ class TestInvalidUTF8(PkgDirCheckBase):
 
 class TestEqualVersions(PkgDirCheckBase):
     """Check EqualVersions results."""
+
+    check_kls = pkgdir.EqualVersionsCheck
 
     def test_it(self):
         # pkg with no revision

@@ -7,7 +7,7 @@ from snakeoil.demandload import demandload
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism as _pl
 
-from .. import base
+from .. import base, sources
 
 demandload('snakeoil.chksum:get_chksums')
 
@@ -159,12 +159,13 @@ class InvalidUTF8(base.PackageResult, base.Error):
 class PkgDirCheck(base.Check):
     """Actual ebuild directory scans; file size, glep31 rule enforcement."""
 
-    feed_type = base.package_feed
+    feed_type = base.raw_package_feed
+    source = sources.RawRepoSource
 
     ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
     known_results = (
         DuplicateFiles, EmptyFile, ExecutableFile, SizeViolation,
-        Glep31Violation, InvalidUTF8, MismatchedPN, InvalidPN, EqualVersions,
+        Glep31Violation, InvalidUTF8, MismatchedPN, InvalidPN,
     )
 
     # TODO: put some 'preferred algorithms by purpose' into snakeoil?
@@ -172,14 +173,12 @@ class PkgDirCheck(base.Check):
 
     def feed(self, pkgset):
         pkg = pkgset[0]
-        base_path = os.path.dirname(pkg.path)
-        category = os.path.basename(
-            os.path.dirname(os.path.dirname(pkg.path)))
+        pkg_path = pjoin(self.options.target_repo.location, pkg.category, pkg.package)
         ebuild_ext = '.ebuild'
         mismatched = []
         invalid = []
         # note we don't use os.walk, we need size info also
-        for filename in listdir(base_path):
+        for filename in listdir(pkg_path):
             # while this may seem odd, written this way such that the
             # filtering happens all in the genexp.  if the result was being
             # handed to any, it's a frame switch each
@@ -190,20 +189,20 @@ class PkgDirCheck(base.Check):
 
             if (filename.endswith(ebuild_ext) or filename in
                     ("Manifest", "metadata.xml")):
-                if os.stat(pjoin(base_path, filename)).st_mode & 0o111:
+                if os.stat(pjoin(pkg_path, filename)).st_mode & 0o111:
                     yield ExecutableFile(pkg, filename)
 
             if filename.endswith(ebuild_ext):
                 try:
-                    with open(pjoin(base_path, filename), mode='rb') as f:
+                    with open(pjoin(pkg_path, filename), mode='rb') as f:
                         f.read(8192).decode()
                 except UnicodeDecodeError as e:
                     yield InvalidUTF8(pkg, filename, str(e))
 
                 pkg_name = os.path.basename(filename[:-len(ebuild_ext)])
                 try:
-                    pkg_atom = atom_cls(f'={category}/{pkg_name}')
-                    if pkg_atom.package != os.path.basename(base_path):
+                    pkg_atom = atom_cls(f'={pkg.category}/{pkg_name}')
+                    if pkg_atom.package != os.path.basename(pkg_path):
                         mismatched.append(pkg_name)
                 except MalformedAtom:
                     invalid.append(pkg_name)
@@ -213,26 +212,13 @@ class PkgDirCheck(base.Check):
         if invalid:
             yield InvalidPN(pkg, invalid)
 
-        # check for equal versions
-        equal_versions = defaultdict(set)
-        sorted_pkgset = sorted(pkgset)
-        for i, pkg_a in enumerate(sorted_pkgset):
-            try:
-                pkg_b = sorted_pkgset[i + 1]
-            except IndexError:
-                break
-            if pkg_a.versioned_atom == pkg_b.versioned_atom:
-                equal_versions[pkg_a.versioned_atom].update([pkg_a.fullver, pkg_b.fullver])
-        for atom, versions in equal_versions.items():
-            yield EqualVersions(atom, versions)
-
         files_by_size = defaultdict(list)
-        base_path_len = len(base_path) + 1
-        for root, dirs, files in os.walk(pjoin(base_path, 'files')):
+        pkg_path_len = len(pkg_path) + 1
+        for root, dirs, files in os.walk(pjoin(pkg_path, 'files')):
             # don't visit any ignored directories
             for d in self.ignore_dirs.intersection(dirs):
                 dirs.remove(d)
-            base_dir = root[base_path_len:]
+            base_dir = root[pkg_path_len:]
             for file_name in files:
                 file_stat = os.lstat(pjoin(root, file_name))
                 if stat.S_ISREG(file_stat.st_mode):
@@ -251,9 +237,29 @@ class PkgDirCheck(base.Check):
         for size, files in files_by_size.items():
             if len(files) > 1:
                 for f in files:
-                    digest = get_chksums(pjoin(base_path, f), self.digest_algo)[0]
+                    digest = get_chksums(pjoin(pkg_path, f), self.digest_algo)[0]
                     files_by_digest[digest].append(f)
 
         for digest, files in files_by_digest.items():
             if len(files) > 1:
                 yield DuplicateFiles(pkg, files)
+
+
+class EqualVersionsCheck(base.Check):
+    """Scan package ebuilds for semantically equal versions."""
+
+    feed_type = base.package_feed
+    known_results = (EqualVersions,)
+
+    def feed(self, pkgset):
+        equal_versions = defaultdict(set)
+        sorted_pkgset = sorted(pkgset)
+        for i, pkg_a in enumerate(sorted_pkgset):
+            try:
+                pkg_b = sorted_pkgset[i + 1]
+            except IndexError:
+                break
+            if pkg_a.versioned_atom == pkg_b.versioned_atom:
+                equal_versions[pkg_a.versioned_atom].update([pkg_a.fullver, pkg_b.fullver])
+        for atom, versions in equal_versions.items():
+            yield EqualVersions(atom, versions)
