@@ -10,6 +10,7 @@ from pkgcore.ebuild import eapi
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
+from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import OrRestriction
 from snakeoil.klass import jit_attr
@@ -133,11 +134,15 @@ class MetadataCheck(base.Check):
             yield DeprecatedEAPI(pkg)
 
     def finish(self):
+        # TODO: Move this somewhere that's consistently triggered after running
+        # all tests on a package set during the feed stage.
+        #
         # report all masked pkgs due to invalid EAPIs and other bad metadata
         for pkg in self.options.target_repo._masked:
             e = pkg.data
-            yield MetadataError(
-                pkg.versioned_atom, e.attr, e.msg(verbosity=self.options.verbosity))
+            if isinstance(e, MetadataException):
+                yield MetadataError(
+                    pkg.versioned_atom, e.attr, e.msg(verbosity=self.options.verbosity))
 
 
 class RequiredUseDefaults(base.VersionedResult, base.Warning):
