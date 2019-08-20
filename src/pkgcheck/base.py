@@ -15,7 +15,7 @@ from collections import OrderedDict, namedtuple
 from operator import attrgetter
 import re
 
-from pkgcore import const
+from pkgcore import const as pkgcore_const
 from pkgcore.config import ConfigHint
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import util
@@ -46,7 +46,7 @@ known_scopes = OrderedDict((
 for i, scope in enumerate(reversed(known_scopes.values())):
     globals()[f'{scope.desc}_scope'] = i
 
-CACHE_DIR = pjoin(const.USER_CACHE_PATH, 'pkgcheck')
+CACHE_DIR = pjoin(pkgcore_const.USER_CACHE_PATH, 'pkgcheck')
 
 
 class Addon(object):
