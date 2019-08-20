@@ -438,7 +438,7 @@ replay = subparsers.add_parser(
         reporter.
     """)
 replay.add_argument(
-    dest='pickle_file', type=argparse.FileType('rb'), help='pickled results file')
+    dest='pickle_file', type=arghparse.FileType('rb'), help='pickled results file')
 
 
 @replay.bind_main_func
