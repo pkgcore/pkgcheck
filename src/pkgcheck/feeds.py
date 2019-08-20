@@ -84,6 +84,23 @@ class VersionToCategory(_Collapse):
     keyfunc = attrgetter('category')
 
 
+class RawVersionToRawPackage(_Collapse):
+
+    source = base.raw_versioned_feed
+    dest = base.raw_package_feed
+    scope = base.package_scope
+    cost = 10
+
+    def keyfunc(self, pkg):
+        return (pkg.category, pkg.package)
+
+
+class RawVersionToCategory(VersionToCategory):
+
+    source = base.raw_versioned_feed
+    cost = 10
+
+
 class _PackageOrCategoryToRepo(base.Transform):
 
     def start(self):

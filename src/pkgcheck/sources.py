@@ -1,9 +1,32 @@
 """Custom package sources used for feeding addons."""
 
-from pkgcore.ebuild import restricts
+from collections import namedtuple
+
+from pkgcore.ebuild import cpv, restricts
 from pkgcore.restrictions import packages
 
 from . import addons, base
+
+
+class RawRepoSource(base.GenericSource):
+    """Ebuild repository source returning raw CPV named tuples."""
+
+    feed_type = base.raw_versioned_feed
+    raw_pkg = namedtuple('pkg', ['category', 'package', 'version'])
+
+    def __init__(self, options, limiter):
+        super().__init__(options, limiter)
+        # Drop repo restriction if one exists as we're matching against a faked
+        # repo with a different repo_id.
+        try:
+            if isinstance(self.limiter[0], restricts.RepositoryDep):
+                self.limiter = packages.AndRestriction(*self.limiter[1:])
+        except TypeError:
+            pass
+
+    def __iter__(self):
+        yield from self.repo.itermatch(
+            self.limiter, sorter=sorted, raw_pkg_cls=lambda *args: self.raw_pkg(*args))
 
 
 class RestrictionRepoSource(base.GenericSource):

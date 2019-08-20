@@ -11,7 +11,7 @@ minimally accepted scope, and for transforms the output scope is
 identical to the input scope.
 """
 
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict, namedtuple, defaultdict
 from operator import attrgetter
 import re
 
@@ -30,7 +30,9 @@ from .log import logger
 repository_feed = 'repo'
 category_feed = 'cat'
 package_feed = 'cat/pkg'
+raw_package_feed = '(cat, pkg)'
 versioned_feed = 'cat/pkg-ver'
+raw_versioned_feed = '(cat, pkg, ver)'
 ebuild_feed = 'cat/pkg-ver+text'
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
@@ -571,9 +573,9 @@ def plug(sinks, transforms, sources, debug=None):
     # point, which should be fairly easy since we only care about
     # their type and scope).
 
-    feed_to_transforms = {}
+    feed_to_transforms = defaultdict(list)
     for transform in transforms:
-        feed_to_transforms.setdefault(transform.source, []).append(transform)
+        feed_to_transforms[transform.source].append(transform)
 
     # Map from typename to best scope
     best_scope = {}
@@ -607,11 +609,12 @@ def plug(sinks, transforms, sources, debug=None):
         # No point in continuing.
         return bad_sinks, ()
 
-    # All types we need to reach.
-    sink_feed_types = frozenset(sink.feed_type for sink in good_sinks)
+    # all feed types we need to reach for each source type
+    sink_feed_map = defaultdict(set)
+    for sink in good_sinks:
+        sink_feed_map[sink.source].add(sink.feed_type)
 
     # tuples of (visited_types, source, transforms, price)
-    pipes = set()
     unprocessed = set(
         (frozenset((source.feed_type,)), raw, source, frozenset(), source.cost)
         for raw, source in sources.items())
@@ -621,6 +624,7 @@ def plug(sinks, transforms, sources, debug=None):
 
     # If we find a single pipeline driving all sinks we want to use it.
     # List of tuples of source, transforms.
+    pipes = set()
     pipes_to_run = []
     best_cost = None
     required_source_costs = {}
@@ -631,7 +635,7 @@ def plug(sinks, transforms, sources, debug=None):
         pipes.add(pipe)
         visited, raw, source, trans, cost = pipe
         best_cost = required_source_costs.get(raw, None)
-        if visited >= sink_feed_types:
+        if visited >= sink_feed_map[raw]:
             # Already reaches all sink types. Check if it is usable as
             # single pipeline:
             if best_cost is None or cost < best_cost:
