@@ -113,7 +113,7 @@ check_options.add_argument(
         Use ``pkgcheck show --keywords`` or the list below to see available options.
     """)
 check_options.add_argument(
-    '-S', '--scopes', metavar='SCOPE', action='csv_negations', dest='selected_scopes',
+    '-s', '--scopes', metavar='SCOPE', action='csv_negations', dest='selected_scopes',
     help='limit keywords to scan for by scope (comma-separated list)',
     docs="""
         Comma separated list of scopes to enable and disable for scanning. Any

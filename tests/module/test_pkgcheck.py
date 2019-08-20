@@ -160,7 +160,7 @@ class TestPkgcheckScanParseArgs(object):
                 "pkgcheck scan: error: no reporter matches 'foo'")
 
     def test_unknown_scope(self, capsys):
-        for opt in ('-S', '--scopes'):
+        for opt in ('-s', '--scopes'):
             with pytest.raises(SystemExit) as excinfo:
                 options, _func = self.tool.parse_args(self.args + [opt, 'foo'])
             assert excinfo.value.code == 2
@@ -195,14 +195,14 @@ class TestPkgcheckScanParseArgs(object):
             assert options.enabled_checks == [check]
 
     def test_missing_scope(self, capsys):
-        for opt in ('-S', '--scopes'):
+        for opt in ('-s', '--scopes'):
             with pytest.raises(SystemExit) as excinfo:
                 options, _func = self.tool.parse_args(self.args + [opt])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
             assert err[0] == (
-                'pkgcheck scan: error: argument -S/--scopes: expected one argument')
+                'pkgcheck scan: error: argument -s/--scopes: expected one argument')
 
     def test_no_active_checks(self, capsys):
             args = self.args + ['-c', 'UnusedInMastersCheck']
