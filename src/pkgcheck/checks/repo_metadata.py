@@ -3,19 +3,15 @@ from difflib import SequenceMatcher
 from itertools import chain, groupby
 from operator import attrgetter, itemgetter
 
+from pkgcore import fetch
+from pkgcore.ebuild import atom
 from snakeoil import mappings
-from snakeoil.demandload import demandload
+from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
+from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, addons
-
-demandload(
-    'snakeoil.contexts:patch',
-    'snakeoil.sequences:iflatten_instance',
-    'pkgcore.ebuild:atom',
-    'pkgcore:fetch',
-)
 
 
 class MultiMovePackageUpdate(base.Warning):

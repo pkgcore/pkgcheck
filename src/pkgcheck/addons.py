@@ -11,16 +11,18 @@ import subprocess
 import stat
 
 from pkgcore.ebuild import cpv
+from pkgcore.ebuild import misc, domain, profiles, repo_objs
 from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
+from pkgcore.restrictions import packages, values
 from pkgcore.test.misc import FakeRepo
 from snakeoil import klass, mappings
 from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
 from snakeoil.decorators import coroutine
-from snakeoil.demandload import demandload, demand_compile_regexp
+from snakeoil.demandload import demand_compile_regexp
 from snakeoil.log import suppress_logging
 from snakeoil.osutils import abspath, listdir_files, pjoin
 from snakeoil.process import find_binary, CommandNotFound
@@ -31,10 +33,6 @@ from snakeoil.strings import pluralism as _pl
 from . import base
 from .log import logger
 
-demandload(
-    'pkgcore.restrictions:packages,values',
-    'pkgcore.ebuild:misc,domain,profiles,repo_objs',
-)
 
 # hacky ebuild path regexes for git log parsing, proper atom validation is handled later
 _ebuild_path_regex_raw = '([^/]+)/([^/]+)/([^/]+)\\.ebuild'

@@ -1,20 +1,15 @@
 """Basic result reporters."""
 
 from collections import defaultdict
+import json
+import pickle
+from xml.sax.saxutils import escape as xml_escape
 
 from pkgcore.config import configurable
-from snakeoil import formatters
+from snakeoil import currying, formatters
 from snakeoil.decorators import coroutine
-from snakeoil.demandload import demandload
 
 from . import base
-
-demandload(
-    'json',
-    'pickle',
-    'xml.sax.saxutils:escape@xml_escape',
-    'snakeoil:currying',
-)
 
 
 class StrReporter(base.Reporter):

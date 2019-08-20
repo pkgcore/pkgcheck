@@ -9,31 +9,27 @@ import argparse
 from functools import partial
 from itertools import chain
 from operator import attrgetter
+import logging
+import os
+import sys
+import textwrap
 
 from pkgcore import const as pkgcore_const
+from pkgcore.ebuild import repository
+from pkgcore.repository import multiplex
+from pkgcore.restrictions import packages
+from pkgcore.restrictions.values import StrExactMatch
 from pkgcore.util import commandline, parserestrict
+from snakeoil import pickling, formatters
 from snakeoil.cli import arghparse
-from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
+from snakeoil.log import suppress_logging
 from snakeoil.osutils import abspath, pjoin
+from snakeoil.sequences import iflatten_instance
 from snakeoil.sequences import unstable_unique
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, feeds, const
-
-demandload(
-    'logging',
-    'os',
-    'sys',
-    'textwrap',
-    'pkgcore.ebuild:repository',
-    'pkgcore.restrictions:packages',
-    'pkgcore.restrictions.values:StrExactMatch',
-    'pkgcore.repository:multiplex',
-    'snakeoil:pickling,formatters',
-    'snakeoil.log:suppress_logging',
-    'snakeoil.sequences:iflatten_instance',
-)
 
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))

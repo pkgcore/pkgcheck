@@ -1,24 +1,20 @@
 import argparse
 from functools import partial
 from itertools import chain
+from lxml import etree
 import os
+from urllib.request import urlopen
+from urllib import error as urllib_error
 
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild.atom import atom
+from snakeoil import fileutils
 from snakeoil.cli.exceptions import UserException
-from snakeoil.demandload import demandload
+from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
 from .. import base
 from ..log import logger
-
-demandload(
-    'urllib.request:urlopen',
-    'urllib:error@urllib_error',
-    'lxml:etree',
-    'snakeoil.osutils:pjoin',
-    'snakeoil:fileutils',
-)
 
 
 class XsdError(Exception):

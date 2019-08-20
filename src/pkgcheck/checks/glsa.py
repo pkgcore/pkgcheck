@@ -1,18 +1,14 @@
 import os
 
-from snakeoil.cli.arghparse import existent_dir
-from snakeoil.demandload import demandload
-from snakeoil.strings import pluralism as _pl
 from pkgcore.pkgsets.glsa import GlsaDirSet
+from pkgcore.restrictions import packages, values
+from pkgcore.restrictions.util import collect_package_restrictions
+from snakeoil.cli.arghparse import existent_dir
+from snakeoil.osutils import abspath, pjoin
+from snakeoil.strings import pluralism as _pl
 
 from .. import base
 from ..log import logger
-
-demandload(
-    'pkgcore.restrictions:packages,values',
-    'pkgcore.restrictions.util:collect_package_restrictions',
-    'snakeoil.osutils:abspath,pjoin',
-)
 
 
 class VulnerablePackage(base.VersionedResult, base.Error):

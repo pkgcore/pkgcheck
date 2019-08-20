@@ -2,20 +2,15 @@ from collections import defaultdict
 from itertools import filterfalse, chain
 import os
 
-from snakeoil.demandload import demandload
+from pkgcore.ebuild import atom, misc, repo_objs, profiles as profiles_mod
+from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
 from snakeoil.log import suppress_logging
+from snakeoil.osutils import listdir_dirs, pjoin
+from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, addons
-
-demandload(
-    'snakeoil.contexts:patch',
-    'snakeoil.osutils:listdir_dirs,pjoin',
-    'snakeoil.sequences:iflatten_instance',
-    'pkgcore.ebuild:atom,misc,repo_objs',
-    'pkgcore.ebuild:profiles@profiles_mod',
-)
 
 
 class BadProfileEntry(base.Error):

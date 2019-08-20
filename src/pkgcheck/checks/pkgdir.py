@@ -3,13 +3,12 @@ import os
 import stat
 
 from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
-from snakeoil.demandload import demandload
+from snakeoil.chksum import get_chksums
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, sources
 
-demandload('snakeoil.chksum:get_chksums')
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()

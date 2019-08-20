@@ -1,16 +1,12 @@
 from functools import partial
 from importlib import import_module
+import inspect
 import os
+import pkgutil
 
 from snakeoil import mappings
-from snakeoil.demandload import demandload
 
 from . import __title__, base
-
-demandload(
-    'inspect',
-    'pkgutil',
-)
 
 
 try:
