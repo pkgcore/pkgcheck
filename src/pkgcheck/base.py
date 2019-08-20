@@ -12,7 +12,7 @@ identical to the input scope.
 """
 
 from collections import OrderedDict, namedtuple, defaultdict
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 import re
 
 from pkgcore import const as pkgcore_const
@@ -493,6 +493,61 @@ class Scope(object):
 
     def filter(self, checks):
         return list(c for c in checks if c.scope in self.scopes)
+
+
+class CollapsedPipes(object):
+    """Collapse and iterate over multiple sources in a sorted fashion."""
+
+    def __init__(self, pipes):
+        self.pipes = [(iter(source), pipe) for source, pipe in pipes]
+        self._cache = {}
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if not self.pipes:
+            raise StopIteration
+
+        if len(self.pipes) == 1:
+            source, pipe = self.pipes[0]
+            return next(source), pipe
+
+        i = 0
+        while i < len(self.pipes):
+            source, pipe = self.pipes[i]
+            try:
+                self._cache[pipe]
+            except KeyError:
+                try:
+                    self._cache[pipe] = next(source)
+                except StopIteration:
+                    self.pipes.pop(i)
+                    continue
+            i += 1
+
+        if not self._cache:
+            raise StopIteration
+
+        l = sorted(self._cache.items(), key=itemgetter(1))
+        pipe, item = l[0]
+        del self._cache[pipe]
+        return item, pipe
+
+
+class Pipeline(object):
+
+    def __init__(self, pipes):
+        self.collapsed = CollapsedPipes(pipes)
+        self.pipes = tuple(x[1] for x in pipes)
+
+    def run(self):
+        for pipe in self.pipes:
+            yield from pipe.start()
+        for item, pipe in self.collapsed:
+            yield from pipe.feed(item)
+        for pipe in self.pipes:
+            yield from pipe.finish()
 
 
 class CheckRunner(object):
