@@ -905,25 +905,27 @@ class StableArchesAddon(base.Addon):
 class UnstatedIUSE(base.VersionedResult, base.Error):
     """Package is reliant on conditionals that aren't in IUSE."""
 
-    __slots__ = ("attr", "profile", "flags", "num_profiles")
+    __slots__ = ('attr', 'flags', 'profile', 'num_profiles')
 
-    def __init__(self, pkg, attr, profile, flags, num_profiles=None):
+    def __init__(self, pkg, attr, flags, profile=None, num_profiles=None):
         super().__init__(pkg)
         self.attr = attr
-        self.profile = profile
         self.flags = tuple(flags)
+        self.profile = profile
         self.num_profiles = num_profiles
 
     @property
     def short_desc(self):
-        if self.num_profiles is not None:
-            num_profiles = f' ({self.num_profiles} total)'
-        else:
-            num_profiles = ''
-        return (
-            f"attr({self.attr}): profile {self.profile!r}{num_profiles}: "
-            f"unstated flag{_pl(self.flags)}: [ {', '.join(self.flags)} ]"
-        )
+        msg = [f'attr({self.attr})']
+        if self.profile is not None:
+            if self.num_profiles is not None:
+                num_profiles = f' ({self.num_profiles} total)'
+            else:
+                num_profiles = ''
+            msg.append(f'profile {self.profile!r}{num_profiles}')
+        flags = ', '.join(self.flags)
+        msg.extend([f'unstated flag{_pl(self.flags)}', f'[ {flags} ]'])
+        return ': '.join(msg)
 
 
 class UseAddon(base.Addon):
@@ -954,7 +956,7 @@ class UseAddon(base.Addon):
         self.profiles = profiles
         self.global_iuse = frozenset(known_iuse)
         self.global_iuse_expand = frozenset(known_iuse_expand)
-        self.unstated_iuse = frozenset(c_implicit_iuse)
+        self.global_iuse_implicit = frozenset(c_implicit_iuse)
         self.ignore = not (c_implicit_iuse or known_iuse or known_iuse_expand)
         if self.ignore:
             logger.warn('disabling use/iuse validity checks since no usable '
@@ -992,30 +994,36 @@ class UseAddon(base.Addon):
                 unstated.update(filterfalse(stated.__contains__, node.vals))
             yield k, tuple(v)
 
-    def use_validate(self, klasses, pkg, seq, attr=None):
-        skip_filter = (packages.Conditional,) + klasses
-        nodes = iflatten_instance(seq, skip_filter)
-        unstated = set()
-        stated = pkg.iuse_stripped
+    def _unstated_iuse(self, pkg, attr, unstated_iuse):
+        """Determine if packages have unstated IUSE."""
+        # determine profiles lacking USE flags
+        if self.profiles:
+            profiles_unstated = defaultdict(set)
+            if attr is not None:
+                for p in self.profiles:
+                    profile_unstated = unstated_iuse - p.iuse_effective
+                    if profile_unstated:
+                        profiles_unstated[tuple(sorted(profile_unstated))].add(p.name)
 
-        vals = dict(self._flatten_restricts(nodes, skip_filter, stated, unstated, attr))
-
-        # find profiles with unstated IUSE
-        profiles_unstated = defaultdict(set)
-        if attr is not None:
-            for p in self.profiles:
-                profile_unstated = unstated - p.iuse_effective
-                if profile_unstated:
-                    profiles_unstated[tuple(sorted(profile_unstated))].add(p.name)
-
-        def _profiles_unstated():
             for unstated, profiles in profiles_unstated.items():
                 profiles = sorted(profiles)
                 if self.options.verbosity > 0:
                     for p in profiles:
-                        yield UnstatedIUSE(pkg, attr, p, unstated)
+                        yield UnstatedIUSE(pkg, attr, unstated, p)
                 else:
                     num_profiles = len(profiles)
-                    yield UnstatedIUSE(pkg, attr, profiles[0], unstated, num_profiles)
+                    yield UnstatedIUSE(pkg, attr, unstated, profiles[0], num_profiles)
+        elif unstated_iuse:
+            # Remove global defined implicit USE flags, note that standalone
+            # repos without profiles will currently lack any implicit IUSE.
+            unstated_iuse -= self.global_iuse_implicit
+            if unstated_iuse:
+                yield UnstatedIUSE(pkg, attr, unstated_iuse)
 
-        return vals, _profiles_unstated()
+    def use_validate(self, klasses, pkg, seq, attr=None):
+        skip_filter = (packages.Conditional,) + klasses
+        nodes = iflatten_instance(seq, skip_filter)
+        unstated = set()
+        vals = dict(self._flatten_restricts(
+            nodes, skip_filter, stated=pkg.iuse_stripped, unstated=unstated, attr=attr))
+        return vals, self._unstated_iuse(pkg, attr, unstated)

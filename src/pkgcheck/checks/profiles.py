@@ -154,7 +154,7 @@ class ProfilesCheck(base.Check, base.EmptyFeed):
         local_iuse = {use for pkg, (use, desc) in self.repo.config.use_local_desc}
         return frozenset(
             local_iuse | self.iuse_handler.global_iuse |
-            self.iuse_handler.global_iuse_expand | self.iuse_handler.unstated_iuse)
+            self.iuse_handler.global_iuse_expand | self.iuse_handler.global_iuse_implicit)
 
     def finish(self):
         unknown_pkgs = defaultdict(lambda: defaultdict(list))
