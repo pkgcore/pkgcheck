@@ -164,7 +164,8 @@ class UnusedLicenses(base.Warning):
 
     @property
     def short_desc(self):
-        return ', '.join(self.licenses)
+        licenses = ', '.join(self.licenses)
+        return f'unused license{_pl(self.licenses)}: {licenses}'
 
 
 class UnusedLicensesCheck(base.Check):
@@ -195,7 +196,7 @@ class UnusedLicensesCheck(base.Check):
 class UnusedMirrors(base.Warning):
     """Unused mirrors detected."""
 
-    __slots__ = ("mirrors",)
+    __slots__ = ('mirrors',)
 
     threshold = base.repository_feed
 
@@ -205,7 +206,8 @@ class UnusedMirrors(base.Warning):
 
     @property
     def short_desc(self):
-        return ', '.join(self.mirrors)
+        mirrors = ', '.join(self.mirrors)
+        return f'unused mirror{_pl(self.mirrors)}: {mirrors}'
 
 
 class _MirrorsCheck(base.Check):
@@ -251,7 +253,7 @@ class UnusedMirrorsCheck(_MirrorsCheck):
 class UnusedEclasses(base.Warning):
     """Unused eclasses detected."""
 
-    __slots__ = ("eclasses",)
+    __slots__ = ('eclasses',)
 
     threshold = base.repository_feed
 
@@ -261,7 +263,8 @@ class UnusedEclasses(base.Warning):
 
     @property
     def short_desc(self):
-        return ', '.join(self.eclasses)
+        eclasses = ', '.join(self.eclasses)
+        return f"unused eclass{_pl(self.eclasses, plural='es')}: {eclasses}"
 
 
 class UnusedEclassesCheck(base.Check):

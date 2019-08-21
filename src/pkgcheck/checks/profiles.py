@@ -287,7 +287,7 @@ class ProfilesCheck(base.Check, base.EmptyFeed):
 class UnusedProfileDirs(base.Warning):
     """Unused profile directories detected."""
 
-    __slots__ = ("dirs",)
+    __slots__ = ('dirs',)
 
     threshold = base.repository_feed
 
@@ -297,13 +297,14 @@ class UnusedProfileDirs(base.Warning):
 
     @property
     def short_desc(self):
-        return f"[ {', '.join(self.dirs)} ]"
+        dirs = ', '.join(map(repr, self.dirs))
+        return f'unused profile dir{_pl(self.dirs)}: {dirs}'
 
 
 class ArchesWithoutProfiles(base.Warning):
     """Arches without corresponding profile listings."""
 
-    __slots__ = ("arches",)
+    __slots__ = ('arches',)
 
     threshold = base.repository_feed
 
@@ -313,13 +314,14 @@ class ArchesWithoutProfiles(base.Warning):
 
     @property
     def short_desc(self):
-        return f"[ {', '.join(self.arches)} ]"
+        arches = ', '.join(self.arches)
+        return f"arch{_pl(self.arches, plural='es')} without profile: {arches}"
 
 
 class NonexistentProfilePath(base.Warning):
     """Specified profile path in profiles.desc doesn't exist."""
 
-    __slots__ = ("path",)
+    __slots__ = ('path',)
 
     threshold = base.repository_feed
 
@@ -329,7 +331,7 @@ class NonexistentProfilePath(base.Warning):
 
     @property
     def short_desc(self):
-        return self.path
+        return f'nonexistent profile path: {self.path!r}'
 
 
 class LaggingProfileEAPI(base.Warning):
@@ -360,7 +362,7 @@ class UnknownCategories(base.Warning):
     Or the categories of the repo's masters as well.
     """
 
-    __slots__ = ("categories",)
+    __slots__ = ('categories',)
 
     threshold = base.repository_feed
 
@@ -370,7 +372,9 @@ class UnknownCategories(base.Warning):
 
     @property
     def short_desc(self):
-        return f"[ {', '.join(self.categories)} ]"
+        categories = ', '.join(self.categories)
+        y = _pl(self.categories, singular='y', plural='ies')
+        return f'unknown categor{y}: {categories}'
 
 
 def dir_parents(path):
