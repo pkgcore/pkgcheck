@@ -6,7 +6,7 @@ import pytest
 
 from pkgcore import const as pkgcore_const
 from pkgcore.util.commandline import Tool
-from pkgcore.ebuild import domain
+from pkgcore.ebuild import domain, repo_objs
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.eapi import get_eapi
@@ -26,7 +26,7 @@ from pkgcheck.scripts import pkgcheck
 # TODO: merge this with the pkgcore-provided equivalent
 class FakePkg(package):
 
-    def __init__(self, cpvstr, data=None, shared=None, parent=None, ebuild=''):
+    def __init__(self, cpvstr, data=None, parent=None, ebuild=''):
         if data is None:
             data = {}
 
@@ -34,8 +34,10 @@ class FakePkg(package):
             data.setdefault(x, "")
 
         cpv = versioned_CPV(cpvstr)
+        # TODO: make pkgcore generate empty shared pkg data when None is passed
+        mxml = repo_objs.LocalMetadataXml('')
+        shared = repo_objs.SharedPkgData(metadata_xml=mxml, manifest=None)
         super().__init__(shared, parent, cpv.category, cpv.package, cpv.fullver)
-        package.local_use = ImmutableDict()
         object.__setattr__(self, "data", data)
         object.__setattr__(self, "_ebuild", ebuild)
 
