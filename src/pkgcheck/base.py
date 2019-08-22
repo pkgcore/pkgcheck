@@ -16,7 +16,7 @@ from operator import attrgetter, itemgetter
 import re
 
 from pkgcore import const as pkgcore_const
-from pkgcore.config import ConfigHint
+from pkgcore.config.hint import ConfigHint
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import util
 from snakeoil.decorators import coroutine

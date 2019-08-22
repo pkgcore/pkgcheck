@@ -5,7 +5,6 @@ import json
 import pickle
 from xml.sax.saxutils import escape as xml_escape
 
-from pkgcore.config import configurable
 from snakeoil import currying, formatters
 from snakeoil.decorators import coroutine
 
