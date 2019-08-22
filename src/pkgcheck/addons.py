@@ -552,10 +552,6 @@ class ProfileAddon(base.Addon):
 
         profiles = enabled.difference(disabled)
 
-        # initialize cache file location
-        cache_dir = pjoin(base.CACHE_DIR, 'repos', namespace.target_repo.repo_id)
-        namespace.cache_file = pjoin(cache_dir, 'profiles.pickle')
-
         # disable profile cache usage for custom profiles directories
         if profiles_dir is not None:
             namespace.profile_cache = False
@@ -621,7 +617,7 @@ class ProfileAddon(base.Addon):
             for profile_obj, profile in chain.from_iterable(
                     self.options.arch_profiles.values()):
                 mtime, files = gen_profile_data.send(profile_obj)
-                data[profile.path] = (mtime, files)
+                data[profile] = (mtime, files)
                 next(gen_profile_data)
             del gen_profile_data
         return mappings.ImmutableDict(data)
@@ -638,25 +634,32 @@ class ProfileAddon(base.Addon):
         self.global_insoluble = set()
         profile_filters = defaultdict(list)
         chunked_data_cache = {}
-        cached_profiles = {}
+        cached_profiles = defaultdict(dict)
 
-        # try loading cached profile filters
-        if options.profile_cache is None:
-            try:
-                with open(options.cache_file, 'rb') as f:
-                    cached_profiles = pickle.load(f)
-                if cached_profiles.cache_version != self.cache_version:
-                    logger.debug('forcing profile cache regen due to outdated version')
-                    os.remove(options.cache_file)
-                    cached_profiles = {}
-            except FileNotFoundError as e:
-                pass
-            except (EOFError, AttributeError, TypeError) as e:
-                logger.debug('forcing profile cache regen: %s', e)
-                os.remove(options.cache_file)
-                cached_profiles = {}
+        if options.profile_cache or options.profile_cache is None:
+            for repo in self.options.target_repo.trees:
+                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id)
+                cache_file = pjoin(cache_dir, 'profiles.pickle')
+                # add profiles-base -> repo mapping to ease storage procedure
+                cached_profiles[repo.config.profiles_base]['repo'] = repo
+                # load cached profile filters by default
+                if options.profile_cache is None:
+                    try:
+                        with open(cache_file, 'rb') as f:
+                            cache = pickle.load(f)
+                        if cache.cache_version == self.cache_version:
+                            cached_profiles[repo.config.profiles_base].update(cache)
+                        else:
+                            logger.debug(
+                                f'forcing %s profile cache regen '
+                                'due to outdated version', repo.repo_id)
+                            os.remove(cache_file)
+                    except FileNotFoundError as e:
+                        pass
+                    except (EOFError, AttributeError, TypeError) as e:
+                        logger.debug('forcing %s profile cache regen: %s', repo.repo_id, e)
+                        os.remove(cache_file)
 
-        cached_profile_updates = False
         for k in self.desired_arches:
             if k.lstrip("~") not in self.desired_arches:
                 continue
@@ -671,9 +674,9 @@ class ProfileAddon(base.Addon):
                 x for x in self.official_arches if x != stable_key))
 
             for profile_obj, profile in options.arch_profiles.get(k, []):
-                files = self.profile_data.get(profile.path, None)
+                files = self.profile_data.get(profile, None)
                 try:
-                    cached_profile = cached_profiles[profile.path]
+                    cached_profile = cached_profiles[profile.base][profile.path]
                     if files != cached_profile['files']:
                         # force refresh of outdated cache entry
                         raise KeyError
@@ -726,8 +729,8 @@ class ProfileAddon(base.Addon):
                             continue
 
                     if options.profile_cache or options.profile_cache is None:
-                        cached_profile_updates = True
-                        cached_profiles[profile.path] = {
+                        cached_profiles[profile.base]['update'] = True
+                        cached_profiles[profile.base][profile.path] = {
                             'files': files,
                             'vfilter': vfilter,
                             'immutable_flags': immutable_flags,
@@ -779,17 +782,24 @@ class ProfileAddon(base.Addon):
                     profile.deprecated))
 
         # dump updated profile filters
-        if cached_profile_updates:
-            try:
-                os.makedirs(os.path.dirname(options.cache_file), exist_ok=True)
-                with open(options.cache_file, 'wb+') as f:
-                    pickle.dump(_ProfilesCache(cached_profiles), f)
-            except IOError as e:
-                msg = f'failed dumping profiles cache: {options.cache_file!r}: {e.strerror}'
-                if not options.forced_cache:
-                    logger.warn(msg)
-                else:
-                    raise UserException(msg)
+        for k, v in cached_profiles.items():
+            if v.pop('update', False):
+                repo = v.pop('repo')
+                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id)
+                cache_file = pjoin(cache_dir, 'profiles.pickle')
+                try:
+                    os.makedirs(os.path.dirname(cache_file), exist_ok=True)
+                    with open(cache_file, 'wb+') as f:
+                        pickle.dump(_ProfilesCache(
+                            cached_profiles[repo.config.profiles_base]), f)
+                except IOError as e:
+                    msg = (
+                        f'failed dumping {repo.repo_id} profiles cache: '
+                        f'{cache_file!r}: {e.strerror}')
+                    if not options.forced_cache:
+                        logger.warn(msg)
+                    else:
+                        raise UserException(msg)
 
         profile_evaluate_dict = {}
         for key, profile_list in profile_filters.items():
