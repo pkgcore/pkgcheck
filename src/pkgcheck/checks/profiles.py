@@ -425,9 +425,7 @@ class RepoProfilesCheck(base.Check, base.EmptyFeed):
         if unknown_categories:
             yield UnknownCategories(unknown_categories)
 
-        arches_without_profiles = set(self.arches)
-        for repo in self.options.target_repo.trees:
-            arches_without_profiles.difference_update(repo.config.profiles.arches())
+        arches_without_profiles = set(self.arches) - set(self.repo.profiles.arches())
         if arches_without_profiles:
             yield ArchesWithoutProfiles(arches_without_profiles)
 
@@ -450,27 +448,22 @@ class RepoProfilesCheck(base.Check, base.EmptyFeed):
             known_profile_statuses = None
 
         # forcibly parse profiles.desc and convert log warnings/errors into reports
-        profiles_obj = repo_objs.BundledProfiles(self.profiles_dir)
-        # TODO: provide easier access to the function underlying a jitted attribute
-        arch_profiles = getattr(repo_objs.BundledProfiles, 'arch_profiles').function
         with patch('pkgcore.log.logger.error', report_profile_errors), \
                 patch('pkgcore.log.logger.warning', report_profile_warnings):
-            profiles = arch_profiles(
-                profiles_obj,
+            profiles = repo_objs.Profiles(self.profiles_dir)._parse_profiles(
                 known_status=known_profile_statuses, known_arch=self.arches)
 
         yield from profile_reports
 
         seen_profile_dirs = set()
-        profile_status = set()
         lagging_profile_eapi = defaultdict(list)
-        for path, status in chain.from_iterable(iter(profiles.values())):
+        for p in profiles:
             # suppress profile warning/error logs that should be caught by ProfilesCheck
             with suppress_logging():
                 try:
-                    profile = profiles_mod.ProfileStack(pjoin(self.profiles_dir, path))
+                    profile = profiles_mod.ProfileStack(pjoin(self.profiles_dir, p.path))
                 except profiles_mod.ProfileError:
-                    yield NonexistentProfilePath(path)
+                    yield NonexistentProfilePath(p.path)
                     continue
                 for parent in profile.stack:
                     seen_profile_dirs.update(
@@ -480,7 +473,6 @@ class RepoProfilesCheck(base.Check, base.EmptyFeed):
                     if (self.repo.repo_id == 'gentoo' and
                             str(profile.eapi) < str(parent.eapi)):
                         lagging_profile_eapi[profile].append(parent)
-            profile_status.add(status)
 
         for profile, parents in lagging_profile_eapi.items():
             yield LaggingProfileEAPI(profile, parents[-1])
