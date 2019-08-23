@@ -808,7 +808,7 @@ class UnknownMirror(base.VersionedResult, base.Error):
         return f"file {self.filename}: unknown mirror {self.mirror!r} from URI {self.uri!r}"
 
 
-class BadProto(base.VersionedResult, base.Warning):
+class BadProtocol(base.VersionedResult, base.Warning):
     """URI uses an unsupported protocol.
 
     Valid protocols are currently: http, https, and ftp
@@ -874,7 +874,7 @@ class SrcUriCheck(base.Check):
     required_addons = (addons.UseAddon,)
     feed_type = base.versioned_feed
     known_results = (
-        BadFilename, BadProto, MissingUri, MetadataError, TarballAvailable,
+        BadFilename, BadProtocol, MissingUri, MetadataError, TarballAvailable,
         UnknownMirror, UnstatedIUSE,
     )
 
@@ -936,7 +936,7 @@ class SrcUriCheck(base.Check):
                     elif self.zip_to_tar_re.match(x):
                         tarball_available.add(x)
                 if bad:
-                    yield BadProto(pkg, f_inst.filename, bad)
+                    yield BadProtocol(pkg, f_inst.filename, bad)
 
         if lacks_uri:
             yield MissingUri(pkg, lacks_uri)

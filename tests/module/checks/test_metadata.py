@@ -1019,7 +1019,7 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
             bad_proto += "s"
 
         r = self.assertReport(chk, self.mk_pkg(f"{bad_proto}://foon.com/foon"))
-        assert isinstance(r, metadata.BadProto)
+        assert isinstance(r, metadata.BadProtocol)
         assert f"file 'foon': bad protocol/uri: '{bad_proto}://foon.com/foon'" == str(r)
         assert r.filename == 'foon'
         assert r.bad_uris == (f'{bad_proto}://foon.com/foon',)
@@ -1027,7 +1027,7 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
         # check collapsing
         pkg = self.mk_pkg(f"{bad_proto}://foon.com/foon {bad_proto}://dar.com/foon")
         r = self.assertReport(chk, pkg)
-        assert isinstance(r, metadata.BadProto)
+        assert isinstance(r, metadata.BadProtocol)
         assert r.filename == 'foon'
         assert list(r.bad_uris) == sorted(
             f'{bad_proto}://{x}/foon' for x in ('foon.com', 'dar.com'))
