@@ -1,3 +1,3 @@
-DESCRIPTION="Ebuild with unnecessary LICENSE"""
+DESCRIPTION="Ebuild with unnecessary LICENSE"
 SLOT="0"
 LICENSE="BSD"
