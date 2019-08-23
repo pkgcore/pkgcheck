@@ -3,6 +3,103 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.6.0 (2019-08-23)
+---------------------------
+
+- Profile data is now cached on a per repo basis in ~/.cache/pkgcore/pkgcheck
+  (or wherever the related XDG cache environment variables point) to speed up
+  singular package scans. These caches are checked and verified for staleness
+  on each run and are enabled by default.
+
+  To forcibly disable profile caches include ``--profile-cache n`` or similar
+  as arguments to ``pkgcheck scan``.
+
+- When running against a git repo, the historical package removals and
+  additions are scanned from ``git log`` and used to populate virtual repos
+  that enable proper stable request checks and nonexistent/outdated blocker
+  checks. Note that initial runs where these repos are being built from scratch
+  can take a minute or more depending on the system; however, subsequent runs
+  shouldn't take much time to update the cached repos.
+
+  To disable git support entirely include ``--git-disable y`` or similar as
+  arguments to ``pkgcheck scan``.
+
+- zshcomp: Add initial support for keyword, check, and reporter completion.
+
+- Enhance support for running against unconfigured, external repos. Now
+  ``pkgcheck scan`` should be able to handle scanning against relevant paths to
+  unknown repos passed to it or against a repo with no arguments passed that
+  the current working directory is currently within.
+
+New keywords/checks
+===================
+
+- BadFilename: Flag SRC_URI targets that use unspecific ${PN}.ext filenames.
+
+- HomepageInSrcUri: Flag ${HOMEPAGE} usage in SRC_URI.
+
+- MissingConditionalTestRestrict: Flag missing ``RESTRICT="!test? ( test )"``.
+
+- InvalidProjectMaintainer: Flag packages specifying non-existing project as
+  maintainer.
+
+- PersonMaintainerMatchesProject: Flag person-type maintainer matching existing
+  projects.
+
+- NonGentooAuthorsCopyright: Flag ebuilds with copyright stating owner other
+  than "Gentoo Authors" in the main gentoo repo.
+
+- AcctCheck: Add various checks for acct-* packages.
+
+- MaintainerWithoutProxy: Flag packages with a proxyless proxy maintainer.
+
+- StaleProxyMaintProject: Flag packages using proxy-maint maintainer without
+  any proxied maintainers.
+
+- BinaryFile: Flag binary files found in the repository.
+
+- DoublePrefixInPath: Flag ebuilds using two consecutive paths including
+  EPREFIX.
+
+- PythonReport: Add various python eclasses related checks.
+
+- ObsoleteUri: Flag obsolete URIs (github/gitlab) that should be updated.
+
+- VisibilityReport: Split NonsolvableDeps into stable, dev, and exp results
+  according to the status of the profile that triggered them.
+
+- GitCommitsCheck: Add initial check support for unpushed git commits. This
+  currently includes the following keywords: DirectNoMaintainer,
+  DroppedStableKeywords, DroppedUnstableKeywords, DirectStableKeywords, and
+  OutdatedCopyright.
+
+- MissingMaintainer: Flag packages missing a maintainer (or maintainer-needed
+  comment) in metadata.xml.
+
+- EqualVersions: Flag ebuilds that have semantically equal versions.
+
+- UnnecessarySlashStrip: Flag ebuilds using a path variable that strips a
+  nonexistent slash (usually due to porting to EAPI 7).
+
+- MissingSlash: Flag ebuilds using a path variable missing a trailing slash
+  (usually due to porting to EAPI 7).
+
+- DeprecatedChksum: Flag distfiles using outdated checksum hashes.
+
+- MissingRevision: Flag packages lacking a revision in =cat/pkg dependencies.
+
+- MissingVirtualKeywords: Flag virtual packages with keywords missing from
+  their dependencies.
+
+- UnsortedKeywords: Flag packages with unsorted KEYWORDS.
+
+- OverlappingKeywords: Flag packages with overlapping arch and ~arch KEYWORDS.
+
+- DuplicateKeywords: Flag packages with duplicate KEYWORD entries.
+
+- InvalidKeywords: Flag packages using invalid KEYWORDS.
+
+---------------------------
 pkgcheck 0.5.4 (2017-09-22)
 ---------------------------
 
