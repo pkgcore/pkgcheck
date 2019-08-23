@@ -8,6 +8,7 @@ from pkgcore.ebuild import atom
 from snakeoil import mappings
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
+from snakeoil.log import suppress_logging
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
@@ -424,7 +425,9 @@ class GlobalUSECheck(base.Check):
             master_flags.update(flag for matcher, (flag, desc) in repo.config.use_desc)
 
     def feed(self, pkgs):
-        local_use = set(pkgs[0].local_use.keys())
+        # ignore bad XML, it will be caught by metadata.xml checks
+        with suppress_logging():
+            local_use = set(pkgs[0].local_use.keys())
         for pkg in pkgs:
             pkg_global_use = pkg.iuse_stripped.difference(local_use)
             for flag in pkg_global_use:
