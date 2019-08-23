@@ -1,6 +1,3 @@
-import chardet
-
-
 # based on https://github.com/audreyr/binaryornot
 #
 # Copyright (c) 2013, Audrey Roy
@@ -86,6 +83,10 @@ def is_binary(path, blocksize=1024):
         byte_str.decode()
         decodable = True
     except UnicodeDecodeError:
+        # Delay import to hide during wheel/sdist builds that iterate over and
+        # import most modules to generate check/keyword/reporter lists.
+        import chardet
+
         # guess character encoding using chardet
         detected_encoding = chardet.detect(byte_str)
         if detected_encoding['confidence'] > 0.8:
