@@ -1,0 +1,5 @@
+DESCRIPTION="Ebuild lacking full URI without RESTRICT=fetch set"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SRC_URI="${P}.tar.gz"
+SLOT="0"
+LICENSE="BSD"

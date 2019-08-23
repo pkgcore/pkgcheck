@@ -1,0 +1,21 @@
+diff -Naur standalone/SrcUriCheck/TarballAvailable/Manifest fixed/SrcUriCheck/TarballAvailable/Manifest
+--- standalone/SrcUriCheck/TarballAvailable/Manifest	2019-08-23 17:00:25.496384963 -0600
++++ fixed/SrcUriCheck/TarballAvailable/Manifest	2019-08-23 17:16:41.086281921 -0600
+@@ -1 +1 @@
+-DIST TarballAvailable-0.zip 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05
++DIST TarballAvailable-0.tar.gz 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05
+diff -Naur standalone/SrcUriCheck/TarballAvailable/TarballAvailable-0.ebuild fixed/SrcUriCheck/TarballAvailable/TarballAvailable-0.ebuild
+--- standalone/SrcUriCheck/TarballAvailable/TarballAvailable-0.ebuild	2019-08-23 17:07:52.527170936 -0600
++++ fixed/SrcUriCheck/TarballAvailable/TarballAvailable-0.ebuild	2019-08-23 17:16:30.793240821 -0600
+@@ -2,9 +2,8 @@
+ DESCRIPTION="Ebuild with SRC_URI using .zip archive when .tar* is available"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SRC_URI="
+-	https://github.com/pkgcore/pkgcheck/archive/${PV}.zip -> ${P}.zip
+-	https://gitlab.com/pkgcore/pkgcheck/-/archive/${PV}.zip -> ${P}.zip
++	https://github.com/pkgcore/pkgcheck/archive/${PV}.tar.gz -> ${P}.tar.gz
++	https://gitlab.com/pkgcore/pkgcheck/-/archive/${PV}.tar.gz -> ${P}.tar.gz
+ "
+ SLOT="0"
+ LICENSE="BSD"
+-DEPEND="app-arch/unzip"

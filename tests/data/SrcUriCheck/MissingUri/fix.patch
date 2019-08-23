@@ -1,0 +1,8 @@
+diff -Naur standalone/SrcUriCheck/MissingUri/MissingUri-0.ebuild fixed/SrcUriCheck/MissingUri/MissingUri-0.ebuild
+--- standalone/SrcUriCheck/MissingUri/MissingUri-0.ebuild	2019-08-23 16:33:58.045128542 -0600
++++ fixed/SrcUriCheck/MissingUri/MissingUri-0.ebuild	2019-08-23 16:35:07.699403413 -0600
+@@ -3,3 +3,4 @@
+ SRC_URI="${P}.tar.gz"
+ SLOT="0"
+ LICENSE="BSD"
++RESTRICT="fetch"

@@ -266,13 +266,22 @@ class TestPkgcheckScan(object):
                     with open(pjoin(root, f)) as target:
                         custom_targets.add(target.read().strip())
 
-        # all pkgs that aren't custom targets must be check/keyword
+        # all pkgs that aren't custom targets or stubs must be check/keyword
         for repo_dir in os.listdir(pjoin(self.testdir, 'repos')):
             repo = UnconfiguredTree(pjoin(self.testdir, 'repos', repo_dir))
+
+            # determine pkg stubs added to the repo
+            stubs = set()
+            try:
+                with open(pjoin(repo.location, 'metadata', 'stubs')) as f:
+                    stubs.update(x.rstrip() for x in f)
+            except FileNotFoundError:
+                pass
+
             results = set((name, cls.__name__) for name, cls in self.results)
             for cat, pkgs in sorted(repo.packages.items()):
                 for pkg in sorted(pkgs):
-                    if f'{cat}/{pkg}' not in custom_targets:
+                    if f'{cat}/{pkg}' not in (custom_targets | stubs):
                         assert (cat, pkg) in results
 
     def test_pkgcheck_test_data(self):

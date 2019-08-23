@@ -1,0 +1,2 @@
+SrcUriCheck/BadProtocol
+  BadProtocol: version 0: file 'BadProtocol-0.tar.gz': bad protocol/uris: 'gopher://github.com/pkgcore/pkgcheck/BadProtocol-0.tar.gz', 'htps://github.com/pkgcore/pkgcheck/BadProtocol-0.tar.gz'

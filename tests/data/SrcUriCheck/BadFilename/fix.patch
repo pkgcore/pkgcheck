@@ -1,0 +1,40 @@
+diff -Naur standalone/SrcUriCheck/BadFilename/BadFilename-0.ebuild fixed/SrcUriCheck/BadFilename/BadFilename-0.ebuild
+--- standalone/SrcUriCheck/BadFilename/BadFilename-0.ebuild	2019-08-23 16:25:00.018990153 -0600
++++ fixed/SrcUriCheck/BadFilename/BadFilename-0.ebuild	2019-08-23 16:25:38.091141467 -0600
+@@ -1,5 +1,5 @@
+ DESCRIPTION="Ebuild with unspecific SRC_URI filename"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SRC_URI="https://github.com/pkgcore/pkgcheck/${PN}.tar.gz"
++SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/SrcUriCheck/BadFilename/BadFilename-1.ebuild fixed/SrcUriCheck/BadFilename/BadFilename-1.ebuild
+--- standalone/SrcUriCheck/BadFilename/BadFilename-1.ebuild	2019-08-23 16:24:53.362963694 -0600
++++ fixed/SrcUriCheck/BadFilename/BadFilename-1.ebuild	2019-08-23 16:25:42.392158564 -0600
+@@ -1,5 +1,5 @@
+ DESCRIPTION="Ebuild with unspecific SRC_URI filename"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SRC_URI="https://github.com/pkgcore/pkgcheck/${PV}.tar.gz"
++SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/SrcUriCheck/BadFilename/BadFilename-2.ebuild fixed/SrcUriCheck/BadFilename/BadFilename-2.ebuild
+--- standalone/SrcUriCheck/BadFilename/BadFilename-2.ebuild	2019-08-23 16:24:46.547936610 -0600
++++ fixed/SrcUriCheck/BadFilename/BadFilename-2.ebuild	2019-08-23 16:25:48.362182289 -0600
+@@ -1,5 +1,5 @@
+ DESCRIPTION="Ebuild with unspecific SRC_URI filename"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SRC_URI="https://github.com/pkgcore/pkgcheck/v${PV}.tar.gz"
++SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/SrcUriCheck/BadFilename/Manifest fixed/SrcUriCheck/BadFilename/Manifest
+--- standalone/SrcUriCheck/BadFilename/Manifest	2019-08-23 16:25:05.185010686 -0600
++++ fixed/SrcUriCheck/BadFilename/Manifest	2019-08-23 16:26:03.572242737 -0600
+@@ -1,3 +1,3 @@
+-DIST BadFilename.tar.gz 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05
+-DIST 1.tar.gz 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05
+-DIST v2.tar.gz 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05
++DIST BadFilename-0.tar.gz 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05
++DIST BadFilename-1.tar.gz 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05
++DIST BadFilename-2.tar.gz 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05

@@ -1,0 +1,13 @@
+diff -Naur standalone/SrcUriCheck/UnknownMirror/UnknownMirror-0.ebuild fixed/SrcUriCheck/UnknownMirror/UnknownMirror-0.ebuild
+--- standalone/SrcUriCheck/UnknownMirror/UnknownMirror-0.ebuild	2019-08-23 16:49:18.700733802 -0600
++++ fixed/SrcUriCheck/UnknownMirror/UnknownMirror-0.ebuild	2019-08-23 16:50:31.709019527 -0600
+@@ -1,8 +1,5 @@
+ DESCRIPTION="Ebuild with unknown mirror in SRC_URI"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SRC_URI="
+-	mirror://used/pkgcore/pkgcheck/${P}.tar.gz
+-	mirror://unknown/pkgcore/pkgcheck/${P}.tar.gz
+-"
++SRC_URI="mirror://used/pkgcore/pkgcheck/${P}.tar.gz"
+ SLOT="0"
+ LICENSE="BSD"

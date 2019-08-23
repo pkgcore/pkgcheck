@@ -1,0 +1,2 @@
+SrcUriCheck/TarballAvailable
+  TarballAvailable: version 0: zip archives used when tarball available: [ https://github.com/pkgcore/pkgcheck/archive/0.zip https://gitlab.com/pkgcore/pkgcheck/-/archive/0.zip ]
