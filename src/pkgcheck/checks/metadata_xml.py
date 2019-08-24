@@ -24,15 +24,13 @@ class XsdError(Exception):
 class _MissingXml(base.Error):
     """Required XML file is missing."""
 
-    def __init__(self, filename, category, package=None):
+    def __init__(self, filename):
         super().__init__()
-        self.category = category
-        self.package = package
         self.filename = os.path.basename(filename)
 
     @property
     def _label(self):
-        if self.package is not None:
+        if hasattr(self, 'package'):
             return f'{self.category}/{self.package}'
         return self.category
 
@@ -44,16 +42,14 @@ class _MissingXml(base.Error):
 class _BadlyFormedXml(base.Warning):
     """XML isn't well formed."""
 
-    def __init__(self, error, filename, category, package=None):
+    def __init__(self, filename, error):
         super().__init__()
-        self.category = category
-        self.package = package
-        self.error = error
         self.filename = os.path.basename(filename)
+        self.error = error
 
     @property
     def _label(self):
-        if self.package is not None:
+        if hasattr(self, 'package'):
             return f'{self.category}/{self.package}'
         return self.category
 
@@ -65,17 +61,14 @@ class _BadlyFormedXml(base.Warning):
 class _InvalidXml(base.Error):
     """XML fails XML Schema validation."""
 
-    # message first so partial() can be easily applied
-    def __init__(self, message, filename, category, package=None):
+    def __init__(self, filename, message):
         super().__init__()
-        self.category = category
-        self.package = package
-        self.message = message
         self.filename = os.path.basename(filename)
+        self.message = message
 
     @property
     def _label(self):
-        if self.package is not None:
+        if hasattr(self, 'package'):
             return f'{self.category}/{self.package}'
         return self.category
 
@@ -93,16 +86,14 @@ class _InvalidXml(base.Error):
 class _MetadataXmlInvalidPkgRef(base.Error):
     """metadata.xml <pkg/> references unknown/invalid package."""
 
-    def __init__(self, pkgtext, filename, category, package=None):
+    def __init__(self, filename, pkgtext):
         super().__init__()
-        self.category = category
-        self.package = package
-        self.pkgtext = pkgtext
         self.filename = os.path.basename(filename)
+        self.pkgtext = pkgtext
 
     @property
     def _label(self):
-        if self.package is not None:
+        if hasattr(self, 'package'):
             return f'{self.category}/{self.package}'
         return self.category
 
@@ -117,16 +108,14 @@ class _MetadataXmlInvalidPkgRef(base.Error):
 class _MetadataXmlInvalidCatRef(base.Error):
     """metadata.xml <cat/> references unknown/invalid category."""
 
-    def __init__(self, cattext, filename, category, package=None):
+    def __init__(self, filename, cattext):
         super().__init__()
-        self.category = category
-        self.package = package
-        self.cattext = cattext
         self.filename = os.path.basename(filename)
+        self.cattext = cattext
 
     @property
     def _label(self):
-        if self.package is not None:
+        if hasattr(self, 'package'):
             return f'{self.category}/{self.package}'
         return self.category
 
@@ -138,23 +127,19 @@ class _MetadataXmlInvalidCatRef(base.Error):
         )
 
 
-class EmptyMaintainer(base.Warning):
+class EmptyMaintainer(base.PackageResult, base.Warning):
     """Package with neither a maintainer or maintainer-needed comment in metadata.xml."""
 
-    threshold = base.package_feed
-
-    def __init__(self, filename, category, package):
-        super().__init__()
+    def __init__(self, filename, pkg):
+        super().__init__(pkg)
         self.filename = filename
-        self.category = category
-        self.package = package
 
     @property
     def short_desc(self):
         return 'no package maintainer or maintainer-needed comment specified'
 
 
-class MaintainerWithoutProxy(base.Warning):
+class MaintainerWithoutProxy(base.PackageResult, base.Warning):
     """Package has a proxied maintainer without a proxy.
 
     All package maintainers have non-@gentoo.org e-mail addresses. Most likely,
@@ -164,14 +149,10 @@ class MaintainerWithoutProxy(base.Warning):
     oversees the proxied maintainer's activity.
     """
 
-    threshold = base.package_feed
-
-    def __init__(self, maintainers, filename, category, package):
-        super().__init__()
-        self.maintainers = tuple(maintainers)
+    def __init__(self, pkg, filename, maintainers):
+        super().__init__(pkg)
         self.filename = filename
-        self.category = category
-        self.package = package
+        self.maintainers = tuple(maintainers)
 
     @property
     def short_desc(self):
@@ -180,7 +161,7 @@ class MaintainerWithoutProxy(base.Warning):
             f"[ {', '.join(map(str, self.maintainers))} ]")
 
 
-class StaleProxyMaintProject(base.Warning):
+class StaleProxyMaintProject(base.PackageResult, base.Warning):
     """Package lists proxy-maint project but has no proxied maintainers.
 
     The package explicitly lists proxy-maint@g.o as the only maintainer.
@@ -188,30 +169,22 @@ class StaleProxyMaintProject(base.Warning):
     but proxy-maint was left over.
     """
 
-    threshold = base.package_feed
-
-    def __init__(self, filename, category, package):
-        super().__init__()
+    def __init__(self, pkg, filename):
+        super().__init__(pkg)
         self.filename = filename
-        self.category = category
-        self.package = package
 
     @property
     def short_desc(self):
         return "proxy-maint maintainer with no proxies"
 
 
-class NonexistentProjectMaintainer(base.Warning):
+class NonexistentProjectMaintainer(base.PackageResult, base.Warning):
     """Package specifying nonexistent project as a maintainer."""
 
-    threshold = base.package_feed
-
-    def __init__(self, emails, filename, category, package):
-        super().__init__()
-        self.emails = tuple(emails)
+    def __init__(self, pkg, filename, emails):
+        super().__init__(pkg)
         self.filename = filename
-        self.category = category
-        self.package = package
+        self.emails = tuple(emails)
 
     @property
     def short_desc(self):
@@ -219,17 +192,13 @@ class NonexistentProjectMaintainer(base.Warning):
         return f'nonexistent project maintainer{_pl(self.emails)}: [ {emails} ]'
 
 
-class WrongMaintainerType(base.Warning):
+class WrongMaintainerType(base.PackageResult, base.Warning):
     """A person-type maintainer matches an existing project."""
 
-    threshold = base.package_feed
-
-    def __init__(self, emails, filename, category, package):
-        super().__init__()
-        self.emails = tuple(emails)
+    def __init__(self, pkg, filename, emails):
+        super().__init__(pkg)
         self.filename = filename
-        self.category = category
-        self.package = package
+        self.emails = tuple(emails)
 
     @property
     def short_desc(self):
@@ -237,54 +206,44 @@ class WrongMaintainerType(base.Warning):
         return f'project maintainer{_pl(self.emails)} with type="person": [ {emails} ]'
 
 
-class PkgMissingMetadataXml(_MissingXml):
+class PkgMissingMetadataXml(base.PackageResult, _MissingXml):
     """Package is missing metadata.xml."""
-    threshold = base.package_feed
 
 
-class CatMissingMetadataXml(_MissingXml):
+class CatMissingMetadataXml(base.CategoryResult, _MissingXml):
     """Category is missing metadata.xml."""
-    threshold = base.category_feed
 
 
-class PkgInvalidXml(_InvalidXml):
+class PkgInvalidXml(base.PackageResult, _InvalidXml):
     """Invalid package metadata.xml."""
-    threshold = base.package_feed
 
 
-class CatInvalidXml(_InvalidXml):
+class CatInvalidXml(base.CategoryResult, _InvalidXml):
     """Invalid category metadata.xml."""
-    threshold = base.category_feed
 
 
-class PkgBadlyFormedXml(_BadlyFormedXml):
+class PkgBadlyFormedXml(base.PackageResult, _BadlyFormedXml):
     """Badly formed package metadata.xml."""
-    threshold = base.package_feed
 
 
-class CatBadlyFormedXml(_BadlyFormedXml):
+class CatBadlyFormedXml(base.CategoryResult, _BadlyFormedXml):
     """Badly formed category metadata.xml."""
-    threshold = base.category_feed
 
 
-class PkgMetadataXmlInvalidPkgRef(_MetadataXmlInvalidPkgRef):
+class PkgMetadataXmlInvalidPkgRef(base.PackageResult, _MetadataXmlInvalidPkgRef):
     """Invalid package reference in package metadata.xml."""
-    threshold = base.package_feed
 
 
-class CatMetadataXmlInvalidPkgRef(_MetadataXmlInvalidPkgRef):
+class CatMetadataXmlInvalidPkgRef(base.CategoryResult, _MetadataXmlInvalidPkgRef):
     """Invalid package reference in category metadata.xml."""
-    threshold = base.category_feed
 
 
-class PkgMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef):
+class PkgMetadataXmlInvalidCatRef(base.PackageResult, _MetadataXmlInvalidCatRef):
     """Invalid category reference in package metadata.xml."""
-    threshold = base.package_feed
 
 
-class CatMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef):
+class CatMetadataXmlInvalidCatRef(base.CategoryResult, _MetadataXmlInvalidCatRef):
     """Invalid category reference in category metadata.xml."""
-    threshold = base.category_feed
 
 
 class _MetadataXmlIndentation(base.Warning):
@@ -293,12 +252,10 @@ class _MetadataXmlIndentation(base.Warning):
     Either all tabs or all spaces should be used, not a mixture of both.
     """
 
-    def __init__(self, lines, filename, category, package=None):
+    def __init__(self, filename, lines):
         super().__init__()
-        self.lines = lines
         self.filename = filename
-        self.category = category
-        self.package = package
+        self.lines = lines
 
     @property
     def short_desc(self):
@@ -310,45 +267,39 @@ class _MetadataXmlIndentation(base.Warning):
             self.short_desc, _pl(self.lines), ', '.join(str(x) for x in self.lines))
 
 
-class CatMetadataXmlIndentation(_MetadataXmlIndentation):
+class CatMetadataXmlIndentation(base.CategoryResult, _MetadataXmlIndentation):
     """Inconsistent indentation in category metadata.xml file.
 
     Either all tabs or all spaces should be used, not a mixture of both.
     """
-    threshold = base.category_feed
 
-class PkgMetadataXmlIndentation(_MetadataXmlIndentation):
+class PkgMetadataXmlIndentation(base.PackageResult, _MetadataXmlIndentation):
     """Inconsistent indentation in package metadata.xml file.
 
     Either all tabs or all spaces should be used, not a mixture of both.
     """
-    threshold = base.package_feed
 
 
 class _MetadataXmlEmptyElement(base.Warning):
     """Empty element in metadata.xml file."""
 
-    def __init__(self, element, line, filename, category, package=None):
+    def __init__(self, filename, element, line):
         super().__init__()
+        self.filename = filename
         self.element = element
         self.line = line
-        self.filename = filename
-        self.category = category
-        self.package = package
 
     @property
     def short_desc(self):
         return f"metadata.xml has empty element {self.element!r} on line {self.line}"
 
 
-class CatMetadataXmlEmptyElement(_MetadataXmlEmptyElement):
+class CatMetadataXmlEmptyElement(base.CategoryResult, _MetadataXmlEmptyElement):
     """Empty element in category metadata.xml file."""
-    threshold = base.category_feed
 
 
-class PkgMetadataXmlEmptyElement(_MetadataXmlEmptyElement):
+class PkgMetadataXmlEmptyElement(base.PackageResult, _MetadataXmlEmptyElement):
     """Empty element in package metadata.xml file."""
-    threshold = base.package_feed
 
 
 class _XmlBaseCheck(base.Check):
@@ -425,18 +376,18 @@ class _XmlBaseCheck(base.Check):
     def feed(self, thing):
         raise NotImplementedError(self.feed)
 
-    def check_doc(self, doc):
+    def check_doc(self, pkg, loc, doc):
         """Perform additional document structure checks."""
         # find all root descendant elements that are empty
         for el in doc.getroot().iterdescendants():
             if (not el.getchildren() and (el.text is None or not el.text.strip())
                     and not el.tag == 'stabilize-allarches'):
-                yield partial(self.empty_element, el.tag, el.sourceline)
+                yield self.empty_element(pkg, loc, el.tag, el.sourceline)
 
         for el in doc.findall('.//cat'):
             c = el.text.strip()
             if c not in self.options.search_repo.categories:
-                yield partial(self.catref_error, c)
+                yield self.catref_error(pkg, loc, c)
 
         for el in doc.findall('.//pkg'):
             p = el.text.strip()
@@ -449,9 +400,9 @@ class _XmlBaseCheck(base.Check):
                 self.pkgref_cache[p] = found
 
             if not self.pkgref_cache[p]:
-                yield partial(self.pkgref_error, p)
+                yield self.pkgref_error(pkg, loc, p)
 
-    def check_whitespace(self, loc):
+    def check_whitespace(self, pkg, loc):
         """Check for indentation consistency."""
         orig_indent = None
         indents = set()
@@ -464,41 +415,42 @@ class _XmlBaseCheck(base.Check):
                         else:
                             indents.update([lineno])
         if indents:
-            yield partial(self.indent_error, indents)
+            yield self.indent_error(pkg, loc, indents)
 
-    def check_file(self, loc, repo, pkg=None):
+    def check_file(self, loc, pkg):
+        repo = pkg.repo
         try:
             doc = etree.parse(loc)
         except (IOError, OSError):
             # it's only an error when missing in the main gentoo repo
             if repo.repo_id == 'gentoo':
-                return (self.missing_error,)
-            return ()
+                yield self.missing_error(pkg, loc)
+            return
         except etree.XMLSyntaxError as e:
-            return (partial(self.misformed_error, str(e)),)
+            yield self.misformed_error(pkg, loc, str(e))
+            return
 
         # note: while doc is available, do not pass it here as it may
         # trigger undefined behavior due to incorrect structure
         if self.schema is not None and not self.schema.validate(doc):
-            return (partial(self.invalid_error, self.schema.error_log),)
+            yield self.invalid_error(pkg, loc, self.schema.error_log)
+            return
 
         # check for missing maintainer-needed comments in gentoo repo
         # and incorrect maintainers
-        maintainers = []
         if pkg is not None and pkg.repo.repo_id == 'gentoo':
             if pkg.maintainers:
                 if not any(m.email.endswith('@gentoo.org')
                            for m in pkg.maintainers):
-                    maintainers.append(partial(
-                        MaintainerWithoutProxy, pkg.maintainers))
+                    yield MaintainerWithoutProxy(pkg, loc, pkg.maintainers)
                 elif (len(pkg.maintainers) == 1 and
                       any(m.email == 'proxy-maint@gentoo.org'
                           for m in pkg.maintainers)):
-                    maintainers.append(partial(StaleProxyMaintProject))
+                    yield StaleProxyMaintProject(pkg, loc)
             else:
                 if not any(c.text.strip() == 'maintainer-needed'
                            for c in doc.xpath('//comment()')):
-                    maintainers.append(partial(EmptyMaintainer))
+                    yield EmptyMaintainer(pkg, loc)
 
             # check maintainer validity
             projects = frozenset(pkg.repo.projects_xml.projects)
@@ -511,12 +463,12 @@ class _XmlBaseCheck(base.Check):
                     elif m.maint_type == 'person' and m.email in projects:
                         wrong_maintainers.append(m.email)
                 if nonexistent:
-                    maintainers.append(partial(NonexistentProjectMaintainer, nonexistent))
+                    yield NonexistentProjectMaintainer(pkg, loc, nonexistent)
                 if wrong_maintainers:
-                    maintainers.append(partial(WrongMaintainerType, wrong_maintainers))
+                    yield WrongMaintainerType(pkg, loc, wrong_maintainers)
 
-        keywords = (maintainers, self.check_doc(doc), self.check_whitespace(loc))
-        return chain.from_iterable(keywords)
+        yield from self.check_doc(pkg, loc, doc)
+        yield from self.check_whitespace(pkg, loc)
 
 
 class PackageMetadataXmlCheck(_XmlBaseCheck):
@@ -544,10 +496,8 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
         if not pkgs:
             return
         pkg = pkgs[0]
-
         loc = pjoin(os.path.dirname(pkg.ebuild.path), "metadata.xml")
-        for report in self.check_file(loc, pkg.repo, pkg):
-            yield report(loc, pkg.category, pkg.package)
+        yield from self.check_file(loc, pkg)
 
 
 class CategoryMetadataXmlCheck(_XmlBaseCheck):
@@ -574,8 +524,7 @@ class CategoryMetadataXmlCheck(_XmlBaseCheck):
             return
         pkg = pkgs[0]
         loc = os.path.join(self.repo_base, pkg.category, "metadata.xml")
-        for report in self.check_file(loc, pkg.repo):
-            yield report(loc, pkg.category)
+        yield from self.check_file(loc, pkg)
 
 
 def noop_validator(loc):

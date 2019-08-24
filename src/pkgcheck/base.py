@@ -305,8 +305,8 @@ class CategoryResult(Result):
 
     threshold = category_feed
 
-    def __init__(self, pkg):
-        super().__init__()
+    def __init__(self, pkg, *args):
+        super().__init__(*args)
         self.category = pkg.category
 
 
@@ -315,8 +315,8 @@ class PackageResult(CategoryResult):
 
     threshold = package_feed
 
-    def __init__(self, pkg):
-        super().__init__(pkg)
+    def __init__(self, pkg, *args):
+        super().__init__(pkg, *args)
         self.package = pkg.package
 
 
@@ -325,8 +325,8 @@ class VersionedResult(PackageResult):
 
     threshold = versioned_feed
 
-    def __init__(self, pkg):
-        super().__init__(pkg)
+    def __init__(self, pkg, *args):
+        super().__init__(pkg, *args)
         self.version = pkg.fullver
 
 
