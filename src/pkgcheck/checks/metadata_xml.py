@@ -98,7 +98,7 @@ class _MetadataXmlInvalidCatRef(base.Error):
 class EmptyMaintainer(base.PackageResult, base.Warning):
     """Package with neither a maintainer or maintainer-needed comment in metadata.xml."""
 
-    def __init__(self, filename, pkg):
+    def __init__(self, pkg, filename):
         super().__init__(pkg)
         self.filename = filename
 
