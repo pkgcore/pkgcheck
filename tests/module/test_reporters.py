@@ -61,7 +61,7 @@ class TestStrReporter(BaseReporter):
     reporter_cls = reporters.StrReporter
     add_report_output = dedent("""\
         profile warning
-        dev-libs: dev-libs is missing metadata.xml
+        dev-libs: category is missing metadata.xml
         dev-libs/foo: invalid package name: [ foo ]
         dev-libs/foo-0: bad filename: [ 0.tar.gz ]
     """)
@@ -76,7 +76,7 @@ class TestFancyReporter(BaseReporter):
           ProfileWarning: profile warning
 
         dev-libs
-          CatMissingMetadataXml: dev-libs is missing metadata.xml
+          CatMissingMetadataXml: category is missing metadata.xml
 
         dev-libs/foo
           InvalidPN: invalid package name: [ foo ]
@@ -100,7 +100,7 @@ class TestJsonReporter(BaseReporter):
     reporter_cls = reporters.JsonReporter
     add_report_output = dedent("""\
         {"_warning": {"ProfileWarning": ["profile warning"]}}
-        {"dev-libs": {"_error": {"CatMissingMetadataXml": ["dev-libs is missing metadata.xml"]}}}
+        {"dev-libs": {"_error": {"CatMissingMetadataXml": ["category is missing metadata.xml"]}}}
         {"dev-libs": {"foo": {"_error": {"InvalidPN": ["invalid package name: [ foo ]"]}}}}
         {"dev-libs": {"foo": {"0": {"_warning": {"BadFilename": ["bad filename: [ 0.tar.gz ]"]}}}}}
     """)
@@ -115,7 +115,7 @@ class TestXmlReporter(BaseReporter):
     add_report_output = dedent("""\
         <checks>
         <result><class>ProfileWarning</class><msg>profile warning</msg></result>
-        <result><category>dev-libs</category><class>CatMissingMetadataXml</class><msg>dev-libs is missing metadata.xml</msg></result>
+        <result><category>dev-libs</category><class>CatMissingMetadataXml</class><msg>category is missing metadata.xml</msg></result>
         <result><category>dev-libs</category><package>foo</package><class>InvalidPN</class><msg>invalid package name: [ foo ]</msg></result>
         <result><category>dev-libs</category><package>foo</package><version>0</version><class>BadFilename</class><msg>bad filename: [ 0.tar.gz ]</msg></result>
         </checks>

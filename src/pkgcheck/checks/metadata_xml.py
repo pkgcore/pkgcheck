@@ -29,14 +29,8 @@ class _MissingXml(base.Error):
         self.filename = os.path.basename(filename)
 
     @property
-    def _label(self):
-        if hasattr(self, 'package'):
-            return f'{self.category}/{self.package}'
-        return self.category
-
-    @property
     def short_desc(self):
-        return f'{self._label} is missing {self.filename}'
+        return f'{self._attr} is missing {self.filename}'
 
 
 class _BadlyFormedXml(base.Warning):
@@ -48,14 +42,8 @@ class _BadlyFormedXml(base.Warning):
         self.error = error
 
     @property
-    def _label(self):
-        if hasattr(self, 'package'):
-            return f'{self.category}/{self.package}'
-        return self.category
-
-    @property
     def short_desc(self):
-        return f'{self._label} {self.filename} is not well formed xml: {self.error}'
+        return f'{self._attr} {self.filename} is not well formed xml: {self.error}'
 
 
 class _InvalidXml(base.Error):
@@ -66,12 +54,6 @@ class _InvalidXml(base.Error):
         self.filename = os.path.basename(filename)
         self.message = message
 
-    @property
-    def _label(self):
-        if hasattr(self, 'package'):
-            return f'{self.category}/{self.package}'
-        return self.category
-
     @staticmethod
     def format_lxml_errors(error_log):
         for l in error_log:
@@ -80,7 +62,7 @@ class _InvalidXml(base.Error):
     @property
     def short_desc(self):
         message = '\n'.join(self.format_lxml_errors(self.message))
-        return f'{self._label} {self.filename} violates metadata.xsd:\n{message}'
+        return f'{self._attr} {self.filename} violates metadata.xsd:\n{message}'
 
 
 class _MetadataXmlInvalidPkgRef(base.Error):
@@ -92,15 +74,9 @@ class _MetadataXmlInvalidPkgRef(base.Error):
         self.pkgtext = pkgtext
 
     @property
-    def _label(self):
-        if hasattr(self, 'package'):
-            return f'{self.category}/{self.package}'
-        return self.category
-
-    @property
     def short_desc(self):
         return (
-            f'{self._label} {self.filename} <pkg/> '
+            f'{self._attr} {self.filename} <pkg/> '
             f'references unknown/invalid package: {self.pkgtext!r}'
         )
 
@@ -114,15 +90,9 @@ class _MetadataXmlInvalidCatRef(base.Error):
         self.cattext = cattext
 
     @property
-    def _label(self):
-        if hasattr(self, 'package'):
-            return f'{self.category}/{self.package}'
-        return self.category
-
-    @property
     def short_desc(self):
         return (
-            f'{self._label} {self.filename} <cat/> references '
+            f'{self._attr} {self.filename} <cat/> references '
             f'unknown/invalid category: {self.cattext!r}'
         )
 

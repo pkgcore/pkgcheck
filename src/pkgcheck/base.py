@@ -308,6 +308,7 @@ class CategoryResult(Result):
     def __init__(self, pkg, *args):
         super().__init__(*args)
         self.category = pkg.category
+        self._attr = 'category'
 
 
 class PackageResult(CategoryResult):
@@ -318,6 +319,7 @@ class PackageResult(CategoryResult):
     def __init__(self, pkg, *args):
         super().__init__(pkg, *args)
         self.package = pkg.package
+        self._attr = 'package'
 
 
 class VersionedResult(PackageResult):
@@ -328,6 +330,7 @@ class VersionedResult(PackageResult):
     def __init__(self, pkg, *args):
         super().__init__(pkg, *args)
         self.version = pkg.fullver
+        self._attr = 'version'
 
 
 class LogError(Error):

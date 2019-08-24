@@ -1,2 +1,2 @@
 CatBadlyFormedXml
-  CatBadlyFormedXml: CatBadlyFormedXml metadata.xml is not well formed xml: xmlParseEntityRef: no name, line 4, column 35 (metadata.xml, line 4)
+  CatBadlyFormedXml: category metadata.xml is not well formed xml: xmlParseEntityRef: no name, line 4, column 35 (metadata.xml, line 4)

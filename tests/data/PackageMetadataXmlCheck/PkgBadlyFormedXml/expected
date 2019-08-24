@@ -1,2 +1,2 @@
 PackageMetadataXmlCheck/PkgBadlyFormedXml
-  PkgBadlyFormedXml: PackageMetadataXmlCheck/PkgBadlyFormedXml metadata.xml is not well formed xml: xmlParseEntityRef: no name, line 7, column 35 (metadata.xml, line 7)
+  PkgBadlyFormedXml: package metadata.xml is not well formed xml: xmlParseEntityRef: no name, line 7, column 35 (metadata.xml, line 7)
