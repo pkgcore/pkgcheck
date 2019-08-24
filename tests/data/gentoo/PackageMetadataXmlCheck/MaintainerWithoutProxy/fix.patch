@@ -1,0 +1,11 @@
+diff -Naur gentoo/PackageMetadataXmlCheck/MaintainerWithoutProxy/metadata.xml fixed/PackageMetadataXmlCheck/MaintainerWithoutProxy/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/MaintainerWithoutProxy/metadata.xml	2019-08-24 11:05:24.707340529 -0600
++++ fixed/PackageMetadataXmlCheck/MaintainerWithoutProxy/metadata.xml	2019-08-24 11:09:27.902970771 -0600
+@@ -4,4 +4,7 @@
+   <maintainer type="person">
+     <email>non-gentoo-dev@email.com</email>
+   </maintainer>
++  <maintainer type="person">
++    <email>random-dev@gentoo.org</email>
++  </maintainer>
+ </pkgmetadata>

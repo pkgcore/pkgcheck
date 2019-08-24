@@ -1,0 +1,9 @@
+diff -Naur gentoo/PackageMetadataXmlCheck/EmptyMaintainer/metadata.xml fixed/PackageMetadataXmlCheck/EmptyMaintainer/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/EmptyMaintainer/metadata.xml	2019-08-24 10:57:04.303619176 -0600
++++ fixed/PackageMetadataXmlCheck/EmptyMaintainer/metadata.xml	2019-08-24 11:02:03.245024250 -0600
+@@ -1,4 +1,5 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <pkgmetadata>
++<!-- maintainer-needed -->
+ </pkgmetadata>

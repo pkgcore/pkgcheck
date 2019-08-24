@@ -260,11 +260,12 @@ class TestPkgcheckScan(object):
         """Make sure the test repos are up to date check/result naming wise."""
         # grab custom targets
         custom_targets = set()
-        for root, _dirs, files in os.walk(pjoin(self.testdir, 'data')):
-            for f in files:
-                if f == 'target':
-                    with open(pjoin(root, f)) as target:
-                        custom_targets.add(target.read().strip())
+        for repo in os.listdir(pjoin(self.testdir, 'data')):
+            for root, _dirs, files in os.walk(pjoin(self.testdir, 'data', repo)):
+                for f in files:
+                    if f == 'target':
+                        with open(pjoin(root, f)) as target:
+                            custom_targets.add(target.read().strip())
 
         # all pkgs that aren't custom targets or stubs must be check/keyword
         for repo_dir in os.listdir(pjoin(self.testdir, 'repos')):
@@ -286,47 +287,46 @@ class TestPkgcheckScan(object):
 
     def test_pkgcheck_test_data(self):
         """Make sure the test data is up to date check/result naming wise."""
-        for check in os.listdir(pjoin(self.testdir, 'data')):
-            assert check in const.CHECKS
-            for keyword in os.listdir(pjoin(self.testdir, f'data/{check}')):
-                assert keyword in const.KEYWORDS
+        for repo in os.listdir(pjoin(self.testdir, 'data')):
+            for check in os.listdir(pjoin(self.testdir, f'data/{repo}')):
+                assert check in const.CHECKS
+                for keyword in os.listdir(pjoin(self.testdir, f'data/{repo}/{check}')):
+                    assert keyword in const.KEYWORDS
 
     @pytest.mark.parametrize('check, result', results)
     def test_pkgcheck_scan(self, check, result, capsys, tmp_path):
-        # run pkgcheck against test pkgs in bundled repo, verifying result output
-        keyword = result.__name__
-        expected_path = pjoin(self.testdir, f'data/{check}/{keyword}/expected')
-        if not os.path.exists(expected_path):
+        """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
+        for repo in os.listdir(pjoin(self.testdir, 'data')):
+            keyword = result.__name__
+            expected_path = pjoin(self.testdir, f'data/{repo}/{check}/{keyword}/expected')
+            if not os.path.exists(expected_path):
+                continue
+
+            # determine what test target to use
+            try:
+                target = open(pjoin(self.testdir, f'data/{repo}/{check}/{keyword}/target'))
+                args = shlex.split(target.read())
+            except FileNotFoundError:
+                if result.threshold in (base.package_feed, base.versioned_feed):
+                    args = [f'{check}/{keyword}']
+                elif result.threshold in base.category_feed:
+                    args = [f'{keyword}/*']
+                elif result.threshold in base.repository_feed:
+                    args = ['-k', keyword]
+
+            repo_dir = pjoin(self.testdir, 'repos', repo)
+            with patch('sys.argv', self.args + ['-r', repo_dir] + args), \
+                    patch('pkgcheck.base.CACHE_DIR', self.cache_dir):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert err == ''
+                assert excinfo.value.code == 0
+                with open(expected_path) as expected:
+                    assert out == expected.read()
+            break
+        else:
             pytest.skip('expected test data not available')
-
-        # determine what repo the test requires
-        try:
-            repo = open(pjoin(self.testdir, f'data/{check}/{keyword}/repo')).read()
-        except FileNotFoundError:
-            repo = 'standalone'
-        repo_dir = pjoin(self.testdir, 'repos', repo)
-
-        # determine what test target to use
-        try:
-            target = open(pjoin(self.testdir, f'data/{check}/{keyword}/target'))
-            args = shlex.split(target.read())
-        except FileNotFoundError:
-            if result.threshold in (base.package_feed, base.versioned_feed):
-                args = [f'{check}/{keyword}']
-            elif result.threshold in base.category_feed:
-                args = [f'{keyword}/*']
-            elif result.threshold in base.repository_feed:
-                args = ['-k', keyword]
-
-        with patch('sys.argv', self.args + ['-r', repo_dir] + args), \
-                patch('pkgcheck.base.CACHE_DIR', self.cache_dir):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            out, err = capsys.readouterr()
-            assert err == ''
-            assert excinfo.value.code == 0
-            with open(expected_path) as expected:
-                assert out == expected.read()
 
     @pytest.mark.parametrize('check, result', results)
     def test_pkgcheck_scan_fix(self, check, result, capsys, tmp_path):
@@ -348,41 +348,41 @@ class TestPkgcheckScan(object):
             'fix.sh': _script,
         }
 
-        for f, func in fix_map.items():
-            fix = pjoin(self.testdir, f'data/{check}/{keyword}/{f}')
-            if os.path.exists(fix):
-                break
+        for repo in os.listdir(pjoin(self.testdir, 'data')):
+            keyword_dir = pjoin(self.testdir, f'data/{repo}/{check}/{keyword}')
+            if os.path.exists(pjoin(keyword_dir, 'fix.patch')):
+                fix = pjoin(keyword_dir, 'fix.patch')
+                func = _patch
+            elif os.path.exists(pjoin(keyword_dir, 'fix.sh')):
+                fix = pjoin(keyword_dir, 'fix.sh')
+                func = _script
+            else:
+                continue
+
+            if result.threshold in (base.package_feed, base.versioned_feed):
+                args = [f'{check}/{keyword}']
+            elif result.threshold in base.category_feed:
+                args = [f'{keyword}/*']
+            elif result.threshold in base.repository_feed:
+                args = ['-k', keyword]
+
+            # apply a fix if one exists and make sure the related result doesn't appear
+            repo_dir = pjoin(self.testdir, 'repos', repo)
+            fixed_repo = str(tmp_path / f'fixed-{repo}')
+            shutil.copytree(repo_dir, fixed_repo)
+            func(fix)
+            with patch('sys.argv', self.args + ['-r', fixed_repo] + args), \
+                    patch('pkgcheck.base.CACHE_DIR', self.cache_dir):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert err == ''
+                assert out == ''
+                assert excinfo.value.code == 0
+            shutil.rmtree(fixed_repo)
+            break
         else:
             pytest.skip('fix not available')
-
-        # determine what repo the test requires
-        try:
-            repo = open(pjoin(self.testdir, f'data/{check}/{keyword}/repo')).read()
-        except FileNotFoundError:
-            repo = 'standalone'
-
-        repo_dir = pjoin(self.testdir, 'repos', repo)
-
-        if result.threshold in (base.package_feed, base.versioned_feed):
-            args = [f'{check}/{keyword}']
-        elif result.threshold in base.category_feed:
-            args = [f'{keyword}/*']
-        elif result.threshold in base.repository_feed:
-            args = ['-k', keyword]
-
-        # apply a fix if one exists and make sure the related result doesn't appear
-        fixed_repo = str(tmp_path / f'fixed-{repo}')
-        shutil.copytree(repo_dir, fixed_repo)
-        func(fix)
-        with patch('sys.argv', self.args + ['-r', fixed_repo] + args), \
-                patch('pkgcheck.base.CACHE_DIR', self.cache_dir):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            out, err = capsys.readouterr()
-            assert err == ''
-            assert out == ''
-            assert excinfo.value.code == 0
-        shutil.rmtree(fixed_repo)
 
 
 class TestPkgcheckShow(object):
