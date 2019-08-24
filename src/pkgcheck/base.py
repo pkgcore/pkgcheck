@@ -300,14 +300,23 @@ class Warning(Result):
     _level = 30
 
 
-class PackageResult(Result):
+class CategoryResult(Result):
+    """Result related to a specific category."""
+
+    threshold = category_feed
+
+    def __init__(self, pkg):
+        super().__init__()
+        self.category = pkg.category
+
+
+class PackageResult(CategoryResult):
     """Result related to a specific package."""
 
     threshold = package_feed
 
     def __init__(self, pkg):
-        super().__init__()
-        self.category = pkg.category
+        super().__init__(pkg)
         self.package = pkg.package
 
 
