@@ -1091,9 +1091,10 @@ class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
         for ext, unpackers in self.check_kls.non_system_unpackers.items():
             for dep_type in ('DEPEND', 'BDEPEND'):
                 for unpacker in unpackers:
-                    kwargs = {dep_type: unpacker.cpvstr}
-                    pkg = self.mk_pkg(ext, **kwargs)
-                    self.assertNoReport(self.mk_check(), pkg)
+                    for dep in (unpacker, f'>={unpacker}-1'):
+                        kwargs = {dep_type: dep}
+                        pkg = self.mk_pkg(ext, **kwargs)
+                        self.assertNoReport(self.mk_check(), pkg)
 
     def test_rar_with_or_dep(self):
         self.assertNoReport(

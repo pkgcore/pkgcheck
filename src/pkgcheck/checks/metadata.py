@@ -1180,12 +1180,12 @@ class MissingUnpackerDepCheck(base.Check):
     required_addons = (addons.UseAddon,)
 
     non_system_unpackers = ImmutableDict({
-        '.zip': frozenset([atom_cls('app-arch/unzip')]),
-        '.jar': frozenset([atom_cls('app-arch/unzip')]),
-        '.7z': frozenset([atom_cls('app-arch/p7zip')]),
-        '.rar': frozenset([atom_cls('app-arch/rar'), atom_cls('app-arch/unrar')]),
-        '.lha': frozenset([atom_cls('app-arch/lha')]),
-        '.lzh': frozenset([atom_cls('app-arch/lha')]),
+        '.zip': frozenset(['app-arch/unzip']),
+        '.jar': frozenset(['app-arch/unzip']),
+        '.7z': frozenset(['app-arch/p7zip']),
+        '.rar': frozenset(['app-arch/rar', 'app-arch/unrar']),
+        '.lha': frozenset(['app-arch/lha']),
+        '.lzh': frozenset(['app-arch/lha']),
     })
 
     def __init__(self, options, iuse_handler):
@@ -1212,6 +1212,7 @@ class MissingUnpackerDepCheck(base.Check):
         if missing_unpackers:
             for dep_type in ('bdepend', 'depend'):
                 deps, _ = self.dep_filter((atom_cls,), pkg, getattr(pkg, dep_type))
+                deps = {x.key for x in deps}
                 for unpackers in list(missing_unpackers.keys()):
                     if unpackers.intersection(deps):
                         missing_unpackers.pop(unpackers, None)
