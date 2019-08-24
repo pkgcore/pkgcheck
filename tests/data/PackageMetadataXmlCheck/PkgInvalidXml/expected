@@ -1,0 +1,3 @@
+PackageMetadataXmlCheck/PkgInvalidXml
+  PkgInvalidXml: PackageMetadataXmlCheck/PkgInvalidXml metadata.xml violates metadata.xsd:
+line 7, col 0: (SCHEMAV_ELEMENT_CONTENT) Element 'description': This element is not expected.

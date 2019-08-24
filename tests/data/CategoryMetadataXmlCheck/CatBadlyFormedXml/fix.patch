@@ -1,0 +1,10 @@
+diff -Naur standalone/CatBadlyFormedXml/metadata.xml fixed/CatBadlyFormedXml/metadata.xml
+--- standalone/CatBadlyFormedXml/metadata.xml	2019-08-24 04:51:41.055750228 -0600
++++ fixed/CatBadlyFormedXml/metadata.xml	2019-08-24 04:54:25.445826600 -0600
+@@ -1,5 +1,5 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE catmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <catmetadata>
+-  <longdescription>Don't use raw & in XML.</longdescription>
++  <longdescription>Don't use raw &amp; in XML.</longdescription>
+ </catmetadata>

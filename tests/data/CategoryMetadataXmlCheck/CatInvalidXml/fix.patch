@@ -1,0 +1,13 @@
+diff -Naur standalone/CatInvalidXml/metadata.xml fixed/CatInvalidXml/metadata.xml
+--- standalone/CatInvalidXml/metadata.xml	2019-08-24 04:52:14.291967847 -0600
++++ fixed/CatInvalidXml/metadata.xml	2019-08-24 04:54:52.023000616 -0600
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE catmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <catmetadata>
+-  <description>
++  <longdescription>
+     Category with invalid XML field failing schema validation.
+-  </description>
++  </longdescription>
+ </catmetadata>

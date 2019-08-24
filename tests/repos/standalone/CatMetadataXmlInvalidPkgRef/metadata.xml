@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE catmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<catmetadata>
+  <longdescription>
+    Category with invalid package reference to <pkg>nonexistent/pkg</pkg>.
+  </longdescription>
+</catmetadata>

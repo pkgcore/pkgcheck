@@ -1,0 +1,2 @@
+CatMetadataXmlInvalidPkgRef
+  CatMetadataXmlInvalidPkgRef: CatMetadataXmlInvalidPkgRef metadata.xml <pkg/> references unknown/invalid package: 'nonexistent/pkg'
