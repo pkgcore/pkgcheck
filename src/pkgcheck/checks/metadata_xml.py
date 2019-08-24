@@ -7,7 +7,7 @@ from urllib.request import urlopen
 from urllib import error as urllib_error
 
 from pkgcore import const as pkgcore_const
-from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.atom import atom, MalformedAtom
 from snakeoil import fileutils
 from snakeoil.cli.exceptions import UserException
 from snakeoil.osutils import pjoin
@@ -474,8 +474,7 @@ class _XmlBaseCheck(base.Check):
                 try:
                     a = atom(p)
                     found = self.options.search_repo.has_match(a)
-                except Exception:
-                    # invalid atom
+                except MalformedAtom:
                     found = False
                 self.pkgref_cache[p] = found
 
