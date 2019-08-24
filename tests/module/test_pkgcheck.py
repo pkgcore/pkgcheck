@@ -335,7 +335,8 @@ class TestPkgcheckScan(object):
 
         def _patch(fix):
             with open(fix) as f:
-                p = subprocess.run(['patch', '-p1'], cwd=fixed_repo, stdin=f)
+                p = subprocess.run(
+                    ['patch', '-p1'], cwd=fixed_repo, stdout=subprocess.DEVNULL, stdin=f)
                 p.check_returncode()
 
         def _script(fix):
