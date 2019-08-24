@@ -1,6 +1,4 @@
 import argparse
-from functools import partial
-from itertools import chain
 from lxml import etree
 import os
 from urllib.request import urlopen
