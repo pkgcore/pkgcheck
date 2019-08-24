@@ -8,8 +8,6 @@ demand_compile_regexp('indent_regexp', '^\t* \t+')
 
 class _Whitespace(base.VersionedResult, base.Warning):
 
-    __slots__ = ()
-
     @property
     def lines_str(self):
         return f"line{_pl(self.lines)}: {', '.join(str(x) for x in self.lines)}"
@@ -17,8 +15,6 @@ class _Whitespace(base.VersionedResult, base.Warning):
 
 class WhitespaceFound(_Whitespace):
     """Leading or trailing whitespace found."""
-
-    __slots__ = ('lines', 'leadtrail')
 
     def __init__(self, pkg, leadtrail, lines):
         super().__init__(pkg)
@@ -33,8 +29,6 @@ class WhitespaceFound(_Whitespace):
 class WrongIndentFound(_Whitespace):
     """Incorrect indentation whitespace found."""
 
-    __slots__ = ('lines',)
-
     def __init__(self, pkg, lines):
         super().__init__(pkg)
         self.lines = tuple(lines)
@@ -46,8 +40,6 @@ class WrongIndentFound(_Whitespace):
 
 class DoubleEmptyLine(_Whitespace):
     """Unneeded blank lines found."""
-
-    __slots__ = ('lines',)
 
     def __init__(self, pkg, lines):
         super().__init__(pkg)

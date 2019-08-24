@@ -18,8 +18,6 @@ from .. import base, addons
 class MultiMovePackageUpdate(base.Warning):
     """Entry for package moved multiple times in profiles/updates files."""
 
-    __slots__ = ("pkg", "moves")
-
     threshold = base.repository_feed
 
     def __init__(self, pkg, moves):
@@ -40,8 +38,6 @@ class OldMultiMovePackageUpdate(base.Warning):
     the update files.
     """
 
-    __slots__ = ("pkg", "moves")
-
     threshold = base.repository_feed
 
     def __init__(self, pkg, moves):
@@ -56,8 +52,6 @@ class OldMultiMovePackageUpdate(base.Warning):
 
 class OldPackageUpdate(base.Warning):
     """Old entry for removed package in profiles/updates files."""
-
-    __slots__ = ("pkg", "updates")
 
     threshold = base.repository_feed
 
@@ -155,8 +149,6 @@ class PackageUpdatesCheck(base.Check, base.EmptyFeed):
 class UnusedLicenses(base.Warning):
     """Unused license(s) detected."""
 
-    __slots__ = ("licenses",)
-
     threshold = base.repository_feed
 
     def __init__(self, licenses):
@@ -196,8 +188,6 @@ class UnusedLicensesCheck(base.Check):
 
 class UnusedMirrors(base.Warning):
     """Unused mirrors detected."""
-
-    __slots__ = ('mirrors',)
 
     threshold = base.repository_feed
 
@@ -254,8 +244,6 @@ class UnusedMirrorsCheck(_MirrorsCheck):
 class UnusedEclasses(base.Warning):
     """Unused eclasses detected."""
 
-    __slots__ = ('eclasses',)
-
     threshold = base.repository_feed
 
     def __init__(self, eclasses):
@@ -297,8 +285,6 @@ class UnusedEclassesCheck(base.Check):
 class UnknownLicenses(base.Warning):
     """License(s) listed in license group(s) that don't exist."""
 
-    __slots__ = ("group", "licenses")
-
     threshold = base.repository_feed
 
     def __init__(self, group, licenses):
@@ -333,7 +319,6 @@ class LicenseGroupsCheck(base.Check, base.EmptyFeed):
 class PotentialLocalUSE(base.Warning):
     """Global USE flag is a potential local USE flag."""
 
-    __slots__ = ("category", "pkgs", "flag")
     threshold = base.repository_feed
 
     def __init__(self, flag, pkgs):
@@ -351,8 +336,6 @@ class PotentialLocalUSE(base.Warning):
 class UnusedGlobalUSE(base.Warning):
     """Unused use.desc flag(s)."""
 
-    __slots__ = ("flags",)
-
     threshold = base.repository_feed
 
     def __init__(self, flags):
@@ -368,7 +351,6 @@ class UnusedGlobalUSE(base.Warning):
 class PotentialGlobalUSE(base.Warning):
     """Local USE flag is a potential global USE flag."""
 
-    __slots__ = ("category", "pkgs", "flag")
     threshold = base.repository_feed
 
     def __init__(self, flag, pkgs):
@@ -508,8 +490,6 @@ def reformat_chksums(iterable):
 class ConflictingChksums(base.VersionedResult, base.Error):
     """Checksum conflict detected between two files."""
 
-    __slots__ = ('filename', 'chksums', 'others')
-
     _sorter = staticmethod(itemgetter(0))
 
     def __init__(self, pkg, filename, chksums, others):
@@ -528,8 +508,6 @@ class ConflictingChksums(base.VersionedResult, base.Error):
 class MissingChksum(base.VersionedResult, base.Warning):
     """A file in the chksum data lacks required checksums."""
 
-    __slots__ = ('filename', 'missing', 'existing')
-
     def __init__(self, pkg, filename, missing, existing):
         super().__init__(pkg)
         self.filename = filename
@@ -545,8 +523,6 @@ class MissingChksum(base.VersionedResult, base.Warning):
 
 class DeprecatedChksum(base.VersionedResult, base.Warning):
     """A file in the chksum data does not use modern checksum set."""
-
-    __slots__ = ('filename', 'expected', 'existing')
 
     def __init__(self, pkg, filename, expected, existing):
         super().__init__(pkg)
@@ -564,8 +540,6 @@ class DeprecatedChksum(base.VersionedResult, base.Warning):
 class MissingManifest(base.VersionedResult, base.Error):
     """SRC_URI targets missing from Manifest file."""
 
-    __slots__ = ('files',)
-
     def __init__(self, pkg, files):
         super().__init__(pkg)
         self.files = tuple(sorted(files))
@@ -579,8 +553,6 @@ class MissingManifest(base.VersionedResult, base.Error):
 class UnknownManifest(base.PackageResult, base.Warning):
     """Manifest entries not matching any SRC_URI targets."""
 
-    __slots__ = ('files',)
-
     def __init__(self, pkg, files):
         super().__init__(pkg)
         self.files = tuple(sorted(files))
@@ -593,8 +565,6 @@ class UnknownManifest(base.PackageResult, base.Warning):
 
 class UnnecessaryManifest(base.PackageResult, base.Warning):
     """Manifest entries for non-DIST targets on a repo with thin manifests enabled."""
-
-    __slots__ = ('files',)
 
     def __init__(self, pkg, files):
         super().__init__(pkg)

@@ -9,8 +9,6 @@ from .. import addons, base
 class UnstableOnly(base.PackageResult, base.Warning):
     """Package/keywords that are strictly unstable."""
 
-    __slots__ = ('versions', 'arches')
-
     def __init__(self, pkgs, arches):
         super().__init__(pkgs[0])
         self.arches = arches

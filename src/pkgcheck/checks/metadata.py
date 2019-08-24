@@ -27,8 +27,6 @@ from .visibility import FakeConfigurable, strip_atom_use
 class MissingLicense(base.VersionedResult, base.Error):
     """Used license(s) have no matching license file(s)."""
 
-    __slots__ = ('licenses',)
-
     def __init__(self, pkg, licenses):
         super().__init__(pkg)
         self.licenses = tuple(sorted(licenses))
@@ -101,8 +99,6 @@ class IUSEMetadataCheck(base.Check):
 class DeprecatedEAPI(base.VersionedResult, base.Warning):
     """Package's EAPI is deprecated according to repo metadata."""
 
-    __slots__ = ('eapi',)
-
     def __init__(self, pkg):
         super().__init__(pkg)
         self.eapi = str(pkg.eapi)
@@ -157,8 +153,6 @@ class RequiredUseDefaults(base.VersionedResult, base.Warning):
     of the needed flags, modifying package.use in the most relevant profiles
     or modifying REQUIRED_USE.
     """
-
-    __slots__ = ("required_use", "use", "keyword", "profile", "num_profiles")
 
     def __init__(self, pkg, required_use, use=(), keyword=None,
                  profile=None, num_profiles=None):
@@ -247,8 +241,6 @@ class RequiredUSEMetadataCheck(base.Check):
 class UnusedLocalUSE(base.PackageResult, base.Warning):
     """Unused local USE flag(s)."""
 
-    __slots__ = ('flags',)
-
     def __init__(self, pkg, flags):
         super().__init__(pkg)
         self.flags = tuple(sorted(flags))
@@ -262,8 +254,6 @@ class UnusedLocalUSE(base.PackageResult, base.Warning):
 class MatchingGlobalUSE(base.PackageResult, base.Error):
     """Local USE flag description matches a global USE flag."""
 
-    __slots__ = ('flag',)
-
     def __init__(self, pkg, flag):
         super().__init__(pkg)
         self.flag = flag
@@ -275,8 +265,6 @@ class MatchingGlobalUSE(base.PackageResult, base.Error):
 
 class ProbableGlobalUSE(base.PackageResult, base.Warning):
     """Local USE flag description closely matches a global USE flag."""
-
-    __slots__ = ('flag',)
 
     def __init__(self, pkg, flag):
         super().__init__(pkg)
@@ -300,8 +288,6 @@ class ProbableUseExpand(base.PackageResult, base.Warning):
 
     .. [#] https://devmanual.gentoo.org/general-concepts/use-flags/
     """
-
-    __slots__ = ('flag', 'group')
 
     def __init__(self, pkg, flag, group):
         super().__init__(pkg)
@@ -375,8 +361,6 @@ class MissingSlotDep(base.VersionedResult, base.Warning):
     .. [#] https://devmanual.gentoo.org/general-concepts/dependencies/#slot-dependencies
     """
 
-    __slots__ = ('dep', 'dep_slots')
-
     def __init__(self, pkg, dep, dep_slots):
         super().__init__(pkg)
         self.dep = dep
@@ -428,8 +412,6 @@ class MissingPackageRevision(base.VersionedResult, base.Warning):
     allowed, ``-r0`` should be appended in order to make the intent explicit.
     """
 
-    __slots__ = ('dep', 'atom')
-
     def __init__(self, pkg, dep, atom):
         super().__init__(pkg)
         self.dep = dep.upper()
@@ -442,8 +424,6 @@ class MissingPackageRevision(base.VersionedResult, base.Warning):
 
 class MissingUseDepDefault(base.VersionedResult, base.Warning):
     """Package dependencies with USE dependencies missing defaults."""
-
-    __slots__ = ('attr', 'atom', 'flag', 'pkg_deps')
 
     def __init__(self, pkg, attr, atom, flag, pkg_deps):
         super().__init__(pkg)
@@ -464,8 +444,6 @@ class OutdatedBlocker(base.VersionedResult, base.Warning):
 
     Note that this ignores slot/subslot deps and USE deps in blocker atoms.
     """
-
-    __slots__ = ("attr", "atom", "age")
 
     def __init__(self, pkg, attr, atom, age):
         super().__init__(pkg)
@@ -489,8 +467,6 @@ class NonexistentBlocker(base.VersionedResult, base.Warning):
 
     Note that this ignores slot/subslot deps and USE deps in blocker atoms.
     """
-
-    __slots__ = ("attr", "atom")
 
     def __init__(self, pkg, attr, atom):
         super().__init__(pkg)
@@ -625,8 +601,6 @@ class StupidKeywords(base.VersionedResult, base.Warning):
 class InvalidKeywords(base.VersionedResult, base.Error):
     """Packages using invalid KEYWORDS."""
 
-    __slots__ = ('keywords',)
-
     def __init__(self, pkg, keywords):
         super().__init__(pkg)
         self.keywords = tuple(sorted(keywords))
@@ -639,8 +613,6 @@ class InvalidKeywords(base.VersionedResult, base.Error):
 class OverlappingKeywords(base.VersionedResult, base.Warning):
     """Packages having overlapping arch and ~arch KEYWORDS."""
 
-    __slots__ = ('keywords',)
-
     def __init__(self, pkg, keywords):
         super().__init__(pkg)
         self.keywords = tuple(sorted(zip(keywords, ('~' + x for x in keywords))))
@@ -652,8 +624,6 @@ class OverlappingKeywords(base.VersionedResult, base.Warning):
 
 class DuplicateKeywords(base.VersionedResult, base.Warning):
     """Packages having duplicate KEYWORDS."""
-
-    __slots__ = ('keywords',)
 
     def __init__(self, pkg, keywords):
         super().__init__(pkg)
@@ -671,8 +641,6 @@ class UnsortedKeywords(base.VersionedResult, base.Warning):
     with hyphens in them, e.g. amd64-fbsd) after regular arches and globs (e.g. ``-*``)
     before them.
     """
-
-    __slots__ = ('keywords', 'sorted_keywords')
 
     def __init__(self, pkg):
         super().__init__(pkg)
@@ -692,8 +660,6 @@ class UnsortedKeywords(base.VersionedResult, base.Warning):
 
 class MissingVirtualKeywords(base.VersionedResult, base.Warning):
     """Virtual packages with keywords missing from their dependencies."""
-
-    __slots__ = ('keywords',)
 
     def __init__(self, pkg, keywords):
         super().__init__(pkg)
@@ -780,8 +746,6 @@ class KeywordsCheck(base.Check):
 class MissingUri(base.VersionedResult, base.Warning):
     """RESTRICT=fetch isn't set, yet no full URI exists."""
 
-    __slots__ = ('filenames',)
-
     def __init__(self, pkg, filenames):
         super().__init__(pkg)
         self.filenames = tuple(sorted(filenames))
@@ -794,8 +758,6 @@ class MissingUri(base.VersionedResult, base.Warning):
 
 class UnknownMirror(base.VersionedResult, base.Error):
     """URI uses an unknown mirror."""
-
-    __slots__ = ("filename", "uri", "mirror")
 
     def __init__(self, pkg, filename, uri, mirror):
         super().__init__(pkg)
@@ -814,8 +776,6 @@ class BadProtocol(base.VersionedResult, base.Warning):
     Valid protocols are currently: http, https, and ftp
     """
 
-    __slots__ = ('filename', 'bad_uris')
-
     def __init__(self, pkg, filename, bad_uris):
         super().__init__(pkg)
         self.filename = filename
@@ -833,8 +793,6 @@ class BadFilename(base.VersionedResult, base.Warning):
     Archive filenames should be disambiguated using ``->`` to rename them.
     """
 
-    __slots__ = ('filenames',)
-
     def __init__(self, pkg, filenames):
         super().__init__(pkg)
         self.filenames = tuple(sorted(filenames))
@@ -851,8 +809,6 @@ class TarballAvailable(base.VersionedResult, base.Warning):
     Tarballs should be preferred over zip archives due to better compression
     and no extra unpack dependencies.
     """
-
-    __slots__ = ('uris',)
 
     def __init__(self, pkg, uris):
         super().__init__(pkg)
@@ -949,8 +905,6 @@ class SrcUriCheck(base.Check):
 class BadDescription(base.VersionedResult, base.Warning):
     """Package's description is bad for some reason."""
 
-    __slots__ = ('msg',)
-
     def __init__(self, pkg, msg):
         super().__init__(pkg)
         self.msg = msg
@@ -990,8 +944,6 @@ class DescriptionCheck(base.Check):
 
 class BadHomepage(base.VersionedResult, base.Warning):
     """Package's homepage is bad for some reason."""
-
-    __slots__ = ('msg',)
 
     def __init__(self, pkg, msg):
         super().__init__(pkg)
@@ -1034,8 +986,6 @@ class HomepageCheck(base.Check):
 class BadRestricts(base.VersionedResult, base.Warning):
     """Package's RESTRICT metadata has unknown entries."""
 
-    __slots__ = ('restricts',)
-
     def __init__(self, pkg, restricts):
         super().__init__(pkg)
         self.restricts = tuple(sorted(restricts))
@@ -1048,8 +998,6 @@ class BadRestricts(base.VersionedResult, base.Warning):
 
 class UnknownProperties(base.VersionedResult, base.Warning):
     """Package's PROPERTIES metadata has unknown entries."""
-
-    __slots__ = ('properties',)
 
     def __init__(self, pkg, properties):
         super().__init__(pkg)
@@ -1144,8 +1092,6 @@ class MissingUnpackerDep(base.VersionedResult, base.Warning):
     Package uses an archive format for which an unpacker is not provided by the
     system set, and lacks an explicit dependency on the unpacker package.
     """
-
-    __slots__ = ("eapi", "filenames", "unpackers")
 
     def __init__(self, pkg, filenames, unpackers):
         super().__init__(pkg)

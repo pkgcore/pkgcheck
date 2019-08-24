@@ -21,8 +21,6 @@ allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 class MismatchedPN(base.PackageResult, base.Error):
     """Ebuilds that have different names than their parent directory."""
 
-    __slots__ = ('ebuilds',)
-
     def __init__(self, pkg, ebuilds):
         super().__init__(pkg)
         self.ebuilds = tuple(sorted(ebuilds))
@@ -35,8 +33,6 @@ class MismatchedPN(base.PackageResult, base.Error):
 
 class InvalidPN(base.PackageResult, base.Error):
     """Ebuilds that have invalid package names."""
-
-    __slots__ = ('ebuilds',)
 
     def __init__(self, pkg, ebuilds):
         super().__init__(pkg)
@@ -56,8 +52,6 @@ class EqualVersions(base.PackageResult, base.Error):
     shouldn't exist in the same repository.
     """
 
-    __slots__ = ('versions',)
-
     def __init__(self, pkg, versions):
         super().__init__(pkg)
         self.versions = tuple(sorted(versions))
@@ -69,8 +63,6 @@ class EqualVersions(base.PackageResult, base.Error):
 
 class DuplicateFiles(base.PackageResult, base.Warning):
     """Two or more identical files in FILESDIR."""
-
-    __slots__ = ('files',)
 
     def __init__(self, pkg, files):
         super().__init__(pkg)
@@ -85,8 +77,6 @@ class DuplicateFiles(base.PackageResult, base.Warning):
 class EmptyFile(base.PackageResult, base.Warning):
     """File in FILESDIR is empty."""
 
-    __slots__ = ('filename',)
-
     def __init__(self, pkg, filename):
         super().__init__(pkg)
         self.filename = filename
@@ -99,8 +89,6 @@ class EmptyFile(base.PackageResult, base.Warning):
 class ExecutableFile(base.PackageResult, base.Warning):
     """File has executable bit, but doesn't need it."""
 
-    __slots__ = ('filename',)
-
     def __init__(self, pkg, filename):
         super().__init__(pkg)
         self.filename = filename
@@ -112,8 +100,6 @@ class ExecutableFile(base.PackageResult, base.Warning):
 
 class SizeViolation(base.PackageResult, base.Warning):
     """File in $FILESDIR is too large (current limit is 20k)."""
-
-    __slots__ = ('filename', 'size')
 
     def __init__(self, pkg, filename, size):
         super().__init__(pkg)
@@ -128,8 +114,6 @@ class SizeViolation(base.PackageResult, base.Warning):
 class Glep31Violation(base.PackageResult, base.Error):
     """File doesn't abide by glep31 requirements."""
 
-    __slots__ = ('filename',)
-
     def __init__(self, pkg, filename):
         super().__init__(pkg)
         self.filename = filename
@@ -142,8 +126,6 @@ class Glep31Violation(base.PackageResult, base.Error):
 
 class InvalidUTF8(base.PackageResult, base.Error):
     """File isn't UTF-8 compliant."""
-
-    __slots__ = ('filename', 'err')
 
     def __init__(self, pkg, filename, err):
         super().__init__(pkg)

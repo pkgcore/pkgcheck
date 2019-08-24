@@ -11,8 +11,6 @@ from .. import base, sources
 class MissingAccountIdentifier(base.VersionedResult, base.Warning):
     """UID/GID can not be found in account package."""
 
-    __slots__ = ('var',)
-
     def __init__(self, pkg, var):
         super().__init__(pkg)
         self.var = var
@@ -24,8 +22,6 @@ class MissingAccountIdentifier(base.VersionedResult, base.Warning):
 
 class ConflictingAccountIdentifiers(base.Error):
     """Same UID/GID is used by multiple packages."""
-
-    __slots__ = ("kind", "identifier", "pkgs")
 
     threshold = base.repository_feed
 
@@ -44,8 +40,6 @@ class ConflictingAccountIdentifiers(base.Error):
 
 class OutsideRangeAccountIdentifier(base.VersionedResult, base.Error):
     """UID/GID outside allowed allocation range."""
-
-    __slots__ = ("kind", "identifier")
 
     def __init__(self, pkg, kind, identifier):
         super().__init__(pkg)

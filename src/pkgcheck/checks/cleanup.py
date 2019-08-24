@@ -6,8 +6,6 @@ from .. import base
 class RedundantVersion(base.VersionedResult, base.Warning):
     """Redundant version(s) of a package in a specific slot."""
 
-    __slots__ = ("slot", "later_versions")
-
     def __init__(self, pkg, higher_pkgs):
         super().__init__(pkg)
         self.slot = pkg.slot

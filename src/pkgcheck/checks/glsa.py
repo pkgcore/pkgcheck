@@ -14,8 +14,6 @@ from ..log import logger
 class VulnerablePackage(base.VersionedResult, base.Error):
     """Packages marked as vulnerable by GLSAs."""
 
-    __slots__ = ("arches", "glsa")
-
     def __init__(self, pkg, glsa):
         super().__init__(pkg)
         arches = set()

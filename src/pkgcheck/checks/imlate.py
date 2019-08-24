@@ -10,8 +10,6 @@ from .. import addons, base
 class PotentialStable(base.VersionedResult, base.Warning):
     """Stable arches with potential stable package candidates."""
 
-    __slots__ = ("slot", "keywords", "stable")
-
     def __init__(self, pkg, keywords):
         super().__init__(pkg)
         self.slot = pkg.slot
@@ -28,8 +26,6 @@ class PotentialStable(base.VersionedResult, base.Warning):
 
 class LaggingStable(base.VersionedResult, base.Warning):
     """Stable arches for stabilized package that are lagging from a stabling standpoint."""
-
-    __slots__ = ("slot", "keywords", "stable")
 
     def __init__(self, pkg, keywords):
         super().__init__(pkg)

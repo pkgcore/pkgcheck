@@ -9,8 +9,6 @@ from ..utils import is_binary
 class BinaryFile(base.Error):
     """Binary file found in the repository."""
 
-    __slots__ = ("path",)
-
     threshold = base.repository_feed
 
     def __init__(self, path):

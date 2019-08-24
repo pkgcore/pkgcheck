@@ -11,8 +11,6 @@ class UnusedInMastersLicenses(base.VersionedResult, base.Warning):
     In other words, they're likely to be removed so should be copied to the overlay.
     """
 
-    __slots__ = ('licenses',)
-
     def __init__(self, pkg, licenses):
         super().__init__(pkg)
         self.licenses = tuple(sorted(licenses))
@@ -28,8 +26,6 @@ class UnusedInMastersMirrors(base.VersionedResult, base.Warning):
 
     In other words, they're likely to be removed so should be copied to the overlay.
     """
-
-    __slots__ = ('mirrors',)
 
     def __init__(self, pkg, mirrors):
         super().__init__(pkg)
@@ -47,8 +43,6 @@ class UnusedInMastersEclasses(base.VersionedResult, base.Warning):
     In other words, they're likely to be removed so should be copied to the overlay.
     """
 
-    __slots__ = ('eclasses',)
-
     def __init__(self, pkg, eclasses):
         super().__init__(pkg)
         self.eclasses = tuple(sorted(eclasses))
@@ -64,8 +58,6 @@ class UnusedInMastersGlobalUSE(base.VersionedResult, base.Warning):
 
     In other words, they're likely to be removed so should be copied to the overlay.
     """
-
-    __slots__ = ('flags',)
 
     def __init__(self, pkg, flags):
         super().__init__(pkg)

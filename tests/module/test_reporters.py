@@ -129,8 +129,6 @@ class TestXmlReporter(BaseReporter):
 
 class UnPickleableResult(base.Result):
 
-    __slots__ = ('func',)
-
     def __init__(self):
         self.func = lambda x: x
 
@@ -149,7 +147,7 @@ class TestPickleStream(BaseReporter):
             out, err = capsysbinary.readouterr()
             assert not err
             unpickled_result = pickle.loads(out)
-            assert unpickled_result == result
+            assert str(unpickled_result) == str(result)
 
     def test_filtered_report(self, capsysbinary):
         self.reporter = self.mk_reporter(keywords=(profiles.ProfileError,))
@@ -160,7 +158,7 @@ class TestPickleStream(BaseReporter):
         out, err = capsysbinary.readouterr()
         assert not err
         result = pickle.loads(out)
-        assert result == self.log_error
+        assert str(result) == str(self.log_error)
 
     def test_unpickleable_result(self):
         result = UnPickleableResult()

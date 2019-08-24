@@ -24,8 +24,6 @@ demand_compile_regexp(
 class OutdatedCopyright(base.VersionedResult, base.Warning):
     """Changed ebuild with outdated copyright."""
 
-    __slots__ = ('year', 'line')
-
     def __init__(self, pkg, year, line):
         super().__init__(pkg)
         self.year = year
@@ -38,8 +36,6 @@ class OutdatedCopyright(base.VersionedResult, base.Warning):
 
 class DirectStableKeywords(base.VersionedResult, base.Error):
     """Newly committed ebuild with stable keywords."""
-
-    __slots__ = ('keywords',)
 
     def __init__(self, pkg, keywords):
         super().__init__(pkg)
@@ -54,7 +50,6 @@ class DirectStableKeywords(base.VersionedResult, base.Error):
 class DroppedUnstableKeywords(base.PackageResult, base.Warning):
     """Unstable keywords dropped from package."""
 
-    __slots__ = ('keywords', 'commit')
     status = 'unstable'
 
     def __init__(self, pkg, keywords, commit):

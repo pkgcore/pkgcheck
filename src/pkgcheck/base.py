@@ -20,7 +20,6 @@ from pkgcore.config.hint import ConfigHint
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import util
 from snakeoil.decorators import coroutine
-from snakeoil.klass import SlotsPicklingMixin, generic_equality
 from snakeoil.osutils import pjoin
 
 from .log import logger
@@ -247,10 +246,7 @@ class Transform(object):
         return f'{self.__class__.__name__}({self.child!r})'
 
 
-class Result(SlotsPicklingMixin, metaclass=generic_equality):
-
-    __slots__ = ('_verbosity',)
-    __attr_comparison__ = '__slots__'
+class Result(object):
 
     # level values match those used in logging module
     _level = 20
@@ -295,21 +291,18 @@ class Result(SlotsPicklingMixin, metaclass=generic_equality):
 class Error(Result):
     """Result with an error priority level."""
 
-    __slots__ = ()
     _level = 40
 
 
 class Warning(Result):
     """Result with a warning priority level."""
 
-    __slots__ = ()
     _level = 30
 
 
 class PackageResult(Result):
     """Result related to a specific package."""
 
-    __slots__ = ('category', 'package')
     threshold = package_feed
 
     def __init__(self, pkg):
@@ -321,7 +314,6 @@ class PackageResult(Result):
 class VersionedResult(PackageResult):
     """Result related to a specific version of a package."""
 
-    __slots__ = ('version',)
     threshold = versioned_feed
 
     def __init__(self, pkg):
@@ -331,8 +323,6 @@ class VersionedResult(PackageResult):
 
 class LogError(Error):
     """Error caught from a logger instance."""
-
-    __slots__ = ("msg",)
 
     def __init__(self, msg):
         super().__init__()
@@ -349,8 +339,6 @@ class LogWarning(Warning, LogError):
 
 class MetadataError(VersionedResult, Error):
     """Problem detected with a package's metadata."""
-
-    __slots__ = ('attr', 'msg')
 
     def __init__(self, pkg, attr, msg):
         super().__init__(pkg)

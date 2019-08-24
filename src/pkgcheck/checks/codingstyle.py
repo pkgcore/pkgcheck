@@ -17,8 +17,6 @@ demand_compile_regexp(
 class HttpsAvailable(base.VersionedResult, base.Warning):
     """Ebuild contains an ``http://`` link that should use ``https://`` instead."""
 
-    __slots__ = ('link', 'lines')
-
     def __init__(self, pkg, link, lines):
         super().__init__(pkg)
         self.link = link
@@ -89,8 +87,6 @@ class HttpsAvailableCheck(base.Check):
 class PortageInternals(base.VersionedResult, base.Warning):
     """Ebuild uses a function or variable internal to portage."""
 
-    __slots__ = ('internal', 'line')
-
     def __init__(self, pkg, internal, line):
         super().__init__(pkg)
         self.internal = internal
@@ -137,8 +133,6 @@ class PortageInternalsCheck(base.Check):
 class MissingSlash(base.VersionedResult, base.Error):
     """Ebuild uses a path variable missing a trailing slash."""
 
-    __slots__ = ('match', 'lines')
-
     def __init__(self, pkg, match, lines):
         super().__init__(pkg)
         self.match = match
@@ -152,8 +146,6 @@ class MissingSlash(base.VersionedResult, base.Error):
 
 class UnnecessarySlashStrip(base.VersionedResult, base.Warning):
     """Ebuild uses a path variable that strips a nonexistent slash."""
-
-    __slots__ = ('match', 'lines')
 
     def __init__(self, pkg, match, lines):
         super().__init__(pkg)
@@ -176,8 +168,6 @@ class DoublePrefixInPath(base.VersionedResult, base.Error):
     For example, ``${ED}$(python_get_sitedir)`` should be replaced
     with ``${D}$(python_get_sitedir)``.
     """
-
-    __slots__ = ('match', 'lines')
 
     def __init__(self, pkg, match, lines):
         super().__init__(pkg)
@@ -298,8 +288,6 @@ class PathVariablesCheck(base.Check):
 class AbsoluteSymlink(base.VersionedResult, base.Warning):
     """Ebuild uses dosym with absolute paths instead of relative."""
 
-    __slots__ = ('line', 'abspath')
-
     def __init__(self, pkg, abspath, line):
         super().__init__(pkg)
         self.abspath = abspath
@@ -334,8 +322,6 @@ class AbsoluteSymlinkCheck(base.Check):
 
 class BadInsIntoDir(base.VersionedResult, base.Warning):
     """Ebuild uses insinto where more compact commands exist."""
-
-    __slots__ = ('line', 'insintodir')
 
     def __init__(self, pkg, insintodir, line):
         super().__init__(pkg)
@@ -395,8 +381,6 @@ class ObsoleteUri(base.VersionedResult, base.Warning):
     avoid mirror collisions with the old file) and update the ebuild
     (for example, by removing no longer necessary vcs-snapshot.eclass).
     """
-
-    __slots__ = ('line', 'uri', 'replacement')
 
     def __init__(self, pkg, line, uri, replacement):
         super().__init__(pkg)
@@ -459,8 +443,6 @@ class InvalidCopyright(base.VersionedResult, base.Warning):
         # Copyright YEARS Gentoo Authors
     """
 
-    __slots__ = ('line',)
-
     def __init__(self, pkg, line):
         super().__init__(pkg)
         self.line = line
@@ -481,8 +463,6 @@ class OldGentooCopyright(base.VersionedResult, base.Warning):
     in other repositories may specify an explicit copyright holder instead.
     """
 
-    __slots__ = ('line',)
-
     def __init__(self, pkg, line):
         super().__init__(pkg)
         self.line = line
@@ -500,8 +480,6 @@ class NonGentooAuthorsCopyright(base.VersionedResult, base.Warning):
     is not listed in metadata/AUTHORS, addition can be requested via
     bugs.gentoo.org.
     """
-
-    __slots__ = ('line',)
 
     def __init__(self, pkg, line):
         super().__init__(pkg)

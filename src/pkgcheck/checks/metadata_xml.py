@@ -24,8 +24,6 @@ class XsdError(Exception):
 class _MissingXml(base.Error):
     """Required XML file is missing."""
 
-    __slots__ = ('category', 'package', 'filename')
-
     def __init__(self, filename, category, package=None):
         super().__init__()
         self.category = category
@@ -45,8 +43,6 @@ class _MissingXml(base.Error):
 
 class _BadlyFormedXml(base.Warning):
     """XML isn't well formed."""
-
-    __slots__ = ('category', 'package', 'error', 'filename')
 
     def __init__(self, error, filename, category, package=None):
         super().__init__()
@@ -68,8 +64,6 @@ class _BadlyFormedXml(base.Warning):
 
 class _InvalidXml(base.Error):
     """XML fails XML Schema validation."""
-
-    __slots__ = ('category', 'package', 'message', 'filename')
 
     # message first so partial() can be easily applied
     def __init__(self, message, filename, category, package=None):
@@ -99,8 +93,6 @@ class _InvalidXml(base.Error):
 class _MetadataXmlInvalidPkgRef(base.Error):
     """metadata.xml <pkg/> references unknown/invalid package."""
 
-    __slots__ = ('category', 'package', 'pkgtext', 'filename')
-
     def __init__(self, pkgtext, filename, category, package=None):
         super().__init__()
         self.category = category
@@ -124,8 +116,6 @@ class _MetadataXmlInvalidPkgRef(base.Error):
 
 class _MetadataXmlInvalidCatRef(base.Error):
     """metadata.xml <cat/> references unknown/invalid category."""
-
-    __slots__ = ('category', 'package', 'cattext', 'filename')
 
     def __init__(self, cattext, filename, category, package=None):
         super().__init__()
@@ -151,7 +141,6 @@ class _MetadataXmlInvalidCatRef(base.Error):
 class EmptyMaintainer(base.Warning):
     """Package with neither a maintainer or maintainer-needed comment in metadata.xml."""
 
-    __slots__ = ('category', 'package', 'filename')
     threshold = base.package_feed
 
     def __init__(self, filename, category, package):
@@ -175,7 +164,6 @@ class MaintainerWithoutProxy(base.Warning):
     oversees the proxied maintainer's activity.
     """
 
-    __slots__ = ("category", "package", "filename", "maintainers")
     threshold = base.package_feed
 
     def __init__(self, maintainers, filename, category, package):
@@ -200,7 +188,6 @@ class StaleProxyMaintProject(base.Warning):
     but proxy-maint was left over.
     """
 
-    __slots__ = ("category", "package", "filename")
     threshold = base.package_feed
 
     def __init__(self, filename, category, package):
@@ -217,7 +204,6 @@ class StaleProxyMaintProject(base.Warning):
 class NonexistentProjectMaintainer(base.Warning):
     """Package specifying nonexistent project as a maintainer."""
 
-    __slots__ = ("category", "package", "filename", "emails")
     threshold = base.package_feed
 
     def __init__(self, emails, filename, category, package):
@@ -236,7 +222,6 @@ class NonexistentProjectMaintainer(base.Warning):
 class WrongMaintainerType(base.Warning):
     """A person-type maintainer matches an existing project."""
 
-    __slots__ = ("category", "package", "filename", "emails")
     threshold = base.package_feed
 
     def __init__(self, emails, filename, category, package):
@@ -254,61 +239,51 @@ class WrongMaintainerType(base.Warning):
 
 class PkgMissingMetadataXml(_MissingXml):
     """Package is missing metadata.xml."""
-    __slots__ = ()
     threshold = base.package_feed
 
 
 class CatMissingMetadataXml(_MissingXml):
     """Category is missing metadata.xml."""
-    __slots__ = ()
     threshold = base.category_feed
 
 
 class PkgInvalidXml(_InvalidXml):
     """Invalid package metadata.xml."""
-    __slots__ = ()
     threshold = base.package_feed
 
 
 class CatInvalidXml(_InvalidXml):
     """Invalid category metadata.xml."""
-    __slots__ = ()
     threshold = base.category_feed
 
 
 class PkgBadlyFormedXml(_BadlyFormedXml):
     """Badly formed package metadata.xml."""
-    __slots__ = ()
     threshold = base.package_feed
 
 
 class CatBadlyFormedXml(_BadlyFormedXml):
     """Badly formed category metadata.xml."""
-    __slots__ = ()
     threshold = base.category_feed
 
 
 class PkgMetadataXmlInvalidPkgRef(_MetadataXmlInvalidPkgRef):
     """Invalid package reference in package metadata.xml."""
-    __slots__ = ()
     threshold = base.package_feed
 
 
 class CatMetadataXmlInvalidPkgRef(_MetadataXmlInvalidPkgRef):
     """Invalid package reference in category metadata.xml."""
-    __slots__ = ()
     threshold = base.category_feed
 
 
 class PkgMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef):
     """Invalid category reference in package metadata.xml."""
-    __slots__ = ()
     threshold = base.package_feed
 
 
 class CatMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef):
     """Invalid category reference in category metadata.xml."""
-    __slots__ = ()
     threshold = base.category_feed
 
 
@@ -317,8 +292,6 @@ class _MetadataXmlIndentation(base.Warning):
 
     Either all tabs or all spaces should be used, not a mixture of both.
     """
-
-    __slots__ = ("category", "package", "filename", "lines")
 
     def __init__(self, lines, filename, category, package=None):
         super().__init__()
@@ -342,7 +315,6 @@ class CatMetadataXmlIndentation(_MetadataXmlIndentation):
 
     Either all tabs or all spaces should be used, not a mixture of both.
     """
-    __slots__ = ()
     threshold = base.category_feed
 
 class PkgMetadataXmlIndentation(_MetadataXmlIndentation):
@@ -350,14 +322,11 @@ class PkgMetadataXmlIndentation(_MetadataXmlIndentation):
 
     Either all tabs or all spaces should be used, not a mixture of both.
     """
-    __slots__ = ()
     threshold = base.package_feed
 
 
 class _MetadataXmlEmptyElement(base.Warning):
     """Empty element in metadata.xml file."""
-
-    __slots__ = ("category", "package", "filename", "line", "element")
 
     def __init__(self, element, line, filename, category, package=None):
         super().__init__()
@@ -374,13 +343,11 @@ class _MetadataXmlEmptyElement(base.Warning):
 
 class CatMetadataXmlEmptyElement(_MetadataXmlEmptyElement):
     """Empty element in category metadata.xml file."""
-    __slots__ = ()
     threshold = base.category_feed
 
 
 class PkgMetadataXmlEmptyElement(_MetadataXmlEmptyElement):
     """Empty element in package metadata.xml file."""
-    __slots__ = ()
     threshold = base.package_feed
 
 

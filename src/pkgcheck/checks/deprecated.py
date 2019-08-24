@@ -7,8 +7,6 @@ from .. import base
 class DeprecatedEclass(base.VersionedResult, base.Warning):
     """Package uses an eclass that is deprecated/abandoned."""
 
-    __slots__ = ('eclasses',)
-
     def __init__(self, pkg, eclasses):
         super().__init__(pkg)
         self.eclasses = eclasses

@@ -913,8 +913,6 @@ class StableArchesAddon(base.Addon):
 class UnstatedIUSE(base.VersionedResult, base.Error):
     """Package is reliant on conditionals that aren't in IUSE."""
 
-    __slots__ = ('attr', 'flags', 'profile', 'num_profiles')
-
     def __init__(self, pkg, attr, flags, profile=None, num_profiles=None):
         super().__init__(pkg)
         self.attr = attr

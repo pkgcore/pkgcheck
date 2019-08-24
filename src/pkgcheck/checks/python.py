@@ -38,8 +38,6 @@ class MissingPythonEclass(base.VersionedResult, base.Warning):
     .. [#] https://wiki.gentoo.org/wiki/Project:Python/Eclasses
     """
 
-    __slots__ = ("eclass", "dep_type", "dep")
-
     def __init__(self, pkg, eclass, dep_type, dep):
         super().__init__(pkg)
         self.eclass = eclass
@@ -59,8 +57,6 @@ class PythonSingleUseMismatch(base.VersionedResult, base.Warning):
     either indicates a bug in the eclasses or the package is manually changing
     the flags.
     """
-
-    __slots__ = ("flags", "single_flags")
 
     def __init__(self, pkg, flags, single_flags):
         super().__init__(pkg)
@@ -102,8 +98,6 @@ class PythonMissingDeps(base.VersionedResult, base.Warning):
     in appropriate USE conditionals.
     """
 
-    __slots__ = ('dep_type',)
-
     def __init__(self, pkg, dep_type):
         super().__init__(pkg)
         self.dep_type = dep_type.upper()
@@ -122,8 +116,6 @@ class PythonRuntimeDepInAnyR1(base.VersionedResult, base.Warning):
     python-r1 or python-single-r1 eclass, otherwise the runtime dependency
     should be removed.
     """
-
-    __slots__ = ('dep_type', 'dep')
 
     def __init__(self, pkg, dep_type, dep):
         super().__init__(pkg)

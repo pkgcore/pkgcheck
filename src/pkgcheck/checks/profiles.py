@@ -16,8 +16,6 @@ from .. import base, addons
 class BadProfileEntry(base.Error):
     """Badly formatted entry in a profiles file."""
 
-    __slots__ = ("path", "error")
-
     threshold = base.repository_feed
 
     def __init__(self, path, error):
@@ -32,8 +30,6 @@ class BadProfileEntry(base.Error):
 
 class UnknownProfilePackages(base.Warning):
     """Profile files include package entries that don't exist in the repo."""
-
-    __slots__ = ("path", "packages")
 
     threshold = base.repository_feed
 
@@ -50,8 +46,6 @@ class UnknownProfilePackages(base.Warning):
 
 class UnknownProfilePackageUse(base.Warning):
     """Profile files include entries with USE flags that aren't used on any matching packages."""
-
-    __slots__ = ("path", "package", "flags")
 
     threshold = base.repository_feed
 
@@ -71,8 +65,6 @@ class UnknownProfilePackageUse(base.Warning):
 class UnknownProfileUse(base.Warning):
     """Profile files include USE flags that don't exist."""
 
-    __slots__ = ("path", "flags")
-
     threshold = base.repository_feed
 
     def __init__(self, path, flags):
@@ -88,8 +80,6 @@ class UnknownProfileUse(base.Warning):
 
 class UnknownProfilePackageKeywords(base.Warning):
     """Profile files include package keywords that don't exist."""
-
-    __slots__ = ("path", "package", "keywords")
 
     threshold = base.repository_feed
 
@@ -287,8 +277,6 @@ class ProfilesCheck(base.Check, base.EmptyFeed):
 class UnusedProfileDirs(base.Warning):
     """Unused profile directories detected."""
 
-    __slots__ = ('dirs',)
-
     threshold = base.repository_feed
 
     def __init__(self, dirs):
@@ -303,8 +291,6 @@ class UnusedProfileDirs(base.Warning):
 
 class ArchesWithoutProfiles(base.Warning):
     """Arches without corresponding profile listings."""
-
-    __slots__ = ('arches',)
 
     threshold = base.repository_feed
 
@@ -321,8 +307,6 @@ class ArchesWithoutProfiles(base.Warning):
 class NonexistentProfilePath(base.Warning):
     """Specified profile path in profiles.desc doesn't exist."""
 
-    __slots__ = ('path',)
-
     threshold = base.repository_feed
 
     def __init__(self, path):
@@ -336,8 +320,6 @@ class NonexistentProfilePath(base.Warning):
 
 class LaggingProfileEAPI(base.Warning):
     """Profile has an EAPI that is older than one of its parents."""
-
-    __slots__ = ('profile', 'profile_eapi', 'parent', 'parent_eapi')
 
     threshold = base.repository_feed
 
@@ -361,8 +343,6 @@ class UnknownCategories(base.Warning):
 
     Or the categories of the repo's masters as well.
     """
-
-    __slots__ = ('categories',)
 
     threshold = base.repository_feed
 

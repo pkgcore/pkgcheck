@@ -13,8 +13,6 @@ day = 24*3600
 class StableRequest(base.VersionedResult, base.Warning):
     """Unstable package added over thirty days ago that could be stabilized."""
 
-    __slots__ = ("keywords", "period", "slot")
-
     def __init__(self, pkg, keywords, period):
         super().__init__(pkg)
         self.slot = pkg.slot
