@@ -30,59 +30,59 @@ class _MissingXml(base.Error):
         super().__init__()
         self.category = category
         self.package = package
-        self.filename = filename
+        self.filename = os.path.basename(filename)
 
     @property
     def _label(self):
         if self.package is not None:
-            return f"{self.category}/{self.package}"
+            return f'{self.category}/{self.package}'
         return self.category
 
     @property
     def short_desc(self):
-        return f"{self._label} is missing {os.path.basename(self.filename)}"
+        return f'{self._label} is missing {self.filename}'
 
 
 class _BadlyFormedXml(base.Warning):
     """XML isn't well formed."""
 
-    __slots__ = ("category", "package", "error", "filename")
+    __slots__ = ('category', 'package', 'error', 'filename')
 
     def __init__(self, error, filename, category, package=None):
         super().__init__()
         self.category = category
         self.package = package
-        self.filename = filename
         self.error = error
+        self.filename = os.path.basename(filename)
 
     @property
     def _label(self):
         if self.package is not None:
-            return f"{self.category}/{self.package}"
+            return f'{self.category}/{self.package}'
         return self.category
 
     @property
     def short_desc(self):
-        return f"{self._label} {os.path.basename(self.filename)} is not well formed xml: {self.error}"
+        return f'{self._label} {self.filename} is not well formed xml: {self.error}'
 
 
 class _InvalidXml(base.Error):
     """XML fails XML Schema validation."""
 
-    __slots__ = ("category", "package", "filename")
+    __slots__ = ('category', 'package', 'message', 'filename')
 
     # message first so partial() can be easily applied
     def __init__(self, message, filename, category, package=None):
         super().__init__()
-        self.message = message
         self.category = category
         self.package = package
-        self.filename = filename
+        self.message = message
+        self.filename = os.path.basename(filename)
 
     @property
     def _label(self):
         if self.package is not None:
-            return f"{self.category}/{self.package}"
+            return f'{self.category}/{self.package}'
         return self.category
 
     @staticmethod
@@ -92,63 +92,66 @@ class _InvalidXml(base.Error):
 
     @property
     def short_desc(self):
-        return "%s %s violates metadata.xsd:\n%s" % (
-            self._label, os.path.basename(self.filename),
-            '\n'.join(self.format_lxml_errors(self.message)))
+        message = '\n'.join(self.format_lxml_errors(self.message))
+        return f'{self._label} {self.filename} violates metadata.xsd:\n{message}'
 
 
 class _MetadataXmlInvalidPkgRef(base.Error):
     """metadata.xml <pkg/> references unknown/invalid package."""
 
-    __slots__ = ("category", "package", "filename")
+    __slots__ = ('category', 'package', 'pkgtext', 'filename')
 
     def __init__(self, pkgtext, filename, category, package=None):
         super().__init__()
         self.category = category
         self.package = package
-        self.filename = filename
         self.pkgtext = pkgtext
+        self.filename = os.path.basename(filename)
 
     @property
     def _label(self):
         if self.package is not None:
-            return f"{self.category}/{self.package}"
+            return f'{self.category}/{self.package}'
         return self.category
 
     @property
     def short_desc(self):
-        return "%s %s <pkg/> references unknown/invalid package: %r" % (
-            self._label, os.path.basename(self.filename), self.pkgtext)
+        return (
+            f'{self._label} {self.filename} <pkg/> '
+            f'references unknown/invalid package: {self.pkgtext!r}'
+        )
 
 
 class _MetadataXmlInvalidCatRef(base.Error):
-    """metadata.xml <cat/> references unknown/invalid category"""
+    """metadata.xml <cat/> references unknown/invalid category."""
 
-    __slots__ = ("category", "package", "filename")
+    __slots__ = ('category', 'package', 'cattext', 'filename')
 
     def __init__(self, cattext, filename, category, package=None):
         super().__init__()
         self.category = category
         self.package = package
-        self.filename = filename
         self.cattext = cattext
+        self.filename = os.path.basename(filename)
 
     @property
     def _label(self):
         if self.package is not None:
-            return f"{self.category}/{self.package}"
+            return f'{self.category}/{self.package}'
         return self.category
 
     @property
     def short_desc(self):
-        return "%s %s <cat/> references unknown/invalid category: %r" % (
-            self._label, os.path.basename(self.filename), self.cattext)
+        return (
+            f'{self._label} {self.filename} <cat/> references '
+            f'unknown/invalid category: {self.cattext!r}'
+        )
 
 
 class EmptyMaintainer(base.Warning):
     """Package with neither a maintainer or maintainer-needed comment in metadata.xml."""
 
-    __slots__ = ("category", "package", "filename")
+    __slots__ = ('category', 'package', 'filename')
     threshold = base.package_feed
 
     def __init__(self, filename, category, package):
