@@ -1,0 +1,6 @@
+diff -Naur standalone/profiles/profiles.desc fixed/profiles/profiles.desc
+--- standalone/profiles/profiles.desc	2019-08-25 03:26:34.234884197 -0600
++++ fixed/profiles/profiles.desc	2019-08-25 03:29:07.492884120 -0600
+@@ -1,2 +1 @@
+ amd64 default stable
+-amd64 nonexistent exp

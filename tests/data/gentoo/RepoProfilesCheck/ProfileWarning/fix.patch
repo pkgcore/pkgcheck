@@ -1,0 +1,6 @@
+diff -Naur gentoo/profiles/profiles.desc fixed/profiles/profiles.desc
+--- gentoo/profiles/profiles.desc	2019-08-25 03:46:25.164658101 -0600
++++ fixed/profiles/profiles.desc	2019-08-25 03:50:43.467344966 -0600
+@@ -1 +1 @@
+-amd64 default unknown
++amd64 default dev
