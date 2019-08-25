@@ -3,6 +3,14 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.6.1 (2019-??-??)
+---------------------------
+
+- MissingUnpackerDepCheck: Fix matching against versioned unpacker deps.
+
+- Rename BadProto keyword to BadProtocol.
+
+---------------------------
 pkgcheck 0.6.0 (2019-08-23)
 ---------------------------
 
