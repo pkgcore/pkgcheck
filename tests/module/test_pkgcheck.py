@@ -296,6 +296,7 @@ class TestPkgcheckScan(object):
     @pytest.mark.parametrize('check, result', results)
     def test_pkgcheck_scan(self, check, result, capsys, tmp_path):
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
+        tested = False
         for repo in os.listdir(pjoin(self.testdir, 'data')):
             keyword = result.__name__
             expected_path = pjoin(self.testdir, f'data/{repo}/{check}/{keyword}/expected')
@@ -324,13 +325,14 @@ class TestPkgcheckScan(object):
                 assert excinfo.value.code == 0
                 with open(expected_path) as expected:
                     assert out == expected.read()
-            break
-        else:
+            tested = True
+
+        if not tested:
             pytest.skip('expected test data not available')
 
     @pytest.mark.parametrize('check, result', results)
     def test_pkgcheck_scan_fix(self, check, result, capsys, tmp_path):
-        # apply fixes to pkgs, verifying the related results are fixed
+        """Apply fixes to pkgs, verifying the related results are fixed."""
         keyword = result.__name__
 
         def _patch(fix):
@@ -348,6 +350,7 @@ class TestPkgcheckScan(object):
             'fix.sh': _script,
         }
 
+        tested = False
         for repo in os.listdir(pjoin(self.testdir, 'data')):
             keyword_dir = pjoin(self.testdir, f'data/{repo}/{check}/{keyword}')
             if os.path.exists(pjoin(keyword_dir, 'fix.patch')):
@@ -380,8 +383,9 @@ class TestPkgcheckScan(object):
                 assert out == ''
                 assert excinfo.value.code == 0
             shutil.rmtree(fixed_repo)
-            break
-        else:
+            tested = True
+
+        if not tested:
             pytest.skip('fix not available')
 
 
