@@ -304,7 +304,7 @@ class ArchesWithoutProfiles(base.Warning):
         return f"arch{_pl(self.arches, plural='es')} without profile: {arches}"
 
 
-class NonexistentProfilePath(base.Warning):
+class NonexistentProfilePath(base.Error):
     """Specified profile path in profiles.desc doesn't exist."""
 
     threshold = base.repository_feed
