@@ -1,2 +1,2 @@
 __title__ = 'pkgcheck'
-__version__ = '0.6.0'
+__version__ = '0.6.1'

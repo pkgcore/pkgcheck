@@ -3,8 +3,12 @@ Release Notes
 =============
 
 ---------------------------
-pkgcheck 0.6.1 (2019-??-??)
+pkgcheck 0.6.1 (2019-08-25)
 ---------------------------
+
+- NonexistentProfilePath: Change from warning to an error.
+
+- Fix various XML result initialization due to missing attributes.
 
 - MissingUnpackerDepCheck: Fix matching against versioned unpacker deps.
 
