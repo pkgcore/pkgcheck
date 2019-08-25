@@ -1,0 +1,11 @@
+diff -Naur standalone/LocalUSECheck/UnusedLocalUSE/metadata.xml fixed/LocalUSECheck/UnusedLocalUSE/metadata.xml
+--- standalone/LocalUSECheck/UnusedLocalUSE/metadata.xml	2019-08-25 03:15:12.285433188 -0600
++++ fixed/LocalUSECheck/UnusedLocalUSE/metadata.xml	2019-08-25 03:16:19.554872547 -0600
+@@ -4,7 +4,4 @@
+ 	<maintainer type="person">
+ 		<email>radhermit@gentoo.org</email>
+ 	</maintainer>
+-	<use>
+-		<flag name="local">local USE flag</flag>
+-	</use>
+ </pkgmetadata>

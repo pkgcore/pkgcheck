@@ -1,0 +1,6 @@
+diff -Naur standalone/ManifestCheck/MissingChksum/Manifest fixed/ManifestCheck/MissingChksum/Manifest
+--- standalone/ManifestCheck/MissingChksum/Manifest	2019-08-25 03:11:17.446899418 -0600
++++ fixed/ManifestCheck/MissingChksum/Manifest	2019-08-25 03:12:36.130413307 -0600
+@@ -1 +1 @@
+-DIST MissingChksum-0.tar.gz 1598683 RMD160 14ad37420733f950b8f7640c2e7f0b3fe593af89 SHA1 cc0a48d81d090ec90e134afba4b9e700a5843f09 SHA256 9673c23d09783a526d09d54327f2ea32dfff053629411939cfca223fe690d36d
++DIST MissingChksum-0.tar.gz 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05

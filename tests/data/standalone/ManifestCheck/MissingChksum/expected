@@ -1,0 +1,2 @@
+ManifestCheck/MissingChksum
+  MissingChksum: version 0: 'MissingChksum-0.tar.gz' missing required chksums: blake2b; has chksums: rmd160, sha1, sha256, size

@@ -1,0 +1,5 @@
+DESCRIPTION="Ebuild with manifest entry using missing required checksums"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
+SLOT="0"
+LICENSE="BSD"
