@@ -220,6 +220,13 @@ def fakeconfig(tmp_path_factory):
     return str(fakeconfig)
 
 
+@pytest.fixture(scope="session")
+def cache_dir(tmp_path_factory):
+    """Generate a cache directory for pkgcheck."""
+    cache_dir = tmp_path_factory.mktemp('cache')
+    return str(cache_dir)
+
+
 @pytest.fixture
 def fakerepo(tmp_path):
     """Generate a stub repo."""

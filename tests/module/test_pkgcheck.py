@@ -21,7 +21,7 @@ from pkgcheck import base, checks, const, reporters,  __title__ as project
 from pkgcheck.checks.profiles import ProfileWarning
 from pkgcheck.scripts import run, pkgcheck
 
-from .misc import fakeconfig, fakerepo, tool
+from .misc import cache_dir, fakeconfig, fakerepo, tool
 
 
 def test_script_run(capsys):
@@ -236,15 +236,14 @@ class TestPkgcheckScan(object):
     script = partial(run, project)
 
     @pytest.fixture(autouse=True)
-    def _setup(self, fakeconfig, tmp_path):
+    def _setup(self, fakeconfig):
         self.args = [project, '--config', fakeconfig, 'scan']
-        self.cache_dir = str(tmp_path)
         self.testdir = os.path.dirname(os.path.dirname(__file__))
 
-    def test_empty_repo(self, capsys, tmp_path):
+    def test_empty_repo(self, capsys, cache_dir):
         # no reports should be generated since the default repo is empty
         with patch('sys.argv', self.args), \
-                patch('pkgcheck.base.CACHE_DIR', self.cache_dir):
+                patch('pkgcheck.base.CACHE_DIR', cache_dir):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             assert excinfo.value.code == 0
@@ -294,7 +293,7 @@ class TestPkgcheckScan(object):
                     assert keyword in const.KEYWORDS
 
     @pytest.mark.parametrize('check, result', results)
-    def test_pkgcheck_scan(self, check, result, capsys, tmp_path):
+    def test_pkgcheck_scan(self, check, result, capsys, cache_dir):
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
         tested = False
         for repo in os.listdir(pjoin(self.testdir, 'data')):
@@ -317,7 +316,7 @@ class TestPkgcheckScan(object):
 
             repo_dir = pjoin(self.testdir, 'repos', repo)
             with patch('sys.argv', self.args + ['-r', repo_dir] + args), \
-                    patch('pkgcheck.base.CACHE_DIR', self.cache_dir):
+                    patch('pkgcheck.base.CACHE_DIR', cache_dir):
                 with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 out, err = capsys.readouterr()
@@ -331,7 +330,7 @@ class TestPkgcheckScan(object):
             pytest.skip('expected test data not available')
 
     @pytest.mark.parametrize('check, result', results)
-    def test_pkgcheck_scan_fix(self, check, result, capsys, tmp_path):
+    def test_pkgcheck_scan_fix(self, check, result, capsys, cache_dir, tmp_path):
         """Apply fixes to pkgs, verifying the related results are fixed."""
         keyword = result.__name__
 
@@ -375,7 +374,7 @@ class TestPkgcheckScan(object):
             shutil.copytree(repo_dir, fixed_repo)
             func(fix)
             with patch('sys.argv', self.args + ['-r', fixed_repo] + args), \
-                    patch('pkgcheck.base.CACHE_DIR', self.cache_dir):
+                    patch('pkgcheck.base.CACHE_DIR', cache_dir):
                 with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 out, err = capsys.readouterr()
