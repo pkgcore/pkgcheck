@@ -204,11 +204,11 @@ class Tmpdir(object):
         self.dir = str(tmpdir)
 
 
-@pytest.fixture
-def fakeconfig(tmp_path):
+@pytest.fixture(scope="session")
+def fakeconfig(tmp_path_factory):
     """Generate a portage config that sets the default repo to pkgcore's stubrepo."""
-    fakeconfig = str(tmp_path)
-    repos_conf = tmp_path / 'repos.conf'
+    fakeconfig = tmp_path_factory.mktemp('fakeconfig')
+    repos_conf = fakeconfig / 'repos.conf'
     stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
     with open(repos_conf, 'w') as f:
         f.write(textwrap.dedent(f"""\
@@ -217,7 +217,7 @@ def fakeconfig(tmp_path):
 
             [stubrepo]
             location = {stubrepo}"""))
-    return fakeconfig
+    return str(fakeconfig)
 
 
 @pytest.fixture
@@ -233,7 +233,7 @@ def fakerepo(tmp_path):
     return fakerepo
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def tool(fakeconfig):
     """Generate a tool utility for running pkgcheck."""
     tool = Tool(pkgcheck.argparser)
