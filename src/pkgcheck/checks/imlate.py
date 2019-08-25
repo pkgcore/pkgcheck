@@ -82,9 +82,6 @@ class ImlateCheck(base.Check):
 
         fmatch = self.source_filter.match
         for slot, pkgs in sorted(pkg_slotted.items()):
-            # skip single pkg slots
-            if len(pkgs) == 1:
-                continue
             slot_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgs))
             stable_slot_keywords = self.all_arches.intersection(slot_keywords)
             potential_slot_stables = {'~' + x for x in stable_slot_keywords}
@@ -95,14 +92,19 @@ class ImlateCheck(base.Check):
                     newer_slot_stables.update(self.all_arches.intersection(pkg.keywords))
                     continue
 
+                # current pkg stable keywords
+                stable = {'~' + x for x in self.source_arches.intersection(pkg.keywords)}
+
                 lagging_stables = potential_slot_stables.intersection(pkg.keywords)
+                # skip keywords that have newer stable versions
                 lagging_stables -= {'~' + x for x in newer_slot_stables}
+                lagging_stables -= stable
                 if lagging_stables:
                     yield LaggingStable(pkg, lagging_stables)
 
                 unstable_keywords = {x for x in pkg.keywords if x[0] == '~'}
                 potential_stables = self.target_arches.intersection(unstable_keywords)
-                potential_stables -= lagging_stables
+                potential_stables -= lagging_stables | stable
                 if potential_stables:
                     yield PotentialStable(pkg, potential_stables)
 
