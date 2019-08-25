@@ -1,0 +1,5 @@
+DESCRIPTION="Ebuild with duplicate KEYWORDS"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SLOT="0"
+LICENSE="BSD"
+KEYWORDS="~amd64 ~amd64"

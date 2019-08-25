@@ -1,0 +1,9 @@
+diff -Naur standalone/KeywordsCheck/DuplicateKeywords/DuplicateKeywords-0.ebuild fixed/KeywordsCheck/DuplicateKeywords/DuplicateKeywords-0.ebuild
+--- standalone/KeywordsCheck/DuplicateKeywords/DuplicateKeywords-0.ebuild	2019-08-24 22:17:49.095265551 -0600
++++ fixed/KeywordsCheck/DuplicateKeywords/DuplicateKeywords-0.ebuild	2019-08-24 22:19:39.517063654 -0600
+@@ -2,4 +2,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-KEYWORDS="~amd64 ~amd64"
++KEYWORDS="~amd64"
