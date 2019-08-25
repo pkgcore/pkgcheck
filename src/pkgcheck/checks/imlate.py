@@ -82,6 +82,9 @@ class ImlateCheck(base.Check):
 
         fmatch = self.source_filter.match
         for slot, pkgs in sorted(pkg_slotted.items()):
+            # skip single pkg slots
+            if len(pkgs) == 1:
+                continue
             slot_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgs))
             stable_slot_keywords = self.all_arches.intersection(slot_keywords)
             potential_slot_stables = {'~' + x for x in stable_slot_keywords}
