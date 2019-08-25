@@ -5,9 +5,9 @@ diff -Naur standalone/CatInvalidXml/metadata.xml fixed/CatInvalidXml/metadata.xm
  <?xml version="1.0" encoding="UTF-8"?>
  <!DOCTYPE catmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
  <catmetadata>
--  <description>
-+  <longdescription>
-     Category with invalid XML field failing schema validation.
--  </description>
-+  </longdescription>
+-	<description>
++	<longdescription>
+		Category with invalid XML field failing schema validation.
+-	</description>
++	</longdescription>
  </catmetadata>

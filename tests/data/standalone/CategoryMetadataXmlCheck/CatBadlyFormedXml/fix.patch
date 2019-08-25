@@ -5,6 +5,6 @@ diff -Naur standalone/CatBadlyFormedXml/metadata.xml fixed/CatBadlyFormedXml/met
  <?xml version="1.0" encoding="UTF-8"?>
  <!DOCTYPE catmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
  <catmetadata>
--  <longdescription>Don't use raw & in XML.</longdescription>
-+  <longdescription>Don't use raw &amp; in XML.</longdescription>
+-	<longdescription>Don't use raw & in XML.</longdescription>
++	<longdescription>Don't use raw &amp; in XML.</longdescription>
  </catmetadata>

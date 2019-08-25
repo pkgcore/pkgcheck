@@ -2,12 +2,12 @@ diff -Naur standalone/PackageMetadataXmlCheck/PkgInvalidXml/metadata.xml fixed/P
 --- standalone/PackageMetadataXmlCheck/PkgInvalidXml/metadata.xml	2019-08-24 04:10:34.640601699 -0600
 +++ fixed/PackageMetadataXmlCheck/PkgInvalidXml/metadata.xml	2019-08-24 04:21:55.644058571 -0600
 @@ -4,7 +4,7 @@
-   <maintainer type="person">
-     <email>radhermit@gentoo.org</email>
-   </maintainer>
--  <description>
-+  <longdescription>
-     Package with invalid XML field failing schema validation.
--  </description>
-+  </longdescription>
+	<maintainer type="person">
+		<email>radhermit@gentoo.org</email>
+	</maintainer>
+-	<description>
++	<longdescription>
+		Package with invalid XML field failing schema validation.
+-	</description>
++	</longdescription>
  </pkgmetadata>

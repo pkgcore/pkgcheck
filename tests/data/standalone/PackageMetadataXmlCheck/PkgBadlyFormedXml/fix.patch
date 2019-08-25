@@ -2,9 +2,9 @@ diff -Naur standalone/PackageMetadataXmlCheck/PkgBadlyFormedXml/metadata.xml fix
 --- standalone/PackageMetadataXmlCheck/PkgBadlyFormedXml/metadata.xml	2019-08-23 17:45:04.180089876 -0600
 +++ fixed/PackageMetadataXmlCheck/PkgBadlyFormedXml/metadata.xml	2019-08-23 17:46:20.145393569 -0600
 @@ -4,5 +4,5 @@
-   <maintainer type="person">
-     <email>radhermit@gentoo.org</email>
-   </maintainer>
--  <longdescription>Don't use raw & in XML.</longdescription>
-+  <longdescription>Don't use raw &amp; in XML.</longdescription>
+	<maintainer type="person">
+		<email>radhermit@gentoo.org</email>
+	</maintainer>
+-	<longdescription>Don't use raw & in XML.</longdescription>
++	<longdescription>Don't use raw &amp; in XML.</longdescription>
  </pkgmetadata>
