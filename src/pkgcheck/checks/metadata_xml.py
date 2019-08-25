@@ -295,6 +295,9 @@ class _XmlBaseCheck(base.Check):
         super().__init__(options)
         self.repo_base = options.target_repo.location
         self.pkgref_cache = {}
+        # content validation checks to run after parsing XML doc
+        self._checks = tuple(
+            getattr(self, x) for x in dir(self) if x.startswith('_check_'))
 
     def _fetch_xsd(self):
         if self.options.verbosity > 0:
@@ -341,10 +344,7 @@ class _XmlBaseCheck(base.Check):
                     return
             _XmlBaseCheck.schema = etree.XMLSchema(etree.parse(metadata_xsd))
 
-    def feed(self, thing):
-        raise NotImplementedError(self.feed)
-
-    def check_doc(self, pkg, loc, doc):
+    def _check_doc(self, pkg, loc, doc):
         """Perform additional document structure checks."""
         # find all root descendant elements that are empty
         for el in doc.getroot().iterdescendants():
@@ -370,7 +370,7 @@ class _XmlBaseCheck(base.Check):
             if not self.pkgref_cache[p]:
                 yield self.pkgref_error(pkg, loc, p)
 
-    def check_whitespace(self, pkg, loc):
+    def _check_whitespace(self, pkg, loc, doc):
         """Check for indentation consistency."""
         orig_indent = None
         indents = set()
@@ -385,7 +385,7 @@ class _XmlBaseCheck(base.Check):
         if indents:
             yield self.indent_error(pkg, loc, indents)
 
-    def check_file(self, loc, pkg):
+    def _parse_xml(self, pkg, loc):
         repo = pkg.repo
         try:
             doc = etree.parse(loc)
@@ -404,39 +404,17 @@ class _XmlBaseCheck(base.Check):
             yield self.invalid_error(pkg, loc, self.schema.error_log)
             return
 
-        # check for missing maintainer-needed comments in gentoo repo
-        # and incorrect maintainers
-        if pkg is not None and pkg.repo.repo_id == 'gentoo':
-            if pkg.maintainers:
-                if not any(m.email.endswith('@gentoo.org')
-                           for m in pkg.maintainers):
-                    yield MaintainerWithoutProxy(pkg, loc, pkg.maintainers)
-                elif (len(pkg.maintainers) == 1 and
-                      any(m.email == 'proxy-maint@gentoo.org'
-                          for m in pkg.maintainers)):
-                    yield StaleProxyMaintProject(pkg, loc)
-            else:
-                if not any(c.text.strip() == 'maintainer-needed'
-                           for c in doc.xpath('//comment()')):
-                    yield EmptyMaintainer(pkg, loc)
+        # run all post parsing/validation checks
+        for check in self._checks:
+            yield from check(pkg, loc, doc)
 
-            # check maintainer validity
-            projects = frozenset(pkg.repo.projects_xml.projects)
-            if projects:
-                nonexistent = []
-                wrong_maintainers = []
-                for m in pkg.maintainers:
-                    if m.maint_type == 'project' and m.email not in projects:
-                        nonexistent.append(m.email)
-                    elif m.maint_type == 'person' and m.email in projects:
-                        wrong_maintainers.append(m.email)
-                if nonexistent:
-                    yield NonexistentProjectMaintainer(pkg, loc, nonexistent)
-                if wrong_maintainers:
-                    yield WrongMaintainerType(pkg, loc, wrong_maintainers)
-
-        yield from self.check_doc(pkg, loc, doc)
-        yield from self.check_whitespace(pkg, loc)
+    def feed(self, pkgs):
+        # empty category or package without ebuilds, skipping check
+        if not pkgs:
+            return
+        pkg = pkgs[0]
+        loc = self._get_xml_location(pkg)
+        yield from self._parse_xml(pkg, loc)
 
 
 class PackageMetadataXmlCheck(_XmlBaseCheck):
@@ -459,13 +437,42 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
         MaintainerWithoutProxy, StaleProxyMaintProject,
         NonexistentProjectMaintainer, WrongMaintainerType)
 
-    def feed(self, pkgs):
-        # package with no ebuilds, skipping check
-        if not pkgs:
-            return
-        pkg = pkgs[0]
-        loc = pjoin(os.path.dirname(pkg.ebuild.path), "metadata.xml")
-        yield from self.check_file(loc, pkg)
+    def _check_maintainers(self, pkg, loc, doc):
+        """Validate maintainers in package metadata for the gentoo repo."""
+        if pkg.repo.repo_id == 'gentoo':
+            if pkg.maintainers:
+                # check proxy maintainers
+                if not any(m.email.endswith('@gentoo.org')
+                           for m in pkg.maintainers):
+                    yield MaintainerWithoutProxy(pkg, loc, pkg.maintainers)
+                elif (len(pkg.maintainers) == 1 and
+                      any(m.email == 'proxy-maint@gentoo.org'
+                          for m in pkg.maintainers)):
+                    yield StaleProxyMaintProject(pkg, loc)
+            else:
+                # check for missing maintainer-needed comment
+                if not any(c.text.strip() == 'maintainer-needed'
+                           for c in doc.xpath('//comment()')):
+                    yield EmptyMaintainer(pkg, loc)
+
+            # check maintainer validity
+            projects = frozenset(pkg.repo.projects_xml.projects)
+            if projects:
+                nonexistent = []
+                wrong_maintainers = []
+                for m in pkg.maintainers:
+                    if m.maint_type == 'project' and m.email not in projects:
+                        nonexistent.append(m.email)
+                    elif m.maint_type == 'person' and m.email in projects:
+                        wrong_maintainers.append(m.email)
+                if nonexistent:
+                    yield NonexistentProjectMaintainer(pkg, loc, nonexistent)
+                if wrong_maintainers:
+                    yield WrongMaintainerType(pkg, loc, wrong_maintainers)
+
+    def _get_xml_location(self, pkg):
+        """Return the metadata.xml location for a given package."""
+        return pjoin(os.path.dirname(pkg.ebuild.path), 'metadata.xml')
 
 
 class CategoryMetadataXmlCheck(_XmlBaseCheck):
@@ -486,13 +493,9 @@ class CategoryMetadataXmlCheck(_XmlBaseCheck):
         CatMetadataXmlInvalidPkgRef, CatMetadataXmlInvalidCatRef,
         CatMetadataXmlIndentation, CatMetadataXmlEmptyElement)
 
-    def feed(self, pkgs):
-        # empty category, skipping check
-        if not pkgs:
-            return
-        pkg = pkgs[0]
-        loc = os.path.join(self.repo_base, pkg.category, "metadata.xml")
-        yield from self.check_file(loc, pkg)
+    def _get_xml_location(self, pkg):
+        """Return the metadata.xml location for a given package's category."""
+        return pjoin(self.repo_base, pkg.category, 'metadata.xml')
 
 
 def noop_validator(loc):
