@@ -25,7 +25,7 @@ class VulnerablePackage(base.VersionedResult, base.Error):
         return f'vulnerable via {self.glsa}, keyword{_pl(self.arches)}: {arches}'
 
 
-class TreeVulnerabilitiesCheck(base.Check):
+class TreeVulnerabilitiesCheck(base.GentooRepoCheck):
     """Scan for vulnerable ebuilds in the tree.
 
     Requires a GLSA directory for vulnerability info.
