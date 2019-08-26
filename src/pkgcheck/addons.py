@@ -965,8 +965,9 @@ class UseAddon(base.Addon):
         self.global_iuse_implicit = frozenset(c_implicit_iuse)
         self.ignore = not (c_implicit_iuse or known_iuse or known_iuse_expand)
         if self.ignore:
-            logger.warn('disabling use/iuse validity checks since no usable '
-                        'use.desc and use.local.desc were found')
+            logger.debug(
+                'disabling use/iuse validity checks since no usable '
+                'use.desc and use.local.desc were found')
 
     def allowed_iuse(self, pkg):
         # metadata_xml checks catch xml issues, suppress warning/error logs here
