@@ -192,8 +192,8 @@ class XmlReporter(base.Reporter):
         self.out.write('</checks>')
 
 
-class JsonObject(base.Reporter):
-    """Generate a stream of JSON result objects."""
+class JsonStream(base.Reporter):
+    """Generate a stream of result objects serialized in JSON."""
 
     priority = -1001
 

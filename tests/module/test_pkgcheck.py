@@ -335,8 +335,8 @@ class TestPkgcheckScan(object):
                 with open(expected_path) as expected:
                     assert out == expected.read()
 
-            # JsonObject reporter, cache results to compare against repo run
-            with patch('sys.argv', self.args + ['-R', 'JsonObject'] + args), \
+            # JsonStream reporter, cache results to compare against repo run
+            with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
                     patch('pkgcheck.base.CACHE_DIR', cache_dir):
                 with pytest.raises(SystemExit) as excinfo:
                     self.script()
@@ -344,7 +344,7 @@ class TestPkgcheckScan(object):
                 assert err == ''
                 assert excinfo.value.code == 0
                 for line in out.rstrip('\n').split('\n'):
-                    deserialized_result = reporters.JsonObject.from_json(line)
+                    deserialized_result = reporters.JsonStream.from_json(line)
                     assert deserialized_result.__class__.__name__ == keyword
                     self._results[repo].add(deserialized_result)
             tested = True
@@ -376,7 +376,7 @@ class TestPkgcheckScan(object):
                 unknown_results = []
                 repo_dir = pjoin(self.testdir, 'repos', repo)
                 args = ['-r', repo_dir, '-c', ','.join(const.CHECKS)]
-                with patch('sys.argv', self.args + ['-R', 'JsonObject'] + args), \
+                with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
                         patch('pkgcheck.base.CACHE_DIR', cache_dir):
                     with pytest.raises(SystemExit) as excinfo:
                         self.script()
@@ -385,7 +385,7 @@ class TestPkgcheckScan(object):
                     assert out, f'{repo} repo failed, no results'
                     assert excinfo.value.code == 0
                     for line in out.rstrip('\n').split('\n'):
-                        result = reporters.JsonObject.from_json(line)
+                        result = reporters.JsonStream.from_json(line)
                         # ignore results generated from stubs
                         stubs = (getattr(result, x, None) for x in ('category', 'package'))
                         if any(x == 'stub' for x in stubs):
@@ -588,7 +588,7 @@ class TestPkgcheckReplay(object):
             assert excinfo.value.code == 2
 
     def test_replay(self, capsys):
-        for reporter_cls in (reporters.BinaryPickleStream, reporters.JsonObject):
+        for reporter_cls in (reporters.BinaryPickleStream, reporters.JsonStream):
             with tempfile.NamedTemporaryFile() as f:
                 out = PlainTextFormatter(f)
                 reporter = reporter_cls(out=out)

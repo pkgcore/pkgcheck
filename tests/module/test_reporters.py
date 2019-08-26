@@ -174,9 +174,9 @@ class TestBinaryPickleStream(TestPickleStream):
     reporter_cls = reporters.BinaryPickleStream
 
 
-class TestJsonObject(BaseReporter):
+class TestJsonStream(BaseReporter):
 
-    reporter_cls = reporters.JsonObject
+    reporter_cls = reporters.JsonStream
 
     def test_add_report(self, capsys):
         self.reporter = self.mk_reporter()

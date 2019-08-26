@@ -447,7 +447,7 @@ def _replay(options, out, err):
     # assume JSON encoded file, fallback to pickle format
     try:
         for line in options.results_file:
-            result = reporters.JsonObject.from_json(line)
+            result = reporters.JsonStream.from_json(line)
             reporter.report(result)
     except (JSONDecodeError, UnicodeDecodeError):
         options.results_file.seek(0)
