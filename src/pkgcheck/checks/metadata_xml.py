@@ -306,7 +306,6 @@ class _XmlBaseCheck(base.Check):
             msg = f'failed fetching XML schema from {self.xsd_url}: {e.reason}'
             if self.options.metadata_xsd_required:
                 raise UserException(msg)
-            self.validator = noop_validator
             raise XsdError(msg)
 
         metadata_xsd = pjoin(
@@ -318,7 +317,6 @@ class _XmlBaseCheck(base.Check):
             msg = f'failed saving XML schema to {metadata_xsd!r}: {e}'
             if self.options.metadata_xsd_required:
                 raise UserException(msg)
-            self.validator = noop_validator
             raise XsdError(msg)
         return metadata_xsd
 
@@ -497,7 +495,3 @@ class CategoryMetadataXmlCheck(_XmlBaseCheck):
     def _get_xml_location(self, pkg):
         """Return the metadata.xml location for a given package's category."""
         return pjoin(self.repo_base, pkg.category, 'metadata.xml')
-
-
-def noop_validator(loc):
-    return 0
