@@ -113,9 +113,9 @@ def strip_atom_use(inst):
 class VisibleVcsPkg(base.VersionedResult, base.Error):
     """Package is VCS-based, but visible."""
 
-    def __init__(self, pkg, arch, profile):
-        super().__init__(pkg)
-        self.arch = arch.lstrip("~")
+    def __init__(self, arch, profile, **kwargs):
+        super().__init__(**kwargs)
+        self.arch = arch
         self.profile = profile
 
     @property
@@ -126,24 +126,24 @@ class VisibleVcsPkg(base.VersionedResult, base.Error):
 class NonexistentDeps(base.VersionedResult, base.Warning):
     """No matches exist for a package dependency."""
 
-    def __init__(self, pkg, attr, nonexistent_atoms):
-        super().__init__(pkg)
-        self.attr = attr.upper()
-        self.atoms = tuple(map(str, nonexistent_atoms))
+    def __init__(self, attr, nonexistent, **kwargs):
+        super().__init__(**kwargs)
+        self.attr = attr
+        self.nonexistent = tuple(nonexistent)
 
     @property
     def short_desc(self):
         return (
-            f"{self.attr}: nonexistent package{_pl(self.atoms)}: "
-            f"[ {', '.join(self.atoms)} ]"
+            f"{self.attr}: nonexistent package{_pl(self.nonexistent)}: "
+            f"[ {', '.join(self.nonexistent)} ]"
         )
 
 
 class UncheckableDep(base.VersionedResult, base.Warning):
     """Given dependency cannot be checked due to the number of transitive use deps in it."""
 
-    def __init__(self, pkg, attr):
-        super().__init__(pkg)
+    def __init__(self, attr, **kwargs):
+        super().__init__(**kwargs)
         self.attr = attr
 
     @property
@@ -154,13 +154,13 @@ class UncheckableDep(base.VersionedResult, base.Warning):
 class NonsolvableDeps(base.VersionedResult, base.Error):
     """No potential solution for a depset attribute."""
 
-    def __init__(self, pkg, attr, keyword, profile, deps,
-                 profile_status, profile_deprecated, num_profiles=None):
-        super().__init__(pkg)
+    def __init__(self, attr, keyword, profile, deps, profile_status,
+                 profile_deprecated, num_profiles=None, **kwargs):
+        super().__init__(**kwargs)
         self.attr = attr
-        self.profile = profile
         self.keyword = keyword
-        self.potentials = tuple(deps)
+        self.profile = profile
+        self.deps = tuple(deps)
         self.profile_status = profile_status
         self.profile_deprecated = profile_deprecated
         self.num_profiles = num_profiles
@@ -173,7 +173,7 @@ class NonsolvableDeps(base.VersionedResult, base.Error):
         return (
             f"nonsolvable depset({self.attr}) keyword({self.keyword}) "
             f"{profile_status} profile ({self.profile}){num_profiles}: "
-            f"solutions: [ {', '.join(self.potentials)} ]"
+            f"solutions: [ {', '.join(self.deps)} ]"
         )
 
 
@@ -257,10 +257,11 @@ class VisibilityCheck(base.Check):
                         nonexistent.add(node)
 
             except _BlockMemoryExhaustion as e:
-                yield UncheckableDep(pkg, attr)
+                yield UncheckableDep(attr, pkg=pkg)
                 suppressed_depsets.append(attr)
             if nonexistent:
-                yield NonexistentDeps(pkg, attr, nonexistent)
+                nonexistent = map(str, sorted(nonexistent))
+                yield NonexistentDeps(attr.upper(), nonexistent, pkg=pkg)
 
         del nonexistent
 
@@ -285,8 +286,8 @@ class VisibilityCheck(base.Check):
                                     profiles.get(profile_status, ()),
                                     key=attrgetter('key', 'name')):
                                 yield cls(
-                                    pkg, attr, profile.key, profile.name, list(failures),
-                                    profile_status, profile.deprecated)
+                                    attr, profile.key, profile.name, list(failures),
+                                    profile_status, profile.deprecated, pkg=pkg)
                 else:
                     # only report one failure per depset per profile type in regular mode
                     for failures, profiles in profile_failures.items():
@@ -297,13 +298,14 @@ class VisibilityCheck(base.Check):
                             if status_profiles:
                                 profile = status_profiles[0]
                                 yield cls(
-                                    pkg, attr, profile.key, profile.name, list(failures),
-                                    profile_status, profile.deprecated, len(status_profiles))
+                                    attr, profile.key, profile.name,
+                                    list(failures), profile_status,
+                                    profile.deprecated, len(status_profiles), pkg=pkg)
 
     def check_visibility_vcs(self, pkg):
         for profile in self.profiles:
             if profile.visible(pkg):
-                yield VisibleVcsPkg(pkg, profile.key, profile.name)
+                yield VisibleVcsPkg(profile.key.lstrip('~'), profile.name, pkg=pkg)
 
     def process_depset(self, pkg, attr, depset, edepset, profiles):
         get_cached_query = self.query_cache.get

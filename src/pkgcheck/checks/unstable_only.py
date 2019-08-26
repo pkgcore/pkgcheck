@@ -9,10 +9,10 @@ from .. import addons, base
 class UnstableOnly(base.PackageResult, base.Warning):
     """Package/keywords that are strictly unstable."""
 
-    def __init__(self, pkgs, arches):
-        super().__init__(pkgs[0])
-        self.arches = arches
-        self.versions = tuple(x.fullver for x in pkgs)
+    def __init__(self, versions, arches, **kwargs):
+        super().__init__(**kwargs)
+        self.versions = tuple(versions)
+        self.arches = tuple(arches)
 
     @property
     def short_desc(self):
@@ -58,4 +58,5 @@ class UnstableOnlyCheck(base.GentooRepoCheck):
 
         # collapse reports by available versions
         for pkgs in unstable_arches.keys():
-            yield UnstableOnly(pkgs, unstable_arches[pkgs])
+            versions = (x.fullver for x in pkgs)
+            yield UnstableOnly(versions, unstable_arches[pkgs], pkg=pkgs[0])

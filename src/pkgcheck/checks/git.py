@@ -24,8 +24,8 @@ demand_compile_regexp(
 class OutdatedCopyright(base.VersionedResult, base.Warning):
     """Changed ebuild with outdated copyright."""
 
-    def __init__(self, pkg, year, line):
-        super().__init__(pkg)
+    def __init__(self, year, line, **kwargs):
+        super().__init__(**kwargs)
         self.year = year
         self.line = line
 
@@ -37,8 +37,8 @@ class OutdatedCopyright(base.VersionedResult, base.Warning):
 class DirectStableKeywords(base.VersionedResult, base.Error):
     """Newly committed ebuild with stable keywords."""
 
-    def __init__(self, pkg, keywords):
-        super().__init__(pkg)
+    def __init__(self, keywords, **kwargs):
+        super().__init__(**kwargs)
         self.keywords = tuple(keywords)
 
     @property
@@ -52,9 +52,9 @@ class DroppedUnstableKeywords(base.PackageResult, base.Warning):
 
     status = 'unstable'
 
-    def __init__(self, pkg, keywords, commit):
-        super().__init__(pkg)
-        self.keywords = tuple(sort_keywords(keywords))
+    def __init__(self, keywords, commit, **kwargs):
+        super().__init__(**kwargs)
+        self.keywords = tuple(keywords)
         self.commit = commit
 
     @property
@@ -176,9 +176,11 @@ class GitCommitsCheck(base.GentooRepoCheck):
             x for x in dropped_keywords if x[0] == '~' and x[1:] in self.valid_arches}
 
         if dropped_stable_keywords:
-            yield DroppedStableKeywords(pkg, dropped_stable_keywords, commit)
+            yield DroppedStableKeywords(
+                sort_keywords(dropped_stable_keywords), commit, pkg=pkg)
         if dropped_unstable_keywords:
-            yield DroppedUnstableKeywords(pkg, dropped_unstable_keywords, commit)
+            yield DroppedUnstableKeywords(
+                sort_keywords(dropped_unstable_keywords), commit, pkg=pkg)
 
     def feed(self, pkgset):
         removed = [pkg for pkg in pkgset if pkg.status == 'D']
@@ -202,14 +204,14 @@ class GitCommitsCheck(base.GentooRepoCheck):
             if copyright:
                 year = copyright.group(1).split('-')[-1]
                 if int(year) < self.today.year:
-                    yield OutdatedCopyright(pkg, year, line.strip('\n'))
+                    yield OutdatedCopyright(year, line.strip('\n'), pkg=pkg)
 
             # checks for newly added ebuilds
             if git_pkg.status == 'A':
                 # check for stable keywords
                 stable_keywords = sorted(x for x in pkg.keywords if x[0] not in '~-')
                 if stable_keywords:
-                    yield DirectStableKeywords(pkg, stable_keywords)
+                    yield DirectStableKeywords(stable_keywords, pkg=pkg)
 
                 # pkg was just added to the tree
                 added_pkgs = self.added_repo.match(git_pkg.unversioned_atom)
@@ -217,4 +219,4 @@ class GitCommitsCheck(base.GentooRepoCheck):
 
                 # check for no maintainers
                 if newly_added and not pkg.maintainers:
-                    yield DirectNoMaintainer(pkg)
+                    yield DirectNoMaintainer(pkg=pkg)

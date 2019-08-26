@@ -14,21 +14,10 @@ from ..log import logger
 class VulnerablePackage(base.VersionedResult, base.Error):
     """Packages marked as vulnerable by GLSAs."""
 
-    def __init__(self, pkg, glsa):
-        super().__init__(pkg)
-        arches = set()
-        for v in collect_package_restrictions(glsa, ["keywords"]):
-            if isinstance(v.restriction, values.ContainmentMatch2):
-                arches.update(x.lstrip("~") for x in v.restriction.vals)
-            else:
-                raise Exception(f"unexpected restriction sequence- {v.restriction} in {glsa}")
-        keys = set(x.lstrip("~") for x in pkg.keywords if not x.startswith("-"))
-        if arches:
-            self.arches = tuple(sorted(arches.intersection(keys)))
-            assert self.arches
-        else:
-            self.arches = tuple(sorted(keys))
-        self.glsa = str(glsa)
+    def __init__(self, arches, glsa, **kwargs):
+        super().__init__(**kwargs)
+        self.arches = tuple(arches)
+        self.glsa = glsa
 
     @property
     def short_desc(self):
@@ -100,4 +89,17 @@ class TreeVulnerabilitiesCheck(base.Check):
     def feed(self, pkg):
         for vuln in self.vulns.get(pkg.key, []):
             if vuln.match(pkg):
-                yield VulnerablePackage(pkg, vuln)
+                arches = set()
+                for v in collect_package_restrictions(vuln, ['keywords']):
+                    if isinstance(v.restriction, values.ContainmentMatch2):
+                        arches.update(x.lstrip('~') for x in v.restriction.vals)
+                    else:
+                        raise Exception(
+                            f'unexpected restriction sequence- {v.restriction} in {vuln}')
+                keys = {x.lstrip('~') for x in pkg.keywords if not x.startswith('-')}
+                if arches:
+                    arches = sorted(arches.intersection(keys))
+                    assert arches
+                else:
+                    arches = sorted(keys)
+                yield VulnerablePackage(arches, str(vuln), pkg=pkg)

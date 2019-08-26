@@ -196,13 +196,13 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         # overlapping stable and unstable keywords
         r = self.assertReport(self.check, self.mk_pkg("amd64 ~amd64"))
         assert isinstance(r, metadata.OverlappingKeywords)
-        assert r.keywords == (('amd64', '~amd64'),)
+        assert r.keywords == "('amd64', '~amd64')"
         assert "overlapping KEYWORDS: ('amd64', '~amd64')" == str(r)
 
         # multiple overlapping sets
         r = self.assertReport(self.check, self.mk_pkg("amd64 ~amd64 ~x86 x86"))
         assert isinstance(r, metadata.OverlappingKeywords)
-        assert r.keywords == (('amd64', '~amd64'), ('x86', '~x86'))
+        assert r.keywords == "('amd64', '~amd64'), ('x86', '~x86')"
 
     def test_duplicate_keywords(self):
         # regular keywords

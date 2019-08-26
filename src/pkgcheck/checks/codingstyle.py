@@ -17,8 +17,8 @@ demand_compile_regexp(
 class HttpsAvailable(base.VersionedResult, base.Warning):
     """Ebuild contains an ``http://`` link that should use ``https://`` instead."""
 
-    def __init__(self, pkg, link, lines):
-        super().__init__(pkg)
+    def __init__(self, link, lines, **kwargs):
+        super().__init__(**kwargs)
         self.link = link
         self.lines = tuple(lines)
 
@@ -81,14 +81,14 @@ class HttpsAvailableCheck(base.Check):
                 links[matches.group('uri')].append(lineno)
 
         for link, lines in links.items():
-            yield HttpsAvailable(pkg, link, lines)
+            yield HttpsAvailable(link, lines, pkg=pkg)
 
 
 class PortageInternals(base.VersionedResult, base.Warning):
     """Ebuild uses a function or variable internal to portage."""
 
-    def __init__(self, pkg, internal, line):
-        super().__init__(pkg)
+    def __init__(self, internal, line, **kwargs):
+        super().__init__(**kwargs)
         self.internal = internal
         self.line = line
 
@@ -127,14 +127,14 @@ class PortageInternalsCheck(base.Check):
             # searching for multiple matches on a single line is too slow
             matches = self.regex.match(line)
             if matches is not None:
-                yield PortageInternals(pkg, matches.group('internal'), lineno)
+                yield PortageInternals(matches.group('internal'), lineno, pkg=pkg)
 
 
 class MissingSlash(base.VersionedResult, base.Error):
     """Ebuild uses a path variable missing a trailing slash."""
 
-    def __init__(self, pkg, match, lines):
-        super().__init__(pkg)
+    def __init__(self, match, lines, **kwargs):
+        super().__init__(**kwargs)
         self.match = match
         self.lines = tuple(lines)
 
@@ -147,8 +147,8 @@ class MissingSlash(base.VersionedResult, base.Error):
 class UnnecessarySlashStrip(base.VersionedResult, base.Warning):
     """Ebuild uses a path variable that strips a nonexistent slash."""
 
-    def __init__(self, pkg, match, lines):
-        super().__init__(pkg)
+    def __init__(self, match, lines, **kwargs):
+        super().__init__(**kwargs)
         self.match = match
         self.lines = tuple(lines)
 
@@ -169,8 +169,8 @@ class DoublePrefixInPath(base.VersionedResult, base.Error):
     with ``${D}$(python_get_sitedir)``.
     """
 
-    def __init__(self, pkg, match, lines):
-        super().__init__(pkg)
+    def __init__(self, match, lines, **kwargs):
+        super().__init__(**kwargs)
         self.match = match
         self.lines = tuple(lines)
 
@@ -278,18 +278,18 @@ class PathVariablesCheck(base.Check):
                 unnecessary[match.group(1)].append(lineno)
 
         for match, lines in missing.items():
-            yield MissingSlash(pkg, match, lines)
+            yield MissingSlash(match, lines, pkg=pkg)
         for match, lines in unnecessary.items():
-            yield UnnecessarySlashStrip(pkg, match, lines)
+            yield UnnecessarySlashStrip(match, lines, pkg=pkg)
         for match, lines in double_prefix.items():
-            yield DoublePrefixInPath(pkg, match, lines)
+            yield DoublePrefixInPath(match, lines, pkg=pkg)
 
 
 class AbsoluteSymlink(base.VersionedResult, base.Warning):
     """Ebuild uses dosym with absolute paths instead of relative."""
 
-    def __init__(self, pkg, abspath, line):
-        super().__init__(pkg)
+    def __init__(self, abspath, line, **kwargs):
+        super().__init__(**kwargs)
         self.abspath = abspath
         self.line = line
 
@@ -317,14 +317,14 @@ class AbsoluteSymlinkCheck(base.Check):
                 continue
             matches = self.regex.match(line)
             if matches is not None:
-                yield AbsoluteSymlink(pkg, matches.groups()[0], lineno)
+                yield AbsoluteSymlink(matches.groups()[0], lineno, pkg=pkg)
 
 
 class BadInsIntoDir(base.VersionedResult, base.Warning):
     """Ebuild uses insinto where more compact commands exist."""
 
-    def __init__(self, pkg, insintodir, line):
-        super().__init__(pkg)
+    def __init__(self, insintodir, line, **kwargs):
+        super().__init__(**kwargs)
         self.line = line
         self.insintodir = insintodir
 
@@ -369,7 +369,7 @@ class BadInsIntoCheck(base.Check):
                 continue
             matches = badf(line)
             if matches is not None:
-                yield BadInsIntoDir(pkg, matches.groups()[0], lineno)
+                yield BadInsIntoDir(matches.groups()[0], lineno, pkg=pkg)
 
 
 class ObsoleteUri(base.VersionedResult, base.Warning):
@@ -382,8 +382,8 @@ class ObsoleteUri(base.VersionedResult, base.Warning):
     (for example, by removing no longer necessary vcs-snapshot.eclass).
     """
 
-    def __init__(self, pkg, line, uri, replacement):
-        super().__init__(pkg)
+    def __init__(self, line, uri, replacement, **kwargs):
+        super().__init__(**kwargs)
         self.line = line
         self.uri = uri
         self.replacement = replacement
@@ -427,10 +427,18 @@ class ObsoleteUriCheck(base.Check):
                 matches = regexp.match(line)
                 if matches is not None:
                     uri = matches.group('uri')
-                    yield ObsoleteUri(pkg, lineno, uri, regexp.sub(repl, uri))
+                    yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)
 
 
-class InvalidCopyright(base.VersionedResult, base.Warning):
+class _CopyrightResult(base.VersionedResult, base.Warning):
+    """Generic copyright result."""
+
+    def __init__(self, line, **kwargs):
+        super().__init__(**kwargs)
+        self.line = line
+
+
+class InvalidCopyright(_CopyrightResult):
     """Ebuild with invalid copyright.
 
     The ebuild does not start with a valid copyright line. Each ebuild must
@@ -443,16 +451,12 @@ class InvalidCopyright(base.VersionedResult, base.Warning):
         # Copyright YEARS Gentoo Authors
     """
 
-    def __init__(self, pkg, line):
-        super().__init__(pkg)
-        self.line = line
-
     @property
     def short_desc(self):
         return f'invalid copyright: {self.line!r}'
 
 
-class OldGentooCopyright(base.VersionedResult, base.Warning):
+class OldGentooCopyright(_CopyrightResult):
     """Ebuild with old Gentoo Foundation copyright.
 
     The ebuild still assigns copyright to the Gentoo Foundation even though
@@ -463,16 +467,12 @@ class OldGentooCopyright(base.VersionedResult, base.Warning):
     in other repositories may specify an explicit copyright holder instead.
     """
 
-    def __init__(self, pkg, line):
-        super().__init__(pkg)
-        self.line = line
-
     @property
     def short_desc(self):
         return f'old copyright, update to "Gentoo Authors": {self.line!r}'
 
 
-class NonGentooAuthorsCopyright(base.VersionedResult, base.Warning):
+class NonGentooAuthorsCopyright(_CopyrightResult):
     """Ebuild with copyright stating owner other than "Gentoo Authors".
 
     The ebuild specifies explicit copyright owner, while the Gentoo repository
@@ -480,10 +480,6 @@ class NonGentooAuthorsCopyright(base.VersionedResult, base.Warning):
     is not listed in metadata/AUTHORS, addition can be requested via
     bugs.gentoo.org.
     """
-
-    def __init__(self, pkg, line):
-        super().__init__(pkg)
-        self.line = line
 
     @property
     def short_desc(self):
@@ -503,15 +499,15 @@ class CopyrightCheck(base.GentooRepoCheck):
             line = lines[0].strip()
             copyright = ebuild_copyright_regex.match(line)
             if copyright is None:
-                yield InvalidCopyright(pkg, line)
+                yield InvalidCopyright(line, pkg=pkg)
             # Copyright policy is active since 2018-10-21, so it applies
             # to all ebuilds committed in 2019 and later
             elif int(copyright.group('end')) >= 2019:
                 if copyright.group('holder') == 'Gentoo Foundation':
-                    yield OldGentooCopyright(pkg, line)
+                    yield OldGentooCopyright(line, pkg=pkg)
                 # Gentoo policy requires 'Gentoo Authors'
                 elif copyright.group('holder') != 'Gentoo Authors':
-                    yield NonGentooAuthorsCopyright(pkg, line)
+                    yield NonGentooAuthorsCopyright(line, pkg=pkg)
 
 
 class HomepageInSrcUri(base.VersionedResult, base.Warning):
@@ -542,4 +538,4 @@ class HomepageInSrcUriCheck(base.Check):
 
         match = self.regex.search(''.join(lines))
         if match is not None:
-            yield HomepageInSrcUri(pkg)
+            yield HomepageInSrcUri(pkg=pkg)

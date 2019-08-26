@@ -10,12 +10,11 @@ from .. import addons, base
 class PotentialStable(base.VersionedResult, base.Warning):
     """Stable arches with potential stable package candidates."""
 
-    def __init__(self, pkg, keywords):
-        super().__init__(pkg)
-        self.slot = pkg.slot
-        self.keywords = tuple(sorted(keywords))
-        self.stable = tuple(sorted(str(arch) for arch in pkg.keywords
-                            if not arch[0] in ("~", "-")))
+    def __init__(self, slot, stable, keywords, **kwargs):
+        super().__init__(**kwargs)
+        self.slot = slot
+        self.stable = tuple(stable)
+        self.keywords = tuple(keywords)
 
     @property
     def short_desc(self):
@@ -27,12 +26,11 @@ class PotentialStable(base.VersionedResult, base.Warning):
 class LaggingStable(base.VersionedResult, base.Warning):
     """Stable arches for stabilized package that are lagging from a stabling standpoint."""
 
-    def __init__(self, pkg, keywords):
-        super().__init__(pkg)
-        self.slot = pkg.slot
-        self.keywords = tuple(sorted(keywords))
-        self.stable = tuple(sorted(str(arch) for arch in pkg.keywords
-                            if not arch[0] in ("~", "-")))
+    def __init__(self, slot, stable, keywords, **kwargs):
+        super().__init__(**kwargs)
+        self.slot = slot
+        self.stable = tuple(stable)
+        self.keywords = tuple(keywords)
 
     @property
     def short_desc(self):
@@ -95,17 +93,21 @@ class ImlateCheck(base.Check):
                 # current pkg stable keywords
                 stable = {'~' + x for x in self.source_arches.intersection(pkg.keywords)}
 
-                lagging_stables = potential_slot_stables.intersection(pkg.keywords)
+                lagging = potential_slot_stables.intersection(pkg.keywords)
                 # skip keywords that have newer stable versions
-                lagging_stables -= {'~' + x for x in newer_slot_stables}
-                lagging_stables -= stable
-                if lagging_stables:
-                    yield LaggingStable(pkg, lagging_stables)
+                lagging -= {'~' + x for x in newer_slot_stables}
+                lagging -= stable
+                if lagging:
+                    stable_kwds = (x for x in pkg.keywords if not x[0] in ('~', '-'))
+                    yield LaggingStable(
+                        pkg.slot, sorted(stable_kwds), sorted(lagging), pkg=pkg)
 
                 unstable_keywords = {x for x in pkg.keywords if x[0] == '~'}
-                potential_stables = self.target_arches.intersection(unstable_keywords)
-                potential_stables -= lagging_stables | stable
-                if potential_stables:
-                    yield PotentialStable(pkg, potential_stables)
+                potential = self.target_arches.intersection(unstable_keywords)
+                potential -= lagging | stable
+                if potential:
+                    stable_kwds = (x for x in pkg.keywords if not x[0] in ('~', '-'))
+                    yield PotentialStable(
+                        pkg.slot, sorted(stable_kwds), sorted(potential), pkg=pkg)
 
                 break

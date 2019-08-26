@@ -11,8 +11,8 @@ from .. import base, sources
 class MissingAccountIdentifier(base.VersionedResult, base.Warning):
     """UID/GID can not be found in account package."""
 
-    def __init__(self, pkg, var):
-        super().__init__(pkg)
+    def __init__(self, var, **kwargs):
+        super().__init__(**kwargs)
         self.var = var
 
     @property
@@ -29,7 +29,7 @@ class ConflictingAccountIdentifiers(base.Error):
         super().__init__()
         self.kind = kind
         self.identifier = identifier
-        self.pkgs = tuple(sorted(p.cpvstr for p in pkgs))
+        self.pkgs = tuple(pkgs)
 
     @property
     def short_desc(self):
@@ -41,8 +41,8 @@ class ConflictingAccountIdentifiers(base.Error):
 class OutsideRangeAccountIdentifier(base.VersionedResult, base.Error):
     """UID/GID outside allowed allocation range."""
 
-    def __init__(self, pkg, kind, identifier):
-        super().__init__(pkg)
+    def __init__(self, kind, identifier, **kwargs):
+        super().__init__(**kwargs)
         self.kind = kind
         self.identifier = identifier
 
@@ -93,12 +93,12 @@ class AcctCheck(base.Check):
                     found_id = int(m.group('id'))
                     break
         else:
-            return (MissingAccountIdentifier(pkg, f"ACCT_{expected_var}_ID"),)
+            return (MissingAccountIdentifier(f"ACCT_{expected_var}_ID", pkg=pkg),)
 
         # all UIDs/GIDs must be in <500, with special exception
         # of nobody/nogroup which use 65534/65533
         if found_id >= 500 and found_id not in extra_allowed_ids:
-            return (OutsideRangeAccountIdentifier(pkg, expected_var.lower(), found_id),)
+            return (OutsideRangeAccountIdentifier(expected_var.lower(), found_id, pkg=pkg),)
 
         seen_id_map[found_id][pkg.key].append(pkg)
 
@@ -107,6 +107,5 @@ class AcctCheck(base.Check):
         for seen, expected_var, _ids in self.category_map.values():
             for found_id, pkgs in sorted(seen.items()):
                 if len(pkgs) > 1:
-                    conflicting_pkgs = chain.from_iterable(pkgs.values())
-                    yield ConflictingAccountIdentifiers(
-                        expected_var.lower(), found_id, conflicting_pkgs)
+                    pkgs = (x.cpvstr for x in sorted(chain.from_iterable(pkgs.values())))
+                    yield ConflictingAccountIdentifiers(expected_var.lower(), found_id, pkgs)

@@ -6,9 +6,9 @@ from .. import addons, base
 class DroppedKeywords(base.VersionedResult, base.Warning):
     """Arch keywords dropped during version bumping."""
 
-    def __init__(self, pkg, arches):
-        super().__init__(pkg)
-        self.arches = tuple(sorted(arches))
+    def __init__(self, arches, **kwargs):
+        super().__init__(**kwargs)
+        self.arches = tuple(arches)
 
     @property
     def short_desc(self):
@@ -67,4 +67,4 @@ class DroppedKeywordsCheck(base.Check):
                 dropped[pkgs[-1]].append(key)
 
         for pkg, keys in dropped.items():
-            yield DroppedKeywords(pkg, keys)
+            yield DroppedKeywords(sorted(keys), pkg=pkg)

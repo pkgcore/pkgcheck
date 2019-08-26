@@ -7,9 +7,9 @@ from .. import base
 class DeprecatedEclass(base.VersionedResult, base.Warning):
     """Package uses an eclass that is deprecated/abandoned."""
 
-    def __init__(self, pkg, eclasses):
-        super().__init__(pkg)
-        self.eclasses = eclasses
+    def __init__(self, eclasses, **kwargs):
+        super().__init__(**kwargs)
+        self.eclasses = tuple(eclasses)
 
     @property
     def short_desc(self):
@@ -118,4 +118,4 @@ class DeprecatedEclassCheck(base.Check):
         deprecated = set(pkg.inherit).intersection(self.blacklist)
         if deprecated:
             eclasses = tuple((old, self.blacklist[old]) for old in sorted(deprecated))
-            yield DeprecatedEclass(pkg, eclasses)
+            yield DeprecatedEclass(eclasses, pkg=pkg)

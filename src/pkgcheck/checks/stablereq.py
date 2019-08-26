@@ -13,9 +13,9 @@ day = 24*3600
 class StableRequest(base.VersionedResult, base.Warning):
     """Unstable package added over thirty days ago that could be stabilized."""
 
-    def __init__(self, pkg, keywords, period):
-        super().__init__(pkg)
-        self.slot = pkg.slot
+    def __init__(self, slot, keywords, period, **kwargs):
+        super().__init__(**kwargs)
+        self.slot = slot
         self.keywords = tuple(keywords)
         self.period = period
 
@@ -91,5 +91,5 @@ class StableRequestCheck(base.GentooRepoCheck):
                         else:
                             keywords = stable_pkg_keywords.intersection(pkg_stable_keywords)
                         keywords = sorted('~' + x for x in keywords)
-                        yield StableRequest(pkg, keywords, days_old)
+                        yield StableRequest(pkg.slot, keywords, days_old, pkg=pkg)
                         break

@@ -27,9 +27,9 @@ from .visibility import FakeConfigurable, strip_atom_use
 class MissingLicense(base.VersionedResult, base.Error):
     """Used license(s) have no matching license file(s)."""
 
-    def __init__(self, pkg, licenses):
-        super().__init__(pkg)
-        self.licenses = tuple(sorted(licenses))
+    def __init__(self, licenses, **kwargs):
+        super().__init__(**kwargs)
+        self.licenses = tuple(licenses)
 
     @property
     def short_desc(self):
@@ -67,13 +67,13 @@ class LicenseMetadataCheck(base.Check):
         licenses = set(licenses)
         if not licenses:
             if pkg.category not in self.unlicensed_categories:
-                yield MetadataError(pkg, "license", "no license defined")
+                yield MetadataError('license', 'no license defined', pkg=pkg)
         else:
             licenses.difference_update(pkg.repo.licenses)
             if licenses:
-                yield MissingLicense(pkg, licenses)
+                yield MissingLicense(sorted(licenses), pkg=pkg)
             elif pkg.category in self.unlicensed_categories:
-                yield UnnecessaryLicense(pkg)
+                yield UnnecessaryLicense(pkg=pkg)
 
 
 class IUSEMetadataCheck(base.Check):
@@ -91,17 +91,17 @@ class IUSEMetadataCheck(base.Check):
         if not self.iuse_handler.ignore:
             iuse = pkg.iuse_stripped.difference(self.iuse_handler.allowed_iuse(pkg))
             if iuse:
+                iuse_str = ', '.join(sorted(iuse))
                 yield MetadataError(
-                    pkg, "iuse", "IUSE unknown flag%s: [ %s ]" % (
-                        _pl(iuse), ", ".join(sorted(iuse))))
+                    'iuse', f'IUSE unknown flag{_pl(iuse)}: [ {iuse_str} ]', pkg=pkg)
 
 
 class DeprecatedEAPI(base.VersionedResult, base.Warning):
     """Package's EAPI is deprecated according to repo metadata."""
 
-    def __init__(self, pkg):
-        super().__init__(pkg)
-        self.eapi = str(pkg.eapi)
+    def __init__(self, eapi, **kwargs):
+        super().__init__(**kwargs)
+        self.eapi = eapi
 
     @property
     def short_desc(self):
@@ -125,9 +125,9 @@ class MetadataCheck(base.Check):
     def feed(self, pkg):
         eapi_str = str(pkg.eapi)
         if eapi_str in self.options.target_repo.config.eapis_banned:
-            yield BannedEAPI(pkg)
+            yield BannedEAPI(str(pkg.eapi), pkg=pkg)
         elif eapi_str in self.options.target_repo.config.eapis_deprecated:
-            yield DeprecatedEAPI(pkg)
+            yield DeprecatedEAPI(str(pkg.eapi), pkg=pkg)
 
     def finish(self):
         # TODO: Move this somewhere that's consistently triggered after running
@@ -138,7 +138,8 @@ class MetadataCheck(base.Check):
             e = pkg.data
             if isinstance(e, MetadataException):
                 yield MetadataError(
-                    pkg.versioned_atom, e.attr, e.msg(verbosity=self.options.verbosity))
+                    e.attr, e.msg(verbosity=self.options.verbosity),
+                    pkg=pkg.versioned_atom)
 
 
 class RequiredUseDefaults(base.VersionedResult, base.Warning):
@@ -154,11 +155,11 @@ class RequiredUseDefaults(base.VersionedResult, base.Warning):
     or modifying REQUIRED_USE.
     """
 
-    def __init__(self, pkg, required_use, use=(), keyword=None,
-                 profile=None, num_profiles=None):
-        super().__init__(pkg)
-        self.required_use = str(required_use)
-        self.use = tuple(sorted(use))
+    def __init__(self, required_use, use=(), keyword=None,
+                 profile=None, num_profiles=None, **kwargs):
+        super().__init__(**kwargs)
+        self.required_use = required_use
+        self.use = tuple(use)
         self.keyword = keyword
         self.profile = profile
         self.num_profiles = num_profiles
@@ -228,22 +229,23 @@ class RequiredUSEMetadataCheck(base.Check):
             # report all failures with profile info in verbose mode
             for node, profile_info in failures.items():
                 for use, keyword, profile in profile_info:
-                    yield RequiredUseDefaults(pkg, node, use, keyword, profile)
+                    yield RequiredUseDefaults(
+                        str(node), sorted(use), keyword, profile, pkg=pkg)
         else:
             # only report one failure per REQUIRED_USE node in regular mode
             for node, profile_info in failures.items():
                 num_profiles = len(profile_info)
                 _use, _keyword, profile = profile_info[0]
                 yield RequiredUseDefaults(
-                    pkg, node, profile=profile, num_profiles=num_profiles)
+                    str(node), profile=profile, num_profiles=num_profiles, pkg=pkg)
 
 
 class UnusedLocalUSE(base.PackageResult, base.Warning):
     """Unused local USE flag(s)."""
 
-    def __init__(self, pkg, flags):
-        super().__init__(pkg)
-        self.flags = tuple(sorted(flags))
+    def __init__(self, flags, **kwargs):
+        super().__init__(**kwargs)
+        self.flags = tuple(flags)
 
     @property
     def short_desc(self):
@@ -254,8 +256,8 @@ class UnusedLocalUSE(base.PackageResult, base.Warning):
 class MatchingGlobalUSE(base.PackageResult, base.Error):
     """Local USE flag description matches a global USE flag."""
 
-    def __init__(self, pkg, flag):
-        super().__init__(pkg)
+    def __init__(self, flag, **kwargs):
+        super().__init__(**kwargs)
         self.flag = flag
 
     @property
@@ -266,8 +268,8 @@ class MatchingGlobalUSE(base.PackageResult, base.Error):
 class ProbableGlobalUSE(base.PackageResult, base.Warning):
     """Local USE flag description closely matches a global USE flag."""
 
-    def __init__(self, pkg, flag):
-        super().__init__(pkg)
+    def __init__(self, flag, **kwargs):
+        super().__init__(**kwargs)
         self.flag = flag
 
     @property
@@ -289,8 +291,8 @@ class ProbableUseExpand(base.PackageResult, base.Warning):
     .. [#] https://devmanual.gentoo.org/general-concepts/use-flags/
     """
 
-    def __init__(self, pkg, flag, group):
-        super().__init__(pkg)
+    def __init__(self, flag, group, **kwargs):
+        super().__init__(**kwargs)
         self.flag = flag
         self.group = group
 
@@ -328,21 +330,21 @@ class LocalUSECheck(base.Check):
             if flag in self.global_use:
                 ratio = SequenceMatcher(None, desc, self.global_use[flag]).ratio()
                 if ratio == 1.0:
-                    yield MatchingGlobalUSE(pkg, flag)
+                    yield MatchingGlobalUSE(flag, pkg=pkg)
                 elif ratio >= 0.75:
-                    yield ProbableGlobalUSE(pkg, flag)
+                    yield ProbableGlobalUSE(flag, pkg=pkg)
             else:
                 for group in self.use_expand_groups:
                     if (flag.startswith(f'{group}_') and
                             flag not in self.use_expand_groups[group]):
-                        yield ProbableUseExpand(pkg, flag, group.upper())
+                        yield ProbableUseExpand(flag, group.upper(), pkg=pkg)
                         break
 
         unused = set(local_use)
         for pkg in pkgs:
             unused.difference_update(pkg.iuse_stripped)
         if unused:
-            yield UnusedLocalUSE(pkg, unused)
+            yield UnusedLocalUSE(sorted(unused), pkg=pkg)
 
 
 class MissingSlotDep(base.VersionedResult, base.Warning):
@@ -361,10 +363,10 @@ class MissingSlotDep(base.VersionedResult, base.Warning):
     .. [#] https://devmanual.gentoo.org/general-concepts/dependencies/#slot-dependencies
     """
 
-    def __init__(self, pkg, dep, dep_slots):
-        super().__init__(pkg)
+    def __init__(self, dep, dep_slots, **kwargs):
+        super().__init__(**kwargs)
         self.dep = dep
-        self.dep_slots = tuple(sorted(dep_slots))
+        self.dep_slots = tuple(dep_slots)
 
     @property
     def short_desc(self):
@@ -397,7 +399,7 @@ class MissingSlotDepCheck(base.Check):
                     (x.blocks or x.slot is not None or x.slot_operator is not None)):
             dep_slots = set(x.slot for x in pkg.repo.itermatch(dep))
             if len(dep_slots) > 1:
-                yield MissingSlotDep(pkg, str(dep), dep_slots)
+                yield MissingSlotDep(str(dep), sorted(dep_slots), pkg=pkg)
 
 
 class MissingPackageRevision(base.VersionedResult, base.Warning):
@@ -412,10 +414,10 @@ class MissingPackageRevision(base.VersionedResult, base.Warning):
     allowed, ``-r0`` should be appended in order to make the intent explicit.
     """
 
-    def __init__(self, pkg, dep, atom):
-        super().__init__(pkg)
+    def __init__(self, dep, atom, **kwargs):
+        super().__init__(**kwargs)
         self.dep = dep.upper()
-        self.atom = str(atom)
+        self.atom = atom
 
     @property
     def short_desc(self):
@@ -425,12 +427,12 @@ class MissingPackageRevision(base.VersionedResult, base.Warning):
 class MissingUseDepDefault(base.VersionedResult, base.Warning):
     """Package dependencies with USE dependencies missing defaults."""
 
-    def __init__(self, pkg, attr, atom, flag, pkg_deps):
-        super().__init__(pkg)
+    def __init__(self, attr, atom, flag, pkg_deps, **kwargs):
+        super().__init__(**kwargs)
         self.attr = attr.upper()
-        self.atom = str(atom)
-        self.pkg_deps = tuple(sorted(str(x.versioned_atom) for x in pkg_deps))
+        self.atom = atom
         self.flag = flag
+        self.pkg_deps = tuple(pkg_deps)
 
     @property
     def short_desc(self):
@@ -445,10 +447,10 @@ class OutdatedBlocker(base.VersionedResult, base.Warning):
     Note that this ignores slot/subslot deps and USE deps in blocker atoms.
     """
 
-    def __init__(self, pkg, attr, atom, age):
-        super().__init__(pkg)
-        self.attr = attr.upper()
-        self.atom = str(atom)
+    def __init__(self, attr, atom, age, **kwargs):
+        super().__init__(**kwargs)
+        self.attr = attr
+        self.atom = atom
         self.age = age
 
     @property
@@ -468,10 +470,10 @@ class NonexistentBlocker(base.VersionedResult, base.Warning):
     Note that this ignores slot/subslot deps and USE deps in blocker atoms.
     """
 
-    def __init__(self, pkg, attr, atom):
-        super().__init__(pkg)
-        self.attr = attr.upper()
-        self.atom = str(atom)
+    def __init__(self, attr, atom, **kwargs):
+        super().__init__(**kwargs)
+        self.attr = attr
+        self.atom = atom
 
     @property
     def short_desc(self):
@@ -546,12 +548,14 @@ class DependencyCheck(base.Check):
                 if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
                     missing_use_deps = self._check_use_deps(attr_name, pkg, atom)
                     for use, pkg_deps in missing_use_deps.items():
-                        yield MissingUseDepDefault(pkg, attr_name, atom, use, pkg_deps)
+                        pkg_deps = sorted(str(x.versioned_atom) for x in pkg_deps)
+                        yield MissingUseDepDefault(
+                            attr_name, str(atom), use, pkg_deps, pkg=pkg)
                 if in_or_restriction and atom.slot_operator == '=':
                     slot_op_or_blocks.add(atom.key)
                 if atom.blocks:
                     if atom.match(pkg):
-                        yield MetadataError(pkg, attr_name, "blocks itself")
+                        yield MetadataError(attr_name, "blocks itself", pkg=pkg)
                     elif atom.slot_operator == '=':
                         slot_op_blockers.add(atom.key)
                     elif self.existence_repo is not None:
@@ -572,23 +576,25 @@ class DependencyCheck(base.Check):
                             else:
                                 nonexistent_blockers.add((attr_name, atom))
                 if atom.op == '=' and not atom.revision:
-                    yield MissingPackageRevision(pkg, attr_name, atom)
+                    yield MissingPackageRevision(attr_name, str(atom), pkg=pkg)
 
             if slot_op_or_blocks:
+                atoms = ', '.join(sorted(slot_op_or_blocks))
                 yield MetadataError(
-                    pkg, attr_name,
-                    "= slot operator used inside || block: [%s]" %
-                    (', '.join(sorted(slot_op_or_blocks),)))
+                    attr_name,
+                    f'= slot operator used inside || block: [{atoms}]',
+                    pkg=pkg)
             if slot_op_blockers:
+                atoms = ', '.join(sorted(slot_op_blockers))
                 yield MetadataError(
-                    pkg, attr_name,
-                    "= slot operator used in blocker: [%s]" %
-                    (', '.join(sorted(slot_op_blockers),)))
+                    attr_name,
+                    f'= slot operator used in blocker: [{atoms}]',
+                    pkg=pkg)
 
             for attr, atom, years in sorted(outdated_blockers):
-                yield OutdatedBlocker(pkg, attr, atom, years)
+                yield OutdatedBlocker(attr.upper(), str(atom), years, pkg=pkg)
             for attr, atom in sorted(nonexistent_blockers):
-                yield NonexistentBlocker(pkg, attr, atom)
+                yield NonexistentBlocker(attr.upper(), str(atom), pkg=pkg)
 
 
 class StupidKeywords(base.VersionedResult, base.Warning):
@@ -601,9 +607,9 @@ class StupidKeywords(base.VersionedResult, base.Warning):
 class InvalidKeywords(base.VersionedResult, base.Error):
     """Packages using invalid KEYWORDS."""
 
-    def __init__(self, pkg, keywords):
-        super().__init__(pkg)
-        self.keywords = tuple(sorted(keywords))
+    def __init__(self, keywords, **kwargs):
+        super().__init__(**kwargs)
+        self.keywords = tuple(keywords)
 
     @property
     def short_desc(self):
@@ -613,21 +619,21 @@ class InvalidKeywords(base.VersionedResult, base.Error):
 class OverlappingKeywords(base.VersionedResult, base.Warning):
     """Packages having overlapping arch and ~arch KEYWORDS."""
 
-    def __init__(self, pkg, keywords):
-        super().__init__(pkg)
-        self.keywords = tuple(sorted(zip(keywords, ('~' + x for x in keywords))))
+    def __init__(self, keywords, **kwargs):
+        super().__init__(**kwargs)
+        self.keywords = keywords
 
     @property
     def short_desc(self):
-        return f"overlapping KEYWORDS: {', '.join(map(str, self.keywords))}"
+        return f"overlapping KEYWORDS: {self.keywords}"
 
 
 class DuplicateKeywords(base.VersionedResult, base.Warning):
     """Packages having duplicate KEYWORDS."""
 
-    def __init__(self, pkg, keywords):
-        super().__init__(pkg)
-        self.keywords = tuple(sort_keywords(keywords))
+    def __init__(self, keywords, **kwargs):
+        super().__init__(**kwargs)
+        self.keywords = tuple(keywords)
 
     @property
     def short_desc(self):
@@ -642,10 +648,10 @@ class UnsortedKeywords(base.VersionedResult, base.Warning):
     before them.
     """
 
-    def __init__(self, pkg):
-        super().__init__(pkg)
-        self.keywords = tuple(pkg.keywords)
-        self.sorted_keywords = tuple(pkg.sorted_keywords)
+    def __init__(self, keywords, sorted_keywords, **kwargs):
+        super().__init__(**kwargs)
+        self.keywords = tuple(keywords)
+        self.sorted_keywords = tuple(sorted_keywords)
 
     @property
     def short_desc(self):
@@ -661,9 +667,9 @@ class UnsortedKeywords(base.VersionedResult, base.Warning):
 class MissingVirtualKeywords(base.VersionedResult, base.Warning):
     """Virtual packages with keywords missing from their dependencies."""
 
-    def __init__(self, pkg, keywords):
-        super().__init__(pkg)
-        self.keywords = tuple(sort_keywords(keywords))
+    def __init__(self, keywords, **kwargs):
+        super().__init__(**kwargs)
+        self.keywords = tuple(keywords)
 
     @property
     def short_desc(self):
@@ -705,14 +711,16 @@ class KeywordsCheck(base.Check):
             if self.options.target_repo.repo_id != 'gentoo':
                 invalid -= self.portage_keywords
             if invalid:
-                yield InvalidKeywords(pkg, invalid)
+                yield InvalidKeywords(sorted(invalid), pkg=pkg)
 
             # check for overlapping keywords
             unstable = {x[1:] for x in pkg.keywords if x[0] == '~'}
             stable = {x for x in pkg.keywords if x[0] != '~'}
             overlapping = unstable & stable
             if overlapping:
-                yield OverlappingKeywords(pkg, overlapping)
+                keywords = ', '.join(map(
+                    str, sorted(zip(overlapping, ('~' + x for x in overlapping)))))
+                yield OverlappingKeywords(keywords, pkg=pkg)
 
             # check for duplicate keywords
             duplicates = set()
@@ -723,11 +731,11 @@ class KeywordsCheck(base.Check):
                 else:
                     duplicates.add(x)
             if duplicates:
-                yield DuplicateKeywords(pkg, duplicates)
+                yield DuplicateKeywords(sort_keywords(duplicates), pkg=pkg)
 
             # check for unsorted keywords
             if pkg.sorted_keywords != pkg.keywords:
-                yield UnsortedKeywords(pkg)
+                yield UnsortedKeywords(pkg.keywords, pkg.sorted_keywords, pkg=pkg)
 
             if pkg.category == 'virtual':
                 keywords = set()
@@ -740,15 +748,15 @@ class KeywordsCheck(base.Check):
                 pkg_keywords.update(f'~{x}' for x in pkg.keywords if x[0] != '~')
                 missing_keywords = keywords - pkg_keywords
                 if missing_keywords:
-                    yield MissingVirtualKeywords(pkg, missing_keywords)
+                    yield MissingVirtualKeywords(sort_keywords(missing_keywords), pkg=pkg)
 
 
 class MissingUri(base.VersionedResult, base.Warning):
     """RESTRICT=fetch isn't set, yet no full URI exists."""
 
-    def __init__(self, pkg, filenames):
-        super().__init__(pkg)
-        self.filenames = tuple(sorted(filenames))
+    def __init__(self, filenames, **kwargs):
+        super().__init__(**kwargs)
+        self.filenames = tuple(filenames)
 
     @property
     def short_desc(self):
@@ -759,8 +767,8 @@ class MissingUri(base.VersionedResult, base.Warning):
 class UnknownMirror(base.VersionedResult, base.Error):
     """URI uses an unknown mirror."""
 
-    def __init__(self, pkg, filename, uri, mirror):
-        super().__init__(pkg)
+    def __init__(self, filename, uri, mirror, **kwargs):
+        super().__init__(**kwargs)
         self.filename = filename
         self.uri = uri
         self.mirror = mirror
@@ -776,10 +784,10 @@ class BadProtocol(base.VersionedResult, base.Warning):
     Valid protocols are currently: http, https, and ftp
     """
 
-    def __init__(self, pkg, filename, bad_uris):
-        super().__init__(pkg)
+    def __init__(self, filename, bad_uris, **kwargs):
+        super().__init__(**kwargs)
         self.filename = filename
-        self.bad_uris = tuple(sorted(bad_uris))
+        self.bad_uris = tuple(bad_uris)
 
     @property
     def short_desc(self):
@@ -793,9 +801,9 @@ class BadFilename(base.VersionedResult, base.Warning):
     Archive filenames should be disambiguated using ``->`` to rename them.
     """
 
-    def __init__(self, pkg, filenames):
-        super().__init__(pkg)
-        self.filenames = tuple(sorted(filenames))
+    def __init__(self, filenames, **kwargs):
+        super().__init__(**kwargs)
+        self.filenames = tuple(filenames)
 
     @property
     def short_desc(self):
@@ -810,9 +818,9 @@ class TarballAvailable(base.VersionedResult, base.Warning):
     and no extra unpack dependencies.
     """
 
-    def __init__(self, pkg, uris):
-        super().__init__(pkg)
-        self.uris = tuple(sorted(uris))
+    def __init__(self, uris, **kwargs):
+        super().__init__(**kwargs)
+        self.uris = tuple(uris)
 
     @property
     def short_desc(self):
@@ -865,7 +873,7 @@ class SrcUriCheck(base.Check):
                 (m, sub_uri) for m, sub_uri in mirrors if isinstance(m, unknown_mirror)]
             for mirror, sub_uri in unknown_mirrors:
                 uri = f"{mirror}/{sub_uri}"
-                yield UnknownMirror(pkg, f_inst.filename, uri, mirror.mirror_name)
+                yield UnknownMirror(f_inst.filename, uri, mirror.mirror_name, pkg=pkg)
 
             # Check for unspecific filenames of the form ${PN}.ext, ${PV}.ext,
             # and v${PV}.ext as well as archives named using only the raw git
@@ -892,21 +900,21 @@ class SrcUriCheck(base.Check):
                     elif self.zip_to_tar_re.match(x):
                         tarball_available.add(x)
                 if bad:
-                    yield BadProtocol(pkg, f_inst.filename, bad)
+                    yield BadProtocol(f_inst.filename, sorted(bad), pkg=pkg)
 
         if lacks_uri:
-            yield MissingUri(pkg, lacks_uri)
+            yield MissingUri(sorted(lacks_uri), pkg=pkg)
         if bad_filenames:
-            yield BadFilename(pkg, bad_filenames)
+            yield BadFilename(sorted(bad_filenames), pkg=pkg)
         if tarball_available:
-            yield TarballAvailable(pkg, tarball_available)
+            yield TarballAvailable(sorted(tarball_available), pkg=pkg)
 
 
 class BadDescription(base.VersionedResult, base.Warning):
     """Package's description is bad for some reason."""
 
-    def __init__(self, pkg, msg):
-        super().__init__(pkg)
+    def __init__(self, msg, **kwargs):
+        super().__init__(**kwargs)
         self.msg = msg
 
     @property
@@ -927,26 +935,26 @@ class DescriptionCheck(base.Check):
     def feed(self, pkg):
         s = pkg.description.lower()
         if s.startswith("based on") and "eclass" in s:
-            yield BadDescription(pkg, "generic eclass defined description")
+            yield BadDescription("generic eclass defined description", pkg=pkg)
         elif pkg.package == s or pkg.key == s:
             yield BadDescription(
-                pkg, "using the pkg name as the description isn't very helpful")
+                "using the pkg name as the description isn't very helpful", pkg=pkg)
         else:
             l = len(pkg.description)
             if not l:
-                yield BadDescription(pkg, "empty/unset")
+                yield BadDescription("empty/unset", pkg=pkg)
             elif l > 150:
-                yield BadDescription(pkg, "over 150 chars in length, bit long")
+                yield BadDescription("over 150 chars in length, bit long", pkg=pkg)
             elif l < 10:
                 yield BadDescription(
-                    pkg, f"{pkg.description!r} under 10 chars in length- too short")
+                    f"{pkg.description!r} under 10 chars in length- too short", pkg=pkg)
 
 
 class BadHomepage(base.VersionedResult, base.Warning):
     """Package's homepage is bad for some reason."""
 
-    def __init__(self, pkg, msg):
-        super().__init__(pkg)
+    def __init__(self, msg, **kwargs):
+        super().__init__(**kwargs)
         self.msg = msg
 
     @property
@@ -966,29 +974,29 @@ class HomepageCheck(base.Check):
     def feed(self, pkg):
         if not pkg.homepage:
             if pkg.category not in self.missing_categories:
-                yield BadHomepage(pkg, "empty/unset")
+                yield BadHomepage("empty/unset", pkg=pkg)
         else:
             if pkg.category in self.missing_categories:
                 yield BadHomepage(
-                    pkg, f"{pkg.category!r} packages shouldn't define HOMEPAGE")
+                    f"{pkg.category!r} packages shouldn't define HOMEPAGE", pkg=pkg)
             else:
                 for homepage in pkg.homepage:
                     i = homepage.find("://")
                     if i == -1:
-                        yield BadHomepage(pkg, f"HOMEPAGE={homepage!r} lacks protocol")
+                        yield BadHomepage(f"HOMEPAGE={homepage!r} lacks protocol", pkg=pkg)
                     elif homepage[:i] not in SrcUriCheck.valid_protos:
                         yield BadHomepage(
-                            pkg,
                             f"HOMEPAGE={homepage!r} uses unsupported "
-                            f"protocol {homepage[:i]!r}")
+                            f"protocol {homepage[:i]!r}",
+                            pkg=pkg)
 
 
 class BadRestricts(base.VersionedResult, base.Warning):
     """Package's RESTRICT metadata has unknown entries."""
 
-    def __init__(self, pkg, restricts):
-        super().__init__(pkg)
-        self.restricts = tuple(sorted(restricts))
+    def __init__(self, restricts, **kwargs):
+        super().__init__(**kwargs)
+        self.restricts = tuple(restricts)
 
     @property
     def short_desc(self):
@@ -999,9 +1007,9 @@ class BadRestricts(base.VersionedResult, base.Warning):
 class UnknownProperties(base.VersionedResult, base.Warning):
     """Package's PROPERTIES metadata has unknown entries."""
 
-    def __init__(self, pkg, properties):
-        super().__init__(pkg)
-        self.properties = tuple(sorted(properties))
+    def __init__(self, properties, **kwargs):
+        super().__init__(**kwargs)
+        self.properties = tuple(properties)
 
     @property
     def short_desc(self):
@@ -1040,11 +1048,11 @@ class RestrictsCheck(base.Check):
         if self.allowed_restricts:
             bad = set(restricts).difference(self.allowed_restricts)
             if bad:
-                yield BadRestricts(pkg, bad)
+                yield BadRestricts(sorted(bad), pkg=pkg)
         if self.allowed_properties:
             unknown = set(properties).difference(self.allowed_properties)
             if unknown:
-                yield UnknownProperties(pkg, unknown)
+                yield UnknownProperties(sorted(unknown), pkg=pkg)
 
 
 class MissingConditionalTestRestrict(base.VersionedResult, base.Warning):
@@ -1083,7 +1091,7 @@ class ConditionalTestRestrictCheck(base.Check):
                r.restriction.negate and 'test' in r.payload for r in pkg.restrict):
             return
 
-        yield MissingConditionalTestRestrict(pkg)
+        yield MissingConditionalTestRestrict(pkg=pkg)
 
 
 class MissingUnpackerDep(base.VersionedResult, base.Warning):
@@ -1093,11 +1101,11 @@ class MissingUnpackerDep(base.VersionedResult, base.Warning):
     system set, and lacks an explicit dependency on the unpacker package.
     """
 
-    def __init__(self, pkg, filenames, unpackers):
-        super().__init__(pkg)
-        self.eapi = str(pkg.eapi)
-        self.filenames = tuple(sorted(filenames))
-        self.unpackers = tuple(sorted(map(str, unpackers)))
+    def __init__(self, eapi, filenames, unpackers, **kwargs):
+        super().__init__(**kwargs)
+        self.eapi = eapi
+        self.filenames = tuple(filenames)
+        self.unpackers = tuple(unpackers)
 
     @property
     def short_desc(self):
@@ -1164,4 +1172,5 @@ class MissingUnpackerDepCheck(base.Check):
                         missing_unpackers.pop(unpackers, None)
 
         for unpackers, filenames in missing_unpackers.items():
-            yield MissingUnpackerDep(pkg, filenames, unpackers)
+            yield MissingUnpackerDep(
+                str(pkg.eapi), sorted(filenames), sorted(unpackers), pkg=pkg)

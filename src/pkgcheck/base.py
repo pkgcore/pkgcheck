@@ -315,8 +315,8 @@ class CategoryResult(Result):
 
     threshold = category_feed
 
-    def __init__(self, pkg, *args):
-        super().__init__(*args)
+    def __init__(self, pkg, **kwargs):
+        super().__init__(**kwargs)
         self.category = pkg.category
         self._attr = 'category'
 
@@ -326,8 +326,8 @@ class PackageResult(CategoryResult):
 
     threshold = package_feed
 
-    def __init__(self, pkg, *args):
-        super().__init__(pkg, *args)
+    def __init__(self, pkg, **kwargs):
+        super().__init__(pkg, **kwargs)
         self.package = pkg.package
         self._attr = 'package'
 
@@ -337,8 +337,8 @@ class VersionedResult(PackageResult):
 
     threshold = versioned_feed
 
-    def __init__(self, pkg, *args):
-        super().__init__(pkg, *args)
+    def __init__(self, pkg, **kwargs):
+        super().__init__(pkg, **kwargs)
         self.version = pkg.fullver
         self._attr = 'version'
 
@@ -362,8 +362,8 @@ class LogWarning(Warning, LogError):
 class MetadataError(VersionedResult, Error):
     """Problem detected with a package's metadata."""
 
-    def __init__(self, pkg, attr, msg):
-        super().__init__(pkg)
+    def __init__(self, attr, msg, **kwargs):
+        super().__init__(**kwargs)
         self.attr = attr
         self.msg = str(msg)
 
@@ -602,7 +602,7 @@ class CheckRunner(object):
                 if exc_info not in self._metadata_errors:
                     self._metadata_errors.add(exc_info)
                     error_str = ': '.join(str(e.error).split('\n'))
-                    yield MetadataError(e.pkg, e.attr, error_str)
+                    yield MetadataError(e.attr, error_str, pkg=e.pkg)
 
     def feed(self, item):
         for check in self.checks:
@@ -616,7 +616,7 @@ class CheckRunner(object):
                 if exc_info not in self._metadata_errors:
                     self._metadata_errors.add(exc_info)
                     error_str = ': '.join(str(e.error).split('\n'))
-                    yield MetadataError(e.pkg, e.attr, error_str)
+                    yield MetadataError(e.attr, error_str, pkg=e.pkg)
 
     def finish(self):
         for check in self.checks:

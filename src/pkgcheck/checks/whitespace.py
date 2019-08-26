@@ -16,8 +16,8 @@ class _Whitespace(base.VersionedResult, base.Warning):
 class WhitespaceFound(_Whitespace):
     """Leading or trailing whitespace found."""
 
-    def __init__(self, pkg, leadtrail, lines):
-        super().__init__(pkg)
+    def __init__(self, leadtrail, lines, **kwargs):
+        super().__init__(**kwargs)
         self.lines = tuple(lines)
         self.leadtrail = leadtrail
 
@@ -29,8 +29,8 @@ class WhitespaceFound(_Whitespace):
 class WrongIndentFound(_Whitespace):
     """Incorrect indentation whitespace found."""
 
-    def __init__(self, pkg, lines):
-        super().__init__(pkg)
+    def __init__(self, lines, **kwargs):
+        super().__init__(**kwargs)
         self.lines = tuple(lines)
 
     @property
@@ -41,8 +41,8 @@ class WrongIndentFound(_Whitespace):
 class DoubleEmptyLine(_Whitespace):
     """Unneeded blank lines found."""
 
-    def __init__(self, pkg, lines):
-        super().__init__(pkg)
+    def __init__(self, lines, **kwargs):
+        super().__init__(**kwargs)
         self.lines = tuple(lines)
 
     @property
@@ -92,16 +92,16 @@ class WhitespaceCheck(base.Check):
             else:
                 lastlineempty = True
         if trailing:
-            yield WhitespaceFound(pkg, "trailing", trailing)
+            yield WhitespaceFound('trailing', trailing, pkg=pkg)
         if leading:
-            yield WhitespaceFound(pkg, "leading", leading)
+            yield WhitespaceFound('leading', leading, pkg=pkg)
         if indent:
-            yield WrongIndentFound(pkg, indent)
+            yield WrongIndentFound(indent, pkg=pkg)
         if double_empty:
-            yield DoubleEmptyLine(pkg, double_empty)
+            yield DoubleEmptyLine(double_empty, pkg=pkg)
         if lastlineempty:
-            yield TrailingEmptyLine(pkg)
+            yield TrailingEmptyLine(pkg=pkg)
 
         # Dealing with empty ebuilds is just paranoia
         if lines and not lines[-1].endswith('\n'):
-            yield NoFinalNewline(pkg)
+            yield NoFinalNewline(pkg=pkg)

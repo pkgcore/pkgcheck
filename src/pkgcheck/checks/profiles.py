@@ -36,7 +36,7 @@ class UnknownProfilePackages(base.Warning):
     def __init__(self, path, packages):
         super().__init__()
         self.path = path
-        self.packages = tuple(str(x) for x in packages)
+        self.packages = tuple(packages)
 
     @property
     def short_desc(self):
@@ -52,7 +52,7 @@ class UnknownProfilePackageUse(base.Warning):
     def __init__(self, path, package, flags):
         super().__init__()
         self.path = path
-        self.package = str(package)
+        self.package = package
         self.flags = tuple(flags)
 
     @property
@@ -86,7 +86,7 @@ class UnknownProfilePackageKeywords(base.Warning):
     def __init__(self, path, package, keywords):
         super().__init__()
         self.path = path
-        self.package = str(package)
+        self.package = package
         self.keywords = tuple(keywords)
 
     @property
@@ -249,16 +249,16 @@ class ProfilesCheck(base.Check, base.EmptyFeed):
 
         for path, filenames in sorted(unknown_pkgs.items()):
             for filename, vals in filenames.items():
+                pkgs = map(str, vals)
                 yield UnknownProfilePackages(
-                    pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
-                    vals)
+                    pjoin(path[len(self.profiles_dir):].lstrip('/'), filename), pkgs)
 
         for path, filenames in sorted(unknown_pkg_use.items()):
             for filename, vals in filenames.items():
                 for pkg, flags in vals:
                     yield UnknownProfilePackageUse(
                         pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
-                        pkg, flags)
+                        str(pkg), flags)
 
         for path, filenames in sorted(unknown_use.items()):
             for filename, vals in filenames.items():
@@ -271,7 +271,7 @@ class ProfilesCheck(base.Check, base.EmptyFeed):
                 for pkg, keywords in vals:
                     yield UnknownProfilePackageKeywords(
                         pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
-                        pkg, keywords)
+                        str(pkg), keywords)
 
 
 class UnusedProfileDirs(base.Warning):
@@ -281,7 +281,7 @@ class UnusedProfileDirs(base.Warning):
 
     def __init__(self, dirs):
         super().__init__()
-        self.dirs = tuple(sorted(dirs))
+        self.dirs = tuple(dirs)
 
     @property
     def short_desc(self):
@@ -296,7 +296,7 @@ class ArchesWithoutProfiles(base.Warning):
 
     def __init__(self, arches):
         super().__init__()
-        self.arches = arches
+        self.arches = tuple(arches)
 
     @property
     def short_desc(self):
@@ -323,17 +323,17 @@ class LaggingProfileEAPI(base.Warning):
 
     threshold = base.repository_feed
 
-    def __init__(self, profile, parent):
+    def __init__(self, profile, eapi, parent, parent_eapi):
         super().__init__()
-        self.profile = profile.name
-        self.profile_eapi = profile.eapi
-        self.parent = parent.name
-        self.parent_eapi = parent.eapi
+        self.profile = profile
+        self.eapi = eapi
+        self.parent = parent
+        self.parent_eapi = parent_eapi
 
     @property
     def short_desc(self):
         return (
-            f'{self.profile!r} profile has EAPI {self.profile_eapi}, '
+            f'{self.profile!r} profile has EAPI {self.eapi}, '
             f'{self.parent!r} parent has EAPI {self.parent_eapi}'
         )
 
@@ -407,7 +407,7 @@ class RepoProfilesCheck(base.Check, base.EmptyFeed):
 
         arches_without_profiles = set(self.arches) - set(self.repo.profiles.arches())
         if arches_without_profiles:
-            yield ArchesWithoutProfiles(arches_without_profiles)
+            yield ArchesWithoutProfiles(sorted(arches_without_profiles))
 
         root_profile_dirs = {'embedded'}
         available_profile_dirs = set()
@@ -455,8 +455,10 @@ class RepoProfilesCheck(base.Check, base.EmptyFeed):
                         lagging_profile_eapi[profile].append(parent)
 
         for profile, parents in lagging_profile_eapi.items():
-            yield LaggingProfileEAPI(profile, parents[-1])
+            parent = parents[-1]
+            yield LaggingProfileEAPI(
+                profile.name, str(profile.eapi), parent.name, str(parent.eapi))
 
         unused_profile_dirs = available_profile_dirs - seen_profile_dirs
         if unused_profile_dirs:
-            yield UnusedProfileDirs(unused_profile_dirs)
+            yield UnusedProfileDirs(sorted(unused_profile_dirs))

@@ -11,9 +11,9 @@ class UnusedInMastersLicenses(base.VersionedResult, base.Warning):
     In other words, they're likely to be removed so should be copied to the overlay.
     """
 
-    def __init__(self, pkg, licenses):
-        super().__init__(pkg)
-        self.licenses = tuple(sorted(licenses))
+    def __init__(self, licenses, **kwargs):
+        super().__init__(**kwargs)
+        self.licenses = tuple(licenses)
 
     @property
     def short_desc(self):
@@ -27,9 +27,9 @@ class UnusedInMastersMirrors(base.VersionedResult, base.Warning):
     In other words, they're likely to be removed so should be copied to the overlay.
     """
 
-    def __init__(self, pkg, mirrors):
-        super().__init__(pkg)
-        self.mirrors = tuple(sorted(mirrors))
+    def __init__(self, mirrors, **kwargs):
+        super().__init__(**kwargs)
+        self.mirrors = tuple(mirrors)
 
     @property
     def short_desc(self):
@@ -43,9 +43,9 @@ class UnusedInMastersEclasses(base.VersionedResult, base.Warning):
     In other words, they're likely to be removed so should be copied to the overlay.
     """
 
-    def __init__(self, pkg, eclasses):
-        super().__init__(pkg)
-        self.eclasses = tuple(sorted(eclasses))
+    def __init__(self, eclasses, **kwargs):
+        super().__init__(**kwargs)
+        self.eclasses = tuple(eclasses)
 
     @property
     def short_desc(self):
@@ -59,9 +59,9 @@ class UnusedInMastersGlobalUSE(base.VersionedResult, base.Warning):
     In other words, they're likely to be removed so should be copied to the overlay.
     """
 
-    def __init__(self, pkg, flags):
-        super().__init__(pkg)
-        self.flags = tuple(sorted(flags))
+    def __init__(self, flags, **kwargs):
+        super().__init__(**kwargs)
+        self.flags = tuple(flags)
 
     @property
     def short_desc(self):
@@ -109,25 +109,25 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
             pkg_licenses = set(iflatten_instance(pkg.license))
             licenses = self.unused_master_licenses & pkg_licenses
             if licenses:
-                yield UnusedInMastersLicenses(pkg, licenses)
+                yield UnusedInMastersLicenses(sorted(licenses), pkg=pkg)
 
         # report mirrors used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_mirrors:
             pkg_mirrors = self._get_mirrors(pkg)
             mirrors = self.unused_master_mirrors & pkg_mirrors
             if mirrors:
-                yield UnusedInMastersMirrors(pkg, mirrors)
+                yield UnusedInMastersMirrors(sorted(mirrors), pkg=pkg)
 
         # report eclasses used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_eclasses:
             pkg_eclasses = set(pkg.inherited)
             eclasses = self.unused_master_eclasses & pkg_eclasses
             if eclasses:
-                yield UnusedInMastersEclasses(pkg, eclasses)
+                yield UnusedInMastersEclasses(sorted(eclasses), pkg=pkg)
 
         # report global USE flags used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_flags:
             non_local_use = pkg.iuse_stripped.difference(pkg.local_use.keys())
             flags = self.unused_master_flags.intersection(non_local_use)
             if flags:
-                yield UnusedInMastersGlobalUSE(pkg, flags)
+                yield UnusedInMastersGlobalUSE(sorted(flags), pkg=pkg)

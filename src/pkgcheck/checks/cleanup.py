@@ -6,10 +6,10 @@ from .. import base
 class RedundantVersion(base.VersionedResult, base.Warning):
     """Redundant version(s) of a package in a specific slot."""
 
-    def __init__(self, pkg, higher_pkgs):
-        super().__init__(pkg)
-        self.slot = pkg.slot
-        self.later_versions = tuple(x.fullver for x in higher_pkgs)
+    def __init__(self, slot, later_versions, **kwargs):
+        super().__init__(**kwargs)
+        self.slot = slot
+        self.later_versions = tuple(later_versions)
 
     @property
     def short_desc(self):
@@ -65,4 +65,5 @@ class RedundantVersionCheck(base.Check):
                 bad.append((pkg, matches))
 
         for pkg, matches in reversed(bad):
-            yield RedundantVersion(pkg, matches)
+            later_versions = (x.fullver for x in matches)
+            yield RedundantVersion(pkg.slot, later_versions, pkg=pkg)

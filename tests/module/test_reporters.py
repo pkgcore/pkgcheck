@@ -20,9 +20,9 @@ class BaseReporter(object):
         self.log_warning = profiles.ProfileWarning('profile warning')
         self.log_error = profiles.ProfileError('profile error')
         pkg = FakePkg('dev-libs/foo-0')
-        self.category_result = metadata_xml.CatMissingMetadataXml(pkg, 'metadata.xml')
-        self.package_result = pkgdir.InvalidPN(pkg, ('foo',))
-        self.versioned_result = metadata.BadFilename(pkg, ('0.tar.gz',))
+        self.category_result = metadata_xml.CatMissingMetadataXml('metadata.xml', pkg=pkg)
+        self.package_result = pkgdir.InvalidPN(('foo',), pkg=pkg)
+        self.versioned_result = metadata.BadFilename(('0.tar.gz',), pkg=pkg)
         return reporter
 
     @property

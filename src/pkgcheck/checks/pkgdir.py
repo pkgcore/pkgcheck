@@ -21,9 +21,9 @@ allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 class MismatchedPN(base.PackageResult, base.Error):
     """Ebuilds that have different names than their parent directory."""
 
-    def __init__(self, pkg, ebuilds):
-        super().__init__(pkg)
-        self.ebuilds = tuple(sorted(ebuilds))
+    def __init__(self, ebuilds, **kwargs):
+        super().__init__(**kwargs)
+        self.ebuilds = tuple(ebuilds)
 
     @property
     def short_desc(self):
@@ -34,9 +34,9 @@ class MismatchedPN(base.PackageResult, base.Error):
 class InvalidPN(base.PackageResult, base.Error):
     """Ebuilds that have invalid package names."""
 
-    def __init__(self, pkg, ebuilds):
-        super().__init__(pkg)
-        self.ebuilds = tuple(sorted(ebuilds))
+    def __init__(self, ebuilds, **kwargs):
+        super().__init__(**kwargs)
+        self.ebuilds = tuple(ebuilds)
 
     @property
     def short_desc(self):
@@ -52,9 +52,9 @@ class EqualVersions(base.PackageResult, base.Error):
     shouldn't exist in the same repository.
     """
 
-    def __init__(self, pkg, versions):
-        super().__init__(pkg)
-        self.versions = tuple(sorted(versions))
+    def __init__(self, versions, **kwargs):
+        super().__init__(**kwargs)
+        self.versions = tuple(versions)
 
     @property
     def short_desc(self):
@@ -64,9 +64,9 @@ class EqualVersions(base.PackageResult, base.Error):
 class DuplicateFiles(base.PackageResult, base.Warning):
     """Two or more identical files in FILESDIR."""
 
-    def __init__(self, pkg, files):
-        super().__init__(pkg)
-        self.files = tuple(sorted(files))
+    def __init__(self, files, **kwargs):
+        super().__init__(**kwargs)
+        self.files = tuple(files)
 
     @property
     def short_desc(self):
@@ -77,8 +77,8 @@ class DuplicateFiles(base.PackageResult, base.Warning):
 class EmptyFile(base.PackageResult, base.Warning):
     """File in FILESDIR is empty."""
 
-    def __init__(self, pkg, filename):
-        super().__init__(pkg)
+    def __init__(self, filename, **kwargs):
+        super().__init__(**kwargs)
         self.filename = filename
 
     @property
@@ -89,8 +89,8 @@ class EmptyFile(base.PackageResult, base.Warning):
 class ExecutableFile(base.PackageResult, base.Warning):
     """File has executable bit, but doesn't need it."""
 
-    def __init__(self, pkg, filename):
-        super().__init__(pkg)
+    def __init__(self, filename, **kwargs):
+        super().__init__(**kwargs)
         self.filename = filename
 
     @property
@@ -101,8 +101,8 @@ class ExecutableFile(base.PackageResult, base.Warning):
 class SizeViolation(base.PackageResult, base.Warning):
     """File in $FILESDIR is too large (current limit is 20k)."""
 
-    def __init__(self, pkg, filename, size):
-        super().__init__(pkg)
+    def __init__(self, filename, size, **kwargs):
+        super().__init__(**kwargs)
         self.filename = filename
         self.size = size
 
@@ -114,8 +114,8 @@ class SizeViolation(base.PackageResult, base.Warning):
 class Glep31Violation(base.PackageResult, base.Error):
     """File doesn't abide by glep31 requirements."""
 
-    def __init__(self, pkg, filename):
-        super().__init__(pkg)
+    def __init__(self, filename, **kwargs):
+        super().__init__(**kwargs)
         self.filename = filename
 
     @property
@@ -127,8 +127,8 @@ class Glep31Violation(base.PackageResult, base.Error):
 class InvalidUTF8(base.PackageResult, base.Error):
     """File isn't UTF-8 compliant."""
 
-    def __init__(self, pkg, filename, err):
-        super().__init__(pkg)
+    def __init__(self, filename, err, **kwargs):
+        super().__init__(**kwargs)
         self.filename = filename
         self.err = err
 
@@ -166,19 +166,19 @@ class PkgDirCheck(base.Check):
             # char, which adds up.
 
             if any(True for x in filename if x not in allowed_filename_chars_set):
-                yield Glep31Violation(pkg, filename)
+                yield Glep31Violation(filename, pkg=pkg)
 
             if (filename.endswith(ebuild_ext) or filename in
                     ("Manifest", "metadata.xml")):
                 if os.stat(pjoin(pkg_path, filename)).st_mode & 0o111:
-                    yield ExecutableFile(pkg, filename)
+                    yield ExecutableFile(filename, pkg=pkg)
 
             if filename.endswith(ebuild_ext):
                 try:
                     with open(pjoin(pkg_path, filename), mode='rb') as f:
                         f.read(8192).decode()
                 except UnicodeDecodeError as e:
-                    yield InvalidUTF8(pkg, filename, str(e))
+                    yield InvalidUTF8(filename, str(e), pkg=pkg)
 
                 pkg_name = os.path.basename(filename[:-len(ebuild_ext)])
                 try:
@@ -189,9 +189,9 @@ class PkgDirCheck(base.Check):
                     invalid.append(pkg_name)
 
         if mismatched:
-            yield MismatchedPN(pkg, mismatched)
+            yield MismatchedPN(sorted(mismatched), pkg=pkg)
         if invalid:
-            yield InvalidPN(pkg, invalid)
+            yield InvalidPN(sorted(invalid), pkg=pkg)
 
         files_by_size = defaultdict(list)
         pkg_path_len = len(pkg_path) + 1
@@ -204,15 +204,16 @@ class PkgDirCheck(base.Check):
                 file_stat = os.lstat(pjoin(root, file_name))
                 if stat.S_ISREG(file_stat.st_mode):
                     if file_stat.st_mode & 0o111:
-                        yield ExecutableFile(pkg, pjoin(base_dir, file_name))
+                        yield ExecutableFile(pjoin(base_dir, file_name), pkg=pkg)
                     if file_stat.st_size == 0:
-                        yield EmptyFile(pkg, pjoin(base_dir, file_name))
+                        yield EmptyFile(pjoin(base_dir, file_name), pkg=pkg)
                     else:
                         files_by_size[file_stat.st_size].append(pjoin(base_dir, file_name))
                         if file_stat.st_size > 20480:
-                            yield SizeViolation(pkg, pjoin(base_dir, file_name), file_stat.st_size)
+                            yield SizeViolation(
+                                pjoin(base_dir, file_name), file_stat.st_size, pkg=pkg)
                     if any(True for char in file_name if char not in allowed_filename_chars_set):
-                        yield Glep31Violation(pkg, pjoin(base_dir, file_name))
+                        yield Glep31Violation(pjoin(base_dir, file_name), pkg=pkg)
 
         files_by_digest = defaultdict(list)
         for size, files in files_by_size.items():
@@ -223,7 +224,7 @@ class PkgDirCheck(base.Check):
 
         for digest, files in files_by_digest.items():
             if len(files) > 1:
-                yield DuplicateFiles(pkg, files)
+                yield DuplicateFiles(sorted(files), pkg=pkg)
 
 
 class EqualVersionsCheck(base.Check):
@@ -242,5 +243,5 @@ class EqualVersionsCheck(base.Check):
                 break
             if pkg_a.versioned_atom == pkg_b.versioned_atom:
                 equal_versions[pkg_a.versioned_atom].update([pkg_a.fullver, pkg_b.fullver])
-        for atom, versions in equal_versions.items():
-            yield EqualVersions(atom, versions)
+        for pkg, versions in equal_versions.items():
+            yield EqualVersions(sorted(versions), pkg=pkg)

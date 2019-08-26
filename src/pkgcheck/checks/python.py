@@ -38,10 +38,10 @@ class MissingPythonEclass(base.VersionedResult, base.Warning):
     .. [#] https://wiki.gentoo.org/wiki/Project:Python/Eclasses
     """
 
-    def __init__(self, pkg, eclass, dep_type, dep):
-        super().__init__(pkg)
+    def __init__(self, eclass, dep_type, dep, **kwargs):
+        super().__init__(**kwargs)
         self.eclass = eclass
-        self.dep_type = dep_type.upper()
+        self.dep_type = dep_type
         self.dep = dep
 
     @property
@@ -58,10 +58,10 @@ class PythonSingleUseMismatch(base.VersionedResult, base.Warning):
     the flags.
     """
 
-    def __init__(self, pkg, flags, single_flags):
-        super().__init__(pkg)
-        self.flags = tuple(sorted(flags))
-        self.single_flags = tuple(sorted(single_flags))
+    def __init__(self, flags, single_flags, **kwargs):
+        super().__init__(**kwargs)
+        self.flags = tuple(flags)
+        self.single_flags = tuple(single_flags)
 
     @property
     def short_desc(self):
@@ -98,9 +98,9 @@ class PythonMissingDeps(base.VersionedResult, base.Warning):
     in appropriate USE conditionals.
     """
 
-    def __init__(self, pkg, dep_type):
-        super().__init__(pkg)
-        self.dep_type = dep_type.upper()
+    def __init__(self, dep_type, **kwargs):
+        super().__init__(**kwargs)
+        self.dep_type = dep_type
 
     @property
     def short_desc(self):
@@ -117,9 +117,9 @@ class PythonRuntimeDepInAnyR1(base.VersionedResult, base.Warning):
     should be removed.
     """
 
-    def __init__(self, pkg, dep_type, dep):
-        super().__init__(pkg)
-        self.dep_type = dep_type.upper()
+    def __init__(self, dep_type, dep, **kwargs):
+        super().__init__(**kwargs)
+        self.dep_type = dep_type
         self.dep = dep
 
     @property
@@ -206,7 +206,7 @@ class PythonCheck(base.Check):
         try:
             eclass = self.get_python_eclass(pkg)
         except ValueError as e:
-            yield base.MetadataError(pkg, 'data', str(e))
+            yield base.MetadataError('data', str(e), pkg=pkg)
             return
 
         if eclass is None:
@@ -225,11 +225,12 @@ class PythonCheck(base.Check):
                         break
 
             if highest_found is not None:
-                if highest_found[0] in ("rdepend", "pdepend"):
+                attr, p = highest_found
+                if attr in ("rdepend", "pdepend"):
                     recomm = "python-r1 or python-single-r1"
                 else:
                     recomm = "python-any-r1"
-                yield MissingPythonEclass(pkg, recomm, *highest_found)
+                yield MissingPythonEclass(recomm, attr.upper(), str(p), pkg=pkg)
         elif eclass in ('python-r1', 'python-single-r1'):
             # grab Python implementations from IUSE
             flags = set([x[len(IUSE_PREFIX):] for x in pkg.iuse
@@ -242,21 +243,21 @@ class PythonCheck(base.Check):
             got_single_impl = len(flags) == 1 and len(s_flags) == 0
             if (eclass == 'python-single-r1' and flags != s_flags
                     and not got_single_impl):
-                yield PythonSingleUseMismatch(pkg, flags, s_flags)
+                yield PythonSingleUseMismatch(sorted(flags), sorted(s_flags), pkg=pkg)
 
             if eclass == 'python-r1' or got_single_impl:
                 req_use_args = (flags, IUSE_PREFIX, OrRestriction)
             else:
                 req_use_args = (s_flags, IUSE_PREFIX_S, JustOneRestriction)
             if not self.check_required_use(pkg.required_use, *req_use_args):
-                yield PythonMissingRequiredUSE(pkg)
+                yield PythonMissingRequiredUSE(pkg=pkg)
             if not self.check_depend(pkg.rdepend, *(req_use_args[:2])):
-                yield PythonMissingDeps(pkg, 'RDEPEND')
+                yield PythonMissingDeps('RDEPEND', pkg=pkg)
         else:  # python-any-r1
             for attr in ("rdepend", "pdepend"):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
                     if not p.blocks and p.key in INTERPRETERS:
-                        yield PythonRuntimeDepInAnyR1(pkg, attr, p)
+                        yield PythonRuntimeDepInAnyR1(attr.upper(), str(p), pkg=pkg)
                         break
             for attr in ("depend", "bdepend"):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
@@ -266,4 +267,4 @@ class PythonCheck(base.Check):
                     continue
                 break
             else:
-                yield PythonMissingDeps(pkg, 'DEPEND')
+                yield PythonMissingDeps('DEPEND', pkg=pkg)

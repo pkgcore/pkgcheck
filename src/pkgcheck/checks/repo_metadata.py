@@ -22,8 +22,8 @@ class MultiMovePackageUpdate(base.Warning):
 
     def __init__(self, pkg, moves):
         super().__init__()
-        self.pkg = str(pkg)
-        self.moves = tuple([self.pkg] + list(map(str, moves)))
+        self.pkg = pkg
+        self.moves = tuple(moves)
 
     @property
     def short_desc(self):
@@ -42,8 +42,8 @@ class OldMultiMovePackageUpdate(base.Warning):
 
     def __init__(self, pkg, moves):
         super().__init__()
-        self.pkg = str(moves[-1])
-        self.moves = tuple([str(pkg)] + list(map(str, moves)))
+        self.pkg = pkg
+        self.moves = tuple(moves)
 
     @property
     def short_desc(self):
@@ -57,8 +57,8 @@ class OldPackageUpdate(base.Warning):
 
     def __init__(self, pkg, updates):
         super().__init__()
-        self.pkg = str(pkg)
-        self.updates = tuple(map(str, updates))
+        self.pkg = pkg
+        self.updates = tuple(updates)
 
     @property
     def short_desc(self):
@@ -134,16 +134,18 @@ class PackageUpdatesCheck(base.Check, base.EmptyFeed):
         for pkg, v in multi_move_updates.items():
             orig_pkg, moves = v
             # check for multi-move chains ending in removed packages
+            moves = [str(orig_pkg)] + list(map(str, moves))
             if not self.repo.match(pkg):
-                yield OldMultiMovePackageUpdate(orig_pkg, moves)
+                yield OldMultiMovePackageUpdate(str(moves[-1]), moves)
                 # don't generate duplicate old report
                 old_move_updates.pop(pkg, None)
             else:
-                yield MultiMovePackageUpdate(orig_pkg, moves)
+                yield MultiMovePackageUpdate(str(orig_pkg), moves)
 
         # report remaining old updates
         for pkg, move in chain(old_move_updates.items(), old_slotmove_updates.items()):
-            yield OldPackageUpdate(pkg, move)
+            updates = map(str, move)
+            yield OldPackageUpdate(str(pkg), updates)
 
 
 class UnusedLicenses(base.Warning):
@@ -153,7 +155,7 @@ class UnusedLicenses(base.Warning):
 
     def __init__(self, licenses):
         super().__init__()
-        self.licenses = tuple(sorted(licenses))
+        self.licenses = tuple(licenses)
 
     @property
     def short_desc(self):
@@ -183,7 +185,7 @@ class UnusedLicensesCheck(base.Check):
 
     def finish(self):
         if self.unused_licenses:
-            yield UnusedLicenses(self.unused_licenses)
+            yield UnusedLicenses(sorted(self.unused_licenses))
 
 
 class UnusedMirrors(base.Warning):
@@ -193,7 +195,7 @@ class UnusedMirrors(base.Warning):
 
     def __init__(self, mirrors):
         super().__init__()
-        self.mirrors = tuple(sorted(mirrors))
+        self.mirrors = tuple(mirrors)
 
     @property
     def short_desc(self):
@@ -238,7 +240,7 @@ class UnusedMirrorsCheck(_MirrorsCheck):
 
     def finish(self):
         if self.unused_mirrors:
-            yield UnusedMirrors(self.unused_mirrors)
+            yield UnusedMirrors(sorted(self.unused_mirrors))
 
 
 class UnusedEclasses(base.Warning):
@@ -248,7 +250,7 @@ class UnusedEclasses(base.Warning):
 
     def __init__(self, eclasses):
         super().__init__()
-        self.eclasses = tuple(sorted(eclasses))
+        self.eclasses = tuple(eclasses)
 
     @property
     def short_desc(self):
@@ -279,7 +281,7 @@ class UnusedEclassesCheck(base.Check):
 
     def finish(self):
         if self.unused_eclasses:
-            yield UnusedEclasses(self.unused_eclasses)
+            yield UnusedEclasses(sorted(self.unused_eclasses))
 
 
 class UnknownLicenses(base.Warning):
@@ -290,7 +292,7 @@ class UnknownLicenses(base.Warning):
     def __init__(self, group, licenses):
         super().__init__()
         self.group = group
-        self.licenses = licenses
+        self.licenses = tuple(licenses)
 
     @property
     def short_desc(self):
@@ -313,7 +315,7 @@ class LicenseGroupsCheck(base.Check, base.EmptyFeed):
         for group, licenses in self.repo.licenses.groups.items():
             unknown_licenses = set(licenses).difference(self.repo.licenses)
             if unknown_licenses:
-                yield UnknownLicenses(group, unknown_licenses)
+                yield UnknownLicenses(group, sorted(unknown_licenses))
 
 
 class PotentialLocalUSE(base.Warning):
@@ -324,7 +326,7 @@ class PotentialLocalUSE(base.Warning):
     def __init__(self, flag, pkgs):
         super().__init__()
         self.flag = flag
-        self.pkgs = tuple(sorted(map(str, pkgs)))
+        self.pkgs = tuple(pkgs)
 
     @property
     def short_desc(self):
@@ -340,7 +342,7 @@ class UnusedGlobalUSE(base.Warning):
 
     def __init__(self, flags):
         super().__init__()
-        self.flags = tuple(sorted(flags))
+        self.flags = tuple(flags)
 
     @property
     def short_desc(self):
@@ -356,7 +358,7 @@ class PotentialGlobalUSE(base.Warning):
     def __init__(self, flag, pkgs):
         super().__init__()
         self.flag = flag
-        self.pkgs = tuple(sorted(map(str, pkgs)))
+        self.pkgs = tuple(pkgs)
 
     @property
     def short_desc(self):
@@ -461,8 +463,9 @@ class GlobalUSECheck(base.Check):
                 potential_locals.append((flag, pkgs))
 
         if unused_global_flags:
-            yield UnusedGlobalUSE(unused_global_flags)
+            yield UnusedGlobalUSE(sorted(unused_global_flags))
         for flag, pkgs in sorted(potential_locals, key=lambda x: len(x[1])):
+            pkgs = sorted(map(str, pkgs))
             yield PotentialLocalUSE(flag, pkgs)
 
         local_use = defaultdict(list)
@@ -476,6 +479,7 @@ class GlobalUSECheck(base.Check):
                 potential_globals.append((flag, matching_pkgs))
 
         for flag, pkgs in sorted(potential_globals, key=lambda x: len(x[1]), reverse=True):
+            pkgs = sorted(map(str, pkgs))
             yield PotentialGlobalUSE(flag, pkgs)
 
 
@@ -490,29 +494,27 @@ def reformat_chksums(iterable):
 class ConflictingChksums(base.VersionedResult, base.Error):
     """Checksum conflict detected between two files."""
 
-    _sorter = staticmethod(itemgetter(0))
-
-    def __init__(self, pkg, filename, chksums, others):
-        super().__init__(pkg)
+    def __init__(self, filename, chksums, pkgs, **kwargs):
+        super().__init__(**kwargs)
         self.filename = filename
-        self.chksums = tuple(sorted(reformat_chksums(chksums), key=self._sorter))
-        self.others = tuple(sorted(others))
+        self.chksums = tuple(chksums)
+        self.pkgs = tuple(pkgs)
 
     @property
     def short_desc(self):
         return (
-            f"conflicts with ({', '.join(self.others)}) "
+            f"conflicts with ({', '.join(self.pkgs)}) "
             f"for file {self.filename!r} chksum {self.chksums}")
 
 
 class MissingChksum(base.VersionedResult, base.Warning):
     """A file in the chksum data lacks required checksums."""
 
-    def __init__(self, pkg, filename, missing, existing):
-        super().__init__(pkg)
+    def __init__(self, filename, missing, existing, **kwargs):
+        super().__init__(**kwargs)
         self.filename = filename
-        self.missing = tuple(sorted(missing))
-        self.existing = tuple(sorted(existing))
+        self.missing = tuple(missing)
+        self.existing = tuple(existing)
 
     @property
     def short_desc(self):
@@ -524,11 +526,11 @@ class MissingChksum(base.VersionedResult, base.Warning):
 class DeprecatedChksum(base.VersionedResult, base.Warning):
     """A file in the chksum data does not use modern checksum set."""
 
-    def __init__(self, pkg, filename, expected, existing):
-        super().__init__(pkg)
+    def __init__(self, filename, expected, existing, **kwargs):
+        super().__init__(**kwargs)
         self.filename = filename
-        self.expected = tuple(sorted(expected))
-        self.existing = tuple(sorted(existing))
+        self.expected = tuple(expected)
+        self.existing = tuple(existing)
 
     @property
     def short_desc(self):
@@ -540,9 +542,9 @@ class DeprecatedChksum(base.VersionedResult, base.Warning):
 class MissingManifest(base.VersionedResult, base.Error):
     """SRC_URI targets missing from Manifest file."""
 
-    def __init__(self, pkg, files):
-        super().__init__(pkg)
-        self.files = tuple(sorted(files))
+    def __init__(self, files, **kwargs):
+        super().__init__(**kwargs)
+        self.files = tuple(files)
 
     @property
     def short_desc(self):
@@ -553,9 +555,9 @@ class MissingManifest(base.VersionedResult, base.Error):
 class UnknownManifest(base.PackageResult, base.Warning):
     """Manifest entries not matching any SRC_URI targets."""
 
-    def __init__(self, pkg, files):
-        super().__init__(pkg)
-        self.files = tuple(sorted(files))
+    def __init__(self, files, **kwargs):
+        super().__init__(**kwargs)
+        self.files = tuple(files)
 
     @property
     def short_desc(self):
@@ -566,9 +568,9 @@ class UnknownManifest(base.PackageResult, base.Warning):
 class UnnecessaryManifest(base.PackageResult, base.Warning):
     """Manifest entries for non-DIST targets on a repo with thin manifests enabled."""
 
-    def __init__(self, pkg, files):
-        super().__init__(pkg)
-        self.files = tuple(sorted(files))
+    def __init__(self, files, **kwargs):
+        super().__init__(**kwargs)
+        self.files = tuple(files)
 
     @property
     def short_desc(self):
@@ -621,17 +623,20 @@ class ManifestCheck(base.Check):
                 fetchable_files = set(f.filename for f in fetchables)
                 missing_manifests = fetchable_files.difference(manifest_distfiles)
                 if missing_manifests:
-                    yield MissingManifest(pkg, missing_manifests)
+                    yield MissingManifest(sorted(missing_manifests), pkg=pkg)
 
                 for f_inst in fetchables:
                     if f_inst.filename in seen:
                         continue
                     missing = required_checksums.difference(f_inst.chksums)
                     if f_inst.filename not in missing_manifests and missing:
-                        yield MissingChksum(pkg, f_inst.filename, missing, f_inst.chksums)
+                        yield MissingChksum(
+                            f_inst.filename, sorted(missing),
+                            sorted(f_inst.chksums), pkg=pkg)
                     elif f_inst.chksums and preferred_checksums != frozenset(f_inst.chksums):
                         yield DeprecatedChksum(
-                            pkg, f_inst.filename, preferred_checksums, f_inst.chksums)
+                            f_inst.filename, sorted(preferred_checksums),
+                            sorted(f_inst.chksums), pkg=pkg)
                     seen.add(f_inst.filename)
 
             if pkg_manifest.thin:
@@ -639,11 +644,11 @@ class ManifestCheck(base.Check):
                 for attr in ('aux_files', 'ebuilds', 'misc'):
                     unnecessary_manifests.extend(getattr(pkg_manifest, attr, []))
                 if unnecessary_manifests:
-                    yield UnnecessaryManifest(pkgset[0], unnecessary_manifests)
+                    yield UnnecessaryManifest(sorted(unnecessary_manifests), pkg=pkgset[0])
 
             unknown_manifests = manifest_distfiles.difference(seen)
             if unknown_manifests:
-                yield UnknownManifest(pkgset[0], unknown_manifests)
+                yield UnknownManifest(sorted(unknown_manifests), pkg=pkgset[0])
 
 
 class ManifestConflictCheck(base.Check):
@@ -680,8 +685,9 @@ class ManifestConflictCheck(base.Check):
                     if our_value is not None and our_value != value:
                         confl_checksums.append((chf_type, value, our_value))
                 if confl_checksums:
-                    yield ConflictingChksums(
-                        pkg, filename, confl_checksums, seen_pkgs)
+                    chksums = sorted(reformat_chksums(confl_checksums), key=itemgetter(0))
+                    pkgs = map(str, sorted(seen_pkgs))
+                    yield ConflictingChksums(filename, chksums, pkgs, pkg=pkg)
                 else:
                     seen_chksums.update(chksums)
                     seen_pkgs.append(pkg)
