@@ -213,7 +213,13 @@ class ExplicitlyEnabledCheck(Check):
             disabled, enabled = namespace.selected_checks
         else:
             disabled, enabled = (), ()
-        skip = cls.__name__ not in enabled
+
+        # enable checks for selected keywords
+        keywords = namespace.filtered_keywords
+        if keywords is not None:
+            keywords = keywords.intersection(cls.known_results)
+
+        skip = cls.__name__ not in enabled and not keywords
         if skip:
             logger.info(f'skipping {cls.__name__}, not explicitly enabled')
         return skip or super().skip(namespace)
