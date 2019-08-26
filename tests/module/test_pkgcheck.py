@@ -1,3 +1,4 @@
+from collections import defaultdict
 from functools import partial
 from io import StringIO
 import os
@@ -234,6 +235,7 @@ class TestPkgcheck(object):
 class TestPkgcheckScan(object):
 
     script = partial(run, project)
+    _results = defaultdict(set)
 
     @pytest.fixture(autouse=True)
     def _setup(self, fakeconfig):
@@ -307,20 +309,23 @@ class TestPkgcheckScan(object):
             if not os.path.exists(expected_path):
                 continue
 
+            repo_dir = pjoin(self.testdir, 'repos', repo)
+            args = ['-r', repo_dir]
+
             # determine what test target to use
             try:
                 target = open(pjoin(self.testdir, f'data/{repo}/{check}/{keyword}/target'))
-                args = shlex.split(target.read())
+                args.extend(shlex.split(target.read()))
             except FileNotFoundError:
                 if result.threshold in (base.package_feed, base.versioned_feed):
-                    args = [f'{check}/{keyword}']
+                    args.append(f'{check}/{keyword}')
                 elif result.threshold in base.category_feed:
-                    args = [f'{keyword}/*']
+                    args.append(f'{keyword}/*')
                 elif result.threshold in base.repository_feed:
-                    args = ['-k', keyword]
+                    args.extend(['-k', keyword])
 
-            repo_dir = pjoin(self.testdir, 'repos', repo)
-            with patch('sys.argv', self.args + ['-r', repo_dir] + args), \
+            # default reporter
+            with patch('sys.argv', self.args + args), \
                     patch('pkgcheck.base.CACHE_DIR', cache_dir):
                 with pytest.raises(SystemExit) as excinfo:
                     self.script()
@@ -329,10 +334,62 @@ class TestPkgcheckScan(object):
                 assert excinfo.value.code == 0
                 with open(expected_path) as expected:
                     assert out == expected.read()
+
+            # JsonObject reporter, cache results to compare against repo run
+            with patch('sys.argv', self.args + ['-R', 'JsonObject'] + args), \
+                    patch('pkgcheck.base.CACHE_DIR', cache_dir):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert err == ''
+                assert excinfo.value.code == 0
+                for line in out.rstrip('\n').split('\n'):
+                    deserialized_result = reporters.JsonObject.from_json(line)
+                    assert deserialized_result.__class__.__name__ == keyword
+                    self._results[repo].add(deserialized_result)
             tested = True
 
         if not tested:
             pytest.skip('expected test data not available')
+
+    def test_pkgcheck_scan_repo(self, capsys, cache_dir, tmp_path):
+        """Verify full repo scans don't return any extra, unknown results."""
+        # TODO: replace with matching against expected full scan dump once
+        # sorting is implemented
+        if not self._results:
+            pytest.skip('test_pkgcheck_scan() must be run before this to populate results')
+        else:
+            for repo in os.listdir(pjoin(self.testdir, 'data')):
+                unknown_results = []
+                repo_dir = pjoin(self.testdir, 'repos', repo)
+                args = ['-r', repo_dir]
+                with patch('sys.argv', self.args + ['-R', 'JsonObject'] + args), \
+                        patch('pkgcheck.base.CACHE_DIR', cache_dir):
+                    with pytest.raises(SystemExit) as excinfo:
+                        self.script()
+                    out, err = capsys.readouterr()
+                    assert err == ''
+                    assert excinfo.value.code == 0
+                    for line in out.rstrip('\n').split('\n'):
+                        result = reporters.JsonObject.from_json(line)
+                        # ignore results generated from stubs
+                        stubs = (getattr(result, x, None) for x in ('category', 'package'))
+                        if any(x == 'stub' for x in stubs):
+                            continue
+                        if result not in self._results[repo]:
+                            unknown_results.append(result)
+
+                if unknown_results:
+                    with tempfile.TemporaryFile() as f:
+                        reporter = reporters.FancyReporter(out=PlainTextFormatter(f))
+                        reporter.start()
+                        for result in unknown_results:
+                            reporter.report(result)
+                        reporter.finish()
+                        f.flush()
+                        f.seek(0)
+                        output = f.read().decode()
+                        pytest.fail(f'{repo} repo has unknown results:\n{output}')
 
     @pytest.mark.parametrize('check, result', results)
     def test_pkgcheck_scan_fix(self, check, result, capsys, cache_dir, tmp_path):
