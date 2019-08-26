@@ -511,21 +511,22 @@ class TestPkgcheckReplay(object):
             err = err.strip().split('\n')
             assert len(err) == 1
             assert err[0] == (
-                'pkgcheck replay: error: the following arguments are required: pickle_file')
+                'pkgcheck replay: error: the following arguments are required: results_file')
             assert excinfo.value.code == 2
 
     def test_replay(self, capsys):
-        with tempfile.NamedTemporaryFile() as f:
-            out = PlainTextFormatter(f)
-            reporter = reporters.BinaryPickleStream(out=out)
-            reporter.start()
-            result = ProfileWarning('profile warning: foo')
-            reporter.report(result)
-            reporter.finish()
-            f.flush()
-            with patch('sys.argv', self.args + ['-R', 'StrReporter', f.name]):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                out, err = capsys.readouterr()
-                assert not err
-                assert out == 'profile warning: foo\n'
+        for reporter_cls in (reporters.BinaryPickleStream, reporters.JsonObject):
+            with tempfile.NamedTemporaryFile() as f:
+                out = PlainTextFormatter(f)
+                reporter = reporter_cls(out=out)
+                reporter.start()
+                result = ProfileWarning('profile warning: foo')
+                reporter.report(result)
+                reporter.finish()
+                f.flush()
+                with patch('sys.argv', self.args + ['-R', 'StrReporter', f.name]):
+                    with pytest.raises(SystemExit) as excinfo:
+                        self.script()
+                    out, err = capsys.readouterr()
+                    assert not err
+                    assert out == 'profile warning: foo\n'
