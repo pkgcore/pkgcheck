@@ -22,7 +22,7 @@ from pkgcheck import base, checks, const, reporters,  __title__ as project
 from pkgcheck.checks.profiles import ProfileWarning
 from pkgcheck.scripts import run, pkgcheck
 
-from .misc import cache_dir, fakeconfig, fakerepo, tool
+from .misc import cache_dir, fakeconfig, testconfig, fakerepo, tool
 
 
 def test_script_run(capsys):
@@ -238,8 +238,8 @@ class TestPkgcheckScan(object):
     _results = defaultdict(set)
 
     @pytest.fixture(autouse=True)
-    def _setup(self, fakeconfig):
-        self.args = [project, '--config', fakeconfig, 'scan']
+    def _setup(self, testconfig):
+        self.args = [project, '--config', testconfig, 'scan']
         self.testdir = os.path.dirname(os.path.dirname(__file__))
 
     def test_empty_repo(self, capsys, cache_dir):
@@ -352,7 +352,20 @@ class TestPkgcheckScan(object):
         if not tested:
             pytest.skip('expected test data not available')
 
-    def test_pkgcheck_scan_repo(self, capsys, cache_dir, tmp_path):
+    def _render_results(self, results):
+        """Render a given set of result objects into their related string form."""
+        with tempfile.TemporaryFile() as f:
+            reporter = reporters.FancyReporter(out=PlainTextFormatter(f))
+            reporter.start()
+            for result in results:
+                reporter.report(result)
+            reporter.finish()
+            f.flush()
+            f.seek(0)
+            output = f.read().decode()
+            return output
+
+    def test_pkgcheck_scan_repos(self, capsys, cache_dir, tmp_path):
         """Verify full repo scans don't return any extra, unknown results."""
         # TODO: replace with matching against expected full scan dump once
         # sorting is implemented
@@ -377,20 +390,17 @@ class TestPkgcheckScan(object):
                         stubs = (getattr(result, x, None) for x in ('category', 'package'))
                         if any(x == 'stub' for x in stubs):
                             continue
-                        if result not in self._results[repo]:
+                        try:
+                            self._results[repo].remove(result)
+                        except KeyError:
                             unknown_results.append(result)
 
+                if self._results[repo]:
+                    output = self._render_results(self._results[repo])
+                    pytest.fail(f'{repo} repo missing results:\n{output}')
                 if unknown_results:
-                    with tempfile.TemporaryFile() as f:
-                        reporter = reporters.FancyReporter(out=PlainTextFormatter(f))
-                        reporter.start()
-                        for result in unknown_results:
-                            reporter.report(result)
-                        reporter.finish()
-                        f.flush()
-                        f.seek(0)
-                        output = f.read().decode()
-                        pytest.fail(f'{repo} repo has unknown results:\n{output}')
+                    output = self._render_results(unknown_results)
+                    pytest.fail(f'{repo} repo has unknown results:\n{output}')
 
     @pytest.mark.parametrize('check, result', results)
     def test_pkgcheck_scan_fix(self, check, result, capsys, cache_dir, tmp_path):

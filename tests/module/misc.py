@@ -216,8 +216,35 @@ def fakeconfig(tmp_path_factory):
             main-repo = stubrepo
 
             [stubrepo]
-            location = {stubrepo}"""))
+            location = {stubrepo}
+        """))
     return str(fakeconfig)
+
+
+@pytest.fixture(scope="session")
+def testconfig(tmp_path_factory):
+    """Generate a portage config that sets the default repo to pkgcore's stubrepo.
+
+    Also, repo entries for all the bundled test repos.
+    """
+    testconfig = tmp_path_factory.mktemp('testconfig')
+    repos_conf = testconfig / 'repos.conf'
+    stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
+    with open(repos_conf, 'w') as f:
+        f.write(textwrap.dedent(f"""\
+            [DEFAULT]
+            main-repo = stubrepo
+
+            [stubrepo]
+            location = {stubrepo}
+        """))
+        testdir = pjoin(os.path.dirname(os.path.dirname(__file__)), 'repos')
+        for repo in os.listdir(testdir):
+            f.write(textwrap.dedent(f"""\
+                [{repo}]
+                location = {pjoin(testdir, repo)}
+            """))
+    return str(testconfig)
 
 
 @pytest.fixture(scope="session")
