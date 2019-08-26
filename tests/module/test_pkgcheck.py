@@ -324,29 +324,24 @@ class TestPkgcheckScan(object):
                 elif result.threshold in base.repository_feed:
                     args.extend(['-k', keyword])
 
-            # default reporter
-            with patch('sys.argv', self.args + args), \
-                    patch('pkgcheck.base.CACHE_DIR', cache_dir):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                out, err = capsys.readouterr()
-                assert err == ''
-                assert excinfo.value.code == 0
-                with open(expected_path) as expected:
-                    assert out == expected.read()
-
-            # JsonStream reporter, cache results to compare against repo run
-            with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
-                    patch('pkgcheck.base.CACHE_DIR', cache_dir):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                out, err = capsys.readouterr()
-                assert err == ''
-                assert excinfo.value.code == 0
-                for line in out.rstrip('\n').split('\n'):
-                    deserialized_result = reporters.JsonStream.from_json(line)
-                    assert deserialized_result.__class__.__name__ == keyword
-                    self._results[repo].add(deserialized_result)
+            with open(expected_path) as f:
+                expected = f.read()
+                # JsonStream reporter, cache results to compare against repo run
+                with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
+                        patch('pkgcheck.base.CACHE_DIR', cache_dir):
+                    with pytest.raises(SystemExit) as excinfo:
+                        self.script()
+                    out, err = capsys.readouterr()
+                    assert err == ''
+                    assert excinfo.value.code == 0
+                    results = []
+                    for line in out.rstrip('\n').split('\n'):
+                        deserialized_result = reporters.JsonStream.from_json(line)
+                        assert deserialized_result.__class__.__name__ == keyword
+                        results.append(deserialized_result)
+                        self._results[repo].add(deserialized_result)
+                    # compare rendered fancy out to expected
+                    assert self._render_results(results) == expected
             tested = True
 
         if not tested:
