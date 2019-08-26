@@ -278,10 +278,15 @@ class TestPkgcheckScan(object):
             except FileNotFoundError:
                 pass
 
+            allowed = custom_targets | stubs
             results = set((name, cls.__name__) for name, cls in self.results)
             for cat, pkgs in sorted(repo.packages.items()):
+                if cat == 'stub':
+                    continue
                 for pkg in sorted(pkgs):
-                    if f'{cat}/{pkg}' not in (custom_targets | stubs):
+                    if pkg == 'stub':
+                        continue
+                    if f'{cat}/{pkg}' not in allowed:
                         assert (cat, pkg) in results
 
     def test_pkgcheck_test_data(self):
