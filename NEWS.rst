@@ -3,6 +3,27 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.6.2 (2019-08-26)
+---------------------------
+
+- TreeVulnerabilitiesCheck: Restrict to checking against the gentoo repo only.
+
+- Allow explicitly selected keywords to properly enable their related checks if
+  they must be explicitly enabled.
+
+- UnusedMirrorsCheck: Ignore missing checksums for fetchables that will be
+  caught by other checks.
+
+- pkgcheck replay: Add support for replaying JsonStream reporter files.
+
+- Add initial JsonStream reporter as an alternative to the pickle reporters for
+  serializing and deserializing result objects.
+
+- Add support for comparing and hashing result objects.
+
+- Fix triggering metadata.xml maintainer checks only for packages.
+
+---------------------------
 pkgcheck 0.6.1 (2019-08-25)
 ---------------------------
 
