@@ -362,13 +362,14 @@ class TestPkgcheckScan(object):
             for repo in os.listdir(pjoin(self.testdir, 'data')):
                 unknown_results = []
                 repo_dir = pjoin(self.testdir, 'repos', repo)
-                args = ['-r', repo_dir]
+                args = ['-r', repo_dir, '-c', ','.join(const.CHECKS)]
                 with patch('sys.argv', self.args + ['-R', 'JsonObject'] + args), \
                         patch('pkgcheck.base.CACHE_DIR', cache_dir):
                     with pytest.raises(SystemExit) as excinfo:
                         self.script()
                     out, err = capsys.readouterr()
-                    assert err == ''
+                    assert err == '', f'{repo} repo failed, {err}'
+                    assert out, f'{repo} repo failed, no results'
                     assert excinfo.value.code == 0
                     for line in out.rstrip('\n').split('\n'):
                         result = reporters.JsonObject.from_json(line)
