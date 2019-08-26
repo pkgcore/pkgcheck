@@ -348,7 +348,7 @@ class UnknownCategories(base.Warning):
 
     def __init__(self, categories):
         super().__init__()
-        self.categories = categories
+        self.categories = tuple(categories)
 
     @property
     def short_desc(self):
@@ -403,7 +403,7 @@ class RepoProfilesCheck(base.Check, base.EmptyFeed):
             (x for x in listdir_dirs(self.repo.location) if x[0] != '.')))
         unknown_categories = category_dirs.difference(self.repo.categories)
         if unknown_categories:
-            yield UnknownCategories(unknown_categories)
+            yield UnknownCategories(sorted(unknown_categories))
 
         arches_without_profiles = set(self.arches) - set(self.repo.profiles.arches())
         if arches_without_profiles:
