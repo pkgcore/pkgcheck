@@ -1,0 +1,11 @@
+diff -Naur standalone/PackageMetadataXmlCheck/PkgMetadataXmlInvalidCatRef/metadata.xml fixed/PackageMetadataXmlCheck/PkgMetadataXmlInvalidCatRef/metadata.xml
+--- standalone/PackageMetadataXmlCheck/PkgMetadataXmlInvalidCatRef/metadata.xml	2019-08-26 10:47:16.744595233 -0600
++++ fixed/PackageMetadataXmlCheck/PkgMetadataXmlInvalidCatRef/metadata.xml	2019-08-26 10:48:54.584244142 -0600
+@@ -5,6 +5,6 @@
+ 		<email>radhermit@gentoo.org</email>
+ 	</maintainer>
+ 	<longdescription>
+-		Package with invalid category reference to <cat>virtul</cat>.
++		Package with invalid category reference to <cat>virtual</cat>.
+ 	</longdescription>
+ </pkgmetadata>

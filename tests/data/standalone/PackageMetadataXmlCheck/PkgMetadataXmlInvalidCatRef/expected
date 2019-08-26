@@ -1,0 +1,2 @@
+PackageMetadataXmlCheck/PkgMetadataXmlInvalidCatRef
+  PkgMetadataXmlInvalidCatRef: package metadata.xml <cat/> references unknown/invalid category: 'virtul'

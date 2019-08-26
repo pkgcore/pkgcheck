@@ -1,0 +1,10 @@
+diff -Naur standalone/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml fixed/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml
+--- standalone/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml	2019-08-26 10:39:25.186467609 -0600
++++ fixed/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml	2019-08-26 10:40:59.606093847 -0600
+@@ -4,5 +4,5 @@
+ 	<maintainer type="person">
+ 		<email>radhermit@gentoo.org</email>
+ 	</maintainer>
+-	<longdescription></longdescription>
++	<longdescription>A description that actually exists.</longdescription>
+ </pkgmetadata>

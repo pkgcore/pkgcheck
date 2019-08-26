@@ -1,0 +1,2 @@
+PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement
+  PkgMetadataXmlEmptyElement: metadata.xml has empty element 'longdescription' on line 7

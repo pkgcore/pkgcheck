@@ -1,0 +1,11 @@
+diff -Naur standalone/CatMetadataXmlInvalidCatRef/metadata.xml fixed/CatMetadataXmlInvalidCatRef/metadata.xml
+--- standalone/CatMetadataXmlInvalidCatRef/metadata.xml	2019-08-26 10:50:03.844703530 -0600
++++ fixed/CatMetadataXmlInvalidCatRef/metadata.xml	2019-08-26 10:51:15.717180222 -0600
+@@ -2,6 +2,6 @@
+ <!DOCTYPE catmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <catmetadata>
+ 	<longdescription>
+-		Category with invalid category reference to <cat>virtul</cat>.
++		Category with invalid category reference to <cat>virtual</cat>.
+ 	</longdescription>
+ </catmetadata>

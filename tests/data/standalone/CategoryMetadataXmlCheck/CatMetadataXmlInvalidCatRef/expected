@@ -1,0 +1,2 @@
+CatMetadataXmlInvalidCatRef
+  CatMetadataXmlInvalidCatRef: category metadata.xml <cat/> references unknown/invalid category: 'virtul'

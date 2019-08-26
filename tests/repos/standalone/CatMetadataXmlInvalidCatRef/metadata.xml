@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE catmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<catmetadata>
+	<longdescription>
+		Category with invalid category reference to <cat>virtul</cat>.
+	</longdescription>
+</catmetadata>

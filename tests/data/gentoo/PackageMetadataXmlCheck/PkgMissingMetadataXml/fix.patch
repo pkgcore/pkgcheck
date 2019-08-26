@@ -1,0 +1,11 @@
+diff -Naur gentoo/PackageMetadataXmlCheck/PkgMissingMetadataXml/metadata.xml fixed/PackageMetadataXmlCheck/PkgMissingMetadataXml/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/PkgMissingMetadataXml/metadata.xml	1969-12-31 17:00:00.000000000 -0700
++++ fixed/PackageMetadataXmlCheck/PkgMissingMetadataXml/metadata.xml	2019-08-26 10:24:32.698564815 -0600
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
++<pkgmetadata>
++	<maintainer type="person">
++		<email>radhermit@gentoo.org</email>
++	</maintainer>
++</pkgmetadata>

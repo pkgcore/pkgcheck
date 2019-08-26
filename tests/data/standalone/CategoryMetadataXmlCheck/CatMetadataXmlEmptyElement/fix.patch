@@ -1,0 +1,10 @@
+diff -Naur standalone/CatMetadataXmlEmptyElement/metadata.xml fixed/CatMetadataXmlEmptyElement/metadata.xml
+--- standalone/CatMetadataXmlEmptyElement/metadata.xml	2019-08-26 10:35:27.974897717 -0600
++++ fixed/CatMetadataXmlEmptyElement/metadata.xml	2019-08-26 10:37:36.199745630 -0600
+@@ -2,5 +2,6 @@
+ <!DOCTYPE catmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <catmetadata>
+ 	<longdescription>
++		A description that actually exists.
+ 	</longdescription>
+ </catmetadata>
