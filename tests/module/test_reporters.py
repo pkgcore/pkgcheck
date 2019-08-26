@@ -172,3 +172,31 @@ class TestPickleStream(BaseReporter):
 class TestBinaryPickleStream(TestPickleStream):
 
     reporter_cls = reporters.BinaryPickleStream
+
+
+class TestJsonObject(BaseReporter):
+
+    reporter_cls = reporters.JsonObject
+
+    def test_add_report(self, capsys):
+        self.reporter = self.mk_reporter()
+        for result in (self.log_warning, self.log_error, self.category_result,
+                       self.package_result, self.versioned_result):
+            self.reporter.start()
+            self.reporter.report(result)
+            self.reporter.finish()
+            out, err = capsys.readouterr()
+            assert not err
+            deserialized_result = self.reporter.from_json(out)
+            assert str(deserialized_result) == str(result)
+
+    def test_filtered_report(self, capsys):
+        self.reporter = self.mk_reporter(keywords=(profiles.ProfileError,))
+        self.reporter.start()
+        self.reporter.report(self.log_warning)
+        self.reporter.report(self.log_error)
+        self.reporter.finish()
+        out, err = capsys.readouterr()
+        assert not err
+        result = self.reporter.from_json(out)
+        assert str(result) == str(self.log_error)

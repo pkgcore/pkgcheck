@@ -6,9 +6,10 @@ import pickle
 from xml.sax.saxutils import escape as xml_escape
 
 from snakeoil import currying, formatters
+from snakeoil.cli.exceptions import UserException
 from snakeoil.decorators import coroutine
 
-from . import base
+from . import base, const
 
 
 class StrReporter(base.Reporter):
@@ -189,6 +190,45 @@ class XmlReporter(base.Reporter):
 
     def finish(self):
         self.out.write('</checks>')
+
+
+class JsonObject(base.Reporter):
+    """Generate a stream of JSON result objects."""
+
+    priority = -1001
+
+    @staticmethod
+    def to_json(result):
+        """Serialize a result object to JSON."""
+        d = {'__class__': result.__class__.__name__}
+        d.update(result._attrs)
+        return d
+
+    @staticmethod
+    def from_json(data):
+        """Deserialize JSON object to its corresponding result object."""
+        d = json.loads(data)
+        try:
+            cls = const.KEYWORDS[d.pop('__class__')]
+        except KeyError:
+            raise UserException('old or invalid JSON results file')
+
+        # reconstruct a package object
+        category = d.pop('category', None)
+        package = d.pop('package', None)
+        version = d.pop('version', None)
+        if any((category, package, version)):
+            pkg = base.RawCPV(category, package, version)
+            d['pkg'] = pkg
+
+        return cls(**d)
+
+    @coroutine
+    def _process_report(self):
+        while True:
+            result = (yield)
+            data = json.dumps(result, default=self.to_json)
+            self.out.write(data)
 
 
 class PickleStream(base.Reporter):

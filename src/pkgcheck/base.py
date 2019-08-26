@@ -505,6 +505,29 @@ class Scope(object):
         return list(c for c in checks if c.scope in self.scopes)
 
 
+class RawCPV(object):
+    """Raw CPV objects supporting basic restrictions/sorting."""
+
+    __slots__ = ('category', 'package', 'fullver')
+
+    def __init__(self, category, package, fullver):
+        self.category = category
+        self.package = package
+        self.fullver = fullver
+
+    def __str__(self):
+        return f'{self.category}/{self.package}-{self.fullver}'
+
+    def __lt__(self, other):
+        if self.category < other.category:
+            return True
+        if self.package < other.package:
+            return True
+        if self.fullver < other.fullver:
+            return True
+        return False
+
+
 class InterleavedSources(object):
     """Iterate over multiple sources, interleaving them in sorted fashion."""
 

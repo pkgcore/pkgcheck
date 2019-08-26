@@ -6,29 +6,6 @@ from pkgcore.restrictions import packages
 from . import addons, base
 
 
-class _RawCPV(object):
-    """Raw CPV objects supporting basic restrictions/sorting."""
-
-    __slots__ = ('category', 'package', 'version')
-
-    def __init__(self, category, package, version):
-        self.category = category
-        self.package = package
-        self.version = version
-
-    def __str__(self):
-        return f'{self.category}/{self.package}-{self.version}'
-
-    def __lt__(self, other):
-        if self.category < other.category:
-            return True
-        if self.package < other.package:
-            return True
-        if self.version < other.version:
-            return True
-        return False
-
-
 class RawRepoSource(base.GenericSource):
     """Ebuild repository source returning raw CPV objects."""
 
@@ -46,7 +23,7 @@ class RawRepoSource(base.GenericSource):
 
     def __iter__(self):
         yield from self.repo.itermatch(
-            self.limiter, sorter=sorted, raw_pkg_cls=lambda *args: _RawCPV(*args))
+            self.limiter, sorter=sorted, raw_pkg_cls=lambda *args: base.RawCPV(*args))
 
 
 class RestrictionRepoSource(base.GenericSource):
