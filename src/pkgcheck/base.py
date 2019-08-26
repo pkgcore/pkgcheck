@@ -284,6 +284,16 @@ class Result(object):
     def long_desc(self):
         return self.short_desc
 
+    @property
+    def _attrs(self):
+        return {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+
+    def __eq__(self, other):
+        return self._attrs == other._attrs
+
+    def __hash__(self):
+        return hash(tuple(sorted(self._attrs)))
+
     def __lt__(self, other):
         return self.__class__.__name__ < other.__class__.__name__
 
