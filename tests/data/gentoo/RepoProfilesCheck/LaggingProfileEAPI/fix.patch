@@ -1,0 +1,5 @@
+diff -Naur gentoo/profiles/default/linux/eapi fixed/profiles/default/linux/eapi
+--- gentoo/profiles/default/linux/eapi	1969-12-31 17:00:00.000000000 -0700
++++ fixed/profiles/default/linux/eapi	2019-08-26 11:34:25.672479496 -0600
+@@ -0,0 +1 @@
++5

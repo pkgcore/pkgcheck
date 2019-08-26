@@ -1,0 +1,7 @@
+diff -Naur gentoo/profiles/categories fixed/profiles/categories
+--- gentoo/profiles/categories	2019-08-26 11:54:09.183232467 -0600
++++ fixed/profiles/categories	2019-08-26 11:55:49.101884403 -0600
+@@ -1,2 +1,3 @@
+ CatMissingMetadataXml
+ PackageMetadataXmlCheck
++unknown
