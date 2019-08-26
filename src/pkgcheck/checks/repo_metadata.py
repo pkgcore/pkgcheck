@@ -214,7 +214,10 @@ class _MirrorsCheck(base.Check):
 
     def _get_mirrors(self, pkg):
         mirrors = []
-        fetchables, _ = self.iuse_filter((fetch.fetchable,), pkg, pkg.fetchables)
+        fetchables, _ = self.iuse_filter(
+            (fetch.fetchable,), pkg,
+            pkg._get_attr['fetchables'](
+                pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True))
         for f in fetchables:
             for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
                 mirrors.append(m[0].mirror_name)
