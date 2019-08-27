@@ -117,7 +117,6 @@ class TestPkgcheckScanParseArgs(object):
         touch(ebuild_path)
         options, _func = self.tool.parse_args(self.args + [ebuild_path])
         restrictions = [
-            restricts.RepositoryDep('fakerepo'),
             restricts.CategoryDep('dev-util'),
             restricts.PackageDep('foo'),
             restricts.VersionMatch('=', '0'),
@@ -130,7 +129,6 @@ class TestPkgcheckScanParseArgs(object):
             options, _func = self.tool.parse_args(self.args)
             assert options.target_repo.repo_id == 'fakerepo'
             restrictions = [
-                restricts.RepositoryDep('fakerepo'),
                 restricts.CategoryDep('dev-util'),
                 restricts.PackageDep('foo'),
             ]
@@ -141,8 +139,7 @@ class TestPkgcheckScanParseArgs(object):
         with chdir(stubrepo):
             options, _func = self.tool.parse_args(self.args)
             assert options.target_repo.repo_id == 'stubrepo'
-            assert list(options.limiters) == [
-                packages.AndRestriction(restricts.RepositoryDep('stubrepo'))]
+            assert list(options.limiters) == [packages.AlwaysTrue]
 
     def test_unknown_repo(self, capsys):
         for opt in ('-r', '--repo'):

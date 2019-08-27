@@ -150,6 +150,23 @@ def _validate_args(parser, namespace):
     namespace.enabled_checks = list(const.CHECKS.values())
     namespace.enabled_keywords = list(const.KEYWORDS.values())
 
+    def _path_restrict(path):
+        """Generate custom package restriction from a given path.
+
+        This drops the repo restriction (initial entry in path restrictions)
+        since runs can only be made against single repo targets so the extra
+        restriction is redundant and breaks several custom sources involving
+        raw pkgs (lacking a repo attr) or faked repos.
+        """
+        try:
+            restrictions = namespace.target_repo.path_restrict(path)[1:]
+            if restrictions:
+                return packages.AndRestriction(*restrictions)
+        except ValueError:
+            # path not in target repo
+            pass
+        return packages.AlwaysTrue
+
     # Get the current working directory for repo detection and restriction
     # creation, fallback to the root dir if it's be removed out from under us.
     try:
@@ -216,7 +233,7 @@ def _validate_args(parser, namespace):
             for target in namespace.targets:
                 if os.path.exists(target):
                     try:
-                        yield repo.path_restrict(target)
+                        yield _path_restrict(target)
                     except ValueError as e:
                         parser.error(e)
                 else:
@@ -232,11 +249,7 @@ def _validate_args(parser, namespace):
                 'Either specify a target repo that is not multi-tree or '
                 'one or more extended atoms to scan '
                 '("*" for the entire repo).')
-        if cwd not in namespace.target_repo:
-            namespace.limiters = [packages.AlwaysTrue]
-        else:
-            namespace.limiters = [packages.AndRestriction(
-                *namespace.target_repo.path_restrict(cwd))]
+        namespace.limiters = [_path_restrict(cwd)]
 
     if namespace.checkset is None:
         namespace.checkset = namespace.config.get_default('pkgcheck_checkset')

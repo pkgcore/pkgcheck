@@ -1,6 +1,5 @@
 """Custom package sources used for feeding addons."""
 
-from pkgcore.ebuild import cpv, restricts
 from pkgcore.restrictions import packages
 
 from . import addons, base
@@ -10,16 +9,6 @@ class RawRepoSource(base.GenericSource):
     """Ebuild repository source returning raw CPV objects."""
 
     feed_type = base.raw_versioned_feed
-
-    def __init__(self, options, limiter):
-        super().__init__(options, limiter)
-        # Drop repo restriction if one exists as we're matching against a faked
-        # repo with a different repo_id.
-        try:
-            if isinstance(self.limiter[0], restricts.RepositoryDep):
-                self.limiter = packages.AndRestriction(*self.limiter[1:])
-        except TypeError:
-            pass
 
     def __iter__(self):
         yield from self.repo.itermatch(
@@ -56,12 +45,3 @@ class GitCommitsRepoSource(base.GenericSource):
     def __init__(self, options, git_addon, limiter):
         super().__init__(options, limiter)
         self.repo = git_addon.commits_repo(addons.GitChangedRepo)
-
-        # Drop repo restriction if one exists as we're matching against a faked
-        # repo with a different repo_id.
-        try:
-            repo_limiter = self.limiter[0]
-        except TypeError:
-            repo_limiter = None
-        if isinstance(repo_limiter, restricts.RepositoryDep):
-            self.limiter = packages.AndRestriction(*self.limiter[1:])
