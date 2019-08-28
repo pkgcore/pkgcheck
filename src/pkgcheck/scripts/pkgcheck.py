@@ -340,6 +340,16 @@ def _validate_args(parser, namespace):
     namespace.enabled_checks = [
         c for c in namespace.enabled_checks if not c.skip(namespace)]
 
+    # skip repo checks when running at cat/pkg/version restriction levels
+    try:
+        if namespace.limiters[0] != packages.AlwaysTrue:
+            logger.debug(f'skipping repo checks, running at higher restriction level')
+            namespace.enabled_checks = [
+                c for c in namespace.enabled_checks if not c.scope == base.repository_scope]
+    except TypeError:
+        # don't skip repo checks when piping in targets
+        pass
+
     if not namespace.enabled_checks:
         parser.error('no active checks')
 
