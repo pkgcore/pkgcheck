@@ -4,7 +4,7 @@ from pkgcore.restrictions import packages, values
 
 from snakeoil.sequences import iflatten_instance
 
-from .. import base, addons
+from .. import base
 
 
 # NB: distutils-r1 inherits one of the first two

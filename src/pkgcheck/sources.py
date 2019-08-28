@@ -12,7 +12,7 @@ class RawRepoSource(base.GenericSource):
 
     def __iter__(self):
         yield from self.repo.itermatch(
-            self.limiter, sorter=sorted, raw_pkg_cls=lambda *args: base.RawCPV(*args))
+            self.limiter, sorter=sorted, raw_pkg_cls=base.RawCPV)
 
 
 class RestrictionRepoSource(base.GenericSource):

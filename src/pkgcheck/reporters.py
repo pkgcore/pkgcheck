@@ -6,7 +6,7 @@ from json.decoder import JSONDecodeError
 import pickle
 from xml.sax.saxutils import escape as xml_escape
 
-from snakeoil import currying, pickling
+from snakeoil import pickling
 from snakeoil.decorators import coroutine
 
 from . import base, const
@@ -97,7 +97,7 @@ class NullReporter(base.Reporter):
     @coroutine
     def _process_report(self):
         while True:
-            result = (yield)
+            _result = (yield)
 
 
 class JsonReporter(base.Reporter):
@@ -216,7 +216,7 @@ class JsonStream(base.Reporter):
         try:
             cls = const.KEYWORDS[d.pop('__class__')]
         except KeyError:
-            raise DeserializationError(f'failed loading: {data!r}')
+            raise DeserializationError(f'missing result class: {data!r}')
 
         # reconstruct a package object
         category = d.pop('category', None)
@@ -238,7 +238,7 @@ class JsonStream(base.Reporter):
             for i, line in enumerate(f, 1):
                 yield cls.from_json(line)
         except DeserializationError as e:
-            raise DeserializationError(f'invalid entry on line {i}')
+            raise DeserializationError(f'invalid entry on line {i}') from e
 
     @coroutine
     def _process_report(self):

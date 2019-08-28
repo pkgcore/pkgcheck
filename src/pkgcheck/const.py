@@ -1,7 +1,8 @@
+"""Registration for keywords, checks, transforms, and reporters."""
+
 from functools import partial
 from importlib import import_module
 import inspect
-import os
 import pkgutil
 
 from snakeoil import mappings
@@ -20,7 +21,7 @@ except ImportError:
 
 def _find_modules(module):
     if getattr(module, '__path__', False):
-        for imp, name, _ in pkgutil.walk_packages(module.__path__, module.__name__ + '.'):
+        for _imp, name, _ in pkgutil.walk_packages(module.__path__, module.__name__ + '.'):
             # skip "private" modules
             if name.rsplit('.', 1)[1][0] == '_':
                 continue
@@ -36,7 +37,7 @@ def _find_obj_classes(module_name, matching_cls):
     module = import_module(f'.{module_name}', __title__)
     classes = []
     for m in _find_modules(module):
-        for name, cls in inspect.getmembers(m):
+        for _name, cls in inspect.getmembers(m):
             if (inspect.isclass(cls) and issubclass(cls, matching_cls)
                     and cls.__name__[0] != '_'):
                 classes.append((cls.__name__, cls))

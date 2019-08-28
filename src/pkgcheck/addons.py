@@ -1,7 +1,6 @@
 """Addon functionality shared by multiple checkers."""
 
-from collections import OrderedDict, UserDict, defaultdict
-from copy import copy
+from collections import UserDict, defaultdict
 from functools import partial
 from itertools import chain, filterfalse
 import os
@@ -24,7 +23,7 @@ from snakeoil.containers import ProtectedSet
 from snakeoil.decorators import coroutine
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.log import suppress_logging
-from snakeoil.osutils import abspath, listdir_files, pjoin
+from snakeoil.osutils import abspath, pjoin
 from snakeoil.process import find_binary, CommandNotFound
 from snakeoil.process.spawn import spawn_get_output
 from snakeoil.sequences import iflatten_instance

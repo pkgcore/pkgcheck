@@ -1,3 +1,5 @@
+"""Various miscellaneous utility functions."""
+
 # based on https://github.com/audreyr/binaryornot
 #
 # Copyright (c) 2013, Audrey Roy
@@ -51,7 +53,7 @@ def is_binary(path, blocksize=1024):
     try:
         with open(path, 'rb') as f:
             byte_str = f.read(blocksize)
-    except IOError as e:
+    except IOError:
         return False
 
     # empty files are considered text
@@ -97,15 +99,8 @@ def is_binary(path, blocksize=1024):
                 pass
 
     # finally use all the checks to decide binary or text
-    if is_likely_binary:
-        if decodable:
-            return False
-        else:
-            return True
-    else:
-        if decodable:
-            return False
-        elif b'\x00' in byte_str or b'\xff' in byte_str:
-            # check for NULL bytes
-            return True
+    if decodable:
         return False
+    if is_likely_binary or b'\x00' in byte_str or b'\xff' in byte_str:
+        return True
+    return False

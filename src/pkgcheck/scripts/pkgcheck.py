@@ -14,7 +14,7 @@ import sys
 import textwrap
 
 from pkgcore import const as pkgcore_const
-from pkgcore.ebuild import repository, restricts
+from pkgcore.ebuild import restricts
 from pkgcore.repository import multiplex
 from pkgcore.restrictions import packages
 from pkgcore.util import commandline, parserestrict
@@ -23,11 +23,9 @@ from snakeoil.cli.exceptions import UserException
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.log import suppress_logging
 from snakeoil.osutils import abspath, pjoin
-from snakeoil.sequences import iflatten_instance
-from snakeoil.sequences import unstable_unique
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, feeds, const, reporters
+from .. import base, const, reporters
 from ..log import logger
 
 
