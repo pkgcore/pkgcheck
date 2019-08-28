@@ -7,7 +7,6 @@ import pickle
 from xml.sax.saxutils import escape as xml_escape
 
 from snakeoil import currying, pickling
-from snakeoil.cli.exceptions import UserException
 from snakeoil.decorators import coroutine
 
 from . import base, const
@@ -220,7 +219,7 @@ class JsonStream(base.Reporter):
         try:
             cls = const.KEYWORDS[d.pop('__class__')]
         except KeyError:
-            raise UserException('old or invalid JSON results file')
+            raise DeserializationError(f'failed loading: {data!r}')
 
         # reconstruct a package object
         category = d.pop('category', None)
@@ -230,12 +229,19 @@ class JsonStream(base.Reporter):
             pkg = base.RawCPV(category, package, version)
             d['pkg'] = pkg
 
-        return cls(**d)
+        try:
+            return cls(**d)
+        except TypeError as e:
+            raise DeserializationError(f'failed loading: {data!r}') from e
 
     @classmethod
     def from_file(cls, f):
         """Deserialize results from a given file handle."""
-        yield from (cls.from_json(x) for x in f)
+        try:
+            for i, line in enumerate(f, 1):
+                yield cls.from_json(line)
+        except DeserializationError as e:
+            raise DeserializationError(f'invalid entry on line {i}')
 
     @coroutine
     def _process_report(self):
@@ -265,7 +271,11 @@ class PickleStream(base.Reporter):
     def from_file(f):
         """Deserialize results from a given file handle."""
         try:
-            yield from pickling.iter_stream(f)
+            for result in pickling.iter_stream(f):
+                if isinstance(result, base.Result):
+                    yield result
+                else:
+                    raise DeserializationError(f'invalid data type: {result!r}')
         except pickle.UnpicklingError as e:
             raise DeserializationError(f'failed unpickling result') from e
 
