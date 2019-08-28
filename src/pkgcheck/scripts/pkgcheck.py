@@ -9,7 +9,6 @@ import argparse
 from functools import partial
 from itertools import chain
 from operator import attrgetter
-import logging
 import os
 import sys
 import textwrap
@@ -30,6 +29,7 @@ from snakeoil.sequences import unstable_unique
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, feeds, const, reporters
+from ..log import logger
 
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
@@ -381,7 +381,7 @@ def _scan(options, out, err):
             f"at {options.target_repo.location!r}")
         for filterer in options.limiters:
             err.write('limiter: ', filterer)
-        debug = logging.debug
+        debug = logger.debug
     else:
         debug = None
 
