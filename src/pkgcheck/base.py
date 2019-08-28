@@ -16,10 +16,12 @@ from operator import attrgetter, itemgetter
 import re
 
 from pkgcore import const as pkgcore_const
+from pkgcore.ebuild import cpv
 from pkgcore.config.hint import ConfigHint
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import util
 from snakeoil.decorators import coroutine
+from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 
 from .log import logger
@@ -326,6 +328,11 @@ class CategoryResult(Result):
         self.category = pkg.category
         self._attr = 'category'
 
+    def __lt__(self, other):
+        if self.category < other.category:
+            return True
+        return super().__lt__(other)
+
 
 class PackageResult(CategoryResult):
     """Result related to a specific package."""
@@ -337,6 +344,11 @@ class PackageResult(CategoryResult):
         self.package = pkg.package
         self._attr = 'package'
 
+    def __lt__(self, other):
+        if self.package < other.package:
+            return True
+        return super().__lt__(other)
+
 
 class VersionedResult(PackageResult):
     """Result related to a specific version of a package."""
@@ -347,6 +359,20 @@ class VersionedResult(PackageResult):
         super().__init__(pkg, **kwargs)
         self.version = pkg.fullver
         self._attr = 'version'
+
+    @jit_attr
+    def ver_rev(self):
+        version, _, revision = self.version.partition('-r')
+        revision = cpv._Revision(revision)
+        return version, revision
+
+    def __lt__(self, other):
+        cmp = cpv.ver_cmp(*(self.ver_rev + other.ver_rev))
+        if cmp < 0:
+            return True
+        elif cmp > 0:
+            return False
+        return super().__lt__(other)
 
 
 class LogError(Error):
