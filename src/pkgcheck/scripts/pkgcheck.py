@@ -8,11 +8,9 @@ from portage.
 import argparse
 from functools import partial
 from itertools import chain
-from json.decoder import JSONDecodeError
 from operator import attrgetter
 import logging
 import os
-from pickle import UnpicklingError
 import sys
 import textwrap
 
@@ -22,7 +20,6 @@ from pkgcore.repository import multiplex
 from pkgcore.restrictions import packages
 from pkgcore.restrictions.values import StrExactMatch
 from pkgcore.util import commandline, parserestrict
-from snakeoil import pickling, formatters
 from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
 from snakeoil.formatters import decorate_forced_wrapping
@@ -461,15 +458,14 @@ def _replay(options, out, err):
     reporter.start()
     # assume JSON encoded file, fallback to pickle format
     try:
-        for line in options.results_file:
-            result = reporters.JsonStream.from_json(line)
+        for result in reporters.JsonStream.from_file(options.results_file):
             reporter.report(result)
-    except (JSONDecodeError, UnicodeDecodeError):
+    except reporters.DeserializationError:
+        options.results_file.seek(0)
         try:
-            options.results_file.seek(0)
-            for count, item in enumerate(pickling.iter_stream(options.results_file)):
-                reporter.report(item)
-        except UnpicklingError:
+            for result in reporters.PickleStream.from_file(options.results_file):
+                reporter.report(result)
+        except reporters.DeserializationError:
             raise UserException('invalid or unsupported replay file')
     reporter.finish()
     return 0

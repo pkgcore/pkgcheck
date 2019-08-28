@@ -2,10 +2,11 @@
 
 from collections import defaultdict
 import json
+from json.decoder import JSONDecodeError
 import pickle
 from xml.sax.saxutils import escape as xml_escape
 
-from snakeoil import currying, formatters
+from snakeoil import currying, pickling
 from snakeoil.cli.exceptions import UserException
 from snakeoil.decorators import coroutine
 
@@ -192,6 +193,10 @@ class XmlReporter(base.Reporter):
         self.out.write('</checks>')
 
 
+class DeserializationError(Exception):
+    """Exception occurred while deserializing a data stream."""
+
+
 class JsonStream(base.Reporter):
     """Generate a stream of result objects serialized in JSON."""
 
@@ -207,7 +212,11 @@ class JsonStream(base.Reporter):
     @staticmethod
     def from_json(data):
         """Deserialize JSON object to its corresponding result object."""
-        d = json.loads(data)
+        try:
+            d = json.loads(data)
+        except (JSONDecodeError, UnicodeDecodeError) as e:
+            raise DeserializationError(f'failed loading: {data!r}') from e
+
         try:
             cls = const.KEYWORDS[d.pop('__class__')]
         except KeyError:
@@ -222,6 +231,11 @@ class JsonStream(base.Reporter):
             d['pkg'] = pkg
 
         return cls(**d)
+
+    @classmethod
+    def from_file(cls, f):
+        """Deserialize results from a given file handle."""
+        yield from (cls.from_json(x) for x in f)
 
     @coroutine
     def _process_report(self):
@@ -246,6 +260,14 @@ class PickleStream(base.Reporter):
     def start(self):
         self.out.wrap = False
         self.out.autoline = False
+
+    @staticmethod
+    def from_file(f):
+        """Deserialize results from a given file handle."""
+        try:
+            yield from pickling.iter_stream(f)
+        except pickle.UnpicklingError as e:
+            raise DeserializationError(f'failed unpickling result') from e
 
     @coroutine
     def _process_report(self):
