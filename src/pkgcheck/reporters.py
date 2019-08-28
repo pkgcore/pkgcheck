@@ -90,7 +90,7 @@ class FancyReporter(base.Reporter):
 
 
 class NullReporter(base.Reporter):
-    """reporter used for timing tests; no output"""
+    """Reporter used for timing tests; no output."""
 
     priority = -10000000
 
@@ -117,6 +117,7 @@ class JsonReporter(base.Reporter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # arbitrarily nested defaultdicts
         self._json_dict = lambda: defaultdict(self._json_dict)
 
     @coroutine
@@ -172,9 +173,6 @@ class XmlReporter(base.Reporter):
         base.ebuild_feed: ver_template,
     }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def start(self):
         self.out.write('<checks>')
 
@@ -182,10 +180,9 @@ class XmlReporter(base.Reporter):
     def _process_report(self):
         while True:
             result = (yield)
-            d = dict((k, getattr(result, k, '')) for k in
-                    ("category", "package", "version"))
-            d["class"] = xml_escape(result.__class__.__name__)
-            d["msg"] = xml_escape(result.desc)
+            d = {k: getattr(result, k, '') for k in ('category', 'package', 'version')}
+            d['class'] = xml_escape(result.__class__.__name__)
+            d['msg'] = xml_escape(result.desc)
             self.out.write(self.threshold_map[result.threshold] % d)
 
     def finish(self):
@@ -247,8 +244,7 @@ class JsonStream(base.Reporter):
     def _process_report(self):
         while True:
             result = (yield)
-            data = json.dumps(result, default=self.to_json)
-            self.out.write(data)
+            self.out.write(json.dumps(result, default=self.to_json))
 
 
 class PickleStream(base.Reporter):
