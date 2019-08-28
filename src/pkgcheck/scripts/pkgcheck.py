@@ -240,7 +240,12 @@ def _validate_args(parser, namespace):
                         yield parserestrict.parse_match(target)
                     except parserestrict.ParseError as e:
                         parser.error(e)
+
+        # Collapse limiters for passed in targets while keeping the generator
+        # intact for piped in targets.
         namespace.limiters = limiters()
+        if isinstance(namespace.targets, list):
+            namespace.limiters = list(namespace.limiters)
     else:
         repo_base = getattr(namespace.target_repo, 'location', None)
         if not repo_base:
