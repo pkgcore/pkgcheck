@@ -576,7 +576,7 @@ class TestPkgcheckReplay(object):
             err = err.strip().split('\n')
             assert len(err) == 1
             assert err[0] == (
-                'pkgcheck replay: error: the following arguments are required: results_file')
+                'pkgcheck replay: error: the following arguments are required: FILE')
             assert excinfo.value.code == 2
 
     def test_replay(self, capsys):

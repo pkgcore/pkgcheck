@@ -440,8 +440,8 @@ replay = subparsers.add_parser(
     description='replay results streams',
     docs="""
         Replay previous results streams from pkgcheck, feeding the results into
-        a reporter. Currently supports replaying streams from pickled-based or
-        JSON object reporters.
+        a reporter. Currently supports replaying streams from pickle or JSON
+        stream reporters.
 
         Useful if you need to delay acting on results until it can be done in
         one minimal window (say updating a database), or want to generate
@@ -449,7 +449,8 @@ replay = subparsers.add_parser(
         reporter.
     """)
 replay.add_argument(
-    dest='results_file', type=arghparse.FileType('rb'), help='serialized results file')
+    dest='results', metavar='FILE',
+    type=arghparse.FileType('rb'), help='path to serialized results file')
 
 
 @replay.bind_main_func
@@ -460,14 +461,14 @@ def _replay(options, out, err):
     processed = 0
     exc = None
     try:
-        for result in reporters.JsonStream.from_file(options.results_file):
+        for result in reporters.JsonStream.from_file(options.results):
             reporter.report(result)
             processed += 1
     except reporters.DeserializationError as e:
         if not processed:
-            options.results_file.seek(0)
+            options.results.seek(0)
             try:
-                for result in reporters.PickleStream.from_file(options.results_file):
+                for result in reporters.PickleStream.from_file(options.results):
                     reporter.report(result)
                     processed += 1
             except reporters.DeserializationError as e:
@@ -480,7 +481,7 @@ def _replay(options, out, err):
             raise UserException('invalid or unsupported replay file')
         else:
             raise UserException(
-                f'corrupted results file {options.results_file.name!r}: {exc}')
+                f'corrupted results file {options.results.name!r}: {exc}')
 
     reporter.finish()
     return 0
