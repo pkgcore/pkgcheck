@@ -349,12 +349,10 @@ class BadInsIntoCheck(base.Check):
     @classmethod
     def _load_class_regex(cls):
         bad_etc = ("conf", "env", "init", "pam")
-        bad_cron = ("hourly", "daily", "weekly", "d")
         bad_paths = ("/usr/share/applications",)
 
         patterns = []
         patterns.append("etc/(?:%s).d" % "|".join(bad_etc))
-        patterns.append("etc/cron.(?:%s)" % "|".join(bad_cron))
         patterns.extend(x.strip("/") for x in bad_paths)
         s = "|".join(patterns)
         s = s.replace("/", "/+")
