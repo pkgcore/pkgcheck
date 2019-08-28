@@ -156,13 +156,18 @@ def _validate_args(parser, namespace):
         restriction is redundant and breaks several custom sources involving
         raw pkgs (lacking a repo attr) or faked repos.
         """
+        repo = namespace.target_repo
+        restrictions = []
         try:
-            restrictions = namespace.target_repo.path_restrict(path)[1:]
-            if restrictions:
-                return packages.AndRestriction(*restrictions)
-        except ValueError:
-            # path not in target repo
-            pass
+            restrictions = repo.path_restrict(path)[1:]
+        except ValueError as e:
+            if path in repo:
+                # path to a non-ebuild file or ebuild in wrong dir layout,
+                # disregard and use parent dir
+                path = os.path.dirname(path)
+                restrictions = repo.path_restrict(path)[1:]
+        if restrictions:
+            return packages.AndRestriction(*restrictions)
         return packages.AlwaysTrue
 
     # Get the current working directory for repo detection and restriction
