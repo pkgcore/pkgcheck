@@ -14,10 +14,9 @@ import sys
 import textwrap
 
 from pkgcore import const as pkgcore_const
-from pkgcore.ebuild import repository
+from pkgcore.ebuild import repository, restricts
 from pkgcore.repository import multiplex
 from pkgcore.restrictions import packages
-from pkgcore.restrictions.values import StrExactMatch
 from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
@@ -340,16 +339,6 @@ def _validate_args(parser, namespace):
     namespace.enabled_checks = [
         c for c in namespace.enabled_checks if not c.skip(namespace)]
 
-    # skip repo checks when running at cat/pkg/version restriction levels
-    try:
-        if namespace.limiters[0] != packages.AlwaysTrue:
-            logger.debug('skipping repo checks, running at higher restriction level')
-            namespace.enabled_checks = [
-                c for c in namespace.enabled_checks if not c.scope == base.repository_scope]
-    except TypeError:
-        # don't skip repo checks when piping in targets
-        pass
-
     if not namespace.enabled_checks:
         parser.error('no active checks')
 
@@ -416,6 +405,19 @@ def _scan(options, out, err):
     reporter.start()
 
     for filterer in options.limiters:
+        # skip repo checks when running at cat/pkg/version restriction levels
+        if filterer != packages.AlwaysTrue:
+            logger.debug('skipping repo checks, running at higher restriction level')
+            sinks = [c for c in sinks if c.scope != base.repository_scope]
+
+        # skip package level checks when running at version restriction level
+        try:
+            if isinstance(filterer[-1], restricts.VersionMatch):
+                logger.debug('skipping package checks, running with version restriction')
+                sinks = [c for c in sinks if c.scope != base.package_scope]
+        except TypeError:
+            pass
+
         sources = {raw: source(filterer) for raw, source in raw_sources.items()}
         bad_sinks, pipes = base.plug(sinks, transforms, sources, debug)
         if bad_sinks:
