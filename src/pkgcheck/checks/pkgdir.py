@@ -141,6 +141,7 @@ class PkgDirCheck(base.Check):
     """Actual ebuild directory scans; file size, glep31 rule enforcement."""
 
     feed_type = base.raw_package_feed
+    scope = base.package_scope
     source = sources.RawRepoSource
 
     ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
@@ -231,6 +232,7 @@ class EqualVersionsCheck(base.Check):
     """Scan package ebuilds for semantically equal versions."""
 
     feed_type = base.package_feed
+    scope = base.package_scope
     known_results = (EqualVersions,)
 
     def feed(self, pkgset):

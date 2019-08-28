@@ -589,6 +589,7 @@ class ManifestCheck(base.Check):
     """
 
     required_addons = (addons.UseAddon,)
+    scope = base.package_scope
     feed_type = base.package_feed
     known_results = (
         MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,

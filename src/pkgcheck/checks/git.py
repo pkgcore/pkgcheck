@@ -135,6 +135,7 @@ class GitCommitsCheck(base.GentooRepoCheck):
     """Check unpushed git commits for various issues."""
 
     feed_type = base.package_feed
+    scope = base.package_scope
     source = sources.GitCommitsRepoSource
     required_addons = (addons.GitAddon,)
     known_results = (

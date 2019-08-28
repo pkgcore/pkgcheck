@@ -43,6 +43,7 @@ class ImlateCheck(base.Check):
     """Scan for ebuilds that are lagging in stabilization."""
 
     feed_type = base.package_feed
+    scope = base.package_scope
     required_addons = (addons.StableArchesAddon,)
     known_results = (PotentialStable, LaggingStable)
 

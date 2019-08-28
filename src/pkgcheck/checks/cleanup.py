@@ -29,6 +29,7 @@ class RedundantVersionCheck(base.Check):
     """
 
     feed_type = base.package_feed
+    scope = base.package_scope
     known_results = (RedundantVersion,)
 
     def feed(self, pkgset):

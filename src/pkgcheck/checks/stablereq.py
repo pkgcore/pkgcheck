@@ -38,6 +38,7 @@ class StableRequestCheck(base.GentooRepoCheck):
     Instead they'll be caught by the UnstableOnly check.
     """
     feed_type = base.package_feed
+    scope = base.package_scope
     source = sources.FilteredRepoSource
     required_addons = (addons.GitAddon,)
     known_results = (StableRequest,)

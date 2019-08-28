@@ -305,6 +305,7 @@ class LocalUSECheck(base.Check):
     """Check local USE flags in metadata.xml for various issues."""
 
     feed_type = base.package_feed
+    scope = base.package_scope
     required_addons = (addons.UseAddon,)
     known_results = (
         UnusedLocalUSE, MatchingGlobalUSE, ProbableGlobalUSE,
