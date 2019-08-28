@@ -1,5 +1,5 @@
 include AUTHORS LICENSE *.py *.rst
-include tox.ini pyproject.toml .coveragerc
+include tox.ini pyproject.toml .coveragerc .pylintrc
 recursive-include bin *
 recursive-include completion *
 recursive-include doc *
