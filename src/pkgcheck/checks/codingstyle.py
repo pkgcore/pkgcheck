@@ -323,14 +323,14 @@ class AbsoluteSymlinkCheck(base.Check):
 class BadInsIntoDir(base.VersionedResult, base.Warning):
     """Ebuild uses insinto where more compact commands exist."""
 
-    def __init__(self, insintodir, line, **kwargs):
+    def __init__(self, line, lineno, **kwargs):
         super().__init__(**kwargs)
         self.line = line
-        self.insintodir = insintodir
+        self.lineno = lineno
 
     @property
     def short_desc(self):
-        return f"ebuild uses insinto {self.insintodir} on line {self.line}"
+        return f"bad insinto usage, line {self.lineno}: {self.line}"
 
 
 class BadInsIntoCheck(base.Check):
