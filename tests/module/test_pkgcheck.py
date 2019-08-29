@@ -329,7 +329,7 @@ class TestPkgcheckScan(object):
                     with pytest.raises(SystemExit) as excinfo:
                         self.script()
                     out, err = capsys.readouterr()
-                    assert err == ''
+                    assert not err
                     assert excinfo.value.code == 0
                     results = []
                     for line in out.rstrip('\n').split('\n'):
@@ -373,7 +373,7 @@ class TestPkgcheckScan(object):
                     with pytest.raises(SystemExit) as excinfo:
                         self.script()
                     out, err = capsys.readouterr()
-                    assert err == '', f'{repo} repo failed, {err}'
+                    assert not err, f'{repo} repo failed, {err}'
                     assert out, f'{repo} repo failed, no results'
                     assert excinfo.value.code == 0
                     for line in out.rstrip('\n').split('\n'):
@@ -438,13 +438,14 @@ class TestPkgcheckScan(object):
             fixed_repo = str(tmp_path / f'fixed-{repo}')
             shutil.copytree(repo_dir, fixed_repo)
             func(fix)
-            with patch('sys.argv', self.args + ['-r', fixed_repo] + args), \
+            cmd = self.args + ['-r', fixed_repo] + args
+            with patch('sys.argv', cmd), \
                     patch('pkgcheck.base.CACHE_DIR', cache_dir):
                 with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 out, err = capsys.readouterr()
-                assert err == ''
-                assert out == ''
+                assert not err, f"failed fixing error, command: {' '.join(cmd)}"
+                assert not out, f"failed fixing error, command: {' '.join(cmd)}"
                 assert excinfo.value.code == 0
             shutil.rmtree(fixed_repo)
             tested = True
