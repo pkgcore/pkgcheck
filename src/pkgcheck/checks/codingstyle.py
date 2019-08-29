@@ -369,6 +369,7 @@ class BadInsIntoCheck(base.Check):
             matches = self._bad_insinto.search(line)
             if matches is not None:
                 yield BadInsIntoDir(matches.group('insinto'), lineno, pkg=pkg)
+                continue
             # Check for insinto usage that should be replaced with
             # docinto/dodoc [-r] under supported EAPIs.
             if pkg.eapi.options.dodoc_allow_recursive:
