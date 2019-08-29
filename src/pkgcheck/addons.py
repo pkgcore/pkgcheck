@@ -161,20 +161,20 @@ class _ParseGitRepo(object):
     # git command to run on the targeted repo
     _git_cmd = None
 
-    def __init__(self, repo, commit=None):
+    def __init__(self, repo, commit=None, **kwargs):
         self.location = repo.location
         self.cache_version = GitAddon.cache_version
 
         if commit is None:
             self.commit = 'origin/HEAD..master'
-            self.pkg_map = self._process_git_repo(commit=self.commit)
+            self.pkg_map = self._process_git_repo(commit=self.commit, **kwargs)
         else:
             self.commit = commit
-            self.pkg_map = self._process_git_repo()
+            self.pkg_map = self._process_git_repo(**kwargs)
 
-    def update(self, commit):
+    def update(self, commit, **kwargs):
         """Update an existing repo starting at a given commit hash."""
-        self._process_git_repo(self.pkg_map, self.commit)
+        self._process_git_repo(self.pkg_map, self.commit, **kwargs)
         self.commit = commit
 
     def _parse_file_line(self, line):
@@ -201,7 +201,7 @@ class _ParseGitRepo(object):
             except MalformedAtom:
                 return None
 
-    def _process_git_repo(self, pkg_map=None, commit=None):
+    def _process_git_repo(self, pkg_map=None, commit=None, debug=False):
         """Parse git log output."""
         if pkg_map is None:
             pkg_map = {}
@@ -225,33 +225,39 @@ class _ParseGitRepo(object):
             logger.warning(f'skipping git checks: {error}')
             return {}
 
-        while line:
-            if not line.startswith('commit '):
-                logger.error(
-                    f'skipping git checks: '
-                    f'unknown git log output: expecting commit hash, got {line!r}')
-                return {}
-            commit = line[7:].strip()
-            # author
-            git_log.stdout.readline()
-            # date
-            line = git_log.stdout.readline().decode().strip()
-            if not line.startswith('Date:'):
-                logger.error(
-                    f'skipping git checks: '
-                    f'unknown git log output: expecting date, got {line!r}')
-                return {}
-            date = line[5:].strip()
+        count = 1
+        with base.ProgressManager(debug=debug) as progress:
+            while line:
+                if not line.startswith('commit '):
+                    logger.error(
+                        f'skipping git checks: '
+                        f'unknown git log output: expecting commit hash, got {line!r}')
+                    return {}
+                commit = line[7:].strip()
+                # author
+                git_log.stdout.readline()
+                # date
+                line = git_log.stdout.readline().decode().strip()
+                if not line.startswith('Date:'):
+                    logger.error(
+                        f'skipping git checks: '
+                        f'unknown git log output: expecting date, got {line!r}')
+                    return {}
+                date = line[5:].strip()
 
-            # summary and file changes
-            while line and not line.startswith('commit '):
-                line = git_log.stdout.readline().decode()
-                parsed = self._parse_file_line(line)
-                if parsed is not None:
-                    atom, status = parsed
-                    pkg_map.setdefault(
-                        atom.category, {}).setdefault(
-                            atom.package, []).append((atom.fullver, date, status, commit))
+                # update progress output
+                progress(f'{commit} commit #{count}, {date}')
+                count += 1
+
+                # summary and file changes
+                while line and not line.startswith('commit '):
+                    line = git_log.stdout.readline().decode()
+                    parsed = self._parse_file_line(line)
+                    if parsed is not None:
+                        atom, status = parsed
+                        pkg_map.setdefault(
+                            atom.category, {}).setdefault(
+                                atom.package, []).append((atom.fullver, date, status, commit))
 
         return pkg_map
 
@@ -379,13 +385,13 @@ class GitAddon(base.Addon):
                         logger.debug(
                             'updating %s repo: %s -> %s',
                             repo_cls.cache_name, git_repo.commit[:10], commit[:10])
-                        git_repo.update(commit)
+                        git_repo.update(commit, debug=self.options.debug)
                     else:
                         cache_repo = False
                 else:
                     logger.debug(
                         'creating %s repo: %s', repo_cls.cache_name, commit[:10])
-                    git_repo = repo_cls(repo, commit)
+                    git_repo = repo_cls(repo, commit, debug=self.options.debug)
 
                 # only enable repo queries if history was found, e.g. a
                 # shallow clone with a depth of 1 won't have any history
