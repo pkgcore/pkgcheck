@@ -12,8 +12,10 @@ identical to the input scope.
 """
 
 from collections import OrderedDict, namedtuple, defaultdict
+from contextlib import AbstractContextManager
 from operator import attrgetter, itemgetter
 import re
+import sys
 
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import cpv
@@ -535,6 +537,32 @@ class Scope(object):
 
     def filter(self, checks):
         return list(c for c in checks if c.scope in self.scopes)
+
+
+class ProgressManager(AbstractContextManager):
+    """Context manager for handling progressive output.
+
+    Useful for updating the user about the status of a long running process.
+    """
+
+    def __init__(self, debug=False):
+        self.debug = debug
+        self._triggered = False
+
+    def _progress_callback(self, s):
+        """Callback used for progressive output."""
+        sys.stderr.write(f'{s}\r')
+        self._triggered = True
+
+    def __enter__(self):
+        if self.debug:
+            return self._progress_callback
+        else:
+            return lambda x: None
+
+    def __exit__(self, _exc_type, _exc_value, _traceback):
+        if self._triggered:
+            sys.stderr.write('\n')
 
 
 class RawCPV(object):
