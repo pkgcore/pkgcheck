@@ -345,17 +345,21 @@ class GitAddon(base.Addon):
         return out[0].strip()
 
     def cached_repo(self, repo_cls, target_repo=None):
-        repo = None
+        cached_repo = None
         if target_repo is None:
             target_repo = self.options.target_repo
 
         if not self.options.git_disable:
             git_repos = []
             for repo in target_repo.trees:
-                try:
-                    commit = self.get_commit_hash(repo.location)
-                except ValueError:
-                    break
+                if os.path.exists(pjoin(repo.location, '.git')):
+                    try:
+                        commit = self.get_commit_hash(repo.location)
+                    except ValueError as e:
+                        logger.debug('%s', e)
+                        break
+                else:
+                    continue
 
                 # initialize cache file location
                 cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
@@ -409,11 +413,11 @@ class GitAddon(base.Addon):
                             raise UserException(msg)
             else:
                 if len(git_repos) > 1:
-                    repo = multiplex.tree(*git_repos)
+                    cached_repo = multiplex.tree(*git_repos)
                 elif len(git_repos) == 1:
-                    repo = git_repos[0]
+                    cached_repo = git_repos[0]
 
-        return repo
+        return cached_repo
 
     def commits_repo(self, repo_cls, target_repo=None):
         if target_repo is None:
