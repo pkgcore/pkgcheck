@@ -146,7 +146,6 @@ def _determine_target_repo(namespace, parser, cwd):
 
     Returns a repository object if a matching one is found, otherwise None.
     """
-    target_repo = None
     target_dir = cwd
 
     # pull a target directory from target args if they're path-based
