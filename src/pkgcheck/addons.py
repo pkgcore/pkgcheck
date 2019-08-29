@@ -352,7 +352,7 @@ class GitAddon(base.Addon):
                     break
 
                 # initialize cache file location
-                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id)
+                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
                 cache_file = pjoin(cache_dir, f'{repo_cls.cache_name}.pickle')
 
                 git_repo = None
@@ -637,7 +637,7 @@ class ProfileAddon(base.Addon):
 
         if options.profile_cache or options.profile_cache is None:
             for repo in self.options.target_repo.trees:
-                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id)
+                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
                 cache_file = pjoin(cache_dir, 'profiles.pickle')
                 # add profiles-base -> repo mapping to ease storage procedure
                 cached_profiles[repo.config.profiles_base]['repo'] = repo
@@ -784,7 +784,7 @@ class ProfileAddon(base.Addon):
         for k, v in cached_profiles.items():
             if v.pop('update', False):
                 repo = v.pop('repo')
-                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id)
+                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
                 cache_file = pjoin(cache_dir, 'profiles.pickle')
                 try:
                     os.makedirs(os.path.dirname(cache_file), exist_ok=True)
