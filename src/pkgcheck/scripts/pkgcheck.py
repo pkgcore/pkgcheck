@@ -159,11 +159,7 @@ def _validate_args(parser, namespace):
         try:
             restrictions = repo.path_restrict(path)[1:]
         except ValueError as e:
-            if path in repo:
-                # path to a non-ebuild file or ebuild in wrong dir layout,
-                # disregard and use parent dir
-                path = os.path.dirname(path)
-                restrictions = repo.path_restrict(path)[1:]
+            raise UserException(str(e))
         if restrictions:
             return packages.AndRestriction(*restrictions)
         return packages.AlwaysTrue
@@ -201,10 +197,6 @@ def _validate_args(parser, namespace):
         if target_repo is None:
             # fallback to the default repo
             target_repo = namespace.config.get_default('repo')
-        elif len(namespace.targets) == 1 and (
-                os.path.abspath(namespace.targets[0]) == target_repo.location):
-            # reset targets so the entire repo is scanned
-            namespace.targets = []
 
         namespace.target_repo = target_repo
 
@@ -249,13 +241,10 @@ def _validate_args(parser, namespace):
         if isinstance(namespace.targets, list):
             namespace.limiters = list(namespace.limiters)
     else:
-        repo_base = getattr(namespace.target_repo, 'location', None)
-        if not repo_base:
-            parser.error(
-                'Either specify a target repo that is not multi-tree or '
-                'one or more extended atoms to scan '
-                '("*" for the entire repo).')
-        namespace.limiters = [_path_restrict(cwd)]
+        if cwd in namespace.target_repo:
+            namespace.limiters = [_path_restrict(cwd)]
+        else:
+            namespace.limiters = [packages.AlwaysTrue]
 
     if namespace.checkset is None:
         namespace.checkset = namespace.config.get_default('pkgcheck_checkset')
