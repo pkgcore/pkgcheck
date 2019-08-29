@@ -377,15 +377,11 @@ def _scan(options, out, err):
         # Ignore the return value, we just need to populate addons_map.
         init_addon(addon)
 
-    if options.verbosity > 1:
-        err.write(
-            f"target repo: {options.target_repo.repo_id!r} "
-            f"at {options.target_repo.location!r}")
-        for filterer in options.limiters:
-            err.write('limiter: ', filterer)
-        debug = logger.debug
-    else:
-        debug = None
+    if options.verbosity >= 1:
+        msg = f'target repo: {options.target_repo.repo_id!r}'
+        if options.target_repo.repo_id != options.target_repo.location:
+            msg += f' at {options.target_repo.location!r}'
+        err.write(msg)
 
     transforms = list(const.TRANSFORMS.values())
     sinks = [x for x in addons_map.values() if isinstance(x, base.Check)]
@@ -407,6 +403,7 @@ def _scan(options, out, err):
 
     reporter.start()
 
+    debug = logger.debug if options.debug else None
     for filterer in options.limiters:
         # skip repo checks when running at cat/pkg/version restriction levels
         if filterer != packages.AlwaysTrue:
@@ -440,8 +437,10 @@ def _scan(options, out, err):
             if options.verbosity > 1 and out_of_scope:
                 err.warn('skipping repo checks (not a full repo scan)')
 
-        if options.debug:
+        if options.verbosity >= 1:
             err.write(f'Running {len(sinks) - len(bad_sinks)} tests')
+        if options.debug:
+            err.write(f'limiter: {filterer}')
         err.flush()
 
         for result in base.Pipeline(pipes).run():

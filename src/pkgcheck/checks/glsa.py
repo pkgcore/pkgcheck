@@ -65,7 +65,7 @@ class TreeVulnerabilitiesCheck(base.GentooRepoCheck):
                 if selected_checks is not None and cls.__name__ in selected_checks[1]:
                     parser.error('no available glsa source, --glsa-dir must be specified')
                 namespace.glsa_enabled = False
-                if namespace.verbosity > 0:
+                if namespace.verbosity > 1:
                     logger.warn(
                         "disabling GLSA checks due to no glsa source "
                         "being found, and the check not being explicitly enabled")
