@@ -141,6 +141,40 @@ for addon in all_addons:
     addon.mangle_argparser(scan)
 
 
+def _determine_target_repo(namespace, parser, cwd):
+    """Determine a target repo when none was explicitly selected.
+
+    Returns a repository object if a matching one is found, otherwise None.
+    """
+    target_repo = None
+    target_dir = cwd
+
+    # pull a target directory from target args if they're path-based
+    if namespace.targets and len(namespace.targets) == 1:
+        initial_target = namespace.targets[0]
+        if os.path.exists(initial_target):
+            # if initial target is an existing path, use it instead of cwd
+            target = os.path.abspath(initial_target)
+            if os.path.isfile(target):
+                target = os.path.dirname(target)
+            target_dir = target
+        else:
+            # initial target doesn't exist as a path, perhaps a repo ID?
+            for repo in namespace.domain.ebuild_repos_raw:
+                if initial_target == repo.repo_id:
+                    return repo
+
+    with suppress_logging():
+        # determine target repo from the target directory
+        for repo in namespace.domain.ebuild_repos_raw:
+            if target_dir in repo:
+                return repo
+
+    # determine if CWD is inside an unconfigured repo
+    return namespace.domain.find_repo(
+        target_dir, config=namespace.config, configure=False)
+
+
 @scan.bind_final_check
 def _validate_args(parser, namespace):
     namespace.enabled_checks = list(const.CHECKS.values())
@@ -171,33 +205,12 @@ def _validate_args(parser, namespace):
     except FileNotFoundError as e:
         cwd = '/'
 
+    # if we have no target repo figure out what to use
     if namespace.target_repo is None:
-        # we have no target repo so try to guess one
-        target_repo = None
-        target_dir = cwd
-
-        # pull a target directory from target args if they're path-based
-        if namespace.targets and os.path.exists(namespace.targets[0]):
-            target = os.path.abspath(namespace.targets[0])
-            if os.path.isfile(target):
-                target = os.path.dirname(target)
-            target_dir = target
-
-        with suppress_logging():
-            # determine target repo from the target directory
-            for repo in namespace.domain.ebuild_repos_raw:
-                if target_dir in repo:
-                    target_repo = repo
-                    break
-            else:
-                # determine if CWD is inside an unconfigured repo
-                target_repo = namespace.domain.find_repo(
-                    target_dir, config=namespace.config, configure=False)
-
+        target_repo = _determine_target_repo(namespace, parser, cwd)
+        # fallback to the default repo
         if target_repo is None:
-            # fallback to the default repo
             target_repo = namespace.config.get_default('repo')
-
         namespace.target_repo = target_repo
 
     # use filtered repo if filtering is enabled
