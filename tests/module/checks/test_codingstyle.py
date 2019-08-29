@@ -85,7 +85,7 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
 
     check_kls = codingstyle.BadInsIntoCheck
 
-    def test_it(self):
+    def test_insinto(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
         fake_src = [
             "# This is our first fake ebuild\n",
@@ -109,10 +109,20 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
         check = self.check_kls(options=None)
 
         reports = self.assertReports(check, [fake_pkg, fake_src])
-        dirs = [x.insintodir for x in reports]
-        assert dirs == list(bad)
         for r, path in zip(reports, bad):
             assert path in str(r)
+
+    def test_docinto(self):
+        check = self.check_kls(options=None)
+        for path in ('${PF}', '${P}', '${PF}/examples'):
+            for eapi_str, eapi in EAPI.known_eapis.items():
+                fake_pkg = misc.FakePkg("dev-util/diff-0.5", data={'EAPI': eapi_str})
+                fake_src = [f'\tinsinto /usr/share/doc/{path}\n']
+                if eapi.options.dodoc_allow_recursive:
+                    r = self.assertReport(check, [fake_pkg, fake_src])
+                    assert path in str(r)
+                else:
+                    self.assertNoReport(check, [fake_pkg, fake_src])
 
 
 class TestAbsoluteSymlink(misc.ReportTestCase):

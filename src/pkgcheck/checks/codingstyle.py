@@ -356,18 +356,25 @@ class BadInsIntoCheck(base.Check):
         patterns.extend(x.strip("/") for x in bad_paths)
         s = "|".join(patterns)
         s = s.replace("/", "/+")
-        cls._bad_insinto = re.compile(rf'insinto[ \t]+(/+(?:{s}))(?:$|[/ \t])')
+        cls._bad_insinto = re.compile(rf'(?P<insinto>insinto[ \t]+/+(?:{s}))(?:$|[/ \t])')
+        cls._bad_insinto_doc = re.compile(
+            r'(?P<insinto>insinto[ \t]+/usr/share/doc/\$\{PF?\}(/\w+)*)(?:$|[/ \t])')
 
     def feed(self, entry):
         pkg, lines = entry
 
-        badf = self._bad_insinto.search
         for lineno, line in enumerate(lines, 1):
             if not line.strip():
                 continue
-            matches = badf(line)
+            matches = self._bad_insinto.search(line)
             if matches is not None:
-                yield BadInsIntoDir(matches.groups()[0], lineno, pkg=pkg)
+                yield BadInsIntoDir(matches.group('insinto'), lineno, pkg=pkg)
+            # Check for insinto usage that should be replaced with
+            # docinto/dodoc [-r] under supported EAPIs.
+            if pkg.eapi.options.dodoc_allow_recursive:
+                matches = self._bad_insinto_doc.search(line)
+                if matches is not None:
+                    yield BadInsIntoDir(matches.group('insinto'), lineno, pkg=pkg)
 
 
 class ObsoleteUri(base.VersionedResult, base.Warning):
