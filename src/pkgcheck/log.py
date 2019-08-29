@@ -12,5 +12,7 @@ from . import __title__
 # overrides the root logger handler.
 logging.basicConfig()
 
-# Our main logger.
 logger = logging.getLogger(__title__)
+logger.addHandler(logging.StreamHandler())
+# don't propagate events back to the root logger
+logger.propagate = False
