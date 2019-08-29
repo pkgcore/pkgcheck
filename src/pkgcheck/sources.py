@@ -8,7 +8,7 @@ from . import addons, base
 
 
 class _RawRepo(UnconfiguredTree):
-    """Repository that allows allows matching against mismatched/invalid package names."""
+    """Repository that allows matching against mismatched/invalid package names."""
 
     def __init__(self, repo):
         super().__init__(repo.location)
@@ -28,9 +28,8 @@ class _RawRepo(UnconfiguredTree):
                 x[lp:ext_len] for x in listdir_files(cppath)
                 if x[ext_len:] == extension)
         except EnvironmentError as e:
-            raise KeyError(
-                "failed fetching versions for package %s: %s" %
-                (pjoin(self.base, '/'.join(catpkg)), str(e))) from e
+            path = pjoin(self.base, os.sep.join(catpkg))
+            raise KeyError(f'failed fetching versions for package {path}: {e}') from e
 
 
 class RawRepoSource(base.GenericSource):
