@@ -217,22 +217,24 @@ class TestPathVariablesCheck(misc.ReportTestCase):
     def test_double_prefix_found(self):
         fake_src = [
             'src_install() {\n',
-            '    cp foo.py "${ED}$(python_get_sitedir)"\n',
+            '   cp foo.py "${ED}$(python_get_sitedir)"\n',
             # test non-match
-            '    cp foo.py "${D%/}$(python_get_sitedir)"\n',
+            '   cp foo.py "${D%/}$(python_get_sitedir)"\n',
             # test slash-strip
-            '    cp foo.py "${ED%/}$(python_get_sitedir)"\n',
+            '   cp foo.py "${ED%/}$(python_get_sitedir)"\n',
             # test extra slash
-            '    cp foo.py "${ED}/$(python_get_sitedir)"\n',
+            '   cp foo.py "${ED}/$(python_get_sitedir)"\n',
             # test variable variant
-            '    cp foo.py "${ED}${PYTHON_SITEDIR}"\n',
+            '   cp foo.py "${ED}${PYTHON_SITEDIR}"\n',
             # test silly mistake
-            '    cp foo "${ED}${EPREFIX}/foo/bar"\n',
+            '   cp foo "${ED}${EPREFIX}/foo/bar"\n',
             # function variants
-            '    insinto "$(python_get_sitedir)"\n',
-            '    exeinto "${EPREFIX}/foo/bar"\n',
-            '    fowners foo:bar "$(python_get_sitedir)/foo/bar.py"\n',
-            '    dodir /foo/bar "${EPREFIX}"/bar/baz\n',
+            '   insinto "$(python_get_sitedir)"\n',
+            '   exeinto "${EPREFIX}/foo/bar"\n',
+            '   fowners foo:bar "$(python_get_sitedir)/foo/bar.py"\n',
+            '   dodir /foo/bar "${EPREFIX}"/bar/baz\n',
+            # commented lines aren't flagged for double prefix usage
+            '#  exeinto "${EPREFIX}/foo/bar"\n',
             '}\n'
         ]
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")

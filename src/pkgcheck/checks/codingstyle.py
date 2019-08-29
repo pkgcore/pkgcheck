@@ -255,17 +255,20 @@ class PathVariablesCheck(base.Check):
         double_prefix = defaultdict(list)
 
         for lineno, line in enumerate(lines, 1):
-            if not line.strip():
+            line = line.strip()
+            if not line:
                 continue
 
-            match = self.double_prefix_regex.search(line)
-            if match is not None:
-                double_prefix[match.group(1)].append(lineno)
-            match = self.double_prefix_func_regex.search(line)
-            if (match is not None and
-                    self.double_prefix_func_false_positive_regex.match(
-                        match.group(0)) is None):
-                double_prefix[match.group(0)].append(lineno)
+            # flag double path prefix usage on uncommented lines only
+            if line[0] != '#':
+                match = self.double_prefix_regex.search(line)
+                if match is not None:
+                    double_prefix[match.group(1)].append(lineno)
+                match = self.double_prefix_func_regex.search(line)
+                if (match is not None and
+                        self.double_prefix_func_false_positive_regex.match(
+                            match.group(0)) is None):
+                    double_prefix[match.group(0)].append(lineno)
 
             # skip EAPIs that don't require trailing slashes
             if pkg.eapi.options.trailing_slash:
