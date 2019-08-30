@@ -294,11 +294,7 @@ class _XmlBaseCheck(base.Check):
             getattr(self, x) for x in dir(self) if x.startswith('_check_'))
 
     def _fetch_xsd(self):
-        if self.options.verbosity > 0:
-            logger.warn(
-                'metadata.xsd cannot be opened from '
-                f'{metadata_xsd!r}, will refetch')
-        logger.info(f"fetching metdata.xsd from {self.xsd_url}")
+        logger.info(f'fetching metdata.xsd from {self.xsd_url}')
 
         try:
             xsd_data = urlopen(self.xsd_url).read()

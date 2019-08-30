@@ -194,8 +194,7 @@ class PythonCheck(base.Check):
                 flag = next(iter(x.restriction.vals))
                 if not flag.startswith(prefix):
                     continue
-                if not any(y.key in INTERPRETERS for y in x
-                                                 if isinstance(y, atom)):
+                if not any(y.key in INTERPRETERS for y in x if isinstance(y, atom)):
                     continue
                 matched.add(flag[len(prefix):])
             if matched == flags:
@@ -233,14 +232,13 @@ class PythonCheck(base.Check):
                 yield MissingPythonEclass(recomm, attr.upper(), str(p), pkg=pkg)
         elif eclass in ('python-r1', 'python-single-r1'):
             # grab Python implementations from IUSE
-            flags = set([x[len(IUSE_PREFIX):] for x in pkg.iuse
-                                              if x.startswith(IUSE_PREFIX)])
-            s_flags = set([x[len(IUSE_PREFIX_S):] for x in pkg.iuse
-                                                  if x.startswith(IUSE_PREFIX_S)])
+            flags = {x[len(IUSE_PREFIX):] for x in pkg.iuse if x.startswith(IUSE_PREFIX)}
+            s_flags = {
+                x[len(IUSE_PREFIX_S):] for x in pkg.iuse if x.startswith(IUSE_PREFIX_S)}
 
             # python-single-r1 should have matching PT and PST
             # (except when there is only one impl, whereas PST is not generated)
-            got_single_impl = len(flags) == 1 and len(s_flags) == 0
+            got_single_impl = len(flags) == 1 and not s_flags
             if (eclass == 'python-single-r1' and flags != s_flags
                     and not got_single_impl):
                 yield PythonSingleUseMismatch(sorted(flags), sorted(s_flags), pkg=pkg)

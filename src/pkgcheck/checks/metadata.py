@@ -6,8 +6,8 @@ from operator import attrgetter
 import os
 import re
 
-from pkgcore.ebuild import eapi
 from pkgcore.ebuild.atom import atom as atom_cls
+from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.package.errors import MetadataException
@@ -176,12 +176,11 @@ class RequiredUseDefaults(base.VersionedResult, base.Warning):
                 f'profile: {self.profile!r}{num_profiles} '
                 f'failed REQUIRED_USE: {self.required_use}'
             )
-        else:
-            return (
-                f'keyword: {self.keyword}, profile: {self.profile!r}, '
-                f"default USE: [{', '.join(self.use)}] "
-                f'-- failed REQUIRED_USE: {self.required_use}'
-            )
+        return (
+            f'keyword: {self.keyword}, profile: {self.profile!r}, '
+            f"default USE: [{', '.join(self.use)}] "
+            f'-- failed REQUIRED_USE: {self.required_use}'
+        )
 
 
 class RequiredUSEMetadataCheck(base.Check):
@@ -191,7 +190,7 @@ class RequiredUSEMetadataCheck(base.Check):
     # only run the check for EAPI 4 and above
     source = (sources.RestrictionRepoSource, (
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
-                'options.has_required_use', values.FunctionRestriction(bool))),))
+            'options.has_required_use', values.FunctionRestriction(bool))),))
     required_addons = (addons.UseAddon, addons.ProfileAddon)
     known_results = (MetadataError, RequiredUseDefaults, UnstatedIUSE)
 
@@ -202,7 +201,7 @@ class RequiredUSEMetadataCheck(base.Check):
 
     def feed(self, pkg):
         # check REQUIRED_USE for invalid nodes
-        nodes, unstated = self.iuse_filter((str,), pkg, pkg.required_use)
+        _nodes, unstated = self.iuse_filter((str,), pkg, pkg.required_use)
         yield from unstated
 
         # check both stable/unstable profiles for stable KEYWORDS and only
@@ -383,7 +382,7 @@ class MissingSlotDepCheck(base.Check):
     # only run the check for EAPI 5 and above
     source = (sources.RestrictionRepoSource, (
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
-                'options.sub_slotting', values.FunctionRestriction(bool))),))
+            'options.sub_slotting', values.FunctionRestriction(bool))),))
     required_addons = (addons.UseAddon,)
     known_results = (MissingSlotDep,)
 
@@ -850,7 +849,7 @@ class SrcUriCheck(base.Check):
         self.iuse_filter = iuse_handler.get_filter('fetchables')
         self.zip_to_tar_re = re.compile(
             r'https?://(github\.com/.*?/.*?/archive/.+\.zip|'
-                      r'gitlab\.com/.*?/.*?/-/archive/.+\.zip)')
+            r'gitlab\.com/.*?/.*?/-/archive/.+\.zip)')
 
     def feed(self, pkg):
         lacks_uri = set()
@@ -937,7 +936,7 @@ class DescriptionCheck(base.Check):
         s = pkg.description.lower()
         if s.startswith("based on") and "eclass" in s:
             yield BadDescription("generic eclass defined description", pkg=pkg)
-        elif pkg.package == s or pkg.key == s:
+        elif s in (pkg.package, pkg.key):
             yield BadDescription(
                 "using the pkg name as the description isn't very helpful", pkg=pkg)
         else:
@@ -1111,7 +1110,7 @@ class MissingUnpackerDep(base.VersionedResult, base.Warning):
     @property
     def short_desc(self):
         # determine proper dep type from pkg EAPI
-        eapi_obj = eapi.get_eapi(self.eapi)
+        eapi_obj = get_eapi(self.eapi)
         dep_type = 'BDEPEND' if 'BDEPEND' in eapi_obj.metadata_keys else 'DEPEND'
 
         if len(self.unpackers) == 1:
@@ -1150,7 +1149,8 @@ class MissingUnpackerDepCheck(base.Check):
 
     def feed(self, pkg):
         # ignore conditionals
-        fetchables, _ = self.fetch_filter((fetchable,), pkg,
+        fetchables, _ = self.fetch_filter(
+            (fetchable,), pkg,
             pkg._get_attr['fetchables'](
                 pkg, allow_missing_checksums=True,
                 ignore_unknown_mirrors=True, skip_default_mirrors=True))

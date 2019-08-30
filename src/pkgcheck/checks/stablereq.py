@@ -92,5 +92,5 @@ class StableRequestCheck(base.GentooRepoCheck):
                         else:
                             keywords = stable_pkg_keywords.intersection(pkg_stable_keywords)
                         keywords = sorted('~' + x for x in keywords)
-                        yield StableRequest(pkg.slot, keywords, days_old, pkg=pkg)
+                        yield StableRequest(slot, keywords, days_old, pkg=pkg)
                         break

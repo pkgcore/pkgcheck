@@ -460,7 +460,7 @@ class GlobalUSECheck(base.Check):
         potential_locals = []
         for flag in self.global_use.keys():
             pkgs = self.global_flag_usage[flag]
-            if len(pkgs) == 0:
+            if not pkgs:
                 unused_global_flags.append(flag)
             elif len(pkgs) < 5:
                 potential_locals.append((flag, pkgs))

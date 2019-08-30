@@ -101,7 +101,7 @@ class ImlateCheck(base.Check):
                 if lagging:
                     stable_kwds = (x for x in pkg.keywords if not x[0] in ('~', '-'))
                     yield LaggingStable(
-                        pkg.slot, sorted(stable_kwds), sorted(lagging), pkg=pkg)
+                        slot, sorted(stable_kwds), sorted(lagging), pkg=pkg)
 
                 unstable_keywords = {x for x in pkg.keywords if x[0] == '~'}
                 potential = self.target_arches.intersection(unstable_keywords)
@@ -109,6 +109,6 @@ class ImlateCheck(base.Check):
                 if potential:
                     stable_kwds = (x for x in pkg.keywords if not x[0] in ('~', '-'))
                     yield PotentialStable(
-                        pkg.slot, sorted(stable_kwds), sorted(potential), pkg=pkg)
+                        slot, sorted(stable_kwds), sorted(potential), pkg=pkg)
 
                 break

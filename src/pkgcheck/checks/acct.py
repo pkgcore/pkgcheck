@@ -1,3 +1,5 @@
+"""Various checks for acct-group and acct-user packages."""
+
 from collections import defaultdict
 from itertools import chain
 import re
@@ -63,7 +65,7 @@ class AcctCheck(base.Check):
     scope = base.repository_scope
     feed_type = base.versioned_feed
     source = (sources.RestrictionRepoSource, (packages.OrRestriction(*(
-            restricts.CategoryDep('acct-user'), restricts.CategoryDep('acct-group'))),))
+        restricts.CategoryDep('acct-user'), restricts.CategoryDep('acct-group'))),))
     known_results = (
         MissingAccountIdentifier, ConflictingAccountIdentifiers,
         OutsideRangeAccountIdentifier,
@@ -93,12 +95,14 @@ class AcctCheck(base.Check):
                     found_id = int(m.group('id'))
                     break
         else:
-            return (MissingAccountIdentifier(f"ACCT_{expected_var}_ID", pkg=pkg),)
+            yield MissingAccountIdentifier(f"ACCT_{expected_var}_ID", pkg=pkg)
+            return
 
         # all UIDs/GIDs must be in <500, with special exception
         # of nobody/nogroup which use 65534/65533
         if found_id >= 500 and found_id not in extra_allowed_ids:
-            return (OutsideRangeAccountIdentifier(expected_var.lower(), found_id, pkg=pkg),)
+            yield OutsideRangeAccountIdentifier(expected_var.lower(), found_id, pkg=pkg)
+            return
 
         seen_id_map[found_id][pkg.key].append(pkg)
 
