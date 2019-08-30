@@ -336,8 +336,10 @@ class GitAddon(base.Addon):
 
     def get_commit_hash(self, repo_location, commit='origin/HEAD'):
         """Retrieve a git repo's commit hash for a specific commit object."""
-        ret, out = spawn_get_output(
-            ['git', 'rev-parse', commit], cwd=repo_location)
+        ret = 1
+        if os.path.exists(pjoin(repo_location, '.git')):
+            ret, out = spawn_get_output(
+                ['git', 'rev-parse', commit], cwd=repo_location)
         if ret != 0:
             raise ValueError(
                 f'failed retrieving {commit} commit hash '
@@ -352,13 +354,10 @@ class GitAddon(base.Addon):
         if not self.options.git_disable:
             git_repos = []
             for repo in target_repo.trees:
-                if os.path.exists(pjoin(repo.location, '.git')):
-                    try:
-                        commit = self.get_commit_hash(repo.location)
-                    except ValueError as e:
-                        logger.debug('%s', e)
-                        break
-                else:
+                try:
+                    commit = self.get_commit_hash(repo.location)
+                except ValueError as e:
+                    logger.debug('%s', e)
                     continue
 
                 # initialize cache file location
