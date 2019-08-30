@@ -365,18 +365,36 @@ def _scan(options, out, err):
         out, keywords=options.filtered_keywords, verbosity=options.verbosity)
 
     addons_map = {}
-
-    def init_addon(klass):
-        res = addons_map.get(klass)
+    def init_addon(cls):
+        """Initialize addons."""
+        res = addons_map.get(cls)
         if res is not None:
             return res
-        deps = list(init_addon(dep) for dep in klass.required_addons)
-        res = addons_map[klass] = klass(options, *deps)
+        deps = [init_addon(dep) for dep in cls.required_addons]
+        res = addons_map[cls] = cls(options, *deps)
         return res
 
-    for addon in options.addons:
-        # Ignore the return value, we just need to populate addons_map.
-        init_addon(addon)
+    def init_source(source):
+        """Initialize a given source."""
+        if isinstance(source, tuple):
+            source_cls, args = source
+        else:
+            source_cls = source
+            args = ()
+        deps = [addons_map.get(cls, cls(options)) for cls in source_cls.required_addons]
+        return partial(source_cls, *args, options, *deps)
+
+    raw_sources = {}
+    def init_checks(addons):
+        """Initialize required checks."""
+        for cls in addons:
+            addon = init_addon(cls)
+            if isinstance(addon, base.Check):
+                if addon.source not in raw_sources:
+                    raw_sources[addon.source] = init_source(addon.source)
+                yield addon
+
+    enabled_checks = tuple(init_checks(options.addons))
 
     if options.verbosity >= 1:
         msg = f'target repo: {options.target_repo.repo_id!r}'
@@ -385,39 +403,27 @@ def _scan(options, out, err):
         err.write(msg)
 
     transforms = list(const.TRANSFORMS.values())
-    sinks = [x for x in addons_map.values() if isinstance(x, base.Check)]
-
-    if not sinks:
-        err.write(f'{scan.prog}: no matching checks available for current scope')
-        return
-
-    raw_sources = {}
-    required_sources = {check.source for check in options.enabled_checks}
-    for source in required_sources:
-        if isinstance(source, tuple):
-            source_cls, args = source
-        else:
-            source_cls = source
-            args = ()
-        addons = [addons_map.get(cls, cls(options)) for cls in source_cls.required_addons]
-        raw_sources[source] = partial(source_cls, *args, options, *addons)
-
     reporter.start()
 
     debug = logger.debug if options.debug else None
     for filterer in options.limiters:
+        sinks = enabled_checks
         # skip repo checks when running at cat/pkg/version restriction levels
         if filterer != packages.AlwaysTrue:
             logger.debug('skipping repo checks, running at higher restriction level')
-            sinks = [c for c in sinks if c.scope != base.repository_scope]
+            sinks = (x for x in sinks if x.scope != base.repository_scope)
 
         # skip package level checks when running at version restriction level
         try:
             if isinstance(filterer[-1], restricts.VersionMatch):
                 logger.debug('skipping package checks, running with version restriction')
-                sinks = [c for c in sinks if c.scope != base.package_scope]
+                sinks = (x for x in sinks if x.scope != base.package_scope)
         except TypeError:
             pass
+
+        sinks = tuple(sinks)
+        if not sinks:
+            err.write(f'{scan.prog}: no matching checks available for current scope')
 
         sources = {raw: source(filterer) for raw, source in raw_sources.items()}
         bad_sinks, pipes = base.plug(sinks, transforms, sources, debug)
