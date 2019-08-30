@@ -81,6 +81,7 @@ def write_obj_lists(python_base, install_prefix):
     # only optimize during install, skip during wheel builds
     if install_prefix == os.path.abspath(sys.prefix):
         byte_compile([path], prefix=python_base)
+        byte_compile([path], optimize=1, prefix=python_base)
         byte_compile([path], optimize=2, prefix=python_base)
 
 
