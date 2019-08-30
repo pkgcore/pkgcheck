@@ -3,6 +3,22 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.6.3 (2019-08-30)
+---------------------------
+
+- PathVariablesCheck: Flag double path prefix usage on uncommented lines only
+  to avoid some types of false positives.
+
+- BadInsIntoCheck: flag ``insinto /usr/share/doc/${PF}`` usage for recent EAPIs
+  as it should be replaced by docinto and dodoc [-r] calls.
+
+- BadInsIntoCheck: Drop old cron support.
+
+- Skip global checks when running at cat/pkg/version restriction levels for
+  ``pkgcheck scan``. Also, skip package level checks that require package set
+  context when running at a single version restriction level.
+
+---------------------------
 pkgcheck 0.6.2 (2019-08-26)
 ---------------------------
 
@@ -233,7 +249,7 @@ pkgcheck 0.5.3 (2016-05-29)
 pkgcheck 0.5.2 (2016-05-28)
 ---------------------------
 
-* Replace libxml2 with lxml-based validator for glep68 schema validation. 
+* Replace libxml2 with lxml-based validator for glep68 schema validation.
 
 * UseAddon: Use profile-derived implicit USE flag lists instead of pre-EAPI 5
   hacks. This also improves the unused global USE flag check to look for unused
