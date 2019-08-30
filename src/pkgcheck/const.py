@@ -5,7 +5,7 @@ from importlib import import_module
 import inspect
 import pkgutil
 
-from snakeoil import mappings
+from snakeoil import demandimport, mappings
 
 from . import __title__, base
 
@@ -48,7 +48,8 @@ def _GET_VALS(attr, func):
     try:
         result = getattr(_defaults, attr)
     except AttributeError:
-        result = func()
+        with demandimport.disabled():
+            result = func()
     return result
 
 
