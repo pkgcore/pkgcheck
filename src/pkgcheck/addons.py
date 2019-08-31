@@ -308,16 +308,34 @@ class HistoricalRepo(SimpleTree):
 
 
 class GitAddon(base.Addon):
+    """Git repo support for various checks.
+
+    Pkgcheck can create virtual package repos from a given git repo's history
+    in order to provide more info for checks relating to stable requests,
+    outdated blockers, or local commits. These virtual repos are cached and
+    updated every run if new commits are detected.
+
+    Git repos must have a supported config in order to work properly.
+    Specifically, pkgcheck assumes that both origin and master branches exist
+    and relate to the upstream and local development states, respectively.
+
+    Additionally, the origin/HEAD ref must exist. If it doesn't, running ``git
+    fetch origin`` should create it. Otherwise, using ``git remote set-head
+    origin master`` or similar will also create the reference.
+    """
 
     # used to check repo cache compatibility
     cache_version = 1
 
-    @staticmethod
-    def mangle_argparser(parser):
-        group = parser.add_argument_group('git')
+    @classmethod
+    def mangle_argparser(cls, parser):
+        group = parser.add_argument_group('git', docs=cls.__doc__)
         group.add_argument(
             '--git-disable', action='store_true',
-            help="disable checks that use git to parse repo logs")
+            help="disable git-related checks",
+            docs="""
+                Disable all checks that use git to parse repo logs.
+            """)
         group.add_argument(
             '--git-cache', action='store_true',
             help="force git repo cache refresh",
