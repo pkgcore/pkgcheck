@@ -284,7 +284,7 @@ class VisibilityCheck(base.Check):
                                     profiles.get(profile_status, ()),
                                     key=attrgetter('key', 'name')):
                                 yield cls(
-                                    attr, profile.key, profile.name, list(failures),
+                                    attr, profile.key, profile.name, failures,
                                     profile_status, profile.deprecated, pkg=pkg)
                 else:
                     # only report one failure per depset per profile type in regular mode
@@ -297,7 +297,7 @@ class VisibilityCheck(base.Check):
                                 profile = status_profiles[0]
                                 yield cls(
                                     attr, profile.key, profile.name,
-                                    list(failures), profile_status,
+                                    failures, profile_status,
                                     profile.deprecated, len(status_profiles), pkg=pkg)
 
     def check_visibility_vcs(self, pkg):
