@@ -222,7 +222,7 @@ class _ParseGitRepo(object):
         line = git_log.stdout.readline().decode().strip()
         if git_log.poll():
             error = git_log.stderr.read().decode().strip()
-            logger.warning(f'skipping git checks: {error}')
+            logger.warning('skipping git checks: %s', error)
             return {}
 
         count = 1
@@ -357,7 +357,7 @@ class GitAddon(base.Addon):
                 try:
                     commit = self.get_commit_hash(repo.location)
                 except ValueError as e:
-                    logger.debug('%s', e)
+                    logger.warning('skipping git checks for %s repo: %s', repo, e)
                     continue
 
                 # initialize cache file location
@@ -429,7 +429,7 @@ class GitAddon(base.Addon):
                 origin = self.get_commit_hash(target_repo.location)
                 master = self.get_commit_hash(target_repo.location, commit='master')
             except ValueError as e:
-                logger.debug(f'skipping git commit checks: {e}')
+                logger.warning('skipping git commit checks: %s', e)
                 return repo
 
             # skip git checks, no local commits found
