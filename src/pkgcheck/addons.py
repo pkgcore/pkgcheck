@@ -805,7 +805,7 @@ class ProfileAddon(base.Addon):
                         f'failed dumping {repo.repo_id} profiles cache: '
                         f'{cache_file!r}: {e.strerror}')
                     if not options.forced_cache:
-                        logger.warn(msg)
+                        logger.warning(msg)
                     else:
                         raise UserException(msg)
 

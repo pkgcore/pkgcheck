@@ -328,7 +328,7 @@ class _XmlBaseCheck(base.Check):
                 try:
                     metadata_xsd = self._fetch_xsd()
                 except XsdError as e:
-                    logger.warn(f'skipping check: {e}')
+                    logger.warning('skipping check: %s', e)
                     return
             _XmlBaseCheck.schema = etree.XMLSchema(etree.parse(metadata_xsd))
 
