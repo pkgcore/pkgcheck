@@ -97,7 +97,7 @@ def visit_atoms(pkg, stream):
 def strip_atom_use(inst):
     if not inst.use:
         return inst
-    if '=*' == inst.op:
+    if inst.op == '=*':
         s = f'={inst.cpvstr}*'
     else:
         s = inst.op + inst.cpvstr
@@ -151,7 +151,7 @@ class UncheckableDep(base.VersionedResult, base.Warning):
         return f"depset {self.attr}: could not be checked due to pkgcore limitation"
 
 
-class NonsolvableDeps(base.VersionedResult, base.Error):
+class _NonsolvableDeps(base.VersionedResult):
     """No potential solution for a depset attribute."""
 
     def __init__(self, attr, keyword, profile, deps, profile_status,
@@ -177,15 +177,15 @@ class NonsolvableDeps(base.VersionedResult, base.Error):
         )
 
 
-class NonsolvableDepsInStable(NonsolvableDeps):
+class NonsolvableDepsInStable(_NonsolvableDeps, base.Error):
     """No potential solution for dependency on stable profile."""
 
 
-class NonsolvableDepsInDev(NonsolvableDeps):
+class NonsolvableDepsInDev(_NonsolvableDeps, base.Error):
     """No potential solution for dependency on dev profile."""
 
 
-class NonsolvableDepsInExp(base.Warning, NonsolvableDeps):
+class NonsolvableDepsInExp(_NonsolvableDeps, base.Warning):
     """No potential solution for dependency on exp profile."""
 
 
@@ -202,7 +202,7 @@ class VisibilityCheck(base.Check):
         addons.QueryCacheAddon, addons.ProfileAddon,
         addons.EvaluateDepSetAddon)
     known_results = (
-        VisibleVcsPkg, NonexistentDeps, NonsolvableDeps, UncheckableDep,
+        VisibleVcsPkg, NonexistentDeps, UncheckableDep,
         NonsolvableDepsInStable, NonsolvableDepsInDev, NonsolvableDepsInExp,
     )
 
@@ -229,11 +229,10 @@ class VisibilityCheck(base.Check):
             yield from self.check_visibility_vcs(pkg)
 
         suppressed_depsets = []
-        for attr in ("bdepend", "depend", "rdepend", "pdepend"):
+        for attr in ('bdepend', 'depend', 'rdepend', 'pdepend'):
             nonexistent = set()
             try:
                 for orig_node in visit_atoms(pkg, getattr(pkg, attr)):
-
                     node = strip_atom_use(orig_node)
                     if node not in self.query_cache:
                         if node in self.profiles.global_insoluble:
@@ -241,7 +240,6 @@ class VisibilityCheck(base.Check):
                             # insert an empty tuple, so that tight loops further
                             # on don't have to use the slower get method
                             self.query_cache[node] = ()
-
                         else:
                             matches = caching_iter(
                                 self.options.search_repo.itermatch(node))
@@ -265,7 +263,7 @@ class VisibilityCheck(base.Check):
 
         del nonexistent
 
-        for attr in ("bdepend", "depend", "rdepend", "pdepend"):
+        for attr in ('bdepend', 'depend', 'rdepend', 'pdepend'):
             if attr in suppressed_depsets:
                 continue
             depset = getattr(pkg, attr)
