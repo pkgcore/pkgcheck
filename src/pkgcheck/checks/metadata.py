@@ -2,7 +2,6 @@ from collections import defaultdict
 from datetime import datetime
 from difflib import SequenceMatcher
 from itertools import chain
-from operator import attrgetter
 import os
 import re
 
@@ -494,9 +493,6 @@ class DependencyCheck(base.Check):
 
     feed_type = base.versioned_feed
 
-    attrs = tuple((x, attrgetter(x)) for x in
-                  ("bdepend", "depend", "rdepend", "pdepend"))
-
     def __init__(self, options, iuse_handler, git_addon):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
@@ -534,28 +530,28 @@ class DependencyCheck(base.Check):
         return {}
 
     def feed(self, pkg):
-        for attr_name, getter in self.attrs:
+        for attr in (x.lower() for x in pkg.eapi.dep_keys):
             slot_op_or_blocks = set()
             slot_op_blockers = set()
             outdated_blockers = set()
             nonexistent_blockers = set()
 
             nodes, unstated = self.iuse_filter(
-                (atom_cls, OrRestriction), pkg, getter(pkg), attr=attr_name)
+                (atom_cls, OrRestriction), pkg, getattr(pkg, attr), attr=attr)
             yield from unstated
 
             for atom, in_or_restriction in self._flatten_or_restrictions(nodes):
                 if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
-                    missing_use_deps = self._check_use_deps(attr_name, pkg, atom)
+                    missing_use_deps = self._check_use_deps(attr, pkg, atom)
                     for use, pkg_deps in missing_use_deps.items():
                         pkg_deps = sorted(str(x.versioned_atom) for x in pkg_deps)
                         yield MissingUseDepDefault(
-                            attr_name, str(atom), use, pkg_deps, pkg=pkg)
+                            attr, str(atom), use, pkg_deps, pkg=pkg)
                 if in_or_restriction and atom.slot_operator == '=':
                     slot_op_or_blocks.add(atom.key)
                 if atom.blocks:
                     if atom.match(pkg):
-                        yield MetadataError(attr_name, "blocks itself", pkg=pkg)
+                        yield MetadataError(attr, "blocks itself", pkg=pkg)
                     elif atom.slot_operator == '=':
                         slot_op_blockers.add(atom.key)
                     elif self.existence_repo is not None:
@@ -572,28 +568,28 @@ class DependencyCheck(base.Check):
                                 removal = datetime.strptime(removal, '%Y-%m-%d')
                                 years = round((self.today - removal).days / 365, 2)
                                 if years > 2:
-                                    outdated_blockers.add((attr_name, atom, years))
+                                    outdated_blockers.add((atom, years))
                             else:
-                                nonexistent_blockers.add((attr_name, atom))
+                                nonexistent_blockers.add((atom))
                 if atom.op == '=' and not atom.revision:
-                    yield MissingPackageRevision(attr_name, str(atom), pkg=pkg)
+                    yield MissingPackageRevision(attr, str(atom), pkg=pkg)
 
             if slot_op_or_blocks:
                 atoms = ', '.join(sorted(slot_op_or_blocks))
                 yield MetadataError(
-                    attr_name,
+                    attr,
                     f'= slot operator used inside || block: [{atoms}]',
                     pkg=pkg)
             if slot_op_blockers:
                 atoms = ', '.join(sorted(slot_op_blockers))
                 yield MetadataError(
-                    attr_name,
+                    attr,
                     f'= slot operator used in blocker: [{atoms}]',
                     pkg=pkg)
 
-            for attr, atom, years in sorted(outdated_blockers):
+            for atom, years in sorted(outdated_blockers):
                 yield OutdatedBlocker(attr.upper(), str(atom), years, pkg=pkg)
-            for attr, atom in sorted(nonexistent_blockers):
+            for atom in sorted(nonexistent_blockers):
                 yield NonexistentBlocker(attr.upper(), str(atom), pkg=pkg)
 
 

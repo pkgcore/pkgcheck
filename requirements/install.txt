@@ -1,4 +1,4 @@
 chardet
 lxml
 snakeoil~=0.8.1
-pkgcore~=0.10.2
+pkgcore~=0.10.3

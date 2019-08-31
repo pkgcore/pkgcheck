@@ -216,7 +216,7 @@ class PythonCheck(base.Check):
 
             # check whether we should be using one
             highest_found = None
-            for attr in ("bdepend", "depend", "rdepend", "pdepend"):
+            for attr in (x.lower() for x in pkg.eapi.dep_keys):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
                     if not p.blocks and p.key in INTERPRETERS:
                         highest_found = (attr, p)

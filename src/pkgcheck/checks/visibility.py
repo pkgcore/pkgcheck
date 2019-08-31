@@ -229,7 +229,7 @@ class VisibilityCheck(base.Check):
             yield from self.check_visibility_vcs(pkg)
 
         suppressed_depsets = []
-        for attr in ('bdepend', 'depend', 'rdepend', 'pdepend'):
+        for attr in (x.lower() for x in pkg.eapi.dep_keys):
             nonexistent = set()
             try:
                 for orig_node in visit_atoms(pkg, getattr(pkg, attr)):
@@ -263,7 +263,7 @@ class VisibilityCheck(base.Check):
 
         del nonexistent
 
-        for attr in ('bdepend', 'depend', 'rdepend', 'pdepend'):
+        for attr in (x.lower() for x in pkg.eapi.dep_keys):
             if attr in suppressed_depsets:
                 continue
             depset = getattr(pkg, attr)
