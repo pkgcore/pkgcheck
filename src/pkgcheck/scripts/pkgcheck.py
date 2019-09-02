@@ -216,6 +216,9 @@ def _validate_args(parser, namespace):
     if namespace.filtered:
         namespace.target_repo = namespace.domain.ebuild_repos[str(namespace.target_repo)]
 
+    # determine if we're running in the gentoo repo or a clone
+    namespace.gentoo_repo = 'gentoo' in namespace.target_repo.aliases
+
     # search_repo is a multiplex of target_repo and its masters, make sure
     # they're configured properly in metadata/layout.conf. This is used for
     # things like visibility checks (it is passed to the checkers in "start").

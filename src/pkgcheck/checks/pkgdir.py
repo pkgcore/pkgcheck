@@ -98,6 +98,22 @@ class ExecutableFile(base.PackageResult, base.Warning):
         return f'unnecessary executable bit: {self.filename!r}'
 
 
+class UnknownFile(base.PackageResult, base.Warning):
+    """Unknown file in package directory.
+
+    Relevant for the gentoo repo only since the spec states that a package
+    directory may contain other files or directories.
+    """
+
+    def __init__(self, filename, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+
+    @property
+    def short_desc(self):
+        return f'unknown file: {self.filename!r}'
+
+
 class SizeViolation(base.PackageResult, base.Warning):
     """File in $FILESDIR is too large (current limit is 20k)."""
 
@@ -146,7 +162,7 @@ class PkgDirCheck(base.Check):
 
     ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
     known_results = (
-        DuplicateFiles, EmptyFile, ExecutableFile, SizeViolation,
+        DuplicateFiles, EmptyFile, ExecutableFile, UnknownFile, SizeViolation,
         Glep31Violation, InvalidUTF8, MismatchedPN, InvalidPN,
     )
 
@@ -161,22 +177,19 @@ class PkgDirCheck(base.Check):
         invalid = []
         # note we don't use os.walk, we need size info also
         for filename in listdir(pkg_path):
-            # while this may seem odd, written this way such that the
-            # filtering happens all in the genexp.  if the result was being
-            # handed to any, it's a frame switch each
-            # char, which adds up.
+            path = pjoin(pkg_path, filename)
+            if os.path.isfile(path) and  os.stat(path).st_mode & 0o111:
+                yield ExecutableFile(filename, pkg=pkg)
 
+            # While this may seem odd, written this way such that the filtering
+            # happens all in the genexp. If the result was being handed to any,
+            # it's a frame switch each char, which adds up.
             if any(True for x in filename if x not in allowed_filename_chars_set):
                 yield Glep31Violation(filename, pkg=pkg)
 
-            if (filename.endswith(ebuild_ext) or filename in
-                    ("Manifest", "metadata.xml")):
-                if os.stat(pjoin(pkg_path, filename)).st_mode & 0o111:
-                    yield ExecutableFile(filename, pkg=pkg)
-
             if filename.endswith(ebuild_ext):
                 try:
-                    with open(pjoin(pkg_path, filename), mode='rb') as f:
+                    with open(path, mode='rb') as f:
                         f.read(8192).decode()
                 except UnicodeDecodeError as e:
                     yield InvalidUTF8(filename, str(e), pkg=pkg)
@@ -188,6 +201,9 @@ class PkgDirCheck(base.Check):
                         mismatched.append(pkg_name)
                 except MalformedAtom:
                     invalid.append(pkg_name)
+            elif (self.options.gentoo_repo and
+                    filename not in ('Manifest', 'metadata.xml', 'files')):
+                yield UnknownFile(filename, pkg=pkg)
 
         if mismatched:
             yield MismatchedPN(sorted(mismatched), pkg=pkg)

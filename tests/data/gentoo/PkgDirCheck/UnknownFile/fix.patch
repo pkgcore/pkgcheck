@@ -1,0 +1,5 @@
+diff -Naur gentoo/PkgDirCheck/UnknownFile/foo fixed/PkgDirCheck/UnknownFile/foo
+--- gentoo/PkgDirCheck/UnknownFile/foo	2019-09-02 10:06:25.435870102 -0600
++++ fixed/PkgDirCheck/UnknownFile/foo	1969-12-31 17:00:00.000000000 -0700
+@@ -1 +0,0 @@
+-foo

@@ -191,7 +191,7 @@ class GentooRepoCheck(Check):
 
     @classmethod
     def skip(cls, namespace):
-        skip = 'gentoo' not in namespace.target_repo.aliases
+        skip = not namespace.gentoo_repo
         if skip:
             logger.info(f'skipping {cls.__name__}, not running against gentoo repo')
         return skip or super().skip(namespace)

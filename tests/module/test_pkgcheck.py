@@ -331,14 +331,17 @@ class TestPkgcheckScan(object):
                     out, err = capsys.readouterr()
                     assert not err
                     assert excinfo.value.code == 0
-                    results = []
-                    for line in out.rstrip('\n').split('\n'):
-                        deserialized_result = reporters.JsonStream.from_json(line)
-                        assert deserialized_result.__class__.__name__ == keyword
-                        results.append(deserialized_result)
-                        self._results[repo].add(deserialized_result)
-                    # compare rendered fancy out to expected
-                    assert self._render_results(results) == expected
+                    if not expected:
+                        assert not out
+                    else:
+                        results = []
+                        for line in out.rstrip('\n').split('\n'):
+                            deserialized_result = reporters.JsonStream.from_json(line)
+                            assert deserialized_result.__class__.__name__ == keyword
+                            results.append(deserialized_result)
+                            self._results[repo].add(deserialized_result)
+                        # compare rendered fancy out to expected
+                        assert self._render_results(results) == expected
             tested = True
 
         if not tested:

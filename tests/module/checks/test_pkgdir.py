@@ -22,7 +22,7 @@ class PkgDirCheckBase(misc.ReportTestCase):
     @pytest.fixture(autouse=True)
     def _create_repo(self, tmpdir):
         self.repo = FakeRepo(repo_id='repo', location=str(tmpdir))
-        options = misc.Options(target_repo=self.repo)
+        options = misc.Options(target_repo=self.repo, gentoo_repo=False)
         self.check = self.check_kls(options)
 
     def mk_pkg(self, files={}, category=None, package=None, version='0.7.1', revision=''):
@@ -319,3 +319,29 @@ class TestExecutableFile(PkgDirCheckBase):
         assert isinstance(r, pkgdir.ExecutableFile)
         assert r.filename == 'files/foo.init'
         assert 'files/foo.init' in str(r)
+
+
+class TestUnknownFile(PkgDirCheckBase):
+    """Check UnknownFile results."""
+
+    def test_regular_files(self):
+        pkg = self.mk_pkg({'foo.init': 'blah'})
+        touch(pjoin(os.path.dirname(pkg.path), 'Manifest'))
+        touch(pjoin(os.path.dirname(pkg.path), 'metadata.xml'))
+        self.assertNoReport(self.check, [pkg])
+
+    def test_unknown_files_non_gentoo_repo(self):
+        pkg = self.mk_pkg({'foo.init': 'blah'})
+        touch(pjoin(os.path.dirname(pkg.path), 'Manifest'))
+        touch(pjoin(os.path.dirname(pkg.path), 'metadata.xml'))
+        touch(pjoin(os.path.dirname(pkg.path), 'foo-2'))
+        self.assertNoReport(self.check, [pkg])
+
+    def test_unknown_files_gentoo_repo(self):
+        pkg = self.mk_pkg({'foo.init': 'blah'})
+        touch(pjoin(os.path.dirname(pkg.path), 'Manifest'))
+        touch(pjoin(os.path.dirname(pkg.path), 'metadata.xml'))
+        touch(pjoin(os.path.dirname(pkg.path), 'foo-2'))
+        options = misc.Options(target_repo=self.repo, gentoo_repo=True)
+        check = self.check_kls(options)
+        r = self.assertReport(check, [pkg])
