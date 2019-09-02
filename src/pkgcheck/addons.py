@@ -354,10 +354,10 @@ class GitAddon(base.Addon):
 
     def get_commit_hash(self, repo_location, commit='origin/HEAD'):
         """Retrieve a git repo's commit hash for a specific commit object."""
-        ret = 1
-        if os.path.exists(pjoin(repo_location, '.git')):
-            ret, out = spawn_get_output(
-                ['git', 'rev-parse', commit], cwd=repo_location)
+        if not os.path.exists(pjoin(repo_location, '.git')):
+            raise ValueError
+        ret, out = spawn_get_output(
+            ['git', 'rev-parse', commit], cwd=repo_location)
         if ret != 0:
             raise ValueError(
                 f'failed retrieving {commit} commit hash '
@@ -375,7 +375,8 @@ class GitAddon(base.Addon):
                 try:
                     commit = self.get_commit_hash(repo.location)
                 except ValueError as e:
-                    logger.warning('skipping git checks for %s repo: %s', repo, e)
+                    if str(e):
+                        logger.warning('skipping git checks for %s repo: %s', repo, e)
                     continue
 
                 # initialize cache file location
@@ -447,7 +448,8 @@ class GitAddon(base.Addon):
                 origin = self.get_commit_hash(target_repo.location)
                 master = self.get_commit_hash(target_repo.location, commit='master')
             except ValueError as e:
-                logger.warning('skipping git commit checks: %s', e)
+                if str(e):
+                    logger.warning('skipping git commit checks: %s', e)
                 return repo
 
             # skip git checks, no local commits found
