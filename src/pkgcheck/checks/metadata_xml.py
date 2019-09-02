@@ -379,12 +379,11 @@ class _XmlBaseCheck(base.Check):
             yield f'line {l.line}, col {l.column}: ({l.type_name}) {l.message}'
 
     def _parse_xml(self, pkg, loc):
-        repo = pkg.repo
         try:
             doc = etree.parse(loc)
         except (IOError, OSError):
             # it's only an error when missing in the main gentoo repo
-            if repo.repo_id == 'gentoo':
+            if self.options.gentoo_repo:
                 yield self.missing_error(os.path.basename(loc), pkg=pkg)
             return
         except etree.XMLSyntaxError as e:
@@ -433,7 +432,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
 
     def _check_maintainers(self, pkg, loc, doc):
         """Validate maintainers in package metadata for the gentoo repo."""
-        if pkg.repo.repo_id == 'gentoo':
+        if self.options.gentoo_repo:
             if pkg.maintainers:
                 # check proxy maintainers
                 if not any(m.email.endswith('@gentoo.org')

@@ -704,7 +704,7 @@ class KeywordsCheck(base.Check):
             # check for invalid keywords
             invalid = set(pkg.keywords) - self.valid_keywords
             # portage-only KEYWORDS are allowed in overlays
-            if self.options.target_repo.repo_id != 'gentoo':
+            if not self.options.gentoo_repo:
                 invalid -= self.portage_keywords
             if invalid:
                 yield InvalidKeywords(sorted(invalid), pkg=pkg)

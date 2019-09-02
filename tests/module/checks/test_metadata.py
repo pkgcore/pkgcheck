@@ -142,7 +142,7 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
             FakePkg('dev-libs/bar-2', keywords=()),
         )
         search_repo = FakeRepo(pkgs=pkgs)
-        options = self.get_options(search_repo=search_repo)
+        options = self.get_options(search_repo=search_repo, gentoo_repo=False)
         profiles = [misc.FakeProfile()]
         iuse_handler = addons.UseAddon(options, profiles)
         self.check = metadata.KeywordsCheck(options, iuse_handler)
@@ -176,7 +176,7 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         assert "invalid KEYWORDS: 'foo'" == str(r)
 
         # check that * and ~* are flagged in gentoo repo
-        options = self.get_options(repo_name='gentoo')
+        options = self.get_options(repo_name='gentoo', gentoo_repo=True)
         profiles = [misc.FakeProfile()]
         iuse_handler = addons.UseAddon(options, profiles)
         check = metadata.KeywordsCheck(options, iuse_handler)

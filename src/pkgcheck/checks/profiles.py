@@ -422,7 +422,7 @@ class RepoProfilesCheck(base.Check, base.EmptyFeed):
         report_profile_errors = lambda x: profile_reports.append(ProfileError(x))
 
         # don't check for acceptable profile statuses on overlays
-        if self.repo.repo_id == 'gentoo':
+        if self.options.gentoo_repo:
             known_profile_statuses = self.known_profile_statuses
         else:
             known_profile_statuses = None
@@ -450,8 +450,7 @@ class RepoProfilesCheck(base.Check, base.EmptyFeed):
                         dir_parents(parent.path[len(self.profiles_dir):]))
                     # flag lagging profile EAPIs -- assumes EAPIs are sequentially
                     # numbered which should be the case for the gentoo repo
-                    if (self.repo.repo_id == 'gentoo' and
-                            str(profile.eapi) < str(parent.eapi)):
+                    if (self.options.gentoo_repo and str(profile.eapi) < str(parent.eapi)):
                         lagging_profile_eapi[profile].append(parent)
 
         for profile, parents in lagging_profile_eapi.items():
