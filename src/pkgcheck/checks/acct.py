@@ -1,6 +1,7 @@
 """Various checks for acct-group and acct-user packages."""
 
 from collections import defaultdict
+from functools import partial
 from itertools import chain
 import re
 
@@ -75,8 +76,8 @@ class AcctCheck(base.Check):
         super().__init__(options)
         self.id_re = re.compile(
             r'ACCT_(?P<var>USER|GROUP)_ID=(?P<quot>[\'"]?)(?P<id>[0-9]+)(?P=quot)')
-        self.seen_uids = defaultdict(lambda: defaultdict(list))
-        self.seen_gids = defaultdict(lambda: defaultdict(list))
+        self.seen_uids = defaultdict(partial(defaultdict, list))
+        self.seen_gids = defaultdict(partial(defaultdict, list))
         self.category_map = {
             'acct-user': (self.seen_uids, 'USER', (65534,)),
             'acct-group': (self.seen_gids, 'GROUP', (65533, 65534)),
