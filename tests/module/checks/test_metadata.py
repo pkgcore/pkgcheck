@@ -1072,10 +1072,10 @@ class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
 
     def test_keyword_output(self):
         # unpacker deps go in BDEPEND in EAPI >= 7
-        r = self.assertReport(self.mk_check(), self.mk_pkg('.jar', eapi='7'))
+        r = self.assertReport(self.mk_check(), self.mk_pkg('.zip', eapi='7'))
         assert 'missing BDEPEND="app-arch/unzip"' in str(r)
         # and in DEPEND for EAPI < 7
-        r = self.assertReport(self.mk_check(), self.mk_pkg('.jar', eapi='6'))
+        r = self.assertReport(self.mk_check(), self.mk_pkg('.zip', eapi='6'))
         assert 'missing DEPEND="app-arch/unzip"' in str(r)
 
     def test_without_dep(self):
