@@ -5,7 +5,6 @@ from operator import attrgetter, itemgetter
 
 from pkgcore import fetch
 from pkgcore.ebuild import atom
-from snakeoil import mappings
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
 from snakeoil.log import suppress_logging
@@ -596,63 +595,57 @@ class ManifestCheck(base.Check):
         DeprecatedChksum,
     )
 
-    repo_grabber = attrgetter("repo")
-
     def __init__(self, options, iuse_handler):
         super().__init__(options)
-        self.preferred_checksums = mappings.defaultdictkey(lambda repo: frozenset(
-            repo.config.manifests.hashes if hasattr(repo, 'config') else ()))
-        self.required_checksums = mappings.defaultdictkey(lambda repo: frozenset(
-            repo.config.manifests.required_hashes if hasattr(repo, 'config') else ()))
+        repo = options.target_repo
+        self.preferred_checksums = frozenset(
+            repo.config.manifests.hashes if hasattr(repo, 'config') else ())
+        self.required_checksums = frozenset(
+            repo.config.manifests.required_hashes if hasattr(repo, 'config') else ())
         self.iuse_filter = iuse_handler.get_filter('fetchables')
 
-    def feed(self, full_pkgset):
-        # sort it by repo.
-        for repo, pkgset in groupby(full_pkgset, self.repo_grabber):
-            preferred_checksums = self.preferred_checksums[repo]
-            required_checksums = self.required_checksums[repo]
-            pkgset = list(pkgset)
-            pkg_manifest = pkgset[0].manifest
-            manifest_distfiles = set(pkg_manifest.distfiles.keys())
-            seen = set()
-            for pkg in pkgset:
-                pkg.release_cached_data()
-                fetchables, _ = self.iuse_filter(
-                    (fetch.fetchable,), pkg,
-                    pkg._get_attr['fetchables'](
-                        pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True))
-                fetchables = set(fetchables)
-                pkg.release_cached_data()
+    def feed(self, pkgset):
+        pkg_manifest = pkgset[0].manifest
+        manifest_distfiles = set(pkg_manifest.distfiles.keys())
+        seen = set()
+        for pkg in pkgset:
+            pkg.release_cached_data()
+            fetchables, _ = self.iuse_filter(
+                (fetch.fetchable,), pkg,
+                pkg._get_attr['fetchables'](
+                    pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True))
+            fetchables = set(fetchables)
+            pkg.release_cached_data()
 
-                fetchable_files = set(f.filename for f in fetchables)
-                missing_manifests = fetchable_files.difference(manifest_distfiles)
-                if missing_manifests:
-                    yield MissingManifest(sorted(missing_manifests), pkg=pkg)
+            fetchable_files = set(f.filename for f in fetchables)
+            missing_manifests = fetchable_files.difference(manifest_distfiles)
+            if missing_manifests:
+                yield MissingManifest(sorted(missing_manifests), pkg=pkg)
 
-                for f_inst in fetchables:
-                    if f_inst.filename in seen:
-                        continue
-                    missing = required_checksums.difference(f_inst.chksums)
-                    if f_inst.filename not in missing_manifests and missing:
-                        yield MissingChksum(
-                            f_inst.filename, sorted(missing),
-                            sorted(f_inst.chksums), pkg=pkg)
-                    elif f_inst.chksums and preferred_checksums != frozenset(f_inst.chksums):
-                        yield DeprecatedChksum(
-                            f_inst.filename, sorted(preferred_checksums),
-                            sorted(f_inst.chksums), pkg=pkg)
-                    seen.add(f_inst.filename)
+            for f_inst in fetchables:
+                if f_inst.filename in seen:
+                    continue
+                missing = self.required_checksums.difference(f_inst.chksums)
+                if f_inst.filename not in missing_manifests and missing:
+                    yield MissingChksum(
+                        f_inst.filename, sorted(missing),
+                        sorted(f_inst.chksums), pkg=pkg)
+                elif f_inst.chksums and self.preferred_checksums != frozenset(f_inst.chksums):
+                    yield DeprecatedChksum(
+                        f_inst.filename, sorted(self.preferred_checksums),
+                        sorted(f_inst.chksums), pkg=pkg)
+                seen.add(f_inst.filename)
 
-            if pkg_manifest.thin:
-                unnecessary_manifests = []
-                for attr in ('aux_files', 'ebuilds', 'misc'):
-                    unnecessary_manifests.extend(getattr(pkg_manifest, attr, []))
-                if unnecessary_manifests:
-                    yield UnnecessaryManifest(sorted(unnecessary_manifests), pkg=pkgset[0])
+        if pkg_manifest.thin:
+            unnecessary_manifests = []
+            for attr in ('aux_files', 'ebuilds', 'misc'):
+                unnecessary_manifests.extend(getattr(pkg_manifest, attr, []))
+            if unnecessary_manifests:
+                yield UnnecessaryManifest(sorted(unnecessary_manifests), pkg=pkgset[0])
 
-            unknown_manifests = manifest_distfiles.difference(seen)
-            if unknown_manifests:
-                yield UnknownManifest(sorted(unknown_manifests), pkg=pkgset[0])
+        unknown_manifests = manifest_distfiles.difference(seen)
+        if unknown_manifests:
+            yield UnknownManifest(sorted(unknown_manifests), pkg=pkgset[0])
 
 
 class ManifestConflictCheck(base.Check):
