@@ -397,7 +397,7 @@ def _scan(options, out, err):
                     raw_sources[addon.source] = init_source(addon.source)
                 yield addon
 
-    enabled_checks = tuple(init_checks(options.addons))
+    enabled_checks = tuple(init_checks(options.pop('addons')))
 
     if options.verbosity >= 1:
         msg = f'target repo: {options.target_repo.repo_id!r}'
