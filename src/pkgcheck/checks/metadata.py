@@ -299,6 +299,25 @@ class ProbableUseExpand(base.PackageResult, base.Warning):
         return f"USE_EXPAND group {self.group!r} matches local USE flag: {self.flag!r}"
 
 
+class UnderscoreInUseFlag(base.PackageResult, base.Warning):
+    """USE flag uses underscore that is reserved for USE_EXPAND.
+
+    The USE flag name uses underscore. However, according to PMS
+    underscores are reserved for USE_EXPAND flags [#]_. The recommended
+    replacement is hyphen ('-').
+
+    .. [#] https://projects.gentoo.org/pms/7/pms.html#x1-200003.1.4
+    """
+
+    def __init__(self, flag, **kwargs):
+        super().__init__(**kwargs)
+        self.flag = flag
+
+    @property
+    def short_desc(self):
+        return f"USE flag {self.flag!r} uses reserved underscore character"
+
+
 class LocalUSECheck(base.Check):
     """Check local USE flags in metadata.xml for various issues."""
 
@@ -307,7 +326,7 @@ class LocalUSECheck(base.Check):
     required_addons = (addons.UseAddon,)
     known_results = (
         UnusedLocalUSE, MatchingGlobalUSE, ProbableGlobalUSE,
-        ProbableUseExpand, UnstatedIUSE,
+        ProbableUseExpand, UnderscoreInUseFlag, UnstatedIUSE,
     )
 
     def __init__(self, options, use_handler):
@@ -334,10 +353,13 @@ class LocalUSECheck(base.Check):
                     yield ProbableGlobalUSE(flag, pkg=pkg)
             else:
                 for group in self.use_expand_groups:
-                    if (flag.startswith(f'{group}_') and
-                            flag not in self.use_expand_groups[group]):
-                        yield ProbableUseExpand(flag, group.upper(), pkg=pkg)
+                    if flag.startswith(f'{group}_'):
+                        if flag not in self.use_expand_groups[group]:
+                            yield ProbableUseExpand(flag, group.upper(), pkg=pkg)
                         break
+                else:
+                    if '_' in flag:
+                        yield UnderscoreInUseFlag(flag, pkg=pkg)
 
         unused = set(local_use)
         for pkg in pkgs:

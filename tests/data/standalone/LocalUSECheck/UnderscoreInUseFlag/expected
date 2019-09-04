@@ -1,0 +1,2 @@
+LocalUSECheck/UnderscoreInUseFlag
+  UnderscoreInUseFlag: USE flag 'foo_bar' uses reserved underscore character
