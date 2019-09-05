@@ -187,7 +187,7 @@ class PathVariablesCheck(base.Check):
     feed_type = base.ebuild_feed
     known_results = (MissingSlash, UnnecessarySlashStrip, DoublePrefixInPath)
     prefixed_dir_functions = (
-        'into', 'insinto', 'exeinto',
+        'insinto', 'exeinto',
         'dodir', 'keepdir',
         'fowners', 'fperms',
         # java-pkg-2
