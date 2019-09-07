@@ -1,4 +1,2 @@
 SrcUriCheck/BadFilename
-  BadFilename: version 0: bad filename: [ BadFilename.tar.gz ]
-  BadFilename: version 1: bad filename: [ 1.tar.gz ]
-  BadFilename: version 2: bad filename: [ v2.tar.gz ]
+  BadFilename: version 0: bad filenames: [ 0.tar.gz, BadFilename.tar.gz, v0.tar.gz ]

@@ -1,5 +1,0 @@
-DESCRIPTION="Ebuild with unspecific SRC_URI filename"
-HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SRC_URI="https://github.com/pkgcore/pkgcheck/${PV}.tar.gz"
-SLOT="0"
-LICENSE="BSD"
