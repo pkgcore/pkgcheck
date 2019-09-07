@@ -423,6 +423,7 @@ def _scan(options, out, err):
         sinks = tuple(x for x in enabled_checks if x.scope <= scan_scope)
         if not sinks:
             err.write(f'{scan.prog}: no matching checks available for current scope')
+            continue
 
         bad_sinks, pipes = base.plug(sinks, transforms, sources, scan_scope, debug=debug)
         if bad_sinks:
