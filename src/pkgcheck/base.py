@@ -111,27 +111,18 @@ class GenericSource(object):
     feed_type = versioned_feed
     cost = 10
 
-    def __init__(self, options, limiter):
+    def __init__(self, options):
         self.options = options
         self.repo = options.target_repo
-        self.limiter = limiter
 
-        for scope, attrs in ((version_scope, ['fullver', 'version', 'rev']),
-                             (package_scope, ['package']),
-                             (category_scope, ['category'])):
-            if any(util.collect_package_restrictions(self.limiter, attrs)):
-                self.scope = scope
-                return
-        self.scope = repository_scope
-
-    def __iter__(self):
-        yield from self.repo.itermatch(self.limiter, sorter=sorted)
+    def itermatch(self, restrict):
+        return self.repo.itermatch(restrict)
 
 
 class EmptySource(GenericSource):
     """Empty source meant for skipping feed."""
 
-    def __iter__(self):
+    def itermatch(self, restrict):
         yield from ()
 
 
@@ -630,8 +621,9 @@ class InterleavedSources(object):
 
 class Pipeline(object):
 
-    def __init__(self, pipes):
-        sources = [(iter(source), i) for i, (source, pipe) in enumerate(pipes)]
+    def __init__(self, pipes, restrict):
+        sources = [
+            (iter(source.itermatch(restrict)), i) for i, (source, pipe) in enumerate(pipes)]
         self.interleaved = InterleavedSources(sources)
         self.pipes = tuple(x[1] for x in pipes)
 
@@ -700,7 +692,7 @@ class CheckRunner(object):
         return f'{self.__class__.__name__}({checks})'
 
 
-def plug(sinks, transforms, sources, debug=None):
+def plug(sinks, transforms, sources, scan_scope=repository_scope, debug=None):
     """Plug together a pipeline.
 
     This tries to return a single pipeline if possible (even if it is
@@ -710,6 +702,7 @@ def plug(sinks, transforms, sources, debug=None):
     :param sinks: Sequence of check instances.
     :param transforms: Sequence of transform classes.
     :param sources: Dict of raw sources to source instances.
+    :param scan_scope: Scope at which the current scan is running.
     :param debug: A logging function or C{None}.
     :return: a sequence of sinks that are unreachable (out of scope or
         missing sources/transforms of the right type),
@@ -737,12 +730,12 @@ def plug(sinks, transforms, sources, debug=None):
             feed_type = todo.pop()
             reachable.add(feed_type)
             for transform in feed_to_transforms.get(feed_type, ()):
-                if (transform.scope <= source.scope and transform.dest not in reachable):
+                if (transform.scope <= scan_scope and transform.dest not in reachable):
                     todo.add(transform.dest)
         for feed_type in reachable:
             scope = best_scope.get(feed_type)
-            if scope is None or scope < source.scope:
-                best_scope[feed_type] = source.scope
+            if scope is None or scope < scan_scope:
+                best_scope[feed_type] = scan_scope
 
     # Throw out unreachable sinks.
     good_sinks = []
@@ -797,7 +790,7 @@ def plug(sinks, transforms, sources, debug=None):
             # No point in growing this further.
             continue
         for transform in transforms:
-            if (source.scope >= transform.scope and
+            if (getattr(source, 'scope', scan_scope) >= transform.scope and
                     transform.source in visited and
                     transform.dest not in visited):
                 unprocessed.add((
@@ -833,7 +826,7 @@ def plug(sinks, transforms, sources, debug=None):
     result = []
     for source_type, source, transforms in pipes_to_run:
         transform = build_transform(
-            source.scope, source.feed_type, source_type, transforms)
+            getattr(source, 'scope', scan_scope), source.feed_type, source_type, transforms)
         if transform:
             result.append((source, transform))
 

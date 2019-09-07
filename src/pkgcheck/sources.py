@@ -41,9 +41,8 @@ class RawRepoSource(base.GenericSource):
         super().__init__(*args)
         self.repo = _RawRepo(self.repo)
 
-    def __iter__(self):
-        yield from self.repo.itermatch(
-            self.limiter, sorter=sorted, raw_pkg_cls=base.RawCPV)
+    def itermatch(self, restrict):
+        return self.repo.itermatch(restrict, raw_pkg_cls=base.RawCPV)
 
 
 class RestrictionRepoSource(base.GenericSource):
@@ -51,7 +50,11 @@ class RestrictionRepoSource(base.GenericSource):
 
     def __init__(self, restriction, *args):
         super().__init__(*args)
-        self.limiter = packages.AndRestriction(*(self.limiter, restriction))
+        self.restriction = restriction
+
+    def itermatch(self, restrict):
+        restrict = packages.AndRestriction(*(restrict, self.restriction))
+        return super().itermatch(restrict)
 
 
 class FilteredRepoSource(base.GenericSource):
@@ -73,6 +76,6 @@ class GitCommitsRepoSource(base.GenericSource):
 
     required_addons = (addons.GitAddon,)
 
-    def __init__(self, options, git_addon, limiter):
-        super().__init__(options, limiter)
+    def __init__(self, options, git_addon):
+        super().__init__(options)
         self.repo = git_addon.commits_repo(addons.GitChangedRepo)

@@ -6,7 +6,6 @@ from portage.
 """
 
 import argparse
-from functools import partial
 from itertools import chain
 from operator import attrgetter
 import os
@@ -385,16 +384,16 @@ def _scan(options, out, err):
             source_cls = source
             args = ()
         deps = [addons_map.get(cls, cls(options)) for cls in source_cls.required_addons]
-        return partial(source_cls, *args, options, *deps)
+        return source_cls(*args, options, *deps)
 
-    raw_sources = {}
+    sources = {}
     def init_checks(addons):
         """Initialize required checks."""
         for cls in addons:
             addon = init_addon(cls)
             if isinstance(addon, base.Check):
-                if addon.source not in raw_sources:
-                    raw_sources[addon.source] = init_source(addon.source)
+                if addon.source not in sources:
+                    sources[addon.source] = init_source(addon.source)
                 yield addon
 
     enabled_checks = tuple(init_checks(options.pop('addons')))
@@ -419,47 +418,26 @@ def _scan(options, out, err):
         else:
             scan_scope = base.repository_scope
 
-        sinks = enabled_checks
-        # skip repo checks when running at cat/pkg/version restriction levels
-        if scan_scope != base.repository_scope:
-            logger.debug('skipping repo checks, running at higher restriction level')
-            sinks = (x for x in sinks if x.scope != base.repository_scope)
-
-        # skip package level checks when running at version restriction level
-        if scan_scope == base.version_scope:
-            logger.debug('skipping package checks, running with version restriction')
-            sinks = (x for x in sinks if x.scope != base.package_scope)
-
-        sinks = tuple(sinks)
+        # skip checks higher than the current scan scope level, e.g. skip repo
+        # level checks when scanning at package level
+        sinks = tuple(x for x in enabled_checks if x.scope <= scan_scope)
         if not sinks:
             err.write(f'{scan.prog}: no matching checks available for current scope')
 
-        sources = {raw: source(filterer) for raw, source in raw_sources.items()}
-        bad_sinks, pipes = base.plug(sinks, transforms, sources, debug)
+        bad_sinks, pipes = base.plug(sinks, transforms, sources, scan_scope, debug=debug)
         if bad_sinks:
-            # We want to report the ones that would work if this was a
-            # full repo scan separately from the ones that are
-            # actually missing transforms.
-            bad_sinks = set(bad_sinks)
-            full_scope = {
-                raw: source(packages.AlwaysTrue) for raw, source in raw_sources.items()}
-            really_bad, ignored = base.plug(sinks, transforms, full_scope)
-            really_bad = set(really_bad)
-            assert bad_sinks >= really_bad, \
-                f'{really_bad - bad_sinks} unreachable with no limiters but reachable with?'
-            for sink in really_bad:
-                err.error(f'sink {sink} could not be connected (missing transforms?)')
-            out_of_scope = bad_sinks - really_bad
-            if options.verbosity > 1 and out_of_scope:
-                err.warn('skipping repo checks (not a full repo scan)')
+            for sink in bad_sinks:
+                check = sink.__class__.__name__
+                err.error(f'{check} could not be connected (missing transforms?)')
+            return 1
 
         if options.verbosity >= 1:
-            err.write(f'Running {len(sinks) - len(bad_sinks)} tests')
+            err.write(f'Running {len(sinks)} tests')
         if options.debug:
             err.write(f'limiter: {filterer}')
         err.flush()
 
-        for result in base.Pipeline(pipes).run():
+        for result in base.Pipeline(pipes, filterer).run():
             reporter.report(result)
 
     reporter.finish()
