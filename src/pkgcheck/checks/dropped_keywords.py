@@ -19,6 +19,7 @@ class DroppedKeywordsCheck(base.Check):
     """Scan packages for keyword dropping across versions."""
 
     feed_type = base.package_feed
+    scope = base.package_scope
     required_addons = (addons.ArchesAddon,)
     known_results = (DroppedKeywords,)
 
