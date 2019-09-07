@@ -115,8 +115,8 @@ class GenericSource(object):
         self.options = options
         self.repo = options.target_repo
 
-    def itermatch(self, restrict):
-        return self.repo.itermatch(restrict)
+    def itermatch(self, restrict, **kwargs):
+        yield from self.repo.itermatch(restrict, **kwargs)
 
 
 class EmptySource(GenericSource):
@@ -622,8 +622,7 @@ class InterleavedSources(object):
 class Pipeline(object):
 
     def __init__(self, pipes, restrict):
-        sources = [
-            (iter(source.itermatch(restrict)), i) for i, (source, pipe) in enumerate(pipes)]
+        sources = [(source.itermatch(restrict), i) for i, (source, pipe) in enumerate(pipes)]
         self.interleaved = InterleavedSources(sources)
         self.pipes = tuple(x[1] for x in pipes)
 

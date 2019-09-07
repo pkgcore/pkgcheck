@@ -42,7 +42,7 @@ class RawRepoSource(base.GenericSource):
         self.repo = _RawRepo(self.repo)
 
     def itermatch(self, restrict):
-        return self.repo.itermatch(restrict, raw_pkg_cls=base.RawCPV)
+        yield from super().itermatch(restrict, raw_pkg_cls=base.RawCPV)
 
 
 class RestrictionRepoSource(base.GenericSource):
@@ -54,7 +54,7 @@ class RestrictionRepoSource(base.GenericSource):
 
     def itermatch(self, restrict):
         restrict = packages.AndRestriction(*(restrict, self.restriction))
-        return super().itermatch(restrict)
+        yield from super().itermatch(restrict)
 
 
 class FilteredRepoSource(base.GenericSource):
