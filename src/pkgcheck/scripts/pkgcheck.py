@@ -14,9 +14,9 @@ import sys
 import textwrap
 
 from pkgcore import const as pkgcore_const
-from pkgcore.ebuild import restricts
 from pkgcore.repository import multiplex
 from pkgcore.restrictions import packages
+from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
@@ -410,19 +410,25 @@ def _scan(options, out, err):
 
     debug = logger.debug if options.debug else None
     for filterer in options.limiters:
+        for scope, attrs in ((base.version_scope, ['fullver', 'version', 'rev']),
+                             (base.package_scope, ['package']),
+                             (base.category_scope, ['category'])):
+            if any(collect_package_restrictions(filterer, attrs)):
+                scan_scope = scope
+                break
+        else:
+            scan_scope = base.repository_scope
+
         sinks = enabled_checks
         # skip repo checks when running at cat/pkg/version restriction levels
-        if filterer != packages.AlwaysTrue:
+        if scan_scope != base.repository_scope:
             logger.debug('skipping repo checks, running at higher restriction level')
             sinks = (x for x in sinks if x.scope != base.repository_scope)
 
         # skip package level checks when running at version restriction level
-        try:
-            if isinstance(filterer[-1], restricts.VersionMatch):
-                logger.debug('skipping package checks, running with version restriction')
-                sinks = (x for x in sinks if x.scope != base.package_scope)
-        except TypeError:
-            pass
+        if scan_scope == base.version_scope:
+            logger.debug('skipping package checks, running with version restriction')
+            sinks = (x for x in sinks if x.scope != base.package_scope)
 
         sinks = tuple(sinks)
         if not sinks:
