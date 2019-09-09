@@ -116,7 +116,7 @@ class GenericSource(object):
         self.repo = options.target_repo
 
     def itermatch(self, restrict, **kwargs):
-        yield from self.repo.itermatch(restrict, **kwargs)
+        yield from self.repo.itermatch(restrict, sorter=sorted, **kwargs)
 
 
 class EmptySource(GenericSource):
