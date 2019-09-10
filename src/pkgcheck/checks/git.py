@@ -173,8 +173,11 @@ class GitCommitsCheck(base.GentooRepoCheck):
 
         dropped_keywords = old_keywords - new_keywords
         dropped_stable_keywords = dropped_keywords & self.valid_arches
-        dropped_unstable_keywords = {
-            x for x in dropped_keywords if x[0] == '~' and x[1:] in self.valid_arches}
+        dropped_unstable_keywords = set()
+        for keyword in (x for x in dropped_keywords if x[0] == '~'):
+            arch = keyword[1:]
+            if arch in self.valid_arches and arch not in new_keywords:
+                dropped_unstable_keywords.add(keyword)
 
         if dropped_stable_keywords:
             yield DroppedStableKeywords(
