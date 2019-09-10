@@ -359,8 +359,11 @@ class GitAddon(base.Addon):
                 parser.error(
                     '--commits is mutually exclusive with '
                     f'target{_pl(namespace.targets)}: {targets}')
-            with patch((namespace, 'git_disable'), False):
-                repo = cls.commits_repo(cls, GitChangedRepo, options=namespace)
+            try:
+                with patch((namespace, 'git_disable'), False):
+                    repo = cls.commits_repo(cls, GitChangedRepo, options=namespace)
+            except CommandNotFound:
+                parser.error('git not available to determine targets for --commits')
             namespace.limiters = sorted(set(x.unversioned_atom for x in repo))
 
     def __init__(self, *args):
