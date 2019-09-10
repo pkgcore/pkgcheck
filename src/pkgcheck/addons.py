@@ -17,6 +17,7 @@ from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values
 from pkgcore.test.misc import FakeRepo
 from snakeoil import klass, mappings
+from snakeoil.contexts import patch
 from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
@@ -358,7 +359,8 @@ class GitAddon(base.Addon):
                 parser.error(
                     '--commits is mutually exclusive with '
                     f'target{_pl(namespace.targets)}: {targets}')
-            repo = cls.commits_repo(cls, GitChangedRepo, options=namespace)
+            with patch((namespace, 'git_disable'), False):
+                repo = cls.commits_repo(cls, GitChangedRepo, options=namespace)
             namespace.limiters = sorted(set(x.unversioned_atom for x in repo))
 
     def __init__(self, *args):
