@@ -342,6 +342,24 @@ class GitAddon(base.Addon):
             docs="""
                 Parses a repo's git log and caches various historical information.
             """)
+        group.add_argument(
+            '--commits', action='store_true', default=False,
+            help="determine scan targets from local git repo commits",
+            docs="""
+                For a local git repo, pkgcheck will pull package targets to
+                scan from the changes compared to the repo's origin.
+            """)
+
+    @classmethod
+    def check_args(cls, parser, namespace):
+        if namespace.commits:
+            if namespace.targets:
+                targets = ' '.join(namespace.targets)
+                parser.error(
+                    '--commits is mutually exclusive with '
+                    f'target{_pl(namespace.targets)}: {targets}')
+            repo = cls.commits_repo(cls, GitChangedRepo, options=namespace)
+            namespace.limiters = sorted(set(x.unversioned_atom for x in repo))
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -352,7 +370,8 @@ class GitAddon(base.Addon):
             except CommandNotFound:
                 self.options.git_disable = True
 
-    def get_commit_hash(self, repo_location, commit='origin/HEAD'):
+    @staticmethod
+    def get_commit_hash(repo_location, commit='origin/HEAD'):
         """Retrieve a git repo's commit hash for a specific commit object."""
         if not os.path.exists(pjoin(repo_location, '.git')):
             raise ValueError
@@ -437,13 +456,14 @@ class GitAddon(base.Addon):
 
         return cached_repo
 
-    def commits_repo(self, repo_cls, target_repo=None):
+    def commits_repo(self, repo_cls, target_repo=None, options=None):
+        options = options if options is not None else self.options
         if target_repo is None:
-            target_repo = self.options.target_repo
+            target_repo = options.target_repo
 
         repo = FakeRepo()
 
-        if not self.options.git_disable:
+        if not options.git_disable:
             try:
                 origin = self.get_commit_hash(target_repo.location)
                 master = self.get_commit_hash(target_repo.location, commit='master')
