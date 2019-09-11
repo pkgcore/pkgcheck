@@ -7,7 +7,6 @@ from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
 from .. import base
-from ..log import logger
 
 
 class _MissingXml(base.Error):
