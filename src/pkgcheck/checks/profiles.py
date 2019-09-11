@@ -1,8 +1,10 @@
-from collections import defaultdict
-from itertools import filterfalse, chain
 import os
+from collections import defaultdict
+from itertools import chain, filterfalse
 
-from pkgcore.ebuild import atom, misc, repo_objs, profiles as profiles_mod
+from pkgcore.ebuild import atom, misc
+from pkgcore.ebuild import profiles as profiles_mod
+from pkgcore.ebuild import repo_objs
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
 from snakeoil.log import suppress_logging
@@ -10,7 +12,7 @@ from snakeoil.osutils import listdir_dirs, pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, addons
+from .. import addons, base
 
 
 class BadProfileEntry(base.Error):

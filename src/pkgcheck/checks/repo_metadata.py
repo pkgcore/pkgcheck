@@ -11,7 +11,7 @@ from snakeoil.log import suppress_logging
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, addons
+from .. import addons, base
 
 
 class MultiMovePackageUpdate(base.Warning):

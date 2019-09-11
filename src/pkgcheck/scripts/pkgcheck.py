@@ -6,11 +6,11 @@ from portage.
 """
 
 import argparse
-from itertools import chain
-from operator import attrgetter
 import os
 import sys
 import textwrap
+from itertools import chain
+from operator import attrgetter
 
 from pkgcore import const as pkgcore_const
 from pkgcore.repository import multiplex
@@ -26,7 +26,6 @@ from snakeoil.strings import pluralism as _pl
 
 from .. import base, const, reporters
 from ..log import logger
-
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
 argparser = commandline.ArgumentParser(

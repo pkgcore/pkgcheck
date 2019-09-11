@@ -1,38 +1,39 @@
 """Addon functionality shared by multiple checkers."""
 
-from collections import UserDict, defaultdict
-from functools import partial
-from itertools import chain, filterfalse
 import os
 import pickle
 import shlex
-import subprocess
 import stat
+import subprocess
+from collections import UserDict, defaultdict
+from functools import partial
+from itertools import chain, filterfalse
 
-from pkgcore.ebuild import cpv
-from pkgcore.ebuild import misc, domain, profiles as profiles_mod, repo_objs
-from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
+from pkgcore.ebuild import cpv, domain, misc
+from pkgcore.ebuild import profiles as profiles_mod
+from pkgcore.ebuild import repo_objs
+from pkgcore.ebuild.atom import MalformedAtom
+from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values
 from pkgcore.test.misc import FakeRepo
 from snakeoil import klass, mappings
-from snakeoil.contexts import patch
 from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
+from snakeoil.contexts import patch
 from snakeoil.decorators import coroutine
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.log import suppress_logging
 from snakeoil.osutils import abspath, pjoin
-from snakeoil.process import find_binary, CommandNotFound
+from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.process.spawn import spawn_get_output
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
 from . import base
 from .log import logger
-
 
 # hacky ebuild path regexes for git log parsing, proper atom validation is handled later
 _ebuild_path_regex_raw = '([^/]+)/([^/]+)/([^/]+)\\.ebuild'

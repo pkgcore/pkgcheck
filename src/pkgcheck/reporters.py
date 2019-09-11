@@ -1,10 +1,9 @@
 """Basic result reporters."""
 
 import csv
-from collections import defaultdict
 import json
-from json.decoder import JSONDecodeError
 import pickle
+from collections import defaultdict
 from xml.sax.saxutils import escape as xml_escape
 
 from snakeoil import pickling
@@ -244,7 +243,7 @@ class JsonStream(base.Reporter):
         """Deserialize JSON object to its corresponding result object."""
         try:
             d = json.loads(data)
-        except (JSONDecodeError, UnicodeDecodeError) as e:
+        except (json.decoder.JSONDecodeError, UnicodeDecodeError) as e:
             raise DeserializationError(f'failed loading: {data!r}') from e
 
         try:

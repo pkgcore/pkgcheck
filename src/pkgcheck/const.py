@@ -1,14 +1,13 @@
 """Registration for keywords, checks, transforms, and reporters."""
 
-from functools import partial
-from importlib import import_module
 import inspect
 import pkgutil
+from functools import partial
+from importlib import import_module
 
 from snakeoil import demandimport, mappings
 
 from . import __title__, base
-
 
 try:
     # This is a file written during installation;

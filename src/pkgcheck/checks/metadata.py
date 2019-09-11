@@ -1,9 +1,9 @@
+import os
+import re
 from collections import defaultdict
 from datetime import datetime
 from difflib import SequenceMatcher
 from itertools import chain
-import os
-import re
 
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.eapi import get_eapi

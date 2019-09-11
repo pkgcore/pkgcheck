@@ -2,13 +2,12 @@ from collections import defaultdict
 from operator import attrgetter
 
 from pkgcore.ebuild.atom import atom as atom_cls
-
 from snakeoil import klass
 from snakeoil.iterables import caching_iter
-from snakeoil.sequences import stable_unique, iflatten_instance, iflatten_func
+from snakeoil.sequences import iflatten_func, iflatten_instance, stable_unique
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, addons
+from .. import addons, base
 
 
 class FakeConfigurable(object):

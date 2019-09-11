@@ -1,14 +1,14 @@
-from collections import defaultdict
 import os
 import stat
+from collections import defaultdict
 
-from pkgcore.ebuild.atom import MalformedAtom, atom as atom_cls
+from pkgcore.ebuild.atom import MalformedAtom
+from pkgcore.ebuild.atom import atom as atom_cls
 from snakeoil.chksum import get_chksums
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, sources
-
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()

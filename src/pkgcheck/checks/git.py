@@ -1,19 +1,19 @@
-from datetime import datetime
-from itertools import chain
 import os
 import subprocess
 import tarfile
+from datetime import datetime
+from itertools import chain
 from tempfile import TemporaryDirectory
 
-from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.ebuild.misc import sort_keywords
+from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.exceptions import PkgcoreException
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, addons, sources
+from .. import addons, base, sources
 from ..log import logger
 
 demand_compile_regexp(

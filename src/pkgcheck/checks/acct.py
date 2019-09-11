@@ -1,9 +1,9 @@
 """Various checks for acct-group and acct-user packages."""
 
+import re
 from collections import defaultdict
 from functools import partial
 from itertools import chain
-import re
 
 from pkgcore.ebuild import restricts
 from pkgcore.restrictions import packages

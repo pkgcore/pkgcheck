@@ -11,15 +11,15 @@ minimally accepted scope, and for transforms the output scope is
 identical to the input scope.
 """
 
-from collections import OrderedDict, namedtuple, defaultdict
-from contextlib import AbstractContextManager
-from operator import attrgetter, itemgetter
 import re
 import sys
+from collections import OrderedDict, defaultdict, namedtuple
+from contextlib import AbstractContextManager
+from operator import attrgetter, itemgetter
 
 from pkgcore import const as pkgcore_const
-from pkgcore.ebuild import cpv
 from pkgcore.config.hint import ConfigHint
+from pkgcore.ebuild import cpv
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import util
 from snakeoil.decorators import coroutine
@@ -27,7 +27,6 @@ from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 
 from .log import logger
-
 
 # source feed types
 repository_feed = 'repo'

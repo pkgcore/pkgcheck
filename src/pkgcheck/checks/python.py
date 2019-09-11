@@ -1,11 +1,9 @@
 from pkgcore.ebuild.atom import atom
-from pkgcore.restrictions.boolean import OrRestriction, JustOneRestriction
 from pkgcore.restrictions import packages, values
-
+from pkgcore.restrictions.boolean import JustOneRestriction, OrRestriction
 from snakeoil.sequences import iflatten_instance
 
 from .. import base
-
 
 # NB: distutils-r1 inherits one of the first two
 ECLASSES = frozenset(['python-r1', 'python-single-r1', 'python-any-r1'])

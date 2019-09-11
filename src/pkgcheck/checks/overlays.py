@@ -1,8 +1,8 @@
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from . import repo_metadata
 from .. import base
+from . import repo_metadata
 
 
 class UnusedInMastersLicenses(base.VersionedResult, base.Warning):

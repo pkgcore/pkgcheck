@@ -1,11 +1,11 @@
 import argparse
-from lxml import etree
 import os
-from urllib.request import urlopen
 from urllib import error as urllib_error
+from urllib.request import urlopen
 
+from lxml import etree
 from pkgcore import const as pkgcore_const
-from pkgcore.ebuild.atom import atom, MalformedAtom
+from pkgcore.ebuild.atom import MalformedAtom, atom
 from snakeoil import fileutils
 from snakeoil.cli.exceptions import UserException
 from snakeoil.osutils import pjoin

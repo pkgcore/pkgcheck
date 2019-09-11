@@ -1,13 +1,12 @@
 """check for some bad coding styles like insinto's, old variables etc"""
 
-from collections import defaultdict
 import re
+from collections import defaultdict
 
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.strings import pluralism as _pl
 
 from .. import base
-
 
 demand_compile_regexp(
     'ebuild_copyright_regex',
