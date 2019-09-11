@@ -21,8 +21,8 @@ class BaseReporter(object):
         self.log_error = profiles.ProfileError('profile error')
         pkg = FakePkg('dev-libs/foo-0')
         self.category_result = metadata_xml.CatMissingMetadataXml('metadata.xml', pkg=pkg)
-        self.package_result = pkgdir.InvalidPN(('foo',), pkg=pkg)
-        self.versioned_result = metadata.BadFilename(('0.tar.gz',), pkg=pkg)
+        self.package_result = pkgdir.InvalidPN(('bar', 'baz'), pkg=pkg)
+        self.versioned_result = metadata.BadFilename(('0.tar.gz', 'foo.tar.gz'), pkg=pkg)
         return reporter
 
     @property
@@ -62,8 +62,8 @@ class TestStrReporter(BaseReporter):
     add_report_output = dedent("""\
         profile warning
         dev-libs: category is missing metadata.xml
-        dev-libs/foo: invalid package name: [ foo ]
-        dev-libs/foo-0: bad filename: [ 0.tar.gz ]
+        dev-libs/foo: invalid package names: [ bar, baz ]
+        dev-libs/foo-0: bad filenames: [ 0.tar.gz, foo.tar.gz ]
     """)
     filtered_report_output = """profile error\n"""
 
@@ -79,8 +79,8 @@ class TestFancyReporter(BaseReporter):
           CatMissingMetadataXml: category is missing metadata.xml
 
         dev-libs/foo
-          InvalidPN: invalid package name: [ foo ]
-          BadFilename: version 0: bad filename: [ 0.tar.gz ]
+          InvalidPN: invalid package names: [ bar, baz ]
+          BadFilename: version 0: bad filenames: [ 0.tar.gz, foo.tar.gz ]
     """)
     filtered_report_output = dedent("""\
         repo
@@ -101,8 +101,8 @@ class TestJsonReporter(BaseReporter):
     add_report_output = dedent("""\
         {"_warning": {"ProfileWarning": ["profile warning"]}}
         {"dev-libs": {"_error": {"CatMissingMetadataXml": ["category is missing metadata.xml"]}}}
-        {"dev-libs": {"foo": {"_error": {"InvalidPN": ["invalid package name: [ foo ]"]}}}}
-        {"dev-libs": {"foo": {"0": {"_warning": {"BadFilename": ["bad filename: [ 0.tar.gz ]"]}}}}}
+        {"dev-libs": {"foo": {"_error": {"InvalidPN": ["invalid package names: [ bar, baz ]"]}}}}
+        {"dev-libs": {"foo": {"0": {"_warning": {"BadFilename": ["bad filenames: [ 0.tar.gz, foo.tar.gz ]"]}}}}}
     """)
     filtered_report_output = dedent("""\
         {"_error": {"ProfileError": ["profile error"]}}
@@ -116,8 +116,8 @@ class TestXmlReporter(BaseReporter):
         <checks>
         <result><class>ProfileWarning</class><msg>profile warning</msg></result>
         <result><category>dev-libs</category><class>CatMissingMetadataXml</class><msg>category is missing metadata.xml</msg></result>
-        <result><category>dev-libs</category><package>foo</package><class>InvalidPN</class><msg>invalid package name: [ foo ]</msg></result>
-        <result><category>dev-libs</category><package>foo</package><version>0</version><class>BadFilename</class><msg>bad filename: [ 0.tar.gz ]</msg></result>
+        <result><category>dev-libs</category><package>foo</package><class>InvalidPN</class><msg>invalid package names: [ bar, baz ]</msg></result>
+        <result><category>dev-libs</category><package>foo</package><version>0</version><class>BadFilename</class><msg>bad filenames: [ 0.tar.gz, foo.tar.gz ]</msg></result>
         </checks>
     """)
     filtered_report_output = dedent("""\
