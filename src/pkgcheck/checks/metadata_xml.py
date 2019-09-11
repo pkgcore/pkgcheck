@@ -1,4 +1,3 @@
-import argparse
 import os
 from urllib import error as urllib_error
 from urllib.request import urlopen
@@ -274,17 +273,6 @@ class _XmlBaseCheck(base.Check):
     invalid_error = None
     missing_error = None
 
-    @classmethod
-    def mangle_argparser(cls, parser):
-        try:
-            parser.plugin.add_argument(
-                '--metadata-xsd-required', action='store_true',
-                help="if metadata.xsd cannot be fetched (no connection for example), "
-                     "treat it as a failure rather than warning and ignoring.")
-        except argparse.ArgumentError:
-            # the arguments have already been added to the parser
-            pass
-
     def __init__(self, options):
         super().__init__(options)
         self.repo_base = options.target_repo.location
@@ -300,9 +288,7 @@ class _XmlBaseCheck(base.Check):
             xsd_data = urlopen(self.xsd_url).read()
         except urllib_error.URLError as e:
             msg = f'failed fetching XML schema from {self.xsd_url}: {e.reason}'
-            if self.options.metadata_xsd_required:
-                raise UserException(msg)
-            raise XsdError(msg)
+            raise UserException(msg)
 
         metadata_xsd = pjoin(
             base.CACHE_DIR, 'repos', 'gentoo', os.path.basename(self.xsd_url))
@@ -311,9 +297,7 @@ class _XmlBaseCheck(base.Check):
             fileutils.write_file(metadata_xsd, 'wb', xsd_data)
         except EnvironmentError as e:
             msg = f'failed saving XML schema to {metadata_xsd!r}: {e}'
-            if self.options.metadata_xsd_required:
-                raise UserException(msg)
-            raise XsdError(msg)
+            raise UserException(msg)
         return metadata_xsd
 
     def start(self):
