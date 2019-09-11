@@ -127,6 +127,18 @@ class TestXmlReporter(BaseReporter):
     """)
 
 
+class TestCsvReporter(BaseReporter):
+
+    reporter_cls = reporters.CsvReporter
+    add_report_output = dedent("""\
+        ,,,profile warning
+        dev-libs,,,category is missing metadata.xml
+        dev-libs,foo,,"invalid package names: [ bar, baz ]"
+        dev-libs,foo,0,"bad filenames: [ 0.tar.gz, foo.tar.gz ]"
+    """)
+    filtered_report_output = """,,,profile error\n"""
+
+
 class UnPickleableResult(base.Result):
 
     def __init__(self):

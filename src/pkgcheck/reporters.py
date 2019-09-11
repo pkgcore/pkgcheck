@@ -1,5 +1,6 @@
 """Basic result reporters."""
 
+import csv
 from collections import defaultdict
 import json
 from json.decoder import JSONDecodeError
@@ -187,6 +188,39 @@ class XmlReporter(base.Reporter):
 
     def finish(self):
         self.out.write('</checks>')
+
+
+class CsvReporter(base.Reporter):
+    """Comma-separated value reporter, convenient for shell processing.
+
+    Example::
+
+        ,,,"global USE flag 'big-endian' is a potential local, used by 1 package: dev-java/icedtea-bin"
+        sys-apps,portage,2.1-r2,sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
+        sys-apps,portage,2.1-r2,"rdepend  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ >=app-misc/pax-utils-0.1.13 ]"
+        sys-apps,portage,2.1-r2,"no change in 75 days, keywords [ ~x86-fbsd ]"
+    """
+
+    # simple reporter; fallback default
+    priority = -1001
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._writer = csv.writer(
+            self.out,
+            doublequote=False,
+            escapechar='\\',
+            lineterminator='')
+
+    @coroutine
+    def _process_report(self):
+        while True:
+            result = (yield)
+            self._writer.writerow((
+                getattr(result, 'category', ''),
+                getattr(result, 'package', ''),
+                getattr(result, 'version', ''),
+                result.desc))
 
 
 class DeserializationError(Exception):
