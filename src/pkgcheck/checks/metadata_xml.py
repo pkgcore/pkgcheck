@@ -1,21 +1,13 @@
 import os
-from urllib import error as urllib_error
-from urllib.request import urlopen
 
 from lxml import etree
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild.atom import MalformedAtom, atom
-from snakeoil import fileutils
-from snakeoil.cli.exceptions import UserException
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
 from .. import base
 from ..log import logger
-
-
-class XsdError(Exception):
-    """Problem acquiring an XML schema file required for a check."""
 
 
 class _MissingXml(base.Error):
@@ -266,7 +258,6 @@ class PkgMetadataXmlEmptyElement(_MetadataXmlEmptyElement, base.PackageResult):
 class _XmlBaseCheck(base.Check):
     """Base class for metadata.xml scans."""
 
-    xsd_url = "https://www.gentoo.org/xml-schema/metadata.xsd"
     schema = None
 
     misformed_error = None
@@ -281,25 +272,6 @@ class _XmlBaseCheck(base.Check):
         self._checks = tuple(
             getattr(self, x) for x in dir(self) if x.startswith('_check_'))
 
-    def _fetch_xsd(self):
-        logger.info(f'fetching metdata.xsd from {self.xsd_url}')
-
-        try:
-            xsd_data = urlopen(self.xsd_url).read()
-        except urllib_error.URLError as e:
-            msg = f'failed fetching XML schema from {self.xsd_url}: {e.reason}'
-            raise UserException(msg)
-
-        metadata_xsd = pjoin(
-            base.CACHE_DIR, 'repos', 'gentoo', os.path.basename(self.xsd_url))
-        try:
-            os.makedirs(os.path.dirname(metadata_xsd), exist_ok=True)
-            fileutils.write_file(metadata_xsd, 'wb', xsd_data)
-        except EnvironmentError as e:
-            msg = f'failed saving XML schema to {metadata_xsd!r}: {e}'
-            raise UserException(msg)
-        return metadata_xsd
-
     def start(self):
         # try to use repo-bundled version of metadata.xsd and fallback to
         # version installed with pkgcore
@@ -308,12 +280,6 @@ class _XmlBaseCheck(base.Check):
             metadata_xsd = pjoin(pkgcore_const.DATA_PATH, 'xml-schema', 'metadata.xsd')
 
         if _XmlBaseCheck.schema is None:
-            if not os.path.isfile(metadata_xsd):
-                try:
-                    metadata_xsd = self._fetch_xsd()
-                except XsdError as e:
-                    logger.warning('skipping check: %s', e)
-                    return
             _XmlBaseCheck.schema = etree.XMLSchema(etree.parse(metadata_xsd))
 
     def _check_doc(self, pkg, loc, doc):
