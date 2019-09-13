@@ -37,8 +37,9 @@ argparser.set_defaults(profile_override=pjoin(pkgcore_const.DATA_PATH, 'stubrepo
 subparsers = argparser.add_subparsers(description="check applets")
 
 
-reporter_opts = commandline.ArgumentParser(suppress=True)
-reporter_opts.add_argument(
+reporter_argparser = commandline.ArgumentParser(suppress=True)
+reporter_options = reporter_argparser.add_argument_group('reporter options')
+reporter_options.add_argument(
     '-R', '--reporter', action='store', default=None,
     help='use a non-default reporter',
     docs="""
@@ -46,7 +47,7 @@ reporter_opts.add_argument(
 
         Use ``pkgcheck show --reporters`` to see available options.
     """)
-reporter_opts.add_argument(
+reporter_options.add_argument(
     '--format', dest='format_str', action='store', default=None,
     help='format string used with FormatReporter',
     docs="""
@@ -65,7 +66,7 @@ reporter_opts.add_argument(
         ``--format {foo}`` will never produce any output because no result has the
         ``foo`` attribute.
     """)
-@reporter_opts.bind_parse_priority(20)
+@reporter_argparser.bind_parse_priority(20)
 def _setup_reporter(namespace):
     if namespace.reporter is None:
         namespace.reporter = sorted(
@@ -89,7 +90,7 @@ def _setup_reporter(namespace):
 
 # These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser(
-    'scan', parents=(reporter_opts,), description='scan targets for QA issues')
+    'scan', parents=(reporter_argparser,), description='scan targets for QA issues')
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
@@ -474,7 +475,7 @@ def _scan(options, out, err):
 
 
 replay = subparsers.add_parser(
-    'replay', parents=(reporter_opts,),
+    'replay', parents=(reporter_argparser,),
     description='replay results streams',
     docs="""
         Replay previous results streams from pkgcheck, feeding the results into
