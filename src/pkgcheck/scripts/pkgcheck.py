@@ -9,6 +9,7 @@ import argparse
 import os
 import sys
 import textwrap
+from functools import partial
 from itertools import chain
 from operator import attrgetter
 
@@ -45,12 +46,30 @@ reporter_opts.add_argument(
 
         Use ``pkgcheck show --reporters`` to see available options.
     """)
+reporter_opts.add_argument(
+    '--format', dest='format_str', action='store', default=None,
+    help='format string used with FormatReporter',
+    docs="""
+        Custom format string used to format output by FormatReporter.
+
+        Supports python format string syntax where result object attribute names
+        surrounded by curly braces are replaced with their values (if they exist).
+
+        For example, ``--format '{category}/{package}/{package}-{version}.ebuild``
+        will output ebuild paths in the target repo for results relating to
+        specific ebuild versions. If a result is for the generic package (or a
+        higher scope), no output will be produced for that result.
+
+        Furthermore, no output will be produced if a result object is missing any
+        requested attribute expansion in the format string. In other words,
+        ``--format {foo}`` will never produce any output because no result has the
+        ``foo`` attribute.
+    """)
 @reporter_opts.bind_parse_priority(20)
 def _setup_reporter(namespace):
     if namespace.reporter is None:
-        reporters = sorted(
-            const.REPORTERS.values(), key=attrgetter('priority'), reverse=True)
-        namespace.reporter = reporters[0]
+        namespace.reporter = sorted(
+            const.REPORTERS.values(), key=attrgetter('priority'), reverse=True)[0]
     else:
         try:
             namespace.reporter = const.REPORTERS[namespace.reporter]
@@ -59,6 +78,13 @@ def _setup_reporter(namespace):
             argparser.error(
                 f"no reporter matches {namespace.reporter!r} "
                 f"(available: {available})")
+
+    if namespace.reporter is reporters.FormatReporter:
+        if not namespace.format_str:
+            argparser.error('missing or empty --format option')
+        namespace.reporter = partial(namespace.reporter, namespace.format_str)
+    elif namespace.format_str is not None:
+        argparser.error('--format option is only valid when using FormatReporter')
 
 
 # These are all set based on other options, so have no default setting.

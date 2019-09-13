@@ -217,6 +217,31 @@ class CsvReporter(base.Reporter):
                 result.desc))
 
 
+class FormatReporter(base.Reporter):
+    """Custom format string reporter."""
+
+    priority = -1001
+
+    def __init__(self, format_str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.format_str = format_str
+        # provide expansions for result desc and level properties
+        self._properties = ('desc', 'level')
+
+    @coroutine
+    def _process_report(self):
+        while True:
+            result = (yield)
+            attrs = vars(result)
+            attrs.update((k, getattr(result, k)) for k in self._properties)
+            try:
+                self.out.write(self.format_str.format(**attrs))
+                self.out.stream.flush()
+            except KeyError:
+                # ignore results missing requested attributes
+                pass
+
+
 class DeserializationError(Exception):
     """Exception occurred while deserializing a data stream."""
 

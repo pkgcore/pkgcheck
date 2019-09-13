@@ -1,5 +1,6 @@
 import pickle
 import sys
+from functools import partial
 from textwrap import dedent
 
 from pkgcore.test.misc import FakePkg
@@ -25,13 +26,8 @@ class BaseReporter(object):
         self.versioned_result = metadata.BadFilename(('0.tar.gz', 'foo.tar.gz'), pkg=pkg)
         return reporter
 
-    @property
-    def add_report_output(self):
-        raise NotImplementedError
-
-    @property
-    def filtered_report_output(self):
-        raise NotImplementedError
+    add_report_output = None
+    filtered_report_output = None
 
     def test_add_report(self, capsys):
         self.reporter = self.mk_reporter()
@@ -137,6 +133,34 @@ class TestCsvReporter(BaseReporter):
         dev-libs,foo,0,"bad filenames: [ 0.tar.gz, foo.tar.gz ]"
     """)
     filtered_report_output = """,,,profile error\n"""
+
+
+class TestFormatReporter(BaseReporter):
+
+    def test_add_report(self, capsys):
+        for format_str, expected in (
+                    ('r', 'r\n' * 4),
+                    ('{category}', 'dev-libs\n' * 3),
+                    ('{category}/{package}', 'dev-libs/foo\n' * 2),
+                    ('{category}/{package}-{version}', 'dev-libs/foo-0\n'),
+                    ('{foo}', ''),
+                ):
+            self.reporter_cls = partial(reporters.FormatReporter, format_str)
+            self.add_report_output = expected
+            super().test_add_report(capsys)
+
+    def test_filtered_report(self, capsys):
+        for format_str, expected in (
+                    ('r', 'r\n'),
+                    ('{category}', ''),
+                    ('{category}/{package}', ''),
+                    ('{category}/{package}-{version}', ''),
+                    ('{foo}', ''),
+                    ('{desc}', 'profile error\n'),
+                ):
+            self.reporter_cls = partial(reporters.FormatReporter, format_str)
+            self.filtered_report_output = expected
+            super().test_filtered_report(capsys)
 
 
 class UnPickleableResult(base.Result):
