@@ -81,7 +81,7 @@ def _setup_reporter(namespace):
 
     if namespace.reporter is reporters.FormatReporter:
         if not namespace.format_str:
-            argparser.error('missing or empty --format option')
+            argparser.error('missing or empty --format option required by FormatReporter')
         namespace.reporter = partial(namespace.reporter, namespace.format_str)
     elif namespace.format_str is not None:
         argparser.error('--format option is only valid when using FormatReporter')
