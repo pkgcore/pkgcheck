@@ -23,4 +23,4 @@ You can also stop by #pkgcore on freenode.
 See Also
 ========
 
-**pkgcore**\(5), **repoman**\(1)
+**pkgcore**\(5)

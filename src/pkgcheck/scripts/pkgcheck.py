@@ -1,8 +1,8 @@
 """
 pkgcore-based QA utility
 
-pkgcheck is a QA utility based on **pkgcore**\\(5) similar to **repoman**\\(1)
-from portage.
+pkgcheck is a QA utility based on **pkgcore**\\(5) that supports scanning
+ebuild repositories for various issues.
 """
 
 import argparse
