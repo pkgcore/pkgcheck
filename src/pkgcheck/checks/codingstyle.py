@@ -22,7 +22,7 @@ class HttpsAvailable(base.VersionedResult, base.Warning):
         self.lines = tuple(lines)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"{self.link!r} should use https:// on line{_pl(self.lines)}: "
             f"{', '.join(map(str, self.lines))}"
@@ -92,7 +92,7 @@ class PortageInternals(base.VersionedResult, base.Warning):
         self.line = line
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"{self.internal!r} used on line {self.line}"
 
 
@@ -138,7 +138,7 @@ class MissingSlash(base.VersionedResult, base.Error):
         self.lines = tuple(lines)
 
     @property
-    def short_desc(self):
+    def desc(self):
         lines = ', '.join(map(str, self.lines))
         return f"{self.match} missing trailing slash on line{_pl(self.lines)}: {lines}"
 
@@ -152,7 +152,7 @@ class UnnecessarySlashStrip(base.VersionedResult, base.Warning):
         self.lines = tuple(lines)
 
     @property
-    def short_desc(self):
+    def desc(self):
         lines = ', '.join(map(str, self.lines))
         return f"{self.match} unnecessary slash strip on line{_pl(self.lines)}: {lines}"
 
@@ -174,7 +174,7 @@ class DoublePrefixInPath(base.VersionedResult, base.Error):
         self.lines = tuple(lines)
 
     @property
-    def short_desc(self):
+    def desc(self):
         lines = ', '.join(map(str, self.lines))
         return (f"{self.match}: concatenates two paths containing EPREFIX "
                 f"on line{_pl(self.lines)} {lines}")
@@ -296,7 +296,7 @@ class AbsoluteSymlink(base.VersionedResult, base.Warning):
         self.line = line
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"'dosym {self.abspath} ...' uses absolute path on line {self.line}"
 
 
@@ -332,7 +332,7 @@ class BadInsIntoDir(base.VersionedResult, base.Warning):
         self.lineno = lineno
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"bad insinto usage, line {self.lineno}: {self.line}"
 
 
@@ -398,7 +398,7 @@ class ObsoleteUri(base.VersionedResult, base.Warning):
         self.replacement = replacement
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (f"obsolete fetch URI: {self.uri} on line "
                 f"{self.line}, should be replaced by: {self.replacement}")
 
@@ -461,7 +461,7 @@ class InvalidCopyright(_CopyrightResult):
     """
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'invalid copyright: {self.line!r}'
 
 
@@ -477,7 +477,7 @@ class OldGentooCopyright(_CopyrightResult):
     """
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'old copyright, update to "Gentoo Authors": {self.line!r}'
 
 
@@ -491,7 +491,7 @@ class NonGentooAuthorsCopyright(_CopyrightResult):
     """
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'copyright line must state "Gentoo Authors": {self.line!r}'
 
 
@@ -528,7 +528,7 @@ class HomepageInSrcUri(base.VersionedResult, base.Warning):
     """
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "${HOMEPAGE} in SRC_URI"
 
 

@@ -12,7 +12,7 @@ class DeprecatedEclass(base.VersionedResult, base.Warning):
         self.eclasses = tuple(eclasses)
 
     @property
-    def short_desc(self):
+    def desc(self):
         eclass_migration = []
         for old_eclass, new_eclass in self.eclasses:
             if new_eclass:

@@ -43,7 +43,7 @@ class MissingPythonEclass(base.VersionedResult, base.Warning):
         self.dep = dep
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'missing {self.eclass} eclass usage for {self.dep_type}="{self.dep}"'
 
 
@@ -62,7 +62,7 @@ class PythonSingleUseMismatch(base.VersionedResult, base.Warning):
         self.single_flags = tuple(single_flags)
 
     @property
-    def short_desc(self):
+    def desc(self):
         flags = ' '.join(self.flags)
         single_flags = ' '.join(self.single_flags)
         return (
@@ -81,7 +81,7 @@ class PythonMissingRequiredUSE(base.VersionedResult, base.Warning):
     """
 
     @property
-    def short_desc(self):
+    def desc(self):
         return 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"'
 
 
@@ -101,7 +101,7 @@ class PythonMissingDeps(base.VersionedResult, base.Warning):
         self.dep_type = dep_type
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'missing {self.dep_type}="${{PYTHON_DEPS}}"'
 
 
@@ -121,7 +121,7 @@ class PythonRuntimeDepInAnyR1(base.VersionedResult, base.Warning):
         self.dep = dep
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f'inherits python-any-r1 with {self.dep_type}="{self.dep}" -- '
             "use python-r1 or python-single-r1 instead"

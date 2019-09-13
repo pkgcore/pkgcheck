@@ -108,7 +108,7 @@ class ReportTestCase(object):
         l.extend(reports)
         l.extend(runner.finish())
         self._assert_known_results(*l)
-        assert l == [], f"{msg}{list(report.short_desc for report in l)}"
+        assert l == [], f"{msg}{list(report.desc for report in l)}"
 
     def assertReportSanity(self, *reports):
         for report in reports:

@@ -20,7 +20,7 @@ class VulnerablePackage(base.VersionedResult, base.Error):
         self.glsa = glsa
 
     @property
-    def short_desc(self):
+    def desc(self):
         arches = ', '.join(self.arches)
         return f'vulnerable via {self.glsa}, keyword{_pl(self.arches)}: {arches}'
 

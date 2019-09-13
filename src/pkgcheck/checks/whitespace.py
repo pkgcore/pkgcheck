@@ -22,7 +22,7 @@ class WhitespaceFound(_Whitespace):
         self.leadtrail = leadtrail
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"ebuild has {self.leadtrail} whitespace on {self.lines_str}"
 
 
@@ -34,7 +34,7 @@ class WrongIndentFound(_Whitespace):
         self.lines = tuple(lines)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"ebuild has whitespace in indentation on {self.lines_str}"
 
 
@@ -46,20 +46,20 @@ class DoubleEmptyLine(_Whitespace):
         self.lines = tuple(lines)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"ebuild has unneeded empty {self.lines_str}"
 
 
 class TrailingEmptyLine(base.VersionedResult, base.Warning):
     """Unneeded trailing blank lines found."""
 
-    short_desc = "ebuild has trailing blank line(s)"
+    desc = "ebuild has trailing blank line(s)"
 
 
 class NoFinalNewline(base.VersionedResult, base.Warning):
     """Ebuild's last line does not have a final newline."""
 
-    short_desc = "ebuild lacks an ending newline"
+    desc = "ebuild lacks an ending newline"
 
 
 class WhitespaceCheck(base.Check):

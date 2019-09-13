@@ -11,7 +11,7 @@ class DroppedKeywords(base.VersionedResult, base.Warning):
         self.arches = tuple(arches)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return ', '.join(self.arches)
 
 

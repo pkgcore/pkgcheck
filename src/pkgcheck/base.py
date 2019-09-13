@@ -256,9 +256,6 @@ class Result(object):
         20: ('info', 'green'),
     }
 
-    def __init__(self):
-        self._verbosity = 0
-
     @property
     def color(self):
         return self._level_to_desc[self._level][1]
@@ -272,17 +269,7 @@ class Result(object):
 
     @property
     def desc(self):
-        if getattr(self, '_verbosity', False):
-            return self.long_desc
-        return self.short_desc
-
-    @property
-    def short_desc(self):
         raise NotImplementedError
-
-    @property
-    def long_desc(self):
-        return self.short_desc
 
     @property
     def _attrs(self):
@@ -375,7 +362,7 @@ class LogError(Error):
         self.msg = msg
 
     @property
-    def short_desc(self):
+    def desc(self):
         return self.msg
 
 
@@ -392,21 +379,20 @@ class MetadataError(VersionedResult, Error):
         self.msg = str(msg)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"attr({self.attr}): {self.msg}"
 
 
 class Reporter(object):
     """Generic result reporter."""
 
-    def __init__(self, out, keywords=None, verbosity=None):
+    def __init__(self, out, keywords=None):
         """Initialize
 
         :type out: L{snakeoil.formatters.Formatter}
         :param keywords: result keywords to report, other keywords will be skipped
         """
         self.out = out
-        self.verbosity = verbosity if verbosity is not None else 0
         self._filtered_keywords = set(keywords) if keywords is not None else keywords
 
         # initialize result processing coroutines
@@ -420,7 +406,6 @@ class Reporter(object):
         while True:
             result = (yield)
             if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
-                result._verbosity = self.verbosity
                 self.process(result)
 
     @coroutine

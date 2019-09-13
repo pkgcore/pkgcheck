@@ -26,7 +26,7 @@ class BadProfileEntry(base.Error):
         self.error = error
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'failed parsing {self.path!r}: {self.error}'
 
 
@@ -41,7 +41,7 @@ class UnknownProfilePackages(base.Warning):
         self.packages = tuple(packages)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "%r: unknown package%s: [ %s ]" % (
             self.path, _pl(self.packages), ', '.join(map(repr, self.packages)))
 
@@ -58,7 +58,7 @@ class UnknownProfilePackageUse(base.Warning):
         self.flags = tuple(flags)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "%r: unknown package USE flag%s: [ '%s[%s]' ]" % (
             self.path, _pl(self.flags), self.package,
             ','.join(self.flags))
@@ -75,7 +75,7 @@ class UnknownProfileUse(base.Warning):
         self.flags = tuple(flags)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "%r: unknown USE flag%s: [ %s ]" % (
             self.path, _pl(self.flags), ', '.join(map(repr, self.flags)))
 
@@ -92,7 +92,7 @@ class UnknownProfilePackageKeywords(base.Warning):
         self.keywords = tuple(keywords)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "%r: unknown package keyword%s: %s: [ %s ]" % (
             self.path, _pl(self.keywords), self.package,
             ', '.join(map(repr, self.keywords)))
@@ -286,7 +286,7 @@ class UnusedProfileDirs(base.Warning):
         self.dirs = tuple(dirs)
 
     @property
-    def short_desc(self):
+    def desc(self):
         dirs = ', '.join(map(repr, self.dirs))
         return f'unused profile dir{_pl(self.dirs)}: {dirs}'
 
@@ -301,7 +301,7 @@ class ArchesWithoutProfiles(base.Warning):
         self.arches = tuple(arches)
 
     @property
-    def short_desc(self):
+    def desc(self):
         arches = ', '.join(self.arches)
         return f"arch{_pl(self.arches, plural='es')} without profile: {arches}"
 
@@ -316,7 +316,7 @@ class NonexistentProfilePath(base.Error):
         self.path = path
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'nonexistent profile path: {self.path!r}'
 
 
@@ -333,7 +333,7 @@ class LaggingProfileEAPI(base.Warning):
         self.parent_eapi = parent_eapi
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f'{self.profile!r} profile has EAPI {self.eapi}, '
             f'{self.parent!r} parent has EAPI {self.parent_eapi}'
@@ -353,7 +353,7 @@ class UnknownCategories(base.Warning):
         self.categories = tuple(categories)
 
     @property
-    def short_desc(self):
+    def desc(self):
         categories = ', '.join(self.categories)
         y = _pl(self.categories, singular='y', plural='ies')
         return f'unknown categor{y}: {categories}'

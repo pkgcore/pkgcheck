@@ -17,7 +17,7 @@ class _MissingXml(base.Error):
         self.filename = filename
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'{self._attr} is missing {self.filename}'
 
 
@@ -30,7 +30,7 @@ class _BadlyFormedXml(base.Warning):
         self.error = error
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'{self._attr} {self.filename} is not well formed xml: {self.error}'
 
 
@@ -43,7 +43,7 @@ class _InvalidXml(base.Error):
         self.message = message
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'{self._attr} {self.filename} violates metadata.xsd:\n{self.message}'
 
 
@@ -56,7 +56,7 @@ class _MetadataXmlInvalidPkgRef(base.Error):
         self.pkgtext = pkgtext
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f'{self._attr} {self.filename} <pkg/> '
             f'references unknown/invalid package: {self.pkgtext!r}'
@@ -72,7 +72,7 @@ class _MetadataXmlInvalidCatRef(base.Error):
         self.cattext = cattext
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f'{self._attr} {self.filename} <cat/> references '
             f'unknown/invalid category: {self.cattext!r}'
@@ -87,7 +87,7 @@ class EmptyMaintainer(base.PackageResult, base.Warning):
         self.filename = filename
 
     @property
-    def short_desc(self):
+    def desc(self):
         return 'no package maintainer or maintainer-needed comment specified'
 
 
@@ -107,7 +107,7 @@ class MaintainerWithoutProxy(base.PackageResult, base.Warning):
         self.maintainers = tuple(maintainers)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"proxied maintainer{_pl(self.maintainers)} missing proxy dev/project: "
             f"[ {', '.join(self.maintainers)} ]")
@@ -126,7 +126,7 @@ class StaleProxyMaintProject(base.PackageResult, base.Warning):
         self.filename = filename
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "proxy-maint maintainer with no proxies"
 
 
@@ -139,7 +139,7 @@ class NonexistentProjectMaintainer(base.PackageResult, base.Warning):
         self.emails = tuple(emails)
 
     @property
-    def short_desc(self):
+    def desc(self):
         emails = ', '.join(self.emails)
         return f'nonexistent project maintainer{_pl(self.emails)}: [ {emails} ]'
 
@@ -153,7 +153,7 @@ class WrongMaintainerType(base.PackageResult, base.Warning):
         self.emails = tuple(emails)
 
     @property
-    def short_desc(self):
+    def desc(self):
         emails = ', '.join(self.emails)
         return f'project maintainer{_pl(self.emails)} with type="person": [ {emails} ]'
 
@@ -210,13 +210,12 @@ class _MetadataXmlIndentation(base.Warning):
         self.lines = tuple(lines)
 
     @property
-    def short_desc(self):
-        return "metadata.xml has inconsistent indentation"
-
-    @property
-    def long_desc(self):
-        return "%s on line%s %s" % (
-            self.short_desc, _pl(self.lines), ', '.join(self.lines))
+    def desc(self):
+        lines = ', '.join(self.lines)
+        return (
+            'metadata.xml has inconsistent indentation '
+            f'on line{_pl(self.lines)}: {lines}'
+        )
 
 
 class CatMetadataXmlIndentation(_MetadataXmlIndentation, base.CategoryResult):
@@ -242,7 +241,7 @@ class _MetadataXmlEmptyElement(base.Warning):
         self.line = line
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"metadata.xml has empty element {self.element!r} on line {self.line}"
 
 

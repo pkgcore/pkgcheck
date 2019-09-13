@@ -118,7 +118,7 @@ class VisibleVcsPkg(base.VersionedResult, base.Error):
         self.profile = profile
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"VCS version visible for arch {self.arch}, profile {self.profile}"
 
 
@@ -131,7 +131,7 @@ class NonexistentDeps(base.VersionedResult, base.Warning):
         self.nonexistent = tuple(nonexistent)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"{self.attr}: nonexistent package{_pl(self.nonexistent)}: "
             f"[ {', '.join(self.nonexistent)} ]"
@@ -146,7 +146,7 @@ class UncheckableDep(base.VersionedResult, base.Warning):
         self.attr = attr
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"depset {self.attr}: could not be checked due to pkgcore limitation"
 
 
@@ -165,7 +165,7 @@ class _NonsolvableDeps(base.VersionedResult):
         self.num_profiles = num_profiles
 
     @property
-    def short_desc(self):
+    def desc(self):
         profile_status = 'deprecated ' if self.profile_deprecated else ''
         profile_status += self.profile_status or 'custom'
         num_profiles = f' ({self.num_profiles} total)' if self.num_profiles is not None else ''

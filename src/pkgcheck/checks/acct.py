@@ -19,7 +19,7 @@ class MissingAccountIdentifier(base.VersionedResult, base.Warning):
         self.var = var
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"unable to determine the value of {self.var} variable"
 
 
@@ -35,7 +35,7 @@ class ConflictingAccountIdentifiers(base.Error):
         self.pkgs = tuple(pkgs)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"conflicting {self.kind} id {self.identifier} usage: "
             f"[ {', '.join(self.pkgs)} ]")
@@ -50,7 +50,7 @@ class OutsideRangeAccountIdentifier(base.VersionedResult, base.Error):
         self.identifier = identifier
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"{self.kind} id {self.identifier} outside permitted "
             f"static allocation range (0..499, 60001+)")

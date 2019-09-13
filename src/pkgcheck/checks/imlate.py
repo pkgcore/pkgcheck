@@ -17,7 +17,7 @@ class PotentialStable(base.VersionedResult, base.Warning):
         self.keywords = tuple(keywords)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "slot(%s), stabled arch%s: [ %s ], potential%s: [ %s ]" % (
             self.slot, _pl(self.stable, plural='es'), ', '.join(self.stable),
             _pl(self.keywords), ', '.join(self.keywords))
@@ -33,7 +33,7 @@ class LaggingStable(base.VersionedResult, base.Warning):
         self.keywords = tuple(keywords)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "slot(%s), stabled arch%s: [ %s ], lagging: [ %s ]" % (
             self.slot, _pl(self.stable, plural='es'),
             ', '.join(self.stable), ', '.join(self.keywords))

@@ -12,7 +12,7 @@ class RedundantVersion(base.VersionedResult, base.Warning):
         self.later_versions = tuple(later_versions)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "slot(%s) keywords are overshadowed by version%s: %s" % (
             self.slot, _pl(self.later_versions), ', '.join(self.later_versions))
 

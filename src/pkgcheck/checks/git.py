@@ -30,7 +30,7 @@ class OutdatedCopyright(base.VersionedResult, base.Warning):
         self.line = line
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'outdated copyright year {self.year!r}: {self.line!r}'
 
 
@@ -42,7 +42,7 @@ class DirectStableKeywords(base.VersionedResult, base.Error):
         self.keywords = tuple(keywords)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'directly committed with stable keyword%s: [ %s ]' % (
             _pl(self.keywords), ', '.join(self.keywords))
 
@@ -58,7 +58,7 @@ class DroppedUnstableKeywords(base.PackageResult, base.Warning):
         self.commit = commit
 
     @property
-    def short_desc(self):
+    def desc(self):
         keywords = ', '.join(self.keywords)
         return (
             f"commit {self.commit[:10]} (or later) dropped {self.status} "
@@ -76,7 +76,7 @@ class DirectNoMaintainer(base.PackageResult, base.Error):
     """Directly added, new package with no specified maintainer."""
 
     @property
-    def short_desc(self):
+    def desc(self):
         return 'directly committed with no package maintainer'
 
 

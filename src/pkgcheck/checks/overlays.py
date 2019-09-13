@@ -16,7 +16,7 @@ class UnusedInMastersLicenses(base.VersionedResult, base.Warning):
         self.licenses = tuple(licenses)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "unused license%s in master repo(s): %s" % (
             _pl(self.licenses), ', '.join(self.licenses))
 
@@ -32,7 +32,7 @@ class UnusedInMastersMirrors(base.VersionedResult, base.Warning):
         self.mirrors = tuple(mirrors)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "unused mirror%s in master repo(s): %s" % (
             _pl(self.mirrors), ', '.join(self.mirrors))
 
@@ -48,7 +48,7 @@ class UnusedInMastersEclasses(base.VersionedResult, base.Warning):
         self.eclasses = tuple(eclasses)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "unused eclass%s in master repo(s): %s" % (
             _pl(self.eclasses, plural='es'), ', '.join(self.eclasses))
 
@@ -64,7 +64,7 @@ class UnusedInMastersGlobalUSE(base.VersionedResult, base.Warning):
         self.flags = tuple(flags)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "use.desc unused flag%s in master repo(s): %s" % (
             _pl(self.flags), ', '.join(self.flags))
 

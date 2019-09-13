@@ -15,7 +15,7 @@ class UnstableOnly(base.PackageResult, base.Warning):
         self.arches = tuple(arches)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "for arch%s: [ %s ], all versions are unstable: [ %s ]" % (
             _pl(self.arches, plural='es'), ', '.join(self.arches), ', '.join(self.versions))
 

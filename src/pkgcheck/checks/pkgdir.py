@@ -26,7 +26,7 @@ class MismatchedPN(base.PackageResult, base.Error):
         self.ebuilds = tuple(ebuilds)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "mismatched package name%s: [ %s ]" % (
             _pl(self.ebuilds), ', '.join(self.ebuilds))
 
@@ -39,7 +39,7 @@ class InvalidPN(base.PackageResult, base.Error):
         self.ebuilds = tuple(ebuilds)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "invalid package name%s: [ %s ]" % (
             _pl(self.ebuilds), ', '.join(self.ebuilds))
 
@@ -57,7 +57,7 @@ class EqualVersions(base.PackageResult, base.Error):
         self.versions = tuple(versions)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"equal package versions: [ {', '.join(self.versions)} ]"
 
 
@@ -69,7 +69,7 @@ class DuplicateFiles(base.PackageResult, base.Warning):
         self.files = tuple(files)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return 'duplicate identical files in FILESDIR: %s' % (
             ', '.join(map(repr, self.files)))
 
@@ -82,7 +82,7 @@ class EmptyFile(base.PackageResult, base.Warning):
         self.filename = filename
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'empty file in FILESDIR: {self.filename!r}'
 
 
@@ -94,7 +94,7 @@ class ExecutableFile(base.PackageResult, base.Warning):
         self.filename = filename
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'unnecessary executable bit: {self.filename!r}'
 
 
@@ -110,7 +110,7 @@ class UnknownFile(base.PackageResult, base.Warning):
         self.filename = filename
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'unknown file: {self.filename!r}'
 
 
@@ -123,7 +123,7 @@ class SizeViolation(base.PackageResult, base.Warning):
         self.size = size
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'{self.filename!r} exceeds 20k in size; {sizeof_fmt(self.size)} total'
 
 
@@ -135,7 +135,7 @@ class Glep31Violation(base.PackageResult, base.Error):
         self.filename = filename
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "filename contains char outside the allowed ranges defined " \
                f"by glep31: {self.filename!r}"
 
@@ -149,7 +149,7 @@ class InvalidUTF8(base.PackageResult, base.Error):
         self.err = err
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"invalid UTF-8: {self.err}: {self.filename!r}"
 
 

@@ -16,7 +16,7 @@ class BinaryFile(base.Error):
         self.path = path
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"binary file found in repository: {self.path!r}"
 
 

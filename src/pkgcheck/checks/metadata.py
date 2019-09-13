@@ -31,7 +31,7 @@ class MissingLicense(base.VersionedResult, base.Error):
         self.licenses = tuple(licenses)
 
     @property
-    def short_desc(self):
+    def desc(self):
         licenses = ', '.join(self.licenses)
         return f"no matching license{_pl(self.licenses)}: [ {licenses} ]"
 
@@ -40,7 +40,7 @@ class UnnecessaryLicense(base.VersionedResult, base.Warning):
     """LICENSE defined for package that is license-less."""
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"{self.category!r} packages shouldn't define LICENSE"
 
 
@@ -103,7 +103,7 @@ class DeprecatedEAPI(base.VersionedResult, base.Warning):
         self.eapi = eapi
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"uses deprecated EAPI {self.eapi}"
 
 
@@ -111,7 +111,7 @@ class BannedEAPI(DeprecatedEAPI, base.Error):
     """Package's EAPI is banned according to repo metadata."""
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"uses banned EAPI {self.eapi}"
 
 
@@ -164,7 +164,7 @@ class RequiredUseDefaults(base.VersionedResult, base.Warning):
         self.num_profiles = num_profiles
 
     @property
-    def short_desc(self):
+    def desc(self):
         if not self.use:
             if self.num_profiles is not None and self.num_profiles > 1:
                 num_profiles = f' ({self.num_profiles} total)'
@@ -246,7 +246,7 @@ class UnusedLocalUSE(base.PackageResult, base.Warning):
         self.flags = tuple(flags)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "metadata.xml unused local USE flag%s: [ %s ]" % (
             _pl(self.flags), ', '.join(self.flags))
 
@@ -259,7 +259,7 @@ class MatchingGlobalUSE(base.PackageResult, base.Error):
         self.flag = flag
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"local USE flag matches a global: {self.flag!r}"
 
 
@@ -271,7 +271,7 @@ class ProbableGlobalUSE(base.PackageResult, base.Warning):
         self.flag = flag
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"local USE flag closely matches a global: {self.flag!r}"
 
 
@@ -295,7 +295,7 @@ class ProbableUseExpand(base.PackageResult, base.Warning):
         self.group = group
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"USE_EXPAND group {self.group!r} matches local USE flag: {self.flag!r}"
 
 
@@ -314,7 +314,7 @@ class UnderscoreInUseFlag(base.PackageResult, base.Warning):
         self.flag = flag
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"USE flag {self.flag!r} uses reserved underscore character"
 
 
@@ -390,7 +390,7 @@ class MissingSlotDep(base.VersionedResult, base.Warning):
         self.dep_slots = tuple(dep_slots)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"{self.dep!r} matches more than one slot: "
             f"[ {', '.join(self.dep_slots)} ]")
@@ -441,7 +441,7 @@ class MissingPackageRevision(base.VersionedResult, base.Warning):
         self.atom = atom
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f'{self.dep}="{self.atom}": "=" operator used without package revision'
 
 
@@ -456,7 +456,7 @@ class MissingUseDepDefault(base.VersionedResult, base.Warning):
         self.pkg_deps = tuple(pkg_deps)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f'{self.attr}="{self.atom}": USE flag {self.flag!r} missing from '
             f"package{_pl(self.pkg_deps)}: [ {', '.join(self.pkg_deps)} ]")
@@ -475,7 +475,7 @@ class OutdatedBlocker(base.VersionedResult, base.Warning):
         self.age = age
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f'outdated blocker {self.attr}="{self.atom}": '
             f'last match removed {self.age} years ago'
@@ -497,7 +497,7 @@ class NonexistentBlocker(base.VersionedResult, base.Warning):
         self.atom = atom
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f'nonexistent blocker {self.attr}="{self.atom}": '
             'no matches in repo history'
@@ -618,8 +618,7 @@ class DependencyCheck(base.Check):
 class StupidKeywords(base.VersionedResult, base.Warning):
     """Packages using ``-*``; use package.mask instead."""
 
-    short_desc = (
-        "keywords contain -*; use package.mask or empty keywords instead")
+    desc = "keywords contain -*; use package.mask or empty keywords instead"
 
 
 class InvalidKeywords(base.VersionedResult, base.Error):
@@ -630,7 +629,7 @@ class InvalidKeywords(base.VersionedResult, base.Error):
         self.keywords = tuple(keywords)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"invalid KEYWORDS: {', '.join(map(repr, self.keywords))}"
 
 
@@ -642,7 +641,7 @@ class OverlappingKeywords(base.VersionedResult, base.Warning):
         self.keywords = keywords
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"overlapping KEYWORDS: {self.keywords}"
 
 
@@ -654,7 +653,7 @@ class DuplicateKeywords(base.VersionedResult, base.Warning):
         self.keywords = tuple(keywords)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"duplicate KEYWORDS: {', '.join(self.keywords)}"
 
 
@@ -672,14 +671,11 @@ class UnsortedKeywords(base.VersionedResult, base.Warning):
         self.sorted_keywords = tuple(sorted_keywords)
 
     @property
-    def short_desc(self):
-        return f"unsorted KEYWORDS: {', '.join(self.keywords)}"
-
-    @property
-    def long_desc(self):
+    def desc(self):
         return (
-            f"\n\tunsorted: {', '.join(self.keywords)}"
-            f"\n\tsorted: {', '.join(self.sorted_keywords)}")
+            f"\n\tunsorted KEYWORDS: {', '.join(self.keywords)}"
+            f"\n\tsorted KEYWORDS: {', '.join(self.sorted_keywords)}"
+        )
 
 
 class MissingVirtualKeywords(base.VersionedResult, base.Warning):
@@ -690,7 +686,7 @@ class MissingVirtualKeywords(base.VersionedResult, base.Warning):
         self.keywords = tuple(keywords)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"missing KEYWORDS: {', '.join(self.keywords)}"
 
 
@@ -777,7 +773,7 @@ class MissingUri(base.VersionedResult, base.Warning):
         self.filenames = tuple(filenames)
 
     @property
-    def short_desc(self):
+    def desc(self):
         filenames = ', '.join(map(repr, self.filenames))
         return f'unfetchable file{_pl(self.filenames)}: {filenames}'
 
@@ -792,7 +788,7 @@ class UnknownMirror(base.VersionedResult, base.Error):
         self.mirror = mirror
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"file {self.filename}: unknown mirror {self.mirror!r} from URI {self.uri!r}"
 
 
@@ -808,7 +804,7 @@ class BadProtocol(base.VersionedResult, base.Warning):
         self.bad_uris = tuple(bad_uris)
 
     @property
-    def short_desc(self):
+    def desc(self):
         uris = ', '.join(map(repr, self.bad_uris))
         return f'file {self.filename!r}: bad protocol/uri{_pl(self.bad_uris)}: {uris}'
 
@@ -824,7 +820,7 @@ class BadFilename(base.VersionedResult, base.Warning):
         self.filenames = tuple(filenames)
 
     @property
-    def short_desc(self):
+    def desc(self):
         filenames = ', '.join(self.filenames)
         return f'bad filename{_pl(self.filenames)}: [ {filenames} ]'
 
@@ -841,7 +837,7 @@ class TarballAvailable(base.VersionedResult, base.Warning):
         self.uris = tuple(uris)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (f"zip archive{_pl(self.uris)} used when tarball available: "
                 f"[ {' '.join(self.uris)} ]")
 
@@ -936,7 +932,7 @@ class BadDescription(base.VersionedResult, base.Warning):
         self.msg = msg
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"bad DESCRIPTION: {self.msg}"
 
 
@@ -976,7 +972,7 @@ class BadHomepage(base.VersionedResult, base.Warning):
         self.msg = msg
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"bad HOMEPAGE: {self.msg}"
 
 
@@ -1017,7 +1013,7 @@ class BadRestricts(base.VersionedResult, base.Warning):
         self.restricts = tuple(restricts)
 
     @property
-    def short_desc(self):
+    def desc(self):
         restricts = ' '.join(self.restricts)
         return f'unknown RESTRICT="{restricts}"'
 
@@ -1030,7 +1026,7 @@ class UnknownProperties(base.VersionedResult, base.Warning):
         self.properties = tuple(properties)
 
     @property
-    def short_desc(self):
+    def desc(self):
         properties = ' '.join(self.properties)
         return f'unknown PROPERTIES="{properties}"'
 
@@ -1085,7 +1081,7 @@ class MissingConditionalTestRestrict(base.VersionedResult, base.Warning):
     """
 
     @property
-    def short_desc(self):
+    def desc(self):
         return 'missing RESTRICT="!test? ( test )" with IUSE=test'
 
 
@@ -1126,7 +1122,7 @@ class MissingUnpackerDep(base.VersionedResult, base.Warning):
         self.unpackers = tuple(unpackers)
 
     @property
-    def short_desc(self):
+    def desc(self):
         # determine proper dep type from pkg EAPI
         eapi_obj = get_eapi(self.eapi)
         dep_type = 'BDEPEND' if 'BDEPEND' in eapi_obj.metadata_keys else 'DEPEND'

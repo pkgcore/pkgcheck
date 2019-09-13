@@ -975,7 +975,7 @@ class UnstatedIUSE(base.VersionedResult, base.Error):
         self.num_profiles = num_profiles
 
     @property
-    def short_desc(self):
+    def desc(self):
         msg = [f'attr({self.attr})']
         if self.profile is not None:
             if self.num_profiles is not None:

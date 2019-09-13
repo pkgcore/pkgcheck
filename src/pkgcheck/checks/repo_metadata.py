@@ -25,7 +25,7 @@ class MultiMovePackageUpdate(base.Warning):
         self.moves = tuple(moves)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"{self.pkg!r}: multi-move update: {' -> '.join(self.moves)}"
 
 
@@ -45,7 +45,7 @@ class OldMultiMovePackageUpdate(base.Warning):
         self.moves = tuple(moves)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"{self.pkg!r} unavailable: old multi-move update: {' -> '.join(self.moves)}"
 
 
@@ -60,7 +60,7 @@ class OldPackageUpdate(base.Warning):
         self.updates = tuple(updates)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return f"{self.pkg!r} unavailable: old update line: {' '.join(self.updates)!r}"
 
 
@@ -157,7 +157,7 @@ class UnusedLicenses(base.Warning):
         self.licenses = tuple(licenses)
 
     @property
-    def short_desc(self):
+    def desc(self):
         licenses = ', '.join(self.licenses)
         return f'unused license{_pl(self.licenses)}: {licenses}'
 
@@ -197,7 +197,7 @@ class UnusedMirrors(base.Warning):
         self.mirrors = tuple(mirrors)
 
     @property
-    def short_desc(self):
+    def desc(self):
         mirrors = ', '.join(self.mirrors)
         return f'unused mirror{_pl(self.mirrors)}: {mirrors}'
 
@@ -255,7 +255,7 @@ class UnusedEclasses(base.Warning):
         self.eclasses = tuple(eclasses)
 
     @property
-    def short_desc(self):
+    def desc(self):
         eclasses = ', '.join(self.eclasses)
         return f"unused eclass{_pl(self.eclasses, plural='es')}: {eclasses}"
 
@@ -297,7 +297,7 @@ class UnknownLicenses(base.Warning):
         self.licenses = tuple(licenses)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "license group %r has unknown license%s: [ %s ]" % (
             self.group, _pl(self.licenses), ', '.join(self.licenses))
 
@@ -331,7 +331,7 @@ class PotentialLocalUSE(base.Warning):
         self.pkgs = tuple(pkgs)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"global USE flag {self.flag!r} is a potential local, "
             f"used by {len(self.pkgs)} package{_pl(len(self.pkgs))}: {', '.join(self.pkgs)}")
@@ -347,7 +347,7 @@ class UnusedGlobalUSE(base.Warning):
         self.flags = tuple(flags)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "use.desc unused flag%s: %s" % (
             _pl(self.flags), ', '.join(self.flags))
 
@@ -363,7 +363,7 @@ class PotentialGlobalUSE(base.Warning):
         self.pkgs = tuple(pkgs)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"local USE flag {self.flag!r} is a potential global "
             f"used by {len(self.pkgs)} packages: {', '.join(self.pkgs)}")
@@ -503,7 +503,7 @@ class ConflictingChksums(base.VersionedResult, base.Error):
         self.pkgs = tuple(pkgs)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"conflicts with ({', '.join(self.pkgs)}) "
             f"for file {self.filename!r} chksum {self.chksums}")
@@ -519,7 +519,7 @@ class MissingChksum(base.VersionedResult, base.Warning):
         self.existing = tuple(existing)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"{self.filename!r} missing required chksums: "
             f"{', '.join(self.missing)}; has chksums: {', '.join(self.existing)}")
@@ -535,7 +535,7 @@ class DeprecatedChksum(base.VersionedResult, base.Warning):
         self.existing = tuple(existing)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"{self.filename!r} uses deprecated checksum set: "
             f"{', '.join(self.existing)}; expected {', '.join(self.expected)}")
@@ -549,7 +549,7 @@ class MissingManifest(base.VersionedResult, base.Error):
         self.files = tuple(files)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "distfile%s missing from Manifest: [ %s ]" % (
             _pl(self.files), ', '.join(self.files),)
 
@@ -562,7 +562,7 @@ class UnknownManifest(base.PackageResult, base.Warning):
         self.files = tuple(files)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "unknown distfile%s in Manifest: [ %s ]" % (
             _pl(self.files), ', '.join(self.files),)
 
@@ -575,7 +575,7 @@ class UnnecessaryManifest(base.PackageResult, base.Warning):
         self.files = tuple(files)
 
     @property
-    def short_desc(self):
+    def desc(self):
         return "unnecessary file%s in Manifest: [ %s ]" % (
             _pl(self.files), ', '.join(self.files),)
 

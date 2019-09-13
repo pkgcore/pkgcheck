@@ -20,7 +20,7 @@ class StableRequest(base.VersionedResult, base.Warning):
         self.period = period
 
     @property
-    def short_desc(self):
+    def desc(self):
         return (
             f"slot({self.slot}) no change in {self.period} days for unstable "
             "keyword%s: [ %s ]" % (_pl(self.keywords), ', '.join(self.keywords))
