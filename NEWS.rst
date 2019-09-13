@@ -3,6 +3,35 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.6.4 (2019-09-13)
+---------------------------
+
+- Add FormatReporter supporting custom format string output.
+
+- pkgcheck scan: Drop --metadata-xsd-required option since the related file is
+  now bundled with pkgcore.
+
+- Add CsvReporter for outputting results in CSV format.
+
+- pkgcheck scan: Add --commits option that use local git repo changes to
+  determine scan targets.
+
+- DroppedUnstableKeywords: Disregard when stable target keywords exist.
+
+- LocalUSECheck: Add test for USE flags with reserved underscore character.
+
+- PathVariablesCheck: Drop 'into' from prefixed dir functions list to avoid
+  false positives in comments.
+
+- MissingUnpackerDepCheck: Drop checks for jar files since most are being
+  directly installed and not unpacked.
+
+- Make gentoo repo checks work for external gentoo repos on systems with a
+  configured gentoo system repo.
+
+- UnknownFile: Flag unknown files in package directories for the gentoo repo.
+
+---------------------------
 pkgcheck 0.6.3 (2019-08-30)
 ---------------------------
 
