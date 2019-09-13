@@ -13,16 +13,16 @@ day = 24*3600
 class StableRequest(base.VersionedResult, base.Warning):
     """Unstable package added over thirty days ago that could be stabilized."""
 
-    def __init__(self, slot, keywords, period, **kwargs):
+    def __init__(self, slot, keywords, age, **kwargs):
         super().__init__(**kwargs)
         self.slot = slot
         self.keywords = tuple(keywords)
-        self.period = period
+        self.age = age
 
     @property
     def desc(self):
         return (
-            f"slot({self.slot}) no change in {self.period} days for unstable "
+            f"slot({self.slot}) no change in {self.age} days for unstable "
             "keyword%s: [ %s ]" % (_pl(self.keywords), ', '.join(self.keywords))
         )
 
