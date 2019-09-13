@@ -22,7 +22,6 @@ class StrReporter(base.Reporter):
         sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86-fbsd ]
     """
 
-    # simple reporter; fallback default
     priority = 0
 
     @coroutine
@@ -52,7 +51,6 @@ class FancyReporter(base.Reporter):
           StableRequest: sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86 ]
     """
 
-    # default report, akin to repoman
     priority = 1
 
     def __init__(self, *args, **kwargs):
@@ -112,7 +110,6 @@ class JsonReporter(base.Reporter):
         jq -c -s 'reduce.[]as$x({};.*$x)' orig.json > new.json
     """
 
-    # json report should only be used if requested
     priority = -1000
 
     def __init__(self, *args, **kwargs):
@@ -147,7 +144,6 @@ class JsonReporter(base.Reporter):
 class XmlReporter(base.Reporter):
     """dump an xml feed of reports"""
 
-    # xml report, shouldn't be used but in worst case.
     priority = -1000
 
     repo_template = (
@@ -200,7 +196,6 @@ class CsvReporter(base.Reporter):
         sys-apps,portage,2.1-r2,"no change in 75 days, keywords [ ~x86-fbsd ]"
     """
 
-    # simple reporter; fallback default
     priority = -1001
 
     def __init__(self, *args, **kwargs):
