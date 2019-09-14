@@ -214,7 +214,10 @@ class GitCommitsCheck(base.GentooRepoCheck):
 
         for git_pkg in pkgset:
             # check git commit summary formatting
-            summary = git_pkg.message[0]
+            try:
+                summary = git_pkg.message[0]
+            except IndexError:
+                summary = ''
             if not summary.startswith(f'{git_pkg.unversioned_atom}: '):
                 yield BadCommitSummary(summary, git_pkg.commit, pkg=git_pkg)
 
