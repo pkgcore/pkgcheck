@@ -40,7 +40,6 @@ _ebuild_path_regex_raw = '([^/]+)/([^/]+)/([^/]+)\\.ebuild'
 _ebuild_path_regex = '(?P<category>[^/]+)/(?P<PN>[^/]+)/(?P<P>[^/]+)\\.ebuild'
 demand_compile_regexp('ebuild_ADM_regex', fr'^(?P<status>[ADM])\t{_ebuild_path_regex}$')
 demand_compile_regexp('ebuild_R_regex', fr'^(?P<status>R)\d+\t{_ebuild_path_regex_raw}\t{_ebuild_path_regex}$')
-demand_compile_regexp('commit_msg_regex', r'^\s.*$')
 
 
 class ArchesAddon(base.Addon):
@@ -162,7 +161,9 @@ class _ParseGitRepo(object):
     """Parse repository git logs."""
 
     # git command to run on the targeted repo
-    _git_cmd = None
+    _git_cmd = 'git log --name-status --date=short --reverse'
+    # selected file filter
+    _diff_filter = None
 
     def __init__(self, repo, commit=None, **kwargs):
         self.location = repo.location
@@ -209,9 +210,23 @@ class _ParseGitRepo(object):
         if pkg_map is None:
             pkg_map = {}
 
-        if self._git_cmd is None:
-            raise ValueError('missing git command to run')
         cmd = shlex.split(self._git_cmd)
+        if self._diff_filter is not None:
+            cmd.append(f'--diff-filter={self._diff_filter}')
+
+        # custom git log format, see the "PRETTY FORMATS" section of the git
+        # log man page for details
+        format_lines = [
+            '# BEGIN COMMIT',
+            '%H', # commit hash
+            '%an <%ae>', # Author Name <author@email.com>
+            '%cn <%ce>', # Committer Name <committer@email.com>
+            '%cd', # commit date
+            '%B# END MESSAGE BODY', # commit message
+        ]
+        format_str = '%n'.join(format_lines)
+        cmd.append(f'--pretty=tformat:{format_str}')
+
         if commit:
             if '..' in commit:
                 cmd.append(commit)
@@ -231,42 +246,30 @@ class _ParseGitRepo(object):
         count = 1
         with base.ProgressManager(debug=debug) as progress:
             while line:
-                if not line.startswith('commit '):
-                    logger.error(
-                        f'skipping git checks: '
-                        f'unknown git log output: expecting commit hash, got {line!r}')
-                    return {}
-                commit = line[7:].strip()
-                author = git_log.stdout.readline().decode()[7:].strip()
-                # author date
-                git_log.stdout.readline()
-                committer = git_log.stdout.readline().decode()[7:].strip()
-                line = git_log.stdout.readline().decode().strip()
-                if not line.startswith('CommitDate:'):
-                    logger.error(
-                        f'skipping git checks: '
-                        f'unknown git log output: expecting commit date, got {line!r}')
-                    return {}
-                commit_date = line[11:].strip()
+                commit = git_log.stdout.readline().decode().strip()
+                author = git_log.stdout.readline().decode().strip()
+                committer = git_log.stdout.readline().decode().strip()
+                commit_date = git_log.stdout.readline().decode().strip()
 
                 # message
                 if local:
                     message = []
                     while True:
-                        line = git_log.stdout.readline().decode()
-                        if commit_msg_regex.match(line): 
-                            message.append(line.strip())
-                        else:
+                        line = git_log.stdout.readline().decode().strip('\n')
+                        if line == '# END MESSAGE BODY':
                             break
-                    message = tuple(message[1:-1])
+                        message.append(line)
 
                 # update progress output
                 progress(f'{commit} commit #{count}, {commit_date}')
                 count += 1
 
                 # file changes
-                while line and not line.startswith('commit '):
-                    parsed = self._parse_file_line(line)
+                while True:
+                    line = git_log.stdout.readline().decode()
+                    if line == '# BEGIN COMMIT\n' or not line:
+                        break
+                    parsed = self._parse_file_line(line.strip())
                     if parsed is not None:
                         atom, status = parsed
                         data = [atom.fullver, commit_date, status, commit]
@@ -274,7 +277,6 @@ class _ParseGitRepo(object):
                             data.extend([author, committer, message])
                         pkg_map.setdefault(atom.category, {}).setdefault(
                             atom.package, []).append(tuple(data))
-                    line = git_log.stdout.readline().decode()
 
         return pkg_map
 
@@ -282,24 +284,21 @@ class _ParseGitRepo(object):
 class GitChangedRepo(_ParseGitRepo):
     """Parse repository git log to determine locally changed packages."""
 
-    _git_cmd = ('git log --diff-filter=ARMD --name-status --pretty=fuller '
-                '--date=short --reverse')
+    _diff_filter = 'ARMD'
 
 
 class GitAddedRepo(_ParseGitRepo):
     """Parse repository git log to determine ebuild added dates."""
 
     cache_name = 'git-added'
-    _git_cmd = ('git log --diff-filter=AR --name-status --pretty=fuller '
-                '--date=short --reverse')
+    _diff_filter = 'AR'
 
 
 class GitRemovedRepo(_ParseGitRepo):
     """Parse repository git log to determine ebuild removal dates."""
 
     cache_name = 'git-removed'
-    _git_cmd = ('git log --diff-filter=D --name-status --pretty=fuller '
-                '--date=short --reverse')
+    _diff_filter = 'D'
 
 
 class UpstreamCommitPkg(cpv.versioned_CPV_cls):
