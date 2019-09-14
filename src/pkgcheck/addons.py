@@ -203,7 +203,7 @@ class _ParseGitRepo(object):
             except MalformedAtom:
                 return None
 
-    def _process_git_repo(self, pkg_map=None, commit=None, debug=False):
+    def _process_git_repo(self, pkg_map=None, commit=None, summary=False, debug=False):
         """Parse git log output."""
         if pkg_map is None:
             pkg_map = {}
@@ -247,6 +247,10 @@ class _ParseGitRepo(object):
                     return {}
                 date = line[5:].strip()
 
+                # summary
+                git_log.stdout.readline()
+                msg = git_log.stdout.readline().decode().strip()
+
                 # update progress output
                 progress(f'{commit} commit #{count}, {date}')
                 count += 1
@@ -257,9 +261,11 @@ class _ParseGitRepo(object):
                     parsed = self._parse_file_line(line)
                     if parsed is not None:
                         atom, status = parsed
-                        pkg_map.setdefault(
-                            atom.category, {}).setdefault(
-                                atom.package, []).append((atom.fullver, date, status, commit))
+                        data = [atom.fullver, date, status, commit]
+                        if summary:
+                            data.append(msg)
+                        pkg_map.setdefault(atom.category, {}).setdefault(
+                            atom.package, []).append(tuple(data))
 
         return pkg_map
 
@@ -287,12 +293,12 @@ class GitRemovedRepo(_ParseGitRepo):
                 '--date=short --reverse')
 
 
-class HistoricalPkg(cpv.versioned_CPV_cls):
-    """Fake packages encapsulating date and status parsed from git log."""
+class UpstreamCommitPkg(cpv.versioned_CPV_cls):
+    """Fake packages encapsulating upstream commits parsed from git log."""
 
-    def __init__(self, cat, pkg, data, *args, **kwargs):
+    def __init__(self, cat, pkg, data):
         ver, date, status, commit = data
-        super().__init__(cat, pkg, ver, *args, **kwargs)
+        super().__init__(cat, pkg, ver)
 
         # add additional date/status attrs
         sf = object.__setattr__
@@ -301,11 +307,26 @@ class HistoricalPkg(cpv.versioned_CPV_cls):
         sf(self, 'commit', commit)
 
 
+class LocalCommitPkg(cpv.versioned_CPV_cls):
+    """Fake packages encapsulating local commits parsed from git log."""
+
+    def __init__(self, cat, pkg, data):
+        ver, date, status, commit, summary = data
+        super().__init__(cat, pkg, ver)
+
+        # add additional date/status attrs
+        sf = object.__setattr__
+        sf(self, 'date', date)
+        sf(self, 'status', status)
+        sf(self, 'commit', commit)
+        sf(self, 'summary', summary)
+
+
 class HistoricalRepo(SimpleTree):
     """Repository encapsulating historical data."""
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('pkg_klass', HistoricalPkg)
+        kwargs.setdefault('pkg_klass', UpstreamCommitPkg)
         super().__init__(*args, **kwargs)
 
 
@@ -482,9 +503,10 @@ class GitAddon(base.Addon):
             if origin == master:
                 return repo
 
-            git_repo = repo_cls(target_repo)
+            git_repo = repo_cls(target_repo, summary=True)
+            repo_id = f'{target_repo.repo_id}-commits'
             repo = HistoricalRepo(
-                git_repo.pkg_map, repo_id=f'{target_repo.repo_id}-commits')
+                git_repo.pkg_map, pkg_klass=LocalCommitPkg, repo_id=repo_id)
 
         return repo
 
