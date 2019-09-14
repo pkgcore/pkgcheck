@@ -204,7 +204,7 @@ class _ParseGitRepo(object):
             except MalformedAtom:
                 return None
 
-    def _process_git_repo(self, pkg_map=None, commit=None, message=False, debug=False):
+    def _process_git_repo(self, pkg_map=None, commit=None, local=False, debug=False):
         """Parse git log output."""
         if pkg_map is None:
             pkg_map = {}
@@ -237,30 +237,31 @@ class _ParseGitRepo(object):
                         f'unknown git log output: expecting commit hash, got {line!r}')
                     return {}
                 commit = line[7:].strip()
-                # author
+                author = git_log.stdout.readline().decode()[7:].strip()
+                # author date
                 git_log.stdout.readline()
-                # date
+                committer = git_log.stdout.readline().decode()[7:].strip()
                 line = git_log.stdout.readline().decode().strip()
-                if not line.startswith('Date:'):
+                if not line.startswith('CommitDate:'):
                     logger.error(
                         f'skipping git checks: '
-                        f'unknown git log output: expecting date, got {line!r}')
+                        f'unknown git log output: expecting commit date, got {line!r}')
                     return {}
-                date = line[5:].strip()
+                commit_date = line[11:].strip()
 
                 # message
-                if message:
-                    msg = []
+                if local:
+                    message = []
                     while True:
                         line = git_log.stdout.readline().decode()
                         if commit_msg_regex.match(line): 
-                            msg.append(line.strip())
+                            message.append(line.strip())
                         else:
                             break
-                    msg = tuple(msg[1:-1])
+                    message = tuple(message[1:-1])
 
                 # update progress output
-                progress(f'{commit} commit #{count}, {date}')
+                progress(f'{commit} commit #{count}, {commit_date}')
                 count += 1
 
                 # file changes
@@ -268,9 +269,9 @@ class _ParseGitRepo(object):
                     parsed = self._parse_file_line(line)
                     if parsed is not None:
                         atom, status = parsed
-                        data = [atom.fullver, date, status, commit]
-                        if message:
-                            data.append(msg)
+                        data = [atom.fullver, commit_date, status, commit]
+                        if local:
+                            data.extend([author, committer, message])
                         pkg_map.setdefault(atom.category, {}).setdefault(
                             atom.package, []).append(tuple(data))
                     line = git_log.stdout.readline().decode()
@@ -281,7 +282,7 @@ class _ParseGitRepo(object):
 class GitChangedRepo(_ParseGitRepo):
     """Parse repository git log to determine locally changed packages."""
 
-    _git_cmd = ('git log --diff-filter=ARMD --name-status --pretty=medium '
+    _git_cmd = ('git log --diff-filter=ARMD --name-status --pretty=fuller '
                 '--date=short --reverse')
 
 
@@ -289,7 +290,7 @@ class GitAddedRepo(_ParseGitRepo):
     """Parse repository git log to determine ebuild added dates."""
 
     cache_name = 'git-added'
-    _git_cmd = ('git log --diff-filter=AR --name-status --pretty=medium '
+    _git_cmd = ('git log --diff-filter=AR --name-status --pretty=fuller '
                 '--date=short --reverse')
 
 
@@ -297,7 +298,7 @@ class GitRemovedRepo(_ParseGitRepo):
     """Parse repository git log to determine ebuild removal dates."""
 
     cache_name = 'git-removed'
-    _git_cmd = ('git log --diff-filter=D --name-status --pretty=medium '
+    _git_cmd = ('git log --diff-filter=D --name-status --pretty=fuller '
                 '--date=short --reverse')
 
 
@@ -308,25 +309,24 @@ class UpstreamCommitPkg(cpv.versioned_CPV_cls):
         ver, date, status, commit = data
         super().__init__(cat, pkg, ver)
 
-        # add additional date/status attrs
+        # add additional attrs
         sf = object.__setattr__
         sf(self, 'date', date)
         sf(self, 'status', status)
         sf(self, 'commit', commit)
 
 
-class LocalCommitPkg(cpv.versioned_CPV_cls):
+class LocalCommitPkg(UpstreamCommitPkg):
     """Fake packages encapsulating local commits parsed from git log."""
 
     def __init__(self, cat, pkg, data):
-        ver, date, status, commit, message = data
-        super().__init__(cat, pkg, ver)
+        author, committer, message = data[-3:]
+        super().__init__(cat, pkg, data[:-3])
 
-        # add additional date/status attrs
+        # add additional attrs
         sf = object.__setattr__
-        sf(self, 'date', date)
-        sf(self, 'status', status)
-        sf(self, 'commit', commit)
+        sf(self, 'author', author)
+        sf(self, 'committer', committer)
         sf(self, 'message', message)
 
 
@@ -511,7 +511,7 @@ class GitAddon(base.Addon):
             if origin == master:
                 return repo
 
-            git_repo = repo_cls(target_repo, message=True)
+            git_repo = repo_cls(target_repo, local=True)
             repo_id = f'{target_repo.repo_id}-commits'
             repo = HistoricalRepo(
                 git_repo.pkg_map, pkg_klass=LocalCommitPkg, repo_id=repo_id)
