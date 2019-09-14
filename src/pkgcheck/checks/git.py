@@ -52,7 +52,7 @@ class BadCommitSummary(base.PackageResult, base.Warning):
 
     @property
     def desc(self):
-        return f'bad summary, commit {self.commit[:10]}: {self.summary!r}'
+        return f'commit {self.commit[:10]}, bad summary: {self.summary!r}'
 
 
 class MissingSignOff(base.PackageResult, base.Error):
