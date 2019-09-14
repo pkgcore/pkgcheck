@@ -621,16 +621,16 @@ def display_checks(out, options):
 
 
 @decorate_forced_wrapping()
-def display_reporters(out, options, reporters):
+def display_reporters(out, options):
     if options.verbosity < 1:
-        out.write('\n'.join(sorted(x.__name__ for x in reporters)), wrap=False)
+        out.write('\n'.join(sorted(const.REPORTERS.keys())), wrap=False)
     else:
         out.write()
         out.write("reporters:")
         out.write()
         out.first_prefix.append('  ')
         out.later_prefix.append('  ')
-        for reporter in sorted(reporters, key=attrgetter('__name__')):
+        for reporter in sorted(const.REPORTERS.values(), key=attrgetter('__name__')):
             out.write(out.bold, out.fg('yellow'), reporter.__name__)
             dump_docstring(out, reporter, prefix='  ')
 
@@ -696,6 +696,6 @@ def _show(options, out, err):
                 out.write(f'{name} -- {scope.desc} scope')
 
     if options.reporters:
-        display_reporters(out, options, list(const.REPORTERS.values()))
+        display_reporters(out, options)
 
     return 0
