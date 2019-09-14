@@ -9,6 +9,7 @@ import argparse
 import os
 import sys
 import textwrap
+from collections import defaultdict
 from functools import partial
 from itertools import chain
 from operator import attrgetter
@@ -554,19 +555,19 @@ def dump_docstring(out, obj, prefix=None):
 
 @decorate_forced_wrapping()
 def display_keywords(out, options):
-    d = {}
-    scope_map = {
-        base.versioned_feed: base.version_scope,
-        base.package_feed: base.package_scope,
-        base.category_feed: base.category_scope,
-        base.repository_feed: base.repository_scope,
-    }
-    for keyword in const.KEYWORDS.values():
-        d.setdefault(scope_map[keyword.threshold], set()).add(keyword)
-
     if options.verbosity < 1:
-        out.write('\n'.join(sorted(x.__name__ for s in d.values() for x in s)), wrap=False)
+        out.write('\n'.join(sorted(const.KEYWORDS.keys())), wrap=False)
     else:
+        d = defaultdict(set)
+        scope_map = {
+            base.versioned_feed: base.version_scope,
+            base.package_feed: base.package_scope,
+            base.category_feed: base.category_scope,
+            base.repository_feed: base.repository_scope,
+        }
+        for keyword in const.KEYWORDS.values():
+            d[scope_map[keyword.threshold]].add(keyword)
+
         scopes = tuple(x.desc for x in reversed(base.known_scopes.values()))
         for scope in reversed(sorted(d)):
             out.write(out.bold, f"{scopes[scope].capitalize()} scope:")
@@ -586,13 +587,13 @@ def display_keywords(out, options):
 
 @decorate_forced_wrapping()
 def display_checks(out, options):
-    d = {}
-    for x in const.CHECKS.values():
-        d.setdefault(x.__module__, []).append(x)
-
     if options.verbosity < 1:
-        out.write('\n'.join(sorted(x.__name__ for s in d.values() for x in s)), wrap=False)
+        out.write('\n'.join(sorted(const.CHECKS.keys())), wrap=False)
     else:
+        d = defaultdict(list)
+        for x in const.CHECKS.values():
+            d[x.__module__].append(x)
+
         for module_name in sorted(d):
             out.write(out.bold, f"{module_name}:")
             out.write()
