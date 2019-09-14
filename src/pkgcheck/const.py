@@ -34,13 +34,15 @@ def _find_modules(module):
 
 def _find_obj_classes(module_name, matching_cls):
     module = import_module(f'.{module_name}', __title__)
-    classes = []
+    classes = {}
     for m in _find_modules(module):
         for _name, cls in inspect.getmembers(m):
             if (inspect.isclass(cls) and issubclass(cls, matching_cls)
                     and cls.__name__[0] != '_'):
-                classes.append((cls.__name__, cls))
-    return tuple(sorted(classes))
+                if cls.__name__ in classes:
+                    raise Exception(f'object name overlap: {cls} and {classes[cls.__name__]}')
+                classes[cls.__name__] = cls
+    return classes
 
 
 def _GET_VALS(attr, func):
