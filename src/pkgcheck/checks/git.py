@@ -34,6 +34,27 @@ class OutdatedCopyright(base.VersionedResult, base.Warning):
         return f'outdated copyright year {self.year!r}: {self.line!r}'
 
 
+class BadCommitSummary(base.PackageResult, base.Warning):
+    """Local package commit with poorly formatted or unmatching commit summary.
+
+    Git commit messages for packages should be formatted in the standardized
+    fashion described in the devmanual [#]_. Specifically, the
+    ``${CATEGORY}/${PN}: `` prefix should be used in the summary relating to
+    the modified package.
+
+    .. [#] https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format
+    """
+
+    def __init__(self, summary, commit, **kwargs):
+        super().__init__(**kwargs)
+        self.summary = summary
+        self.commit = commit
+
+    @property
+    def desc(self):
+        return f'bad commit summary ({self.commit[:10]}): {self.summary!r}'
+
+
 class DirectStableKeywords(base.VersionedResult, base.Error):
     """Newly committed ebuild with stable keywords."""
 
@@ -139,7 +160,7 @@ class GitCommitsCheck(base.GentooRepoCheck):
     source = sources.GitCommitsRepoSource
     required_addons = (addons.GitAddon,)
     known_results = (
-        DirectStableKeywords, DirectNoMaintainer,
+        DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,
         OutdatedCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
     )
 
@@ -192,6 +213,10 @@ class GitCommitsCheck(base.GentooRepoCheck):
             yield from self.removal_checks(removed)
 
         for git_pkg in pkgset:
+            # check git commit summary formatting
+            if not git_pkg.summary.startswith(f'{git_pkg.unversioned_atom}: '):
+                yield BadCommitSummary(git_pkg.summary, git_pkg.commit, pkg=git_pkg)
+
             try:
                 pkg = self.repo.match(git_pkg.versioned_atom)[0]
             except IndexError:
