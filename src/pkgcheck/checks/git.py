@@ -52,7 +52,7 @@ class BadCommitSummary(base.PackageResult, base.Warning):
 
     @property
     def desc(self):
-        return f'bad commit summary ({self.commit[:10]}): {self.summary!r}'
+        return f'bad summary, commit {self.commit[:10]}: {self.summary!r}'
 
 
 class DirectStableKeywords(base.VersionedResult, base.Error):
