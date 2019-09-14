@@ -39,7 +39,7 @@ class BadCommitSummary(base.PackageResult, base.Warning):
 
     Git commit messages for packages should be formatted in the standardized
     fashion described in the devmanual [#]_. Specifically, the
-    ``${CATEGORY}/${PN}: `` prefix should be used in the summary relating to
+    ``${CATEGORY}/${PN}:`` prefix should be used in the summary relating to
     the modified package.
 
     .. [#] https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format
@@ -53,6 +53,28 @@ class BadCommitSummary(base.PackageResult, base.Warning):
     @property
     def desc(self):
         return f'bad summary, commit {self.commit[:10]}: {self.summary!r}'
+
+
+class MissingSignOff(base.PackageResult, base.Error):
+    """Local package commit with missing sign offs.
+
+    Sign offs are required for commits as specified by GLEP 76 [#]_.
+
+    .. [#] https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin
+    """
+
+    def __init__(self, missing_sign_offs, commit, **kwargs):
+        super().__init__(**kwargs)
+        self.missing_sign_offs = missing_sign_offs
+        self.commit = commit
+
+    @property
+    def desc(self):
+        sign_offs = ', '.join(self.missing_sign_offs)
+        return (
+            f'commit {self.commit[:10]}, '
+            f'missing sign-off{_pl(self.missing_sign_offs)}: {sign_offs}'
+        )
 
 
 class DirectStableKeywords(base.VersionedResult, base.Error):
@@ -160,7 +182,7 @@ class GitCommitsCheck(base.GentooRepoCheck):
     source = sources.GitCommitsRepoSource
     required_addons = (addons.GitAddon,)
     known_results = (
-        DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,
+        DirectStableKeywords, DirectNoMaintainer, BadCommitSummary, MissingSignOff,
         OutdatedCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
     )
 
@@ -220,6 +242,16 @@ class GitCommitsCheck(base.GentooRepoCheck):
                 summary = ''
             if not summary.startswith(f'{git_pkg.unversioned_atom}: '):
                 yield BadCommitSummary(summary, git_pkg.commit, pkg=git_pkg)
+
+            # check for missing git sign offs
+            sign_offs = {
+                line[15:].strip() for line in git_pkg.message
+                if line.startswith('Signed-off-by: ')}
+            required_sign_offs = {git_pkg.author, git_pkg.committer}
+            missing_sign_offs = required_sign_offs - sign_offs
+            if missing_sign_offs:
+                yield MissingSignOff(
+                    tuple(sorted(missing_sign_offs)), git_pkg.commit, pkg=git_pkg)
 
             try:
                 pkg = self.repo.match(git_pkg.versioned_atom)[0]
