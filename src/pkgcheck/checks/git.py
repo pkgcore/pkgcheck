@@ -214,8 +214,9 @@ class GitCommitsCheck(base.GentooRepoCheck):
 
         for git_pkg in pkgset:
             # check git commit summary formatting
-            if not git_pkg.summary.startswith(f'{git_pkg.unversioned_atom}: '):
-                yield BadCommitSummary(git_pkg.summary, git_pkg.commit, pkg=git_pkg)
+            summary = git_pkg.message[0]
+            if not summary.startswith(f'{git_pkg.unversioned_atom}: '):
+                yield BadCommitSummary(summary, git_pkg.commit, pkg=git_pkg)
 
             try:
                 pkg = self.repo.match(git_pkg.versioned_atom)[0]

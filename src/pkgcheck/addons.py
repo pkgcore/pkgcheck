@@ -40,6 +40,7 @@ _ebuild_path_regex_raw = '([^/]+)/([^/]+)/([^/]+)\\.ebuild'
 _ebuild_path_regex = '(?P<category>[^/]+)/(?P<PN>[^/]+)/(?P<P>[^/]+)\\.ebuild'
 demand_compile_regexp('ebuild_ADM_regex', fr'^(?P<status>[ADM])\t{_ebuild_path_regex}$')
 demand_compile_regexp('ebuild_R_regex', fr'^(?P<status>R)\d+\t{_ebuild_path_regex_raw}\t{_ebuild_path_regex}$')
+demand_compile_regexp('commit_msg_regex', r'^\s.*$')
 
 
 class ArchesAddon(base.Addon):
@@ -203,7 +204,7 @@ class _ParseGitRepo(object):
             except MalformedAtom:
                 return None
 
-    def _process_git_repo(self, pkg_map=None, commit=None, summary=False, debug=False):
+    def _process_git_repo(self, pkg_map=None, commit=None, message=False, debug=False):
         """Parse git log output."""
         if pkg_map is None:
             pkg_map = {}
@@ -247,25 +248,32 @@ class _ParseGitRepo(object):
                     return {}
                 date = line[5:].strip()
 
-                # summary
-                git_log.stdout.readline()
-                msg = git_log.stdout.readline().decode().strip()
+                # message
+                if message:
+                    msg = []
+                    while True:
+                        line = git_log.stdout.readline().decode()
+                        if commit_msg_regex.match(line): 
+                            msg.append(line.strip())
+                        else:
+                            break
+                    msg = tuple(msg[1:-1])
 
                 # update progress output
                 progress(f'{commit} commit #{count}, {date}')
                 count += 1
 
-                # summary and file changes
+                # file changes
                 while line and not line.startswith('commit '):
-                    line = git_log.stdout.readline().decode()
                     parsed = self._parse_file_line(line)
                     if parsed is not None:
                         atom, status = parsed
                         data = [atom.fullver, date, status, commit]
-                        if summary:
+                        if message:
                             data.append(msg)
                         pkg_map.setdefault(atom.category, {}).setdefault(
                             atom.package, []).append(tuple(data))
+                    line = git_log.stdout.readline().decode()
 
         return pkg_map
 
@@ -311,7 +319,7 @@ class LocalCommitPkg(cpv.versioned_CPV_cls):
     """Fake packages encapsulating local commits parsed from git log."""
 
     def __init__(self, cat, pkg, data):
-        ver, date, status, commit, summary = data
+        ver, date, status, commit, message = data
         super().__init__(cat, pkg, ver)
 
         # add additional date/status attrs
@@ -319,7 +327,7 @@ class LocalCommitPkg(cpv.versioned_CPV_cls):
         sf(self, 'date', date)
         sf(self, 'status', status)
         sf(self, 'commit', commit)
-        sf(self, 'summary', summary)
+        sf(self, 'message', message)
 
 
 class HistoricalRepo(SimpleTree):
@@ -503,7 +511,7 @@ class GitAddon(base.Addon):
             if origin == master:
                 return repo
 
-            git_repo = repo_cls(target_repo, summary=True)
+            git_repo = repo_cls(target_repo, message=True)
             repo_id = f'{target_repo.repo_id}-commits'
             repo = HistoricalRepo(
                 git_repo.pkg_map, pkg_klass=LocalCommitPkg, repo_id=repo_id)
