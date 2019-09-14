@@ -1,0 +1,10 @@
+diff -Naur gentoo/EbuildHeaderCheck/InvalidLicenseHeader/InvalidLicenseHeader-0.ebuild fixed/EbuildHeaderCheck/InvalidLicenseHeader/InvalidLicenseHeader-0.ebuild
+--- gentoo/EbuildHeaderCheck/InvalidLicenseHeader/InvalidLicenseHeader-0.ebuild	2019-09-14 16:13:59.172674517 -0600
++++ fixed/EbuildHeaderCheck/InvalidLicenseHeader/InvalidLicenseHeader-0.ebuild	2019-09-14 16:16:55.644352877 -0600
+@@ -1,5 +1,5 @@
+ # Copyright 1999-2019 Gentoo Authors
+-# Distributed under the terms of the GNU General Public License v3
++# Distributed under the terms of the GNU General Public License v2
+ 
+ DESCRIPTION="Ebuild with invalid license header"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
