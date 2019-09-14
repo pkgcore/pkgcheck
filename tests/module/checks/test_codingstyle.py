@@ -374,9 +374,9 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert uri in str(r)
 
 
-class TestCopyright(misc.ReportTestCase):
+class TestEbuildHeaderCheck(misc.ReportTestCase):
 
-    check_kls = codingstyle.CopyrightCheck
+    check_kls = codingstyle.EbuildHeaderCheck
 
     def mk_pkg(self):
         return misc.FakePkg("dev-util/diffball-0.5")
@@ -394,7 +394,7 @@ class TestCopyright(misc.ReportTestCase):
         ]
         fake_pkg = self.mk_pkg()
         for line in good_copyrights:
-            fake_src = [line]
+            fake_src = [line, self.check_kls.license_header]
             self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
 
     def test_invalid_copyright(self):
@@ -407,7 +407,7 @@ class TestCopyright(misc.ReportTestCase):
         ]
         fake_pkg = self.mk_pkg()
         for line in bad_copyrights:
-            fake_src = [line]
+            fake_src = [line, self.check_kls.license_header]
             r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
             assert isinstance(r, codingstyle.InvalidCopyright)
             assert line.strip() in str(r)
@@ -422,7 +422,7 @@ class TestCopyright(misc.ReportTestCase):
         ]
         fake_pkg = self.mk_pkg()
         for line in bad_copyrights:
-            fake_src = [line]
+            fake_src = [line, self.check_kls.license_header]
             r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
             assert isinstance(r, codingstyle.OldGentooCopyright)
             assert line.strip() in str(r)
@@ -436,7 +436,7 @@ class TestCopyright(misc.ReportTestCase):
         ]
         fake_pkg = self.mk_pkg()
         for line in good_copyrights:
-            fake_src = [line]
+            fake_src = [line, self.check_kls.license_header]
             self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
 
     def test_non_gentoo_authors_copyright_in_gentoo(self):
@@ -447,9 +447,28 @@ class TestCopyright(misc.ReportTestCase):
         ]
         fake_pkg = self.mk_pkg()
         for line in bad_copyrights:
-            fake_src = [line]
+            fake_src = [line, self.check_kls.license_header]
             r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
             assert isinstance(r, codingstyle.NonGentooAuthorsCopyright)
+            assert line.strip() in str(r)
+
+    def test_license_headers(self):
+        copyright = '# Copyright 1999-2019 Gentoo Authors\n'
+        fake_pkg = self.mk_pkg()
+        fake_src = [copyright, self.check_kls.license_header]
+        self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
+
+        bad_license_headers = [
+            '',
+            '\n',
+            f'{self.check_kls.license_header} ',
+            f' {self.check_kls.license_header}',
+            '# Distributed under the terms of the GNU General Public License v3'
+        ]
+        for line in bad_license_headers:
+            fake_src = [copyright, line]
+            r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
+            assert isinstance(r, codingstyle.InvalidLicenseHeader)
             assert line.strip() in str(r)
 
 

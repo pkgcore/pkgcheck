@@ -439,15 +439,15 @@ class ObsoleteUriCheck(base.Check):
                     yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)
 
 
-class _CopyrightResult(base.VersionedResult, base.Warning):
-    """Generic copyright result."""
+class _EbuildHeaderResult(base.VersionedResult, base.Warning):
+    """Generic ebuild header result."""
 
     def __init__(self, line, **kwargs):
         super().__init__(**kwargs)
         self.line = line
 
 
-class InvalidCopyright(_CopyrightResult):
+class InvalidCopyright(_EbuildHeaderResult):
     """Ebuild with invalid copyright.
 
     The ebuild does not start with a valid copyright line. Each ebuild must
@@ -465,7 +465,7 @@ class InvalidCopyright(_CopyrightResult):
         return f'invalid copyright: {self.line!r}'
 
 
-class OldGentooCopyright(_CopyrightResult):
+class OldGentooCopyright(_EbuildHeaderResult):
     """Ebuild with old Gentoo Foundation copyright.
 
     The ebuild still assigns copyright to the Gentoo Foundation even though
@@ -481,7 +481,7 @@ class OldGentooCopyright(_CopyrightResult):
         return f'old copyright, update to "Gentoo Authors": {self.line!r}'
 
 
-class NonGentooAuthorsCopyright(_CopyrightResult):
+class NonGentooAuthorsCopyright(_EbuildHeaderResult):
     """Ebuild with copyright stating owner other than "Gentoo Authors".
 
     The ebuild specifies explicit copyright owner, while the Gentoo repository
@@ -495,12 +495,31 @@ class NonGentooAuthorsCopyright(_CopyrightResult):
         return f'copyright line must state "Gentoo Authors": {self.line!r}'
 
 
-class CopyrightCheck(base.GentooRepoCheck):
-    """Scan ebuild for incorrect copyright header."""
+class InvalidLicenseHeader(_EbuildHeaderResult):
+    """Ebuild with invalid license header.
+
+    The ebuild does not have with a valid license header.
+
+    Ebuilds in the Gentoo repository must use:
+
+        # Distributed under the terms of the GNU General Public License v2
+    """
+
+    @property
+    def desc(self):
+        return f'invalid license header: {self.line!r}'
+
+
+class EbuildHeaderCheck(base.GentooRepoCheck):
+    """Scan ebuild for incorrect copyright/license headers."""
 
     feed_type = base.ebuild_feed
     known_results = (
-        InvalidCopyright, OldGentooCopyright, NonGentooAuthorsCopyright)
+        InvalidCopyright, OldGentooCopyright, NonGentooAuthorsCopyright,
+        InvalidLicenseHeader,
+    )
+
+    license_header = '# Distributed under the terms of the GNU General Public License v2'
 
     def feed(self, entry):
         pkg, lines = entry
@@ -517,6 +536,13 @@ class CopyrightCheck(base.GentooRepoCheck):
                 # Gentoo policy requires 'Gentoo Authors'
                 elif copyright.group('holder') != 'Gentoo Authors':
                     yield NonGentooAuthorsCopyright(line, pkg=pkg)
+
+            try:
+                line = lines[1].strip('\n')
+            except IndexError:
+                line = ''
+            if line != self.license_header:
+                yield InvalidLicenseHeader(line, pkg=pkg)
 
 
 class HomepageInSrcUri(base.VersionedResult, base.Warning):
