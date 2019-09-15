@@ -386,16 +386,17 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
                 if not any(m.email.endswith('@gentoo.org')
                            for m in pkg.maintainers):
                     maintainers = sorted(map(str, pkg.maintainers))
-                    yield MaintainerWithoutProxy(loc, maintainers, pkg=pkg)
+                    yield MaintainerWithoutProxy(
+                        os.path.basename(loc), maintainers, pkg=pkg)
                 elif (len(pkg.maintainers) == 1 and
                       any(m.email == 'proxy-maint@gentoo.org'
                           for m in pkg.maintainers)):
-                    yield StaleProxyMaintProject(loc, pkg=pkg)
+                    yield StaleProxyMaintProject(os.path.basename(loc), pkg=pkg)
             else:
                 # check for missing maintainer-needed comment
                 if not any(c.text.strip() == 'maintainer-needed'
                            for c in doc.xpath('//comment()')):
-                    yield EmptyMaintainer(loc, pkg=pkg)
+                    yield EmptyMaintainer(os.path.basename(loc), pkg=pkg)
 
             # check maintainer validity
             projects = frozenset(pkg.repo.projects_xml.projects)
@@ -408,9 +409,11 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
                     elif m.maint_type == 'person' and m.email in projects:
                         wrong_maintainers.append(m.email)
                 if nonexistent:
-                    yield NonexistentProjectMaintainer(loc, sorted(nonexistent), pkg=pkg)
+                    yield NonexistentProjectMaintainer(
+                        os.path.basename(loc), sorted(nonexistent), pkg=pkg)
                 if wrong_maintainers:
-                    yield WrongMaintainerType(loc, sorted(wrong_maintainers), pkg=pkg)
+                    yield WrongMaintainerType(
+                        os.path.basename(loc), sorted(wrong_maintainers), pkg=pkg)
 
     def _get_xml_location(self, pkg):
         """Return the metadata.xml location for a given package."""
