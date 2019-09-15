@@ -158,7 +158,7 @@ class ProfileData(object):
 
 
 _GitCommit = namedtuple('GitCommit', [
-    'commit', 'commit_date', 'author', 'committer', 'message'])
+    'commit', 'commit_date', 'author', 'committer', 'key', 'message'])
 _GitPkgChange = namedtuple('GitPkgChange', [
     'atom', 'status', 'commit', 'commit_date', 'author', 'committer', 'message'])
 
@@ -226,6 +226,7 @@ class ParseGitRepo(object):
             '%cd', # commit date
             '%an <%ae>', # Author Name <author@email.com>
             '%cn <%ce>', # Committer Name <committer@email.com>
+            '%GP', # primary key fingerprint used for signing
             '%B# END MESSAGE BODY', # commit message
         ]
         format_str = '%n'.join(format_lines)
@@ -254,6 +255,7 @@ class ParseGitRepo(object):
                 commit_date = git_log.stdout.readline().decode().strip()
                 author = git_log.stdout.readline().decode().strip()
                 committer = git_log.stdout.readline().decode().strip()
+                key = git_log.stdout.readline().decode().strip()
 
                 message = []
                 while True:
@@ -267,7 +269,7 @@ class ParseGitRepo(object):
                 count += 1
 
                 if not pkgs:
-                    yield _GitCommit(commit, commit_date, author, committer, message)
+                    yield _GitCommit(commit, commit_date, author, committer, key, message)
 
                 # file changes
                 while True:

@@ -276,15 +276,31 @@ class MissingSignOff(base.CommitResult, base.Error):
         )
 
 
+class MissingSignature(base.CommitResult, base.Error):
+    """Local commit with missing OpenPGP signature.
+
+    Commits are required to be signed as specified by GLEP 66 [#]_.
+
+    .. [#] https://www.gentoo.org/glep/glep-0066.html#openpgp-signatures
+    """
+
+    @property
+    def desc(self):
+        return f'commit {self.commit}, missing OpenPGP signature'
+
+
 class GitCommitsCheck(base.GentooRepoCheck, base.ExplicitlyEnabledCheck):
     """Check unpushed git commits for various issues."""
 
     feed_type = base.commit_feed
     scope = base.commit_scope
     source = sources.GitCommitsSource
-    known_results = (MissingSignOff,)
+    known_results = (MissingSignOff, MissingSignature)
 
     def feed(self, commit):
+        if not commit.key:
+            yield MissingSignature(commit=commit)
+
         # check for missing git sign offs
         sign_offs = {
             line[15:].strip() for line in commit.message
