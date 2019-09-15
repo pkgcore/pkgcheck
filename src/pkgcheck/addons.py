@@ -183,7 +183,7 @@ class ParseGitRepo(object):
 
     def update(self, commit, **kwargs):
         """Update an existing repo starting at a given commit hash."""
-        self._pkg_changes(self.pkg_map, self.commit, **kwargs)
+        self._pkg_changes(self.pkg_map, commit=self.commit, **kwargs)
         self.commit = commit
 
     @staticmethod
