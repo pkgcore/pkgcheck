@@ -23,7 +23,6 @@ from snakeoil import klass, mappings
 from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
-from snakeoil.contexts import patch
 from snakeoil.decorators import coroutine
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.log import suppress_logging
@@ -395,7 +394,8 @@ class GitAddon(base.Addon):
     @classmethod
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('git', docs=cls.__doc__)
-        group.add_argument(
+        mutual_ex_group = group.add_mutually_exclusive_group()
+        mutual_ex_group.add_argument(
             '--git-disable', action='store_true',
             help="disable git-related checks",
             docs="""
@@ -407,7 +407,7 @@ class GitAddon(base.Addon):
             docs="""
                 Parses a repo's git log and caches various historical information.
             """)
-        group.add_argument(
+        mutual_ex_group.add_argument(
             '--commits', action=_ScanCommits, default=False,
             help="determine scan targets from local git repo commits",
             docs="""
@@ -424,8 +424,7 @@ class GitAddon(base.Addon):
                     '--commits is mutually exclusive with '
                     f'target{_pl(namespace.targets)}: {targets}')
             try:
-                with patch((namespace, 'git_disable'), False):
-                    repo = cls.commits_repo(cls, GitChangedRepo, options=namespace)
+                repo = cls.commits_repo(cls, GitChangedRepo, options=namespace)
             except CommandNotFound:
                 parser.error('git not available to determine targets for --commits')
             namespace.limiters = sorted(set(x.unversioned_atom for x in repo))
