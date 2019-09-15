@@ -230,6 +230,7 @@ def testconfig(tmp_path_factory):
     testconfig = tmp_path_factory.mktemp('testconfig')
     repos_conf = testconfig / 'repos.conf'
     stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
+    testdir = pjoin(os.path.dirname(os.path.dirname(__file__)), 'repos')
     with open(repos_conf, 'w') as f:
         f.write(textwrap.dedent(f"""\
             [DEFAULT]
@@ -237,13 +238,9 @@ def testconfig(tmp_path_factory):
 
             [stubrepo]
             location = {stubrepo}
+            [overlayed]
+            location = {pjoin(testdir, 'overlayed')}
         """))
-        testdir = pjoin(os.path.dirname(os.path.dirname(__file__)), 'repos')
-        for repo in os.listdir(testdir):
-            f.write(textwrap.dedent(f"""\
-                [{repo}]
-                location = {pjoin(testdir, repo)}
-            """))
     return str(testconfig)
 
 
