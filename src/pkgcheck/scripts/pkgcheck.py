@@ -361,10 +361,21 @@ def _validate_args(parser, namespace):
     disabled_checks, enabled_checks = ((), ())
     if namespace.selected_checks is not None:
         disabled_checks, enabled_checks = namespace.selected_checks
+        available_checks = list(const.CHECKS.keys())
+
+        alias_map = {'all': available_checks}
+        replace_aliases = lambda x: alias_map.get(x, [x])
+
+        # expand check aliases to check lists
+        disabled_checks = list(chain.from_iterable(map(replace_aliases, disabled_checks)))
+        enabled_checks = list(chain.from_iterable(map(replace_aliases, enabled_checks)))
+
+        # overwrite selected checks with expanded aliases
+        namespace.selected_checks = (disabled_checks, enabled_checks)
+
         # validate selected checks
         selected_checks = set(disabled_checks + enabled_checks)
-        available_checks = set(const.CHECKS.keys())
-        unknown_checks = selected_checks - available_checks
+        unknown_checks = selected_checks.difference(available_checks)
         if unknown_checks:
             parser.error("unknown check%s: %s (use 'pkgcheck show --checks' to show valid checks)" % (
                 _pl(unknown_checks), ', '.join(map(repr, unknown_checks))))

@@ -405,7 +405,7 @@ class TestPkgcheckScan(object):
                         self._script(trigger, triggered_repo)
                     repo_dir = triggered_repo
 
-                args = ['-r', repo_dir, '-c', ','.join(const.CHECKS)]
+                args = ['-r', repo_dir, '-c', 'all']
                 with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
                         patch('pkgcheck.base.CACHE_DIR', cache_dir):
                     with pytest.raises(SystemExit) as excinfo:
