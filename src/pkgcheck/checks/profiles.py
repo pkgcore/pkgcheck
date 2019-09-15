@@ -432,7 +432,8 @@ class RepoProfilesCheck(base.Check, base.EmptyFeed):
         # forcibly parse profiles.desc and convert log warnings/errors into reports
         with patch('pkgcore.log.logger.error', report_profile_errors), \
                 patch('pkgcore.log.logger.warning', report_profile_warnings):
-            profiles = repo_objs.Profiles(self.profiles_dir)._parse_profiles(
+            repo_obj = repo_objs.Profiles(self.profiles_dir, repo_id=self.repo.repo_id)
+            profiles = repo_obj._parse_profiles(
                 known_status=known_profile_statuses, known_arch=self.arches)
 
         yield from profile_reports
