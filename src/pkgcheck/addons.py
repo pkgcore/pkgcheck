@@ -218,7 +218,7 @@ class _ParseGitRepo(object):
         # log man page for details
         format_lines = [
             '# BEGIN COMMIT',
-            '%H', # commit hash
+            '%h', # abbreviated commit hash
             '%an <%ae>', # Author Name <author@email.com>
             '%cn <%ce>', # Committer Name <committer@email.com>
             '%cd', # commit date

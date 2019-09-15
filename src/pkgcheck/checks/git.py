@@ -52,7 +52,7 @@ class BadCommitSummary(base.PackageResult, base.Warning):
 
     @property
     def desc(self):
-        return f'commit {self.commit[:10]}, bad summary: {self.summary!r}'
+        return f'commit {self.commit}, bad summary: {self.summary!r}'
 
 
 class MissingSignOff(base.PackageResult, base.Error):
@@ -72,7 +72,7 @@ class MissingSignOff(base.PackageResult, base.Error):
     def desc(self):
         sign_offs = ', '.join(self.missing_sign_offs)
         return (
-            f'commit {self.commit[:10]}, '
+            f'commit {self.commit}, '
             f'missing sign-off{_pl(self.missing_sign_offs)}: {sign_offs}'
         )
 
@@ -104,7 +104,7 @@ class DroppedUnstableKeywords(base.PackageResult, base.Warning):
     def desc(self):
         keywords = ', '.join(self.keywords)
         return (
-            f"commit {self.commit[:10]} (or later) dropped {self.status} "
+            f"commit {self.commit} (or later) dropped {self.status} "
             f"keyword{_pl(self.keywords)}: [ {keywords} ]"
         )
 
