@@ -445,39 +445,40 @@ def _scan(options, out, err):
         for result in base.GitPipeline(git_checks, source).run():
             reporter.report(result)
 
-    debug = logger.debug if options.debug else None
-    for filterer in options.limiters:
-        for scope, attrs in ((base.version_scope, ['fullver', 'version', 'rev']),
-                             (base.package_scope, ['package']),
-                             (base.category_scope, ['category'])):
-            if any(collect_package_restrictions(filterer, attrs)):
-                scan_scope = scope
-                break
-        else:
-            scan_scope = base.repository_scope
+    if enabled_checks:
+        debug = logger.debug if options.debug else None
+        for filterer in options.limiters:
+            for scope, attrs in ((base.version_scope, ['fullver', 'version', 'rev']),
+                                (base.package_scope, ['package']),
+                                (base.category_scope, ['category'])):
+                if any(collect_package_restrictions(filterer, attrs)):
+                    scan_scope = scope
+                    break
+            else:
+                scan_scope = base.repository_scope
 
-        # skip checks higher than the current scan scope level, e.g. skip repo
-        # level checks when scanning at package level
-        sinks = tuple(x for x in enabled_checks if x.scope <= scan_scope)
-        if not sinks:
-            err.write(f'{scan.prog}: no matching checks available for current scope')
-            continue
+            # skip checks higher than the current scan scope level, e.g. skip repo
+            # level checks when scanning at package level
+            sinks = tuple(x for x in enabled_checks if x.scope <= scan_scope)
+            if not sinks:
+                err.write(f'{scan.prog}: no matching checks available for current scope')
+                continue
 
-        bad_sinks, pipes = base.plug(sinks, transforms, sources, scan_scope, debug=debug)
-        if bad_sinks:
-            for sink in bad_sinks:
-                check = sink.__class__.__name__
-                err.error(f'{check} could not be connected (missing transforms?)')
-            return 1
+            bad_sinks, pipes = base.plug(sinks, transforms, sources, scan_scope, debug=debug)
+            if bad_sinks:
+                for sink in bad_sinks:
+                    check = sink.__class__.__name__
+                    err.error(f'{check} could not be connected (missing transforms?)')
+                return 1
 
-        if options.verbosity >= 1:
-            err.write(f'Running {len(sinks)} tests')
-        if options.debug:
-            err.write(f'limiter: {filterer}')
-        err.flush()
+            if options.verbosity >= 1:
+                err.write(f'Running {len(sinks)} tests')
+            if options.debug:
+                err.write(f'limiter: {filterer}')
+            err.flush()
 
-        for result in base.Pipeline(pipes, filterer).run():
-            reporter.report(result)
+            for result in base.Pipeline(pipes, filterer).run():
+                reporter.report(result)
 
     reporter.finish()
 
