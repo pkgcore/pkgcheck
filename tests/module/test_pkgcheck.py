@@ -362,7 +362,7 @@ class TestPkgcheckScan(object):
                             results.append(deserialized_result)
                             self._results[repo].add(deserialized_result)
                         # compare rendered fancy out to expected
-                        assert self._render_results(results) == expected
+                        assert self._render_results(sorted(results)) == expected
             tested = True
 
         if not tested:
