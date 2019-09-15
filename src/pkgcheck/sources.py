@@ -70,7 +70,7 @@ class FilteredRepoSource(base.GenericSource):
 class GitCommitsRepoSource(base.GenericSource):
     """Repository source for locally changed packages in git history.
 
-    Parses local git log history to determine packages with changes that
+    Parses git log history to determine packages with changes that
     haven't been pushed upstream yet.
     """
 
@@ -79,3 +79,20 @@ class GitCommitsRepoSource(base.GenericSource):
     def __init__(self, options, git_addon):
         super().__init__(options)
         self.repo = git_addon.commits_repo(addons.GitChangedRepo)
+
+
+class GitCommitsSource(base.GenericSource):
+    """Source for local commits in git history.
+
+    Parses git log history to determine commits that haven't been pushed
+    upstream yet.
+    """
+
+    required_addons = (addons.GitAddon,)
+
+    def __init__(self, options, git_addon):
+        super().__init__(options)
+        self.commits = git_addon.commits()
+
+    def __iter__(self):
+        yield from self.commits

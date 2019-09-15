@@ -1,11 +1,12 @@
 """Addon functionality shared by multiple checkers."""
 
+import argparse
 import os
 import pickle
 import shlex
 import stat
 import subprocess
-from collections import UserDict, defaultdict
+from collections import UserDict, defaultdict, namedtuple
 from functools import partial
 from itertools import chain, filterfalse
 
@@ -157,7 +158,12 @@ class ProfileData(object):
         return immutable, enabled
 
 
-class _ParseGitRepo(object):
+_GitCommit = namedtuple('GitCommit', [
+    'commit', 'commit_date', 'author', 'committer', 'message'])
+_GitPkgChange = namedtuple('GitPkgChange', [
+    'atom', 'status', 'commit', 'commit_date', 'author', 'committer', 'message'])
+
+class ParseGitRepo(object):
     """Parse repository git logs."""
 
     # git command to run on the targeted repo
@@ -171,17 +177,18 @@ class _ParseGitRepo(object):
 
         if commit is None:
             self.commit = 'origin/HEAD..master'
-            self.pkg_map = self._process_git_repo(commit=self.commit, **kwargs)
+            self.pkg_map = self._pkg_changes(commit=self.commit, **kwargs)
         else:
             self.commit = commit
-            self.pkg_map = self._process_git_repo(**kwargs)
+            self.pkg_map = self._pkg_changes(**kwargs)
 
     def update(self, commit, **kwargs):
         """Update an existing repo starting at a given commit hash."""
-        self._process_git_repo(self.pkg_map, self.commit, **kwargs)
+        self._pkg_changes(self.pkg_map, self.commit, **kwargs)
         self.commit = commit
 
-    def _parse_file_line(self, line):
+    @staticmethod
+    def _parse_file_line(line):
         """Pull atoms and status from file change lines."""
         # match initially added ebuilds
         match = ebuild_ADM_regex.match(line)
@@ -205,28 +212,23 @@ class _ParseGitRepo(object):
             except MalformedAtom:
                 return None
 
-    def _process_git_repo(self, pkg_map=None, commit=None, local=False, debug=False):
+    @classmethod
+    def parse_git_log(cls, repo_path, git_cmd=None, commit=None,
+                      pkgs=False, local=False, debug=False):
         """Parse git log output."""
-        if pkg_map is None:
-            pkg_map = {}
-
-        cmd = shlex.split(self._git_cmd)
-        if self._diff_filter is not None:
-            cmd.append(f'--diff-filter={self._diff_filter}')
-
+        if git_cmd is None:
+            git_cmd = cls._git_cmd
+        cmd = shlex.split(git_cmd) if isinstance(git_cmd, str) else git_cmd
         # custom git log format, see the "PRETTY FORMATS" section of the git
         # log man page for details
         format_lines = [
             '# BEGIN COMMIT',
             '%h', # abbreviated commit hash
             '%cd', # commit date
+            '%an <%ae>', # Author Name <author@email.com>
+            '%cn <%ce>', # Committer Name <committer@email.com>
+            '%B# END MESSAGE BODY', # commit message
         ]
-        if local:
-            format_lines.extend([
-                '%an <%ae>', # Author Name <author@email.com>
-                '%cn <%ce>', # Committer Name <committer@email.com>
-                '%B# END MESSAGE BODY', # commit message
-            ]) # commit message
         format_str = '%n'.join(format_lines)
         cmd.append(f'--pretty=tformat:{format_str}')
 
@@ -239,7 +241,7 @@ class _ParseGitRepo(object):
             cmd.append('origin/HEAD')
 
         git_log = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.location)
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=repo_path)
         line = git_log.stdout.readline().decode().strip()
         if git_log.poll():
             error = git_log.stderr.read().decode().strip()
@@ -251,53 +253,69 @@ class _ParseGitRepo(object):
             while line:
                 commit = git_log.stdout.readline().decode().strip()
                 commit_date = git_log.stdout.readline().decode().strip()
+                author = git_log.stdout.readline().decode().strip()
+                committer = git_log.stdout.readline().decode().strip()
 
-                # author, committer, and message for local commits
-                if local:
-                    author = git_log.stdout.readline().decode().strip()
-                    committer = git_log.stdout.readline().decode().strip()
-                    message = []
-                    while True:
-                        line = git_log.stdout.readline().decode().strip('\n')
-                        if line == '# END MESSAGE BODY':
-                            break
-                        message.append(line)
+                message = []
+                while True:
+                    line = git_log.stdout.readline().decode().strip('\n')
+                    if line == '# END MESSAGE BODY':
+                        break
+                    message.append(line)
 
                 # update progress output
                 progress(f'{commit} commit #{count}, {commit_date}')
                 count += 1
+
+                if not pkgs:
+                    yield _GitCommit(commit, commit_date, author, committer, message)
 
                 # file changes
                 while True:
                     line = git_log.stdout.readline().decode()
                     if line == '# BEGIN COMMIT\n' or not line:
                         break
-                    parsed = self._parse_file_line(line.strip())
-                    if parsed is not None:
-                        atom, status = parsed
-                        data = [atom.fullver, commit_date, status, commit]
-                        if local:
-                            data.extend([author, committer, message])
-                        pkg_map.setdefault(atom.category, {}).setdefault(
-                            atom.package, []).append(tuple(data))
+                    if pkgs:
+                        parsed = cls._parse_file_line(line.strip())
+                        if parsed is not None:
+                            atom, status = parsed
+                            yield _GitPkgChange(
+                                atom, status, commit, commit_date,
+                                author, committer, message)
+
+    def _pkg_changes(self, pkg_map=None, local=False, **kwargs):
+        """Parse package changes from git log output."""
+        if pkg_map is None:
+            pkg_map = {}
+
+        cmd = shlex.split(self._git_cmd)
+        if self._diff_filter is not None:
+            cmd.append(f'--diff-filter={self._diff_filter}')
+
+        for pkg in self.parse_git_log(self.location, cmd, pkgs=True, **kwargs):
+            data = [pkg.atom.fullver, pkg.commit_date, pkg.status, pkg.commit]
+            if local:
+                data.extend([pkg.author, pkg.committer, pkg.message])
+            pkg_map.setdefault(pkg.atom.category, {}).setdefault(
+                pkg.atom.package, []).append(tuple(data))
 
         return pkg_map
 
 
-class GitChangedRepo(_ParseGitRepo):
+class GitChangedRepo(ParseGitRepo):
     """Parse repository git log to determine locally changed packages."""
 
     _diff_filter = 'ARMD'
 
 
-class GitAddedRepo(_ParseGitRepo):
+class GitAddedRepo(ParseGitRepo):
     """Parse repository git log to determine ebuild added dates."""
 
     cache_name = 'git-added'
     _diff_filter = 'AR'
 
 
-class GitRemovedRepo(_ParseGitRepo):
+class GitRemovedRepo(ParseGitRepo):
     """Parse repository git log to determine ebuild removal dates."""
 
     cache_name = 'git-removed'
@@ -340,6 +358,20 @@ class HistoricalRepo(SimpleTree):
         super().__init__(*args, **kwargs)
 
 
+class _ScanCommits(argparse.Action):
+    """Argparse action that enables git commit checks."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, nargs=0, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # avoid cyclic imports
+        from . import const
+        namespace.forced_checks.extend(
+            name for name, cls in const.CHECKS.items() if cls.scope == base.commit_scope)
+        setattr(namespace, self.dest, True)
+
+
 class GitAddon(base.Addon):
     """Git repo support for various checks.
 
@@ -376,7 +408,7 @@ class GitAddon(base.Addon):
                 Parses a repo's git log and caches various historical information.
             """)
         group.add_argument(
-            '--commits', action='store_true', default=False,
+            '--commits', action=_ScanCommits, default=False,
             help="determine scan targets from local git repo commits",
             docs="""
                 For a local git repo, pkgcheck will pull package targets to
@@ -509,16 +541,31 @@ class GitAddon(base.Addon):
                     logger.warning('skipping git commit checks: %s', e)
                 return repo
 
-            # skip git checks, no local commits found
-            if origin == master:
-                return repo
-
-            git_repo = repo_cls(target_repo, local=True)
-            repo_id = f'{target_repo.repo_id}-commits'
-            repo = HistoricalRepo(
-                git_repo.pkg_map, pkg_klass=LocalCommitPkg, repo_id=repo_id)
+            if origin != master:
+                git_repo = repo_cls(target_repo, local=True)
+                repo_id = f'{target_repo.repo_id}-commits'
+                repo = HistoricalRepo(
+                    git_repo.pkg_map, pkg_klass=LocalCommitPkg, repo_id=repo_id)
 
         return repo
+
+    def commits(self, repo=None):
+        path = repo.location if repo is not None else self.options.target_repo.location
+        commits = iter(())
+
+        if not self.options.git_disable:
+            try:
+                origin = self.get_commit_hash(path)
+                master = self.get_commit_hash(path, commit='master')
+            except ValueError as e:
+                if str(e):
+                    logger.warning('skipping git commit checks: %s', e)
+                return commits
+
+            if origin != master:
+                commits = ParseGitRepo.parse_git_log(path, commit='origin/HEAD..master')
+
+        return commits
 
 
 class _ProfilesCache(UserDict):

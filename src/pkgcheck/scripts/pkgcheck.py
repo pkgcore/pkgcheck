@@ -37,7 +37,6 @@ argparser = commandline.ArgumentParser(
 argparser.set_defaults(profile_override=pjoin(pkgcore_const.DATA_PATH, 'stubrepo/profiles/default'))
 subparsers = argparser.add_subparsers(description="check applets")
 
-
 reporter_argparser = commandline.ArgumentParser(suppress=True)
 reporter_options = reporter_argparser.add_argument_group('reporter options')
 reporter_options.add_argument(
@@ -92,6 +91,7 @@ def _setup_reporter(namespace):
 # These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser(
     'scan', parents=(reporter_argparser,), description='scan targets for QA issues')
+scan.set_defaults(forced_checks=[])
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
@@ -422,7 +422,13 @@ def _scan(options, out, err):
                     sources[addon.source] = init_source(addon.source)
                 yield addon
 
-    enabled_checks = tuple(init_checks(options.pop('addons')))
+    enabled_checks = []
+    git_checks = []
+    for check in init_checks(options.pop('addons')):
+        if check.scope == base.commit_scope:
+            git_checks.append(check)
+        else:
+            enabled_checks.append(check)
 
     if options.verbosity >= 1:
         msg = f'target repo: {options.target_repo.repo_id!r}'
@@ -432,6 +438,12 @@ def _scan(options, out, err):
 
     transforms = list(const.TRANSFORMS.values())
     reporter.start()
+
+    # run git commit checks separately from pkg-related checks
+    if git_checks:
+        source = sources.pop(git_checks[0].source)
+        for result in base.GitPipeline(git_checks, source).run():
+            reporter.report(result)
 
     debug = logger.debug if options.debug else None
     for filterer in options.limiters:
@@ -564,6 +576,7 @@ def display_keywords(out, options):
             base.package_feed: base.package_scope,
             base.category_feed: base.category_scope,
             base.repository_feed: base.repository_scope,
+            base.commit_feed: base.commit_scope,
         }
         for keyword in const.KEYWORDS.values():
             d[scope_map[keyword.threshold]].add(keyword)

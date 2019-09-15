@@ -55,28 +55,6 @@ class BadCommitSummary(base.PackageResult, base.Warning):
         return f'commit {self.commit}, bad summary: {self.summary!r}'
 
 
-class MissingSignOff(base.PackageResult, base.Error):
-    """Local package commit with missing sign offs.
-
-    Sign offs are required for commits as specified by GLEP 76 [#]_.
-
-    .. [#] https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin
-    """
-
-    def __init__(self, missing_sign_offs, commit, **kwargs):
-        super().__init__(**kwargs)
-        self.missing_sign_offs = missing_sign_offs
-        self.commit = commit
-
-    @property
-    def desc(self):
-        sign_offs = ', '.join(self.missing_sign_offs)
-        return (
-            f'commit {self.commit}, '
-            f'missing sign-off{_pl(self.missing_sign_offs)}: {sign_offs}'
-        )
-
-
 class DirectStableKeywords(base.VersionedResult, base.Error):
     """Newly committed ebuild with stable keywords."""
 
@@ -174,15 +152,15 @@ class _RemovalRepo(UnconfiguredTree):
         self.__tmpdir.cleanup()
 
 
-class GitCommitsCheck(base.GentooRepoCheck):
-    """Check unpushed git commits for various issues."""
+class GitPkgCommitsCheck(base.GentooRepoCheck):
+    """Check unpushed git package commits for various issues."""
 
     feed_type = base.package_feed
     scope = base.package_scope
     source = sources.GitCommitsRepoSource
     required_addons = (addons.GitAddon,)
     known_results = (
-        DirectStableKeywords, DirectNoMaintainer, BadCommitSummary, MissingSignOff,
+        DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,
         OutdatedCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
     )
 
@@ -243,16 +221,6 @@ class GitCommitsCheck(base.GentooRepoCheck):
             if not summary.startswith(f'{git_pkg.unversioned_atom}: '):
                 yield BadCommitSummary(summary, git_pkg.commit, pkg=git_pkg)
 
-            # check for missing git sign offs
-            sign_offs = {
-                line[15:].strip() for line in git_pkg.message
-                if line.startswith('Signed-off-by: ')}
-            required_sign_offs = {git_pkg.author, git_pkg.committer}
-            missing_sign_offs = required_sign_offs - sign_offs
-            if missing_sign_offs:
-                yield MissingSignOff(
-                    tuple(sorted(missing_sign_offs)), git_pkg.commit, pkg=git_pkg)
-
             try:
                 pkg = self.repo.match(git_pkg.versioned_atom)[0]
             except IndexError:
@@ -285,3 +253,43 @@ class GitCommitsCheck(base.GentooRepoCheck):
                 # check for no maintainers
                 if newly_added and not pkg.maintainers:
                     yield DirectNoMaintainer(pkg=pkg)
+
+
+class MissingSignOff(base.CommitResult, base.Error):
+    """Local commit with missing sign offs.
+
+    Sign offs are required for commits as specified by GLEP 76 [#]_.
+
+    .. [#] https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin
+    """
+
+    def __init__(self, missing_sign_offs, **kwargs):
+        super().__init__(**kwargs)
+        self.missing_sign_offs = missing_sign_offs
+
+    @property
+    def desc(self):
+        sign_offs = ', '.join(self.missing_sign_offs)
+        return (
+            f'commit {self.commit}, '
+            f'missing sign-off{_pl(self.missing_sign_offs)}: {sign_offs}'
+        )
+
+
+class GitCommitsCheck(base.GentooRepoCheck, base.ExplicitlyEnabledCheck):
+    """Check unpushed git commits for various issues."""
+
+    feed_type = base.commit_feed
+    scope = base.commit_scope
+    source = sources.GitCommitsSource
+    known_results = (MissingSignOff,)
+
+    def feed(self, commit):
+        # check for missing git sign offs
+        sign_offs = {
+            line[15:].strip() for line in commit.message
+            if line.startswith('Signed-off-by: ')}
+        required_sign_offs = {commit.author, commit.committer}
+        missing_sign_offs = required_sign_offs - sign_offs
+        if missing_sign_offs:
+            yield MissingSignOff(tuple(sorted(missing_sign_offs)), commit=commit)

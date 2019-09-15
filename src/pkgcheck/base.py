@@ -29,6 +29,7 @@ from snakeoil.osutils import pjoin
 from .log import logger
 
 # source feed types
+commit_feed = 'git'
 repository_feed = 'repo'
 category_feed = 'cat'
 package_feed = 'cat/pkg'
@@ -40,6 +41,7 @@ ebuild_feed = 'cat/pkg-ver+text'
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
 _Scope = namedtuple('Scope', ['threshold', 'desc'])
 known_scopes = OrderedDict((
+    ('git', _Scope(commit_feed, 'commit')),
     ('repo', _Scope(repository_feed, 'repository')),
     ('cat', _Scope(category_feed, 'category')),
     ('pkg', _Scope(package_feed, 'package')),
@@ -206,13 +208,14 @@ class ExplicitlyEnabledCheck(Check):
         if namespace.selected_checks is not None:
             disabled, enabled = namespace.selected_checks
         else:
-            disabled, enabled = (), ()
+            disabled, enabled = [], []
 
         # enable checks for selected keywords
         keywords = namespace.filtered_keywords
         if keywords is not None:
             keywords = keywords.intersection(cls.known_results)
 
+        enabled += namespace.forced_checks
         skip = cls.__name__ not in enabled and not keywords
         if skip:
             logger.info(f'skipping {cls.__name__}, not explicitly enabled')
@@ -295,6 +298,17 @@ class Warning(Result):
     """Result with a warning priority level."""
 
     _level = 30
+
+
+class CommitResult(Result):
+    """Result related to a specific git commit."""
+
+    threshold = commit_feed
+
+    def __init__(self, commit, **kwargs):
+        super().__init__(**kwargs)
+        self.commit = commit.commit
+        self._attr = 'commit'
 
 
 class CategoryResult(Result):
@@ -601,6 +615,19 @@ class InterleavedSources(object):
         pipe_idx, item = l[0]
         del self._cache[pipe_idx]
         return item, pipe_idx
+
+
+class GitPipeline(object):
+
+    def __init__(self, checks, source):
+        self.checkrunner = CheckRunner(checks)
+        self.source = source
+
+    def run(self):
+        yield from self.checkrunner.start()
+        for commit in self.source:
+            yield from self.checkrunner.feed(commit)
+        yield from self.checkrunner.finish()
 
 
 class Pipeline(object):
