@@ -239,6 +239,18 @@ class TestPkgcheckScan(object):
         self.args = [project, '--config', testconfig, 'scan']
         self.testdir = os.path.dirname(os.path.dirname(__file__))
 
+    @staticmethod
+    def _patch(fix, repo_path):
+        with open(fix) as f:
+            p = subprocess.run(
+                ['patch', '-p1'], cwd=repo_path, stdout=subprocess.DEVNULL, stdin=f)
+            p.check_returncode()
+
+    @staticmethod
+    def _script(fix, repo_path):
+        p = subprocess.run([fix], cwd=repo_path)
+        p.check_returncode()
+
     def test_empty_repo(self, capsys, cache_dir):
         # no reports should be generated since the default repo is empty
         with patch('sys.argv', self.args), \
@@ -401,31 +413,15 @@ class TestPkgcheckScan(object):
     def test_pkgcheck_scan_fix(self, check, result, capsys, cache_dir, tmp_path):
         """Apply fixes to pkgs, verifying the related results are fixed."""
         keyword = result.__name__
-
-        def _patch(fix):
-            with open(fix) as f:
-                p = subprocess.run(
-                    ['patch', '-p1'], cwd=fixed_repo, stdout=subprocess.DEVNULL, stdin=f)
-                p.check_returncode()
-
-        def _script(fix):
-            p = subprocess.run([fix], cwd=fixed_repo)
-            p.check_returncode()
-
-        fix_map = {
-            'fix.patch': _patch,
-            'fix.sh': _script,
-        }
-
         tested = False
         for repo in os.listdir(pjoin(self.testdir, 'data')):
             keyword_dir = pjoin(self.testdir, f'data/{repo}/{check}/{keyword}')
             if os.path.exists(pjoin(keyword_dir, 'fix.patch')):
                 fix = pjoin(keyword_dir, 'fix.patch')
-                func = _patch
+                func = self._patch
             elif os.path.exists(pjoin(keyword_dir, 'fix.sh')):
                 fix = pjoin(keyword_dir, 'fix.sh')
-                func = _script
+                func = self._script
             else:
                 continue
 
@@ -440,7 +436,7 @@ class TestPkgcheckScan(object):
             repo_dir = pjoin(self.testdir, 'repos', repo)
             fixed_repo = str(tmp_path / f'fixed-{repo}')
             shutil.copytree(repo_dir, fixed_repo)
-            func(fix)
+            func(fix, fixed_repo)
             cmd = self.args + ['-r', fixed_repo] + args
             with patch('sys.argv', cmd), \
                     patch('pkgcheck.base.CACHE_DIR', cache_dir):
