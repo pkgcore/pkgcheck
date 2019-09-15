@@ -213,7 +213,7 @@ class ParseGitRepo(object):
 
     @classmethod
     def parse_git_log(cls, repo_path, git_cmd=None, commit=None,
-                      pkgs=False, local=False, debug=False):
+                      pkgs=False, debug=False):
         """Parse git log output."""
         if git_cmd is None:
             git_cmd = cls._git_cmd
