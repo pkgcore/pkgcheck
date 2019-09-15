@@ -219,11 +219,14 @@ class _ParseGitRepo(object):
         format_lines = [
             '# BEGIN COMMIT',
             '%h', # abbreviated commit hash
-            '%an <%ae>', # Author Name <author@email.com>
-            '%cn <%ce>', # Committer Name <committer@email.com>
             '%cd', # commit date
-            '%B# END MESSAGE BODY', # commit message
         ]
+        if local:
+            format_lines.extend([
+                '%an <%ae>', # Author Name <author@email.com>
+                '%cn <%ce>', # Committer Name <committer@email.com>
+                '%B# END MESSAGE BODY', # commit message
+            ]) # commit message
         format_str = '%n'.join(format_lines)
         cmd.append(f'--pretty=tformat:{format_str}')
 
@@ -247,12 +250,12 @@ class _ParseGitRepo(object):
         with base.ProgressManager(debug=debug) as progress:
             while line:
                 commit = git_log.stdout.readline().decode().strip()
-                author = git_log.stdout.readline().decode().strip()
-                committer = git_log.stdout.readline().decode().strip()
                 commit_date = git_log.stdout.readline().decode().strip()
 
-                # message
+                # author, committer, and message for local commits
                 if local:
+                    author = git_log.stdout.readline().decode().strip()
+                    committer = git_log.stdout.readline().decode().strip()
                     message = []
                     while True:
                         line = git_log.stdout.readline().decode().strip('\n')
