@@ -111,7 +111,22 @@ main_options.add_argument(
 check_options = scan.add_argument_group('check selection')
 check_options.add_argument(
     '-c', '--checks', metavar='CHECK', action='csv_negations', dest='selected_checks',
-    help='limit checks to regex or package/class matching (comma-separated list)')
+    help='limit checks to run (comma-separated list)',
+    docs="""
+        Comma separated list of checks to enable and disable for
+        scanning. Any checks specified in this fashion will be the
+        only checks that get run, skipping any disabled checks.
+
+        To specify disabled checks prefix them with ``-``. Note that when
+        starting the argument list with a disabled check an equals sign must
+        be used, e.g. ``-c=-check``, otherwise the disabled check argument is
+        treated as an option.
+
+        The special argument of ``all`` corresponds to the list of all checks,
+        respectively. Therefore, to forcibly enable all checks use ``-c all``.
+
+        Use ``pkgcheck show --checks`` see available options.
+    """)
 check_options.add_argument(
     '-C', '--checkset', metavar='CHECKSET', action=commandline.StoreConfigObject,
     config_type='pkgcheck_checkset',
@@ -133,7 +148,7 @@ check_options.add_argument(
         lists of error and warning keywords, respectively. Therefore, to only
         scan for errors and ignore all QA warnings use ``-k errors``.
 
-        Use ``pkgcheck show --keywords`` or the list below to see available options.
+        Use ``pkgcheck show --keywords`` to see available options.
     """)
 check_options.add_argument(
     '-s', '--scopes', metavar='SCOPE', action='csv_negations', dest='selected_scopes',
