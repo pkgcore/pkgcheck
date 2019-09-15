@@ -309,7 +309,7 @@ class TestPkgcheckScan(object):
                     assert keyword in const.KEYWORDS
 
     @pytest.mark.parametrize('check, result', results)
-    def test_pkgcheck_scan(self, check, result, capsys, cache_dir):
+    def test_pkgcheck_scan(self, check, result, capsys, cache_dir, tmp_path):
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
         tested = False
         for repo in os.listdir(pjoin(self.testdir, 'data')):
@@ -319,6 +319,15 @@ class TestPkgcheckScan(object):
                 continue
 
             repo_dir = pjoin(self.testdir, 'repos', repo)
+
+            # create issue related to keyword as required
+            trigger = pjoin(self.testdir, f'data/{repo}/{check}/{keyword}/trigger.sh')
+            if os.path.exists(trigger):
+                triggered_repo = str(tmp_path / f'triggered-{repo}')
+                shutil.copytree(repo_dir, triggered_repo)
+                self._script(trigger, triggered_repo)
+                repo_dir = triggered_repo
+
             args = ['-r', repo_dir]
 
             # determine what test target to use
@@ -382,6 +391,20 @@ class TestPkgcheckScan(object):
             for repo in os.listdir(pjoin(self.testdir, 'data')):
                 unknown_results = []
                 repo_dir = pjoin(self.testdir, 'repos', repo)
+
+                # create issues related to keyword as required
+                triggers = []
+                for root, _dirs, files in os.walk(pjoin(self.testdir, 'data', repo)):
+                    for f in files:
+                        if f == 'trigger.sh':
+                            triggers.append(pjoin(root, f))
+                if triggers:
+                    triggered_repo = str(tmp_path / f'triggered-{repo}')
+                    shutil.copytree(repo_dir, triggered_repo)
+                    for trigger in triggers:
+                        self._script(trigger, triggered_repo)
+                    repo_dir = triggered_repo
+
                 args = ['-r', repo_dir, '-c', ','.join(const.CHECKS)]
                 with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
                         patch('pkgcheck.base.CACHE_DIR', cache_dir):
