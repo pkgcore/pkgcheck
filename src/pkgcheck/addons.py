@@ -124,43 +124,11 @@ class QueryCacheAddon(base.Feed):
         self.query_cache.clear()
 
 
-class ProfileData(object):
-
-    def __init__(self, profile_name, key, provides, vfilter,
-                 iuse_effective, use, pkg_use, masked_use, forced_use, lookup_cache, insoluble,
-                 status, deprecated):
-        self.key = key
-        self.name = profile_name
-        self.provides_repo = provides
-        self.provides_has_match = getattr(provides, 'has_match', provides.match)
-        self.iuse_effective = iuse_effective
-        self.use = use
-        self.pkg_use = pkg_use
-        self.masked_use = masked_use
-        self.forced_use = forced_use
-        self.cache = lookup_cache
-        self.insoluble = insoluble
-        self.visible = vfilter.match
-        self.status = status
-        self.deprecated = deprecated
-
-    def identify_use(self, pkg, known_flags):
-        # note we're trying to be *really* careful about not creating
-        # pointless intermediate sets unless required
-        # kindly don't change that in any modifications, it adds up.
-        enabled = known_flags.intersection(self.forced_use.pull_data(pkg))
-        immutable = enabled.union(
-            filter(known_flags.__contains__, self.masked_use.pull_data(pkg)))
-        force_disabled = self.masked_use.pull_data(pkg)
-        if force_disabled:
-            enabled = enabled.difference(force_disabled)
-        return immutable, enabled
-
-
 _GitCommit = namedtuple('GitCommit', [
     'commit', 'commit_date', 'author', 'committer', 'message'])
 _GitPkgChange = namedtuple('GitPkgChange', [
     'atom', 'status', 'commit', 'commit_date', 'author', 'committer', 'message'])
+
 
 class ParseGitRepo(object):
     """Parse repository git logs."""
@@ -321,7 +289,7 @@ class GitRemovedRepo(ParseGitRepo):
     _diff_filter = 'D'
 
 
-class UpstreamCommitPkg(cpv.versioned_CPV_cls):
+class _UpstreamCommitPkg(cpv.versioned_CPV_cls):
     """Fake packages encapsulating upstream commits parsed from git log."""
 
     def __init__(self, cat, pkg, data):
@@ -335,7 +303,7 @@ class UpstreamCommitPkg(cpv.versioned_CPV_cls):
         sf(self, 'commit', commit)
 
 
-class LocalCommitPkg(UpstreamCommitPkg):
+class _LocalCommitPkg(_UpstreamCommitPkg):
     """Fake packages encapsulating local commits parsed from git log."""
 
     def __init__(self, cat, pkg, data):
@@ -349,11 +317,11 @@ class LocalCommitPkg(UpstreamCommitPkg):
         sf(self, 'message', message)
 
 
-class HistoricalRepo(SimpleTree):
+class _HistoricalRepo(SimpleTree):
     """Repository encapsulating historical data."""
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('pkg_klass', UpstreamCommitPkg)
+        kwargs.setdefault('pkg_klass', _UpstreamCommitPkg)
         super().__init__(*args, **kwargs)
 
 
@@ -505,7 +473,7 @@ class GitAddon(base.Addon):
                 # only enable repo queries if history was found, e.g. a
                 # shallow clone with a depth of 1 won't have any history
                 if git_repo.pkg_map:
-                    git_repos.append(HistoricalRepo(
+                    git_repos.append(_HistoricalRepo(
                         git_repo.pkg_map, repo_id=f'{repo.repo_id}-history'))
                     # dump historical repo data
                     if cache_repo:
@@ -543,8 +511,8 @@ class GitAddon(base.Addon):
             if origin != master:
                 git_repo = repo_cls(target_repo, local=True)
                 repo_id = f'{target_repo.repo_id}-commits'
-                repo = HistoricalRepo(
-                    git_repo.pkg_map, pkg_klass=LocalCommitPkg, repo_id=repo_id)
+                repo = _HistoricalRepo(
+                    git_repo.pkg_map, pkg_klass=_LocalCommitPkg, repo_id=repo_id)
 
         return repo
 
@@ -565,6 +533,39 @@ class GitAddon(base.Addon):
                 commits = ParseGitRepo.parse_git_log(path, commit='origin/HEAD..master')
 
         return commits
+
+
+class ProfileData(object):
+
+    def __init__(self, profile_name, key, provides, vfilter,
+                 iuse_effective, use, pkg_use, masked_use, forced_use, lookup_cache, insoluble,
+                 status, deprecated):
+        self.key = key
+        self.name = profile_name
+        self.provides_repo = provides
+        self.provides_has_match = getattr(provides, 'has_match', provides.match)
+        self.iuse_effective = iuse_effective
+        self.use = use
+        self.pkg_use = pkg_use
+        self.masked_use = masked_use
+        self.forced_use = forced_use
+        self.cache = lookup_cache
+        self.insoluble = insoluble
+        self.visible = vfilter.match
+        self.status = status
+        self.deprecated = deprecated
+
+    def identify_use(self, pkg, known_flags):
+        # note we're trying to be *really* careful about not creating
+        # pointless intermediate sets unless required
+        # kindly don't change that in any modifications, it adds up.
+        enabled = known_flags.intersection(self.forced_use.pull_data(pkg))
+        immutable = enabled.union(
+            filter(known_flags.__contains__, self.masked_use.pull_data(pkg)))
+        force_disabled = self.masked_use.pull_data(pkg)
+        if force_disabled:
+            enabled = enabled.difference(force_disabled)
+        return immutable, enabled
 
 
 class _ProfilesCache(UserDict):
