@@ -10,7 +10,7 @@ from snakeoil.strings import pluralism as _pl
 from .. import addons, base
 
 
-class FakeConfigurable(object):
+class FakeConfigurable:
     "Package wrapper binding profile data."""
 
     configurable = True

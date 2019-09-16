@@ -130,7 +130,7 @@ _GitPkgChange = namedtuple('GitPkgChange', [
     'atom', 'status', 'commit', 'commit_date', 'author', 'committer', 'message'])
 
 
-class ParseGitRepo(object):
+class ParseGitRepo:
     """Parse repository git logs."""
 
     # git command to run on the targeted repo
@@ -535,7 +535,7 @@ class GitAddon(base.Addon):
         return commits
 
 
-class ProfileData(object):
+class ProfileData:
 
     def __init__(self, profile_name, key, provides, vfilter,
                  iuse_effective, use, pkg_use, masked_use, forced_use, lookup_cache, insoluble,

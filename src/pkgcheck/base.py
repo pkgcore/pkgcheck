@@ -55,7 +55,7 @@ for i, scope in enumerate(reversed(known_scopes.values())):
 CACHE_DIR = pjoin(pkgcore_const.USER_CACHE_PATH, 'pkgcheck')
 
 
-class Addon(object):
+class Addon:
     """Base class for extra functionality for pkgcheck other than a check.
 
     The checkers can depend on one or more of these. They will get
@@ -105,7 +105,7 @@ class Addon(object):
         """
 
 
-class GenericSource(object):
+class GenericSource:
     """Base template for a repository source."""
 
     required_addons = ()
@@ -222,7 +222,7 @@ class ExplicitlyEnabledCheck(Check):
         return skip or super().skip(namespace)
 
 
-class Transform(object):
+class Transform:
     """Base class for a feed type transformer.
 
     :cvar source: start type
@@ -249,7 +249,7 @@ class Transform(object):
         return f'{self.__class__.__name__}({self.child!r})'
 
 
-class Result(object):
+class Result:
 
     # level values match those used in logging module
     _level = 20
@@ -397,7 +397,7 @@ class MetadataError(VersionedResult, Error):
         return f"attr({self.attr}): {self.msg}"
 
 
-class Reporter(object):
+class Reporter:
     """Generic result reporter."""
 
     def __init__(self, out, keywords=None):
@@ -471,7 +471,7 @@ def convert_check_filter(tok):
         return func
 
 
-class _CheckSet(object):
+class _CheckSet:
     """Run only listed checks."""
 
     # No config hint here since this one is abstract.
@@ -515,7 +515,7 @@ def filter_update(objs, enabled=(), disabled=()):
     return objs
 
 
-class Scope(object):
+class Scope:
     """Only run checks matching any of the given scopes."""
 
     pkgcore_config_type = ConfigHint(
@@ -554,7 +554,7 @@ class ProgressManager(AbstractContextManager):
             sys.stderr.write('\n')
 
 
-class RawCPV(object):
+class RawCPV:
     """Raw CPV objects supporting basic restrictions/sorting."""
 
     __slots__ = ('category', 'package', 'fullver')
@@ -577,7 +577,7 @@ class RawCPV(object):
         return False
 
 
-class InterleavedSources(object):
+class InterleavedSources:
     """Iterate over multiple sources, interleaving them in sorted fashion."""
 
     def __init__(self, sources):
@@ -617,7 +617,7 @@ class InterleavedSources(object):
         return item, pipe_idx
 
 
-class GitPipeline(object):
+class GitPipeline:
 
     def __init__(self, checks, source):
         self.checkrunner = CheckRunner(checks)
@@ -630,7 +630,7 @@ class GitPipeline(object):
         yield from self.checkrunner.finish()
 
 
-class Pipeline(object):
+class Pipeline:
 
     def __init__(self, pipes, restrict):
         sources = [(source.itermatch(restrict), i) for i, (source, pipe) in enumerate(pipes)]
@@ -646,7 +646,7 @@ class Pipeline(object):
             yield from pipe.finish()
 
 
-class CheckRunner(object):
+class CheckRunner:
 
     def __init__(self, checks):
         self.checks = checks
