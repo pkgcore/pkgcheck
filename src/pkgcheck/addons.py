@@ -649,7 +649,8 @@ class ProfileAddon(base.Addon):
             selected_profiles = (('exp',), ())
 
         if profiles_dir:
-            profiles_obj = repo_objs.Profiles(profiles_dir, namespace.target_repo.config)
+            profiles_obj = repo_objs.Profiles(
+                namespace.target_repo.config, profiles_base=profiles_dir)
         else:
             profiles_obj = namespace.target_repo.profiles
 
