@@ -18,7 +18,7 @@ from pkgcheck.checks import metadata
 from .. import misc
 
 
-class TestDescriptionReport(misc.ReportTestCase):
+class TestDescriptionCheck(misc.ReportTestCase):
 
     check_kls = metadata.DescriptionCheck
 
@@ -270,7 +270,7 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         assert 'missing KEYWORDS: amd64, ppc, ~x86' == str(r)
 
 
-class TestIUSEMetadataReport(IUSE_Options, misc.ReportTestCase):
+class TestIUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
 
     check_kls = metadata.IUSEMetadataCheck
 
@@ -358,7 +358,7 @@ class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
         assert "attr(eapi): EAPI 'blah' is not supported" == str(r)
 
 
-class TestRequiredUSEMetadataReport(IUSE_Options, misc.ReportTestCase):
+class TestRequiredUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
 
     check_kls = metadata.RequiredUSEMetadataCheck
 

@@ -21,7 +21,7 @@ def check(tmpdir):
         misc.Options(glsa_location=str(tmpdir), glsa_enabled=True))
 
 
-class TestVulnerabilitiesReport(misc.ReportTestCase):
+class TestVulnerabilitiesCheck(misc.ReportTestCase):
 
     check_kls = glsa.TreeVulnerabilitiesCheck
 

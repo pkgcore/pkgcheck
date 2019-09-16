@@ -101,7 +101,7 @@ class TestTrailingNewLineOnEnd(WhitespaceCheckTest):
         assert 'trailing blank line(s)' in str(r)
 
 
-class TestMultiReport(WhitespaceCheckTest):
+class TestMultipleChecks(WhitespaceCheckTest):
 
     def test_it(self):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5")

@@ -19,7 +19,7 @@ def mk_pkg(ver, keywords="", slot="0"):
         f"dev-util/diffball-{ver}", data={"SLOT": slot, "KEYWORDS": keywords})
 
 
-class TestImlateReport(misc.ReportTestCase):
+class TestImlateCheck(misc.ReportTestCase):
 
     check_kls = imlate.ImlateCheck
 

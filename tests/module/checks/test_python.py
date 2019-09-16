@@ -4,7 +4,7 @@ from pkgcheck.checks import python
 from .. import misc
 
 
-class TestPythonReport(misc.ReportTestCase):
+class TestPythonCheck(misc.ReportTestCase):
 
     check = python.PythonCheck(None)
     check_kls = python.PythonCheck
