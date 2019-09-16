@@ -291,7 +291,7 @@ class GitRemovedRepo(ParseGitRepo):
     _diff_filter = 'D'
 
 
-class _UpstreamCommitPkg(cpv.versioned_CPV_cls):
+class _UpstreamCommitPkg(cpv.versioned_CPV):
     """Fake packages encapsulating upstream commits parsed from git log."""
 
     def __init__(self, cat, pkg, data):
