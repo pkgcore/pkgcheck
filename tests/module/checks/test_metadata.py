@@ -746,9 +746,10 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         return super().mk_check(git_addon, **kwargs)
 
     # pull the set of dependency attrs from the most recent EAPI
-    @pytest.mark.parametrize('attr', list(eapi.EAPI.known_eapis.values())[-1].dep_keys)
+    dep_attrs = list(eapi.EAPI.known_eapis.values())[-1].dep_keys
+
+    @pytest.mark.parametrize('attr', dep_attrs)
     def test_depset(self, attr):
-        # should puke a metadata error for empty license
         chk = self.mk_check()
         mk_pkg = partial(self.mk_pkg, attr)
 
@@ -762,9 +763,6 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, mk_pkg("|| ("))
         assert isinstance(r, metadata.MetadataError)
         assert r.attr == attr.lower()
-
-        if 'depend' not in attr:
-            return
 
         # pkg blocking itself
         r = self.assertReport(chk, mk_pkg("!dev-util/diffball"))
@@ -790,6 +788,11 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         assert isinstance(r, metadata.MissingPackageRevision)
         assert f'{attr.upper()}="=dev-libs/foo-1"' in str(r)
 
+    @pytest.mark.parametrize('attr', dep_attrs)
+    def test_depset_unstated_iuse(self, attr):
+        chk = self.mk_check()
+        mk_pkg = partial(self.mk_pkg, attr)
+
         # unstated IUSE
         r = self.assertReport(chk, mk_pkg(depset='foo? ( dev-libs/foo )'))
         assert isinstance(r, addons.UnstatedIUSE)
@@ -801,7 +804,10 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         assert isinstance(r, addons.UnstatedIUSE)
         assert 'unstated flags: [ bar, foo ]' in str(r)
 
-        # MissingUseDepDefault checks
+    @pytest.mark.parametrize('attr', dep_attrs)
+    def test_depset_missing_usedep_default(self, attr):
+        chk = self.mk_check()
+        mk_pkg = partial(self.mk_pkg, attr)
 
         # USE flag exists on all matching pkgs
         self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[bar?]'))
