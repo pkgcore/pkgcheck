@@ -702,13 +702,14 @@ class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
                         eapi=eapi_str, rdepend='dev-lbs/foo', depend='dev-libs/foo'))
 
     def test_supported_eapis(self):
-        for eapi_str, eapi_obj in eapi.EAPI.known_eapis.items():
-            if eapi_obj.options.sub_slotting:
-                r = self.assertReport(
-                    self.mk_check(), self.mk_pkg(
-                        eapi=eapi_str, rdepend='dev-libs/foo', depend='dev-libs/foo'))
-                assert isinstance(r, metadata.MissingSlotDep)
-                assert "'dev-libs/foo' matches more than one slot: [ 0, 1 ]" == str(r)
+        for dep_str in ('dev-libs/foo', 'dev-libs/foo[bar]'):
+            for eapi_str, eapi_obj in eapi.EAPI.known_eapis.items():
+                if eapi_obj.options.sub_slotting:
+                    r = self.assertReport(
+                        self.mk_check(), self.mk_pkg(
+                            eapi=eapi_str, rdepend=dep_str, depend=dep_str))
+                    assert isinstance(r, metadata.MissingSlotDep)
+                    assert 'matches more than one slot: [ 0, 1 ]' in str(r)
 
     def test_no_deps(self):
         self.assertNoReport(self.mk_check(), self.mk_pkg())

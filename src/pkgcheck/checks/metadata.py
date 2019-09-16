@@ -418,7 +418,7 @@ class MissingSlotDepCheck(base.Check):
         # skip deps that are blockers or have explicit slots/slot operators
         for dep in (x for x in set(rdepend).intersection(depend) if not
                     (x.blocks or x.slot is not None or x.slot_operator is not None)):
-            dep_slots = set(x.slot for x in pkg.repo.itermatch(dep))
+            dep_slots = set(x.slot for x in pkg.repo.itermatch(dep.unversioned_atom))
             if len(dep_slots) > 1:
                 yield MissingSlotDep(str(dep), sorted(dep_slots), pkg=pkg)
 
