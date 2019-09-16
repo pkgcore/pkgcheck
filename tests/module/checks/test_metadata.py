@@ -5,10 +5,10 @@ import os
 import tempfile
 import textwrap
 
+import pytest
 from pkgcore.ebuild import eapi, repository, repo_objs
 from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
-from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
 
 from pkgcheck import addons, base
@@ -726,16 +726,12 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
 
     check_kls = metadata.DependencyCheck
 
-    attr_map = dict(
-        (x, x.upper())
-        for x in ("depend", "rdepend", "pdepend", "bdepend"))
-
     def mk_pkg(self, attr, depset='', eapi='0', iuse=''):
-        if attr == 'bdepend':
+        if attr == 'BDEPEND':
             eapi = '7'
         return misc.FakePkg(
             'dev-util/diffball-2.7.1',
-            data={'EAPI': eapi, 'IUSE': iuse, self.attr_map[attr]: depset})
+            data={'EAPI': eapi, 'IUSE': iuse, attr: depset})
 
     def mk_check(self, pkgs=None, **kwargs):
         if pkgs is None:
@@ -749,7 +745,9 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         git_addon = addons.GitAddon(options)
         return super().mk_check(git_addon, **kwargs)
 
-    def generic_check(self, attr):
+    # pull the set of dependency attrs from the most recent EAPI
+    @pytest.mark.parametrize('attr', list(eapi.EAPI.known_eapis.values())[-1].dep_keys)
+    def test_depset(self, attr):
         # should puke a metadata error for empty license
         chk = self.mk_check()
         mk_pkg = partial(self.mk_pkg, attr)
@@ -763,7 +761,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         # invalid depset syntax
         r = self.assertReport(chk, mk_pkg("|| ("))
         assert isinstance(r, metadata.MetadataError)
-        assert r.attr == attr
+        assert r.attr == attr.lower()
 
         if 'depend' not in attr:
             return
@@ -845,10 +843,6 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         assert r.pkg_deps == ('=dev-libs/foo-0', '=dev-libs/foo-1')
         assert r.flag == 'blah'
         assert "USE flag 'blah' missing" in str(r)
-
-    for x in attr_map:
-        locals()[f"test_{x}"] = post_curry(generic_check, x)
-    del x
 
 
 class TestSrcUriCheck(use_based(), misc.ReportTestCase):
