@@ -1,7 +1,7 @@
 from collections import defaultdict
 from operator import attrgetter
 
-from pkgcore.ebuild.atom import atom as atom_cls
+from pkgcore.ebuild.atom import atom, transitive_use_atom
 from snakeoil import klass
 from snakeoil.iterables import caching_iter
 from snakeoil.sequences import iflatten_func, iflatten_instance, stable_unique
@@ -76,20 +76,20 @@ class _BlockMemoryExhaustion(Exception):
 
 
 # This is fast path code, hence the seperated implementations.
-if getattr(atom_cls, '_TRANSITIVE_USE_ATOM_BUG_IS_FIXED', False):
-    def _eapi2_flatten(val, atom_kls=atom_cls, transitive_use_atom=atom_cls._transitive_use_atom):
-        return isinstance(val, atom_kls) and not isinstance(val, transitive_use_atom)
+if getattr(atom, '_TRANSITIVE_USE_ATOM_BUG_IS_FIXED', False):
+    def _eapi2_flatten(val):
+        return isinstance(val, atom) and not isinstance(val, transitive_use_atom)
 else:
-    def _eapi2_flatten(val, atom_kls=atom_cls, transitive_use_atom=atom_cls._transitive_use_atom):
+    def _eapi2_flatten(val):
         if isinstance(val, transitive_use_atom):
             if len([x for x in val.use if x.endswith("?")]) > 16:
                 raise _BlockMemoryExhaustion(val)
-        return isinstance(val, atom_kls) and not isinstance(val, transitive_use_atom)
+        return isinstance(val, atom) and not isinstance(val, transitive_use_atom)
 
 
 def visit_atoms(pkg, stream):
     if not pkg.eapi.options.transitive_use_atoms:
-        return iflatten_instance(stream, atom_cls)
+        return iflatten_instance(stream, atom)
     return iflatten_func(stream, _eapi2_flatten)
 
 
@@ -106,7 +106,7 @@ def strip_atom_use(inst):
             s = '!' + s
     if inst.slot:
         s += f':{inst.slot}'
-    return atom_cls(s)
+    return atom(s)
 
 
 class VisibleVcsPkg(base.VersionedResult, base.Error):
