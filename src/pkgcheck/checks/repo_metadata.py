@@ -4,7 +4,6 @@ from itertools import chain, groupby
 from operator import attrgetter, itemgetter
 
 from pkgcore import fetch
-from pkgcore.ebuild import atom
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
 from snakeoil.log import suppress_logging
@@ -125,7 +124,7 @@ class PackageUpdatesCheck(base.Check, base.EmptyFeed):
             # scan updates for old entries with removed packages
             for x in slotmove_updates:
                 _, pkg, newslot = x
-                if not self.repo.match(atom.atom(pkg.key)):
+                if not self.repo.match(pkg.unversioned_atom):
                     # reproduce updates file line data for result output
                     x = ('slotmove', str(pkg)[:-(len(pkg.slot) + 1)], pkg.slot, newslot)
                     old_slotmove_updates[pkg.key] = x
