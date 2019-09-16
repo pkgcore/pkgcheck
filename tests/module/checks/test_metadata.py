@@ -20,40 +20,34 @@ from .. import misc
 class TestDescriptionCheck(misc.ReportTestCase):
 
     check_kls = metadata.DescriptionCheck
+    check = metadata.DescriptionCheck(None, None)
 
     def mk_pkg(self, desc=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"DESCRIPTION": desc})
 
-    def test_it(self):
-        check = metadata.DescriptionCheck(None, None)
+    def test_good_desc(self):
+        self.assertNoReport(self.check, self.mk_pkg("a perfectly written package description"))
 
-        self.assertNoReport(check, self.mk_pkg("a perfectly written package description"))
+    def test_bad_descs(self):
+        for desc in ('based on eclass',
+                     'diffball',
+                     'dev-util/diffball',
+                     'foon'):
+            r = self.assertReport(self.check, self.mk_pkg(desc))
+            assert isinstance(r, metadata.BadDescription)
 
-        assert isinstance(
-            self.assertReport(check, self.mk_pkg("based on eclass")),
-            metadata.BadDescription)
-        assert isinstance(
-            self.assertReport(check, self.mk_pkg("diffball")),
-            metadata.BadDescription)
-        assert isinstance(
-            self.assertReport(check, self.mk_pkg("dev-util/diffball")),
-            metadata.BadDescription)
-        assert isinstance(
-            self.assertReport(check, self.mk_pkg("foon")),
-            metadata.BadDescription)
-
-        # length-based checks
-        r = self.assertReport(check, self.mk_pkg())
+    def test_desc_length(self):
+        r = self.assertReport(self.check, self.mk_pkg())
         assert isinstance(r, metadata.BadDescription)
         assert 'bad DESCRIPTION: empty/unset' == str(r)
 
-        self.assertNoReport(check, self.mk_pkg('s' * 150))
-        r = self.assertReport(check, self.mk_pkg('s' * 151))
+        self.assertNoReport(self.check, self.mk_pkg('s' * 150))
+        r = self.assertReport(self.check, self.mk_pkg('s' * 151))
         assert isinstance(r, metadata.BadDescription)
         assert 'over 150 chars in length' in str(r)
 
-        self.assertNoReport(check, self.mk_pkg('s' * 10))
-        r = self.assertReport(check, self.mk_pkg('s' * 9))
+        self.assertNoReport(self.check, self.mk_pkg('s' * 10))
+        r = self.assertReport(self.check, self.mk_pkg('s' * 9))
         assert isinstance(r, metadata.BadDescription)
         assert 'under 10 chars in length' in str(r)
 
@@ -273,20 +267,30 @@ class TestIUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
 
     check_kls = metadata.IUSEMetadataCheck
 
+    @pytest.fixture
+    def check(self):
+        options = self.get_options()
+        profiles = [misc.FakeProfile()]
+        return metadata.IUSEMetadataCheck(options, addons.UseAddon(options, profiles))
+
     def mk_pkg(self, iuse=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"IUSE": iuse})
 
-    def test_it(self):
-        # verify behaviour when use.* data isn't available
-        options = self.get_options()
-        profiles = [misc.FakeProfile()]
-        check = metadata.IUSEMetadataCheck(
-            options, addons.UseAddon(options, profiles))
-        self.assertNoReport(check, self.mk_pkg("foo bar"))
-        r = self.assertReport(check, self.mk_pkg("foo dar"))
-        assert r.attr == "iuse"
+    def test_known_iuse(self, check):
+        self.assertNoReport(check, self.mk_pkg('foo bar'))
+
+    def test_unknown_iuse(self, check):
+        r = self.assertReport(check, self.mk_pkg('foo dar'))
+        assert isinstance(r, base.MetadataError)
+        assert r.attr == 'iuse'
+        assert 'dar' in str(r)
+
+    def test_arch_iuse(self, check):
         # arch flags must _not_ be in IUSE
-        self.assertReport(check, self.mk_pkg("x86"))
+        r = self.assertReport(check, self.mk_pkg('x86'))
+        assert isinstance(r, base.MetadataError)
+        assert r.attr == 'iuse'
+        assert 'x86' in str(r)
 
 
 class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
@@ -555,45 +559,37 @@ class TestRestrictsCheck(use_based(), misc.ReportTestCase):
 class TestConditionalTestRestrictCheck(misc.ReportTestCase):
 
     check_kls = metadata.ConditionalTestRestrictCheck
+    check = metadata.ConditionalTestRestrictCheck(None)
 
     def mk_pkg(self, iuse='', restrict=''):
         return misc.FakePkg(
             'dev-util/diffball-2.7.1', data={'IUSE': iuse, 'RESTRICT': restrict})
 
-    def test_it(self):
-        check = self.check_kls(None)
-        self.assertNoReport(check, self.mk_pkg())
-        self.assertNoReport(check, self.mk_pkg(
+    def test_empty_restrict(self):
+        self.assertNoReport(self.check, self.mk_pkg())
+
+    def test_specified_restrict(self):
+        self.assertNoReport(self.check, self.mk_pkg(
             iuse='test', restrict='!test? ( test )'))
+
         # unconditional restriction is fine too
-        self.assertNoReport(check, self.mk_pkg(iuse='test', restrict='test'))
-        self.assertNoReport(check, self.mk_pkg(restrict='test'))
+        self.assertNoReport(self.check, self.mk_pkg(iuse='test', restrict='test'))
+        self.assertNoReport(self.check, self.mk_pkg(restrict='test'))
         # more RESTRICTs
-        self.assertNoReport(check, self.mk_pkg(iuse='foo test',
+        self.assertNoReport(self.check, self.mk_pkg(iuse='foo test',
             restrict='foo? ( strip ) !test? ( test ) bindist'))
 
-        # missing entirely
-        r = self.assertReport(check, self.mk_pkg(iuse='test'))
-        assert isinstance(r, metadata.MissingConditionalTestRestrict)
-        assert 'RESTRICT="!test? ( test )"' in str(r)
-
-        # 'test' present in other condition
-        r = self.assertReport(check, self.mk_pkg(
-            iuse='foo test', restrict='!foo? ( test )'))
-        assert isinstance(r, metadata.MissingConditionalTestRestrict)
-        assert 'RESTRICT="!test? ( test )"' in str(r)
-
-        # correct restriction inside another condition
-        r = self.assertReport(check, self.mk_pkg(
-            iuse='foo test', restrict='!foo? ( !test? ( test ) )'))
-        assert isinstance(r, metadata.MissingConditionalTestRestrict)
-        assert 'RESTRICT="!test? ( test )"' in str(r)
-
-        # USE condition gotten the other way around
-        r = self.assertReport(check, self.mk_pkg(
-            iuse='test', restrict='test? ( test )'))
-        assert isinstance(r, metadata.MissingConditionalTestRestrict)
-        assert 'RESTRICT="!test? ( test )"' in str(r)
+    def test_missing_restrict(self):
+        data = (
+            ('test', ''), # missing entirely
+            ('foo test', '!foo? ( test )'), # 'test' present in other condition
+            ('foo test', '!foo? ( !test? ( test ) )'), # correct restriction inside another condition
+            ('test', 'test? ( test )'), # USE condition gotten the other way around
+        )
+        for iuse, restrict in data:
+            r = self.assertReport(self.check, self.mk_pkg(iuse=iuse, restrict=restrict))
+            assert isinstance(r, metadata.MissingConditionalTestRestrict)
+            assert 'RESTRICT="!test? ( test )"' in str(r)
 
 
 class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
