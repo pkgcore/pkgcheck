@@ -137,6 +137,8 @@ class ParseGitRepo:
     _git_cmd = 'git log --name-status --date=short --reverse'
     # selected file filter
     _diff_filter = None
+    # filename for cache file, if None cache files aren't supported
+    cache_name = None
 
     def __init__(self, repo, commit=None, **kwargs):
         self.location = repo.location
@@ -423,6 +425,9 @@ class GitAddon(base.Addon):
         cached_repo = None
         if target_repo is None:
             target_repo = self.options.target_repo
+
+        if repo_cls.cache_name is None:
+            raise TypeError(f"{repo_cls} doesn't support cached repos")
 
         if not self.options.git_disable:
             git_repos = []
