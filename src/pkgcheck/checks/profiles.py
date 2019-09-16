@@ -4,7 +4,7 @@ from itertools import chain, filterfalse
 
 from pkgcore.ebuild import atom, misc
 from pkgcore.ebuild import profiles as profiles_mod
-from pkgcore.ebuild import repo_objs
+from pkgcore.ebuild.repo_objs import Profiles
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
 from snakeoil.log import suppress_logging
@@ -432,8 +432,8 @@ class RepoProfilesCheck(base.Check, base.EmptyFeed):
         # forcibly parse profiles.desc and convert log warnings/errors into reports
         with patch('pkgcore.log.logger.error', report_profile_errors), \
                 patch('pkgcore.log.logger.warning', report_profile_warnings):
-            repo_obj = repo_objs.Profiles(self.profiles_dir, repo_id=self.repo.repo_id)
-            profiles = repo_obj._parse_profiles(
+            profiles = Profiles.parse(
+                self.profiles_dir, self.repo.repo_id,
                 known_status=known_profile_statuses, known_arch=self.arches)
 
         yield from profile_reports
