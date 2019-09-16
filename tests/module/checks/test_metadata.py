@@ -10,7 +10,6 @@ from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
-from snakeoil.test.mixins import TempDirMixin
 
 from pkgcheck import addons, base
 from pkgcheck.checks import metadata
@@ -102,7 +101,7 @@ class TestHomepageCheck(misc.ReportTestCase):
             assert f"'{category}' packages shouldn't define HOMEPAGE" in str(r)
 
 
-class IUSE_Options(TempDirMixin):
+class IUSE_Options(misc.Tmpdir):
 
     def get_options(self, properties=(), restrict=(), **kwargs):
         repo_base = tempfile.mkdtemp(dir=self.dir)
