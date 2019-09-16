@@ -104,19 +104,19 @@ class TestHomepageCheck(misc.ReportTestCase):
 
 class IUSE_Options(TempDirMixin):
 
-    def get_options(self, properties=(), restrict=(), **kwds):
+    def get_options(self, properties=(), restrict=(), **kwargs):
         repo_base = tempfile.mkdtemp(dir=self.dir)
         base = pjoin(repo_base, 'profiles')
         os.mkdir(base)
         fileutils.write_file(
             pjoin(base, "arch.list"), 'w',
-            "\n".join(kwds.pop("arches", ("x86", "ppc", "amd64", "amd64-fbsd"))))
+            "\n".join(kwargs.pop("arches", ("x86", "ppc", "amd64", "amd64-fbsd"))))
 
         fileutils.write_file(
             pjoin(base, "use.desc"), "w",
-            "\n".join(f"{x} - {x}" for x in kwds.pop("use_desc", ("foo", "bar"))))
+            "\n".join(f"{x} - {x}" for x in kwargs.pop("use_desc", ("foo", "bar"))))
 
-        fileutils.write_file(pjoin(base, 'repo_name'), 'w', kwds.pop('repo_name', 'monkeys'))
+        fileutils.write_file(pjoin(base, 'repo_name'), 'w', kwargs.pop('repo_name', 'monkeys'))
         os.mkdir(pjoin(repo_base, 'metadata'))
         with open(pjoin(repo_base, 'metadata', 'layout.conf'), 'w') as f:
             f.write(textwrap.dedent(f"""\
@@ -124,10 +124,10 @@ class IUSE_Options(TempDirMixin):
                 properties-allowed = {' '.join(properties)}
                 restrict-allowed = {' '.join(restrict)}
             """))
-        kwds['target_repo'] = repository.UnconfiguredTree(repo_base)
-        kwds.setdefault('verbosity', 0)
-        kwds.setdefault('git_disable', True)
-        return misc.Options(**kwds)
+        kwargs['target_repo'] = repository.UnconfiguredTree(repo_base)
+        kwargs.setdefault('verbosity', 0)
+        kwargs.setdefault('git_disable', True)
+        return misc.Options(**kwargs)
 
 
 class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
