@@ -133,8 +133,8 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
 
     check_kls = metadata.KeywordsCheck
 
-    def setUp(self):
-        super().setUp()
+    @pytest.fixture
+    def check(self):
         pkgs = (
             FakePkg('dev-libs/foo-0', keywords=('amd64', '~x86')),
             FakePkg('dev-libs/foo-1', keywords=('-*', 'ppc')),
@@ -144,32 +144,32 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         options = self.get_options(search_repo=search_repo, gentoo_repo=False)
         profiles = [misc.FakeProfile()]
         iuse_handler = addons.UseAddon(options, profiles)
-        self.check = metadata.KeywordsCheck(options, iuse_handler)
+        return metadata.KeywordsCheck(options, iuse_handler)
 
     def mk_pkg(self, keywords='', cpv='dev-util/diffball-0.7.1', rdepend=''):
         return misc.FakePkg(cpv, data={'KEYWORDS': keywords, 'RDEPEND': rdepend})
 
-    def test_no_keywords(self):
-        self.assertNoReport(self.check, self.mk_pkg())
+    def test_no_keywords(self, check):
+        self.assertNoReport(check, self.mk_pkg())
 
-    def test_stupid_keywords(self):
+    def test_stupid_keywords(self, check):
         # regular keywords
-        self.assertNoReport(self.check, self.mk_pkg("ppc"))
+        self.assertNoReport(check, self.mk_pkg("ppc"))
         # masked all except a single arch
-        self.assertNoReport(self.check, self.mk_pkg("-* ~x86"))
+        self.assertNoReport(check, self.mk_pkg("-* ~x86"))
         # all keywords masked
-        r = self.assertReport(self.check, self.mk_pkg("-*"))
+        r = self.assertReport(check, self.mk_pkg("-*"))
         assert isinstance(r, metadata.StupidKeywords)
         assert 'keywords contain -*' in str(r)
 
-    def test_invalid_keywords(self):
+    def test_invalid_keywords(self, check):
         # regular keywords
-        self.assertNoReport(self.check, self.mk_pkg("-* -amd64 ppc ~x86"))
-        self.assertNoReport(self.check, self.mk_pkg("* -amd64 ppc ~x86"))
-        self.assertNoReport(self.check, self.mk_pkg("~* -amd64 ppc ~x86"))
+        self.assertNoReport(check, self.mk_pkg("-* -amd64 ppc ~x86"))
+        self.assertNoReport(check, self.mk_pkg("* -amd64 ppc ~x86"))
+        self.assertNoReport(check, self.mk_pkg("~* -amd64 ppc ~x86"))
 
         # unknown keyword
-        r = self.assertReport(self.check, self.mk_pkg("foo"))
+        r = self.assertReport(check, self.mk_pkg("foo"))
         assert isinstance(r, metadata.InvalidKeywords)
         assert r.keywords == ('foo',)
         assert "invalid KEYWORDS: 'foo'" == str(r)
@@ -188,82 +188,82 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         assert r.keywords == ('~*',)
         assert "invalid KEYWORDS: '~*'" == str(r)
 
-    def test_overlapping_keywords(self):
+    def test_overlapping_keywords(self, check):
         # regular keywords
-        self.assertNoReport(self.check, self.mk_pkg("~* ~amd64"))
+        self.assertNoReport(check, self.mk_pkg("~* ~amd64"))
 
         # overlapping stable and unstable keywords
-        r = self.assertReport(self.check, self.mk_pkg("amd64 ~amd64"))
+        r = self.assertReport(check, self.mk_pkg("amd64 ~amd64"))
         assert isinstance(r, metadata.OverlappingKeywords)
         assert r.keywords == "('amd64', '~amd64')"
         assert "overlapping KEYWORDS: ('amd64', '~amd64')" == str(r)
 
         # multiple overlapping sets
-        r = self.assertReport(self.check, self.mk_pkg("amd64 ~amd64 ~x86 x86"))
+        r = self.assertReport(check, self.mk_pkg("amd64 ~amd64 ~x86 x86"))
         assert isinstance(r, metadata.OverlappingKeywords)
         assert r.keywords == "('amd64', '~amd64'), ('x86', '~x86')"
 
-    def test_duplicate_keywords(self):
+    def test_duplicate_keywords(self, check):
         # regular keywords
-        self.assertNoReport(self.check, self.mk_pkg("~* ~amd64"))
+        self.assertNoReport(check, self.mk_pkg("~* ~amd64"))
 
         # single duplicate
-        r = self.assertReport(self.check, self.mk_pkg("amd64 amd64"))
+        r = self.assertReport(check, self.mk_pkg("amd64 amd64"))
         assert isinstance(r, metadata.DuplicateKeywords)
         assert r.keywords == ('amd64',)
         assert 'duplicate KEYWORDS: amd64' == str(r)
 
         # multiple duplicates
-        r = self.assertReport(self.check, self.mk_pkg("-* -* amd64 amd64 ~x86 ~x86"))
+        r = self.assertReport(check, self.mk_pkg("-* -* amd64 amd64 ~x86 ~x86"))
         assert isinstance(r, metadata.DuplicateKeywords)
         assert r.keywords == ('-*', 'amd64', '~x86')
 
-    def test_unsorted_keywords(self):
+    def test_unsorted_keywords(self, check):
         # regular keywords
-        self.assertNoReport(self.check, self.mk_pkg('-* ~amd64'))
+        self.assertNoReport(check, self.mk_pkg('-* ~amd64'))
 
         # prefix keywords come after regular keywords
-        self.assertNoReport(self.check, self.mk_pkg('~amd64 ppc ~x86 ~amd64-fbsd'))
+        self.assertNoReport(check, self.mk_pkg('~amd64 ppc ~x86 ~amd64-fbsd'))
 
         # masks should come before regular keywords
-        r = self.assertReport(self.check, self.mk_pkg('~amd64 -*'))
+        r = self.assertReport(check, self.mk_pkg('~amd64 -*'))
         assert isinstance(r, metadata.UnsortedKeywords)
         assert r.keywords == ('~amd64', '-*')
         assert r.sorted_keywords == ('-*', '~amd64')
         assert '\n\tunsorted KEYWORDS: ~amd64, -*\n\tsorted KEYWORDS: -*, ~amd64' == str(r)
 
         # keywords should be sorted alphabetically by arch
-        r = self.assertReport(self.check, self.mk_pkg('ppc ~amd64'))
+        r = self.assertReport(check, self.mk_pkg('ppc ~amd64'))
         assert isinstance(r, metadata.UnsortedKeywords)
         assert r.keywords == ('ppc', '~amd64')
         assert r.sorted_keywords == ('~amd64', 'ppc')
         assert '\n\tunsorted KEYWORDS: ppc, ~amd64\n\tsorted KEYWORDS: ~amd64, ppc' == str(r)
 
         # prefix keywords should come after regular keywords
-        r = self.assertReport(self.check, self.mk_pkg('~amd64 ~amd64-fbsd ppc ~x86'))
+        r = self.assertReport(check, self.mk_pkg('~amd64 ~amd64-fbsd ppc ~x86'))
         assert isinstance(r, metadata.UnsortedKeywords)
         assert r.keywords == ('~amd64', '~amd64-fbsd', 'ppc', '~x86')
         assert r.sorted_keywords == ('~amd64', 'ppc', '~x86', '~amd64-fbsd')
 
-    def test_missing_virtual_keywords(self):
+    def test_missing_virtual_keywords(self, check):
         # non-virtuals don't trigger
         pkg = self.mk_pkg(cpv='dev-util/foo-0', rdepend='=dev-libs/foo-0')
-        self.assertNoReport(self.check, pkg)
+        self.assertNoReport(check, pkg)
 
         # matching pkg with no keywords
         pkg = self.mk_pkg(cpv='virtual/foo-0', rdepend='dev-libs/bar')
-        self.assertNoReport(self.check, pkg)
+        self.assertNoReport(check, pkg)
 
         # single pkg match
         pkg = self.mk_pkg(cpv='virtual/foo-0', rdepend='=dev-libs/foo-0')
-        r = self.assertReport(self.check, pkg)
+        r = self.assertReport(check, pkg)
         assert isinstance(r, metadata.MissingVirtualKeywords)
         assert r.keywords == ('amd64', '~x86')
         assert 'missing KEYWORDS: amd64, ~x86' == str(r)
 
         # multiple pkg match
         pkg = self.mk_pkg(cpv='virtual/foo-0', rdepend='dev-libs/foo')
-        r = self.assertReport(self.check, pkg)
+        r = self.assertReport(check, pkg)
         assert isinstance(r, metadata.MissingVirtualKeywords)
         assert r.keywords == ('amd64', 'ppc', '~x86')
         assert 'missing KEYWORDS: amd64, ppc, ~x86' == str(r)
@@ -361,9 +361,9 @@ class TestRequiredUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
 
     check_kls = metadata.RequiredUSEMetadataCheck
 
-    def setUp(self):
-        super().setUp()
-        self.check = self.mk_check()
+    @pytest.fixture
+    def check(self):
+        return self.mk_check()
 
     def mk_check(self, masks=(), verbosity=1, profiles=None):
         if profiles is None:
@@ -380,11 +380,11 @@ class TestRequiredUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
             iuse=iuse.split(),
             data={"REQUIRED_USE": required_use, "KEYWORDS": keywords})
 
-    def test_unsupported_eapis(self):
+    def test_unsupported_eapis(self, check):
         for eapi_str, eapi_obj in eapi.EAPI.known_eapis.items():
             if not eapi_obj.options.has_required_use:
                 pkg = self.mk_pkg(eapi=eapi_str, required_use="foo? ( blah )")
-                self.assertNoReport(self.check, pkg)
+                self.assertNoReport(check, pkg)
 
     def test_multireport_verbosity(self):
         profiles = {
@@ -402,34 +402,34 @@ class TestRequiredUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
         assert "keyword: x86, profile: 'default/linux/x86', default USE: [foo] " in str(r[0])
         assert "keyword: x86, profile: 'default/linux/x86/foo', default USE: [foo]" in str(r[1])
 
-    def test_required_use(self):
+    def test_required_use(self, check):
         # bad syntax
-        r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="| ( foo bar )"))
+        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="| ( foo bar )"))
         assert isinstance(r, metadata.MetadataError)
 
         # useless constructs
-        r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="foo? ( )"))
+        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( )"))
         assert isinstance(r, metadata.MetadataError)
-        r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="|| ( )"))
+        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="|| ( )"))
         assert isinstance(r, metadata.MetadataError)
 
         # only supported in >= EAPI 5
-        self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="?? ( foo bar )"))
-        self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
+        self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="?? ( foo bar )"))
+        self.assertNoReport(check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
 
-    def test_unstated_iuse(self):
-        r = self.assertReport(self.check, self.mk_pkg(required_use="foo? ( blah )"))
+    def test_unstated_iuse(self, check):
+        r = self.assertReport(check, self.mk_pkg(required_use="foo? ( blah )"))
         assert isinstance(r, addons.UnstatedIUSE)
         assert r.flags == ("blah", "foo")
-        r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
+        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
         assert isinstance(r, addons.UnstatedIUSE)
         assert r.flags == ("blah",)
 
-    def test_required_use_defaults(self):
+    def test_required_use_defaults(self, check):
         # simple, valid IUSE/REQUIRED_USE usage
-        self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar"))
-        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo", required_use="foo"))
-        self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar", required_use="foo? ( bar )"))
+        self.assertNoReport(check, self.mk_pkg(iuse="foo bar"))
+        self.assertNoReport(check, self.mk_pkg(iuse="+foo", required_use="foo"))
+        self.assertNoReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( bar )"))
 
         # pkgs masked by the related profile aren't checked
         self.assertNoReport(
@@ -437,7 +437,7 @@ class TestRequiredUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
             self.mk_pkg(cpvstr="dev-util/diffball-8.0", iuse="foo bar", required_use="bar"))
 
         # unsatisfied REQUIRED_USE
-        r = self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="bar"))
+        r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="bar"))
         assert isinstance(r, metadata.RequiredUseDefaults)
         assert r.keyword == 'x86'
         assert r.profile == 'default/linux/x86'
@@ -445,40 +445,40 @@ class TestRequiredUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
         assert str(r.required_use) == 'bar'
 
         # at-most-one-of
-        self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
-        self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="+foo bar", required_use="?? ( foo bar )"))
-        self.assertNoReport(self.check, self.mk_pkg(eapi="5", iuse="foo +bar", required_use="?? ( foo bar )"))
-        r = self.assertReport(self.check, self.mk_pkg(eapi="5", iuse="+foo +bar", required_use="?? ( foo bar )"))
+        self.assertNoReport(check, self.mk_pkg(eapi="5", iuse="foo bar", required_use="?? ( foo bar )"))
+        self.assertNoReport(check, self.mk_pkg(eapi="5", iuse="+foo bar", required_use="?? ( foo bar )"))
+        self.assertNoReport(check, self.mk_pkg(eapi="5", iuse="foo +bar", required_use="?? ( foo bar )"))
+        r = self.assertReport(check, self.mk_pkg(eapi="5", iuse="+foo +bar", required_use="?? ( foo bar )"))
         assert isinstance(r, metadata.RequiredUseDefaults)
         assert r.use == ('bar', 'foo')
         assert str(r.required_use) == 'at-most-one-of ( foo bar )'
 
         # exactly-one-of
-        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo bar", required_use="^^ ( foo bar )"))
-        self.assertNoReport(self.check, self.mk_pkg(iuse="foo +bar", required_use="^^ ( foo bar )"))
-        self.assertReport(self.check, self.mk_pkg(iuse="foo bar", required_use="^^ ( foo bar )"))
-        r = self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar", required_use="^^ ( foo bar )"))
+        self.assertNoReport(check, self.mk_pkg(iuse="+foo bar", required_use="^^ ( foo bar )"))
+        self.assertNoReport(check, self.mk_pkg(iuse="foo +bar", required_use="^^ ( foo bar )"))
+        self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="^^ ( foo bar )"))
+        r = self.assertReport(check, self.mk_pkg(iuse="+foo +bar", required_use="^^ ( foo bar )"))
         assert isinstance(r, metadata.RequiredUseDefaults)
         assert r.use == ('bar', 'foo')
         assert str(r.required_use) == 'exactly-one-of ( foo bar )'
 
         # all-of
-        self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( bar baz )"))
-        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo +bar +baz", required_use="foo? ( bar baz )"))
-        self.assertReports(self.check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( bar baz )"))
-        self.assertReport(self.check, self.mk_pkg(iuse="+foo +bar baz", required_use="foo? ( bar baz )"))
-        r = self.assertReport(self.check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( bar baz )"))
+        self.assertNoReport(check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( bar baz )"))
+        self.assertNoReport(check, self.mk_pkg(iuse="+foo +bar +baz", required_use="foo? ( bar baz )"))
+        self.assertReports(check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( bar baz )"))
+        self.assertReport(check, self.mk_pkg(iuse="+foo +bar baz", required_use="foo? ( bar baz )"))
+        r = self.assertReport(check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( bar baz )"))
         assert isinstance(r, metadata.RequiredUseDefaults)
         assert r.use == ('baz', 'foo')
         # TODO: fix this output to show both required USE flags
         assert str(r.required_use) == 'bar'
 
         # any-of
-        self.assertNoReport(self.check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( || ( bar baz ) )"))
-        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo +bar baz", required_use="foo? ( || ( bar baz ) )"))
-        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( || ( bar baz ) )"))
-        self.assertNoReport(self.check, self.mk_pkg(iuse="+foo +bar +baz", required_use="foo? ( || ( bar baz ) )"))
-        r = self.assertReport(self.check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( || ( bar baz ) )"))
+        self.assertNoReport(check, self.mk_pkg(iuse="foo bar baz", required_use="foo? ( || ( bar baz ) )"))
+        self.assertNoReport(check, self.mk_pkg(iuse="+foo +bar baz", required_use="foo? ( || ( bar baz ) )"))
+        self.assertNoReport(check, self.mk_pkg(iuse="+foo bar +baz", required_use="foo? ( || ( bar baz ) )"))
+        self.assertNoReport(check, self.mk_pkg(iuse="+foo +bar +baz", required_use="foo? ( || ( bar baz ) )"))
+        r = self.assertReport(check, self.mk_pkg(iuse="+foo bar baz", required_use="foo? ( || ( bar baz ) )"))
         assert isinstance(r, metadata.RequiredUseDefaults)
         assert r.use == ('foo',)
         assert str(r.required_use) == '( bar || baz )'
