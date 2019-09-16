@@ -29,23 +29,23 @@ class TestImlateReport(misc.ReportTestCase):
             [mk_pkg(str(x), "~x86 ~amd64") for x in range(10)])
 
     def test_all_stable(self):
-        r = self.assertNoReport(
+        self.assertNoReport(
             mk_check(),
             [mk_pkg("0.9", "amd64 x86")])
 
     def test_unselected_arch(self):
-        r = self.assertNoReport(
+        self.assertNoReport(
             mk_check(),
             [mk_pkg("0.9", "~mips amd64")])
 
     def test_specified_stable_arches(self):
         # pkg doesn't have any unstable arches we care about
-        r = self.assertNoReport(
+        self.assertNoReport(
             mk_check(source_arches=('arm', 'arm64')),
             [mk_pkg("0.9", "~x86 amd64")])
 
         # pkg doesn't have any stable arches we care about
-        r = self.assertNoReport(
+        self.assertNoReport(
             mk_check(source_arches=('arm64',)),
             [mk_pkg("0.9", "~x86 amd64")])
 
