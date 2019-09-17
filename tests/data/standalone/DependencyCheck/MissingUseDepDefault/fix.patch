@@ -1,0 +1,9 @@
+diff -Naur standalone/DependencyCheck/MissingUseDepDefault/MissingUseDepDefault-0.ebuild fixed/DependencyCheck/MissingUseDepDefault/MissingUseDepDefault-0.ebuild
+--- standalone/DependencyCheck/MissingUseDepDefault/MissingUseDepDefault-0.ebuild	2019-09-17 10:42:09.975010501 -0600
++++ fixed/DependencyCheck/MissingUseDepDefault/MissingUseDepDefault-0.ebuild	2019-09-17 10:54:02.837554060 -0600
+@@ -3,4 +3,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-DEPEND="stub/stub1[foo?]"
++DEPEND="stub/stub1[foo(+)?]"

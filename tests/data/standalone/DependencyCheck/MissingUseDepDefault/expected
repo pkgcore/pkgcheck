@@ -1,0 +1,2 @@
+DependencyCheck/MissingUseDepDefault
+  MissingUseDepDefault: version 0: DEPEND="stub/stub1[foo?]": USE flag 'foo' missing from package: [ =stub/stub1-0 ]

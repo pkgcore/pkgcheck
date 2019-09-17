@@ -1,0 +1,2 @@
+DependencyCheck/UnstatedIUSE
+  UnstatedIUSE: version 0: attr(rdepend): profile 'default' (1 total): unstated flag: [ used ]

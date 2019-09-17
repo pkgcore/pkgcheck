@@ -1,0 +1,9 @@
+diff -Naur standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild
+--- standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild	2019-09-17 11:01:07.112319931 -0600
++++ fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild	2019-09-17 11:01:44.129474002 -0600
+@@ -2,4 +2,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-RDEPEND="=stub/stub1-0"
++RDEPEND="=stub/stub1-0-r0"

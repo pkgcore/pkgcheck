@@ -1,0 +1,5 @@
+DESCRIPTION="Ebuild with missing package revision in dependency"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SLOT="0"
+LICENSE="BSD"
+RDEPEND="=stub/stub1-0"
