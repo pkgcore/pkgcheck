@@ -12,8 +12,7 @@ install:
 - pip install -U pip
 before_script:
 - git clone https://github.com/pkgcore/pkgdist.git
-- cp -R pkgdist/requirements/* requirements/
-- requirements/pip.sh -rrequirements/ci.txt
+- pkgdist/ci.sh
 script: tox -e travis
 after_success:
 # upload coverage data
