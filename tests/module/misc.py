@@ -8,7 +8,7 @@ from pkgcore import const as pkgcore_const
 from pkgcore.util.commandline import Tool
 from pkgcore.ebuild import domain, repo_objs
 from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.cpv import versioned_CPV
+from pkgcore.ebuild.cpv import VersionedCPV
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.misc import ChunkedDataDict, chunked_data
@@ -33,7 +33,7 @@ class FakePkg(package):
         for x in ("DEPEND", "RDEPEND", "PDEPEND", "IUSE", "LICENSE"):
             data.setdefault(x, "")
 
-        cpv = versioned_CPV(cpvstr)
+        cpv = VersionedCPV(cpvstr)
         # TODO: make pkgcore generate empty shared pkg data when None is passed
         mxml = repo_objs.LocalMetadataXml('')
         shared = repo_objs.SharedPkgData(metadata_xml=mxml, manifest=None)
@@ -57,7 +57,7 @@ class FakeTimedPkg(package):
     def __init__(self, cpvstr, mtime, data=None, shared=None, repo=None):
         if data is None:
             data = {}
-        cpv = versioned_CPV(cpvstr)
+        cpv = VersionedCPV(cpvstr)
         super().__init__(shared, factory(repo), cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
         object.__setattr__(self, "_mtime_", mtime)
@@ -70,7 +70,7 @@ class FakeFilesDirPkg(package):
     def __init__(self, cpvstr, repo, data=None, shared=None):
         if data is None:
             data = {}
-        cpv = versioned_CPV(cpvstr)
+        cpv = VersionedCPV(cpvstr)
         super().__init__(shared, factory(repo), cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
         object.__setattr__(self, "path", pjoin(
