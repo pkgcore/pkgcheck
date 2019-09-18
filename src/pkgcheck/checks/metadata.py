@@ -448,18 +448,19 @@ class MissingPackageRevision(base.VersionedResult, base.Warning):
 class MissingUseDepDefault(base.VersionedResult, base.Warning):
     """Package dependencies with USE dependencies missing defaults."""
 
-    def __init__(self, attr, atom, flag, pkg_deps, **kwargs):
+    def __init__(self, attr, atom, flag, pkgs, **kwargs):
         super().__init__(**kwargs)
         self.attr = attr.upper()
         self.atom = atom
         self.flag = flag
-        self.pkg_deps = tuple(pkg_deps)
+        self.pkgs = tuple(pkgs)
 
     @property
     def desc(self):
         return (
             f'{self.attr}="{self.atom}": USE flag {self.flag!r} missing from '
-            f"package{_pl(self.pkg_deps)}: [ {', '.join(self.pkg_deps)} ]")
+            f"package{_pl(self.pkgs)}: [ {', '.join(self.pkgs)} ]"
+        )
 
 
 class OutdatedBlocker(base.VersionedResult, base.Warning):
@@ -536,7 +537,7 @@ class DependencyCheck(base.Check):
             else:
                 yield (x, False)
 
-    def _check_use_deps(self, attr, pkg, atom):
+    def _check_use_deps(self, attr, atom):
         """Check dependencies for missing USE dep defaults."""
         conditional_use = (
             x for x in atom.use
@@ -544,10 +545,10 @@ class DependencyCheck(base.Check):
         stripped_use = [x.strip('?=').lstrip('!') for x in conditional_use]
         if stripped_use:
             missing_use_deps = defaultdict(set)
-            for pkg_dep in self.options.search_repo.match(strip_atom_use(atom)):
+            for pkg in self.options.search_repo.match(strip_atom_use(atom)):
                 for use in stripped_use:
-                    if use not in pkg_dep.iuse_effective:
-                        missing_use_deps[use].add(pkg_dep)
+                    if use not in pkg.iuse_effective:
+                        missing_use_deps[use].add(pkg.versioned_atom)
             return missing_use_deps
         return {}
 
@@ -564,11 +565,10 @@ class DependencyCheck(base.Check):
 
             for atom, in_or_restriction in self._flatten_or_restrictions(nodes):
                 if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
-                    missing_use_deps = self._check_use_deps(attr, pkg, atom)
-                    for use, pkg_deps in missing_use_deps.items():
-                        pkg_deps = sorted(str(x.versioned_atom) for x in pkg_deps)
-                        yield MissingUseDepDefault(
-                            attr, str(atom), use, pkg_deps, pkg=pkg)
+                    missing_use_deps = self._check_use_deps(attr, atom)
+                    for use, atoms in missing_use_deps.items():
+                        pkgs = map(str, sorted(atoms))
+                        yield MissingUseDepDefault(attr, str(atom), use, pkgs, pkg=pkg)
                 if in_or_restriction and atom.slot_operator == '=':
                     slot_op_or_blocks.add(atom.key)
                 if atom.blocks:
