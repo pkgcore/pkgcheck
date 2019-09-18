@@ -300,6 +300,12 @@ class Warning(Result):
     _level = 30
 
 
+class Info(Result):
+    """Result with an info priority level."""
+
+    _level = 20
+
+
 class CommitResult(Result):
     """Result related to a specific git commit."""
 
