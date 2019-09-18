@@ -93,22 +93,6 @@ def visit_atoms(pkg, stream):
     return iflatten_func(stream, _eapi2_flatten)
 
 
-def strip_atom_use(inst):
-    if not inst.use:
-        return inst
-    if inst.op == '=*':
-        s = f'={inst.cpvstr}*'
-    else:
-        s = inst.op + inst.cpvstr
-    if inst.blocks:
-        s = '!' + s
-        if not inst.blocks_temp_ignorable:
-            s = '!' + s
-    if inst.slot:
-        s += f':{inst.slot}'
-    return atom(s)
-
-
 class VisibleVcsPkg(base.VersionedResult, base.Error):
     """Package is VCS-based, but visible."""
 
@@ -232,7 +216,7 @@ class VisibilityCheck(base.Check):
             nonexistent = set()
             try:
                 for orig_node in visit_atoms(pkg, getattr(pkg, attr)):
-                    node = strip_atom_use(orig_node)
+                    node = orig_node.no_usedeps
                     if node not in self.query_cache:
                         if node in self.profiles.global_insoluble:
                             nonexistent.add(node)
@@ -340,7 +324,7 @@ class VisibilityCheck(base.Check):
                         # get is required since there is an intermix between old style
                         # virtuals and new style- thus the cache priming doesn't get
                         # all of it.
-                        src = get_cached_query(strip_atom_use(node), ())
+                        src = get_cached_query(node.no_usedeps, ())
                         if node.use:
                             src = (FakeConfigurable(pkg, profile) for pkg in src)
                             src = (pkg for pkg in src if node.force_True(pkg))

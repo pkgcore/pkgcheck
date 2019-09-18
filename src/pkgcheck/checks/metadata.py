@@ -20,7 +20,7 @@ from snakeoil.strings import pluralism as _pl
 from .. import addons, base, sources
 from ..addons import UnstatedIUSE
 from ..base import MetadataError
-from .visibility import FakeConfigurable, strip_atom_use
+from .visibility import FakeConfigurable
 
 
 class MissingLicense(base.VersionedResult, base.Error):
@@ -545,7 +545,7 @@ class DependencyCheck(base.Check):
         stripped_use = [x.strip('?=').lstrip('!') for x in conditional_use]
         if stripped_use:
             missing_use_deps = defaultdict(set)
-            for pkg in self.options.search_repo.match(strip_atom_use(atom)):
+            for pkg in self.options.search_repo.match(atom.no_usedeps):
                 for use in stripped_use:
                     if use not in pkg.iuse_effective:
                         missing_use_deps[use].add(pkg.versioned_atom)
@@ -755,7 +755,7 @@ class KeywordsCheck(base.Check):
                 keywords = set()
                 rdepend, _ = self.iuse_filter((atom_cls,), pkg, pkg.rdepend)
                 for x in set(rdepend):
-                    for p in self.options.search_repo.match(strip_atom_use(x)):
+                    for p in self.options.search_repo.match(x.no_usedeps):
                         keywords.update(
                             x for x in p.keywords if x.lstrip('~') in self.valid_arches)
                 pkg_keywords = set(pkg.keywords)
