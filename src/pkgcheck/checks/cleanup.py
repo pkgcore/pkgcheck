@@ -3,7 +3,7 @@ from snakeoil.strings import pluralism as _pl
 from .. import base
 
 
-class RedundantVersion(base.VersionedResult, base.Warning):
+class RedundantVersion(base.VersionedResult, base.Info):
     """Redundant version(s) of a package in a specific slot."""
 
     def __init__(self, slot, later_versions, **kwargs):

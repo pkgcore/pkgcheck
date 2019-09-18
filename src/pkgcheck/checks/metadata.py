@@ -522,7 +522,7 @@ class MissingUseDepDefault(base.VersionedResult, base.Warning):
         )
 
 
-class OutdatedBlocker(base.VersionedResult, base.Warning):
+class OutdatedBlocker(base.VersionedResult, base.Info):
     """Blocker dependency removed more than two years ago from the tree.
 
     Note that this ignores slot/subslot deps and USE deps in blocker atoms.

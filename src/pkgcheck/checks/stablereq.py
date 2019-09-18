@@ -10,7 +10,7 @@ from .. import addons, base, sources
 day = 24*3600
 
 
-class StableRequest(base.VersionedResult, base.Warning):
+class StableRequest(base.VersionedResult, base.Info):
     """Unstable package added over thirty days ago that could be stabilized."""
 
     def __init__(self, slot, keywords, age, **kwargs):

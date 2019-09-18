@@ -319,7 +319,7 @@ class LicenseGroupsCheck(base.Check, base.EmptyFeed):
                 yield UnknownLicenses(group, sorted(unknown_licenses))
 
 
-class PotentialLocalUSE(base.Warning):
+class PotentialLocalUSE(base.Info):
     """Global USE flag is a potential local USE flag."""
 
     threshold = base.repository_feed
@@ -351,7 +351,7 @@ class UnusedGlobalUSE(base.Warning):
             _pl(self.flags), ', '.join(self.flags))
 
 
-class PotentialGlobalUSE(base.Warning):
+class PotentialGlobalUSE(base.Info):
     """Local USE flag is a potential global USE flag."""
 
     threshold = base.repository_feed

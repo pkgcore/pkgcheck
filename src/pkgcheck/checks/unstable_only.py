@@ -6,7 +6,7 @@ from snakeoil.strings import pluralism as _pl
 from .. import addons, base
 
 
-class UnstableOnly(base.PackageResult, base.Warning):
+class UnstableOnly(base.PackageResult, base.Info):
     """Package/keywords that are strictly unstable."""
 
     def __init__(self, versions, arches, **kwargs):
