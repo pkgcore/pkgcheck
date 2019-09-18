@@ -144,9 +144,9 @@ check_options.add_argument(
         be used, e.g. ``-k=-keyword``, otherwise the disabled keyword argument is
         treated as an option.
 
-        The special arguments of ``errors`` and ``warnings`` correspond to the
-        lists of error and warning keywords, respectively. Therefore, to only
-        scan for errors and ignore all QA warnings use ``-k errors``.
+        The special arguments of ``error``, ``warning``, and ``info``
+        correspond to the lists of error, warning, and info keywords,
+        respectively. For example, to only scan for errors use ``-k error``.
 
         Use ``pkgcheck show --keywords`` to see available options.
     """)
@@ -332,10 +332,11 @@ def _validate_args(parser, namespace):
     if namespace.selected_keywords is not None:
         disabled_keywords, enabled_keywords = namespace.selected_keywords
 
-        errors = (k for k, v in const.KEYWORDS.items() if issubclass(v, base.Error))
-        warnings = (k for k, v in const.KEYWORDS.items() if issubclass(v, base.Warning))
+        error = (k for k, v in const.KEYWORDS.items() if issubclass(v, base.Error))
+        warning = (k for k, v in const.KEYWORDS.items() if issubclass(v, base.Warning))
+        info = (k for k, v in const.KEYWORDS.items() if issubclass(v, base.Info))
 
-        alias_map = {'errors': errors, 'warnings': warnings}
+        alias_map = {'error': error, 'warning': warning, 'info': info}
         replace_aliases = lambda x: alias_map.get(x, [x])
 
         # expand keyword aliases to keyword lists
