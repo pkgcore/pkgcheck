@@ -10,8 +10,7 @@ from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.package.errors import MetadataException
-from pkgcore.restrictions import packages, values
-from pkgcore.restrictions.boolean import OrRestriction
+from pkgcore.restrictions import packages, values, boolean
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
@@ -36,6 +35,24 @@ class MissingLicense(base.VersionedResult, base.Error):
         return f"no matching license{_pl(self.licenses)}: [ {licenses} ]"
 
 
+class MissingLicenseRestricts(base.VersionedResult, base.Error):
+    """Restrictive license used without matching RESTRICT."""
+
+    def __init__(self, license_group, license, restrictions, **kwargs):
+        super().__init__(**kwargs)
+        self.license_group = license_group
+        self.license = license
+        self.restrictions = tuple(restrictions)
+
+    @property
+    def desc(self):
+        restrictions = ' '.join(self.restrictions)
+        return (
+            f'{self.license_group} license {self.license!r} '
+            f'requires RESTRICT="{restrictions}"'
+        )
+
+
 class UnnecessaryLicense(base.VersionedResult, base.Warning):
     """LICENSE defined for package that is license-less."""
 
@@ -47,7 +64,10 @@ class UnnecessaryLicense(base.VersionedResult, base.Warning):
 class LicenseMetadataCheck(base.Check):
     """LICENSE validity checks."""
 
-    known_results = (MetadataError, MissingLicense, UnnecessaryLicense, UnstatedIUSE)
+    known_results = (
+        MetadataError, MissingLicense, UnnecessaryLicense, UnstatedIUSE,
+        MissingLicenseRestricts,
+    )
     feed_type = base.versioned_feed
 
     # categories for ebuilds that can lack LICENSE settings
@@ -58,12 +78,51 @@ class LicenseMetadataCheck(base.Check):
     def __init__(self, options, iuse_handler, profiles):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter('license')
+        self.eula = self.options.target_repo.licenses.groups.get('EULA')
+        self.mirror_restricts = frozenset(['fetch', 'mirror'])
+
+    def _required_licenses(self, license_group, nodes, restricts=None):
+        """Determine required licenses from a given license group."""
+        for node in nodes:
+            v = restricts if restricts is not None else []
+            if isinstance(node, str) and node not in license_group:
+                continue
+            elif isinstance(node, boolean.AndRestriction):
+                yield from self._required_licenses(license_group, node, v)
+                continue
+            elif isinstance(node, boolean.OrRestriction):
+                licenses = list(self._required_licenses(license_group, node, v))
+                # skip conditionals that have another option
+                if len(node) == len(licenses):
+                    yield from licenses
+                continue
+            elif isinstance(node, packages.Conditional):
+                v.append(node.restriction)
+                yield from self._required_licenses(license_group, node.payload, v)
+                continue
+            yield node, tuple(v)
 
     def feed(self, pkg):
+        # check for restrictive licenses with missing RESTRICT
+        if self.eula is not None:
+            for license, restrictions in self._required_licenses(self.eula, pkg.license):
+                restricts = frozenset(chain.from_iterable(
+                    x.vals for x in restrictions if not x.negate))
+                license_restrictions = pkg.restrict.evaluate_depset(restricts)
+                missing_restricts = []
+                if 'bindist' not in license_restrictions:
+                    missing_restricts.append('bindist')
+                if not self.mirror_restricts.intersection(license_restrictions):
+                    missing_restricts.append('mirror')
+                if missing_restricts:
+                    yield MissingLicenseRestricts(
+                        'EULA', license, missing_restricts, pkg=pkg)
+
+        # flatten license depset
         licenses, unstated = self.iuse_filter((str,), pkg, pkg.license)
         yield from unstated
-
         licenses = set(licenses)
+
         if not licenses:
             if pkg.category not in self.unlicensed_categories:
                 yield MetadataError('license', 'no license defined', pkg=pkg)
@@ -531,7 +590,7 @@ class DependencyCheck(base.Check):
     @staticmethod
     def _flatten_or_restrictions(i):
         for x in i:
-            if isinstance(x, OrRestriction):
+            if isinstance(x, boolean.OrRestriction):
                 for y in iflatten_instance(x, (atom_cls,)):
                     yield (y, True)
             else:
@@ -560,7 +619,7 @@ class DependencyCheck(base.Check):
             nonexistent_blockers = set()
 
             nodes, unstated = self.iuse_filter(
-                (atom_cls, OrRestriction), pkg, getattr(pkg, attr), attr=attr)
+                (atom_cls, boolean.OrRestriction), pkg, getattr(pkg, attr), attr=attr)
             yield from unstated
 
             for atom, in_or_restriction in self._flatten_or_restrictions(nodes):
