@@ -45,14 +45,15 @@ class BadCommitSummary(base.PackageResult, base.Warning):
     .. [#] https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format
     """
 
-    def __init__(self, summary, commit, **kwargs):
+    def __init__(self, error, summary, commit, **kwargs):
         super().__init__(**kwargs)
+        self.error = error
         self.summary = summary
         self.commit = commit
 
     @property
     def desc(self):
-        return f'commit {self.commit}, bad summary: {self.summary!r}'
+        return f'commit {self.commit}, {self.error}: {self.summary!r}'
 
 
 class DirectStableKeywords(base.VersionedResult, base.Error):
@@ -219,7 +220,8 @@ class GitPkgCommitsCheck(base.GentooRepoCheck):
             except IndexError:
                 summary = ''
             if not summary.startswith(f'{git_pkg.unversioned_atom}: '):
-                yield BadCommitSummary(summary, git_pkg.commit, pkg=git_pkg)
+                error = 'summary missing matching package prefix'
+                yield BadCommitSummary(error, summary, git_pkg.commit, pkg=git_pkg)
 
             try:
                 pkg = self.repo.match(git_pkg.versioned_atom)[0]
