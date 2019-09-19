@@ -76,11 +76,12 @@ class _UrlCheck(base.NetworkCheck):
         self.reporter_lock = threading.Lock()
         self.redirected_result = None
         self.dead_result = None
+        # spoof user agent similar to what would be used when fetching files
+        self.headers = {'User-Agent': 'Wget/1.20.3 (linux-gnu)'}
 
     def _url_to_result(self, url):
         result = False
-        # TODO: support spoofing user agent?
-        req = urllib.request.Request(url)
+        req = urllib.request.Request(url, headers=self.headers)
         try:
             response = urllib.request.urlopen(req, timeout=self.timeout)
             if self.redirected_result is not None:
