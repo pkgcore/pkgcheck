@@ -135,30 +135,30 @@ class LicenseMetadataCheck(base.Check):
                 yield UnnecessaryLicense(pkg=pkg)
 
 
-class InvalidUseFlags(base.VersionedResult, base.Error):
+class _UseFlagsResult(base.VersionedResult, base.Error):
+    """Generic USE flags result."""
+
+    _type = None
+
+    def __init__(self, flags, **kwargs):
+        super().__init__(**kwargs)
+        self.flags = tuple(flags)
+
+    @property
+    def desc(self):
+        flags = ', '.join(map(repr, sorted(self.flags)))
+        return f'{self._type} USE flag{_pl(self.flags)}: {flags}'
+
+
+class InvalidUseFlags(_UseFlagsResult):
     """Package IUSE contains invalid USE flags."""
 
-    def __init__(self, flags, **kwargs):
-        super().__init__(**kwargs)
-        self.flags = tuple(flags)
+    _type = 'invalid'
 
-    @property
-    def desc(self):
-        flags = ', '.join(map(repr, sorted(self.flags)))
-        return f'invalid USE flag{_pl(self.flags)}: {flags}'
-
-
-class UnknownUseFlags(base.VersionedResult, base.Error):
+class UnknownUseFlags(_UseFlagsResult):
     """Package IUSE contains unknown USE flags."""
 
-    def __init__(self, flags, **kwargs):
-        super().__init__(**kwargs)
-        self.flags = tuple(flags)
-
-    @property
-    def desc(self):
-        flags = ', '.join(map(repr, sorted(self.flags)))
-        return f'unknown USE flag{_pl(self.flags)}: {flags}'
+    _type = 'unknown'
 
 
 class IUSEMetadataCheck(base.Check):
@@ -184,24 +184,30 @@ class IUSEMetadataCheck(base.Check):
                 yield UnknownUseFlags(unknown, pkg=pkg)
 
 
-class DeprecatedEAPI(base.VersionedResult, base.Warning):
-    """Package's EAPI is deprecated according to repo metadata."""
+class _EAPIResult(base.VersionedResult):
+    """Generic EAPI result."""
+
+    _type = None
 
     def __init__(self, eapi, **kwargs):
         super().__init__(**kwargs)
-        self.eapi = eapi
+        self.eapi = str(eapi)
 
     @property
     def desc(self):
-        return f"uses deprecated EAPI {self.eapi}"
+        return f"uses {self._type} EAPI {self.eapi}"
 
 
-class BannedEAPI(DeprecatedEAPI, base.Error):
+class DeprecatedEAPI(_EAPIResult, base.Warning):
+    """Package's EAPI is deprecated according to repo metadata."""
+
+    _type = 'deprecated'
+
+
+class BannedEAPI(_EAPIResult, base.Error):
     """Package's EAPI is banned according to repo metadata."""
 
-    @property
-    def desc(self):
-        return f"uses banned EAPI {self.eapi}"
+    _type = 'banned'
 
 
 class MetadataCheck(base.Check):
@@ -213,9 +219,9 @@ class MetadataCheck(base.Check):
     def feed(self, pkg):
         eapi_str = str(pkg.eapi)
         if eapi_str in self.options.target_repo.config.eapis_banned:
-            yield BannedEAPI(str(pkg.eapi), pkg=pkg)
+            yield BannedEAPI(pkg.eapi, pkg=pkg)
         elif eapi_str in self.options.target_repo.config.eapis_deprecated:
-            yield DeprecatedEAPI(str(pkg.eapi), pkg=pkg)
+            yield DeprecatedEAPI(pkg.eapi, pkg=pkg)
 
     def finish(self):
         # TODO: Move this somewhere that's consistently triggered after running
