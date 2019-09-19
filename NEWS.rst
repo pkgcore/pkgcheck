@@ -3,6 +3,34 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.6.5 (2019-09-18)
+---------------------------
+
+- InvalidUseFlags: Flag invalid USE flags in IUSE.
+
+- UnknownUseFlags: Use specific keyword result for unknown USE flags in IUSE
+  instead of MetadataError.
+
+- pkgcheck scan: Add ``info`` alias for -k/--keywords option and rename
+  errors/warnings aliases to ``error`` and ``warning``.
+
+- Add Info result type and mark a several non-warning results as info level
+  (e.g. RedundantVersion and PotentialStable).
+
+- MissingLicenseRestricts: Flag restrictive license usage missing required
+  RESTRICT settings.
+
+- MissingSlotDepCheck: Properly report missing slotdeps for atom with use deps.
+
+- pkgcheck scan: Add ``all`` alias for -c/--checks option.
+
+- MissingSignOff: Add initial check for missing commit message sign offs.
+
+- InvalidLicenseHeader: Add initial license header check for the gentoo repo.
+
+- BadCommitSummary: Add initial commit message summary formatting check.
+
+---------------------------
 pkgcheck 0.6.4 (2019-09-13)
 ---------------------------
 
