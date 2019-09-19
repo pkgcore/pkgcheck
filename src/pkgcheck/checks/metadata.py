@@ -173,10 +173,7 @@ class IUSEMetadataCheck(base.Check):
         self.iuse_handler = iuse_handler
 
     def feed(self, pkg):
-        invalid = []
-        for flag in pkg.iuse_stripped:
-            if not atom.valid_use_flag.match(flag):
-                invalid.append(flag)
+        invalid = [x for x in pkg.iuse_stripped if not atom.valid_use_flag.match(x)]
         if invalid:
             yield InvalidUseFlags(invalid, pkg=pkg)
 
