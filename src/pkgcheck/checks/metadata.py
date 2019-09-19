@@ -5,6 +5,7 @@ from datetime import datetime
 from difflib import SequenceMatcher
 from itertools import chain
 
+from pkgcore.ebuild import atom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
@@ -134,24 +135,56 @@ class LicenseMetadataCheck(base.Check):
                 yield UnnecessaryLicense(pkg=pkg)
 
 
+class InvalidUseFlags(base.VersionedResult, base.Error):
+    """Package IUSE contains invalid USE flags."""
+
+    def __init__(self, flags, **kwargs):
+        super().__init__(**kwargs)
+        self.flags = tuple(flags)
+
+    @property
+    def desc(self):
+        flags = ', '.join(map(repr, sorted(self.flags)))
+        return f'invalid USE flag{_pl(self.flags)}: {flags}'
+
+
+class UnknownUseFlags(base.VersionedResult, base.Error):
+    """Package IUSE contains unknown USE flags."""
+
+    def __init__(self, flags, **kwargs):
+        super().__init__(**kwargs)
+        self.flags = tuple(flags)
+
+    @property
+    def desc(self):
+        flags = ', '.join(map(repr, sorted(self.flags)))
+        return f'unknown USE flag{_pl(self.flags)}: {flags}'
+
+
 class IUSEMetadataCheck(base.Check):
     """IUSE validity checks."""
 
     feed_type = base.versioned_feed
     required_addons = (addons.UseAddon,)
-    known_results = (MetadataError,)
+    known_results = (InvalidUseFlags, UnknownUseFlags)
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
         self.iuse_handler = iuse_handler
 
     def feed(self, pkg):
+        invalid = []
+        for flag in pkg.iuse_stripped:
+            if not atom.valid_use_flag.match(flag):
+                invalid.append(flag)
+        if invalid:
+            yield InvalidUseFlags(invalid, pkg=pkg)
+
         if not self.iuse_handler.ignore:
-            iuse = pkg.iuse_stripped.difference(self.iuse_handler.allowed_iuse(pkg))
-            if iuse:
-                iuse_str = ', '.join(sorted(iuse))
-                yield MetadataError(
-                    'iuse', f'IUSE unknown flag{_pl(iuse)}: [ {iuse_str} ]', pkg=pkg)
+            unknown = pkg.iuse_stripped.difference(self.iuse_handler.allowed_iuse(pkg))
+            unknown = unknown.difference(invalid)
+            if unknown:
+                yield UnknownUseFlags(unknown, pkg=pkg)
 
 
 class DeprecatedEAPI(base.VersionedResult, base.Warning):

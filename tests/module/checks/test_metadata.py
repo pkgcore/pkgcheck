@@ -281,16 +281,24 @@ class TestIUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
 
     def test_unknown_iuse(self, check):
         r = self.assertReport(check, self.mk_pkg('foo dar'))
-        assert isinstance(r, base.MetadataError)
-        assert r.attr == 'iuse'
+        assert isinstance(r, metadata.UnknownUseFlags)
+        assert r.flags == ('dar',)
         assert 'dar' in str(r)
 
     def test_arch_iuse(self, check):
         # arch flags must _not_ be in IUSE
         r = self.assertReport(check, self.mk_pkg('x86'))
-        assert isinstance(r, base.MetadataError)
-        assert r.attr == 'iuse'
+        assert isinstance(r, metadata.UnknownUseFlags)
+        assert r.flags == ('x86',)
         assert 'x86' in str(r)
+
+    def test_invalid_iuse(self, check):
+        chars = ['+', '-', '_', '@']
+        for flag in (chars + [f'{c}flag' for c in chars]):
+            r = self.assertReport(check, self.mk_pkg(f'foo {flag}'))
+            assert isinstance(r, metadata.InvalidUseFlags)
+            assert r.flags == (flag,)
+            assert flag in str(r)
 
 
 class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
