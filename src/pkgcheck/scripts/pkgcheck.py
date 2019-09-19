@@ -165,6 +165,9 @@ check_options.add_argument(
 
         Available scopes: %s
     """ % (', '.join(base.known_scopes)))
+check_options.add_argument(
+    '--net', action='store_true',
+    help='run checks that require internet access')
 
 
 def add_addon(addon, addon_set):

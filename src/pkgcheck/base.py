@@ -222,6 +222,17 @@ class ExplicitlyEnabledCheck(Check):
         return skip or super().skip(namespace)
 
 
+class NetworkCheck(Check):
+    """Check requiring internet access."""
+
+    @classmethod
+    def skip(cls, namespace):
+        skip = not namespace.net
+        if skip:
+            logger.info(f'skipping {cls.__name__}, network checks not enabled')
+        return skip or super().skip(namespace)
+
+
 class Transform:
     """Base class for a feed type transformer.
 
