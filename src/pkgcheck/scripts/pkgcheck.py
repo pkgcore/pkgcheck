@@ -168,6 +168,9 @@ check_options.add_argument(
 check_options.add_argument(
     '--net', action='store_true',
     help='run checks that require internet access')
+check_options.add_argument(
+    '--timeout', type=float, default='5',
+    help='timeout used for network checks')
 
 
 def add_addon(addon, addon_set):
@@ -421,6 +424,7 @@ def _validate_args(parser, namespace):
 @scan.bind_main_func
 def _scan(options, out, err):
     reporter = options.reporter(out, keywords=options.filtered_keywords)
+    options.reporter = reporter
 
     addons_map = {}
     def init_addon(cls):
