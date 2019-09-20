@@ -263,7 +263,7 @@ class Transform:
 class Result:
 
     # level values match those used in logging module
-    _level = 20
+    _level = None
     _level_to_desc = {
         40: ('error', 'red'),
         30: ('warning', 'yellow'),
