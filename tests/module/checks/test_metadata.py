@@ -719,6 +719,19 @@ class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
                     assert isinstance(r, metadata.MissingSlotDep)
                     assert 'matches more than one slot: [ 0, 1 ]' in str(r)
 
+    def test_dep_skips(self):
+        for dep_str in (
+                '!dev-libs/foo', '!!dev-libs/foo', # blockers
+                '~dev-libs/foo-0', '~dev-libs/foo-1', # version limited to single slots
+                'dev-libs/foo:0', 'dev-libs/foo:1', # slotted
+                'dev-libs/foo:*', 'dev-libs/foo:=', # slot operators
+                ):
+            for eapi_str, eapi_obj in eapi.EAPI.known_eapis.items():
+                if eapi_obj.options.sub_slotting:
+                    self.assertNoReport(
+                        self.mk_check(), self.mk_pkg(
+                            eapi=eapi_str, rdepend=dep_str, depend=dep_str))
+
     def test_no_deps(self):
         self.assertNoReport(self.mk_check(), self.mk_pkg())
 
