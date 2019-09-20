@@ -17,13 +17,13 @@ def check(tmpdir):
         f.write(mk_glsa(("dev-util/diffball", ([], [">0.7"]))))
     with open(pjoin(str(tmpdir), "glsa-200611-02.xml"), "w") as f:
         f.write(mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
-    return glsa.TreeVulnerabilitiesCheck(
+    return glsa.GlsaCheck(
         misc.Options(glsa_location=str(tmpdir), glsa_enabled=True))
 
 
 class TestVulnerabilitiesCheck(misc.ReportTestCase):
 
-    check_kls = glsa.TreeVulnerabilitiesCheck
+    check_kls = glsa.GlsaCheck
 
     def test_non_matching(self, check):
         self.assertNoReport(check, mk_pkg("0.5.1"))
