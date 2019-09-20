@@ -141,7 +141,7 @@ class ProfilesMixin(ArgparseCheck, Tmpdir):
         for profile in profiles:
             assert ensure_dirs(pjoin(loc, profile)), f"failed creating profile {profile!r}"
         if arches is None:
-            arches = set(val[0] for val in profiles.values())
+            arches = {val[0] for val in profiles.values()}
         write_file(pjoin(loc, 'arch.list'), 'w', "\n".join(arches))
         write_file(pjoin(loc, 'repo_name'), 'w', 'testing')
         write_file(pjoin(loc, 'eapi'), 'w', '5')
@@ -459,13 +459,11 @@ class TestEvaluateDepSetAddon(ProfilesMixin):
 
         assert (
             set(str(l1[0]).split()) ==
-            set(['dev-util/confcache', 'dev-util/bar', 'dev-util/nobar',
-                'x11-libs/xserver']))
+            {'dev-util/confcache', 'dev-util/bar', 'dev-util/nobar', 'x11-libs/xserver'})
 
         assert (
             set(str(l2[0]).split()) ==
-            set(['dev-util/confcache', 'dev-util/foo', 'dev-util/bar',
-                'x11-libs/xserver']))
+            {'dev-util/confcache', 'dev-util/foo', 'dev-util/bar', 'x11-libs/xserver'})
 
         # test feed wiping, using an empty depset; if it didn't clear, then
         # results from a pkg/attr tuple from above would come through rather

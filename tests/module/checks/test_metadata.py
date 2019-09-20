@@ -873,7 +873,7 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
                     self.chksums = {}
                 else:
                     self.chksums = {}.fromkeys(
-                        set(os.path.basename(x) for x in src_uri.split()),
+                        {os.path.basename(x) for x in src_uri.split()},
                         default_chksums)
 
             def _get_digests(self, pkg, allow_missing=False):

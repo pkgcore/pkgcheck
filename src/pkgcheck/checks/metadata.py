@@ -513,7 +513,7 @@ class MissingSlotDepCheck(base.Check):
         # skip deps that are blockers or have explicit slots/slot operators
         for dep in (x for x in set(rdepend).intersection(depend) if not
                     (x.blocks or x.slot is not None or x.slot_operator is not None)):
-            dep_slots = set(x.slot for x in pkg.repo.itermatch(dep.no_usedeps))
+            dep_slots = {x.slot for x in pkg.repo.itermatch(dep.no_usedeps)}
             if len(dep_slots) > 1:
                 yield MissingSlotDep(str(dep), sorted(dep_slots), pkg=pkg)
 
@@ -799,16 +799,16 @@ class KeywordsCheck(base.Check):
         super().__init__(options)
         self.iuse_filter = iuse_handler.get_filter()
         self.valid_arches = self.options.target_repo.known_arches
-        special_keywords = set(['-*'])
+        special_keywords = {'-*'}
         stable_keywords = self.valid_arches
-        unstable_keywords = set('~' + x for x in self.valid_arches)
-        disabled_keywords = set('-' + x for x in self.valid_arches)
+        unstable_keywords = {'~' + x for x in self.valid_arches}
+        disabled_keywords = {'-' + x for x in self.valid_arches}
         self.valid_keywords = (
             special_keywords | stable_keywords | unstable_keywords | disabled_keywords)
 
         # Note: '*' and '~*' are portage-only special KEYWORDS atm, i.e. not
         # specified in PMS, so they don't belong in the main tree.
-        self.portage_keywords = set(['*', '~*'])
+        self.portage_keywords = {'*', '~*'}
 
     def feed(self, pkg):
         if len(pkg.keywords) == 1 and pkg.keywords[0] == "-*":

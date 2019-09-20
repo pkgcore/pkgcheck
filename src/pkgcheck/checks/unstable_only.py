@@ -30,7 +30,7 @@ class UnstableOnlyCheck(base.GentooRepoCheck):
 
     def __init__(self, options, stable_arches=None):
         super().__init__(options)
-        arches = set(x.strip().lstrip("~") for x in options.stable_arches)
+        arches = {x.strip().lstrip("~") for x in options.stable_arches}
 
         # stable, then unstable, then file
         self.arch_restricts = {}

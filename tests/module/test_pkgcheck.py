@@ -290,7 +290,7 @@ class TestPkgcheckScan(object):
                 pass
 
             allowed = custom_targets | stubs
-            results = set((name, cls.__name__) for name, cls in self.results)
+            results = {(name, cls.__name__) for name, cls in self.results}
             for cat, pkgs in sorted(repo.packages.items()):
                 if cat == 'stub':
                     continue

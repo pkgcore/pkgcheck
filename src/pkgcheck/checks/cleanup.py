@@ -46,7 +46,7 @@ class RedundantVersionCheck(base.Check):
             # reduce false positives for idiot keywords/ebuilds
             if pkg.live:
                 continue
-            curr_set = set(x for x in pkg.keywords if not x.startswith("-"))
+            curr_set = {x for x in pkg.keywords if not x.startswith("-")}
             if not curr_set:
                 continue
 

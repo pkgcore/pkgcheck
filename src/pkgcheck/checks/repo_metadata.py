@@ -616,7 +616,7 @@ class ManifestCheck(base.Check):
             fetchables = set(fetchables)
             pkg.release_cached_data()
 
-            fetchable_files = set(f.filename for f in fetchables)
+            fetchable_files = {f.filename for f in fetchables}
             missing_manifests = fetchable_files.difference(manifest_distfiles)
             if missing_manifests:
                 yield MissingManifest(sorted(missing_manifests), pkg=pkg)
