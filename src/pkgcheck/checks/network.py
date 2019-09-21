@@ -9,6 +9,7 @@ from pkgcore.fetch import fetchable
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
 from .. import addons, base
+from . import LatestPkgsCheck
 
 
 class DeadHomepage(base.VersionedResult, base.Warning):
@@ -63,7 +64,7 @@ class DeadSrcUrl(base.VersionedResult, base.Warning):
         return f'dead SRC_URI target, {self.message}: {self.url!r}'
 
 
-class _UrlCheck(base.NetworkCheck):
+class _UrlCheck(base.NetworkCheck, LatestPkgsCheck):
     """Various URL related checks that require internet access."""
 
     feed_type = base.versioned_feed
