@@ -191,7 +191,7 @@ class Check(Feed):
     @property
     def source(self):
         # replace versioned pkg feeds with filtered ones as required
-        if self.options.verbosity < 1 and self.feed_type == versioned_feed:
+        if self.options.verbosity < 1 and self.scope == version_scope:
             filtered_results = [
                 x for x in self.known_results if issubclass(x, FilteredVersionResult)]
             if filtered_results:
