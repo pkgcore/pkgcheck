@@ -6,6 +6,7 @@ from snakeoil.klass import jit_attr
 from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base, sources
+from . import GentooRepoCheck
 
 day = 24*3600
 
@@ -27,7 +28,7 @@ class StableRequest(base.VersionedResult, base.Info):
         )
 
 
-class StableRequestCheck(base.GentooRepoCheck):
+class StableRequestCheck(GentooRepoCheck):
     """Ebuilds that have sat unstable with no changes for over a month.
 
     By default, only triggered for arches with stable profiles. To check

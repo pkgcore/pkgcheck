@@ -4,6 +4,7 @@ from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base
+from . import GentooRepoCheck
 
 
 class UnstableOnly(base.PackageResult, base.Info):
@@ -20,7 +21,7 @@ class UnstableOnly(base.PackageResult, base.Info):
             _pl(self.arches, plural='es'), ', '.join(self.arches), ', '.join(self.versions))
 
 
-class UnstableOnlyCheck(base.GentooRepoCheck):
+class UnstableOnlyCheck(GentooRepoCheck):
     """Scan for packages that have just unstable keywords."""
 
     feed_type = base.package_feed

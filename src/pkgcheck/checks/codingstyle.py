@@ -7,6 +7,7 @@ from snakeoil.demandload import demand_compile_regexp
 from snakeoil.strings import pluralism as _pl
 
 from .. import base
+from . import GentooRepoCheck
 
 demand_compile_regexp(
     'ebuild_copyright_regex',
@@ -510,7 +511,7 @@ class InvalidLicenseHeader(_EbuildHeaderResult, base.Error):
         return f'invalid license header: {self.line!r}'
 
 
-class EbuildHeaderCheck(base.GentooRepoCheck):
+class EbuildHeaderCheck(GentooRepoCheck):
     """Scan ebuild for incorrect copyright/license headers."""
 
     feed_type = base.ebuild_feed

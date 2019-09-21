@@ -9,6 +9,7 @@ from snakeoil.strings import pluralism as _pl
 
 from .. import base
 from ..log import logger
+from . import GentooRepoCheck
 
 
 class VulnerablePackage(base.VersionedResult, base.Error):
@@ -25,7 +26,7 @@ class VulnerablePackage(base.VersionedResult, base.Error):
         return f'vulnerable via {self.glsa}, keyword{_pl(self.arches)}: {arches}'
 
 
-class GlsaCheck(base.GentooRepoCheck):
+class GlsaCheck(GentooRepoCheck):
     """Scan for vulnerable ebuilds in the tree.
 
     Requires a GLSA directory for vulnerability info.

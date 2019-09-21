@@ -26,8 +26,6 @@ from snakeoil.decorators import coroutine
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 
-from .log import logger
-
 # source feed types
 commit_feed = 'git'
 repository_feed = 'repo'
@@ -176,61 +174,6 @@ class Check(Feed):
     def skip(cls, namespace):
         """Conditionally skip check when running all enabled checks."""
         return False
-
-
-class GentooRepoCheck(Check):
-    """Check that is only valid when run against the gentoo repo."""
-
-    @classmethod
-    def skip(cls, namespace):
-        skip = not namespace.gentoo_repo
-        if skip:
-            logger.info(f'skipping {cls.__name__}, not running against gentoo repo')
-        return skip or super().skip(namespace)
-
-
-class OverlayRepoCheck(Check):
-    """Check that is only valid when run against an overlay repo."""
-
-    @classmethod
-    def skip(cls, namespace):
-        skip = not namespace.target_repo.masters
-        if skip:
-            logger.info(f'skipping {cls.__name__}, not running against overlay repo')
-        return skip or super().skip(namespace)
-
-
-class ExplicitlyEnabledCheck(Check):
-    """Check that is only valid when explicitly enabled."""
-
-    @classmethod
-    def skip(cls, namespace):
-        if namespace.selected_checks is not None:
-            disabled, enabled = namespace.selected_checks
-        else:
-            disabled, enabled = [], []
-
-        # enable checks for selected keywords
-        keywords = namespace.filtered_keywords
-        if keywords is not None:
-            keywords = keywords.intersection(cls.known_results)
-
-        enabled += namespace.forced_checks
-        skip = cls.__name__ not in enabled and not keywords
-        if skip:
-            logger.info(f'skipping {cls.__name__}, not explicitly enabled')
-        return skip or super().skip(namespace)
-
-
-class NetworkCheck(Check):
-    """Check requiring internet access."""
-
-    @classmethod
-    def skip(cls, namespace):
-        skip = not namespace.net
-        if skip:
-            logger.info(f'skipping {cls.__name__}, network checks not enabled')
-        return skip or super().skip(namespace)
 
 
 class Transform:

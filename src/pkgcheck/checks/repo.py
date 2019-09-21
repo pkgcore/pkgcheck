@@ -4,6 +4,7 @@ from snakeoil.osutils import pjoin
 
 from .. import base
 from ..utils import is_binary
+from . import GentooRepoCheck
 
 
 class BinaryFile(base.Error):
@@ -20,7 +21,7 @@ class BinaryFile(base.Error):
         return f"binary file found in repository: {self.path!r}"
 
 
-class RepoDirCheck(base.GentooRepoCheck, base.EmptyFeed):
+class RepoDirCheck(GentooRepoCheck, base.EmptyFeed):
     """Scan all files in the repository for issues."""
 
     feed_type = base.repository_feed

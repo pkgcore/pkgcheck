@@ -2,7 +2,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
 from .. import base
-from . import repo_metadata
+from . import ExplicitlyEnabledCheck, OverlayRepoCheck, repo_metadata
 
 
 class UnusedInMastersLicenses(base.VersionedResult, base.Warning):
@@ -70,7 +70,7 @@ class UnusedInMastersGlobalUSE(base.VersionedResult, base.Warning):
 
 
 class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
-                           base.OverlayRepoCheck, base.ExplicitlyEnabledCheck):
+                           OverlayRepoCheck, ExplicitlyEnabledCheck):
     """Check for various metadata that may be removed from master repos."""
 
     feed_type = base.versioned_feed

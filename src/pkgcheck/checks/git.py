@@ -15,6 +15,7 @@ from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base, sources
 from ..log import logger
+from . import ExplicitlyEnabledCheck, GentooRepoCheck
 
 demand_compile_regexp(
     'ebuild_copyright_regex',
@@ -153,7 +154,7 @@ class _RemovalRepo(UnconfiguredTree):
         self.__tmpdir.cleanup()
 
 
-class GitPkgCommitsCheck(base.GentooRepoCheck):
+class GitPkgCommitsCheck(GentooRepoCheck):
     """Check unpushed git package commits for various issues."""
 
     feed_type = base.package_feed
@@ -278,7 +279,7 @@ class MissingSignOff(base.CommitResult, base.Error):
         )
 
 
-class GitCommitsCheck(base.GentooRepoCheck, base.ExplicitlyEnabledCheck):
+class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
     """Check unpushed git commits for various issues."""
 
     feed_type = base.commit_feed
