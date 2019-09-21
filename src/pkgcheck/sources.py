@@ -67,6 +67,18 @@ class UnmaskedRepoSource(base.GenericSource):
             pkg_accept_keywords=(), pkg_keywords=(), profile=False)
 
 
+class FilteredRepoSource(base.GenericSource):
+    """Ebuild repository source supporting custom package filtering."""
+
+    def __init__(self, pkg_filter, *args, source):
+        super().__init__(*args)
+        self.pkg_filter = pkg_filter
+        self.source = source
+
+    def itermatch(self, restrict):
+        yield from self.pkg_filter(self.source.itermatch(restrict))
+
+
 class GitCommitsRepoSource(base.GenericSource):
     """Repository source for locally changed packages in git history.
 
