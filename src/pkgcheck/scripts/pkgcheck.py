@@ -439,12 +439,20 @@ def _scan(options, out, err):
     def init_source(source):
         """Initialize a given source."""
         if isinstance(source, tuple):
-            source_cls, args = source
+            if len(source) == 3:
+                source, args, kwargs = source
+                kwargs = dict(kwargs)
+                # initialize wrapped source
+                if 'source' in kwargs:
+                    kwargs['source'] = init_source(kwargs['source'])
+            else:
+                source, args = source
+                kwargs = {}
         else:
-            source_cls = source
             args = ()
-        deps = [addons_map.get(cls, cls(options)) for cls in source_cls.required_addons]
-        return source_cls(*args, options, *deps)
+            kwargs = {}
+        deps = [addons_map.get(cls, cls(options)) for cls in source.required_addons]
+        return source(*args, options, *deps, **kwargs)
 
     sources = {}
     def init_checks(addons):
