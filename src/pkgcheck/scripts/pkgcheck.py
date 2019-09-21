@@ -423,7 +423,8 @@ def _validate_args(parser, namespace):
 
 @scan.bind_main_func
 def _scan(options, out, err):
-    reporter = options.reporter(out, keywords=options.filtered_keywords)
+    reporter = options.reporter(
+        out, verbosity=options.verbosity, keywords=options.filtered_keywords)
     options.reporter = reporter
 
     addons_map = {}

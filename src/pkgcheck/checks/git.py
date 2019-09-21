@@ -159,7 +159,7 @@ class GitPkgCommitsCheck(GentooRepoCheck):
 
     feed_type = base.package_feed
     scope = base.package_scope
-    source = sources.GitCommitsRepoSource
+    _source = sources.GitCommitsRepoSource
     required_addons = (addons.GitAddon,)
     known_results = (
         DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,
@@ -284,7 +284,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
 
     feed_type = base.commit_feed
     scope = base.commit_scope
-    source = sources.GitCommitsSource
+    _source = sources.GitCommitsSource
     known_results = (MissingSignOff,)
 
     def feed(self, commit):

@@ -40,7 +40,7 @@ class StableRequestCheck(GentooRepoCheck):
     """
     feed_type = base.package_feed
     scope = base.package_scope
-    source = sources.UnmaskedRepoSource
+    _source = sources.UnmaskedRepoSource
     required_addons = (addons.GitAddon,)
     known_results = (StableRequest,)
 

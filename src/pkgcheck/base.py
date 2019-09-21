@@ -22,8 +22,8 @@ from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild import cpv
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import util
+from snakeoil import klass
 from snakeoil.decorators import coroutine
-from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 
 # source feed types
@@ -128,14 +128,15 @@ class EmptySource(GenericSource):
 class FilteredRepoSource(GenericSource):
     """Ebuild repository source supporting custom package filtering."""
 
-    def __init__(self, pkg_filter, filtered, *args, source):
+    def __init__(self, pkg_filter, partial_filtered, *args, source):
         super().__init__(*args)
         self._pkg_filter = pkg_filter
-        self._filtered = filtered
+        self._partial_filtered = partial_filtered
         self._source = source
 
     def itermatch(self, restrict):
-        yield from self._pkg_filter(self._source.itermatch(restrict), filtered=self._filtered)
+        yield from self._pkg_filter(
+            self._source.itermatch(restrict), partial_filtered=self._partial_filtered)
 
 
 class Feed(Addon):
@@ -150,7 +151,11 @@ class Feed(Addon):
 
     scope = version_scope
     priority = 0
-    source = GenericSource
+    _source = GenericSource
+
+    @property
+    def source(self):
+        return self._source
 
     def start(self):
         """Do startup here."""
@@ -165,7 +170,7 @@ class Feed(Addon):
 class EmptyFeed(Feed):
     """Empty feed that skips the object feeding phase."""
 
-    source = EmptySource
+    _source = EmptySource
 
     # required for tests since they manually run the checks instead of
     # constructing pipelines
@@ -182,6 +187,21 @@ class Check(Feed):
     """
 
     known_results = ()
+
+    @property
+    def source(self):
+        # replace versioned pkg feeds with filtered ones as required
+        if self.options.verbosity < 1 and self.feed_type == versioned_feed:
+            filtered_results = [
+                x for x in self.known_results if issubclass(x, FilteredVersionResult)]
+            if filtered_results:
+                partial_filtered = len(filtered_results) != len(self.known_results)
+                return (
+                    FilteredRepoSource,
+                    (LatestPkgsFilter, partial_filtered),
+                    (('source', self._source),)
+                )
+        return self._source
 
     @classmethod
     def skip(cls, namespace):
@@ -217,6 +237,9 @@ class Transform:
 
 
 class Result:
+
+    # all results are shown by default
+    _filtered = False
 
     # level values match those used in logging module
     _level = None
@@ -326,7 +349,7 @@ class VersionedResult(PackageResult):
         self.version = pkg.fullver
         self._attr = 'version'
 
-    @jit_attr
+    @klass.jit_attr
     def ver_rev(self):
         version, _, revision = self.version.partition('-r')
         revision = cpv._Revision(revision)
@@ -339,6 +362,19 @@ class VersionedResult(PackageResult):
         elif cmp > 0:
             return False
         return super().__lt__(other)
+
+
+class FilteredVersionResult(VersionedResult):
+    """Result that will be optionally filtered for old packages by default."""
+
+    # all results are hidden by default except for selected pkgs
+    _filtered = True
+
+    def __init__(self, pkg, **kwargs):
+        if isinstance(pkg, _SelectedPkg):
+            self._filtered = False
+            pkg = pkg._pkg
+        super().__init__(pkg, **kwargs)
 
 
 class LogError(Error):
@@ -373,13 +409,14 @@ class MetadataError(VersionedResult, Error):
 class Reporter:
     """Generic result reporter."""
 
-    def __init__(self, out, keywords=None):
+    def __init__(self, out, verbosity=0, keywords=None):
         """Initialize
 
         :type out: L{snakeoil.formatters.Formatter}
         :param keywords: result keywords to report, other keywords will be skipped
         """
         self.out = out
+        self.verbosity = verbosity
         self._filtered_keywords = set(keywords) if keywords is not None else keywords
 
         # initialize result processing coroutines
@@ -393,6 +430,9 @@ class Reporter:
         while True:
             result = (yield)
             if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
+                # skip filtered results by default
+                if self.verbosity < 1 and result._filtered:
+                    continue
                 self.process(result)
 
     @coroutine
@@ -550,10 +590,22 @@ class RawCPV:
         return False
 
 
+class _SelectedPkg:
+
+    __slots__ = ('_pkg',)
+
+    def __init__(self, pkg):
+        self._pkg = pkg
+
+    __getattr__ = klass.GetAttrProxy('_pkg')
+    __dir__ = klass.DirProxy('_pkg')
+
+
 class LatestPkgsFilter:
     """Filter source packages, yielding those from the latest non-VCS and VCS slots."""
 
-    def __init__(self, source_iter):
+    def __init__(self, source_iter, partial_filtered=False):
+        self._partial_filtered = partial_filtered
         self._source_iter = source_iter
         self._pkg_cache = deque()
         self._pkg_marker = None
@@ -568,14 +620,19 @@ class LatestPkgsFilter:
                 self._pkg_marker = next(self._source_iter)
             pkg = self._pkg_marker
             key = pkg.key
-            pkgs = OrderedDict()
+            selected_pkgs = OrderedDict()
+            if self._partial_filtered:
+                pkgs = []
 
             # determine the latest non-VCS and VCS pkgs for each slot
             while key == pkg.key:
                 if pkg.live:
-                    pkgs[f'vcs-{pkg.slot}'] = pkg
+                    selected_pkgs[f'vcs-{pkg.slot}'] = pkg
                 else:
-                    pkgs[pkg.slot] = pkg
+                    selected_pkgs[pkg.slot] = pkg
+
+                if self._partial_filtered:
+                    pkgs.append(pkg)
 
                 try:
                     pkg = next(self._source_iter)
@@ -585,7 +642,13 @@ class LatestPkgsFilter:
 
             if self._pkg_marker is not None:
                 self._pkg_marker = pkg
-            self._pkg_cache.extend(pkgs.values())
+
+            if self._partial_filtered:
+                selected_pkgs = set(selected_pkgs.values())
+                self._pkg_cache.extend(
+                    _SelectedPkg(pkg) if pkg in selected_pkgs else pkg for pkg in pkgs)
+            else:
+                self._pkg_cache.extend(selected_pkgs.values())
 
         return self._pkg_cache.popleft()
 

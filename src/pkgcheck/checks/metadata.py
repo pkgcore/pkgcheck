@@ -282,7 +282,7 @@ class RequiredUSEMetadataCheck(base.Check):
 
     feed_type = base.versioned_feed
     # only run the check for EAPI 4 and above
-    source = (sources.RestrictionRepoSource, (
+    _source = (sources.RestrictionRepoSource, (
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
             'options.has_required_use', values.FunctionRestriction(bool))),))
     required_addons = (addons.UseAddon, addons.ProfileAddon)
@@ -496,7 +496,7 @@ class MissingSlotDepCheck(base.Check):
 
     feed_type = base.versioned_feed
     # only run the check for EAPI 5 and above
-    source = (sources.RestrictionRepoSource, (
+    _source = (sources.RestrictionRepoSource, (
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
             'options.sub_slotting', values.FunctionRestriction(bool))),))
     required_addons = (addons.UseAddon,)
