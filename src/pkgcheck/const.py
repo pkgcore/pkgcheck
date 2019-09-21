@@ -1,6 +1,7 @@
 """Registration for keywords, checks, transforms, and reporters."""
 
 import inspect
+import os
 import pkgutil
 from functools import partial
 from importlib import import_module
@@ -32,16 +33,31 @@ def _find_modules(module):
         yield module
 
 
+def _find_classes(module, matching_cls):
+    for _name, cls in inspect.getmembers(module):
+        if (inspect.isclass(cls) and issubclass(cls, matching_cls)
+                and cls.__name__[0] != '_'):
+            yield cls
+
+
 def _find_obj_classes(module_name, matching_cls):
     module = import_module(f'.{module_name}', __title__)
+
+    # skip top-level, base classes
+    base_classes = {}
+    if os.path.basename(module.__file__) == '__init__.py':
+        for cls in _find_classes(module, matching_cls):
+            base_classes[cls.__name__] = cls
+
     classes = {}
     for m in _find_modules(module):
-        for _name, cls in inspect.getmembers(m):
-            if (inspect.isclass(cls) and issubclass(cls, matching_cls)
-                    and cls.__name__[0] != '_'):
-                if cls.__name__ in classes:
-                    raise Exception(f'object name overlap: {cls} and {classes[cls.__name__]}')
-                classes[cls.__name__] = cls
+        for cls in _find_classes(m, matching_cls):
+            if cls.__name__ in base_classes:
+                continue
+            if cls.__name__ in classes:
+                raise Exception(f'object name overlap: {cls} and {classes[cls.__name__]}')
+            classes[cls.__name__] = cls
+
     return classes
 
 
