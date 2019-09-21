@@ -288,6 +288,13 @@ class GitChangedRepo(ParseGitRepo):
     _diff_filter = 'ARMD'
 
 
+class GitModifiedRepo(ParseGitRepo):
+    """Parse repository git log to determine latest ebuild modification dates."""
+
+    cache_name = 'git-modified'
+    _diff_filter = 'ARM'
+
+
 class GitAddedRepo(ParseGitRepo):
     """Parse repository git log to determine ebuild added dates."""
 

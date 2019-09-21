@@ -52,7 +52,7 @@ class StableRequestCheck(GentooRepoCheck):
 
     @jit_attr
     def added_repo(self):
-        return self._git_addon.cached_repo(addons.GitAddedRepo)
+        return self._git_addon.cached_repo(addons.GitModifiedRepo)
 
     def feed(self, pkgset):
         # disable check when git repo parsing is disabled
