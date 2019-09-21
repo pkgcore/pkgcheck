@@ -9,10 +9,10 @@ from pkgcore.fetch import fetchable
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
 from .. import addons, base
-from . import LatestPkgsCheck, NetworkCheck
+from . import NetworkCheck
 
 
-class DeadHomepage(base.VersionedResult, base.Warning):
+class DeadHomepage(base.FilteredVersionResult, base.Warning):
     """Package with a dead HOMEPAGE."""
 
     def __init__(self, url, message, **kwargs):
@@ -25,7 +25,7 @@ class DeadHomepage(base.VersionedResult, base.Warning):
         return f'dead homepage, {self.message}: {self.url!r}'
 
 
-class SSLCertificateError(base.VersionedResult, base.Warning):
+class SSLCertificateError(base.FilteredVersionResult, base.Warning):
     """Package with https:// HOMEPAGE with an invalid SSL cert."""
 
     def __init__(self, url, message, **kwargs):
@@ -38,7 +38,7 @@ class SSLCertificateError(base.VersionedResult, base.Warning):
         return f'SSL cert error, {self.message}: {self.url!r}'
 
 
-class RedirectedHomepage(base.VersionedResult, base.Warning):
+class RedirectedHomepage(base.FilteredVersionResult, base.Warning):
     """Package with a HOMEPAGE that redirects to a different site."""
 
     def __init__(self, url, redirected, **kwargs):
@@ -51,7 +51,7 @@ class RedirectedHomepage(base.VersionedResult, base.Warning):
         return f'redirected homepage, {self.url!r} -> {self.redirected!r}'
 
 
-class DeadSrcUrl(base.VersionedResult, base.Warning):
+class DeadSrcUrl(base.FilteredVersionResult, base.Warning):
     """Package with a dead SRC_URI target."""
 
     def __init__(self, url, message, **kwargs):
@@ -64,7 +64,7 @@ class DeadSrcUrl(base.VersionedResult, base.Warning):
         return f'dead SRC_URI target, {self.message}: {self.url!r}'
 
 
-class _UrlCheck(NetworkCheck, LatestPkgsCheck):
+class _UrlCheck(NetworkCheck):
     """Various URL related checks that require internet access."""
 
     feed_type = base.versioned_feed
