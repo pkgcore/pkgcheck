@@ -13,7 +13,7 @@ identical to the input scope.
 
 import re
 import sys
-from collections import OrderedDict, defaultdict, namedtuple
+from collections import OrderedDict, defaultdict, namedtuple, deque
 from contextlib import AbstractContextManager
 from operator import attrgetter, itemgetter
 
@@ -592,6 +592,46 @@ class RawCPV:
         if self.fullver < other.fullver:
             return True
         return False
+
+
+class LatestPkgsFilter:
+    """Filter source packages, yielding those from the latest non-VCS and VCS slots."""
+
+    def __init__(self, source_iter):
+        self._source_iter = source_iter
+        self._pkg_cache = deque()
+        self._pkg_marker = None
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        # refill pkg cache
+        if not self._pkg_cache:
+            if self._pkg_marker is None:
+                self._pkg_marker = next(self._source_iter)
+            pkg = self._pkg_marker
+            key = pkg.key
+            pkgs = OrderedDict()
+
+            # determine the latest non-VCS and VCS pkgs for each slot
+            while key == pkg.key:
+                if pkg.live:
+                    pkgs[f'vcs-{pkg.slot}'] = pkg
+                else:
+                    pkgs[pkg.slot] = pkg
+
+                try:
+                    pkg = next(self._source_iter)
+                except StopIteration:
+                    self._pkg_marker = None
+                    break
+
+            if self._pkg_marker is not None:
+                self._pkg_marker = pkg
+            self._pkg_cache.extend(pkgs.values())
+
+        return self._pkg_cache.popleft()
 
 
 class InterleavedSources:
