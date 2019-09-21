@@ -51,12 +51,12 @@ class StableRequestCheck(GentooRepoCheck):
         self._git_addon = git_addon
 
     @jit_attr
-    def added_repo(self):
+    def modified_repo(self):
         return self._git_addon.cached_repo(addons.GitModifiedRepo)
 
     def feed(self, pkgset):
         # disable check when git repo parsing is disabled
-        if self.added_repo is None:
+        if self.modified_repo is None:
             return
 
         pkg_slotted = defaultdict(list)
@@ -80,7 +80,7 @@ class StableRequestCheck(GentooRepoCheck):
                         break
 
                     try:
-                        match = self.added_repo.match(pkg.versioned_atom)[0]
+                        match = self.modified_repo.match(pkg.versioned_atom)[0]
                     except IndexError:
                         # probably an uncommitted, local ebuild... skipping
                         continue
