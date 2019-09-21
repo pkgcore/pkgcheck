@@ -648,7 +648,7 @@ class LatestPkgsFilter:
                 self._pkg_cache.extend(
                     _SelectedPkg(pkg) if pkg in selected_pkgs else pkg for pkg in pkgs)
             else:
-                self._pkg_cache.extend(selected_pkgs.values())
+                self._pkg_cache.extend(_SelectedPkg(pkg) for pkg in selected_pkgs.values())
 
         return self._pkg_cache.popleft()
 
