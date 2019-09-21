@@ -134,7 +134,7 @@ class ParseGitRepo:
     """Parse repository git logs."""
 
     # git command to run on the targeted repo
-    _git_cmd = 'git log --name-status --date=short --reverse'
+    _git_cmd = 'git log --name-status --date=short'
     # selected file filter
     _diff_filter = None
     # filename for cache file, if None cache files aren't supported
@@ -261,13 +261,24 @@ class ParseGitRepo:
         if self._diff_filter is not None:
             cmd.append(f'--diff-filter={self._diff_filter}')
 
+        seen = set()
         for pkg in self.parse_git_log(self.location, cmd, pkgs=True, **kwargs):
-            data = [pkg.atom.fullver, pkg.commit_date, pkg.status, pkg.commit]
-            if local:
-                data.extend([pkg.author, pkg.committer, pkg.message])
-            pkg_map.setdefault(pkg.atom.category, {}).setdefault(
-                pkg.atom.package, []).append(tuple(data))
-
+            atom = pkg.atom
+            if atom not in seen:
+                seen.add(atom)
+                data = {
+                    'date': pkg.commit_date,
+                    'status': pkg.status,
+                    'commit': pkg.commit,
+                }
+                if local:
+                    data.update({
+                        'author': pkg.author,
+                        'committer': pkg.committer,
+                        'message': pkg.message,
+                    })
+                pkg_map.setdefault(atom.category, {}).setdefault(
+                    atom.package, {})[atom.fullver] = data
         return pkg_map
 
 
@@ -294,9 +305,8 @@ class GitRemovedRepo(ParseGitRepo):
 class _UpstreamCommitPkg(cpv.VersionedCPV):
     """Fake packages encapsulating upstream commits parsed from git log."""
 
-    def __init__(self, cat, pkg, data):
-        ver, date, status, commit = data
-        super().__init__(cat, pkg, ver)
+    def __init__(self, *args, date, status, commit):
+        super().__init__(*args)
 
         # add additional attrs
         sf = object.__setattr__
@@ -308,9 +318,8 @@ class _UpstreamCommitPkg(cpv.VersionedCPV):
 class _LocalCommitPkg(_UpstreamCommitPkg):
     """Fake packages encapsulating local commits parsed from git log."""
 
-    def __init__(self, cat, pkg, data):
-        author, committer, message = data[-3:]
-        super().__init__(cat, pkg, data[:-3])
+    def __init__(self, *args, author, committer, message, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # add additional attrs
         sf = object.__setattr__
@@ -325,6 +334,15 @@ class _HistoricalRepo(SimpleTree):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('pkg_klass', _UpstreamCommitPkg)
         super().__init__(*args, **kwargs)
+
+    def _get_versions(self, cp_key):
+        return tuple(self.cpv_dict[cp_key[0]][cp_key[1]].items())
+
+    def _internal_gen_candidates(self, candidates, sorter, raw_pkg_cls, **kwargs):
+        for cp in sorter(candidates):
+            yield from sorter(
+                raw_pkg_cls(cp[0], cp[1], ver, **data)
+                for ver, data in self.versions.get(cp, ()))
 
 
 class _ScanCommits(argparse.Action):
@@ -359,7 +377,7 @@ class GitAddon(base.Addon):
     """
 
     # used to check repo cache compatibility
-    cache_version = 1
+    cache_version = 2
 
     @classmethod
     def mangle_argparser(cls, parser):
