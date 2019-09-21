@@ -125,6 +125,19 @@ class EmptySource(GenericSource):
         yield from ()
 
 
+class FilteredRepoSource(GenericSource):
+    """Ebuild repository source supporting custom package filtering."""
+
+    def __init__(self, pkg_filter, filtered, *args, source):
+        super().__init__(*args)
+        self._pkg_filter = pkg_filter
+        self._filtered = filtered
+        self._source = source
+
+    def itermatch(self, restrict):
+        yield from self._pkg_filter(self._source.itermatch(restrict), filtered=self._filtered)
+
+
 class Feed(Addon):
     """Base template for addon iterating over an item feed.
 
