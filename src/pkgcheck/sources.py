@@ -57,7 +57,7 @@ class RestrictionRepoSource(base.GenericSource):
         yield from super().itermatch(restrict)
 
 
-class FilteredRepoSource(base.GenericSource):
+class UnmaskedRepoSource(base.GenericSource):
     """Repository source that uses profiles/package.mask to filter packages."""
 
     def __init__(self, *args):
