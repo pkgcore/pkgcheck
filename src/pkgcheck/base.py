@@ -367,12 +367,9 @@ class VersionedResult(PackageResult):
 class FilteredVersionResult(VersionedResult):
     """Result that will be optionally filtered for old packages by default."""
 
-    # all results are hidden by default except for selected pkgs
-    _filtered = True
-
     def __init__(self, pkg, **kwargs):
-        if isinstance(pkg, _SelectedPkg):
-            self._filtered = False
+        if isinstance(pkg, _FilteredPkg):
+            self._filtered = True
             pkg = pkg._pkg
         super().__init__(pkg, **kwargs)
 
@@ -594,13 +591,19 @@ class RawCPV:
         return f'{self.category}/{self.package}'
 
 
-class _SelectedPkg:
-    """Selected package used to mark related results that should be output by default."""
+class _FilteredPkg:
+    """Filtered package used to mark related results that should be skipped by default."""
 
     __slots__ = ('_pkg',)
 
     def __init__(self, pkg):
         self._pkg = pkg
+
+    def __str__(self):
+        return str(self._pkg)
+
+    def __repr__(self):
+        return repr(self._pkg)
 
     __getattr__ = klass.GetAttrProxy('_pkg')
     __dir__ = klass.DirProxy('_pkg')
@@ -651,9 +654,9 @@ class LatestPkgsFilter:
             if self._partial_filtered:
                 selected_pkgs = set(selected_pkgs.values())
                 self._pkg_cache.extend(
-                    _SelectedPkg(pkg) if pkg in selected_pkgs else pkg for pkg in pkgs)
+                    _FilteredPkg(pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs)
             else:
-                self._pkg_cache.extend(_SelectedPkg(pkg) for pkg in selected_pkgs.values())
+                self._pkg_cache.extend(selected_pkgs.values())
 
         return self._pkg_cache.popleft()
 
