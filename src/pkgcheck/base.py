@@ -19,7 +19,7 @@ from operator import attrgetter, itemgetter
 
 from pkgcore import const as pkgcore_const
 from pkgcore.config.hint import ConfigHint
-from pkgcore.ebuild import cpv
+from pkgcore.ebuild import atom, cpv
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import util
 from snakeoil import klass
@@ -567,20 +567,7 @@ class ProgressManager(AbstractContextManager):
             sys.stderr.write('\n')
 
 
-class _SortedPkg:
-    """Package mixin supporting basic package sorting."""
-
-    def __lt__(self, other):
-        if self.category < other.category:
-            return True
-        if self.package < other.package:
-            return True
-        if self.fullver < other.fullver:
-            return True
-        return False
-
-
-class RawCPV(_SortedPkg):
+class RawCPV:
     """Raw CPV objects supporting basic restrictions/sorting."""
 
     __slots__ = ('category', 'package', 'fullver')
@@ -590,11 +577,24 @@ class RawCPV(_SortedPkg):
         self.package = package
         self.fullver = fullver
 
+    def __lt__(self, other):
+        if self.versioned_atom < other.versioned_atom:
+            return True
+        return False
+
+    @property
+    def versioned_atom(self):
+        if self.fullver:
+            return atom.atom(f'={self}')
+        return atom.atom(str(self))
+
     def __str__(self):
-        return f'{self.category}/{self.package}-{self.fullver}'
+        if self.fullver:
+            return f'{self.category}/{self.package}-{self.fullver}'
+        return f'{self.category}/{self.package}'
 
 
-class _SelectedPkg(_SortedPkg):
+class _SelectedPkg:
     """Selected package used to mark related results that should be output by default."""
 
     __slots__ = ('_pkg',)
