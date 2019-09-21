@@ -567,7 +567,20 @@ class ProgressManager(AbstractContextManager):
             sys.stderr.write('\n')
 
 
-class RawCPV:
+class _SortedPkg:
+    """Package mixin supporting basic package sorting."""
+
+    def __lt__(self, other):
+        if self.category < other.category:
+            return True
+        if self.package < other.package:
+            return True
+        if self.fullver < other.fullver:
+            return True
+        return False
+
+
+class RawCPV(_SortedPkg):
     """Raw CPV objects supporting basic restrictions/sorting."""
 
     __slots__ = ('category', 'package', 'fullver')
@@ -580,17 +593,9 @@ class RawCPV:
     def __str__(self):
         return f'{self.category}/{self.package}-{self.fullver}'
 
-    def __lt__(self, other):
-        if self.category < other.category:
-            return True
-        if self.package < other.package:
-            return True
-        if self.fullver < other.fullver:
-            return True
-        return False
 
-
-class _SelectedPkg:
+class _SelectedPkg(_SortedPkg):
+    """Selected package used to mark related results that should be output by default."""
 
     __slots__ = ('_pkg',)
 
