@@ -241,6 +241,18 @@ class TestProfileAddon(ProfilesMixin):
         check = self.addon_kls(options)
         self.assertProfiles(check, 'amd64', 'prefix/amd64')
 
+    def test_make_defaults_missing_arch(self, capsys):
+        self.mk_profiles({
+            "arch/amd64": ["amd64"]},
+            base='foo',
+            make_defaults=[])
+        with pytest.raises(SystemExit) as excinfo:
+            options = self.process_check(pjoin(self.dir, 'foo'), [f'--profiles=arch/amd64'])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        assert not out
+        assert "profile make.defaults lacks ARCH setting: 'arch/amd64'" in err
+
     def test_enable_stable(self):
         self.mk_profiles({
             "default-linux/dep": ["x86", False, True],

@@ -746,7 +746,9 @@ class ProfileAddon(base.Addon):
 
             with suppress_logging():
                 if profile.arch is None:
-                    # profile make.defaults lacks ARCH setting, skip it
+                    # throw error if profiles have been explicitly selected, otherwise skip it
+                    if namespace.profiles is not None:
+                        parser.error(f'profile make.defaults lacks ARCH setting: {p.path!r}')
                     continue
 
             cached_profiles.append(profile)
