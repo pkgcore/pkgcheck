@@ -122,12 +122,14 @@ class PortageInternalsCheck(base.Check):
     def feed(self, entry):
         pkg, lines = entry
         for lineno, line in enumerate(lines, 1):
-            if not line.strip():
+            line = line.strip()
+            if not line:
                 continue
-            # searching for multiple matches on a single line is too slow
-            matches = self.regex.match(line)
-            if matches is not None:
-                yield PortageInternals(matches.group('internal'), lineno, pkg=pkg)
+            if line[0] != '#':
+                # searching for multiple matches on a single line is too slow
+                matches = self.regex.match(line)
+                if matches is not None:
+                    yield PortageInternals(matches.group('internal'), lineno, pkg=pkg)
 
 
 class MissingSlash(base.VersionedResult, base.Error):
