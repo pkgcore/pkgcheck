@@ -564,10 +564,10 @@ class TestRestrictsCheck(use_based(), misc.ReportTestCase):
             assert 'unstated flags: [ boo, foo ]' in str(r)
 
 
-class TestConditionalTestRestrictCheck(misc.ReportTestCase):
+class TestRestrictTestCheck(misc.ReportTestCase):
 
-    check_kls = metadata.ConditionalTestRestrictCheck
-    check = metadata.ConditionalTestRestrictCheck(None)
+    check_kls = metadata.RestrictTestCheck
+    check = metadata.RestrictTestCheck(None)
 
     def mk_pkg(self, iuse='', restrict=''):
         return misc.FakePkg(
@@ -596,7 +596,7 @@ class TestConditionalTestRestrictCheck(misc.ReportTestCase):
         )
         for iuse, restrict in data:
             r = self.assertReport(self.check, self.mk_pkg(iuse=iuse, restrict=restrict))
-            assert isinstance(r, metadata.MissingConditionalTestRestrict)
+            assert isinstance(r, metadata.MissingTestRestrict)
             assert 'RESTRICT="!test? ( test )"' in str(r)
 
 

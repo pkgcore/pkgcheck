@@ -1164,7 +1164,7 @@ class RestrictsCheck(base.Check):
                 yield UnknownProperties(sorted(unknown), pkg=pkg)
 
 
-class MissingConditionalTestRestrict(base.VersionedResult, base.Warning):
+class MissingTestRestrict(base.VersionedResult, base.Warning):
     """Missing ``RESTRICT="!test? ( test )"``.
 
     Traditionally, it was assumed that ``IUSE=test`` is a special flag that is
@@ -1180,11 +1180,11 @@ class MissingConditionalTestRestrict(base.VersionedResult, base.Warning):
         return 'missing RESTRICT="!test? ( test )" with IUSE=test'
 
 
-class ConditionalTestRestrictCheck(base.Check):
+class RestrictTestCheck(base.Check):
     """Check whether packages specify RESTRICT="!test? ( test )"."""
 
     feed_type = base.versioned_feed
-    known_results = (MissingConditionalTestRestrict,)
+    known_results = (MissingTestRestrict,)
 
     def feed(self, pkg):
         if 'test' not in pkg.iuse:
@@ -1200,7 +1200,7 @@ class ConditionalTestRestrictCheck(base.Check):
                r.restriction.negate and 'test' in r.payload for r in pkg.restrict):
             return
 
-        yield MissingConditionalTestRestrict(pkg=pkg)
+        yield MissingTestRestrict(pkg=pkg)
 
 
 class MissingUnpackerDep(base.VersionedResult, base.Warning):
