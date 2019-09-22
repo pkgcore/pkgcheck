@@ -218,8 +218,7 @@ class TestProfileAddon(ProfilesMixin):
 
     def test_nonexistent(self, capsys):
         self.mk_profiles({
-            "default-linux/exp": ["x86", "exp"],
-            "default-linux/x86": ["x86"]},
+            "x86": ["x86"]},
             base='foo')
         for profiles in ('bar', '-bar', 'x86,bar', 'bar,x86', 'x86,-bar'):
             with pytest.raises(SystemExit) as excinfo:
