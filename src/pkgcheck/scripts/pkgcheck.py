@@ -635,7 +635,7 @@ def display_keywords(out, options):
                 out.first_prefix.append('  ')
                 out.later_prefix.append('  ')
                 for keyword in keywords:
-                    out.write(out.fg(keyword.color.__get__(keyword)), keyword.__name__, out.reset, ':')
+                    out.write(out.fg(keyword.color), keyword.__name__, out.reset, ':')
                     dump_docstring(out, keyword, prefix='  ')
             finally:
                 out.first_prefix.pop()
@@ -667,7 +667,7 @@ def display_checks(out, options):
                     # output result types that each check can generate
                     results = []
                     for r in sorted(check.known_results, key=attrgetter('__name__')):
-                        results.extend([out.fg(r.color.__get__(r)), r.__name__, out.reset, ', '])
+                        results.extend([out.fg(r.color), r.__name__, out.reset, ', '])
                     results.pop()
                     out.write(*(['  (known results: '] + results + [')']))
                     out.write()

@@ -236,7 +236,18 @@ class Transform:
         return f'{self.__class__.__name__}({self.child!r})'
 
 
-class Result:
+class _LeveledResult(type):
+
+    @property
+    def color(cls):
+        return cls._level_to_desc[cls._level][1]
+
+    @property
+    def level(cls):
+        return cls._level_to_desc[cls._level][0]
+
+
+class Result(metaclass=_LeveledResult):
 
     # all results are shown by default
     _filtered = False
