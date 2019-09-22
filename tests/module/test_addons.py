@@ -6,6 +6,7 @@ import shutil
 from pkgcore.ebuild import repo_objs, repository
 from pkgcore.restrictions import packages
 from pkgcore.util import commandline
+import pytest
 from snakeoil.fileutils import write_file
 from snakeoil.osutils import pjoin, ensure_dirs
 
@@ -214,6 +215,19 @@ class TestProfileAddon(ProfilesMixin):
         options = self.process_check(pjoin(self.dir, 'foo'), [])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
+
+    def test_nonexistent(self, capsys):
+        self.mk_profiles({
+            "default-linux/exp": ["x86", "exp"],
+            "default-linux/x86": ["x86"]},
+            base='foo')
+        for profiles in ('bar', '-bar', 'x86,bar', 'bar,x86', 'x86,-bar'):
+            with pytest.raises(SystemExit) as excinfo:
+                options = self.process_check(pjoin(self.dir, 'foo'), [f'--profiles={profiles}'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            assert not out
+            assert "nonexistent profile: 'bar'" in err
 
     def test_enable_stable(self):
         self.mk_profiles({

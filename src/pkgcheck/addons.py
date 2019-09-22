@@ -692,7 +692,10 @@ class ProfileAddon(base.Addon):
             elif s == 'all':
                 yield from profiles_obj
             else:
-                yield profiles_obj[os.path.normpath(s)]
+                try:
+                    yield profiles_obj[os.path.normpath(s)]
+                except KeyError:
+                    parser.error(f'nonexistent profile: {s!r}')
 
         disabled, enabled = selected_profiles
         disabled = set(disabled)
