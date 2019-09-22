@@ -734,9 +734,6 @@ class ProfileAddon(base.Addon):
         for p in profiles:
             if ignore_deprecated and p.deprecated:
                 continue
-            if p.arch is None:
-                # if profile lacks arch setting, skip it
-                continue
 
             try:
                 profile = profiles_obj.create_profile(p)
@@ -747,8 +744,13 @@ class ProfileAddon(base.Addon):
                     parser.error(f'invalid profile: {e.path!r}: {e.error}')
                 continue
 
+            with suppress_logging():
+                if profile.arch is None:
+                    # profile make.defaults lacks ARCH setting, skip it
+                    continue
+
             cached_profiles.append(profile)
-            arch_profiles[p.arch].append((profile, p))
+            arch_profiles[profile.arch].append((profile, p))
 
         namespace.arch_profiles = arch_profiles
 

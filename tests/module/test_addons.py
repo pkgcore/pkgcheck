@@ -128,7 +128,7 @@ class ProfilesMixin(ArgparseCheck, Tmpdir):
 
     addon_kls = addons.ProfileAddon
 
-    def mk_profiles(self, profiles, base='profiles', arches=None):
+    def mk_profiles(self, profiles, base='profiles', arches=None, make_defaults=None):
         os.mkdir(pjoin(self.dir, 'metadata'))
         # write empty masters to suppress warnings
         write_file(pjoin(self.dir, 'metadata', 'layout.conf'), 'w', 'masters=')
@@ -157,7 +157,10 @@ class ProfilesMixin(ArgparseCheck, Tmpdir):
                     with open(pjoin(loc, profile, 'deprecated'), 'w') as f:
                         f.write("foon\n#dar\n")
                 with open(pjoin(loc, profile, 'make.defaults'), 'w') as f:
-                    f.write(f"ARCH={vals[0]}\n")
+                    if make_defaults is not None:
+                        f.write('\n'.join(make_defaults))
+                    else:
+                        f.write(f'ARCH={vals[0]}\n')
                 with open(pjoin(loc, profile, 'eapi'), 'w') as f:
                     f.write('5')
 
@@ -227,6 +230,16 @@ class TestProfileAddon(ProfilesMixin):
             out, err = capsys.readouterr()
             assert not out
             assert "nonexistent profile: 'bar'" in err
+
+    def test_make_defaults(self):
+        self.mk_profiles({
+            "amd64": ["amd64"],
+            "prefix/amd64": ["amd64-linux"]},
+            base='foo',
+            make_defaults=['ARCH="amd64"'])
+        options = self.process_check(pjoin(self.dir, 'foo'), [f'--profiles=prefix/amd64'])
+        check = self.addon_kls(options)
+        self.assertProfiles(check, 'amd64', 'prefix/amd64')
 
     def test_enable_stable(self):
         self.mk_profiles({
