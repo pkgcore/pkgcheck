@@ -59,7 +59,8 @@ def main(f=sys.stdout, **kwargs):
                     out('\n' + explanation)
                 checks = ', '.join(
                     f'`{c}`_' for c in sorted(related_checks[keyword]))
-                out('\n' + f"(related check{_pl(related_checks[keyword])}: {checks})")
+                out('\n' + f'- level: {keyword.level}')
+                out(f'- related check{_pl(related_checks[keyword])}: {checks}')
 
 
 if __name__ == '__main__':
