@@ -85,8 +85,8 @@ class HttpsAvailableCheck(base.Check):
             yield HttpsAvailable(link, lines, pkg=pkg)
 
 
-class _BadCommandResult(base.VersionedResult):
-    """Generic bad command result."""
+class PortageInternals(base.VersionedResult, base.Warning):
+    """Ebuild uses a function or variable internal to portage."""
 
     def __init__(self, command, line, **kwargs):
         super().__init__(**kwargs)
@@ -98,16 +98,32 @@ class _BadCommandResult(base.VersionedResult):
         return f"{self.command!r} used on line {self.line}"
 
 
-class PortageInternals(_BadCommandResult, base.Warning):
-    """Ebuild uses a function or variable internal to portage."""
-
-
-class DeprecatedEapiCommand(_BadCommandResult, base.Warning):
+class DeprecatedEapiCommand(base.VersionedResult, base.Warning):
     """Ebuild uses a deprecated EAPI command."""
 
+    def __init__(self, command, eapi, line, **kwargs):
+        super().__init__(**kwargs)
+        self.command = command
+        self.eapi = eapi
+        self.line = line
 
-class BannedEapiCommand(_BadCommandResult, base.Error):
+    @property
+    def desc(self):
+        return f'{self.command!r} deprecated in EAPI {self.eapi}, used on line {self.line}'
+
+
+class BannedEapiCommand(base.VersionedResult, base.Error):
     """Ebuild uses a banned EAPI command."""
+
+    def __init__(self, command, eapi, line, **kwargs):
+        super().__init__(**kwargs)
+        self.command = command
+        self.eapi = eapi
+        self.line = line
+
+    @property
+    def desc(self):
+        return f'{self.command!r} banned in EAPI {self.eapi}, used on line {self.line}'
 
 
 class BadCommandsCheck(base.Check):
@@ -154,16 +170,17 @@ class BadCommandsCheck(base.Check):
                 matches = self.internals_re.match(line)
                 if matches is not None:
                     yield PortageInternals(matches.group('cmd'), lineno, pkg=pkg)
-                banned_eapi_cmds_re = self.banned_eapi_cmds.get(str(pkg.eapi))
+                eapi = str(pkg.eapi)
+                banned_eapi_cmds_re = self.banned_eapi_cmds.get(eapi)
                 if banned_eapi_cmds_re is not None:
                     matches = banned_eapi_cmds_re.match(line)
                     if matches is not None:
-                        yield BannedEapiCommand(matches.group('cmd'), lineno, pkg=pkg)
-                deprecated_eapi_cmds_re = self.deprecated_eapi_cmds.get(str(pkg.eapi))
+                        yield BannedEapiCommand(matches.group('cmd'), eapi, lineno, pkg=pkg)
+                deprecated_eapi_cmds_re = self.deprecated_eapi_cmds.get(eapi)
                 if deprecated_eapi_cmds_re is not None:
                     matches = deprecated_eapi_cmds_re.match(line)
                     if matches is not None:
-                        yield DeprecatedEapiCommand(matches.group('cmd'), lineno, pkg=pkg)
+                        yield DeprecatedEapiCommand(matches.group('cmd'), eapi, lineno, pkg=pkg)
 
 
 class MissingSlash(base.VersionedResult, base.Error):
