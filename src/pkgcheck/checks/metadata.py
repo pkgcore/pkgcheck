@@ -114,7 +114,8 @@ class LicenseMetadataCheck(base.Check):
                 if 'bindist' not in license_restrictions:
                     missing_restricts.append('bindist')
                 if not self.mirror_restricts.intersection(license_restrictions):
-                    missing_restricts.append('mirror')
+                    if pkg.fetchables:
+                        missing_restricts.append('mirror')
                 if missing_restricts:
                     yield MissingLicenseRestricts(
                         'EULA', license, missing_restricts, pkg=pkg)
