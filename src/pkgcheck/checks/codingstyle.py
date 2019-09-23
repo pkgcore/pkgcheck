@@ -96,16 +96,20 @@ class _CommandResult(base.VersionedResult):
         self.line = line
         self.lineno = lineno
 
-
-class PortageInternals(_CommandResult, base.Error):
-    """Ebuild uses a function or variable internal to portage."""
+    @property
+    def usage_desc(self):
+        return f'{self.command!r}'
 
     @property
     def desc(self):
-        s = f'{self.command!r}, used on line {self.lineno}'
+        s = f'{self.usage_desc}, used on line {self.lineno}'
         if self.line != self.command:
             s +=  f': {self.line!r}'
         return s
+
+
+class PortageInternals(_CommandResult, base.Error):
+    """Ebuild uses a function or variable internal to portage."""
 
 
 class _EapiCommandResult(_CommandResult):
@@ -116,11 +120,8 @@ class _EapiCommandResult(_CommandResult):
         self.eapi = eapi
 
     @property
-    def desc(self):
-        s = f'{self.command!r} {self._status} in EAPI {self.eapi}, used on line {self.lineno}'
-        if self.line != self.command:
-            s +=  f': {self.line!r}'
-        return s
+    def usage_desc(self):
+        return f'{self.command!r} {self._status} in EAPI {self.eapi}'
 
 
 class DeprecatedEapiCommand(_EapiCommandResult, base.Warning):
