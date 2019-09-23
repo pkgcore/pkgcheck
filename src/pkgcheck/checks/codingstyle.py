@@ -181,13 +181,13 @@ class BadCommandsCheck(base.Check):
 
     def feed(self, entry):
         pkg, lines = entry
+        regexes = self.regexes[str(pkg.eapi)]
         for lineno, line in enumerate(lines, 1):
             line = line.strip()
             if not line:
                 continue
             if line[0] != '#':
-                eapi_str = str(pkg.eapi)
-                for regex, result_cls, kwargs in self.regexes[eapi_str]:
+                for regex, result_cls, kwargs in regexes:
                     match = regex.match(line)
                     if match is not None:
                         yield result_cls(match.group('cmd'), line, lineno, pkg=pkg, **kwargs)
