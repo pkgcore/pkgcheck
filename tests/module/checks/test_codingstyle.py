@@ -54,9 +54,9 @@ class TestHttpsAvailableCheck(misc.ReportTestCase):
         self.assertReports(self.check, [self.pkg, fake_src])
 
 
-class TestPortageInternalsCheck(misc.ReportTestCase):
+class TestBadCommandsCheck(misc.ReportTestCase):
 
-    check_kls = codingstyle.PortageInternalsCheck
+    check_kls = codingstyle.BadCommandsCheck
 
     @classmethod
     def setup_class(cls):
@@ -72,13 +72,13 @@ class TestPortageInternalsCheck(misc.ReportTestCase):
         self.assertNoReport(self.check, [self.pkg, fake_src])
 
     def test_all_internals(self):
-        for internal in self.check_kls.INTERNALS:
-            fake_src = [f'{internal} foo bar']
+        for command in self.check_kls.INTERNALS:
+            fake_src = [f'{command} foo bar']
             r = self.assertReport(self.check, [self.pkg, fake_src])
             assert isinstance(r, codingstyle.PortageInternals)
-            assert r.internal == internal
+            assert r.command == command
             assert r.line == 1
-            assert internal in str(r)
+            assert command in str(r)
 
 
 class TestBadInsIntoUsage(misc.ReportTestCase):
