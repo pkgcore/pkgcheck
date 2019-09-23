@@ -3,6 +3,7 @@
 import re
 from collections import defaultdict
 
+from pkgcore.ebuild.eapi import EAPI
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.strings import pluralism as _pl
 
@@ -84,24 +85,36 @@ class HttpsAvailableCheck(base.Check):
             yield HttpsAvailable(link, lines, pkg=pkg)
 
 
-class PortageInternals(base.VersionedResult, base.Warning):
-    """Ebuild uses a function or variable internal to portage."""
+class _BadCommandResult(base.VersionedResult):
+    """Generic bad command result."""
 
-    def __init__(self, internal, line, **kwargs):
+    def __init__(self, command, line, **kwargs):
         super().__init__(**kwargs)
-        self.internal = internal
+        self.command = command
         self.line = line
 
     @property
     def desc(self):
-        return f"{self.internal!r} used on line {self.line}"
+        return f"{self.command!r} used on line {self.line}"
 
 
-class PortageInternalsCheck(base.Check):
-    """Scan ebuild for portage internals usage."""
+class PortageInternals(_BadCommandResult, base.Warning):
+    """Ebuild uses a function or variable internal to portage."""
+
+
+class DeprecatedEapiCommand(_BadCommandResult, base.Warning):
+    """Ebuild uses a deprecated EAPI command."""
+
+
+class BannedEapiCommand(_BadCommandResult, base.Error):
+    """Ebuild uses a banned EAPI command."""
+
+
+class BadCommandsCheck(base.Check):
+    """Scan ebuild for various deprecated and banned command usage."""
 
     feed_type = base.ebuild_feed
-    known_results = (PortageInternals,)
+    known_results = (PortageInternals, DeprecatedEapiCommand, BannedEapiCommand)
 
     INTERNALS = (
         'prepall',
@@ -116,8 +129,19 @@ class PortageInternalsCheck(base.Check):
 
     def __init__(self, options):
         super().__init__(options)
-        self.regex = re.compile(
-            r'^(\s*|.*[|&{(]+\s*)\b(?P<internal>%s)\b' % r'|'.join(self.INTERNALS))
+        self.internals_re = re.compile(
+            r'^(\s*|.*[|&{(]+\s*)\b(?P<cmd>%s)\b' % r'|'.join(self.INTERNALS))
+        self.banned_eapi_cmds = {}
+        self.deprecated_eapi_cmds = {}
+        for eapi in EAPI.known_eapis.values():
+            if eapi.bash_cmds_banned:
+                cmds = r'|'.join(eapi.bash_cmds_banned)
+                self.banned_eapi_cmds[str(eapi)] = re.compile(
+                    rf'^(\s*|.*[|&{{(]+\s*)\b(?P<cmd>{cmds})\s')
+            if eapi.bash_cmds_deprecated:
+                cmds = r'|'.join(eapi.bash_cmds_deprecated)
+                self.deprecated_eapi_cmds[str(eapi)] = re.compile(
+                    rf'^(\s*|.*[|&{{(]+\s*)\b(?P<cmd>{cmds})\s')
 
     def feed(self, entry):
         pkg, lines = entry
@@ -127,9 +151,19 @@ class PortageInternalsCheck(base.Check):
                 continue
             if line[0] != '#':
                 # searching for multiple matches on a single line is too slow
-                matches = self.regex.match(line)
+                matches = self.internals_re.match(line)
                 if matches is not None:
-                    yield PortageInternals(matches.group('internal'), lineno, pkg=pkg)
+                    yield PortageInternals(matches.group('cmd'), lineno, pkg=pkg)
+                banned_eapi_cmds_re = self.banned_eapi_cmds.get(str(pkg.eapi))
+                if banned_eapi_cmds_re is not None:
+                    matches = banned_eapi_cmds_re.match(line)
+                    if matches is not None:
+                        yield BannedEapiCommand(matches.group('cmd'), lineno, pkg=pkg)
+                deprecated_eapi_cmds_re = self.deprecated_eapi_cmds.get(str(pkg.eapi))
+                if deprecated_eapi_cmds_re is not None:
+                    matches = deprecated_eapi_cmds_re.match(line)
+                    if matches is not None:
+                        yield DeprecatedEapiCommand(matches.group('cmd'), lineno, pkg=pkg)
 
 
 class MissingSlash(base.VersionedResult, base.Error):
