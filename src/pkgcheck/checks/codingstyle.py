@@ -149,14 +149,14 @@ class BadCommandsCheck(base.Check):
             r'^(\s*|.*[|&{(]+\s*)\b(?P<cmd>%s)\b' % r'|'.join(self.INTERNALS))
         self.banned_eapi_cmds = {}
         self.deprecated_eapi_cmds = {}
-        for eapi in EAPI.known_eapis.values():
+        for eapi_str, eapi in EAPI.known_eapis.items():
             if eapi.bash_cmds_banned:
                 cmds = r'|'.join(eapi.bash_cmds_banned)
-                self.banned_eapi_cmds[str(eapi)] = re.compile(
+                self.banned_eapi_cmds[eapi_str] = re.compile(
                     rf'^(\s*|.*[|&{{(]+\s*)\b(?P<cmd>{cmds})\s')
             if eapi.bash_cmds_deprecated:
                 cmds = r'|'.join(eapi.bash_cmds_deprecated)
-                self.deprecated_eapi_cmds[str(eapi)] = re.compile(
+                self.deprecated_eapi_cmds[eapi_str] = re.compile(
                     rf'^(\s*|.*[|&{{(]+\s*)\b(?P<cmd>{cmds})\s')
 
     def feed(self, entry):
