@@ -79,7 +79,8 @@ class TestBadCommandsCheck(misc.ReportTestCase):
             r = self.assertReport(self.check, [self.mk_pkg(), [line]])
             assert isinstance(r, codingstyle.PortageInternals)
             assert r.command == command
-            assert r.line == 1
+            assert r.line == line
+            assert r.lineno == 1
             assert command in str(r)
 
     def test_deprecated_cmds(self):
@@ -94,7 +95,8 @@ class TestBadCommandsCheck(misc.ReportTestCase):
                 assert isinstance(r, codingstyle.DeprecatedEapiCommand)
                 assert r.command == command
                 assert r.eapi == eapi_str
-                assert r.line == 1
+                assert r.line == line
+                assert r.lineno == 1
                 assert f"'{command}' deprecated in EAPI {eapi_str}" in str(r)
 
     def test_banned_cmds(self):
@@ -109,7 +111,8 @@ class TestBadCommandsCheck(misc.ReportTestCase):
                 assert isinstance(r, codingstyle.BannedEapiCommand)
                 assert r.command == command
                 assert r.eapi == eapi_str
-                assert r.line == 1
+                assert r.line == line
+                assert r.lineno == 1
                 assert f"'{command}' banned in EAPI {eapi_str}" in str(r)
 
 

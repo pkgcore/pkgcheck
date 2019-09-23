@@ -88,42 +88,48 @@ class HttpsAvailableCheck(base.Check):
 class PortageInternals(base.VersionedResult, base.Warning):
     """Ebuild uses a function or variable internal to portage."""
 
-    def __init__(self, command, line, **kwargs):
+    def __init__(self, command, line, lineno, **kwargs):
         super().__init__(**kwargs)
         self.command = command
         self.line = line
+        self.lineno = lineno
 
     @property
     def desc(self):
-        return f"{self.command!r} used on line {self.line}"
+        s = f'{self.command!r}, used on line {self.lineno}'
+        if self.line != self.command:
+            s +=  f': {self.line!r}'
+        return s
 
 
-class DeprecatedEapiCommand(base.VersionedResult, base.Warning):
+class _EapiCommandResult(base.VersionedResult):
+    """Generic EAPI command result."""
+
+    def __init__(self, command, eapi, line, lineno, **kwargs):
+        super().__init__(**kwargs)
+        self.command = command
+        self.eapi = eapi
+        self.line = line
+        self.lineno = lineno
+
+    @property
+    def desc(self):
+        s = f'{self.command!r} {self._status} in EAPI {self.eapi}, used on line {self.lineno}'
+        if self.line != self.command:
+            s +=  f': {self.line!r}'
+        return s
+
+
+class DeprecatedEapiCommand(_EapiCommandResult, base.Warning):
     """Ebuild uses a deprecated EAPI command."""
 
-    def __init__(self, command, eapi, line, **kwargs):
-        super().__init__(**kwargs)
-        self.command = command
-        self.eapi = eapi
-        self.line = line
-
-    @property
-    def desc(self):
-        return f'{self.command!r} deprecated in EAPI {self.eapi}, used on line {self.line}'
+    _status = 'deprecated'
 
 
-class BannedEapiCommand(base.VersionedResult, base.Error):
+class BannedEapiCommand(_EapiCommandResult, base.Error):
     """Ebuild uses a banned EAPI command."""
 
-    def __init__(self, command, eapi, line, **kwargs):
-        super().__init__(**kwargs)
-        self.command = command
-        self.eapi = eapi
-        self.line = line
-
-    @property
-    def desc(self):
-        return f'{self.command!r} banned in EAPI {self.eapi}, used on line {self.line}'
+    _status = 'banned'
 
 
 class BadCommandsCheck(base.Check):
@@ -171,18 +177,18 @@ class BadCommandsCheck(base.Check):
                 # searching for multiple matches on a single line is too slow
                 matches = self.internals_re.match(line)
                 if matches is not None:
-                    yield PortageInternals(matches.group('cmd'), lineno, pkg=pkg)
+                    yield PortageInternals(matches.group('cmd'), line, lineno, pkg=pkg)
                 eapi = str(pkg.eapi)
                 banned_eapi_cmds_re = self.banned_eapi_cmds.get(eapi)
                 if banned_eapi_cmds_re is not None:
                     matches = banned_eapi_cmds_re.match(line)
                     if matches is not None:
-                        yield BannedEapiCommand(matches.group('cmd'), eapi, lineno, pkg=pkg)
+                        yield BannedEapiCommand(matches.group('cmd'), eapi, line, lineno, pkg=pkg)
                 deprecated_eapi_cmds_re = self.deprecated_eapi_cmds.get(eapi)
                 if deprecated_eapi_cmds_re is not None:
                     matches = deprecated_eapi_cmds_re.match(line)
                     if matches is not None:
-                        yield DeprecatedEapiCommand(matches.group('cmd'), eapi, lineno, pkg=pkg)
+                        yield DeprecatedEapiCommand(matches.group('cmd'), eapi, line, lineno, pkg=pkg)
 
 
 class MissingSlash(base.VersionedResult, base.Error):
