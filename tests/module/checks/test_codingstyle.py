@@ -57,11 +57,10 @@ class TestHttpsAvailableCheck(misc.ReportTestCase):
 class TestBadCommandsCheck(misc.ReportTestCase):
 
     check_kls = codingstyle.BadCommandsCheck
+    check = codingstyle.BadCommandsCheck(options=None)
 
-    @classmethod
-    def setup_class(cls):
-        cls.check = cls.check_kls(options=None)
-        cls.pkg = misc.FakePkg("dev-util/diffball-0.5")
+    def mk_pkg(self, eapi='0'):
+        return misc.FakePkg("dev-util/diff-0.5", data={'EAPI': eapi})
 
     def test_no_matches(self):
         fake_src = [
@@ -69,16 +68,49 @@ class TestBadCommandsCheck(misc.ReportTestCase):
             '\n',
             'doins -r foobar\n',
         ]
-        self.assertNoReport(self.check, [self.pkg, fake_src])
+        self.assertNoReport(self.check, [self.mk_pkg(), fake_src])
 
     def test_all_internals(self):
         for command in self.check_kls.INTERNALS:
-            fake_src = [f'{command} foo bar']
-            r = self.assertReport(self.check, [self.pkg, fake_src])
+            # commented lines are skipped
+            line = f'{command} foo bar'
+            self.assertNoReport(self.check, [self.mk_pkg(), [f'#{line}']])
+
+            r = self.assertReport(self.check, [self.mk_pkg(), [line]])
             assert isinstance(r, codingstyle.PortageInternals)
             assert r.command == command
             assert r.line == 1
             assert command in str(r)
+
+    def test_deprecated_cmds(self):
+        for eapi_str, eapi in EAPI.known_eapis.items():
+            for command in eapi.bash_cmds_deprecated:
+                # commented lines are skipped
+                line = f'{command} foo bar'
+                pkg = self.mk_pkg(eapi_str)
+                self.assertNoReport(self.check, [pkg, [f'#{line}']])
+
+                r = self.assertReport(self.check, [pkg, [line]])
+                assert isinstance(r, codingstyle.DeprecatedEapiCommand)
+                assert r.command == command
+                assert r.eapi == eapi_str
+                assert r.line == 1
+                assert f"'{command}' deprecated in EAPI {eapi_str}" in str(r)
+
+    def test_banned_cmds(self):
+        for eapi_str, eapi in EAPI.known_eapis.items():
+            for command in eapi.bash_cmds_banned:
+                # commented lines are skipped
+                line = f'{command} foo bar'
+                pkg = self.mk_pkg(eapi_str)
+                self.assertNoReport(self.check, [pkg, [f'#{line}']])
+
+                r = self.assertReport(self.check, [pkg, [line]])
+                assert isinstance(r, codingstyle.BannedEapiCommand)
+                assert r.command == command
+                assert r.eapi == eapi_str
+                assert r.line == 1
+                assert f"'{command}' banned in EAPI {eapi_str}" in str(r)
 
 
 class TestBadInsIntoUsage(misc.ReportTestCase):
