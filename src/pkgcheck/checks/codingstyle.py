@@ -97,7 +97,7 @@ class _CommandResult(base.VersionedResult):
         self.lineno = lineno
 
 
-class PortageInternals(_CommandResult, base.Warning):
+class PortageInternals(_CommandResult, base.Error):
     """Ebuild uses a function or variable internal to portage."""
 
     @property
