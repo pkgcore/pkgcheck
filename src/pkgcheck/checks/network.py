@@ -1,19 +1,19 @@
 import concurrent.futures
 import urllib.request
+import socket
 import ssl
 import threading
 from functools import partial
 from itertools import chain
 
 from pkgcore.fetch import fetchable
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
 from .. import addons, base
 from . import NetworkCheck
 
 
-class DeadHomepage(base.FilteredVersionResult, base.Warning):
-    """Package with a dead HOMEPAGE."""
+class _DeadUrlResult(base.FilteredVersionResult, base.Warning):
+    """Generic result for a dead URL."""
 
     def __init__(self, url, message, **kwargs):
         super().__init__(**kwargs)
@@ -22,7 +22,36 @@ class DeadHomepage(base.FilteredVersionResult, base.Warning):
 
     @property
     def desc(self):
-        return f'dead homepage, {self.message}: {self.url!r}'
+        return f'{self.message}: {self.url!r}'
+
+
+class DeadHomepage(_DeadUrlResult):
+    """Package with a dead HOMEPAGE."""
+
+
+class DeadSrcUrl(_DeadUrlResult):
+    """Package with a dead SRC_URI target."""
+
+
+class _RedirectedUrlResult(base.FilteredVersionResult, base.Warning):
+    """Generic result for a URL that permanently redirects to a different site."""
+
+    def __init__(self, url, new_url, **kwargs):
+        super().__init__(**kwargs)
+        self.url = url
+        self.new_url = new_url
+
+    @property
+    def desc(self):
+        return f'permanently redirected url, {self.url!r} -> {self.new_url!r}'
+
+
+class RedirectedHomepage(_RedirectedUrlResult):
+    """Package with a HOMEPAGE that permanently redirects to a different site."""
+
+
+class RedirectedSrcUrl(_RedirectedUrlResult):
+    """Package with a SRC_URI target that permanently redirects to a different site."""
 
 
 class SSLCertificateError(base.FilteredVersionResult, base.Warning):
@@ -38,30 +67,20 @@ class SSLCertificateError(base.FilteredVersionResult, base.Warning):
         return f'SSL cert error, {self.message}: {self.url!r}'
 
 
-class RedirectedHomepage(base.FilteredVersionResult, base.Warning):
-    """Package with a HOMEPAGE that redirects to a different site."""
+class _HttpRedirected301(Exception):
+    """Exception used for flagging HTTP 301 redirects."""
 
-    def __init__(self, url, redirected, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, url):
         self.url = url
-        self.redirected = redirected
-
-    @property
-    def desc(self):
-        return f'redirected homepage, {self.url!r} -> {self.redirected!r}'
 
 
-class DeadSrcUrl(base.FilteredVersionResult, base.Warning):
-    """Package with a dead SRC_URI target."""
+class _FlagHttp301RedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Flag HTTP 301 redirects when using urllib."""
 
-    def __init__(self, url, message, **kwargs):
-        super().__init__(**kwargs)
-        self.url = url
-        self.message = message
-
-    @property
-    def desc(self):
-        return f'dead SRC_URI target, {self.message}: {self.url!r}'
+    def http_error_301(self, req, fp, code, msg, headers):
+        new_url = headers['Location']
+        super().http_error_301(req, fp, code, msg, headers)
+        raise _HttpRedirected301(new_url)
 
 
 class _UrlCheck(NetworkCheck):
@@ -75,20 +94,19 @@ class _UrlCheck(NetworkCheck):
         self.executor = concurrent.futures.ThreadPoolExecutor()
         self.timeout = self.options.timeout
         self.reporter_lock = threading.Lock()
-        self.redirected_result = None
         self.dead_result = None
+        self.redirected_result = None
+
+        self.url_opener = urllib.request.build_opener(_FlagHttp301RedirectHandler())
         # spoof user agent similar to what would be used when fetching files
-        self.headers = {'User-Agent': 'Wget/1.20.3 (linux-gnu)'}
+        self.url_opener.addheaders = [('User-Agent', 'Wget/1.20.3 (linux-gnu)')]
 
     def _url_to_result(self, url):
         result = False
-        req = urllib.request.Request(url, headers=self.headers)
         try:
-            response = urllib.request.urlopen(req, timeout=self.timeout)
-            if self.redirected_result is not None:
-                response_url = response.geturl()
-                if response_url != url:
-                    result = partial(self.redirected_result, url, response_url)
+            response = self.url_opener.open(url, timeout=self.timeout)
+        except _HttpRedirected301 as e:
+            result = partial(self.redirected_result, url, e.url)
         except urllib.error.HTTPError as e:
             if e.code >= 400:
                 result = partial(self.dead_result, url, str(e))
@@ -96,9 +114,7 @@ class _UrlCheck(NetworkCheck):
             result = partial(self.dead_result, url, str(e))
         except ssl.CertificateError as e:
             result = partial(SSLCertificateError, url, str(e))
-        except IGNORED_EXCEPTIONS:
-            raise
-        except Exception as e:
+        except socket.timeout as e:
             result = partial(self.dead_result, url, str(e))
         return result
 
@@ -133,8 +149,8 @@ class HomepageUrlCheck(_UrlCheck):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.redirected_result = RedirectedHomepage
         self.dead_result = DeadHomepage
+        self.redirected_result = RedirectedHomepage
 
     def _get_urls(self, pkg):
         return pkg.homepage
@@ -143,13 +159,14 @@ class HomepageUrlCheck(_UrlCheck):
 class FetchablesUrlCheck(_UrlCheck):
     """Various SRC_URI related checks that require internet access."""
 
-    known_results = (DeadSrcUrl, SSLCertificateError)
+    known_results = (DeadSrcUrl, RedirectedSrcUrl, SSLCertificateError)
     required_addons = (addons.UseAddon,)
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
         self.fetch_filter = iuse_handler.get_filter('fetchables')
         self.dead_result = DeadSrcUrl
+        self.redirected_result = RedirectedSrcUrl
 
     def _get_urls(self, pkg):
         # ignore conditionals
