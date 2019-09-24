@@ -7,6 +7,7 @@ from functools import partial
 from itertools import chain
 
 from pkgcore.fetch import fetchable
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
 from .. import addons, base
 from . import NetworkCheck
@@ -67,6 +68,19 @@ class SSLCertificateError(base.FilteredVersionResult, base.Warning):
         return f'SSL cert error, {self.message}: {self.url!r}'
 
 
+class HttpsUrlAvailable(base.FilteredVersionResult, base.Warning):
+    """URL uses http:// when https:// is available."""
+
+    def __init__(self, http_url, https_url, **kwargs):
+        super().__init__(**kwargs)
+        self.http_url = http_url
+        self.https_url = https_url
+
+    @property
+    def desc(self):
+        return f'{self.http_url} should use {self.https_url}'
+
+
 class _HttpRedirected301(Exception):
     """Exception used for flagging HTTP 301 redirects."""
 
@@ -118,6 +132,17 @@ class _UrlCheck(NetworkCheck):
             result = partial(self.dead_result, url, str(e))
         return result
 
+    def _https_check(self, url):
+        result = False
+        try:
+            response = self.url_opener.open(url, timeout=self.timeout)
+            result = partial(HttpsUrlAvailable, f'http://{url[8:]}', url)
+        except IGNORED_EXCEPTIONS:
+            raise
+        except Exception:
+            pass
+        return result
+
     def _done(self, pkg, future):
         result = future.result()
         if result:
@@ -127,25 +152,33 @@ class _UrlCheck(NetworkCheck):
     def _get_urls(self, pkg):
         raise NotImplementedError
 
+    def _http_to_https_urls(self, urls):
+        for url in urls:
+            if url.startswith('http://'):
+                yield f'https://{url[7:]}'
+
     def feed(self, pkg):
-        for url in self._get_urls(pkg):
-            future = self.checked.get(url)
-            if future is None:
-                future = self.executor.submit(self._url_to_result, url)
-                future.add_done_callback(partial(self._done, pkg))
-                self.checked[url] = future
-            elif future.done():
-                result = future.result()
-                if result:
-                    yield result(pkg=pkg)
-            else:
-                future.add_done_callback(partial(self._done, pkg))
+        target_urls = tuple(self._get_urls(pkg))
+        for urls, func in ((target_urls, self._url_to_result),
+                          (self._http_to_https_urls(target_urls), self._https_check)):
+            for url in urls:
+                future = self.checked.get(url)
+                if future is None:
+                    future = self.executor.submit(func, url)
+                    future.add_done_callback(partial(self._done, pkg))
+                    self.checked[url] = future
+                elif future.done():
+                    result = future.result()
+                    if result:
+                        yield result(pkg=pkg)
+                else:
+                    future.add_done_callback(partial(self._done, pkg))
 
 
 class HomepageUrlCheck(_UrlCheck):
     """Various HOMEPAGE related checks that require internet access."""
 
-    known_results = (DeadHomepage, RedirectedHomepage, SSLCertificateError)
+    known_results = (DeadHomepage, RedirectedHomepage, HttpsUrlAvailable, SSLCertificateError)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -159,7 +192,7 @@ class HomepageUrlCheck(_UrlCheck):
 class FetchablesUrlCheck(_UrlCheck):
     """Various SRC_URI related checks that require internet access."""
 
-    known_results = (DeadSrcUrl, RedirectedSrcUrl, SSLCertificateError)
+    known_results = (DeadSrcUrl, RedirectedSrcUrl, HttpsUrlAvailable, SSLCertificateError)
     required_addons = (addons.UseAddon,)
 
     def __init__(self, options, iuse_handler):
