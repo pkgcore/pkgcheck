@@ -3,6 +3,33 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.6.6 (2019-09-24)
+---------------------------
+
+- HttpsUrlAvailable: Check http:// URLs for https:// availability (not run by
+  default).
+
+- MissingLicenseRestricts: Skip RESTRICT="mirror" for packages lacking SRC_URI.
+
+- DeprecatedEapiCommand: Check for deprecated EAPI commands (e.g. dohtml usage in EAPI 6).
+
+- BannedEapiCommand: Check for banned EAPI commands (e.g. dohtml usage in EAPI 7).
+
+- StableRequestCheck: Use ebuild modification events instead of added events to
+  check for stabilization.
+
+- Add support for filtering versioned results to only check the latest VCS and
+  non-VCS packages per slot.
+
+- MissingSlotDep: Fix dep slot determination by using use flag stripped dep
+  atoms instead of unversioned atoms.
+
+- Add HomepageUrlCheck and FetchablesUrlCheck network-based checks that check
+  HOMEPAGE and SRC_URI urls for various issues and require network access so
+  they aren't run by default. The ``--net`` option must be specified in order
+  to run them.
+
+---------------------------
 pkgcheck 0.6.5 (2019-09-18)
 ---------------------------
 
