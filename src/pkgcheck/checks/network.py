@@ -149,13 +149,22 @@ try:
             return result
 
         def _https_available_check(self, url):
-            """Check https:// sites exist for http:// URLs."""
+            """Check if https:// alternatives exist for http:// URLs."""
             result = None
             try:
                 # suppress urllib3 SSL cert verification failure log messages
                 with suppress_logging():
-                    self.session.get(url)
-                result = partial(HttpsUrlAvailable, f'http://{url[8:]}', url)
+                    r = self.session.get(url)
+                redirected_url = None
+                for response in r.history:
+                    if not response.is_permanent_redirect:
+                        break
+                    redirected_url = response.headers['location']
+                if redirected_url:
+                    if redirected_url.startswith('https://'):
+                        result = partial(HttpsUrlAvailable, url, redirected_url)
+                else:
+                    result = partial(HttpsUrlAvailable, f'http://{url[8:]}', url)
             except requests.exceptions.RequestException as e:
                 pass
             return result
