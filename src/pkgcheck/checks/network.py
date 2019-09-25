@@ -23,7 +23,7 @@ class _DeadUrlResult(base.FilteredVersionResult, base.Warning):
 
     @property
     def desc(self):
-        return f'{self.message}: {self.url!r}'
+        return f'{self.message}: {self.url}'
 
 
 class DeadHomepage(_DeadUrlResult):
@@ -44,7 +44,7 @@ class _RedirectedUrlResult(base.FilteredVersionResult, base.Warning):
 
     @property
     def desc(self):
-        return f'permanently redirected url, {self.url!r} -> {self.new_url!r}'
+        return f'permanently redirected: {self.url} -> {self.new_url}'
 
 
 class RedirectedHomepage(_RedirectedUrlResult):
@@ -65,7 +65,7 @@ class SSLCertificateError(base.FilteredVersionResult, base.Warning):
 
     @property
     def desc(self):
-        return f'SSL cert error, {self.message}: {self.url!r}'
+        return f'SSL cert error: {self.message}: {self.url}'
 
 
 class HttpsUrlAvailable(base.FilteredVersionResult, base.Warning):
@@ -78,7 +78,7 @@ class HttpsUrlAvailable(base.FilteredVersionResult, base.Warning):
 
     @property
     def desc(self):
-        return f'{self.http_url} should use {self.https_url}'
+        return f'HTTPS site available: {self.http_url} -> {self.https_url}'
 
 
 class _HttpRedirected301(Exception):
@@ -116,7 +116,7 @@ class _UrlCheck(NetworkCheck):
         self.url_opener.addheaders = [('User-Agent', 'Wget/1.20.3 (linux-gnu)')]
 
     def _url_to_result(self, url):
-        result = False
+        result = None
         try:
             response = self.url_opener.open(url, timeout=self.timeout)
         except _HttpRedirected301 as e:
@@ -133,7 +133,7 @@ class _UrlCheck(NetworkCheck):
         return result
 
     def _https_check(self, url):
-        result = False
+        result = None
         try:
             response = self.url_opener.open(url, timeout=self.timeout)
             result = partial(HttpsUrlAvailable, f'http://{url[8:]}', url)
