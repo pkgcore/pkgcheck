@@ -123,9 +123,12 @@ class _UrlCheck(NetworkCheck):
             result = partial(self.redirected_result, url, e.url)
         except urllib.error.HTTPError as e:
             if e.code >= 400:
-                result = partial(self.dead_result, url, str(e))
+                result = partial(self.dead_result, url, str(e.reason))
         except urllib.error.URLError as e:
-            result = partial(self.dead_result, url, str(e))
+            if isinstance(e.reason, ssl.SSLError):
+                result = partial(SSLCertificateError, url, str(e.reason))
+            else:
+                result = partial(self.dead_result, url, str(e.reason))
         except ssl.CertificateError as e:
             result = partial(SSLCertificateError, url, str(e))
         except socket.timeout as e:
