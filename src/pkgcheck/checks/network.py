@@ -86,7 +86,7 @@ try:
             return f'HTTPS url available: {self.http_url} -> {self.https_url}'
 
 
-    class _Session(requests.Session):
+    class Session(requests.Session):
         """Custom requests session handling timeout, concurrency, and header settings."""
 
         def __init__(self, concurrent=None, timeout=None):
@@ -124,7 +124,7 @@ try:
             self.executor = concurrent.futures.ThreadPoolExecutor()
             self.reporter_lock = threading.Lock()
             self.timeout = self.options.timeout
-            self.session = _Session(timeout=self.timeout)
+            self.session = self.options.requests_session
             self.dead_result = None
             self.redirected_result = None
 
