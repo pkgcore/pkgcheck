@@ -724,13 +724,7 @@ class ProfileAddon(base.Addon):
             namespace.profile_cache = False
         namespace.forced_cache = bool(namespace.profile_cache)
 
-        # We hold onto the profiles as we're going, due to the fact that
-        # profile nodes are weakly cached; hold onto all for this loop, avoids
-        # a lot of reparsing at the expense of slightly more memory usage
-        # temporarily.
-        cached_profiles = []
-
-        arch_profiles = defaultdict(list)
+        namespace.arch_profiles = defaultdict(list)
         for p in profiles:
             if ignore_deprecated and p.deprecated:
                 continue
@@ -751,10 +745,7 @@ class ProfileAddon(base.Addon):
                         parser.error(f'profile make.defaults lacks ARCH setting: {p.path!r}')
                     continue
 
-            cached_profiles.append(profile)
-            arch_profiles[profile.arch].append((profile, p))
-
-        namespace.arch_profiles = arch_profiles
+            namespace.arch_profiles[profile.arch].append((profile, p))
 
     @coroutine
     def _profile_files(self):
