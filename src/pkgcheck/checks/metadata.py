@@ -447,15 +447,14 @@ class LocalUSECheck(base.Check):
                     yield MatchingGlobalUSE(flag, pkg=pkg)
                 elif ratio >= 0.75:
                     yield ProbableGlobalUSE(flag, pkg=pkg)
-            else:
+            elif '_' in flag:
                 for group in self.use_expand_groups:
                     if flag.startswith(f'{group}_'):
                         if flag not in self.use_expand_groups[group]:
                             yield ProbableUseExpand(flag, group.upper(), pkg=pkg)
                         break
                 else:
-                    if '_' in flag:
-                        yield UnderscoreInUseFlag(flag, pkg=pkg)
+                    yield UnderscoreInUseFlag(flag, pkg=pkg)
 
         unused = set(local_use)
         for pkg in pkgs:
