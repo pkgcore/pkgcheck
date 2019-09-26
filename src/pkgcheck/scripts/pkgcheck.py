@@ -425,6 +425,7 @@ def _validate_args(parser, namespace):
 def _scan(options, out, err):
     reporter = options.reporter(
         out, verbosity=options.verbosity, keywords=options.filtered_keywords)
+    # TODO: drop this after reworking network tests
     options.reporter = reporter
 
     addons_map = {}

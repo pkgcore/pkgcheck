@@ -169,7 +169,8 @@ class _UrlCheck(NetworkCheck):
     def _done(self, pkg, future):
         result = future.result()
         if result:
-            self.options.reporter.report(result(pkg=pkg))
+            with self.reporter_lock:
+                self.options.reporter.report(result(pkg=pkg))
 
     def _get_urls(self, pkg):
         raise NotImplementedError
