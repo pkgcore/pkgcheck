@@ -62,7 +62,9 @@ class NetworkCheck(base.Check):
                 # inject requests session into namespace for network checks to use
                 namespace.requests_session = Session(timeout=namespace.timeout)
             except ImportError as e:
-                # skip network checks in the probable case where requests isn't installed
+                if e.name != 'requests':
+                    raise
+                # skip network checks when requests module isn't installed
                 skip = True
-                logger.info(f'skipping {cls.__name__}, {e}')
+                logger.info(f'skipping {cls.__name__}, failed importing requests')
         return skip or super().skip(namespace)
