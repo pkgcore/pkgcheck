@@ -57,7 +57,12 @@ class NetworkCheck(base.Check):
         if skip:
             logger.info(f'skipping {cls.__name__}, network checks not enabled')
         elif 'requests_session' not in namespace:
-            # inject requests session into namespace for multiple network checks to use
-            from ..net import Session
-            namespace.requests_session = Session(timeout=namespace.timeout)
+            try:
+                from ..net import Session
+                # inject requests session into namespace for network checks to use
+                namespace.requests_session = Session(timeout=namespace.timeout)
+            except ImportError as e:
+                # skip network checks in the probable case where requests isn't installed
+                skip = True
+                logger.info(f'skipping {cls.__name__}, {e}')
         return skip or super().skip(namespace)
