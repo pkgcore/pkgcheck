@@ -8,52 +8,6 @@ from pkgcheck.checks import codingstyle
 from .. import misc
 
 
-class TestHttpsAvailableCheck(misc.ReportTestCase):
-
-    check_kls = codingstyle.HttpsAvailableCheck
-
-    @classmethod
-    def setup_class(cls):
-        cls.check = cls.check_kls(options=None)
-        cls.pkg = misc.FakePkg("dev-util/diffball-0.5")
-
-    def test_no_matches(self):
-        fake_src = ['HOMEPAGE="http://foobar.com/"\n']
-        self.assertNoReport(self.check, [self.pkg, fake_src])
-
-    def test_already_https(self):
-        fake_src = ['HOMEPAGE="https://github.com/foo/bar"\n']
-        self.assertNoReport(self.check, [self.pkg, fake_src])
-
-    def test_single_match(self):
-        fake_src = [f'HOMEPAGE="http://github.com/foo/bar"\n']
-        r = self.assertReport(self.check, [self.pkg, fake_src])
-        assert isinstance(r, codingstyle.HttpsAvailable)
-        assert r.link == 'http://github.com/'
-        assert r.lines == (1,)
-        assert 'http://github.com/' in str(r)
-
-    def test_multiple_line_matches(self):
-        fake_src = [
-            'HOMEPAGE="http://foo.apache.org/"\n',
-            '\n',
-            'SRC_URI="http://foo.apache.org/${P}.tar.bz2"\n',
-        ]
-        r = self.assertReport(self.check, [self.pkg, fake_src])
-        assert isinstance(r, codingstyle.HttpsAvailable)
-        assert r.link == 'http://foo.apache.org/'
-        assert r.lines == (1, 3)
-        assert 'http://foo.apache.org/' in str(r)
-
-    def test_multiple_link_matches(self):
-        fake_src = [
-            'HOMEPAGE="http://www.kernel.org/foo"\n',
-            '\n',
-            'SRC_URI="http://sf.net/foo/${P}.tar.bz2"\n',
-        ]
-        self.assertReports(self.check, [self.pkg, fake_src])
-
-
 class TestBadCommandsCheck(misc.ReportTestCase):
 
     check_kls = codingstyle.BadCommandsCheck
