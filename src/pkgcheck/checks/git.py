@@ -171,7 +171,7 @@ class GitPkgCommitsCheck(GentooRepoCheck):
         self.today = datetime.today()
         self.repo = self.options.target_repo
         self.valid_arches = self.options.target_repo.known_arches
-        self.added_repo = git_addon.commits_repo(addons.GitAddedRepo)
+        self.added_repo = git_addon.cached_repo(addons.GitAddedRepo)
 
     @jit_attr
     def removal_repo(self):
@@ -250,11 +250,10 @@ class GitPkgCommitsCheck(GentooRepoCheck):
                     yield DirectStableKeywords(stable_keywords, pkg=pkg)
 
                 # pkg was just added to the tree
-                added_pkgs = self.added_repo.match(git_pkg.unversioned_atom)
-                newly_added = all(x.date == added_pkgs[0].date for x in added_pkgs)
+                newly_added = not self.added_repo.match(git_pkg.unversioned_atom)
 
                 # check for no maintainers
-                if newly_added and not pkg.maintainers:
+                if not pkg.maintainers and newly_added:
                     yield DirectNoMaintainer(pkg=pkg)
 
 
