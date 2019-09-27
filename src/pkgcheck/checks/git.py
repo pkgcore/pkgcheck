@@ -70,10 +70,10 @@ class DirectStableKeywords(base.VersionedResult, base.Error):
             _pl(self.keywords), ', '.join(self.keywords))
 
 
-class DroppedUnstableKeywords(base.PackageResult, base.Warning):
+class _DroppedKeywords(base.PackageResult):
     """Unstable keywords dropped from package."""
 
-    status = 'unstable'
+    _status = None
 
     def __init__(self, keywords, commit, **kwargs):
         super().__init__(**kwargs)
@@ -84,15 +84,21 @@ class DroppedUnstableKeywords(base.PackageResult, base.Warning):
     def desc(self):
         keywords = ', '.join(self.keywords)
         return (
-            f"commit {self.commit} (or later) dropped {self.status} "
-            f"keyword{_pl(self.keywords)}: [ {keywords} ]"
+            f'commit {self.commit} (or later) dropped {self._status} '
+            f'keyword{_pl(self.keywords)}: [ {keywords} ]'
         )
 
 
-class DroppedStableKeywords(base.Error, DroppedUnstableKeywords):
+class DroppedUnstableKeywords(_DroppedKeywords, base.Warning):
+    """Unstable keywords dropped from package."""
+
+    _status = 'unstable'
+
+
+class DroppedStableKeywords(_DroppedKeywords, base.Error):
     """Stable keywords dropped from package."""
 
-    status = 'stable'
+    _status = 'stable'
 
 
 class DirectNoMaintainer(base.PackageResult, base.Error):
