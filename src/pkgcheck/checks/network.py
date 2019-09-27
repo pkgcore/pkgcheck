@@ -146,11 +146,12 @@ class _UrlCheck(NetworkCheck):
                 if not response.is_permanent_redirect:
                     break
                 redirected_url = response.headers['location']
+            orig_url = f'http://{url[8:]}'
             if redirected_url:
                 if redirected_url.startswith('https://'):
-                    result = partial(HttpsUrlAvailable, url, redirected_url)
+                    result = partial(HttpsUrlAvailable, orig_url, redirected_url)
             else:
-                result = partial(HttpsUrlAvailable, f'http://{url[8:]}', url)
+                result = partial(HttpsUrlAvailable, orig_url, url)
         except (RequestError, SSLError) as e:
             pass
         return result
