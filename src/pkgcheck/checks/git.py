@@ -177,12 +177,17 @@ class GitPkgCommitsCheck(GentooRepoCheck):
         self.today = datetime.today()
         self.repo = self.options.target_repo
         self.valid_arches = self.options.target_repo.known_arches
-        self.added_repo = git_addon.cached_repo(addons.GitAddedRepo)
+        self._git_addon = git_addon
 
     @jit_attr
     def removal_repo(self):
         """Create a repository of packages removed from git."""
         return _RemovalRepo(self.repo)
+
+    @jit_attr
+    def added_repo(self):
+        """Create/load cached repo of packages added to git."""
+        return self._git_addon.cached_repo(addons.GitAddedRepo)
 
     def removal_checks(self, removed):
         """Check for issues due to package removals."""
