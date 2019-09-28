@@ -174,9 +174,14 @@ class _UrlCheck(NetworkCheck):
             result = self.dead_result(url, str(e), pkg=pkg)
         return result
 
-    def _done(self, future):
+    def _done(self, pkg, future):
         result = future.result()
         if result:
+            if pkg is not None:
+                # recreate result object with different pkg target
+                data = result.attrs_to_pkg(result._attrs)
+                data['pkg'] = pkg
+                result = result.__class__(**data)
             with self.reporter_lock:
                 self.options.reporter.report(result)
 
@@ -187,14 +192,14 @@ class _UrlCheck(NetworkCheck):
         future = self.checked.get(url)
         if future is None:
             future = self.executor.submit(func, url, **kwargs)
-            future.add_done_callback(self._done)
+            future.add_done_callback(partial(self._done, None))
             self.checked[url] = future
         elif future.done():
             result = future.result()
             if result:
                 yield result
         else:
-            future.add_done_callback(self._done)
+            future.add_done_callback(partial(self._done, kwargs['pkg']))
 
     def feed(self, pkg):
         http_urls, ftp_urls = partition(
