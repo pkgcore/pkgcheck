@@ -629,8 +629,8 @@ class RawCPV:
         return f'{self.category}/{self.package}'
 
 
-class _FilteredPkg:
-    """Filtered package used to mark related results that should be skipped by default."""
+class WrappedPkg:
+    """Generic package wrapper used to inject attributes into package objects."""
 
     __slots__ = ('_pkg',)
 
@@ -643,8 +643,17 @@ class _FilteredPkg:
     def __repr__(self):
         return repr(self._pkg)
 
+    def __lt__(self, other):
+        if self.versioned_atom < other.versioned_atom:
+            return True
+        return False
+
     __getattr__ = klass.GetAttrProxy('_pkg')
     __dir__ = klass.DirProxy('_pkg')
+
+
+class _FilteredPkg(WrappedPkg):
+    """Filtered package used to mark related results that should be skipped by default."""
 
 
 class LatestPkgsFilter:
@@ -692,7 +701,7 @@ class LatestPkgsFilter:
             if self._partial_filtered:
                 selected_pkgs = set(selected_pkgs.values())
                 self._pkg_cache.extend(
-                    _FilteredPkg(pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs)
+                    _FilteredPkg(pkg=pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs)
             else:
                 self._pkg_cache.extend(selected_pkgs.values())
 
