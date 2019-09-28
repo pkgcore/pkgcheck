@@ -35,5 +35,7 @@ class Session(requests.Session):
             return super().send(req, **kwargs)
         except requests.exceptions.SSLError as e:
             raise SSLError(e)
+        except requests.exceptions.ConnectionError as e:
+            raise RequestError(e, 'connection failed')
         except requests.exceptions.RequestException as e:
             raise RequestError(e)

@@ -84,10 +84,13 @@ class HttpsUrlAvailable(base.FilteredVersionResult, base.Warning):
 class _RequestException(Exception):
     """Wrapper for requests exceptions."""
 
-    def __init__(self, exc):
+    def __init__(self, exc, msg=None):
         self.request_exc = exc
+        self.msg = msg
 
     def __str__(self):
+        if self.msg:
+            return self.msg
         return str(self.request_exc)
 
 
