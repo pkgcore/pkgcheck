@@ -32,7 +32,9 @@ class Session(requests.Session):
         # forcibly use the session timeout
         kwargs['timeout'] = self.timeout
         try:
-            return super().send(req, **kwargs)
+            r = super().send(req, **kwargs)
+            r.raise_for_status()
+            return r
         except requests.exceptions.SSLError as e:
             raise SSLError(e)
         except requests.exceptions.ConnectionError as e:
