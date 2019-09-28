@@ -123,13 +123,6 @@ class GenericSource:
         yield from self.source.itermatch(restrict, **kwargs)
 
 
-class EmptySource(GenericSource):
-    """Empty source meant for skipping feed."""
-
-    def itermatch(self, restrict):
-        yield from ()
-
-
 class FilteredRepoSource(GenericSource):
     """Ebuild repository source supporting custom package filtering."""
 
@@ -169,17 +162,6 @@ class Feed(Addon):
 
     def finish(self):
         """Do cleanup and omit final results here."""
-
-
-class EmptyFeed(Feed):
-    """Empty feed that skips the object feeding phase."""
-
-    _source = EmptySource
-
-    # required for tests since they manually run the checks instead of
-    # constructing pipelines
-    def feed(self, item):
-        pass
 
 
 class Check(Feed):

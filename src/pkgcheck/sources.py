@@ -9,6 +9,13 @@ from snakeoil.osutils import listdir_files, pjoin
 from . import addons, base
 
 
+class EmptySource(base.GenericSource):
+    """Empty source meant for skipping feed."""
+
+    def itermatch(self, restrict):
+        yield from ()
+
+
 class _RawRepo(UnconfiguredTree):
     """Repository that allows matching against mismatched/invalid package names."""
 

@@ -75,10 +75,11 @@ class BadPackageUpdate(base.LogError):
     threshold = base.repository_feed
 
 
-class PackageUpdatesCheck(base.Check, base.EmptyFeed):
+class PackageUpdatesCheck(base.Check):
     """Scan profiles/updates/* for outdated entries and other issues."""
 
     scope = base.repository_scope
+    _source = sources.EmptySource
     known_results = (
         MultiMovePackageUpdate, OldMultiMovePackageUpdate,
         OldPackageUpdate, MovedPackageUpdate, BadPackageUpdate,
@@ -297,10 +298,11 @@ class UnknownLicenses(base.Warning):
             self.group, _pl(self.licenses), ', '.join(self.licenses))
 
 
-class LicenseGroupsCheck(base.Check, base.EmptyFeed):
+class LicenseGroupsCheck(base.Check):
     """Scan license groups for unknown licenses."""
 
     scope = base.repository_scope
+    _source = sources.EmptySource
     known_results = (UnknownLicenses,)
 
     def __init__(self, options):

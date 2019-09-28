@@ -2,7 +2,7 @@ import os
 
 from snakeoil.osutils import pjoin
 
-from .. import base
+from .. import base, sources
 from ..utils import is_binary
 from . import GentooRepoCheck
 
@@ -21,10 +21,11 @@ class BinaryFile(base.Error):
         return f"binary file found in repository: {self.path!r}"
 
 
-class RepoDirCheck(GentooRepoCheck, base.EmptyFeed):
+class RepoDirCheck(GentooRepoCheck):
     """Scan all files in the repository for issues."""
 
     scope = base.repository_scope
+    _source = sources.EmptySource
     known_results = (BinaryFile,)
 
     # repo root level directories that are ignored
