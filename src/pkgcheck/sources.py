@@ -96,3 +96,23 @@ class GitCommitsSource(base.GenericSource):
 
     def __iter__(self):
         yield from self.commits
+
+
+class _SourcePkg(base.WrappedPkg):
+    """Package object with file contents injected as an attribute."""
+
+    __slots__ = ('lines',)
+
+    def __init__(self, lines, **kwargs):
+        super().__init__(**kwargs)
+        self.lines = lines
+
+
+class EbuildFileRepoSource(base.GenericSource):
+    """Ebuild repository source yielding package objects and their file contents."""
+
+    feed_type = base.ebuild_feed
+
+    def itermatch(self, restrict):
+        for pkg in super().itermatch(restrict):
+            yield _SourcePkg(pkg=pkg, lines=tuple(pkg.ebuild.text_fileobj()))
