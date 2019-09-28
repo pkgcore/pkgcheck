@@ -114,7 +114,7 @@ class _UrlCheck(NetworkCheck):
         self.dead_result = None
         self.redirected_result = None
 
-    def _http_check(self, url):
+    def _http_check(self, pkg, url):
         """Check http:// and https:// URLs using requests."""
         result = None
         try:
@@ -127,15 +127,19 @@ class _UrlCheck(NetworkCheck):
                     break
                 redirected_url = response.headers['location']
             if redirected_url:
-                result = partial(self.redirected_result, url, redirected_url)
+                if redirected_url.startswith('https://') and url.startswith('http://'):
+                    result = HttpsUrlAvailable(url, redirected_url, pkg=pkg)
+                else:
+                    result = self.redirected_result(url, redirected_url, pkg=pkg)
         except SSLError as e:
-            result = partial(SSLCertificateError, url, str(e))
+            result = SSLCertificateError(url, str(e), pkg=pkg)
         except RequestError as e:
-            result = partial(self.dead_result, url, str(e))
+            result = self.dead_result(url, str(e), pkg=pkg)
         return result
 
-    def _https_available_check(self, url):
+    def _https_available_check(self, pkg, future, urls):
         """Check if https:// alternatives exist for http:// URLs."""
+        orig_url, url = urls
         result = None
         try:
             # suppress urllib3 SSL cert verification failure log messages
@@ -146,60 +150,66 @@ class _UrlCheck(NetworkCheck):
                 if not response.is_permanent_redirect:
                     break
                 redirected_url = response.headers['location']
-            orig_url = f'http://{url[8:]}'
-            if redirected_url:
-                if redirected_url.startswith('https://'):
-                    result = partial(HttpsUrlAvailable, orig_url, redirected_url)
-            else:
-                result = partial(HttpsUrlAvailable, orig_url, url)
+            # skip result if http:// URL check was redirected to https://
+            if not isinstance(future.result(), HttpsUrlAvailable):
+                if redirected_url:
+                    if redirected_url.startswith('https://'):
+                        result = HttpsUrlAvailable(orig_url, redirected_url, pkg=pkg)
+                else:
+                    result = HttpsUrlAvailable(orig_url, url, pkg=pkg)
         except (RequestError, SSLError) as e:
             pass
         return result
 
-    def _ftp_check(self, url):
+    def _ftp_check(self, pkg, url):
         """Check ftp:// URLs using urllib."""
         result = None
         try:
             response = urllib.request.urlopen(url, timeout=self.timeout)
         except urllib.error.URLError as e:
-            result = partial(self.dead_result, url, str(e.reason))
+            result = self.dead_result(url, str(e.reason), pkg=pkg)
         except socket.timeout as e:
-            result = partial(self.dead_result, url, str(e))
+            result = self.dead_result(url, str(e), pkg=pkg)
         return result
 
-    def _done(self, pkg, future):
+    def _done(self, future):
         result = future.result()
         if result:
             with self.reporter_lock:
-                self.options.reporter.report(result(pkg=pkg))
+                self.options.reporter.report(result)
 
     def _get_urls(self, pkg):
         raise NotImplementedError
+
+    def _schedule_check(self, func, url):
+        future = self.checked.get(url)
+        if future is None:
+            future = self.executor.submit(func, url)
+            future.add_done_callback(self._done)
+            self.checked[url] = future
+        elif future.done():
+            result = future.result()
+            if result:
+                yield result
+        else:
+            future.add_done_callback(self._done)
 
     def feed(self, pkg):
         http_urls, ftp_urls = partition(
             self._get_urls(pkg), predicate=lambda x: x.startswith('ftp://'))
         http_urls = tuple(http_urls)
-        http_to_https_urls = (
-            f'https://{url[7:]}' for url in http_urls if url.startswith('http://'))
 
-        for urls, func in (
-                (http_urls, self._http_check),
-                (http_to_https_urls, self._https_available_check),
-                (ftp_urls, self._ftp_check),
-                ):
+        for urls, func in ((http_urls, self._http_check),
+                           (ftp_urls, self._ftp_check)):
             for url in urls:
-                future = self.checked.get(url)
-                if future is None:
-                    future = self.executor.submit(func, url)
-                    future.add_done_callback(partial(self._done, pkg))
-                    self.checked[url] = future
-                elif future.done():
-                    result = future.result()
-                    if result:
-                        yield result(pkg=pkg)
-                else:
-                    future.add_done_callback(partial(self._done, pkg))
+                yield from self._schedule_check(partial(func, pkg), url)
+
+        http_to_https_urls = (
+            (url, f'https://{url[7:]}') for url in http_urls if url.startswith('http://'))
+        for orig_url, url in http_to_https_urls:
+            future = self.checked[orig_url]
+            yield from self._schedule_check(
+                partial(self._https_available_check, pkg, future), (orig_url, url))
 
 
 class HomepageUrlCheck(_UrlCheck):
