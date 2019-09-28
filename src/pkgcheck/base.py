@@ -252,8 +252,9 @@ class Result(metaclass=_LeveledResult):
     # all results are shown by default
     _filtered = False
 
+    # default to warning level
+    _level = 30
     # level values match those used in logging module
-    _level = None
     _level_to_desc = {
         40: ('error', 'red'),
         30: ('warning', 'yellow'),
