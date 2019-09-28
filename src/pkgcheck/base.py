@@ -262,10 +262,12 @@ class Result(metaclass=_LeveledResult):
 
     @property
     def color(self):
+        """Rendered result output color related to priority level."""
         return self._level_to_desc[self._level][1]
 
     @property
     def level(self):
+        """Result priority level."""
         return self._level_to_desc[self._level][0]
 
     def __str__(self):
@@ -273,11 +275,24 @@ class Result(metaclass=_LeveledResult):
 
     @property
     def desc(self):
+        """Result description."""
         raise NotImplementedError
 
     @property
     def _attrs(self):
+        """Return all public result attributes."""
         return {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+
+    @staticmethod
+    def attrs_to_pkg(d):
+        """Reconstruct a package object from split attributes."""
+        category = d.pop('category', None)
+        package = d.pop('package', None)
+        version = d.pop('version', None)
+        if any((category, package, version)):
+            pkg = RawCPV(category, package, version)
+            d['pkg'] = pkg
+        return d
 
     def __eq__(self, other):
         return self._attrs == other._attrs

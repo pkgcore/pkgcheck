@@ -272,12 +272,7 @@ class JsonStream(base.Reporter):
             raise DeserializationError(f'missing result class: {data!r}')
 
         # reconstruct a package object
-        category = d.pop('category', None)
-        package = d.pop('package', None)
-        version = d.pop('version', None)
-        if any((category, package, version)):
-            pkg = base.RawCPV(category, package, version)
-            d['pkg'] = pkg
+        d = base.Result.attrs_to_pkg(d)
 
         try:
             return cls(**d)
