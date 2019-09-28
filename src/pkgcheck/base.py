@@ -565,6 +565,10 @@ class RawCPV:
         return False
 
     @property
+    def key(self):
+        return f'{self.category}/{self.package}'
+
+    @property
     def versioned_atom(self):
         if self.fullver:
             return atom.atom(f'={self}')
