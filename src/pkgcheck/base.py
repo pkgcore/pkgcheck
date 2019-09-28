@@ -14,7 +14,6 @@ import re
 import sys
 from collections import OrderedDict, defaultdict, namedtuple, deque
 from contextlib import AbstractContextManager
-from operator import attrgetter
 
 from pkgcore import const as pkgcore_const
 from pkgcore.config.hint import ConfigHint
@@ -140,14 +139,10 @@ class Feed(Addon):
     """Base template for addon iterating over an item feed.
 
     :cvar scope: scope relative to the package repository the check runs under
-    :cvar priority: priority level of the check which plugger sorts by --
-        should be left alone except for weird pseudo-checks like the cache
-        wiper that influence other checks
     :cvar source: source of feed items
     """
 
     scope = version_scope
-    priority = 0
     _source = GenericSource
 
     @property
@@ -158,7 +153,7 @@ class Feed(Addon):
         """Do startup here."""
 
     def feed(self, item):
-        raise NotImplementedError
+        """Handle functionality against the passed in item."""
 
     def finish(self):
         """Do cleanup and omit final results here."""
@@ -795,19 +790,18 @@ class CheckRunner:
         return f'{self.__class__.__name__}({checks})'
 
 
-def plug(sinks, sources):
+def plug(checks, sources):
     """Plug together a pipeline.
 
     This tries to return a single pipeline if possible (even if it is
     more "expensive" than using separate pipelines). If more than one
     pipeline is needed it does not try to minimize the number.
 
-    :param sinks: Sequence of check instances.
+    :param checks: Sequence of check instances.
     :param sources: Dict of raw sources to source instances.
     :return: A sequence of (source, consumer) tuples.
     """
-    sinks = list(sinks)
-    sinks.sort(key=attrgetter('priority'))
+    sinks = list(checks)
 
     def build_sink(source_type):
         children = []

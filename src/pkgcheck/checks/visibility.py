@@ -7,7 +7,7 @@ from snakeoil.iterables import caching_iter
 from snakeoil.sequences import iflatten_func, iflatten_instance, stable_unique
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base
+from .. import addons, base, feeds
 
 
 class FakeConfigurable:
@@ -172,7 +172,7 @@ class NonsolvableDepsInExp(_NonsolvableDeps, base.Warning):
     """No potential solution for dependency on exp profile."""
 
 
-class VisibilityCheck(base.Check):
+class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, base.Check):
     """Visibility dependency scans.
 
     Check that at least one solution is possible for a pkg, checking all
@@ -180,18 +180,14 @@ class VisibilityCheck(base.Check):
     keyword.
     """
 
-    required_addons = (
-        addons.QueryCacheAddon, addons.ProfileAddon,
-        addons.EvaluateDepSetAddon)
+    required_addons = (addons.ProfileAddon,)
     known_results = (
         VisibleVcsPkg, NonexistentDeps, UncheckableDep,
         NonsolvableDepsInStable, NonsolvableDepsInDev, NonsolvableDepsInExp,
     )
 
-    def __init__(self, options, query_cache, profiles, depset_cache):
-        super().__init__(options)
-        self.query_cache = query_cache.query_cache
-        self.depset_cache = depset_cache
+    def __init__(self, options, profiles):
+        super().__init__(options, profiles)
         self.profiles = profiles
         self.report_cls_map = {
             'stable': NonsolvableDepsInStable,
@@ -200,6 +196,8 @@ class VisibilityCheck(base.Check):
         }
 
     def feed(self, pkg):
+        super().feed(pkg)
+
         # query_cache gets caching_iter partial repo searches shoved into it-
         # reason is simple, it's likely that versions of this pkg probably
         # use similar deps- so we're forcing those packages that were
@@ -250,7 +248,7 @@ class VisibilityCheck(base.Check):
                 continue
             depset = getattr(pkg, attr)
             profile_failures = defaultdict(lambda: defaultdict(set))
-            for edepset, profiles in self.depset_cache.collapse_evaluate_depset(
+            for edepset, profiles in self.collapse_evaluate_depset(
                     pkg, attr, depset):
                 for profile, failures in self.process_depset(
                         pkg, attr, depset, edepset, profiles):
