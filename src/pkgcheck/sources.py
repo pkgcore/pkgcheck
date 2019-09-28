@@ -123,8 +123,8 @@ class EbuildFileRepoSource(base.GenericSource):
             yield _SourcePkg(pkg=pkg, lines=tuple(pkg.ebuild.text_fileobj()))
 
 
-class _CollapsedRepoSource(base.GenericSource):
-    """Generic repository source collapsing packages into similar chunks."""
+class _CombinedSource(base.GenericSource):
+    """Generic source combining packages into similar chunks."""
 
     def keyfunc(self, pkg):
         raise NotImplementedError(self.keyfunc)
@@ -133,32 +133,32 @@ class _CollapsedRepoSource(base.GenericSource):
         key = None
         chunk = None
         for pkg in super().itermatch(restrict):
-            flag = self.keyfunc(pkg)
-            if flag == key:
+            new = self.keyfunc(pkg)
+            if new == key:
                 chunk.append(pkg)
             else:
                 if chunk is not None:
                     yield chunk
                 chunk = [pkg]
-                key = flag
+                key = new
         if chunk is not None:
             yield chunk
 
 
-class PackageRepoSource(_CollapsedRepoSource):
+class PackageRepoSource(_CombinedSource):
     """Ebuild repository source yielding lists of versioned packages per package."""
 
     keyfunc = attrgetter('key')
 
 
-class CategoryRepoSource(_CollapsedRepoSource):
+class CategoryRepoSource(_CombinedSource):
     """Ebuild repository source yielding lists of versioned packages per category."""
 
     keyfunc = attrgetter('category')
 
 
-class RawPackageRepoSource(_CollapsedRepoSource):
-    """Ebuild repository source yielding lists of versioned packages per package."""
+class RawPackageRepoSource(_CombinedSource):
+    """Repository source yielding lists of tuples of (pkg, cat) per package."""
 
     def keyfunc(self, pkg):
         return (pkg.category, pkg.package)
