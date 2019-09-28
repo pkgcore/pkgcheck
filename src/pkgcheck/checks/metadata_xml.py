@@ -424,7 +424,7 @@ class CategoryMetadataXmlCheck(_XmlBaseCheck):
     """Category level metadata.xml scans."""
 
     scope = base.category_scope
-    _source = sources.CategoryRepoSource
+    _source = (sources.CategoryRepoSource, (), (('source', sources.RawRepoSource),))
     misformed_error = CatBadlyFormedXml
     invalid_error = CatInvalidXml
     missing_error = CatMissingMetadataXml
