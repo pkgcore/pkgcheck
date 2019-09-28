@@ -26,7 +26,7 @@ from pkgcheck.scripts import pkgcheck
 # TODO: merge this with the pkgcore-provided equivalent
 class FakePkg(package):
 
-    def __init__(self, cpvstr, data=None, parent=None, ebuild=''):
+    def __init__(self, cpvstr, data=None, parent=None, ebuild='', **kwargs):
         if data is None:
             data = {}
 
@@ -40,6 +40,10 @@ class FakePkg(package):
         super().__init__(shared, parent, cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
         object.__setattr__(self, "_ebuild", ebuild)
+
+        # custom attributes
+        for attr, value in kwargs.items():
+            object.__setattr__(self, attr, value)
 
     @property
     def eapi(self):
