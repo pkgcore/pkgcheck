@@ -401,8 +401,8 @@ class FilteredVersionResult(VersionedResult):
         super().__init__(pkg, **kwargs)
 
 
-class LogError(Error):
-    """Error caught from a logger instance."""
+class _LogResult(Result):
+    """Message caught from a logger instance."""
 
     def __init__(self, msg):
         super().__init__()
@@ -413,8 +413,12 @@ class LogError(Error):
         return self.msg
 
 
-class LogWarning(Warning, LogError):
+class LogWarning(_LogResult, Warning):
     """Warning caught from a logger instance."""
+
+
+class LogError(_LogResult, Error):
+    """Error caught from a logger instance."""
 
 
 class MetadataError(VersionedResult, Error):
