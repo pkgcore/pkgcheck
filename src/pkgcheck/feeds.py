@@ -5,30 +5,6 @@ from operator import attrgetter
 from . import base
 
 
-class VersionToEbuild(base.Transform):
-    """Convert from just a package to a (package, list_of_lines) tuple."""
-
-    source = base.versioned_feed
-    dest = base.ebuild_feed
-    scope = base.version_scope
-    cost = 20
-
-    def feed(self, pkg):
-        yield from self.child.feed((pkg, tuple(pkg.ebuild.text_fileobj())))
-
-
-class EbuildToVersion(base.Transform):
-    """Convert (package, list_of_lines) to just package."""
-
-    source = base.ebuild_feed
-    dest = base.versioned_feed
-    scope = base.version_scope
-    cost = 5
-
-    def feed(self, pair):
-        yield from self.child.feed(pair[0])
-
-
 class _Collapse(base.Transform):
     """Collapse the input into tuples with a function returning the same val.
 
