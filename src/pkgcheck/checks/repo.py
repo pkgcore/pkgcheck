@@ -46,3 +46,45 @@ class RepoDirCheck(GentooRepoCheck):
                         self.dirs.append(entry.path)
                 elif is_binary(entry.path):
                     yield BinaryFile(entry.path[len(self.repo.location) + 1:])
+
+
+class EmptyCategoryDir(base.CategoryResult, base.Warning):
+    """Empty category directory in the repository."""
+
+    threshold = base.repository_feed
+
+    @property
+    def desc(self):
+        return f'empty category directory: {self.category}'
+
+
+class EmptyPackageDir(base.PackageResult, base.Warning):
+    """Empty package directory in the repository."""
+
+    threshold = base.repository_feed
+
+    @property
+    def desc(self):
+        return f'empty package directory: {self.category}/{self.package}'
+
+
+class EmptyDirsCheck(GentooRepoCheck):
+    """Scan for empty category or package directories."""
+
+    scope = base.repository_scope
+    _source = sources.EmptySource
+    known_results = (EmptyCategoryDir, EmptyPackageDir)
+
+    def __init__(self, options):
+        super().__init__(options)
+        self.repo = options.target_repo
+
+    def finish(self):
+        for cat, pkgs in sorted(self.repo.packages.items()):
+            if not pkgs:
+                yield EmptyCategoryDir(pkg=base.RawCPV(cat, None, None))
+                continue
+            for pkg in sorted(pkgs):
+                versions = self.repo.versions[(cat, pkg)]
+                if not versions:
+                    yield EmptyPackageDir(pkg=base.RawCPV(cat, pkg, None))

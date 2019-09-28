@@ -1,4 +1,6 @@
 CatMissingMetadataXml
 EbuildHeaderCheck
+EmptyCategoryDir
+EmptyDirsCheck
 PackageMetadataXmlCheck
 PkgDirCheck

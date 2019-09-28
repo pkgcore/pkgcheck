@@ -1,0 +1,18 @@
+diff -Naur gentoo/EmptyCategoryDir/metadata.xml fixed/EmptyCategoryDir/metadata.xml
+--- gentoo/EmptyCategoryDir/metadata.xml	2019-09-28 17:30:51.177331471 -0600
++++ fixed/EmptyCategoryDir/metadata.xml	1969-12-31 17:00:00.000000000 -0700
+@@ -1,4 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!DOCTYPE catmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<catmetadata>
+-</catmetadata>
+diff -Naur gentoo/profiles/categories fixed/profiles/categories
+--- gentoo/profiles/categories	2019-09-28 17:33:51.571072362 -0600
++++ fixed/profiles/categories	2019-09-28 17:51:54.423489257 -0600
+@@ -1,6 +1,5 @@
+ CatMissingMetadataXml
+ EbuildHeaderCheck
+-EmptyCategoryDir
+ EmptyDirsCheck
+ PackageMetadataXmlCheck
+ PkgDirCheck
