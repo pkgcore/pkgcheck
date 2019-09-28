@@ -155,10 +155,3 @@ class CategoryRepoSource(_CombinedSource):
     """Ebuild repository source yielding lists of versioned packages per category."""
 
     keyfunc = attrgetter('category')
-
-
-class RawPackageRepoSource(_CombinedSource):
-    """Repository source yielding lists of tuples of (pkg, cat) per package."""
-
-    def keyfunc(self, pkg):
-        return (pkg.category, pkg.package)

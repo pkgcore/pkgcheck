@@ -157,7 +157,7 @@ class PkgDirCheck(base.Check):
     """Actual ebuild directory scans; file size, glep31 rule enforcement."""
 
     scope = base.package_scope
-    _source = (sources.RawPackageRepoSource, (), (('source', sources.RawRepoSource),))
+    _source = (sources.PackageRepoSource, (), (('source', sources.RawRepoSource),))
 
     ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
     known_results = (
