@@ -13,6 +13,7 @@ from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import packages, values, boolean
 from snakeoil.klass import jit_attr
+from snakeoil.log import suppress_logging
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
@@ -439,7 +440,9 @@ class LocalUSECheck(base.Check):
 
     def feed(self, pkgs):
         pkg = pkgs[0]
-        local_use = pkg.local_use
+        # metadata_xml checks catch xml issues, suppress warning/error logs here
+        with suppress_logging():
+            local_use = pkg.local_use
 
         for flag, desc in local_use.items():
             if flag in self.global_use:
