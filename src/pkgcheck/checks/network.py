@@ -114,7 +114,7 @@ class _UrlCheck(NetworkCheck):
         self.dead_result = None
         self.redirected_result = None
 
-    def _http_check(self, pkg, url):
+    def _http_check(self, url, *, pkg):
         """Check http:// and https:// URLs using requests."""
         result = None
         try:
@@ -137,9 +137,8 @@ class _UrlCheck(NetworkCheck):
             result = self.dead_result(url, str(e), pkg=pkg)
         return result
 
-    def _https_available_check(self, pkg, future, urls):
+    def _https_available_check(self, url, *, future, orig_url, pkg):
         """Check if https:// alternatives exist for http:// URLs."""
-        orig_url, url = urls
         result = None
         try:
             # suppress urllib3 SSL cert verification failure log messages
@@ -161,7 +160,7 @@ class _UrlCheck(NetworkCheck):
             pass
         return result
 
-    def _ftp_check(self, pkg, url):
+    def _ftp_check(self, url, *, pkg):
         """Check ftp:// URLs using urllib."""
         result = None
         try:
@@ -181,10 +180,10 @@ class _UrlCheck(NetworkCheck):
     def _get_urls(self, pkg):
         raise NotImplementedError
 
-    def _schedule_check(self, func, url):
+    def _schedule_check(self, func, url, **kwargs):
         future = self.checked.get(url)
         if future is None:
-            future = self.executor.submit(func, url)
+            future = self.executor.submit(func, url, **kwargs)
             future.add_done_callback(self._done)
             self.checked[url] = future
         elif future.done():
@@ -202,14 +201,15 @@ class _UrlCheck(NetworkCheck):
         for urls, func in ((http_urls, self._http_check),
                            (ftp_urls, self._ftp_check)):
             for url in urls:
-                yield from self._schedule_check(partial(func, pkg), url)
+                yield from self._schedule_check(func, url, pkg=pkg)
 
         http_to_https_urls = (
             (url, f'https://{url[7:]}') for url in http_urls if url.startswith('http://'))
         for orig_url, url in http_to_https_urls:
             future = self.checked[orig_url]
             yield from self._schedule_check(
-                partial(self._https_available_check, pkg, future), (orig_url, url))
+                self._https_available_check, url,
+                future=future, orig_url=orig_url, pkg=pkg)
 
 
 class HomepageUrlCheck(_UrlCheck):
