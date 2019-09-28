@@ -39,7 +39,7 @@ class RawRepoSource(base.GenericSource):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.repo = _RawRepo(self.repo)
+        self._repo = _RawRepo(self._repo)
 
     def itermatch(self, restrict):
         yield from super().itermatch(restrict, raw_pkg_cls=base.RawCPV)
@@ -62,8 +62,8 @@ class UnmaskedRepoSource(base.GenericSource):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.repo = self.options.domain.filter_repo(
-            self.repo, pkg_masks=(), pkg_unmasks=(),
+        self._repo = self._options.domain.filter_repo(
+            self._repo, pkg_masks=(), pkg_unmasks=(),
             pkg_accept_keywords=(), pkg_keywords=(), profile=False)
 
 
@@ -78,7 +78,7 @@ class GitCommitsRepoSource(base.GenericSource):
 
     def __init__(self, options, git_addon):
         super().__init__(options)
-        self.repo = git_addon.commits_repo(addons.GitChangedRepo)
+        self._repo = git_addon.commits_repo(addons.GitChangedRepo)
 
 
 class GitCommitsSource(base.GenericSource):

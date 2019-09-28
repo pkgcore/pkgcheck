@@ -110,12 +110,20 @@ class GenericSource:
     feed_type = versioned_feed
     cost = 10
 
-    def __init__(self, options):
-        self.options = options
-        self.repo = options.target_repo
+    def __init__(self, options, source=None):
+        self._options = options
+        self._repo = options.target_repo
+        self._source = source
+
+    @property
+    def source(self):
+        if self._source is not None:
+            return self._source
+        return self._repo
 
     def itermatch(self, restrict, **kwargs):
-        yield from self.repo.itermatch(restrict, sorter=sorted, **kwargs)
+        kwargs.setdefault('sorter', sorted)
+        yield from self.source.itermatch(restrict, **kwargs)
 
 
 class EmptySource(GenericSource):
@@ -128,15 +136,14 @@ class EmptySource(GenericSource):
 class FilteredRepoSource(GenericSource):
     """Ebuild repository source supporting custom package filtering."""
 
-    def __init__(self, pkg_filter, partial_filtered, *args, source):
-        super().__init__(*args)
+    def __init__(self, pkg_filter, partial_filtered, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._pkg_filter = pkg_filter
         self._partial_filtered = partial_filtered
-        self._source = source
 
     def itermatch(self, restrict):
         yield from self._pkg_filter(
-            self._source.itermatch(restrict), partial_filtered=self._partial_filtered)
+            super().itermatch(restrict), partial_filtered=self._partial_filtered)
 
 
 class Feed(Addon):
