@@ -13,8 +13,8 @@ class TestBadCommandsCheck(misc.ReportTestCase):
     check_kls = codingstyle.BadCommandsCheck
     check = codingstyle.BadCommandsCheck(options=None)
 
-    def mk_pkg(self, eapi='0'):
-        return misc.FakePkg("dev-util/diff-0.5", data={'EAPI': eapi})
+    def mk_pkg(self, eapi='0', lines=()):
+        return misc.FakePkg("dev-util/diff-0.5", data={'EAPI': eapi}, lines=lines)
 
     def test_no_matches(self):
         fake_src = [
@@ -22,15 +22,15 @@ class TestBadCommandsCheck(misc.ReportTestCase):
             '\n',
             'doins -r foobar\n',
         ]
-        self.assertNoReport(self.check, [self.mk_pkg(), fake_src])
+        self.assertNoReport(self.check, self.mk_pkg(lines=fake_src))
 
     def test_all_internals(self):
         for command in self.check_kls.INTERNALS:
             # commented lines are skipped
             line = f'{command} foo bar'
-            self.assertNoReport(self.check, [self.mk_pkg(), [f'#{line}']])
+            self.assertNoReport(self.check, self.mk_pkg(lines=[f'#{line}']))
 
-            r = self.assertReport(self.check, [self.mk_pkg(), [line]])
+            r = self.assertReport(self.check, self.mk_pkg(lines=[line]))
             assert isinstance(r, codingstyle.PortageInternals)
             assert r.command == command
             assert r.line == line
@@ -42,10 +42,11 @@ class TestBadCommandsCheck(misc.ReportTestCase):
             for command in eapi.bash_cmds_deprecated:
                 # commented lines are skipped
                 line = f'{command} foo bar'
-                pkg = self.mk_pkg(eapi_str)
-                self.assertNoReport(self.check, [pkg, [f'#{line}']])
+                pkg = self.mk_pkg(eapi_str, lines=[f'#{line}'])
+                self.assertNoReport(self.check, pkg)
 
-                r = self.assertReport(self.check, [pkg, [line]])
+                pkg = self.mk_pkg(eapi_str, lines=[line])
+                r = self.assertReport(self.check, pkg)
                 assert isinstance(r, codingstyle.DeprecatedEapiCommand)
                 assert r.command == command
                 assert r.eapi == eapi_str
@@ -58,10 +59,11 @@ class TestBadCommandsCheck(misc.ReportTestCase):
             for command in eapi.bash_cmds_banned:
                 # commented lines are skipped
                 line = f'{command} foo bar'
-                pkg = self.mk_pkg(eapi_str)
-                self.assertNoReport(self.check, [pkg, [f'#{line}']])
+                pkg = self.mk_pkg(eapi_str, lines=[f'#{line}'])
+                self.assertNoReport(self.check, pkg)
 
-                r = self.assertReport(self.check, [pkg, [line]])
+                pkg = self.mk_pkg(eapi_str, lines=[line])
+                r = self.assertReport(self.check, pkg)
                 assert isinstance(r, codingstyle.BannedEapiCommand)
                 assert r.command == command
                 assert r.eapi == eapi_str
@@ -75,7 +77,6 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
     check_kls = codingstyle.BadInsIntoCheck
 
     def test_insinto(self):
-        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
         fake_src = [
             "# This is our first fake ebuild\n",
             "\n",
@@ -89,6 +90,7 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
             "\tinsinto //usr/share//applications//\n",
             "# That's it for now\n",
         ]
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
 
         bad = (
             "/etc/env.d", "/etc/conf.d", "/etc/init.d", "/etc/pam.d",
@@ -97,7 +99,7 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
         )
         check = self.check_kls(options=None)
 
-        reports = self.assertReports(check, [fake_pkg, fake_src])
+        reports = self.assertReports(check, fake_pkg)
         for r, path in zip(reports, bad):
             assert path in str(r)
 
@@ -105,13 +107,14 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
         check = self.check_kls(options=None)
         for path in ('${PF}', '${P}', '${PF}/examples'):
             for eapi_str, eapi in EAPI.known_eapis.items():
-                fake_pkg = misc.FakePkg("dev-util/diff-0.5", data={'EAPI': eapi_str})
                 fake_src = [f'\tinsinto /usr/share/doc/{path}\n']
+                fake_pkg = misc.FakePkg(
+                    "dev-util/diff-0.5", data={'EAPI': eapi_str}, lines=fake_src)
                 if eapi.options.dodoc_allow_recursive:
-                    r = self.assertReport(check, [fake_pkg, fake_src])
+                    r = self.assertReport(check, fake_pkg)
                     assert path in str(r)
                 else:
-                    self.assertNoReport(check, [fake_pkg, fake_src])
+                    self.assertNoReport(check, fake_pkg)
 
 
 class TestAbsoluteSymlink(misc.ReportTestCase):
@@ -136,7 +139,6 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
             ("/crazy/root/dir", "/crazy/symlink"),
         )
 
-        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
         fake_src = [
             "# This is our first fake ebuild\n",
             "\n",
@@ -144,9 +146,10 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
         for src, dest in chain.from_iterable((absolute, relative, unhandled)):
             fake_src.append(f"\tdosym {src} {dest}\n")
         fake_src.append("# That's it for now\n")
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
 
         check = self.check_kls(options=None)
-        reports = self.assertReports(check, [fake_pkg, fake_src])
+        reports = self.assertReports(check, fake_pkg)
         abspaths = [x.abspath for x in reports]
 
         assert len(reports) == len(absolute)
@@ -169,11 +172,12 @@ class TestPathVariablesCheck(misc.ReportTestCase):
                     fake_src.append(f'   rm "${{{path_var}{suffix}}}"a/file{x} || die\n')
                 fake_src.extend(["}\n", "\n"])
                 for eapi_str, eapi in EAPI.known_eapis.items():
-                    fake_pkg = misc.FakePkg("dev-util/diff-0.5", data={'EAPI': eapi_str})
+                    fake_pkg = misc.FakePkg(
+                        "dev-util/diff-0.5", data={'EAPI': eapi_str}, lines=fake_src)
                     if eapi.options.trailing_slash:
-                        self.assertNoReport(self.check, [fake_pkg, fake_src])
+                        self.assertNoReport(self.check, fake_pkg)
                     else:
-                        r = self.assertReport(self.check, [fake_pkg, fake_src])
+                        r = self.assertReport(self.check, fake_pkg)
                         assert isinstance(r, cls)
                         assert r.match == f'${{{path_var}{suffix}}}'
                         assert r.lines == tuple(x + 2 for x in range(lines))
@@ -188,8 +192,9 @@ class TestPathVariablesCheck(misc.ReportTestCase):
                 "\n",
             ]
             for eapi_str, eapi in EAPI.known_eapis.items():
-                fake_pkg = misc.FakePkg("dev-util/diffball-0.5", data={'EAPI': eapi_str})
-                self.assertNoReport(self.check, [fake_pkg, fake_src])
+                fake_pkg = misc.FakePkg(
+                    "dev-util/diffball-0.5", data={'EAPI': eapi_str}, lines=fake_src)
+                self.assertNoReport(self.check, fake_pkg)
 
     def test_missing_found(self):
         self._found(codingstyle.MissingSlash)
@@ -226,8 +231,8 @@ class TestPathVariablesCheck(misc.ReportTestCase):
             '#  exeinto "${EPREFIX}/foo/bar"\n',
             '}\n'
         ]
-        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
-        r = self.assertReports(self.check, [fake_pkg, fake_src])
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        r = self.assertReports(self.check, fake_pkg)
         cls = codingstyle.DoublePrefixInPath
         expected_results = (
             ('${ED}$(python_get_sitedir)', 2),
@@ -260,21 +265,21 @@ class TestPathVariablesCheck(misc.ReportTestCase):
             '    dodir /etc/env.d && echo "FOO=${EPREFIX}"\n',
             '}\n'
         ]
-        fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
-        self.assertNoReport(self.check, [fake_pkg, fake_src])
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        self.assertNoReport(self.check, fake_pkg)
 
 
 class TestObsoleteUri(misc.ReportTestCase):
 
     check_kls = codingstyle.ObsoleteUriCheck
-    fake_pkg = misc.FakePkg("dev-util/diffball-0.5")
 
     def test_github_archive_uri(self):
         uri = 'https://github.com/foo/bar/archive/${PV}.tar.gz'
         fake_src = [
             f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
         ]
-        self.assertNoReport(self.check_kls(options=None), [self.fake_pkg, fake_src])
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        self.assertNoReport(self.check_kls(options=None), fake_pkg)
 
     def test_commented_github_tarball_uri(self):
         uri = 'https://github.com/foo/bar/tarball/${PV}'
@@ -283,7 +288,8 @@ class TestObsoleteUri(misc.ReportTestCase):
             '\n',
             f'# {uri}\n'
         ]
-        self.assertNoReport(self.check_kls(options=None), [self.fake_pkg, fake_src])
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        self.assertNoReport(self.check_kls(options=None), fake_pkg)
 
     def test_github_tarball_uri(self):
         uri = 'https://github.com/foo/bar/tarball/${PV}'
@@ -291,8 +297,8 @@ class TestObsoleteUri(misc.ReportTestCase):
             f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
         ]
 
-        r = self.assertReport(self.check_kls(options=None),
-                              [self.fake_pkg, fake_src])
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        r = self.assertReport(self.check_kls(options=None), fake_pkg)
         assert r.line == 1
         assert r.uri == uri
         assert (r.replacement ==
@@ -305,8 +311,8 @@ class TestObsoleteUri(misc.ReportTestCase):
             f'SRC_URI="{uri} -> ${{P}}.zip"\n'
         ]
 
-        r = self.assertReport(self.check_kls(options=None),
-                              [self.fake_pkg, fake_src])
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        r = self.assertReport(self.check_kls(options=None), fake_pkg)
         assert r.line == 1
         assert r.uri == uri
         assert (r.replacement ==
@@ -318,7 +324,8 @@ class TestObsoleteUri(misc.ReportTestCase):
         fake_src = [
             f'SRC_URI="{uri}"\n'
         ]
-        self.assertNoReport(self.check_kls(options=None), [self.fake_pkg, fake_src])
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        self.assertNoReport(self.check_kls(options=None), fake_pkg)
 
     def test_gitlab_tar_gz_uri(self):
         uri = 'https://gitlab.com/foo/bar/repository/archive.tar.gz?ref=${PV}'
@@ -326,8 +333,8 @@ class TestObsoleteUri(misc.ReportTestCase):
             f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
         ]
 
-        r = self.assertReport(self.check_kls(options=None),
-                              [self.fake_pkg, fake_src])
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        r = self.assertReport(self.check_kls(options=None), fake_pkg)
         assert r.line == 1
         assert r.uri == uri
         assert (r.replacement ==
@@ -340,8 +347,8 @@ class TestObsoleteUri(misc.ReportTestCase):
             f'SRC_URI="{uri} -> ${{P}}.tar.bz2"\n'
         ]
 
-        r = self.assertReport(self.check_kls(options=None),
-                              [self.fake_pkg, fake_src])
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        r = self.assertReport(self.check_kls(options=None), fake_pkg)
         assert r.line == 1
         assert r.uri == uri
         assert (r.replacement ==
@@ -354,8 +361,8 @@ class TestObsoleteUri(misc.ReportTestCase):
             f'SRC_URI="{uri} -> ${{P}}.zip"\n'
         ]
 
-        r = self.assertReport(self.check_kls(options=None),
-                              [self.fake_pkg, fake_src])
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        r = self.assertReport(self.check_kls(options=None), fake_pkg)
         assert r.line == 1
         assert r.uri == uri
         assert (r.replacement ==
@@ -367,13 +374,12 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
 
     check_kls = codingstyle.EbuildHeaderCheck
 
-    def mk_pkg(self):
-        return misc.FakePkg("dev-util/diffball-0.5")
+    def mk_pkg(self, **kwargs):
+        return misc.FakePkg("dev-util/diffball-0.5", **kwargs)
 
     def test_empty_file(self):
-        fake_src = []
-        fake_pkg = self.mk_pkg()
-        self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
+        fake_pkg = self.mk_pkg(lines=())
+        self.assertNoReport(self.check_kls(options=None), fake_pkg)
 
     def test_good_copyright(self):
         good_copyrights = [
@@ -381,10 +387,10 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
             '# Copyright 2019 Gentoo Authors\n',
             '# Copyright 2010-2017 Gentoo Authors\n',
         ]
-        fake_pkg = self.mk_pkg()
         for line in good_copyrights:
             fake_src = [line, self.check_kls.license_header]
-            self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
+            fake_pkg = self.mk_pkg(lines=fake_src)
+            self.assertNoReport(self.check_kls(options=None), fake_pkg)
 
     def test_invalid_copyright(self):
         bad_copyrights = [
@@ -394,10 +400,10 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
             '# Here is entirely random text\n',
             '\n',
         ]
-        fake_pkg = self.mk_pkg()
         for line in bad_copyrights:
             fake_src = [line, self.check_kls.license_header]
-            r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
+            fake_pkg = self.mk_pkg(lines=fake_src)
+            r = self.assertReport(self.check_kls(options=None), fake_pkg)
             assert isinstance(r, codingstyle.InvalidCopyright)
             assert line.strip() in str(r)
 
@@ -409,10 +415,10 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
             '# Copyright 3125 Gentoo Foundation\n',
             '# Copyright 2010-2021 Gentoo Foundation\n',
         ]
-        fake_pkg = self.mk_pkg()
         for line in bad_copyrights:
             fake_src = [line, self.check_kls.license_header]
-            r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
+            fake_pkg = self.mk_pkg(lines=fake_src)
+            r = self.assertReport(self.check_kls(options=None), fake_pkg)
             assert isinstance(r, codingstyle.OldGentooCopyright)
             assert line.strip() in str(r)
 
@@ -423,10 +429,10 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
             '# Copyright 2016 Gentoo Foundation\n',
             '# Copyright 2010-2017 Gentoo Foundation\n',
         ]
-        fake_pkg = self.mk_pkg()
         for line in good_copyrights:
             fake_src = [line, self.check_kls.license_header]
-            self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
+            fake_pkg = self.mk_pkg(lines=fake_src)
+            self.assertNoReport(self.check_kls(options=None), fake_pkg)
 
     def test_non_gentoo_authors_copyright_in_gentoo(self):
         """Ebuilds in the gentoo repo must use 'Gentoo Authors'."""
@@ -434,18 +440,18 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
             '# Copyright 1999-2019 D. E. Veloper\n',
             '# Copyright 2019 辣鸡汤\n',
         ]
-        fake_pkg = self.mk_pkg()
         for line in bad_copyrights:
             fake_src = [line, self.check_kls.license_header]
-            r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
+            fake_pkg = self.mk_pkg(lines=fake_src)
+            r = self.assertReport(self.check_kls(options=None), fake_pkg)
             assert isinstance(r, codingstyle.NonGentooAuthorsCopyright)
             assert line.strip() in str(r)
 
     def test_license_headers(self):
         copyright = '# Copyright 1999-2019 Gentoo Authors\n'
-        fake_pkg = self.mk_pkg()
         fake_src = [copyright, self.check_kls.license_header]
-        self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        self.assertNoReport(self.check_kls(options=None), fake_pkg)
 
         bad_license_headers = [
             '',
@@ -456,7 +462,8 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
         ]
         for line in bad_license_headers:
             fake_src = [copyright, line]
-            r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
+            fake_pkg = self.mk_pkg(lines=fake_src)
+            r = self.assertReport(self.check_kls(options=None), fake_pkg)
             assert isinstance(r, codingstyle.InvalidLicenseHeader)
             assert line.strip() in str(r)
 
@@ -465,34 +472,34 @@ class TestHomepageInSrcUri(misc.ReportTestCase):
 
     check_kls = codingstyle.HomepageInSrcUriCheck
 
-    def mk_pkg(self):
-        return misc.FakePkg("dev-util/diffball-0.5")
+    def mk_pkg(self, **kwargs):
+        return misc.FakePkg("dev-util/diffball-0.5", **kwargs)
 
     def test_single_line(self):
-        fake_pkg = self.mk_pkg()
         fake_src = ['HOMEPAGE="https://example.com/"\n',
                     'SRC_URI="${HOMEPAGE}/${P}.tar.bz2"\n']
-        r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        r = self.assertReport(self.check_kls(options=None), fake_pkg)
         assert isinstance(r, codingstyle.HomepageInSrcUri)
         assert str(r) == '${HOMEPAGE} in SRC_URI'
 
     def test_multi_line(self):
-        fake_pkg = self.mk_pkg()
         fake_src = ['HOMEPAGE="https://example.com/"\n',
                     'SRC_URI="https://example.org/${P}-manpages.tar.bz2\n',
                     '\t${HOMEPAGE}/${P}.tar.bz2"\n']
-        r = self.assertReport(self.check_kls(options=None), [fake_pkg, fake_src])
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        r = self.assertReport(self.check_kls(options=None), fake_pkg)
         assert isinstance(r, codingstyle.HomepageInSrcUri)
 
     def test_no_match(self):
-        fake_pkg = self.mk_pkg()
         fake_src = ['HOMEPAGE="https://example.com/"\n',
                     'SRC_URI="https://example.com/${P}.tar.bz2"\n']
-        self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        self.assertNoReport(self.check_kls(options=None), fake_pkg)
 
     def test_no_false_positive(self):
-        fake_pkg = self.mk_pkg()
         fake_src = ['HOMEPAGE="https://example.com/"\n',
                     'SRC_URI="https://example.com/${P}.tar.bz2"\n',
                     '# ${HOMEPAGE} must not be used here\n']
-        self.assertNoReport(self.check_kls(options=None), [fake_pkg, fake_src])
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        self.assertNoReport(self.check_kls(options=None), fake_pkg)

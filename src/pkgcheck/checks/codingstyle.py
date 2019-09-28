@@ -9,7 +9,7 @@ from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism as _pl
 
-from .. import base
+from .. import base, sources
 from . import GentooRepoCheck
 
 demand_compile_regexp(
@@ -70,6 +70,7 @@ class BadCommandsCheck(base.Check):
     """Scan ebuild for various deprecated and banned command usage."""
 
     feed_type = base.ebuild_feed
+    _source = sources.EbuildFileRepoSource
     known_results = (PortageInternals, DeprecatedEapiCommand, BannedEapiCommand)
 
     INTERNALS = (
@@ -109,10 +110,9 @@ class BadCommandsCheck(base.Check):
             d[eapi_str] = tuple(regexes)
         return ImmutableDict(d)
 
-    def feed(self, entry):
-        pkg, lines = entry
+    def feed(self, pkg):
         regexes = self.regexes[str(pkg.eapi)]
-        for lineno, line in enumerate(lines, 1):
+        for lineno, line in enumerate(pkg.lines, 1):
             line = line.strip()
             if not line:
                 continue
@@ -178,6 +178,7 @@ class PathVariablesCheck(base.Check):
     """Scan ebuild for path variables with various issues."""
 
     feed_type = base.ebuild_feed
+    _source = sources.EbuildFileRepoSource
     known_results = (MissingSlash, UnnecessarySlashStrip, DoublePrefixInPath)
     prefixed_dir_functions = (
         'insinto', 'exeinto',
@@ -240,14 +241,12 @@ class PathVariablesCheck(base.Check):
                 r'|'.join(self.prefixed_getters),
                 r'|'.join(self.prefixed_rhs_variables)))
 
-    def feed(self, entry):
-        pkg, lines = entry
-
+    def feed(self, pkg):
         missing = defaultdict(list)
         unnecessary = defaultdict(list)
         double_prefix = defaultdict(list)
 
-        for lineno, line in enumerate(lines, 1):
+        for lineno, line in enumerate(pkg.lines, 1):
             line = line.strip()
             if not line:
                 continue
@@ -298,6 +297,7 @@ class AbsoluteSymlinkCheck(base.Check):
     """Scan ebuild for dosym absolute path usage instead of relative."""
 
     feed_type = base.ebuild_feed
+    _source = sources.EbuildFileRepoSource
     known_results = (AbsoluteSymlink,)
 
     DIRS = ('bin', 'etc', 'lib', 'opt', 'sbin', 'srv', 'usr', 'var')
@@ -307,9 +307,8 @@ class AbsoluteSymlinkCheck(base.Check):
         self.regex = re.compile(
             r'^\s*dosym\s+((["\'])?/(%s)(?(2).*?\2|\S*))' % r'|'.join(self.DIRS))
 
-    def feed(self, entry):
-        pkg, lines = entry
-        for lineno, line in enumerate(lines, 1):
+    def feed(self, pkg):
+        for lineno, line in enumerate(pkg.lines, 1):
             if not line.strip():
                 continue
             matches = self.regex.match(line)
@@ -334,6 +333,7 @@ class BadInsIntoCheck(base.Check):
     """Scan ebuild for bad insinto usage."""
 
     feed_type = base.ebuild_feed
+    _source = sources.EbuildFileRepoSource
     _bad_insinto = None
 
     known_results = (BadInsIntoDir,)
@@ -357,10 +357,8 @@ class BadInsIntoCheck(base.Check):
         cls._bad_insinto_doc = re.compile(
             r'(?P<insinto>insinto[ \t]+/usr/share/doc/\$\{PF?\}(/\w+)*)(?:$|[/ \t])')
 
-    def feed(self, entry):
-        pkg, lines = entry
-
-        for lineno, line in enumerate(lines, 1):
+    def feed(self, pkg):
+        for lineno, line in enumerate(pkg.lines, 1):
             if not line.strip():
                 continue
             matches = self._bad_insinto.search(line)
@@ -401,6 +399,7 @@ class ObsoleteUriCheck(base.Check):
     """Scan ebuild for obsolete URIs."""
 
     feed_type = base.ebuild_feed
+    _source = sources.EbuildFileRepoSource
     known_results = (ObsoleteUri,)
 
     REGEXPS = (
@@ -419,10 +418,8 @@ class ObsoleteUriCheck(base.Check):
         for regexp, repl in self.REGEXPS:
             self.regexes.append((re.compile(regexp), repl))
 
-    def feed(self, entry):
-        pkg, lines = entry
-
-        for lineno, line in enumerate(lines, 1):
+    def feed(self, pkg):
+        for lineno, line in enumerate(pkg.lines, 1):
             if not line.strip() or line.startswith('#'):
                 continue
             # searching for multiple matches on a single line is too slow
@@ -508,6 +505,7 @@ class EbuildHeaderCheck(GentooRepoCheck):
     """Scan ebuild for incorrect copyright/license headers."""
 
     feed_type = base.ebuild_feed
+    _source = sources.EbuildFileRepoSource
     known_results = (
         InvalidCopyright, OldGentooCopyright, NonGentooAuthorsCopyright,
         InvalidLicenseHeader,
@@ -515,10 +513,9 @@ class EbuildHeaderCheck(GentooRepoCheck):
 
     license_header = '# Distributed under the terms of the GNU General Public License v2'
 
-    def feed(self, entry):
-        pkg, lines = entry
-        if lines:
-            line = lines[0].strip()
+    def feed(self, pkg):
+        if pkg.lines:
+            line = pkg.lines[0].strip()
             copyright = ebuild_copyright_regex.match(line)
             if copyright is None:
                 yield InvalidCopyright(line, pkg=pkg)
@@ -532,7 +529,7 @@ class EbuildHeaderCheck(GentooRepoCheck):
                     yield NonGentooAuthorsCopyright(line, pkg=pkg)
 
             try:
-                line = lines[1].strip('\n')
+                line = pkg.lines[1].strip('\n')
             except IndexError:
                 line = ''
             if line != self.license_header:
@@ -556,15 +553,14 @@ class HomepageInSrcUriCheck(base.Check):
     """Scan ebuild for ${HOMEPAGE} in SRC_URI."""
 
     feed_type = base.ebuild_feed
+    _source = sources.EbuildFileRepoSource
     known_results = (HomepageInSrcUri,)
 
     def __init__(self, options):
         super().__init__(options)
         self.regex = re.compile(r'^\s*SRC_URI="[^"]*[$]{HOMEPAGE}', re.M|re.S)
 
-    def feed(self, entry):
-        pkg, lines = entry
-
-        match = self.regex.search(''.join(lines))
+    def feed(self, pkg):
+        match = self.regex.search(''.join(pkg.lines))
         if match is not None:
             yield HomepageInSrcUri(pkg=pkg)
