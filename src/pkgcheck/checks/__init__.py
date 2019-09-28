@@ -5,7 +5,7 @@ from ..log import logger
 
 
 class GentooRepoCheck(base.Check):
-    """Check that is only valid when run against the gentoo repo."""
+    """Check that is only run against the gentoo repo."""
 
     @classmethod
     def skip(cls, namespace):
@@ -16,7 +16,7 @@ class GentooRepoCheck(base.Check):
 
 
 class OverlayRepoCheck(base.Check):
-    """Check that is only valid when run against an overlay repo."""
+    """Check that is only run against overlay repos."""
 
     @classmethod
     def skip(cls, namespace):
@@ -27,7 +27,7 @@ class OverlayRepoCheck(base.Check):
 
 
 class ExplicitlyEnabledCheck(base.Check):
-    """Check that is only valid when explicitly enabled."""
+    """Check that is only run when explicitly enabled."""
 
     @classmethod
     def skip(cls, namespace):
@@ -49,7 +49,7 @@ class ExplicitlyEnabledCheck(base.Check):
 
 
 class NetworkCheck(base.Check):
-    """Check requiring internet access."""
+    """Check that is only run when network support is enabled."""
 
     @classmethod
     def skip(cls, namespace):
