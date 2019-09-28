@@ -135,7 +135,6 @@ class PythonCheck(base.Check):
     they don't suffer from common mistakes.
     """
 
-    feed_type = base.versioned_feed
     known_results = (
         MissingPythonEclass, PythonSingleUseMismatch, PythonMissingRequiredUSE,
         PythonMissingDeps, PythonRuntimeDepInAnyR1, base.MetadataError,

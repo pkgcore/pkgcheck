@@ -180,7 +180,6 @@ class VisibilityCheck(base.Check):
     keyword.
     """
 
-    feed_type = base.versioned_feed
     required_addons = (
         addons.QueryCacheAddon, addons.ProfileAddon,
         addons.EvaluateDepSetAddon)

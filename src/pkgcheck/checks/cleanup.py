@@ -28,7 +28,6 @@ class RedundantVersionCheck(base.Check):
     pkga-1 can potentially be removed.
     """
 
-    feed_type = base.package_feed
     scope = base.package_scope
     _source = sources.PackageRepoSource
     known_results = (RedundantVersion,)

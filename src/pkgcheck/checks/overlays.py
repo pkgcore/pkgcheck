@@ -73,7 +73,6 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
                            OverlayRepoCheck, ExplicitlyEnabledCheck):
     """Check for various metadata that may be removed from master repos."""
 
-    feed_type = base.versioned_feed
     scope = base.repository_scope
     known_results = (
         UnusedInMastersLicenses, UnusedInMastersMirrors, UnusedInMastersEclasses,

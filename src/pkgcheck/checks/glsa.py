@@ -32,7 +32,6 @@ class GlsaCheck(GentooRepoCheck):
     Requires a GLSA directory for vulnerability info.
     """
 
-    feed_type = base.versioned_feed
     known_results = (VulnerablePackage,)
 
     @staticmethod

@@ -70,7 +70,6 @@ class LicenseMetadataCheck(base.Check):
         MetadataError, MissingLicense, UnnecessaryLicense, UnstatedIUSE,
         MissingLicenseRestricts,
     )
-    feed_type = base.versioned_feed
 
     # categories for ebuilds that can lack LICENSE settings
     unlicensed_categories = frozenset(['virtual', 'acct-group', 'acct-user'])
@@ -166,7 +165,6 @@ class UnknownUseFlags(_UseFlagsResult):
 class IUSEMetadataCheck(base.Check):
     """IUSE validity checks."""
 
-    feed_type = base.versioned_feed
     required_addons = (addons.UseAddon,)
     known_results = (InvalidUseFlags, UnknownUseFlags)
 
@@ -215,7 +213,6 @@ class BannedEAPI(_EAPIResult, base.Error):
 class MetadataCheck(base.Check):
     """Scan for packages with banned/deprecated EAPIs or bad metadata."""
 
-    feed_type = base.versioned_feed
     known_results = (DeprecatedEAPI, BannedEAPI, MetadataError)
 
     def feed(self, pkg):
@@ -282,7 +279,6 @@ class RequiredUseDefaults(base.VersionedResult, base.Warning):
 class RequiredUSEMetadataCheck(base.Check):
     """REQUIRED_USE validity checks."""
 
-    feed_type = base.versioned_feed
     # only run the check for EAPI 4 and above
     _source = (sources.RestrictionRepoSource, (
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
@@ -418,7 +414,6 @@ class UnderscoreInUseFlag(base.PackageResult, base.Warning):
 class LocalUSECheck(base.Check):
     """Check local USE flags in metadata.xml for various issues."""
 
-    feed_type = base.package_feed
     scope = base.package_scope
     _source = sources.PackageRepoSource
     required_addons = (addons.UseAddon,)
@@ -498,7 +493,6 @@ class MissingSlotDep(base.VersionedResult, base.Warning):
 class MissingSlotDepCheck(base.Check):
     """Check for missing slot dependencies."""
 
-    feed_type = base.versioned_feed
     # only run the check for EAPI 5 and above
     _source = (sources.RestrictionRepoSource, (
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
@@ -612,8 +606,6 @@ class DependencyCheck(base.Check):
         MetadataError, MissingPackageRevision, MissingUseDepDefault,
         OutdatedBlocker, NonexistentBlocker, UnstatedIUSE,
     )
-
-    feed_type = base.versioned_feed
 
     def __init__(self, options, iuse_handler, git_addon):
         super().__init__(options)
@@ -793,7 +785,6 @@ class KeywordsCheck(base.Check):
     """Check package keywords for sanity; empty keywords, and -* are flagged."""
 
     required_addons = (addons.UseAddon,)
-    feed_type = base.versioned_feed
     known_results = (
         StupidKeywords, InvalidKeywords, OverlappingKeywords, DuplicateKeywords,
         UnsortedKeywords, MissingVirtualKeywords, MetadataError,
@@ -949,7 +940,6 @@ class SrcUriCheck(base.Check):
     """
 
     required_addons = (addons.UseAddon,)
-    feed_type = base.versioned_feed
     known_results = (
         BadFilename, BadProtocol, MissingUri, MetadataError, TarballAvailable,
         UnknownMirror, UnstatedIUSE,
@@ -1042,7 +1032,6 @@ class DescriptionCheck(base.Check):
     just using the package's name.
     """
 
-    feed_type = base.versioned_feed
     known_results = (BadDescription,)
 
     def feed(self, pkg):
@@ -1078,7 +1067,6 @@ class BadHomepage(base.VersionedResult, base.Warning):
 class HomepageCheck(base.Check):
     """HOMEPAGE checks."""
 
-    feed_type = base.versioned_feed
     known_results = (BadHomepage,)
 
     # categories for ebuilds that should lack HOMEPAGE
@@ -1133,7 +1121,6 @@ class UnknownProperties(base.VersionedResult, base.Warning):
 class RestrictsCheck(base.Check):
     """Check for valid RESTRICT settings."""
 
-    feed_type = base.versioned_feed
     known_results = (BadRestricts, UnknownProperties, UnstatedIUSE)
     required_addons = (addons.UseAddon,)
 
@@ -1187,7 +1174,6 @@ class MissingTestRestrict(base.VersionedResult, base.Warning):
 class RestrictTestCheck(base.Check):
     """Check whether packages specify RESTRICT="!test? ( test )"."""
 
-    feed_type = base.versioned_feed
     known_results = (MissingTestRestrict,)
 
     def feed(self, pkg):
@@ -1240,8 +1226,6 @@ class MissingUnpackerDep(base.VersionedResult, base.Warning):
 
 class MissingUnpackerDepCheck(base.Check):
     """Check whether package is missing unpacker dependencies."""
-
-    feed_type = base.versioned_feed
 
     known_results = (MissingUnpackerDep,)
     required_addons = (addons.UseAddon,)

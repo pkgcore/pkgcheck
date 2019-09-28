@@ -361,7 +361,6 @@ class _XmlBaseCheck(base.Check):
 class PackageMetadataXmlCheck(_XmlBaseCheck):
     """Package level metadata.xml scans."""
 
-    feed_type = base.package_feed
     scope = base.package_scope
     _source = sources.PackageRepoSource
     misformed_error = PkgBadlyFormedXml
@@ -424,7 +423,6 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
 class CategoryMetadataXmlCheck(_XmlBaseCheck):
     """Category level metadata.xml scans."""
 
-    feed_type = base.category_feed
     scope = base.category_scope
     _source = sources.CategoryRepoSource
     misformed_error = CatBadlyFormedXml

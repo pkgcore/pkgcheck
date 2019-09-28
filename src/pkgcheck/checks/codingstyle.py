@@ -69,7 +69,6 @@ class BannedEapiCommand(_EapiCommandResult, base.Error):
 class BadCommandsCheck(base.Check):
     """Scan ebuild for various deprecated and banned command usage."""
 
-    feed_type = base.ebuild_feed
     _source = sources.EbuildFileRepoSource
     known_results = (PortageInternals, DeprecatedEapiCommand, BannedEapiCommand)
 
@@ -177,7 +176,6 @@ class DoublePrefixInPath(base.VersionedResult, base.Error):
 class PathVariablesCheck(base.Check):
     """Scan ebuild for path variables with various issues."""
 
-    feed_type = base.ebuild_feed
     _source = sources.EbuildFileRepoSource
     known_results = (MissingSlash, UnnecessarySlashStrip, DoublePrefixInPath)
     prefixed_dir_functions = (
@@ -296,7 +294,6 @@ class AbsoluteSymlink(base.VersionedResult, base.Warning):
 class AbsoluteSymlinkCheck(base.Check):
     """Scan ebuild for dosym absolute path usage instead of relative."""
 
-    feed_type = base.ebuild_feed
     _source = sources.EbuildFileRepoSource
     known_results = (AbsoluteSymlink,)
 
@@ -332,7 +329,6 @@ class BadInsIntoDir(base.VersionedResult, base.Warning):
 class BadInsIntoCheck(base.Check):
     """Scan ebuild for bad insinto usage."""
 
-    feed_type = base.ebuild_feed
     _source = sources.EbuildFileRepoSource
     _bad_insinto = None
 
@@ -398,7 +394,6 @@ class ObsoleteUri(base.VersionedResult, base.Warning):
 class ObsoleteUriCheck(base.Check):
     """Scan ebuild for obsolete URIs."""
 
-    feed_type = base.ebuild_feed
     _source = sources.EbuildFileRepoSource
     known_results = (ObsoleteUri,)
 
@@ -504,7 +499,6 @@ class InvalidLicenseHeader(_EbuildHeaderResult, base.Error):
 class EbuildHeaderCheck(GentooRepoCheck):
     """Scan ebuild for incorrect copyright/license headers."""
 
-    feed_type = base.ebuild_feed
     _source = sources.EbuildFileRepoSource
     known_results = (
         InvalidCopyright, OldGentooCopyright, NonGentooAuthorsCopyright,
@@ -552,7 +546,6 @@ class HomepageInSrcUri(base.VersionedResult, base.Warning):
 class HomepageInSrcUriCheck(base.Check):
     """Scan ebuild for ${HOMEPAGE} in SRC_URI."""
 
-    feed_type = base.ebuild_feed
     _source = sources.EbuildFileRepoSource
     known_results = (HomepageInSrcUri,)
 

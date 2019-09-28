@@ -37,8 +37,6 @@ class _RawRepo(UnconfiguredTree):
 class RawRepoSource(base.GenericSource):
     """Ebuild repository source returning raw CPV objects."""
 
-    feed_type = base.raw_versioned_feed
-
     def __init__(self, *args):
         super().__init__(*args)
         self._repo = _RawRepo(self._repo)
@@ -113,8 +111,6 @@ class _SourcePkg(base.WrappedPkg):
 class EbuildFileRepoSource(base.GenericSource):
     """Ebuild repository source yielding package objects and their file contents."""
 
-    feed_type = base.ebuild_feed
-
     def itermatch(self, restrict):
         for pkg in super().itermatch(restrict):
             yield _SourcePkg(pkg=pkg, lines=tuple(pkg.ebuild.text_fileobj()))
@@ -122,8 +118,6 @@ class EbuildFileRepoSource(base.GenericSource):
 
 class _CollapsedRepoSource(base.GenericSource):
     """Generic repository source collapsing packages into similar chunks."""
-
-    feed_type = base.package_feed
 
     def keyfunc(self, pkg):
         raise NotImplementedError(self.keyfunc)
@@ -147,21 +141,17 @@ class _CollapsedRepoSource(base.GenericSource):
 class PackageRepoSource(_CollapsedRepoSource):
     """Ebuild repository source yielding lists of versioned packages per package."""
 
-    feed_type = base.package_feed
     keyfunc = attrgetter('key')
 
 
 class CategoryRepoSource(_CollapsedRepoSource):
     """Ebuild repository source yielding lists of versioned packages per category."""
 
-    feed_type = base.category_feed
     keyfunc = attrgetter('category')
 
 
 class RawPackageRepoSource(_CollapsedRepoSource):
     """Ebuild repository source yielding lists of versioned packages per package."""
-
-    feed_type = base.raw_package_feed
 
     def keyfunc(self, pkg):
         return (pkg.category, pkg.package)

@@ -156,7 +156,6 @@ class InvalidUTF8(base.PackageResult, base.Error):
 class PkgDirCheck(base.Check):
     """Actual ebuild directory scans; file size, glep31 rule enforcement."""
 
-    feed_type = base.raw_package_feed
     scope = base.package_scope
     _source = (sources.RawPackageRepoSource, (), (('source', sources.RawRepoSource),))
 
@@ -247,7 +246,6 @@ class PkgDirCheck(base.Check):
 class EqualVersionsCheck(base.Check):
     """Scan package ebuilds for semantically equal versions."""
 
-    feed_type = base.package_feed
     scope = base.package_scope
     _source = sources.PackageRepoSource
     known_results = (EqualVersions,)

@@ -163,7 +163,6 @@ class _RemovalRepo(UnconfiguredTree):
 class GitPkgCommitsCheck(GentooRepoCheck):
     """Check unpushed git package commits for various issues."""
 
-    feed_type = base.package_feed
     scope = base.package_scope
     _source = (sources.PackageRepoSource, (), (('source', sources.GitCommitsRepoSource),))
     required_addons = (addons.GitAddon,)
@@ -292,7 +291,6 @@ class MissingSignOff(base.CommitResult, base.Error):
 class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
     """Check unpushed git commits for various issues."""
 
-    feed_type = base.commit_feed
     scope = base.commit_scope
     _source = sources.GitCommitsSource
     known_results = (MissingSignOff,)

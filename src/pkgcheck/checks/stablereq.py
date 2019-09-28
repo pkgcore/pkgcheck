@@ -38,7 +38,6 @@ class StableRequestCheck(GentooRepoCheck):
     Note that packages with no stable keywords won't trigger this at all.
     Instead they'll be caught by the UnstableOnly check.
     """
-    feed_type = base.package_feed
     scope = base.package_scope
     _source = (sources.PackageRepoSource, (), (('source', sources.UnmaskedRepoSource),))
     required_addons = (addons.GitAddon,)

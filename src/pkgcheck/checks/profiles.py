@@ -118,7 +118,6 @@ class ProfilesCheck(base.Check, base.EmptyFeed):
     """Scan repo profiles for unknown flags/packages."""
 
     required_addons = (addons.UseAddon,)
-    feed_type = base.repository_feed
     scope = base.repository_scope
     known_results = (
         UnknownProfilePackages, UnknownProfilePackageUse, UnknownProfileUse,
@@ -381,7 +380,6 @@ class RepoProfilesCheck(base.Check, base.EmptyFeed):
     """
 
     required_addons = (addons.ProfileAddon,)
-    feed_type = base.repository_feed
     scope = base.repository_scope
     known_results = (
         ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,

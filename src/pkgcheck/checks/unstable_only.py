@@ -24,7 +24,6 @@ class UnstableOnly(base.PackageResult, base.Info):
 class UnstableOnlyCheck(GentooRepoCheck):
     """Scan for packages that have just unstable keywords."""
 
-    feed_type = base.package_feed
     scope = base.package_scope
     _source = sources.PackageRepoSource
     required_addons = (addons.StableArchesAddon,)

@@ -28,7 +28,6 @@ class DeprecatedEclass(base.VersionedResult, base.Warning):
 class DeprecatedEclassCheck(base.Check):
     """Check for ebuilds using deprecated eclasses."""
 
-    feed_type = base.versioned_feed
     known_results = (DeprecatedEclass,)
 
     blacklist = ImmutableDict({

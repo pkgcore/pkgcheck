@@ -42,7 +42,6 @@ class LaggingStable(base.VersionedResult, base.Info):
 class ImlateCheck(base.Check):
     """Scan for ebuilds that are lagging in stabilization."""
 
-    feed_type = base.package_feed
     scope = base.package_scope
     _source = sources.PackageRepoSource
     required_addons = (addons.StableArchesAddon,)

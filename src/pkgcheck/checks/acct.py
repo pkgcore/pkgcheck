@@ -64,7 +64,6 @@ class AcctCheck(base.Check):
     """
 
     scope = base.repository_scope
-    feed_type = base.versioned_feed
     _source = (sources.RestrictionRepoSource, (packages.OrRestriction(*(
         restricts.CategoryDep('acct-user'), restricts.CategoryDep('acct-group'))),))
     known_results = (

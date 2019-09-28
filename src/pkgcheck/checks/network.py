@@ -105,8 +105,6 @@ class RequestError(_RequestException):
 class _UrlCheck(NetworkCheck):
     """Various URL related checks that require internet access."""
 
-    feed_type = base.versioned_feed
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.checked = {}

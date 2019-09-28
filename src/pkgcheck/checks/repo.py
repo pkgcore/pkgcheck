@@ -24,7 +24,6 @@ class BinaryFile(base.Error):
 class RepoDirCheck(GentooRepoCheck, base.EmptyFeed):
     """Scan all files in the repository for issues."""
 
-    feed_type = base.repository_feed
     scope = base.repository_scope
     known_results = (BinaryFile,)
 

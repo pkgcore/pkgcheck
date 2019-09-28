@@ -106,7 +106,6 @@ class GenericSource:
     """Base template for a repository source."""
 
     required_addons = ()
-    feed_type = versioned_feed
 
     def __init__(self, options, source=None):
         self._options = options

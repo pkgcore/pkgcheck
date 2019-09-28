@@ -78,7 +78,6 @@ class BadPackageUpdate(base.LogError):
 class PackageUpdatesCheck(base.Check, base.EmptyFeed):
     """Scan profiles/updates/* for outdated entries and other issues."""
 
-    feed_type = base.repository_feed
     scope = base.repository_scope
     known_results = (
         MultiMovePackageUpdate, OldMultiMovePackageUpdate,
@@ -164,7 +163,6 @@ class UnusedLicenses(base.Warning):
 class UnusedLicensesCheck(base.Check):
     """Check for unused license files."""
 
-    feed_type = base.versioned_feed
     scope = base.repository_scope
     known_results = (UnusedLicenses,)
 
@@ -225,7 +223,6 @@ class _MirrorsCheck(base.Check):
 class UnusedMirrorsCheck(_MirrorsCheck):
     """Check for unused mirrors."""
 
-    feed_type = base.versioned_feed
     scope = base.repository_scope
     known_results = (UnusedMirrors,)
 
@@ -262,7 +259,6 @@ class UnusedEclasses(base.Warning):
 class UnusedEclassesCheck(base.Check):
     """Check for unused eclasses."""
 
-    feed_type = base.versioned_feed
     scope = base.repository_scope
     known_results = (UnusedEclasses,)
 
@@ -304,7 +300,6 @@ class UnknownLicenses(base.Warning):
 class LicenseGroupsCheck(base.Check, base.EmptyFeed):
     """Scan license groups for unknown licenses."""
 
-    feed_type = base.repository_feed
     scope = base.repository_scope
     known_results = (UnknownLicenses,)
 
@@ -380,7 +375,6 @@ def _dfs(graph, start, visited=None):
 class GlobalUSECheck(base.Check):
     """Check global USE and USE_EXPAND flags for various issues."""
 
-    feed_type = base.package_feed
     scope = base.repository_scope
     _source = sources.PackageRepoSource
     required_addons = (addons.UseAddon,)
@@ -589,7 +583,6 @@ class ManifestCheck(base.Check):
 
     required_addons = (addons.UseAddon,)
     scope = base.package_scope
-    feed_type = base.package_feed
     _source = sources.PackageRepoSource
     known_results = (
         MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
@@ -657,7 +650,6 @@ class ManifestConflictCheck(base.Check):
     """
 
     scope = base.repository_scope
-    feed_type = base.package_feed
     _source = sources.PackageRepoSource
     known_results = (ConflictingChksums,)
 

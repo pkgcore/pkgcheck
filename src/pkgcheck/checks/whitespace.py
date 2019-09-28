@@ -65,7 +65,6 @@ class NoFinalNewline(base.VersionedResult, base.Warning):
 class WhitespaceCheck(base.Check):
     """Scan ebuild for useless whitespace."""
 
-    feed_type = base.ebuild_feed
     _source = sources.EbuildFileRepoSource
     known_results = (
         WhitespaceFound, WrongIndentFound, DoubleEmptyLine,
