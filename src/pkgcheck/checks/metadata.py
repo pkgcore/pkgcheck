@@ -419,6 +419,7 @@ class LocalUSECheck(base.Check):
 
     feed_type = base.package_feed
     scope = base.package_scope
+    _source = sources.PackageRepoSource
     required_addons = (addons.UseAddon,)
     known_results = (
         UnusedLocalUSE, MatchingGlobalUSE, ProbableGlobalUSE,

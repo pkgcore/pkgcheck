@@ -10,7 +10,7 @@ from snakeoil.log import suppress_logging
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base
+from .. import addons, base, sources
 
 
 class MultiMovePackageUpdate(base.Warning):
@@ -382,6 +382,7 @@ class GlobalUSECheck(base.Check):
 
     feed_type = base.package_feed
     scope = base.repository_scope
+    _source = sources.PackageRepoSource
     required_addons = (addons.UseAddon,)
     known_results = (PotentialLocalUSE, PotentialGlobalUSE, UnusedGlobalUSE)
 
@@ -589,6 +590,7 @@ class ManifestCheck(base.Check):
     required_addons = (addons.UseAddon,)
     scope = base.package_scope
     feed_type = base.package_feed
+    _source = sources.PackageRepoSource
     known_results = (
         MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
         DeprecatedChksum,
@@ -656,6 +658,7 @@ class ManifestConflictCheck(base.Check):
 
     scope = base.repository_scope
     feed_type = base.package_feed
+    _source = sources.PackageRepoSource
     known_results = (ConflictingChksums,)
 
     repo_grabber = attrgetter("repo")

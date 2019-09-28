@@ -7,15 +7,14 @@ feed type) since this might change in the future. Scopes are integers,
 but do not rely on that either.
 
 Feed types have to match exactly. Scopes are ordered: they define a
-minimally accepted scope, and for transforms the output scope is
-identical to the input scope.
+minimally accepted scope.
 """
 
 import re
 import sys
 from collections import OrderedDict, defaultdict, namedtuple, deque
 from contextlib import AbstractContextManager
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 
 from pkgcore import const as pkgcore_const
 from pkgcore.config.hint import ConfigHint
@@ -108,7 +107,6 @@ class GenericSource:
 
     required_addons = ()
     feed_type = versioned_feed
-    cost = 10
 
     def __init__(self, options, source=None):
         self._options = options
@@ -214,33 +212,6 @@ class Check(Feed):
     def skip(cls, namespace):
         """Conditionally skip check when running all enabled checks."""
         return False
-
-
-class Transform:
-    """Base class for a feed type transformer.
-
-    :cvar source: start type
-    :cvar dest: destination type
-    :cvar scope: minimum scope
-    :cvar cost: cost
-    """
-
-    def __init__(self, child):
-        self.child = child
-
-    def start(self):
-        """Startup."""
-        yield from self.child.start()
-
-    def feed(self, item):
-        raise NotImplementedError
-
-    def finish(self):
-        """Clean up."""
-        yield from self.child.finish()
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({self.child!r})'
 
 
 class _LeveledResult(type):
@@ -722,6 +693,12 @@ class InterleavedSources:
     def __iter__(self):
         return self
 
+    def _key(self, obj):
+        obj = obj[1]
+        if isinstance(obj, list):
+            return obj[0]
+        return obj
+
     def __next__(self):
         if not self.sources:
             raise StopIteration
@@ -746,7 +723,7 @@ class InterleavedSources:
         if not self._cache:
             raise StopIteration
 
-        l = sorted(self._cache.items(), key=itemgetter(1))
+        l = sorted(self._cache.items(), key=self._key)
         pipe_idx, item = l[0]
         del self._cache[pipe_idx]
         return item, pipe_idx
@@ -837,7 +814,7 @@ class CheckRunner:
         return f'{self.__class__.__name__}({checks})'
 
 
-def plug(sinks, transforms, sources, scan_scope=repository_scope, debug=None):
+def plug(sinks, sources):
     """Plug together a pipeline.
 
     This tries to return a single pipeline if possible (even if it is
@@ -845,135 +822,28 @@ def plug(sinks, transforms, sources, scan_scope=repository_scope, debug=None):
     pipeline is needed it does not try to minimize the number.
 
     :param sinks: Sequence of check instances.
-    :param transforms: Sequence of transform classes.
     :param sources: Dict of raw sources to source instances.
-    :param scan_scope: Scope at which the current scan is running.
-    :param debug: A logging function or C{None}.
-    :return: a sequence of sinks that are unreachable (out of scope or
-        missing sources/transforms of the right type),
-        a sequence of (source, consumer) tuples.
+    :return: A sequence of (source, consumer) tuples.
     """
+    sinks = list(sinks)
+    sinks.sort(key=attrgetter('priority'))
 
-    # This is not optimized to deal with huge numbers of sinks,
-    # sources and transforms, but that should not matter (although it
-    # may be necessary to handle a lot of sinks a bit better at some
-    # point, which should be fairly easy since we only care about
-    # their type and scope).
-
-    feed_to_transforms = defaultdict(list)
-    for transform in transforms:
-        feed_to_transforms[transform.source].append(transform)
-
-    # Map from typename to best scope
-    best_scope = {}
-    for source in sources.values():
-        # (not particularly clever, if we get a ton of sources this
-        # should be optimized to do less duplicate work).
-        reachable = set()
-        todo = set([source.feed_type])
-        while todo:
-            feed_type = todo.pop()
-            reachable.add(feed_type)
-            for transform in feed_to_transforms.get(feed_type, ()):
-                if (transform.scope <= scan_scope and transform.dest not in reachable):
-                    todo.add(transform.dest)
-        for feed_type in reachable:
-            scope = best_scope.get(feed_type)
-            if scope is None or scope < scan_scope:
-                best_scope[feed_type] = scan_scope
-
-    # Throw out unreachable sinks.
-    good_sinks = []
-    bad_sinks = []
-    for sink in sinks:
-        scope = best_scope.get(sink.feed_type)
-        if scope is None or sink.scope > scope:
-            bad_sinks.append(sink)
-        else:
-            good_sinks.append(sink)
-
-    if not good_sinks:
-        # No point in continuing.
-        return bad_sinks, ()
-
-    # all feed types we need to reach for each source type
-    sink_feed_map = defaultdict(set)
-    for sink in good_sinks:
-        sink_feed_map[sink.source].add(sink.feed_type)
-
-    # tuples of (visited_types, source, transforms, price)
-    unprocessed = set(
-        (frozenset((source.feed_type,)), raw, source, frozenset(), source.cost)
-        for raw, source in sources.items())
-    if debug is not None:
-        for pipe in unprocessed:
-            debug(f'initial: {pipe!r}')
-
-    # If we find a single pipeline driving all sinks we want to use it.
-    # List of tuples of source, transforms.
-    pipes = set()
-    pipes_to_run = []
-    best_cost = None
-    required_source_costs = {}
-    while unprocessed:
-        pipe = unprocessed.pop()
-        if pipe in pipes:
-            continue
-        pipes.add(pipe)
-        visited, raw, source, trans, cost = pipe
-        best_cost = required_source_costs.get(raw, None)
-        if visited >= sink_feed_map[raw]:
-            # Already reaches all sink types. Check if it is usable as
-            # single pipeline:
-            if best_cost is None or cost < best_cost:
-                pipes_to_run.append((raw, source, trans))
-                required_source_costs[raw] = cost
-                best_cost = cost
-            # No point in growing this further: it already reaches everything.
-            continue
-        if best_cost is not None and best_cost <= cost:
-            # No point in growing this further.
-            continue
-        for transform in transforms:
-            if (getattr(source, 'scope', scan_scope) >= transform.scope and
-                    transform.source in visited and
-                    transform.dest not in visited):
-                unprocessed.add((
-                    visited.union((transform.dest,)), raw, source,
-                    trans.union((transform,)), cost + transform.cost))
-                if debug is not None:
-                    debug(f'growing {trans!r} for {source!r} with {transform!r}')
-
-    # Just an assert since unreachable sinks should have been thrown away.
-    assert pipes_to_run, 'did not find a solution?'
-
-    good_sinks.sort(key=attrgetter('priority'))
-
-    def build_transform(scope, feed_type, source_type, transforms):
+    def build_sink(source_type):
         children = []
-        for transform in transforms:
-            if transform.source == feed_type and transform.scope <= scope:
-                # Note this relies on the cheapest pipe not having any "loops"
-                # in its transforms.
-                t = build_transform(scope, transform.dest, source_type, transforms)
-                if t:
-                    children.append(transform(t))
         # Hacky: we modify this in place.
-        for i in reversed(range(len(good_sinks))):
-            sink = good_sinks[i]
-            if (sink.feed_type == feed_type and
-                    sink.source == source_type and sink.scope <= scope):
+        for i in reversed(range(len(sinks))):
+            sink = sinks[i]
+            if sink.source == source_type:
                 children.append(sink)
-                del good_sinks[i]
+                del sinks[i]
         if children:
             return CheckRunner(children)
 
-    result = []
-    for source_type, source, transforms in pipes_to_run:
-        transform = build_transform(
-            getattr(source, 'scope', scan_scope), source.feed_type, source_type, transforms)
-        if transform:
-            result.append((source, transform))
+    good_sinks = []
+    for source_type, source, in sources.items():
+        sink = build_sink(source_type)
+        if sink:
+            good_sinks.append((source, sink))
 
-    assert not good_sinks, f'sinks left: {good_sinks!r}'
-    return bad_sinks, result
+    assert not sinks, f'sinks left: {sinks!r}'
+    return good_sinks

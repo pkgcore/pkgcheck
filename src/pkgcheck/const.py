@@ -1,4 +1,4 @@
-"""Registration for keywords, checks, transforms, and reporters."""
+"""Registration for keywords, checks, and reporters."""
 
 import inspect
 import os
@@ -75,8 +75,6 @@ try:
         'KEYWORDS', partial(_find_obj_classes, 'checks', base.Result)))
     CHECKS = mappings.ImmutableDict(_GET_VALS(
         'CHECKS', partial(_find_obj_classes, 'checks', base.Check)))
-    TRANSFORMS = mappings.ImmutableDict(_GET_VALS(
-        'TRANSFORMS', partial(_find_obj_classes, 'feeds', base.Transform)))
     REPORTERS = mappings.ImmutableDict(_GET_VALS(
         'REPORTERS', partial(_find_obj_classes, 'reporters', base.Reporter)))
 except SyntaxError as e:

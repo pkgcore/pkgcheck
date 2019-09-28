@@ -1,6 +1,6 @@
 from snakeoil.strings import pluralism as _pl
 
-from .. import base
+from .. import base, sources
 
 
 class RedundantVersion(base.VersionedResult, base.Info):
@@ -30,6 +30,7 @@ class RedundantVersionCheck(base.Check):
 
     feed_type = base.package_feed
     scope = base.package_scope
+    _source = sources.PackageRepoSource
     known_results = (RedundantVersion,)
 
     def feed(self, pkgset):

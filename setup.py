@@ -57,7 +57,7 @@ def write_obj_lists(python_base, install_prefix):
 
     modules = defaultdict(set)
     objs = defaultdict(list)
-    for obj in ('KEYWORDS', 'CHECKS', 'TRANSFORMS', 'REPORTERS'):
+    for obj in ('KEYWORDS', 'CHECKS', 'REPORTERS'):
         for name, cls in getattr(const, obj).items():
             parent, module = cls.__module__.rsplit('.', 1)
             modules[parent].add(module)
@@ -65,7 +65,6 @@ def write_obj_lists(python_base, install_prefix):
 
     keywords = tuple(objs['KEYWORDS'])
     checks = tuple(objs['CHECKS'])
-    transforms = tuple(objs['TRANSFORMS'])
     reporters = tuple(objs['REPORTERS'])
 
     with open(path, 'w') as f:
@@ -75,7 +74,6 @@ def write_obj_lists(python_base, install_prefix):
         f.write(dedent(f"""\
             KEYWORDS = {keywords}
             CHECKS = {checks}
-            TRANSFORMS = {transforms}
             REPORTERS = {reporters}
         """))
     # only optimize during install, skip during wheel builds

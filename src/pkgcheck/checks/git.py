@@ -165,7 +165,7 @@ class GitPkgCommitsCheck(GentooRepoCheck):
 
     feed_type = base.package_feed
     scope = base.package_scope
-    _source = sources.GitCommitsRepoSource
+    _source = (sources.PackageRepoSource, (), (('source', sources.GitCommitsRepoSource),))
     required_addons = (addons.GitAddon,)
     known_results = (
         DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,

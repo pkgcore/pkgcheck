@@ -480,7 +480,6 @@ def _scan(options, out, err):
             msg += f' at {options.target_repo.location!r}'
         err.write(msg)
 
-    transforms = list(const.TRANSFORMS.values())
     reporter.start()
 
     # run git commit checks separately from pkg-related checks
@@ -508,12 +507,7 @@ def _scan(options, out, err):
                 err.write(f'{scan.prog}: no matching checks available for current scope')
                 continue
 
-            bad_sinks, pipes = base.plug(sinks, transforms, sources, scan_scope, debug=debug)
-            if bad_sinks:
-                for sink in bad_sinks:
-                    check = sink.__class__.__name__
-                    err.error(f'{check} could not be connected (missing transforms?)')
-                return 1
+            pipes = base.plug(sinks, sources)
 
             if options.verbosity >= 1:
                 err.write(f'Running {len(sinks)} tests')

@@ -3,7 +3,7 @@ from collections import defaultdict
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base
+from .. import addons, base, sources
 from . import GentooRepoCheck
 
 
@@ -26,6 +26,7 @@ class UnstableOnlyCheck(GentooRepoCheck):
 
     feed_type = base.package_feed
     scope = base.package_scope
+    _source = sources.PackageRepoSource
     required_addons = (addons.StableArchesAddon,)
     known_results = (UnstableOnly,)
 

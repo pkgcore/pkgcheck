@@ -6,7 +6,7 @@ from pkgcore.ebuild.atom import MalformedAtom, atom
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
-from .. import base
+from .. import base, sources
 
 
 class _MissingXml(base.Error):
@@ -363,6 +363,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
 
     feed_type = base.package_feed
     scope = base.package_scope
+    _source = sources.PackageRepoSource
     misformed_error = PkgBadlyFormedXml
     invalid_error = PkgInvalidXml
     missing_error = PkgMissingMetadataXml
@@ -425,6 +426,7 @@ class CategoryMetadataXmlCheck(_XmlBaseCheck):
 
     feed_type = base.category_feed
     scope = base.category_scope
+    _source = sources.CategoryRepoSource
     misformed_error = CatBadlyFormedXml
     invalid_error = CatInvalidXml
     missing_error = CatMissingMetadataXml

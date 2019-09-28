@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from .. import addons, base
+from .. import addons, base, sources
 
 
 class DroppedKeywords(base.VersionedResult, base.Warning):
@@ -20,6 +20,7 @@ class DroppedKeywordsCheck(base.Check):
 
     feed_type = base.package_feed
     scope = base.package_scope
+    _source = sources.PackageRepoSource
     required_addons = (addons.ArchesAddon,)
     known_results = (DroppedKeywords,)
 

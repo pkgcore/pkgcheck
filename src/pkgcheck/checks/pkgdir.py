@@ -158,7 +158,7 @@ class PkgDirCheck(base.Check):
 
     feed_type = base.raw_package_feed
     scope = base.package_scope
-    _source = sources.RawRepoSource
+    _source = (sources.RawPackageRepoSource, (), (('source', sources.RawRepoSource),))
 
     ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
     known_results = (
@@ -249,6 +249,7 @@ class EqualVersionsCheck(base.Check):
 
     feed_type = base.package_feed
     scope = base.package_scope
+    _source = sources.PackageRepoSource
     known_results = (EqualVersions,)
 
     def feed(self, pkgset):

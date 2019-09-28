@@ -1,5 +1,7 @@
 """Custom package sources used for feeding addons."""
 
+from operator import attrgetter
+
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files, pjoin
@@ -41,8 +43,8 @@ class RawRepoSource(base.GenericSource):
         super().__init__(*args)
         self._repo = _RawRepo(self._repo)
 
-    def itermatch(self, restrict):
-        yield from super().itermatch(restrict, raw_pkg_cls=base.RawCPV)
+    def itermatch(self, restrict, **kwargs):
+        yield from super().itermatch(restrict, raw_pkg_cls=base.RawCPV, **kwargs)
 
 
 class RestrictionRepoSource(base.GenericSource):
@@ -52,9 +54,9 @@ class RestrictionRepoSource(base.GenericSource):
         super().__init__(*args)
         self.restriction = restriction
 
-    def itermatch(self, restrict):
+    def itermatch(self, restrict, **kwargs):
         restrict = packages.AndRestriction(*(restrict, self.restriction))
-        yield from super().itermatch(restrict)
+        yield from super().itermatch(restrict, **kwargs)
 
 
 class UnmaskedRepoSource(base.GenericSource):
@@ -116,3 +118,50 @@ class EbuildFileRepoSource(base.GenericSource):
     def itermatch(self, restrict):
         for pkg in super().itermatch(restrict):
             yield _SourcePkg(pkg=pkg, lines=tuple(pkg.ebuild.text_fileobj()))
+
+
+class _CollapsedRepoSource(base.GenericSource):
+    """Generic repository source collapsing packages into similar chunks."""
+
+    feed_type = base.package_feed
+
+    def keyfunc(self, pkg):
+        raise NotImplementedError(self.keyfunc)
+
+    def itermatch(self, restrict):
+        key = None
+        chunk = None
+        for pkg in super().itermatch(restrict):
+            flag = self.keyfunc(pkg)
+            if flag == key:
+                chunk.append(pkg)
+            else:
+                if chunk is not None:
+                    yield chunk
+                chunk = [pkg]
+                key = flag
+        if chunk is not None:
+            yield chunk
+
+
+class PackageRepoSource(_CollapsedRepoSource):
+    """Ebuild repository source yielding lists of versioned packages per package."""
+
+    feed_type = base.package_feed
+    keyfunc = attrgetter('key')
+
+
+class CategoryRepoSource(_CollapsedRepoSource):
+    """Ebuild repository source yielding lists of versioned packages per category."""
+
+    feed_type = base.category_feed
+    keyfunc = attrgetter('category')
+
+
+class RawPackageRepoSource(_CollapsedRepoSource):
+    """Ebuild repository source yielding lists of versioned packages per package."""
+
+    feed_type = base.raw_package_feed
+
+    def keyfunc(self, pkg):
+        return (pkg.category, pkg.package)
