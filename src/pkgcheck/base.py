@@ -101,95 +101,6 @@ class Addon:
         """
 
 
-class GenericSource:
-    """Base template for a repository source."""
-
-    required_addons = ()
-
-    def __init__(self, options, source=None):
-        self._options = options
-        self._repo = options.target_repo
-        self._source = source
-
-    @property
-    def source(self):
-        if self._source is not None:
-            return self._source
-        return self._repo
-
-    def itermatch(self, restrict, **kwargs):
-        kwargs.setdefault('sorter', sorted)
-        yield from self.source.itermatch(restrict, **kwargs)
-
-
-class FilteredRepoSource(GenericSource):
-    """Ebuild repository source supporting custom package filtering."""
-
-    def __init__(self, pkg_filter, partial_filtered, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._pkg_filter = pkg_filter
-        self._partial_filtered = partial_filtered
-
-    def itermatch(self, restrict):
-        yield from self._pkg_filter(
-            super().itermatch(restrict), partial_filtered=self._partial_filtered)
-
-
-class Feed(Addon):
-    """Base template for addon iterating over an item feed.
-
-    :cvar scope: scope relative to the package repository the check runs under
-    :cvar source: source of feed items
-    """
-
-    scope = version_scope
-    _source = GenericSource
-
-    @property
-    def source(self):
-        return self._source
-
-    def start(self):
-        """Do startup here."""
-
-    def feed(self, item):
-        """Handle functionality against the passed in item."""
-
-    def finish(self):
-        """Do cleanup and omit final results here."""
-
-
-class Check(Feed):
-    """Base template for a check.
-
-    :cvar scope: scope relative to the package repository the check runs under
-    :cvar source: source of feed items
-    :cvar known_results: result keywords the check can possibly yield
-    """
-
-    known_results = ()
-
-    @property
-    def source(self):
-        # replace versioned pkg feeds with filtered ones as required
-        if self.options.verbosity < 1 and self.scope == version_scope:
-            filtered_results = [
-                x for x in self.known_results if issubclass(x, FilteredVersionResult)]
-            if filtered_results:
-                partial_filtered = len(filtered_results) != len(self.known_results)
-                return (
-                    FilteredRepoSource,
-                    (LatestPkgsFilter, partial_filtered),
-                    (('source', self._source),)
-                )
-        return self._source
-
-    @classmethod
-    def skip(cls, namespace):
-        """Conditionally skip check when running all enabled checks."""
-        return False
-
-
 class _LeveledResult(type):
 
     @property
@@ -349,7 +260,7 @@ class FilteredVersionResult(VersionedResult):
     """Result that will be optionally filtered for old packages by default."""
 
     def __init__(self, pkg, **kwargs):
-        if isinstance(pkg, _FilteredPkg):
+        if isinstance(pkg, FilteredPkg):
             self._filtered = True
             pkg = pkg._pkg
         super().__init__(pkg, **kwargs)
@@ -607,60 +518,8 @@ class WrappedPkg:
     __dir__ = klass.DirProxy('_pkg')
 
 
-class _FilteredPkg(WrappedPkg):
+class FilteredPkg(WrappedPkg):
     """Filtered package used to mark related results that should be skipped by default."""
-
-
-class LatestPkgsFilter:
-    """Filter source packages, yielding those from the latest non-VCS and VCS slots."""
-
-    def __init__(self, source_iter, partial_filtered=False):
-        self._partial_filtered = partial_filtered
-        self._source_iter = source_iter
-        self._pkg_cache = deque()
-        self._pkg_marker = None
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        # refill pkg cache
-        if not self._pkg_cache:
-            if self._pkg_marker is None:
-                self._pkg_marker = next(self._source_iter)
-            pkg = self._pkg_marker
-            key = pkg.key
-            selected_pkgs = OrderedDict()
-            if self._partial_filtered:
-                pkgs = []
-
-            # determine the latest non-VCS and VCS pkgs for each slot
-            while key == pkg.key:
-                if pkg.live:
-                    selected_pkgs[f'vcs-{pkg.slot}'] = pkg
-                else:
-                    selected_pkgs[pkg.slot] = pkg
-
-                if self._partial_filtered:
-                    pkgs.append(pkg)
-
-                try:
-                    pkg = next(self._source_iter)
-                except StopIteration:
-                    self._pkg_marker = None
-                    break
-
-            if self._pkg_marker is not None:
-                self._pkg_marker = pkg
-
-            if self._partial_filtered:
-                selected_pkgs = set(selected_pkgs.values())
-                self._pkg_cache.extend(
-                    _FilteredPkg(pkg=pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs)
-            else:
-                self._pkg_cache.extend(selected_pkgs.values())
-
-        return self._pkg_cache.popleft()
 
 
 class InterleavedSources:

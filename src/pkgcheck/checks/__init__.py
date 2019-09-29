@@ -1,10 +1,41 @@
 """Core check classes."""
 
-from .. import base, sources
+from .. import base, feeds, sources
 from ..log import logger
 
 
-class GentooRepoCheck(base.Check):
+class Check(feeds.Feed):
+    """Base template for a check.
+
+    :cvar scope: scope relative to the package repository the check runs under
+    :cvar source: source of feed items
+    :cvar known_results: result keywords the check can possibly yield
+    """
+
+    known_results = ()
+
+    @property
+    def source(self):
+        # replace versioned pkg feeds with filtered ones as required
+        if self.options.verbosity < 1 and self.scope == base.version_scope:
+            filtered_results = [
+                x for x in self.known_results if issubclass(x, base.FilteredVersionResult)]
+            if filtered_results:
+                partial_filtered = len(filtered_results) != len(self.known_results)
+                return (
+                    sources.FilteredRepoSource,
+                    (sources.LatestPkgsFilter, partial_filtered),
+                    (('source', self._source),)
+                )
+        return self._source
+
+    @classmethod
+    def skip(cls, namespace):
+        """Conditionally skip check when running all enabled checks."""
+        return False
+
+
+class GentooRepoCheck(Check):
     """Check that is only run against the gentoo repo."""
 
     @classmethod
@@ -15,7 +46,7 @@ class GentooRepoCheck(base.Check):
         return skip or super().skip(namespace)
 
 
-class OverlayRepoCheck(base.Check):
+class OverlayRepoCheck(Check):
     """Check that is only run against overlay repos."""
 
     @classmethod
@@ -26,7 +57,7 @@ class OverlayRepoCheck(base.Check):
         return skip or super().skip(namespace)
 
 
-class ExplicitlyEnabledCheck(base.Check):
+class ExplicitlyEnabledCheck(Check):
     """Check that is only run when explicitly enabled."""
 
     @classmethod
@@ -48,7 +79,7 @@ class ExplicitlyEnabledCheck(base.Check):
         return skip or super().skip(namespace)
 
 
-class NetworkCheck(base.Check):
+class NetworkCheck(Check):
     """Check that is only run when network support is enabled."""
 
     @classmethod

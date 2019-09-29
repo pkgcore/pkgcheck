@@ -1,19 +1,107 @@
-"""Custom package sources used for feeding addons."""
+"""Custom package sources used for feeding checks."""
 
+import os
+from collections import OrderedDict, deque
 from operator import attrgetter
 
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files, pjoin
 
-from . import addons, base
+from . import base
 
 
-class EmptySource(base.GenericSource):
+class GenericSource:
+    """Base template for a repository source."""
+
+    required_addons = ()
+
+    def __init__(self, options, source=None):
+        self._options = options
+        self._repo = options.target_repo
+        self._source = source
+
+    @property
+    def source(self):
+        if self._source is not None:
+            return self._source
+        return self._repo
+
+    def itermatch(self, restrict, **kwargs):
+        kwargs.setdefault('sorter', sorted)
+        yield from self.source.itermatch(restrict, **kwargs)
+
+
+class EmptySource(GenericSource):
     """Empty source meant for skipping feed."""
 
     def itermatch(self, restrict):
         yield from ()
+
+
+class LatestPkgsFilter:
+    """Filter source packages, yielding those from the latest non-VCS and VCS slots."""
+
+    def __init__(self, source_iter, partial_filtered=False):
+        self._partial_filtered = partial_filtered
+        self._source_iter = source_iter
+        self._pkg_cache = deque()
+        self._pkg_marker = None
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        # refill pkg cache
+        if not self._pkg_cache:
+            if self._pkg_marker is None:
+                self._pkg_marker = next(self._source_iter)
+            pkg = self._pkg_marker
+            key = pkg.key
+            selected_pkgs = OrderedDict()
+            if self._partial_filtered:
+                pkgs = []
+
+            # determine the latest non-VCS and VCS pkgs for each slot
+            while key == pkg.key:
+                if pkg.live:
+                    selected_pkgs[f'vcs-{pkg.slot}'] = pkg
+                else:
+                    selected_pkgs[pkg.slot] = pkg
+
+                if self._partial_filtered:
+                    pkgs.append(pkg)
+
+                try:
+                    pkg = next(self._source_iter)
+                except StopIteration:
+                    self._pkg_marker = None
+                    break
+
+            if self._pkg_marker is not None:
+                self._pkg_marker = pkg
+
+            if self._partial_filtered:
+                selected_pkgs = set(selected_pkgs.values())
+                self._pkg_cache.extend(
+                    base.FilteredPkg(pkg=pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs)
+            else:
+                self._pkg_cache.extend(selected_pkgs.values())
+
+        return self._pkg_cache.popleft()
+
+
+class FilteredRepoSource(GenericSource):
+    """Ebuild repository source supporting custom package filtering."""
+
+    def __init__(self, pkg_filter, partial_filtered, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._pkg_filter = pkg_filter
+        self._partial_filtered = partial_filtered
+
+    def itermatch(self, restrict):
+        yield from self._pkg_filter(
+            super().itermatch(restrict), partial_filtered=self._partial_filtered)
 
 
 class _RawRepo(UnconfiguredTree):
@@ -41,7 +129,7 @@ class _RawRepo(UnconfiguredTree):
             raise KeyError(f'failed fetching versions for package {path}: {e}') from e
 
 
-class RawRepoSource(base.GenericSource):
+class RawRepoSource(GenericSource):
     """Ebuild repository source returning raw CPV objects."""
 
     def __init__(self, *args):
@@ -52,7 +140,7 @@ class RawRepoSource(base.GenericSource):
         yield from super().itermatch(restrict, raw_pkg_cls=base.RawCPV, **kwargs)
 
 
-class RestrictionRepoSource(base.GenericSource):
+class RestrictionRepoSource(GenericSource):
     """Ebuild repository source supporting custom restrictions."""
 
     def __init__(self, restriction, *args):
@@ -64,7 +152,7 @@ class RestrictionRepoSource(base.GenericSource):
         yield from super().itermatch(restrict, **kwargs)
 
 
-class UnmaskedRepoSource(base.GenericSource):
+class UnmaskedRepoSource(GenericSource):
     """Repository source that uses profiles/package.mask to filter packages."""
 
     def __init__(self, *args):
@@ -72,37 +160,6 @@ class UnmaskedRepoSource(base.GenericSource):
         self._repo = self._options.domain.filter_repo(
             self._repo, pkg_masks=(), pkg_unmasks=(),
             pkg_accept_keywords=(), pkg_keywords=(), profile=False)
-
-
-class GitCommitsRepoSource(base.GenericSource):
-    """Repository source for locally changed packages in git history.
-
-    Parses git log history to determine packages with changes that
-    haven't been pushed upstream yet.
-    """
-
-    required_addons = (addons.GitAddon,)
-
-    def __init__(self, options, git_addon):
-        super().__init__(options)
-        self._repo = git_addon.commits_repo(addons.GitChangedRepo)
-
-
-class GitCommitsSource(base.GenericSource):
-    """Source for local commits in git history.
-
-    Parses git log history to determine commits that haven't been pushed
-    upstream yet.
-    """
-
-    required_addons = (addons.GitAddon,)
-
-    def __init__(self, options, git_addon):
-        super().__init__(options)
-        self.commits = git_addon.commits()
-
-    def __iter__(self):
-        yield from self.commits
 
 
 class _SourcePkg(base.WrappedPkg):
@@ -115,7 +172,7 @@ class _SourcePkg(base.WrappedPkg):
         self.lines = lines
 
 
-class EbuildFileRepoSource(base.GenericSource):
+class EbuildFileRepoSource(GenericSource):
     """Ebuild repository source yielding package objects and their file contents."""
 
     def itermatch(self, restrict):
@@ -123,7 +180,7 @@ class EbuildFileRepoSource(base.GenericSource):
             yield _SourcePkg(pkg=pkg, lines=tuple(pkg.ebuild.text_fileobj()))
 
 
-class _CombinedSource(base.GenericSource):
+class _CombinedSource(GenericSource):
     """Generic source combining packages into similar chunks."""
 
     def keyfunc(self, pkg):

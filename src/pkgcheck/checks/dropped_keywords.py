@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from .. import addons, base, sources
+from . import Check
 
 
 class DroppedKeywords(base.VersionedResult, base.Warning):
@@ -15,7 +16,7 @@ class DroppedKeywords(base.VersionedResult, base.Warning):
         return ', '.join(self.arches)
 
 
-class DroppedKeywordsCheck(base.Check):
+class DroppedKeywordsCheck(Check):
     """Scan packages for keyword dropping across versions."""
 
     scope = base.package_scope

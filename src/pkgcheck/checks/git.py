@@ -22,6 +22,37 @@ demand_compile_regexp(
     r'^# Copyright (\d\d\d\d(-\d\d\d\d)?) .+')
 
 
+class GitCommitsRepoSource(sources.GenericSource):
+    """Repository source for locally changed packages in git history.
+
+    Parses git log history to determine packages with changes that
+    haven't been pushed upstream yet.
+    """
+
+    required_addons = (addons.GitAddon,)
+
+    def __init__(self, options, git_addon):
+        super().__init__(options)
+        self._repo = git_addon.commits_repo(addons.GitChangedRepo)
+
+
+class GitCommitsSource(sources.GenericSource):
+    """Source for local commits in git history.
+
+    Parses git log history to determine commits that haven't been pushed
+    upstream yet.
+    """
+
+    required_addons = (addons.GitAddon,)
+
+    def __init__(self, options, git_addon):
+        super().__init__(options)
+        self.commits = git_addon.commits()
+
+    def __iter__(self):
+        yield from self.commits
+
+
 class OutdatedCopyright(base.VersionedResult, base.Warning):
     """Changed ebuild with outdated copyright."""
 
@@ -164,7 +195,7 @@ class GitPkgCommitsCheck(GentooRepoCheck):
     """Check unpushed git package commits for various issues."""
 
     scope = base.package_scope
-    _source = (sources.PackageRepoSource, (), (('source', sources.GitCommitsRepoSource),))
+    _source = (sources.PackageRepoSource, (), (('source', GitCommitsRepoSource),))
     required_addons = (addons.GitAddon,)
     known_results = (
         DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,
@@ -292,7 +323,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
     """Check unpushed git commits for various issues."""
 
     scope = base.commit_scope
-    _source = sources.GitCommitsSource
+    _source = GitCommitsSource
     known_results = (MissingSignOff,)
 
     def feed(self, commit):

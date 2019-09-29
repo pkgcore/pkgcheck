@@ -4,6 +4,7 @@ from pkgcore.restrictions.boolean import JustOneRestriction, OrRestriction
 from snakeoil.sequences import iflatten_instance
 
 from .. import base
+from . import Check
 
 # NB: distutils-r1 inherits one of the first two
 ECLASSES = frozenset(['python-r1', 'python-single-r1', 'python-any-r1'])
@@ -128,7 +129,7 @@ class PythonRuntimeDepInAnyR1(base.VersionedResult, base.Warning):
         )
 
 
-class PythonCheck(base.Check):
+class PythonCheck(Check):
     """Python eclass checks.
 
     Check whether Python eclasses are used for Python packages, and whether

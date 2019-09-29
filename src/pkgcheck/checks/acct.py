@@ -9,6 +9,7 @@ from pkgcore.ebuild import restricts
 from pkgcore.restrictions import packages
 
 from .. import base, sources
+from . import Check
 
 
 class MissingAccountIdentifier(base.VersionedResult, base.Warning):
@@ -56,7 +57,7 @@ class OutsideRangeAccountIdentifier(base.VersionedResult, base.Error):
             f"static allocation range (0..499, 60001+)")
 
 
-class AcctCheck(base.Check):
+class AcctCheck(Check):
     """Various checks for acct-* packages.
 
     Verify that acct-* packages do not use conflicting, invalid or out-of-range

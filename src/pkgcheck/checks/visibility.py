@@ -8,6 +8,7 @@ from snakeoil.sequences import iflatten_func, iflatten_instance, stable_unique
 from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base, feeds
+from . import Check
 
 
 class FakeConfigurable:
@@ -172,7 +173,7 @@ class NonsolvableDepsInExp(_NonsolvableDeps, base.Warning):
     """No potential solution for dependency on exp profile."""
 
 
-class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, base.Check):
+class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
     """Visibility dependency scans.
 
     Check that at least one solution is possible for a pkg, checking all

@@ -10,7 +10,7 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, sources
-from . import GentooRepoCheck
+from . import Check, GentooRepoCheck
 
 demand_compile_regexp(
     'ebuild_copyright_regex',
@@ -66,7 +66,7 @@ class BannedEapiCommand(_EapiCommandResult, base.Error):
     _status = 'banned'
 
 
-class BadCommandsCheck(base.Check):
+class BadCommandsCheck(Check):
     """Scan ebuild for various deprecated and banned command usage."""
 
     _source = sources.EbuildFileRepoSource
@@ -173,7 +173,7 @@ class DoublePrefixInPath(base.VersionedResult, base.Error):
                 f"on line{_pl(self.lines)} {lines}")
 
 
-class PathVariablesCheck(base.Check):
+class PathVariablesCheck(Check):
     """Scan ebuild for path variables with various issues."""
 
     _source = sources.EbuildFileRepoSource
@@ -291,7 +291,7 @@ class AbsoluteSymlink(base.VersionedResult, base.Warning):
         return f"'dosym {self.abspath} ...' uses absolute path on line {self.line}"
 
 
-class AbsoluteSymlinkCheck(base.Check):
+class AbsoluteSymlinkCheck(Check):
     """Scan ebuild for dosym absolute path usage instead of relative."""
 
     _source = sources.EbuildFileRepoSource
@@ -326,7 +326,7 @@ class BadInsIntoDir(base.VersionedResult, base.Warning):
         return f"bad insinto usage, line {self.lineno}: {self.line}"
 
 
-class BadInsIntoCheck(base.Check):
+class BadInsIntoCheck(Check):
     """Scan ebuild for bad insinto usage."""
 
     _source = sources.EbuildFileRepoSource
@@ -391,7 +391,7 @@ class ObsoleteUri(base.VersionedResult, base.Warning):
                 f"{self.line}, should be replaced by: {self.replacement}")
 
 
-class ObsoleteUriCheck(base.Check):
+class ObsoleteUriCheck(Check):
     """Scan ebuild for obsolete URIs."""
 
     _source = sources.EbuildFileRepoSource
@@ -543,7 +543,7 @@ class HomepageInSrcUri(base.VersionedResult, base.Warning):
         return "${HOMEPAGE} in SRC_URI"
 
 
-class HomepageInSrcUriCheck(base.Check):
+class HomepageInSrcUriCheck(Check):
     """Scan ebuild for ${HOMEPAGE} in SRC_URI."""
 
     _source = sources.EbuildFileRepoSource

@@ -2,6 +2,7 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism as _pl
 
 from .. import base
+from . import Check
 
 
 class DeprecatedEclass(base.VersionedResult, base.Warning):
@@ -25,7 +26,7 @@ class DeprecatedEclass(base.VersionedResult, base.Warning):
             _pl(eclass_migration, plural='es'), ', '.join(eclass_migration))
 
 
-class DeprecatedEclassCheck(base.Check):
+class DeprecatedEclassCheck(Check):
     """Check for ebuilds using deprecated eclasses."""
 
     known_results = (DeprecatedEclass,)

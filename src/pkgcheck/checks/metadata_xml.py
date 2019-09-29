@@ -7,6 +7,7 @@ from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, sources
+from . import Check
 
 
 class _MissingXml(base.Error):
@@ -253,7 +254,7 @@ class PkgMetadataXmlEmptyElement(_MetadataXmlEmptyElement, base.PackageResult):
     """Empty element in package metadata.xml file."""
 
 
-class _XmlBaseCheck(base.Check):
+class _XmlBaseCheck(Check):
     """Base class for metadata.xml scans."""
 
     schema = None

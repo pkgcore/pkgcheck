@@ -1,9 +1,33 @@
-"""Custom feed functionality used by checks."""
+"""Feed functionality used by checks."""
 
-from . import base
+from . import base, sources
 
 
-class QueryCache(base.Feed):
+class Feed(base.Addon):
+    """Base template for addon iterating over an item feed.
+
+    :cvar scope: scope relative to the package repository the check runs under
+    :cvar source: source of feed items
+    """
+
+    scope = base.version_scope
+    _source = sources.GenericSource
+
+    @property
+    def source(self):
+        return self._source
+
+    def start(self):
+        """Do startup here."""
+
+    def feed(self, item):
+        """Handle functionality against the passed in item."""
+
+    def finish(self):
+        """Do cleanup and omit final results here."""
+
+
+class QueryCache(Feed):
 
     @staticmethod
     def mangle_argparser(parser):
@@ -41,7 +65,7 @@ class QueryCache(base.Feed):
         super().feed(item)
 
 
-class EvaluateDepSet(base.Feed):
+class EvaluateDepSet(Feed):
 
     def __init__(self, options, profiles):
         super().__init__(options)

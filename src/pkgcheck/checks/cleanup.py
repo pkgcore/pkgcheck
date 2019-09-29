@@ -1,6 +1,7 @@
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, sources
+from . import Check
 
 
 class RedundantVersion(base.VersionedResult, base.Info):
@@ -17,7 +18,7 @@ class RedundantVersion(base.VersionedResult, base.Info):
             self.slot, _pl(self.later_versions), ', '.join(self.later_versions))
 
 
-class RedundantVersionCheck(base.Check):
+class RedundantVersionCheck(Check):
     """Scan for overshadowed package versions.
 
     Scan for versions that are likely shadowed by later versions from a

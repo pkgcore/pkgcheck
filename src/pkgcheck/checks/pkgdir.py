@@ -9,6 +9,7 @@ from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, sources
+from . import Check
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()
@@ -153,7 +154,7 @@ class InvalidUTF8(base.PackageResult, base.Error):
         return f"invalid UTF-8: {self.err}: {self.filename!r}"
 
 
-class PkgDirCheck(base.Check):
+class PkgDirCheck(Check):
     """Actual ebuild directory scans; file size, glep31 rule enforcement."""
 
     scope = base.package_scope
@@ -243,7 +244,7 @@ class PkgDirCheck(base.Check):
                 yield DuplicateFiles(sorted(files), pkg=pkg)
 
 
-class EqualVersionsCheck(base.Check):
+class EqualVersionsCheck(Check):
     """Scan package ebuilds for semantically equal versions."""
 
     scope = base.package_scope

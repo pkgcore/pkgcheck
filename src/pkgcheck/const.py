@@ -8,7 +8,7 @@ from importlib import import_module
 
 from snakeoil import demandimport, mappings
 
-from . import __title__, base
+from . import __title__, base, checks
 
 try:
     # This is a file written during installation;
@@ -74,7 +74,7 @@ try:
     KEYWORDS = mappings.ImmutableDict(_GET_VALS(
         'KEYWORDS', partial(_find_obj_classes, 'checks', base.Result)))
     CHECKS = mappings.ImmutableDict(_GET_VALS(
-        'CHECKS', partial(_find_obj_classes, 'checks', base.Check)))
+        'CHECKS', partial(_find_obj_classes, 'checks', checks.Check)))
     REPORTERS = mappings.ImmutableDict(_GET_VALS(
         'REPORTERS', partial(_find_obj_classes, 'reporters', base.Reporter)))
 except SyntaxError as e:

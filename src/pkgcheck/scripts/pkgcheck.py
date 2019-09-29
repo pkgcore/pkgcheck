@@ -26,7 +26,7 @@ from snakeoil.log import suppress_logging
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, const, reporters
+from .. import base, checks, const, reporters
 from ..log import logger
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
@@ -461,7 +461,7 @@ def _scan(options, out, err):
         """Initialize required checks."""
         for cls in addons:
             addon = init_addon(cls)
-            if isinstance(addon, base.Check):
+            if isinstance(addon, checks.Check):
                 if addon.source not in sources:
                     sources[addon.source] = init_source(addon.source)
                 yield addon

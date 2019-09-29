@@ -22,6 +22,7 @@ from .. import addons, base, sources
 from ..addons import UnstatedIUSE
 from ..base import MetadataError
 from .visibility import FakeConfigurable
+from . import Check
 
 
 class MissingLicense(base.VersionedResult, base.Error):
@@ -63,7 +64,7 @@ class UnnecessaryLicense(base.VersionedResult, base.Warning):
         return f"{self.category!r} packages shouldn't define LICENSE"
 
 
-class LicenseMetadataCheck(base.Check):
+class LicenseMetadataCheck(Check):
     """LICENSE validity checks."""
 
     known_results = (
@@ -162,7 +163,7 @@ class UnknownUseFlags(_UseFlagsResult):
     _type = 'unknown'
 
 
-class IUSEMetadataCheck(base.Check):
+class IUSEMetadataCheck(Check):
     """IUSE validity checks."""
 
     required_addons = (addons.UseAddon,)
@@ -210,7 +211,7 @@ class BannedEAPI(_EAPIResult, base.Error):
     _type = 'banned'
 
 
-class MetadataCheck(base.Check):
+class MetadataCheck(Check):
     """Scan for packages with banned/deprecated EAPIs or bad metadata."""
 
     known_results = (DeprecatedEAPI, BannedEAPI, MetadataError)
@@ -276,7 +277,7 @@ class RequiredUseDefaults(base.VersionedResult, base.Warning):
         )
 
 
-class RequiredUSEMetadataCheck(base.Check):
+class RequiredUSEMetadataCheck(Check):
     """REQUIRED_USE validity checks."""
 
     # only run the check for EAPI 4 and above
@@ -411,7 +412,7 @@ class UnderscoreInUseFlag(base.PackageResult, base.Warning):
         return f"USE flag {self.flag!r} uses reserved underscore character"
 
 
-class LocalUSECheck(base.Check):
+class LocalUSECheck(Check):
     """Check local USE flags in metadata.xml for various issues."""
 
     scope = base.package_scope
@@ -490,7 +491,7 @@ class MissingSlotDep(base.VersionedResult, base.Warning):
             f"[ {', '.join(self.dep_slots)} ]")
 
 
-class MissingSlotDepCheck(base.Check):
+class MissingSlotDepCheck(Check):
     """Check for missing slot dependencies."""
 
     # only run the check for EAPI 5 and above
@@ -598,7 +599,7 @@ class NonexistentBlocker(base.VersionedResult, base.Warning):
         )
 
 
-class DependencyCheck(base.Check):
+class DependencyCheck(Check):
     """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon, addons.GitAddon)
@@ -781,7 +782,7 @@ class MissingVirtualKeywords(base.VersionedResult, base.Warning):
         return f"missing KEYWORDS: {', '.join(self.keywords)}"
 
 
-class KeywordsCheck(base.Check):
+class KeywordsCheck(Check):
     """Check package keywords for sanity; empty keywords, and -* are flagged."""
 
     required_addons = (addons.UseAddon,)
@@ -932,7 +933,7 @@ class TarballAvailable(base.VersionedResult, base.Warning):
                 f"[ {' '.join(self.uris)} ]")
 
 
-class SrcUriCheck(base.Check):
+class SrcUriCheck(Check):
     """SRC_URI related checks.
 
     Verify that URIs are valid, fetchable, using a supported protocol, and
@@ -1025,7 +1026,7 @@ class BadDescription(base.VersionedResult, base.Warning):
         return f"bad DESCRIPTION: {self.msg}"
 
 
-class DescriptionCheck(base.Check):
+class DescriptionCheck(Check):
     """DESCRIPTION checks.
 
     Check on length (<=150), too short (<10), or generic (lifted from eclass or
@@ -1064,7 +1065,7 @@ class BadHomepage(base.VersionedResult, base.Warning):
         return f"bad HOMEPAGE: {self.msg}"
 
 
-class HomepageCheck(base.Check):
+class HomepageCheck(Check):
     """HOMEPAGE checks."""
 
     known_results = (BadHomepage,)
@@ -1118,7 +1119,7 @@ class UnknownProperties(base.VersionedResult, base.Warning):
         return f'unknown PROPERTIES="{properties}"'
 
 
-class RestrictsCheck(base.Check):
+class RestrictsCheck(Check):
     """Check for valid RESTRICT settings."""
 
     known_results = (BadRestricts, UnknownProperties, UnstatedIUSE)
@@ -1171,7 +1172,7 @@ class MissingTestRestrict(base.VersionedResult, base.Warning):
         return 'missing RESTRICT="!test? ( test )" with IUSE=test'
 
 
-class RestrictTestCheck(base.Check):
+class RestrictTestCheck(Check):
     """Check whether packages specify RESTRICT="!test? ( test )"."""
 
     known_results = (MissingTestRestrict,)
@@ -1224,7 +1225,7 @@ class MissingUnpackerDep(base.VersionedResult, base.Warning):
         )
 
 
-class MissingUnpackerDepCheck(base.Check):
+class MissingUnpackerDepCheck(Check):
     """Check whether package is missing unpacker dependencies."""
 
     known_results = (MissingUnpackerDep,)

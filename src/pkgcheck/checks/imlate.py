@@ -5,6 +5,7 @@ from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base, sources
+from . import Check
 
 
 class PotentialStable(base.VersionedResult, base.Info):
@@ -39,7 +40,7 @@ class LaggingStable(base.VersionedResult, base.Info):
             ', '.join(self.stable), ', '.join(self.keywords))
 
 
-class ImlateCheck(base.Check):
+class ImlateCheck(Check):
     """Scan for ebuilds that are lagging in stabilization."""
 
     scope = base.package_scope

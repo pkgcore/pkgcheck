@@ -2,6 +2,7 @@ from snakeoil.demandload import demand_compile_regexp
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, sources
+from . import Check
 
 demand_compile_regexp('indent_regexp', '^\t* \t+')
 
@@ -62,7 +63,7 @@ class NoFinalNewline(base.VersionedResult, base.Warning):
     desc = "ebuild lacks an ending newline"
 
 
-class WhitespaceCheck(base.Check):
+class WhitespaceCheck(Check):
     """Scan ebuild for useless whitespace."""
 
     _source = sources.EbuildFileRepoSource

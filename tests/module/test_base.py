@@ -1,6 +1,6 @@
 import pytest
 
-from pkgcheck import base
+from pkgcheck import base, checks, sources
 
 
 dummies = list(f'dummy-{i}' for i in range(0, 10))
@@ -19,7 +19,7 @@ class TestUtilities(object):
         assert not base.convert_check_filter('bar.foo')('foo.bar.baz')
 
 
-class DummySource(base.GenericSource):
+class DummySource(sources.GenericSource):
 
     """Dummy source object just "producing" itself.
 
@@ -35,7 +35,7 @@ class DummySource(base.GenericSource):
         return f'{self.__class__.__name__}({self.feed_type})'
 
 
-class DummySink(base.Check):
+class DummySink(checks.Check):
 
     """Dummy sink object just yielding every fed to it with itself appended.
 

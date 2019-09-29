@@ -11,6 +11,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base, sources
+from . import Check
 
 
 class MultiMovePackageUpdate(base.Warning):
@@ -75,7 +76,7 @@ class BadPackageUpdate(base.LogError):
     threshold = base.repository_feed
 
 
-class PackageUpdatesCheck(base.Check):
+class PackageUpdatesCheck(Check):
     """Scan profiles/updates/* for outdated entries and other issues."""
 
     scope = base.repository_scope
@@ -161,7 +162,7 @@ class UnusedLicenses(base.Warning):
         return f'unused license{_pl(self.licenses)}: {licenses}'
 
 
-class UnusedLicensesCheck(base.Check):
+class UnusedLicensesCheck(Check):
     """Check for unused license files."""
 
     scope = base.repository_scope
@@ -200,7 +201,7 @@ class UnusedMirrors(base.Warning):
         return f'unused mirror{_pl(self.mirrors)}: {mirrors}'
 
 
-class _MirrorsCheck(base.Check):
+class _MirrorsCheck(Check):
     """Check for unused mirrors."""
 
     required_addons = (addons.UseAddon,)
@@ -257,7 +258,7 @@ class UnusedEclasses(base.Warning):
         return f"unused eclass{_pl(self.eclasses, plural='es')}: {eclasses}"
 
 
-class UnusedEclassesCheck(base.Check):
+class UnusedEclassesCheck(Check):
     """Check for unused eclasses."""
 
     scope = base.repository_scope
@@ -298,7 +299,7 @@ class UnknownLicenses(base.Warning):
             self.group, _pl(self.licenses), ', '.join(self.licenses))
 
 
-class LicenseGroupsCheck(base.Check):
+class LicenseGroupsCheck(Check):
     """Scan license groups for unknown licenses."""
 
     scope = base.repository_scope
@@ -374,7 +375,7 @@ def _dfs(graph, start, visited=None):
     return visited
 
 
-class GlobalUSECheck(base.Check):
+class GlobalUSECheck(Check):
     """Check global USE and USE_EXPAND flags for various issues."""
 
     scope = base.repository_scope
@@ -576,7 +577,7 @@ class UnnecessaryManifest(base.PackageResult, base.Warning):
             _pl(self.files), ', '.join(self.files),)
 
 
-class ManifestCheck(base.Check):
+class ManifestCheck(Check):
     """Manifest related checks.
 
     Verify that the Manifest file exists, doesn't have missing or
@@ -644,7 +645,7 @@ class ManifestCheck(base.Check):
             yield UnknownManifest(sorted(unknown_manifests), pkg=pkgset[0])
 
 
-class ManifestConflictCheck(base.Check):
+class ManifestConflictCheck(Check):
     """Conflicting checksum check.
 
     Verify that two Manifest files do not contain conflicting checksums
