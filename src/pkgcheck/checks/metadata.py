@@ -18,7 +18,7 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base, results, sources
+from .. import addons, base, git, results, sources
 from ..addons import UnstatedIUSE
 from ..results import MetadataError
 from .visibility import FakeConfigurable
@@ -602,7 +602,7 @@ class NonexistentBlocker(results.VersionedResult, results.Warning):
 class DependencyCheck(Check):
     """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
-    required_addons = (addons.UseAddon, addons.GitAddon)
+    required_addons = (addons.UseAddon, git.GitAddon)
     known_results = (
         MetadataError, MissingPackageRevision, MissingUseDepDefault,
         OutdatedBlocker, NonexistentBlocker, UnstatedIUSE,
@@ -618,7 +618,7 @@ class DependencyCheck(Check):
 
     @jit_attr
     def existence_repo(self):
-        return self._git_addon.cached_repo(addons.GitRemovedRepo)
+        return self._git_addon.cached_repo(git.GitRemovedRepo)
 
     @staticmethod
     def _flatten_or_restrictions(i):

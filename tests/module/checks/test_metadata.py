@@ -11,7 +11,7 @@ from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
 from snakeoil.osutils import pjoin
 
-from pkgcheck import addons, results
+from pkgcheck import addons, git, results
 from pkgcheck.checks import metadata
 
 from .. import misc
@@ -752,7 +752,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
             )
         kwargs['search_repo'] = FakeRepo(pkgs=pkgs, repo_id='test')
         options = self.get_options(**kwargs)
-        git_addon = addons.GitAddon(options)
+        git_addon = git.GitAddon(options)
         return super().mk_check(git_addon, **kwargs)
 
     # pull the set of dependency attrs from the most recent EAPI

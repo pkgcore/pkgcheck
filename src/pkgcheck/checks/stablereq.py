@@ -5,7 +5,7 @@ from itertools import chain
 from snakeoil.klass import jit_attr
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base, results, sources
+from .. import base, git, results, sources
 from . import GentooRepoCheck
 
 day = 24*3600
@@ -40,7 +40,7 @@ class StableRequestCheck(GentooRepoCheck):
     """
     scope = base.package_scope
     _source = (sources.PackageRepoSource, (), (('source', sources.UnmaskedRepoSource),))
-    required_addons = (addons.GitAddon,)
+    required_addons = (git.GitAddon,)
     known_results = (StableRequest,)
 
     def __init__(self, options, git_addon=None, staleness=int(day*30)):
@@ -51,7 +51,7 @@ class StableRequestCheck(GentooRepoCheck):
 
     @jit_attr
     def modified_repo(self):
-        return self._git_addon.cached_repo(addons.GitModifiedRepo)
+        return self._git_addon.cached_repo(git.GitModifiedRepo)
 
     def feed(self, pkgset):
         # disable check when git repo parsing is disabled

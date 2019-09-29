@@ -13,7 +13,7 @@ from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base, results, sources
+from .. import base, git, results, sources
 from ..log import logger
 from . import ExplicitlyEnabledCheck, GentooRepoCheck
 
@@ -29,11 +29,11 @@ class GitCommitsRepoSource(sources.GenericSource):
     haven't been pushed upstream yet.
     """
 
-    required_addons = (addons.GitAddon,)
+    required_addons = (git.GitAddon,)
 
     def __init__(self, options, git_addon):
         super().__init__(options)
-        self._repo = git_addon.commits_repo(addons.GitChangedRepo)
+        self._repo = git_addon.commits_repo(git.GitChangedRepo)
 
 
 class GitCommitsSource(sources.GenericSource):
@@ -43,7 +43,7 @@ class GitCommitsSource(sources.GenericSource):
     upstream yet.
     """
 
-    required_addons = (addons.GitAddon,)
+    required_addons = (git.GitAddon,)
 
     def __init__(self, options, git_addon):
         super().__init__(options)
@@ -196,7 +196,7 @@ class GitPkgCommitsCheck(GentooRepoCheck):
 
     scope = base.package_scope
     _source = (sources.PackageRepoSource, (), (('source', GitCommitsRepoSource),))
-    required_addons = (addons.GitAddon,)
+    required_addons = (git.GitAddon,)
     known_results = (
         DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,
         OutdatedCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
@@ -217,7 +217,7 @@ class GitPkgCommitsCheck(GentooRepoCheck):
     @jit_attr
     def added_repo(self):
         """Create/load cached repo of packages added to git."""
-        return self._git_addon.cached_repo(addons.GitAddedRepo)
+        return self._git_addon.cached_repo(git.GitAddedRepo)
 
     def removal_checks(self, removed):
         """Check for issues due to package removals."""
