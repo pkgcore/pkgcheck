@@ -12,16 +12,13 @@ minimally accepted scope.
 
 import re
 import sys
-from collections import OrderedDict, defaultdict, namedtuple, deque
+from collections import OrderedDict, namedtuple
 from contextlib import AbstractContextManager
 
 from pkgcore import const as pkgcore_const
 from pkgcore.config.hint import ConfigHint
-from pkgcore.ebuild import atom, cpv
-from pkgcore.package.errors import MetadataException
-from pkgcore.restrictions import util
+from pkgcore.ebuild import atom
 from snakeoil import klass
-from snakeoil.decorators import coroutine
 from snakeoil.osutils import pjoin
 
 # source feed types
