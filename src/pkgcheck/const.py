@@ -44,7 +44,7 @@ def _find_obj_classes(module_name, matching_cls):
     module = import_module(f'.{module_name}', __title__)
 
     # skip top-level, base classes
-    base_classes = {}
+    base_classes = {matching_cls.__name__: matching_cls}
     if os.path.basename(module.__file__) == '__init__.py':
         for cls in _find_classes(module, matching_cls):
             base_classes[cls.__name__] = cls
