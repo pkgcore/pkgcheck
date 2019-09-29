@@ -10,11 +10,11 @@ from snakeoil.log import suppress_logging
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base, sources
+from .. import addons, base, results, sources
 from . import Check
 
 
-class MultiMovePackageUpdate(base.Warning):
+class MultiMovePackageUpdate(results.Warning):
     """Entry for package moved multiple times in profiles/updates files."""
 
     threshold = base.repository_feed
@@ -29,7 +29,7 @@ class MultiMovePackageUpdate(base.Warning):
         return f"{self.pkg!r}: multi-move update: {' -> '.join(self.moves)}"
 
 
-class OldMultiMovePackageUpdate(base.Warning):
+class OldMultiMovePackageUpdate(results.Warning):
     """Old entry for removed package moved multiple times in profiles/updates files.
 
     This means that the reported pkg has been moved at least three times and
@@ -49,7 +49,7 @@ class OldMultiMovePackageUpdate(base.Warning):
         return f"{self.pkg!r} unavailable: old multi-move update: {' -> '.join(self.moves)}"
 
 
-class OldPackageUpdate(base.Warning):
+class OldPackageUpdate(results.Warning):
     """Old entry for removed package in profiles/updates files."""
 
     threshold = base.repository_feed
@@ -64,13 +64,13 @@ class OldPackageUpdate(base.Warning):
         return f"{self.pkg!r} unavailable: old update line: {' '.join(self.updates)!r}"
 
 
-class MovedPackageUpdate(base.LogWarning):
+class MovedPackageUpdate(results.LogWarning):
     """Entry for package already moved in profiles/updates files."""
 
     threshold = base.repository_feed
 
 
-class BadPackageUpdate(base.LogError):
+class BadPackageUpdate(results.LogError):
     """Badly formatted package update in profiles/updates files."""
 
     threshold = base.repository_feed
@@ -147,7 +147,7 @@ class PackageUpdatesCheck(Check):
             yield OldPackageUpdate(str(pkg), updates)
 
 
-class UnusedLicenses(base.Warning):
+class UnusedLicenses(results.Warning):
     """Unused license(s) detected."""
 
     threshold = base.repository_feed
@@ -186,7 +186,7 @@ class UnusedLicensesCheck(Check):
             yield UnusedLicenses(sorted(self.unused_licenses))
 
 
-class UnusedMirrors(base.Warning):
+class UnusedMirrors(results.Warning):
     """Unused mirrors detected."""
 
     threshold = base.repository_feed
@@ -243,7 +243,7 @@ class UnusedMirrorsCheck(_MirrorsCheck):
             yield UnusedMirrors(sorted(self.unused_mirrors))
 
 
-class UnusedEclasses(base.Warning):
+class UnusedEclasses(results.Warning):
     """Unused eclasses detected."""
 
     threshold = base.repository_feed
@@ -283,7 +283,7 @@ class UnusedEclassesCheck(Check):
             yield UnusedEclasses(sorted(self.unused_eclasses))
 
 
-class UnknownLicenses(base.Warning):
+class UnknownLicenses(results.Warning):
     """License(s) listed in license group(s) that don't exist."""
 
     threshold = base.repository_feed
@@ -317,7 +317,7 @@ class LicenseGroupsCheck(Check):
                 yield UnknownLicenses(group, sorted(unknown_licenses))
 
 
-class PotentialLocalUSE(base.Info):
+class PotentialLocalUSE(results.Info):
     """Global USE flag is a potential local USE flag."""
 
     threshold = base.repository_feed
@@ -334,7 +334,7 @@ class PotentialLocalUSE(base.Info):
             f"used by {len(self.pkgs)} package{_pl(len(self.pkgs))}: {', '.join(self.pkgs)}")
 
 
-class UnusedGlobalUSE(base.Warning):
+class UnusedGlobalUSE(results.Warning):
     """Unused use.desc flag(s)."""
 
     threshold = base.repository_feed
@@ -349,7 +349,7 @@ class UnusedGlobalUSE(base.Warning):
             _pl(self.flags), ', '.join(self.flags))
 
 
-class PotentialGlobalUSE(base.Info):
+class PotentialGlobalUSE(results.Info):
     """Local USE flag is a potential global USE flag."""
 
     threshold = base.repository_feed
@@ -490,7 +490,7 @@ def reformat_chksums(iterable):
             yield chf, "%x" % val1, "%x" % val2
 
 
-class ConflictingChksums(base.VersionedResult, base.Error):
+class ConflictingChksums(results.VersionedResult, results.Error):
     """Checksum conflict detected between two files."""
 
     def __init__(self, filename, chksums, pkgs, **kwargs):
@@ -506,7 +506,7 @@ class ConflictingChksums(base.VersionedResult, base.Error):
             f"for file {self.filename!r} chksum {self.chksums}")
 
 
-class MissingChksum(base.VersionedResult, base.Warning):
+class MissingChksum(results.VersionedResult, results.Warning):
     """A file in the chksum data lacks required checksums."""
 
     def __init__(self, filename, missing, existing, **kwargs):
@@ -522,7 +522,7 @@ class MissingChksum(base.VersionedResult, base.Warning):
             f"{', '.join(self.missing)}; has chksums: {', '.join(self.existing)}")
 
 
-class DeprecatedChksum(base.VersionedResult, base.Warning):
+class DeprecatedChksum(results.VersionedResult, results.Warning):
     """A file in the chksum data does not use modern checksum set."""
 
     def __init__(self, filename, expected, existing, **kwargs):
@@ -538,7 +538,7 @@ class DeprecatedChksum(base.VersionedResult, base.Warning):
             f"{', '.join(self.existing)}; expected {', '.join(self.expected)}")
 
 
-class MissingManifest(base.VersionedResult, base.Error):
+class MissingManifest(results.VersionedResult, results.Error):
     """SRC_URI targets missing from Manifest file."""
 
     def __init__(self, files, **kwargs):
@@ -551,7 +551,7 @@ class MissingManifest(base.VersionedResult, base.Error):
             _pl(self.files), ', '.join(self.files),)
 
 
-class UnknownManifest(base.PackageResult, base.Warning):
+class UnknownManifest(results.PackageResult, results.Warning):
     """Manifest entries not matching any SRC_URI targets."""
 
     def __init__(self, files, **kwargs):
@@ -564,7 +564,7 @@ class UnknownManifest(base.PackageResult, base.Warning):
             _pl(self.files), ', '.join(self.files),)
 
 
-class UnnecessaryManifest(base.PackageResult, base.Warning):
+class UnnecessaryManifest(results.PackageResult, results.Warning):
     """Manifest entries for non-DIST targets on a repo with thin manifests enabled."""
 
     def __init__(self, files, **kwargs):

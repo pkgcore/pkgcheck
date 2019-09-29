@@ -12,11 +12,11 @@ from snakeoil.osutils import listdir_dirs, pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base, sources
+from .. import addons, base, results, sources
 from . import Check
 
 
-class BadProfileEntry(base.Error):
+class BadProfileEntry(results.Error):
     """Badly formatted entry in a profiles file."""
 
     threshold = base.repository_feed
@@ -31,7 +31,7 @@ class BadProfileEntry(base.Error):
         return f'failed parsing {self.path!r}: {self.error}'
 
 
-class UnknownProfilePackages(base.Warning):
+class UnknownProfilePackages(results.Warning):
     """Profile files include package entries that don't exist in the repo."""
 
     threshold = base.repository_feed
@@ -47,7 +47,7 @@ class UnknownProfilePackages(base.Warning):
             self.path, _pl(self.packages), ', '.join(map(repr, self.packages)))
 
 
-class UnknownProfilePackageUse(base.Warning):
+class UnknownProfilePackageUse(results.Warning):
     """Profile files include entries with USE flags that aren't used on any matching packages."""
 
     threshold = base.repository_feed
@@ -65,7 +65,7 @@ class UnknownProfilePackageUse(base.Warning):
             ','.join(self.flags))
 
 
-class UnknownProfileUse(base.Warning):
+class UnknownProfileUse(results.Warning):
     """Profile files include USE flags that don't exist."""
 
     threshold = base.repository_feed
@@ -81,7 +81,7 @@ class UnknownProfileUse(base.Warning):
             self.path, _pl(self.flags), ', '.join(map(repr, self.flags)))
 
 
-class UnknownProfilePackageKeywords(base.Warning):
+class UnknownProfilePackageKeywords(results.Warning):
     """Profile files include package keywords that don't exist."""
 
     threshold = base.repository_feed
@@ -99,13 +99,13 @@ class UnknownProfilePackageKeywords(base.Warning):
             ', '.join(map(repr, self.keywords)))
 
 
-class ProfileWarning(base.LogWarning):
+class ProfileWarning(results.LogWarning):
     """Badly formatted data in various profile files."""
 
     threshold = base.repository_feed
 
 
-class ProfileError(base.LogError):
+class ProfileError(results.LogError):
     """Erroneously formatted data in various profile files."""
 
     threshold = base.repository_feed
@@ -277,7 +277,7 @@ class ProfilesCheck(Check):
                         str(pkg), keywords)
 
 
-class UnusedProfileDirs(base.Warning):
+class UnusedProfileDirs(results.Warning):
     """Unused profile directories detected."""
 
     threshold = base.repository_feed
@@ -292,7 +292,7 @@ class UnusedProfileDirs(base.Warning):
         return f'unused profile dir{_pl(self.dirs)}: {dirs}'
 
 
-class ArchesWithoutProfiles(base.Warning):
+class ArchesWithoutProfiles(results.Warning):
     """Arches without corresponding profile listings."""
 
     threshold = base.repository_feed
@@ -307,7 +307,7 @@ class ArchesWithoutProfiles(base.Warning):
         return f"arch{_pl(self.arches, plural='es')} without profile: {arches}"
 
 
-class NonexistentProfilePath(base.Error):
+class NonexistentProfilePath(results.Error):
     """Specified profile path in profiles.desc doesn't exist."""
 
     threshold = base.repository_feed
@@ -321,7 +321,7 @@ class NonexistentProfilePath(base.Error):
         return f'nonexistent profile path: {self.path!r}'
 
 
-class LaggingProfileEAPI(base.Warning):
+class LaggingProfileEAPI(results.Warning):
     """Profile has an EAPI that is older than one of its parents."""
 
     threshold = base.repository_feed
@@ -341,7 +341,7 @@ class LaggingProfileEAPI(base.Warning):
         )
 
 
-class UnknownCategories(base.Warning):
+class UnknownCategories(results.Warning):
     """Category directories that aren't listed in a repo's categories.
 
     Or the categories of the repo's masters as well.

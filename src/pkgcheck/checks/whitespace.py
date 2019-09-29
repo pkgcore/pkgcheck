@@ -1,13 +1,13 @@
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, sources
+from .. import results, sources
 from . import Check
 
 demand_compile_regexp('indent_regexp', '^\t* \t+')
 
 
-class _Whitespace(base.VersionedResult, base.Warning):
+class _Whitespace(results.VersionedResult, results.Warning):
 
     @property
     def lines_str(self):
@@ -51,13 +51,13 @@ class DoubleEmptyLine(_Whitespace):
         return f"ebuild has unneeded empty {self.lines_str}"
 
 
-class TrailingEmptyLine(base.VersionedResult, base.Warning):
+class TrailingEmptyLine(results.VersionedResult, results.Warning):
     """Unneeded trailing blank lines found."""
 
     desc = "ebuild has trailing blank line(s)"
 
 
-class NoFinalNewline(base.VersionedResult, base.Warning):
+class NoFinalNewline(results.VersionedResult, results.Warning):
     """Ebuild's last line does not have a final newline."""
 
     desc = "ebuild lacks an ending newline"

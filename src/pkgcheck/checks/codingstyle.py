@@ -9,7 +9,7 @@ from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, sources
+from .. import results, sources
 from . import Check, GentooRepoCheck
 
 demand_compile_regexp(
@@ -17,7 +17,7 @@ demand_compile_regexp(
     r'^# Copyright (?P<begin>\d{4}-)?(?P<end>\d{4}) (?P<holder>.+)$')
 
 
-class _CommandResult(base.VersionedResult):
+class _CommandResult(results.VersionedResult):
     """Generic command result."""
 
     def __init__(self, command, line, lineno, **kwargs):
@@ -38,7 +38,7 @@ class _CommandResult(base.VersionedResult):
         return s
 
 
-class PortageInternals(_CommandResult, base.Error):
+class PortageInternals(_CommandResult, results.Error):
     """Ebuild uses a function or variable internal to portage."""
 
 
@@ -54,13 +54,13 @@ class _EapiCommandResult(_CommandResult):
         return f'{self.command!r} {self._status} in EAPI {self.eapi}'
 
 
-class DeprecatedEapiCommand(_EapiCommandResult, base.Warning):
+class DeprecatedEapiCommand(_EapiCommandResult, results.Warning):
     """Ebuild uses a deprecated EAPI command."""
 
     _status = 'deprecated'
 
 
-class BannedEapiCommand(_EapiCommandResult, base.Error):
+class BannedEapiCommand(_EapiCommandResult, results.Error):
     """Ebuild uses a banned EAPI command."""
 
     _status = 'banned'
@@ -122,7 +122,7 @@ class BadCommandsCheck(Check):
                         yield result_cls(match.group('cmd'), line, lineno, pkg=pkg, **kwargs)
 
 
-class MissingSlash(base.VersionedResult, base.Error):
+class MissingSlash(results.VersionedResult, results.Error):
     """Ebuild uses a path variable missing a trailing slash."""
 
     def __init__(self, match, lines, **kwargs):
@@ -136,7 +136,7 @@ class MissingSlash(base.VersionedResult, base.Error):
         return f"{self.match} missing trailing slash on line{_pl(self.lines)}: {lines}"
 
 
-class UnnecessarySlashStrip(base.VersionedResult, base.Warning):
+class UnnecessarySlashStrip(results.VersionedResult, results.Warning):
     """Ebuild uses a path variable that strips a nonexistent slash."""
 
     def __init__(self, match, lines, **kwargs):
@@ -150,7 +150,7 @@ class UnnecessarySlashStrip(base.VersionedResult, base.Warning):
         return f"{self.match} unnecessary slash strip on line{_pl(self.lines)}: {lines}"
 
 
-class DoublePrefixInPath(base.VersionedResult, base.Error):
+class DoublePrefixInPath(results.VersionedResult, results.Error):
     """Ebuild uses two consecutive paths including EPREFIX.
 
     Ebuild combines two path variables (or a variable and a getter), both
@@ -278,7 +278,7 @@ class PathVariablesCheck(Check):
             yield DoublePrefixInPath(match, lines, pkg=pkg)
 
 
-class AbsoluteSymlink(base.VersionedResult, base.Warning):
+class AbsoluteSymlink(results.VersionedResult, results.Warning):
     """Ebuild uses dosym with absolute paths instead of relative."""
 
     def __init__(self, abspath, line, **kwargs):
@@ -313,7 +313,7 @@ class AbsoluteSymlinkCheck(Check):
                 yield AbsoluteSymlink(matches.groups()[0], lineno, pkg=pkg)
 
 
-class BadInsIntoDir(base.VersionedResult, base.Warning):
+class BadInsIntoDir(results.VersionedResult, results.Warning):
     """Ebuild uses insinto where more compact commands exist."""
 
     def __init__(self, line, lineno, **kwargs):
@@ -369,7 +369,7 @@ class BadInsIntoCheck(Check):
                     yield BadInsIntoDir(matches.group('insinto'), lineno, pkg=pkg)
 
 
-class ObsoleteUri(base.VersionedResult, base.Warning):
+class ObsoleteUri(results.VersionedResult, results.Warning):
     """URI used is obsolete.
 
     The URI used to fetch distfile is obsolete and can be replaced
@@ -425,7 +425,7 @@ class ObsoleteUriCheck(Check):
                     yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)
 
 
-class _EbuildHeaderResult(base.VersionedResult):
+class _EbuildHeaderResult(results.VersionedResult):
     """Generic ebuild header result."""
 
     def __init__(self, line, **kwargs):
@@ -433,7 +433,7 @@ class _EbuildHeaderResult(base.VersionedResult):
         self.line = line
 
 
-class InvalidCopyright(_EbuildHeaderResult, base.Error):
+class InvalidCopyright(_EbuildHeaderResult, results.Error):
     """Ebuild with invalid copyright.
 
     The ebuild does not start with a valid copyright line. Each ebuild must
@@ -451,7 +451,7 @@ class InvalidCopyright(_EbuildHeaderResult, base.Error):
         return f'invalid copyright: {self.line!r}'
 
 
-class OldGentooCopyright(_EbuildHeaderResult, base.Warning):
+class OldGentooCopyright(_EbuildHeaderResult, results.Warning):
     """Ebuild with old Gentoo Foundation copyright.
 
     The ebuild still assigns copyright to the Gentoo Foundation even though
@@ -467,7 +467,7 @@ class OldGentooCopyright(_EbuildHeaderResult, base.Warning):
         return f'old copyright, update to "Gentoo Authors": {self.line!r}'
 
 
-class NonGentooAuthorsCopyright(_EbuildHeaderResult, base.Error):
+class NonGentooAuthorsCopyright(_EbuildHeaderResult, results.Error):
     """Ebuild with copyright stating owner other than "Gentoo Authors".
 
     The ebuild specifies explicit copyright owner, while the Gentoo repository
@@ -481,7 +481,7 @@ class NonGentooAuthorsCopyright(_EbuildHeaderResult, base.Error):
         return f'copyright line must state "Gentoo Authors": {self.line!r}'
 
 
-class InvalidLicenseHeader(_EbuildHeaderResult, base.Error):
+class InvalidLicenseHeader(_EbuildHeaderResult, results.Error):
     """Ebuild with invalid license header.
 
     The ebuild does not have with a valid license header.
@@ -530,7 +530,7 @@ class EbuildHeaderCheck(GentooRepoCheck):
                 yield InvalidLicenseHeader(line, pkg=pkg)
 
 
-class HomepageInSrcUri(base.VersionedResult, base.Warning):
+class HomepageInSrcUri(results.VersionedResult, results.Warning):
     """${HOMEPAGE} is referenced in SRC_URI.
 
     SRC_URI is built on top of ${HOMEPAGE}. This is discouraged since HOMEPAGE

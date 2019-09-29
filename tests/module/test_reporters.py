@@ -7,7 +7,7 @@ from pkgcore.test.misc import FakePkg
 import pytest
 from snakeoil.formatters import PlainTextFormatter
 
-from pkgcheck import base, reporters
+from pkgcheck import base, reporters, results
 from pkgcheck.checks import pkgdir, profiles, metadata, metadata_xml
 
 
@@ -163,7 +163,7 @@ class TestFormatReporter(BaseReporter):
             super().test_filtered_report(capsys)
 
 
-class UnPickleableResult(base.Result):
+class UnPickleableResult(results.Result):
 
     def __init__(self):
         self.func = lambda x: x

@@ -11,7 +11,7 @@ from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
 from snakeoil.osutils import pjoin
 
-from pkgcheck import addons, base
+from pkgcheck import addons, results
 from pkgcheck.checks import metadata
 
 from .. import misc
@@ -365,7 +365,7 @@ class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
                 EAPI=blah
             """))
         r = self.assertReport(check, list(self.repo), iterate=True)
-        assert isinstance(r, base.MetadataError)
+        assert isinstance(r, results.MetadataError)
         assert "attr(eapi): EAPI 'blah' is not supported" == str(r)
 
 

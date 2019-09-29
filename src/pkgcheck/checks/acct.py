@@ -8,11 +8,11 @@ from itertools import chain
 from pkgcore.ebuild import restricts
 from pkgcore.restrictions import packages
 
-from .. import base, sources
+from .. import base, results, sources
 from . import Check
 
 
-class MissingAccountIdentifier(base.VersionedResult, base.Warning):
+class MissingAccountIdentifier(results.VersionedResult, results.Warning):
     """UID/GID can not be found in account package."""
 
     def __init__(self, var, **kwargs):
@@ -24,7 +24,7 @@ class MissingAccountIdentifier(base.VersionedResult, base.Warning):
         return f"unable to determine the value of {self.var} variable"
 
 
-class ConflictingAccountIdentifiers(base.Error):
+class ConflictingAccountIdentifiers(results.Error):
     """Same UID/GID is used by multiple packages."""
 
     threshold = base.repository_feed
@@ -42,7 +42,7 @@ class ConflictingAccountIdentifiers(base.Error):
             f"[ {', '.join(self.pkgs)} ]")
 
 
-class OutsideRangeAccountIdentifier(base.VersionedResult, base.Error):
+class OutsideRangeAccountIdentifier(results.VersionedResult, results.Error):
     """UID/GID outside allowed allocation range."""
 
     def __init__(self, kind, identifier, **kwargs):

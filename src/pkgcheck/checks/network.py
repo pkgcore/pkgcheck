@@ -9,11 +9,11 @@ from pkgcore.fetch import fetchable
 from snakeoil.iterables import partition
 from snakeoil.log import suppress_logging
 
-from .. import addons, base
+from .. import addons, results
 from . import NetworkCheck
 
 
-class _DeadUrlResult(base.FilteredVersionResult, base.Warning):
+class _DeadUrlResult(results.FilteredVersionResult, results.Warning):
     """Generic result for a dead URL."""
 
     def __init__(self, url, message, **kwargs):
@@ -34,7 +34,7 @@ class DeadSrcUrl(_DeadUrlResult):
     """Package with a dead SRC_URI target."""
 
 
-class _RedirectedUrlResult(base.FilteredVersionResult, base.Warning):
+class _RedirectedUrlResult(results.FilteredVersionResult, results.Warning):
     """Generic result for a URL that permanently redirects to a different site."""
 
     def __init__(self, url, new_url, **kwargs):
@@ -55,7 +55,7 @@ class RedirectedSrcUrl(_RedirectedUrlResult):
     """Package with a SRC_URI target that permanently redirects to a different site."""
 
 
-class SSLCertificateError(base.FilteredVersionResult, base.Warning):
+class SSLCertificateError(results.FilteredVersionResult, results.Warning):
     """Package with https:// HOMEPAGE with an invalid SSL cert."""
 
     def __init__(self, url, message, **kwargs):
@@ -68,7 +68,7 @@ class SSLCertificateError(base.FilteredVersionResult, base.Warning):
         return f'SSL cert error: {self.message}: {self.url}'
 
 
-class HttpsUrlAvailable(base.FilteredVersionResult, base.Warning):
+class HttpsUrlAvailable(results.FilteredVersionResult, results.Warning):
     """URL uses http:// when https:// is available."""
 
     def __init__(self, http_url, https_url, **kwargs):

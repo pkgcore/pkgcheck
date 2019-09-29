@@ -3,11 +3,11 @@ from collections import defaultdict
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base, sources
+from .. import addons, base, results, sources
 from . import GentooRepoCheck
 
 
-class UnstableOnly(base.PackageResult, base.Info):
+class UnstableOnly(results.PackageResult, results.Info):
     """Package/keywords that are strictly unstable."""
 
     def __init__(self, versions, arches, **kwargs):

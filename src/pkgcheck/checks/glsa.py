@@ -7,12 +7,12 @@ from snakeoil.cli.arghparse import existent_dir
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.strings import pluralism as _pl
 
-from .. import base
+from .. import results
 from ..log import logger
 from . import GentooRepoCheck
 
 
-class VulnerablePackage(base.VersionedResult, base.Error):
+class VulnerablePackage(results.VersionedResult, results.Error):
     """Packages marked as vulnerable by GLSAs."""
 
     def __init__(self, arches, glsa, **kwargs):

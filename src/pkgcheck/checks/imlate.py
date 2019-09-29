@@ -4,11 +4,11 @@ from itertools import chain
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base, sources
+from .. import addons, base, results, sources
 from . import Check
 
 
-class PotentialStable(base.VersionedResult, base.Info):
+class PotentialStable(results.VersionedResult, results.Info):
     """Stable arches with potential stable package candidates."""
 
     def __init__(self, slot, stable, keywords, **kwargs):
@@ -24,7 +24,7 @@ class PotentialStable(base.VersionedResult, base.Info):
             _pl(self.keywords), ', '.join(self.keywords))
 
 
-class LaggingStable(base.VersionedResult, base.Info):
+class LaggingStable(results.VersionedResult, results.Info):
     """Stable arches for stabilized package that are lagging from a stabling standpoint."""
 
     def __init__(self, slot, stable, keywords, **kwargs):

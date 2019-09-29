@@ -1,10 +1,10 @@
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, sources
+from .. import base, results, sources
 from . import Check
 
 
-class RedundantVersion(base.VersionedResult, base.Info):
+class RedundantVersion(results.VersionedResult, results.Info):
     """Redundant version(s) of a package in a specific slot."""
 
     def __init__(self, slot, later_versions, **kwargs):

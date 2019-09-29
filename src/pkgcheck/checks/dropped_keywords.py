@@ -1,10 +1,10 @@
 from collections import defaultdict
 
-from .. import addons, base, sources
+from .. import addons, base, results, sources
 from . import Check
 
 
-class DroppedKeywords(base.VersionedResult, base.Warning):
+class DroppedKeywords(results.VersionedResult, results.Warning):
     """Arch keywords dropped during version bumping."""
 
     def __init__(self, arches, **kwargs):

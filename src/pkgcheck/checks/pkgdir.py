@@ -8,7 +8,7 @@ from snakeoil.chksum import get_chksums
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, sources
+from .. import base, results, sources
 from . import Check
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
@@ -19,7 +19,7 @@ allowed_filename_chars_set.update(chr(x) for x in range(ord('0'), ord('9')+1))
 allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 
 
-class MismatchedPN(base.PackageResult, base.Error):
+class MismatchedPN(results.PackageResult, results.Error):
     """Ebuilds that have different names than their parent directory."""
 
     def __init__(self, ebuilds, **kwargs):
@@ -32,7 +32,7 @@ class MismatchedPN(base.PackageResult, base.Error):
             _pl(self.ebuilds), ', '.join(self.ebuilds))
 
 
-class InvalidPN(base.PackageResult, base.Error):
+class InvalidPN(results.PackageResult, results.Error):
     """Ebuilds that have invalid package names."""
 
     def __init__(self, ebuilds, **kwargs):
@@ -45,7 +45,7 @@ class InvalidPN(base.PackageResult, base.Error):
             _pl(self.ebuilds), ', '.join(self.ebuilds))
 
 
-class EqualVersions(base.PackageResult, base.Error):
+class EqualVersions(results.PackageResult, results.Error):
     """Ebuilds that have equal versions.
 
     For example, cat/pn-1.0.2, cat/pn-1.0.2-r0, cat/pn-1.0.2-r00 and
@@ -62,7 +62,7 @@ class EqualVersions(base.PackageResult, base.Error):
         return f"equal package versions: [ {', '.join(self.versions)} ]"
 
 
-class DuplicateFiles(base.PackageResult, base.Warning):
+class DuplicateFiles(results.PackageResult, results.Warning):
     """Two or more identical files in FILESDIR."""
 
     def __init__(self, files, **kwargs):
@@ -75,7 +75,7 @@ class DuplicateFiles(base.PackageResult, base.Warning):
             ', '.join(map(repr, self.files)))
 
 
-class EmptyFile(base.PackageResult, base.Warning):
+class EmptyFile(results.PackageResult, results.Warning):
     """File in FILESDIR is empty."""
 
     def __init__(self, filename, **kwargs):
@@ -87,7 +87,7 @@ class EmptyFile(base.PackageResult, base.Warning):
         return f'empty file in FILESDIR: {self.filename!r}'
 
 
-class ExecutableFile(base.PackageResult, base.Warning):
+class ExecutableFile(results.PackageResult, results.Warning):
     """File has executable bit, but doesn't need it."""
 
     def __init__(self, filename, **kwargs):
@@ -99,7 +99,7 @@ class ExecutableFile(base.PackageResult, base.Warning):
         return f'unnecessary executable bit: {self.filename!r}'
 
 
-class UnknownFile(base.PackageResult, base.Warning):
+class UnknownFile(results.PackageResult, results.Warning):
     """Unknown file in package directory.
 
     Relevant for the gentoo repo only since the spec states that a package
@@ -115,7 +115,7 @@ class UnknownFile(base.PackageResult, base.Warning):
         return f'unknown file: {self.filename!r}'
 
 
-class SizeViolation(base.PackageResult, base.Warning):
+class SizeViolation(results.PackageResult, results.Warning):
     """File in $FILESDIR is too large (current limit is 20k)."""
 
     def __init__(self, filename, size, **kwargs):
@@ -128,7 +128,7 @@ class SizeViolation(base.PackageResult, base.Warning):
         return f'{self.filename!r} exceeds 20k in size; {sizeof_fmt(self.size)} total'
 
 
-class Glep31Violation(base.PackageResult, base.Error):
+class Glep31Violation(results.PackageResult, results.Error):
     """File doesn't abide by glep31 requirements."""
 
     def __init__(self, filename, **kwargs):
@@ -141,7 +141,7 @@ class Glep31Violation(base.PackageResult, base.Error):
                f"by glep31: {self.filename!r}"
 
 
-class InvalidUTF8(base.PackageResult, base.Error):
+class InvalidUTF8(results.PackageResult, results.Error):
     """File isn't UTF-8 compliant."""
 
     def __init__(self, filename, err, **kwargs):

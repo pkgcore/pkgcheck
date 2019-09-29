@@ -7,7 +7,7 @@ from snakeoil.iterables import caching_iter
 from snakeoil.sequences import iflatten_func, iflatten_instance, stable_unique
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base, feeds
+from .. import addons, feeds, results
 from . import Check
 
 
@@ -94,7 +94,7 @@ def visit_atoms(pkg, stream):
     return iflatten_func(stream, _eapi2_flatten)
 
 
-class VisibleVcsPkg(base.VersionedResult, base.Error):
+class VisibleVcsPkg(results.VersionedResult, results.Error):
     """Package is VCS-based, but visible."""
 
     def __init__(self, arch, profile, **kwargs):
@@ -107,7 +107,7 @@ class VisibleVcsPkg(base.VersionedResult, base.Error):
         return f"VCS version visible for arch {self.arch}, profile {self.profile}"
 
 
-class NonexistentDeps(base.VersionedResult, base.Warning):
+class NonexistentDeps(results.VersionedResult, results.Warning):
     """No matches exist for a package dependency."""
 
     def __init__(self, attr, nonexistent, **kwargs):
@@ -123,7 +123,7 @@ class NonexistentDeps(base.VersionedResult, base.Warning):
         )
 
 
-class UncheckableDep(base.VersionedResult, base.Warning):
+class UncheckableDep(results.VersionedResult, results.Warning):
     """Given dependency cannot be checked due to the number of transitive use deps in it."""
 
     def __init__(self, attr, **kwargs):
@@ -135,7 +135,7 @@ class UncheckableDep(base.VersionedResult, base.Warning):
         return f"depset {self.attr}: could not be checked due to pkgcore limitation"
 
 
-class _NonsolvableDeps(base.VersionedResult):
+class _NonsolvableDeps(results.VersionedResult):
     """No potential solution for a depset attribute."""
 
     def __init__(self, attr, keyword, profile, deps, profile_status,
@@ -161,15 +161,15 @@ class _NonsolvableDeps(base.VersionedResult):
         )
 
 
-class NonsolvableDepsInStable(_NonsolvableDeps, base.Error):
+class NonsolvableDepsInStable(_NonsolvableDeps, results.Error):
     """No potential solution for dependency on stable profile."""
 
 
-class NonsolvableDepsInDev(_NonsolvableDeps, base.Error):
+class NonsolvableDepsInDev(_NonsolvableDeps, results.Error):
     """No potential solution for dependency on dev profile."""
 
 
-class NonsolvableDepsInExp(_NonsolvableDeps, base.Warning):
+class NonsolvableDepsInExp(_NonsolvableDeps, results.Warning):
     """No potential solution for dependency on exp profile."""
 
 

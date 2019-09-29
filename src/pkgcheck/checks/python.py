@@ -3,7 +3,8 @@ from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import JustOneRestriction, OrRestriction
 from snakeoil.sequences import iflatten_instance
 
-from .. import base
+from .. import results
+from ..results import MetadataError
 from . import Check
 
 # NB: distutils-r1 inherits one of the first two
@@ -26,7 +27,7 @@ IUSE_PREFIX = 'python_targets_'
 IUSE_PREFIX_S = 'python_single_target_'
 
 
-class MissingPythonEclass(base.VersionedResult, base.Warning):
+class MissingPythonEclass(results.VersionedResult, results.Warning):
     """Package depends on Python but does not use the eclasses.
 
     All packages depending on Python are required to use one of the following
@@ -48,7 +49,7 @@ class MissingPythonEclass(base.VersionedResult, base.Warning):
         return f'missing {self.eclass} eclass usage for {self.dep_type}="{self.dep}"'
 
 
-class PythonSingleUseMismatch(base.VersionedResult, base.Warning):
+class PythonSingleUseMismatch(results.VersionedResult, results.Warning):
     """Package has mismatched PYTHON_SINGLE_TARGET and PYTHON_TARGETS flags.
 
     The package declares both PYTHON_SINGLE_TARGET and PYTHON_TARGETS flags but
@@ -73,7 +74,7 @@ class PythonSingleUseMismatch(base.VersionedResult, base.Warning):
         )
 
 
-class PythonMissingRequiredUSE(base.VersionedResult, base.Warning):
+class PythonMissingRequiredUSE(results.VersionedResult, results.Warning):
     """Package is missing PYTHON_REQUIRED_USE.
 
     The python-r1 and python-single-r1 eclasses require the packages to
@@ -86,7 +87,7 @@ class PythonMissingRequiredUSE(base.VersionedResult, base.Warning):
         return 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"'
 
 
-class PythonMissingDeps(base.VersionedResult, base.Warning):
+class PythonMissingDeps(results.VersionedResult, results.Warning):
     """Package is missing PYTHON_DEPS.
 
     The python-r1 and python-single-r1 eclasses require the packages
@@ -106,7 +107,7 @@ class PythonMissingDeps(base.VersionedResult, base.Warning):
         return f'missing {self.dep_type}="${{PYTHON_DEPS}}"'
 
 
-class PythonRuntimeDepInAnyR1(base.VersionedResult, base.Warning):
+class PythonRuntimeDepInAnyR1(results.VersionedResult, results.Warning):
     """Package depends on Python at runtime but uses any-r1 eclass.
 
     The python-any-r1 eclass is meant to be used purely for build-time
@@ -138,7 +139,7 @@ class PythonCheck(Check):
 
     known_results = (
         MissingPythonEclass, PythonSingleUseMismatch, PythonMissingRequiredUSE,
-        PythonMissingDeps, PythonRuntimeDepInAnyR1, base.MetadataError,
+        PythonMissingDeps, PythonRuntimeDepInAnyR1, MetadataError,
     )
 
     @staticmethod
@@ -203,7 +204,7 @@ class PythonCheck(Check):
         try:
             eclass = self.get_python_eclass(pkg)
         except ValueError as e:
-            yield base.MetadataError('data', str(e), pkg=pkg)
+            yield MetadataError('data', str(e), pkg=pkg)
             return
 
         if eclass is None:

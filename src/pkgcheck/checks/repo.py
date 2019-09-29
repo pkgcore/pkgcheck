@@ -2,12 +2,12 @@ import os
 
 from snakeoil.osutils import pjoin
 
-from .. import base, sources
+from .. import base, results, sources
 from ..utils import is_binary
 from . import GentooRepoCheck
 
 
-class BinaryFile(base.Error):
+class BinaryFile(results.Error):
     """Binary file found in the repository."""
 
     threshold = base.repository_feed
@@ -48,7 +48,7 @@ class RepoDirCheck(GentooRepoCheck):
                     yield BinaryFile(entry.path[len(self.repo.location) + 1:])
 
 
-class EmptyCategoryDir(base.CategoryResult, base.Warning):
+class EmptyCategoryDir(results.CategoryResult, results.Warning):
     """Empty category directory in the repository."""
 
     threshold = base.repository_feed
@@ -58,7 +58,7 @@ class EmptyCategoryDir(base.CategoryResult, base.Warning):
         return f'empty category directory: {self.category}'
 
 
-class EmptyPackageDir(base.PackageResult, base.Warning):
+class EmptyPackageDir(results.PackageResult, results.Warning):
     """Empty package directory in the repository."""
 
     threshold = base.repository_feed

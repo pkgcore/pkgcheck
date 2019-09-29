@@ -13,7 +13,7 @@ from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base, sources
+from .. import addons, base, results, sources
 from ..log import logger
 from . import ExplicitlyEnabledCheck, GentooRepoCheck
 
@@ -53,7 +53,7 @@ class GitCommitsSource(sources.GenericSource):
         yield from self.commits
 
 
-class OutdatedCopyright(base.VersionedResult, base.Warning):
+class OutdatedCopyright(results.VersionedResult, results.Warning):
     """Changed ebuild with outdated copyright."""
 
     def __init__(self, year, line, **kwargs):
@@ -66,7 +66,7 @@ class OutdatedCopyright(base.VersionedResult, base.Warning):
         return f'outdated copyright year {self.year!r}: {self.line!r}'
 
 
-class BadCommitSummary(base.PackageResult, base.Warning):
+class BadCommitSummary(results.PackageResult, results.Warning):
     """Local package commit with poorly formatted or unmatching commit summary.
 
     Git commit messages for packages should be formatted in the standardized
@@ -88,7 +88,7 @@ class BadCommitSummary(base.PackageResult, base.Warning):
         return f'commit {self.commit}, {self.error}: {self.summary!r}'
 
 
-class DirectStableKeywords(base.VersionedResult, base.Error):
+class DirectStableKeywords(results.VersionedResult, results.Error):
     """Newly committed ebuild with stable keywords."""
 
     def __init__(self, keywords, **kwargs):
@@ -101,7 +101,7 @@ class DirectStableKeywords(base.VersionedResult, base.Error):
             _pl(self.keywords), ', '.join(self.keywords))
 
 
-class _DroppedKeywords(base.PackageResult):
+class _DroppedKeywords(results.PackageResult):
     """Unstable keywords dropped from package."""
 
     _status = None
@@ -120,19 +120,19 @@ class _DroppedKeywords(base.PackageResult):
         )
 
 
-class DroppedUnstableKeywords(_DroppedKeywords, base.Warning):
+class DroppedUnstableKeywords(_DroppedKeywords, results.Warning):
     """Unstable keywords dropped from package."""
 
     _status = 'unstable'
 
 
-class DroppedStableKeywords(_DroppedKeywords, base.Error):
+class DroppedStableKeywords(_DroppedKeywords, results.Error):
     """Stable keywords dropped from package."""
 
     _status = 'stable'
 
 
-class DirectNoMaintainer(base.PackageResult, base.Error):
+class DirectNoMaintainer(results.PackageResult, results.Error):
     """Directly added, new package with no specified maintainer."""
 
     @property
@@ -298,7 +298,7 @@ class GitPkgCommitsCheck(GentooRepoCheck):
                     yield DirectNoMaintainer(pkg=pkg)
 
 
-class MissingSignOff(base.CommitResult, base.Error):
+class MissingSignOff(results.CommitResult, results.Error):
     """Local commit with missing sign offs.
 
     Sign offs are required for commits as specified by GLEP 76 [#]_.

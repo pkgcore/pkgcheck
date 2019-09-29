@@ -8,7 +8,7 @@ from importlib import import_module
 
 from snakeoil import demandimport, mappings
 
-from . import __title__, base, checks
+from . import __title__, base, results, checks
 
 try:
     # This is a file written during installation;
@@ -54,7 +54,7 @@ def _find_obj_classes(module_name, matching_cls):
         for cls in _find_classes(m, matching_cls):
             if cls.__name__ in base_classes:
                 continue
-            if cls.__name__ in classes:
+            if cls.__name__ in classes and classes[cls.__name__] != cls:
                 raise Exception(f'object name overlap: {cls} and {classes[cls.__name__]}')
             classes[cls.__name__] = cls
 
@@ -72,7 +72,7 @@ def _GET_VALS(attr, func):
 
 try:
     KEYWORDS = mappings.ImmutableDict(_GET_VALS(
-        'KEYWORDS', partial(_find_obj_classes, 'checks', base.Result)))
+        'KEYWORDS', partial(_find_obj_classes, 'checks', results.Result)))
     CHECKS = mappings.ImmutableDict(_GET_VALS(
         'CHECKS', partial(_find_obj_classes, 'checks', checks.Check)))
     REPORTERS = mappings.ImmutableDict(_GET_VALS(

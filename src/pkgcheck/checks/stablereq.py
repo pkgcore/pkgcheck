@@ -5,13 +5,13 @@ from itertools import chain
 from snakeoil.klass import jit_attr
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base, sources
+from .. import addons, base, results, sources
 from . import GentooRepoCheck
 
 day = 24*3600
 
 
-class StableRequest(base.VersionedResult, base.Info):
+class StableRequest(results.VersionedResult, results.Info):
     """Unstable package added over thirty days ago that could be stabilized."""
 
     def __init__(self, slot, keywords, age, **kwargs):

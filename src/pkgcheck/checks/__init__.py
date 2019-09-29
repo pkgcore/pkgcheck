@@ -1,6 +1,6 @@
 """Core check classes."""
 
-from .. import base, feeds, sources
+from .. import base, feeds, results, sources
 from ..log import logger
 
 
@@ -19,7 +19,7 @@ class Check(feeds.Feed):
         # replace versioned pkg feeds with filtered ones as required
         if self.options.verbosity < 1 and self.scope == base.version_scope:
             filtered_results = [
-                x for x in self.known_results if issubclass(x, base.FilteredVersionResult)]
+                x for x in self.known_results if issubclass(x, results.FilteredVersionResult)]
             if filtered_results:
                 partial_filtered = len(filtered_results) != len(self.known_results)
                 return (

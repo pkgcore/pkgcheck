@@ -1,11 +1,11 @@
 from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism as _pl
 
-from .. import base
+from .. import results
 from . import Check
 
 
-class DeprecatedEclass(base.VersionedResult, base.Warning):
+class DeprecatedEclass(results.VersionedResult, results.Warning):
     """Package uses an eclass that is deprecated/abandoned."""
 
     def __init__(self, eclasses, **kwargs):

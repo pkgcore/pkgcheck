@@ -18,14 +18,14 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from .. import addons, base, sources
+from .. import addons, base, results, sources
 from ..addons import UnstatedIUSE
-from ..base import MetadataError
+from ..results import MetadataError
 from .visibility import FakeConfigurable
 from . import Check
 
 
-class MissingLicense(base.VersionedResult, base.Error):
+class MissingLicense(results.VersionedResult, results.Error):
     """Used license(s) have no matching license file(s)."""
 
     def __init__(self, licenses, **kwargs):
@@ -38,7 +38,7 @@ class MissingLicense(base.VersionedResult, base.Error):
         return f"no matching license{_pl(self.licenses)}: [ {licenses} ]"
 
 
-class MissingLicenseRestricts(base.VersionedResult, base.Error):
+class MissingLicenseRestricts(results.VersionedResult, results.Error):
     """Restrictive license used without matching RESTRICT."""
 
     def __init__(self, license_group, license, restrictions, **kwargs):
@@ -56,7 +56,7 @@ class MissingLicenseRestricts(base.VersionedResult, base.Error):
         )
 
 
-class UnnecessaryLicense(base.VersionedResult, base.Warning):
+class UnnecessaryLicense(results.VersionedResult, results.Warning):
     """LICENSE defined for package that is license-less."""
 
     @property
@@ -137,7 +137,7 @@ class LicenseMetadataCheck(Check):
                 yield UnnecessaryLicense(pkg=pkg)
 
 
-class _UseFlagsResult(base.VersionedResult, base.Error):
+class _UseFlagsResult(results.VersionedResult, results.Error):
     """Generic USE flags result."""
 
     _type = None
@@ -185,7 +185,7 @@ class IUSEMetadataCheck(Check):
                 yield UnknownUseFlags(unknown, pkg=pkg)
 
 
-class _EAPIResult(base.VersionedResult):
+class _EAPIResult(results.VersionedResult):
     """Generic EAPI result."""
 
     _type = None
@@ -199,13 +199,13 @@ class _EAPIResult(base.VersionedResult):
         return f"uses {self._type} EAPI {self.eapi}"
 
 
-class DeprecatedEAPI(_EAPIResult, base.Warning):
+class DeprecatedEAPI(_EAPIResult, results.Warning):
     """Package's EAPI is deprecated according to repo metadata."""
 
     _type = 'deprecated'
 
 
-class BannedEAPI(_EAPIResult, base.Error):
+class BannedEAPI(_EAPIResult, results.Error):
     """Package's EAPI is banned according to repo metadata."""
 
     _type = 'banned'
@@ -236,7 +236,7 @@ class MetadataCheck(Check):
                     pkg=pkg.versioned_atom)
 
 
-class RequiredUseDefaults(base.VersionedResult, base.Warning):
+class RequiredUseDefaults(results.VersionedResult, results.Warning):
     """Default USE flag settings don't satisfy REQUIRED_USE.
 
     The REQUIRED_USE constraints specified in the ebuild are not satisfied
@@ -332,7 +332,7 @@ class RequiredUSEMetadataCheck(Check):
                     str(node), profile=profile, num_profiles=num_profiles, pkg=pkg)
 
 
-class UnusedLocalUSE(base.PackageResult, base.Warning):
+class UnusedLocalUSE(results.PackageResult, results.Warning):
     """Unused local USE flag(s)."""
 
     def __init__(self, flags, **kwargs):
@@ -345,7 +345,7 @@ class UnusedLocalUSE(base.PackageResult, base.Warning):
             _pl(self.flags), ', '.join(self.flags))
 
 
-class MatchingGlobalUSE(base.PackageResult, base.Error):
+class MatchingGlobalUSE(results.PackageResult, results.Error):
     """Local USE flag description matches a global USE flag."""
 
     def __init__(self, flag, **kwargs):
@@ -357,7 +357,7 @@ class MatchingGlobalUSE(base.PackageResult, base.Error):
         return f"local USE flag matches a global: {self.flag!r}"
 
 
-class ProbableGlobalUSE(base.PackageResult, base.Warning):
+class ProbableGlobalUSE(results.PackageResult, results.Warning):
     """Local USE flag description closely matches a global USE flag."""
 
     def __init__(self, flag, **kwargs):
@@ -369,7 +369,7 @@ class ProbableGlobalUSE(base.PackageResult, base.Warning):
         return f"local USE flag closely matches a global: {self.flag!r}"
 
 
-class ProbableUseExpand(base.PackageResult, base.Warning):
+class ProbableUseExpand(results.PackageResult, results.Warning):
     """Local USE flag that isn't overridden matches a USE_EXPAND group.
 
     The local USE flag starts with a prefix reserved to USE_EXPAND group,
@@ -393,7 +393,7 @@ class ProbableUseExpand(base.PackageResult, base.Warning):
         return f"USE_EXPAND group {self.group!r} matches local USE flag: {self.flag!r}"
 
 
-class UnderscoreInUseFlag(base.PackageResult, base.Warning):
+class UnderscoreInUseFlag(results.PackageResult, results.Warning):
     """USE flag uses underscore that is reserved for USE_EXPAND.
 
     The USE flag name uses underscore. However, according to PMS
@@ -463,7 +463,7 @@ class LocalUSECheck(Check):
             yield UnusedLocalUSE(sorted(unused), pkg=pkg)
 
 
-class MissingSlotDep(base.VersionedResult, base.Warning):
+class MissingSlotDep(results.VersionedResult, results.Warning):
     """Missing slot value in dependencies.
 
     The package dependency does not specify a slot but the target package
@@ -517,7 +517,7 @@ class MissingSlotDepCheck(Check):
                 yield MissingSlotDep(str(dep), sorted(dep_slots), pkg=pkg)
 
 
-class MissingPackageRevision(base.VersionedResult, base.Warning):
+class MissingPackageRevision(results.VersionedResult, results.Warning):
     """Missing package revision in =cat/pkg dependencies.
 
     The dependency string uses the ``=`` operator without specifying a revision.
@@ -539,7 +539,7 @@ class MissingPackageRevision(base.VersionedResult, base.Warning):
         return f'{self.dep}="{self.atom}": "=" operator used without package revision'
 
 
-class MissingUseDepDefault(base.VersionedResult, base.Warning):
+class MissingUseDepDefault(results.VersionedResult, results.Warning):
     """Package dependencies with USE dependencies missing defaults."""
 
     def __init__(self, attr, atom, flag, pkgs, **kwargs):
@@ -557,7 +557,7 @@ class MissingUseDepDefault(base.VersionedResult, base.Warning):
         )
 
 
-class OutdatedBlocker(base.VersionedResult, base.Info):
+class OutdatedBlocker(results.VersionedResult, results.Info):
     """Blocker dependency removed more than two years ago from the tree.
 
     Note that this ignores slot/subslot deps and USE deps in blocker atoms.
@@ -577,7 +577,7 @@ class OutdatedBlocker(base.VersionedResult, base.Info):
         )
 
 
-class NonexistentBlocker(base.VersionedResult, base.Warning):
+class NonexistentBlocker(results.VersionedResult, results.Warning):
     """No matches for blocker dependency in repo history.
 
     For the gentoo repo this means it was either removed before the CVS -> git
@@ -707,13 +707,13 @@ class DependencyCheck(Check):
                 yield NonexistentBlocker(attr.upper(), str(atom), pkg=pkg)
 
 
-class StupidKeywords(base.VersionedResult, base.Warning):
+class StupidKeywords(results.VersionedResult, results.Warning):
     """Packages using ``-*``; use package.mask instead."""
 
     desc = "keywords contain -*; use package.mask or empty keywords instead"
 
 
-class InvalidKeywords(base.VersionedResult, base.Error):
+class InvalidKeywords(results.VersionedResult, results.Error):
     """Packages using invalid KEYWORDS."""
 
     def __init__(self, keywords, **kwargs):
@@ -725,7 +725,7 @@ class InvalidKeywords(base.VersionedResult, base.Error):
         return f"invalid KEYWORDS: {', '.join(map(repr, self.keywords))}"
 
 
-class OverlappingKeywords(base.VersionedResult, base.Warning):
+class OverlappingKeywords(results.VersionedResult, results.Warning):
     """Packages having overlapping arch and ~arch KEYWORDS."""
 
     def __init__(self, keywords, **kwargs):
@@ -737,7 +737,7 @@ class OverlappingKeywords(base.VersionedResult, base.Warning):
         return f"overlapping KEYWORDS: {self.keywords}"
 
 
-class DuplicateKeywords(base.VersionedResult, base.Warning):
+class DuplicateKeywords(results.VersionedResult, results.Warning):
     """Packages having duplicate KEYWORDS."""
 
     def __init__(self, keywords, **kwargs):
@@ -749,7 +749,7 @@ class DuplicateKeywords(base.VersionedResult, base.Warning):
         return f"duplicate KEYWORDS: {', '.join(self.keywords)}"
 
 
-class UnsortedKeywords(base.VersionedResult, base.Warning):
+class UnsortedKeywords(results.VersionedResult, results.Warning):
     """Packages with unsorted KEYWORDS.
 
     KEYWORDS should be sorted in alphabetical order with prefix keywords (those
@@ -770,7 +770,7 @@ class UnsortedKeywords(base.VersionedResult, base.Warning):
         )
 
 
-class MissingVirtualKeywords(base.VersionedResult, base.Warning):
+class MissingVirtualKeywords(results.VersionedResult, results.Warning):
     """Virtual packages with keywords missing from their dependencies."""
 
     def __init__(self, keywords, **kwargs):
@@ -856,7 +856,7 @@ class KeywordsCheck(Check):
                     yield MissingVirtualKeywords(sort_keywords(missing_keywords), pkg=pkg)
 
 
-class MissingUri(base.VersionedResult, base.Warning):
+class MissingUri(results.VersionedResult, results.Warning):
     """RESTRICT=fetch isn't set, yet no full URI exists."""
 
     def __init__(self, filenames, **kwargs):
@@ -869,7 +869,7 @@ class MissingUri(base.VersionedResult, base.Warning):
         return f'unfetchable file{_pl(self.filenames)}: {filenames}'
 
 
-class UnknownMirror(base.VersionedResult, base.Error):
+class UnknownMirror(results.VersionedResult, results.Error):
     """URI uses an unknown mirror."""
 
     def __init__(self, filename, uri, mirror, **kwargs):
@@ -883,7 +883,7 @@ class UnknownMirror(base.VersionedResult, base.Error):
         return f"file {self.filename}: unknown mirror {self.mirror!r} from URI {self.uri!r}"
 
 
-class BadProtocol(base.VersionedResult, base.Warning):
+class BadProtocol(results.VersionedResult, results.Warning):
     """URI uses an unsupported protocol.
 
     Valid protocols are currently: http, https, and ftp
@@ -900,7 +900,7 @@ class BadProtocol(base.VersionedResult, base.Warning):
         return f'file {self.filename!r}: bad protocol/uri{_pl(self.bad_uris)}: {uris}'
 
 
-class BadFilename(base.VersionedResult, base.Warning):
+class BadFilename(results.VersionedResult, results.Warning):
     """URI uses unspecific or poor filename(s).
 
     Archive filenames should be disambiguated using ``->`` to rename them.
@@ -916,7 +916,7 @@ class BadFilename(base.VersionedResult, base.Warning):
         return f'bad filename{_pl(self.filenames)}: [ {filenames} ]'
 
 
-class TarballAvailable(base.VersionedResult, base.Warning):
+class TarballAvailable(results.VersionedResult, results.Warning):
     """URI uses .zip archive when .tar* is available.
 
     Tarballs should be preferred over zip archives due to better compression
@@ -1014,7 +1014,7 @@ class SrcUriCheck(Check):
             yield TarballAvailable(sorted(tarball_available), pkg=pkg)
 
 
-class BadDescription(base.VersionedResult, base.Warning):
+class BadDescription(results.VersionedResult, results.Warning):
     """Package's description is bad for some reason."""
 
     def __init__(self, msg, **kwargs):
@@ -1053,7 +1053,7 @@ class DescriptionCheck(Check):
                     f"{pkg.description!r} under 10 chars in length- too short", pkg=pkg)
 
 
-class BadHomepage(base.VersionedResult, base.Warning):
+class BadHomepage(results.VersionedResult, results.Warning):
     """Package's homepage is bad for some reason."""
 
     def __init__(self, msg, **kwargs):
@@ -1093,7 +1093,7 @@ class HomepageCheck(Check):
                             pkg=pkg)
 
 
-class BadRestricts(base.VersionedResult, base.Warning):
+class BadRestricts(results.VersionedResult, results.Warning):
     """Package's RESTRICT metadata has unknown entries."""
 
     def __init__(self, restricts, **kwargs):
@@ -1106,7 +1106,7 @@ class BadRestricts(base.VersionedResult, base.Warning):
         return f'unknown RESTRICT="{restricts}"'
 
 
-class UnknownProperties(base.VersionedResult, base.Warning):
+class UnknownProperties(results.VersionedResult, results.Warning):
     """Package's PROPERTIES metadata has unknown entries."""
 
     def __init__(self, properties, **kwargs):
@@ -1156,7 +1156,7 @@ class RestrictsCheck(Check):
                 yield UnknownProperties(sorted(unknown), pkg=pkg)
 
 
-class MissingTestRestrict(base.VersionedResult, base.Warning):
+class MissingTestRestrict(results.VersionedResult, results.Warning):
     """Missing ``RESTRICT="!test? ( test )"``.
 
     Traditionally, it was assumed that ``IUSE=test`` is a special flag that is
@@ -1194,7 +1194,7 @@ class RestrictTestCheck(Check):
         yield MissingTestRestrict(pkg=pkg)
 
 
-class MissingUnpackerDep(base.VersionedResult, base.Warning):
+class MissingUnpackerDep(results.VersionedResult, results.Warning):
     """Missing dependency on a required unpacker package.
 
     Package uses an archive format for which an unpacker is not provided by the

@@ -9,7 +9,7 @@ from xml.sax.saxutils import escape as xml_escape
 from snakeoil import pickling
 from snakeoil.decorators import coroutine
 
-from . import base, const
+from . import base, const, results
 
 
 class StrReporter(base.Reporter):
@@ -272,7 +272,7 @@ class JsonStream(base.Reporter):
             raise DeserializationError(f'missing result class: {data!r}')
 
         # reconstruct a package object
-        d = base.Result.attrs_to_pkg(d)
+        d = results.Result.attrs_to_pkg(d)
 
         try:
             return cls(**d)
@@ -316,7 +316,7 @@ class PickleStream(base.Reporter):
         """Deserialize results from a given file handle."""
         try:
             for result in pickling.iter_stream(f):
-                if isinstance(result, base.Result):
+                if isinstance(result, results.Result):
                     yield result
                 else:
                     raise DeserializationError(f'invalid data type: {result!r}')

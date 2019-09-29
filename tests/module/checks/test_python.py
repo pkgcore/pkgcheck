@@ -1,4 +1,4 @@
-from pkgcheck import base
+from pkgcheck import results
 from pkgcheck.checks import python
 
 from .. import misc
@@ -18,7 +18,7 @@ class TestPythonCheck(misc.ReportTestCase):
             self.check,
             self.mk_pkg(_eclasses_=['python-any-r1', 'python-single-r1'],
                         DEPEND='dev-lang/python'))
-        assert isinstance(r, base.MetadataError)
+        assert isinstance(r, results.MetadataError)
 
     def test_missing_eclass_depend(self):
         self.assertNoReport(

@@ -6,11 +6,11 @@ from pkgcore.ebuild.atom import MalformedAtom, atom
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, sources
+from .. import base, results, sources
 from . import Check
 
 
-class _MissingXml(base.Error):
+class _MissingXml(results.Error):
     """Required XML file is missing."""
 
     def __init__(self, filename, **kwargs):
@@ -22,7 +22,7 @@ class _MissingXml(base.Error):
         return f'{self._attr} is missing {self.filename}'
 
 
-class _BadlyFormedXml(base.Warning):
+class _BadlyFormedXml(results.Warning):
     """XML isn't well formed."""
 
     def __init__(self, filename, error, **kwargs):
@@ -35,7 +35,7 @@ class _BadlyFormedXml(base.Warning):
         return f'{self._attr} {self.filename} is not well formed xml: {self.error}'
 
 
-class _InvalidXml(base.Error):
+class _InvalidXml(results.Error):
     """XML fails XML Schema validation."""
 
     def __init__(self, filename, message, **kwargs):
@@ -48,7 +48,7 @@ class _InvalidXml(base.Error):
         return f'{self._attr} {self.filename} violates metadata.xsd:\n{self.message}'
 
 
-class _MetadataXmlInvalidPkgRef(base.Error):
+class _MetadataXmlInvalidPkgRef(results.Error):
     """metadata.xml <pkg/> references unknown/invalid package."""
 
     def __init__(self, filename, pkgtext, **kwargs):
@@ -64,7 +64,7 @@ class _MetadataXmlInvalidPkgRef(base.Error):
         )
 
 
-class _MetadataXmlInvalidCatRef(base.Error):
+class _MetadataXmlInvalidCatRef(results.Error):
     """metadata.xml <cat/> references unknown/invalid category."""
 
     def __init__(self, filename, cattext, **kwargs):
@@ -80,7 +80,7 @@ class _MetadataXmlInvalidCatRef(base.Error):
         )
 
 
-class EmptyMaintainer(base.PackageResult, base.Warning):
+class EmptyMaintainer(results.PackageResult, results.Warning):
     """Package with neither a maintainer or maintainer-needed comment in metadata.xml."""
 
     def __init__(self, filename, **kwargs):
@@ -92,7 +92,7 @@ class EmptyMaintainer(base.PackageResult, base.Warning):
         return 'no package maintainer or maintainer-needed comment specified'
 
 
-class MaintainerWithoutProxy(base.PackageResult, base.Warning):
+class MaintainerWithoutProxy(results.PackageResult, results.Warning):
     """Package has a proxied maintainer without a proxy.
 
     All package maintainers have non-@gentoo.org e-mail addresses. Most likely,
@@ -114,7 +114,7 @@ class MaintainerWithoutProxy(base.PackageResult, base.Warning):
             f"[ {', '.join(self.maintainers)} ]")
 
 
-class StaleProxyMaintProject(base.PackageResult, base.Warning):
+class StaleProxyMaintProject(results.PackageResult, results.Warning):
     """Package lists proxy-maint project but has no proxied maintainers.
 
     The package explicitly lists proxy-maint@g.o as the only maintainer.
@@ -131,7 +131,7 @@ class StaleProxyMaintProject(base.PackageResult, base.Warning):
         return "proxy-maint maintainer with no proxies"
 
 
-class NonexistentProjectMaintainer(base.PackageResult, base.Warning):
+class NonexistentProjectMaintainer(results.PackageResult, results.Warning):
     """Package specifying nonexistent project as a maintainer."""
 
     def __init__(self, filename, emails, **kwargs):
@@ -145,7 +145,7 @@ class NonexistentProjectMaintainer(base.PackageResult, base.Warning):
         return f'nonexistent project maintainer{_pl(self.emails)}: [ {emails} ]'
 
 
-class WrongMaintainerType(base.PackageResult, base.Warning):
+class WrongMaintainerType(results.PackageResult, results.Warning):
     """A person-type maintainer matches an existing project."""
 
     def __init__(self, filename, emails, **kwargs):
@@ -159,47 +159,47 @@ class WrongMaintainerType(base.PackageResult, base.Warning):
         return f'project maintainer{_pl(self.emails)} with type="person": [ {emails} ]'
 
 
-class PkgMissingMetadataXml(_MissingXml, base.PackageResult):
+class PkgMissingMetadataXml(_MissingXml, results.PackageResult):
     """Package is missing metadata.xml."""
 
 
-class CatMissingMetadataXml(_MissingXml, base.CategoryResult):
+class CatMissingMetadataXml(_MissingXml, results.CategoryResult):
     """Category is missing metadata.xml."""
 
 
-class PkgInvalidXml(_InvalidXml, base.PackageResult):
+class PkgInvalidXml(_InvalidXml, results.PackageResult):
     """Invalid package metadata.xml."""
 
 
-class CatInvalidXml(_InvalidXml, base.CategoryResult):
+class CatInvalidXml(_InvalidXml, results.CategoryResult):
     """Invalid category metadata.xml."""
 
 
-class PkgBadlyFormedXml(_BadlyFormedXml, base.PackageResult):
+class PkgBadlyFormedXml(_BadlyFormedXml, results.PackageResult):
     """Badly formed package metadata.xml."""
 
 
-class CatBadlyFormedXml(_BadlyFormedXml, base.CategoryResult):
+class CatBadlyFormedXml(_BadlyFormedXml, results.CategoryResult):
     """Badly formed category metadata.xml."""
 
 
-class PkgMetadataXmlInvalidPkgRef(_MetadataXmlInvalidPkgRef, base.PackageResult):
+class PkgMetadataXmlInvalidPkgRef(_MetadataXmlInvalidPkgRef, results.PackageResult):
     """Invalid package reference in package metadata.xml."""
 
 
-class CatMetadataXmlInvalidPkgRef(_MetadataXmlInvalidPkgRef, base.CategoryResult):
+class CatMetadataXmlInvalidPkgRef(_MetadataXmlInvalidPkgRef, results.CategoryResult):
     """Invalid package reference in category metadata.xml."""
 
 
-class PkgMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef, base.PackageResult):
+class PkgMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef, results.PackageResult):
     """Invalid category reference in package metadata.xml."""
 
 
-class CatMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef, base.CategoryResult):
+class CatMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef, results.CategoryResult):
     """Invalid category reference in category metadata.xml."""
 
 
-class _MetadataXmlIndentation(base.Warning):
+class _MetadataXmlIndentation(results.Warning):
     """Inconsistent indentation in metadata.xml file.
 
     Either all tabs or all spaces should be used, not a mixture of both.
@@ -219,20 +219,20 @@ class _MetadataXmlIndentation(base.Warning):
         )
 
 
-class CatMetadataXmlIndentation(_MetadataXmlIndentation, base.CategoryResult):
+class CatMetadataXmlIndentation(_MetadataXmlIndentation, results.CategoryResult):
     """Inconsistent indentation in category metadata.xml file.
 
     Either all tabs or all spaces should be used, not a mixture of both.
     """
 
-class PkgMetadataXmlIndentation(_MetadataXmlIndentation, base.PackageResult):
+class PkgMetadataXmlIndentation(_MetadataXmlIndentation, results.PackageResult):
     """Inconsistent indentation in package metadata.xml file.
 
     Either all tabs or all spaces should be used, not a mixture of both.
     """
 
 
-class _MetadataXmlEmptyElement(base.Warning):
+class _MetadataXmlEmptyElement(results.Warning):
     """Empty element in metadata.xml file."""
 
     def __init__(self, filename, element, line, **kwargs):
@@ -246,11 +246,11 @@ class _MetadataXmlEmptyElement(base.Warning):
         return f"metadata.xml has empty element {self.element!r} on line {self.line}"
 
 
-class CatMetadataXmlEmptyElement(_MetadataXmlEmptyElement, base.CategoryResult):
+class CatMetadataXmlEmptyElement(_MetadataXmlEmptyElement, results.CategoryResult):
     """Empty element in category metadata.xml file."""
 
 
-class PkgMetadataXmlEmptyElement(_MetadataXmlEmptyElement, base.PackageResult):
+class PkgMetadataXmlEmptyElement(_MetadataXmlEmptyElement, results.PackageResult):
     """Empty element in package metadata.xml file."""
 
 

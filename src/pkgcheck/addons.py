@@ -32,7 +32,7 @@ from snakeoil.process.spawn import spawn_get_output
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from . import base
+from . import base, results
 from .log import logger
 
 # hacky ebuild path regexes for git log parsing, proper atom validation is handled later
@@ -999,7 +999,7 @@ class StableArchesAddon(base.Addon):
         options.stable_arches = stable_arches
 
 
-class UnstatedIUSE(base.VersionedResult, base.Error):
+class UnstatedIUSE(results.VersionedResult, results.Error):
     """Package is reliant on conditionals that aren't in IUSE."""
 
     def __init__(self, attr, flags, profile=None, num_profiles=None, **kwargs):
