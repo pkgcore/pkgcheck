@@ -7,17 +7,21 @@ from . import base
 
 
 class _LeveledResult(type):
+    """Metaclass that injects color/level attributes to raw result classes."""
 
     @property
     def color(cls):
+        """Rendered result output color related to priority level."""
         return cls._level_to_desc[cls._level][1]
 
     @property
     def level(cls):
+        """Result priority level."""
         return cls._level_to_desc[cls._level][0]
 
 
 class Result(metaclass=_LeveledResult):
+    """Generic report result returned from a check."""
 
     # all results are shown by default
     _filtered = False
@@ -47,7 +51,6 @@ class Result(metaclass=_LeveledResult):
     @property
     def desc(self):
         """Result description."""
-        raise NotImplementedError
 
     @property
     def _attrs(self):

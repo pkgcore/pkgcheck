@@ -227,7 +227,7 @@ class GitPkgCommitsCheck(GentooRepoCheck):
         try:
             removal_repo = self.removal_repo(removed)
         except PkgcoreException as e:
-            logger.warning(f'skipping git removal checks: {e}')
+            logger.warning('skipping git removal checks: %s', e)
             return
 
         old_keywords = set(chain.from_iterable(

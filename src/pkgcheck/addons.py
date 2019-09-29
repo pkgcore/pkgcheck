@@ -323,7 +323,7 @@ class ProfileAddon(base.Addon):
                             cached_profiles[repo.config.profiles_base].update(cache)
                         else:
                             logger.debug(
-                                f'forcing %s profile cache regen '
+                                'forcing %s profile cache regen '
                                 'due to outdated version', repo.repo_id)
                             os.remove(cache_file)
                     except FileNotFoundError as e:
@@ -533,8 +533,9 @@ class StableArchesAddon(base.Addon):
         super().__init__(options)
         # use known stable arches if arches aren't specified
         if options.selected_arches is None:
-            stable_arches = set().union(*(repo.profiles.arches('stable')
-                                   for repo in options.target_repo.trees))
+            stable_arches = set().union(*(
+                repo.profiles.arches('stable')
+                for repo in options.target_repo.trees))
         else:
             stable_arches = set(options.arches)
 

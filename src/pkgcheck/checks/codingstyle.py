@@ -34,7 +34,7 @@ class _CommandResult(results.VersionedResult):
     def desc(self):
         s = f'{self.usage_desc}, used on line {self.lineno}'
         if self.line != self.command:
-            s +=  f': {self.line!r}'
+            s += f': {self.line!r}'
         return s
 
 
@@ -44,6 +44,8 @@ class PortageInternals(_CommandResult, results.Error):
 
 class _EapiCommandResult(_CommandResult):
     """Generic EAPI command result."""
+
+    _status = None
 
     def __init__(self, *args, eapi, **kwargs):
         super().__init__(*args, **kwargs)

@@ -23,11 +23,13 @@ class GenericSource:
 
     @property
     def source(self):
+        """Source that packages are pulled from."""
         if self._source is not None:
             return self._source
         return self._repo
 
     def itermatch(self, restrict, **kwargs):
+        """Yield packages matching the given restriction from the selected source."""
         kwargs.setdefault('sorter', sorted)
         yield from self.source.itermatch(restrict, **kwargs)
 
@@ -184,6 +186,7 @@ class _CombinedSource(GenericSource):
     """Generic source combining packages into similar chunks."""
 
     def keyfunc(self, pkg):
+        """Function targeting attribute used to group packages."""
         raise NotImplementedError(self.keyfunc)
 
     def itermatch(self, restrict):

@@ -26,7 +26,7 @@ from snakeoil.log import suppress_logging
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, checks, const, pipeline, reporters
+from .. import base, checks, const, pipeline, reporters, results
 from ..log import logger
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
@@ -320,8 +320,11 @@ def _validate_args(parser, namespace):
         selected_scopes = set(disabled_scopes + enabled_scopes)
         unknown_scopes = selected_scopes - set(base.known_scopes.keys())
         if unknown_scopes:
-            parser.error('unknown scope%s: %s (available scopes: %s)' % (
-                _pl(unknown_scopes), ', '.join(map(repr, unknown_scopes)), ', '.join(base.known_scopes.keys())))
+            unknown = ', '.join(map(repr, unknown_scopes))
+            available = ', '.join(base.known_scopes.keys())
+            parser.error(
+                f'unknown scope{_pl(unknown_scopes)}: '
+                f'{unknown} (available scopes: {available})')
 
         # convert scopes to keyword lists
         disabled_keywords = [
@@ -338,9 +341,9 @@ def _validate_args(parser, namespace):
     if namespace.selected_keywords is not None:
         disabled_keywords, enabled_keywords = namespace.selected_keywords
 
-        error = (k for k, v in const.KEYWORDS.items() if issubclass(v, base.Error))
-        warning = (k for k, v in const.KEYWORDS.items() if issubclass(v, base.Warning))
-        info = (k for k, v in const.KEYWORDS.items() if issubclass(v, base.Info))
+        error = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Error))
+        warning = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Warning))
+        info = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Info))
 
         alias_map = {'error': error, 'warning': warning, 'info': info}
         replace_aliases = lambda x: alias_map.get(x, [x])
@@ -354,8 +357,8 @@ def _validate_args(parser, namespace):
         available_keywords = set(const.KEYWORDS.keys())
         unknown_keywords = selected_keywords - available_keywords
         if unknown_keywords:
-            parser.error("unknown keyword%s: %s (use 'pkgcheck show --keywords' to show valid keywords)" % (
-                _pl(unknown_keywords), ', '.join(map(repr, unknown_keywords))))
+            unknown = ', '.join(map(repr, unknown_keywords))
+            parser.error(f'unknown keyword{_pl(unknown_keywords)}: {unknown}')
 
         # filter outputted keywords
         namespace.enabled_keywords = base.filter_update(
@@ -384,8 +387,8 @@ def _validate_args(parser, namespace):
         selected_checks = set(disabled_checks + enabled_checks)
         unknown_checks = selected_checks.difference(available_checks)
         if unknown_checks:
-            parser.error("unknown check%s: %s (use 'pkgcheck show --checks' to show valid checks)" % (
-                _pl(unknown_checks), ', '.join(map(repr, unknown_checks))))
+            unknown = ', '.join(map(repr, unknown_checks))
+            parser.error(f'unknown check{_pl(unknown_checks)}: {unknown} ')
     elif namespace.filtered_keywords is not None:
         # enable checks based on enabled keyword -> check mapping
         enabled_checks = []
@@ -489,11 +492,11 @@ def _scan(options, out, err):
             reporter.report(result)
 
     if enabled_checks:
-        debug = logger.debug if options.debug else None
         for filterer in options.limiters:
-            for scope, attrs in ((base.version_scope, ['fullver', 'version', 'rev']),
-                                (base.package_scope, ['package']),
-                                (base.category_scope, ['category'])):
+            for scope, attrs in (
+                    (base.version_scope, ['fullver', 'version', 'rev']),
+                    (base.package_scope, ['package']),
+                    (base.category_scope, ['category'])):
                 if any(collect_package_restrictions(filterer, attrs)):
                     scan_scope = scope
                     break
@@ -570,9 +573,8 @@ def _replay(options, out, err):
     if exc:
         if not processed:
             raise UserException('invalid or unsupported replay file')
-        else:
-            raise UserException(
-                f'corrupted results file {options.results.name!r}: {exc}')
+        raise UserException(
+            f'corrupted results file {options.results.name!r}: {exc}')
 
     reporter.finish()
     return 0
@@ -660,11 +662,11 @@ def display_checks(out, options):
                     dump_docstring(out, check, prefix='  ')
 
                     # output result types that each check can generate
-                    results = []
+                    keywords = []
                     for r in sorted(check.known_results, key=attrgetter('__name__')):
-                        results.extend([out.fg(r.color), r.__name__, out.reset, ', '])
-                    results.pop()
-                    out.write(*(['  (known results: '] + results + [')']))
+                        keywords.extend([out.fg(r.color), r.__name__, out.reset, ', '])
+                    keywords.pop()
+                    out.write(*(['  (known results: '] + keywords + [')']))
                     out.write()
 
             finally:
