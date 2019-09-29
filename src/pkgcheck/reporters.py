@@ -12,7 +12,48 @@ from snakeoil.decorators import coroutine
 from . import base, const, results
 
 
-class StrReporter(base.Reporter):
+class Reporter:
+    """Generic result reporter."""
+
+    def __init__(self, out, verbosity=0, keywords=None):
+        """Initialize
+
+        :type out: L{snakeoil.formatters.Formatter}
+        :param keywords: result keywords to report, other keywords will be skipped
+        """
+        self.out = out
+        self.verbosity = verbosity
+        self._filtered_keywords = set(keywords) if keywords is not None else keywords
+
+        # initialize result processing coroutines
+        self.report = self._add_report().send
+        self.process = self._process_report().send
+
+    @coroutine
+    def _add_report(self):
+        """Add a report result to be processed for output."""
+        # only process reports for keywords that are enabled
+        while True:
+            result = (yield)
+            if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
+                # skip filtered results by default
+                if self.verbosity < 1 and result._filtered:
+                    continue
+                self.process(result)
+
+    @coroutine
+    def _process_report(self):
+        """Render and output a report result.."""
+        raise NotImplementedError(self._process_report)
+
+    def start(self):
+        """Initialize reporter output."""
+
+    def finish(self):
+        """Finalize reporter output."""
+
+
+class StrReporter(Reporter):
     """Simple string reporter, pkgcheck-0.1 behaviour.
 
     Example::
@@ -40,7 +81,7 @@ class StrReporter(base.Reporter):
             self.out.stream.flush()
 
 
-class FancyReporter(base.Reporter):
+class FancyReporter(Reporter):
     """grouped colored output
 
     Example::
@@ -87,7 +128,7 @@ class FancyReporter(base.Reporter):
             self.out.stream.flush()
 
 
-class NullReporter(base.Reporter):
+class NullReporter(Reporter):
     """Reporter used for timing tests; no output."""
 
     priority = -10000000
@@ -98,7 +139,7 @@ class NullReporter(base.Reporter):
             _result = (yield)
 
 
-class JsonReporter(base.Reporter):
+class JsonReporter(Reporter):
     """Dump a json feed of reports.
 
     Note that the format is newline-delimited JSON with each line being related
@@ -141,7 +182,7 @@ class JsonReporter(base.Reporter):
             self.out.stream.flush()
 
 
-class XmlReporter(base.Reporter):
+class XmlReporter(Reporter):
     """dump an xml feed of reports"""
 
     priority = -1000
@@ -185,7 +226,7 @@ class XmlReporter(base.Reporter):
         self.out.write('</checks>')
 
 
-class CsvReporter(base.Reporter):
+class CsvReporter(Reporter):
     """Comma-separated value reporter, convenient for shell processing.
 
     Example::
@@ -217,7 +258,7 @@ class CsvReporter(base.Reporter):
                 result.desc))
 
 
-class FormatReporter(base.Reporter):
+class FormatReporter(Reporter):
     """Custom format string reporter."""
 
     priority = -1001
@@ -246,7 +287,7 @@ class DeserializationError(Exception):
     """Exception occurred while deserializing a data stream."""
 
 
-class JsonStream(base.Reporter):
+class JsonStream(Reporter):
     """Generate a stream of result objects serialized in JSON."""
 
     priority = -1001
@@ -295,7 +336,7 @@ class JsonStream(base.Reporter):
             self.out.write(json.dumps(result, default=self.to_json))
 
 
-class PickleStream(base.Reporter):
+class PickleStream(Reporter):
     """Generate a stream of pickled objects using the original pickling protocol.
 
     For each specific target for checks, a header is pickled detailing the

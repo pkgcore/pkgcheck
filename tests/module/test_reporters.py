@@ -13,7 +13,7 @@ from pkgcheck.checks import pkgdir, profiles, metadata, metadata_xml
 
 class BaseReporter(object):
 
-    reporter_cls = base.Reporter
+    reporter_cls = reporters.Reporter
 
     def mk_reporter(self, **kwargs):
         out = PlainTextFormatter(sys.stdout)

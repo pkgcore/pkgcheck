@@ -101,47 +101,6 @@ class Addon:
         """
 
 
-class Reporter:
-    """Generic result reporter."""
-
-    def __init__(self, out, verbosity=0, keywords=None):
-        """Initialize
-
-        :type out: L{snakeoil.formatters.Formatter}
-        :param keywords: result keywords to report, other keywords will be skipped
-        """
-        self.out = out
-        self.verbosity = verbosity
-        self._filtered_keywords = set(keywords) if keywords is not None else keywords
-
-        # initialize result processing coroutines
-        self.report = self._add_report().send
-        self.process = self._process_report().send
-
-    @coroutine
-    def _add_report(self):
-        """Add a report result to be processed for output."""
-        # only process reports for keywords that are enabled
-        while True:
-            result = (yield)
-            if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
-                # skip filtered results by default
-                if self.verbosity < 1 and result._filtered:
-                    continue
-                self.process(result)
-
-    @coroutine
-    def _process_report(self):
-        """Render and output a report result.."""
-        raise NotImplementedError(self._process_report)
-
-    def start(self):
-        """Initialize reporter output."""
-
-    def finish(self):
-        """Finalize reporter output."""
-
-
 def convert_check_filter(tok):
     """Convert an input string into a filter function.
 

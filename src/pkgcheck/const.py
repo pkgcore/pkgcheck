@@ -8,7 +8,7 @@ from importlib import import_module
 
 from snakeoil import demandimport, mappings
 
-from . import __title__, base, results, checks
+from . import __title__, checks, reporters, results
 
 try:
     # This is a file written during installation;
@@ -76,6 +76,6 @@ try:
     CHECKS = mappings.ImmutableDict(_GET_VALS(
         'CHECKS', partial(_find_obj_classes, 'checks', checks.Check)))
     REPORTERS = mappings.ImmutableDict(_GET_VALS(
-        'REPORTERS', partial(_find_obj_classes, 'reporters', base.Reporter)))
+        'REPORTERS', partial(_find_obj_classes, 'reporters', reporters.Reporter)))
 except SyntaxError as e:
     raise SyntaxError(f'invalid syntax: {e.filename}, line {e.lineno}')
