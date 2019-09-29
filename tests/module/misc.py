@@ -19,7 +19,7 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
 
-from pkgcheck import base
+from pkgcheck import base, pipeline
 from pkgcheck.scripts import pkgcheck
 
 
@@ -103,7 +103,7 @@ class ReportTestCase(object):
         l = []
         if msg:
             msg = f"{msg}: "
-        runner = base.CheckRunner([check])
+        runner = pipeline.CheckRunner([check])
         l.extend(runner.start())
         if iterate:
             reports = chain.from_iterable(runner.feed(item) for item in data)
@@ -124,7 +124,7 @@ class ReportTestCase(object):
 
     def assertReports(self, check, data, iterate=False):
         l = []
-        runner = base.CheckRunner([check])
+        runner = pipeline.CheckRunner([check])
         l.extend(runner.start())
         if iterate:
             reports = chain.from_iterable(runner.feed(item) for item in data)

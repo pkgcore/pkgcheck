@@ -1,6 +1,6 @@
 import pytest
 
-from pkgcheck import base, checks, sources
+from pkgcheck import base, checks, pipeline, sources
 
 
 dummies = list(f'dummy-{i}' for i in range(0, 10))
@@ -73,7 +73,7 @@ class TestPlug(object):
         if kw:
             raise TypeError(f'unsupported kwargs {list(kw.keys())!r}')
         try:
-            pipes = base.plug(sinks, sources)
+            pipes = pipeline.plug(sinks, sources)
         except KeyboardInterrupt:
             raise
         actual_pipes = set(pipes)
@@ -95,8 +95,8 @@ class TestPlug(object):
         self.assertPipes(
             [sinks[0]],
             {DummySource: sources[0]},
-            (sources[0], base.CheckRunner([sinks[0]])))
+            (sources[0], pipeline.CheckRunner([sinks[0]])))
         self.assertPipes(
             [sinks[0]],
             {DummySource: sources[0]},
-            (sources[0], base.CheckRunner([sinks[0]])))
+            (sources[0], pipeline.CheckRunner([sinks[0]])))

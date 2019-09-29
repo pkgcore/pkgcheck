@@ -26,7 +26,7 @@ from snakeoil.log import suppress_logging
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, checks, const, reporters
+from .. import base, checks, const, pipeline, reporters
 from ..log import logger
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
@@ -485,7 +485,7 @@ def _scan(options, out, err):
     # run git commit checks separately from pkg-related checks
     if git_checks:
         source = sources.pop(git_checks[0].source)
-        for result in base.GitPipeline(git_checks, source).run():
+        for result in pipeline.GitPipeline(git_checks, source).run():
             reporter.report(result)
 
     if enabled_checks:
@@ -507,7 +507,7 @@ def _scan(options, out, err):
                 err.write(f'{scan.prog}: no matching checks available for current scope')
                 continue
 
-            pipes = base.plug(sinks, sources)
+            pipes = pipeline.plug(sinks, sources)
 
             if options.verbosity >= 1:
                 err.write(f'Running {len(sinks)} tests')
@@ -515,7 +515,7 @@ def _scan(options, out, err):
                 err.write(f'limiter: {filterer}')
             err.flush()
 
-            for result in base.Pipeline(pipes, filterer).run():
+            for result in pipeline.Pipeline(pipes, filterer).run():
                 reporter.report(result)
 
     reporter.finish()
