@@ -553,7 +553,7 @@ class TestPkgcheckShow(object):
             out, err = capsys.readouterr()
             assert not err
             out = out.strip().split('\n')
-            assert out == list(base.known_scopes)
+            assert out == list(base.scopes)
             assert excinfo.value.code == 0
 
     def test_show_reporters(self, capsys):

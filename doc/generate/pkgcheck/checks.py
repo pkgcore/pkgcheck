@@ -39,10 +39,10 @@ def main(f=sys.stdout, **kwargs):
 
     wrapper = TextWrapper(width=85)
 
-    for i, scope in enumerate(base.known_scopes.values()):
+    for i, scope in enumerate(base.scopes.values()):
         _rst_header('-', scope.desc.capitalize() + ' scope')
 
-        checks = (x for x in const.CHECKS.values() if x.scope == i)
+        checks = (x for x in const.CHECKS.values() if x.scope == scope)
         for check in checks:
             if check.__doc__ is not None:
                 try:

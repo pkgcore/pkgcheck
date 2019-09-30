@@ -165,7 +165,7 @@ check_options.add_argument(
         -k/--keywords option.
 
         Available scopes: %s
-    """ % (', '.join(base.known_scopes)))
+    """ % (', '.join(base.scopes)))
 check_options.add_argument(
     '--net', action='store_true',
     help='run checks that require internet access')
@@ -319,10 +319,10 @@ def _validate_args(parser, namespace):
 
         # validate selected scopes
         selected_scopes = set(disabled_scopes + enabled_scopes)
-        unknown_scopes = selected_scopes - set(base.known_scopes.keys())
+        unknown_scopes = selected_scopes - set(base.scopes)
         if unknown_scopes:
             unknown = ', '.join(map(repr, unknown_scopes))
-            available = ', '.join(base.known_scopes.keys())
+            available = ', '.join(base.scopes)
             parser.error(
                 f'unknown scope{_pl(unknown_scopes)}: '
                 f'{unknown} (available scopes: {available})')
@@ -330,10 +330,10 @@ def _validate_args(parser, namespace):
         # convert scopes to keyword lists
         disabled_keywords = [
             k.__name__ for s in disabled_scopes for k in const.KEYWORDS.values()
-            if k.scope == base.known_scopes[s].scope]
+            if k.scope == base.scopes[s]]
         enabled_keywords = [
             k.__name__ for s in enabled_scopes for k in const.KEYWORDS.values()
-            if k.scope == base.known_scopes[s].scope]
+            if k.scope == base.scopes[s]]
 
         # filter outputted keywords
         namespace.enabled_keywords = base.filter_update(
@@ -608,15 +608,14 @@ def display_keywords(out, options):
     if options.verbosity < 1:
         out.write('\n'.join(sorted(const.KEYWORDS.keys())), wrap=False)
     else:
-        d = defaultdict(set)
+        scopes = defaultdict(set)
         for keyword in const.KEYWORDS.values():
-            d[keyword.scope].add(keyword)
+            scopes[keyword.scope].add(keyword)
 
-        scopes = tuple(x.desc for x in reversed(base.known_scopes.values()))
-        for scope in reversed(sorted(d)):
-            out.write(out.bold, f"{scopes[scope].capitalize()} scope:")
+        for scope in reversed(sorted(scopes)):
+            out.write(out.bold, f"{str(scope).capitalize()} scope:")
             out.write()
-            keywords = sorted(d[scope], key=attrgetter('__name__'))
+            keywords = sorted(scopes[scope], key=attrgetter('__name__'))
 
             try:
                 out.first_prefix.append('  ')
@@ -734,9 +733,9 @@ def _show(options, out, err):
 
     if options.scopes:
         if options.verbosity < 1:
-            out.write('\n'.join(base.known_scopes.keys()))
+            out.write('\n'.join(base.scopes.keys()))
         else:
-            for name, scope in base.known_scopes.items():
+            for name, scope in base.scopes.items():
                 out.write(f'{name} -- {scope.desc} scope')
 
     if options.reporters:

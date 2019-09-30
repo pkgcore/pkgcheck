@@ -37,10 +37,10 @@ def main(f=sys.stdout, **kwargs):
         for keyword in check.known_results:
             related_checks[keyword].add(check.__name__)
 
-    for scope in base.known_scopes.values():
+    for scope in base.scopes.values():
         _rst_header('-', scope.desc.capitalize() + ' scope')
 
-        keywords = (x for x in const.KEYWORDS.values() if x.scope == scope.scope)
+        keywords = (x for x in const.KEYWORDS.values() if x.scope == scope)
         for keyword in keywords:
             if keyword.__doc__ is not None:
                 try:

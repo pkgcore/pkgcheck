@@ -12,7 +12,7 @@ minimally accepted scope.
 
 import re
 import sys
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from contextlib import AbstractContextManager
 
 from pkgcore import const as pkgcore_const
@@ -29,19 +29,45 @@ versioned_feed = 'cat/pkg-ver'
 raw_versioned_feed = '(cat, pkg, ver)'
 ebuild_feed = 'cat/pkg-ver+text'
 
-# mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
-_Scope = namedtuple('Scope', ['threshold', 'desc', 'scope'])
-known_scopes = OrderedDict((
-    ('git', _Scope(commit_feed, 'commit', 4)),
-    ('repo', _Scope(repository_feed, 'repository', 3)),
-    ('cat', _Scope(category_feed, 'category', 2)),
-    ('pkg', _Scope(package_feed, 'package', 1)),
-    ('ver', _Scope(versioned_feed, 'version', 0)),
-))
 
-# The plugger needs to be able to compare scopes.
-for i, scope in enumerate(reversed(known_scopes.values())):
-    globals()[f'{scope.desc}_scope'] = i
+class Scope:
+    """Generic scope for scans, checks, and results."""
+
+    def __init__(self, threshold, desc, level):
+        self.threshold = threshold
+        self.desc = desc
+        self.level = level
+
+    def __str__(self):
+        return self.desc
+
+    def __lt__(self, other):
+        return self.level < other.level
+
+    def __gt__(self, other):
+        return self.level > other.level
+
+    def __le__(self, other):
+        return self.level <= other.level
+
+    def __ge__(self, other):
+        return self.level >= other.level
+
+
+version_scope = Scope(versioned_feed, 'version', 0)
+package_scope = Scope(package_feed, 'package', 1)
+category_scope = Scope(category_feed, 'category', 2)
+repository_scope = Scope(repository_feed, 'repository', 3)
+commit_scope = Scope(commit_feed, 'commit', 4)
+
+# mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
+scopes = OrderedDict((
+    ('git', commit_scope),
+    ('repo', repository_scope),
+    ('cat', category_scope),
+    ('pkg', package_scope),
+    ('ver', version_scope),
+))
 
 CACHE_DIR = pjoin(pkgcore_const.USER_CACHE_PATH, 'pkgcheck')
 
