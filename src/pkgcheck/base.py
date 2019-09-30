@@ -19,22 +19,11 @@ from pkgcore import const as pkgcore_const
 from pkgcore.config.hint import ConfigHint
 from snakeoil.osutils import pjoin
 
-# source feed types
-commit_feed = 'git'
-repository_feed = 'repo'
-category_feed = 'cat'
-package_feed = 'cat/pkg'
-raw_package_feed = '(cat, pkg)'
-versioned_feed = 'cat/pkg-ver'
-raw_versioned_feed = '(cat, pkg, ver)'
-ebuild_feed = 'cat/pkg-ver+text'
-
 
 class Scope:
     """Generic scope for scans, checks, and results."""
 
-    def __init__(self, threshold, desc, level):
-        self.threshold = threshold
+    def __init__(self, desc, level):
         self.desc = desc
         self.level = level
 
@@ -54,11 +43,11 @@ class Scope:
         return self.level >= other.level
 
 
-version_scope = Scope(versioned_feed, 'version', 0)
-package_scope = Scope(package_feed, 'package', 1)
-category_scope = Scope(category_feed, 'category', 2)
-repository_scope = Scope(repository_feed, 'repository', 3)
-commit_scope = Scope(commit_feed, 'commit', 4)
+version_scope = Scope('version', 0)
+package_scope = Scope('package', 1)
+category_scope = Scope('category', 2)
+repository_scope = Scope('repository', 3)
+commit_scope = Scope('commit', 4)
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
 scopes = OrderedDict((
