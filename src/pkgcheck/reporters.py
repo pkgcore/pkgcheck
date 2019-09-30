@@ -29,6 +29,10 @@ class Reporter:
         self.report = self._add_report().send
         self.process = self._process_report().send
 
+    def __call__(self, results):
+        for result in results:
+            self.report(result)
+
     @coroutine
     def _add_report(self):
         """Add a report result to be processed for output."""
