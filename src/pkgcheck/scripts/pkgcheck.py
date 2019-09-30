@@ -488,7 +488,7 @@ def _scan(options, out, err):
     git_checks = enabled_checks.pop(base.commit_scope, None)
     if git_checks:
         source, checks = git_checks.popitem()
-        reporter(pipeline.GitPipeline(checks, source).run())
+        reporter(pipeline.GitPipeline(checks, source))
 
     if enabled_checks:
         for filterer in options.limiters:
@@ -516,7 +516,7 @@ def _scan(options, out, err):
                 err.write(f'limiter: {filterer}')
             err.flush()
 
-            reporter(pipeline.Pipeline(pipes, filterer).run())
+            reporter(pipeline.Pipeline(pipes, filterer))
 
     reporter.finish()
 

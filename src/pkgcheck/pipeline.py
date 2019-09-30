@@ -57,7 +57,7 @@ class GitPipeline:
         self.checkrunner = CheckRunner(checks)
         self.source = source
 
-    def run(self):
+    def __iter__(self):
         yield from self.checkrunner.start()
         for commit in self.source:
             yield from self.checkrunner.feed(commit)
@@ -71,7 +71,7 @@ class Pipeline:
         self.interleaved = InterleavedSources(sources)
         self.pipes = tuple(x[1] for x in pipes)
 
-    def run(self):
+    def __iter__(self):
         for pipe in self.pipes:
             yield from pipe.start()
         for item, i in self.interleaved:
