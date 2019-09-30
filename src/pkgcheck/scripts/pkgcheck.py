@@ -327,13 +327,14 @@ def _validate_args(parser, namespace):
                 f'unknown scope{_pl(unknown_scopes)}: '
                 f'{unknown} (available scopes: {available})')
 
+        disabled_scopes = {base.scopes[x] for x in disabled_scopes}
+        enabled_scopes = {base.scopes[x] for x in enabled_scopes}
+
         # convert scopes to keyword lists
         disabled_keywords = [
-            k.__name__ for s in disabled_scopes for k in const.KEYWORDS.values()
-            if k.scope == base.scopes[s]]
+            k.__name__ for k in const.KEYWORDS.values() if k.scope in disabled_scopes]
         enabled_keywords = [
-            k.__name__ for s in enabled_scopes for k in const.KEYWORDS.values()
-            if k.scope == base.scopes[s]]
+            k.__name__ for k in const.KEYWORDS.values() if k.scope in enabled_scopes]
 
         # filter outputted keywords
         namespace.enabled_keywords = base.filter_update(
