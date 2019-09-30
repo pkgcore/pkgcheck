@@ -59,10 +59,10 @@ sinks = tuple(DummySink(dummy) for dummy in dummies)
 
 class TestPlug(object):
 
-    def assertPipes(self, sinks, sources, *expected_pipes, **kw):
+    def assertPipes(self, pipes, *expected_pipes, **kw):
         """Check if the plug function yields the expected pipelines.
 
-        The first three arguments are passed through to plug.
+        The first argument is passed through to plug.
         Further arguments are the pipes that should be returned.
         They are interpreted as a set (since the return order from plug
         is unspecified).
@@ -73,7 +73,7 @@ class TestPlug(object):
         if kw:
             raise TypeError(f'unsupported kwargs {list(kw.keys())!r}')
         try:
-            pipes = pipeline.plug(sinks, sources)
+            pipes = pipeline.plug(pipes)
         except KeyboardInterrupt:
             raise
         actual_pipes = set(pipes)
@@ -93,10 +93,5 @@ class TestPlug(object):
 
     def test_simple(self):
         self.assertPipes(
-            [sinks[0]],
-            {DummySource: sources[0]},
-            (sources[0], pipeline.CheckRunner([sinks[0]])))
-        self.assertPipes(
-            [sinks[0]],
-            {DummySource: sources[0]},
+            [{sources[0]: [sinks[0]]}],
             (sources[0], pipeline.CheckRunner([sinks[0]])))

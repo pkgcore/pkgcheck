@@ -1,4 +1,4 @@
-"""Pipeline building support for connecting sources/sinks running checks."""
+"""Pipeline building support for connecting sources and checks."""
 
 from pkgcore.package.errors import MetadataException
 
@@ -137,35 +137,12 @@ class CheckRunner:
         return f'{self.__class__.__name__}({checks})'
 
 
-def plug(checks, sources):
+def plug(pipes):
     """Plug together a pipeline.
 
-    This tries to return a single pipeline if possible (even if it is
-    more "expensive" than using separate pipelines). If more than one
-    pipeline is needed it does not try to minimize the number.
-
-    :param checks: Sequence of check instances.
-    :param sources: Dict of raw sources to source instances.
-    :return: A sequence of (source, consumer) tuples.
+    :param pipes: Iterable of source -> check pipe mappings.
+    :return: A generator of (source, consumer) tuples.
     """
-    sinks = list(checks)
-
-    def build_sink(source_type):
-        children = []
-        # Hacky: we modify this in place.
-        for i in reversed(range(len(sinks))):
-            sink = sinks[i]
-            if sink.source == source_type:
-                children.append(sink)
-                del sinks[i]
-        if children:
-            return CheckRunner(children)
-
-    good_sinks = []
-    for source_type, source, in sources.items():
-        sink = build_sink(source_type)
-        if sink:
-            good_sinks.append((source, sink))
-
-    assert not sinks, f'sinks left: {sinks!r}'
-    return good_sinks
+    for pipe_mapping in pipes:
+        for source, checks in pipe_mapping.items():
+            yield source, CheckRunner(checks)

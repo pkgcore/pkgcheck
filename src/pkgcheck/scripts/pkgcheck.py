@@ -26,7 +26,8 @@ from snakeoil.log import suppress_logging
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, checks, const, pipeline, reporters, results
+from .. import base, const, pipeline, reporters, results
+from ..checks import Check
 from ..log import logger
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
@@ -459,23 +460,21 @@ def _scan(options, out, err):
         deps = [addons_map.get(cls, cls(options)) for cls in source.required_addons]
         return source(*args, options, *deps, **kwargs)
 
-    sources = {}
     def init_checks(addons):
         """Initialize required checks."""
+        enabled = defaultdict(lambda: defaultdict(list))
+        sources = {}
         for cls in addons:
             addon = init_addon(cls)
-            if isinstance(addon, checks.Check):
-                if addon.source not in sources:
-                    sources[addon.source] = init_source(addon.source)
-                yield addon
+            if isinstance(addon, Check):
+                source = sources.get(addon.source)
+                if source is None:
+                    source = init_source(addon.source)
+                    sources[addon.source] = source
+                enabled[addon.scope][source].append(addon)
+        return enabled
 
-    enabled_checks = []
-    git_checks = []
-    for check in init_checks(options.pop('addons')):
-        if check.scope == base.commit_scope:
-            git_checks.append(check)
-        else:
-            enabled_checks.append(check)
+    enabled_checks = init_checks(options.pop('addons'))
 
     if options.verbosity >= 1:
         msg = f'target repo: {options.target_repo.repo_id!r}'
@@ -486,9 +485,10 @@ def _scan(options, out, err):
     reporter.start()
 
     # run git commit checks separately from pkg-related checks
+    git_checks = enabled_checks.pop(base.commit_scope, None)
     if git_checks:
-        source = sources.pop(git_checks[0].source)
-        for result in pipeline.GitPipeline(git_checks, source).run():
+        source, checks = git_checks.popitem()
+        for result in pipeline.GitPipeline(checks, source).run():
             reporter.report(result)
 
     if enabled_checks:
@@ -503,17 +503,16 @@ def _scan(options, out, err):
             else:
                 scan_scope = base.repository_scope
 
-            # skip checks higher than the current scan scope level, e.g. skip repo
-            # level checks when scanning at package level
-            sinks = tuple(x for x in enabled_checks if x.scope <= scan_scope)
-            if not sinks:
+            # Skip checks higher than the current scan scope level, e.g. skip repo
+            # level checks when scanning at package level.
+            pipes = (d for scope, d in enabled_checks.items() if scope <= scan_scope)
+            pipes = tuple(pipeline.plug(pipes))
+            if not pipes:
                 err.write(f'{scan.prog}: no matching checks available for current scope')
                 continue
 
-            pipes = pipeline.plug(sinks, sources)
-
             if options.verbosity >= 1:
-                err.write(f'Running {len(sinks)} tests')
+                err.write(f'Running {len(pipes)} tests')
             if options.debug:
                 err.write(f'limiter: {filterer}')
             err.flush()
