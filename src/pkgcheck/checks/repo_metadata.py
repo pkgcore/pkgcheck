@@ -17,8 +17,6 @@ from . import Check
 class MultiMovePackageUpdate(results.Warning):
     """Entry for package moved multiple times in profiles/updates files."""
 
-    threshold = base.repository_feed
-
     def __init__(self, pkg, moves):
         super().__init__()
         self.pkg = pkg
@@ -37,8 +35,6 @@ class OldMultiMovePackageUpdate(results.Warning):
     the update files.
     """
 
-    threshold = base.repository_feed
-
     def __init__(self, pkg, moves):
         super().__init__()
         self.pkg = pkg
@@ -51,8 +47,6 @@ class OldMultiMovePackageUpdate(results.Warning):
 
 class OldPackageUpdate(results.Warning):
     """Old entry for removed package in profiles/updates files."""
-
-    threshold = base.repository_feed
 
     def __init__(self, pkg, updates):
         super().__init__()
@@ -67,13 +61,9 @@ class OldPackageUpdate(results.Warning):
 class MovedPackageUpdate(results.LogWarning):
     """Entry for package already moved in profiles/updates files."""
 
-    threshold = base.repository_feed
-
 
 class BadPackageUpdate(results.LogError):
     """Badly formatted package update in profiles/updates files."""
-
-    threshold = base.repository_feed
 
 
 class PackageUpdatesCheck(Check):
@@ -150,8 +140,6 @@ class PackageUpdatesCheck(Check):
 class UnusedLicenses(results.Warning):
     """Unused license(s) detected."""
 
-    threshold = base.repository_feed
-
     def __init__(self, licenses):
         super().__init__()
         self.licenses = tuple(licenses)
@@ -188,8 +176,6 @@ class UnusedLicensesCheck(Check):
 
 class UnusedMirrors(results.Warning):
     """Unused mirrors detected."""
-
-    threshold = base.repository_feed
 
     def __init__(self, mirrors):
         super().__init__()
@@ -246,8 +232,6 @@ class UnusedMirrorsCheck(_MirrorsCheck):
 class UnusedEclasses(results.Warning):
     """Unused eclasses detected."""
 
-    threshold = base.repository_feed
-
     def __init__(self, eclasses):
         super().__init__()
         self.eclasses = tuple(eclasses)
@@ -286,8 +270,6 @@ class UnusedEclassesCheck(Check):
 class UnknownLicenses(results.Warning):
     """License(s) listed in license group(s) that don't exist."""
 
-    threshold = base.repository_feed
-
     def __init__(self, group, licenses):
         super().__init__()
         self.group = group
@@ -320,8 +302,6 @@ class LicenseGroupsCheck(Check):
 class PotentialLocalUSE(results.Info):
     """Global USE flag is a potential local USE flag."""
 
-    threshold = base.repository_feed
-
     def __init__(self, flag, pkgs):
         super().__init__()
         self.flag = flag
@@ -337,8 +317,6 @@ class PotentialLocalUSE(results.Info):
 class UnusedGlobalUSE(results.Warning):
     """Unused use.desc flag(s)."""
 
-    threshold = base.repository_feed
-
     def __init__(self, flags):
         super().__init__()
         self.flags = tuple(flags)
@@ -351,8 +329,6 @@ class UnusedGlobalUSE(results.Warning):
 
 class PotentialGlobalUSE(results.Info):
     """Local USE flag is a potential global USE flag."""
-
-    threshold = base.repository_feed
 
     def __init__(self, flag, pkgs):
         super().__init__()

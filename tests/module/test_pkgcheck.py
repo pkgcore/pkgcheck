@@ -335,11 +335,11 @@ class TestPkgcheckScan(object):
                 target = open(pjoin(self.testdir, f'data/{repo}/{check}/{keyword}/target'))
                 args.extend(shlex.split(target.read()))
             except FileNotFoundError:
-                if result.threshold in (base.package_feed, base.versioned_feed):
+                if result.scope in (base.package_scope, base.version_scope):
                     args.append(f'{check}/{keyword}')
-                elif result.threshold in base.category_feed:
+                elif result.scope == base.category_scope:
                     args.append(f'{keyword}/*')
-                elif result.threshold in base.repository_feed:
+                elif result.scope == base.repository_scope:
                     args.extend(['-k', keyword])
 
             with open(expected_path) as f:
@@ -448,11 +448,11 @@ class TestPkgcheckScan(object):
             else:
                 continue
 
-            if result.threshold in (base.package_feed, base.versioned_feed):
+            if result.scope in (base.package_scope, base.version_scope):
                 args = [f'{check}/{keyword}']
-            elif result.threshold in base.category_feed:
+            elif result.scope == base.category_scope:
                 args = [f'{keyword}/*']
-            elif result.threshold in base.repository_feed:
+            elif result.scope == base.repository_scope:
                 args = ['-k', keyword]
 
             # apply a fix if one exists and make sure the related result doesn't appear

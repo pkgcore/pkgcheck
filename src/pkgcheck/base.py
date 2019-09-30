@@ -30,13 +30,13 @@ raw_versioned_feed = '(cat, pkg, ver)'
 ebuild_feed = 'cat/pkg-ver+text'
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
-_Scope = namedtuple('Scope', ['threshold', 'desc'])
+_Scope = namedtuple('Scope', ['threshold', 'desc', 'scope'])
 known_scopes = OrderedDict((
-    ('git', _Scope(commit_feed, 'commit')),
-    ('repo', _Scope(repository_feed, 'repository')),
-    ('cat', _Scope(category_feed, 'category')),
-    ('pkg', _Scope(package_feed, 'package')),
-    ('ver', _Scope(versioned_feed, 'version')),
+    ('git', _Scope(commit_feed, 'commit', 4)),
+    ('repo', _Scope(repository_feed, 'repository', 3)),
+    ('cat', _Scope(category_feed, 'category', 2)),
+    ('pkg', _Scope(package_feed, 'package', 1)),
+    ('ver', _Scope(versioned_feed, 'version', 0)),
 ))
 
 # The plugger needs to be able to compare scopes.

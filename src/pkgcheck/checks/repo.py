@@ -11,8 +11,6 @@ from . import GentooRepoCheck
 class BinaryFile(results.Error):
     """Binary file found in the repository."""
 
-    threshold = base.repository_feed
-
     def __init__(self, path):
         super().__init__()
         self.path = path
@@ -52,7 +50,7 @@ class RepoDirCheck(GentooRepoCheck):
 class EmptyCategoryDir(results.CategoryResult, results.Warning):
     """Empty category directory in the repository."""
 
-    threshold = base.repository_feed
+    scope = base.repository_scope
 
     @property
     def desc(self):
@@ -62,7 +60,7 @@ class EmptyCategoryDir(results.CategoryResult, results.Warning):
 class EmptyPackageDir(results.PackageResult, results.Warning):
     """Empty package directory in the repository."""
 
-    threshold = base.repository_feed
+    scope = base.repository_scope
 
     @property
     def desc(self):

@@ -27,8 +27,6 @@ class MissingAccountIdentifier(results.VersionedResult, results.Warning):
 class ConflictingAccountIdentifiers(results.Error):
     """Same UID/GID is used by multiple packages."""
 
-    threshold = base.repository_feed
-
     def __init__(self, kind, identifier, pkgs):
         super().__init__()
         self.kind = kind

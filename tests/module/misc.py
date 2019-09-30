@@ -81,19 +81,18 @@ class FakeFilesDirPkg(package):
             repo.location, cpv.category, cpv.package, f'{cpv.package}-{cpv.fullver}.ebuild'))
 
 
-default_threshold_attrs = {
-    base.repository_feed: (),
-    base.category_feed: ('category',),
-    base.package_feed: ('category', 'package'),
-    base.versioned_feed: ('category', 'package', 'version'),
+default_scope_attrs = {
+    base.repository_scope: (),
+    base.category_scope: ('category',),
+    base.package_scope: ('category', 'package'),
+    base.version_scope: ('category', 'package', 'version'),
 }
-default_threshold_attrs[base.ebuild_feed] = default_threshold_attrs[base.versioned_feed]
 
 
 class ReportTestCase(object):
     """Base class for verifying report generation."""
 
-    _threshold_attrs = default_threshold_attrs.copy()
+    _scope_attrs = default_scope_attrs.copy()
 
     def _assert_known_results(self, *reports):
         for report in reports:
@@ -116,11 +115,10 @@ class ReportTestCase(object):
 
     def assertReportSanity(self, *reports):
         for report in reports:
-            attrs = self._threshold_attrs.get(report.threshold)
+            attrs = self._scope_attrs.get(report.scope)
             for attr in attrs:
                 assert hasattr(report, attr), (
-                    f"threshold {report.threshold}, missing attr {attr}: " \
-                    f"{report.__class__!r} {report}")
+                    f"missing attr {attr}: {report.__class__!r} {report}")
 
     def assertReports(self, check, data, iterate=False):
         l = []

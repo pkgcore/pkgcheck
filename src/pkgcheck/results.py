@@ -26,7 +26,8 @@ class Result(metaclass=_LeveledResult):
 
     # all results are shown by default
     _filtered = False
-
+    # default to repository level results
+    scope = base.repository_scope
     # default to warning level
     _level = 30
     # level values match those used in logging module
@@ -76,7 +77,9 @@ class Result(metaclass=_LeveledResult):
         return hash(tuple(sorted(self._attrs)))
 
     def __lt__(self, other):
-        return self.__class__.__name__ < other.__class__.__name__
+        if self.scope == other.scope:
+            return self.__class__.__name__ < other.__class__.__name__
+        return self.scope < other.scope
 
 
 class Error(Result):
@@ -100,7 +103,7 @@ class Info(Result):
 class CommitResult(Result):
     """Result related to a specific git commit."""
 
-    threshold = base.commit_feed
+    scope = base.commit_scope
 
     def __init__(self, commit, **kwargs):
         super().__init__(**kwargs)
@@ -111,7 +114,7 @@ class CommitResult(Result):
 class CategoryResult(Result):
     """Result related to a specific category."""
 
-    threshold = base.category_feed
+    scope = base.category_scope
 
     def __init__(self, pkg, **kwargs):
         super().__init__(**kwargs)
@@ -127,7 +130,7 @@ class CategoryResult(Result):
 class PackageResult(CategoryResult):
     """Result related to a specific package."""
 
-    threshold = base.package_feed
+    scope = base.package_scope
 
     def __init__(self, pkg, **kwargs):
         super().__init__(pkg, **kwargs)
@@ -143,7 +146,7 @@ class PackageResult(CategoryResult):
 class VersionedResult(PackageResult):
     """Result related to a specific version of a package."""
 
-    threshold = base.versioned_feed
+    scope = base.version_scope
 
     def __init__(self, pkg, **kwargs):
         super().__init__(pkg, **kwargs)
@@ -157,11 +160,14 @@ class VersionedResult(PackageResult):
         return version, revision
 
     def __lt__(self, other):
-        cmp = cpv.ver_cmp(*(self.ver_rev + other.ver_rev))
-        if cmp < 0:
-            return True
-        elif cmp > 0:
-            return False
+        try:
+            cmp = cpv.ver_cmp(*(self.ver_rev + other.ver_rev))
+            if cmp < 0:
+                return True
+            elif cmp > 0:
+                return False
+        except AttributeError:
+            pass
         return super().__lt__(other)
 
 

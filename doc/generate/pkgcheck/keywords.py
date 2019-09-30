@@ -40,7 +40,7 @@ def main(f=sys.stdout, **kwargs):
     for scope in base.known_scopes.values():
         _rst_header('-', scope.desc.capitalize() + ' scope')
 
-        keywords = (x for x in const.KEYWORDS.values() if x.threshold == scope.threshold)
+        keywords = (x for x in const.KEYWORDS.values() if x.scope == scope.scope)
         for keyword in keywords:
             if keyword.__doc__ is not None:
                 try:

@@ -73,12 +73,12 @@ class StrReporter(Reporter):
     def _process_report(self):
         while True:
             result = (yield)
-            if result.threshold == base.versioned_feed:
+            if result.scope == base.version_scope:
                 self.out.write(
                     f"{result.category}/{result.package}-{result.version}: {result.desc}")
-            elif result.threshold == base.package_feed:
+            elif result.scope == base.package_scope:
                 self.out.write(f"{result.category}/{result.package}: {result.desc}")
-            elif result.threshold == base.category_feed:
+            elif result.scope == base.category_scope:
                 self.out.write(f"{result.category}: {result.desc}")
             else:
                 self.out.write(result.desc)
@@ -106,9 +106,9 @@ class FancyReporter(Reporter):
     def _process_report(self):
         while True:
             result = (yield)
-            if result.threshold in (base.versioned_feed, base.package_feed):
+            if result.scope in (base.version_scope, base.package_scope):
                 key = f'{result.category}/{result.package}'
-            elif result.threshold == base.category_feed:
+            elif result.scope == base.category_scope:
                 key = result.category
             else:
                 key = 'repo'
@@ -121,7 +121,7 @@ class FancyReporter(Reporter):
             self.out.first_prefix.append('  ')
             self.out.later_prefix.append('    ')
             s = ''
-            if result.threshold == base.versioned_feed:
+            if result.scope == base.version_scope:
                 s = f"version {result.version}: "
             self.out.write(
                 self.out.fg(result.color),
@@ -168,11 +168,11 @@ class JsonReporter(Reporter):
             result = (yield)
             data = self._json_dict()
 
-            if result.threshold == base.repository_feed:
+            if result.scope == base.repository_scope:
                 d = data
-            elif result.threshold == base.category_feed:
+            elif result.scope == base.category_scope:
                 d = data[result.category]
-            elif result.threshold == base.package_feed:
+            elif result.scope == base.package_scope:
                 d = data[result.category][result.package]
             else:
                 # versioned or ebuild feed
@@ -206,12 +206,11 @@ class XmlReporter(Reporter):
         "<package>%(package)s</package><version>%(version)s</version>"
         "<class>%(class)s</class><msg>%(msg)s</msg></result>")
 
-    threshold_map = {
-        base.repository_feed: repo_template,
-        base.category_feed: cat_template,
-        base.package_feed: pkg_template,
-        base.versioned_feed: ver_template,
-        base.ebuild_feed: ver_template,
+    scope_map = {
+        base.repository_scope: repo_template,
+        base.category_scope: cat_template,
+        base.package_scope: pkg_template,
+        base.version_scope: ver_template,
     }
 
     def start(self):
@@ -224,7 +223,7 @@ class XmlReporter(Reporter):
             d = {k: getattr(result, k, '') for k in ('category', 'package', 'version')}
             d['class'] = xml_escape(result.__class__.__name__)
             d['msg'] = xml_escape(result.desc)
-            self.out.write(self.threshold_map[result.threshold] % d)
+            self.out.write(self.scope_map[result.scope] % d)
 
     def finish(self):
         self.out.write('</checks>')

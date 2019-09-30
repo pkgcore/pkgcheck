@@ -330,10 +330,10 @@ def _validate_args(parser, namespace):
         # convert scopes to keyword lists
         disabled_keywords = [
             k.__name__ for s in disabled_scopes for k in const.KEYWORDS.values()
-            if k.threshold == base.known_scopes[s].threshold]
+            if k.scope == base.known_scopes[s].scope]
         enabled_keywords = [
             k.__name__ for s in enabled_scopes for k in const.KEYWORDS.values()
-            if k.threshold == base.known_scopes[s].threshold]
+            if k.scope == base.known_scopes[s].scope]
 
         # filter outputted keywords
         namespace.enabled_keywords = base.filter_update(
@@ -609,15 +609,8 @@ def display_keywords(out, options):
         out.write('\n'.join(sorted(const.KEYWORDS.keys())), wrap=False)
     else:
         d = defaultdict(set)
-        scope_map = {
-            base.versioned_feed: base.version_scope,
-            base.package_feed: base.package_scope,
-            base.category_feed: base.category_scope,
-            base.repository_feed: base.repository_scope,
-            base.commit_feed: base.commit_scope,
-        }
         for keyword in const.KEYWORDS.values():
-            d[scope_map[keyword.threshold]].add(keyword)
+            d[keyword.scope].add(keyword)
 
         scopes = tuple(x.desc for x in reversed(base.known_scopes.values()))
         for scope in reversed(sorted(d)):

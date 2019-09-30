@@ -19,8 +19,6 @@ from . import Check
 class BadProfileEntry(results.Error):
     """Badly formatted entry in a profiles file."""
 
-    threshold = base.repository_feed
-
     def __init__(self, path, error):
         super().__init__()
         self.path = path
@@ -33,8 +31,6 @@ class BadProfileEntry(results.Error):
 
 class UnknownProfilePackages(results.Warning):
     """Profile files include package entries that don't exist in the repo."""
-
-    threshold = base.repository_feed
 
     def __init__(self, path, packages):
         super().__init__()
@@ -49,8 +45,6 @@ class UnknownProfilePackages(results.Warning):
 
 class UnknownProfilePackageUse(results.Warning):
     """Profile files include entries with USE flags that aren't used on any matching packages."""
-
-    threshold = base.repository_feed
 
     def __init__(self, path, package, flags):
         super().__init__()
@@ -68,8 +62,6 @@ class UnknownProfilePackageUse(results.Warning):
 class UnknownProfileUse(results.Warning):
     """Profile files include USE flags that don't exist."""
 
-    threshold = base.repository_feed
-
     def __init__(self, path, flags):
         super().__init__()
         self.path = path
@@ -83,8 +75,6 @@ class UnknownProfileUse(results.Warning):
 
 class UnknownProfilePackageKeywords(results.Warning):
     """Profile files include package keywords that don't exist."""
-
-    threshold = base.repository_feed
 
     def __init__(self, path, package, keywords):
         super().__init__()
@@ -102,13 +92,9 @@ class UnknownProfilePackageKeywords(results.Warning):
 class ProfileWarning(results.LogWarning):
     """Badly formatted data in various profile files."""
 
-    threshold = base.repository_feed
-
 
 class ProfileError(results.LogError):
     """Erroneously formatted data in various profile files."""
-
-    threshold = base.repository_feed
 
 
 class _ProfileNode(profiles_mod.ProfileNode):
@@ -280,8 +266,6 @@ class ProfilesCheck(Check):
 class UnusedProfileDirs(results.Warning):
     """Unused profile directories detected."""
 
-    threshold = base.repository_feed
-
     def __init__(self, dirs):
         super().__init__()
         self.dirs = tuple(dirs)
@@ -294,8 +278,6 @@ class UnusedProfileDirs(results.Warning):
 
 class ArchesWithoutProfiles(results.Warning):
     """Arches without corresponding profile listings."""
-
-    threshold = base.repository_feed
 
     def __init__(self, arches):
         super().__init__()
@@ -310,8 +292,6 @@ class ArchesWithoutProfiles(results.Warning):
 class NonexistentProfilePath(results.Error):
     """Specified profile path in profiles.desc doesn't exist."""
 
-    threshold = base.repository_feed
-
     def __init__(self, path):
         super().__init__()
         self.path = path
@@ -323,8 +303,6 @@ class NonexistentProfilePath(results.Error):
 
 class LaggingProfileEAPI(results.Warning):
     """Profile has an EAPI that is older than one of its parents."""
-
-    threshold = base.repository_feed
 
     def __init__(self, profile, eapi, parent, parent_eapi):
         super().__init__()
@@ -346,8 +324,6 @@ class UnknownCategories(results.Warning):
 
     Or the categories of the repo's masters as well.
     """
-
-    threshold = base.repository_feed
 
     def __init__(self, categories):
         super().__init__()
