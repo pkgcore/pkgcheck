@@ -8,7 +8,7 @@ from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files, pjoin
 
-from . import base
+from .packages import FilteredPkg, RawCPV, WrappedPkg
 
 
 class GenericSource:
@@ -86,7 +86,7 @@ class LatestPkgsFilter:
             if self._partial_filtered:
                 selected_pkgs = set(selected_pkgs.values())
                 self._pkg_cache.extend(
-                    base.FilteredPkg(pkg=pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs)
+                    FilteredPkg(pkg=pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs)
             else:
                 self._pkg_cache.extend(selected_pkgs.values())
 
@@ -139,7 +139,7 @@ class RawRepoSource(GenericSource):
         self._repo = _RawRepo(self._repo)
 
     def itermatch(self, restrict, **kwargs):
-        yield from super().itermatch(restrict, raw_pkg_cls=base.RawCPV, **kwargs)
+        yield from super().itermatch(restrict, raw_pkg_cls=RawCPV, **kwargs)
 
 
 class RestrictionRepoSource(GenericSource):
@@ -164,7 +164,7 @@ class UnmaskedRepoSource(GenericSource):
             pkg_accept_keywords=(), pkg_keywords=(), profile=False)
 
 
-class _SourcePkg(base.WrappedPkg):
+class _SourcePkg(WrappedPkg):
     """Package object with file contents injected as an attribute."""
 
     __slots__ = ('lines',)

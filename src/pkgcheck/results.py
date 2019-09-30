@@ -4,6 +4,7 @@ from pkgcore.ebuild import cpv
 from snakeoil import klass
 
 from . import base
+from .packages import FilteredPkg, RawCPV
 
 
 class _LeveledResult(type):
@@ -64,7 +65,7 @@ class Result(metaclass=_LeveledResult):
         package = d.pop('package', None)
         version = d.pop('version', None)
         if any((category, package, version)):
-            pkg = base.RawCPV(category, package, version)
+            pkg = RawCPV(category, package, version)
             d['pkg'] = pkg
         return d
 
@@ -168,7 +169,7 @@ class FilteredVersionResult(VersionedResult):
     """Result that will be optionally filtered for old packages by default."""
 
     def __init__(self, pkg, **kwargs):
-        if isinstance(pkg, base.FilteredPkg):
+        if isinstance(pkg, FilteredPkg):
             self._filtered = True
             pkg = pkg._pkg
         super().__init__(pkg, **kwargs)

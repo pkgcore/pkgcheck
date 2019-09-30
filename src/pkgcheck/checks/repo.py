@@ -3,6 +3,7 @@ import os
 from snakeoil.osutils import pjoin
 
 from .. import base, results, sources
+from ..packages import RawCPV
 from ..utils import is_binary
 from . import GentooRepoCheck
 
@@ -82,9 +83,9 @@ class EmptyDirsCheck(GentooRepoCheck):
     def finish(self):
         for cat, pkgs in sorted(self.repo.packages.items()):
             if not pkgs:
-                yield EmptyCategoryDir(pkg=base.RawCPV(cat, None, None))
+                yield EmptyCategoryDir(pkg=RawCPV(cat, None, None))
                 continue
             for pkg in sorted(pkgs):
                 versions = self.repo.versions[(cat, pkg)]
                 if not versions:
-                    yield EmptyPackageDir(pkg=base.RawCPV(cat, pkg, None))
+                    yield EmptyPackageDir(pkg=RawCPV(cat, pkg, None))
