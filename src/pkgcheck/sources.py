@@ -228,6 +228,12 @@ class CategoryRepoSource(_CombinedSource):
     keyfunc = attrgetter('category')
 
 
+class RepositoryRepoSource(GenericSource):
+    """Ebuild repository source yielding lists of versioned packages per package."""
+
+    feed_type = base.repository_scope
+
+
 class _FilteredSource(GenericSource):
     """Generic source yielding selected attribute from matching packages."""
 
