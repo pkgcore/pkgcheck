@@ -16,7 +16,6 @@ from collections import OrderedDict
 from contextlib import AbstractContextManager
 
 from pkgcore import const as pkgcore_const
-from pkgcore.config.hint import ConfigHint
 from snakeoil.osutils import pjoin
 
 
@@ -164,9 +163,6 @@ class _CheckSet:
 class Whitelist(_CheckSet):
     """Only run checks matching one of the provided patterns."""
 
-    pkgcore_config_type = ConfigHint(
-        {'patterns': 'list'}, typename='pkgcheck_checkset')
-
     def filter(self, checks):
         return list(
             c for c in checks
@@ -175,9 +171,6 @@ class Whitelist(_CheckSet):
 
 class Blacklist(_CheckSet):
     """Only run checks not matching any of the provided patterns."""
-
-    pkgcore_config_type = ConfigHint(
-        {'patterns': 'list'}, typename='pkgcheck_checkset')
 
     def filter(self, checks):
         return list(
