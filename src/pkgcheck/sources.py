@@ -234,7 +234,7 @@ class RepositoryRepoSource(GenericSource):
     feed_type = base.repository_scope
 
 
-class _FilteredSource(GenericSource):
+class _FilteredSource(RawRepoSource):
     """Generic source yielding selected attribute from matching packages."""
 
     def keyfunc(self, pkg):

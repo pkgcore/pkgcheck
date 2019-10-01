@@ -35,6 +35,10 @@ class RawCPV:
             return atom.atom(f'={self}')
         return atom.atom(str(self))
 
+    @property
+    def unversioned_atom(self):
+        return atom.atom(self.key)
+
     def __str__(self):
         if self.fullver:
             return f'{self.category}/{self.package}-{self.fullver}'

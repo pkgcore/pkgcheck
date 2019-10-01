@@ -44,7 +44,7 @@ class Pipeline:
 
     def _insert_pkgs(self, queue):
         source = UnversionedSource(self.options)
-        for restrict in source.itermatch(self.restrict, raw_pkg_cls=CPV):
+        for restrict in source.itermatch(self.restrict):
             queue.put(restrict)
         for i in range(self.jobs):
             queue.put(None)
@@ -94,7 +94,7 @@ class Pipeline:
                 source = VersionedSource(self.options)
                 futures = []
                 with concurrent.futures.ProcessPoolExecutor(self.jobs) as executor:
-                    for r in source.itermatch(self.restrict, raw_pkg_cls=CPV):
+                    for r in source.itermatch(self.restrict):
                         futures.append(
                             executor.submit(self._run_version_checks, version_checks, r))
                     for p in pkg_checks:
