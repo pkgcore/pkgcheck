@@ -4,6 +4,7 @@ import csv
 import json
 import pickle
 from collections import defaultdict
+from multiprocessing import Process
 from xml.sax.saxutils import escape as xml_escape
 
 from snakeoil import pickling
@@ -29,9 +30,16 @@ class Reporter:
         self.report = self._add_report().send
         self.process = self._process_report().send
 
-    def __call__(self, results):
-        for result in results:
-            self.report(result)
+    def __call__(self, pipe, results_q):
+        p = Process(target=pipe.run, args=(results_q,))
+        p.start()
+        while True:
+            results = results_q.get()
+            if results is None:
+                break
+            for result in sorted(results):
+                self.report(result)
+        p.join()
 
     @coroutine
     def _add_report(self):

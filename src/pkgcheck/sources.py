@@ -8,12 +8,14 @@ from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files, pjoin
 
+from . import base
 from .packages import FilteredPkg, RawCPV, WrappedPkg
 
 
 class GenericSource:
     """Base template for a repository source."""
 
+    feed_type = base.version_scope
     required_addons = ()
 
     def __init__(self, options, source=None):
@@ -41,6 +43,8 @@ class GenericSource:
 
 class EmptySource(GenericSource):
     """Empty source meant for skipping feed."""
+
+    feed_type = base.repository_scope
 
     def itermatch(self, restrict):
         yield from ()
@@ -213,12 +217,14 @@ class _CombinedSource(GenericSource):
 class PackageRepoSource(_CombinedSource):
     """Ebuild repository source yielding lists of versioned packages per package."""
 
+    feed_type = base.package_scope
     keyfunc = attrgetter('key')
 
 
 class CategoryRepoSource(_CombinedSource):
     """Ebuild repository source yielding lists of versioned packages per category."""
 
+    feed_type = base.category_scope
     keyfunc = attrgetter('category')
 
 

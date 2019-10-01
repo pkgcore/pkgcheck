@@ -12,6 +12,7 @@ import textwrap
 from collections import defaultdict
 from functools import partial
 from itertools import chain
+from multiprocessing import SimpleQueue
 from operator import attrgetter
 
 from pkgcore import const as pkgcore_const
@@ -89,6 +90,13 @@ def _setup_reporter(namespace):
         argparser.error('--format option is only valid when using FormatReporter')
 
 
+def jobs(x):
+    jobs = int(x)
+    if jobs < 1:
+        raise argparse.ArgumentTypeError('must be >= 1')
+    return jobs
+
+
 # These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser(
     'scan', parents=(reporter_argparser,), description='scan targets for QA issues')
@@ -107,6 +115,13 @@ main_options.add_argument(
     docs="""
         Enable all package filtering mechanisms such as ACCEPT_KEYWORDS,
         ACCEPT_LICENSE, and package.mask.
+    """)
+main_options.add_argument(
+    '-j', '--jobs', type=jobs,
+    help='number of checks to run in parallel',
+    docs="""
+        Number of checks to run in parallel, defaults to using all available
+        processors.
     """)
 
 check_options = scan.add_argument_group('check selection')
@@ -485,11 +500,13 @@ def _scan(options, out, err):
 
     reporter.start()
 
+    results_q = SimpleQueue()
     # run git commit checks separately from pkg-related checks
     git_checks = enabled_checks.pop(base.commit_scope, None)
     if git_checks:
         source, checks = git_checks.popitem()
-        reporter(pipeline.GitPipeline(checks, source))
+        for result in pipeline.GitPipeline(checks, source):
+            reporter.report(result)
 
     if enabled_checks:
         for filterer in options.limiters:
@@ -506,7 +523,7 @@ def _scan(options, out, err):
             # Skip checks higher than the current scan scope level, e.g. skip repo
             # level checks when scanning at package level.
             pipes = (d for scope, d in enabled_checks.items() if scope <= scan_scope)
-            pipes = tuple(pipeline.plug(pipes))
+            pipes = pipeline.plug(pipes)
             if not pipes:
                 err.write(f'{scan.prog}: no matching checks available for current scope')
                 continue
@@ -517,7 +534,8 @@ def _scan(options, out, err):
                 err.write(f'limiter: {filterer}')
             err.flush()
 
-            reporter(pipeline.Pipeline(pipes, filterer))
+            p = pipeline.Pipeline(options, scan_scope, pipes, filterer)
+            reporter(p, results_q)
 
     reporter.finish()
 
