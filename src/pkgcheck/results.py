@@ -122,8 +122,11 @@ class CategoryResult(Result):
         self._attr = 'category'
 
     def __lt__(self, other):
-        if self.category < other.category:
-            return True
+        try:
+            if self.category < other.category:
+                return True
+        except AttributeError:
+            pass
         return super().__lt__(other)
 
 
@@ -138,8 +141,11 @@ class PackageResult(CategoryResult):
         self._attr = 'package'
 
     def __lt__(self, other):
-        if self.package < other.package:
-            return True
+        try:
+            if self.package < other.package:
+                return True
+        except AttributeError:
+            pass
         return super().__lt__(other)
 
 
