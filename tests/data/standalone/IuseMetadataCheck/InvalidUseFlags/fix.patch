@@ -1,0 +1,18 @@
+diff -Naur standalone/IuseMetadataCheck/InvalidUseFlags/InvalidUseFlags-0.ebuild fixed/IuseMetadataCheck/InvalidUseFlags/InvalidUseFlags-0.ebuild
+--- standalone/IuseMetadataCheck/InvalidUseFlags/InvalidUseFlags-0.ebuild	2019-09-18 21:52:54.860068690 -0600
++++ fixed/IuseMetadataCheck/InvalidUseFlags/InvalidUseFlags-0.ebuild	2019-09-18 21:58:10.025343307 -0600
+@@ -2,4 +2,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-IUSE="used +flag1 -flag2 + -"
++IUSE="used flag1 flag2"
+diff -Naur standalone/IuseMetadataCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild fixed/IuseMetadataCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild
+--- standalone/IuseMetadataCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild	2019-09-18 21:53:47.468281475 -0600
++++ fixed/IuseMetadataCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild	2019-09-18 21:58:25.504405829 -0600
+@@ -3,4 +3,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-IUSE="used +flag1 -flag2 + -"
++IUSE="used +flag1 -flag2"

@@ -263,15 +263,15 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         assert 'missing KEYWORDS: amd64, ppc, ~x86' == str(r)
 
 
-class TestIUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
+class TestIuseMetadataCheck(IUSE_Options, misc.ReportTestCase):
 
-    check_kls = metadata.IUSEMetadataCheck
+    check_kls = metadata.IuseMetadataCheck
 
     @pytest.fixture
     def check(self):
         options = self.get_options()
         profiles = [misc.FakeProfile()]
-        return metadata.IUSEMetadataCheck(options, addons.UseAddon(options, profiles))
+        return metadata.IuseMetadataCheck(options, addons.UseAddon(options, profiles))
 
     def mk_pkg(self, iuse=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"IUSE": iuse})
@@ -339,7 +339,7 @@ class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
         check = self.mk_check(deprecated=deprecated, banned=banned)
         for eapi_str in deprecated:
             r = self.assertReport(check, self.mk_pkg(eapi=eapi_str))
-            assert isinstance(r, metadata.DeprecatedEAPI)
+            assert isinstance(r, metadata.DeprecatedEapi)
             assert r.eapi == eapi_str
             assert f'uses deprecated EAPI {eapi_str}' == str(r)
 
@@ -349,7 +349,7 @@ class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
         check = self.mk_check(deprecated=deprecated, banned=banned)
         for eapi_str in banned:
             r = self.assertReport(check, self.mk_pkg(eapi=eapi_str))
-            assert isinstance(r, metadata.BannedEAPI)
+            assert isinstance(r, metadata.BannedEapi)
             assert r.eapi == eapi_str
             assert f'uses banned EAPI {eapi_str}' == str(r)
 
@@ -370,9 +370,9 @@ class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
         assert "attr(eapi): EAPI 'blah' is not supported" == str(r)
 
 
-class TestRequiredUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
+class TestRequiredUseMetadataCheck(IUSE_Options, misc.ReportTestCase):
 
-    check_kls = metadata.RequiredUSEMetadataCheck
+    check_kls = metadata.RequiredUseMetadataCheck
 
     @pytest.fixture
     def check(self):
@@ -432,10 +432,10 @@ class TestRequiredUSEMetadataCheck(IUSE_Options, misc.ReportTestCase):
 
     def test_unstated_iuse(self, check):
         r = self.assertReport(check, self.mk_pkg(required_use="foo? ( blah )"))
-        assert isinstance(r, addons.UnstatedIUSE)
+        assert isinstance(r, addons.UnstatedIuse)
         assert r.flags == ("blah", "foo")
         r = self.assertReport(check, self.mk_pkg(iuse="foo bar", required_use="foo? ( blah )"))
-        assert isinstance(r, addons.UnstatedIUSE)
+        assert isinstance(r, addons.UnstatedIuse)
         assert r.flags == ("blah",)
 
     def test_required_use_defaults(self, check):
@@ -557,11 +557,11 @@ class TestRestrictsCheck(use_based(), misc.ReportTestCase):
             self.assertNoReport(check, self.mk_pkg(**{attr: 'foo? ( bar )', 'iuse': 'foo'}))
             # conditional missing IUSE
             r = self.assertReport(check, self.mk_pkg(**{attr: 'foo? ( bar )'}))
-            assert isinstance(r, addons.UnstatedIUSE)
+            assert isinstance(r, addons.UnstatedIuse)
             assert 'unstated flag: [ foo ]' in str(r)
             # multiple missing IUSE
             r = self.assertReport(check, self.mk_pkg(**{attr: 'foo? ( bar ) boo? ( blah )'}))
-            assert isinstance(r, addons.UnstatedIUSE)
+            assert isinstance(r, addons.UnstatedIuse)
             assert 'unstated flags: [ boo, foo ]' in str(r)
 
 
@@ -641,7 +641,7 @@ class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
         # conditional URI with missing IUSE
         pkg = self.mk_pkg(license='foo? ( BSD )')
         r = self.assertReport(chk, pkg)
-        assert isinstance(r, addons.UnstatedIUSE)
+        assert isinstance(r, addons.UnstatedIuse)
         assert 'unstated flag: [ foo ]' in str(r)
 
     def test_single_missing(self):
@@ -806,13 +806,13 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
 
         # unstated IUSE
         r = self.assertReport(chk, mk_pkg(depset='foo? ( dev-libs/foo )'))
-        assert isinstance(r, addons.UnstatedIUSE)
+        assert isinstance(r, addons.UnstatedIuse)
         assert 'unstated flag: [ foo ]' in str(r)
         # known IUSE
         self.assertNoReport(chk, mk_pkg(depset='foo? ( dev-libs/foo )', iuse='foo'))
         # multiple unstated IUSE
         r = self.assertReport(chk, mk_pkg(depset='foo? ( !bar? ( dev-libs/foo ) )'))
-        assert isinstance(r, addons.UnstatedIUSE)
+        assert isinstance(r, addons.UnstatedIuse)
         assert 'unstated flags: [ bar, foo ]' in str(r)
 
     @pytest.mark.parametrize('attr', dep_attrs)
@@ -1003,7 +1003,7 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
         # conditional URI with missing IUSE
         pkg = self.mk_pkg(src_uri='foo? ( https://foo.com/foo-0.tar.gz )')
         r = self.assertReport(chk, pkg)
-        assert isinstance(r, addons.UnstatedIUSE)
+        assert isinstance(r, addons.UnstatedIuse)
         assert 'unstated flag: [ foo ]' in str(r)
 
     def test_bad_proto(self):

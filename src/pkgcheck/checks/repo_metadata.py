@@ -302,7 +302,7 @@ class LicenseGroupsCheck(Check):
                 yield UnknownLicenses(group, sorted(unknown_licenses))
 
 
-class PotentialLocalUSE(results.Info):
+class PotentialLocalUse(results.Info):
     """Global USE flag is a potential local USE flag."""
 
     def __init__(self, flag, pkgs):
@@ -317,7 +317,7 @@ class PotentialLocalUSE(results.Info):
             f"used by {len(self.pkgs)} package{_pl(len(self.pkgs))}: {', '.join(self.pkgs)}")
 
 
-class UnusedGlobalUSE(results.Warning):
+class UnusedGlobalUse(results.Warning):
     """Unused use.desc flag(s)."""
 
     def __init__(self, flags):
@@ -330,7 +330,7 @@ class UnusedGlobalUSE(results.Warning):
             _pl(self.flags), ', '.join(self.flags))
 
 
-class PotentialGlobalUSE(results.Info):
+class PotentialGlobalUse(results.Info):
     """Local USE flag is a potential global USE flag."""
 
     def __init__(self, flag, pkgs):
@@ -354,13 +354,13 @@ def _dfs(graph, start, visited=None):
     return visited
 
 
-class GlobalUSECheck(Check):
+class GlobalUseCheck(Check):
     """Check global USE and USE_EXPAND flags for various issues."""
 
     scope = base.repository_scope
     _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
     required_addons = (addons.UseAddon,)
-    known_results = (PotentialLocalUSE, PotentialGlobalUSE, UnusedGlobalUSE)
+    known_results = (PotentialLocalUse, PotentialGlobalUse, UnusedGlobalUse)
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
@@ -441,10 +441,10 @@ class GlobalUSECheck(Check):
                 potential_locals.append((flag, pkgs))
 
         if unused_global_flags:
-            yield UnusedGlobalUSE(sorted(unused_global_flags))
+            yield UnusedGlobalUse(sorted(unused_global_flags))
         for flag, pkgs in sorted(potential_locals, key=lambda x: len(x[1])):
             pkgs = sorted(map(str, pkgs))
-            yield PotentialLocalUSE(flag, pkgs)
+            yield PotentialLocalUse(flag, pkgs)
 
         local_use = defaultdict(list)
         for pkg, (flag, desc) in self.local_use:
@@ -458,7 +458,7 @@ class GlobalUSECheck(Check):
 
         for flag, pkgs in sorted(potential_globals, key=lambda x: len(x[1]), reverse=True):
             pkgs = sorted(map(str, pkgs))
-            yield PotentialGlobalUSE(flag, pkgs)
+            yield PotentialGlobalUse(flag, pkgs)
 
 
 def reformat_chksums(iterable):

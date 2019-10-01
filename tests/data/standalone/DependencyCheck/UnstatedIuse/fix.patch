@@ -1,0 +1,9 @@
+diff -Naur standalone/DependencyCheck/UnstatedIuse/UnstatedIuse-0.ebuild fixed/DependencyCheck/UnstatedIuse/UnstatedIuse-0.ebuild
+--- standalone/DependencyCheck/UnstatedIuse/UnstatedIuse-0.ebuild	2019-09-17 10:59:41.809964886 -0600
++++ fixed/DependencyCheck/UnstatedIuse/UnstatedIuse-0.ebuild	2019-09-17 11:00:18.196116334 -0600
+@@ -2,4 +2,5 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
++IUSE="used"
+ RDEPEND="used? ( stub/stub1 )"

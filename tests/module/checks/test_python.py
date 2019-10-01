@@ -242,7 +242,7 @@ class TestPythonCheck(misc.ReportTestCase):
                         '  dev-lang/python:2.7 ) '
                         'python_targets_python3_6? ( '
                         '  dev-lang/python:3.6 )'))
-        assert isinstance(r, python.PythonMissingRequiredUSE)
+        assert isinstance(r, python.PythonMissingRequiredUse)
         assert 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"' == str(r)
 
         # incomplete REQUIRED_USE (e.g. use of python_gen_useflags)
@@ -258,7 +258,7 @@ class TestPythonCheck(misc.ReportTestCase):
                             'python_targets_python3_6? ( '
                             '  dev-lang/python:3.6 )',
                     REQUIRED_USE='|| ( python_targets_python2_7 )')),
-            python.PythonMissingRequiredUSE)
+            python.PythonMissingRequiredUse)
 
         assert isinstance(
             self.assertReport(
@@ -276,7 +276,7 @@ class TestPythonCheck(misc.ReportTestCase):
                             '  dev-lang/python:3.7 )',
                     REQUIRED_USE='|| ( python_targets_python3_6 '
                                  '  python_targets_python3_7 )')),
-            python.PythonMissingRequiredUSE)
+            python.PythonMissingRequiredUse)
 
         assert isinstance(
             self.assertReport(
@@ -291,7 +291,7 @@ class TestPythonCheck(misc.ReportTestCase):
                             '  dev-lang/python:2.7 ) '
                             'python_single_target_python3_6? ( '
                             '  dev-lang/python:3.6 )')),
-            python.PythonMissingRequiredUSE)
+            python.PythonMissingRequiredUse)
 
         # incomplete REQUIRED_USE
         assert isinstance(
@@ -308,7 +308,7 @@ class TestPythonCheck(misc.ReportTestCase):
                             'python_single_target_python3_6? ( '
                             '  dev-lang/python:3.6 )',
                     REQUIRED_USE='^^ ( python_single_target_python2_7 )')),
-            python.PythonMissingRequiredUSE)
+            python.PythonMissingRequiredUse)
 
         # || instead of ^^ in python-single-r1
         assert isinstance(
@@ -326,7 +326,7 @@ class TestPythonCheck(misc.ReportTestCase):
                             '  dev-lang/python:3.6 )',
                     REQUIRED_USE='|| ( python_targets_python2_7 '
                                  '  python_targets_python3_6 )')),
-            python.PythonMissingRequiredUSE)
+            python.PythonMissingRequiredUse)
 
     def test_missing_deps(self):
         r = self.assertReport(

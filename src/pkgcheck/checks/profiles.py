@@ -301,7 +301,7 @@ class NonexistentProfilePath(results.Error):
         return f'nonexistent profile path: {self.path!r}'
 
 
-class LaggingProfileEAPI(results.Warning):
+class LaggingProfileEapi(results.Warning):
     """Profile has an EAPI that is older than one of its parents."""
 
     def __init__(self, profile, eapi, parent, parent_eapi):
@@ -362,7 +362,7 @@ class RepoProfilesCheck(Check):
     _source = sources.EmptySource
     known_results = (
         ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,
-        UnknownCategories, LaggingProfileEAPI,
+        UnknownCategories, LaggingProfileEapi,
         ProfileError, ProfileWarning,
     )
 
@@ -435,7 +435,7 @@ class RepoProfilesCheck(Check):
 
         for profile, parents in lagging_profile_eapi.items():
             parent = parents[-1]
-            yield LaggingProfileEAPI(
+            yield LaggingProfileEapi(
                 profile.name, str(profile.eapi), parent.name, str(parent.eapi))
 
         unused_profile_dirs = available_profile_dirs - seen_profile_dirs

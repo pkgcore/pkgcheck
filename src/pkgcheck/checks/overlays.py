@@ -53,7 +53,7 @@ class UnusedInMastersEclasses(results.VersionedResult, results.Warning):
             _pl(self.eclasses, plural='es'), ', '.join(self.eclasses))
 
 
-class UnusedInMastersGlobalUSE(results.VersionedResult, results.Warning):
+class UnusedInMastersGlobalUse(results.VersionedResult, results.Warning):
     """Global USE flags detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
@@ -77,7 +77,7 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
     _source = sources.RepositoryRepoSource
     known_results = (
         UnusedInMastersLicenses, UnusedInMastersMirrors, UnusedInMastersEclasses,
-        UnusedInMastersGlobalUSE,
+        UnusedInMastersGlobalUse,
     )
 
     def start(self):
@@ -130,4 +130,4 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
             non_local_use = pkg.iuse_stripped.difference(pkg.local_use.keys())
             flags = self.unused_master_flags.intersection(non_local_use)
             if flags:
-                yield UnusedInMastersGlobalUSE(sorted(flags), pkg=pkg)
+                yield UnusedInMastersGlobalUse(sorted(flags), pkg=pkg)

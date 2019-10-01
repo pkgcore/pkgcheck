@@ -74,7 +74,7 @@ class PythonSingleUseMismatch(results.VersionedResult, results.Warning):
         )
 
 
-class PythonMissingRequiredUSE(results.VersionedResult, results.Warning):
+class PythonMissingRequiredUse(results.VersionedResult, results.Warning):
     """Package is missing PYTHON_REQUIRED_USE.
 
     The python-r1 and python-single-r1 eclasses require the packages to
@@ -138,7 +138,7 @@ class PythonCheck(Check):
     """
 
     known_results = (
-        MissingPythonEclass, PythonSingleUseMismatch, PythonMissingRequiredUSE,
+        MissingPythonEclass, PythonSingleUseMismatch, PythonMissingRequiredUse,
         PythonMissingDeps, PythonRuntimeDepInAnyR1, MetadataError,
     )
 
@@ -247,7 +247,7 @@ class PythonCheck(Check):
             else:
                 req_use_args = (s_flags, IUSE_PREFIX_S, JustOneRestriction)
             if not self.check_required_use(pkg.required_use, *req_use_args):
-                yield PythonMissingRequiredUSE(pkg=pkg)
+                yield PythonMissingRequiredUse(pkg=pkg)
             if not self.check_depend(pkg.rdepend, *(req_use_args[:2])):
                 yield PythonMissingDeps('RDEPEND', pkg=pkg)
         else:  # python-any-r1

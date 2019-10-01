@@ -1,0 +1,11 @@
+diff -Naur standalone/LocalUseCheck/ProbableGlobalUse/metadata.xml fixed/LocalUseCheck/ProbableGlobalUse/metadata.xml
+--- standalone/LocalUseCheck/ProbableGlobalUse/metadata.xml	2019-08-21 02:12:27.787915100 -0600
++++ fixed/LocalUseCheck/ProbableGlobalUse/metadata.xml	2019-08-21 02:17:09.469997879 -0600
+@@ -4,7 +4,4 @@
+	<maintainer type="person">
+		<email>radhermit@gentoo.org</email>
+	</maintainer>
+-	<use>
+-		<flag name="probable">probably global flag</flag>
+-	</use>
+ </pkgmetadata>

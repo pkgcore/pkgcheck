@@ -542,7 +542,7 @@ class StableArchesAddon(base.Addon):
         options.stable_arches = stable_arches
 
 
-class UnstatedIUSE(results.VersionedResult, results.Error):
+class UnstatedIuse(results.VersionedResult, results.Error):
     """Package is reliant on conditionals that aren't in IUSE."""
 
     def __init__(self, attr, flags, profile=None, num_profiles=None, **kwargs):
@@ -648,16 +648,16 @@ class UseAddon(base.Addon):
                 profiles = sorted(profiles)
                 if self.options.verbosity > 0:
                     for p in profiles:
-                        yield UnstatedIUSE(attr, unstated, p, pkg=pkg)
+                        yield UnstatedIuse(attr, unstated, p, pkg=pkg)
                 else:
                     num_profiles = len(profiles)
-                    yield UnstatedIUSE(attr, unstated, profiles[0], num_profiles, pkg=pkg)
+                    yield UnstatedIuse(attr, unstated, profiles[0], num_profiles, pkg=pkg)
         elif unstated_iuse:
             # Remove global defined implicit USE flags, note that standalone
             # repos without profiles will currently lack any implicit IUSE.
             unstated_iuse -= self.global_iuse_implicit
             if unstated_iuse:
-                yield UnstatedIUSE(attr, unstated_iuse, pkg=pkg)
+                yield UnstatedIuse(attr, unstated_iuse, pkg=pkg)
 
     def use_validate(self, klasses, pkg, seq, attr=None):
         skip_filter = (packages.Conditional,) + klasses

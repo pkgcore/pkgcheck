@@ -1,0 +1,20 @@
+diff -Naur standalone/LocalUseCheck/UnderscoreInUseFlag/metadata.xml fixed/LocalUseCheck/UnderscoreInUseFlag/metadata.xml
+--- standalone/LocalUseCheck/UnderscoreInUseFlag/metadata.xml	2019-09-04 10:56:36.120246759 +0200
++++ fixed/LocalUseCheck/UnderscoreInUseFlag/metadata.xml	2019-09-04 11:07:42.466278179 +0200
+@@ -5,6 +5,6 @@
+ 		<email>radhermit@gentoo.org</email>
+ 	</maintainer>
+ 	<use>
+-		<flag name="foo_bar">local USE flag with underscore</flag>
++		<flag name="foo-bar">local USE flag without underscore</flag>
+ 	</use>
+ </pkgmetadata>
+diff -Naur standalone/LocalUseCheck/UnderscoreInUseFlag/UnderscoreInUseFlag-0.ebuild fixed/LocalUseCheck/UnderscoreInUseFlag/UnderscoreInUseFlag-0.ebuild
+--- standalone/LocalUseCheck/UnderscoreInUseFlag/UnderscoreInUseFlag-0.ebuild	2019-09-04 10:56:51.764401394 +0200
++++ fixed/LocalUseCheck/UnderscoreInUseFlag/UnderscoreInUseFlag-0.ebuild	2019-09-04 11:07:32.300826502 +0200
+@@ -2,4 +2,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-IUSE="foo_bar"
++IUSE="foo-bar"

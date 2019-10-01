@@ -1,0 +1,2 @@
+LocalUseCheck/ProbableGlobalUse
+  ProbableGlobalUse: local USE flag closely matches a global: 'probable'

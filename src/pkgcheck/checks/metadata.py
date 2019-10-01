@@ -18,7 +18,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base, git, results, sources
-from ..addons import UnstatedIUSE
+from ..addons import UnstatedIuse
 from ..results import MetadataError
 from .visibility import FakeConfigurable
 from . import Check
@@ -67,7 +67,7 @@ class LicenseMetadataCheck(Check):
     """LICENSE validity checks."""
 
     known_results = (
-        MetadataError, MissingLicense, UnnecessaryLicense, UnstatedIUSE,
+        MetadataError, MissingLicense, UnnecessaryLicense, UnstatedIuse,
         MissingLicenseRestricts,
     )
 
@@ -162,7 +162,7 @@ class UnknownUseFlags(_UseFlagsResult):
     _type = 'unknown'
 
 
-class IUSEMetadataCheck(Check):
+class IuseMetadataCheck(Check):
     """IUSE validity checks."""
 
     required_addons = (addons.UseAddon,)
@@ -184,7 +184,7 @@ class IUSEMetadataCheck(Check):
                 yield UnknownUseFlags(unknown, pkg=pkg)
 
 
-class _EAPIResult(results.VersionedResult):
+class _EapiResult(results.VersionedResult):
     """Generic EAPI result."""
 
     _type = None
@@ -198,13 +198,13 @@ class _EAPIResult(results.VersionedResult):
         return f"uses {self._type} EAPI {self.eapi}"
 
 
-class DeprecatedEAPI(_EAPIResult, results.Warning):
+class DeprecatedEapi(_EapiResult, results.Warning):
     """Package's EAPI is deprecated according to repo metadata."""
 
     _type = 'deprecated'
 
 
-class BannedEAPI(_EAPIResult, results.Error):
+class BannedEapi(_EapiResult, results.Error):
     """Package's EAPI is banned according to repo metadata."""
 
     _type = 'banned'
@@ -213,14 +213,14 @@ class BannedEAPI(_EAPIResult, results.Error):
 class MetadataCheck(Check):
     """Scan for packages with banned/deprecated EAPIs or bad metadata."""
 
-    known_results = (DeprecatedEAPI, BannedEAPI, MetadataError)
+    known_results = (DeprecatedEapi, BannedEapi, MetadataError)
 
     def feed(self, pkg):
         eapi_str = str(pkg.eapi)
         if eapi_str in self.options.target_repo.config.eapis_banned:
-            yield BannedEAPI(pkg.eapi, pkg=pkg)
+            yield BannedEapi(pkg.eapi, pkg=pkg)
         elif eapi_str in self.options.target_repo.config.eapis_deprecated:
-            yield DeprecatedEAPI(pkg.eapi, pkg=pkg)
+            yield DeprecatedEapi(pkg.eapi, pkg=pkg)
 
 
 class RequiredUseDefaults(results.VersionedResult, results.Warning):
@@ -264,7 +264,7 @@ class RequiredUseDefaults(results.VersionedResult, results.Warning):
         )
 
 
-class RequiredUSEMetadataCheck(Check):
+class RequiredUseMetadataCheck(Check):
     """REQUIRED_USE validity checks."""
 
     # only run the check for EAPI 4 and above
@@ -272,7 +272,7 @@ class RequiredUSEMetadataCheck(Check):
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
             'options.has_required_use', values.FunctionRestriction(bool))),))
     required_addons = (addons.UseAddon, addons.ProfileAddon)
-    known_results = (MetadataError, RequiredUseDefaults, UnstatedIUSE)
+    known_results = (MetadataError, RequiredUseDefaults, UnstatedIuse)
 
     def __init__(self, options, iuse_handler, profiles):
         super().__init__(options)
@@ -319,7 +319,7 @@ class RequiredUSEMetadataCheck(Check):
                     str(node), profile=profile, num_profiles=num_profiles, pkg=pkg)
 
 
-class UnusedLocalUSE(results.PackageResult, results.Warning):
+class UnusedLocalUse(results.PackageResult, results.Warning):
     """Unused local USE flag(s)."""
 
     def __init__(self, flags, **kwargs):
@@ -332,7 +332,7 @@ class UnusedLocalUSE(results.PackageResult, results.Warning):
             _pl(self.flags), ', '.join(self.flags))
 
 
-class MatchingGlobalUSE(results.PackageResult, results.Error):
+class MatchingGlobalUse(results.PackageResult, results.Error):
     """Local USE flag description matches a global USE flag."""
 
     def __init__(self, flag, **kwargs):
@@ -344,7 +344,7 @@ class MatchingGlobalUSE(results.PackageResult, results.Error):
         return f"local USE flag matches a global: {self.flag!r}"
 
 
-class ProbableGlobalUSE(results.PackageResult, results.Warning):
+class ProbableGlobalUse(results.PackageResult, results.Warning):
     """Local USE flag description closely matches a global USE flag."""
 
     def __init__(self, flag, **kwargs):
@@ -399,15 +399,15 @@ class UnderscoreInUseFlag(results.PackageResult, results.Warning):
         return f"USE flag {self.flag!r} uses reserved underscore character"
 
 
-class LocalUSECheck(Check):
+class LocalUseCheck(Check):
     """Check local USE flags in metadata.xml for various issues."""
 
     scope = base.package_scope
     _source = sources.PackageRepoSource
     required_addons = (addons.UseAddon,)
     known_results = (
-        UnusedLocalUSE, MatchingGlobalUSE, ProbableGlobalUSE,
-        ProbableUseExpand, UnderscoreInUseFlag, UnstatedIUSE,
+        UnusedLocalUse, MatchingGlobalUse, ProbableGlobalUse,
+        ProbableUseExpand, UnderscoreInUseFlag, UnstatedIuse,
     )
 
     def __init__(self, options, use_handler):
@@ -431,9 +431,9 @@ class LocalUSECheck(Check):
             if flag in self.global_use:
                 ratio = SequenceMatcher(None, desc, self.global_use[flag]).ratio()
                 if ratio == 1.0:
-                    yield MatchingGlobalUSE(flag, pkg=pkg)
+                    yield MatchingGlobalUse(flag, pkg=pkg)
                 elif ratio >= 0.75:
-                    yield ProbableGlobalUSE(flag, pkg=pkg)
+                    yield ProbableGlobalUse(flag, pkg=pkg)
             elif '_' in flag:
                 for group in self.use_expand_groups:
                     if flag.startswith(f'{group}_'):
@@ -447,7 +447,7 @@ class LocalUSECheck(Check):
         for pkg in pkgs:
             unused.difference_update(pkg.iuse_stripped)
         if unused:
-            yield UnusedLocalUSE(sorted(unused), pkg=pkg)
+            yield UnusedLocalUse(sorted(unused), pkg=pkg)
 
 
 class MissingSlotDep(results.VersionedResult, results.Warning):
@@ -592,7 +592,7 @@ class DependencyCheck(Check):
     required_addons = (addons.UseAddon, git.GitAddon)
     known_results = (
         MetadataError, MissingPackageRevision, MissingUseDepDefault,
-        OutdatedBlocker, NonexistentBlocker, UnstatedIUSE,
+        OutdatedBlocker, NonexistentBlocker, UnstatedIuse,
     )
 
     def __init__(self, options, iuse_handler, git_addon):
@@ -930,7 +930,7 @@ class SrcUriCheck(Check):
     required_addons = (addons.UseAddon,)
     known_results = (
         BadFilename, BadProtocol, MissingUri, MetadataError, TarballAvailable,
-        UnknownMirror, UnstatedIUSE,
+        UnknownMirror, UnstatedIuse,
     )
 
     valid_protos = frozenset(["http", "https", "ftp"])
@@ -1109,7 +1109,7 @@ class UnknownProperties(results.VersionedResult, results.Warning):
 class RestrictsCheck(Check):
     """Check for valid RESTRICT settings."""
 
-    known_results = (BadRestricts, UnknownProperties, UnstatedIUSE)
+    known_results = (BadRestricts, UnknownProperties, UnstatedIuse)
     required_addons = (addons.UseAddon,)
 
     def __init__(self, options, iuse_handler):
