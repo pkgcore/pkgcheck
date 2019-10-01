@@ -1,16 +1,17 @@
 """Pipeline building support for connecting sources and checks."""
 
-from collections import defaultdict
 import concurrent.futures
+import os
+from collections import defaultdict
 from itertools import chain
-from multiprocessing import Pool, SimpleQueue, Process, cpu_count
+from multiprocessing import Pool, Process, SimpleQueue
 
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.package.errors import MetadataException
 
 from . import base
 from .results import MetadataError
-from .sources import VersionedSource, UnversionedSource
+from .sources import UnversionedSource, VersionedSource
 
 
 class GitPipeline:
@@ -31,7 +32,7 @@ class Pipeline:
         self.scan_scope = scan_scope
         self.pipes = pipes
         self.restrict = restrict
-        self.jobs = options.jobs if options.jobs is not None else cpu_count()
+        self.jobs = options.jobs if options.jobs is not None else os.cpu_count()
 
     def _run_version_checks(self, pipes, restrict):
         results = []

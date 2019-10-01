@@ -1,6 +1,6 @@
 """Various support for network checks."""
 
-from multiprocessing import cpu_count
+import os
 
 import requests
 
@@ -20,7 +20,7 @@ class Session(requests.Session):
             self.timeout = timeout if timeout is not None else 5
 
         # block when urllib3 connection pool is full
-        concurrent = concurrent if concurrent is not None else cpu_count() * 5
+        concurrent = concurrent if concurrent is not None else os.cpu_count() * 5
         a = requests.adapters.HTTPAdapter(pool_maxsize=concurrent, pool_block=True)
         self.mount('https://', a)
         self.mount('http://', a)
