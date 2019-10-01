@@ -124,7 +124,7 @@ class Pipeline:
             if non_pkg_checks:
                 results = []
                 for pipe in non_pkg_checks:
-                    results.extend(pipe.run(self.restrict))
+                    results.extend(pipe.run(self.restrict, metadata_errors=False))
                 if results:
                     results_q.put(results)
 
@@ -158,7 +158,7 @@ class CheckRunner:
                     error_str = ': '.join(str(e.error).split('\n'))
                     yield MetadataError(e.attr, error_str, pkg=e.pkg)
 
-    def run(self, restrict=None):
+    def run(self, restrict=None, metadata_errors=True):
         source = self.source if restrict is None else self.source.itermatch(restrict)
         for item in source:
             for check in self.checks:
@@ -175,7 +175,7 @@ class CheckRunner:
                         yield MetadataError(e.attr, error_str, pkg=e.pkg)
 
         # yield metadata errors from itermatch() error callbacks
-        if getattr(self.source, 'metadata_errors', None):
+        if metadata_errors and getattr(self.source, 'metadata_errors', None):
             for e in self.source.metadata_errors:
                 error_str = ': '.join(str(e.error).split('\n'))
                 yield MetadataError(e.attr, error_str, pkg=e.pkg)
