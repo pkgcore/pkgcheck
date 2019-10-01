@@ -20,6 +20,7 @@ class GenericSource:
         self._options = options
         self._repo = options.target_repo
         self._source = source
+        self.metadata_errors = []
 
     @property
     def source(self):
@@ -28,9 +29,13 @@ class GenericSource:
             return self._source
         return self._repo
 
+    def _metadata_error(self, exc):
+        self.metadata_errors.append(exc)
+
     def itermatch(self, restrict, **kwargs):
         """Yield packages matching the given restriction from the selected source."""
         kwargs.setdefault('sorter', sorted)
+        kwargs.setdefault('error_callback', self._metadata_error)
         yield from self.source.itermatch(restrict, **kwargs)
 
 

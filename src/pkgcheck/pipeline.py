@@ -114,6 +114,13 @@ class CheckRunner:
                     error_str = ': '.join(str(e.error).split('\n'))
                     yield MetadataError(e.attr, error_str, pkg=e.pkg)
 
+        # yield metadata errors from itermatch() error callbacks
+        if getattr(self.source, 'metadata_errors', None):
+            for e in self.source.metadata_errors:
+                error_str = ': '.join(str(e.error).split('\n'))
+                yield MetadataError(e.attr, error_str, pkg=e.pkg)
+            self.source.metadata_errors.clear()
+
     def finish(self):
         for check in self.checks:
             reports = check.finish()

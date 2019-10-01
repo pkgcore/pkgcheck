@@ -223,18 +223,6 @@ class MetadataCheck(Check):
         elif eapi_str in self.options.target_repo.config.eapis_deprecated:
             yield DeprecatedEAPI(pkg.eapi, pkg=pkg)
 
-    def finish(self):
-        # TODO: Move this somewhere that's consistently triggered after running
-        # all tests on a package set during the feed stage.
-        #
-        # report all masked pkgs due to invalid EAPIs and other bad metadata
-        for pkg in self.options.target_repo._masked:
-            e = pkg.data
-            if isinstance(e, MetadataException):
-                yield MetadataError(
-                    e.attr, e.msg(verbosity=self.options.verbosity),
-                    pkg=pkg.versioned_atom)
-
 
 class RequiredUseDefaults(results.VersionedResult, results.Warning):
     """Default USE flag settings don't satisfy REQUIRED_USE.
