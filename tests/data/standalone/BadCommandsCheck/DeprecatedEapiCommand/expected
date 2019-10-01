@@ -1,0 +1,2 @@
+BadCommandsCheck/DeprecatedEapiCommand
+  DeprecatedEapiCommand: version 0: 'dohtml' deprecated in EAPI 6, used on line 8: 'dohtml doc/*'

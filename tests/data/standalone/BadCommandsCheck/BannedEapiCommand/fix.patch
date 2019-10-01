@@ -1,0 +1,11 @@
+diff -Naur standalone/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-0.ebuild fixed/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-0.ebuild
+--- standalone/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-0.ebuild	2019-10-01 15:48:21.121467232 -0600
++++ fixed/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-0.ebuild	2019-10-01 15:50:51.970090195 -0600
+@@ -5,5 +5,6 @@
+ LICENSE="BSD"
+ 
+ src_install() {
+-	dohtml doc/*
++	docinto html
++	dodoc doc/*
+ }

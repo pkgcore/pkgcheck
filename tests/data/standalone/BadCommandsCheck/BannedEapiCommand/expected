@@ -1,0 +1,2 @@
+BadCommandsCheck/BannedEapiCommand
+  BannedEapiCommand: version 0: 'dohtml' banned in EAPI 7, used on line 8: 'dohtml doc/*'
