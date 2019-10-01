@@ -215,3 +215,33 @@ class CategoryRepoSource(_CombinedSource):
     """Ebuild repository source yielding lists of versioned packages per category."""
 
     keyfunc = attrgetter('category')
+
+
+class _FilteredSource(GenericSource):
+    """Generic source yielding selected attribute from matching packages."""
+
+    def keyfunc(self, pkg):
+        raise NotImplementedError(self.keyfunc)
+
+    def itermatch(self, restrict, **kwargs):
+        key = None
+        for pkg in super().itermatch(restrict, **kwargs):
+            new = self.keyfunc(pkg)
+            if new != key:
+                if key is not None:
+                    yield key
+                key = new
+        if key is not None:
+            yield key
+
+
+class UnversionedSource(_FilteredSource):
+    """Source yielding unversioned atoms from matching packages."""
+
+    keyfunc = attrgetter('unversioned_atom')
+
+
+class VersionedSource(_FilteredSource):
+    """Source yielding versioned atoms from matching packages."""
+
+    keyfunc = attrgetter('versioned_atom')
