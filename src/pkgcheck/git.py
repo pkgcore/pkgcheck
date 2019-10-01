@@ -386,7 +386,7 @@ class GitAddon(base.Addon):
                             git_repo = None
                     except FileNotFoundError as e:
                         pass
-                    except (EOFError, AttributeError, TypeError) as e:
+                    except (EOFError, AttributeError, ModuleNotFoundError, TypeError) as e:
                         logger.debug('forcing git repo cache regen: %s', e)
                         os.remove(cache_file)
                         git_repo = None
