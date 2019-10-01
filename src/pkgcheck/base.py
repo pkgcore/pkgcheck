@@ -30,6 +30,10 @@ class Scope:
     def __str__(self):
         return self.desc
 
+    def __repr__(self):
+        address = '@%#8x' % (id(self),)
+        return f'<{self.__class__.__name__} desc={self.desc!r} {address}>'
+
     def __lt__(self, other):
         return self.level < other.level
 
