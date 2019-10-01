@@ -10,7 +10,6 @@ from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
-from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import packages, values, boolean
 from snakeoil.klass import jit_attr
 from snakeoil.log import suppress_logging

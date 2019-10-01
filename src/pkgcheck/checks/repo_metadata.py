@@ -1,7 +1,7 @@
 from collections import defaultdict
 from difflib import SequenceMatcher
 from itertools import chain
-from operator import attrgetter, itemgetter
+from operator import itemgetter
 
 from pkgcore import fetch
 from snakeoil.contexts import patch

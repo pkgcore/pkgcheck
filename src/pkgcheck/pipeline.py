@@ -6,7 +6,6 @@ from collections import defaultdict
 from itertools import chain
 from multiprocessing import Pool, Process, SimpleQueue
 
-from pkgcore.ebuild.cpv import CPV
 from pkgcore.package.errors import MetadataException
 
 from . import base
