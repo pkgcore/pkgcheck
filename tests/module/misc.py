@@ -1,4 +1,3 @@
-from itertools import chain
 import os
 import textwrap
 
@@ -102,13 +101,13 @@ class ReportTestCase(object):
         l = []
         if msg:
             msg = f"{msg}: "
-        runner = pipeline.CheckRunner([check])
-        l.extend(runner.start())
         if iterate:
-            reports = chain.from_iterable(runner.feed(item) for item in data)
+            source = data
         else:
-            reports = runner.feed(data)
-        l.extend(reports)
+            source = [data]
+        runner = pipeline.CheckRunner(source, [check])
+        l.extend(runner.start())
+        l.extend(runner.run())
         l.extend(runner.finish())
         self._assert_known_results(*l)
         assert l == [], f"{msg}{list(report.desc for report in l)}"
@@ -122,13 +121,13 @@ class ReportTestCase(object):
 
     def assertReports(self, check, data, iterate=False):
         l = []
-        runner = pipeline.CheckRunner([check])
-        l.extend(runner.start())
         if iterate:
-            reports = chain.from_iterable(runner.feed(item) for item in data)
+            source = data
         else:
-            reports = runner.feed(data)
-        l.extend(reports)
+            source = [data]
+        runner = pipeline.CheckRunner(source, [check])
+        l.extend(runner.start())
+        l.extend(runner.run())
         l.extend(runner.finish())
         self._assert_known_results(*l)
         assert l, f"must get a report from {check} {data}, got none"
