@@ -445,8 +445,6 @@ def _validate_args(parser, namespace):
 def _scan(options, out, err):
     reporter = options.reporter(
         out, verbosity=options.verbosity, keywords=options.filtered_keywords)
-    # TODO: drop this after reworking network tests
-    options.reporter = reporter
 
     addons_map = {}
     def init_addon(cls):
@@ -490,6 +488,11 @@ def _scan(options, out, err):
                 enabled[addon.scope][source].append(addon)
         return enabled
 
+    results_q = SimpleQueue()
+    def results_callback(results):
+        results_q.put(results)
+    options.results_callback = results_callback
+
     enabled_checks = init_checks(options.pop('addons'))
 
     if options.verbosity >= 1:
@@ -500,7 +503,6 @@ def _scan(options, out, err):
 
     reporter.start()
 
-    results_q = SimpleQueue()
     # run git commit checks separately from pkg-related checks
     git_checks = enabled_checks.pop(base.commit_scope, None)
     if git_checks:

@@ -1,6 +1,5 @@
 import concurrent.futures
 import socket
-import threading
 import urllib.request
 from functools import partial
 from itertools import chain
@@ -109,11 +108,11 @@ class _UrlCheck(NetworkCheck):
         super().__init__(*args, **kwargs)
         self.checked = {}
         self.executor = concurrent.futures.ThreadPoolExecutor()
-        self.reporter_lock = threading.Lock()
         self.timeout = self.options.timeout
         self.session = self.options.requests_session
         self.dead_result = None
         self.redirected_result = None
+        self.results_callback = self.options.results_callback
 
     def _http_check(self, url, *, pkg):
         """Check http:// and https:// URLs using requests."""
@@ -192,8 +191,7 @@ class _UrlCheck(NetworkCheck):
                 data = result.attrs_to_pkg(result._attrs)
                 data['pkg'] = pkg
                 result = result.__class__(**data)
-            with self.reporter_lock:
-                self.options.reporter.report(result)
+            self.results_callback([result])
 
     def _get_urls(self, pkg):
         raise NotImplementedError
