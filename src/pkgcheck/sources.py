@@ -46,7 +46,7 @@ class EmptySource(GenericSource):
 
     feed_type = base.repository_scope
 
-    def itermatch(self, restrict):
+    def itermatch(self, restrict, **kwargs):
         yield from ()
 
 
@@ -110,9 +110,9 @@ class FilteredRepoSource(GenericSource):
         self._pkg_filter = pkg_filter
         self._partial_filtered = partial_filtered
 
-    def itermatch(self, restrict):
+    def itermatch(self, restrict, **kwargs):
         yield from self._pkg_filter(
-            super().itermatch(restrict), partial_filtered=self._partial_filtered)
+            super().itermatch(restrict, **kwargs), partial_filtered=self._partial_filtered)
 
 
 class _RawRepo(UnconfiguredTree):
@@ -186,8 +186,8 @@ class _SourcePkg(WrappedPkg):
 class EbuildFileRepoSource(GenericSource):
     """Ebuild repository source yielding package objects and their file contents."""
 
-    def itermatch(self, restrict):
-        for pkg in super().itermatch(restrict):
+    def itermatch(self, restrict, **kwargs):
+        for pkg in super().itermatch(restrict, **kwargs):
             yield _SourcePkg(pkg=pkg, lines=tuple(pkg.ebuild.text_fileobj()))
 
 
@@ -198,10 +198,10 @@ class _CombinedSource(GenericSource):
         """Function targeting attribute used to group packages."""
         raise NotImplementedError(self.keyfunc)
 
-    def itermatch(self, restrict):
+    def itermatch(self, restrict, **kwargs):
         key = None
         chunk = None
-        for pkg in super().itermatch(restrict):
+        for pkg in super().itermatch(restrict, **kwargs):
             new = self.keyfunc(pkg)
             if new == key:
                 chunk.append(pkg)
