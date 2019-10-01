@@ -1,18 +1,24 @@
 """Various custom package objects."""
 
-from pkgcore.ebuild import atom
+from pkgcore.ebuild import atom, cpv
 from snakeoil import klass
 
 
 class RawCPV:
     """Raw CPV objects supporting basic restrictions/sorting."""
 
-    __slots__ = ('category', 'package', 'fullver')
+    __slots__ = ('category', 'package', 'fullver', 'version', 'revision')
 
     def __init__(self, category, package, fullver):
         self.category = category
         self.package = package
         self.fullver = fullver
+        if self.fullver is not None:
+            self.version, _, revision = self.fullver.partition('-r')
+            self.revision = cpv._Revision(revision)
+        else:
+            self.revision = None
+            self.version = None
 
     def __lt__(self, other):
         if self.versioned_atom < other.versioned_atom:
@@ -36,7 +42,7 @@ class RawCPV:
 
     def __repr__(self):
         address = '@%#8x' % (id(self),)
-        return f'<{self.__class__} cpv={self.versioned_atom.cpvstr!r} {address}>'
+        return f'<{self.__class__.__name__} cpv={self.versioned_atom.cpvstr!r} {address}>'
 
 
 class WrappedPkg:
