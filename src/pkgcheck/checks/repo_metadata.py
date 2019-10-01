@@ -1,6 +1,6 @@
 from collections import defaultdict
 from difflib import SequenceMatcher
-from itertools import chain, groupby
+from itertools import chain
 from operator import attrgetter, itemgetter
 
 from pkgcore import fetch
@@ -154,6 +154,7 @@ class UnusedLicensesCheck(Check):
     """Check for unused license files."""
 
     scope = base.repository_scope
+    _source = sources.RepositoryRepoSource
     known_results = (UnusedLicenses,)
 
     def __init__(self, options):
@@ -212,6 +213,7 @@ class UnusedMirrorsCheck(_MirrorsCheck):
     """Check for unused mirrors."""
 
     scope = base.repository_scope
+    _source = sources.RepositoryRepoSource
     known_results = (UnusedMirrors,)
 
     def start(self):
@@ -246,6 +248,7 @@ class UnusedEclassesCheck(Check):
     """Check for unused eclasses."""
 
     scope = base.repository_scope
+    _source = sources.RepositoryRepoSource
     known_results = (UnusedEclasses,)
 
     def __init__(self, options):
@@ -355,7 +358,7 @@ class GlobalUSECheck(Check):
     """Check global USE and USE_EXPAND flags for various issues."""
 
     scope = base.repository_scope
-    _source = sources.PackageRepoSource
+    _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
     required_addons = (addons.UseAddon,)
     known_results = (PotentialLocalUSE, PotentialGlobalUSE, UnusedGlobalUSE)
 
@@ -629,35 +632,31 @@ class ManifestConflictCheck(Check):
     """
 
     scope = base.repository_scope
-    _source = sources.PackageRepoSource
+    _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
     known_results = (ConflictingChksums,)
-
-    repo_grabber = attrgetter("repo")
 
     def __init__(self, options):
         super().__init__(options)
         self.seen_checksums = {}
 
-    def feed(self, full_pkgset):
-        # sort it by repo.
-        for repo, pkgset in groupby(full_pkgset, self.repo_grabber):
-            pkg = next(iter(pkgset))
-            for filename, chksums in pkg.manifest.distfiles.items():
-                existing = self.seen_checksums.get(filename)
-                if existing is None:
-                    self.seen_checksums[filename] = (
-                        [pkg.key], dict(chksums.items()))
-                    continue
-                seen_pkgs, seen_chksums = existing
-                confl_checksums = []
-                for chf_type, value in seen_chksums.items():
-                    our_value = chksums.get(chf_type)
-                    if our_value is not None and our_value != value:
-                        confl_checksums.append((chf_type, value, our_value))
-                if confl_checksums:
-                    chksums = sorted(reformat_chksums(confl_checksums), key=itemgetter(0))
-                    pkgs = map(str, sorted(seen_pkgs))
-                    yield ConflictingChksums(filename, chksums, pkgs, pkg=pkg)
-                else:
-                    seen_chksums.update(chksums)
-                    seen_pkgs.append(pkg)
+    def feed(self, pkgs):
+        pkg = pkgs[0]
+        for filename, chksums in pkg.manifest.distfiles.items():
+            existing = self.seen_checksums.get(filename)
+            if existing is None:
+                self.seen_checksums[filename] = (
+                    [pkg.key], dict(chksums.items()))
+                continue
+            seen_pkgs, seen_chksums = existing
+            confl_checksums = []
+            for chf_type, value in seen_chksums.items():
+                our_value = chksums.get(chf_type)
+                if our_value is not None and our_value != value:
+                    confl_checksums.append((chf_type, value, our_value))
+            if confl_checksums:
+                chksums = sorted(reformat_chksums(confl_checksums), key=itemgetter(0))
+                pkgs = map(str, sorted(seen_pkgs))
+                yield ConflictingChksums(filename, chksums, pkgs, pkg=pkg)
+            else:
+                seen_chksums.update(chksums)
+                seen_pkgs.append(pkg)

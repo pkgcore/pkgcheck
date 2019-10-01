@@ -1,7 +1,7 @@
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, results
+from .. import base, results, sources
 from . import ExplicitlyEnabledCheck, OverlayRepoCheck, repo_metadata
 
 
@@ -74,6 +74,7 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
     """Check for various metadata that may be removed from master repos."""
 
     scope = base.repository_scope
+    _source = sources.RepositoryRepoSource
     known_results = (
         UnusedInMastersLicenses, UnusedInMastersMirrors, UnusedInMastersEclasses,
         UnusedInMastersGlobalUSE,
