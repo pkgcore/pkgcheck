@@ -140,27 +140,51 @@ class Pipeline:
 
 class CheckRunner:
 
+    _known_metadata_attrs = set()
+    _seen_metadata_errors = set()
+
     def __init__(self, source, checks):
         self.source = source
         self.checks = checks
 
+        scope = base.version_scope
         known_results = set()
         for check in self.checks:
+            if check.scope > scope:
+                scope = check.scope
             known_results.update(check.known_results)
+
+        self._itermatch_kwargs = {}
+        # only use set metadata error callback for version scope runners
+        if scope == base.version_scope:
+            self._itermatch_kwargs['error_callback'] = self._metadata_error_cb
+
         self._metadata_error_classes = {}
         for cls in known_results:
             if issubclass(cls, MetadataError):
                 for attr in cls._metadata_attrs:
                     self._metadata_error_classes[attr] = cls
+                    self._known_metadata_attrs.add(attr)
         self._metadata_errors = []
 
     def _metadata_error_cb(self, e):
         try:
             cls = self._metadata_error_classes[e.attr]
-            error_str = ': '.join(str(e.error).split('\n'))
-            self._metadata_errors.append(cls(e.attr, error_str, pkg=e.pkg))
         except KeyError:
-            pass
+            known = e.attr in self._known_metadata_attrs
+            seen = e in self._seen_metadata_errors
+            # return generic MetadataError for unhandled attributes that
+            # haven't been seen already
+            if not known and not seen:
+                cls = MetadataError
+                self._seen_metadata_errors.add(e)
+            else:
+                cls = None
+
+        if cls is not None:
+            error_str = ': '.join(e.msg().split('\n'))
+            result = cls(e.attr, error_str, pkg=e.pkg)
+            self._metadata_errors.append(result)
 
     def start(self):
         for check in self.checks:
@@ -170,7 +194,7 @@ class CheckRunner:
 
     def run(self, restrict=packages.AlwaysTrue):
         try:
-            source = self.source.itermatch(restrict, error_callback=self._metadata_error_cb)
+            source = self.source.itermatch(restrict, **self._itermatch_kwargs)
         except AttributeError:
             source = self.source
 
