@@ -24,7 +24,7 @@ from .visibility import FakeConfigurable
 from . import Check
 
 
-class MissingLicense(results.VersionedResult, results.Error):
+class MissingLicenseFile(results.VersionedResult, results.Error):
     """Used license(s) have no matching license file(s)."""
 
     def __init__(self, licenses, **kwargs):
@@ -34,7 +34,19 @@ class MissingLicense(results.VersionedResult, results.Error):
     @property
     def desc(self):
         licenses = ', '.join(self.licenses)
-        return f"no matching license{_pl(self.licenses)}: [ {licenses} ]"
+        return f"no matching license file{_pl(self.licenses)}: {licenses}"
+
+
+class MissingLicense(results.VersionedResult, results.Error):
+    """Package has no LICENSE defined."""
+
+    desc = 'no license defined'
+
+
+class InvalidLicense(MetadataError):
+    """Package's LICENSE is invalid."""
+
+    _metadata_attrs = ('license',)
 
 
 class MissingLicenseRestricts(results.VersionedResult, results.Error):
@@ -67,8 +79,8 @@ class LicenseMetadataCheck(Check):
     """LICENSE validity checks."""
 
     known_results = frozenset([
-        MetadataError, MissingLicense, UnnecessaryLicense, UnstatedIuse,
-        MissingLicenseRestricts,
+        InvalidLicense, MissingLicense, MissingLicenseFile, UnnecessaryLicense,
+        UnstatedIuse, MissingLicenseRestricts,
     ])
 
     # categories for ebuilds that can lack LICENSE settings
@@ -127,11 +139,11 @@ class LicenseMetadataCheck(Check):
 
         if not licenses:
             if pkg.category not in self.unlicensed_categories:
-                yield MetadataError('license', 'no license defined', pkg=pkg)
+                yield MissingLicense(pkg=pkg)
         else:
             licenses.difference_update(pkg.repo.licenses)
             if licenses:
-                yield MissingLicense(sorted(licenses), pkg=pkg)
+                yield MissingLicenseFile(sorted(licenses), pkg=pkg)
             elif pkg.category in self.unlicensed_categories:
                 yield UnnecessaryLicense(pkg=pkg)
 

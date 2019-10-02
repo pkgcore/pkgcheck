@@ -620,12 +620,12 @@ class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
 
     def test_malformed(self):
         r = self.assertReport(self.mk_check(), self.mk_pkg("|| ("))
-        assert isinstance(r, metadata.MetadataError)
+        assert isinstance(r, metadata.InvalidLicense)
         assert r.attr == 'license'
 
     def test_empty(self):
         r = self.assertReport(self.mk_check(), self.mk_pkg())
-        assert isinstance(r, metadata.MetadataError)
+        assert isinstance(r, metadata.MissingLicense)
 
     def test_unstated_iuse(self):
         chk = self.mk_check(licenses=('BSD',))
@@ -645,9 +645,9 @@ class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
 
     def test_single_missing(self):
         r = self.assertReport(self.mk_check(), self.mk_pkg("foo"))
-        assert isinstance(r, metadata.MissingLicense)
+        assert isinstance(r, metadata.MissingLicenseFile)
         assert r.licenses == ('foo',)
-        assert 'no matching license: [ foo ]' == str(r)
+        assert 'no matching license file: foo' == str(r)
 
     def test_multiple_existing(self):
         chk = self.mk_check(['foo', 'foo2'])
@@ -657,9 +657,9 @@ class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
     def test_multiple_missing(self):
         chk = self.mk_check(['foo', 'foo2'])
         r = self.assertReport(chk, self.mk_pkg('|| ( foo foo3 foo4 )'))
-        assert isinstance(r, metadata.MissingLicense)
+        assert isinstance(r, metadata.MissingLicenseFile)
         assert r.licenses == ('foo3', 'foo4')
-        assert 'no matching licenses: [ foo3, foo4 ]' == str(r)
+        assert 'no matching license files: foo3, foo4' == str(r)
 
     def test_unlicensed_categories(self):
         check = self.mk_check(['foo'])
