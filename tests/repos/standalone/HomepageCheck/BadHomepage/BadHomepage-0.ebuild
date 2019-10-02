@@ -1,0 +1,3 @@
+DESCRIPTION="Ebuild with missing HOMEPAGE"
+SLOT="0"
+LICENSE="BSD"

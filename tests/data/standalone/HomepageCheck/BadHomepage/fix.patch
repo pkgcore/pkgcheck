@@ -1,0 +1,26 @@
+diff -Naur standalone/HomepageCheck/BadHomepage/BadHomepage-0.ebuild fixed/HomepageCheck/BadHomepage/BadHomepage-0.ebuild
+--- standalone/HomepageCheck/BadHomepage/BadHomepage-0.ebuild	2019-10-02 02:55:52.745579689 -0600
++++ fixed/HomepageCheck/BadHomepage/BadHomepage-0.ebuild	2019-10-02 03:01:09.519830204 -0600
+@@ -1,3 +1,4 @@
+ DESCRIPTION="Ebuild with missing HOMEPAGE"
++HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/HomepageCheck/BadHomepage/BadHomepage-1.ebuild fixed/HomepageCheck/BadHomepage/BadHomepage-1.ebuild
+--- standalone/HomepageCheck/BadHomepage/BadHomepage-1.ebuild	2019-10-02 02:58:20.094161379 -0600
++++ fixed/HomepageCheck/BadHomepage/BadHomepage-1.ebuild	2019-10-02 03:01:19.572869894 -0600
+@@ -1,4 +1,4 @@
+ DESCRIPTION="Ebuild HOMEPAGE with missing protocol"
+-HOMEPAGE="github.com/pkgcore/pkgcheck"
++HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/HomepageCheck/BadHomepage/BadHomepage-2.ebuild fixed/HomepageCheck/BadHomepage/BadHomepage-2.ebuild
+--- standalone/HomepageCheck/BadHomepage/BadHomepage-2.ebuild	2019-10-02 02:58:45.317260935 -0600
++++ fixed/HomepageCheck/BadHomepage/BadHomepage-2.ebuild	2019-10-02 03:01:25.634893824 -0600
+@@ -1,4 +1,4 @@
+ DESCRIPTION="Ebuild HOMEPAGE with unsupported protocol"
+-HOMEPAGE="gopher://github.com/pkgcore/pkgcheck"
++HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"

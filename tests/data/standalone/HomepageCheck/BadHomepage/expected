@@ -1,0 +1,4 @@
+HomepageCheck/BadHomepage
+  BadHomepage: version 0: bad HOMEPAGE: empty/unset
+  BadHomepage: version 1: bad HOMEPAGE: HOMEPAGE='github.com/pkgcore/pkgcheck' lacks protocol
+  BadHomepage: version 2: bad HOMEPAGE: HOMEPAGE='gopher://github.com/pkgcore/pkgcheck' uses unsupported protocol 'gopher'
