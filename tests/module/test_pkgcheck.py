@@ -1,28 +1,30 @@
-from collections import defaultdict
-from functools import partial
-from io import StringIO
 import os
 import shlex
 import shutil
 import subprocess
 import tempfile
+from collections import defaultdict
+from functools import partial
+from io import StringIO
+from operator import attrgetter
 from unittest.mock import patch
 
+import pytest
 from pkgcore import const as pkgcore_const
-from pkgcore.ebuild import restricts, atom
+from pkgcore.ebuild import atom, restricts
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.restrictions import packages
-import pytest
 from snakeoil.contexts import chdir
 from snakeoil.fileutils import touch
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
 
-from pkgcheck import base, checks, const, reporters,  __title__ as project
+from pkgcheck import __title__ as project
+from pkgcheck import base, checks, const, reporters
 from pkgcheck.checks.profiles import ProfileWarning
-from pkgcheck.scripts import run, pkgcheck
+from pkgcheck.scripts import pkgcheck, run
 
-from .misc import cache_dir, fakeconfig, testconfig, fakerepo, tool
+from .misc import cache_dir, fakeconfig, fakerepo, testconfig, tool
 
 
 def test_script_run(capsys):
@@ -262,8 +264,8 @@ class TestPkgcheckScan(object):
             assert out == err == ''
 
     results = []
-    for name, cls in const.CHECKS.items():
-        for result in cls.known_results:
+    for name, cls in sorted(const.CHECKS.items()):
+        for result in sorted(cls.known_results, key=attrgetter('__name__')):
             results.append((cls, result))
 
     def test_pkgcheck_test_repos(self):
