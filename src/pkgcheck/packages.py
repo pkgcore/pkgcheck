@@ -20,11 +20,6 @@ class RawCPV:
             self.revision = None
             self.version = None
 
-    def __lt__(self, other):
-        if self.versioned_atom < other.versioned_atom:
-            return True
-        return False
-
     @property
     def key(self):
         return f'{self.category}/{self.package}'
@@ -38,6 +33,9 @@ class RawCPV:
     @property
     def unversioned_atom(self):
         return atom.atom(self.key)
+
+    def __lt__(self, other):
+        return self.versioned_atom < other.versioned_atom
 
     def __str__(self):
         if self.fullver:
@@ -64,9 +62,7 @@ class WrappedPkg:
         return repr(self._pkg)
 
     def __lt__(self, other):
-        if self.versioned_atom < other.versioned_atom:
-            return True
-        return False
+        return self.versioned_atom < other.versioned_atom
 
     __getattr__ = klass.GetAttrProxy('_pkg')
     __dir__ = klass.DirProxy('_pkg')
