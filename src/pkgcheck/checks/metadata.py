@@ -694,8 +694,8 @@ class DependencyCheck(Check):
                 yield NonexistentBlocker(attr.upper(), str(atom), pkg=pkg)
 
 
-class StupidKeywords(results.VersionedResult, results.Warning):
-    """Packages using ``-*``; use package.mask instead."""
+class BadKeywords(results.VersionedResult, results.Warning):
+    """Packages using ``-*`` should use package.mask instead."""
 
     desc = "keywords contain -*; use package.mask or empty keywords instead"
 
@@ -774,7 +774,7 @@ class KeywordsCheck(Check):
 
     required_addons = (addons.UseAddon,)
     known_results = (
-        StupidKeywords, InvalidKeywords, OverlappingKeywords, DuplicateKeywords,
+        BadKeywords, InvalidKeywords, OverlappingKeywords, DuplicateKeywords,
         UnsortedKeywords, MissingVirtualKeywords, MetadataError,
     )
 
@@ -795,7 +795,7 @@ class KeywordsCheck(Check):
 
     def feed(self, pkg):
         if len(pkg.keywords) == 1 and pkg.keywords[0] == "-*":
-            yield StupidKeywords(pkg)
+            yield BadKeywords(pkg)
         else:
             # check for invalid keywords
             invalid = set(pkg.keywords) - self.valid_keywords

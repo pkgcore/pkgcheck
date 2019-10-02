@@ -146,14 +146,14 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
     def test_no_keywords(self, check):
         self.assertNoReport(check, self.mk_pkg())
 
-    def test_stupid_keywords(self, check):
+    def test_bad_keywords(self, check):
         # regular keywords
         self.assertNoReport(check, self.mk_pkg("ppc"))
         # masked all except a single arch
         self.assertNoReport(check, self.mk_pkg("-* ~x86"))
         # all keywords masked
         r = self.assertReport(check, self.mk_pkg("-*"))
-        assert isinstance(r, metadata.StupidKeywords)
+        assert isinstance(r, metadata.BadKeywords)
         assert 'keywords contain -*' in str(r)
 
     def test_invalid_keywords(self, check):
