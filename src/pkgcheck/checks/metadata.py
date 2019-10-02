@@ -731,8 +731,8 @@ class BadKeywords(results.VersionedResult, results.Warning):
     desc = "keywords contain -*; use package.mask or empty keywords instead"
 
 
-class InvalidKeywords(results.VersionedResult, results.Error):
-    """Packages using invalid KEYWORDS."""
+class UnknownKeywords(results.VersionedResult, results.Error):
+    """Packages using unknown KEYWORDS."""
 
     def __init__(self, keywords, **kwargs):
         super().__init__(**kwargs)
@@ -740,7 +740,7 @@ class InvalidKeywords(results.VersionedResult, results.Error):
 
     @property
     def desc(self):
-        return f"invalid KEYWORDS: {', '.join(map(repr, self.keywords))}"
+        return f"unknown KEYWORDS: {', '.join(map(repr, self.keywords))}"
 
 
 class OverlappingKeywords(results.VersionedResult, results.Warning):
@@ -805,8 +805,8 @@ class KeywordsCheck(Check):
 
     required_addons = (addons.UseAddon,)
     known_results = frozenset([
-        BadKeywords, InvalidKeywords, OverlappingKeywords, DuplicateKeywords,
-        UnsortedKeywords, MissingVirtualKeywords, MetadataError,
+        BadKeywords, UnknownKeywords, OverlappingKeywords, DuplicateKeywords,
+        UnsortedKeywords, MissingVirtualKeywords,
     ])
 
     def __init__(self, options, iuse_handler):
@@ -828,13 +828,13 @@ class KeywordsCheck(Check):
         if len(pkg.keywords) == 1 and pkg.keywords[0] == "-*":
             yield BadKeywords(pkg)
         else:
-            # check for invalid keywords
-            invalid = set(pkg.keywords) - self.valid_keywords
+            # check for unknown keywords
+            unknown = set(pkg.keywords) - self.valid_keywords
             # portage-only KEYWORDS are allowed in overlays
             if not self.options.gentoo_repo:
-                invalid -= self.portage_keywords
-            if invalid:
-                yield InvalidKeywords(sorted(invalid), pkg=pkg)
+                unknown -= self.portage_keywords
+            if unknown:
+                yield UnknownKeywords(sorted(unknown), pkg=pkg)
 
             # check for overlapping keywords
             unstable = {x[1:] for x in pkg.keywords if x[0] == '~'}

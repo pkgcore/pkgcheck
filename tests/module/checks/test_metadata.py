@@ -164,9 +164,9 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
 
         # unknown keyword
         r = self.assertReport(check, self.mk_pkg("foo"))
-        assert isinstance(r, metadata.InvalidKeywords)
+        assert isinstance(r, metadata.UnknownKeywords)
         assert r.keywords == ('foo',)
-        assert "invalid KEYWORDS: 'foo'" == str(r)
+        assert "unknown KEYWORDS: 'foo'" == str(r)
 
         # check that * and ~* are flagged in gentoo repo
         options = self.get_options(repo_name='gentoo', gentoo_repo=True)
@@ -174,13 +174,13 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         iuse_handler = addons.UseAddon(options, profiles)
         check = metadata.KeywordsCheck(options, iuse_handler)
         r = self.assertReport(check, self.mk_pkg("*"))
-        assert isinstance(r, metadata.InvalidKeywords)
+        assert isinstance(r, metadata.UnknownKeywords)
         assert r.keywords == ('*',)
-        assert "invalid KEYWORDS: '*'" == str(r)
+        assert "unknown KEYWORDS: '*'" == str(r)
         r = self.assertReport(check, self.mk_pkg("~*"))
-        assert isinstance(r, metadata.InvalidKeywords)
+        assert isinstance(r, metadata.UnknownKeywords)
         assert r.keywords == ('~*',)
-        assert "invalid KEYWORDS: '~*'" == str(r)
+        assert "unknown KEYWORDS: '~*'" == str(r)
 
     def test_overlapping_keywords(self, check):
         # regular keywords
