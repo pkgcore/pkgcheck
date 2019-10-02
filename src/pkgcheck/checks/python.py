@@ -4,7 +4,6 @@ from pkgcore.restrictions.boolean import JustOneRestriction, OrRestriction
 from snakeoil.sequences import iflatten_instance
 
 from .. import results
-from ..results import MetadataError
 from . import Check
 
 # NB: distutils-r1 inherits one of the first two
@@ -130,6 +129,18 @@ class PythonRuntimeDepInAnyR1(results.VersionedResult, results.Warning):
         )
 
 
+class PythonEclassError(results.VersionedResult, results.Error):
+    """Generic python eclass error."""
+
+    def __init__(self, msg, **kwargs):
+        super().__init__(**kwargs)
+        self.msg = msg
+
+    @property
+    def desc(self):
+        return self.msg
+
+
 class PythonCheck(Check):
     """Python eclass checks.
 
@@ -139,7 +150,7 @@ class PythonCheck(Check):
 
     known_results = frozenset([
         MissingPythonEclass, PythonSingleUseMismatch, PythonMissingRequiredUse,
-        PythonMissingDeps, PythonRuntimeDepInAnyR1, MetadataError,
+        PythonMissingDeps, PythonRuntimeDepInAnyR1, PythonEclassError,
     ])
 
     @staticmethod
@@ -204,7 +215,7 @@ class PythonCheck(Check):
         try:
             eclass = self.get_python_eclass(pkg)
         except ValueError as e:
-            yield MetadataError('data', str(e), pkg=pkg)
+            yield PythonEclassError(str(e), pkg=pkg)
             return
 
         if eclass is None:
