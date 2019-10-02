@@ -1,7 +1,6 @@
 from collections import defaultdict
 from difflib import SequenceMatcher
 from itertools import chain
-from operator import itemgetter
 
 from pkgcore import fetch
 from snakeoil.contexts import patch
@@ -461,30 +460,6 @@ class GlobalUseCheck(Check):
             yield PotentialGlobalUse(flag, pkgs)
 
 
-def reformat_chksums(iterable):
-    for chf, val1, val2 in iterable:
-        if chf == "size":
-            yield chf, val1, val2
-        else:
-            yield chf, "%x" % val1, "%x" % val2
-
-
-class ConflictingChksums(results.VersionedResult, results.Error):
-    """Checksum conflict detected between two files."""
-
-    def __init__(self, filename, chksums, pkgs, **kwargs):
-        super().__init__(**kwargs)
-        self.filename = filename
-        self.chksums = tuple(chksums)
-        self.pkgs = tuple(pkgs)
-
-    @property
-    def desc(self):
-        return (
-            f"conflicts with ({', '.join(self.pkgs)}) "
-            f"for file {self.filename!r} chksum {self.chksums}")
-
-
 class MissingChksum(results.VersionedResult, results.Warning):
     """A file in the chksum data lacks required checksums."""
 
@@ -623,6 +598,25 @@ class ManifestCheck(Check):
             yield UnknownManifest(sorted(unknown_manifests), pkg=pkgset[0])
 
 
+class ConflictingChksums(results.VersionedResult, results.Error):
+    """Checksum conflict detected between two files."""
+
+    def __init__(self, filename, chksums, pkgs, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+        self.chksums = tuple(chksums)
+        self.pkgs = tuple(pkgs)
+
+    @property
+    def desc(self):
+        pkgs = ', '.join(self.pkgs)
+        chksums = ', '.join(self.chksums)
+        return (
+            f'distfile {self.filename!r} has different checksum{_pl(self.chksums)} '
+            f'({chksums}) for package{_pl(self.pkgs)}: {pkgs}'
+        )
+
+
 class ManifestConflictCheck(Check):
     """Conflicting checksum check.
 
@@ -637,6 +631,14 @@ class ManifestConflictCheck(Check):
     def __init__(self, options):
         super().__init__(options)
         self.seen_checksums = {}
+
+    @staticmethod
+    def reformat_chksums(iterable):
+        for chf, val1, val2 in iterable:
+            if chf == "size":
+                yield chf, val1, val2
+            else:
+                yield chf, "%x" % val1, "%x" % val2
 
     def feed(self, pkgs):
         pkg = pkgs[0]
@@ -653,7 +655,7 @@ class ManifestConflictCheck(Check):
                 if our_value is not None and our_value != value:
                     confl_checksums.append((chf_type, value, our_value))
             if confl_checksums:
-                chksums = sorted(reformat_chksums(confl_checksums), key=itemgetter(0))
+                chksums = sorted(x[0] for x in self.reformat_chksums(confl_checksums))
                 pkgs = map(str, sorted(seen_pkgs))
                 yield ConflictingChksums(filename, chksums, pkgs, pkg=pkg)
             else:
