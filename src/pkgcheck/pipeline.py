@@ -7,6 +7,7 @@ from itertools import chain
 from multiprocessing import Pool, Process, SimpleQueue
 
 from pkgcore.package.errors import MetadataException
+from pkgcore.restrictions import packages
 
 from . import base
 from .results import MetadataError
@@ -167,11 +168,11 @@ class CheckRunner:
             if reports is not None:
                 yield from reports
 
-    def run(self, restrict=None):
-        if restrict is None:
-            source = self.source
-        else:
+    def run(self, restrict=packages.AlwaysTrue):
+        try:
             source = self.source.itermatch(restrict, error_callback=self._metadata_error_cb)
+        except AttributeError:
+            source = self.source
 
         for item in source:
             for check in self.checks:
