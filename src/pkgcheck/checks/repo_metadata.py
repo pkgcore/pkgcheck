@@ -504,17 +504,17 @@ class MissingChksum(results.VersionedResult, results.Warning):
 class DeprecatedChksum(results.VersionedResult, results.Warning):
     """A file in the chksum data does not use modern checksum set."""
 
-    def __init__(self, filename, expected, existing, **kwargs):
+    def __init__(self, filename, deprecated, **kwargs):
         super().__init__(**kwargs)
         self.filename = filename
-        self.expected = tuple(expected)
-        self.existing = tuple(existing)
+        self.deprecated = tuple(deprecated)
 
     @property
     def desc(self):
         return (
-            f"{self.filename!r} uses deprecated checksum set: "
-            f"{', '.join(self.existing)}; expected {', '.join(self.expected)}")
+            f"{self.filename!r} has deprecated checksum{_pl(self.deprecated)}: "
+            f"{', '.join(self.deprecated)}"
+        )
 
 
 class MissingManifest(results.VersionedResult, results.Error):
@@ -607,9 +607,8 @@ class ManifestCheck(Check):
                         f_inst.filename, sorted(missing),
                         sorted(f_inst.chksums), pkg=pkg)
                 elif f_inst.chksums and self.preferred_checksums != frozenset(f_inst.chksums):
-                    yield DeprecatedChksum(
-                        f_inst.filename, sorted(self.preferred_checksums),
-                        sorted(f_inst.chksums), pkg=pkg)
+                    deprecated = set(f_inst.chksums).difference(self.preferred_checksums)
+                    yield DeprecatedChksum(f_inst.filename, sorted(deprecated), pkg=pkg)
                 seen.add(f_inst.filename)
 
         if pkg_manifest.thin:
