@@ -777,19 +777,19 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
 
         # pkg blocking itself
         r = self.assertReport(chk, mk_pkg("!dev-util/diffball"))
-        assert isinstance(r, metadata.MetadataError)
+        assert isinstance(r, metadata.BadDependency)
         assert "blocks itself" in r.msg
 
         # check for := in || () blocks
         pkg = mk_pkg(eapi='5', depset="|| ( dev-libs/foo:= dev-libs/bar:= )")
         r = self.assertReport(chk, pkg)
-        assert isinstance(r, metadata.MetadataError)
+        assert isinstance(r, metadata.BadDependency)
         assert "= slot operator used inside || block" in r.msg
         assert "[dev-libs/bar, dev-libs/foo]" in r.msg
 
         # check for := in blockers
         r = self.assertReport(chk, mk_pkg(eapi='5', depset="!dev-libs/foo:="))
-        assert isinstance(r, metadata.MetadataError)
+        assert isinstance(r, metadata.BadDependency)
         assert "= slot operator used in blocker" in r.msg
         assert "[dev-libs/foo]" in r.msg
 

@@ -1,10 +1,10 @@
 EAPI=7
-DESCRIPTION="Ebuild with metadata errors in depsets"
+DESCRIPTION="Ebuild with bad dependencies"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 SLOT="0"
 LICENSE="BSD"
 DEPEND="
-	!DependencyCheck/MetadataError
+	!DependencyCheck/BadDependency
 	|| ( stub/stub1:= stub/stub2:= )
 	!!stub/stub3:=
 "

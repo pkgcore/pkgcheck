@@ -523,7 +523,7 @@ class MissingPackageRevision(results.VersionedResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.dep}="{self.atom}": "=" operator used without package revision'
+        return f'"=" operator used without package revision: {self.dep}="{self.atom}"'
 
 
 class MissingUseDepDefault(results.VersionedResult, results.Warning):
@@ -586,12 +586,26 @@ class NonexistentBlocker(results.VersionedResult, results.Warning):
         )
 
 
+class BadDependency(results.VersionedResult, results.Error):
+    """Package has a bad dependency."""
+
+    def __init__(self, depset, atom, msg, **kwargs):
+        super().__init__(**kwargs)
+        self.depset = depset
+        self.atom = str(atom)
+        self.msg = msg
+
+    @property
+    def desc(self):
+        return f'{self.msg}: {self.depset.upper()}="{self.atom}"'
+
+
 class DependencyCheck(Check):
     """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon, git.GitAddon)
     known_results = frozenset([
-        MetadataError, MissingPackageRevision, MissingUseDepDefault,
+        BadDependency, MissingPackageRevision, MissingUseDepDefault,
         OutdatedBlocker, NonexistentBlocker, UnstatedIuse,
     ])
 
@@ -606,15 +620,6 @@ class DependencyCheck(Check):
     @jit_attr
     def existence_repo(self):
         return self._git_addon.cached_repo(git.GitRemovedRepo)
-
-    @staticmethod
-    def _flatten_or_restrictions(i):
-        for x in i:
-            if isinstance(x, boolean.OrRestriction):
-                for y in iflatten_instance(x, (atom_cls,)):
-                    yield (y, True)
-            else:
-                yield (x, False)
 
     def _check_use_deps(self, attr, atom):
         """Check dependencies for missing USE dep defaults."""
@@ -633,8 +638,6 @@ class DependencyCheck(Check):
 
     def feed(self, pkg):
         for attr in (x.lower() for x in pkg.eapi.dep_keys):
-            slot_op_or_blocks = set()
-            slot_op_blockers = set()
             outdated_blockers = set()
             nonexistent_blockers = set()
 
@@ -642,51 +645,49 @@ class DependencyCheck(Check):
                 (atom_cls, boolean.OrRestriction), pkg, getattr(pkg, attr), attr=attr)
             yield from unstated
 
-            for atom, in_or_restriction in self._flatten_or_restrictions(nodes):
-                if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
-                    missing_use_deps = self._check_use_deps(attr, atom)
-                    for use, atoms in missing_use_deps.items():
-                        pkgs = map(str, sorted(atoms))
-                        yield MissingUseDepDefault(attr, str(atom), use, pkgs, pkg=pkg)
-                if in_or_restriction and atom.slot_operator == '=':
-                    slot_op_or_blocks.add(atom.key)
-                if atom.blocks:
-                    if atom.match(pkg):
-                        yield MetadataError(attr, "blocks itself", pkg=pkg)
-                    elif atom.slot_operator == '=':
-                        slot_op_blockers.add(atom.key)
-                    elif self.existence_repo is not None:
-                        # check for outdated blockers (2+ years old)
-                        if atom.op == '=*':
-                            s = f"={atom.cpvstr}*"
-                        else:
-                            s = atom.op + atom.cpvstr
-                        unblocked = atom_cls(s)
-                        if not self.options.search_repo.match(unblocked):
-                            matches = self.existence_repo.match(unblocked)
-                            if matches:
-                                removal = max(x.date for x in matches)
-                                removal = datetime.strptime(removal, '%Y-%m-%d')
-                                years = round((self.today - removal).days / 365, 2)
-                                if years > 2:
-                                    outdated_blockers.add((atom, years))
-                            else:
-                                nonexistent_blockers.add((atom))
-                if atom.op == '=' and not atom.revision:
-                    yield MissingPackageRevision(attr, str(atom), pkg=pkg)
+            for node in nodes:
+                if isinstance(node, boolean.OrRestriction):
+                    in_or_restriction = True
+                else:
+                    in_or_restriction = False
 
-            if slot_op_or_blocks:
-                atoms = ', '.join(sorted(slot_op_or_blocks))
-                yield MetadataError(
-                    attr,
-                    f'= slot operator used inside || block: [{atoms}]',
-                    pkg=pkg)
-            if slot_op_blockers:
-                atoms = ', '.join(sorted(slot_op_blockers))
-                yield MetadataError(
-                    attr,
-                    f'= slot operator used in blocker: [{atoms}]',
-                    pkg=pkg)
+                for atom in iflatten_instance(node, (atom_cls,)):
+                    if in_or_restriction and atom.slot_operator == '=':
+                        yield BadDependency(
+                            attr, atom, '= slot operator used inside || block', pkg=pkg)
+
+                    if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
+                        missing_use_deps = self._check_use_deps(attr, atom)
+                        for use, atoms in missing_use_deps.items():
+                            pkgs = map(str, sorted(atoms))
+                            yield MissingUseDepDefault(attr, str(atom), use, pkgs, pkg=pkg)
+
+                    if atom.op == '=' and not atom.revision:
+                        yield MissingPackageRevision(attr, str(atom), pkg=pkg)
+
+                    if atom.blocks:
+                        if atom.match(pkg):
+                            yield BadDependency(attr, atom, "package blocks itself", pkg=pkg)
+                        elif atom.slot_operator == '=':
+                            yield BadDependency(
+                                attr, atom, '= slot operator used in blocker', pkg=pkg)
+                        elif self.existence_repo is not None:
+                            # check for outdated blockers (2+ years old)
+                            if atom.op == '=*':
+                                s = f"={atom.cpvstr}*"
+                            else:
+                                s = atom.op + atom.cpvstr
+                            unblocked = atom_cls(s)
+                            if not self.options.search_repo.match(unblocked):
+                                matches = self.existence_repo.match(unblocked)
+                                if matches:
+                                    removal = max(x.date for x in matches)
+                                    removal = datetime.strptime(removal, '%Y-%m-%d')
+                                    years = round((self.today - removal).days / 365, 2)
+                                    if years > 2:
+                                        outdated_blockers.add((atom, years))
+                                else:
+                                    nonexistent_blockers.add((atom))
 
             for atom, years in sorted(outdated_blockers):
                 yield OutdatedBlocker(attr.upper(), str(atom), years, pkg=pkg)

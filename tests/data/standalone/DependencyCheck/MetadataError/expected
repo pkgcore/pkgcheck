@@ -1,4 +1,0 @@
-DependencyCheck/MetadataError
-  MetadataError: version 0: attr(depend): blocks itself
-  MetadataError: version 0: attr(depend): = slot operator used inside || block: [stub/stub1, stub/stub2]
-  MetadataError: version 0: attr(depend): = slot operator used in blocker: [stub/stub3]
