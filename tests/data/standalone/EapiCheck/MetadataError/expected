@@ -1,3 +1,0 @@
-EapiCheck/MetadataError
-  MetadataError: version 0: attr(eapi): EAPI '9999' is not supported
-  MetadataError: version 1: attr(eapi): invalid EAPI: 'invalid!'

@@ -1,0 +1,18 @@
+diff -Naur standalone/EapiCheck/InvalidEapi/InvalidEapi-0.ebuild fixed/EapiCheck/InvalidEapi/InvalidEapi-0.ebuild
+--- standalone/EapiCheck/InvalidEapi/InvalidEapi-0.ebuild	2019-09-15 03:08:49.094741882 -0600
++++ fixed/EapiCheck/InvalidEapi/InvalidEapi-0.ebuild	2019-09-15 03:12:21.294596386 -0600
+@@ -1,4 +1,4 @@
+-EAPI=9999
++EAPI=7
+ DESCRIPTION="Ebuild using unsupported EAPI"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+diff -Naur standalone/EapiCheck/InvalidEapi/InvalidEapi-1.ebuild fixed/EapiCheck/InvalidEapi/InvalidEapi-1.ebuild
+--- standalone/EapiCheck/InvalidEapi/InvalidEapi-1.ebuild	2019-09-15 03:09:44.633965531 -0600
++++ fixed/EapiCheck/InvalidEapi/InvalidEapi-1.ebuild	2019-09-15 03:12:30.961635314 -0600
+@@ -1,4 +1,4 @@
+-EAPI="invalid!"
++EAPI=7
+ DESCRIPTION="Ebuild using invalid EAPI"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"

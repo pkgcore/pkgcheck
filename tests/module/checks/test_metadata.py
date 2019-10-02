@@ -353,7 +353,6 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
             assert r.eapi == eapi_str
             assert f'uses banned EAPI {eapi_str}' == str(r)
 
-    @pytest.mark.skip('skipped until metadata error callback is reworked for tests')
     def test_unknown_eapis(self):
         deprecated = ('0', '2', '4', '5')
         banned = ('1', '3')
@@ -365,8 +364,8 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
             f.write(textwrap.dedent("""\
                 EAPI=blah
             """))
-        r = self.assertReport(check, list(self.repo), iterate=True)
-        assert isinstance(r, results.MetadataError)
+        r = self.assertReport(check, self.repo)
+        assert isinstance(r, metadata.InvalidEapi)
         assert "attr(eapi): EAPI 'blah' is not supported" == str(r)
 
 
@@ -772,26 +771,34 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
 
         # invalid depset syntax
         r = self.assertReport(chk, mk_pkg("|| ("))
-        assert isinstance(r, metadata.MetadataError)
+        assert isinstance(r, metadata.InvalidDependency)
         assert r.attr == attr.lower()
 
         # pkg blocking itself
         r = self.assertReport(chk, mk_pkg("!dev-util/diffball"))
         assert isinstance(r, metadata.BadDependency)
-        assert "blocks itself" in r.msg
+        assert "blocks itself" in str(r)
+        assert f'{attr.upper()}="!dev-util/diffball"' in str(r)
 
         # check for := in || () blocks
-        pkg = mk_pkg(eapi='5', depset="|| ( dev-libs/foo:= dev-libs/bar:= )")
+        pkg = mk_pkg(eapi='5', depset="|| ( dev-libs/foo:= dev-libs/bar )")
         r = self.assertReport(chk, pkg)
         assert isinstance(r, metadata.BadDependency)
-        assert "= slot operator used inside || block" in r.msg
-        assert "[dev-libs/bar, dev-libs/foo]" in r.msg
+        assert "= slot operator used inside || block" in str(r)
+        assert f'{attr.upper()}="dev-libs/foo:="' in str(r)
+
+        # multiple := atoms in || () blocks
+        pkg = mk_pkg(eapi='5', depset="|| ( dev-libs/foo:= dev-libs/bar:= )")
+        reports = self.assertReports(chk, pkg)
+        for r in reports:
+            assert isinstance(r, metadata.BadDependency)
+            assert "= slot operator used inside || block" in str(r)
 
         # check for := in blockers
         r = self.assertReport(chk, mk_pkg(eapi='5', depset="!dev-libs/foo:="))
         assert isinstance(r, metadata.BadDependency)
-        assert "= slot operator used in blocker" in r.msg
-        assert "[dev-libs/foo]" in r.msg
+        assert "= slot operator used in blocker" in str(r)
+        assert f'{attr.upper()}="!dev-libs/foo:="' in str(r)
 
         # check for missing package revisions
         self.assertNoReport(chk, mk_pkg("=dev-libs/foo-1-r0"))

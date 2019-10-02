@@ -210,10 +210,16 @@ class BannedEapi(_EapiResult, results.Error):
     _type = 'banned'
 
 
+class InvalidEapi(MetadataError):
+    """Package's EAPI is invalid."""
+
+    _metadata_attrs = ('eapi',)
+
+
 class EapiCheck(Check):
     """Scan for packages with banned/deprecated/invalid EAPIs."""
 
-    known_results = frozenset([DeprecatedEapi, BannedEapi, MetadataError])
+    known_results = frozenset([DeprecatedEapi, BannedEapi, InvalidEapi])
 
     def feed(self, pkg):
         eapi_str = str(pkg.eapi)
@@ -600,12 +606,18 @@ class BadDependency(results.VersionedResult, results.Error):
         return f'{self.msg}: {self.depset.upper()}="{self.atom}"'
 
 
+class InvalidDependency(MetadataError):
+    """Package has an invalid dependency."""
+
+    _metadata_attrs = ('depend', 'rdepend', 'pdepend', 'bdepend')
+
+
 class DependencyCheck(Check):
     """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon, git.GitAddon)
     known_results = frozenset([
-        BadDependency, MissingPackageRevision, MissingUseDepDefault,
+        BadDependency, InvalidDependency, MissingPackageRevision, MissingUseDepDefault,
         OutdatedBlocker, NonexistentBlocker, UnstatedIuse,
     ])
 
