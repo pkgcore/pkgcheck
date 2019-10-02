@@ -27,14 +27,14 @@ ACCT_{self.kind.upper()}_ID="{identifier}"
         pkgs = (misc.FakePkg('dev-util/foo-0'),
                 misc.FakePkg('dev-util/bar-1'))
         check = self.mk_check(pkgs)
-        self.assertNoReport(check, pkgs, iterate=True)
+        self.assertNoReport(check, pkgs)
 
     def test_correct_ids(self):
         pkgs = (self.mk_pkg('foo', 100),
                 self.mk_pkg('bar', 200),
                 self.mk_pkg('nobody', 65534))
         check = self.mk_check(pkgs)
-        self.assertNoReport(check, pkgs, iterate=True)
+        self.assertNoReport(check, pkgs)
 
     def test_missing_ids(self):
         pkg = self.mk_pkg('foo', None, ebuild='inherit acct-user\n')
@@ -48,7 +48,7 @@ ACCT_{self.kind.upper()}_ID="{identifier}"
         pkgs = (self.mk_pkg('foo', 100),
                 self.mk_pkg('bar', 100))
         check = self.mk_check(pkgs)
-        r = self.assertReport(check, pkgs, iterate=True)
+        r = self.assertReport(check, pkgs)
         assert isinstance(r, acct.ConflictingAccountIdentifiers)
         assert r.kind == self.kind
         assert r.identifier == 100
@@ -59,7 +59,7 @@ ACCT_{self.kind.upper()}_ID="{identifier}"
         pkgs = (self.mk_pkg('foo', 100),
                 self.mk_pkg('foo', 100, version=2))
         check = self.mk_check(pkgs)
-        self.assertNoReport(check, pkgs, iterate=True)
+        self.assertNoReport(check, pkgs)
 
     def test_dynamic_assignment_range(self):
         pkg = self.mk_pkg('foo', 500)

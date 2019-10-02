@@ -12,6 +12,7 @@ from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.misc import ChunkedDataDict, chunked_data
 from pkgcore.package.metadata import factory
+from pkgcore.repository import prototype
 from pkgcore.repository.util import SimpleTree
 from snakeoil.data_source import text_data_source
 from snakeoil.mappings import ImmutableDict
@@ -97,11 +98,11 @@ class ReportTestCase(object):
         for report in reports:
             assert report.__class__ in self.check_kls.known_results
 
-    def assertNoReport(self, check, data, msg="", iterate=False):
+    def assertNoReport(self, check, data, msg=""):
         l = []
         if msg:
             msg = f"{msg}: "
-        if iterate:
+        if isinstance(data, (prototype.tree, tuple)):
             source = data
         else:
             source = [data]
@@ -119,9 +120,9 @@ class ReportTestCase(object):
                 assert hasattr(report, attr), (
                     f"missing attr {attr}: {report.__class__!r} {report}")
 
-    def assertReports(self, check, data, iterate=False):
+    def assertReports(self, check, data):
         l = []
-        if iterate:
+        if isinstance(data, (prototype.tree, tuple)):
             source = data
         else:
             source = [data]
@@ -134,8 +135,8 @@ class ReportTestCase(object):
         self.assertReportSanity(*l)
         return l
 
-    def assertReport(self, check, data, iterate=False):
-        r = self.assertReports(check, data, iterate=iterate)
+    def assertReport(self, check, data):
+        r = self.assertReports(check, data)
         self._assert_known_results(*r)
         assert len(r) == 1, f"expected one report, got {len(r)}: {r}"
         self.assertReportSanity(r[0])
