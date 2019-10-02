@@ -25,7 +25,7 @@ class RepoDirCheck(GentooRepoCheck):
 
     scope = base.repository_scope
     _source = sources.EmptySource
-    known_results = (BinaryFile,)
+    known_results = frozenset([BinaryFile])
 
     # repo root level directories that are ignored
     ignored_root_dirs = frozenset(['.git'])
@@ -72,7 +72,7 @@ class EmptyDirsCheck(GentooRepoCheck):
 
     scope = base.repository_scope
     _source = sources.EmptySource
-    known_results = (EmptyCategoryDir, EmptyPackageDir)
+    known_results = frozenset([EmptyCategoryDir, EmptyPackageDir])
 
     def __init__(self, options):
         super().__init__(options)

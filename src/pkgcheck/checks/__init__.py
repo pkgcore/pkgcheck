@@ -12,7 +12,7 @@ class Check(feeds.Feed):
     :cvar known_results: result keywords the check can possibly yield
     """
 
-    known_results = ()
+    known_results = frozenset()
 
     @property
     def source(self):

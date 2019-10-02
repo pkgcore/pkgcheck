@@ -46,7 +46,7 @@ class ImlateCheck(Check):
     scope = base.package_scope
     _source = sources.PackageRepoSource
     required_addons = (addons.StableArchesAddon,)
-    known_results = (PotentialStable, LaggingStable)
+    known_results = frozenset([PotentialStable, LaggingStable])
 
     @staticmethod
     def mangle_argparser(parser):

@@ -31,7 +31,7 @@ class RedundantVersionCheck(Check):
 
     scope = base.package_scope
     _source = sources.PackageRepoSource
-    known_results = (RedundantVersion,)
+    known_results = frozenset([RedundantVersion])
 
     def feed(self, pkgset):
         if len(pkgset) == 1:

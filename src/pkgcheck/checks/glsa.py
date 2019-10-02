@@ -32,7 +32,7 @@ class GlsaCheck(GentooRepoCheck):
     Requires a GLSA directory for vulnerability info.
     """
 
-    known_results = (VulnerablePackage,)
+    known_results = frozenset([VulnerablePackage])
 
     @staticmethod
     def mangle_argparser(parser):

@@ -65,10 +65,10 @@ class AcctCheck(Check):
     scope = base.repository_scope
     _source = (sources.RestrictionRepoSource, (packages.OrRestriction(*(
         restricts.CategoryDep('acct-user'), restricts.CategoryDep('acct-group'))),))
-    known_results = (
+    known_results = frozenset([
         MissingAccountIdentifier, ConflictingAccountIdentifiers,
         OutsideRangeAccountIdentifier,
-    )
+    ])
 
     def __init__(self, options):
         super().__init__(options)

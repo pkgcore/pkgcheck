@@ -66,10 +66,10 @@ class UnnecessaryLicense(results.VersionedResult, results.Warning):
 class LicenseMetadataCheck(Check):
     """LICENSE validity checks."""
 
-    known_results = (
+    known_results = frozenset([
         MetadataError, MissingLicense, UnnecessaryLicense, UnstatedIuse,
         MissingLicenseRestricts,
-    )
+    ])
 
     # categories for ebuilds that can lack LICENSE settings
     unlicensed_categories = frozenset(['virtual', 'acct-group', 'acct-user'])
@@ -166,7 +166,7 @@ class IuseMetadataCheck(Check):
     """IUSE validity checks."""
 
     required_addons = (addons.UseAddon,)
-    known_results = (InvalidUseFlags, UnknownUseFlags)
+    known_results = frozenset([InvalidUseFlags, UnknownUseFlags])
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
@@ -213,7 +213,7 @@ class BannedEapi(_EapiResult, results.Error):
 class MetadataCheck(Check):
     """Scan for packages with banned/deprecated EAPIs or bad metadata."""
 
-    known_results = (DeprecatedEapi, BannedEapi, MetadataError)
+    known_results = frozenset([DeprecatedEapi, BannedEapi, MetadataError])
 
     def feed(self, pkg):
         eapi_str = str(pkg.eapi)
@@ -272,7 +272,7 @@ class RequiredUseMetadataCheck(Check):
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
             'options.has_required_use', values.FunctionRestriction(bool))),))
     required_addons = (addons.UseAddon, addons.ProfileAddon)
-    known_results = (MetadataError, RequiredUseDefaults, UnstatedIuse)
+    known_results = frozenset([MetadataError, RequiredUseDefaults, UnstatedIuse])
 
     def __init__(self, options, iuse_handler, profiles):
         super().__init__(options)
@@ -405,10 +405,10 @@ class LocalUseCheck(Check):
     scope = base.package_scope
     _source = sources.PackageRepoSource
     required_addons = (addons.UseAddon,)
-    known_results = (
+    known_results = frozenset([
         UnusedLocalUse, MatchingGlobalUse, ProbableGlobalUse,
         ProbableUseExpand, UnderscoreInUseFlag, UnstatedIuse,
-    )
+    ])
 
     def __init__(self, options, use_handler):
         super().__init__(options)
@@ -486,7 +486,7 @@ class MissingSlotDepCheck(Check):
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
             'options.sub_slotting', values.FunctionRestriction(bool))),))
     required_addons = (addons.UseAddon,)
-    known_results = (MissingSlotDep,)
+    known_results = frozenset([MissingSlotDep])
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
@@ -590,10 +590,10 @@ class DependencyCheck(Check):
     """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon, git.GitAddon)
-    known_results = (
+    known_results = frozenset([
         MetadataError, MissingPackageRevision, MissingUseDepDefault,
         OutdatedBlocker, NonexistentBlocker, UnstatedIuse,
-    )
+    ])
 
     def __init__(self, options, iuse_handler, git_addon):
         super().__init__(options)
@@ -773,10 +773,10 @@ class KeywordsCheck(Check):
     """Check package keywords for sanity; empty keywords, and -* are flagged."""
 
     required_addons = (addons.UseAddon,)
-    known_results = (
+    known_results = frozenset([
         BadKeywords, InvalidKeywords, OverlappingKeywords, DuplicateKeywords,
         UnsortedKeywords, MissingVirtualKeywords, MetadataError,
-    )
+    ])
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
@@ -928,10 +928,10 @@ class SrcUriCheck(Check):
     """
 
     required_addons = (addons.UseAddon,)
-    known_results = (
+    known_results = frozenset([
         BadFilename, BadProtocol, MissingUri, MetadataError, TarballAvailable,
         UnknownMirror, UnstatedIuse,
-    )
+    ])
 
     valid_protos = frozenset(["http", "https", "ftp"])
 
@@ -1020,7 +1020,7 @@ class DescriptionCheck(Check):
     just using the package's name.
     """
 
-    known_results = (BadDescription,)
+    known_results = frozenset([BadDescription])
 
     def feed(self, pkg):
         s = pkg.description.lower()
@@ -1055,7 +1055,7 @@ class BadHomepage(results.VersionedResult, results.Warning):
 class HomepageCheck(Check):
     """HOMEPAGE checks."""
 
-    known_results = (BadHomepage,)
+    known_results = frozenset([BadHomepage])
 
     # categories for ebuilds that should lack HOMEPAGE
     missing_categories = frozenset(['virtual', 'acct-group', 'acct-user'])
@@ -1109,7 +1109,7 @@ class UnknownProperties(results.VersionedResult, results.Warning):
 class RestrictsCheck(Check):
     """Check for valid RESTRICT settings."""
 
-    known_results = (BadRestricts, UnknownProperties, UnstatedIuse)
+    known_results = frozenset([BadRestricts, UnknownProperties, UnstatedIuse])
     required_addons = (addons.UseAddon,)
 
     def __init__(self, options, iuse_handler):
@@ -1162,7 +1162,7 @@ class MissingTestRestrict(results.VersionedResult, results.Warning):
 class RestrictTestCheck(Check):
     """Check whether packages specify RESTRICT="!test? ( test )"."""
 
-    known_results = (MissingTestRestrict,)
+    known_results = frozenset([MissingTestRestrict])
 
     def feed(self, pkg):
         if 'test' not in pkg.iuse:
@@ -1215,7 +1215,7 @@ class MissingUnpackerDep(results.VersionedResult, results.Warning):
 class MissingUnpackerDepCheck(Check):
     """Check whether package is missing unpacker dependencies."""
 
-    known_results = (MissingUnpackerDep,)
+    known_results = frozenset([MissingUnpackerDep])
     required_addons = (addons.UseAddon,)
 
     non_system_unpackers = ImmutableDict({

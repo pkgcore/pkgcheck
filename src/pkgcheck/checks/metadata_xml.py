@@ -372,12 +372,13 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
     indent_error = PkgMetadataXmlIndentation
     empty_element = PkgMetadataXmlEmptyElement
 
-    known_results = (
+    known_results = frozenset([
         PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
         PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, EmptyMaintainer,
         MaintainerWithoutProxy, StaleProxyMaintProject,
-        NonexistentProjectMaintainer, WrongMaintainerType)
+        NonexistentProjectMaintainer, WrongMaintainerType,
+    ])
 
     def _check_maintainers(self, pkg, loc, doc):
         """Validate maintainers in package metadata for the gentoo repo."""
@@ -434,10 +435,11 @@ class CategoryMetadataXmlCheck(_XmlBaseCheck):
     indent_error = CatMetadataXmlIndentation
     empty_element = CatMetadataXmlEmptyElement
 
-    known_results = (
+    known_results = frozenset([
         CatBadlyFormedXml, CatInvalidXml, CatMissingMetadataXml,
         CatMetadataXmlInvalidPkgRef, CatMetadataXmlInvalidCatRef,
-        CatMetadataXmlIndentation, CatMetadataXmlEmptyElement)
+        CatMetadataXmlIndentation, CatMetadataXmlEmptyElement,
+    ])
 
     def _get_xml_location(self, pkg):
         """Return the metadata.xml location for a given package's category."""

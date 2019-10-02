@@ -27,7 +27,7 @@ class UnstableOnlyCheck(GentooRepoCheck):
     scope = base.package_scope
     _source = sources.PackageRepoSource
     required_addons = (addons.StableArchesAddon,)
-    known_results = (UnstableOnly,)
+    known_results = frozenset([UnstableOnly])
 
     def __init__(self, options, stable_arches=None):
         super().__init__(options)

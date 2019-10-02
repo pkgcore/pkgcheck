@@ -68,7 +68,7 @@ class BadCommandsCheck(Check):
     """Scan ebuild for various deprecated and banned command usage."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = (DeprecatedEapiCommand, BannedEapiCommand)
+    known_results = frozenset([DeprecatedEapiCommand, BannedEapiCommand])
 
     CMD_USAGE_REGEX = r'^(\s*|.*[|&{{(]+\s*)\b(?P<cmd>{})(?!\.)\b'
 
@@ -163,7 +163,7 @@ class PathVariablesCheck(Check):
     """Scan ebuild for path variables with various issues."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = (MissingSlash, UnnecessarySlashStrip, DoublePrefixInPath)
+    known_results = frozenset([MissingSlash, UnnecessarySlashStrip, DoublePrefixInPath])
     prefixed_dir_functions = (
         'insinto', 'exeinto',
         'dodir', 'keepdir',
@@ -281,7 +281,7 @@ class AbsoluteSymlinkCheck(Check):
     """Scan ebuild for dosym absolute path usage instead of relative."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = (AbsoluteSymlink,)
+    known_results = frozenset([AbsoluteSymlink])
 
     DIRS = ('bin', 'etc', 'lib', 'opt', 'sbin', 'srv', 'usr', 'var')
 
@@ -318,7 +318,7 @@ class BadInsIntoCheck(Check):
     _source = sources.EbuildFileRepoSource
     _bad_insinto = None
 
-    known_results = (BadInsIntoDir,)
+    known_results = frozenset([BadInsIntoDir])
 
     def __init__(self, options):
         super().__init__(options)
@@ -381,7 +381,7 @@ class ObsoleteUriCheck(Check):
     """Scan ebuild for obsolete URIs."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = (ObsoleteUri,)
+    known_results = frozenset([ObsoleteUri])
 
     REGEXPS = (
         (r'.*\b(?P<uri>(?P<prefix>https?://github\.com/.*?/.*?/)'
@@ -486,10 +486,10 @@ class EbuildHeaderCheck(GentooRepoCheck):
     """Scan ebuild for incorrect copyright/license headers."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = (
+    known_results = frozenset([
         InvalidCopyright, OldGentooCopyright, NonGentooAuthorsCopyright,
         InvalidLicenseHeader,
-    )
+    ])
 
     license_header = '# Distributed under the terms of the GNU General Public License v2'
 
@@ -533,7 +533,7 @@ class HomepageInSrcUriCheck(Check):
     """Scan ebuild for ${HOMEPAGE} in SRC_URI."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = (HomepageInSrcUri,)
+    known_results = frozenset([HomepageInSrcUri])
 
     def __init__(self, options):
         super().__init__(options)

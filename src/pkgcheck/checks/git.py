@@ -197,10 +197,10 @@ class GitPkgCommitsCheck(GentooRepoCheck):
     scope = base.package_scope
     _source = (sources.PackageRepoSource, (), (('source', GitCommitsRepoSource),))
     required_addons = (git.GitAddon,)
-    known_results = (
+    known_results = frozenset([
         DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,
         OutdatedCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
-    )
+    ])
 
     def __init__(self, options, git_addon):
         super().__init__(options)
@@ -324,7 +324,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
 
     scope = base.commit_scope
     _source = GitCommitsSource
-    known_results = (MissingSignOff,)
+    known_results = frozenset([MissingSignOff])
 
     def feed(self, commit):
         # check for missing git sign offs

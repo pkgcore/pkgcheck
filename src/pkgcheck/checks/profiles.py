@@ -107,10 +107,10 @@ class ProfilesCheck(Check):
     required_addons = (addons.UseAddon,)
     scope = base.repository_scope
     _source = sources.EmptySource
-    known_results = (
+    known_results = frozenset([
         UnknownProfilePackages, UnknownProfilePackageUse, UnknownProfileUse,
         UnknownProfilePackageKeywords, BadProfileEntry, ProfileWarning, ProfileError,
-    )
+    ])
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
@@ -360,11 +360,11 @@ class RepoProfilesCheck(Check):
     required_addons = (addons.ProfileAddon,)
     scope = base.repository_scope
     _source = sources.EmptySource
-    known_results = (
+    known_results = frozenset([
         ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,
         UnknownCategories, LaggingProfileEapi,
         ProfileError, ProfileWarning,
-    )
+    ])
 
     # known profile status types for the gentoo repo
     known_profile_statuses = frozenset(['stable', 'dev', 'exp'])

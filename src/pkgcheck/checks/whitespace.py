@@ -67,9 +67,10 @@ class WhitespaceCheck(Check):
     """Scan ebuild for useless whitespace."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = (
+    known_results = frozenset([
         WhitespaceFound, WrongIndentFound, DoubleEmptyLine,
-        TrailingEmptyLine, NoFinalNewline)
+        TrailingEmptyLine, NoFinalNewline,
+    ])
 
     def feed(self, pkg):
         lastlineempty = False

@@ -182,10 +182,10 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
     """
 
     required_addons = (addons.ProfileAddon,)
-    known_results = (
+    known_results = frozenset([
         VisibleVcsPkg, NonexistentDeps, UncheckableDep,
         NonsolvableDepsInStable, NonsolvableDepsInDev, NonsolvableDepsInExp,
-    )
+    ])
 
     def __init__(self, options, profiles):
         super().__init__(options, profiles)

@@ -29,7 +29,7 @@ class DeprecatedEclass(results.VersionedResult, results.Warning):
 class DeprecatedEclassCheck(Check):
     """Check for ebuilds using deprecated eclasses."""
 
-    known_results = (DeprecatedEclass,)
+    known_results = frozenset([DeprecatedEclass])
 
     blacklist = ImmutableDict({
         '64-bit': None,

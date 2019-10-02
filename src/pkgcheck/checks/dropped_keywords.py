@@ -22,7 +22,7 @@ class DroppedKeywordsCheck(Check):
     scope = base.package_scope
     _source = sources.PackageRepoSource
     required_addons = (addons.ArchesAddon,)
-    known_results = (DroppedKeywords,)
+    known_results = frozenset([DroppedKeywords])
 
     def __init__(self, options, arches):
         super().__init__(options)

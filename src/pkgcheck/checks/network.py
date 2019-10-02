@@ -231,7 +231,8 @@ class _UrlCheck(NetworkCheck):
 class HomepageUrlCheck(_UrlCheck):
     """Various HOMEPAGE related checks that require internet access."""
 
-    known_results = (DeadHomepage, RedirectedHomepage, HttpsUrlAvailable, SSLCertificateError)
+    known_results = frozenset([
+        DeadHomepage, RedirectedHomepage, HttpsUrlAvailable, SSLCertificateError])
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -245,7 +246,8 @@ class HomepageUrlCheck(_UrlCheck):
 class FetchablesUrlCheck(_UrlCheck):
     """Various SRC_URI related checks that require internet access."""
 
-    known_results = (DeadSrcUrl, RedirectedSrcUrl, HttpsUrlAvailable, SSLCertificateError)
+    known_results = frozenset([
+        DeadSrcUrl, RedirectedSrcUrl, HttpsUrlAvailable, SSLCertificateError])
     required_addons = (addons.UseAddon,)
 
     def __init__(self, options, iuse_handler):

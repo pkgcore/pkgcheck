@@ -75,10 +75,10 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
 
     scope = base.repository_scope
     _source = sources.RepositoryRepoSource
-    known_results = (
+    known_results = frozenset([
         UnusedInMastersLicenses, UnusedInMastersMirrors, UnusedInMastersEclasses,
         UnusedInMastersGlobalUse,
-    )
+    ])
 
     def start(self):
         self.unused_master_licenses = set()

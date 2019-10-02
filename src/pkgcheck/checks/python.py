@@ -137,10 +137,10 @@ class PythonCheck(Check):
     they don't suffer from common mistakes.
     """
 
-    known_results = (
+    known_results = frozenset([
         MissingPythonEclass, PythonSingleUseMismatch, PythonMissingRequiredUse,
         PythonMissingDeps, PythonRuntimeDepInAnyR1, MetadataError,
-    )
+    ])
 
     @staticmethod
     def get_python_eclass(pkg):

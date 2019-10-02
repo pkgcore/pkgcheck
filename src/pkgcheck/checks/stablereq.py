@@ -41,7 +41,7 @@ class StableRequestCheck(GentooRepoCheck):
     scope = base.package_scope
     _source = (sources.PackageRepoSource, (), (('source', sources.UnmaskedRepoSource),))
     required_addons = (git.GitAddon,)
-    known_results = (StableRequest,)
+    known_results = frozenset([StableRequest])
 
     def __init__(self, options, git_addon=None, staleness=int(day*30)):
         super().__init__(options)

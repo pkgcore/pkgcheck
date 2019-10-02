@@ -161,10 +161,10 @@ class PkgDirCheck(Check):
     _source = (sources.PackageRepoSource, (), (('source', sources.RawRepoSource),))
 
     ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
-    known_results = (
+    known_results = frozenset([
         DuplicateFiles, EmptyFile, ExecutableFile, UnknownFile, SizeViolation,
         Glep31Violation, InvalidUTF8, MismatchedPN, InvalidPN,
-    )
+    ])
 
     # TODO: put some 'preferred algorithms by purpose' into snakeoil?
     digest_algo = 'sha256'
@@ -249,7 +249,7 @@ class EqualVersionsCheck(Check):
 
     scope = base.package_scope
     _source = sources.PackageRepoSource
-    known_results = (EqualVersions,)
+    known_results = frozenset([EqualVersions])
 
     def feed(self, pkgset):
         equal_versions = defaultdict(set)

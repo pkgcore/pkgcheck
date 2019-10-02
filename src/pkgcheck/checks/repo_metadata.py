@@ -70,10 +70,10 @@ class PackageUpdatesCheck(Check):
 
     scope = base.repository_scope
     _source = sources.EmptySource
-    known_results = (
+    known_results = frozenset([
         MultiMovePackageUpdate, OldMultiMovePackageUpdate,
         OldPackageUpdate, MovedPackageUpdate, BadPackageUpdate,
-    )
+    ])
 
     def __init__(self, options):
         super().__init__(options)
@@ -154,7 +154,7 @@ class UnusedLicensesCheck(Check):
 
     scope = base.repository_scope
     _source = sources.RepositoryRepoSource
-    known_results = (UnusedLicenses,)
+    known_results = frozenset([UnusedLicenses])
 
     def __init__(self, options):
         super().__init__(options)
@@ -213,7 +213,7 @@ class UnusedMirrorsCheck(_MirrorsCheck):
 
     scope = base.repository_scope
     _source = sources.RepositoryRepoSource
-    known_results = (UnusedMirrors,)
+    known_results = frozenset([UnusedMirrors])
 
     def start(self):
         master_mirrors = set()
@@ -248,7 +248,7 @@ class UnusedEclassesCheck(Check):
 
     scope = base.repository_scope
     _source = sources.RepositoryRepoSource
-    known_results = (UnusedEclasses,)
+    known_results = frozenset([UnusedEclasses])
 
     def __init__(self, options):
         super().__init__(options)
@@ -288,7 +288,7 @@ class LicenseGroupsCheck(Check):
 
     scope = base.repository_scope
     _source = sources.EmptySource
-    known_results = (UnknownLicenses,)
+    known_results = frozenset([UnknownLicenses])
 
     def __init__(self, options):
         super().__init__(options)
@@ -359,7 +359,7 @@ class GlobalUseCheck(Check):
     scope = base.repository_scope
     _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
     required_addons = (addons.UseAddon,)
-    known_results = (PotentialLocalUse, PotentialGlobalUse, UnusedGlobalUse)
+    known_results = frozenset([PotentialLocalUse, PotentialGlobalUse, UnusedGlobalUse])
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
@@ -541,10 +541,10 @@ class ManifestCheck(Check):
     required_addons = (addons.UseAddon,)
     scope = base.package_scope
     _source = sources.PackageRepoSource
-    known_results = (
+    known_results = frozenset([
         MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
         DeprecatedChksum,
-    )
+    ])
 
     def __init__(self, options, iuse_handler):
         super().__init__(options)
@@ -626,7 +626,7 @@ class ManifestConflictCheck(Check):
 
     scope = base.repository_scope
     _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
-    known_results = (ConflictingChksums,)
+    known_results = frozenset([ConflictingChksums])
 
     def __init__(self, options):
         super().__init__(options)
