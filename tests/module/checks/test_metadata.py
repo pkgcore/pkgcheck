@@ -898,7 +898,7 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
     def test_malformed(self):
         r = self.assertReport(
             self.mk_check(), self.mk_pkg("foon", disable_chksums=True))
-        assert isinstance(r, metadata.MetadataError)
+        assert isinstance(r, metadata.InvalidSrcUri)
         assert r.attr == 'fetchables'
 
     def test_regular_src_uri(self):

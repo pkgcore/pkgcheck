@@ -951,6 +951,12 @@ class TarballAvailable(results.VersionedResult, results.Warning):
                 f"[ {' '.join(self.uris)} ]")
 
 
+class InvalidSrcUri(MetadataError):
+    """Package's SRC_URI is invalid."""
+
+    _metadata_attrs = ('fetchables',)
+
+
 class SrcUriCheck(Check):
     """SRC_URI related checks.
 
@@ -960,7 +966,7 @@ class SrcUriCheck(Check):
 
     required_addons = (addons.UseAddon,)
     known_results = frozenset([
-        BadFilename, BadProtocol, MissingUri, MetadataError, TarballAvailable,
+        BadFilename, BadProtocol, MissingUri, InvalidSrcUri, TarballAvailable,
         UnknownMirror, UnstatedIuse,
     ])
 
