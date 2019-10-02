@@ -1,0 +1,9 @@
+diff -Naur standalone/EapiCheck/BannedEapi/BannedEapi-0.ebuild fixed/EapiCheck/BannedEapi/BannedEapi-0.ebuild
+--- standalone/EapiCheck/BannedEapi/BannedEapi-0.ebuild	2019-09-15 03:05:12.832870282 -0600
++++ fixed/EapiCheck/BannedEapi/BannedEapi-0.ebuild	2019-09-15 03:11:08.602303656 -0600
+@@ -1,4 +1,4 @@
+-EAPI=1
++EAPI=7
+ DESCRIPTION="Ebuild using banned EAPI"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"

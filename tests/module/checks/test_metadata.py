@@ -301,9 +301,9 @@ class TestIuseMetadataCheck(IUSE_Options, misc.ReportTestCase):
             assert flag in str(r)
 
 
-class TestMetadataCheck(misc.ReportTestCase, misc.Tmpdir):
+class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
 
-    check_kls = metadata.MetadataCheck
+    check_kls = metadata.EapiCheck
 
     def mk_check(self, deprecated=(), banned=()):
         # TODO: switch to using a repo fixture when available

@@ -1,0 +1,9 @@
+diff -Naur standalone/EapiCheck/DeprecatedEapi/DeprecatedEapi-0.ebuild fixed/EapiCheck/DeprecatedEapi/DeprecatedEapi-0.ebuild
+--- standalone/EapiCheck/DeprecatedEapi/DeprecatedEapi-0.ebuild	2019-09-15 03:08:00.380545715 -0600
++++ fixed/EapiCheck/DeprecatedEapi/DeprecatedEapi-0.ebuild	2019-09-15 03:11:41.260435170 -0600
+@@ -1,4 +1,4 @@
+-EAPI=5
++EAPI=7
+ DESCRIPTION="Ebuild using deprecated EAPI"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"

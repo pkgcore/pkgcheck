@@ -210,8 +210,8 @@ class BannedEapi(_EapiResult, results.Error):
     _type = 'banned'
 
 
-class MetadataCheck(Check):
-    """Scan for packages with banned/deprecated EAPIs or bad metadata."""
+class EapiCheck(Check):
+    """Scan for packages with banned/deprecated/invalid EAPIs."""
 
     known_results = frozenset([DeprecatedEapi, BannedEapi, MetadataError])
 
