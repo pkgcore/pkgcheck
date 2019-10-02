@@ -366,7 +366,7 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
             """))
         r = self.assertReport(check, self.repo)
         assert isinstance(r, metadata.InvalidEapi)
-        assert "attr(eapi): EAPI 'blah' is not supported" == str(r)
+        assert "EAPI 'blah' is not supported" == str(r)
 
 
 class TestRequiredUseMetadataCheck(IUSE_Options, misc.ReportTestCase):

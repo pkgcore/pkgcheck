@@ -220,4 +220,7 @@ class MetadataError(VersionedResult, Error):
 
     @property
     def desc(self):
-        return f'attr({self.attr}): {self.msg}'
+        if self._metadata_attrs:
+            return self.msg
+        else:
+            return f'attr({self.attr}): {self.msg}'
