@@ -210,6 +210,9 @@ class LogError(_LogResult, Error):
 class MetadataError(VersionedResult, Error):
     """Problem detected with a package's metadata."""
 
+    # specific metadata attributes handled by the result class
+    _metadata_attrs = ()
+
     def __init__(self, attr, msg, **kwargs):
         super().__init__(**kwargs)
         self.attr = attr

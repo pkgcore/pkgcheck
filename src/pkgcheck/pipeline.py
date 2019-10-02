@@ -124,7 +124,7 @@ class Pipeline:
             if non_pkg_checks:
                 results = []
                 for pipe in non_pkg_checks:
-                    results.extend(pipe.run(self.restrict, metadata_errors=False))
+                    results.extend(pipe.run(self.restrict))
                 if results:
                     results_q.put(results)
 
@@ -142,24 +142,37 @@ class CheckRunner:
     def __init__(self, source, checks):
         self.source = source
         self.checks = checks
-        self._metadata_errors = set()
+
+        known_results = set()
+        for check in self.checks:
+            known_results.update(check.known_results)
+        self._metadata_error_classes = {}
+        for cls in known_results:
+            if issubclass(cls, MetadataError):
+                for attr in cls._metadata_attrs:
+                    self._metadata_error_classes[attr] = cls
+        self._metadata_errors = []
+
+    def _metadata_error_cb(self, e):
+        try:
+            cls = self._metadata_error_classes[e.attr]
+            error_str = ': '.join(str(e.error).split('\n'))
+            self._metadata_errors.append(cls(e.attr, error_str, pkg=e.pkg))
+        except KeyError:
+            pass
 
     def start(self):
         for check in self.checks:
-            try:
-                reports = check.start()
-                if reports is not None:
-                    yield from reports
-            except MetadataException as e:
-                exc_info = (e.pkg, e.error)
-                # only report distinct metadata errors
-                if exc_info not in self._metadata_errors:
-                    self._metadata_errors.add(exc_info)
-                    error_str = ': '.join(str(e.error).split('\n'))
-                    yield MetadataError(e.attr, error_str, pkg=e.pkg)
+            reports = check.start()
+            if reports is not None:
+                yield from reports
 
-    def run(self, restrict=None, metadata_errors=True):
-        source = self.source if restrict is None else self.source.itermatch(restrict)
+    def run(self, restrict=None):
+        if restrict is None:
+            source = self.source
+        else:
+            source = self.source.itermatch(restrict, error_callback=self._metadata_error_cb)
+
         for item in source:
             for check in self.checks:
                 try:
@@ -167,19 +180,11 @@ class CheckRunner:
                     if reports is not None:
                         yield from reports
                 except MetadataException as e:
-                    exc_info = (e.pkg, e.error)
-                    # only report distinct metadata errors
-                    if exc_info not in self._metadata_errors:
-                        self._metadata_errors.add(exc_info)
-                        error_str = ': '.join(str(e.error).split('\n'))
-                        yield MetadataError(e.attr, error_str, pkg=e.pkg)
+                    self._metadata_error_cb(e)
 
-        # yield metadata errors from itermatch() error callbacks
-        if metadata_errors and getattr(self.source, 'metadata_errors', None):
-            for e in self.source.metadata_errors:
-                error_str = ': '.join(str(e.error).split('\n'))
-                yield MetadataError(e.attr, error_str, pkg=e.pkg)
-            self.source.metadata_errors.clear()
+        if self._metadata_errors:
+            yield from self._metadata_errors
+            self._metadata_errors.clear()
 
     def finish(self):
         for check in self.checks:
