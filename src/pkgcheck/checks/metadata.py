@@ -282,6 +282,12 @@ class RequiredUseDefaults(results.VersionedResult, results.Warning):
         )
 
 
+class InvalidRequiredUse(MetadataError):
+    """Package's REQUIRED_USE is invalid."""
+
+    _metadata_attrs = ('required_use',)
+
+
 class RequiredUseMetadataCheck(Check):
     """REQUIRED_USE validity checks."""
 
@@ -290,7 +296,7 @@ class RequiredUseMetadataCheck(Check):
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
             'options.has_required_use', values.FunctionRestriction(bool))),))
     required_addons = (addons.UseAddon, addons.ProfileAddon)
-    known_results = frozenset([MetadataError, RequiredUseDefaults, UnstatedIuse])
+    known_results = frozenset([InvalidRequiredUse, RequiredUseDefaults, UnstatedIuse])
 
     def __init__(self, options, iuse_handler, profiles):
         super().__init__(options)
