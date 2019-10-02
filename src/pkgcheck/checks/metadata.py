@@ -19,7 +19,6 @@ from snakeoil.strings import pluralism as _pl
 
 from .. import addons, base, git, results, sources
 from ..addons import UnstatedIuse
-from ..results import MetadataError
 from .visibility import FakeConfigurable
 from . import Check
 
@@ -43,7 +42,7 @@ class MissingLicense(results.VersionedResult, results.Error):
     desc = 'no license defined'
 
 
-class InvalidLicense(MetadataError):
+class InvalidLicense(results.MetadataError):
     """Package's LICENSE is invalid."""
 
     _metadata_attrs = ('license',)
@@ -222,7 +221,7 @@ class BannedEapi(_EapiResult, results.Error):
     _type = 'banned'
 
 
-class InvalidEapi(MetadataError):
+class InvalidEapi(results.MetadataError):
     """Package's EAPI is invalid."""
 
     _metadata_attrs = ('eapi',)
@@ -282,7 +281,7 @@ class RequiredUseDefaults(results.VersionedResult, results.Warning):
         )
 
 
-class InvalidRequiredUse(MetadataError):
+class InvalidRequiredUse(results.MetadataError):
     """Package's REQUIRED_USE is invalid."""
 
     _metadata_attrs = ('required_use',)
@@ -624,7 +623,7 @@ class BadDependency(results.VersionedResult, results.Error):
         return f'{self.msg}: {self.depset.upper()}="{self.atom}"'
 
 
-class InvalidDependency(MetadataError):
+class InvalidDependency(results.MetadataError):
     """Package has an invalid dependency."""
 
     _metadata_attrs = ('depend', 'rdepend', 'pdepend', 'bdepend')
@@ -951,7 +950,7 @@ class TarballAvailable(results.VersionedResult, results.Warning):
                 f"[ {' '.join(self.uris)} ]")
 
 
-class InvalidSrcUri(MetadataError):
+class InvalidSrcUri(results.MetadataError):
     """Package's SRC_URI is invalid."""
 
     _metadata_attrs = ('fetchables',)
