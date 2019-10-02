@@ -264,7 +264,7 @@ class TestPkgcheckScan(object):
     results = []
     for name, cls in const.CHECKS.items():
         for result in cls.known_results:
-            results.append((name, result))
+            results.append((cls, result))
 
     def test_pkgcheck_test_repos(self):
         """Make sure the test repos are up to date check/result naming wise."""
@@ -290,7 +290,7 @@ class TestPkgcheckScan(object):
                 pass
 
             allowed = custom_targets | stubs
-            results = {(name, cls.__name__) for name, cls in self.results}
+            results = {(check.__name__, result.__name__) for check, result in self.results}
             for cat, pkgs in sorted(repo.packages.items()):
                 if cat == 'stub':
                     continue
@@ -313,15 +313,16 @@ class TestPkgcheckScan(object):
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
         tested = False
         for repo in os.listdir(pjoin(self.testdir, 'data')):
+            check_name = check.__name__
             keyword = result.__name__
-            expected_path = pjoin(self.testdir, f'data/{repo}/{check}/{keyword}/expected')
+            expected_path = pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/expected')
             if not os.path.exists(expected_path):
                 continue
 
             repo_dir = pjoin(self.testdir, 'repos', repo)
 
             # create issue related to keyword as required
-            trigger = pjoin(self.testdir, f'data/{repo}/{check}/{keyword}/trigger.sh')
+            trigger = pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/trigger.sh')
             if os.path.exists(trigger):
                 triggered_repo = str(tmp_path / f'triggered-{repo}')
                 shutil.copytree(repo_dir, triggered_repo)
@@ -332,15 +333,17 @@ class TestPkgcheckScan(object):
 
             # determine what test target to use
             try:
-                target = open(pjoin(self.testdir, f'data/{repo}/{check}/{keyword}/target'))
+                target = open(pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/target'))
                 args.extend(shlex.split(target.read()))
             except FileNotFoundError:
-                if result.scope in (base.package_scope, base.version_scope):
-                    args.append(f'{check}/{keyword}')
+                if base.repository_scope in (result.scope, check.scope):
+                    args.extend(['-k', keyword])
                 elif result.scope == base.category_scope:
                     args.append(f'{keyword}/*')
-                elif result.scope == base.repository_scope:
-                    args.extend(['-k', keyword])
+                elif result.scope in (base.package_scope, base.version_scope):
+                    args.append(f'{check_name}/{keyword}')
+                else:
+                    pytest.fail(f'{keyword} result for {check_name} check has unknown scope')
 
             with open(expected_path) as f:
                 expected = f.read()
@@ -435,10 +438,11 @@ class TestPkgcheckScan(object):
     @pytest.mark.parametrize('check, result', results)
     def test_pkgcheck_scan_fix(self, check, result, capsys, cache_dir, tmp_path):
         """Apply fixes to pkgs, verifying the related results are fixed."""
+        check_name = check.__name__
         keyword = result.__name__
         tested = False
         for repo in os.listdir(pjoin(self.testdir, 'data')):
-            keyword_dir = pjoin(self.testdir, f'data/{repo}/{check}/{keyword}')
+            keyword_dir = pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}')
             if os.path.exists(pjoin(keyword_dir, 'fix.patch')):
                 fix = pjoin(keyword_dir, 'fix.patch')
                 func = self._patch
@@ -448,19 +452,23 @@ class TestPkgcheckScan(object):
             else:
                 continue
 
-            if result.scope in (base.package_scope, base.version_scope):
-                args = [f'{check}/{keyword}']
-            elif result.scope == base.category_scope:
-                args = [f'{keyword}/*']
-            elif result.scope == base.repository_scope:
-                args = ['-k', keyword]
-
             # apply a fix if one exists and make sure the related result doesn't appear
             repo_dir = pjoin(self.testdir, 'repos', repo)
             fixed_repo = str(tmp_path / f'fixed-{repo}')
             shutil.copytree(repo_dir, fixed_repo)
             func(fix, fixed_repo)
-            cmd = self.args + ['-r', fixed_repo] + args
+
+            args = ['-r', fixed_repo]
+            if base.repository_scope in (result.scope, check.scope):
+                args.extend(['-k', keyword])
+            elif result.scope == base.category_scope:
+                args.append(f'{keyword}/*')
+            elif result.scope in (base.package_scope, base.version_scope):
+                args.append(f'{check_name}/{keyword}')
+            else:
+                pytest.fail(f'{keyword} result for {check_name} check has unknown scope')
+
+            cmd = self.args + args
             with patch('sys.argv', cmd), \
                     patch('pkgcheck.base.CACHE_DIR', cache_dir):
                 with pytest.raises(SystemExit) as excinfo:
