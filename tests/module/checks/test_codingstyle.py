@@ -24,19 +24,6 @@ class TestBadCommandsCheck(misc.ReportTestCase):
         ]
         self.assertNoReport(self.check, self.mk_pkg(lines=fake_src))
 
-    def test_all_internals(self):
-        for command in self.check_kls.INTERNALS:
-            # commented lines are skipped
-            line = f'{command} foo bar'
-            self.assertNoReport(self.check, self.mk_pkg(lines=[f'#{line}']))
-
-            r = self.assertReport(self.check, self.mk_pkg(lines=[line]))
-            assert isinstance(r, codingstyle.PortageInternals)
-            assert r.command == command
-            assert r.line == line
-            assert r.lineno == 1
-            assert command in str(r)
-
     def test_deprecated_cmds(self):
         for eapi_str, eapi in EAPI.known_eapis.items():
             for command in eapi.bash_cmds_deprecated:

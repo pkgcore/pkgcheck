@@ -38,10 +38,6 @@ class _CommandResult(results.VersionedResult):
         return s
 
 
-class PortageInternals(_CommandResult, results.Error):
-    """Ebuild uses a function or variable internal to portage."""
-
-
 class _EapiCommandResult(_CommandResult):
     """Generic EAPI command result."""
 
@@ -72,18 +68,7 @@ class BadCommandsCheck(Check):
     """Scan ebuild for various deprecated and banned command usage."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = (PortageInternals, DeprecatedEapiCommand, BannedEapiCommand)
-
-    INTERNALS = (
-        'prepall',
-        'prepalldocs',
-        'prepallinfo',
-        'prepallman',
-        'prepallstrip',
-        'prepinfo',
-        'prepman',
-        'prepstrip',
-    )
+    known_results = (DeprecatedEapiCommand, BannedEapiCommand)
 
     CMD_USAGE_REGEX = r'^(\s*|.*[|&{{(]+\s*)\b(?P<cmd>{})(?!\.)\b'
 
@@ -93,9 +78,8 @@ class BadCommandsCheck(Check):
     @jit_attr
     def regexes(self):
         d = {}
-        internals_re = self._cmds_regex(self.INTERNALS)
         for eapi_str, eapi in EAPI.known_eapis.items():
-            regexes = [(internals_re, PortageInternals, {})]
+            regexes = []
             if eapi.bash_cmds_banned:
                 regexes.append((
                     self._cmds_regex(eapi.bash_cmds_banned),
