@@ -478,6 +478,7 @@ def _scan(options, out, err):
         """Initialize required checks."""
         enabled = defaultdict(lambda: defaultdict(list))
         sources = {}
+        caches = []
         for cls in addons:
             addon = init_addon(cls)
             if isinstance(addon, Check):
@@ -486,20 +487,26 @@ def _scan(options, out, err):
                     source = init_source(addon.source)
                     sources[addon.source] = source
                 enabled[addon.scope][source].append(addon)
-        return enabled
+            if isinstance(addon, base.Cache):
+                caches.append(addon)
+        return enabled, caches
 
     results_q = SimpleQueue()
     def results_callback(results):
         results_q.put(results)
     options.results_callback = results_callback
 
-    enabled_checks = init_checks(options.pop('addons'))
+    enabled_checks, caches = init_checks(options.pop('addons'))
 
     if options.verbosity >= 1:
         msg = f'target repo: {options.target_repo.repo_id!r}'
         if options.target_repo.repo_id != options.target_repo.location:
             msg += f' at {options.target_repo.location!r}'
         err.write(msg)
+
+    # force cache updates
+    if caches:
+        base.Cache.update_caches(options, caches)
 
     reporter.start()
 
