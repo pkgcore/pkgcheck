@@ -10,6 +10,7 @@ Feed types have to match exactly. Scopes are ordered: they define a
 minimally accepted scope.
 """
 
+import concurrent.futures
 import re
 import sys
 from collections import OrderedDict
@@ -112,6 +113,27 @@ class Addon:
         This is only called for addons that are enabled, but before
         they are instantiated.
         """
+
+
+class Cache:
+    """Mixin for addon classes that create/use data caches."""
+
+    # used to check on-disk cache compatibility
+    cache_version = 0
+
+    def update_cache(self):
+        """Update related cache and push updates to disk."""
+        raise NotImplementedError(self.update_cache)
+
+    @staticmethod
+    def update_caches(options, addons):
+        """Update all known caches."""
+        ret = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(addon.update_cache) for addon in addons]
+            for future in concurrent.futures.as_completed(futures):
+                ret.append(future.result())
+        return any(ret)
 
 
 def convert_check_filter(tok):
