@@ -265,7 +265,7 @@ class _ScanCommits(argparse.Action):
         setattr(namespace, self.dest, True)
 
 
-class GitAddon(base.Addon):
+class GitAddon(base.Addon, base.Cache):
     """Git repo support for various checks.
 
     Pkgcheck can create virtual package repos from a given git repo's history
@@ -294,12 +294,6 @@ class GitAddon(base.Addon):
             help="disable git-related checks",
             docs="""
                 Disable all checks that use git to parse repo logs.
-            """)
-        group.add_argument(
-            '--git-cache', action='store_true',
-            help="force git repo cache refresh",
-            docs="""
-                Parses a repo's git log and caches various historical information.
             """)
         mutual_ex_group.add_argument(
             '--commits', action=_ScanCommits, default=False,
@@ -332,6 +326,9 @@ class GitAddon(base.Addon):
             except CommandNotFound:
                 self.options.git_disable = True
 
+        # mapping of repo locations to their corresponding git repo caches
+        self._cached_repos = {}
+
     @staticmethod
     def get_commit_hash(repo_location, commit='origin/HEAD'):
         """Retrieve a git repo's commit hash for a specific commit object."""
@@ -345,19 +342,15 @@ class GitAddon(base.Addon):
                 f'for git repo: {repo_location}')
         return out[0].strip()
 
-    def cached_repo(self, repo_cls, target_repo=None):
-        cached_repo = None
-        if target_repo is None:
-            target_repo = self.options.target_repo
+    def update_cache(self):
+        """Update related cache and push updates to disk."""
+        target_repo = self.options.target_repo
 
         if not self.options.git_disable:
-            git_repos = []
             for repo in target_repo.trees:
                 try:
                     commit = self.get_commit_hash(repo.location)
                 except ValueError as e:
-                    if str(e):
-                        logger.warning('skipping git checks for %s repo: %s', repo, e)
                     continue
 
                 # initialize cache file location
@@ -366,7 +359,7 @@ class GitAddon(base.Addon):
 
                 git_repo = None
                 cache_repo = True
-                if not self.options.git_cache:
+                if not getattr(self.options, 'force_cache', False):
                     # try loading cached, historical repo data
                     try:
                         with open(cache_file, 'rb') as f:
@@ -395,11 +388,9 @@ class GitAddon(base.Addon):
                     logger.debug('creating cached git repo: %s', commit[:10])
                     git_repo = ParsedGitRepo(repo, commit, debug=self.options.debug)
 
-                # only enable repo queries if history was found, e.g. a
-                # shallow clone with a depth of 1 won't have any history
                 if git_repo:
-                    git_repos.append(repo_cls(git_repo, repo_id=f'{repo.repo_id}-history'))
-                    # dump historical repo data
+                    self._cached_repos[repo.location] = git_repo
+                    # push repo to disk if it was created or updated
                     if cache_repo:
                         try:
                             os.makedirs(os.path.dirname(cache_file), exist_ok=True)
@@ -408,6 +399,23 @@ class GitAddon(base.Addon):
                         except IOError as e:
                             msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
                             raise UserException(msg)
+
+    def cached_repo(self, repo_cls, target_repo=None):
+        cached_repo = None
+        if target_repo is None:
+            target_repo = self.options.target_repo
+
+        if not self.options.git_disable:
+            git_repos = []
+            for repo in target_repo.trees:
+                git_repo = self._cached_repos.get(repo.location, None)
+                # only enable repo queries if history was found, e.g. a
+                # shallow clone with a depth of 1 won't have any history
+                if git_repo:
+                    git_repos.append(repo_cls(git_repo, repo_id=f'{repo.repo_id}-history'))
+                else:
+                    logger.warning('skipping git checks for %s repo', repo)
+                    break
             else:
                 if len(git_repos) > 1:
                     cached_repo = multiplex.tree(*git_repos)
