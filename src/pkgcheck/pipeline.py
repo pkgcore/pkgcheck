@@ -32,7 +32,7 @@ class Pipeline:
         self.scan_scope = scan_scope
         self.pipes = pipes
         self.restrict = restrict
-        self.jobs = options.jobs if options.jobs is not None else os.cpu_count()
+        self.jobs = options.jobs
 
     def _run_version_checks(self, pipes, restrict):
         results = []
@@ -78,7 +78,7 @@ class Pipeline:
             # sense for packages hitting visibility checks or other CPU heavy
             # tests hard, e.g. packages with a lot of transitive USE flags, so
             # the default is to run them serially.
-            if self.options.jobs is None:
+            if self.options.jobs == 1:
                 results = []
                 for pipe in chain.from_iterable(self.pipes.values()):
                     results.extend(pipe.run(self.restrict))

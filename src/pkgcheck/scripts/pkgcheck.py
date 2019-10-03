@@ -117,7 +117,7 @@ main_options.add_argument(
         ACCEPT_LICENSE, and package.mask.
     """)
 main_options.add_argument(
-    '-j', '--jobs', type=jobs,
+    '-j', '--jobs', type=jobs, default=os.cpu_count(),
     help='number of checks to run in parallel',
     docs="""
         Number of checks to run in parallel, defaults to using all available
