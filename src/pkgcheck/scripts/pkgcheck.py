@@ -442,62 +442,67 @@ def _validate_args(parser, namespace):
         parser.error(str(e))
 
 
+def init_addon(cls, options, addons_map=None):
+    """Initialize a given addon."""
+    if addons_map is None:
+        addons_map = {}
+    res = addons_map.get(cls)
+    if res is not None:
+        return res
+    deps = [init_addon(dep, options, addons_map) for dep in cls.required_addons]
+    res = addons_map[cls] = cls(options, *deps)
+    return res
+
+
+def init_source(source, options, addons_map):
+    """Initialize a given source."""
+    if isinstance(source, tuple):
+        if len(source) == 3:
+            source, args, kwargs = source
+            kwargs = dict(kwargs)
+            # initialize wrapped source
+            if 'source' in kwargs:
+                kwargs['source'] = init_source(kwargs['source'], options, addons_map)
+        else:
+            source, args = source
+            kwargs = {}
+    else:
+        args = ()
+        kwargs = {}
+    deps = [addons_map.get(cls, cls(options)) for cls in source.required_addons]
+    return source(*args, options, *deps, **kwargs)
+
+
+def init_checks(addons, options):
+    """Initialize required checks."""
+    enabled = defaultdict(lambda: defaultdict(list))
+    addons_map = {}
+    sources = {}
+    caches = []
+    for cls in addons:
+        addon = init_addon(cls, options, addons_map)
+        if isinstance(addon, Check):
+            source = sources.get(addon.source)
+            if source is None:
+                source = init_source(addon.source, options, addons_map)
+                sources[addon.source] = source
+            enabled[addon.scope][source].append(addon)
+        if isinstance(addon, base.Cache):
+            caches.append(addon)
+    return enabled, caches
+
+
 @scan.bind_main_func
 def _scan(options, out, err):
     reporter = options.reporter(
         out, verbosity=options.verbosity, keywords=options.filtered_keywords)
-
-    addons_map = {}
-    def init_addon(cls):
-        """Initialize addons."""
-        res = addons_map.get(cls)
-        if res is not None:
-            return res
-        deps = [init_addon(dep) for dep in cls.required_addons]
-        res = addons_map[cls] = cls(options, *deps)
-        return res
-
-    def init_source(source):
-        """Initialize a given source."""
-        if isinstance(source, tuple):
-            if len(source) == 3:
-                source, args, kwargs = source
-                kwargs = dict(kwargs)
-                # initialize wrapped source
-                if 'source' in kwargs:
-                    kwargs['source'] = init_source(kwargs['source'])
-            else:
-                source, args = source
-                kwargs = {}
-        else:
-            args = ()
-            kwargs = {}
-        deps = [addons_map.get(cls, cls(options)) for cls in source.required_addons]
-        return source(*args, options, *deps, **kwargs)
-
-    def init_checks(addons):
-        """Initialize required checks."""
-        enabled = defaultdict(lambda: defaultdict(list))
-        sources = {}
-        caches = []
-        for cls in addons:
-            addon = init_addon(cls)
-            if isinstance(addon, Check):
-                source = sources.get(addon.source)
-                if source is None:
-                    source = init_source(addon.source)
-                    sources[addon.source] = source
-                enabled[addon.scope][source].append(addon)
-            if isinstance(addon, base.Cache):
-                caches.append(addon)
-        return enabled, caches
 
     results_q = SimpleQueue()
     def results_callback(results):
         results_q.put(results)
     options.results_callback = results_callback
 
-    enabled_checks, caches = init_checks(options.pop('addons'))
+    enabled_checks, caches = init_checks(options.pop('addons'), options)
 
     if options.verbosity >= 1:
         msg = f'target repo: {options.target_repo.repo_id!r}'
@@ -604,17 +609,7 @@ def _cache(options, out, err):
         except IOError as e:
             raise UserException(f'failed removing cache dir: {e}')
     elif options.force_cache or options.update:
-        addons_map = {}
-        def init_addon(cls):
-            """Initialize addons."""
-            res = addons_map.get(cls)
-            if res is not None:
-                return res
-            deps = [init_addon(dep) for dep in cls.required_addons]
-            res = addons_map[cls] = cls(options, *deps)
-            return res
-
-        caches = [init_addon(addon) for addon in cache_addons]
+        caches = [init_addon(addon, options) for addon in cache_addons]
         base.Cache.update_caches(options, caches)
 
 
