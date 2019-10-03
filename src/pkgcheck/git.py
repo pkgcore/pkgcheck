@@ -5,7 +5,7 @@ import os
 import pickle
 import shlex
 import subprocess
-from collections import namedtuple
+from collections import namedtuple, UserDict
 
 from pkgcore.ebuild import cpv
 from pkgcore.ebuild.atom import MalformedAtom
@@ -35,30 +35,27 @@ _GitPkgChange = namedtuple('GitPkgChange', [
     'atom', 'status', 'commit', 'commit_date', 'author', 'committer', 'message'])
 
 
-class ParseGitRepo:
+class ParsedGitRepo(UserDict):
     """Parse repository git logs."""
 
     # git command to run on the targeted repo
-    _git_cmd = 'git log --name-status --date=short'
-    # selected file filter
-    _diff_filter = None
-    # filename for cache file, if None cache files aren't supported
-    cache_name = None
+    _git_cmd = 'git log --name-status --date=short --diff-filter=ARMD'
 
     def __init__(self, repo, commit=None, **kwargs):
+        super().__init__()
         self.location = repo.location
         self.cache_version = GitAddon.cache_version
 
         if commit is None:
             self.commit = 'origin/HEAD..master'
-            self.pkg_map = self._pkg_changes(commit=self.commit, **kwargs)
+            self._pkg_changes(commit=self.commit, **kwargs)
         else:
             self.commit = commit
-            self.pkg_map = self._pkg_changes(**kwargs)
+            self._pkg_changes(**kwargs)
 
     def update(self, commit, **kwargs):
         """Update an existing repo starting at a given commit hash."""
-        self._pkg_changes(self.pkg_map, commit=self.commit, **kwargs)
+        self._pkg_changes(commit=self.commit, **kwargs)
         self.commit = commit
 
     @staticmethod
@@ -157,20 +154,16 @@ class ParseGitRepo:
                                 atom, status, commit, commit_date,
                                 author, committer, message)
 
-    def _pkg_changes(self, pkg_map=None, local=False, **kwargs):
+    def _pkg_changes(self, local=False, **kwargs):
         """Parse package changes from git log output."""
-        if pkg_map is None:
-            pkg_map = {}
-
         cmd = shlex.split(self._git_cmd)
-        if self._diff_filter is not None:
-            cmd.append(f'--diff-filter={self._diff_filter}')
 
         seen = set()
         for pkg in self.parse_git_log(self.location, cmd, pkgs=True, **kwargs):
             atom = pkg.atom
-            if atom not in seen:
-                seen.add(atom)
+            key = (atom, pkg.status)
+            if key not in seen:
+                seen.add(key)
                 data = {
                     'date': pkg.commit_date,
                     'status': pkg.status,
@@ -182,36 +175,8 @@ class ParseGitRepo:
                         'committer': pkg.committer,
                         'message': pkg.message,
                     })
-                pkg_map.setdefault(atom.category, {}).setdefault(
-                    atom.package, {})[atom.fullver] = data
-        return pkg_map
-
-
-class GitChangedRepo(ParseGitRepo):
-    """Parse repository git log to determine locally changed packages."""
-
-    _diff_filter = 'ARMD'
-
-
-class GitModifiedRepo(ParseGitRepo):
-    """Parse repository git log to determine latest ebuild modification dates."""
-
-    cache_name = 'git-modified'
-    _diff_filter = 'ARM'
-
-
-class GitAddedRepo(ParseGitRepo):
-    """Parse repository git log to determine ebuild added dates."""
-
-    cache_name = 'git-added'
-    _diff_filter = 'AR'
-
-
-class GitRemovedRepo(ParseGitRepo):
-    """Parse repository git log to determine ebuild removal dates."""
-
-    cache_name = 'git-removed'
-    _diff_filter = 'D'
+                self.data.setdefault(atom.category, {}).setdefault(
+                    atom.package, {})[(atom.fullver, pkg.status)] = data
 
 
 class _UpstreamCommitPkg(cpv.VersionedCPV):
@@ -241,20 +206,49 @@ class _LocalCommitPkg(_UpstreamCommitPkg):
 
 
 class _HistoricalRepo(SimpleTree):
-    """Repository encapsulating historical data."""
+    """Repository encapsulating historical git data."""
+
+    # selected pkg status filter
+    _status_filter = None
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('pkg_klass', _UpstreamCommitPkg)
         super().__init__(*args, **kwargs)
 
     def _get_versions(self, cp_key):
-        return tuple(self.cpv_dict[cp_key[0]][cp_key[1]].items())
+        versions = []
+        for (version, status), data in self.cpv_dict[cp_key[0]][cp_key[1]].items():
+            if self._status_filter is None or status in self._status_filter:
+                versions.append((version, data))
+        return tuple(versions)
 
     def _internal_gen_candidates(self, candidates, sorter, raw_pkg_cls, **kwargs):
         for cp in sorter(candidates):
             yield from sorter(
                 raw_pkg_cls(cp[0], cp[1], ver, **data)
                 for ver, data in self.versions.get(cp, ()))
+
+
+class GitChangedRepo(_HistoricalRepo):
+    """Historical git repo consisting of the latest changed packages."""
+
+
+class GitModifiedRepo(_HistoricalRepo):
+    """Historical git repo consisting of the latest modified packages."""
+
+    _status_filter = frozenset(['A', 'R', 'M'])
+
+
+class GitAddedRepo(_HistoricalRepo):
+    """Historical git repo consisting of added packages."""
+
+    _status_filter = frozenset(['A', 'R'])
+
+
+class GitRemovedRepo(_HistoricalRepo):
+    """Historical git repo consisting of removed packages."""
+
+    _status_filter = frozenset(['D'])
 
 
 class _ScanCommits(argparse.Action):
@@ -289,7 +283,7 @@ class GitAddon(base.Addon):
     """
 
     # used to check repo cache compatibility
-    cache_version = 2
+    cache_version = 3
 
     @classmethod
     def mangle_argparser(cls, parser):
@@ -356,9 +350,6 @@ class GitAddon(base.Addon):
         if target_repo is None:
             target_repo = self.options.target_repo
 
-        if repo_cls.cache_name is None:
-            raise TypeError(f"{repo_cls} doesn't support cached repos")
-
         if not self.options.git_disable:
             git_repos = []
             for repo in target_repo.trees:
@@ -371,7 +362,7 @@ class GitAddon(base.Addon):
 
                 # initialize cache file location
                 cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
-                cache_file = pjoin(cache_dir, f'{repo_cls.cache_name}.pickle')
+                cache_file = pjoin(cache_dir, 'git.pickle')
 
                 git_repo = None
                 cache_repo = True
@@ -395,21 +386,19 @@ class GitAddon(base.Addon):
                         repo.location == getattr(git_repo, 'location', None)):
                     if commit != git_repo.commit:
                         logger.debug(
-                            'updating %s repo: %s -> %s',
-                            repo_cls.cache_name, git_repo.commit[:10], commit[:10])
+                            'updating cached git repo: %s -> %s',
+                            git_repo.commit[:10], commit[:10])
                         git_repo.update(commit, debug=self.options.debug)
                     else:
                         cache_repo = False
                 else:
-                    logger.debug(
-                        'creating %s repo: %s', repo_cls.cache_name, commit[:10])
-                    git_repo = repo_cls(repo, commit, debug=self.options.debug)
+                    logger.debug('creating cached git repo: %s', commit[:10])
+                    git_repo = ParsedGitRepo(repo, commit, debug=self.options.debug)
 
                 # only enable repo queries if history was found, e.g. a
                 # shallow clone with a depth of 1 won't have any history
-                if git_repo.pkg_map:
-                    git_repos.append(_HistoricalRepo(
-                        git_repo.pkg_map, repo_id=f'{repo.repo_id}-history'))
+                if git_repo:
+                    git_repos.append(repo_cls(git_repo, repo_id=f'{repo.repo_id}-history'))
                     # dump historical repo data
                     if cache_repo:
                         try:
@@ -444,10 +433,9 @@ class GitAddon(base.Addon):
                 return repo
 
             if origin != master:
-                git_repo = repo_cls(target_repo, local=True)
+                git_repo = ParsedGitRepo(target_repo, local=True)
                 repo_id = f'{target_repo.repo_id}-commits'
-                repo = _HistoricalRepo(
-                    git_repo.pkg_map, pkg_klass=_LocalCommitPkg, repo_id=repo_id)
+                repo = repo_cls(git_repo, pkg_klass=_LocalCommitPkg, repo_id=repo_id)
 
         return repo
 
@@ -465,6 +453,6 @@ class GitAddon(base.Addon):
                 return commits
 
             if origin != master:
-                commits = ParseGitRepo.parse_git_log(path, commit='origin/HEAD..master')
+                commits = ParsedGitRepo.parse_git_log(path, commit='origin/HEAD..master')
 
         return commits
