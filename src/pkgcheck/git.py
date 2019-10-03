@@ -13,7 +13,6 @@ from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
-from pkgcore.test.misc import FakeRepo
 from snakeoil.cli.exceptions import UserException
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import pjoin
@@ -457,7 +456,8 @@ class GitAddon(base.Addon, base.Cache):
         if target_repo is None:
             target_repo = options.target_repo
 
-        repo = FakeRepo()
+        git_repo = {}
+        repo_id = f'{target_repo.repo_id}-commits'
 
         if not options.git_disable:
             try:
@@ -470,10 +470,8 @@ class GitAddon(base.Addon, base.Cache):
 
             if origin != master:
                 git_repo = ParsedGitRepo(target_repo, local=True)
-                repo_id = f'{target_repo.repo_id}-commits'
-                repo = repo_cls(git_repo, pkg_klass=_LocalCommitPkg, repo_id=repo_id)
 
-        return repo
+        return repo_cls(git_repo, pkg_klass=_LocalCommitPkg, repo_id=repo_id)
 
     def commits(self, repo=None):
         path = repo.location if repo is not None else self.options.target_repo.location
