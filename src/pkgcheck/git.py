@@ -463,13 +463,11 @@ class GitAddon(base.Addon, base.Cache):
             try:
                 origin = self.get_commit_hash(target_repo.location)
                 master = self.get_commit_hash(target_repo.location, commit='master')
+                if origin != master:
+                    git_repo = ParsedGitRepo(target_repo, local=True)
             except ValueError as e:
                 if str(e):
                     logger.warning('skipping git commit checks: %s', e)
-                return repo
-
-            if origin != master:
-                git_repo = ParsedGitRepo(target_repo, local=True)
 
         return repo_cls(git_repo, pkg_klass=_LocalCommitPkg, repo_id=repo_id)
 
