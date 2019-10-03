@@ -124,6 +124,7 @@ case $state in
 
     subcommands=(
       scan:'scan targets for QA issues'
+      cache:'update/remove pkgcheck caches'
       replay:'replay results streams'
       show:'show various pkgcheck info'
     )
@@ -141,6 +142,8 @@ case $state in
         scan_opts=(
           {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_repos'
           {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter]:reporters:_reporters"
+          "--filtered[enable all license and visibility filtering for packages]:yes/no:((y\:'yes' n\:'no'))"
+          {'(--jobs)-j','(-j)--jobs'}'[number of checks to run in parallel]:jobs'
         )
 
         check_opts=(
@@ -148,6 +151,8 @@ case $state in
           {'(--checkset)-C','(-C)--checkset'}'[preconfigured set of checks to run]'
           {'(--keywords)-k','(-k)--keywords'}'[comma separated list of keywords to enable/disable]:keywords:{_values -s , keywords $(_keywords -p)}'
           {'(--scopes)-s','(-s)--scopes'}'[comma separated list of keyword scopes to enable/disable]:scopes:{_values -s . scopes $(_scopes -p)}'
+          '--net[run checks that require internet access]'
+          '--timeout[timeout used for network checks (in seconds)]:timeout'
         )
 
         arch_opts=(
@@ -156,6 +161,7 @@ case $state in
 
         profile_opts=(
           '--profiles-base[path to base profiles directory]:profiles base path:_path_files -/'
+          "--profile-cache[forcibly enable/disable profile cache usage]:yes/no:((y\:'yes' n\:'no'))"
           {'(--profiles)-p','(-p)--profiles'}'[comma separated list of profiles to enable/disable]:profiles:{_values -s , profiles stable dev exp deprecated}'
         )
 
@@ -170,6 +176,14 @@ case $state in
           $check_opts \
           $plugin_opts \
           '*:target:_files' \
+          && ret=0
+        ;;
+      (cache)
+        _arguments -C -A '-*' \
+          $common_output_args \
+          {'(--update)-u','(-u)--update'}'[update caches]' \
+          {'(--force)-f','(-f)--force'}'[forcibly update caches]' \
+          {'(--remove)-r','(-r)--remove'}'[forcibly remove caches]' \
           && ret=0
         ;;
       (replay)
