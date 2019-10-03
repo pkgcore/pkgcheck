@@ -3,6 +3,7 @@
 import csv
 import json
 import pickle
+import signal
 from collections import defaultdict
 from multiprocessing import Process
 from xml.sax.saxutils import escape as xml_escape
@@ -31,8 +32,10 @@ class Reporter:
         self.process = self._process_report().send
 
     def __call__(self, pipe, results_q):
+        orig_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)
         p = Process(target=pipe.run, args=(results_q,))
         p.start()
+        signal.signal(signal.SIGINT, orig_sigint_handler)
         while True:
             results = results_q.get()
             if results is None:

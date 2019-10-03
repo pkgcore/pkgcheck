@@ -43,12 +43,12 @@ class Pipeline:
     def _run_pkg_checks(self, restrict, pipe):
         return list(pipe.run(restrict))
 
-    def _insert_pkgs(self, queue):
+    def _insert_pkgs(self, restricts_q):
         source = UnversionedSource(self.options)
         for restrict in source.itermatch(self.restrict):
-            queue.put(restrict)
+            restricts_q.put(restrict)
         for i in range(self.jobs):
-            queue.put(None)
+            restricts_q.put(None)
 
     def _run_checks(self, pipes, restricts_q, results_q):
         while True:
