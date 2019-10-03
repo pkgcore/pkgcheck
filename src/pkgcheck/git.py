@@ -343,7 +343,7 @@ class GitAddon(base.Addon, base.Cache):
                 f'for git repo: {repo_location}')
         return out[0].strip()
 
-    def update_cache(self):
+    def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         try:
             # running from scan subcommand
@@ -366,7 +366,7 @@ class GitAddon(base.Addon, base.Cache):
 
                 git_repo = None
                 cache_repo = True
-                if not getattr(self.options, 'force_cache', False):
+                if not force:
                     # try loading cached, historical repo data
                     try:
                         with open(cache_file, 'rb') as f:

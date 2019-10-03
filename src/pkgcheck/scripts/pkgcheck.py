@@ -568,14 +568,14 @@ cache = subparsers.add_parser(
     """)
 cache_actions = cache.add_mutually_exclusive_group()
 cache_actions.add_argument(
-    '-u', '--update', action='store_true',
+    '-u', '--update', dest='update_cache', action='store_true',
     help='update caches')
-cache_actions.add_argument(
-    '-f', '--force', dest='force_cache', action='store_true',
-    help='forcibly update caches')
 cache_actions.add_argument(
     '-r', '--remove', dest='remove_cache', action='store_true',
     help='forcibly remove caches')
+cache.add_argument(
+    '-f', '--force', dest='force_cache', action='store_true',
+    help='forcibly update/remove caches')
 
 cache_addons = set()
 cache.plugin = cache.add_argument_group()
@@ -608,7 +608,7 @@ def _cache(options, out, err):
             pass
         except IOError as e:
             raise UserException(f'failed removing cache dir: {e}')
-    elif options.force_cache or options.update:
+    elif options.update_cache:
         caches = [init_addon(addon, options) for addon in cache_addons]
         base.Cache.update_caches(options, caches)
 

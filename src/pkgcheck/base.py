@@ -121,7 +121,7 @@ class Cache:
     # used to check on-disk cache compatibility
     cache_version = 0
 
-    def update_cache(self):
+    def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         raise NotImplementedError(self.update_cache)
 
@@ -130,7 +130,9 @@ class Cache:
         """Update all known caches."""
         ret = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(addon.update_cache) for addon in addons]
+            futures = [
+                executor.submit(addon.update_cache, options.force_cache)
+                for addon in addons]
             for future in concurrent.futures.as_completed(futures):
                 ret.append(future.result())
         return any(ret)
