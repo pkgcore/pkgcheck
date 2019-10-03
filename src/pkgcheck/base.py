@@ -130,9 +130,10 @@ class Cache:
     def update_caches(options, addons):
         """Update all known caches."""
         ret = []
+        force = getattr(options, 'force_cache', False)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
-                executor.submit(addon.update_cache, options.force_cache)
+                executor.submit(addon.update_cache, force)
                 for addon in addons]
             for future in concurrent.futures.as_completed(futures):
                 ret.append(future.result())
@@ -146,7 +147,8 @@ class Cache:
     def remove_caches(options, addons):
         """Remove all or selected caches."""
         ret = []
-        if options.force_cache:
+        force = getattr(options, 'force_cache', False)
+        if force:
             try:
                 shutil.rmtree(base.CACHE_DIR)
             except FileNotFoundError:
