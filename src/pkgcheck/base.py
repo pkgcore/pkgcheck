@@ -12,6 +12,7 @@ minimally accepted scope.
 
 import concurrent.futures
 import re
+import shutil
 import sys
 from collections import OrderedDict
 from contextlib import AbstractContextManager
@@ -137,6 +138,28 @@ class Cache:
                 ret.append(future.result())
         return any(ret)
 
+    def remove_cache(self):
+        """Remove selected caches."""
+        raise NotImplementedError(self.remove_cache)
+
+    @staticmethod
+    def remove_caches(options, addons):
+        """Remove all or selected caches."""
+        ret = []
+        if options.force_cache:
+            try:
+                shutil.rmtree(base.CACHE_DIR)
+            except FileNotFoundError:
+                pass
+            except IOError as e:
+                raise UserException(f'failed removing cache dir: {e}')
+            ret.append(0)
+        else:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [executor.submit(addon.remove_cache) for addon in addons]
+                for future in concurrent.futures.as_completed(futures):
+                    ret.append(future.result())
+        return any(ret)
 
 def convert_check_filter(tok):
     """Convert an input string into a filter function.

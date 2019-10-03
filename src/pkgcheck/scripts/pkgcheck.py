@@ -7,7 +7,6 @@ ebuild repositories for various issues.
 
 import argparse
 import os
-import shutil
 import sys
 import textwrap
 from collections import defaultdict
@@ -601,16 +600,17 @@ def _validate_args(parser, namespace):
 
 @cache.bind_main_func
 def _cache(options, out, err):
+    ret = 0
+    caches = [init_addon(addon, options) for addon in cache_addons]
     if options.remove_cache:
-        try:
-            shutil.rmtree(base.CACHE_DIR)
-        except FileNotFoundError:
-            pass
-        except IOError as e:
-            raise UserException(f'failed removing cache dir: {e}')
+        ret = base.Cache.remove_caches(options, caches)
     elif options.update_cache:
-        caches = [init_addon(addon, options) for addon in cache_addons]
-        base.Cache.update_caches(options, caches)
+        ret = base.Cache.update_caches(options, caches)
+    else:
+        # TODO: list existing caches
+        pass
+
+    return ret
 
 
 replay = subparsers.add_parser(
