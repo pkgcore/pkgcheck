@@ -7,6 +7,7 @@ ebuild repositories for various issues.
 
 import argparse
 import os
+import shutil
 import sys
 import textwrap
 from collections import defaultdict
@@ -552,6 +553,69 @@ def _scan(options, out, err):
     # results not get the final message shoved in midway
     out.stream.flush()
     return 0
+
+
+cache = subparsers.add_parser(
+    'cache', description='update/remove pkgcheck caches',
+    docs="""
+        Caches of various types are used by pkgcheck. This command allows the
+        user to manually force cache updates or removals.
+    """)
+cache_actions = cache.add_mutually_exclusive_group()
+cache_actions.add_argument(
+    '-u', '--update', action='store_true',
+    help='update caches')
+cache_actions.add_argument(
+    '-f', '--force', dest='force_cache', action='store_true',
+    help='forcibly update caches')
+cache_actions.add_argument(
+    '-r', '--remove', dest='remove_cache', action='store_true',
+    help='forcibly remove caches')
+
+cache_addons = set()
+cache.plugin = cache.add_argument_group()
+for check in const.CHECKS.values():
+    for addon in check.required_addons:
+        if issubclass(addon, base.Cache):
+            cache_addons.add(addon)
+for addon in cache_addons:
+    addon.mangle_argparser(cache.plugin)
+
+@cache.bind_final_check
+def _validate_args(parser, namespace):
+    for addon in cache_addons:
+        add_addon(addon, cache_addons)
+    try:
+        for addon in cache_addons:
+            addon.check_args(parser, namespace)
+    except argparse.ArgumentError as e:
+        if namespace.debug:
+            raise
+        parser.error(str(e))
+
+
+@cache.bind_main_func
+def _cache(options, out, err):
+    if options.remove_cache:
+        try:
+            shutil.rmtree(base.CACHE_DIR)
+        except FileNotFoundError:
+            pass
+        except IOError as e:
+            raise UserException(f'failed removing cache dir: {e}')
+    elif options.force_cache or options.update:
+        addons_map = {}
+        def init_addon(cls):
+            """Initialize addons."""
+            res = addons_map.get(cls)
+            if res is not None:
+                return res
+            deps = [init_addon(dep) for dep in cls.required_addons]
+            res = addons_map[cls] = cls(options, *deps)
+            return res
+
+        caches = [init_addon(addon) for addon in cache_addons]
+        base.Cache.update_caches(options, caches)
 
 
 replay = subparsers.add_parser(

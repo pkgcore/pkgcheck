@@ -5,6 +5,7 @@ import os
 import pickle
 import shlex
 import subprocess
+from itertools import chain
 from collections import namedtuple, UserDict
 
 from pkgcore.ebuild import cpv
@@ -344,10 +345,16 @@ class GitAddon(base.Addon, base.Cache):
 
     def update_cache(self):
         """Update related cache and push updates to disk."""
-        target_repo = self.options.target_repo
+        try:
+            # running from scan subcommand
+            repos = self.options.target_repo.trees
+        except AttributeError:
+            # running from cache subcommand
+            repos = self.options.domain.ebuild_repos
+            repos = chain.from_iterable(repo.trees for repo in repos)
 
         if not self.options.git_disable:
-            for repo in target_repo.trees:
+            for repo in repos:
                 try:
                     commit = self.get_commit_hash(repo.location)
                 except ValueError as e:
