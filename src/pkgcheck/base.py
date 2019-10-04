@@ -47,6 +47,12 @@ class Scope:
     def __ge__(self, other):
         return self.level >= other.level
 
+    def __eq__(self, other):
+        return self.level == other.level
+
+    def __hash__(self):
+        return hash(self.level)
+
 
 version_scope = Scope('version', 0)
 package_scope = Scope('package', 1)
