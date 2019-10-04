@@ -60,16 +60,14 @@ class Pipeline:
             else:
                 results = []
                 for pipe in pipes[scope]:
+                    if scope == base.repository_scope:
+                        results.extend(pipe.start())
                     results.extend(pipe.run(restrict))
+                    if scope == base.repository_scope:
+                        results.extend(pipe.finish())
                 results_q.put(results)
 
     def run(self, results_q):
-        results = []
-        for pipe in chain.from_iterable(self.pipes.values()):
-            results.extend(pipe.start())
-        if results:
-            results_q.put(results)
-
         scoped_pipes = defaultdict(list)
         if self.scan_scope == base.version_scope:
             scoped_pipes[base.version_scope] = list(chain.from_iterable(self.pipes.values()))
@@ -93,12 +91,6 @@ class Pipeline:
         pool.close()
         p.join()
         pool.join()
-
-        results = []
-        for pipe in chain.from_iterable(self.pipes.values()):
-            results.extend(pipe.finish())
-        if results:
-            results_q.put(results)
 
         results_q.put(None)
 
