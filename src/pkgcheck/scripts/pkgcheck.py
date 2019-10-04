@@ -536,8 +536,7 @@ def _scan(options, out, err):
 
             # Skip checks higher than the current scan scope level, e.g. skip repo
             # level checks when scanning at package level.
-            pipes = (d for scope, d in enabled_checks.items() if scope <= scan_scope)
-            pipes = pipeline.plug(pipes)
+            pipes = [d for scope, d in enabled_checks.items() if scope <= scan_scope]
             if not pipes:
                 err.write(f'{scan.prog}: no matching checks available for current scope')
                 continue

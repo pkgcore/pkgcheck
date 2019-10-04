@@ -68,17 +68,22 @@ class Pipeline:
                 results_q.put(results)
 
     def run(self, results_q):
+        checkrunners = defaultdict(list)
+        for pipe_mapping in self.pipes:
+            for source, checks in pipe_mapping.items():
+                checkrunners[source.feed_type].append(CheckRunner(source, checks))
+
         scoped_pipes = defaultdict(list)
         if self.scan_scope == base.version_scope:
-            scoped_pipes[base.version_scope] = list(chain.from_iterable(self.pipes.values()))
+            scoped_pipes[base.version_scope] = list(chain.from_iterable(checkrunners.values()))
         elif self.scan_scope == base.package_scope:
-            for scope, pipes in self.pipes.items():
+            for scope, pipes in checkrunners.items():
                 if scope == base.version_scope:
                     scoped_pipes[base.version_scope].extend(pipes)
                 else:
                     scoped_pipes[base.package_scope].extend(pipes)
         else:
-            for scope, pipes in self.pipes.items():
+            for scope, pipes in checkrunners.items():
                 if scope <= base.package_scope:
                     scoped_pipes[base.package_scope].extend(pipes)
                 else:
@@ -192,16 +197,3 @@ class CheckRunner:
     def __repr__(self):
         checks = ', '.join(sorted(str(check) for check in self.checks))
         return f'{self.__class__.__name__}({checks})'
-
-
-def plug(pipes):
-    """Plug together a pipeline.
-
-    :param pipes: Iterable of source -> check pipe mappings.
-    :return: A generator of (source, consumer) tuples.
-    """
-    d = defaultdict(list)
-    for pipe_mapping in pipes:
-        for source, checks in pipe_mapping.items():
-            d[source.feed_type].append(CheckRunner(source, checks))
-    return d
