@@ -1,6 +1,5 @@
 """Pipeline building support for connecting sources and checks."""
 
-import concurrent.futures
 import os
 from collections import defaultdict
 from itertools import chain
@@ -34,31 +33,35 @@ class Pipeline:
         self.restrict = restrict
         self.jobs = options.jobs
 
-    def _run_version_checks(self, pipes, restrict):
-        results = []
-        for pipe in pipes:
-            results.extend(pipe.run(restrict))
-        return results
+    def _queue_work(self, scoped_pipes, work_q):
+        for scope, pipes in scoped_pipes.items():
+            if scope == base.version_scope:
+                versioned_source = VersionedSource(self.options)
+                for restrict in versioned_source.itermatch(self.restrict):
+                    for i in range(len(pipes)):
+                        work_q.put((scope, restrict, i))
+            elif scope == base.package_scope:
+                unversioned_source = UnversionedSource(self.options)
+                for restrict in unversioned_source.itermatch(self.restrict):
+                    work_q.put((scope, restrict, 0))
+            else:
+                work_q.put((scope, self.restrict, 0))
 
-    def _run_pkg_checks(self, restrict, pipe):
-        return list(pipe.run(restrict))
-
-    def _insert_pkgs(self, restricts_q):
-        source = UnversionedSource(self.options)
-        for restrict in source.itermatch(self.restrict):
-            restricts_q.put(restrict)
         for i in range(self.jobs):
-            restricts_q.put(None)
+            work_q.put((None, None, None))
 
-    def _run_checks(self, pipes, restricts_q, results_q):
+    def _run_checks(self, pipes, work_q, results_q):
         while True:
-            restrict = restricts_q.get()
-            if restrict is None:
+            scope, restrict, check_idx = work_q.get()
+            if scope is None:
                 return
-            results = []
-            for pipe in pipes:
-                results.extend(pipe.run(restrict))
-            results_q.put(results)
+            if scope == base.version_scope:
+                results_q.put(list(pipes[scope][check_idx].run(restrict)))
+            else:
+                results = []
+                for pipe in pipes[scope]:
+                    results.extend(pipe.run(restrict))
+                results_q.put(results)
 
     def run(self, results_q):
         results = []
@@ -67,67 +70,29 @@ class Pipeline:
         if results:
             results_q.put(results)
 
+        scoped_pipes = defaultdict(list)
         if self.scan_scope == base.version_scope:
-            results = []
-            for pipe in chain.from_iterable(self.pipes.values()):
-                results.extend(pipe.run(self.restrict))
-            if results:
-                results_q.put(results)
+            scoped_pipes[base.version_scope] = list(chain.from_iterable(self.pipes.values()))
         elif self.scan_scope == base.package_scope:
-            # Optionally run package scope scans in parallel. This only makes
-            # sense for packages hitting visibility checks or other CPU heavy
-            # tests hard, e.g. packages with a lot of transitive USE flags, so
-            # the default is to run them serially.
-            if self.options.jobs == 1:
-                results = []
-                for pipe in chain.from_iterable(self.pipes.values()):
-                    results.extend(pipe.run(self.restrict))
-                if results:
-                    results_q.put(results)
-            else:
-                pkg_checks = []
-                version_checks = []
-                for scope, pipes in self.pipes.items():
-                    if scope == base.package_scope:
-                        pkg_checks.extend(pipes)
-                    else:
-                        version_checks.extend(pipes)
-                source = VersionedSource(self.options)
-                futures = []
-                with concurrent.futures.ProcessPoolExecutor(self.jobs) as executor:
-                    for r in source.itermatch(self.restrict):
-                        futures.append(
-                            executor.submit(self._run_version_checks, version_checks, r))
-                    for p in pkg_checks:
-                        futures.append(executor.submit(self._run_pkg_checks, self.restrict, p))
-                results = []
-                for future in concurrent.futures.as_completed(futures):
-                    results.extend(future.result())
-                results_q.put(results)
+            for scope, pipes in self.pipes.items():
+                if scope == base.version_scope:
+                    scoped_pipes[base.version_scope].extend(pipes)
+                else:
+                    scoped_pipes[base.package_scope].extend(pipes)
         else:
-            # Performing scan runs at category scope and higher makes package
-            # checks run in parallel.
-            pkg_checks = []
-            non_pkg_checks = []
             for scope, pipes in self.pipes.items():
                 if scope <= base.package_scope:
-                    pkg_checks.extend(pipes)
+                    scoped_pipes[base.package_scope].extend(pipes)
                 else:
-                    non_pkg_checks.extend(pipes)
-            if pkg_checks:
-                restricts_q = SimpleQueue()
-                p = Process(target=self._insert_pkgs, args=(restricts_q,))
-                p.start()
-                pool = Pool(self.jobs, self._run_checks, (pkg_checks, restricts_q, results_q))
-                pool.close()
-                p.join()
-                pool.join()
-            if non_pkg_checks:
-                results = []
-                for pipe in non_pkg_checks:
-                    results.extend(pipe.run(self.restrict))
-                if results:
-                    results_q.put(results)
+                    scoped_pipes[scope].extend(pipes)
+
+        work_q = SimpleQueue()
+        p = Process(target=self._queue_work, args=(scoped_pipes, work_q))
+        p.start()
+        pool = Pool(self.jobs, self._run_checks, (scoped_pipes, work_q, results_q))
+        pool.close()
+        p.join()
+        pool.join()
 
         results = []
         for pipe in chain.from_iterable(self.pipes.values()):
