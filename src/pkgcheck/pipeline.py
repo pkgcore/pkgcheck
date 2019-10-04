@@ -1,7 +1,7 @@
 """Pipeline building support for connecting sources and checks."""
 
 import os
-from collections import defaultdict
+from collections import defaultdict, deque
 from itertools import chain
 from multiprocessing import Pool, Process, SimpleQueue
 
@@ -122,7 +122,7 @@ class CheckRunner:
                 for attr in cls._metadata_attrs:
                     self._metadata_error_classes[attr] = cls
                     self._known_metadata_attrs.add(attr)
-        self._metadata_errors = []
+        self._metadata_errors = deque()
 
     def _metadata_error_cb(self, e):
         try:
@@ -141,7 +141,7 @@ class CheckRunner:
         if cls is not None:
             error_str = ': '.join(e.msg().split('\n'))
             result = cls(e.attr, error_str, pkg=e.pkg)
-            self._metadata_errors.append(result)
+            self._metadata_errors.append((e.pkg, result))
 
     def start(self):
         for check in self.checks:
@@ -164,9 +164,12 @@ class CheckRunner:
                 except MetadataException as e:
                     self._metadata_error_cb(e)
 
-        if self._metadata_errors:
-            yield from self._metadata_errors
-            self._metadata_errors.clear()
+        while self._metadata_errors:
+            pkg, result = self._metadata_errors.popleft()
+            # Only show metadata errors for packages matching the current
+            # restriction to avoid duplicate reports.
+            if restrict.match(pkg):
+                yield result
 
     def finish(self):
         for check in self.checks:
