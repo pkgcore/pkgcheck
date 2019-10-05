@@ -236,28 +236,29 @@ def _determine_target_repo(namespace, parser, cwd):
         target_dir, config=namespace.config, configure=False)
 
 
+def _path_restrict(path, namespace):
+    """Generate custom package restriction from a given path.
+
+    This drops the repo restriction (initial entry in path restrictions)
+    since runs can only be made against single repo targets so the extra
+    restriction is redundant and breaks several custom sources involving
+    raw pkgs (lacking a repo attr) or faked repos.
+    """
+    repo = namespace.target_repo
+    restrictions = []
+    try:
+        restrictions = repo.path_restrict(path)[1:]
+    except ValueError as e:
+        raise UserException(str(e))
+    if restrictions:
+        return packages.AndRestriction(*restrictions)
+    return packages.AlwaysTrue
+
+
 @scan.bind_final_check
 def _validate_args(parser, namespace):
     namespace.enabled_checks = list(const.CHECKS.values())
     namespace.enabled_keywords = list(const.KEYWORDS.values())
-
-    def _path_restrict(path):
-        """Generate custom package restriction from a given path.
-
-        This drops the repo restriction (initial entry in path restrictions)
-        since runs can only be made against single repo targets so the extra
-        restriction is redundant and breaks several custom sources involving
-        raw pkgs (lacking a repo attr) or faked repos.
-        """
-        repo = namespace.target_repo
-        restrictions = []
-        try:
-            restrictions = repo.path_restrict(path)[1:]
-        except ValueError as e:
-            raise UserException(str(e))
-        if restrictions:
-            return packages.AndRestriction(*restrictions)
-        return packages.AlwaysTrue
 
     # Get the current working directory for repo detection and restriction
     # creation, fallback to the root dir if it's be removed out from under us.
@@ -303,7 +304,7 @@ def _validate_args(parser, namespace):
             for target in namespace.targets:
                 if os.path.exists(target):
                     try:
-                        yield _path_restrict(target)
+                        yield _path_restrict(target, namespace)
                     except ValueError as e:
                         parser.error(e)
                 else:
@@ -319,7 +320,7 @@ def _validate_args(parser, namespace):
             namespace.limiters = list(namespace.limiters)
     else:
         if cwd in namespace.target_repo:
-            namespace.limiters = [_path_restrict(cwd)]
+            namespace.limiters = [_path_restrict(cwd, namespace)]
         else:
             namespace.limiters = [packages.AlwaysTrue]
 
