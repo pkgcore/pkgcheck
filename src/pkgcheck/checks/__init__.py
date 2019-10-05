@@ -79,7 +79,11 @@ class ExplicitlyEnabledCheck(Check):
         return skip or super().skip(namespace)
 
 
-class NetworkCheck(Check):
+class AsyncCheck(Check):
+    """Check that schedules tasks to be run asynchronously."""
+
+
+class NetworkCheck(AsyncCheck):
     """Check that is only run when network support is enabled."""
 
     @classmethod

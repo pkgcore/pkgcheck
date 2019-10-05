@@ -1,5 +1,6 @@
 """Pipeline building support for connecting sources and checks."""
 
+import concurrent.futures
 import os
 from collections import defaultdict, deque
 from itertools import chain
@@ -33,7 +34,8 @@ class Pipeline:
         self.restrict = restrict
         self.jobs = options.jobs
 
-    def _queue_work(self, scoped_pipes, work_q):
+    def _queue_work(self, scoped_pipes, async_pipes, work_q):
+        # queue restriction tasks based on scope for check running parallelism
         for scope, pipes in scoped_pipes.items():
             if scope == base.version_scope:
                 versioned_source = VersionedSource(self.options)
@@ -47,19 +49,25 @@ class Pipeline:
             else:
                 work_q.put((scope, self.restrict, 0))
 
+        # insert flags to notify processes that no more work exists
         for i in range(self.jobs):
             work_q.put((None, None, None))
 
-    def _run_checks(self, pipes, work_q, results_q):
+        # run all async checks from a single process
+        for scope, pipes in async_pipes.items():
+            for pipe in pipes:
+                pipe.run(self.restrict)
+
+    def _run_checks(self, sync_pipes, work_q, results_q):
         while True:
             scope, restrict, check_idx = work_q.get()
             if scope is None:
                 return
             if scope == base.version_scope:
-                results_q.put(list(pipes[scope][check_idx].run(restrict)))
+                results_q.put(list(sync_pipes[scope][check_idx].run(restrict)))
             else:
                 results = []
-                for pipe in pipes[scope]:
+                for pipe in sync_pipes[scope]:
                     if scope == base.repository_scope:
                         results.extend(pipe.start())
                     results.extend(pipe.run(restrict))
@@ -68,31 +76,43 @@ class Pipeline:
                 results_q.put(results)
 
     def run(self, results_q):
+        # initialize checkrunners per source type, using separate runner for async checks
         checkrunners = defaultdict(list)
         for pipe_mapping in self.pipes:
-            for source, checks in pipe_mapping.items():
-                checkrunners[source.feed_type].append(CheckRunner(source, checks))
+            for (source, is_async), checks in pipe_mapping.items():
+                if is_async:
+                    runner = AsyncCheckRunner(source, checks, results_q=results_q)
+                else:
+                    runner = CheckRunner(source, checks)
+                checkrunners[(source.feed_type, is_async)].append(runner)
 
-        scoped_pipes = defaultdict(list)
+        # categorize checkrunners for parallelization based on the scan and source scope
+        scoped_pipes = defaultdict(lambda: defaultdict(list))
         if self.scan_scope == base.version_scope:
-            scoped_pipes[base.version_scope] = list(chain.from_iterable(checkrunners.values()))
+            for (scope, is_async), runners in checkrunners.items():
+                scoped_pipes[is_async][base.version_scope].extend(runners)
         elif self.scan_scope == base.package_scope:
-            for scope, pipes in checkrunners.items():
+            for (scope, is_async), runners in checkrunners.items():
                 if scope == base.version_scope:
-                    scoped_pipes[base.version_scope].extend(pipes)
+                    scoped_pipes[is_async][base.version_scope].extend(runners)
                 else:
-                    scoped_pipes[base.package_scope].extend(pipes)
+                    scoped_pipes[is_async][base.package_scope].extend(runners)
         else:
-            for scope, pipes in checkrunners.items():
+            for (scope, is_async), runners in checkrunners.items():
                 if scope <= base.package_scope:
-                    scoped_pipes[base.package_scope].extend(pipes)
+                    scoped_pipes[is_async][base.package_scope].extend(runners)
                 else:
-                    scoped_pipes[scope].extend(pipes)
+                    scoped_pipes[is_async][scope].extend(runners)
 
+        sync_pipes = scoped_pipes[False]
+        async_pipes = scoped_pipes[True]
         work_q = SimpleQueue()
-        p = Process(target=self._queue_work, args=(scoped_pipes, work_q))
+
+        # split target restriction into tasks for parallelization
+        p = Process(target=self._queue_work, args=(sync_pipes, async_pipes, work_q))
         p.start()
-        pool = Pool(self.jobs, self._run_checks, (scoped_pipes, work_q, results_q))
+        # run tasks using process pool, queuing generated results for reporting
+        pool = Pool(self.jobs, self._run_checks, (sync_pipes, work_q, results_q))
         pool.close()
         p.join()
         pool.join()
@@ -197,3 +217,22 @@ class CheckRunner:
     def __repr__(self):
         checks = ', '.join(sorted(str(check) for check in self.checks))
         return f'{self.__class__.__name__}({checks})'
+
+
+class AsyncCheckRunner(CheckRunner):
+
+    def __init__(self, *args, results_q, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.results_q = results_q
+
+    def run(self, restrict=packages.AlwaysTrue):
+        try:
+            source = self.source.itermatch(restrict, **self._itermatch_kwargs)
+        except AttributeError:
+            source = self.source
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = {}
+            for item in source:
+                for check in self.checks:
+                    check.schedule(item, executor, futures, self.results_q)

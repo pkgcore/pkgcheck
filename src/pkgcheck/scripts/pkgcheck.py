@@ -28,7 +28,7 @@ from snakeoil.osutils import abspath, pjoin
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, const, pipeline, reporters, results
-from ..checks import Check
+from ..checks import AsyncCheck, Check
 from ..log import logger
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
@@ -473,7 +473,7 @@ def init_source(source, options, addons_map):
 
 
 def init_checks(addons, options):
-    """Initialize required checks."""
+    """Initialize selected checks."""
     enabled = defaultdict(lambda: defaultdict(list))
     addons_map = {}
     sources = {}
@@ -481,11 +481,12 @@ def init_checks(addons, options):
     for cls in addons:
         addon = init_addon(cls, options, addons_map)
         if isinstance(addon, Check):
+            is_async = isinstance(addon, AsyncCheck)
             source = sources.get(addon.source)
             if source is None:
                 source = init_source(addon.source, options, addons_map)
                 sources[addon.source] = source
-            enabled[addon.scope][source].append(addon)
+            enabled[addon.scope][(source, is_async)].append(addon)
         if isinstance(addon, base.Cache):
             caches.append(addon)
     return enabled, caches
@@ -518,7 +519,7 @@ def _scan(options, out, err):
     # run git commit checks separately from pkg-related checks
     git_checks = enabled_checks.pop(base.commit_scope, None)
     if git_checks:
-        source, checks = git_checks.popitem()
+        (source, is_async), checks = git_checks.popitem()
         for result in pipeline.GitPipeline(checks, source):
             reporter.report(result)
 
