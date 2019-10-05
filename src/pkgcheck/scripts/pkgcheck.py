@@ -497,11 +497,6 @@ def _scan(options, out, err):
     reporter = options.reporter(
         out, verbosity=options.verbosity, keywords=options.filtered_keywords)
 
-    results_q = SimpleQueue()
-    def results_callback(results):
-        results_q.put(results)
-    options.results_callback = results_callback
-
     enabled_checks, caches = init_checks(options.pop('addons'), options)
 
     if options.verbosity >= 1:
@@ -514,6 +509,7 @@ def _scan(options, out, err):
     if caches:
         base.Cache.update_caches(options, caches)
 
+    results_q = SimpleQueue()
     reporter.start()
 
     # run git commit checks separately from pkg-related checks

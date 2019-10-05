@@ -1,4 +1,3 @@
-import concurrent.futures
 import socket
 import urllib.request
 from functools import partial
@@ -106,13 +105,10 @@ class _UrlCheck(NetworkCheck):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.checked = {}
-        self.executor = concurrent.futures.ThreadPoolExecutor()
         self.timeout = self.options.timeout
         self.session = self.options.requests_session
         self.dead_result = None
         self.redirected_result = None
-        self.results_callback = self.options.results_callback
 
     def _http_check(self, url, *, pkg):
         """Check http:// and https:// URLs using requests."""
@@ -183,7 +179,7 @@ class _UrlCheck(NetworkCheck):
             result = self.dead_result(url, str(e), pkg=pkg)
         return result
 
-    def _done(self, pkg, future):
+    def task_done(self, results_q, pkg, future):
         result = future.result()
         if result:
             if pkg is not None:
@@ -191,25 +187,21 @@ class _UrlCheck(NetworkCheck):
                 data = result.attrs_to_pkg(result._attrs)
                 data['pkg'] = pkg
                 result = result.__class__(**data)
-            self.results_callback([result])
+            results_q.put([result])
 
     def _get_urls(self, pkg):
         raise NotImplementedError
 
-    def _schedule_check(self, func, url, **kwargs):
-        future = self.checked.get(url)
+    def _schedule_check(self, func, url, executor, futures, results_q, **kwargs):
+        future = futures.get(url)
         if future is None:
-            future = self.executor.submit(func, url, **kwargs)
-            future.add_done_callback(partial(self._done, None))
-            self.checked[url] = future
-        elif future.done():
-            result = future.result()
-            if result:
-                yield result
+            future = executor.submit(func, url, **kwargs)
+            future.add_done_callback(partial(self.task_done, results_q, None))
+            futures[url] = future
         else:
-            future.add_done_callback(partial(self._done, kwargs['pkg']))
+            future.add_done_callback(partial(self.task_done, results_q, kwargs['pkg']))
 
-    def feed(self, pkg):
+    def schedule(self, pkg, executor, futures, results_q):
         http_urls, ftp_urls = partition(
             self._get_urls(pkg), predicate=lambda x: x.startswith('ftp://'))
         http_urls = tuple(http_urls)
@@ -217,14 +209,14 @@ class _UrlCheck(NetworkCheck):
         for urls, func in ((http_urls, self._http_check),
                            (ftp_urls, self._ftp_check)):
             for url in urls:
-                yield from self._schedule_check(func, url, pkg=pkg)
+                self._schedule_check(func, url, executor, futures, results_q, pkg=pkg)
 
         http_to_https_urls = (
             (url, f'https://{url[7:]}') for url in http_urls if url.startswith('http://'))
         for orig_url, url in http_to_https_urls:
-            future = self.checked[orig_url]
-            yield from self._schedule_check(
-                self._https_available_check, url,
+            future = futures[orig_url]
+            self._schedule_check(
+                self._https_available_check, url, executor, futures, results_q,
                 future=future, orig_url=orig_url, pkg=pkg)
 
 
