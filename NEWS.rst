@@ -3,10 +3,41 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.6.7 (2019-10-05)
+---------------------------
+
+- pkgcheck scan: All scanning scopes now run checks in parallel by default for
+  multi-core systems. For repo/category scope levels parallelism is done per
+  package while for package/version scope levels parallelism is done per
+  version. The -j/--jobs option was also added to allow controlling the amount
+  of processes used when scanning, by default it's set to the number of CPUs
+  the target system has.
+
+- pkgcheck cache: Add initial cache subcommand to support updating/removing
+  caches used by pkgcheck. This allows users to forcibly update/remove caches
+  when they want instead of pkgcheck only handling the process internally
+  during the scanning process.
+
+- Add specific result keywords for metadata issues relating to various package
+  attributes instead of using the generic MetadataError for all of them.
+
+- Drop check for PortageInternals as the last usage was dropped from the tree.
+
+- Add EmptyCategoryDir and EmptyPackageDir results to warn when the gentoo repo
+  has empty category or package directories that people removing packages
+  forgot to handle.
+
+- Drop HttpsAvailableCheck and its related HttpsAvailable result. The network
+  checks should now support dynamically pinging sites to test for viability.
+
+- Port network checks to use the requests module for http/https requests so
+  urllib is only used for ftp URLs.
+
+---------------------------
 pkgcheck 0.6.6 (2019-09-24)
 ---------------------------
 
-- HttpsUrlAvailable: Check http:// URLs for https:// availability (not run by
+- HttpsUrlAvailable: Check http URLs for https availability (not run by
   default).
 
 - MissingLicenseRestricts: Skip RESTRICT="mirror" for packages lacking SRC_URI.
@@ -256,7 +287,7 @@ pkgcheck 0.5.4 (2017-09-22)
 - Add PortageInternals check for ebuilds using a function or variable internal
   to portage similar to repoman.
 
-- Add HttpsAvailable check for http:// links that should use https:// similar
+- Add HttpsAvailable check for http links that should use https similar
   to repoman.
 
 - Add DuplicateFiles check for duplicate files in FILESDIR.
