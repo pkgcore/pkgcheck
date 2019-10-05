@@ -6,7 +6,7 @@ import pkgutil
 from functools import partial
 from importlib import import_module
 
-from snakeoil import demandimport, mappings
+from snakeoil import mappings
 
 from . import __title__, checks, reporters, results
 
@@ -65,8 +65,7 @@ def _GET_VALS(attr, func):
     try:
         result = getattr(_defaults, attr)
     except AttributeError:
-        with demandimport.disabled():
-            result = func()
+        result = func()
     return result
 
 
