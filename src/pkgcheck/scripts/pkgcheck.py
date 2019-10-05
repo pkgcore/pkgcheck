@@ -516,7 +516,7 @@ def _scan(options, out, err):
     git_checks = enabled_checks.pop(base.commit_scope, None)
     if git_checks:
         (source, is_async), checks = git_checks.popitem()
-        for result in pipeline.GitPipeline(checks, source):
+        for result in pipeline.GitPipeline(source, checks):
             reporter.report(result)
 
     if enabled_checks:
