@@ -22,7 +22,7 @@ demand_compile_regexp(
     r'^# Copyright (\d\d\d\d(-\d\d\d\d)?) .+')
 
 
-class GitCommitsRepoSource(sources.GenericSource):
+class GitCommitsRepoSource(sources.RepoSource):
     """Repository source for locally changed packages in git history.
 
     Parses git log history to determine packages with changes that
@@ -36,7 +36,7 @@ class GitCommitsRepoSource(sources.GenericSource):
         self._repo = git_addon.commits_repo(git.GitChangedRepo)
 
 
-class GitCommitsSource(sources.GenericSource):
+class GitCommitsSource(sources.Source):
     """Source for local commits in git history.
 
     Parses git log history to determine commits that haven't been pushed
@@ -46,11 +46,7 @@ class GitCommitsSource(sources.GenericSource):
     required_addons = (git.GitAddon,)
 
     def __init__(self, options, git_addon):
-        super().__init__(options)
-        self.commits = git_addon.commits()
-
-    def __iter__(self):
-        yield from self.commits
+        super().__init__(options, source=git_addon.commits())
 
 
 class OutdatedCopyright(results.VersionedResult, results.Warning):

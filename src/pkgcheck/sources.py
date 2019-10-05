@@ -12,11 +12,24 @@ from . import base
 from .packages import FilteredPkg, RawCPV, WrappedPkg
 
 
-class GenericSource:
+class Source:
+    """Base template for a source."""
+
+    feed_type = base.repository_scope
+    required_addons = ()
+
+    def __init__(self, options, source):
+        self._options = options
+        self.source = source
+
+    def __iter__(self):
+        yield from self.source
+
+
+class RepoSource(Source):
     """Base template for a repository source."""
 
     feed_type = base.version_scope
-    required_addons = ()
 
     def __init__(self, options, source=None):
         self._options = options
@@ -36,13 +49,13 @@ class GenericSource:
         yield from self.source.itermatch(restrict, **kwargs)
 
 
-class EmptySource(GenericSource):
+class EmptySource(Source):
     """Empty source meant for skipping feed."""
 
     feed_type = base.repository_scope
 
-    def itermatch(self, restrict, **kwargs):
-        yield from ()
+    def __init__(self, options):
+        super().__init__(options, source=())
 
 
 class LatestPkgsFilter:
@@ -97,7 +110,7 @@ class LatestPkgsFilter:
         return self._pkg_cache.popleft()
 
 
-class FilteredRepoSource(GenericSource):
+class FilteredRepoSource(RepoSource):
     """Ebuild repository source supporting custom package filtering."""
 
     def __init__(self, pkg_filter, partial_filtered, *args, **kwargs):
@@ -135,7 +148,7 @@ class _RawRepo(UnconfiguredTree):
             raise KeyError(f'failed fetching versions for package {path}: {e}') from e
 
 
-class RawRepoSource(GenericSource):
+class RawRepoSource(RepoSource):
     """Ebuild repository source returning raw CPV objects."""
 
     def __init__(self, *args):
@@ -146,7 +159,7 @@ class RawRepoSource(GenericSource):
         yield from super().itermatch(restrict, raw_pkg_cls=RawCPV, **kwargs)
 
 
-class RestrictionRepoSource(GenericSource):
+class RestrictionRepoSource(RepoSource):
     """Ebuild repository source supporting custom restrictions."""
 
     def __init__(self, restriction, *args):
@@ -158,7 +171,7 @@ class RestrictionRepoSource(GenericSource):
         yield from super().itermatch(restrict, **kwargs)
 
 
-class UnmaskedRepoSource(GenericSource):
+class UnmaskedRepoSource(RepoSource):
     """Repository source that uses profiles/package.mask to filter packages."""
 
     def itermatch(self, restrict, **kwargs):
@@ -178,7 +191,7 @@ class _SourcePkg(WrappedPkg):
         self.lines = lines
 
 
-class EbuildFileRepoSource(GenericSource):
+class EbuildFileRepoSource(RepoSource):
     """Ebuild repository source yielding package objects and their file contents."""
 
     def itermatch(self, restrict, **kwargs):
@@ -186,7 +199,7 @@ class EbuildFileRepoSource(GenericSource):
             yield _SourcePkg(pkg=pkg, lines=tuple(pkg.ebuild.text_fileobj()))
 
 
-class _CombinedSource(GenericSource):
+class _CombinedSource(RepoSource):
     """Generic source combining packages into similar chunks."""
 
     def keyfunc(self, pkg):
@@ -223,7 +236,7 @@ class CategoryRepoSource(_CombinedSource):
     keyfunc = attrgetter('category')
 
 
-class RepositoryRepoSource(GenericSource):
+class RepositoryRepoSource(RepoSource):
     """Ebuild repository source yielding lists of versioned packages per package."""
 
     feed_type = base.repository_scope

@@ -11,7 +11,7 @@ class Feed(base.Addon):
     """
 
     scope = base.version_scope
-    _source = sources.GenericSource
+    _source = sources.RepoSource
 
     @property
     def source(self):
