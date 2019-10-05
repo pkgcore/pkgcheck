@@ -282,9 +282,7 @@ def _validate_args(parser, namespace):
     # determine if we're running in the gentoo repo or a clone
     namespace.gentoo_repo = 'gentoo' in namespace.target_repo.aliases
 
-    # search_repo is a multiplex of target_repo and its masters, make sure
-    # they're configured properly in metadata/layout.conf. This is used for
-    # things like visibility checks (it is passed to the checkers in "start").
+    # multiplex of target repo and its masters used for package existence queries
     namespace.search_repo = multiplex.tree(*namespace.target_repo.trees)
 
     if namespace.targets:
