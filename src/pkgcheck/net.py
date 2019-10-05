@@ -1,8 +1,11 @@
 """Various support for network checks."""
 
 import os
+import logging
 
 import requests
+# suppress all urllib3 log messages
+logging.getLogger('urllib3').propagate = False
 
 from .checks.network import RequestError, SSLError
 

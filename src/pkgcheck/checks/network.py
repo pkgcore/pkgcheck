@@ -5,7 +5,6 @@ from itertools import chain
 
 from pkgcore.fetch import fetchable
 from snakeoil.iterables import partition
-from snakeoil.log import suppress_logging
 
 from .. import addons, results
 from . import NetworkCheck
@@ -113,60 +112,56 @@ class _UrlCheck(NetworkCheck):
     def _http_check(self, url, *, pkg):
         """Check http:// and https:// URLs using requests."""
         result = None
-        # suppress urllib3 SSL cert verification failure log messages
-        with suppress_logging():
-            try:
-                r = self.session.get(url)
+        try:
+            r = self.session.get(url)
 
-                redirected_url = None
-                for response in r.history:
-                    if not response.is_permanent_redirect:
-                        break
-                    redirected_url = response.headers['location']
-                    hsts = 'strict-transport-security' in response.headers
+            redirected_url = None
+            for response in r.history:
+                if not response.is_permanent_redirect:
+                    break
+                redirected_url = response.headers['location']
+                hsts = 'strict-transport-security' in response.headers
 
-                if redirected_url:
-                    if redirected_url.startswith('https://') and url.startswith('http://'):
-                        result = HttpsUrlAvailable(url, redirected_url, pkg=pkg)
-                    elif redirected_url.startswith('http://') and hsts:
-                        redirected_url = f'https://{redirected_url[7:]}'
-                        result = self.redirected_result(url, redirected_url, pkg=pkg)
-                    else:
-                        result = self.redirected_result(url, redirected_url, pkg=pkg)
-            except SSLError as e:
-                result = SSLCertificateError(url, str(e), pkg=pkg)
-            except RequestError as e:
-                result = self.dead_result(url, str(e), pkg=pkg)
-            return result
+            if redirected_url:
+                if redirected_url.startswith('https://') and url.startswith('http://'):
+                    result = HttpsUrlAvailable(url, redirected_url, pkg=pkg)
+                elif redirected_url.startswith('http://') and hsts:
+                    redirected_url = f'https://{redirected_url[7:]}'
+                    result = self.redirected_result(url, redirected_url, pkg=pkg)
+                else:
+                    result = self.redirected_result(url, redirected_url, pkg=pkg)
+        except SSLError as e:
+            result = SSLCertificateError(url, str(e), pkg=pkg)
+        except RequestError as e:
+            result = self.dead_result(url, str(e), pkg=pkg)
+        return result
 
     def _https_available_check(self, url, *, future, orig_url, pkg):
         """Check if https:// alternatives exist for http:// URLs."""
         result = None
-        # suppress urllib3 SSL cert verification failure log messages
-        with suppress_logging():
-            try:
-                r = self.session.get(url)
+        try:
+            r = self.session.get(url)
 
-                redirected_url = None
-                for response in r.history:
-                    if not response.is_permanent_redirect:
-                        break
-                    redirected_url = response.headers['location']
-                    hsts = 'strict-transport-security' in response.headers
+            redirected_url = None
+            for response in r.history:
+                if not response.is_permanent_redirect:
+                    break
+                redirected_url = response.headers['location']
+                hsts = 'strict-transport-security' in response.headers
 
-                # skip result if http:// URL check was redirected to https://
-                if not isinstance(future.result(), HttpsUrlAvailable):
-                    if redirected_url:
-                        if redirected_url.startswith('https://'):
-                            result = HttpsUrlAvailable(orig_url, redirected_url, pkg=pkg)
-                        elif redirected_url.startswith('http://') and hsts:
-                            redirected_url = f'https://{redirected_url[7:]}'
-                            result = HttpsUrlAvailable(orig_url, redirected_url, pkg=pkg)
-                    else:
-                        result = HttpsUrlAvailable(orig_url, url, pkg=pkg)
-            except (RequestError, SSLError) as e:
-                pass
-            return result
+            # skip result if http:// URL check was redirected to https://
+            if not isinstance(future.result(), HttpsUrlAvailable):
+                if redirected_url:
+                    if redirected_url.startswith('https://'):
+                        result = HttpsUrlAvailable(orig_url, redirected_url, pkg=pkg)
+                    elif redirected_url.startswith('http://') and hsts:
+                        redirected_url = f'https://{redirected_url[7:]}'
+                        result = HttpsUrlAvailable(orig_url, redirected_url, pkg=pkg)
+                else:
+                    result = HttpsUrlAvailable(orig_url, url, pkg=pkg)
+        except (RequestError, SSLError) as e:
+            pass
+        return result
 
     def _ftp_check(self, url, *, pkg):
         """Check ftp:// URLs using urllib."""
