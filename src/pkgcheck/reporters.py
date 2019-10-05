@@ -5,7 +5,7 @@ import json
 import pickle
 import signal
 from collections import defaultdict
-from multiprocessing import Process
+from multiprocessing import Process, SimpleQueue
 from xml.sax.saxutils import escape as xml_escape
 
 from snakeoil import pickling
@@ -31,7 +31,8 @@ class Reporter:
         self.report = self._add_report().send
         self.process = self._process_report().send
 
-    def __call__(self, pipe, results_q):
+    def __call__(self, pipe):
+        results_q = SimpleQueue()
         orig_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)
         p = Process(target=pipe.run, args=(results_q,))
         p.start()

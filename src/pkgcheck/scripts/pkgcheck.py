@@ -12,7 +12,6 @@ import textwrap
 from collections import defaultdict
 from functools import partial
 from itertools import chain
-from multiprocessing import SimpleQueue
 from operator import attrgetter
 
 from pkgcore import const as pkgcore_const
@@ -509,7 +508,6 @@ def _scan(options, out, err):
     if caches:
         base.Cache.update_caches(options, caches)
 
-    results_q = SimpleQueue()
     reporter.start()
 
     # run git commit checks separately from pkg-related checks
@@ -544,8 +542,7 @@ def _scan(options, out, err):
                 err.write(f'limiter: {filterer}')
             err.flush()
 
-            p = pipeline.Pipeline(options, scan_scope, pipes, filterer)
-            reporter(p, results_q)
+            reporter(pipeline.Pipeline(options, scan_scope, pipes, filterer))
 
     reporter.finish()
 
