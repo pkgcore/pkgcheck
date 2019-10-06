@@ -328,7 +328,7 @@ class ProfileAddon(base.Addon):
                             os.remove(cache_file)
                     except FileNotFoundError as e:
                         pass
-                    except (EOFError, AttributeError, ModuleNotFoundError, TypeError) as e:
+                    except (AttributeError, EOFError, ImportError, IndexError) as e:
                         logger.debug('forcing %s profile cache regen: %s', repo.repo_id, e)
                         os.remove(cache_file)
 
