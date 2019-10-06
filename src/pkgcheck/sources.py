@@ -8,7 +8,7 @@ from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files, pjoin
 
-from . import base
+from . import addons, base
 from .packages import FilteredPkg, RawCPV, WrappedPkg
 
 
@@ -270,3 +270,23 @@ class VersionedSource(_FilteredSource):
     """Source yielding versioned atoms from matching packages."""
 
     keyfunc = attrgetter('versioned_atom')
+
+
+def init_source(source, options, addons_map=None):
+    """Initialize a given source."""
+    if isinstance(source, tuple):
+        if len(source) == 3:
+            source, args, kwargs = source
+            kwargs = dict(kwargs)
+            # initialize wrapped source
+            if 'source' in kwargs:
+                kwargs['source'] = init_source(kwargs['source'], options, addons_map)
+        else:
+            source, args = source
+            kwargs = {}
+    else:
+        args = ()
+        kwargs = {}
+    for addon in source.required_addons:
+        kwargs[addon.param_name] = addons.init_addon(addon, options, addons_map)
+    return source(*args, options, **kwargs)

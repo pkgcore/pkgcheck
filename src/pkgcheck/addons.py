@@ -687,3 +687,22 @@ class NetAddon(base.Addon):
             if e.name == 'requests':
                 raise UserException('network checks require requests to be installed')
             raise
+
+
+def init_addon(cls, options, addons_map=None):
+    """Initialize a given addon."""
+    if addons_map is None:
+        addons_map = {}
+    res = addons_map.get(cls)
+    if res is not None:
+        return res
+
+    # initialize and inject all required addons for a given addon's inheritance
+    # tree as kwargs
+    required_addons = chain.from_iterable(
+        x.required_addons for x in cls.__mro__ if issubclass(x, base.Addon))
+    kwargs = {
+        addon.param_name: init_addon(addon, options, addons_map)
+        for addon in required_addons}
+    res = addons_map[cls] = cls(options, **kwargs)
+    return res

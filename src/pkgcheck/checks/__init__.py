@@ -1,5 +1,7 @@
 """Core check classes."""
 
+from collections import defaultdict
+
 from .. import addons, base, feeds, results, sources
 from ..log import logger
 
@@ -99,3 +101,23 @@ class NetworkCheck(AsyncCheck):
         if skip:
             logger.info(f'skipping {cls.__name__}, network checks not enabled')
         return skip or super().skip(namespace)
+
+
+def init_checks(enabled_addons, options):
+    """Initialize selected checks."""
+    enabled = defaultdict(lambda: defaultdict(list))
+    addons_map = {}
+    source_map = {}
+    caches = []
+    for cls in enabled_addons:
+        addon = addons.init_addon(cls, options, addons_map)
+        if isinstance(addon, Check):
+            is_async = isinstance(addon, AsyncCheck)
+            source = source_map.get(addon.source)
+            if source is None:
+                source = sources.init_source(addon.source, options, addons_map)
+                source_map[addon.source] = source
+            enabled[addon.scope][(source, is_async)].append(addon)
+        if isinstance(addon, base.Cache):
+            caches.append(addon)
+    return enabled, caches

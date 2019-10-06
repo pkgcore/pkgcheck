@@ -27,7 +27,7 @@ from snakeoil.osutils import abspath, pjoin
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, const, pipeline, reporters, results
-from ..checks import AsyncCheck, Check
+from ..checks import init_checks
 from ..log import logger
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
@@ -434,65 +434,6 @@ def _validate_args(parser, namespace):
         if namespace.debug:
             raise
         parser.error(str(e))
-
-
-def init_addon(cls, options, addons_map=None):
-    """Initialize a given addon."""
-    if addons_map is None:
-        addons_map = {}
-    res = addons_map.get(cls)
-    if res is not None:
-        return res
-
-    # initialize and inject all required addons for a given addon's inheritance
-    # tree as kwargs
-    required_addons = chain.from_iterable(
-        x.required_addons for x in cls.__mro__ if issubclass(x, base.Addon))
-    kwargs = {
-        addon.param_name: init_addon(addon, options, addons_map)
-        for addon in required_addons}
-    res = addons_map[cls] = cls(options, **kwargs)
-    return res
-
-
-def init_source(source, options, addons_map):
-    """Initialize a given source."""
-    if isinstance(source, tuple):
-        if len(source) == 3:
-            source, args, kwargs = source
-            kwargs = dict(kwargs)
-            # initialize wrapped source
-            if 'source' in kwargs:
-                kwargs['source'] = init_source(kwargs['source'], options, addons_map)
-        else:
-            source, args = source
-            kwargs = {}
-    else:
-        args = ()
-        kwargs = {}
-    for dep in source.required_addons:
-        kwargs[dep.param_name] = init_addon(dep, options, addons_map)
-    return source(*args, options, **kwargs)
-
-
-def init_checks(addons, options):
-    """Initialize selected checks."""
-    enabled = defaultdict(lambda: defaultdict(list))
-    addons_map = {}
-    sources = {}
-    caches = []
-    for cls in addons:
-        addon = init_addon(cls, options, addons_map)
-        if isinstance(addon, Check):
-            is_async = isinstance(addon, AsyncCheck)
-            source = sources.get(addon.source)
-            if source is None:
-                source = init_source(addon.source, options, addons_map)
-                sources[addon.source] = source
-            enabled[addon.scope][(source, is_async)].append(addon)
-        if isinstance(addon, base.Cache):
-            caches.append(addon)
-    return enabled, caches
 
 
 @scan.bind_main_func
