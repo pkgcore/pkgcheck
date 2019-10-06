@@ -63,8 +63,9 @@ class AcctCheck(Check):
     """
 
     scope = base.repository_scope
-    _source = (sources.RestrictionRepoSource, (packages.OrRestriction(*(
+    _restricted_source = (sources.RestrictionRepoSource, (packages.OrRestriction(*(
         restricts.CategoryDep('acct-user'), restricts.CategoryDep('acct-group'))),))
+    _source = (sources.RepositoryRepoSource, (), (('source', _restricted_source),))
     known_results = frozenset([
         MissingAccountIdentifier, ConflictingAccountIdentifiers,
         OutsideRangeAccountIdentifier,
