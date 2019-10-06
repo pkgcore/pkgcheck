@@ -122,9 +122,6 @@ def init_checks(enabled_addons, options):
             if source is None:
                 source = sources.init_source(addon.source, options, addons_map)
                 source_map[addon.source] = source
-            # check for matching check and source scopes
-            if addon.scope != source.feed_type:
-                raise ValueError(f"check scope doesn't match source scope: {addon}")
             enabled[addon.scope][(source, is_async)].append(addon)
         if isinstance(addon, base.Cache):
             caches.append(addon)
