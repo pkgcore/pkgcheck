@@ -1,8 +1,8 @@
 """Pipeline building support for connecting sources and checks."""
 
-import concurrent.futures
 import os
 from collections import defaultdict, deque
+from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
 from multiprocessing import Pool, Process, SimpleQueue
 
@@ -16,8 +16,8 @@ from .sources import UnversionedSource, VersionedSource
 
 class GitPipeline:
 
-    def __init__(self, source, checks):
-        self.checkrunner = CheckRunner(source, checks)
+    def __init__(self, *args, **kwargs):
+        self.checkrunner = CheckRunner(*args, **kwargs)
 
     def __iter__(self):
         yield from self.checkrunner.start()
@@ -85,9 +85,10 @@ class Pipeline:
         for pipe_mapping in self.pipes:
             for (source, is_async), checks in pipe_mapping.items():
                 if is_async:
-                    runner = AsyncCheckRunner(source, checks, results_q=results_q)
+                    runner = AsyncCheckRunner(
+                        self.options, source, checks, results_q=results_q)
                 else:
-                    runner = CheckRunner(source, checks)
+                    runner = CheckRunner(self.options, source, checks)
                 checkrunners[(source.feed_type, is_async)].append(runner)
 
         # categorize checkrunners for parallelization based on the scan and source scope
@@ -129,7 +130,8 @@ class CheckRunner:
     _known_metadata_attrs = set()
     _seen_metadata_errors = set()
 
-    def __init__(self, source, checks):
+    def __init__(self, options, source, checks):
+        self.options = options
         self.source = source
         self.checks = checks
 
@@ -235,7 +237,7 @@ class AsyncCheckRunner(CheckRunner):
         except AttributeError:
             source = self.source
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
             futures = {}
             for item in source:
                 for check in self.checks:

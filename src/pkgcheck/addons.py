@@ -678,11 +678,12 @@ class NetAddon(base.Addon):
             '--timeout', type=float, default='5',
             help='timeout used for network checks')
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(self, *args):
+        super().__init__(*args)
         try:
             from .net import Session
-            self.session = Session(timeout=self.options.timeout)
+            self.session = Session(
+                concurrent=self.options.tasks, timeout=self.options.timeout)
         except ImportError as e:
             if e.name == 'requests':
                 raise UserException('network checks require requests to be installed')

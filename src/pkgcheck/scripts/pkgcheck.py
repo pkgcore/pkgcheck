@@ -89,11 +89,11 @@ def _setup_reporter(namespace):
         argparser.error('--format option is only valid when using FormatReporter')
 
 
-def jobs(x):
-    jobs = int(x)
-    if jobs < 1:
+def positive_int(x):
+    n = int(x)
+    if n < 1:
         raise argparse.ArgumentTypeError('must be >= 1')
-    return jobs
+    return n
 
 
 # These are all set based on other options, so have no default setting.
@@ -116,11 +116,17 @@ main_options.add_argument(
         ACCEPT_LICENSE, and package.mask.
     """)
 main_options.add_argument(
-    '-j', '--jobs', type=jobs, default=os.cpu_count(),
+    '-j', '--jobs', type=positive_int, default=os.cpu_count(),
     help='number of checks to run in parallel',
     docs="""
         Number of checks to run in parallel, defaults to using all available
         processors.
+    """)
+main_options.add_argument(
+    '-t', '--tasks', type=positive_int, default=os.cpu_count() * 5,
+    help='number of asynchronous tasks to run concurrently',
+    docs="""
+        Number of asynchronous tasks to run concurrently (defaults to 5 * CPU count).
     """)
 
 check_options = scan.add_argument_group('check selection')
@@ -456,7 +462,7 @@ def _scan(options, out, err):
         git_checks = enabled_checks.pop(base.commit_scope, None)
         if git_checks:
             (source, is_async), checks = git_checks.popitem()
-            for result in pipeline.GitPipeline(source, checks):
+            for result in pipeline.GitPipeline(options, source, checks):
                 reporter.report(result)
 
         if enabled_checks:

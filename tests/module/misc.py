@@ -100,7 +100,7 @@ class ReportTestCase(object):
             source = data
         else:
             source = [data]
-        runner = pipeline.CheckRunner(source, [check])
+        runner = pipeline.CheckRunner(Options(), source, [check])
         l.extend(runner.start())
         l.extend(runner.run())
         l.extend(runner.finish())
@@ -120,7 +120,7 @@ class ReportTestCase(object):
             source = data
         else:
             source = [data]
-        runner = pipeline.CheckRunner(source, [check])
+        runner = pipeline.CheckRunner(Options(), source, [check])
         l.extend(runner.start())
         l.extend(runner.run())
         l.extend(runner.finish())
