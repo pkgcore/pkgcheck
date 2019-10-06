@@ -32,53 +32,57 @@ class Check(feeds.Feed):
         return self._source
 
     @classmethod
-    def skip(cls, namespace):
+    def skip(cls, namespace, skip=False):
         """Conditionally skip check when running all enabled checks."""
-        return False
+        if skip and namespace.forced_checks:
+            return cls.__name__ not in namespace.forced_checks
+        return skip
 
 
 class GentooRepoCheck(Check):
     """Check that is only run against the gentoo repo."""
 
     @classmethod
-    def skip(cls, namespace):
-        skip = not namespace.gentoo_repo
-        if skip:
-            logger.info(f'skipping {cls.__name__}, not running against gentoo repo')
-        return skip or super().skip(namespace)
+    def skip(cls, namespace, skip=False):
+        if not skip:
+            skip = not namespace.gentoo_repo
+            if skip:
+                logger.info(f'skipping {cls.__name__}, not running against gentoo repo')
+        return super().skip(namespace, skip=skip)
 
 
 class OverlayRepoCheck(Check):
     """Check that is only run against overlay repos."""
 
     @classmethod
-    def skip(cls, namespace):
-        skip = not namespace.target_repo.masters
-        if skip:
-            logger.info(f'skipping {cls.__name__}, not running against overlay repo')
-        return skip or super().skip(namespace)
+    def skip(cls, namespace, skip=False):
+        if not skip:
+            skip = not namespace.target_repo.masters
+            if skip:
+                logger.info(f'skipping {cls.__name__}, not running against overlay repo')
+        return super().skip(namespace, skip=skip)
 
 
 class ExplicitlyEnabledCheck(Check):
     """Check that is only run when explicitly enabled."""
 
     @classmethod
-    def skip(cls, namespace):
-        if namespace.selected_checks is not None:
-            disabled, enabled = namespace.selected_checks
-        else:
-            disabled, enabled = [], []
+    def skip(cls, namespace, skip=False):
+        if not skip:
+            if namespace.selected_checks is not None:
+                disabled, enabled = namespace.selected_checks
+            else:
+                disabled, enabled = [], []
 
-        # enable checks for selected keywords
-        keywords = namespace.filtered_keywords
-        if keywords is not None:
-            keywords = keywords.intersection(cls.known_results)
+            # enable checks for selected keywords
+            keywords = namespace.filtered_keywords
+            if keywords is not None:
+                keywords = keywords.intersection(cls.known_results)
 
-        enabled += namespace.forced_checks
-        skip = cls.__name__ not in enabled and not keywords
-        if skip:
-            logger.info(f'skipping {cls.__name__}, not explicitly enabled')
-        return skip or super().skip(namespace)
+            skip = cls.__name__ not in enabled and not keywords
+            if skip:
+                logger.info(f'skipping {cls.__name__}, not explicitly enabled')
+        return super().skip(namespace, skip=skip)
 
 
 class AsyncCheck(Check):
@@ -96,11 +100,12 @@ class NetworkCheck(AsyncCheck):
         self.session = net_addon.session
 
     @classmethod
-    def skip(cls, namespace):
-        skip = not namespace.net
-        if skip:
-            logger.info(f'skipping {cls.__name__}, network checks not enabled')
-        return skip or super().skip(namespace)
+    def skip(cls, namespace, skip=False):
+        if not skip:
+            skip = not namespace.net
+            if skip:
+                logger.info(f'skipping {cls.__name__}, network checks not enabled')
+        return super().skip(namespace, skip=skip)
 
 
 def init_checks(enabled_addons, options):
