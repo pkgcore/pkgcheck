@@ -45,6 +45,15 @@ class Reporter:
                 self.report(result)
         p.join()
 
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, *excinfo):
+        self.finish()
+        # flush output buffer
+        self.out.stream.flush()
+
     @coroutine
     def _add_report(self):
         """Add a report result to be processed for output."""

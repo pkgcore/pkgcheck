@@ -438,9 +438,6 @@ def _validate_args(parser, namespace):
 
 @scan.bind_main_func
 def _scan(options, out, err):
-    reporter = options.reporter(
-        out, verbosity=options.verbosity, keywords=options.filtered_keywords)
-
     enabled_checks, caches = init_checks(options.pop('addons'), options)
 
     if options.verbosity >= 1:
@@ -453,47 +450,42 @@ def _scan(options, out, err):
     if caches:
         base.Cache.update_caches(options, caches)
 
-    reporter.start()
+    with options.reporter(out, verbosity=options.verbosity,
+                          keywords=options.filtered_keywords) as reporter:
+        # run git commit checks separately from pkg-related checks
+        git_checks = enabled_checks.pop(base.commit_scope, None)
+        if git_checks:
+            (source, is_async), checks = git_checks.popitem()
+            for result in pipeline.GitPipeline(source, checks):
+                reporter.report(result)
 
-    # run git commit checks separately from pkg-related checks
-    git_checks = enabled_checks.pop(base.commit_scope, None)
-    if git_checks:
-        (source, is_async), checks = git_checks.popitem()
-        for result in pipeline.GitPipeline(source, checks):
-            reporter.report(result)
+        if enabled_checks:
+            for filterer in options.limiters:
+                for scope, attrs in (
+                        (base.version_scope, ['fullver', 'version', 'rev']),
+                        (base.package_scope, ['package']),
+                        (base.category_scope, ['category'])):
+                    if any(collect_package_restrictions(filterer, attrs)):
+                        scan_scope = scope
+                        break
+                else:
+                    scan_scope = base.repository_scope
 
-    if enabled_checks:
-        for filterer in options.limiters:
-            for scope, attrs in (
-                    (base.version_scope, ['fullver', 'version', 'rev']),
-                    (base.package_scope, ['package']),
-                    (base.category_scope, ['category'])):
-                if any(collect_package_restrictions(filterer, attrs)):
-                    scan_scope = scope
-                    break
-            else:
-                scan_scope = base.repository_scope
+                # Skip checks higher than the current scan scope level, e.g. skip repo
+                # level checks when scanning at package level.
+                pipes = [d for scope, d in enabled_checks.items() if scope <= scan_scope]
+                if not pipes:
+                    err.write(f'{scan.prog}: no matching checks available for current scope')
+                    continue
 
-            # Skip checks higher than the current scan scope level, e.g. skip repo
-            # level checks when scanning at package level.
-            pipes = [d for scope, d in enabled_checks.items() if scope <= scan_scope]
-            if not pipes:
-                err.write(f'{scan.prog}: no matching checks available for current scope')
-                continue
+                if options.verbosity >= 1:
+                    err.write(f'Running {len(pipes)} tests')
+                if options.debug:
+                    err.write(f'limiter: {filterer}')
+                err.flush()
 
-            if options.verbosity >= 1:
-                err.write(f'Running {len(pipes)} tests')
-            if options.debug:
-                err.write(f'limiter: {filterer}')
-            err.flush()
+                reporter(pipeline.Pipeline(options, scan_scope, pipes, filterer))
 
-            reporter(pipeline.Pipeline(options, scan_scope, pipes, filterer))
-
-    reporter.finish()
-
-    # flush stdout first; if they're directing it all to a file, this makes
-    # results not get the final message shoved in midway
-    out.stream.flush()
     return 0
 
 
