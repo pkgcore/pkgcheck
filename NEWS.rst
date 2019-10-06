@@ -3,6 +3,18 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.6.8 (2019-10-06)
+---------------------------
+
+- pkgcheck scan: Add -t/--tasks option to limit the number of async tasks that
+  can run concurrently. Currently used to limit the number of concurrent
+  network requests made.
+
+- Repository level checks are now run in parallel by default.
+
+- Fix iterating over git commits to fix git-related checks.
+
+---------------------------
 pkgcheck 0.6.7 (2019-10-05)
 ---------------------------
 
