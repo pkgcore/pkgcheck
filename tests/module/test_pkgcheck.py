@@ -374,12 +374,9 @@ class TestPkgcheckScan(object):
     def _render_results(self, results):
         """Render a given set of result objects into their related string form."""
         with tempfile.TemporaryFile() as f:
-            reporter = reporters.FancyReporter(out=PlainTextFormatter(f))
-            reporter.start()
-            for result in results:
-                reporter.report(result)
-            reporter.finish()
-            f.flush()
+            with reporters.FancyReporter(out=PlainTextFormatter(f)) as reporter:
+                for result in results:
+                    reporter.report(result)
             f.seek(0)
             output = f.read().decode()
             return output
@@ -611,15 +608,12 @@ class TestPkgcheckReplay(object):
             assert excinfo.value.code == 2
 
     def test_replay(self, capsys):
+        result = ProfileWarning('profile warning: foo')
         for reporter_cls in (reporters.BinaryPickleStream, reporters.JsonStream):
             with tempfile.NamedTemporaryFile() as f:
                 out = PlainTextFormatter(f)
-                reporter = reporter_cls(out=out)
-                reporter.start()
-                result = ProfileWarning('profile warning: foo')
-                reporter.report(result)
-                reporter.finish()
-                f.flush()
+                with reporter_cls(out) as reporter:
+                    reporter.report(result)
                 with patch('sys.argv', self.args + ['-R', 'StrReporter', f.name]):
                     with pytest.raises(SystemExit) as excinfo:
                         self.script()

@@ -15,38 +15,36 @@ class BaseReporter(object):
 
     reporter_cls = reporters.Reporter
 
-    def mk_reporter(self, **kwargs):
-        out = PlainTextFormatter(sys.stdout)
-        reporter = self.reporter_cls(out=out, **kwargs)
+    @pytest.fixture(autouse=True)
+    def _setup(self):
         self.log_warning = profiles.ProfileWarning('profile warning')
         self.log_error = profiles.ProfileError('profile error')
         pkg = FakePkg('dev-libs/foo-0')
         self.category_result = metadata_xml.CatMissingMetadataXml('metadata.xml', pkg=pkg)
         self.package_result = pkgdir.InvalidPN(('bar', 'baz'), pkg=pkg)
         self.versioned_result = metadata.BadFilename(('0.tar.gz', 'foo.tar.gz'), pkg=pkg)
-        return reporter
+
+    def mk_reporter(self, **kwargs):
+        out = PlainTextFormatter(sys.stdout)
+        return self.reporter_cls(out, **kwargs)
 
     add_report_output = None
     filtered_report_output = None
 
     def test_add_report(self, capsys):
-        self.reporter = self.mk_reporter()
-        self.reporter.start()
-        self.reporter.report(self.log_warning)
-        self.reporter.report(self.category_result)
-        self.reporter.report(self.package_result)
-        self.reporter.report(self.versioned_result)
-        self.reporter.finish()
+        with self.mk_reporter() as reporter:
+            reporter.report(self.log_warning)
+            reporter.report(self.category_result)
+            reporter.report(self.package_result)
+            reporter.report(self.versioned_result)
         out, err = capsys.readouterr()
         assert not err
         assert out == self.add_report_output
 
     def test_filtered_report(self, capsys):
-        self.reporter = self.mk_reporter(keywords=(profiles.ProfileError,))
-        self.reporter.start()
-        self.reporter.report(self.log_warning)
-        self.reporter.report(self.log_error)
-        self.reporter.finish()
+        with self.mk_reporter(keywords=(profiles.ProfileError,)) as reporter:
+            reporter.report(self.log_warning)
+            reporter.report(self.log_error)
         out, err = capsys.readouterr()
         assert not err
         assert out == self.filtered_report_output
@@ -174,23 +172,19 @@ class TestPickleStream(BaseReporter):
     reporter_cls = reporters.PickleStream
 
     def test_add_report(self, capsysbinary):
-        self.reporter = self.mk_reporter()
-        for result in (self.log_warning, self.log_error, self.category_result,
-                       self.package_result, self.versioned_result):
-            self.reporter.start()
-            self.reporter.report(result)
-            self.reporter.finish()
-            out, err = capsysbinary.readouterr()
-            assert not err
-            unpickled_result = pickle.loads(out)
-            assert str(unpickled_result) == str(result)
+        with self.mk_reporter() as reporter:
+            for result in (self.log_warning, self.log_error, self.category_result,
+                           self.package_result, self.versioned_result):
+                reporter.report(result)
+                out, err = capsysbinary.readouterr()
+                assert not err
+                unpickled_result = pickle.loads(out)
+                assert str(unpickled_result) == str(result)
 
     def test_filtered_report(self, capsysbinary):
-        self.reporter = self.mk_reporter(keywords=(profiles.ProfileError,))
-        self.reporter.start()
-        self.reporter.report(self.log_warning)
-        self.reporter.report(self.log_error)
-        self.reporter.finish()
+        with self.mk_reporter(keywords=(profiles.ProfileError,)) as reporter:
+            reporter.report(self.log_warning)
+            reporter.report(self.log_error)
         out, err = capsysbinary.readouterr()
         assert not err
         result = pickle.loads(out)
@@ -198,11 +192,9 @@ class TestPickleStream(BaseReporter):
 
     def test_unpickleable_result(self):
         result = UnPickleableResult()
-        reporter = self.mk_reporter()
-        with pytest.raises(TypeError):
-            reporter.start()
-            reporter.report(result)
-            reporter.finish()
+        with self.mk_reporter() as reporter:
+            with pytest.raises(TypeError):
+                reporter.report(result)
 
 
 class TestBinaryPickleStream(TestPickleStream):
@@ -215,24 +207,20 @@ class TestJsonStream(BaseReporter):
     reporter_cls = reporters.JsonStream
 
     def test_add_report(self, capsys):
-        self.reporter = self.mk_reporter()
-        for result in (self.log_warning, self.log_error, self.category_result,
-                       self.package_result, self.versioned_result):
-            self.reporter.start()
-            self.reporter.report(result)
-            self.reporter.finish()
-            out, err = capsys.readouterr()
-            assert not err
-            deserialized_result = self.reporter.from_json(out)
-            assert str(deserialized_result) == str(result)
+        with self.mk_reporter() as reporter:
+            for result in (self.log_warning, self.log_error, self.category_result,
+                        self.package_result, self.versioned_result):
+                reporter.report(result)
+                out, err = capsys.readouterr()
+                assert not err
+                deserialized_result = reporter.from_json(out)
+                assert str(deserialized_result) == str(result)
 
     def test_filtered_report(self, capsys):
-        self.reporter = self.mk_reporter(keywords=(profiles.ProfileError,))
-        self.reporter.start()
-        self.reporter.report(self.log_warning)
-        self.reporter.report(self.log_error)
-        self.reporter.finish()
-        out, err = capsys.readouterr()
-        assert not err
-        result = self.reporter.from_json(out)
-        assert str(result) == str(self.log_error)
+        with self.mk_reporter(keywords=(profiles.ProfileError,)) as reporter:
+            reporter.report(self.log_warning)
+            reporter.report(self.log_error)
+            out, err = capsys.readouterr()
+            assert not err
+            result = reporter.from_json(out)
+            assert str(result) == str(self.log_error)
