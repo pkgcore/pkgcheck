@@ -1,6 +1,6 @@
 """Core check classes."""
 
-from .. import base, feeds, results, sources
+from .. import addons, base, feeds, results, sources
 from ..log import logger
 
 
@@ -86,20 +86,16 @@ class AsyncCheck(Check):
 class NetworkCheck(AsyncCheck):
     """Check that is only run when network support is enabled."""
 
+    required_addons = (addons.NetAddon,)
+
+    def __init__(self, *args, net_addon):
+        super().__init__(*args)
+        self.timeout = self.options.timeout
+        self.session = net_addon.session
+
     @classmethod
     def skip(cls, namespace):
         skip = not namespace.net
         if skip:
             logger.info(f'skipping {cls.__name__}, network checks not enabled')
-        elif 'requests_session' not in namespace:
-            try:
-                from ..net import Session
-                # inject requests session into namespace for network checks to use
-                namespace.requests_session = Session(timeout=namespace.timeout)
-            except ImportError as e:
-                if e.name != 'requests':
-                    raise
-                # skip network checks when requests module isn't installed
-                skip = True
-                logger.info(f'skipping {cls.__name__}, failed importing requests')
         return skip or super().skip(namespace)

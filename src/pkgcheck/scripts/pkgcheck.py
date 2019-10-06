@@ -180,14 +180,9 @@ check_options.add_argument(
 
         Available scopes: %s
     """ % (', '.join(base.scopes)))
-
-net_options = scan.add_argument_group('network')
-net_options.add_argument(
+check_options.add_argument(
     '--net', action='store_true',
     help='run checks that require internet access')
-net_options.add_argument(
-    '--timeout', type=float, default='5',
-    help='timeout used for network checks')
 
 
 def add_addon(addon, addon_set):

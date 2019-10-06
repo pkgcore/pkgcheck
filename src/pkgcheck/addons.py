@@ -666,3 +666,24 @@ class UseAddon(base.Addon):
         vals = dict(self._flatten_restricts(
             nodes, skip_filter, stated=pkg.iuse_stripped, unstated=unstated, attr=attr))
         return vals, self._unstated_iuse(pkg, attr, unstated)
+
+
+class NetAddon(base.Addon):
+    """Addon supporting network functionality."""
+
+    @classmethod
+    def mangle_argparser(cls, parser):
+        group = parser.add_argument_group('network')
+        group.add_argument(
+            '--timeout', type=float, default='5',
+            help='timeout used for network checks')
+
+    def __init__(self, options):
+        super().__init__(options)
+        try:
+            from .net import Session
+            self.session = Session(timeout=self.options.timeout)
+        except ImportError as e:
+            if e.name == 'requests':
+                raise UserException('network checks require requests to be installed')
+            raise
