@@ -24,8 +24,6 @@ from pkgcheck import base, checks, const, reporters
 from pkgcheck.checks.profiles import ProfileWarning
 from pkgcheck.scripts import pkgcheck, run
 
-from .misc import cache_dir, fakeconfig, fakerepo, testconfig, tool
-
 
 def test_script_run(capsys):
     """Test regular code path for running scripts."""
