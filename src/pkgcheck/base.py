@@ -11,6 +11,7 @@ minimally accepted scope.
 """
 
 import concurrent.futures
+import os
 import re
 import shutil
 import sys
@@ -138,10 +139,22 @@ class Cache:
 
     # used to check on-disk cache compatibility
     cache_version = 0
+    # used by cache subcommand
+    cache_type = None
+    _cache_file = None
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         raise NotImplementedError(self.update_cache)
+
+    @staticmethod
+    def cache_dir(repo):
+        """Return the cache directory for a given repository."""
+        return pjoin(CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
+
+    def cache_file(self, repo):
+        """Return the cache file for a given repository."""
+        return pjoin(self.cache_dir(repo), self._cache_file)
 
     @staticmethod
     def update_caches(options, addons):
@@ -167,7 +180,7 @@ class Cache:
         force = getattr(options, 'force_cache', False)
         if force:
             try:
-                shutil.rmtree(base.CACHE_DIR)
+                shutil.rmtree(CACHE_DIR)
             except FileNotFoundError:
                 pass
             except IOError as e:
@@ -179,6 +192,7 @@ class Cache:
                 for future in concurrent.futures.as_completed(futures):
                     ret.append(future.result())
         return any(ret)
+
 
 def convert_check_filter(tok):
     """Convert an input string into a filter function.

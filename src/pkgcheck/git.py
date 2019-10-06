@@ -5,7 +5,6 @@ import os
 import pickle
 import shlex
 import subprocess
-from itertools import chain
 from collections import namedtuple, UserDict
 
 from pkgcore.ebuild import cpv
@@ -284,6 +283,9 @@ class GitAddon(base.Addon, base.Cache):
 
     # used to check repo cache compatibility
     cache_version = 3
+    # used by cache subcommand and related class
+    cache_type = 'git'
+    _cache_file = 'git.pickle'
 
     @classmethod
     def mangle_argparser(cls, parser):
@@ -350,14 +352,10 @@ class GitAddon(base.Addon, base.Cache):
         except AttributeError:
             # running from cache subcommand
             repos = self.options.domain.ebuild_repos
-            repos = chain.from_iterable(repo.trees for repo in repos)
 
         for repo in repos:
-            # initialize cache file location
-            cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
-            cache_file = pjoin(cache_dir, 'git.pickle')
             try:
-                os.remove(cache_file)
+                os.remove(self.cache_file(repo))
             except FileNotFoundError as e:
                 pass
             except IOError as e:
@@ -371,7 +369,6 @@ class GitAddon(base.Addon, base.Cache):
         except AttributeError:
             # running from cache subcommand
             repos = self.options.domain.ebuild_repos
-            repos = chain.from_iterable(repo.trees for repo in repos)
 
         if not self.options.git_disable:
             for repo in repos:
@@ -381,8 +378,7 @@ class GitAddon(base.Addon, base.Cache):
                     continue
 
                 # initialize cache file location
-                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
-                cache_file = pjoin(cache_dir, 'git.pickle')
+                cache_file = self.cache_file(repo)
 
                 git_repo = None
                 cache_repo = True

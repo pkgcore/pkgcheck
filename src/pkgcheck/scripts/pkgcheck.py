@@ -27,6 +27,7 @@ from snakeoil.osutils import abspath, pjoin
 from snakeoil.strings import pluralism as _pl
 
 from .. import base, const, pipeline, reporters, results
+from ..addons import init_addon
 from ..checks import init_checks
 from ..log import logger
 
@@ -541,8 +542,19 @@ def _cache(options, out, err):
     elif options.update_cache:
         ret = base.Cache.update_caches(options, caches)
     else:
-        # TODO: list existing caches
-        pass
+        # list existing caches
+        caches_map = defaultdict(list)
+        for cache in caches:
+            for repo in sorted(options.domain.ebuild_repos, key=attrgetter('repo_id')):
+                cache_file = cache.cache_file(repo)
+                if os.path.exists(cache_file):
+                    caches_map[cache.cache_type].append(repo)
+        for cache_type, repos in caches_map.items():
+            out.write(f'{cache_type} caches: ', autoline=False)
+            if options.verbosity < 1:
+                out.write(', '.join(r.repo_id for r in repos))
+            else:
+                out.write('\n' + '\n'.join(f'  {cache.cache_file(repo)}' for repo in repos))
 
     return ret
 
