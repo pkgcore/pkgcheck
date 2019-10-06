@@ -459,9 +459,7 @@ def _scan(options, out, err):
     with options.reporter(out, verbosity=options.verbosity,
                           keywords=options.filtered_keywords) as reporter:
         # run git commit checks separately from pkg-related checks
-        git_checks = enabled_checks.pop(base.commit_scope, None)
-        if git_checks:
-            (source, is_async), checks = git_checks.popitem()
+        for (source, is_async), checks in enabled_checks.pop(base.commit_scope, {}).items():
             for result in pipeline.GitPipeline(options, source, checks):
                 reporter.report(result)
 
