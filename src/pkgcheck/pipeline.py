@@ -42,12 +42,13 @@ class Pipeline:
                 for restrict in versioned_source.itermatch(self.restrict):
                     for i in range(len(pipes)):
                         work_q.put((scope, restrict, i))
-            elif scope == base.package_scope:
+            elif scope in (base.package_scope, base.category_scope):
                 unversioned_source = UnversionedSource(self.options)
                 for restrict in unversioned_source.itermatch(self.restrict):
                     work_q.put((scope, restrict, 0))
             else:
-                work_q.put((scope, self.restrict, 0))
+                for i in range(len(pipes)):
+                    work_q.put((scope, self.restrict, i))
 
         # insert flags to notify processes that no more work exists
         for i in range(self.jobs):
@@ -60,19 +61,22 @@ class Pipeline:
 
     def _run_checks(self, sync_pipes, work_q, results_q):
         while True:
-            scope, restrict, check_idx = work_q.get()
+            scope, restrict, pipe_idx = work_q.get()
             if scope is None:
                 return
             if scope == base.version_scope:
-                results_q.put(list(sync_pipes[scope][check_idx].run(restrict)))
-            else:
+                results_q.put(list(sync_pipes[scope][pipe_idx].run(restrict)))
+            elif scope in (base.package_scope, base.category_scope):
                 results = []
                 for pipe in sync_pipes[scope]:
-                    if scope == base.repository_scope:
-                        results.extend(pipe.start())
                     results.extend(pipe.run(restrict))
-                    if scope == base.repository_scope:
-                        results.extend(pipe.finish())
+                results_q.put(results)
+            else:
+                results = []
+                pipe = sync_pipes[scope][pipe_idx]
+                results.extend(pipe.start())
+                results.extend(pipe.run(restrict))
+                results.extend(pipe.finish())
                 results_q.put(results)
 
     def run(self, results_q):
