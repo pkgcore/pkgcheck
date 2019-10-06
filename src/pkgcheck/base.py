@@ -72,7 +72,18 @@ scopes = OrderedDict((
 CACHE_DIR = pjoin(pkgcore_const.USER_CACHE_PATH, 'pkgcheck')
 
 
-class Addon:
+class _AddonParam(type):
+    """Metaclass defining param_name property for addon dependency kwargs injection.
+
+    Note that this assumes addon classes follow the CapWords convention.
+    """
+
+    @property
+    def param_name(cls):
+        return re.sub(r'([a-z])([A-Z])', r'\1_\2', cls.__name__).lower()
+
+
+class Addon(metaclass=_AddonParam):
     """Base class for extra functionality for pkgcheck other than a check.
 
     The checkers can depend on one or more of these. They will get
@@ -92,7 +103,7 @@ class Addon:
 
     required_addons = ()
 
-    def __init__(self, options, *args):
+    def __init__(self, options):
         """Initialize.
 
         An instance of every addon in required_addons is passed as extra arg.

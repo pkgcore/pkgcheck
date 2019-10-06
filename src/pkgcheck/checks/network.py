@@ -104,8 +104,6 @@ class _UrlCheck(NetworkCheck):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.timeout = self.options.timeout
-        self.session = self.options.requests_session
         self.dead_result = None
         self.redirected_result = None
 
@@ -237,9 +235,9 @@ class FetchablesUrlCheck(_UrlCheck):
         DeadSrcUrl, RedirectedSrcUrl, HttpsUrlAvailable, SSLCertificateError])
     required_addons = (addons.UseAddon,)
 
-    def __init__(self, options, iuse_handler):
-        super().__init__(options)
-        self.fetch_filter = iuse_handler.get_filter('fetchables')
+    def __init__(self, *args, use_addon, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fetch_filter = use_addon.get_filter('fetchables')
         self.dead_result = DeadSrcUrl
         self.redirected_result = RedirectedSrcUrl
 

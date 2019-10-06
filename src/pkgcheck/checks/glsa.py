@@ -73,13 +73,13 @@ class GlsaCheck(GentooRepoCheck):
 
         namespace.glsa_location = abspath(glsa_loc)
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(self, *args):
+        super().__init__(*args)
 
         # this is a bit brittle
         self.vulns = {}
         if self.options.glsa_enabled:
-            for r in GlsaDirSet(options.glsa_location):
+            for r in GlsaDirSet(self.options.glsa_location):
                 if len(r) > 2:
                     self.vulns.setdefault(
                         r[0].key, []).append(packages.AndRestriction(*r[1:]))

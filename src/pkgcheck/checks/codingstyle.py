@@ -205,8 +205,8 @@ class PathVariablesCheck(Check):
         'PYTHON_CONFIG', 'PYTHON_SCRIPTDIR',
     )
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.missing_regex = re.compile(r'(\${(%s)})"?\w' % r'|'.join(self.variables))
         self.unnecessary_regex = re.compile(r'(\${(%s)%%/})' % r'|'.join(self.variables))
         self.double_prefix_regex = re.compile(
@@ -285,8 +285,8 @@ class AbsoluteSymlinkCheck(Check):
 
     DIRS = ('bin', 'etc', 'lib', 'opt', 'sbin', 'srv', 'usr', 'var')
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.regex = re.compile(
             r'^\s*dosym\s+((["\'])?/(%s)(?(2).*?\2|\S*))' % r'|'.join(self.DIRS))
 
@@ -320,8 +320,8 @@ class BadInsIntoCheck(Check):
 
     known_results = frozenset([BadInsIntoDir])
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(self, *args):
+        super().__init__(*args)
         if self._bad_insinto is None:
             self._load_class_regex()
 
@@ -393,8 +393,8 @@ class ObsoleteUriCheck(Check):
          r'\g<prefix>-/archive/\g<ref>/\g<pkg>-\g<ref>.\g<format>'),
     )
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.regexes = []
         for regexp, repl in self.REGEXPS:
             self.regexes.append((re.compile(regexp), repl))
@@ -535,8 +535,8 @@ class HomepageInSrcUriCheck(Check):
     _source = sources.EbuildFileRepoSource
     known_results = frozenset([HomepageInSrcUri])
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.regex = re.compile(r'^\s*SRC_URI="[^"]*[$]{HOMEPAGE}', re.M|re.S)
 
     def feed(self, pkg):

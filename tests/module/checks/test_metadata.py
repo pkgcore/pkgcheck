@@ -20,7 +20,7 @@ from .. import misc
 class TestDescriptionCheck(misc.ReportTestCase):
 
     check_kls = metadata.DescriptionCheck
-    check = metadata.DescriptionCheck(None, None)
+    check = metadata.DescriptionCheck(None)
 
     def mk_pkg(self, desc=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"DESCRIPTION": desc})
@@ -55,7 +55,7 @@ class TestDescriptionCheck(misc.ReportTestCase):
 class TestHomepageCheck(misc.ReportTestCase):
 
     check_kls = metadata.HomepageCheck
-    check = metadata.HomepageCheck(None, None)
+    check = metadata.HomepageCheck(None)
 
     def mk_pkg(self, homepage='', cpvstr='dev-util/diffball-0.7.1'):
         return misc.FakePkg(cpvstr, data={"HOMEPAGE": homepage})
@@ -136,9 +136,8 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         )
         search_repo = FakeRepo(pkgs=pkgs)
         options = self.get_options(search_repo=search_repo, gentoo_repo=False)
-        profiles = [misc.FakeProfile()]
-        iuse_handler = addons.UseAddon(options, profiles)
-        return metadata.KeywordsCheck(options, iuse_handler)
+        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
+        return metadata.KeywordsCheck(options, use_addon=use_addon)
 
     def mk_pkg(self, keywords='', cpv='dev-util/diffball-0.7.1', rdepend=''):
         return misc.FakePkg(cpv, data={'KEYWORDS': keywords, 'RDEPEND': rdepend})
@@ -170,9 +169,8 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
 
         # check that * and ~* are flagged in gentoo repo
         options = self.get_options(repo_name='gentoo', gentoo_repo=True)
-        profiles = [misc.FakeProfile()]
-        iuse_handler = addons.UseAddon(options, profiles)
-        check = metadata.KeywordsCheck(options, iuse_handler)
+        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
+        check = metadata.KeywordsCheck(options, use_addon=use_addon)
         r = self.assertReport(check, self.mk_pkg("*"))
         assert isinstance(r, metadata.UnknownKeywords)
         assert r.keywords == ('*',)
@@ -270,8 +268,8 @@ class TestIuseMetadataCheck(IUSE_Options, misc.ReportTestCase):
     @pytest.fixture
     def check(self):
         options = self.get_options()
-        profiles = [misc.FakeProfile()]
-        return metadata.IuseMetadataCheck(options, addons.UseAddon(options, profiles))
+        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
+        return metadata.IuseMetadataCheck(options, use_addon=use_addon)
 
     def mk_pkg(self, iuse=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"IUSE": iuse})
@@ -381,7 +379,8 @@ class TestRequiredUseMetadataCheck(IUSE_Options, misc.ReportTestCase):
         if profiles is None:
             profiles = {'x86': [misc.FakeProfile(name='default/linux/x86', masks=masks)]}
         options = self.get_options(verbosity=verbosity)
-        check = self.check_kls(options, addons.UseAddon(options, profiles['x86']), profiles)
+        use_addon = addons.UseAddon(options, profile_addon=profiles['x86'])
+        check = self.check_kls(options, use_addon=use_addon, profile_addon=profiles)
         return check
 
     def mk_pkg(self, cpvstr="dev-util/diffball-0.7.1", eapi="4", iuse="",
@@ -503,11 +502,12 @@ def use_based():
         def test_required_addons(self):
             assert addons.UseAddon in self.check_kls.required_addons
 
-        def mk_check(self, *args, **kwargs):
-            options = self.get_options(**kwargs)
+        def mk_check(self, *args, options=None, **kwargs):
+            options = options if options is not None else {}
+            options = self.get_options(**options)
             profiles = [misc.FakeProfile(iuse_effective=["x86"])]
-            iuse_handler = addons.UseAddon(options, profiles)
-            check = self.check_kls(options, iuse_handler, *args)
+            use_addon = addons.UseAddon(options, profile_addon=profiles)
+            check = self.check_kls(options, *args, use_addon=use_addon, **kwargs)
             return check
 
     return UseBased
@@ -532,7 +532,7 @@ class TestRestrictsCheck(use_based(), misc.ReportTestCase):
     def test_allowed(self):
         for attr, result in (('properties', metadata.UnknownProperties),
                              ('restrict', metadata.BadRestricts)):
-            check = self.mk_check(**{attr: ('foo',)})
+            check = self.mk_check(options={attr: ('foo',)})
             # allowed
             self.assertNoReport(check, self.mk_pkg(**{attr: 'foo'}))
 
@@ -607,9 +607,8 @@ class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
     def mk_check(self, licenses=(), **kwargs):
         self.repo = FakeRepo(repo_id='test', licenses=licenses)
         options = self.get_options(**kwargs)
-        profiles = [misc.FakeProfile()]
-        iuse_handler = addons.UseAddon(options, profiles)
-        check = self.check_kls(options, iuse_handler, {})
+        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
+        check = self.check_kls(options, use_addon=use_addon)
         return check
 
     def mk_pkg(self, license='', iuse=''):
@@ -690,9 +689,8 @@ class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
             )
         self.repo = FakeRepo(pkgs=pkgs, repo_id='test')
         options = self.get_options(**kwargs)
-        profiles = [misc.FakeProfile()]
-        iuse_handler = addons.UseAddon(options, profiles)
-        check = self.check_kls(options, iuse_handler)
+        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
+        check = self.check_kls(options, use_addon=use_addon)
         return check
 
     def mk_pkg(self, eapi='5', rdepend='', depend=''):
@@ -751,9 +749,8 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
                 FakePkg('dev-libs/bar-2', slot='2'),
             )
         kwargs['search_repo'] = FakeRepo(pkgs=pkgs, repo_id='test')
-        options = self.get_options(**kwargs)
-        git_addon = git.GitAddon(options)
-        return super().mk_check(git_addon, **kwargs)
+        git_addon = git.GitAddon(self.get_options(**kwargs))
+        return super().mk_check(options=kwargs, git_addon=git_addon)
 
     # pull the set of dependency attrs from the most recent EAPI
     dep_attrs = list(eapi.EAPI.known_eapis.values())[-1].dep_keys

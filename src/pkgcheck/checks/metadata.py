@@ -85,11 +85,11 @@ class LicenseMetadataCheck(Check):
     # categories for ebuilds that can lack LICENSE settings
     unlicensed_categories = frozenset(['virtual', 'acct-group', 'acct-user'])
 
-    required_addons = (addons.UseAddon, addons.ProfileAddon)
+    required_addons = (addons.UseAddon,)
 
-    def __init__(self, options, iuse_handler, profiles):
-        super().__init__(options)
-        self.iuse_filter = iuse_handler.get_filter('license')
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.iuse_filter = use_addon.get_filter('license')
         self.eula = self.options.target_repo.licenses.groups.get('EULA')
         self.mirror_restricts = frozenset(['fetch', 'mirror'])
 
@@ -179,9 +179,9 @@ class IuseMetadataCheck(Check):
     required_addons = (addons.UseAddon,)
     known_results = frozenset([InvalidUseFlags, UnknownUseFlags])
 
-    def __init__(self, options, iuse_handler):
-        super().__init__(options)
-        self.iuse_handler = iuse_handler
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.iuse_handler = use_addon
 
     def feed(self, pkg):
         invalid = [x for x in pkg.iuse_stripped if not atom.valid_use_flag.match(x)]
@@ -297,10 +297,10 @@ class RequiredUseMetadataCheck(Check):
     required_addons = (addons.UseAddon, addons.ProfileAddon)
     known_results = frozenset([InvalidRequiredUse, RequiredUseDefaults, UnstatedIuse])
 
-    def __init__(self, options, iuse_handler, profiles):
-        super().__init__(options)
-        self.iuse_filter = iuse_handler.get_filter('required_use')
-        self.profiles = profiles
+    def __init__(self, *args, use_addon, profile_addon):
+        super().__init__(*args)
+        self.iuse_filter = use_addon.get_filter('required_use')
+        self.profiles = profile_addon
 
     def feed(self, pkg):
         # check REQUIRED_USE for invalid nodes
@@ -433,16 +433,16 @@ class LocalUseCheck(Check):
         ProbableUseExpand, UnderscoreInUseFlag, UnstatedIuse,
     ])
 
-    def __init__(self, options, use_handler):
-        super().__init__(options)
-        self.iuse_handler = use_handler
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.iuse_handler = use_addon
         self.global_use = {
-            flag: desc for matcher, (flag, desc) in options.target_repo.config.use_desc}
+            flag: desc for matcher, (flag, desc) in self.options.target_repo.config.use_desc}
 
         self.use_expand_groups = dict()
-        for key in options.target_repo.config.use_expand_desc.keys():
+        for key in self.options.target_repo.config.use_expand_desc.keys():
             self.use_expand_groups[key] = {
-                flag for flag, desc in options.target_repo.config.use_expand_desc[key]}
+                flag for flag, desc in self.options.target_repo.config.use_expand_desc[key]}
 
     def feed(self, pkgs):
         pkg = pkgs[0]
@@ -511,9 +511,9 @@ class MissingSlotDepCheck(Check):
     required_addons = (addons.UseAddon,)
     known_results = frozenset([MissingSlotDep])
 
-    def __init__(self, options, iuse_handler):
-        super().__init__(options)
-        self.iuse_filter = iuse_handler.get_filter()
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.iuse_filter = use_addon.get_filter()
 
     def feed(self, pkg):
         rdepend, _ = self.iuse_filter((atom_cls,), pkg, pkg.rdepend)
@@ -638,9 +638,9 @@ class DependencyCheck(Check):
         OutdatedBlocker, NonexistentBlocker, UnstatedIuse,
     ])
 
-    def __init__(self, options, iuse_handler, git_addon):
-        super().__init__(options)
-        self.iuse_filter = iuse_handler.get_filter()
+    def __init__(self, *args, use_addon, git_addon):
+        super().__init__(*args)
+        self.iuse_filter = use_addon.get_filter()
         self.conditional_ops = {'?', '='}
         self.use_defaults = {'(+)', '(-)'}
         self.today = datetime.today()
@@ -808,9 +808,9 @@ class KeywordsCheck(Check):
         UnsortedKeywords, MissingVirtualKeywords,
     ])
 
-    def __init__(self, options, iuse_handler):
-        super().__init__(options)
-        self.iuse_filter = iuse_handler.get_filter()
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.iuse_filter = use_addon.get_filter()
         self.valid_arches = self.options.target_repo.known_arches
         special_keywords = {'-*'}
         stable_keywords = self.valid_arches
@@ -971,9 +971,9 @@ class SrcUriCheck(Check):
 
     valid_protos = frozenset(["http", "https", "ftp"])
 
-    def __init__(self, options, iuse_handler):
-        super().__init__(options)
-        self.iuse_filter = iuse_handler.get_filter('fetchables')
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.iuse_filter = use_addon.get_filter('fetchables')
         self.zip_to_tar_re = re.compile(
             r'https?://(github\.com/.*?/.*?/archive/.+\.zip|'
             r'gitlab\.com/.*?/.*?/-/archive/.+\.zip)')
@@ -1148,15 +1148,15 @@ class RestrictsCheck(Check):
     known_results = frozenset([BadRestricts, UnknownProperties, UnstatedIuse])
     required_addons = (addons.UseAddon,)
 
-    def __init__(self, options, iuse_handler):
-        super().__init__(options)
-        self.restrict_filter = iuse_handler.get_filter('restrict')
-        self.properties_filter = iuse_handler.get_filter('properties')
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.restrict_filter = use_addon.get_filter('restrict')
+        self.properties_filter = use_addon.get_filter('properties')
 
         # pull allowed RESTRICT/PROPERTIES values from a repo and its masters
         allowed_restricts = []
         allowed_properties = []
-        for repo in options.target_repo.trees:
+        for repo in self.options.target_repo.trees:
             allowed_restricts.extend(repo.config.restrict_allowed)
             allowed_properties.extend(repo.config.properties_allowed)
         self.allowed_restricts = frozenset(allowed_restricts)
@@ -1262,10 +1262,10 @@ class MissingUnpackerDepCheck(Check):
         '.lzh': frozenset(['app-arch/lha']),
     })
 
-    def __init__(self, options, iuse_handler):
-        super().__init__(options)
-        self.dep_filter = iuse_handler.get_filter()
-        self.fetch_filter = iuse_handler.get_filter('fetchables')
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.dep_filter = use_addon.get_filter()
+        self.fetch_filter = use_addon.get_filter('fetchables')
 
     def feed(self, pkg):
         # ignore conditionals

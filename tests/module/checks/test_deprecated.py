@@ -12,7 +12,7 @@ def mk_pkg(ver, fake_src):
 class TestDeprecatedEclass(misc.ReportTestCase):
 
     check_kls = deprecated.DeprecatedEclassCheck
-    check = deprecated.DeprecatedEclassCheck(None, None)
+    check = deprecated.DeprecatedEclassCheck(None)
 
     def test_no_eclasses(self):
         fake_src = """

@@ -29,9 +29,9 @@ class UnstableOnlyCheck(GentooRepoCheck):
     required_addons = (addons.StableArchesAddon,)
     known_results = frozenset([UnstableOnly])
 
-    def __init__(self, options, stable_arches=None):
-        super().__init__(options)
-        arches = {x.strip().lstrip("~") for x in options.stable_arches}
+    def __init__(self, *args, stable_arches_addon=None):
+        super().__init__(*args)
+        arches = {x.strip().lstrip("~") for x in self.options.stable_arches}
 
         # stable, then unstable, then file
         self.arch_restricts = {}

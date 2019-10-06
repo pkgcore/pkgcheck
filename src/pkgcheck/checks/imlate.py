@@ -60,16 +60,16 @@ class ImlateCheck(Check):
                 The default arches are all stable arches (unless --arches is specified).
             """)
 
-    def __init__(self, options, stable_arches=None):
-        super().__init__(options)
-        self.all_arches = frozenset(options.arches)
-        self.stable_arches = frozenset(arch.strip().lstrip("~") for arch in options.stable_arches)
+    def __init__(self, *args, stable_arches_addon=None):
+        super().__init__(*args)
+        self.all_arches = frozenset(self.options.arches)
+        self.stable_arches = frozenset(arch.strip().lstrip("~") for arch in self.options.stable_arches)
         self.target_arches = frozenset(
             "~%s" % arch.strip().lstrip("~") for arch in self.stable_arches)
 
-        source_arches = options.source_arches
+        source_arches = self.options.source_arches
         if source_arches is None:
-            source_arches = options.stable_arches
+            source_arches = self.options.stable_arches
         self.source_arches = frozenset(
             arch.lstrip("~") for arch in source_arches)
         self.source_filter = packages.PackageRestriction(

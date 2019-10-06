@@ -31,8 +31,8 @@ class GitCommitsRepoSource(sources.RepoSource):
 
     required_addons = (git.GitAddon,)
 
-    def __init__(self, options, git_addon):
-        super().__init__(options)
+    def __init__(self, *args, git_addon):
+        super().__init__(*args)
         self._repo = git_addon.commits_repo(git.GitChangedRepo)
 
 
@@ -45,8 +45,8 @@ class GitCommitsSource(sources.Source):
 
     required_addons = (git.GitAddon,)
 
-    def __init__(self, options, git_addon):
-        super().__init__(options, source=git_addon.commits())
+    def __init__(self, *args, git_addon):
+        super().__init__(*args, source=git_addon.commits())
 
 
 class OutdatedCopyright(results.VersionedResult, results.Warning):
@@ -198,8 +198,8 @@ class GitPkgCommitsCheck(GentooRepoCheck):
         OutdatedCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
     ])
 
-    def __init__(self, options, git_addon):
-        super().__init__(options)
+    def __init__(self, *args, git_addon):
+        super().__init__(*args)
         self.today = datetime.today()
         self.repo = self.options.target_repo
         self.valid_arches = self.options.target_repo.known_arches

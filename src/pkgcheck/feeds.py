@@ -67,11 +67,11 @@ class QueryCache(Feed):
 
 class EvaluateDepSet(Feed):
 
-    def __init__(self, options, profiles):
-        super().__init__(options)
+    def __init__(self, *args, profile_addon):
+        super().__init__(*args)
         self.pkg_evaluate_depsets_cache = {}
         self.pkg_profiles_cache = {}
-        self.profiles = profiles
+        self.profiles = profile_addon
 
     def feed(self, item):
         super().feed(item)

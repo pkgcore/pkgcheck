@@ -6,7 +6,7 @@ from .. import misc
 class TestRedundantVersion(misc.ReportTestCase):
 
     check_kls = cleanup.RedundantVersionCheck
-    check = cleanup.RedundantVersionCheck(None, None)
+    check = cleanup.RedundantVersionCheck(None)
 
     def mk_pkg(self, ver, keywords=("x86", "amd64"), slot="0", **kwds):
         return misc.FakePkg(

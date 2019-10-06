@@ -112,10 +112,10 @@ class ProfilesCheck(Check):
         UnknownProfilePackageKeywords, BadProfileEntry, ProfileWarning, ProfileError,
     ])
 
-    def __init__(self, options, iuse_handler):
-        super().__init__(options)
-        self.repo = options.target_repo
-        self.iuse_handler = iuse_handler
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.repo = self.options.target_repo
+        self.iuse_handler = use_addon
         self.profiles_dir = self.repo.config.profiles_base
         self.non_profile_dirs = frozenset(
             pjoin(self.profiles_dir, x) for x in addons.ProfileAddon.non_profile_dirs)
@@ -369,10 +369,10 @@ class RepoProfilesCheck(Check):
     # known profile status types for the gentoo repo
     known_profile_statuses = frozenset(['stable', 'dev', 'exp'])
 
-    def __init__(self, options, profile_addon):
-        super().__init__(options)
-        self.arches = options.target_repo.known_arches
-        self.repo = options.target_repo
+    def __init__(self, *args, profile_addon):
+        super().__init__(*args)
+        self.arches = self.options.target_repo.known_arches
+        self.repo = self.options.target_repo
         self.profiles_dir = self.repo.config.profiles_base
         self.non_profile_dirs = profile_addon.non_profile_dirs
 

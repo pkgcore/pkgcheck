@@ -24,9 +24,9 @@ class DroppedKeywordsCheck(Check):
     required_addons = (addons.ArchesAddon,)
     known_results = frozenset([DroppedKeywords])
 
-    def __init__(self, options, arches):
-        super().__init__(options)
-        self.arches = frozenset(options.arches)
+    def __init__(self, *args, arches_addon):
+        super().__init__(*args)
+        self.arches = frozenset(self.options.arches)
 
     def feed(self, pkgset):
         # skip live ebuilds otherwise they're flagged

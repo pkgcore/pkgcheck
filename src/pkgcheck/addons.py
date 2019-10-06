@@ -294,10 +294,10 @@ class ProfileAddon(base.Addon):
             del gen_profile_data
         return mappings.ImmutableDict(data)
 
-    def __init__(self, options, arches=None):
-        super().__init__(options)
+    def __init__(self, *args, arches_addon=None):
+        super().__init__(*args)
 
-        self.official_arches = options.target_repo.known_arches
+        self.official_arches = self.options.target_repo.known_arches
         self.desired_arches = getattr(self.options, 'arches', None)
         if self.desired_arches is None or self.options.selected_arches is None:
             # copy it to be safe
@@ -308,14 +308,14 @@ class ProfileAddon(base.Addon):
         chunked_data_cache = {}
         cached_profiles = defaultdict(dict)
 
-        if options.profile_cache or options.profile_cache is None:
+        if self.options.profile_cache or self.options.profile_cache is None:
             for repo in self.options.target_repo.trees:
                 cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
                 cache_file = pjoin(cache_dir, 'profiles.pickle')
                 # add profiles-base -> repo mapping to ease storage procedure
                 cached_profiles[repo.config.profiles_base]['repo'] = repo
                 # load cached profile filters by default
-                if options.profile_cache is None:
+                if self.options.profile_cache is None:
                     try:
                         with open(cache_file, 'rb') as f:
                             cache = pickle.load(f)
@@ -345,7 +345,7 @@ class ProfileAddon(base.Addon):
             default_masked_use = tuple(set(
                 x for x in self.official_arches if x != stable_key))
 
-            for profile_obj, profile in options.arch_profiles.get(k, []):
+            for profile_obj, profile in self.options.arch_profiles.get(k, []):
                 files = self.profile_data.get(profile, None)
                 try:
                     cached_profile = cached_profiles[profile.base][profile.path]
@@ -400,7 +400,7 @@ class ProfileAddon(base.Addon):
                             # unsupported EAPI or other issue, profile checks will catch this
                             continue
 
-                    if options.profile_cache or options.profile_cache is None:
+                    if self.options.profile_cache or self.options.profile_cache is None:
                         cached_profiles[profile.base]['update'] = True
                         cached_profiles[profile.base][profile.path] = {
                             'files': files,
@@ -468,7 +468,7 @@ class ProfileAddon(base.Addon):
                     msg = (
                         f'failed dumping {repo.repo_id} profiles cache: '
                         f'{cache_file!r}: {e.strerror}')
-                    if not options.forced_cache:
+                    if not self.options.forced_cache:
                         logger.warning(msg)
                     else:
                         raise UserException(msg)
@@ -529,17 +529,17 @@ class StableArchesAddon(base.Addon):
 
     required_addons = (ArchesAddon,)
 
-    def __init__(self, options, arches=None):
-        super().__init__(options)
+    def __init__(self, *args, arches_addon=None):
+        super().__init__(*args)
         # use known stable arches if arches aren't specified
-        if options.selected_arches is None:
+        if self.options.selected_arches is None:
             stable_arches = set().union(*(
                 repo.profiles.arches('stable')
-                for repo in options.target_repo.trees))
+                for repo in self.options.target_repo.trees))
         else:
-            stable_arches = set(options.arches)
+            stable_arches = set(self.options.arches)
 
-        options.stable_arches = stable_arches
+        self.options.stable_arches = stable_arches
 
 
 class UnstatedIuse(results.VersionedResult, results.Error):
@@ -570,18 +570,18 @@ class UseAddon(base.Addon):
 
     required_addons = (ProfileAddon,)
 
-    def __init__(self, options, profiles):
-        super().__init__(options)
+    def __init__(self, *args, profile_addon):
+        super().__init__(*args)
 
         # common profile elements
         c_implicit_iuse = set()
-        if profiles:
-            c_implicit_iuse = set.intersection(*(set(p.iuse_effective) for p in profiles))
+        if profile_addon:
+            c_implicit_iuse = set.intersection(*(set(p.iuse_effective) for p in profile_addon))
 
         known_iuse = set()
         known_iuse_expand = set()
 
-        for repo in options.target_repo.trees:
+        for repo in self.options.target_repo.trees:
             known_iuse.update(flag for matcher, (flag, desc) in repo.config.use_desc)
             known_iuse_expand.update(
                 flag for flags in repo.config.use_expand_desc.values()
@@ -591,7 +591,7 @@ class UseAddon(base.Addon):
             ((packages.AlwaysTrue, known_iuse),),
             ((packages.AlwaysTrue, known_iuse_expand),),
         )
-        self.profiles = profiles
+        self.profiles = profile_addon
         self.global_iuse = frozenset(known_iuse)
         self.global_iuse_expand = frozenset(known_iuse_expand)
         self.global_iuse_implicit = frozenset(c_implicit_iuse)

@@ -75,9 +75,9 @@ class PackageUpdatesCheck(Check):
         OldPackageUpdate, MovedPackageUpdate, BadPackageUpdate,
     ])
 
-    def __init__(self, options):
-        super().__init__(options)
-        self.repo = options.target_repo
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.repo = self.options.target_repo
 
     def finish(self):
         update_reports = []
@@ -156,8 +156,8 @@ class UnusedLicensesCheck(Check):
     _source = sources.RepositoryRepoSource
     known_results = frozenset([UnusedLicenses])
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.unused_licenses = None
 
     def start(self):
@@ -192,9 +192,9 @@ class _MirrorsCheck(Check):
 
     required_addons = (addons.UseAddon,)
 
-    def __init__(self, options, iuse_handler):
-        super().__init__(options)
-        self.iuse_filter = iuse_handler.get_filter('fetchables')
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.iuse_filter = use_addon.get_filter('fetchables')
 
     def _get_mirrors(self, pkg):
         mirrors = []
@@ -250,8 +250,8 @@ class UnusedEclassesCheck(Check):
     _source = sources.RepositoryRepoSource
     known_results = frozenset([UnusedEclasses])
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.unused_eclasses = None
 
     def start(self):
@@ -290,9 +290,9 @@ class LicenseGroupsCheck(Check):
     _source = sources.EmptySource
     known_results = frozenset([UnknownLicenses])
 
-    def __init__(self, options):
-        super().__init__(options)
-        self.repo = options.target_repo
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.repo = self.options.target_repo
 
     def finish(self):
         for group, licenses in self.repo.licenses.groups.items():
@@ -361,10 +361,10 @@ class GlobalUseCheck(Check):
     required_addons = (addons.UseAddon,)
     known_results = frozenset([PotentialLocalUse, PotentialGlobalUse, UnusedGlobalUse])
 
-    def __init__(self, options, iuse_handler):
-        super().__init__(options)
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
         self.global_flag_usage = defaultdict(set)
-        self.repo = options.target_repo
+        self.repo = self.options.target_repo
 
     @jit_attr
     def local_use(self):
@@ -546,14 +546,14 @@ class ManifestCheck(Check):
         DeprecatedChksum,
     ])
 
-    def __init__(self, options, iuse_handler):
-        super().__init__(options)
-        repo = options.target_repo
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        repo = self.options.target_repo
         self.preferred_checksums = frozenset(
             repo.config.manifests.hashes if hasattr(repo, 'config') else ())
         self.required_checksums = frozenset(
             repo.config.manifests.required_hashes if hasattr(repo, 'config') else ())
-        self.iuse_filter = iuse_handler.get_filter('fetchables')
+        self.iuse_filter = use_addon.get_filter('fetchables')
 
     def feed(self, pkgset):
         pkg_manifest = pkgset[0].manifest
@@ -628,8 +628,8 @@ class ManifestConflictCheck(Check):
     _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
     known_results = frozenset([ConflictingChksums])
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.seen_checksums = {}
 
     @staticmethod

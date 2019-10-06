@@ -34,14 +34,12 @@ class TestEvaluateDepSet(ProfilesMixin):
     addon_kls = feeds.EvaluateDepSet
 
     def get_check(self, *profiles):
-        # basically carefully tweak profileaddon to get ourself an instance
-        # since evaluate relies on it.
+        # Carefully tweak profile addon to get an instance since evaluate
+        # relies on it.
         profile_options = self.process_check(
             None, [f"--profiles={','.join(profiles)}"], addon_kls=addons.ProfileAddon)
-        profile_check = addons.ProfileAddon(profile_options)
-
-        # now we're good to go.
-        return self.addon_kls(profile_options, profile_check)
+        profile_addon = addons.ProfileAddon(profile_options)
+        return self.addon_kls(profile_options, profile_addon=profile_addon)
 
     def test_it(self):
         with open(pjoin(self.dir, "arch.list"), "w") as f:

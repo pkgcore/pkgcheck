@@ -7,7 +7,7 @@ class WhitespaceCheckTest(misc.ReportTestCase):
     """Various whitespace related test support."""
 
     check_kls = whitespace.WhitespaceCheck
-    check = whitespace.WhitespaceCheck(None, None)
+    check = whitespace.WhitespaceCheck(None)
 
 
 class TestWhitespaceFound(WhitespaceCheckTest):

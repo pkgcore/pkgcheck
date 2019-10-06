@@ -448,8 +448,15 @@ def init_addon(cls, options, addons_map=None):
     res = addons_map.get(cls)
     if res is not None:
         return res
-    deps = [init_addon(dep, options, addons_map) for dep in cls.required_addons]
-    res = addons_map[cls] = cls(options, *deps)
+
+    # initialize and inject all required addons for a given addon's inheritance
+    # tree as kwargs
+    required_addons = chain.from_iterable(
+        x.required_addons for x in cls.__mro__ if issubclass(x, base.Addon))
+    kwargs = {
+        addon.param_name: init_addon(addon, options, addons_map)
+        for addon in required_addons}
+    res = addons_map[cls] = cls(options, **kwargs)
     return res
 
 
@@ -468,8 +475,9 @@ def init_source(source, options, addons_map):
     else:
         args = ()
         kwargs = {}
-    deps = [addons_map.get(cls, cls(options)) for cls in source.required_addons]
-    return source(*args, options, *deps, **kwargs)
+    for dep in source.required_addons:
+        kwargs[dep.param_name] = init_addon(dep, options, addons_map)
+    return source(*args, options, **kwargs)
 
 
 def init_checks(addons, options):

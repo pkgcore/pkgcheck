@@ -70,8 +70,8 @@ class AcctCheck(Check):
         OutsideRangeAccountIdentifier,
     ])
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.id_re = re.compile(
             r'ACCT_(?P<var>USER|GROUP)_ID=(?P<quot>[\'"]?)(?P<id>[0-9]+)(?P=quot)')
         self.seen_uids = defaultdict(partial(defaultdict, list))

@@ -30,9 +30,9 @@ class RepoDirCheck(GentooRepoCheck):
     # repo root level directories that are ignored
     ignored_root_dirs = frozenset(['.git'])
 
-    def __init__(self, options):
-        super().__init__(options)
-        self.repo = options.target_repo
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.repo = self.options.target_repo
         self.ignored_paths = {
             pjoin(self.repo.location, x) for x in self.ignored_root_dirs}
         self.dirs = [self.repo.location]
@@ -74,9 +74,9 @@ class EmptyDirsCheck(GentooRepoCheck):
     _source = sources.EmptySource
     known_results = frozenset([EmptyCategoryDir, EmptyPackageDir])
 
-    def __init__(self, options):
-        super().__init__(options)
-        self.repo = options.target_repo
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.repo = self.options.target_repo
 
     def finish(self):
         for cat, pkgs in sorted(self.repo.packages.items()):

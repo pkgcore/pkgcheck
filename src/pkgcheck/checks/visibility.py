@@ -187,9 +187,9 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
         NonsolvableDepsInStable, NonsolvableDepsInDev, NonsolvableDepsInExp,
     ])
 
-    def __init__(self, options, profiles):
-        super().__init__(options, profiles)
-        self.profiles = profiles
+    def __init__(self, *args, profile_addon):
+        super().__init__(*args, profile_addon=profile_addon)
+        self.profiles = profile_addon
         self.report_cls_map = {
             'stable': NonsolvableDepsInStable,
             'dev': NonsolvableDepsInDev,

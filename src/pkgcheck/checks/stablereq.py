@@ -43,9 +43,8 @@ class StableRequestCheck(GentooRepoCheck):
     required_addons = (git.GitAddon,)
     known_results = frozenset([StableRequest])
 
-    def __init__(self, options, git_addon=None, staleness=int(day*30)):
-        super().__init__(options)
-        self.staleness = staleness
+    def __init__(self, *args, git_addon=None):
+        super().__init__(*args)
         self.today = datetime.today()
         self._git_addon = git_addon
 

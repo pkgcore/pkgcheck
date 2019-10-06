@@ -1,13 +1,13 @@
 from itertools import chain
 
-from pkgcheck.checks.dropped_keywords import DroppedKeywordsCheck as drop_keys
+from pkgcheck.checks import dropped_keywords
 
 from .. import misc
 
 
 class TestDroppedKeywords(misc.ReportTestCase):
 
-    check_kls = drop_keys
+    check_kls = dropped_keywords.DroppedKeywordsCheck
 
     def mk_pkg(self, ver, keywords='', eclasses=(), **kwargs):
         return misc.FakePkg(
@@ -19,9 +19,8 @@ class TestDroppedKeywords(misc.ReportTestCase):
             })
 
     def mk_check(self, arches=('x86', 'amd64'), verbosity=0):
-        return drop_keys(
-            misc.Options((("arches", arches),), verbosity=verbosity),
-            None)
+        options = misc.Options(arches=arches, verbosity=verbosity)
+        return self.check_kls(options, arches_addon=None)
 
     def test_it(self):
         # single version, shouldn't yield.

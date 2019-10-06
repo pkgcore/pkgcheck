@@ -263,9 +263,9 @@ class _XmlBaseCheck(Check):
     invalid_error = None
     missing_error = None
 
-    def __init__(self, options):
-        super().__init__(options)
-        self.repo_base = options.target_repo.location
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.repo_base = self.options.target_repo.location
         self.pkgref_cache = {}
         # content validation checks to run after parsing XML doc
         self._checks = tuple(
