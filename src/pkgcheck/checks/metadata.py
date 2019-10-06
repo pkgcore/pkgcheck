@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import datetime
 from difflib import SequenceMatcher
 from itertools import chain
+from operator import attrgetter
 
 from pkgcore.ebuild import atom
 from pkgcore.ebuild.atom import atom as atom_cls
@@ -310,7 +311,7 @@ class RequiredUseMetadataCheck(Check):
         # check both stable/unstable profiles for stable KEYWORDS and only
         # unstable profiles for unstable KEYWORDS
         keywords = []
-        for keyword in pkg.keywords:
+        for keyword in pkg.sorted_keywords:
             if keyword[0] != '~':
                 keywords.append(keyword)
             keywords.append('~' + keyword.lstrip('~'))
@@ -319,7 +320,7 @@ class RequiredUseMetadataCheck(Check):
         # REQUIRED_USE for all profiles matching a pkg's KEYWORDS
         failures = defaultdict(list)
         for keyword in keywords:
-            for profile in self.profiles.get(keyword, ()):
+            for profile in sorted(self.profiles.get(keyword, ()), key=attrgetter('name')):
                 # skip packages masked by the profile
                 if profile.visible(pkg):
                     src = FakeConfigurable(pkg, profile)
