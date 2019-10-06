@@ -52,7 +52,7 @@ class Pipeline:
 
         # insert flags to notify processes that no more work exists
         for i in range(self.jobs):
-            work_q.put((None, None, None))
+            work_q.put(None)
 
         # run all async checks from a single process
         for scope, pipes in async_pipes.items():
@@ -60,10 +60,7 @@ class Pipeline:
                 pipe.run(self.restrict)
 
     def _run_checks(self, sync_pipes, work_q, results_q):
-        while True:
-            scope, restrict, pipe_idx = work_q.get()
-            if scope is None:
-                return
+        for scope, restrict, pipe_idx in iter(work_q.get, None):
             if scope == base.version_scope:
                 results_q.put(list(sync_pipes[scope][pipe_idx].run(restrict)))
             elif scope in (base.package_scope, base.category_scope):
