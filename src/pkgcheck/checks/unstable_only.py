@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism as _pl
 
@@ -61,4 +62,4 @@ class UnstableOnlyCheck(GentooRepoCheck):
         # collapse reports by available versions
         for pkgs in unstable_arches.keys():
             versions = (x.fullver for x in pkgs)
-            yield UnstableOnly(versions, unstable_arches[pkgs], pkg=pkgs[0])
+            yield UnstableOnly(versions, sort_keywords(unstable_arches[pkgs]), pkg=pkgs[0])
