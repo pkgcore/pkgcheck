@@ -5,6 +5,7 @@ import json
 import pickle
 import signal
 from collections import defaultdict
+from itertools import chain
 from multiprocessing import Process, SimpleQueue
 from xml.sax.saxutils import escape as xml_escape
 
@@ -37,12 +38,15 @@ class Reporter:
         p = Process(target=pipe.run, args=(results_q,))
         p.start()
         signal.signal(signal.SIGINT, orig_sigint_handler)
-        while True:
-            results = results_q.get()
-            if results is None:
-                break
+        if pipe.scan_scope == base.package_scope:
+            # sort versioned package results
+            results = chain.from_iterable(iter(results_q.get, None))
             for result in sorted(results):
                 self.report(result)
+        else:
+            for results in iter(results_q.get, None):
+                for result in sorted(results):
+                    self.report(result)
         p.join()
 
     def __enter__(self):
