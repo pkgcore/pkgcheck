@@ -50,11 +50,11 @@ class Reporter:
         p.join()
 
     def __enter__(self):
-        self.start()
+        self._start()
         return self
 
     def __exit__(self, *excinfo):
-        self.finish()
+        self._finish()
         # flush output buffer
         self.out.stream.flush()
 
@@ -75,10 +75,10 @@ class Reporter:
         """Render and output a report result.."""
         raise NotImplementedError(self._process_report)
 
-    def start(self):
+    def _start(self):
         """Initialize reporter output."""
 
-    def finish(self):
+    def _finish(self):
         """Finalize reporter output."""
 
 
@@ -238,8 +238,11 @@ class XmlReporter(Reporter):
         base.version_scope: ver_template,
     }
 
-    def start(self):
+    def _start(self):
         self.out.write('<checks>')
+
+    def _finish(self):
+        self.out.write('</checks>')
 
     @coroutine
     def _process_report(self):
@@ -249,9 +252,6 @@ class XmlReporter(Reporter):
             d['class'] = xml_escape(result.__class__.__name__)
             d['msg'] = xml_escape(result.desc)
             self.out.write(self.scope_map[result.scope] % d)
-
-    def finish(self):
-        self.out.write('</checks>')
 
 
 class CsvReporter(Reporter):
@@ -376,7 +376,7 @@ class PickleStream(Reporter):
     priority = -1001
     protocol = 0
 
-    def start(self):
+    def _start(self):
         self.out.wrap = False
         self.out.autoline = False
 

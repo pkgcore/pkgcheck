@@ -579,26 +579,25 @@ replay.add_argument(
 
 @replay.bind_main_func
 def _replay(options, out, err):
-    reporter = options.reporter(out)
-    reporter.start()
     # assume JSON encoded file, fallback to pickle format
     processed = 0
     exc = None
-    try:
-        for result in reporters.JsonStream.from_file(options.results):
-            reporter.report(result)
-            processed += 1
-    except reporters.DeserializationError as e:
-        if not processed:
-            options.results.seek(0)
-            try:
-                for result in reporters.PickleStream.from_file(options.results):
-                    reporter.report(result)
-                    processed += 1
-            except reporters.DeserializationError as e:
+    with options.reporter(out) as reporter:
+        try:
+            for result in reporters.JsonStream.from_file(options.results):
+                reporter.report(result)
+                processed += 1
+        except reporters.DeserializationError as e:
+            if not processed:
+                options.results.seek(0)
+                try:
+                    for result in reporters.PickleStream.from_file(options.results):
+                        reporter.report(result)
+                        processed += 1
+                except reporters.DeserializationError as e:
+                    exc = e
+            else:
                 exc = e
-        else:
-            exc = e
 
     if exc:
         if not processed:
@@ -606,7 +605,6 @@ def _replay(options, out, err):
         raise UserException(
             f'corrupted results file {options.results.name!r}: {exc}')
 
-    reporter.finish()
     return 0
 
 
