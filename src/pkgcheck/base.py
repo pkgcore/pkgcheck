@@ -15,10 +15,10 @@ import os
 import re
 import shutil
 import sys
-from collections import OrderedDict
 from contextlib import AbstractContextManager
 
 from pkgcore import const as pkgcore_const
+from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
 
@@ -62,13 +62,13 @@ repository_scope = Scope('repository', 3)
 commit_scope = Scope('commit', 4)
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
-scopes = OrderedDict((
-    ('git', commit_scope),
-    ('repo', repository_scope),
-    ('cat', category_scope),
-    ('pkg', package_scope),
-    ('ver', version_scope),
-))
+scopes = ImmutableDict({
+    'git': commit_scope,
+    'repo': repository_scope,
+    'cat': category_scope,
+    'pkg': package_scope,
+    'ver': version_scope,
+})
 
 CACHE_DIR = pjoin(pkgcore_const.USER_CACHE_PATH, 'pkgcheck')
 

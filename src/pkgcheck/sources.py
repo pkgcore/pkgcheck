@@ -1,7 +1,7 @@
 """Custom package sources used for feeding checks."""
 
 import os
-from collections import OrderedDict, deque
+from collections import deque
 from operator import attrgetter
 
 from pkgcore.ebuild.repository import UnconfiguredTree
@@ -77,7 +77,7 @@ class LatestPkgsFilter:
                 self._pkg_marker = next(self._source_iter)
             pkg = self._pkg_marker
             key = pkg.key
-            selected_pkgs = OrderedDict()
+            selected_pkgs = {}
             if self._partial_filtered:
                 pkgs = []
 
