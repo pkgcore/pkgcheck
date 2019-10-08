@@ -1,2 +1,2 @@
 SrcUriCheck/UnstatedIuse
-  UnstatedIuse: version 0: attr(fetchables): profile 'default' (1 total): unstated flag: [ used ]
+  UnstatedIuse: version 0: attr(fetchables): profile 'default/amd64' (2 total): unstated flag: [ used ]

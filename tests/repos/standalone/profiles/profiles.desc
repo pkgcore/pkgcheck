@@ -1,1 +1,2 @@
-amd64 default stable
+amd64 default/amd64 stable
+x86 default/x86 stable

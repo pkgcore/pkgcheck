@@ -1,0 +1,5 @@
+DESCRIPTION="Ebuild with unsorted KEYWORDS"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SLOT="0"
+LICENSE="BSD"
+KEYWORDS="~x86 ~amd64"
