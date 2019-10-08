@@ -543,7 +543,7 @@ class TestRestrictsCheck(use_based(), misc.ReportTestCase):
 
     def test_allowed(self):
         for attr, result in (('properties', metadata.UnknownProperties),
-                             ('restrict', metadata.BadRestricts)):
+                             ('restrict', metadata.UnknownRestricts)):
             check = self.mk_check(options={attr: ('foo',)})
             # allowed
             self.assertNoReport(check, self.mk_pkg(**{attr: 'foo'}))

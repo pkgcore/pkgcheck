@@ -1124,7 +1124,7 @@ class HomepageCheck(Check):
                             pkg=pkg)
 
 
-class BadRestricts(results.VersionedResult, results.Warning):
+class UnknownRestricts(results.VersionedResult, results.Warning):
     """Package's RESTRICT metadata has unknown entries."""
 
     def __init__(self, restricts, **kwargs):
@@ -1153,7 +1153,7 @@ class UnknownProperties(results.VersionedResult, results.Warning):
 class RestrictsCheck(Check):
     """Check for valid RESTRICT settings."""
 
-    known_results = frozenset([BadRestricts, UnknownProperties, UnstatedIuse])
+    known_results = frozenset([UnknownRestricts, UnknownProperties, UnstatedIuse])
     required_addons = (addons.UseAddon,)
 
     def __init__(self, *args, use_addon):
@@ -1180,7 +1180,7 @@ class RestrictsCheck(Check):
         if self.allowed_restricts:
             bad = set(restricts).difference(self.allowed_restricts)
             if bad:
-                yield BadRestricts(sorted(bad), pkg=pkg)
+                yield UnknownRestricts(sorted(bad), pkg=pkg)
         if self.allowed_properties:
             unknown = set(properties).difference(self.allowed_properties)
             if unknown:
