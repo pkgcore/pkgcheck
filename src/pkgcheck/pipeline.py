@@ -90,10 +90,10 @@ class Pipeline:
 
         # categorize checkrunners for parallelization based on the scan and source scope
         scoped_pipes = defaultdict(lambda: defaultdict(list))
-        if self.scan_scope == base.version_scope:
+        if self.scan_scope == base.version_scope and len(self.restrict) == 1:
             for (scope, is_async), runners in checkrunners.items():
                 scoped_pipes[is_async][base.version_scope].extend(runners)
-        elif self.scan_scope == base.package_scope:
+        elif self.scan_scope == base.package_scope and len(self.restrict) == 1:
             for (scope, is_async), runners in checkrunners.items():
                 if scope == base.version_scope:
                     scoped_pipes[is_async][base.version_scope].extend(runners)

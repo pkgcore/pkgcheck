@@ -16,7 +16,7 @@ from operator import attrgetter
 
 from pkgcore import const as pkgcore_const
 from pkgcore.repository import multiplex
-from pkgcore.restrictions import packages
+from pkgcore.restrictions import boolean, packages
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
@@ -331,6 +331,16 @@ def _validate_args(parser, namespace):
         namespace.limiters = limiters()
         if isinstance(namespace.targets, list):
             namespace.limiters = list(namespace.limiters)
+
+            # collapse limiters into a single restriction in order to run them in parallel
+            if len(namespace.limiters) > 1:
+                # multiple targets are restricted to a single scanning scope
+                scopes = {_restrict_to_scope(x) for x in namespace.limiters}
+                if len(scopes) > 1:
+                    scan_scopes = ', '.join(sorted(map(str, scopes)))
+                    parser.error(f'targets specify multiple scan scope levels: {scan_scopes}')
+
+                namespace.limiters = [boolean.OrRestriction(*namespace.limiters)]
     else:
         if cwd in namespace.target_repo:
             namespace.limiters = [_path_restrict(cwd, namespace)]
