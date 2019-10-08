@@ -1,0 +1,4 @@
+KeywordsCheck/UnsortedKeywords
+  UnsortedKeywords: version 0: 
+	unsorted KEYWORDS: ~x86, ~amd64
+	sorted KEYWORDS: ~amd64, ~x86
