@@ -775,17 +775,20 @@ class UnsortedKeywords(results.VersionedResult, results.Warning):
     before them.
     """
 
-    def __init__(self, keywords, sorted_keywords, **kwargs):
+    def __init__(self, keywords, sorted_keywords=(), **kwargs):
         super().__init__(**kwargs)
         self.keywords = tuple(keywords)
         self.sorted_keywords = tuple(sorted_keywords)
 
     @property
     def desc(self):
-        return (
-            f"\n\tunsorted KEYWORDS: {', '.join(self.keywords)}"
-            f"\n\tsorted KEYWORDS: {', '.join(self.sorted_keywords)}"
-        )
+        if self.sorted_keywords:
+            # verbose mode shows list of properly sorted keywords
+            return (
+                f"\n\tunsorted KEYWORDS: {', '.join(self.keywords)}"
+                f"\n\tsorted KEYWORDS: {', '.join(self.sorted_keywords)}"
+            )
+        return f"unsorted KEYWORDS: {', '.join(self.keywords)}"
 
 
 class MissingVirtualKeywords(results.VersionedResult, results.Warning):
@@ -858,7 +861,11 @@ class KeywordsCheck(Check):
 
             # check for unsorted keywords
             if pkg.sorted_keywords != pkg.keywords:
-                yield UnsortedKeywords(pkg.keywords, pkg.sorted_keywords, pkg=pkg)
+                if self.options.verbosity < 1:
+                    yield UnsortedKeywords(pkg.keywords, pkg=pkg)
+                else:
+                    yield UnsortedKeywords(
+                        pkg.keywords, sorted_keywords=pkg.sorted_keywords, pkg=pkg)
 
             if pkg.category == 'virtual':
                 keywords = set()

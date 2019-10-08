@@ -217,6 +217,18 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         # prefix keywords come after regular keywords
         self.assertNoReport(check, self.mk_pkg('~amd64 ppc ~x86 ~amd64-fbsd'))
 
+        # non-verbose mode doesn't show sorted keywords
+        r = self.assertReport(check, self.mk_pkg('~amd64 -*'))
+        assert isinstance(r, metadata.UnsortedKeywords)
+        assert r.keywords == ('~amd64', '-*')
+        assert r.sorted_keywords == ()
+        assert 'unsorted KEYWORDS: ~amd64, -*' == str(r)
+
+        # create a check instance with verbose mode enabled
+        options = self.get_options(gentoo_repo=False, verbosity=1)
+        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
+        check = metadata.KeywordsCheck(options, use_addon=use_addon)
+
         # masks should come before regular keywords
         r = self.assertReport(check, self.mk_pkg('~amd64 -*'))
         assert isinstance(r, metadata.UnsortedKeywords)
