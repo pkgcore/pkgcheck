@@ -1,0 +1,2 @@
+RestrictsCheck/UnknownRestricts
+  UnknownRestricts: version 0: unknown RESTRICT="foo"

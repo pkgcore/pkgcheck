@@ -1,0 +1,9 @@
+diff -Naur standalone/RestrictsCheck/UnknownRestricts/UnknownRestricts-0.ebuild fixed/RestrictsCheck/UnknownRestricts/UnknownRestricts-0.ebuild
+--- standalone/RestrictsCheck/UnknownRestricts/UnknownRestricts-0.ebuild	2019-10-08 02:36:30.390654096 -0600
++++ fixed/RestrictsCheck/UnknownRestricts/UnknownRestricts-0.ebuild	2019-10-08 02:42:33.587430292 -0600
+@@ -2,4 +2,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-RESTRICT="foo"
++RESTRICT="mirror"
