@@ -312,69 +312,73 @@ class TestPkgcheckScan(object):
     def test_pkgcheck_scan(self, check, result, capsys, cache_dir, tmp_path):
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
         tested = False
+        check_name = check.__name__
+        keyword = result.__name__
         for repo in os.listdir(pjoin(self.testdir, 'data')):
-            check_name = check.__name__
-            keyword = result.__name__
-            expected_path = pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/expected')
-            if not os.path.exists(expected_path):
-                continue
+            for verbosity, file in ((0, 'expected'), (1, 'expected-verbose')):
+                expected_path = pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/{file}')
+                if not os.path.exists(expected_path):
+                    continue
 
-            repo_dir = pjoin(self.testdir, 'repos', repo)
+                repo_dir = pjoin(self.testdir, 'repos', repo)
 
-            # create issue related to keyword as required
-            trigger = pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/trigger.sh')
-            if os.path.exists(trigger):
-                triggered_repo = str(tmp_path / f'triggered-{repo}')
-                shutil.copytree(repo_dir, triggered_repo)
-                self._script(trigger, triggered_repo)
-                repo_dir = triggered_repo
+                # create issue related to keyword as required
+                trigger = pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/trigger.sh')
+                if os.path.exists(trigger):
+                    triggered_repo = str(tmp_path / f'triggered-{repo}')
+                    shutil.copytree(repo_dir, triggered_repo)
+                    self._script(trigger, triggered_repo)
+                    repo_dir = triggered_repo
 
-            args = ['-r', repo_dir]
+                args = (['-v'] * verbosity) + ['-r', repo_dir]
 
-            # determine what test target to use
-            try:
-                target = open(pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/target'))
-                args.extend(shlex.split(target.read()))
-            except FileNotFoundError:
-                if base.repository_scope in (result.scope, check.scope):
-                    args.extend(['-k', keyword])
-                elif result.scope == base.category_scope:
-                    args.append(f'{keyword}/*')
-                elif result.scope in (base.package_scope, base.version_scope):
-                    args.append(f'{check_name}/{keyword}')
-                else:
-                    pytest.fail(f'{keyword} result for {check_name} check has unknown scope')
-
-            with open(expected_path) as f:
-                expected = f.read()
-                # JsonStream reporter, cache results to compare against repo run
-                with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
-                        patch('pkgcheck.base.CACHE_DIR', cache_dir):
-                    with pytest.raises(SystemExit) as excinfo:
-                        self.script()
-                    out, err = capsys.readouterr()
-                    assert not err
-                    assert excinfo.value.code == 0
-                    if not expected:
-                        assert not out
+                # determine what test target to use
+                try:
+                    target = open(pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/target'))
+                    args.extend(shlex.split(target.read()))
+                except FileNotFoundError:
+                    if base.repository_scope in (result.scope, check.scope):
+                        args.extend(['-k', keyword])
+                    elif result.scope == base.category_scope:
+                        args.append(f'{keyword}/*')
+                    elif result.scope in (base.package_scope, base.version_scope):
+                        args.append(f'{check_name}/{keyword}')
                     else:
-                        results = []
-                        for line in out.rstrip('\n').split('\n'):
-                            deserialized_result = reporters.JsonStream.from_json(line)
-                            assert deserialized_result.__class__.__name__ == keyword
-                            results.append(deserialized_result)
-                            self._results[repo].add(deserialized_result)
-                        # compare rendered fancy out to expected
-                        assert self._render_results(sorted(results)) == expected
-            tested = True
+                        pytest.fail(f'{keyword} result for {check_name} check has unknown scope')
+
+                with open(expected_path) as f:
+                    expected = f.read()
+                    # JsonStream reporter, cache results to compare against repo run
+                    with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
+                            patch('pkgcheck.base.CACHE_DIR', cache_dir):
+                        with pytest.raises(SystemExit) as excinfo:
+                            self.script()
+                        out, err = capsys.readouterr()
+                        if not verbosity:
+                            assert not err
+                        assert excinfo.value.code == 0
+                        if not expected:
+                            assert not out
+                        else:
+                            results = []
+                            for line in out.rstrip('\n').split('\n'):
+                                deserialized_result = reporters.JsonStream.from_json(line)
+                                assert deserialized_result.__class__.__name__ == keyword
+                                results.append(deserialized_result)
+                                if not verbosity:
+                                    self._results[repo].add(deserialized_result)
+                            # compare rendered fancy out to expected
+                            assert self._render_results(
+                                sorted(results), verbosity=verbosity) == expected
+                tested = True
 
         if not tested:
             pytest.skip('expected test data not available')
 
-    def _render_results(self, results):
+    def _render_results(self, results, **kwargs):
         """Render a given set of result objects into their related string form."""
         with tempfile.TemporaryFile() as f:
-            with reporters.FancyReporter(out=PlainTextFormatter(f)) as reporter:
+            with reporters.FancyReporter(out=PlainTextFormatter(f), **kwargs) as reporter:
                 for result in results:
                     reporter.report(result)
             f.seek(0)
