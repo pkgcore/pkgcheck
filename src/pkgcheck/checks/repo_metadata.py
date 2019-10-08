@@ -634,11 +634,11 @@ class MatchingChksums(results.VersionedResult, results.Warning):
         )
 
 
-class ManifestConflictCheck(Check):
-    """Conflicting checksum check.
+class ManifestCollisionCheck(Check):
+    """Search Manifest entries for different types of distfile collisions.
 
-    Verify that two Manifest files do not contain conflicting checksums
-    for the same filename.
+    In particular, search for matching filenames with different checksums and
+    different filenames with matching checksums.
     """
 
     scope = base.repository_scope

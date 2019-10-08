@@ -1,0 +1,2 @@
+test/ConflictingChksums
+  ConflictingChksums: version 0: distfile 'foo.tar.gz' has different checksum (blake2b) for package: ManifestCollisionCheck/ConflictingChksums

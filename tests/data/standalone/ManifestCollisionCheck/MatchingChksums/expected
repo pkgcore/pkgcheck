@@ -1,0 +1,2 @@
+test/MatchingChksums
+  MatchingChksums: version 0: distfile 'foo2.tar.gz' matches checksums for 'foo1.tar.gz' from ManifestCollisionCheck/MatchingChksums
