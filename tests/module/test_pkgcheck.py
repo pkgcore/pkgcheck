@@ -292,10 +292,10 @@ class TestPkgcheckScan(object):
             allowed = custom_targets | stubs
             results = {(check.__name__, result.__name__) for check, result in self.results}
             for cat, pkgs in sorted(repo.packages.items()):
-                if cat == 'stub':
+                if cat.startswith('stub'):
                     continue
                 for pkg in sorted(pkgs):
-                    if pkg == 'stub':
+                    if pkg.startswith('stub'):
                         continue
                     if f'{cat}/{pkg}' not in allowed:
                         assert (cat, pkg) in results
@@ -421,8 +421,8 @@ class TestPkgcheckScan(object):
                     for line in out.rstrip('\n').split('\n'):
                         result = reporters.JsonStream.from_json(line)
                         # ignore results generated from stubs
-                        stubs = (getattr(result, x, None) for x in ('category', 'package'))
-                        if any(x == 'stub' for x in stubs):
+                        stubs = (getattr(result, x, '') for x in ('category', 'package'))
+                        if any(x.startswith('stub') for x in stubs):
                             continue
                         try:
                             self._results[repo].remove(result)
