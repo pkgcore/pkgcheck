@@ -628,10 +628,10 @@ class MatchingChksums(results.VersionedResult, results.Warning):
 
     @property
     def desc(self):
-        return (
-            f'distfile {self.filename!r} matches checksums for '
-            f'{self.orig_file!r} from {self.orig_pkg}'
-        )
+        msg = f'distfile {self.filename!r} matches checksums for {self.orig_file!r}'
+        if f'{self.category}/{self.package}' != self.orig_pkg:
+            msg += f' from {self.orig_pkg}'
+        return msg
 
 
 class ManifestCollisionCheck(Check):
