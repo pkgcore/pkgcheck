@@ -617,6 +617,23 @@ class ConflictingChksums(results.VersionedResult, results.Error):
         )
 
 
+class MatchingChksums(results.VersionedResult, results.Warning):
+    """Two distfiles share the same checksums but use different names."""
+
+    def __init__(self, filename, orig_file, orig_pkg, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+        self.orig_file = orig_file
+        self.orig_pkg = orig_pkg
+
+    @property
+    def desc(self):
+        return (
+            f'distfile {self.filename!r} matches checksums for '
+            f'{self.orig_file!r} from {self.orig_pkg}'
+        )
+
+
 class ManifestConflictCheck(Check):
     """Conflicting checksum check.
 
@@ -626,38 +643,47 @@ class ManifestConflictCheck(Check):
 
     scope = base.repository_scope
     _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
-    known_results = frozenset([ConflictingChksums])
+    known_results = frozenset([ConflictingChksums, MatchingChksums])
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.seen_checksums = {}
+        self.seen_files = {}
+        self.seen_chksums = {}
 
-    @staticmethod
-    def reformat_chksums(iterable):
-        for chf, val1, val2 in iterable:
-            if chf == "size":
-                yield chf, val1, val2
-            else:
-                yield chf, "%x" % val1, "%x" % val2
+    def _detect_conflicts(self, pkg, filename, chksums):
+        """Check for similarly named distfiles with different checksums."""
+        existing = self.seen_files.get(filename)
+        if existing is None:
+            self.seen_files[filename] = (
+                [pkg.key], dict(chksums.items()))
+            return
+        seen_pkgs, seen_chksums = existing
+        conflicting_chksums = []
+        for chf_type, value in seen_chksums.items():
+            our_value = chksums.get(chf_type)
+            if our_value is not None and our_value != value:
+                conflicting_chksums.append(chf_type)
+        if conflicting_chksums:
+            pkgs = map(str, sorted(seen_pkgs))
+            yield ConflictingChksums(filename, sorted(conflicting_chksums), pkgs, pkg=pkg)
+        else:
+            seen_chksums.update(chksums)
+            seen_pkgs.append(pkg)
+
+    def _detect_matching(self, pkg, filename, chksums):
+        """Check for distfiles with matching checksums and different names."""
+        key = tuple(chksums.values())
+        existing = self.seen_chksums.get(key)
+        if existing is None:
+            self.seen_chksums[key] = (pkg.key, filename)
+            return
+        seen_pkg, seen_file = existing
+        if seen_file == filename:
+            return
+        yield MatchingChksums(filename, seen_file, seen_pkg, pkg=pkg)
 
     def feed(self, pkgs):
         pkg = pkgs[0]
         for filename, chksums in pkg.manifest.distfiles.items():
-            existing = self.seen_checksums.get(filename)
-            if existing is None:
-                self.seen_checksums[filename] = (
-                    [pkg.key], dict(chksums.items()))
-                continue
-            seen_pkgs, seen_chksums = existing
-            confl_checksums = []
-            for chf_type, value in seen_chksums.items():
-                our_value = chksums.get(chf_type)
-                if our_value is not None and our_value != value:
-                    confl_checksums.append((chf_type, value, our_value))
-            if confl_checksums:
-                chksums = sorted(x[0] for x in self.reformat_chksums(confl_checksums))
-                pkgs = map(str, sorted(seen_pkgs))
-                yield ConflictingChksums(filename, chksums, pkgs, pkg=pkg)
-            else:
-                seen_chksums.update(chksums)
-                seen_pkgs.append(pkg)
+            yield from self._detect_conflicts(pkg, filename, chksums)
+            yield from self._detect_matching(pkg, filename, chksums)
