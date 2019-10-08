@@ -1,0 +1,16 @@
+diff -Naur standalone/test/MatchingChksums/Manifest fixed/test/MatchingChksums/Manifest
+--- standalone/test/MatchingChksums/Manifest	2019-10-08 09:59:11.976813178 -0600
++++ fixed/test/MatchingChksums/Manifest	2019-10-08 10:04:41.818463731 -0600
+@@ -1 +1 @@
+-DIST foo2.tar.gz 153310 BLAKE2B abc123d9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05
++DIST foo1.tar.gz 153310 BLAKE2B abc123d9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05
+diff -Naur standalone/test/MatchingChksums/MatchingChksums-0.ebuild fixed/test/MatchingChksums/MatchingChksums-0.ebuild
+--- standalone/test/MatchingChksums/MatchingChksums-0.ebuild	2019-10-08 09:59:11.977813183 -0600
++++ fixed/test/MatchingChksums/MatchingChksums-0.ebuild	2019-10-08 10:04:31.633412766 -0600
+@@ -1,5 +1,5 @@
+ DESCRIPTION="Ebuild with manifest entry colliding with another package"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SRC_URI="https://github.com/pkgcore/pkgcheck/foo2.tar.gz"
++SRC_URI="https://github.com/pkgcore/pkgcheck/foo1.tar.gz"
+ SLOT="0"
+ LICENSE="BSD"

@@ -1,0 +1,5 @@
+DESCRIPTION="Ebuild with manifest entry colliding with another package"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SRC_URI="https://github.com/pkgcore/pkgcheck/foo1.tar.gz"
+SLOT="0"
+LICENSE="BSD"
