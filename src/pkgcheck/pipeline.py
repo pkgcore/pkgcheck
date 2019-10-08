@@ -42,7 +42,7 @@ class Pipeline:
                 for restrict in versioned_source.itermatch(self.restrict):
                     for i in range(len(pipes)):
                         work_q.put((scope, restrict, i))
-            elif scope in (base.package_scope, base.category_scope):
+            elif scope == base.package_scope:
                 unversioned_source = UnversionedSource(self.options)
                 for restrict in unversioned_source.itermatch(self.restrict):
                     work_q.put((scope, restrict, 0))
