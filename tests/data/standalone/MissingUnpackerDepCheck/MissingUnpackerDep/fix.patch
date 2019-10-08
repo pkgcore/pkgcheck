@@ -1,0 +1,8 @@
+diff -Naur standalone/MissingUnpackerDepCheck/MissingUnpackerDep/MissingUnpackerDep-0.ebuild fixed/MissingUnpackerDepCheck/MissingUnpackerDep/MissingUnpackerDep-0.ebuild
+--- standalone/MissingUnpackerDepCheck/MissingUnpackerDep/MissingUnpackerDep-0.ebuild	2019-10-08 02:55:42.845221788 -0600
++++ fixed/MissingUnpackerDepCheck/MissingUnpackerDep/MissingUnpackerDep-0.ebuild	2019-10-08 02:56:42.103506456 -0600
+@@ -3,3 +3,4 @@
+ SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.zip"
+ SLOT="0"
+ LICENSE="BSD"
++DEPEND="app-arch/unzip"

@@ -1,0 +1,2 @@
+MissingUnpackerDepCheck/MissingUnpackerDep
+  MissingUnpackerDep: version 0: missing DEPEND="app-arch/unzip" for SRC_URI archive: [ MissingUnpackerDep-0.zip ]
