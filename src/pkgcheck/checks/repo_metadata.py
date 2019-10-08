@@ -650,40 +650,41 @@ class ManifestCollisionCheck(Check):
         self.seen_files = {}
         self.seen_chksums = {}
 
-    def _detect_conflicts(self, pkg, filename, chksums):
+    def _conflicts(self, pkg):
         """Check for similarly named distfiles with different checksums."""
-        existing = self.seen_files.get(filename)
-        if existing is None:
-            self.seen_files[filename] = (
-                [pkg.key], dict(chksums.items()))
-            return
-        seen_pkgs, seen_chksums = existing
-        conflicting_chksums = []
-        for chf_type, value in seen_chksums.items():
-            our_value = chksums.get(chf_type)
-            if our_value is not None and our_value != value:
-                conflicting_chksums.append(chf_type)
-        if conflicting_chksums:
-            pkgs = map(str, sorted(seen_pkgs))
-            yield ConflictingChksums(filename, sorted(conflicting_chksums), pkgs, pkg=pkg)
-        else:
-            seen_chksums.update(chksums)
-            seen_pkgs.append(pkg)
+        for filename, chksums in pkg.manifest.distfiles.items():
+            existing = self.seen_files.get(filename)
+            if existing is None:
+                self.seen_files[filename] = (
+                    [pkg.key], dict(chksums.items()))
+                continue
+            seen_pkgs, seen_chksums = existing
+            conflicting_chksums = []
+            for chf_type, value in seen_chksums.items():
+                our_value = chksums.get(chf_type)
+                if our_value is not None and our_value != value:
+                    conflicting_chksums.append(chf_type)
+            if conflicting_chksums:
+                pkgs = map(str, sorted(seen_pkgs))
+                yield ConflictingChksums(filename, sorted(conflicting_chksums), pkgs, pkg=pkg)
+            else:
+                seen_chksums.update(chksums)
+                seen_pkgs.append(pkg)
 
-    def _detect_matching(self, pkg, filename, chksums):
+    def _matching(self, pkg):
         """Check for distfiles with matching checksums and different names."""
-        key = tuple(chksums.values())
-        existing = self.seen_chksums.get(key)
-        if existing is None:
-            self.seen_chksums[key] = (pkg.key, filename)
-            return
-        seen_pkg, seen_file = existing
-        if seen_file == filename:
-            return
-        yield MatchingChksums(filename, seen_file, seen_pkg, pkg=pkg)
+        for filename, chksums in pkg.manifest.distfiles.items():
+            key = tuple(chksums.values())
+            existing = self.seen_chksums.get(key)
+            if existing is None:
+                self.seen_chksums[key] = (pkg.key, filename)
+                continue
+            seen_pkg, seen_file = existing
+            if seen_file == filename:
+                continue
+            yield MatchingChksums(filename, seen_file, seen_pkg, pkg=pkg)
 
     def feed(self, pkgs):
         pkg = pkgs[0]
-        for filename, chksums in pkg.manifest.distfiles.items():
-            yield from self._detect_conflicts(pkg, filename, chksums)
-            yield from self._detect_matching(pkg, filename, chksums)
+        yield from self._conflicts(pkg)
+        yield from self._matching(pkg)
