@@ -317,7 +317,8 @@ class GitAddon(base.Addon, base.Cache):
                 repo = cls.commits_repo(cls, GitChangedRepo, options=namespace)
             except CommandNotFound:
                 parser.error('git not available to determine targets for --commits')
-            namespace.limiters = sorted(set(x.unversioned_atom for x in repo))
+            pkgs = sorted(set(x.unversioned_atom for x in repo))
+            namespace.limiters = [(base.package_scope, pkg) for pkg in pkgs]
 
     def __init__(self, *args):
         super().__init__(*args)
