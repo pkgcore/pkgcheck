@@ -259,6 +259,17 @@ def _path_restrict(path, namespace):
     return packages.AlwaysTrue
 
 
+def _restrict_to_scope(restrict):
+    """Determine a given restriction's scope level."""
+    for scope, attrs in (
+            (base.version_scope, ['fullver', 'version', 'rev']),
+            (base.package_scope, ['package']),
+            (base.category_scope, ['category'])):
+        if any(collect_package_restrictions(restrict, attrs)):
+            return scope
+    return base.repository_scope
+
+
 @scan.bind_final_check
 def _validate_args(parser, namespace):
     namespace.enabled_checks = list(const.CHECKS.values())
@@ -466,16 +477,7 @@ def _scan(options, out, err):
 
         if enabled_checks:
             for filterer in options.limiters:
-                for scope, attrs in (
-                        (base.version_scope, ['fullver', 'version', 'rev']),
-                        (base.package_scope, ['package']),
-                        (base.category_scope, ['category'])):
-                    if any(collect_package_restrictions(filterer, attrs)):
-                        scan_scope = scope
-                        break
-                else:
-                    scan_scope = base.repository_scope
-
+                scan_scope = _restrict_to_scope(filterer)
                 # Skip checks higher than the current scan scope level, e.g. skip repo
                 # level checks when scanning at package level.
                 pipes = [d for scope, d in enabled_checks.items() if scope <= scan_scope]
