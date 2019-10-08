@@ -12,6 +12,7 @@ from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
+from pkgcore.restrictions import boolean
 from snakeoil.cli.exceptions import UserException
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import pjoin
@@ -318,7 +319,8 @@ class GitAddon(base.Addon, base.Cache):
             except CommandNotFound:
                 parser.error('git not available to determine targets for --commits')
             pkgs = sorted(set(x.unversioned_atom for x in repo))
-            namespace.limiters = [(base.package_scope, pkg) for pkg in pkgs]
+            combined_restrict = boolean.OrRestriction(*pkgs)
+            namespace.limiters = [(base.package_scope, combined_restrict)]
 
     def __init__(self, *args):
         super().__init__(*args)
