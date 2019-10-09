@@ -38,7 +38,7 @@ class Reporter:
         p = Process(target=pipe.run, args=(results_q,))
         p.start()
         signal.signal(signal.SIGINT, orig_sigint_handler)
-        if pipe.scan_scope in (base.version_scope, base.package_scope) and len(pipe.restrict) == 1:
+        if pipe.pkg_scan:
             # sort versioned package results
             results = chain.from_iterable(iter(results_q.get, None))
             for result in sorted(results):

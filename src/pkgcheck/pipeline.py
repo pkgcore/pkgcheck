@@ -7,7 +7,7 @@ from itertools import chain
 from multiprocessing import Pool, Process, SimpleQueue
 
 from pkgcore.package.errors import MetadataException
-from pkgcore.restrictions import packages
+from pkgcore.restrictions import boolean, packages
 
 from . import base
 from .results import MetadataError
@@ -33,6 +33,9 @@ class Pipeline:
         self.pipes = pipes
         self.restrict = restrict
         self.jobs = options.jobs
+        self.pkg_scan = (
+            scan_scope in (base.version_scope, base.package_scope) and
+            isinstance(restrict, boolean.AndRestriction))
 
     def _queue_work(self, scoped_pipes, async_pipes, work_q):
         # queue restriction tasks based on scope for check running parallelism
@@ -90,10 +93,7 @@ class Pipeline:
 
         # categorize checkrunners for parallelization based on the scan and source scope
         scoped_pipes = defaultdict(lambda: defaultdict(list))
-        if self.scan_scope == base.version_scope and len(self.restrict) == 1:
-            for (scope, is_async), runners in checkrunners.items():
-                scoped_pipes[is_async][base.version_scope].extend(runners)
-        elif self.scan_scope == base.package_scope and len(self.restrict) == 1:
+        if self.pkg_scan:
             for (scope, is_async), runners in checkrunners.items():
                 if scope == base.version_scope:
                     scoped_pipes[is_async][base.version_scope].extend(runners)
