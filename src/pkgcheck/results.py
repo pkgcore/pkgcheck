@@ -78,6 +78,8 @@ class Result(metaclass=_LeveledResult):
 
     def __lt__(self, other):
         if self.scope == other.scope:
+            if self.__class__.__name__ == other.__class__.__name__:
+                return self.desc < other.desc
             return self.__class__.__name__ < other.__class__.__name__
         return self.scope < other.scope
 

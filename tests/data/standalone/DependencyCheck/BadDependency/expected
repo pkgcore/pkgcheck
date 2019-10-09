@@ -1,5 +1,5 @@
 DependencyCheck/BadDependency
-  BadDependency: version 0: package blocks itself: DEPEND="!DependencyCheck/BadDependency"
+  BadDependency: version 0: = slot operator used in blocker: DEPEND="!!stub/stub3:="
   BadDependency: version 0: = slot operator used inside || block: DEPEND="stub/stub1:="
   BadDependency: version 0: = slot operator used inside || block: DEPEND="stub/stub2:="
-  BadDependency: version 0: = slot operator used in blocker: DEPEND="!!stub/stub3:="
+  BadDependency: version 0: package blocks itself: DEPEND="!DependencyCheck/BadDependency"
