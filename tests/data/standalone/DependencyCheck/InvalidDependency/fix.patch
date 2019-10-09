@@ -1,0 +1,9 @@
+diff -Naur standalone/DependencyCheck/InvalidDependency/InvalidDependency-0.ebuild fixed/DependencyCheck/InvalidDependency/InvalidDependency-0.ebuild
+--- standalone/DependencyCheck/InvalidDependency/InvalidDependency-0.ebuild	2019-10-09 06:14:19.176309135 -0600
++++ fixed/DependencyCheck/InvalidDependency/InvalidDependency-0.ebuild	2019-10-09 06:15:52.832743752 -0600
+@@ -2,4 +2,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-DEPEND="unzip"
++DEPEND="app-arch/unzip"
