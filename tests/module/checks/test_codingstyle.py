@@ -455,9 +455,9 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
             assert line.strip() in str(r)
 
 
-class TestHomepageInSrcUri(misc.ReportTestCase):
+class TestRawSrcUriCheck(misc.ReportTestCase):
 
-    check_kls = codingstyle.HomepageInSrcUriCheck
+    check_kls = codingstyle.RawSrcUriCheck
 
     def mk_pkg(self, **kwargs):
         return misc.FakePkg("dev-util/diffball-0.5", **kwargs)
@@ -490,3 +490,28 @@ class TestHomepageInSrcUri(misc.ReportTestCase):
                     '# ${HOMEPAGE} must not be used here\n']
         fake_pkg = self.mk_pkg(lines=fake_src)
         self.assertNoReport(self.check_kls(None), fake_pkg)
+
+    def test_dynamic_src_uri(self):
+        fake_src = ['SRC_URI="https://example.com/${PV}/${P}.tar.bz2"\n']
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        self.assertNoReport(self.check_kls(None), fake_pkg)
+
+    def test_static_package_src_uri(self):
+        fake_src = ['SRC_URI="https://example.com/diffball-0.5.tar.bz2"\n']
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        r = self.assertReport(self.check_kls(None), fake_pkg)
+        assert isinstance(r, codingstyle.StaticSrcUri)
+        assert r.static_str == 'diffball-0.5.tar.bz2'
+
+    def test_static_package_version_src_uri(self):
+        fake_src = ['SRC_URI="https://example.com/0.5/${P}.tar.bz2"\n']
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        r = self.assertReport(self.check_kls(None), fake_pkg)
+        assert isinstance(r, codingstyle.StaticSrcUri)
+        assert r.static_str == '0.5'
+
+    def test_multi_static_src_uri(self):
+        fake_src = ['SRC_URI="https://example.com/0.5/diffball-0.5.tar.bz2"\n']
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        for r in self.assertReports(self.check_kls(None), fake_pkg):
+            assert isinstance(r, codingstyle.StaticSrcUri)

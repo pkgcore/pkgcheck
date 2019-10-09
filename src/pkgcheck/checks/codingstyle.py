@@ -526,20 +526,42 @@ class HomepageInSrcUri(results.VersionedResult, results.Warning):
 
     @property
     def desc(self):
-        return "${HOMEPAGE} in SRC_URI"
+        return '${HOMEPAGE} in SRC_URI'
 
 
-class HomepageInSrcUriCheck(Check):
-    """Scan ebuild for ${HOMEPAGE} in SRC_URI."""
+class StaticSrcUri(results.VersionedResult, results.Warning):
+    """SRC_URI contains static value instead of the dynamic equivalent."""
+
+    def __init__(self, static_str, **kwargs):
+        super().__init__(**kwargs)
+        self.static_str = static_str
+
+    @property
+    def desc(self):
+        return f'{self.static_str!r} in SRC_URI'
+
+
+class RawSrcUriCheck(Check):
+    """Scan raw SRC_URI content for various issues."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = frozenset([HomepageInSrcUri])
+    known_results = frozenset([HomepageInSrcUri, StaticSrcUri])
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.regex = re.compile(r'^\s*SRC_URI="[^"]*[$]{HOMEPAGE}', re.M|re.S)
+        self.src_uri_regex = re.compile(r'^\s*SRC_URI="[^"]*"', re.MULTILINE)
 
     def feed(self, pkg):
-        match = self.regex.search(''.join(pkg.lines))
-        if match is not None:
-            yield HomepageInSrcUri(pkg=pkg)
+        src_uri = self.src_uri_regex.search(''.join(pkg.lines))
+        if src_uri is not None:
+            raw_src_uri = src_uri.group(0)
+            if '${HOMEPAGE}' in raw_src_uri:
+                yield HomepageInSrcUri(pkg=pkg)
+
+            exts = pkg.eapi.archive_suffixes_re.pattern
+            P = re.escape(pkg.P)
+            PV = re.escape(pkg.PV)
+            static_src_uri_re = rf'/(?P<static_str>({P}{exts}(?="|\n)|{PV}(?=/)))'
+            for match in re.finditer(static_src_uri_re, raw_src_uri):
+                static_str = match.group('static_str')
+                yield StaticSrcUri(static_str, pkg=pkg)
