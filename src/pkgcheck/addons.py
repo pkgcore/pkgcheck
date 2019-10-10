@@ -703,7 +703,7 @@ def init_addon(cls, options, addons_map=None):
     required_addons = chain.from_iterable(
         x.required_addons for x in cls.__mro__ if issubclass(x, base.Addon))
     kwargs = {
-        addon.param_name: init_addon(addon, options, addons_map)
+        base.param_name(addon): init_addon(addon, options, addons_map)
         for addon in required_addons}
     res = addons_map[cls] = cls(options, **kwargs)
     return res

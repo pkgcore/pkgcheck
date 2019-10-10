@@ -288,5 +288,5 @@ def init_source(source, options, addons_map=None):
         args = ()
         kwargs = {}
     for addon in source.required_addons:
-        kwargs[addon.param_name] = addons.init_addon(addon, options, addons_map)
+        kwargs[base.param_name(addon)] = addons.init_addon(addon, options, addons_map)
     return source(*args, options, **kwargs)

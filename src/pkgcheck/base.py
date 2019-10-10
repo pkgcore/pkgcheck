@@ -73,18 +73,7 @@ scopes = ImmutableDict({
 CACHE_DIR = pjoin(pkgcore_const.USER_CACHE_PATH, 'pkgcheck')
 
 
-class _AddonParam(type):
-    """Metaclass defining param_name property for addon dependency kwargs injection.
-
-    Note that this assumes addon classes follow the CapWords convention.
-    """
-
-    @property
-    def param_name(cls):
-        return re.sub(r'([a-z])([A-Z])', r'\1_\2', cls.__name__).lower()
-
-
-class Addon(metaclass=_AddonParam):
+class Addon:
     """Base class for extra functionality for pkgcheck other than a check.
 
     The checkers can depend on one or more of these. They will get
@@ -267,6 +256,14 @@ def filter_update(objs, enabled=(), disabled=()):
         blacklist = Blacklist(disabled)
         objs = list(blacklist.filter(objs))
     return objs
+
+
+def param_name(cls):
+    """Restructure class names for injected parameters.
+
+    For example, GitAddon -> git_addon and GitCache -> git_cache.
+    """
+    return re.sub(r'([a-z])([A-Z])', r'\1_\2', cls.__name__).lower()
 
 
 class ProgressManager(AbstractContextManager):
