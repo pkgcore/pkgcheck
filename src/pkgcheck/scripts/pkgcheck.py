@@ -292,7 +292,7 @@ def _validate_args(parser, namespace):
 
     # use filtered repo if filtering is enabled
     if namespace.filtered:
-        namespace.target_repo = namespace.domain.ebuild_repos[str(namespace.target_repo)]
+        namespace.target_repo = namespace.domain.ebuild_repos[namespace.target_repo.repo_id]
 
     # determine if we're running in the gentoo repo or a clone
     namespace.gentoo_repo = 'gentoo' in namespace.target_repo.aliases
