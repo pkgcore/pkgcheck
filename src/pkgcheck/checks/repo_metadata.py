@@ -688,3 +688,34 @@ class ManifestCollisionCheck(Check):
         pkg = pkgs[0]
         yield from self._conflicts(pkg)
         yield from self._matching(pkg)
+
+
+class EmptyProject(results.Warning):
+    """A project has no developers."""
+
+    def __init__(self, project):
+        super().__init__()
+        self.project = project
+
+    @property
+    def desc(self):
+        return f"Project has no members: {self.project}"
+
+
+class ProjectMetadataCheck(Check):
+    """Check projects.xml for issues."""
+
+    scope = base.repository_scope
+    _source = sources.EmptySource
+    known_results = frozenset([
+        EmptyProject,
+    ])
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.repo = self.options.target_repo
+
+    def finish(self):
+        for key, project in self.repo.projects_xml.projects.items():
+            if not project.recursive_members:
+                yield EmptyProject(project)

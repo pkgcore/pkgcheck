@@ -1,0 +1,14 @@
+diff -dur standalone/metadata/projects.xml fixed/metadata/projects.xml
+--- standalone/metadata/projects.xml	2019-10-14 22:08:43.893932127 +0200
++++ fixed/metadata/projects.xml	2019-10-15 16:21:19.818380782 +0200
+@@ -6,5 +6,10 @@
+     <name>Empty project</name>
+     <url>https://example.com/empty-project</url>
+     <description>Test project with no members.</description>
++    <member is-lead="1">
++      <email>somedev@gentoo.org</email>
++      <name>Some developer</name>
++      <role>Member</role>
++    </member>
+   </project>
+ </projects>
