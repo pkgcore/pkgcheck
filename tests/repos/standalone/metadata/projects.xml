@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<projects>
+  <project>
+    <email>emptyproject@example.com</email>
+    <name>Empty project</name>
+    <url>https://example.com/empty-project</url>
+    <description>Test project with no members.</description>
+  </project>
+</projects>
