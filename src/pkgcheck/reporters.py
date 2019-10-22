@@ -321,11 +321,13 @@ class JsonStream(Reporter):
     priority = -1001
 
     @staticmethod
-    def to_json(result):
-        """Serialize a result object to JSON."""
-        d = {'__class__': result.__class__.__name__}
-        d.update(result._attrs)
-        return d
+    def to_json(obj):
+        """Serialize results and other objects to JSON."""
+        if isinstance(obj, results.Result):
+            d = {'__class__': obj.__class__.__name__}
+            d.update(obj._attrs)
+            return d
+        return str(obj)
 
     @staticmethod
     def from_json(data):
