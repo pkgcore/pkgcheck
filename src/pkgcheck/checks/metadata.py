@@ -1015,7 +1015,7 @@ class SrcUriCheck(Check):
             # commit hash.
             PN = re.escape(pkg.PN)
             PV = re.escape(pkg.PV)
-            exts = pkg.eapi.archive_suffixes_re.pattern
+            exts = pkg.eapi.archive_exts_regex_pattern
             bad_filenames_re = rf'^({PN}|v?{PV}|[0-9a-f]{{40}}){exts}$'
             if re.match(bad_filenames_re, f_inst.filename):
                 bad_filenames.add(f_inst.filename)

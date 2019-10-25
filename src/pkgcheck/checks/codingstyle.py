@@ -558,7 +558,7 @@ class RawSrcUriCheck(Check):
             if '${HOMEPAGE}' in raw_src_uri:
                 yield HomepageInSrcUri(pkg=pkg)
 
-            exts = pkg.eapi.archive_suffixes_re.pattern
+            exts = pkg.eapi.archive_exts_regex_pattern
             P = re.escape(pkg.P)
             PV = re.escape(pkg.PV)
             static_src_uri_re = rf'/(?P<static_str>({P}{exts}(?="|\n)|{PV}(?=/)))'
