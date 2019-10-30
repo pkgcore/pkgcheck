@@ -315,15 +315,15 @@ def _validate_args(parser, namespace):
 
         def restrictions():
             for target in namespace.targets:
-                if os.path.exists(target):
-                    try:
-                        r = _path_restrict(target, namespace)
-                    except ValueError as e:
-                        parser.error(e)
-                else:
-                    try:
-                        r = parserestrict.parse_match(target)
-                    except parserestrict.ParseError as e:
+                try:
+                    r = parserestrict.parse_match(target)
+                except parserestrict.ParseError as e:
+                    if os.path.exists(target):
+                        try:
+                            r = _path_restrict(target, namespace)
+                        except ValueError as e:
+                            parser.error(e)
+                    else:
                         parser.error(e)
                 yield _restrict_to_scope(r), r
 
