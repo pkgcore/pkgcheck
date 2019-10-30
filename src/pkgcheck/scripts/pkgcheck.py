@@ -313,7 +313,7 @@ def _validate_args(parser, namespace):
                     yield line.rstrip()
             namespace.targets = stdin()
 
-        def limiters():
+        def restrictions():
             for target in namespace.targets:
                 if os.path.exists(target):
                     try:
@@ -327,28 +327,28 @@ def _validate_args(parser, namespace):
                         parser.error(e)
                 yield _restrict_to_scope(r), r
 
-        # Collapse limiters for passed in targets while keeping the generator
-        # intact for piped in targets.
-        namespace.limiters = limiters()
+        # Collapse restrictions for passed in targets while keeping the
+        # generator intact for piped in targets.
+        namespace.restrictions = restrictions()
         if isinstance(namespace.targets, list):
-            namespace.limiters = list(namespace.limiters)
+            namespace.restrictions = list(namespace.restrictions)
 
-            # collapse limiters into a single restriction in order to run them in parallel
-            if len(namespace.limiters) > 1:
+            # collapse restrictions in order to run them in parallel
+            if len(namespace.restrictions) > 1:
                 # multiple targets are restricted to a single scanning scope
-                scopes = {scope for scope, restrict in namespace.limiters}
+                scopes = {scope for scope, restrict in namespace.restrictions}
                 if len(scopes) > 1:
                     scan_scopes = ', '.join(sorted(map(str, scopes)))
                     parser.error(f'targets specify multiple scan scope levels: {scan_scopes}')
 
-                combined_restrict = boolean.OrRestriction(*(r for s, r in namespace.limiters))
-                namespace.limiters = [(scopes.pop(), combined_restrict)]
+                combined_restrict = boolean.OrRestriction(*(r for s, r in namespace.restrictions))
+                namespace.restrictions = [(scopes.pop(), combined_restrict)]
     else:
         if cwd in namespace.target_repo:
             restrict = _path_restrict(cwd, namespace)
         else:
             restrict = packages.AlwaysTrue
-        namespace.limiters = [(_restrict_to_scope(restrict), restrict)]
+        namespace.restrictions = [(_restrict_to_scope(restrict), restrict)]
 
     if namespace.checkset is None:
         namespace.checkset = namespace.config.get_default('pkgcheck_checkset')
@@ -489,7 +489,7 @@ def _scan(options, out, err):
                 reporter.report(result)
 
         if enabled_checks:
-            for scan_scope, filterer in options.limiters:
+            for scan_scope, restrict in options.restrictions:
                 # Skip checks higher than the current scan scope level, e.g. skip repo
                 # level checks when scanning at package level.
                 pipes = [d for scope, d in enabled_checks.items() if scope <= scan_scope]
@@ -500,10 +500,10 @@ def _scan(options, out, err):
                 if options.verbosity >= 1:
                     err.write(f'Running {len(pipes)} tests')
                 if options.debug:
-                    err.write(f'limiter: {filterer}')
+                    err.write(f'restriction: {restrict}')
                 err.flush()
 
-                reporter(pipeline.Pipeline(options, scan_scope, pipes, filterer))
+                reporter(pipeline.Pipeline(options, scan_scope, pipes, restrict))
 
     return 0
 

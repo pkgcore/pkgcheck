@@ -83,18 +83,18 @@ class TestPkgcheckScanParseArgs(object):
 
     def test_targets(self):
         options, _func = self.tool.parse_args(self.args + ['dev-util/foo'])
-        assert list(options.limiters) == [(base.package_scope, atom.atom('dev-util/foo'))]
+        assert list(options.restrictions) == [(base.package_scope, atom.atom('dev-util/foo'))]
 
     def test_stdin_targets(self):
         with patch('sys.stdin', StringIO('dev-util/foo')):
             options, _func = self.tool.parse_args(self.args + ['-'])
-            assert list(options.limiters) == [(base.package_scope, atom.atom('dev-util/foo'))]
+            assert list(options.restrictions) == [(base.package_scope, atom.atom('dev-util/foo'))]
 
     def test_invalid_targets(self, capsys):
         with pytest.raises(SystemExit) as excinfo:
             options, _func = self.tool.parse_args(self.args + ['dev-util/f$o'])
             # force target parsing
-            list(options.limiters)
+            list(options.restrictions)
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         err = err.strip()
@@ -104,12 +104,12 @@ class TestPkgcheckScanParseArgs(object):
         # selected repo
         options, _func = self.tool.parse_args(self.args + ['-r', 'stubrepo'])
         assert options.target_repo.repo_id == 'stubrepo'
-        assert options.limiters == [(base.repository_scope, packages.AlwaysTrue)]
+        assert options.restrictions == [(base.repository_scope, packages.AlwaysTrue)]
 
         # dir path
         options, _func = self.tool.parse_args(self.args + [fakerepo])
         assert options.target_repo.repo_id == 'fakerepo'
-        assert options.limiters == [(base.repository_scope, packages.AlwaysTrue)]
+        assert options.restrictions == [(base.repository_scope, packages.AlwaysTrue)]
 
         # file path
         os.makedirs(pjoin(fakerepo, 'dev-util', 'foo'))
@@ -121,7 +121,7 @@ class TestPkgcheckScanParseArgs(object):
             restricts.PackageDep('foo'),
             restricts.VersionMatch('=', '0'),
         ]
-        assert list(options.limiters) == [(base.version_scope, packages.AndRestriction(*restrictions))]
+        assert list(options.restrictions) == [(base.version_scope, packages.AndRestriction(*restrictions))]
         assert options.target_repo.repo_id == 'fakerepo'
 
         # cwd path in unconfigured repo
@@ -132,14 +132,14 @@ class TestPkgcheckScanParseArgs(object):
                 restricts.CategoryDep('dev-util'),
                 restricts.PackageDep('foo'),
             ]
-            assert list(options.limiters) == [(base.package_scope, packages.AndRestriction(*restrictions))]
+            assert list(options.restrictions) == [(base.package_scope, packages.AndRestriction(*restrictions))]
 
         # cwd path in configured repo
         stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
         with chdir(stubrepo):
             options, _func = self.tool.parse_args(self.args)
             assert options.target_repo.repo_id == 'stubrepo'
-            assert list(options.limiters) == [(base.repository_scope, packages.AlwaysTrue)]
+            assert list(options.restrictions) == [(base.repository_scope, packages.AlwaysTrue)]
 
     def test_unknown_repo(self, capsys):
         for opt in ('-r', '--repo'):
