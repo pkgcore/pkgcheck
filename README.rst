@@ -46,19 +46,9 @@ the following::
 
     tox -e py36
 
-Notes
-=====
-
-Currently full tree scans will use a large amount of memory (up to ~1.7GB) in
-part due to pkgcore's restriction design in relation to the expanding use of
-transitive use flag dependencies across the tree. To alleviate this
-pkgcore.restrictions_ will be refactored, probably leading to splitting
-conditionals off into their own set.
-
 
 .. _`Installing python modules`: http://docs.python.org/inst/
 .. _pkgcore: https://github.com/pkgcore/pkgcore
-.. _pkgcore.restrictions: https://github.com/pkgcore/pkgcore/issues/80
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcheck.svg
     :target: https://pypi.python.org/pypi/pkgcheck
