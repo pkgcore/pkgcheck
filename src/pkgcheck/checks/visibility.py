@@ -97,14 +97,16 @@ def visit_atoms(pkg, stream):
 class VisibleVcsPkg(results.VersionedResult, results.Error):
     """Package is VCS-based, but visible."""
 
-    def __init__(self, arch, profile, **kwargs):
+    def __init__(self, arch, profile, num_profiles=None, **kwargs):
         super().__init__(**kwargs)
         self.arch = arch
         self.profile = profile
+        self.num_profiles = num_profiles
 
     @property
     def desc(self):
-        return f"VCS version visible for arch {self.arch}, profile {self.profile}"
+        num_profiles = f' ({self.num_profiles} total)' if self.num_profiles is not None else ''
+        return f"VCS version visible for arch {self.arch}, profile {self.profile}{num_profiles}"
 
 
 class NonexistentDeps(results.VersionedResult, results.Warning):
@@ -282,9 +284,19 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
                                     profile.deprecated, len(status_profiles), pkg=pkg)
 
     def check_visibility_vcs(self, pkg):
+        visible = []
         for profile in self.profiles:
             if profile.visible(pkg):
-                yield VisibleVcsPkg(profile.key.lstrip('~'), profile.name, pkg=pkg)
+                visible.append(profile)
+
+        if visible:
+            if self.options.verbosity > 0:
+                # report all failures across all profiles in verbose mode
+                for p in visible:
+                    yield VisibleVcsPkg(p.key.lstrip('~'), p.name, pkg=pkg)
+            else:
+                p = visible[0]
+                yield VisibleVcsPkg(p.key.lstrip('~'), p.name, len(visible), pkg=pkg)
 
     def process_depset(self, pkg, attr, depset, edepset, profiles):
         get_cached_query = self.query_cache.get
