@@ -235,7 +235,7 @@ class ProfileAddon(base.Addon):
         namespace.forced_cache = bool(namespace.profile_cache)
 
         namespace.arch_profiles = defaultdict(list)
-        for p in profiles:
+        for p in sorted(profiles):
             if ignore_deprecated and p.deprecated:
                 continue
 
@@ -332,7 +332,7 @@ class ProfileAddon(base.Addon):
                         logger.debug('forcing %s profile cache regen: %s', repo.repo_id, e)
                         os.remove(cache_file)
 
-        for k in self.desired_arches:
+        for k in sorted(self.desired_arches):
             if k.lstrip("~") not in self.desired_arches:
                 continue
             stable_key = k.lstrip("~")
