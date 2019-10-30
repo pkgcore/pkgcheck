@@ -124,12 +124,12 @@ class ParsedGitRepo(UserDict):
             while line:
                 commit = git_log.stdout.readline().decode().strip()
                 commit_date = git_log.stdout.readline().decode().strip()
-                author = git_log.stdout.readline().decode().strip()
-                committer = git_log.stdout.readline().decode().strip()
+                author = git_log.stdout.readline().decode('utf-8', 'replace').strip()
+                committer = git_log.stdout.readline().decode('utf-8', 'replace').strip()
 
                 message = []
                 while True:
-                    line = git_log.stdout.readline().decode().strip('\n')
+                    line = git_log.stdout.readline().decode('utf-8', 'replace').strip('\n')
                     if line == '# END MESSAGE BODY':
                         break
                     message.append(line)
