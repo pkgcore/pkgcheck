@@ -669,7 +669,7 @@ class ManifestCollisionCheck(Check):
                 yield ConflictingChksums(filename, sorted(conflicting_chksums), pkgs, pkg=pkg)
             else:
                 seen_chksums.update(chksums)
-                seen_pkgs.append(pkg)
+                seen_pkgs.append(pkg.key)
 
     def _matching(self, pkg):
         """Check for distfiles with matching checksums and different names."""
