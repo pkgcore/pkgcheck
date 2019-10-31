@@ -1,0 +1,3 @@
+VisibilityCheck/NonexistentDeps
+  NonexistentDeps: version 0: DEPEND: nonexistent package: [ cat/nonexistent ]
+  NonexistentDeps: version 0: RDEPEND: nonexistent package: [ cat/nonexistent ]
