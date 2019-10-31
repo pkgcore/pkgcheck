@@ -106,7 +106,10 @@ class VisibleVcsPkg(results.VersionedResult, results.Error):
     @property
     def desc(self):
         num_profiles = f' ({self.num_profiles} total)' if self.num_profiles is not None else ''
-        return f"VCS version visible for arch {self.arch}, profile {self.profile}{num_profiles}"
+        return (
+            f'VCS version visible for KEYWORDS="{self.arch}", '
+            f'profile {self.profile}{num_profiles}'
+        )
 
 
 class NonexistentDeps(results.VersionedResult, results.Warning):
@@ -293,10 +296,10 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
             if self.options.verbosity > 0:
                 # report all failures across all profiles in verbose mode
                 for p in visible:
-                    yield VisibleVcsPkg(p.key.lstrip('~'), p.name, pkg=pkg)
+                    yield VisibleVcsPkg(p.key, p.name, pkg=pkg)
             else:
                 p = visible[0]
-                yield VisibleVcsPkg(p.key.lstrip('~'), p.name, len(visible), pkg=pkg)
+                yield VisibleVcsPkg(p.key, p.name, len(visible), pkg=pkg)
 
     def process_depset(self, pkg, attr, depset, edepset, profiles):
         get_cached_query = self.query_cache.get
