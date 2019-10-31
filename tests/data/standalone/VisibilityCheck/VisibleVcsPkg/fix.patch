@@ -1,0 +1,16 @@
+diff -Naur standalone/VisibilityCheck/VisibleVcsPkg/VisibleVcsPkg-0.ebuild fixed/VisibilityCheck/VisibleVcsPkg/VisibleVcsPkg-0.ebuild
+--- standalone/VisibilityCheck/VisibleVcsPkg/VisibleVcsPkg-0.ebuild	2019-10-30 18:49:01.334094722 -0600
++++ fixed/VisibilityCheck/VisibleVcsPkg/VisibleVcsPkg-0.ebuild	2019-10-30 18:49:40.551199117 -0600
+@@ -4,4 +4,3 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-KEYWORDS="amd64"
+diff -Naur standalone/VisibilityCheck/VisibleVcsPkg/VisibleVcsPkg-1.ebuild fixed/VisibilityCheck/VisibleVcsPkg/VisibleVcsPkg-1.ebuild
+--- standalone/VisibilityCheck/VisibleVcsPkg/VisibleVcsPkg-1.ebuild	2019-10-30 18:49:01.334094722 -0600
++++ fixed/VisibilityCheck/VisibleVcsPkg/VisibleVcsPkg-1.ebuild	2019-10-30 18:49:46.594215205 -0600
+@@ -4,4 +4,3 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-KEYWORDS="~x86"

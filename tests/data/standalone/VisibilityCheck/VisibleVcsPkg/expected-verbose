@@ -1,0 +1,4 @@
+VisibilityCheck/VisibleVcsPkg
+  VisibleVcsPkg: version 0: VCS version visible for KEYWORDS="amd64", profile default/amd64
+  VisibleVcsPkg: version 0: VCS version visible for KEYWORDS="~amd64", profile default/amd64
+  VisibleVcsPkg: version 1: VCS version visible for KEYWORDS="~x86", profile default/x86
