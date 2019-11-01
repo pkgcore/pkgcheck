@@ -4,6 +4,7 @@ from collections import defaultdict
 from distutils import log
 from distutils.command import install_data as dst_install_data
 from distutils.util import byte_compile
+from itertools import chain
 import os
 import sys
 from textwrap import dedent
@@ -12,6 +13,9 @@ from setuptools import setup
 
 from snakeoil.dist import distutils_extensions as pkgdist
 pkgdist_setup, pkgdist_cmds = pkgdist.setup()
+
+DATA_INSTALL_OFFSET = 'share/pkgcheck'
+
 
 class install(pkgdist.install):
     """Install wrapper to generate and install pkgcheck-related files."""
@@ -76,6 +80,20 @@ def write_obj_lists(python_base, install_prefix):
             CHECKS = {checks}
             REPORTERS = {reporters}
         """))
+
+        # write install path constants to config
+        if install_prefix != os.path.abspath(sys.prefix):
+            # write more dynamic _const file for wheel installs
+            f.write(dedent("""\
+                import os.path as osp
+                INSTALL_PREFIX = osp.abspath(sys.prefix)
+                DATA_PATH = osp.join(INSTALL_PREFIX, {!r})
+            """.format(DATA_INSTALL_OFFSET)))
+        else:
+            f.write("INSTALL_PREFIX=%r\n" % install_prefix)
+            f.write("DATA_PATH=%r\n" %
+                    os.path.join(install_prefix, DATA_INSTALL_OFFSET))
+
     # only optimize during install, skip during wheel builds
     if install_prefix == os.path.abspath(sys.prefix):
         byte_compile([path], prefix=python_base)
@@ -108,18 +126,37 @@ class install_data(dst_install_data.install_data):
         self.data_files.append(('share/pkgcheck', files))
 
 
+class test(pkgdist.pytest):
+    """Wrapper to enforce testing against built version."""
+
+    def run(self):
+        # This is fairly hacky, but is done to ensure that the tests
+        # are ran purely from what's in build, reflecting back to the source config data.
+        key = 'PKGCHECK_OVERRIDE_REPO_PATH'
+        original = os.environ.get(key)
+        try:
+            os.environ[key] = os.path.dirname(os.path.realpath(__file__))
+            super().run()
+        finally:
+            if original is not None:
+                os.environ[key] = original
+            else:
+                os.environ.pop(key, None)
+
+
 setup(**dict(pkgdist_setup,
     license='BSD',
     author='Tim Harder',
     author_email='radhermit@gmail.com',
     description='pkgcore-based QA utility',
     url='https://github.com/pkgcore/pkgcheck',
-    data_files=list(
+    data_files=list(chain(
         pkgdist.data_mapping('share/zsh/site-functions', 'completion/zsh'),
-        ),
+        pkgdist.data_mapping('share/pkgcheck', 'data'),
+        )),
     cmdclass=dict(
         pkgdist_cmds,
-        test=pkgdist.pytest,
+        test=test,
         install_data=install_data,
         install=install,
         ),

@@ -2,6 +2,7 @@ include AUTHORS LICENSE *.py *.rst
 include tox.ini pyproject.toml .coveragerc .pylintrc
 recursive-include bin *
 recursive-include completion *
+recursive-include data *
 recursive-include doc *
 recursive-include requirements *
 recursive-include src *

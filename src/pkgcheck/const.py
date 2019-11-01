@@ -3,12 +3,16 @@
 import inspect
 import os
 import pkgutil
+import sys
 from functools import partial
 from importlib import import_module
 
 from snakeoil import mappings
 
 from . import __title__, checks, reporters, results
+
+_reporoot = os.path.realpath(__file__).rsplit(os.path.sep, 3)[0]
+_module = sys.modules[__name__]
 
 try:
     # This is a file written during installation;
@@ -17,6 +21,22 @@ try:
     from . import _const as _defaults
 except ImportError:
     _defaults = object()
+
+
+def _GET_CONST(attr, default_value, allow_environment_override=False):
+    consts = mappings.ProxiedAttrs(_module)
+    is_tuple = not isinstance(default_value, str)
+    if is_tuple:
+        default_value = tuple(x % consts for x in default_value)
+    else:
+        default_value %= consts
+
+    result = getattr(_defaults, attr, default_value)
+    if allow_environment_override:
+        result = os.environ.get(f'PKGCHECK_OVERRIDE_{attr}', result)
+    if is_tuple:
+        result = tuple(result)
+    return result
 
 
 def _find_modules(module):
@@ -68,6 +88,8 @@ def _GET_VALS(attr, func):
         result = func()
     return result
 
+REPO_PATH = _GET_CONST('REPO_PATH', _reporoot, allow_environment_override=True)
+DATA_PATH = _GET_CONST('DATA_PATH', '%(REPO_PATH)s/data')
 
 try:
     KEYWORDS = mappings.ImmutableDict(_GET_VALS(
