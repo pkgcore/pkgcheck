@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import tarfile
 from datetime import datetime
@@ -67,9 +68,9 @@ class BadCommitSummary(results.PackageResult, results.Warning):
     """Local package commit with poorly formatted or unmatching commit summary.
 
     Git commit messages for packages should be formatted in the standardized
-    fashion described in the devmanual [#]_. Specifically, the
-    ``${CATEGORY}/${PN}:`` prefix should be used in the summary relating to
-    the modified package.
+    fashion described in the devmanual [#]_. Specifically, a
+    ``${CATEGORY}/${PN}:`` or ``${CATEGORY}/${P}:`` prefix should be used in
+    the summary relating to the modified package.
 
     .. [#] https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format
     """
@@ -258,7 +259,8 @@ class GitPkgCommitsCheck(GentooRepoCheck):
                 summary = git_pkg.message[0]
             except IndexError:
                 summary = ''
-            if not summary.startswith(f'{git_pkg.unversioned_atom}: '):
+            summary_prefix_re = rf'^({git_pkg.key}|{git_pkg.cpvstr}): '
+            if not re.match(summary_prefix_re, summary):
                 error = 'summary missing matching package prefix'
                 yield BadCommitSummary(error, summary, git_pkg.commit, pkg=git_pkg)
 
