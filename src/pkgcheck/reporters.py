@@ -39,8 +39,8 @@ class Reporter:
         p.start()
         signal.signal(signal.SIGINT, orig_sigint_handler)
         if pipe.pkg_scan:
-            # sort versioned package results
-            results = chain.from_iterable(iter(results_q.get, None))
+            # sort versioned package results, removing duplicate MetadataError results
+            results = set(chain.from_iterable(iter(results_q.get, None)))
             for result in sorted(results):
                 self.report(result)
         else:
