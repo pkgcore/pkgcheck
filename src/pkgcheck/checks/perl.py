@@ -8,7 +8,7 @@ import tempfile
 from snakeoil.osutils import pjoin
 
 from .. import const, results, sources
-from . import ExplicitlyEnabledCheck
+from . import ExplicitlyEnabledCheck, SkipOptionalCheck
 
 
 class BadPerlModuleVersion(results.VersionedResult, results.Warning):
@@ -54,8 +54,11 @@ class PerlCheck(ExplicitlyEnabledCheck):
         try:
             self.connection, _address = sock.accept()
         except socket.timeout as e:
-            err = self.perl_client.stderr.read().decode().strip()
-            raise Exception(f'failed to connect to perl client: {err}')
+            err_msg = 'failed to connect to perl client'
+            if self.options.verbosity > 0:
+                stderr = self.perl_client.stderr.read().decode().strip()
+                err_msg += f': {stderr}'
+            raise SkipOptionalCheck(err_msg)
 
     def feed(self, pkg):
         if 'perl-module' in pkg.inherited:

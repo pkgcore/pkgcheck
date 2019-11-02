@@ -415,7 +415,6 @@ class TestPkgcheckScan(object):
                     with pytest.raises(SystemExit) as excinfo:
                         self.script()
                     out, err = capsys.readouterr()
-                    assert not err, f'{repo} repo failed, {err}'
                     assert out, f'{repo} repo failed, no results'
                     assert excinfo.value.code == 0
                     for line in out.rstrip('\n').split('\n'):

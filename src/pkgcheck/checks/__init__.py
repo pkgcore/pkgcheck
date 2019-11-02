@@ -1,5 +1,6 @@
 """Core check classes."""
 
+import sys
 from collections import defaultdict
 
 from .. import addons, base, feeds, results, sources
@@ -108,6 +109,10 @@ class NetworkCheck(AsyncCheck):
         return super().skip(namespace, skip=skip)
 
 
+class SkipOptionalCheck(Exception):
+    """Failed initializing optional check due to missing dependencies or other situation."""
+
+
 def init_checks(enabled_addons, options):
     """Initialize selected checks."""
     enabled = defaultdict(lambda: defaultdict(list))
@@ -115,7 +120,12 @@ def init_checks(enabled_addons, options):
     source_map = {}
     caches = []
     for cls in enabled_addons:
-        addon = addons.init_addon(cls, options, addons_map)
+        try:
+            addon = addons.init_addon(cls, options, addons_map)
+        except SkipOptionalCheck as e:
+            err_msg = f'skipping optional check {cls.__name__!r}: {e}'
+            sys.stderr.write(f'{err_msg}\n')
+            continue
         if isinstance(addon, Check):
             is_async = isinstance(addon, AsyncCheck)
             source = source_map.get(addon.source)
