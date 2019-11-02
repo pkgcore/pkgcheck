@@ -38,6 +38,7 @@ class PerlCheck(ExplicitlyEnabledCheck):
         self.dist_version_re = re.compile('DIST_VERSION=(?P<dist_version>\d+(\.\d+)*)\s*\n')
         self.process_lock = multiprocessing.Lock()
         self.connection = None
+        self.perl_client = None
         self.socket_dir = tempfile.TemporaryDirectory(prefix='pkgcheck-')
 
         # set up Unix domain socket to communicate with perl client
@@ -48,8 +49,12 @@ class PerlCheck(ExplicitlyEnabledCheck):
 
         # start perl client for normalizing perl module versions into package versions
         perl_script = pjoin(const.DATA_PATH, 'perl-version.pl')
-        self.perl_client = subprocess.Popen(
-            ['perl', perl_script, socket_path], bufsize=1, stderr=subprocess.PIPE)
+        try:
+            self.perl_client = subprocess.Popen(
+                ['perl', perl_script, socket_path], bufsize=1, stderr=subprocess.PIPE)
+        except FileNotFoundError as e:
+            raise SkipOptionalCheck('perl not installed on system')
+
         sock.settimeout(1)
         try:
             self.connection, _address = sock.accept()
@@ -77,4 +82,5 @@ class PerlCheck(ExplicitlyEnabledCheck):
             self.connection.close()
         self.socket_dir.cleanup()
         # at this point, we don't care about being nice to the perl side
-        self.perl_client.kill()
+        if self.perl_client is not None:
+            self.perl_client.kill()
