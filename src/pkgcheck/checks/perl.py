@@ -12,7 +12,7 @@ from . import ExplicitlyEnabledCheck
 
 
 class BadPerlModuleVersion(results.VersionedResult, results.Warning):
-    """Package's perl module version that doesn't match its $PV."""
+    """A package's perl module version doesn't match its $PV."""
 
     def __init__(self, dist_version, perl_version, **kwargs):
         super().__init__(**kwargs)
@@ -40,7 +40,7 @@ class PerlCheck(ExplicitlyEnabledCheck):
         self.connection = None
         self.socket_dir = tempfile.TemporaryDirectory(prefix='pkgcheck-')
 
-        # set up Unix domain socket to interoperate with perl side
+        # set up Unix domain socket to communicate with perl client
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         socket_path = os.path.join(self.socket_dir.name, 'perl.socket')
         sock.bind(socket_path)
@@ -65,7 +65,7 @@ class PerlCheck(ExplicitlyEnabledCheck):
                 with self.process_lock:
                     self.connection.send(dist_version.encode() + b'\n')
                     size = int(self.connection.recv(2))
-                    perl_version = self.connection.recv(size).decode()
+                    perl_version = self.connection.recv(size).decode('utf-8', 'replace')
                     if perl_version != pkg.version:
                         yield BadPerlModuleVersion(dist_version, perl_version, pkg=pkg)
 
