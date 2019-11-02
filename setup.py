@@ -86,6 +86,7 @@ def write_obj_lists(python_base, install_prefix):
             # write more dynamic _const file for wheel installs
             f.write(dedent("""\
                 import os.path as osp
+                import sys
                 INSTALL_PREFIX = osp.abspath(sys.prefix)
                 DATA_PATH = osp.join(INSTALL_PREFIX, {!r})
             """.format(DATA_INSTALL_OFFSET)))
