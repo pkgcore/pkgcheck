@@ -5,10 +5,11 @@ import socket
 import subprocess
 import tempfile
 
+from snakeoil.cli.exceptions import UserException
 from snakeoil.osutils import pjoin
 
 from .. import const, results, sources
-from . import ExplicitlyEnabledCheck, SkipOptionalCheck
+from . import ExplicitlyEnabledCheck
 
 
 class BadPerlModuleVersion(results.VersionedResult, results.Warning):
@@ -53,7 +54,7 @@ class PerlCheck(ExplicitlyEnabledCheck):
             self.perl_client = subprocess.Popen(
                 ['perl', perl_script, socket_path], bufsize=1, stderr=subprocess.PIPE)
         except FileNotFoundError as e:
-            raise SkipOptionalCheck('perl not installed on system')
+            raise UserException('perl not installed on system')
 
         sock.settimeout(1)
         try:
@@ -63,7 +64,7 @@ class PerlCheck(ExplicitlyEnabledCheck):
             if self.options.verbosity > 0:
                 stderr = self.perl_client.stderr.read().decode().strip()
                 err_msg += f': {stderr}'
-            raise SkipOptionalCheck(err_msg)
+            raise UserException(err_msg)
 
     def feed(self, pkg):
         if 'perl-module' in pkg.inherited:
