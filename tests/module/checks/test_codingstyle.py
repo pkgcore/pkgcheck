@@ -174,7 +174,8 @@ class TestPathVariablesCheck(misc.ReportTestCase):
         for path_var in self.check_kls.variables:
             fake_src = [
                 "src_install() {\n",
-                f'   rm "${{S}}"a/random/file || die\n',
+                f'   local var="${{{path_var}}}_foo"\n',
+                f'   rm "${{{path_var}}}"/a/random/file || die\n',
                 "}\n",
                 "\n",
             ]

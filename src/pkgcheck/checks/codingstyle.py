@@ -207,7 +207,7 @@ class PathVariablesCheck(Check):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.missing_regex = re.compile(r'(\${(%s)})"?\w' % r'|'.join(self.variables))
+        self.missing_regex = re.compile(r'(\${(%s)})"?\w+/' % r'|'.join(self.variables))
         self.unnecessary_regex = re.compile(r'(\${(%s)%%/})' % r'|'.join(self.variables))
         self.double_prefix_regex = re.compile(
             r'(\${(%s)(%%/)?}/?\$(\((%s)\)|{(%s)}))' % (
