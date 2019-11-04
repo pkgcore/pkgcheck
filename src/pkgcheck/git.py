@@ -320,7 +320,7 @@ class GitAddon(base.Addon, base.Cache):
                 parser.error('git not available to determine targets for --commits')
             pkgs = sorted(set(x.unversioned_atom for x in repo))
             combined_restrict = boolean.OrRestriction(*pkgs)
-            namespace.limiters = [(base.package_scope, combined_restrict)]
+            namespace.restrictions = [(base.package_scope, combined_restrict)]
 
     def __init__(self, *args):
         super().__init__(*args)
