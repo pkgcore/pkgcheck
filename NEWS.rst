@@ -3,6 +3,44 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.6.9 (2019-11-04)
+---------------------------
+
+- MissingSlash: Avoid some types of false positives where the path variable is
+  used to create a simple string, but not as a path directly.
+
+- BadPerlModuleVersion: Add support for verifying Gentoo's perl module
+  versioning scheme -- not run by default since it requires various perl
+  dependencies.
+
+- BadCommitSummary: Also allow "${CATEGORY}/${P}:" prefixes.
+
+- MetadataError: Fix suppressing duplicate results due to multiprocess usage.
+
+- VisibleVcsPkg: Collapse profile reports for non-verbose mode.
+
+- Use replacement character for non-UTF8 characters while decoding author,
+  committer, and message fields from git logs.
+
+- pkgcheck scan: Try parsing target arguments as restrictions before falling
+  back to using path restrictions.
+
+- EmptyProject: Check for projects with no members in projects.xml.
+
+- StaticSrcUri: Check if SRC_URI uses static values for P or PV instead of the
+  dynamic, variable equivalents.
+
+- MatchingChksums: Check for distfiles that share the same checksums but have
+  different names.
+
+- pkgcheck scan: Parallelize checks for targets passed in via cli args.
+
+- Sort versioned package results under package scanning scope so outputted
+  results are deterministic when scanning against single packages similar to
+  what the output is per package when running scans at a category or repo
+  level.
+
+---------------------------
 pkgcheck 0.6.8 (2019-10-06)
 ---------------------------
 
