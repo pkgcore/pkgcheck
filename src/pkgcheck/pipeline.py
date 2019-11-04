@@ -89,6 +89,11 @@ class Pipeline:
                         self.options, source, checks, results_q=results_q)
                 else:
                     runner = CheckRunner(self.options, source, checks)
+
+                # initialize package and version scoped checks
+                if source.feed_type <= base.package_scope:
+                    runner.start()
+
                 checkrunners[(source.feed_type, is_async)].append(runner)
 
         # categorize checkrunners for parallelization based on the scan and source scope
