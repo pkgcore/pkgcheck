@@ -101,7 +101,7 @@ class ReportTestCase(object):
         else:
             source = [data]
         runner = pipeline.CheckRunner(Options(), source, [check])
-        l.extend(runner.start())
+        runner.start()
         l.extend(runner.run())
         l.extend(runner.finish())
         self._assert_known_results(*l)
@@ -121,7 +121,7 @@ class ReportTestCase(object):
         else:
             source = [data]
         runner = pipeline.CheckRunner(Options(), source, [check])
-        l.extend(runner.start())
+        runner.start()
         l.extend(runner.run())
         l.extend(runner.finish())
         self._assert_known_results(*l)

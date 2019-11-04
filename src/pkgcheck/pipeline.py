@@ -18,9 +18,9 @@ class GitPipeline:
 
     def __init__(self, *args, **kwargs):
         self.checkrunner = CheckRunner(*args, **kwargs)
+        self.checkrunner.start()
 
     def __iter__(self):
-        yield from self.checkrunner.start()
         yield from self.checkrunner.run()
         yield from self.checkrunner.finish()
 
@@ -74,7 +74,7 @@ class Pipeline:
             else:
                 results = []
                 pipe = sync_pipes[scope][pipe_idx]
-                results.extend(pipe.start())
+                pipe.start()
                 results.extend(pipe.run(restrict))
                 results.extend(pipe.finish())
                 results_q.put(results)
@@ -169,9 +169,7 @@ class CheckRunner:
 
     def start(self):
         for check in self.checks:
-            reports = check.start()
-            if reports is not None:
-                yield from reports
+            check.start()
 
     def run(self, restrict=packages.AlwaysTrue):
         try:
