@@ -17,14 +17,8 @@ class Feed(base.Addon):
     def source(self):
         return self._source
 
-    def start(self):
-        """Do startup here."""
-
     def feed(self, item):
         """Handle functionality against the passed in item."""
-
-    def finish(self):
-        """Do cleanup and omit final results here."""
 
 
 class QueryCache(Feed):

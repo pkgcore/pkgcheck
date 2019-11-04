@@ -21,7 +21,6 @@ class TestQueryCacheAddon(ArgparseCheck):
     def test_feed(self):
         options = self.process_check([])
         check = self.addon_kls(options)
-        check.start()
         assert check.options.query_caching_freq == self.default_reset
         check.query_cache['foo'] = 'bar'
         pkg = FakePkg('dev-util/diffball-0.5')

@@ -38,6 +38,12 @@ class Check(feeds.Feed):
             return cls.__name__ not in namespace.forced_checks
         return skip
 
+    def start(self):
+        """Do startup here."""
+
+    def finish(self):
+        """Do cleanup and yield final results here."""
+
 
 class GentooRepoCheck(Check):
     """Check that is only run against the gentoo repo."""
