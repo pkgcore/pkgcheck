@@ -37,11 +37,12 @@ class PerlCheck(ExplicitlyEnabledCheck):
     def __init__(self, *args):
         super().__init__(*args)
         self.dist_version_re = re.compile('DIST_VERSION=(?P<dist_version>\d+(\.\d+)*)\s*\n')
-        self.process_lock = multiprocessing.Lock()
         self.connection = None
         self.perl_client = None
+        self.process_lock = multiprocessing.Lock()
         self.socket_dir = tempfile.TemporaryDirectory(prefix='pkgcheck-')
 
+    def start(self):
         # set up Unix domain socket to communicate with perl client
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         socket_path = os.path.join(self.socket_dir.name, 'perl.socket')
