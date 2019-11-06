@@ -26,26 +26,31 @@ class TestPerlCheck(misc.ReportTestCase):
     check = perl.PerlCheck(misc.Options(verbosity=0))
     check_kls = perl.PerlCheck
 
-    def mk_pkg(self, dist_version, PVR, **kwargs):
-        lines = [
-            'inherit perl-module\n',
-            f'DIST_VERSION={dist_version}\n',
-        ]
+    def mk_pkg(self, PVR, dist_version='', eclasses=('perl-module',), **kwargs):
+        lines = ['inherit perl-module\n']
+        if dist_version:
+            lines.append(f'DIST_VERSION={dist_version}\n')
         kwargs.setdefault('EAPI', '7')
-        kwargs.setdefault('_eclasses_', ['perl-module'])
+        kwargs.setdefault('_eclasses_', list(eclasses))
         return misc.FakePkg(f'app-foo/bar-{PVR}', lines=lines, data=kwargs)
 
     def test_matching(self):
         for PVR in ('1.7.0-r0', '1.7.0', '1.7.0-r100'):
-            self.assertNoReport(self.check, self.mk_pkg('1.007', PVR))
+            self.assertNoReport(self.check, self.mk_pkg(PVR, '1.007'))
 
     def test_nonmatching(self):
         for PVR in ('1.7.0-r0', '1.7.0', '1.7.0-r100'):
-            r = self.assertReport(self.check, self.mk_pkg('1.07', PVR))
+            r = self.assertReport(self.check, self.mk_pkg(PVR, '1.07'))
             assert r.dist_version == '1.07'
             assert r.perl_version == '1.70.0'
             assert '1.07 -> 1.70.0' in str(r)
-            r = self.assertReport(self.check, self.mk_pkg('1.7', PVR))
+            r = self.assertReport(self.check, self.mk_pkg(PVR, '1.7'))
             assert r.dist_version == '1.7'
             assert r.perl_version == '1.700.0'
             assert '1.7 -> 1.700.0' in str(r)
+
+    def test_no_perl_module_eclass_inherit(self):
+        self.assertNoReport(self.check, self.mk_pkg('1.7.0', '1.07', eclasses=()))
+
+    def test_no_dist_version(self):
+        self.assertNoReport(self.check, self.mk_pkg('1.7.0'))
