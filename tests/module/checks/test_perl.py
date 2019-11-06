@@ -11,7 +11,7 @@ REASON = ''
 def perl_deps_missing():
     """Check if perl deps are missing."""
     global REASON
-    check = perl.PerlCheck(misc.Options(verbosity=0))
+    check = perl.PerlCheck(misc.Options(verbosity=1))
     try:
         check.start()
     except UserException as e:
