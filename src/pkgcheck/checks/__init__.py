@@ -2,6 +2,8 @@
 
 from collections import defaultdict
 
+from snakeoil.cli.exceptions import UserException
+
 from .. import addons, base, feeds, results, sources
 from ..log import logger
 
@@ -112,6 +114,10 @@ class NetworkCheck(AsyncCheck):
             if skip:
                 logger.info(f'skipping {cls.__name__}, network checks not enabled')
         return super().skip(namespace, skip=skip)
+
+
+class FailedCheckInit(UserException):
+    """Check failed to initialize/start due to missing dependencies or other situation."""
 
 
 def init_checks(enabled_addons, options):

@@ -1,7 +1,6 @@
 import pytest
-from snakeoil.cli.exceptions import UserException
 
-from pkgcheck.checks import perl
+from pkgcheck.checks import FailedCheckInit, perl
 
 from .. import misc
 
@@ -14,7 +13,7 @@ def perl_deps_missing():
     check = perl.PerlCheck(misc.Options(verbosity=1))
     try:
         check.start()
-    except UserException as e:
+    except FailedCheckInit as e:
         REASON = str(e)
         return True
     return False
