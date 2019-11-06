@@ -60,13 +60,13 @@ class PerlCheck(ExplicitlyEnabledCheck):
         try:
             self.perl_client = subprocess.Popen(
                 ['perl', perl_script, socket_path], bufsize=1, stderr=subprocess.PIPE)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             raise FailedCheckInit('perl not installed on system')
 
         sock.settimeout(1)
         try:
             self.connection, _address = sock.accept()
-        except socket.timeout as e:
+        except socket.timeout:
             err_msg = 'failed to connect to perl client'
             if self.options.verbosity > 0:
                 stderr = self.perl_client.stderr.read().decode().strip()
