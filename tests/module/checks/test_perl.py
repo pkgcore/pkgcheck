@@ -5,18 +5,22 @@ from pkgcheck.checks import perl
 
 from .. import misc
 
+REASON = ''
+
 
 def perl_deps_missing():
     """Check if perl deps are missing."""
+    global REASON
     check = perl.PerlCheck(misc.Options(verbosity=0))
     try:
         check.start()
-    except UserException:
+    except UserException as e:
+        REASON = str(e)
         return True
     return False
 
 
-@pytest.mark.skipif(perl_deps_missing(), reason='perl deps missing')
+@pytest.mark.skipif(perl_deps_missing(), reason=REASON)
 class TestPerlCheck(misc.ReportTestCase):
 
     check = perl.PerlCheck(misc.Options(verbosity=0))
