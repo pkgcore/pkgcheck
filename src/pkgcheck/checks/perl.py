@@ -1,3 +1,4 @@
+import errno
 import multiprocessing
 import os
 import re
@@ -46,7 +47,13 @@ class PerlCheck(ExplicitlyEnabledCheck):
         # set up Unix domain socket to communicate with perl client
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         socket_path = os.path.join(self.socket_dir.name, 'perl.socket')
-        sock.bind(socket_path)
+        try:
+            sock.bind(socket_path)
+        except OSError as e:
+            if e.errno == errno.EADDRINUSE:
+                # socket already set up by a previous run
+                return
+            raise
         sock.listen()
 
         # start perl client for normalizing perl module versions into package versions
