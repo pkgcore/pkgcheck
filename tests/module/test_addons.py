@@ -1,7 +1,5 @@
 import argparse
-import itertools
 import os
-import shutil
 
 from pkgcore.ebuild import repo_objs, repository
 from pkgcore.restrictions import packages
@@ -331,25 +329,15 @@ class TestProfileAddon(ProfilesMixin):
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux')
 
-    def test_identify_profiles(self):
+    def test_profile_collapsing(self):
         self.mk_profiles({
             'default-linux': ['x86'],
             'default-linux/x86': ["x86"],
             'default-linux/ppc': ['ppc']},
             base='foo')
-
-        counter = itertools.count()
-
-        def run_check(*args):
-            # create a fresh tree for the profile work everytime.
-            # do this, so that it's always a unique pathway- this sidesteps
-            # any potential issues of ProfileNode instance caching.
-            path = pjoin(self.dir, 'foo', str(next(counter)))
-            shutil.copytree(pjoin(self.dir, 'foo'), path, symlinks=True)
-            return self.process_check(path, list(args))
-
-        options = run_check()
+        options = self.process_check(pjoin(self.dir, 'foo'), [])
         check = self.addon_kls(options)
+
         # assert they're collapsed properly.
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
         assert len(check.profile_evaluate_dict['x86']) == 1
@@ -375,36 +363,6 @@ class TestProfileAddon(ProfilesMixin):
 
         l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'foon'}))
         assert len(l) == 0, f"checking for profile collapsing: {l!r}"
-
-        # test collapsing reusing existing profile layout
-        with open(pjoin(self.dir, 'foo', 'default-linux', 'use.mask'), 'w') as f:
-            f.write("lib")
-        options = run_check()
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
-        assert len(check.profile_evaluate_dict['x86']) == 2
-
-        with open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.mask'), 'w') as f:
-            f.write("lib")
-        options = run_check()
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
-        assert len(check.profile_evaluate_dict['x86']) == 1
-
-        # test collapsing reusing existing profile layout
-        with open(pjoin(self.dir, 'foo', 'default-linux', 'use.force'), 'w') as f:
-            f.write("foo")
-        options = run_check()
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
-        assert len(check.profile_evaluate_dict['x86']) == 2
-
-        with open(pjoin(self.dir, 'foo', 'default-linux', 'x86', 'use.force'), 'w') as f:
-            f.write("foo")
-        options = run_check()
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
-        assert len(check.profile_evaluate_dict['x86']) == 1
 
 
 class TestUseAddon(ArgparseCheck, Tmpdir):
