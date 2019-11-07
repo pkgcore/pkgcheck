@@ -135,27 +135,22 @@ class CheckRunner:
         self.checks = checks
 
         scope = base.version_scope
-        known_results = set()
+        self._known_results = set()
         for check in self.checks:
             if check.scope > scope:
                 scope = check.scope
-            known_results.update(check.known_results)
+            self._known_results.update(check.known_results)
 
         self._itermatch_kwargs = {}
         # only use set metadata error callback for version scope runners
         if scope == base.version_scope:
             self._itermatch_kwargs['error_callback'] = self._metadata_error_cb
 
-        self._metadata_error_classes = {}
-        for cls in known_results:
-            if issubclass(cls, MetadataError):
-                for attr in cls._metadata_attrs:
-                    self._metadata_error_classes[attr] = cls
         self._metadata_errors = deque()
 
     def _metadata_error_cb(self, e):
-        cls = self._metadata_error_classes.get(e.attr, None)
-        if cls is not None:
+        cls = MetadataError.result_mapping.get(e.attr, MetadataError)
+        if cls in self._known_results or cls is MetadataError:
             error_str = ': '.join(e.msg().split('\n'))
             result = cls(e.attr, error_str, pkg=e.pkg)
             self._metadata_errors.append((e.pkg, result))
