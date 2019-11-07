@@ -123,6 +123,10 @@ class SkipOptionalCheck(UserException):
     initialization.
     """
 
+    def __init__(self, check, msg):
+        check_name = check.__class__.__name__
+        super().__init__(f'{check_name}: {msg}')
+
 
 def init_checks(enabled_addons, options):
     """Initialize selected checks."""

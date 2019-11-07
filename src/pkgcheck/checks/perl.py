@@ -60,17 +60,17 @@ class PerlCheck(Check):
             self.perl_client = subprocess.Popen(
                 ['perl', perl_script, socket_path], bufsize=1, stderr=subprocess.PIPE)
         except FileNotFoundError:
-            raise SkipOptionalCheck(f'{self.__class__.__name__}: perl not installed on system')
+            raise SkipOptionalCheck(self, 'perl not installed on system')
 
         sock.settimeout(1)
         try:
             self.connection, _address = sock.accept()
         except socket.timeout:
-            err_msg = f'{self.__class__.__name__}: failed to connect to perl client'
+            err_msg = 'failed to connect to perl client'
             if self.options.verbosity > 0:
                 stderr = self.perl_client.stderr.read().decode().strip()
                 err_msg += f': {stderr}'
-            raise SkipOptionalCheck(err_msg)
+            raise SkipOptionalCheck(self, err_msg)
 
     def feed(self, pkg):
         if 'perl-module' in pkg.inherited:
