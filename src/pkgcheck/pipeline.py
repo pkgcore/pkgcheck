@@ -129,8 +129,6 @@ class Pipeline:
 
 class CheckRunner:
 
-    _known_metadata_attrs = set()
-
     def __init__(self, options, source, checks):
         self.options = options
         self.source = source
@@ -153,20 +151,10 @@ class CheckRunner:
             if issubclass(cls, MetadataError):
                 for attr in cls._metadata_attrs:
                     self._metadata_error_classes[attr] = cls
-                    self._known_metadata_attrs.add(attr)
         self._metadata_errors = deque()
 
     def _metadata_error_cb(self, e):
-        try:
-            cls = self._metadata_error_classes[e.attr]
-        except KeyError:
-            known = e.attr in self._known_metadata_attrs
-            # return generic MetadataError for unhandled attributes
-            if not known:
-                cls = MetadataError
-            else:
-                cls = None
-
+        cls = self._metadata_error_classes.get(e.attr, None)
         if cls is not None:
             error_str = ': '.join(e.msg().split('\n'))
             result = cls(e.attr, error_str, pkg=e.pkg)
