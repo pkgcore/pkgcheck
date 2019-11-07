@@ -116,8 +116,12 @@ class NetworkCheck(AsyncCheck):
         return super().skip(namespace, skip=skip)
 
 
-class FailedCheckInit(UserException):
-    """Check failed to initialize/start due to missing dependencies or other situation."""
+class SkipOptionalCheck(UserException):
+    """Check failed to initialize due to missing dependencies or other situation.
+
+    Checks not explicitly selected will be skipped if they raise this during
+    initialization.
+    """
 
 
 def init_checks(enabled_addons, options):
@@ -126,8 +130,19 @@ def init_checks(enabled_addons, options):
     addons_map = {}
     source_map = {}
     caches = []
+
+    if options.selected_checks is not None:
+        _disabled, selected_checks = options.selected_checks
+    else:
+        _disabled, selected_checks = [], []
+
     for cls in enabled_addons:
-        addon = addons.init_addon(cls, options, addons_map)
+        try:
+            addon = addons.init_addon(cls, options, addons_map)
+        except SkipOptionalCheck:
+            if cls.__name__ in selected_checks:
+                raise
+            continue
         if isinstance(addon, Check):
             is_async = isinstance(addon, AsyncCheck)
             source = source_map.get(addon.source)

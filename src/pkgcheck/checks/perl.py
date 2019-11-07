@@ -9,7 +9,7 @@ import tempfile
 from snakeoil.osutils import pjoin
 
 from .. import const, results, sources
-from . import ExplicitlyEnabledCheck, FailedCheckInit
+from . import Check, SkipOptionalCheck
 
 
 class BadPerlModuleVersion(results.VersionedResult, results.Warning):
@@ -28,7 +28,7 @@ class BadPerlModuleVersion(results.VersionedResult, results.Warning):
         )
 
 
-class PerlCheck(ExplicitlyEnabledCheck):
+class PerlCheck(Check):
     """Perl ebuild related checks."""
 
     _source = sources.EbuildFileRepoSource
@@ -42,7 +42,6 @@ class PerlCheck(ExplicitlyEnabledCheck):
         self.process_lock = multiprocessing.Lock()
         self.socket_dir = tempfile.TemporaryDirectory(prefix='pkgcheck-')
 
-    def start(self):
         # set up Unix domain socket to communicate with perl client
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         socket_path = os.path.join(self.socket_dir.name, 'perl.socket')
@@ -61,17 +60,17 @@ class PerlCheck(ExplicitlyEnabledCheck):
             self.perl_client = subprocess.Popen(
                 ['perl', perl_script, socket_path], bufsize=1, stderr=subprocess.PIPE)
         except FileNotFoundError:
-            raise FailedCheckInit('perl not installed on system')
+            raise SkipOptionalCheck(f'{self.__class__.__name__}: perl not installed on system')
 
         sock.settimeout(1)
         try:
             self.connection, _address = sock.accept()
         except socket.timeout:
-            err_msg = 'failed to connect to perl client'
+            err_msg = f'{self.__class__.__name__}: failed to connect to perl client'
             if self.options.verbosity > 0:
                 stderr = self.perl_client.stderr.read().decode().strip()
                 err_msg += f': {stderr}'
-            raise FailedCheckInit(err_msg)
+            raise SkipOptionalCheck(err_msg)
 
     def feed(self, pkg):
         if 'perl-module' in pkg.inherited:
