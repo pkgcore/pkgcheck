@@ -1,3 +1,4 @@
+import errno
 import socket
 from unittest.mock import patch
 
@@ -79,3 +80,12 @@ class TestPerlCheck(misc.ReportTestCase):
                 with pytest.raises(FailedCheckInit) as excinfo:
                     check.start()
                 assert 'failed to connect to perl client' in str(excinfo.value)
+
+    def test_socket_bind_error(self):
+        """Raise socket binding exceptions that aren't due to rebinding."""
+        with patch('socket.socket') as mock_socket:
+            mock_socket.return_value.bind.side_effect = OSError(errno.ENOTSOCK, 'foo')
+            check = perl.PerlCheck(misc.Options(verbosity=0))
+            with pytest.raises(OSError) as excinfo:
+                check.start()
+            assert excinfo.value.errno == errno.ENOTSOCK
