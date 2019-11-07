@@ -228,10 +228,20 @@ class InvalidEapi(results.MetadataError):
     _metadata_attrs = ('eapi',)
 
 
-class EapiCheck(Check):
-    """Scan for packages with banned/deprecated/invalid EAPIs."""
+class SourcingError(results.MetadataError):
+    """Failed sourcing ebuild."""
 
-    known_results = frozenset([DeprecatedEapi, BannedEapi, InvalidEapi])
+    _metadata_attrs = ('data',)
+
+
+class EapiCheck(Check):
+    """Scan for packages with banned/deprecated/invalid EAPIs.
+
+    This check also flags ebuilds with invalid metadata causing sourcing
+    errors.
+    """
+
+    known_results = frozenset([DeprecatedEapi, BannedEapi, InvalidEapi, SourcingError])
 
     def feed(self, pkg):
         eapi_str = str(pkg.eapi)
