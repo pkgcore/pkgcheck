@@ -69,6 +69,7 @@ class TestBadInsIntoUsage(misc.ReportTestCase):
             "\n",
             "\tinsinto /usr/bin\n",
             "\tinsinto /etc/env.d\n",
+            "\tinsinto /etc/env.d/foo\n",
             "\tinsinto /etc/conf.d\n",
             "\tinsinto /etc/init.d/\n",
             "\tinsinto /etc/pam.d\n",

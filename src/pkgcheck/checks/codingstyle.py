@@ -331,7 +331,7 @@ class BadInsIntoCheck(Check):
         bad_paths = ("/usr/share/applications",)
 
         patterns = []
-        patterns.append("etc/(?:%s).d" % "|".join(bad_etc))
+        patterns.append("etc/(?:%s).d(?!/\w+)" % "|".join(bad_etc))
         patterns.extend(x.strip("/") for x in bad_paths)
         s = "|".join(patterns)
         s = s.replace("/", "/+")
