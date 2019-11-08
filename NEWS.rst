@@ -3,6 +3,21 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.7.0 (2019-11-08)
+---------------------------
+
+- BadInsIntoCheck: Skip reporting insinto calls using subdirs since the related
+  commands don't support installing files into subdirs.
+
+- PerlCheck: Run by default if perl and deps are installed otherwise skip unless
+  explicitly enabled.
+
+- SourcingError: Add specific result for ebuilds that fail sourcing due to
+  metadata issues.
+
+- Fix git --commits option restriction.
+
+---------------------------
 pkgcheck 0.6.9 (2019-11-04)
 ---------------------------
 
