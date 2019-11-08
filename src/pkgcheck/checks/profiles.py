@@ -377,12 +377,14 @@ class RepoProfilesCheck(Check):
         self.non_profile_dirs = profile_addon.non_profile_dirs
 
     def finish(self):
-        category_dirs = set(filterfalse(
-            self.repo.false_categories.__contains__,
-            (x for x in listdir_dirs(self.repo.location) if x[0] != '.')))
-        unknown_categories = category_dirs.difference(self.repo.categories)
-        if unknown_categories:
-            yield UnknownCategories(sorted(unknown_categories))
+        # don't check for unknown category dirs on overlays
+        if self.options.gentoo_repo:
+            category_dirs = set(filterfalse(
+                self.repo.false_categories.__contains__,
+                (x for x in listdir_dirs(self.repo.location) if x[0] != '.')))
+            unknown_categories = category_dirs.difference(self.repo.categories)
+            if unknown_categories:
+                yield UnknownCategories(sorted(unknown_categories))
 
         arches_without_profiles = set(self.arches) - set(self.repo.profiles.arches())
         if arches_without_profiles:
