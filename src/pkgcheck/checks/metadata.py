@@ -699,7 +699,7 @@ class DependencyCheck(Check):
                     if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
                         missing_use_deps = self._check_use_deps(attr, atom)
                         for use, atoms in missing_use_deps.items():
-                            pkgs = map(str, sorted(atoms))
+                            pkgs = (x.cpvstr for x in sorted(atoms))
                             yield MissingUseDepDefault(attr, str(atom), use, pkgs, pkg=pkg)
 
                     if atom.op == '=' and not atom.revision:

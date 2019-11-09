@@ -849,7 +849,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo?]'))
         assert isinstance(r, metadata.MissingUseDepDefault)
         assert r.atom == 'dev-libs/bar[foo?]'
-        assert r.pkgs == ('=dev-libs/bar-2',)
+        assert r.pkgs == ('dev-libs/bar-2',)
         assert r.flag == 'foo'
         assert "USE flag 'foo' missing" in str(r)
 
@@ -857,7 +857,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, mk_pkg(eapi='4', depset='!dev-libs/bar[foo?]'))
         assert isinstance(r, metadata.MissingUseDepDefault)
         assert r.atom == '!dev-libs/bar[foo?]'
-        assert r.pkgs == ('=dev-libs/bar-2',)
+        assert r.pkgs == ('dev-libs/bar-2',)
         assert r.flag == 'foo'
         assert "USE flag 'foo' missing" in str(r)
 
@@ -865,7 +865,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[baz?]'))
         assert isinstance(r, metadata.MissingUseDepDefault)
         assert r.atom == 'dev-libs/foo[baz?]'
-        assert r.pkgs == ('=dev-libs/foo-0',)
+        assert r.pkgs == ('dev-libs/foo-0',)
         assert r.flag == 'baz'
         assert "USE flag 'baz' missing" in str(r)
 
@@ -873,7 +873,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[blah?]'))
         assert isinstance(r, metadata.MissingUseDepDefault)
         assert r.atom == 'dev-libs/foo[blah?]'
-        assert r.pkgs == ('=dev-libs/foo-0', '=dev-libs/foo-1')
+        assert r.pkgs == ('dev-libs/foo-0', 'dev-libs/foo-1')
         assert r.flag == 'blah'
         assert "USE flag 'blah' missing" in str(r)
 
