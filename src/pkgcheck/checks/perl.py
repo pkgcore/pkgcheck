@@ -13,19 +13,16 @@ from . import Check, SkipOptionalCheck
 
 
 class BadPerlModuleVersion(results.VersionedResult, results.Warning):
-    """A package's perl module version doesn't match its $PV."""
+    """A package's normalized perl module version doesn't match its $PV."""
 
-    def __init__(self, dist_version, perl_version, **kwargs):
+    def __init__(self, dist_version, normalized, **kwargs):
         super().__init__(**kwargs)
         self.dist_version = dist_version
-        self.perl_version = perl_version
+        self.normalized = normalized
 
     @property
     def desc(self):
-        return (
-            "module version doesn't match package version: "
-            f'{self.dist_version} -> {self.perl_version}'
-        )
+        return f'DIST_VERSION={self.dist_version} normalizes to {self.normalized}'
 
 
 class PerlCheck(Check):
@@ -80,9 +77,9 @@ class PerlCheck(Check):
                 with self.process_lock:
                     self.connection.send(dist_version.encode() + b'\n')
                     size = int(self.connection.recv(2))
-                    perl_version = self.connection.recv(size).decode('utf-8', 'replace')
-                    if perl_version != pkg.version:
-                        yield BadPerlModuleVersion(dist_version, perl_version, pkg=pkg)
+                    normalized = self.connection.recv(size).decode('utf-8', 'replace')
+                    if normalized != pkg.version:
+                        yield BadPerlModuleVersion(dist_version, normalized, pkg=pkg)
 
     def __del__(self):
         if self.connection is not None:

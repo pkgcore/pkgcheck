@@ -48,12 +48,12 @@ class TestPerlCheck(misc.ReportTestCase):
         for PVR in ('1.7.0-r0', '1.7.0', '1.7.0-r100'):
             r = self.assertReport(self.mk_check(), self.mk_pkg(PVR, '1.07'))
             assert r.dist_version == '1.07'
-            assert r.perl_version == '1.70.0'
-            assert '1.07 -> 1.70.0' in str(r)
+            assert r.normalized == '1.70.0'
+            assert 'DIST_VERSION=1.07 normalizes to 1.70.0' == str(r)
             r = self.assertReport(self.mk_check(), self.mk_pkg(PVR, '1.7'))
             assert r.dist_version == '1.7'
-            assert r.perl_version == '1.700.0'
-            assert '1.7 -> 1.700.0' in str(r)
+            assert r.normalized == '1.700.0'
+            assert 'DIST_VERSION=1.7 normalizes to 1.700.0' == str(r)
 
     def test_no_perl_module_eclass_inherit(self):
         """Ebuilds that don't inherit the perl-module eclass are skipped."""
