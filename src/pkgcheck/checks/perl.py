@@ -12,7 +12,7 @@ from .. import const, results, sources
 from . import Check, SkipOptionalCheck
 
 
-class BadPerlModuleVersion(results.VersionedResult, results.Warning):
+class MismatchedPerlVersion(results.VersionedResult, results.Warning):
     """A package's normalized perl module version doesn't match its $PV."""
 
     def __init__(self, dist_version, normalized, **kwargs):
@@ -29,7 +29,7 @@ class PerlCheck(Check):
     """Perl ebuild related checks."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = frozenset([BadPerlModuleVersion])
+    known_results = frozenset([MismatchedPerlVersion])
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -79,7 +79,7 @@ class PerlCheck(Check):
                     size = int(self.connection.recv(2))
                     normalized = self.connection.recv(size).decode('utf-8', 'replace')
                     if normalized != pkg.version:
-                        yield BadPerlModuleVersion(dist_version, normalized, pkg=pkg)
+                        yield MismatchedPerlVersion(dist_version, normalized, pkg=pkg)
 
     def __del__(self):
         if self.connection is not None:

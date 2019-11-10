@@ -47,10 +47,12 @@ class TestPerlCheck(misc.ReportTestCase):
         """Ebuilds without matching DIST_VERSION and package version."""
         for PVR in ('1.7.0-r0', '1.7.0', '1.7.0-r100'):
             r = self.assertReport(self.mk_check(), self.mk_pkg(PVR, '1.07'))
+            assert isinstance(r, perl.MismatchedPerlVersion)
             assert r.dist_version == '1.07'
             assert r.normalized == '1.70.0'
             assert 'DIST_VERSION=1.07 normalizes to 1.70.0' == str(r)
             r = self.assertReport(self.mk_check(), self.mk_pkg(PVR, '1.7'))
+            assert isinstance(r, perl.MismatchedPerlVersion)
             assert r.dist_version == '1.7'
             assert r.normalized == '1.700.0'
             assert 'DIST_VERSION=1.7 normalizes to 1.700.0' == str(r)
