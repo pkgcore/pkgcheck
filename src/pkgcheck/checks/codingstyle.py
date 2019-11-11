@@ -17,14 +17,12 @@ demand_compile_regexp(
     r'^# Copyright (?P<begin>\d{4}-)?(?P<end>\d{4}) (?P<holder>.+)$')
 
 
-class _CommandResult(results.VersionedResult):
+class _CommandResult(results.LineResult):
     """Generic command result."""
 
-    def __init__(self, command, line, lineno, **kwargs):
+    def __init__(self, command, **kwargs):
         super().__init__(**kwargs)
         self.command = command
-        self.line = line
-        self.lineno = lineno
 
     @property
     def usage_desc(self):
@@ -105,7 +103,8 @@ class BadCommandsCheck(Check):
                 for regex, result_cls, kwargs in regexes:
                     match = regex.match(line)
                     if match is not None:
-                        yield result_cls(match.group('cmd'), line, lineno, pkg=pkg, **kwargs)
+                        yield result_cls(
+                            match.group('cmd'), line=line, lineno=lineno, pkg=pkg, **kwargs)
 
 
 class MissingSlash(results.VersionedResult, results.Error):
@@ -264,17 +263,16 @@ class PathVariablesCheck(Check):
             yield DoublePrefixInPath(match, lines, pkg=pkg)
 
 
-class AbsoluteSymlink(results.VersionedResult, results.Warning):
+class AbsoluteSymlink(results.LineResult, results.Warning):
     """Ebuild uses dosym with absolute paths instead of relative."""
 
-    def __init__(self, abspath, line, **kwargs):
+    def __init__(self, abspath, **kwargs):
         super().__init__(**kwargs)
         self.abspath = abspath
-        self.line = line
 
     @property
     def desc(self):
-        return f"'dosym {self.abspath} ...' uses absolute path on line {self.line}"
+        return f"'dosym {self.abspath} ...' uses absolute path on line {self.lineno}"
 
 
 class AbsoluteSymlinkCheck(Check):
@@ -296,7 +294,7 @@ class AbsoluteSymlinkCheck(Check):
                 continue
             matches = self.regex.match(line)
             if matches is not None:
-                yield AbsoluteSymlink(matches.groups()[0], lineno, pkg=pkg)
+                yield AbsoluteSymlink(matches.groups()[0], line=line, lineno=lineno, pkg=pkg)
 
 
 class DeprecatedInsinto(results.LineResult, results.Warning):
