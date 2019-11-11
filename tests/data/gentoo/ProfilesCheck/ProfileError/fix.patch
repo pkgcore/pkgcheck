@@ -1,0 +1,6 @@
+diff -Naur gentoo/profiles/default/linux/bad_parent/parent fixed/profiles/default/linux/bad_parent/parent
+--- gentoo/profiles/default/linux/bad_parent/parent	2019-11-11 14:35:48.140165120 -0700
++++ fixed/profiles/default/linux/bad_parent/parent	2019-11-11 14:44:16.661132156 -0700
+@@ -1,2 +1 @@
+-../../nonexistent
+ ..

@@ -1,0 +1,2 @@
+repo
+  ProfileError: repo 'gentoo': 'default/linux/bad_parent/parent' (line 1), bad profile parent '../../nonexistent': nonexistent profile
