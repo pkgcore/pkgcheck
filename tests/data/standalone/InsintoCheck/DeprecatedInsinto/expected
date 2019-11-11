@@ -1,0 +1,9 @@
+InsintoCheck/DeprecatedInsinto
+  DeprecatedInsinto: version 0: deprecated insinto usage (use doconfd or newconfd instead), line 7: insinto /etc/conf.d
+  DeprecatedInsinto: version 0: deprecated insinto usage (use doenvd or newenvd instead), line 9: insinto /etc/env.d
+  DeprecatedInsinto: version 0: deprecated insinto usage (use doinitd or newinitd instead), line 11: insinto /etc/init.d
+  DeprecatedInsinto: version 0: deprecated insinto usage (use dopamd or newpamd from pam.eclass instead), line 13: insinto /etc/pam.d
+  DeprecatedInsinto: version 0: deprecated insinto usage (use domenu or newmenu from desktop.eclass instead), line 15: insinto /usr/share/applications
+  DeprecatedInsinto: version 1: deprecated insinto usage (use docinto/dodoc instead), line 8: insinto /usr/share/doc/${PF}
+  DeprecatedInsinto: version 1: deprecated insinto usage (use docinto/dodoc instead), line 10: insinto /usr/share/doc/${PF}
+  DeprecatedInsinto: version 1: deprecated insinto usage (use docinto/dodoc instead), line 12: insinto /usr/share/doc/${PF}/examples

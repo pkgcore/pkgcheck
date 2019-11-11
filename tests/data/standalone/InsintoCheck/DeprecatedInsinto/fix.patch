@@ -1,0 +1,41 @@
+diff -Naur standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-0.ebuild fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-0.ebuild
+--- standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-0.ebuild	2019-11-11 13:01:41.528308196 -0700
++++ fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-0.ebuild	2019-11-11 13:30:29.398945854 -0700
+@@ -4,14 +4,9 @@
+ LICENSE="BSD"
+ 
+ src_install() {
+-	insinto /etc/conf.d
+-	doins foo
+-	insinto /etc/env.d
+-	doins foo
+-	insinto /etc/init.d
+-	doins foo
+-	insinto /etc/pam.d
+-	doins foo
+-	insinto /usr/share/applications
+-	doins foo
++	doconf.d foo
++	doenvd foo
++	doinitd foo
++	dopamd foo
++	domenu foo
+ }
+diff -Naur standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild
+--- standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild	2019-11-11 13:29:29.619715385 -0700
++++ fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild	2019-11-11 13:31:03.062075683 -0700
+@@ -5,10 +5,8 @@
+ LICENSE="BSD"
+ 
+ src_install() {
+-	insinto /usr/share/doc/${PF}
+-	doins foo
+-	insinto /usr/share/doc/${PF}/
+-	doins -r html
+-	insinto /usr/share/doc/${PF}/examples
+-	doins samples/*
++	dodoc foo
++	dodoc -r html
++	docinto examples
++	dodoc samples/*
+ }
