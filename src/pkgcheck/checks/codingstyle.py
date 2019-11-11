@@ -1,4 +1,4 @@
-"""check for some bad coding styles like insinto's, old variables etc"""
+"""Various line-based checks."""
 
 import re
 from collections import defaultdict
