@@ -182,8 +182,6 @@ class VersionedResult(PackageResult):
 class LineResult(VersionedResult):
     """Result related to a specific line of an ebuild."""
 
-    scope = base.version_scope
-
     def __init__(self, line, lineno, **kwargs):
         super().__init__(**kwargs)
         self.line = line
