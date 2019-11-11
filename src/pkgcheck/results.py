@@ -7,7 +7,7 @@ from . import base
 from .packages import FilteredPkg, RawCPV
 
 
-class _LeveledResult(type):
+class _ResultPriority(type):
     """Metaclass that injects color/level attributes to raw result classes."""
 
     @property
@@ -21,7 +21,7 @@ class _LeveledResult(type):
         return cls._level_to_desc[cls._level][0]
 
 
-class Result(metaclass=_LeveledResult):
+class Result(metaclass=_ResultPriority):
     """Generic report result returned from a check."""
 
     # all results are shown by default
@@ -151,7 +151,7 @@ class PackageResult(CategoryResult):
         return super().__lt__(other)
 
 
-class VersionedResult(PackageResult):
+class VersionResult(PackageResult):
     """Result related to a specific version of a package."""
 
     scope = base.version_scope
@@ -179,7 +179,7 @@ class VersionedResult(PackageResult):
         return super().__lt__(other)
 
 
-class LineResult(VersionedResult):
+class LineResult(VersionResult):
     """Result related to a specific line of an ebuild."""
 
     def __init__(self, line, lineno, **kwargs):
@@ -200,7 +200,7 @@ class LineResult(VersionedResult):
         return super().__lt__(other)
 
 
-class FilteredVersionResult(VersionedResult):
+class FilteredVersionResult(VersionResult):
     """Result that will be optionally filtered for old packages by default."""
 
     def __init__(self, pkg, **kwargs):
@@ -230,7 +230,7 @@ class LogError(_LogResult, Error):
     """Error caught from a logger instance."""
 
 
-class _RegisterMetadataErrors(_LeveledResult):
+class _RegisterMetadataErrors(_ResultPriority):
     """Metaclass for register known metadata results."""
 
     def __new__(cls, name, bases, class_dict):
@@ -246,7 +246,7 @@ class _RegisterMetadataErrors(_LeveledResult):
         return new_cls
 
 
-class MetadataError(VersionedResult, Error, metaclass=_RegisterMetadataErrors):
+class MetadataError(VersionResult, Error, metaclass=_RegisterMetadataErrors):
     """Problem detected with a package's metadata."""
 
     # specific metadata attributes handled by the result class

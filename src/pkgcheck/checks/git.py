@@ -51,7 +51,7 @@ class GitCommitsSource(sources.Source):
         super().__init__(*args, source=git_addon.commits())
 
 
-class OutdatedCopyright(results.VersionedResult, results.Warning):
+class OutdatedCopyright(results.VersionResult, results.Warning):
     """Changed ebuild with outdated copyright."""
 
     def __init__(self, year, line, **kwargs):
@@ -86,7 +86,7 @@ class BadCommitSummary(results.PackageResult, results.Warning):
         return f'commit {self.commit}, {self.error}: {self.summary!r}'
 
 
-class DirectStableKeywords(results.VersionedResult, results.Error):
+class DirectStableKeywords(results.VersionResult, results.Error):
     """Newly committed ebuild with stable keywords."""
 
     def __init__(self, keywords, **kwargs):

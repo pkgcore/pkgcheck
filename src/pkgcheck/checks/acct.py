@@ -12,7 +12,7 @@ from .. import base, results, sources
 from . import Check
 
 
-class MissingAccountIdentifier(results.VersionedResult, results.Warning):
+class MissingAccountIdentifier(results.VersionResult, results.Warning):
     """UID/GID can not be found in account package."""
 
     def __init__(self, var, **kwargs):
@@ -40,7 +40,7 @@ class ConflictingAccountIdentifiers(results.Error):
             f"[ {', '.join(self.pkgs)} ]")
 
 
-class OutsideRangeAccountIdentifier(results.VersionedResult, results.Error):
+class OutsideRangeAccountIdentifier(results.VersionResult, results.Error):
     """UID/GID outside allowed allocation range."""
 
     def __init__(self, kind, identifier, **kwargs):

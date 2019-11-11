@@ -107,7 +107,7 @@ class BadCommandsCheck(Check):
                             match.group('cmd'), line=line, lineno=lineno, pkg=pkg, **kwargs)
 
 
-class MissingSlash(results.VersionedResult, results.Error):
+class MissingSlash(results.VersionResult, results.Error):
     """Ebuild uses a path variable missing a trailing slash."""
 
     def __init__(self, match, lines, **kwargs):
@@ -121,7 +121,7 @@ class MissingSlash(results.VersionedResult, results.Error):
         return f"{self.match} missing trailing slash on line{_pl(self.lines)}: {lines}"
 
 
-class UnnecessarySlashStrip(results.VersionedResult, results.Warning):
+class UnnecessarySlashStrip(results.VersionResult, results.Warning):
     """Ebuild uses a path variable that strips a nonexistent slash."""
 
     def __init__(self, match, lines, **kwargs):
@@ -135,7 +135,7 @@ class UnnecessarySlashStrip(results.VersionedResult, results.Warning):
         return f"{self.match} unnecessary slash strip on line{_pl(self.lines)}: {lines}"
 
 
-class DoublePrefixInPath(results.VersionedResult, results.Error):
+class DoublePrefixInPath(results.VersionResult, results.Error):
     """Ebuild uses two consecutive paths including EPREFIX.
 
     Ebuild combines two path variables (or a variable and a getter), both
@@ -355,7 +355,7 @@ class InsintoCheck(Check):
                         lineno=lineno, pkg=pkg)
 
 
-class ObsoleteUri(results.VersionedResult, results.Warning):
+class ObsoleteUri(results.VersionResult, results.Warning):
     """URI used is obsolete.
 
     The URI used to fetch distfile is obsolete and can be replaced
@@ -411,7 +411,7 @@ class ObsoleteUriCheck(Check):
                     yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)
 
 
-class _EbuildHeaderResult(results.VersionedResult):
+class _EbuildHeaderResult(results.VersionResult):
     """Generic ebuild header result."""
 
     def __init__(self, line, **kwargs):
@@ -516,7 +516,7 @@ class EbuildHeaderCheck(GentooRepoCheck):
                 yield InvalidLicenseHeader(line, pkg=pkg)
 
 
-class HomepageInSrcUri(results.VersionedResult, results.Warning):
+class HomepageInSrcUri(results.VersionResult, results.Warning):
     """${HOMEPAGE} is referenced in SRC_URI.
 
     SRC_URI is built on top of ${HOMEPAGE}. This is discouraged since HOMEPAGE
@@ -529,7 +529,7 @@ class HomepageInSrcUri(results.VersionedResult, results.Warning):
         return '${HOMEPAGE} in SRC_URI'
 
 
-class StaticSrcUri(results.VersionedResult, results.Warning):
+class StaticSrcUri(results.VersionResult, results.Warning):
     """SRC_URI contains static value instead of the dynamic equivalent."""
 
     def __init__(self, static_str, **kwargs):

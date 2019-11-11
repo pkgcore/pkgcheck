@@ -542,7 +542,7 @@ class StableArchesAddon(base.Addon):
         self.options.stable_arches = stable_arches
 
 
-class UnstatedIuse(results.VersionedResult, results.Error):
+class UnstatedIuse(results.VersionResult, results.Error):
     """Package is reliant on conditionals that aren't in IUSE."""
 
     def __init__(self, attr, flags, profile=None, num_profiles=None, **kwargs):

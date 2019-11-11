@@ -12,7 +12,7 @@ from ..log import logger
 from . import GentooRepoCheck
 
 
-class VulnerablePackage(results.VersionedResult, results.Error):
+class VulnerablePackage(results.VersionResult, results.Error):
     """Packages marked as vulnerable by GLSAs."""
 
     def __init__(self, arches, glsa, **kwargs):

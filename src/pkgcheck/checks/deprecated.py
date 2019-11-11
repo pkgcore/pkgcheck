@@ -5,7 +5,7 @@ from .. import results
 from . import Check
 
 
-class DeprecatedEclass(results.VersionedResult, results.Warning):
+class DeprecatedEclass(results.VersionResult, results.Warning):
     """Package uses an eclass that is deprecated/abandoned."""
 
     def __init__(self, eclasses, **kwargs):

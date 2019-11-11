@@ -11,7 +11,7 @@ from . import GentooRepoCheck
 day = 24*3600
 
 
-class StableRequest(results.VersionedResult, results.Info):
+class StableRequest(results.VersionResult, results.Info):
     """Unstable package added over thirty days ago that could be stabilized."""
 
     def __init__(self, slot, keywords, age, **kwargs):

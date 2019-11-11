@@ -12,7 +12,7 @@ from .. import const, results, sources
 from . import Check, SkipOptionalCheck
 
 
-class MismatchedPerlVersion(results.VersionedResult, results.Warning):
+class MismatchedPerlVersion(results.VersionResult, results.Warning):
     """A package's normalized perl module version doesn't match its $PV."""
 
     def __init__(self, dist_version, normalized, **kwargs):

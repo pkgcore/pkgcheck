@@ -26,7 +26,7 @@ IUSE_PREFIX = 'python_targets_'
 IUSE_PREFIX_S = 'python_single_target_'
 
 
-class MissingPythonEclass(results.VersionedResult, results.Warning):
+class MissingPythonEclass(results.VersionResult, results.Warning):
     """Package depends on Python but does not use the eclasses.
 
     All packages depending on Python are required to use one of the following
@@ -48,7 +48,7 @@ class MissingPythonEclass(results.VersionedResult, results.Warning):
         return f'missing {self.eclass} eclass usage for {self.dep_type}="{self.dep}"'
 
 
-class PythonSingleUseMismatch(results.VersionedResult, results.Warning):
+class PythonSingleUseMismatch(results.VersionResult, results.Warning):
     """Package has mismatched PYTHON_SINGLE_TARGET and PYTHON_TARGETS flags.
 
     The package declares both PYTHON_SINGLE_TARGET and PYTHON_TARGETS flags but
@@ -73,7 +73,7 @@ class PythonSingleUseMismatch(results.VersionedResult, results.Warning):
         )
 
 
-class PythonMissingRequiredUse(results.VersionedResult, results.Warning):
+class PythonMissingRequiredUse(results.VersionResult, results.Warning):
     """Package is missing PYTHON_REQUIRED_USE.
 
     The python-r1 and python-single-r1 eclasses require the packages to
@@ -86,7 +86,7 @@ class PythonMissingRequiredUse(results.VersionedResult, results.Warning):
         return 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"'
 
 
-class PythonMissingDeps(results.VersionedResult, results.Warning):
+class PythonMissingDeps(results.VersionResult, results.Warning):
     """Package is missing PYTHON_DEPS.
 
     The python-r1 and python-single-r1 eclasses require the packages
@@ -106,7 +106,7 @@ class PythonMissingDeps(results.VersionedResult, results.Warning):
         return f'missing {self.dep_type}="${{PYTHON_DEPS}}"'
 
 
-class PythonRuntimeDepInAnyR1(results.VersionedResult, results.Warning):
+class PythonRuntimeDepInAnyR1(results.VersionResult, results.Warning):
     """Package depends on Python at runtime but uses any-r1 eclass.
 
     The python-any-r1 eclass is meant to be used purely for build-time
@@ -129,7 +129,7 @@ class PythonRuntimeDepInAnyR1(results.VersionedResult, results.Warning):
         )
 
 
-class PythonEclassError(results.VersionedResult, results.Error):
+class PythonEclassError(results.VersionResult, results.Error):
     """Generic python eclass error."""
 
     def __init__(self, msg, **kwargs):

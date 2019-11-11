@@ -460,7 +460,7 @@ class GlobalUseCheck(Check):
             yield PotentialGlobalUse(flag, pkgs)
 
 
-class MissingChksum(results.VersionedResult, results.Warning):
+class MissingChksum(results.VersionResult, results.Warning):
     """A file in the chksum data lacks required checksums."""
 
     def __init__(self, filename, missing, existing, **kwargs):
@@ -476,7 +476,7 @@ class MissingChksum(results.VersionedResult, results.Warning):
             f"{', '.join(self.missing)}; has chksums: {', '.join(self.existing)}")
 
 
-class DeprecatedChksum(results.VersionedResult, results.Warning):
+class DeprecatedChksum(results.VersionResult, results.Warning):
     """A file in the chksum data does not use modern checksum set."""
 
     def __init__(self, filename, deprecated, **kwargs):
@@ -492,7 +492,7 @@ class DeprecatedChksum(results.VersionedResult, results.Warning):
         )
 
 
-class MissingManifest(results.VersionedResult, results.Error):
+class MissingManifest(results.VersionResult, results.Error):
     """SRC_URI targets missing from Manifest file."""
 
     def __init__(self, files, **kwargs):
@@ -598,7 +598,7 @@ class ManifestCheck(Check):
             yield UnknownManifest(sorted(unknown_manifests), pkg=pkgset[0])
 
 
-class ConflictingChksums(results.VersionedResult, results.Error):
+class ConflictingChksums(results.VersionResult, results.Error):
     """Checksum conflict detected between two files."""
 
     def __init__(self, filename, chksums, pkgs, **kwargs):
@@ -617,7 +617,7 @@ class ConflictingChksums(results.VersionedResult, results.Error):
         )
 
 
-class MatchingChksums(results.VersionedResult, results.Warning):
+class MatchingChksums(results.VersionResult, results.Warning):
     """Two distfiles share the same checksums but use different names."""
 
     def __init__(self, filename, orig_file, orig_pkg, **kwargs):

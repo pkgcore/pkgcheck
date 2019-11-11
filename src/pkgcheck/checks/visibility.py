@@ -94,7 +94,7 @@ def visit_atoms(pkg, stream):
     return iflatten_func(stream, _eapi2_flatten)
 
 
-class VisibleVcsPkg(results.VersionedResult, results.Error):
+class VisibleVcsPkg(results.VersionResult, results.Error):
     """Package is VCS-based, but visible."""
 
     def __init__(self, arch, profile, num_profiles=None, **kwargs):
@@ -112,7 +112,7 @@ class VisibleVcsPkg(results.VersionedResult, results.Error):
         )
 
 
-class NonexistentDeps(results.VersionedResult, results.Warning):
+class NonexistentDeps(results.VersionResult, results.Warning):
     """No matches exist for a package dependency."""
 
     def __init__(self, attr, nonexistent, **kwargs):
@@ -128,7 +128,7 @@ class NonexistentDeps(results.VersionedResult, results.Warning):
         )
 
 
-class UncheckableDep(results.VersionedResult, results.Warning):
+class UncheckableDep(results.VersionResult, results.Warning):
     """Given dependency cannot be checked due to the number of transitive use deps in it."""
 
     def __init__(self, attr, **kwargs):
@@ -140,7 +140,7 @@ class UncheckableDep(results.VersionedResult, results.Warning):
         return f"depset {self.attr}: could not be checked due to pkgcore limitation"
 
 
-class _NonsolvableDeps(results.VersionedResult):
+class _NonsolvableDeps(results.VersionResult):
     """No potential solution for a depset attribute."""
 
     def __init__(self, attr, keyword, profile, deps, profile_status,

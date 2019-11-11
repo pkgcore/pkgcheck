@@ -4,7 +4,7 @@ from .. import addons, base, results, sources
 from . import Check
 
 
-class DroppedKeywords(results.VersionedResult, results.Warning):
+class DroppedKeywords(results.VersionResult, results.Warning):
     """Arch keywords dropped during version bumping."""
 
     def __init__(self, arches, **kwargs):

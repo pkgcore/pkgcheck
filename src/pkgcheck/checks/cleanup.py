@@ -4,7 +4,7 @@ from .. import base, results, sources
 from . import Check
 
 
-class RedundantVersion(results.VersionedResult, results.Info):
+class RedundantVersion(results.VersionResult, results.Info):
     """Redundant version(s) of a package in a specific slot."""
 
     def __init__(self, slot, later_versions, **kwargs):

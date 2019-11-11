@@ -5,7 +5,7 @@ from .. import base, results, sources
 from . import ExplicitlyEnabledCheck, OverlayRepoCheck, repo_metadata
 
 
-class UnusedInMastersLicenses(results.VersionedResult, results.Warning):
+class UnusedInMastersLicenses(results.VersionResult, results.Warning):
     """Licenses detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
@@ -21,7 +21,7 @@ class UnusedInMastersLicenses(results.VersionedResult, results.Warning):
             _pl(self.licenses), ', '.join(self.licenses))
 
 
-class UnusedInMastersMirrors(results.VersionedResult, results.Warning):
+class UnusedInMastersMirrors(results.VersionResult, results.Warning):
     """Mirrors detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
@@ -37,7 +37,7 @@ class UnusedInMastersMirrors(results.VersionedResult, results.Warning):
             _pl(self.mirrors), ', '.join(self.mirrors))
 
 
-class UnusedInMastersEclasses(results.VersionedResult, results.Warning):
+class UnusedInMastersEclasses(results.VersionResult, results.Warning):
     """Eclasses detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
@@ -53,7 +53,7 @@ class UnusedInMastersEclasses(results.VersionedResult, results.Warning):
             _pl(self.eclasses, plural='es'), ', '.join(self.eclasses))
 
 
-class UnusedInMastersGlobalUse(results.VersionedResult, results.Warning):
+class UnusedInMastersGlobalUse(results.VersionResult, results.Warning):
     """Global USE flags detected that are unused in the master repo(s).
 
     In other words, they're likely to be removed so should be copied to the overlay.
