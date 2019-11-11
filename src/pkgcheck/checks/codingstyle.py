@@ -302,41 +302,40 @@ class AbsoluteSymlinkCheck(Check):
 class DeprecatedInsinto(results.VersionedResult, results.Warning):
     """Ebuild uses insinto where more compact commands exist."""
 
-    def __init__(self, line, lineno, **kwargs):
+    def __init__(self, line, lineno, cmd, **kwargs):
         super().__init__(**kwargs)
         self.line = line
         self.lineno = lineno
+        self.cmd = cmd
 
     @property
     def desc(self):
-        return f"bad insinto usage, line {self.lineno}: {self.line}"
+        return (
+            f'deprecated insinto usage (use {self.cmd} instead), '
+            f'line {self.lineno}: {self.line}'
+        )
 
 
 class InsintoCheck(Check):
     """Scan ebuild for deprecated insinto usage."""
 
     _source = sources.EbuildFileRepoSource
-    _insinto_re = None
-
     known_results = frozenset([DeprecatedInsinto])
+
+    path_mapping = ImmutableDict({
+        '/etc/conf.d': 'doconfd or newconfd',
+        '/etc/env.d': 'doenvd or newenvd',
+        '/etc/init.d': 'doinitd or newinitd',
+        '/etc/pam.d': 'dopamd or newpamd from pam.eclass',
+        '/usr/share/applications': 'domenu or newmenu from desktop.eclass',
+    })
 
     def __init__(self, *args):
         super().__init__(*args)
-        if self._insinto_re is None:
-            self._load_class_regex()
-
-    @classmethod
-    def _load_class_regex(cls):
-        bad_etc = ("conf", "env", "init", "pam")
-        bad_paths = ("/usr/share/applications",)
-
-        patterns = []
-        patterns.append("etc/(?:%s).d(?!/\w+)" % "|".join(bad_etc))
-        patterns.extend(x.strip("/") for x in bad_paths)
-        s = "|".join(patterns)
-        s = s.replace("/", "/+")
-        cls._insinto_re = re.compile(rf'(?P<insinto>insinto[ \t]+/+(?:{s}))(?:$|[/ \t])')
-        cls._insinto_doc_re = re.compile(
+        paths = '|'.join(s.replace('/', '/+') + '/?' for s in self.path_mapping)
+        self._insinto_re = re.compile(
+            rf'(?P<insinto>insinto[ \t]+(?P<path>{paths})(?!/\w+))(?:$|[/ \t])')
+        self._insinto_doc_re = re.compile(
             r'(?P<insinto>insinto[ \t]+/usr/share/doc/\$\{PF?\}(/\w+)*)(?:$|[/ \t])')
 
     def feed(self, pkg):
@@ -345,14 +344,17 @@ class InsintoCheck(Check):
                 continue
             matches = self._insinto_re.search(line)
             if matches is not None:
-                yield DeprecatedInsinto(matches.group('insinto'), lineno, pkg=pkg)
+                path = re.sub('//+', '/', matches.group('path'))
+                cmd = self.path_mapping[path.rstrip('/')]
+                yield DeprecatedInsinto(matches.group('insinto'), lineno, cmd=cmd, pkg=pkg)
                 continue
             # Check for insinto usage that should be replaced with
             # docinto/dodoc [-r] under supported EAPIs.
             if pkg.eapi.options.dodoc_allow_recursive:
                 matches = self._insinto_doc_re.search(line)
                 if matches is not None:
-                    yield DeprecatedInsinto(matches.group('insinto'), lineno, pkg=pkg)
+                    yield DeprecatedInsinto(
+                        matches.group('insinto'), lineno, cmd='docinto/dodoc', pkg=pkg)
 
 
 class ObsoleteUri(results.VersionedResult, results.Warning):
