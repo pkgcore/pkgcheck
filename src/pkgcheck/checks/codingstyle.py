@@ -299,7 +299,7 @@ class AbsoluteSymlinkCheck(Check):
                 yield AbsoluteSymlink(matches.groups()[0], lineno, pkg=pkg)
 
 
-class BadInsIntoDir(results.VersionedResult, results.Warning):
+class DeprecatedInsinto(results.VersionedResult, results.Warning):
     """Ebuild uses insinto where more compact commands exist."""
 
     def __init__(self, line, lineno, **kwargs):
@@ -312,17 +312,17 @@ class BadInsIntoDir(results.VersionedResult, results.Warning):
         return f"bad insinto usage, line {self.lineno}: {self.line}"
 
 
-class BadInsIntoCheck(Check):
-    """Scan ebuild for bad insinto usage."""
+class InsintoCheck(Check):
+    """Scan ebuild for deprecated insinto usage."""
 
     _source = sources.EbuildFileRepoSource
-    _bad_insinto = None
+    _insinto_re = None
 
-    known_results = frozenset([BadInsIntoDir])
+    known_results = frozenset([DeprecatedInsinto])
 
     def __init__(self, *args):
         super().__init__(*args)
-        if self._bad_insinto is None:
+        if self._insinto_re is None:
             self._load_class_regex()
 
     @classmethod
@@ -335,24 +335,24 @@ class BadInsIntoCheck(Check):
         patterns.extend(x.strip("/") for x in bad_paths)
         s = "|".join(patterns)
         s = s.replace("/", "/+")
-        cls._bad_insinto = re.compile(rf'(?P<insinto>insinto[ \t]+/+(?:{s}))(?:$|[/ \t])')
-        cls._bad_insinto_doc = re.compile(
+        cls._insinto_re = re.compile(rf'(?P<insinto>insinto[ \t]+/+(?:{s}))(?:$|[/ \t])')
+        cls._insinto_doc_re = re.compile(
             r'(?P<insinto>insinto[ \t]+/usr/share/doc/\$\{PF?\}(/\w+)*)(?:$|[/ \t])')
 
     def feed(self, pkg):
         for lineno, line in enumerate(pkg.lines, 1):
             if not line.strip():
                 continue
-            matches = self._bad_insinto.search(line)
+            matches = self._insinto_re.search(line)
             if matches is not None:
-                yield BadInsIntoDir(matches.group('insinto'), lineno, pkg=pkg)
+                yield DeprecatedInsinto(matches.group('insinto'), lineno, pkg=pkg)
                 continue
             # Check for insinto usage that should be replaced with
             # docinto/dodoc [-r] under supported EAPIs.
             if pkg.eapi.options.dodoc_allow_recursive:
-                matches = self._bad_insinto_doc.search(line)
+                matches = self._insinto_doc_re.search(line)
                 if matches is not None:
-                    yield BadInsIntoDir(matches.group('insinto'), lineno, pkg=pkg)
+                    yield DeprecatedInsinto(matches.group('insinto'), lineno, pkg=pkg)
 
 
 class ObsoleteUri(results.VersionedResult, results.Warning):

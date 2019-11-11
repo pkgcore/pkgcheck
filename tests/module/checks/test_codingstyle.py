@@ -59,9 +59,9 @@ class TestBadCommandsCheck(misc.ReportTestCase):
                 assert f"'{command}' banned in EAPI {eapi_str}" in str(r)
 
 
-class TestBadInsIntoUsage(misc.ReportTestCase):
+class TestInsintoCheck(misc.ReportTestCase):
 
-    check_kls = codingstyle.BadInsIntoCheck
+    check_kls = codingstyle.InsintoCheck
 
     def test_insinto(self):
         fake_src = [
