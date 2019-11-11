@@ -179,6 +179,29 @@ class VersionedResult(PackageResult):
         return super().__lt__(other)
 
 
+class LineResult(VersionedResult):
+    """Result related to a specific line of an ebuild."""
+
+    scope = base.version_scope
+
+    def __init__(self, line, lineno, **kwargs):
+        super().__init__(**kwargs)
+        self.line = line
+        self.lineno = lineno
+
+    def __lt__(self, other):
+        try:
+            # sort by line number for matching versions
+            if cpv.ver_cmp(*(self.ver_rev + other.ver_rev)) == 0:
+                if self.lineno < other.lineno:
+                    return True
+                elif self.lineno > other.lineno:
+                    return False
+        except AttributeError:
+            pass
+        return super().__lt__(other)
+
+
 class FilteredVersionResult(VersionedResult):
     """Result that will be optionally filtered for old packages by default."""
 
