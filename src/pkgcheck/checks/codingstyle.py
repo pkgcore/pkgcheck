@@ -299,13 +299,11 @@ class AbsoluteSymlinkCheck(Check):
                 yield AbsoluteSymlink(matches.groups()[0], lineno, pkg=pkg)
 
 
-class DeprecatedInsinto(results.VersionedResult, results.Warning):
+class DeprecatedInsinto(results.LineResult, results.Warning):
     """Ebuild uses insinto where more compact commands exist."""
 
-    def __init__(self, line, lineno, cmd, **kwargs):
+    def __init__(self, cmd, **kwargs):
         super().__init__(**kwargs)
-        self.line = line
-        self.lineno = lineno
         self.cmd = cmd
 
     @property
@@ -346,7 +344,8 @@ class InsintoCheck(Check):
             if matches is not None:
                 path = re.sub('//+', '/', matches.group('path'))
                 cmd = self.path_mapping[path.rstrip('/')]
-                yield DeprecatedInsinto(matches.group('insinto'), lineno, cmd=cmd, pkg=pkg)
+                yield DeprecatedInsinto(
+                    cmd, line=matches.group('insinto'), lineno=lineno, pkg=pkg)
                 continue
             # Check for insinto usage that should be replaced with
             # docinto/dodoc [-r] under supported EAPIs.
@@ -354,7 +353,8 @@ class InsintoCheck(Check):
                 matches = self._insinto_doc_re.search(line)
                 if matches is not None:
                     yield DeprecatedInsinto(
-                        matches.group('insinto'), lineno, cmd='docinto/dodoc', pkg=pkg)
+                        'docinto/dodoc', line=matches.group('insinto'),
+                        lineno=lineno, pkg=pkg)
 
 
 class ObsoleteUri(results.VersionedResult, results.Warning):
