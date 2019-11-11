@@ -261,24 +261,25 @@ class ProfileAddon(base.Addon):
     def _profile_files(self):
         """Given a profile object, return its file set and most recent mtime."""
         cache = {}
-        while True:
-            profile = (yield)
-            profile_mtime = 0
-            profile_files = []
-            for node in profile.stack:
-                mtime, files = cache.get(node.path, (0, []))
-                if not mtime:
-                    for f in os.listdir(node.path):
-                        p = pjoin(node.path, f)
-                        files.append(p)
-                        st_obj = os.lstat(p)
-                        if stat.S_ISREG(st_obj.st_mode) and st_obj.st_mtime > mtime:
-                            mtime = st_obj.st_mtime
-                    cache[node.path] = (mtime, files)
-                if mtime > profile_mtime:
-                    profile_mtime = mtime
-                profile_files.extend(files)
-            yield profile_mtime, frozenset(profile_files)
+        with suppress_logging():
+            while True:
+                profile = (yield)
+                profile_mtime = 0
+                profile_files = []
+                for node in profile.stack:
+                    mtime, files = cache.get(node.path, (0, []))
+                    if not mtime:
+                        for f in os.listdir(node.path):
+                            p = pjoin(node.path, f)
+                            files.append(p)
+                            st_obj = os.lstat(p)
+                            if stat.S_ISREG(st_obj.st_mode) and st_obj.st_mtime > mtime:
+                                mtime = st_obj.st_mtime
+                        cache[node.path] = (mtime, files)
+                    if mtime > profile_mtime:
+                        profile_mtime = mtime
+                    profile_files.extend(files)
+                yield profile_mtime, frozenset(profile_files)
 
     @klass.jit_attr
     def profile_data(self):
