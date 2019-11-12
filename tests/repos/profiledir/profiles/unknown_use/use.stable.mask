@@ -1,0 +1,2 @@
+# ignored due to profile EAPI
+use_stable_mask

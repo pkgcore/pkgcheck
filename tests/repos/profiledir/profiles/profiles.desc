@@ -2,3 +2,7 @@ amd64 default
 amd64 default stable
 amd64 default/bad_parent dev
 amd64 nonexistent exp
+
+amd64 unknown_use exp
+amd64 unknown_use/unknown_stable_use exp
+amd64 unknown_use/unknown_stable_use_mask exp
