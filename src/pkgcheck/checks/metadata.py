@@ -11,6 +11,7 @@ from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
+from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import packages, values, boolean
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
@@ -675,12 +676,18 @@ class DependencyCheck(Check):
 
     def feed(self, pkg):
         for attr in sorted(x.lower() for x in pkg.eapi.dep_keys):
-            outdated_blockers = set()
-            nonexistent_blockers = set()
+            try:
+                deps = getattr(pkg, attr)
+            except MetadataException as e:
+                yield InvalidDependency(attr, e.msg(), pkg=pkg)
+                continue
 
             nodes, unstated = self.iuse_filter(
-                (atom_cls, boolean.OrRestriction), pkg, getattr(pkg, attr), attr=attr)
+                (atom_cls, boolean.OrRestriction), pkg, deps, attr=attr)
             yield from unstated
+
+            outdated_blockers = set()
+            nonexistent_blockers = set()
 
             for node in nodes:
                 if isinstance(node, boolean.OrRestriction):
