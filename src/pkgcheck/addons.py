@@ -197,15 +197,16 @@ class ProfileAddon(base.Addon):
 
         def norm_name(s):
             """Expand status keywords and format paths."""
-            if s in ('dev', 'exp', 'stable', 'deprecated'):
-                yield from profiles_obj.get_profiles(status=s)
-            elif s == 'all':
-                yield from profiles_obj
-            else:
-                try:
-                    yield profiles_obj[os.path.normpath(s)]
-                except KeyError:
-                    parser.error(f'nonexistent profile: {s!r}')
+            with suppress_logging():
+                if s in ('dev', 'exp', 'stable', 'deprecated'):
+                    yield from profiles_obj.get_profiles(status=s)
+                elif s == 'all':
+                    yield from profiles_obj
+                else:
+                    try:
+                        yield profiles_obj[os.path.normpath(s)]
+                    except KeyError:
+                        parser.error(f'nonexistent profile: {s!r}')
 
         disabled, enabled = selected_profiles
         disabled = set(disabled)
