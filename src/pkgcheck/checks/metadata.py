@@ -650,7 +650,6 @@ class DependencyCheck(Check):
     def __init__(self, *args, use_addon, git_addon):
         super().__init__(*args)
         self.iuse_filter = use_addon.get_filter()
-        self.conditional_ops = {'?', '='}
         self.use_defaults = {'(+)', '(-)'}
         self.today = datetime.today()
         self._git_addon = git_addon
@@ -661,10 +660,9 @@ class DependencyCheck(Check):
 
     def _check_use_deps(self, attr, atom):
         """Check dependencies for missing USE dep defaults."""
-        conditional_use = (
-            x for x in atom.use
-            if (x[-1] in self.conditional_ops and x[-4:-1] not in self.use_defaults))
-        stripped_use = [x.strip('?=').lstrip('!') for x in conditional_use]
+        stripped_use = [
+            x[:-1].lstrip('!') for x in atom.use
+            if (x[-1] == '?' and x[-4:-1] not in self.use_defaults)]
         if stripped_use:
             missing_use_deps = defaultdict(set)
             for pkg in self.options.search_repo.match(atom.no_usedeps):

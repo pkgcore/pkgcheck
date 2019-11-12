@@ -841,9 +841,13 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
 
         # USE flag doesn't exist but has proper default
         self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo(-)?]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo(+)=]'))
         self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[!foo(-)?]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='!dev-libs/bar[foo(+)?]'))
         self.assertNoReport(chk, mk_pkg(eapi='4', depset='!dev-libs/bar[!foo(+)?]'))
+
+        # USE flag exists on a partial set of the matching pkgs
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[baz=]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[!baz=]'))
 
         # matching pkg doesn't have any USE flags
         r = self.assertReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo?]'))
