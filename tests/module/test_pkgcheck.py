@@ -339,7 +339,7 @@ class TestPkgcheckScan(object):
                     args.extend(shlex.split(target.read()))
                 except FileNotFoundError:
                     if base.repository_scope in (result.scope, check.scope):
-                        args.extend(['-k', keyword])
+                        args.extend(['-c', check_name, '-k', keyword])
                     elif result.scope == base.category_scope:
                         args.append(f'{keyword}/*')
                     elif result.scope in (base.package_scope, base.version_scope):
@@ -462,7 +462,7 @@ class TestPkgcheckScan(object):
 
             args = ['-r', fixed_repo]
             if base.repository_scope in (result.scope, check.scope):
-                args.extend(['-k', keyword])
+                args.extend(['-c', check_name, '-k', keyword])
             elif result.scope == base.category_scope:
                 args.append(f'{keyword}/*')
             elif result.scope in (base.package_scope, base.version_scope):
