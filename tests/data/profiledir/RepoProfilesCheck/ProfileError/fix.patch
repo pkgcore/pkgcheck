@@ -1,0 +1,8 @@
+diff -Naur profiledir/profiles/profiles.desc fixed/profiles/profiles.desc
+--- profiledir/profiles/profiles.desc	2019-11-11 18:57:00.459703482 -0700
++++ fixed/profiles/profiles.desc	2019-11-11 18:58:41.293082335 -0700
+@@ -1,4 +1,3 @@
+-amd64 default
+ amd64 default stable
+ amd64 default/bad_parent dev
+ amd64 nonexistent exp
