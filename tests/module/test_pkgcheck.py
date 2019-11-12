@@ -331,7 +331,7 @@ class TestPkgcheckScan(object):
                     self._script(trigger, triggered_repo)
                     repo_dir = triggered_repo
 
-                args = (['-v'] * verbosity) + ['-r', repo_dir]
+                args = (['-v'] * verbosity) + ['-r', repo_dir, '-c', check_name]
 
                 # determine what test target to use
                 try:
@@ -339,7 +339,7 @@ class TestPkgcheckScan(object):
                     args.extend(shlex.split(target.read()))
                 except FileNotFoundError:
                     if base.repository_scope in (result.scope, check.scope):
-                        args.extend(['-c', check_name, '-k', keyword])
+                        args.extend(['-k', keyword])
                     elif result.scope == base.category_scope:
                         args.append(f'{keyword}/*')
                     elif result.scope in (base.package_scope, base.version_scope):
@@ -460,9 +460,9 @@ class TestPkgcheckScan(object):
             shutil.copytree(repo_dir, fixed_repo)
             func(fix, fixed_repo)
 
-            args = ['-r', fixed_repo]
+            args = ['-r', fixed_repo, '-c', check_name]
             if base.repository_scope in (result.scope, check.scope):
-                args.extend(['-c', check_name, '-k', keyword])
+                args.extend(['-k', keyword])
             elif result.scope == base.category_scope:
                 args.append(f'{keyword}/*')
             elif result.scope in (base.package_scope, base.version_scope):
