@@ -22,7 +22,6 @@ from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
 from snakeoil.formatters import decorate_forced_wrapping
-from snakeoil.log import suppress_logging
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.strings import pluralism as _pl
 
@@ -229,11 +228,10 @@ def _determine_target_repo(namespace, parser, cwd):
                 if initial_target == repo.repo_id:
                     return repo
 
-    with suppress_logging():
-        # determine target repo from the target directory
-        for repo in namespace.domain.ebuild_repos_raw:
-            if target_dir in repo:
-                return repo
+    # determine target repo from the target directory
+    for repo in namespace.domain.ebuild_repos_raw:
+        if target_dir in repo:
+            return repo
 
     # determine if CWD is inside an unconfigured repo
     return namespace.domain.find_repo(

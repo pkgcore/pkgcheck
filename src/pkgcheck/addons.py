@@ -16,7 +16,6 @@ from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
 from snakeoil.decorators import coroutine
-from snakeoil.log import suppress_logging
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
@@ -197,16 +196,15 @@ class ProfileAddon(base.Addon):
 
         def norm_name(s):
             """Expand status keywords and format paths."""
-            with suppress_logging():
-                if s in ('dev', 'exp', 'stable', 'deprecated'):
-                    yield from profiles_obj.get_profiles(status=s)
-                elif s == 'all':
-                    yield from profiles_obj
-                else:
-                    try:
-                        yield profiles_obj[os.path.normpath(s)]
-                    except KeyError:
-                        parser.error(f'nonexistent profile: {s!r}')
+            if s in ('dev', 'exp', 'stable', 'deprecated'):
+                yield from profiles_obj.get_profiles(status=s)
+            elif s == 'all':
+                yield from profiles_obj
+            else:
+                try:
+                    yield profiles_obj[os.path.normpath(s)]
+                except KeyError:
+                    parser.error(f'nonexistent profile: {s!r}')
 
         disabled, enabled = selected_profiles
         disabled = set(disabled)
@@ -249,12 +247,11 @@ class ProfileAddon(base.Addon):
                     parser.error(f'invalid profile: {e.path!r}: {e.error}')
                 continue
 
-            with suppress_logging():
-                if profile.arch is None:
-                    # throw error if profiles have been explicitly selected, otherwise skip it
-                    if namespace.profiles is not None:
-                        parser.error(f'profile make.defaults lacks ARCH setting: {p.path!r}')
-                    continue
+            if profile.arch is None:
+                # throw error if profiles have been explicitly selected, otherwise skip it
+                if namespace.profiles is not None:
+                    parser.error(f'profile make.defaults lacks ARCH setting: {p.path!r}')
+                continue
 
             namespace.arch_profiles[profile.arch].append((profile, p))
 
@@ -262,25 +259,24 @@ class ProfileAddon(base.Addon):
     def _profile_files(self):
         """Given a profile object, return its file set and most recent mtime."""
         cache = {}
-        with suppress_logging():
-            while True:
-                profile = (yield)
-                profile_mtime = 0
-                profile_files = []
-                for node in profile.stack:
-                    mtime, files = cache.get(node.path, (0, []))
-                    if not mtime:
-                        for f in os.listdir(node.path):
-                            p = pjoin(node.path, f)
-                            files.append(p)
-                            st_obj = os.lstat(p)
-                            if stat.S_ISREG(st_obj.st_mode) and st_obj.st_mtime > mtime:
-                                mtime = st_obj.st_mtime
-                        cache[node.path] = (mtime, files)
-                    if mtime > profile_mtime:
-                        profile_mtime = mtime
-                    profile_files.extend(files)
-                yield profile_mtime, frozenset(profile_files)
+        while True:
+            profile = (yield)
+            profile_mtime = 0
+            profile_files = []
+            for node in profile.stack:
+                mtime, files = cache.get(node.path, (0, []))
+                if not mtime:
+                    for f in os.listdir(node.path):
+                        p = pjoin(node.path, f)
+                        files.append(p)
+                        st_obj = os.lstat(p)
+                        if stat.S_ISREG(st_obj.st_mode) and st_obj.st_mtime > mtime:
+                            mtime = st_obj.st_mtime
+                    cache[node.path] = (mtime, files)
+                if mtime > profile_mtime:
+                    profile_mtime = mtime
+                profile_files.extend(files)
+            yield profile_mtime, frozenset(profile_files)
 
     @klass.jit_attr
     def profile_data(self):
@@ -366,41 +362,40 @@ class ProfileAddon(base.Addon):
                     provides_repo = cached_profile['provides_repo']
                 except KeyError:
                     logger.debug('profile regen: %s', profile.path)
-                    with suppress_logging():
-                        try:
-                            vfilter = domain.generate_filter(profile_obj.masks, profile_obj.unmasks)
+                    try:
+                        vfilter = domain.generate_filter(profile_obj.masks, profile_obj.unmasks)
 
-                            immutable_flags = profile_obj.masked_use.clone(unfreeze=True)
-                            immutable_flags.add_bare_global((), default_masked_use)
-                            immutable_flags.optimize(cache=chunked_data_cache)
-                            immutable_flags.freeze()
+                        immutable_flags = profile_obj.masked_use.clone(unfreeze=True)
+                        immutable_flags.add_bare_global((), default_masked_use)
+                        immutable_flags.optimize(cache=chunked_data_cache)
+                        immutable_flags.freeze()
 
-                            stable_immutable_flags = profile_obj.stable_masked_use.clone(unfreeze=True)
-                            stable_immutable_flags.add_bare_global((), default_masked_use)
-                            stable_immutable_flags.optimize(cache=chunked_data_cache)
-                            stable_immutable_flags.freeze()
+                        stable_immutable_flags = profile_obj.stable_masked_use.clone(unfreeze=True)
+                        stable_immutable_flags.add_bare_global((), default_masked_use)
+                        stable_immutable_flags.optimize(cache=chunked_data_cache)
+                        stable_immutable_flags.freeze()
 
-                            enabled_flags = profile_obj.forced_use.clone(unfreeze=True)
-                            enabled_flags.add_bare_global((), (stable_key,))
-                            enabled_flags.optimize(cache=chunked_data_cache)
-                            enabled_flags.freeze()
+                        enabled_flags = profile_obj.forced_use.clone(unfreeze=True)
+                        enabled_flags.add_bare_global((), (stable_key,))
+                        enabled_flags.optimize(cache=chunked_data_cache)
+                        enabled_flags.freeze()
 
-                            stable_enabled_flags = profile_obj.stable_forced_use.clone(unfreeze=True)
-                            stable_enabled_flags.add_bare_global((), (stable_key,))
-                            stable_enabled_flags.optimize(cache=chunked_data_cache)
-                            stable_enabled_flags.freeze()
+                        stable_enabled_flags = profile_obj.stable_forced_use.clone(unfreeze=True)
+                        stable_enabled_flags.add_bare_global((), (stable_key,))
+                        stable_enabled_flags.optimize(cache=chunked_data_cache)
+                        stable_enabled_flags.freeze()
 
-                            pkg_use = profile_obj.pkg_use
-                            iuse_effective = profile_obj.iuse_effective
-                            provides_repo = profile_obj.provides_repo
+                        pkg_use = profile_obj.pkg_use
+                        iuse_effective = profile_obj.iuse_effective
+                        provides_repo = profile_obj.provides_repo
 
-                            # finalize enabled USE flags
-                            use = set()
-                            misc.incremental_expansion(use, profile_obj.use, 'while expanding USE')
-                            use = frozenset(use)
-                        except profiles_mod.ProfileError:
-                            # unsupported EAPI or other issue, profile checks will catch this
-                            continue
+                        # finalize enabled USE flags
+                        use = set()
+                        misc.incremental_expansion(use, profile_obj.use, 'while expanding USE')
+                        use = frozenset(use)
+                    except profiles_mod.ProfileError:
+                        # unsupported EAPI or other issue, profile checks will catch this
+                        continue
 
                     if self.options.profile_cache or self.options.profile_cache is None:
                         cached_profiles[profile.base]['update'] = True
@@ -604,9 +599,7 @@ class UseAddon(base.Addon):
                 'use.desc and use.local.desc were found')
 
     def allowed_iuse(self, pkg):
-        # metadata_xml checks catch xml issues, suppress warning/error logs here
-        with suppress_logging():
-            return self.collapsed_iuse.pull_data(pkg).union(pkg.local_use)
+        return self.collapsed_iuse.pull_data(pkg).union(pkg.local_use)
 
     def get_filter(self, attr=None):
         if self.ignore:

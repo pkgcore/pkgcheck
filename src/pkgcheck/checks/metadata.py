@@ -13,7 +13,6 @@ from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.restrictions import packages, values, boolean
 from snakeoil.klass import jit_attr
-from snakeoil.log import suppress_logging
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
@@ -457,9 +456,7 @@ class LocalUseCheck(Check):
 
     def feed(self, pkgs):
         pkg = pkgs[0]
-        # metadata_xml checks catch xml issues, suppress warning/error logs here
-        with suppress_logging():
-            local_use = pkg.local_use
+        local_use = pkg.local_use
 
         for flag, desc in local_use.items():
             if flag in self.global_use:

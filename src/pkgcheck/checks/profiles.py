@@ -7,7 +7,6 @@ from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.ebuild.repo_objs import Profiles
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
-from snakeoil.log import suppress_logging
 from snakeoil.osutils import listdir_dirs, pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
@@ -420,20 +419,18 @@ class RepoProfilesCheck(Check):
         seen_profile_dirs = set()
         lagging_profile_eapi = defaultdict(list)
         for p in profiles:
-            # suppress profile warning/error logs that should be caught by ProfilesCheck
-            with suppress_logging():
-                try:
-                    profile = profiles_mod.ProfileStack(pjoin(self.profiles_dir, p.path))
-                except profiles_mod.ProfileError:
-                    yield NonexistentProfilePath(p.path)
-                    continue
-                for parent in profile.stack:
-                    seen_profile_dirs.update(
-                        dir_parents(parent.path[len(self.profiles_dir):]))
-                    # flag lagging profile EAPIs -- assumes EAPIs are sequentially
-                    # numbered which should be the case for the gentoo repo
-                    if (self.options.gentoo_repo and str(profile.eapi) < str(parent.eapi)):
-                        lagging_profile_eapi[profile].append(parent)
+            try:
+                profile = profiles_mod.ProfileStack(pjoin(self.profiles_dir, p.path))
+            except profiles_mod.ProfileError:
+                yield NonexistentProfilePath(p.path)
+                continue
+            for parent in profile.stack:
+                seen_profile_dirs.update(
+                    dir_parents(parent.path[len(self.profiles_dir):]))
+                # flag lagging profile EAPIs -- assumes EAPIs are sequentially
+                # numbered which should be the case for the gentoo repo
+                if (self.options.gentoo_repo and str(profile.eapi) < str(parent.eapi)):
+                    lagging_profile_eapi[profile].append(parent)
 
         for profile, parents in lagging_profile_eapi.items():
             parent = parents[-1]

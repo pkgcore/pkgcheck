@@ -5,7 +5,6 @@ from itertools import chain
 from pkgcore import fetch
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
-from snakeoil.log import suppress_logging
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
 
@@ -387,8 +386,7 @@ class GlobalUseCheck(Check):
 
     def feed(self, pkgs):
         # ignore bad XML, it will be caught by metadata.xml checks
-        with suppress_logging():
-            local_use = set(pkgs[0].local_use.keys())
+        local_use = set(pkgs[0].local_use.keys())
         for pkg in pkgs:
             pkg_global_use = pkg.iuse_stripped.difference(local_use)
             for flag in pkg_global_use:

@@ -10,7 +10,7 @@ import sys
 def run(script_name):
     """Run a given script module."""
     try:
-        from pkgcore.util.commandline import Tool
+        from pkgcheck.cli import Tool
         script_module = '.'.join(
             os.path.realpath(__file__).split(os.path.sep)[-3:-1] +
             [script_name.replace('-', '_')])
