@@ -674,7 +674,7 @@ class DependencyCheck(Check):
         return {}
 
     def feed(self, pkg):
-        for attr in (x.lower() for x in pkg.eapi.dep_keys):
+        for attr in sorted(x.lower() for x in pkg.eapi.dep_keys):
             outdated_blockers = set()
             nonexistent_blockers = set()
 
