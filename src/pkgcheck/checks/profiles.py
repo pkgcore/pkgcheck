@@ -178,7 +178,12 @@ class ProfilesCheck(Check):
             # make sure replacement profile exists
             if vals is not None:
                 replacement, msg = vals
-                _ProfileNode(pjoin(self.profiles_dir, replacement))
+                try:
+                    _ProfileNode(pjoin(self.profiles_dir, replacement))
+                except profiles_mod.ProfileError as e:
+                    yield ProfileError(
+                        f'nonexistent replacement {replacement!r} '
+                        f'for deprecated profile: {profile.name!r}')
 
         file_parse_map = {
             'packages': ('packages', _pkg_atoms),
