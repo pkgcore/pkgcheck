@@ -127,18 +127,18 @@ class ProfilesCheck(Check):
         unknown_use = defaultdict(lambda: defaultdict(list))
         unknown_keywords = defaultdict(lambda: defaultdict(list))
 
-        def _pkg_atoms(filename, vals):
+        def _pkg_atoms(filename, profile, vals):
             for a in iflatten_instance(vals, atom.atom):
                 if not self.repo.match(a):
                     unknown_pkgs[profile.path][filename].append(a)
 
-        def _pkg_keywords(filename, vals):
+        def _pkg_keywords(filename, profile, vals):
             for atom, keywords in vals:
                 invalid = set(keywords) - self.valid_keywords
                 if invalid:
                     unknown_keywords[profile.path][filename].append((atom, invalid))
 
-        def _pkg_use(filename, vals):
+        def _pkg_use(filename, profile, vals):
             # TODO: give ChunkedDataDict some dict view methods
             d = vals
             if isinstance(d, misc.ChunkedDataDict):
@@ -160,7 +160,7 @@ class ProfilesCheck(Check):
                             unknown_pkg_use[profile.path][filename].append(
                                 (a, unknown_enabled))
 
-        def _use(filename, vals):
+        def _use(filename, profile, vals):
             # TODO: give ChunkedDataDict some dict view methods
             d = vals.render_to_dict()
             for _, entries in d.items():
@@ -174,7 +174,7 @@ class ProfilesCheck(Check):
                         unknown_use[profile.path][filename].extend(
                             unknown_enabled)
 
-        def _deprecated(filename, vals):
+        def _deprecated(filename, profile, vals):
             # make sure replacement profile exists
             if vals is not None:
                 replacement, msg = vals
@@ -215,7 +215,9 @@ class ProfilesCheck(Check):
                     with patch('pkgcore.log.logger.error', report_profile_errors), \
                             patch('pkgcore.log.logger.warning', report_profile_warnings):
                         vals = getattr(profile, attr)
-                    func(f, vals)
+                    results = func(f, profile, vals)
+                    if results is not None:
+                        yield from results
 
         yield from profile_reports
 
