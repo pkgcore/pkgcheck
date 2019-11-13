@@ -6,3 +6,6 @@ amd64 nonexistent exp
 amd64 unknown_use exp
 amd64 unknown_use/unknown_stable_use exp
 amd64 unknown_use/unknown_stable_use_mask exp
+
+amd64 deprecated/empty exp
+amd64 deprecated/nonexistent exp
