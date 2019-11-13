@@ -15,19 +15,6 @@ from .. import addons, base, results, sources
 from . import Check
 
 
-class BadProfileEntry(results.Error):
-    """Badly formatted entry in a profiles file."""
-
-    def __init__(self, path, error):
-        super().__init__()
-        self.path = path
-        self.error = error
-
-    @property
-    def desc(self):
-        return f'failed parsing {self.path!r}: {self.error}'
-
-
 class UnknownProfilePackages(results.Warning):
     """Profile files include package entries that don't exist in the repo."""
 
@@ -108,7 +95,7 @@ class ProfilesCheck(Check):
     _source = sources.EmptySource
     known_results = frozenset([
         UnknownProfilePackages, UnknownProfilePackageUse, UnknownProfileUse,
-        UnknownProfilePackageKeywords, BadProfileEntry, ProfileWarning, ProfileError,
+        UnknownProfilePackageKeywords, ProfileWarning, ProfileError,
     ])
 
     def __init__(self, *args, use_addon):
@@ -224,14 +211,11 @@ class ProfilesCheck(Check):
                 for f in set(files).intersection(file_parse_map.keys()):
                     attr, func = file_parse_map[f]
                     file_path = pjoin(root[len(self.profiles_dir) + 1:], f)
-                    try:
-                        # convert log warnings/errors into reports
-                        with patch('pkgcore.log.logger.error', report_profile_errors), \
-                                patch('pkgcore.log.logger.warning', report_profile_warnings):
-                            vals = getattr(profile, attr)
-                        func(f, vals)
-                    except profiles_mod.ProfileError as e:
-                        yield BadProfileEntry(file_path, str(e))
+                    # convert log warnings/errors into reports
+                    with patch('pkgcore.log.logger.error', report_profile_errors), \
+                            patch('pkgcore.log.logger.warning', report_profile_warnings):
+                        vals = getattr(profile, attr)
+                    func(f, vals)
 
         yield from profile_reports
 
