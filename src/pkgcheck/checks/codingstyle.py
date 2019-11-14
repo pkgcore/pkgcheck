@@ -569,9 +569,9 @@ class RawEbuildCheck(Check):
         self.var_regex = re.compile(r'\${?\w+}?')
 
     def check_homepage(self, pkg, s):
-        matches = stable_unique(self.var_regex.findall(s))
+        matches = self.var_regex.findall(s)
         if matches:
-            yield VariableInHomepage(matches, pkg=pkg)
+            yield VariableInHomepage(stable_unique(matches), pkg=pkg)
 
     def check_src_uri(self, pkg, s):
         if '${HOMEPAGE}' in s:
