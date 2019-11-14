@@ -1,0 +1,33 @@
+diff -Naur standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-0.ebuild fixed/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-0.ebuild
+--- standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-0.ebuild	2019-11-14 15:53:10.315364912 -0700
++++ fixed/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-0.ebuild	2019-11-14 15:56:30.182095875 -0700
+@@ -1,5 +1,4 @@
+ DESCRIPTION="Ebuild with invalid SRC_URI"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SRC_URI="?"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-1.ebuild fixed/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-1.ebuild
+--- standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-1.ebuild	2019-11-14 15:53:18.481394769 -0700
++++ fixed/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-1.ebuild	2019-11-14 15:56:32.897105805 -0700
+@@ -1,5 +1,4 @@
+ DESCRIPTION="Ebuild with invalid SRC_URI"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SRC_URI="( )"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-2.ebuild fixed/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-2.ebuild
+--- standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-2.ebuild	2019-11-14 15:56:03.873999657 -0700
++++ fixed/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-2.ebuild	2019-11-14 15:56:36.366118491 -0700
+@@ -1,5 +1,5 @@
+ DESCRIPTION="Ebuild with invalid SRC_URI"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz/"
++SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/SrcUriCheck/InvalidSrcUri/Manifest fixed/SrcUriCheck/InvalidSrcUri/Manifest
+--- standalone/SrcUriCheck/InvalidSrcUri/Manifest	1969-12-31 17:00:00.000000000 -0700
++++ fixed/SrcUriCheck/InvalidSrcUri/Manifest	2019-11-14 15:57:52.611397338 -0700
+@@ -0,0 +1 @@
++DIST InvalidSrcUri-2.tar.gz 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7e45bcb7b255cdf810ce8cd16a957fb5bca3d1e71c088cd784968641db5dfbe1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6642a371e47b3c5de7a615feec5e05
