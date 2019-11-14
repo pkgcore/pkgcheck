@@ -7,45 +7,16 @@ from . import base
 from .packages import FilteredPkg, RawCPV
 
 
-class _ResultPriority(type):
-    """Metaclass that injects color/level attributes to raw result classes."""
-
-    @property
-    def color(cls):
-        """Rendered result output color related to priority level."""
-        return cls._level_to_desc[cls._level][1]
-
-    @property
-    def level(cls):
-        """Result priority level."""
-        return cls._level_to_desc[cls._level][0]
-
-
-class Result(metaclass=_ResultPriority):
+class Result:
     """Generic report result returned from a check."""
 
     # all results are shown by default
     _filtered = False
     # default to repository level results
     scope = base.repository_scope
-    # default to warning level
-    _level = 30
-    # level values match those used in logging module
-    _level_to_desc = {
-        40: ('error', 'red'),
-        30: ('warning', 'yellow'),
-        20: ('info', 'green'),
-    }
-
-    @property
-    def color(self):
-        """Rendered result output color related to priority level."""
-        return self._level_to_desc[self._level][1]
-
-    @property
-    def level(self):
-        """Result priority level."""
-        return self._level_to_desc[self._level][0]
+    # priority level and color
+    level = None
+    color = None
 
     def __str__(self):
         return self.desc
@@ -87,19 +58,22 @@ class Result(metaclass=_ResultPriority):
 class Error(Result):
     """Result with an error priority level."""
 
-    _level = 40
+    level = 'error'
+    color = 'red'
 
 
 class Warning(Result):
     """Result with a warning priority level."""
 
-    _level = 30
+    level = 'warning'
+    color = 'yellow'
 
 
 class Info(Result):
     """Result with an info priority level."""
 
-    _level = 20
+    level = 'info'
+    color = 'green'
 
 
 class CommitResult(Result):
@@ -230,7 +204,7 @@ class LogError(_LogResult, Error):
     """Error caught from a logger instance."""
 
 
-class _RegisterMetadataErrors(_ResultPriority):
+class _RegisterMetadataErrors(type):
     """Metaclass for register known metadata results."""
 
     def __new__(cls, name, bases, class_dict):
