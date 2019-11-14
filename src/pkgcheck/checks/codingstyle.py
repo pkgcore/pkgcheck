@@ -7,6 +7,7 @@ from pkgcore.ebuild.eapi import EAPI
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
+from snakeoil.sequences import stable_unique
 from snakeoil.strings import pluralism as _pl
 
 from .. import results, sources
@@ -565,10 +566,10 @@ class RawEbuildCheck(Check):
         attr_vars = ('HOMEPAGE', 'SRC_URI')
         self.attr_regex = re.compile(
             rf'|'.join(f'(?P<{x.lower()}>{x}="[^"]*")' for x in attr_vars), re.MULTILINE)
-        self.var_regex = re.compile(r'\${?\w*}?')
+        self.var_regex = re.compile(r'\${?\w+}?')
 
     def check_homepage(self, pkg, s):
-        matches = set(self.var_regex.findall(s))
+        matches = stable_unique(self.var_regex.findall(s))
         if matches:
             yield VariableInHomepage(matches, pkg=pkg)
 
