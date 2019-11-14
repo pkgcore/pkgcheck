@@ -1,0 +1,9 @@
+diff -Naur standalone/RawEbuildCheck/VariableInHomepage/VariableInHomepage-0.ebuild fixed/RawEbuildCheck/VariableInHomepage/VariableInHomepage-0.ebuild
+--- standalone/RawEbuildCheck/VariableInHomepage/VariableInHomepage-0.ebuild	2019-11-14 00:52:56.887503142 -0700
++++ fixed/RawEbuildCheck/VariableInHomepage/VariableInHomepage-0.ebuild	2019-11-14 00:55:29.241081360 -0700
+@@ -1,4 +1,4 @@
+ DESCRIPTION="Ebuild with variable in HOMEPAGE"
+-HOMEPAGE="https://github.com/pkgcore/${PN}"
++HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"

@@ -1,0 +1,5 @@
+DESCRIPTION="Ebuild with static values of dynamica variables in SRC_URI"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SRC_URI="https://github.com/pkgcore/pkgcheck/StaticSrcUri-0.tar.gz"
+SLOT="0"
+LICENSE="BSD"

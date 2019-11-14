@@ -1,0 +1,2 @@
+RawEbuildCheck/HomepageInSrcUri
+  HomepageInSrcUri: version 0: ${HOMEPAGE} in SRC_URI
