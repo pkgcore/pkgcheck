@@ -1,0 +1,20 @@
+diff -Naur profiledir/profiles/unknown_pkgs/package.mask fixed/profiles/unknown_pkgs/package.mask
+--- profiledir/profiles/unknown_pkgs/package.mask	2019-11-14 14:45:28.288014251 -0700
++++ fixed/profiles/unknown_pkgs/package.mask	2019-11-14 14:47:15.810590719 -0700
+@@ -1,2 +1 @@
+ stub/stub3
+-unknown/pkg_mask
+diff -Naur profiledir/profiles/unknown_pkgs/package.unmask fixed/profiles/unknown_pkgs/package.unmask
+--- profiledir/profiles/unknown_pkgs/package.unmask	2019-11-14 14:45:48.556122912 -0700
++++ fixed/profiles/unknown_pkgs/package.unmask	2019-11-14 14:47:09.834558682 -0700
+@@ -1,2 +1 @@
+ stub/stub4
+-unknown/pkg_unmask
+diff -Naur profiledir/profiles/unknown_pkgs/packages fixed/profiles/unknown_pkgs/packages
+--- profiledir/profiles/unknown_pkgs/packages	2019-11-14 14:44:20.030648300 -0700
++++ fixed/profiles/unknown_pkgs/packages	2019-11-14 14:47:24.296636217 -0700
+@@ -1,4 +1,2 @@
+ *stub/stub1
+-*unknown/pkg
+ -*stub/stub2
+--*unknown/disabled_pkg

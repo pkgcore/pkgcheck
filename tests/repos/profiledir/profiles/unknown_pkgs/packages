@@ -1,0 +1,4 @@
+*stub/stub1
+*unknown/pkg
+-*stub/stub2
+-*unknown/disabled_pkg

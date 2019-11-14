@@ -1,0 +1,4 @@
+repo
+  UnknownProfilePackages: 'unknown_pkgs/package.mask': unknown package: [ 'unknown/pkg_mask' ]
+  UnknownProfilePackages: 'unknown_pkgs/package.unmask': unknown package: [ 'unknown/pkg_unmask' ]
+  UnknownProfilePackages: 'unknown_pkgs/packages': unknown packages: [ 'unknown/disabled_pkg', 'unknown/pkg' ]
