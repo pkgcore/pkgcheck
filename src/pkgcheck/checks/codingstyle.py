@@ -541,27 +541,51 @@ class StaticSrcUri(results.VersionResult, results.Warning):
         return f'{self.static_str!r} in SRC_URI'
 
 
-class RawSrcUriCheck(Check):
-    """Scan raw SRC_URI content for various issues."""
+class VariableInHomepage(results.VersionResult, results.Warning):
+    """HOMEPAGE includes a variable."""
+
+    def __init__(self, variables, **kwargs):
+        super().__init__(**kwargs)
+        self.variables = tuple(variables)
+
+    @property
+    def desc(self):
+        var_list = ', '.join(self.variables)
+        return f'HOMEPAGE includes variable{_pl(self.variables)}: {var_list}'
+
+
+class RawEbuildCheck(Check):
+    """Scan raw ebuild content for various issues."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = frozenset([HomepageInSrcUri, StaticSrcUri])
+    known_results = frozenset([HomepageInSrcUri, StaticSrcUri, VariableInHomepage])
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.src_uri_regex = re.compile(r'^\s*SRC_URI="[^"]*"', re.MULTILINE)
+        attr_vars = ('HOMEPAGE', 'SRC_URI')
+        self.attr_regex = re.compile(
+            rf'|'.join(f'(?P<{x.lower()}>{x}="[^"]*")' for x in attr_vars), re.MULTILINE)
+        self.var_regex = re.compile(r'\${?\w*}?')
+
+    def check_homepage(self, pkg, s):
+        matches = set(self.var_regex.findall(s))
+        if matches:
+            yield VariableInHomepage(matches, pkg=pkg)
+
+    def check_src_uri(self, pkg, s):
+        if '${HOMEPAGE}' in s:
+            yield HomepageInSrcUri(pkg=pkg)
+
+        exts = pkg.eapi.archive_exts_regex_pattern
+        P = re.escape(pkg.P)
+        PV = re.escape(pkg.PV)
+        static_src_uri_re = rf'/(?P<static_str>({P}{exts}(?="|\n)|{PV}(?=/)))'
+        for match in re.finditer(static_src_uri_re, s):
+            static_str = match.group('static_str')
+            yield StaticSrcUri(static_str, pkg=pkg)
 
     def feed(self, pkg):
-        src_uri = self.src_uri_regex.search(''.join(pkg.lines))
-        if src_uri is not None:
-            raw_src_uri = src_uri.group(0)
-            if '${HOMEPAGE}' in raw_src_uri:
-                yield HomepageInSrcUri(pkg=pkg)
-
-            exts = pkg.eapi.archive_exts_regex_pattern
-            P = re.escape(pkg.P)
-            PV = re.escape(pkg.PV)
-            static_src_uri_re = rf'/(?P<static_str>({P}{exts}(?="|\n)|{PV}(?=/)))'
-            for match in re.finditer(static_src_uri_re, raw_src_uri):
-                static_str = match.group('static_str')
-                yield StaticSrcUri(static_str, pkg=pkg)
+        for match in self.attr_regex.finditer(''.join(pkg.lines)):
+            attr = match.lastgroup
+            func = getattr(self, f'check_{attr}')
+            yield from func(pkg, match.group(attr))

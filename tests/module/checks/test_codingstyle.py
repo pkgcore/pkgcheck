@@ -457,9 +457,9 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
             assert line.strip() in str(r)
 
 
-class TestRawSrcUriCheck(misc.ReportTestCase):
+class TestRawEbuildCheck(misc.ReportTestCase):
 
-    check_kls = codingstyle.RawSrcUriCheck
+    check_kls = codingstyle.RawEbuildCheck
 
     def mk_pkg(self, **kwargs):
         return misc.FakePkg("dev-util/diffball-0.5", **kwargs)
@@ -517,3 +517,19 @@ class TestRawSrcUriCheck(misc.ReportTestCase):
         fake_pkg = self.mk_pkg(lines=fake_src)
         for r in self.assertReports(self.check_kls(None), fake_pkg):
             assert isinstance(r, codingstyle.StaticSrcUri)
+
+    def test_single_homepage_variable(self):
+        fake_src = ['HOMEPAGE="https://example.com/${PN}"\n']
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        r = self.assertReport(self.check_kls(None), fake_pkg)
+        assert isinstance(r, codingstyle.VariableInHomepage)
+        assert r.variables == ('${PN}',)
+        assert '${PN}' in str(r)
+
+    def test_multiple_homepage_variables(self):
+        fake_src = ['HOMEPAGE="https://example.com/${PN}/${FOO}"\n']
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        r = self.assertReport(self.check_kls(None), fake_pkg)
+        assert isinstance(r, codingstyle.VariableInHomepage)
+        assert r.variables == ('${PN}', '${FOO}')
+        assert '${PN}, ${FOO}' in str(r)
