@@ -844,26 +844,25 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[!foo(-)?]'))
         self.assertNoReport(chk, mk_pkg(eapi='4', depset='!dev-libs/bar[foo(+)?]'))
         self.assertNoReport(chk, mk_pkg(eapi='4', depset='!dev-libs/bar[!foo(+)?]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo(-)=]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[!foo(-)=]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo(+)=]'))
+        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[!foo(+)=]'))
 
-        # USE flag exists on a partial set of the matching pkgs
-        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[baz=]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[!baz=]'))
-
-        # matching pkg doesn't have any USE flags
-        r = self.assertReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo?]'))
-        assert isinstance(r, metadata.MissingUseDepDefault)
-        assert r.atom == 'dev-libs/bar[foo?]'
-        assert r.pkgs == ('dev-libs/bar-2',)
-        assert r.flag == 'foo'
-        assert "USE flag 'foo' missing" in str(r)
-
-        # blocker triggers result as well
-        r = self.assertReport(chk, mk_pkg(eapi='4', depset='!dev-libs/bar[foo?]'))
-        assert isinstance(r, metadata.MissingUseDepDefault)
-        assert r.atom == '!dev-libs/bar[foo?]'
-        assert r.pkgs == ('dev-libs/bar-2',)
-        assert r.flag == 'foo'
-        assert "USE flag 'foo' missing" in str(r)
+        # result triggers when all matching pkgs don't have requested USE flag
+        for dep in (
+                'dev-libs/bar[foo?]',
+                'dev-libs/bar[!foo?]',
+                'dev-libs/bar[foo=]',
+                'dev-libs/bar[!foo=]',
+                '!dev-libs/bar[foo?]',
+                ):
+            r = self.assertReport(chk, mk_pkg(eapi='4', depset=dep))
+            assert isinstance(r, metadata.MissingUseDepDefault)
+            assert r.atom == dep
+            assert r.pkgs == ('dev-libs/bar-2',)
+            assert r.flag == 'foo'
+            assert "USE flag 'foo' missing" in str(r)
 
         # USE flag missing on one of multiple matches
         r = self.assertReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[baz?]'))
