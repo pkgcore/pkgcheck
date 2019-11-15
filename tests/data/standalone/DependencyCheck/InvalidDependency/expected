@@ -2,3 +2,7 @@ DependencyCheck/InvalidDependency
   InvalidDependency: version 0: failed parsing DEPEND: 'pkg1' is unparseable: flagged token- invalid package atom: 'pkg1'
   InvalidDependency: version 0: failed parsing PDEPEND: 'pkg3' is unparseable: flagged token- invalid package atom: 'pkg3'
   InvalidDependency: version 0: failed parsing RDEPEND: 'pkg2' is unparseable: flagged token- invalid package atom: 'pkg2'
+  InvalidDependency: version 1: failed parsing BDEPEND: 'pkg4' is unparseable: flagged token- invalid package atom: 'pkg4'
+  InvalidDependency: version 1: failed parsing DEPEND: 'pkg1' is unparseable: flagged token- invalid package atom: 'pkg1'
+  InvalidDependency: version 1: failed parsing PDEPEND: 'pkg3' is unparseable: flagged token- invalid package atom: 'pkg3'
+  InvalidDependency: version 1: failed parsing RDEPEND: 'pkg2' is unparseable: flagged token- invalid package atom: 'pkg2'
