@@ -123,11 +123,18 @@ class Pipeline:
 
 
 class CheckRunner:
+    """Generic runner for checks.
+
+    Checks are run in order of priority. Some checks need to be run before
+    others if both are enabled due to package attribute caching in pkgcore,
+    e.g. checks that test depset parsing need to come before other checks that
+    use the parsed deps otherwise results from parsing errors could be missed.
+    """
 
     def __init__(self, options, source, checks):
         self.options = options
         self.source = source
-        self.checks = checks
+        self.checks = sorted(checks)
         self._running_check = None
 
         scope = base.version_scope

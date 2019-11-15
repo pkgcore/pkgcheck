@@ -16,6 +16,7 @@ class Check(feeds.Feed):
     :cvar known_results: result keywords the check can possibly yield
     """
 
+    _priority = 0
     known_results = frozenset()
 
     @property
@@ -45,6 +46,9 @@ class Check(feeds.Feed):
 
     def finish(self):
         """Do cleanup and yield final results here."""
+
+    def __lt__(self, other):
+        return self._priority < other._priority
 
 
 class GentooRepoCheck(Check):
