@@ -310,7 +310,7 @@ class TestPkgcheckScan(object):
                     assert keyword in const.KEYWORDS
 
     @pytest.mark.parametrize('check, result', results)
-    def test_pkgcheck_scan(self, check, result, capsys, cache_dir, tmp_path):
+    def test_scan(self, check, result, capsys, cache_dir, tmp_path):
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
         tested = False
         check_name = check.__name__
@@ -387,7 +387,7 @@ class TestPkgcheckScan(object):
             output = f.read().decode()
             return output
 
-    def test_pkgcheck_scan_repos(self, capsys, cache_dir, tmp_path):
+    def test_scan_repos(self, capsys, cache_dir, tmp_path):
         """Verify full repo scans don't return any extra, unknown results."""
         # TODO: replace with matching against expected full scan dump once
         # sorting is implemented
@@ -438,7 +438,7 @@ class TestPkgcheckScan(object):
                     pytest.fail(f'{repo} repo has unknown results:\n{output}')
 
     @pytest.mark.parametrize('check, result', results)
-    def test_pkgcheck_scan_fix(self, check, result, capsys, cache_dir, tmp_path):
+    def test_fix(self, check, result, capsys, cache_dir, tmp_path):
         """Apply fixes to pkgs, verifying the related results are fixed."""
         check_name = check.__name__
         keyword = result.__name__
