@@ -128,6 +128,7 @@ class CheckRunner:
         self.options = options
         self.source = source
         self.checks = checks
+        self._running_check = None
 
         scope = base.version_scope
         self._known_results = set()
@@ -145,7 +146,12 @@ class CheckRunner:
 
     def _metadata_error_cb(self, e):
         cls = MetadataError.result_mapping.get(e.attr, MetadataError)
-        if cls in self._known_results or cls is MetadataError:
+        process_callback = (
+            cls is MetadataError or
+            cls in getattr(self._running_check, 'known_results', self._known_results)
+        )
+
+        if process_callback:
             error_str = ': '.join(e.msg().split('\n'))
             result = cls(e.attr, error_str, pkg=e.pkg)
             self._metadata_errors.append((e.pkg, result))
@@ -162,12 +168,14 @@ class CheckRunner:
 
         for item in source:
             for check in self.checks:
+                self._running_check = check
                 try:
                     reports = check.feed(item)
                     if reports is not None:
                         yield from reports
                 except MetadataException as e:
                     self._metadata_error_cb(e)
+            self._running_check = None
 
         while self._metadata_errors:
             pkg, result = self._metadata_errors.popleft()
