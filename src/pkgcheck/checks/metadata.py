@@ -642,6 +642,9 @@ class DependencyCheck(Check):
     """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon, git.GitAddon)
+    # heightened priority to force running before other checks pulling dep
+    # attrs so no parsed dep attrs are cached on the pkg object yet
+    _priority = -1
     known_results = frozenset([
         BadDependency, InvalidDependency, MissingPackageRevision, MissingUseDepDefault,
         OutdatedBlocker, NonexistentBlocker, UnstatedIuse,
