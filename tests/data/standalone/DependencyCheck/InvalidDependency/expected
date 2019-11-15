@@ -1,3 +1,2 @@
 DependencyCheck/InvalidDependency
-  InvalidDependency: version 0: failed parsing DEPEND: 'unzip' is unparseable: flagged token- invalid package atom: 'unzip'
-  InvalidDependency: version 0: failed parsing RDEPEND: 'unzip' is unparseable: flagged token- invalid package atom: 'unzip'
+  InvalidDependency: version 0: failed parsing RDEPEND: 'pkg' is unparseable: flagged token- invalid package atom: 'pkg'

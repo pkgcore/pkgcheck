@@ -5,5 +5,5 @@ diff -Naur standalone/DependencyCheck/InvalidDependency/InvalidDependency-0.ebui
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
  SLOT="0"
  LICENSE="BSD"
--DEPEND="unzip"
-+DEPEND="app-arch/unzip"
+-RDEPEND="pkg"
++RDEPEND="app-foo/pkg"
