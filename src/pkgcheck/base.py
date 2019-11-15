@@ -234,7 +234,7 @@ class Whitelist(_CheckSet):
 
     def filter(self, checks):
         return list(
-            c for c in checks
+            c for c in set(checks)
             if any(p(f'{c.__module__}.{c.__name__}') for p in self.patterns))
 
 
@@ -243,7 +243,7 @@ class Blacklist(_CheckSet):
 
     def filter(self, checks):
         return list(
-            c for c in checks
+            c for c in set(checks)
             if not any(p(f'{c.__module__}.{c.__name__}') for p in self.patterns))
 
 
