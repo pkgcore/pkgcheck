@@ -233,7 +233,7 @@ class TestPkgcheckScan(object):
 
     script = partial(run, project)
     _results = defaultdict(set)
-    _checks_run = set()
+    _checks_run = defaultdict(set)
 
     @pytest.fixture(autouse=True)
     def _setup(self, testconfig):
@@ -372,7 +372,7 @@ class TestPkgcheckScan(object):
                             assert self._render_results(
                                 sorted(results), verbosity=verbosity) == expected
                 tested = True
-                self._checks_run.add(check_name)
+                self._checks_run[repo].add(check_name)
 
         if not tested:
             pytest.skip('expected test data not available')
@@ -411,7 +411,7 @@ class TestPkgcheckScan(object):
                         self._script(trigger, triggered_repo)
                     repo_dir = triggered_repo
 
-                args = ['-r', repo_dir, '-c', ','.join(self._checks_run)]
+                args = ['-r', repo_dir, '-c', ','.join(self._checks_run[repo])]
                 with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
                         patch('pkgcheck.base.CACHE_DIR', cache_dir):
                     with pytest.raises(SystemExit) as excinfo:
