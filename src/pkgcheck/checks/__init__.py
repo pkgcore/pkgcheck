@@ -48,6 +48,8 @@ class Check(feeds.Feed):
         """Do cleanup and yield final results here."""
 
     def __lt__(self, other):
+        if self._priority == other._priority:
+            return self.__class__.__name__ < other.__class__.__name__
         return self._priority < other._priority
 
 
