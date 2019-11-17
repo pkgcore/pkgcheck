@@ -7,6 +7,7 @@ import shlex
 import subprocess
 from collections import namedtuple, UserDict
 
+from pathspec import PathSpec
 from pkgcore.ebuild import cpv
 from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
@@ -15,6 +16,7 @@ from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import boolean
 from snakeoil.cli.exceptions import UserException
 from snakeoil.demandload import demand_compile_regexp
+from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.process.spawn import spawn_get_output
@@ -333,6 +335,19 @@ class GitAddon(base.Addon, base.Cache):
 
         # mapping of repo locations to their corresponding git repo caches
         self._cached_repos = {}
+
+    @jit_attr
+    def gitignore(self):
+        path = pjoin(self.options.target_repo.location, '.gitignore')
+        patterns = []
+        try:
+            with open(path) as f:
+                patterns = f.readlines()
+        except FileNotFoundError:
+            pass
+        except IOError as e:
+            logger.warning(f'failed reading {path!r}: {e}')
+        return PathSpec.from_lines('gitwildmatch', patterns)
 
     @staticmethod
     def get_commit_hash(repo_location, commit='origin/HEAD'):
