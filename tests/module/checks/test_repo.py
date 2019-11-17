@@ -6,6 +6,7 @@ from pkgcore.test.misc import FakeRepo
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
+from pkgcheck import git
 from pkgcheck.checks import repo
 
 from .. import misc
@@ -17,8 +18,9 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
 
     def mk_check(self):
         self.repo = FakeRepo(repo_id='repo', location=self.dir)
-        options = misc.Options(target_repo=self.repo)
-        return repo.RepoDirCheck(options)
+        options = misc.Options(target_repo=self.repo, git_disable=True)
+        git_addon = git.GitAddon(options)
+        return repo.RepoDirCheck(options, git_addon=git_addon)
 
     def mk_pkg(self, cpvstr):
         pkg = atom.atom(cpvstr)

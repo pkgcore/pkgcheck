@@ -8,7 +8,7 @@ from snakeoil.chksum import get_chksums
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism as _pl
 
-from .. import base, results, sources
+from .. import base, git, results, sources
 from . import Check
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
@@ -161,6 +161,7 @@ class PkgDirCheck(Check):
     _source = (sources.PackageRepoSource, (), (('source', sources.RawRepoSource),))
 
     ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
+    required_addons = (git.GitAddon,)
     known_results = frozenset([
         DuplicateFiles, EmptyFile, ExecutableFile, UnknownFile, SizeViolation,
         Glep31Violation, InvalidUTF8, MismatchedPN, InvalidPN,
@@ -168,6 +169,11 @@ class PkgDirCheck(Check):
 
     # TODO: put some 'preferred algorithms by purpose' into snakeoil?
     digest_algo = 'sha256'
+
+    def __init__(self, *args, git_addon):
+        super().__init__(*args)
+        self._git_addon = git_addon
+        self._repo_prefix_len = len(self.options.target_repo.location) + 1
 
     def feed(self, pkgset):
         pkg = pkgset[0]
@@ -178,6 +184,11 @@ class PkgDirCheck(Check):
         # note we don't use os.walk, we need size info also
         for filename in listdir(pkg_path):
             path = pjoin(pkg_path, filename)
+
+            # skip files matching .gitignore
+            if self._git_addon.gitignore.match_file(path[self._repo_prefix_len:]):
+                continue
+
             if os.path.isfile(path) and  os.stat(path).st_mode & 0o111:
                 yield ExecutableFile(filename, pkg=pkg)
 
@@ -218,7 +229,11 @@ class PkgDirCheck(Check):
                 dirs.remove(d)
             base_dir = root[pkg_path_len:]
             for file_name in files:
-                file_stat = os.lstat(pjoin(root, file_name))
+                path = pjoin(root, file_name)
+                # skip files matching .gitignore
+                if self._git_addon.gitignore.match_file(path[self._repo_prefix_len:]):
+                    continue
+                file_stat = os.lstat(path)
                 if stat.S_ISREG(file_stat.st_mode):
                     if file_stat.st_mode & 0o111:
                         yield ExecutableFile(pjoin(base_dir, file_name), pkg=pkg)

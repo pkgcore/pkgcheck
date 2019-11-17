@@ -2,7 +2,7 @@ import os
 
 from snakeoil.osutils import pjoin
 
-from .. import base, results, sources
+from .. import base, git, results, sources
 from ..packages import RawCPV
 from ..utils import is_binary
 from . import GentooRepoCheck
@@ -25,13 +25,15 @@ class RepoDirCheck(GentooRepoCheck):
 
     scope = base.repository_scope
     _source = sources.EmptySource
+    required_addons = (git.GitAddon,)
     known_results = frozenset([BinaryFile])
 
     # repo root level directories that are ignored
     ignored_root_dirs = frozenset(['.git'])
 
-    def __init__(self, *args):
+    def __init__(self, *args, git_addon):
         super().__init__(*args)
+        self._git_addon = git_addon
         self.repo = self.options.target_repo
         self.ignored_paths = {
             pjoin(self.repo.location, x) for x in self.ignored_root_dirs}
@@ -44,7 +46,9 @@ class RepoDirCheck(GentooRepoCheck):
                     if entry.path not in self.ignored_paths:
                         self.dirs.append(entry.path)
                 elif is_binary(entry.path):
-                    yield BinaryFile(entry.path[len(self.repo.location) + 1:])
+                    rel_path = entry.path[len(self.repo.location) + 1:]
+                    if not self._git_addon.gitignore.match_file(rel_path):
+                        yield BinaryFile(rel_path)
 
 
 class EmptyCategoryDir(results.CategoryResult, results.Warning):
