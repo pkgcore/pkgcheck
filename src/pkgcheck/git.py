@@ -321,6 +321,9 @@ class GitAddon(base.Addon, base.Cache):
                 cwd=repo.location)
             if ret != 0:
                 parser.error('git not available to determine targets for --commits')
+            elif not out:
+                # no pkg changes exist
+                parser.exit()
             pkgs = sorted(atom_cls(os.sep.join(x.split(os.sep, 2)[:2])) for x in out)
             combined_restrict = boolean.OrRestriction(*pkgs)
             namespace.restrictions = [(base.package_scope, combined_restrict)]
