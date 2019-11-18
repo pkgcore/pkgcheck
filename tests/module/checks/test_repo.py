@@ -103,7 +103,7 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         # but results are suppressed if a matching .gitignore entry exists
         with open(pjoin(self.repo.location, '.gitignore'), 'w') as f:
             f.write('/distfiles/')
-        self.assertNoReport(check, [])
+        self.assertNoReport(self.mk_check(), [])
 
     def test_non_utf8_encodings(self):
         # non-english languages courtesy of google translate mangling
