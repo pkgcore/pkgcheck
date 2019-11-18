@@ -293,14 +293,13 @@ class GitAddon(base.Addon, base.Cache):
     @classmethod
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('git', docs=cls.__doc__)
-        mutual_ex_group = group.add_mutually_exclusive_group()
-        mutual_ex_group.add_argument(
+        group.add_argument(
             '--git-disable', action='store_true',
             help="disable git-related checks",
             docs="""
                 Disable all checks that use git to parse repo logs.
             """)
-        mutual_ex_group.add_argument(
+        group.add_argument(
             '--commits', action=_ScanCommits, default=False,
             help="determine scan targets from local git repo commits",
             docs="""
