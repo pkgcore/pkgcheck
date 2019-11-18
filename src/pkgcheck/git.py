@@ -316,11 +316,13 @@ class GitAddon(base.Addon, base.Cache):
                 parser.error(
                     '--commits is mutually exclusive with '
                     f'target{_pl(namespace.targets)}: {targets}')
-            try:
-                repo = cls.commits_repo(cls, GitChangedRepo, options=namespace)
-            except CommandNotFound:
+            repo = namespace.target_repo
+            ret, out = spawn_get_output(
+                ['git', 'diff', 'origin', '--name-only'] + list(repo.categories),
+                cwd=repo.location)
+            if ret != 0:
                 parser.error('git not available to determine targets for --commits')
-            pkgs = sorted(set(x.unversioned_atom for x in repo))
+            pkgs = sorted(atom_cls(os.sep.join(x.split(os.sep, 2)[:2])) for x in out)
             combined_restrict = boolean.OrRestriction(*pkgs)
             namespace.restrictions = [(base.package_scope, combined_restrict)]
 
