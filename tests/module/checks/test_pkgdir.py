@@ -376,3 +376,18 @@ class TestUnknownFile(PkgDirCheckBase):
         r = self.assertReport(self.mk_check(gentoo=True), [pkg])
         assert isinstance(r, pkgdir.UnknownFile)
         assert 'foo-2' in str(r)
+
+    def test_unknown_files_gitignore(self):
+        pkg = self.mk_pkg(files={'foo.init': 'blah'}, category='dev-util', package='foo')
+        touch(pjoin(os.path.dirname(pkg.path), 'Manifest'))
+        touch(pjoin(os.path.dirname(pkg.path), 'metadata.xml'))
+        touch(pjoin(os.path.dirname(pkg.path), 'foo-0.ebuild'))
+        touch(pjoin(os.path.dirname(pkg.path), 'foo-0.ebuild.swp'))
+        r = self.assertReport(self.mk_check(gentoo=True), [pkg])
+        assert isinstance(r, pkgdir.UnknownFile)
+        assert 'foo-0.ebuild.swp' in str(r)
+
+        # results are suppressed if a matching .gitignore entry exists
+        with open(pjoin(self.repo.location, '.gitignore'), 'w') as f:
+            f.write('*.swp')
+        self.assertNoReport(self.mk_check(gentoo=True), [pkg])
