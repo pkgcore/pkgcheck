@@ -89,6 +89,22 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         assert r.path == 'dev-util/foo/files/foo'
         assert "'dev-util/foo/files/foo'" in str(r)
 
+    def test_gitignore(self):
+        # distfiles located in deprecated in-tree location are reported by default
+        check = self.mk_check()
+        distfiles = pjoin(self.repo.location, 'distfiles')
+        os.mkdir(distfiles)
+        with open(pjoin(distfiles, 'foo-0.tar.gz'), 'wb') as f:
+            f.write(b'\xd3\xad\xbe\xef')
+        r = self.assertReport(check, [])
+        assert isinstance(r, repo.BinaryFile)
+        assert "distfiles/foo-0.tar.gz" in str(r)
+
+        # but results are suppressed if a matching .gitignore entry exists
+        with open(pjoin(self.repo.location, '.gitignore'), 'w') as f:
+            f.write('/distfiles/')
+        self.assertNoReport(check, [])
+
     def test_non_utf8_encodings(self):
         # non-english languages courtesy of google translate mangling
         langs = (
