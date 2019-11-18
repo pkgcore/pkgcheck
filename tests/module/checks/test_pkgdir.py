@@ -327,6 +327,31 @@ class TestExecutableFile(PkgDirCheckBase):
         assert 'files/foo.init' in str(r)
 
 
+class TestGlep31Violation(PkgDirCheckBase):
+    """Check Glep31Violation results."""
+
+    def test_regular_files(self):
+        pkg = self.mk_pkg({'foo.init': 'blah'})
+        touch(pjoin(os.path.dirname(pkg.path), 'Manifest'))
+        touch(pjoin(os.path.dirname(pkg.path), 'metadata.xml'))
+        self.assertNoReport(self.mk_check(), [pkg])
+
+    def test_filenames_outside_allowed_charsets(self):
+        pkg = self.mk_pkg({
+            'foo.init': 'bar',
+            'foo.init~': 'foo',
+        })
+        # vim backup files are flagged by default
+        r = self.assertReport(self.mk_check(), [pkg])
+        assert isinstance(r, pkgdir.Glep31Violation)
+        assert 'files/foo.init~' in str(r)
+
+        # but results are suppressed if a matching .gitignore entry exists
+        with open(pjoin(self.repo.location, '.gitignore'), 'w') as f:
+            f.write('*~')
+        self.assertNoReport(self.mk_check(), [pkg])
+
+
 class TestUnknownFile(PkgDirCheckBase):
     """Check UnknownFile results."""
 
@@ -349,3 +374,5 @@ class TestUnknownFile(PkgDirCheckBase):
         touch(pjoin(os.path.dirname(pkg.path), 'metadata.xml'))
         touch(pjoin(os.path.dirname(pkg.path), 'foo-2'))
         r = self.assertReport(self.mk_check(gentoo=True), [pkg])
+        assert isinstance(r, pkgdir.UnknownFile)
+        assert 'foo-2' in str(r)
