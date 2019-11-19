@@ -13,7 +13,7 @@ from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
-from pkgcore.restrictions import boolean
+from pkgcore.restrictions import packages
 from snakeoil.cli.exceptions import UserException
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.klass import jit_attr
@@ -325,7 +325,7 @@ class GitAddon(base.Addon, base.Cache):
                 # no pkg changes exist
                 parser.exit()
             pkgs = sorted(atom_cls(os.sep.join(x.split(os.sep, 2)[:2])) for x in out)
-            combined_restrict = boolean.OrRestriction(*pkgs)
+            combined_restrict = packages.OrRestriction(*pkgs)
             namespace.restrictions = [(base.package_scope, combined_restrict)]
 
     def __init__(self, *args):

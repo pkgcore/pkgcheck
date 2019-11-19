@@ -141,6 +141,45 @@ class TestPkgcheckScanParseArgs(object):
             assert options.target_repo.repo_id == 'stubrepo'
             assert list(options.restrictions) == [(base.repository_scope, packages.AlwaysTrue)]
 
+    def test_commits_with_targets(self, capsys):
+        with pytest.raises(SystemExit) as excinfo:
+            options, _func = self.tool.parse_args(self.args + ['--commits', 'dev-util/foo'])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        err = err.strip().split('\n')
+        assert err[-1].startswith(
+            "pkgcheck scan: error: --commits is mutually exclusive with target: dev-util/foo")
+
+    def test_commits_git_error(self, capsys):
+        with patch('pkgcheck.git.spawn_get_output') as spawn_get_output:
+            spawn_get_output.return_value = (1, [])
+            with pytest.raises(SystemExit) as excinfo:
+                options, _func = self.tool.parse_args(self.args + ['--commits'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[-1].startswith(
+                "pkgcheck scan: error: git not available to determine targets for --commits")
+
+    def test_commits_nonexistent(self):
+        with patch('pkgcheck.git.spawn_get_output') as spawn_get_output:
+            spawn_get_output.return_value = (0, [])
+            with pytest.raises(SystemExit) as excinfo:
+                options, _func = self.tool.parse_args(self.args + ['--commits'])
+            assert excinfo.value.code == 0
+
+    def test_commits_existing(self):
+        output = [
+            'dev-libs/foo/metadata.xml\n',
+            'media-libs/bar/bar-0.ebuild\n',
+        ]
+        with patch('pkgcheck.git.spawn_get_output') as spawn_get_output:
+            spawn_get_output.return_value = (0, output)
+            options, _func = self.tool.parse_args(self.args + ['--commits'])
+            restrictions = [atom.atom('dev-libs/foo'), atom.atom('media-libs/bar')]
+            assert options.restrictions == \
+                [(base.package_scope, packages.OrRestriction(*restrictions))]
+
     def test_unknown_repo(self, capsys):
         for opt in ('-r', '--repo'):
             with pytest.raises(SystemExit) as excinfo:
