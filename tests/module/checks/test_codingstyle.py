@@ -110,40 +110,47 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
     check_kls = codingstyle.AbsoluteSymlinkCheck
 
     def test_it(self):
-        absolute = (
+        absolute = [
             ("/bin/blah", "/bin/baz"),
             ('"/bin/blah baz"', "/bin/blahbaz"),
             ("'/bin/blah baz'", "/bin/blahbaz"),
             ("/etc/Boo", "/etc/boo"),
-        )
+        ]
 
-        relative = (
+        absolute_prefixed = []
+        for path_var in codingstyle.PATH_VARIABLES:
+            src, dest = ('/bin/blah', '/bin/bash')
+            absolute_prefixed.append((f'"${{{path_var}}}"{src}', dest))
+            absolute_prefixed.append((f'"${{{path_var}%/}}"{src}', dest))
+            src, dest = ('/bin/blah baz', '/bin/blahbaz')
+            absolute_prefixed.append((f'"${{{path_var}}}{src}"', dest))
+            absolute_prefixed.append((f'"${{{path_var}%/}}{src}"', dest))
+
+        relative = [
             ("blah", "/bin/baz"),
             ('"blah baz"', "/bin/blahbaz"),
             ("Boo", "/etc/boo"),
-        )
+        ]
 
-        unhandled = (
+        unhandled = [
             ("/crazy/root/dir", "/crazy/symlink"),
-        )
+        ]
 
         fake_src = [
             "# This is our first fake ebuild\n",
             "\n",
         ]
-        for src, dest in chain.from_iterable((absolute, relative, unhandled)):
+        for src, dest in chain.from_iterable((absolute, absolute_prefixed, relative, unhandled)):
             fake_src.append(f"\tdosym {src} {dest}\n")
         fake_src.append("# That's it for now\n")
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
 
         check = self.check_kls(None)
         reports = self.assertReports(check, fake_pkg)
-        abspaths = [x.abspath for x in reports]
 
-        assert len(reports) == len(absolute)
-        assert abspaths == [x[0] for x in absolute]
-        for r, abspath in zip(reports, absolute):
-            assert abspath[0] in str(r)
+        assert len(reports) == len(absolute) + len(absolute_prefixed)
+        for r, (src, dest) in zip(reports, absolute + absolute_prefixed):
+            assert f'dosym {src}' in str(r)
 
 
 class TestPathVariablesCheck(misc.ReportTestCase):
@@ -154,7 +161,7 @@ class TestPathVariablesCheck(misc.ReportTestCase):
     def _found(self, cls, suffix=''):
         # check single and multiple matches across all specified variables
         for lines in (1, 2):
-            for path_var in self.check_kls.variables:
+            for path_var in codingstyle.PATH_VARIABLES:
                 fake_src = ["src_install() {\n"]
                 for x in range(lines):
                     fake_src.append(f'   rm "${{{path_var}{suffix}}}"a/file{x} || die\n')
@@ -172,7 +179,7 @@ class TestPathVariablesCheck(misc.ReportTestCase):
                         assert path_var in str(r)
 
     def _unfound(self, cls, suffix=''):
-        for path_var in self.check_kls.variables:
+        for path_var in codingstyle.PATH_VARIABLES:
             fake_src = [
                 "src_install() {\n",
                 f'   local var="${{{path_var}}}_foo"\n',

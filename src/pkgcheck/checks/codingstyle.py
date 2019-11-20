@@ -17,6 +17,9 @@ demand_compile_regexp(
     'ebuild_copyright_regex',
     r'^# Copyright (?P<begin>\d{4}-)?(?P<end>\d{4}) (?P<holder>.+)$')
 
+PREFIXED_VARIABLES = ('EROOT', 'ED')
+PATH_VARIABLES = ('BROOT', 'ROOT', 'D') + PREFIXED_VARIABLES
+
 
 class _CommandResult(results.LineResult):
     """Generic command result."""
@@ -173,8 +176,6 @@ class PathVariablesCheck(Check):
         # python-utils-r1
         'python_scriptinto', 'python_moduleinto',
     )
-    prefixed_variables = ('EROOT', 'ED')
-    variables = ('ROOT', 'D') + prefixed_variables
     # TODO: add variables to mark this status in the eclasses in order to pull
     # this data from parsed eclass docs
     prefixed_getters = (
@@ -207,11 +208,11 @@ class PathVariablesCheck(Check):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.missing_regex = re.compile(r'(\${(%s)})"?\w+/' % r'|'.join(self.variables))
-        self.unnecessary_regex = re.compile(r'(\${(%s)%%/})' % r'|'.join(self.variables))
+        self.missing_regex = re.compile(r'(\${(%s)})"?\w+/' % r'|'.join(PATH_VARIABLES))
+        self.unnecessary_regex = re.compile(r'(\${(%s)%%/})' % r'|'.join(PATH_VARIABLES))
         self.double_prefix_regex = re.compile(
             r'(\${(%s)(%%/)?}/?\$(\((%s)\)|{(%s)}))' % (
-                r'|'.join(self.prefixed_variables + ('EPREFIX',)),
+                r'|'.join(PREFIXED_VARIABLES + ('EPREFIX',)),
                 r'|'.join(self.prefixed_getters),
                 r'|'.join(self.prefixed_rhs_variables)))
         self.double_prefix_func_regex = re.compile(
@@ -267,13 +268,13 @@ class PathVariablesCheck(Check):
 class AbsoluteSymlink(results.LineResult, results.Warning):
     """Ebuild uses dosym with absolute paths instead of relative."""
 
-    def __init__(self, abspath, **kwargs):
+    def __init__(self, cmd, **kwargs):
         super().__init__(**kwargs)
-        self.abspath = abspath
+        self.cmd = cmd
 
     @property
     def desc(self):
-        return f"'dosym {self.abspath} ...' uses absolute path on line {self.lineno}"
+        return f"dosym called with absolute path on line {self.lineno}: {self.cmd}"
 
 
 class AbsoluteSymlinkCheck(Check):
@@ -286,8 +287,11 @@ class AbsoluteSymlinkCheck(Check):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.regex = re.compile(
-            r'^\s*dosym\s+((["\'])?/(%s)(?(2).*?\2|\S*))' % r'|'.join(self.DIRS))
+        dirs = '|'.join(self.DIRS)
+        path_vars = '|'.join(PATH_VARIABLES)
+        prefixed_regex = rf'"\${{({path_vars})(%/)?}}(?P<cp>")?(?(cp)\S*|.*?")'
+        non_prefixed_regex = rf'(?P<op>["\'])?/({dirs})(?(op).*?(?P=op)|\S*)'
+        self.regex = re.compile(rf'^\s*(?P<cmd>dosym\s+({prefixed_regex}|{non_prefixed_regex}))')
 
     def feed(self, pkg):
         for lineno, line in enumerate(pkg.lines, 1):
@@ -295,7 +299,7 @@ class AbsoluteSymlinkCheck(Check):
                 continue
             matches = self.regex.match(line)
             if matches is not None:
-                yield AbsoluteSymlink(matches.groups()[0], line=line, lineno=lineno, pkg=pkg)
+                yield AbsoluteSymlink(matches.group('cmd'), line=line, lineno=lineno, pkg=pkg)
 
 
 class DeprecatedInsinto(results.LineResult, results.Warning):
