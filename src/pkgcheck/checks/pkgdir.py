@@ -99,20 +99,22 @@ class ExecutableFile(results.PackageResult, results.Warning):
         return f'unnecessary executable bit: {self.filename!r}'
 
 
-class UnknownFile(results.PackageResult, results.Warning):
-    """Unknown file in package directory.
+class UnknownPkgDirEntry(results.PackageResult, results.Warning):
+    """Unknown files or directories in package directory.
 
     Relevant for the gentoo repo only since the spec states that a package
     directory may contain other files or directories.
     """
 
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filenames, **kwargs):
         super().__init__(**kwargs)
-        self.filename = filename
+        self.filenames = tuple(filenames)
 
     @property
     def desc(self):
-        return f'unknown file: {self.filename!r}'
+        files = ', '.join(map(repr, self.filenames))
+        y = _pl(self.filenames, singular='y', plural='ies')
+        return f'unknown entr{y}: {files}'
 
 
 class SizeViolation(results.PackageResult, results.Warning):
@@ -172,7 +174,7 @@ class PkgDirCheck(Check):
     ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
     required_addons = (git.GitAddon,)
     known_results = frozenset([
-        DuplicateFiles, EmptyFile, ExecutableFile, UnknownFile, SizeViolation,
+        DuplicateFiles, EmptyFile, ExecutableFile, UnknownPkgDirEntry, SizeViolation,
         BannedCharacter, InvalidUTF8, MismatchedPN, InvalidPN,
     ])
 
@@ -189,6 +191,7 @@ class PkgDirCheck(Check):
         ebuild_ext = '.ebuild'
         mismatched = []
         invalid = []
+        unknown = []
         # note we don't use os.walk, we need size info also
         for filename in listdir(pkg_path):
             path = pjoin(pkg_path, filename)
@@ -222,12 +225,14 @@ class PkgDirCheck(Check):
                     invalid.append(pkg_name)
             elif (self.options.gentoo_repo and
                     filename not in ('Manifest', 'metadata.xml', 'files')):
-                yield UnknownFile(filename, pkg=pkg)
+                unknown.append(filename)
 
         if mismatched:
             yield MismatchedPN(sorted(mismatched), pkg=pkg)
         if invalid:
             yield InvalidPN(sorted(invalid), pkg=pkg)
+        if unknown:
+            yield UnknownPkgDirEntry(sorted(unknown), pkg=pkg)
 
         files_by_size = defaultdict(list)
         pkg_path_len = len(pkg_path) + 1
