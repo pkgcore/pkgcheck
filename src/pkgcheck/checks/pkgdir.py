@@ -128,8 +128,13 @@ class SizeViolation(results.PackageResult, results.Warning):
         return f'{self.filename!r} exceeds 20k in size; {sizeof_fmt(self.size)} total'
 
 
-class Glep31Violation(results.PackageResult, results.Error):
-    """File doesn't abide by glep31 requirements."""
+class BannedCharacter(results.PackageResult, results.Error):
+    """File or directory name doesn't abide by GLEP 31 requirements.
+
+    See the official GLEP 31 documentation [#]_ for details.
+
+    .. [#] https://www.gentoo.org/glep/glep-0031.html
+    """
 
     def __init__(self, filename, chars, **kwargs):
         super().__init__(**kwargs)
@@ -159,7 +164,7 @@ class InvalidUTF8(results.PackageResult, results.Error):
 
 
 class PkgDirCheck(Check):
-    """Actual ebuild directory scans; file size, glep31 rule enforcement."""
+    """Scan ebuild directory for various file-related issues."""
 
     scope = base.package_scope
     _source = (sources.PackageRepoSource, (), (('source', sources.RawRepoSource),))
@@ -168,7 +173,7 @@ class PkgDirCheck(Check):
     required_addons = (git.GitAddon,)
     known_results = frozenset([
         DuplicateFiles, EmptyFile, ExecutableFile, UnknownFile, SizeViolation,
-        Glep31Violation, InvalidUTF8, MismatchedPN, InvalidPN,
+        BannedCharacter, InvalidUTF8, MismatchedPN, InvalidPN,
     ])
 
     # TODO: put some 'preferred algorithms by purpose' into snakeoil?
@@ -201,7 +206,7 @@ class PkgDirCheck(Check):
             # it's a frame switch each char, which adds up.
             banned_chars = set(filename) - allowed_filename_chars_set
             if banned_chars:
-                yield Glep31Violation(filename, sorted(banned_chars), pkg=pkg)
+                yield BannedCharacter(filename, sorted(banned_chars), pkg=pkg)
 
             if filename.endswith(ebuild_ext):
                 try:
@@ -251,7 +256,7 @@ class PkgDirCheck(Check):
                                 pjoin(base_dir, filename), file_stat.st_size, pkg=pkg)
                     banned_chars = set(filename) - allowed_filename_chars_set
                     if banned_chars:
-                        yield Glep31Violation(
+                        yield BannedCharacter(
                             pjoin(base_dir, filename), sorted(banned_chars), pkg=pkg)
 
         files_by_digest = defaultdict(list)

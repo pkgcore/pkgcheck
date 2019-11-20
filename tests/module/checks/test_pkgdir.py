@@ -327,8 +327,8 @@ class TestExecutableFile(PkgDirCheckBase):
         assert 'files/foo.init' in str(r)
 
 
-class TestGlep31Violation(PkgDirCheckBase):
-    """Check Glep31Violation results."""
+class TestBannedCharacter(PkgDirCheckBase):
+    """Check BannedCharacter results."""
 
     def test_regular_files(self):
         pkg = self.mk_pkg({'foo.init': 'blah'})
@@ -343,7 +343,7 @@ class TestGlep31Violation(PkgDirCheckBase):
         })
         # vim backup files are flagged by default
         r = self.assertReport(self.mk_check(), [pkg])
-        assert isinstance(r, pkgdir.Glep31Violation)
+        assert isinstance(r, pkgdir.BannedCharacter)
         assert 'files/foo.init~' in str(r)
 
         # but results are suppressed if a matching .gitignore entry exists
