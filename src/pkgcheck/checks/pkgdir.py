@@ -131,14 +131,18 @@ class SizeViolation(results.PackageResult, results.Warning):
 class Glep31Violation(results.PackageResult, results.Error):
     """File doesn't abide by glep31 requirements."""
 
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filename, chars, **kwargs):
         super().__init__(**kwargs)
         self.filename = filename
+        self.chars = tuple(chars)
 
     @property
     def desc(self):
-        return "filename contains char outside the allowed ranges defined " \
-               f"by glep31: {self.filename!r}"
+        chars = ', '.join(map(repr, self.chars))
+        return (
+            f'filename {self.filename!r} character{_pl(self.chars)} '
+            f'outside allowed set: {chars}'
+        )
 
 
 class InvalidUTF8(results.PackageResult, results.Error):
@@ -195,8 +199,9 @@ class PkgDirCheck(Check):
             # While this may seem odd, written this way such that the filtering
             # happens all in the genexp. If the result was being handed to any,
             # it's a frame switch each char, which adds up.
-            if any(True for x in filename if x not in allowed_filename_chars_set):
-                yield Glep31Violation(filename, pkg=pkg)
+            banned_chars = set(filename) - allowed_filename_chars_set
+            if banned_chars:
+                yield Glep31Violation(filename, sorted(banned_chars), pkg=pkg)
 
             if filename.endswith(ebuild_ext):
                 try:
@@ -228,24 +233,26 @@ class PkgDirCheck(Check):
             for d in self.ignore_dirs.intersection(dirs):
                 dirs.remove(d)
             base_dir = root[pkg_path_len:]
-            for file_name in files:
-                path = pjoin(root, file_name)
+            for filename in files:
+                path = pjoin(root, filename)
                 # skip files matching .gitignore
                 if self._git_addon.gitignore.match_file(path[self._repo_prefix_len:]):
                     continue
                 file_stat = os.lstat(path)
                 if stat.S_ISREG(file_stat.st_mode):
                     if file_stat.st_mode & 0o111:
-                        yield ExecutableFile(pjoin(base_dir, file_name), pkg=pkg)
+                        yield ExecutableFile(pjoin(base_dir, filename), pkg=pkg)
                     if file_stat.st_size == 0:
-                        yield EmptyFile(pjoin(base_dir, file_name), pkg=pkg)
+                        yield EmptyFile(pjoin(base_dir, filename), pkg=pkg)
                     else:
-                        files_by_size[file_stat.st_size].append(pjoin(base_dir, file_name))
+                        files_by_size[file_stat.st_size].append(pjoin(base_dir, filename))
                         if file_stat.st_size > 20480:
                             yield SizeViolation(
-                                pjoin(base_dir, file_name), file_stat.st_size, pkg=pkg)
-                    if any(True for char in file_name if char not in allowed_filename_chars_set):
-                        yield Glep31Violation(pjoin(base_dir, file_name), pkg=pkg)
+                                pjoin(base_dir, filename), file_stat.st_size, pkg=pkg)
+                    banned_chars = set(filename) - allowed_filename_chars_set
+                    if banned_chars:
+                        yield Glep31Violation(
+                            pjoin(base_dir, filename), sorted(banned_chars), pkg=pkg)
 
         files_by_digest = defaultdict(list)
         for size, files in files_by_size.items():
