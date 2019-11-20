@@ -33,7 +33,7 @@ class RepoDirCheck(GentooRepoCheck):
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
-        self._git_addon = git_addon
+        self.gitignored = git_addon.gitignored
         self.repo = self.options.target_repo
         self.ignored_paths = {
             pjoin(self.repo.location, x) for x in self.ignored_root_dirs}
@@ -43,11 +43,12 @@ class RepoDirCheck(GentooRepoCheck):
         while self.dirs:
             for entry in os.scandir(self.dirs.pop()):
                 if entry.is_dir(follow_symlinks=False):
-                    if entry.path not in self.ignored_paths:
-                        self.dirs.append(entry.path)
+                    if entry.path in self.ignored_paths or self.gitignored(entry.path):
+                        continue
+                    self.dirs.append(entry.path)
                 elif is_binary(entry.path):
-                    rel_path = entry.path[len(self.repo.location) + 1:]
-                    if not self._git_addon.gitignore.match_file(rel_path):
+                    if not self.gitignored(entry.path):
+                        rel_path = entry.path[len(self.repo.location) + 1:]
                         yield BinaryFile(rel_path)
 
 

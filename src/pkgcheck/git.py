@@ -339,9 +339,12 @@ class GitAddon(base.Addon, base.Cache):
 
         # mapping of repo locations to their corresponding git repo caches
         self._cached_repos = {}
+        # used for chopping off path prefixes for gitignore
+        self._repo_prefix_len = len(self.options.target_repo.location) + 1
 
     @jit_attr
     def gitignore(self):
+        """Load a repo's .gitignore file for path matching usage."""
         path = pjoin(self.options.target_repo.location, '.gitignore')
         patterns = []
         try:
@@ -352,6 +355,12 @@ class GitAddon(base.Addon, base.Cache):
         except IOError as e:
             logger.warning(f'failed reading {path!r}: {e}')
         return PathSpec.from_lines('gitwildmatch', patterns)
+
+    def gitignored(self, path):
+        """Determine if a given path in a repository is matched by .gitignore settings."""
+        if path.startswith(self.options.target_repo.location):
+            path = path[self._repo_prefix_len:]
+        return self.gitignore.match_file(path)
 
     @staticmethod
     def get_commit_hash(repo_location, commit='origin/HEAD'):

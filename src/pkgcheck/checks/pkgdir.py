@@ -181,8 +181,7 @@ class PkgDirCheck(Check):
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
-        self._git_addon = git_addon
-        self._repo_prefix_len = len(self.options.target_repo.location) + 1
+        self.gitignored = git_addon.gitignored
 
     def feed(self, pkgset):
         pkg = pkgset[0]
@@ -194,8 +193,7 @@ class PkgDirCheck(Check):
         for filename in listdir(pkg_path):
             path = pjoin(pkg_path, filename)
 
-            # skip files matching .gitignore
-            if self._git_addon.gitignore.match_file(path[self._repo_prefix_len:]):
+            if self.gitignored(path):
                 continue
 
             if os.path.isfile(path) and  os.stat(path).st_mode & 0o111:
@@ -240,8 +238,7 @@ class PkgDirCheck(Check):
             base_dir = root[pkg_path_len:]
             for filename in files:
                 path = pjoin(root, filename)
-                # skip files matching .gitignore
-                if self._git_addon.gitignore.match_file(path[self._repo_prefix_len:]):
+                if self.gitignored(path):
                     continue
                 file_stat = os.lstat(path)
                 if stat.S_ISREG(file_stat.st_mode):
