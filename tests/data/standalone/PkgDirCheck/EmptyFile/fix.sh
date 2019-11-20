@@ -1,2 +1,2 @@
-#!/bin/sh
+#!/bin/bash
 rm PkgDirCheck/EmptyFile/files/empty
