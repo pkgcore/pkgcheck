@@ -87,12 +87,19 @@ class TestHomepageCheck(misc.ReportTestCase):
         isinstance(r, metadata.BadHomepage)
         assert "uses unsupported protocol 'htp'" in str(r)
 
+    def test_unspecific_site(self):
+        for suffix in ('', '/'):
+            for site in ('https://www.gentoo.org', 'https://gentoo.org'):
+                r = self.assertReport(self.check, self.mk_pkg(f'{site}{suffix}'))
+                isinstance(r, metadata.BadHomepage)
+                assert "unspecific HOMEPAGE" in str(r)
+
     def test_missing_categories(self):
         for category in self.check_kls.missing_categories:
             pkg = misc.FakePkg(f"{category}/foo-1", data={"HOMEPAGE": "http://foo.com"})
             r = self.assertReport(self.check, pkg)
             isinstance(r, metadata.BadHomepage)
-            assert f"'{category}' packages shouldn't define HOMEPAGE" in str(r)
+            assert f"HOMEPAGE should be undefined for '{category}' packages" in str(r)
 
 
 class IUSE_Options(misc.Tmpdir):

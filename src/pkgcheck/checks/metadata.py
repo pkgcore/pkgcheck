@@ -1101,7 +1101,13 @@ class DescriptionCheck(Check):
 
 
 class BadHomepage(results.VersionResult, results.Warning):
-    """Package's homepage is bad for some reason."""
+    """A package's HOMEPAGE is bad for some reason.
+
+    See the HOMEPAGE ebuild variable entry in the devmanual [#]_ for more
+    information.
+
+    .. [#] https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables
+    """
 
     def __init__(self, msg, **kwargs):
         super().__init__(**kwargs)
@@ -1109,7 +1115,7 @@ class BadHomepage(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f"bad HOMEPAGE: {self.msg}"
+        return self.msg
 
 
 class HomepageCheck(Check):
@@ -1119,25 +1125,30 @@ class HomepageCheck(Check):
 
     # categories for ebuilds that should lack HOMEPAGE
     missing_categories = frozenset(['virtual', 'acct-group', 'acct-user'])
+    # generic sites that shouldn't be used for HOMEPAGE
+    generic_sites = frozenset(['https://www.gentoo.org', 'https://gentoo.org'])
 
     def feed(self, pkg):
         if not pkg.homepage:
             if pkg.category not in self.missing_categories:
-                yield BadHomepage("empty/unset", pkg=pkg)
+                yield BadHomepage('HOMEPAGE empty/unset', pkg=pkg)
         else:
             if pkg.category in self.missing_categories:
                 yield BadHomepage(
-                    f"{pkg.category!r} packages shouldn't define HOMEPAGE", pkg=pkg)
+                    f'HOMEPAGE should be undefined for {pkg.category!r} packages', pkg=pkg)
             else:
                 for homepage in pkg.homepage:
-                    i = homepage.find("://")
-                    if i == -1:
-                        yield BadHomepage(f"HOMEPAGE={homepage!r} lacks protocol", pkg=pkg)
-                    elif homepage[:i] not in SrcUriCheck.valid_protos:
-                        yield BadHomepage(
-                            f"HOMEPAGE={homepage!r} uses unsupported "
-                            f"protocol {homepage[:i]!r}",
-                            pkg=pkg)
+                    if homepage.rstrip('/') in self.generic_sites:
+                        yield BadHomepage(f'unspecific HOMEPAGE: {homepage}', pkg=pkg)
+                    else:
+                        i = homepage.find('://')
+                        if i == -1:
+                            yield BadHomepage(f'HOMEPAGE={homepage!r} lacks protocol', pkg=pkg)
+                        elif homepage[:i] not in SrcUriCheck.valid_protos:
+                            yield BadHomepage(
+                                f'HOMEPAGE={homepage!r} uses unsupported '
+                                f'protocol {homepage[:i]!r}',
+                                pkg=pkg)
 
 
 class UnknownRestricts(results.VersionResult, results.Warning):
