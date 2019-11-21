@@ -104,7 +104,7 @@ class DeprecatedEclassCheck(Check):
         'ruby-gnome2': 'ruby-ng-gnome2',
         'tla': None,
         'ltprune': None,
-        'user': 'GLEP 81',
+        'user': 'acct-user/acct-group packages',
         'vim': None,
         'webapp-apache': None,
         'x-modular': 'xorg-2',
