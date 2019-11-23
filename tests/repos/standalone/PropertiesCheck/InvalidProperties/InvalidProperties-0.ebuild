@@ -1,0 +1,6 @@
+DESCRIPTION="Ebuild with invalid PROPERTIES"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SLOT="0"
+LICENSE="BSD"
+IUSE="used"
+PROPERTIES="!used ( interactive )"

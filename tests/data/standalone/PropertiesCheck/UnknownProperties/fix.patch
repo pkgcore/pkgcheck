@@ -1,0 +1,9 @@
+diff -Naur standalone/PropertiesCheck/UnknownProperties/UnknownProperties-0.ebuild fixed/PropertiesCheck/UnknownProperties/UnknownProperties-0.ebuild
+--- standalone/PropertiesCheck/UnknownProperties/UnknownProperties-0.ebuild	2019-10-08 02:38:22.837212452 -0600
++++ fixed/PropertiesCheck/UnknownProperties/UnknownProperties-0.ebuild	2019-10-08 02:43:25.224678356 -0600
+@@ -2,4 +2,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-PROPERTIES="foo"
++PROPERTIES="live"

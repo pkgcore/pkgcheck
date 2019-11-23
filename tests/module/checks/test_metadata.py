@@ -532,9 +532,7 @@ def use_based():
     return UseBased
 
 
-class TestRestrictsCheck(use_based(), misc.ReportTestCase):
-
-    check_kls = metadata.RestrictsCheck
+class _TestRestrictPropertiesCheck(use_based(), misc.ReportTestCase):
 
     def mk_pkg(self, restrict='', properties='', iuse=''):
         return misc.FakePkg(
@@ -542,45 +540,58 @@ class TestRestrictsCheck(use_based(), misc.ReportTestCase):
             data={'IUSE': iuse, 'RESTRICT': restrict, 'PROPERTIES': properties})
 
     def test_no_allowed(self):
-        for attr in ('properties', 'restrict'):
-            # repo or its masters don't define any allowed values so anything goes
-            check = self.mk_check()
-            self.assertNoReport(check, self.mk_pkg(**{attr: 'foo'}))
-            self.assertNoReport(check, self.mk_pkg(**{attr: 'foo? ( bar )', 'iuse': 'foo'}))
+        # repo or its masters don't define any allowed values so anything goes
+        check = self.mk_check()
+        self.assertNoReport(check, self.mk_pkg(**{self.check_kls._attr: 'foo'}))
+        self.assertNoReport(check, self.mk_pkg(**{self.check_kls._attr: 'foo? ( bar )', 'iuse': 'foo'}))
 
     def test_allowed(self):
-        for attr, result in (('properties', metadata.UnknownProperties),
-                             ('restrict', metadata.UnknownRestricts)):
-            check = self.mk_check(options={attr: ('foo',)})
-            # allowed
-            self.assertNoReport(check, self.mk_pkg(**{attr: 'foo'}))
+        check = self.mk_check(options={self.check_kls._attr: ('foo',)})
+        # allowed
+        self.assertNoReport(check, self.mk_pkg(**{self.check_kls._attr: 'foo'}))
 
-            # unknown
-            r = self.assertReport(check, self.mk_pkg(**{attr: 'bar'}))
-            assert isinstance(r, result)
-            assert f'unknown {attr.upper()}="bar"' == str(r)
+        # unknown
+        r = self.assertReport(check, self.mk_pkg(**{self.check_kls._attr: 'bar'}))
+        assert isinstance(r, self.check_kls._unknown_result_cls)
+        assert f'unknown {self.check_kls._attr.upper()}="bar"' == str(r)
 
-            # unknown multiple, conditional
-            pkg = self.mk_pkg(**{attr: 'baz? ( foo bar boo )', 'iuse': 'baz'})
-            r = self.assertReport(check, pkg)
-            assert isinstance(r, result)
-            assert f'unknown {attr.upper()}="bar boo"' == str(r)
+        # unknown multiple, conditional
+        pkg = self.mk_pkg(**{self.check_kls._attr: 'baz? ( foo bar boo )', 'iuse': 'baz'})
+        r = self.assertReport(check, pkg)
+        assert isinstance(r, self.check_kls._unknown_result_cls)
+        assert f'unknown {self.check_kls._attr.upper()}="bar boo"' == str(r)
 
     def test_unstated_iuse(self):
-        for attr in ('properties', 'restrict'):
-            check = self.mk_check()
-            # no IUSE
-            self.assertNoReport(check, self.mk_pkg(**{attr: 'foo'}))
-            # conditional with IUSE defined
-            self.assertNoReport(check, self.mk_pkg(**{attr: 'foo? ( bar )', 'iuse': 'foo'}))
-            # conditional missing IUSE
-            r = self.assertReport(check, self.mk_pkg(**{attr: 'foo? ( bar )'}))
-            assert isinstance(r, addons.UnstatedIuse)
-            assert 'unstated flag: [ foo ]' in str(r)
-            # multiple missing IUSE
-            r = self.assertReport(check, self.mk_pkg(**{attr: 'foo? ( bar ) boo? ( blah )'}))
-            assert isinstance(r, addons.UnstatedIuse)
-            assert 'unstated flags: [ boo, foo ]' in str(r)
+        check = self.mk_check()
+        # no IUSE
+        self.assertNoReport(check, self.mk_pkg(**{self.check_kls._attr: 'foo'}))
+        # conditional with IUSE defined
+        self.assertNoReport(check, self.mk_pkg(**{self.check_kls._attr: 'foo? ( bar )', 'iuse': 'foo'}))
+        # conditional missing IUSE
+        r = self.assertReport(check, self.mk_pkg(**{self.check_kls._attr: 'foo? ( bar )'}))
+        assert isinstance(r, addons.UnstatedIuse)
+        assert 'unstated flag: [ foo ]' in str(r)
+        # multiple missing IUSE
+        r = self.assertReport(check, self.mk_pkg(**{self.check_kls._attr: 'foo? ( bar ) boo? ( blah )'}))
+        assert isinstance(r, addons.UnstatedIuse)
+        assert 'unstated flags: [ boo, foo ]' in str(r)
+
+
+class TestRestrictCheck(_TestRestrictPropertiesCheck):
+
+    check_kls = metadata.RestrictCheck
+
+
+class TestPropertiesCheck(_TestRestrictPropertiesCheck):
+
+    check_kls = metadata.PropertiesCheck
+
+
+class _TestRestrictPropertiesCheck(use_based(), misc.ReportTestCase):
+
+    check_kls = metadata.RestrictCheck
+    attr = None
+    unknown_result_cls = None
 
 
 class TestRestrictTestCheck(misc.ReportTestCase):

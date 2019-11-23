@@ -1151,7 +1151,7 @@ class HomepageCheck(Check):
                                 pkg=pkg)
 
 
-class UnknownRestricts(results.VersionResult, results.Warning):
+class UnknownRestrict(results.VersionResult, results.Warning):
     """Package's RESTRICT metadata has unknown entries."""
 
     def __init__(self, restricts, **kwargs):
@@ -1183,44 +1183,55 @@ class InvalidRestrict(results.MetadataError):
     _metadata_attrs = ('restrict',)
 
 
-class RestrictsCheck(Check):
-    """Check for valid RESTRICT settings."""
+class InvalidProperties(results.MetadataError):
+    """Package's PROPERTIES is invalid."""
 
-    known_results = frozenset([
-        UnknownRestricts, UnknownProperties, UnstatedIuse, InvalidRestrict
-    ])
+    _metadata_attrs = ('properties',)
+
+
+class _RestrictPropertiesCheck(Check):
+    """Generic check for RESTRICT and PROPERTIES."""
+
+    _attr = None
+    _unknown_result_cls = None
     _priority = -1
     required_addons = (addons.UseAddon,)
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
-        self.restrict_filter = use_addon.get_filter('restrict')
-        self.properties_filter = use_addon.get_filter('properties')
+        self.filter = use_addon.get_filter(self._attr)
 
-        # pull allowed RESTRICT/PROPERTIES values from a repo and its masters
-        allowed_restricts = []
-        allowed_properties = []
+        # pull allowed values from a repo and its masters
+        allowed = []
         for repo in self.options.target_repo.trees:
-            allowed_restricts.extend(repo.config.restrict_allowed)
-            allowed_properties.extend(repo.config.properties_allowed)
-        self.allowed_restricts = frozenset(allowed_restricts)
-        self.allowed_properties = frozenset(allowed_properties)
+            allowed.extend(getattr(repo.config, f'{self._attr}_allowed'))
+        self.allowed = frozenset(allowed)
 
     def feed(self, pkg):
-        restricts, unstated = self.restrict_filter((str,), pkg, pkg.restrict)
-        yield from unstated
-        properties, unstated = self.properties_filter((str,), pkg, pkg.properties)
+        values, unstated = self.filter((str,), pkg, getattr(pkg, self._attr))
         yield from unstated
 
         # skip if target repo or its masters don't define allowed values
-        if self.allowed_restricts:
-            bad = set(restricts).difference(self.allowed_restricts)
-            if bad:
-                yield UnknownRestricts(sorted(bad), pkg=pkg)
-        if self.allowed_properties:
-            unknown = set(properties).difference(self.allowed_properties)
+        if self.allowed:
+            unknown = set(values).difference(self.allowed)
             if unknown:
-                yield UnknownProperties(sorted(unknown), pkg=pkg)
+                yield self._unknown_result_cls(sorted(unknown), pkg=pkg)
+
+
+class RestrictCheck(_RestrictPropertiesCheck):
+    """RESTRICT related checks."""
+
+    known_results = frozenset([UnknownRestrict, UnstatedIuse, InvalidRestrict])
+    _attr = 'restrict'
+    _unknown_result_cls = UnknownRestrict
+
+
+class PropertiesCheck(_RestrictPropertiesCheck):
+    """PROPERTIES related checks."""
+
+    known_results = frozenset([UnknownProperties, UnstatedIuse, InvalidProperties])
+    _attr = 'properties'
+    _unknown_result_cls = UnknownProperties
 
 
 class MissingTestRestrict(results.VersionResult, results.Warning):

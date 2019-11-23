@@ -1,0 +1,2 @@
+PropertiesCheck/InvalidProperties
+  InvalidProperties: version 0: failed parsing PROPERTIES: '!used ( interactive )' is unparseable: flagged token- string index out of range

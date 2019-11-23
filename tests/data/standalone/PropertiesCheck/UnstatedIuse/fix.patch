@@ -1,0 +1,9 @@
+diff -Naur standalone/PropertiesCheck/UnstatedIuse/UnstatedIuse-0.ebuild fixed/PropertiesCheck/UnstatedIuse/UnstatedIuse-0.ebuild
+--- standalone/PropertiesCheck/UnstatedIuse/UnstatedIuse-0.ebuild	2019-11-23 17:11:46.384774990 -0700
++++ fixed/PropertiesCheck/UnstatedIuse/UnstatedIuse-0.ebuild	2019-11-23 17:12:59.316962880 -0700
+@@ -2,4 +2,5 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
++IUSE="used"
+ PROPERTIES="used? ( interactive )"
