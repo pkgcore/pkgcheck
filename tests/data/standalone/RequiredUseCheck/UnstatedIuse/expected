@@ -1,0 +1,2 @@
+RequiredUseCheck/UnstatedIuse
+  UnstatedIuse: version 0: attr(required_use): profile 'default/amd64' (2 total): unstated flag: [ used ]
