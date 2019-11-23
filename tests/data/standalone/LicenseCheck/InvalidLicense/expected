@@ -1,0 +1,4 @@
+LicenseCheck/InvalidLicense
+  InvalidLicense: version 0: failed parsing LICENSE: '( )' is unparseable
+  InvalidLicense: version 1: failed parsing LICENSE: '?' is unparseable: flagged token- ?
+  InvalidLicense: version 2: failed parsing LICENSE: 'used?' is unparseable: flagged token- used?
