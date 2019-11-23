@@ -1,0 +1,2 @@
+RestrictsCheck/InvalidRestrict
+  InvalidRestrict: version 0: failed parsing RESTRICT: '!used ( test )' is unparseable: flagged token- string index out of range

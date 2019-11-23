@@ -1177,10 +1177,19 @@ class UnknownProperties(results.VersionResult, results.Warning):
         return f'unknown PROPERTIES="{properties}"'
 
 
+class InvalidRestrict(results.MetadataError):
+    """Package's RESTRICT is invalid."""
+
+    _metadata_attrs = ('restrict',)
+
+
 class RestrictsCheck(Check):
     """Check for valid RESTRICT settings."""
 
-    known_results = frozenset([UnknownRestricts, UnknownProperties, UnstatedIuse])
+    known_results = frozenset([
+        UnknownRestricts, UnknownProperties, UnstatedIuse, InvalidRestrict
+    ])
+    _priority = -1
     required_addons = (addons.UseAddon,)
 
     def __init__(self, *args, use_addon):
