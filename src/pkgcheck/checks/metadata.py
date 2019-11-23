@@ -75,7 +75,7 @@ class UnnecessaryLicense(results.VersionResult, results.Warning):
         return f"{self.category!r} packages shouldn't define LICENSE"
 
 
-class LicenseMetadataCheck(Check):
+class LicenseCheck(Check):
     """LICENSE validity checks."""
 
     known_results = frozenset([

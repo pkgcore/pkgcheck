@@ -619,9 +619,9 @@ class TestRestrictTestCheck(misc.ReportTestCase):
             assert 'RESTRICT="!test? ( test )"' in str(r)
 
 
-class TestLicenseMetadataCheck(use_based(), misc.ReportTestCase):
+class TestLicenseCheck(use_based(), misc.ReportTestCase):
 
-    check_kls = metadata.LicenseMetadataCheck
+    check_kls = metadata.LicenseCheck
 
     def mk_check(self, licenses=(), **kwargs):
         self.repo = FakeRepo(repo_id='test', licenses=licenses)

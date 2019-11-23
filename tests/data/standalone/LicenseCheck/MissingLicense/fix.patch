@@ -1,0 +1,8 @@
+diff -Naur standalone/LicenseCheck/MissingLicense/MissingLicense-0.ebuild fixed/LicenseCheck/MissingLicense/MissingLicense-0.ebuild
+--- standalone/LicenseCheck/MissingLicense/MissingLicense-0.ebuild	2019-08-21 22:08:32.581264873 -0600
++++ fixed/LicenseCheck/MissingLicense/MissingLicense-0.ebuild	2019-08-21 22:09:43.194548871 -0600
+@@ -1,3 +1,4 @@
+ DESCRIPTION="Ebuild missing a LICENSE"""
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
++LICENSE="BSD"
