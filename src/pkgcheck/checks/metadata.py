@@ -298,7 +298,7 @@ class InvalidRequiredUse(results.MetadataError):
     _metadata_attrs = ('required_use',)
 
 
-class RequiredUseMetadataCheck(Check):
+class RequiredUseCheck(Check):
     """REQUIRED_USE validity checks."""
 
     # only run the check for EAPI 4 and above

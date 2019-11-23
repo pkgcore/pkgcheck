@@ -386,9 +386,9 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
         assert "EAPI 'blah' is not supported" == str(r)
 
 
-class TestRequiredUseMetadataCheck(IUSE_Options, misc.ReportTestCase):
+class TestRequiredUseCheck(IUSE_Options, misc.ReportTestCase):
 
-    check_kls = metadata.RequiredUseMetadataCheck
+    check_kls = metadata.RequiredUseCheck
 
     @pytest.fixture
     def check(self):
