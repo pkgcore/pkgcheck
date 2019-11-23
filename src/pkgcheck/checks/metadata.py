@@ -744,7 +744,7 @@ class DependencyCheck(Check):
 class BadKeywords(results.VersionResult, results.Warning):
     """Packages using ``-*`` should use package.mask instead."""
 
-    desc = "keywords contain -*; use package.mask or empty keywords instead"
+    desc = 'use package.mask or undefined keywords instead of KEYWORDS="-*"'
 
 
 class UnknownKeywords(results.VersionResult, results.Error):

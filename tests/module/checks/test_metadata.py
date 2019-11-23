@@ -160,7 +160,7 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         # all keywords masked
         r = self.assertReport(check, self.mk_pkg("-*"))
         assert isinstance(r, metadata.BadKeywords)
-        assert 'keywords contain -*' in str(r)
+        assert 'KEYWORDS="-*"' in str(r)
 
     def test_invalid_keywords(self, check):
         # regular keywords
