@@ -1,0 +1,4 @@
+RequiredUseCheck/InvalidRequiredUse
+  InvalidRequiredUse: version 0: failed parsing REQUIRED_USE: '|| ( )' is unparseable
+  InvalidRequiredUse: version 1: failed parsing REQUIRED_USE: '?' is unparseable: flagged token- ?
+  InvalidRequiredUse: version 2: failed parsing REQUIRED_USE: 'required?' is unparseable: flagged token- required?
