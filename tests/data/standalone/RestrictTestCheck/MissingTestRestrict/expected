@@ -1,0 +1,2 @@
+RestrictTestCheck/MissingTestRestrict
+  MissingTestRestrict: version 0: missing RESTRICT="!test? ( test )" with IUSE=test
