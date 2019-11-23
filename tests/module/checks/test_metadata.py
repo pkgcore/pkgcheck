@@ -280,15 +280,15 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         assert 'missing KEYWORDS: amd64, ppc, ~x86' == str(r)
 
 
-class TestIuseMetadataCheck(IUSE_Options, misc.ReportTestCase):
+class TestIuseCheck(IUSE_Options, misc.ReportTestCase):
 
-    check_kls = metadata.IuseMetadataCheck
+    check_kls = metadata.IuseCheck
 
     @pytest.fixture
     def check(self):
         options = self.get_options()
         use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
-        return metadata.IuseMetadataCheck(options, use_addon=use_addon)
+        return self.check_kls(options, use_addon=use_addon)
 
     def mk_pkg(self, iuse=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"IUSE": iuse})

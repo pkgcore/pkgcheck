@@ -174,7 +174,7 @@ class UnknownUseFlags(_UseFlagsResult):
     _type = 'unknown'
 
 
-class IuseMetadataCheck(Check):
+class IuseCheck(Check):
     """IUSE validity checks."""
 
     required_addons = (addons.UseAddon,)
