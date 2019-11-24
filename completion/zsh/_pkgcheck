@@ -159,14 +159,19 @@ case $state in
           {'(--arches)-a','(-a)--arches'}'[comma separated list of arches to enable/disable]:arches:{_values -s , arches $(_arches -p)}'
         )
 
+        git_opts=(
+          '--git-disable[disable git-related checks]'
+          '--commits[determine scan targets from local git repo commits]'
+        )
+
         profile_opts=(
-          '--profiles-base[path to base profiles directory]:profiles base path:_path_files -/'
           "--profile-cache[forcibly enable/disable profile cache usage]:yes/no:((y\:'yes' n\:'no'))"
           {'(--profiles)-p','(-p)--profiles'}'[comma separated list of profiles to enable/disable]:profiles:{_values -s , profiles stable dev exp deprecated}'
         )
 
         plugin_opts=(
           $arch_opts
+          $git_opts
           $profile_opts
         )
 
