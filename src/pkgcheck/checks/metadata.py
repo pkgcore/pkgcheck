@@ -1232,7 +1232,7 @@ class _RestrictPropertiesCheck(Check):
         yield from unstated
 
         # skip if target repo or its masters don't define allowed values
-        if self.allowed:
+        if self.allowed and values:
             unknown = set(values).difference(self.allowed)
             if unknown:
                 yield self._unknown_result_cls(sorted(unknown), pkg=pkg)
