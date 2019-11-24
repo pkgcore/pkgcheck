@@ -950,15 +950,15 @@ class BadProtocol(results.VersionResult, results.Warning):
     Valid protocols are currently: http, https, and ftp
     """
 
-    def __init__(self, filename, bad_uris, **kwargs):
+    def __init__(self, protocol, uris, **kwargs):
         super().__init__(**kwargs)
-        self.filename = filename
-        self.bad_uris = tuple(bad_uris)
+        self.protocol = protocol
+        self.uris = tuple(uris)
 
     @property
     def desc(self):
-        uris = ', '.join(map(repr, self.bad_uris))
-        return f'file {self.filename!r}: bad protocol/uri{_pl(self.bad_uris)}: {uris}'
+        uris = ', '.join(map(repr, self.uris))
+        return f'bad protocol {self.protocol!r} in URI{_pl(self.uris)}: {uris}'
 
 
 class BadFilename(results.VersionResult, results.Warning):
@@ -1061,17 +1061,17 @@ class SrcUriCheck(Check):
             if not f_inst.uri and 'fetch' not in pkg.restrict.evaluate_depset(restricts):
                 lacks_uri.add(f_inst.filename)
             else:
-                bad = set()
+                bad_protocols = defaultdict(set)
                 for x in f_inst.uri:
                     i = x.find("://")
                     if i == -1:
                         lacks_uri.add(x)
                     elif x[:i] not in self.valid_protos:
-                        bad.add(x)
+                        bad_protocols[x[:i]].add(x)
                     elif self.zip_to_tar_re.match(x):
                         tarball_available.add(x)
-                if bad:
-                    yield BadProtocol(f_inst.filename, sorted(bad), pkg=pkg)
+                for protocol, uris in bad_protocols.items():
+                    yield BadProtocol(protocol, sorted(uris), pkg=pkg)
 
         if lacks_uri:
             yield MissingUri(sorted(lacks_uri), pkg=pkg)
