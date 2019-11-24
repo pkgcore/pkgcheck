@@ -239,7 +239,7 @@ class ProfileAddon(base.Addon):
                 continue
 
             try:
-                profile = profiles_obj.create_profile(p)
+                profile = profiles_obj.create_profile(p, load_profile_base=False)
             except profiles_mod.ProfileError as e:
                 # Only throw errors if the profile was selected by the user, bad
                 # repo profiles will be caught during repo metadata scans.
