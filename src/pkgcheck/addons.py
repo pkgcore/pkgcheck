@@ -124,7 +124,7 @@ class ProfileAddon(base.Addon):
     non_profile_dirs = frozenset(['desc', 'updates'])
 
     # used to check profile cache compatibility
-    cache_version = 1
+    cache_version = 2
 
     @staticmethod
     def mangle_argparser(parser):
@@ -295,8 +295,9 @@ class ProfileAddon(base.Addon):
 
     def __init__(self, *args, arches_addon=None):
         super().__init__(*args)
+        target_repo = self.options.target_repo
 
-        self.official_arches = self.options.target_repo.known_arches
+        self.official_arches = target_repo.known_arches
         self.desired_arches = getattr(self.options, 'arches', None)
         if self.desired_arches is None or self.options.selected_arches is None:
             # copy it to be safe
@@ -308,7 +309,7 @@ class ProfileAddon(base.Addon):
         cached_profiles = defaultdict(dict)
 
         if self.options.profile_cache or self.options.profile_cache is None:
-            for repo in self.options.target_repo.trees:
+            for repo in target_repo.trees:
                 cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
                 cache_file = pjoin(cache_dir, 'profiles.pickle')
                 # add profiles-base -> repo mapping to ease storage procedure
@@ -352,7 +353,8 @@ class ProfileAddon(base.Addon):
                         # force refresh of outdated cache entry
                         raise KeyError
 
-                    vfilter = cached_profile['vfilter']
+                    masks = cached_profile['masks']
+                    unmasks = cached_profile['unmasks']
                     immutable_flags = cached_profile['immutable_flags']
                     stable_immutable_flags = cached_profile['stable_immutable_flags']
                     enabled_flags = cached_profile['enabled_flags']
@@ -364,7 +366,8 @@ class ProfileAddon(base.Addon):
                 except KeyError:
                     logger.debug('profile regen: %s', profile.path)
                     try:
-                        vfilter = domain.generate_filter(profile_obj.masks, profile_obj.unmasks)
+                        masks = profile_obj.masks
+                        unmasks = profile_obj.unmasks
 
                         immutable_flags = profile_obj.masked_use.clone(unfreeze=True)
                         immutable_flags.add_bare_global((), default_masked_use)
@@ -402,7 +405,8 @@ class ProfileAddon(base.Addon):
                         cached_profiles[profile.base]['update'] = True
                         cached_profiles[profile.base][profile.path] = {
                             'files': files,
-                            'vfilter': vfilter,
+                            'masks': masks,
+                            'unmasks': unmasks,
                             'immutable_flags': immutable_flags,
                             'stable_immutable_flags': stable_immutable_flags,
                             'enabled_flags': enabled_flags,
@@ -425,6 +429,7 @@ class ProfileAddon(base.Addon):
                 # note that the cache/insoluble are inversly paired;
                 # stable cache is usable for unstable, but not vice versa.
                 # unstable insoluble is usable for stable, but not vice versa
+                vfilter = domain.generate_filter(target_repo.masks | masks, unmasks)
                 profile_filters[stable_key].append(ProfileData(
                     profile.path, stable_key,
                     provides_repo,
