@@ -943,7 +943,7 @@ class UnknownMirror(results.VersionResult, results.Error):
         return f'unknown mirror {self.mirror!r} from URI {self.uri!r}'
 
 
-class BadProtocol(results.VersionResult, results.Warning):
+class BadProtocol(results.VersionResult, results.Error):
     """URI uses an unsupported protocol.
 
     Valid protocols are currently: http, https, and ftp
