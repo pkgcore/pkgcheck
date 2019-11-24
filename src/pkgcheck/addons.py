@@ -168,22 +168,21 @@ class ProfileAddon(base.Addon):
 
     @staticmethod
     def check_args(parser, namespace):
+        target_repo = namespace.target_repo
         selected_profiles = namespace.profiles
         if selected_profiles is None:
             # disable exp profiles by default if no profiles are selected
             selected_profiles = (('exp',), ())
 
-        profiles_obj = namespace.target_repo.profiles
-
         def norm_name(s):
             """Expand status keywords and format paths."""
             if s in ('dev', 'exp', 'stable', 'deprecated'):
-                yield from profiles_obj.get_profiles(status=s)
+                yield from target_repo.profiles.get_profiles(status=s)
             elif s == 'all':
-                yield from profiles_obj
+                yield from target_repo.profiles
             else:
                 try:
-                    yield profiles_obj[os.path.normpath(s)]
+                    yield target_repo.profiles[os.path.normpath(s)]
                 except KeyError:
                     parser.error(f'nonexistent profile: {s!r}')
 
@@ -205,7 +204,7 @@ class ProfileAddon(base.Addon):
         # If no profiles are enabled, then all that are defined in
         # profiles.desc are scanned except ones that are explicitly disabled.
         if not enabled:
-            enabled = set(profiles_obj)
+            enabled = set(target_repo.profiles)
 
         profiles = enabled.difference(disabled)
         namespace.forced_cache = bool(namespace.profile_cache)
@@ -216,7 +215,7 @@ class ProfileAddon(base.Addon):
                 continue
 
             try:
-                profile = profiles_obj.create_profile(p, load_profile_base=False)
+                profile = target_repo.profiles.create_profile(p, load_profile_base=False)
             except profiles_mod.ProfileError as e:
                 # Only throw errors if the profile was selected by the user, bad
                 # repo profiles will be caught during repo metadata scans.
