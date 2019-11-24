@@ -1,0 +1,2 @@
+DependencyCheck/InvalidRdepend
+  InvalidRdepend: version 0: failed parsing RDEPEND: 'stub1' is unparseable: flagged token- invalid package atom: 'stub1'

@@ -632,10 +632,28 @@ class BadDependency(results.VersionResult, results.Error):
         return f'{self.msg}: {self.depset.upper()}="{self.atom}"'
 
 
-class InvalidDependency(results.MetadataError):
-    """Package has an invalid dependency."""
+class InvalidDepend(results.MetadataError):
+    """Package has invalid DEPEND."""
 
-    _metadata_attrs = ('depend', 'rdepend', 'pdepend', 'bdepend')
+    _metadata_attrs = ('depend',)
+
+
+class InvalidRdepend(results.MetadataError):
+    """Package has invalid RDEPEND."""
+
+    _metadata_attrs = ('rdepend',)
+
+
+class InvalidPdepend(results.MetadataError):
+    """Package has invalid PDEPEND."""
+
+    _metadata_attrs = ('pdepend',)
+
+
+class InvalidBdepend(results.MetadataError):
+    """Package has invalid BDEPEND."""
+
+    _metadata_attrs = ('bdepend',)
 
 
 class DependencyCheck(Check):
@@ -646,8 +664,9 @@ class DependencyCheck(Check):
     # attrs so no parsed dep attrs are cached on the pkg object yet
     _priority = -1
     known_results = frozenset([
-        BadDependency, InvalidDependency, MissingPackageRevision, MissingUseDepDefault,
+        BadDependency, MissingPackageRevision, MissingUseDepDefault,
         OutdatedBlocker, NonexistentBlocker, UnstatedIuse,
+        InvalidDepend, InvalidRdepend, InvalidPdepend, InvalidBdepend,
     ])
 
     def __init__(self, *args, use_addon, git_addon):
@@ -681,7 +700,8 @@ class DependencyCheck(Check):
             try:
                 deps = getattr(pkg, attr)
             except MetadataException as e:
-                yield InvalidDependency(attr, e.msg(), pkg=pkg)
+                cls = globals()[f'Invalid{attr.capitalize()}']
+                yield cls(attr, e.msg(), pkg=pkg)
                 continue
 
             nodes, unstated = self.iuse_filter(

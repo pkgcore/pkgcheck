@@ -1,0 +1,2 @@
+DependencyCheck/InvalidBdepend
+  InvalidBdepend: version 0: failed parsing BDEPEND: 'stub1' is unparseable: flagged token- invalid package atom: 'stub1'

@@ -1,0 +1,9 @@
+diff -Naur standalone/DependencyCheck/InvalidRdepend/InvalidRdepend-0.ebuild fixed/DependencyCheck/InvalidRdepend/InvalidRdepend-0.ebuild
+--- standalone/DependencyCheck/InvalidRdepend/InvalidRdepend-0.ebuild	2019-11-23 21:18:11.296468067 -0700
++++ fixed/DependencyCheck/InvalidRdepend/InvalidRdepend-0.ebuild	2019-11-23 21:21:39.973375585 -0700
+@@ -3,4 +3,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-RDEPEND="stub1"
++RDEPEND="stub/stub1"

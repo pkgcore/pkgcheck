@@ -1,0 +1,2 @@
+DependencyCheck/InvalidPdepend
+  InvalidPdepend: version 0: failed parsing PDEPEND: 'stub1' is unparseable: flagged token- invalid package atom: 'stub1'

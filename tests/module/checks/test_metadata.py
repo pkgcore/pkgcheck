@@ -798,8 +798,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
 
         # invalid depset syntax
         r = self.assertReport(chk, mk_pkg("|| ("))
-        assert isinstance(r, metadata.InvalidDependency)
-        assert r.attr == attr.lower()
+        assert isinstance(r, getattr(metadata, f'Invalid{attr.lower().capitalize()}'))
 
         # pkg blocking itself
         r = self.assertReport(chk, mk_pkg("!dev-util/diffball"))

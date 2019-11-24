@@ -1,9 +1,0 @@
-EAPI=7
-DESCRIPTION="Ebuild with invalid dependency"
-HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
-LICENSE="BSD"
-DEPEND="pkg1"
-RDEPEND="pkg2"
-PDEPEND="pkg3"
-BDEPEND="pkg4"
