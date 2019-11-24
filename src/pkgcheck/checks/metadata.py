@@ -46,7 +46,7 @@ class MissingLicense(results.VersionResult, results.Error):
 class InvalidLicense(results.MetadataError):
     """Package's LICENSE is invalid."""
 
-    _metadata_attrs = ('license',)
+    _attr = 'license'
 
 
 class MissingLicenseRestricts(results.VersionResult, results.Error):
@@ -225,13 +225,13 @@ class BannedEapi(_EapiResult, results.Error):
 class InvalidEapi(results.MetadataError):
     """Package's EAPI is invalid."""
 
-    _metadata_attrs = ('eapi',)
+    _attr = 'eapi'
 
 
 class SourcingError(results.MetadataError):
     """Failed sourcing ebuild."""
 
-    _metadata_attrs = ('data',)
+    _attr = 'data'
 
 
 class EapiCheck(Check):
@@ -295,7 +295,7 @@ class RequiredUseDefaults(results.VersionResult, results.Warning):
 class InvalidRequiredUse(results.MetadataError):
     """Package's REQUIRED_USE is invalid."""
 
-    _metadata_attrs = ('required_use',)
+    _attr = 'required_use'
 
 
 class RequiredUseCheck(Check):
@@ -635,25 +635,25 @@ class BadDependency(results.VersionResult, results.Error):
 class InvalidDepend(results.MetadataError):
     """Package has invalid DEPEND."""
 
-    _metadata_attrs = ('depend',)
+    _attr = 'depend'
 
 
 class InvalidRdepend(results.MetadataError):
     """Package has invalid RDEPEND."""
 
-    _metadata_attrs = ('rdepend',)
+    _attr = 'rdepend'
 
 
 class InvalidPdepend(results.MetadataError):
     """Package has invalid PDEPEND."""
 
-    _metadata_attrs = ('pdepend',)
+    _attr = 'pdepend'
 
 
 class InvalidBdepend(results.MetadataError):
     """Package has invalid BDEPEND."""
 
-    _metadata_attrs = ('bdepend',)
+    _attr = 'bdepend'
 
 
 class DependencyCheck(Check):
@@ -997,7 +997,7 @@ class TarballAvailable(results.VersionResult, results.Warning):
 class InvalidSrcUri(results.MetadataError):
     """Package's SRC_URI is invalid."""
 
-    _metadata_attrs = ('fetchables',)
+    _attr = 'fetchables'
 
 
 class SrcUriCheck(Check):
@@ -1200,13 +1200,13 @@ class UnknownProperties(results.VersionResult, results.Warning):
 class InvalidRestrict(results.MetadataError):
     """Package's RESTRICT is invalid."""
 
-    _metadata_attrs = ('restrict',)
+    _attr = 'restrict'
 
 
 class InvalidProperties(results.MetadataError):
     """Package's PROPERTIES is invalid."""
 
-    _metadata_attrs = ('properties',)
+    _attr = 'properties'
 
 
 class _RestrictPropertiesCheck(Check):

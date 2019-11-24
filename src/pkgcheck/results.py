@@ -209,12 +209,12 @@ class _RegisterMetadataErrors(type):
 
     def __new__(cls, name, bases, class_dict):
         new_cls = type.__new__(cls, name, bases, class_dict)
-        if new_cls._metadata_attrs:
-            for attr in new_cls._metadata_attrs:
-                setting = new_cls.result_mapping.setdefault(attr, new_cls)
-                if setting != new_cls:
-                    raise ValueError(
-                        f'metadata attribute {attr!r} already registered: {setting!r}')
+        attr = new_cls._attr
+        if attr is not None:
+            setting = new_cls.result_mapping.setdefault(attr, new_cls)
+            if setting != new_cls:
+                raise ValueError(
+                    f'metadata attribute {attr!r} already registered: {setting!r}')
         elif new_cls.__name__ != 'MetadataError':
             raise ValueError(f'class missing metadata attributes: {new_cls!r}')
         return new_cls
@@ -224,7 +224,7 @@ class MetadataError(VersionResult, Error, metaclass=_RegisterMetadataErrors):
     """Problem detected with a package's metadata."""
 
     # specific metadata attributes handled by the result class
-    _metadata_attrs = ()
+    _attr = None
     # mapping from data attributes to result classes
     result_mapping = {}
 
@@ -235,7 +235,7 @@ class MetadataError(VersionResult, Error, metaclass=_RegisterMetadataErrors):
 
     @property
     def desc(self):
-        if self._metadata_attrs:
+        if self._attr is not None:
             return self.msg
         else:
             return f'attr({self.attr}): {self.msg}'
