@@ -933,15 +933,14 @@ class MissingUri(results.VersionResult, results.Warning):
 class UnknownMirror(results.VersionResult, results.Error):
     """URI uses an unknown mirror."""
 
-    def __init__(self, filename, uri, mirror, **kwargs):
+    def __init__(self, mirror, uri, **kwargs):
         super().__init__(**kwargs)
-        self.filename = filename
-        self.uri = uri
         self.mirror = mirror
+        self.uri = uri
 
     @property
     def desc(self):
-        return f"file {self.filename}: unknown mirror {self.mirror!r} from URI {self.uri!r}"
+        return f'unknown mirror {self.mirror!r} from URI {self.uri!r}'
 
 
 class BadProtocol(results.VersionResult, results.Warning):
@@ -1044,7 +1043,7 @@ class SrcUriCheck(Check):
                 (m, sub_uri) for m, sub_uri in mirrors if isinstance(m, unknown_mirror)]
             for mirror, sub_uri in unknown_mirrors:
                 uri = f"{mirror}/{sub_uri}"
-                yield UnknownMirror(f_inst.filename, uri, mirror.mirror_name, pkg=pkg)
+                yield UnknownMirror(mirror.mirror_name, uri, pkg=pkg)
 
             # Check for unspecific filenames of the form ${PN}.ext, ${PV}.ext,
             # and v${PV}.ext as well as archives named using only the raw git

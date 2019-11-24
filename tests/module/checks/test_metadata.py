@@ -950,18 +950,17 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
         # single mirror
         r = self.assertReport(chk, self.mk_pkg('mirror://foo/a-0.gz https://foo.com/a-0.gz'))
         assert isinstance(r, metadata.UnknownMirror)
-        assert r.filename == 'a-0.gz'
-        assert r.uri == 'mirror://foo/a-0.gz'
         assert r.mirror == 'foo'
+        assert r.uri == 'mirror://foo/a-0.gz'
         assert "unknown mirror 'foo'" in str(r)
 
         # multiple mirrors
         pkg = self.mk_pkg('mirror://foo/a-0.gz mirror://bar/a-0.gz https://foo.com/a-0.gz')
         reports = self.assertReports(chk, pkg)
         for mirror, r in zip(('bar', 'foo'), sorted(reports, key=attrgetter('mirror'))):
-            assert r.filename == 'a-0.gz'
-            assert r.uri == f'mirror://{mirror}/a-0.gz'
+            assert isinstance(r, metadata.UnknownMirror)
             assert r.mirror == mirror
+            assert r.uri == f'mirror://{mirror}/a-0.gz'
             assert f"unknown mirror '{mirror}'" in str(r)
 
     def test_bad_filename(self):
