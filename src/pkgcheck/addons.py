@@ -268,10 +268,11 @@ class ProfileAddon(base.Addon):
                 if not mtime:
                     for f in os.listdir(node.path):
                         p = pjoin(node.path, f)
-                        files.append(p)
                         st_obj = os.lstat(p)
-                        if stat.S_ISREG(st_obj.st_mode) and st_obj.st_mtime > mtime:
-                            mtime = st_obj.st_mtime
+                        if stat.S_ISREG(st_obj.st_mode):
+                            files.append(p)
+                            if st_obj.st_mtime > mtime:
+                                mtime = st_obj.st_mtime
                     cache[node.path] = (mtime, files)
                 if mtime > profile_mtime:
                     profile_mtime = mtime
