@@ -341,7 +341,7 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
                         if node.use:
                             src = (FakeConfigurable(pkg, profile) for pkg in src)
                             src = (pkg for pkg in src if node.force_True(pkg))
-                        if any(True for pkg in src if visible(pkg)):
+                        if any(visible(pkg) for pkg in src):
                             cache.add(node)
                             break
                         else:
