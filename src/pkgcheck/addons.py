@@ -9,7 +9,6 @@ from itertools import chain, filterfalse
 
 from pkgcore.ebuild import domain, misc
 from pkgcore.ebuild import profiles as profiles_mod
-from pkgcore.ebuild import repo_objs
 from pkgcore.restrictions import packages, values
 from snakeoil import klass, mappings
 from snakeoil.cli.arghparse import StoreBool
@@ -130,14 +129,6 @@ class ProfileAddon(base.Addon):
     def mangle_argparser(parser):
         group = parser.add_argument_group('profiles')
         group.add_argument(
-            "--profiles-base", dest='profiles_dir', default=None,
-            help="path to base profiles directory",
-            docs="""
-                The path to the base profiles directory. This will override the
-                default usage of profiles bundled in the target repository;
-                primarily for testing.
-            """)
-        group.add_argument(
             '--profile-cache', action=StoreBool,
             help="forcibly enable/disable profile cache usage",
             docs="""
@@ -177,22 +168,12 @@ class ProfileAddon(base.Addon):
 
     @staticmethod
     def check_args(parser, namespace):
-        profiles_dir = getattr(namespace, "profiles_dir", None)
-        if profiles_dir is not None:
-            profiles_dir = abspath(profiles_dir)
-            if not os.path.isdir(profiles_dir):
-                parser.error(f"invalid profiles base: {profiles_dir!r}")
-
         selected_profiles = namespace.profiles
         if selected_profiles is None:
             # disable exp profiles by default if no profiles are selected
             selected_profiles = (('exp',), ())
 
-        if profiles_dir:
-            profiles_obj = repo_objs.Profiles(
-                namespace.target_repo.config, profiles_base=profiles_dir)
-        else:
-            profiles_obj = namespace.target_repo.profiles
+        profiles_obj = namespace.target_repo.profiles
 
         def norm_name(s):
             """Expand status keywords and format paths."""
@@ -227,10 +208,6 @@ class ProfileAddon(base.Addon):
             enabled = set(profiles_obj)
 
         profiles = enabled.difference(disabled)
-
-        # disable profile cache usage for custom profiles directories
-        if profiles_dir is not None:
-            namespace.profile_cache = False
         namespace.forced_cache = bool(namespace.profile_cache)
 
         namespace.arch_profiles = defaultdict(list)

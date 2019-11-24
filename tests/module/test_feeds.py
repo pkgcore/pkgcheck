@@ -36,7 +36,7 @@ class TestEvaluateDepSet(ProfilesMixin):
         # Carefully tweak profile addon to get an instance since evaluate
         # relies on it.
         profile_options = self.process_check(
-            None, [f"--profiles={','.join(profiles)}"], addon_kls=addons.ProfileAddon)
+            [f"--profiles={','.join(profiles)}"], addon_kls=addons.ProfileAddon)
         profile_addon = addons.ProfileAddon(profile_options)
         return self.addon_kls(profile_options, profile_addon=profile_addon)
 
@@ -47,8 +47,8 @@ class TestEvaluateDepSet(ProfilesMixin):
         self.mk_profiles({
             "1": ["x86"],
             "2": ["x86"],
-            "3": ["ppc"]},
-            base='profiles')
+            "3": ["ppc"],
+        })
 
         with open(pjoin(self.dir, 'profiles', '1', 'package.use.stable.mask'), 'w') as f:
             f.write('dev-util/diffball foo')

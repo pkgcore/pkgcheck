@@ -102,17 +102,13 @@ class ProfilesMixin(ArgparseCheck, Tmpdir):
 
     addon_kls = addons.ProfileAddon
 
-    def mk_profiles(self, profiles, base='profiles', arches=None, make_defaults=None):
+    def mk_profiles(self, profiles, arches=None, make_defaults=None):
         os.mkdir(pjoin(self.dir, 'metadata'))
         # write empty masters to suppress warnings
         write_file(pjoin(self.dir, 'metadata', 'layout.conf'), 'w', 'masters=')
 
-        loc = pjoin(self.dir, base)
+        loc = pjoin(self.dir, 'profiles')
         os.mkdir(loc)
-        if base != 'profiles':
-            # write empty masters to suppress warnings
-            os.mkdir(pjoin(loc, 'metadata'))
-            write_file(pjoin(loc, 'metadata', 'layout.conf'), 'w', 'masters=')
         for profile in profiles:
             assert ensure_dirs(pjoin(loc, profile)), f"failed creating profile {profile!r}"
         if arches is None:
@@ -138,12 +134,9 @@ class ProfilesMixin(ArgparseCheck, Tmpdir):
                 with open(pjoin(loc, profile, 'eapi'), 'w') as f:
                     f.write('5')
 
-    def process_check(self, profiles_base, *args, **kwds):
+    def process_check(self, *args, **kwds):
         namespace = argparse.Namespace()
-        if profiles_base is None:
-            repo_config = repo_objs.RepoConfig(location=self.dir)
-        else:
-            repo_config = repo_objs.RepoConfig(location=profiles_base, profiles_base='.')
+        repo_config = repo_objs.RepoConfig(location=self.dir)
         namespace.target_repo = repository.UnconfiguredTree(
             repo_config.location, repo_config=repo_config)
         namespace.search_repo = Options()
@@ -162,9 +155,9 @@ class TestProfileAddon(ProfilesMixin):
     def test_defaults(self):
         self.mk_profiles({
             "profile1": ["x86"],
-            "profile1/2": ["x86"]},
-            base='profiles')
-        options = self.process_check(None, [], profiles=None)
+            "profile1/2": ["x86"],
+        })
+        options = self.process_check([], profiles=None)
         # override the default
         check = self.addon_kls(options)
         assert sorted(check.official_arches) == ['x86']
@@ -177,9 +170,9 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/dep": ["x86", False, True],
             "default-linux/dev": ["x86", "dev"],
             "default-linux/exp": ["x86", "exp"],
-            "default-linux": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=stable,-stable'])
+            "default-linux": ["x86"],
+        })
+        options = self.process_check(['--profiles=stable,-stable'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/dev', 'default-linux/exp')
 
@@ -187,19 +180,17 @@ class TestProfileAddon(ProfilesMixin):
         self.mk_profiles({
             "default-linux/dep": ["x86", False, True],
             "default-linux": ["x86", "dev"],
-            "default-linux/x86": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), [])
+            "default-linux/x86": ["x86"],
+        })
+        options = self.process_check([])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
 
     def test_nonexistent(self, capsys):
-        self.mk_profiles({
-            "x86": ["x86"]},
-            base='foo')
+        self.mk_profiles({"x86": ["x86"]})
         for profiles in ('bar', '-bar', 'x86,bar', 'bar,x86', 'x86,-bar'):
             with pytest.raises(SystemExit) as excinfo:
-                options = self.process_check(pjoin(self.dir, 'foo'), [f'--profiles={profiles}'])
+                options = self.process_check([f'--profiles={profiles}'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             assert not out
@@ -209,19 +200,17 @@ class TestProfileAddon(ProfilesMixin):
         self.mk_profiles({
             "amd64": ["amd64"],
             "prefix/amd64": ["amd64-linux"]},
-            base='foo',
             make_defaults=['ARCH="amd64"'])
-        options = self.process_check(pjoin(self.dir, 'foo'), [f'--profiles=prefix/amd64'])
+        options = self.process_check([f'--profiles=prefix/amd64'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'amd64', 'prefix/amd64')
 
     def test_make_defaults_missing_arch(self, capsys):
         self.mk_profiles({
             "arch/amd64": ["amd64"]},
-            base='foo',
             make_defaults=[])
         with pytest.raises(SystemExit) as excinfo:
-            options = self.process_check(pjoin(self.dir, 'foo'), [f'--profiles=arch/amd64'])
+            options = self.process_check([f'--profiles=arch/amd64'])
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         assert not out
@@ -232,9 +221,9 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/dep": ["x86", False, True],
             "default-linux/dev": ["x86", "dev"],
             "default-linux/exp": ["x86", "exp"],
-            "default-linux": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=stable'])
+            "default-linux": ["x86"],
+        })
+        options = self.process_check(['--profiles=stable'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux')
 
@@ -243,9 +232,9 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/dep": ["x86", False, True],
             "default-linux/dev": ["x86", "dev"],
             "default-linux/exp": ["x86", "exp"],
-            "default-linux": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=-stable'])
+            "default-linux": ["x86"],
+        })
+        options = self.process_check(['--profiles=-stable'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/dev', 'default-linux/exp')
 
@@ -253,9 +242,9 @@ class TestProfileAddon(ProfilesMixin):
         self.mk_profiles({
             "default-linux/dep": ["x86", False, True],
             "default-linux/dev": ["x86", "dev"],
-            "default-linux/x86": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=dev'])
+            "default-linux/x86": ["x86"],
+        })
+        options = self.process_check(['--profiles=dev'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/dev')
 
@@ -263,9 +252,9 @@ class TestProfileAddon(ProfilesMixin):
         self.mk_profiles({
             "default-linux/dep": ["x86", False, True],
             "default-linux/dev": ["x86", "dev"],
-            "default-linux/x86": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=-dev'])
+            "default-linux/x86": ["x86"],
+        })
+        options = self.process_check(['--profiles=-dev'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
@@ -273,9 +262,9 @@ class TestProfileAddon(ProfilesMixin):
         self.mk_profiles({
             "default-linux/dep": ["x86", False, True],
             "default-linux/exp": ["x86", "exp"],
-            "default-linux/x86": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=exp'])
+            "default-linux/x86": ["x86"],
+        })
+        options = self.process_check(['--profiles=exp'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/exp')
 
@@ -283,29 +272,27 @@ class TestProfileAddon(ProfilesMixin):
         self.mk_profiles({
             "default-linux/dep": ["x86", False, True],
             "default-linux/exp": ["x86", "exp"],
-            "default-linux/x86": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=-exp'])
+            "default-linux/x86": ["x86"],
+        })
+        options = self.process_check(['--profiles=-exp'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
     def test_enable_deprecated(self):
         self.mk_profiles({
             "default-linux/dep": ["x86", False, True],
-            "default-linux/x86": ["x86"]},
-            base='foo')
-        options = self.process_check(
-            pjoin(self.dir, 'foo'), ['--profiles=deprecated'])
+            "default-linux/x86": ["x86"],
+        })
+        options = self.process_check(['--profiles=deprecated'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/dep')
 
     def test_disable_deprecated(self):
         self.mk_profiles({
             "default-linux/dep": ["x86", False, True],
-            "default-linux/x86": ["x86"]},
-            base='foo')
-        options = self.process_check(
-            pjoin(self.dir, 'foo'), ['--profiles=-deprecated'])
+            "default-linux/x86": ["x86"],
+        })
+        options = self.process_check(['--profiles=-deprecated'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
@@ -313,9 +300,9 @@ class TestProfileAddon(ProfilesMixin):
         self.mk_profiles({
             "default-linux/dep": ["x86", False, True],
             "default-linux": ["x86"],
-            "default-linux/x86": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles', 'default-linux/x86'])
+            "default-linux/x86": ["x86"],
+        })
+        options = self.process_check(['--profiles', 'default-linux/x86'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux/x86')
 
@@ -323,9 +310,9 @@ class TestProfileAddon(ProfilesMixin):
         self.mk_profiles({
             "default-linux/dep": ["x86", False, True],
             "default-linux": ["x86"],
-            "default-linux/x86": ["x86"]},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), ['--profiles=-default-linux/x86'])
+            "default-linux/x86": ["x86"],
+        })
+        options = self.process_check(['--profiles=-default-linux/x86'])
         check = self.addon_kls(options)
         self.assertProfiles(check, 'x86', 'default-linux')
 
@@ -333,9 +320,9 @@ class TestProfileAddon(ProfilesMixin):
         self.mk_profiles({
             'default-linux': ['x86'],
             'default-linux/x86': ["x86"],
-            'default-linux/ppc': ['ppc']},
-            base='foo')
-        options = self.process_check(pjoin(self.dir, 'foo'), [])
+            'default-linux/ppc': ['ppc'],
+        })
+        options = self.process_check([])
         check = self.addon_kls(options)
 
         # assert they're collapsed properly.
