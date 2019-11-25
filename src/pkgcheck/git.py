@@ -132,7 +132,7 @@ class ParsedGitRepo(UserDict):
                 message = []
                 while True:
                     line = git_log.stdout.readline().decode('utf-8', 'replace').strip('\n')
-                    if line == '# END MESSAGE BODY':
+                    if line == '# END MESSAGE BODY' or not line:
                         break
                     message.append(line)
 
