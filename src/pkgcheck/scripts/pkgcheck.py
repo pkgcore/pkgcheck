@@ -190,20 +190,14 @@ check_options.add_argument(
     '--net', action='store_true',
     help='run checks that require internet access')
 
+scan.plugin = scan.add_argument_group('plugin options')
+
 
 def add_addon(addon, addon_set):
     if addon not in addon_set:
         addon_set.add(addon)
         for dep in addon.required_addons:
             add_addon(dep, addon_set)
-
-
-all_addons = set()
-scan.plugin = scan.add_argument_group('plugin options')
-for check in const.CHECKS.values():
-    add_addon(check, all_addons)
-for addon in all_addons:
-    addon.mangle_argparser(scan)
 
 
 def _determine_target_repo(namespace, parser, cwd):
@@ -266,6 +260,15 @@ def _restrict_to_scope(restrict):
         if any(collect_package_restrictions(restrict, attrs)):
             return scope
     return base.repository_scope
+
+
+@scan.bind_pre_parse
+def _setup_scan_addons(parser, namespace):
+    all_addons = set()
+    for check in const.CHECKS.values():
+        add_addon(check, all_addons)
+    for addon in all_addons:
+        addon.mangle_argparser(parser)
 
 
 @scan.bind_final_check
@@ -523,21 +526,24 @@ cache.add_argument(
     '-f', '--force', dest='force_cache', action='store_true',
     help='forcibly update/remove caches')
 
-cache_addons = set()
-cache.plugin = cache.add_argument_group()
-for check in const.CHECKS.values():
-    for addon in check.required_addons:
-        if issubclass(addon, base.Cache):
-            cache_addons.add(addon)
-for addon in cache_addons:
-    addon.mangle_argparser(cache.plugin)
+
+@cache.bind_pre_parse
+def _setup_cache_addons(parser, namespace):
+    cache_addons = set()
+    for check in const.CHECKS.values():
+        for addon in check.required_addons:
+            if issubclass(addon, base.Cache):
+                cache_addons.add(addon)
+    for addon in cache_addons:
+        add_addon(addon, cache_addons)
+        addon.mangle_argparser(parser)
+    namespace.cache_addons = cache_addons
+
 
 @cache.bind_final_check
 def _validate_args(parser, namespace):
-    for addon in cache_addons:
-        add_addon(addon, cache_addons)
     try:
-        for addon in cache_addons:
+        for addon in namespace.cache_addons:
             addon.check_args(parser, namespace)
     except argparse.ArgumentError as e:
         if namespace.debug:
@@ -548,7 +554,7 @@ def _validate_args(parser, namespace):
 @cache.bind_main_func
 def _cache(options, out, err):
     ret = 0
-    caches = [init_addon(addon, options) for addon in cache_addons]
+    caches = [init_addon(addon, options) for addon in options.pop('cache_addons')]
     if options.remove_cache:
         ret = base.Cache.remove_caches(options, caches)
     elif options.update_cache:
