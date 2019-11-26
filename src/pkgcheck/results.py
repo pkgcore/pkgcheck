@@ -211,6 +211,7 @@ class _RegisterMetadataErrors(type):
         new_cls = type.__new__(cls, name, bases, class_dict)
         attr = new_cls._attr
         if attr is not None:
+            new_cls.results.add(new_cls)
             setting = new_cls.result_mapping.setdefault(attr, new_cls)
             if setting != new_cls:
                 raise ValueError(
@@ -227,6 +228,8 @@ class MetadataError(VersionResult, Error, metaclass=_RegisterMetadataErrors):
     _attr = None
     # mapping from data attributes to result classes
     result_mapping = {}
+    # set of registered result classes
+    results = set()
 
     def __init__(self, attr, msg, **kwargs):
         super().__init__(**kwargs)

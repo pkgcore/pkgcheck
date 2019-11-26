@@ -660,9 +660,6 @@ class DependencyCheck(Check):
     """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
     required_addons = (addons.UseAddon, git.GitAddon)
-    # heightened priority to force running before other checks pulling dep
-    # attrs so no parsed dep attrs are cached on the pkg object yet
-    _priority = -1
     known_results = frozenset([
         BadDependency, MissingPackageRevision, MissingUseDepDefault,
         OutdatedBlocker, NonexistentBlocker, UnstatedIuse,
@@ -1213,7 +1210,6 @@ class _RestrictPropertiesCheck(Check):
 
     _attr = None
     _unknown_result_cls = None
-    _priority = -1
     required_addons = (addons.UseAddon,)
 
     def __init__(self, *args, use_addon):
