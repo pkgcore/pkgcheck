@@ -134,18 +134,15 @@ class CheckRunner:
     def __init__(self, options, source, checks):
         self.options = options
         self.source = source
+        self.checks = sorted(checks)
         self._running_check = None
 
         scope = base.version_scope
         self._known_results = set()
-        for check in checks:
+        for check in self.checks:
             if check.scope > scope:
                 scope = check.scope
             self._known_results.update(check.known_results)
-            # raise priority for checks that scan for metadata errors
-            if check._priority == 0 and check.known_results & MetadataError.results:
-                check._priority = -1
-        self.checks = sorted(checks)
 
         self._itermatch_kwargs = {}
         # only use set metadata error callback for version scope runners

@@ -2,9 +2,11 @@
 
 from collections import defaultdict
 
+from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
 
-from .. import addons, base, feeds, results, sources
+from .. import addons, base, feeds, sources
+from ..results import FilteredVersionResult, MetadataError
 from ..log import logger
 
 
@@ -16,15 +18,22 @@ class Check(feeds.Feed):
     :cvar known_results: result keywords the check can possibly yield
     """
 
-    _priority = 0
+    __priority = 0
     known_results = frozenset()
+
+    @klass.jit_attr
+    def priority(self):
+        # raise priority for checks that scan for metadata errors
+        if self.__priority == 0 and self.known_results & MetadataError.results:
+            return -1
+        return self.__priority
 
     @property
     def source(self):
         # replace versioned pkg feeds with filtered ones as required
         if self.options.verbosity < 1 and self.scope == base.version_scope:
             filtered_results = [
-                x for x in self.known_results if issubclass(x, results.FilteredVersionResult)]
+                x for x in self.known_results if issubclass(x, FilteredVersionResult)]
             if filtered_results:
                 partial_filtered = len(filtered_results) != len(self.known_results)
                 return (
@@ -48,9 +57,9 @@ class Check(feeds.Feed):
         """Do cleanup and yield final results here."""
 
     def __lt__(self, other):
-        if self._priority == other._priority:
+        if self.priority == other.priority:
             return self.__class__.__name__ < other.__class__.__name__
-        return self._priority < other._priority
+        return self.priority < other.priority
 
 
 class GentooRepoCheck(Check):
