@@ -126,7 +126,7 @@ class IUSE_Options(misc.Tmpdir):
             """))
         kwargs['target_repo'] = repository.UnconfiguredTree(repo_base)
         kwargs.setdefault('verbosity', 0)
-        kwargs.setdefault('git_disable', True)
+        kwargs.setdefault('cache', {'git': False})
         return misc.Options(**kwargs)
 
 

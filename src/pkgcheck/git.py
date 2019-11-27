@@ -284,21 +284,14 @@ class GitAddon(base.Addon, base.Cache):
     origin master`` or similar will also create the reference.
     """
 
-    # used to check repo cache compatibility
+    # used to check cache compatibility
     cache_version = 3
-    # used by cache subcommand and related class
-    cache_type = 'git'
-    _cache_file = 'git.pickle'
+    # attributes for cache registry
+    cache_data = base.CacheData('git', 'git.pickle')
 
     @classmethod
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('git', docs=cls.__doc__)
-        group.add_argument(
-            '--git-disable', action='store_true',
-            help="disable git-related checks",
-            docs="""
-                Disable all checks that use git to parse repo logs.
-            """)
         group.add_argument(
             '--commits', action=_ScanCommits, default=False,
             help="determine scan targets from local git repo commits",
@@ -331,11 +324,11 @@ class GitAddon(base.Addon, base.Cache):
     def __init__(self, *args):
         super().__init__(*args)
         # disable git support if git isn't installed
-        if not self.options.git_disable:
+        if self.options.cache['git']:
             try:
                 find_binary('git')
             except CommandNotFound:
-                self.options.git_disable = True
+                self.options.cache['git'] = False
 
         # mapping of repo locations to their corresponding git repo caches
         self._cached_repos = {}
@@ -400,7 +393,7 @@ class GitAddon(base.Addon, base.Cache):
             # running from cache subcommand
             repos = self.options.domain.ebuild_repos
 
-        if not self.options.git_disable:
+        if self.options.cache['git']:
             for repo in repos:
                 try:
                     commit = self.get_commit_hash(repo.location)
@@ -458,7 +451,7 @@ class GitAddon(base.Addon, base.Cache):
         if target_repo is None:
             target_repo = self.options.target_repo
 
-        if not self.options.git_disable:
+        if self.options.cache['git']:
             git_repos = []
             for repo in target_repo.trees:
                 git_repo = self._cached_repos.get(repo.location, None)
@@ -485,7 +478,7 @@ class GitAddon(base.Addon, base.Cache):
         git_repo = {}
         repo_id = f'{target_repo.repo_id}-commits'
 
-        if not options.git_disable:
+        if options.cache['git']:
             try:
                 origin = self.get_commit_hash(target_repo.location)
                 master = self.get_commit_hash(target_repo.location, commit='master')
@@ -501,7 +494,7 @@ class GitAddon(base.Addon, base.Cache):
         path = repo.location if repo is not None else self.options.target_repo.location
         commits = iter(())
 
-        if not self.options.git_disable:
+        if self.options.cache['git']:
             try:
                 origin = self.get_commit_hash(path)
                 master = self.get_commit_hash(path, commit='master')

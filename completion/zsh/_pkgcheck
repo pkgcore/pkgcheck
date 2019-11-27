@@ -135,6 +135,13 @@ case $state in
   (subcommand)
     curcontext=${curcontext%:*}-$line[1]:
 
+    typeset -a caches
+
+    caches=(
+      'git'
+      'profiles'
+    )
+
     case $line[1] in
       (scan)
         typeset -a scan_opts check_opts arch_opts profile_opts plugin_opts
@@ -144,6 +151,8 @@ case $state in
           {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter]:reporters:_reporters"
           "--filtered[enable all license and visibility filtering for packages]:yes/no:((y\:'yes' n\:'no'))"
           {'(--jobs)-j','(-j)--jobs'}'[number of checks to run in parallel]:jobs'
+          {'(--tasks)-t','(-t)--tasks'}'[number of asynchronous tasks to run concurrently]:tasks'
+          '--cache[forcibly enable/disable caches]:cache types:{_values -s , "cache types" $caches}'
         )
 
         check_opts=(
@@ -160,12 +169,10 @@ case $state in
         )
 
         git_opts=(
-          '--git-disable[disable git-related checks]'
           '--commits[determine scan targets from local git repo commits]'
         )
 
         profile_opts=(
-          "--profile-cache[forcibly enable/disable profile cache usage]:yes/no:((y\:'yes' n\:'no'))"
           {'(--profiles)-p','(-p)--profiles'}'[comma separated list of profiles to enable/disable]:profiles:{_values -s , profiles stable dev exp deprecated}'
         )
 
@@ -189,6 +196,7 @@ case $state in
           {'(--update)-u','(-u)--update'}'[update caches]' \
           {'(--force)-f','(-f)--force'}'[forcibly update caches]' \
           {'(--remove)-r','(-r)--remove'}'[forcibly remove caches]' \
+          {'(--type)-t','(-t)--type'}'[target cache types]:cache types:{_values -s , "cache types" $caches}' \
           && ret=0
         ;;
       (replay)

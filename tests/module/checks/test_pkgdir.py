@@ -25,7 +25,7 @@ class PkgDirCheckBase(misc.ReportTestCase):
         self.repo = FakeRepo(repo_id='repo', location=str(tmpdir))
 
     def mk_check(self, gentoo=False):
-        options = misc.Options(target_repo=self.repo, git_disable=True, gentoo_repo=gentoo)
+        options = misc.Options(target_repo=self.repo, cache={'git': False}, gentoo_repo=gentoo)
         kwargs = {}
         if git.GitAddon in self.check_kls.required_addons:
             kwargs['git_addon'] = git.GitAddon(options)

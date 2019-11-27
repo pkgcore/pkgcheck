@@ -205,7 +205,7 @@ class LogError(_LogResult, Error):
 
 
 class _RegisterMetadataErrors(type):
-    """Metaclass for register known metadata results."""
+    """Metaclass for registering known metadata results."""
 
     def __new__(cls, name, bases, class_dict):
         new_cls = type.__new__(cls, name, bases, class_dict)

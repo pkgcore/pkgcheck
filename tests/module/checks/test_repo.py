@@ -18,7 +18,7 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
 
     def mk_check(self):
         self.repo = FakeRepo(repo_id='repo', location=self.dir)
-        options = misc.Options(target_repo=self.repo, git_disable=True)
+        options = misc.Options(target_repo=self.repo, cache={'git': False})
         git_addon = git.GitAddon(options)
         return repo.RepoDirCheck(options, git_addon=git_addon)
 

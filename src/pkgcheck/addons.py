@@ -10,11 +10,12 @@ from itertools import chain, filterfalse
 from pkgcore.ebuild import domain, misc
 from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.restrictions import packages, values
-from snakeoil import klass, mappings
 from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
 from snakeoil.decorators import coroutine
+from snakeoil.klass import jit_attr
+from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism as _pl
@@ -114,7 +115,7 @@ class _ProfilesCache(UserDict):
         self.cache_version = ProfileAddon.cache_version
 
 
-class ProfileAddon(base.Addon):
+class ProfileAddon(base.Addon, base.Cache):
 
     required_addons = (ArchesAddon,)
 
@@ -122,23 +123,14 @@ class ProfileAddon(base.Addon):
     # the gentoo repo, but could be in overlays as well
     non_profile_dirs = frozenset(['desc', 'updates'])
 
-    # used to check profile cache compatibility
+    # used to check cache compatibility
     cache_version = 2
+    # attributes for cache registry
+    cache_data = base.CacheData('profiles', 'profiles.pickle')
 
     @staticmethod
     def mangle_argparser(parser):
         group = parser.add_argument_group('profiles')
-        group.add_argument(
-            '--profile-cache', action=StoreBool,
-            help="forcibly enable/disable profile cache usage",
-            docs="""
-                Significantly decreases profile load time by caching and reusing
-                the resulting filters rather than rebuilding them for each run.
-
-                Caches are used by default. In order to forcibly refresh them,
-                enable this option. Conversely, if caches are unwanted disable
-                this instead.
-            """)
         group.add_argument(
             '-p', '--profiles', metavar='PROFILE', action='csv_negations',
             dest='profiles',
@@ -207,7 +199,7 @@ class ProfileAddon(base.Addon):
             enabled = set(target_repo.profiles)
 
         profiles = enabled.difference(disabled)
-        namespace.forced_cache = bool(namespace.profile_cache)
+        namespace.forced_cache = 'profiles' in namespace.cache
 
         namespace.arch_profiles = defaultdict(list)
         for p in sorted(profiles):
@@ -255,11 +247,11 @@ class ProfileAddon(base.Addon):
                 profile_files.extend(files)
             yield profile_mtime, frozenset(profile_files)
 
-    @klass.jit_attr
+    @jit_attr
     def profile_data(self):
         """Mapping of profile age and file sets used to check cache viability."""
         data = {}
-        if self.options.profile_cache is None or self.options.profile_cache:
+        if self.options.cache['profiles']:
             gen_profile_data = self._profile_files()
             for profile_obj, profile in chain.from_iterable(
                     self.options.arch_profiles.values()):
@@ -267,7 +259,7 @@ class ProfileAddon(base.Addon):
                 data[profile] = (mtime, files)
                 next(gen_profile_data)
             del gen_profile_data
-        return mappings.ImmutableDict(data)
+        return ImmutableDict(data)
 
     def __init__(self, *args, arches_addon=None):
         super().__init__(*args)
@@ -284,29 +276,27 @@ class ProfileAddon(base.Addon):
         chunked_data_cache = {}
         cached_profiles = defaultdict(dict)
 
-        if self.options.profile_cache or self.options.profile_cache is None:
+        if self.options.cache['profiles']:
             for repo in target_repo.trees:
                 cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
                 cache_file = pjoin(cache_dir, 'profiles.pickle')
                 # add profiles-base -> repo mapping to ease storage procedure
                 cached_profiles[repo.config.profiles_base]['repo'] = repo
-                # load cached profile filters by default
-                if self.options.profile_cache is None:
-                    try:
-                        with open(cache_file, 'rb') as f:
-                            cache = pickle.load(f)
-                        if cache.cache_version == self.cache_version:
-                            cached_profiles[repo.config.profiles_base].update(cache)
-                        else:
-                            logger.debug(
-                                'forcing %s profile cache regen '
-                                'due to outdated version', repo.repo_id)
-                            os.remove(cache_file)
-                    except FileNotFoundError as e:
-                        pass
-                    except (AttributeError, EOFError, ImportError, IndexError) as e:
-                        logger.debug('forcing %s profile cache regen: %s', repo.repo_id, e)
+                try:
+                    with open(cache_file, 'rb') as f:
+                        cache = pickle.load(f)
+                    if cache.cache_version == self.cache_version:
+                        cached_profiles[repo.config.profiles_base].update(cache)
+                    else:
+                        logger.debug(
+                            'forcing %s profile cache regen '
+                            'due to outdated version', repo.repo_id)
                         os.remove(cache_file)
+                except FileNotFoundError as e:
+                    pass
+                except (AttributeError, EOFError, ImportError, IndexError) as e:
+                    logger.debug('forcing %s profile cache regen: %s', repo.repo_id, e)
+                    os.remove(cache_file)
 
         for k in sorted(self.desired_arches):
             if k.lstrip("~") not in self.desired_arches:
@@ -377,7 +367,7 @@ class ProfileAddon(base.Addon):
                         # unsupported EAPI or other issue, profile checks will catch this
                         continue
 
-                    if self.options.profile_cache or self.options.profile_cache is None:
+                    if self.options.cache['profiles']:
                         cached_profiles[profile.base]['update'] = True
                         cached_profiles[profile.base][profile.path] = {
                             'files': files,
@@ -466,6 +456,10 @@ class ProfileAddon(base.Addon):
 
         self.profile_evaluate_dict = profile_evaluate_dict
         self.profile_filters = profile_filters
+
+    def update_cache(self, force=False):
+        """Update related cache and push updates to disk."""
+        # TODO: add support for generating profiles cache via cache subcommand
 
     def identify_profiles(self, pkg):
         # yields groups of profiles; the 'groups' are grouped by the ability to share

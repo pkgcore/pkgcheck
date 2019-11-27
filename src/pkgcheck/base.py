@@ -15,6 +15,7 @@ import os
 import re
 import shutil
 import sys
+from collections import namedtuple
 from contextlib import AbstractContextManager
 
 from pkgcore import const as pkgcore_const
@@ -123,14 +124,31 @@ class Addon:
         """
 
 
-class Cache:
+CacheData = namedtuple('Cache', ['type', 'file'])
+
+
+class _RegisterCache(type):
+    """Metaclass for registering caches."""
+
+    def __new__(cls, name, bases, class_dict):
+        new_cls = type.__new__(cls, name, bases, class_dict)
+        if new_cls.__name__ != 'Cache':
+            try:
+                new_cls.caches[new_cls] = new_cls.cache_data
+            except TypeError:
+                raise ValueError(f'invalid cache_data attribute: {new_cls!r}')
+        return new_cls
+
+
+class Cache(metaclass=_RegisterCache):
     """Mixin for addon classes that create/use data caches."""
 
     # used to check on-disk cache compatibility
     cache_version = 0
-    # used by cache subcommand
-    cache_type = None
-    _cache_file = None
+    # attributes for cache registry
+    cache_data = None
+    # registered cache types
+    caches = {}
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
@@ -143,7 +161,7 @@ class Cache:
 
     def cache_file(self, repo):
         """Return the cache file for a given repository."""
-        return pjoin(self.cache_dir(repo), self._cache_file)
+        return pjoin(self.cache_dir(repo), self.cache_data.file)
 
     @staticmethod
     def update_caches(options, addons):

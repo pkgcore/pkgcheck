@@ -89,6 +89,43 @@ def _setup_reporter(namespace):
         argparser.error('--format option is only valid when using FormatReporter')
 
 
+class CacheNegations(arghparse.CommaSeparatedNegations):
+    """Split comma-separated enabled and disabled cache types."""
+
+    def parse_values(self, values):
+        all_cache_types = {cache.type for cache in base.Cache.caches.values()}
+        disabled, enabled = [], list(all_cache_types)
+        if values is None or values in ('y', 'yes', 'true'):
+            pass
+        elif values in ('n', 'no', 'false'):
+            disabled = list(all_cache_types)
+        else:
+            disabled, enabled = super().parse_values(values)
+        disabled = set(disabled)
+        enabled = set(enabled) if enabled else all_cache_types
+        unknown = (disabled | enabled) - all_cache_types
+        if unknown:
+            unknowns = ', '.join(map(repr, unknown))
+            raise argparse.ArgumentError(
+                self, f'unknown cache type{_pl(unknown)}: {unknowns}')
+        enabled = set(enabled).difference(disabled)
+        return enabled
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        enabled = self.parse_values(values)
+        caches = {}
+        for cache in base.Cache.caches.values():
+            caches[cache.type] = cache.type in enabled
+        setattr(namespace, self.dest, caches)
+
+    @staticmethod
+    def default():
+        caches = {}
+        for cache in base.Cache.caches.values():
+            caches[cache.type] = True
+        return caches
+
+
 # These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser(
     'scan', parents=(reporter_argparser,), description='scan targets for QA issues')
@@ -121,6 +158,30 @@ main_options.add_argument(
     docs="""
         Number of asynchronous tasks to run concurrently (defaults to 5 * CPU count).
     """)
+main_options.add_argument(
+    '--cache', action=CacheNegations, default=CacheNegations.default(),
+    help='forcibly enable/disable caches',
+    docs="""
+        All cache types are enabled by default, this option explicitly sets
+        which caches will be generated and used during scanning.
+
+        To enable only certain cache types, specify them in a comma-separated
+        list, e.g. ``--cache git,profiles`` will enable both the git and
+        profiles caches.
+
+        To disable specific cache types prefix them with ``-``. Note
+        that when starting the argument list with a disabled value an equals
+        sign must be used, e.g. ``--cache=-git``, otherwise the disabled
+        argument is treated as an option.
+
+        In order to disable all cache usage, it's easiest to use something
+        similar to ``--cache false`` instead of explicitly listing all disabled
+        cache types.
+
+        When disabled, no caches will be saved to disk and results requiring
+        caches (e.g. git-related checks) will be skipped.
+    """)
+
 
 check_options = scan.add_argument_group('check selection')
 check_options.add_argument(
@@ -518,16 +579,16 @@ cache_actions.add_argument(
 cache.add_argument(
     '-f', '--force', dest='force_cache', action='store_true',
     help='forcibly update/remove caches')
+cache.add_argument(
+    '-t', '--type', dest='cache',
+    action=CacheNegations, default=CacheNegations.default(),
+    help='target cache types')
 
 
 @cache.bind_pre_parse
 def _setup_cache_addons(parser, namespace):
     cache_addons = set()
-    for check in const.CHECKS.values():
-        for addon in check.required_addons:
-            if issubclass(addon, base.Cache):
-                cache_addons.add(addon)
-    for addon in cache_addons:
+    for addon in base.Cache.caches:
         add_addon(addon, cache_addons)
         addon.mangle_argparser(parser)
     namespace.cache_addons = cache_addons
@@ -559,7 +620,7 @@ def _cache(options, out, err):
             for repo in sorted(options.domain.ebuild_repos, key=attrgetter('repo_id')):
                 cache_file = cache.cache_file(repo)
                 if os.path.exists(cache_file):
-                    caches_map[cache.cache_type].append(repo)
+                    caches_map[cache.cache_data.type].append(repo)
         for cache_type, repos in caches_map.items():
             out.write(f'{cache_type} caches: ', autoline=False)
             if options.verbosity < 1:

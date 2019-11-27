@@ -1,10 +1,10 @@
-import argparse
 import os
 
 from pkgcore.ebuild import repo_objs, repository
 from pkgcore.restrictions import packages
 from pkgcore.util import commandline
 import pytest
+from snakeoil.cli import arghparse
 from snakeoil.fileutils import write_file
 from snakeoil.osutils import pjoin, ensure_dirs
 
@@ -135,12 +135,12 @@ class ProfilesMixin(ArgparseCheck, Tmpdir):
                     f.write('5')
 
     def process_check(self, *args, **kwds):
-        namespace = argparse.Namespace()
+        namespace = arghparse.Namespace()
         repo_config = repo_objs.RepoConfig(location=self.dir)
         namespace.target_repo = repository.UnconfiguredTree(
             repo_config.location, repo_config=repo_config)
         namespace.search_repo = Options()
-        namespace.profile_cache = False
+        namespace.cache = {'profiles': False}
         options = ArgparseCheck.process_check(self, namespace=namespace, *args, **kwds)
         return options
 
