@@ -26,6 +26,26 @@ from .log import logger
 
 class ArchesAddon(base.Addon):
 
+    @classmethod
+    def mangle_argparser(cls, parser):
+        group = parser.add_argument_group('arches')
+        group.add_argument(
+            '-a', '--arches', dest='selected_arches', metavar='ARCH',
+            action='csv_negations',
+            help='comma separated list of arches to enable/disable',
+            docs="""
+                Comma separated list of arches to enable and disable.
+
+                To specify disabled arches prefix them with '-'. Note that when
+                starting the argument list with a disabled arch an equals sign
+                must be used, e.g. -a=-arch, otherwise the disabled arch
+                argument is treated as an option.
+
+                By default all repo defined arches are used; however,
+                stable-related checks (e.g. UnstableOnly) default to the set of
+                arches having stable profiles in the target repo.
+            """)
+
     @staticmethod
     def check_args(parser, namespace):
         arches = namespace.selected_arches
@@ -52,26 +72,6 @@ class ArchesAddon(base.Addon):
                     ', '.join(sorted(all_arches))))
 
         namespace.arches = tuple(sorted(arches))
-
-    @classmethod
-    def mangle_argparser(cls, parser):
-        group = parser.add_argument_group('arches')
-        group.add_argument(
-            '-a', '--arches', dest='selected_arches', metavar='ARCH',
-            action='csv_negations',
-            help='comma separated list of arches to enable/disable',
-            docs="""
-                Comma separated list of arches to enable and disable.
-
-                To specify disabled arches prefix them with '-'. Note that when
-                starting the argument list with a disabled arch an equals sign
-                must be used, e.g. -a=-arch, otherwise the disabled arch
-                argument is treated as an option.
-
-                By default all repo defined arches are used; however,
-                stable-related checks (e.g. UnstableOnly) default to the set of
-                arches having stable profiles in the target repo.
-            """)
 
 
 class ProfileData:
