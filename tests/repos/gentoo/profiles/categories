@@ -4,3 +4,4 @@ EmptyCategoryDir
 EmptyDirsCheck
 PackageMetadataXmlCheck
 PkgDirCheck
+UnstableOnlyCheck

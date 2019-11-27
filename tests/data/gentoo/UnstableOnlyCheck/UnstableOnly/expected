@@ -1,0 +1,2 @@
+UnstableOnlyCheck/UnstableOnly
+  UnstableOnly: for arch: [ amd64 ], all versions are unstable: [ 0 ]
