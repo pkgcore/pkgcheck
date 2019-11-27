@@ -620,7 +620,7 @@ def _cache(options, out, err):
     else:
         # list existing caches
         caches_map = defaultdict(list)
-        for cache in caches:
+        for cache in sorted(caches, key=attrgetter('cache_data.type')):
             for repo in sorted(options.domain.ebuild_repos, key=attrgetter('repo_id')):
                 cache_file = cache.cache_file(repo)
                 if os.path.exists(cache_file):
