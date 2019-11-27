@@ -367,23 +367,6 @@ class GitAddon(base.Addon, base.Cache):
                 f'for git repo: {repo_location}')
         return out[0].strip()
 
-    def remove_cache(self):
-        """Remove selected caches."""
-        try:
-            # running from scan subcommand
-            repos = self.options.target_repo.trees
-        except AttributeError:
-            # running from cache subcommand
-            repos = self.options.domain.ebuild_repos
-
-        for repo in repos:
-            try:
-                os.remove(self.cache_file(repo))
-            except FileNotFoundError as e:
-                pass
-            except IOError as e:
-                raise UserException(f'failed removing cache: {cache_file!r}: {e}')
-
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         try:

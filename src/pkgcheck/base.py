@@ -11,14 +11,18 @@ minimally accepted scope.
 """
 
 import concurrent.futures
+import errno
 import os
 import re
 import shutil
 import sys
 from collections import namedtuple
 from contextlib import AbstractContextManager
+from operator import attrgetter
+from pathlib import Path
 
 from pkgcore import const as pkgcore_const
+from snakeoil.cli.exceptions import UserException
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
@@ -163,6 +167,16 @@ class Cache(metaclass=_RegisterCache):
         """Return the cache file for a given repository."""
         return pjoin(self.cache_dir(repo), self.cache_data.file)
 
+    @classmethod
+    def existing(cls):
+        """Mapping of all existing cache types to file paths."""
+        caches_map = {}
+        repos_dir = pjoin(CACHE_DIR, 'repos')
+        for cache in sorted(cls.caches, key=attrgetter('cache_data.type')):
+            caches_map[cache.cache_data.type] = tuple(sorted(
+                Path(repos_dir).rglob(cache.cache_data.file)))
+        return ImmutableDict(caches_map)
+
     @staticmethod
     def update_caches(options, addons):
         """Update all known caches."""
@@ -176,14 +190,9 @@ class Cache(metaclass=_RegisterCache):
                 ret.append(future.result())
         return any(ret)
 
-    def remove_cache(self):
-        """Remove selected caches."""
-        raise NotImplementedError(self.remove_cache)
-
-    @staticmethod
-    def remove_caches(options, addons):
+    @classmethod
+    def remove_caches(cls, options):
         """Remove all or selected caches."""
-        ret = []
         force = getattr(options, 'force_cache', False)
         if force:
             try:
@@ -192,13 +201,23 @@ class Cache(metaclass=_RegisterCache):
                 pass
             except IOError as e:
                 raise UserException(f'failed removing cache dir: {e}')
-            ret.append(0)
         else:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                futures = [executor.submit(addon.remove_cache) for addon in addons]
-                for future in concurrent.futures.as_completed(futures):
-                    ret.append(future.result())
-        return any(ret)
+            try:
+                for cache_type, paths in cls.existing().items():
+                    if cache_type in options.cache_types:
+                        for path in paths:
+                            if options.dry_run:
+                                print(f'Would remove {path}')
+                            else:
+                                path.unlink()
+                                # remove empty cache dirs
+                                while str(path) != CACHE_DIR:
+                                    path.parent.rmdir()
+                                    path = path.parent
+            except IOError as e:
+                if e.errno != errno.ENOTEMPTY:
+                    raise UserException(f'failed removing {cache_type} cache: {path!r}: {e}')
+        return 0
 
 
 def convert_check_filter(tok):

@@ -575,7 +575,10 @@ cache.add_argument(
     '-f', '--force', dest='force_cache', action='store_true',
     help='forcibly update/remove caches')
 cache.add_argument(
-    '-t', '--type', dest='cache',
+    '-n', '--dry-run', action='store_true',
+    help='dry run without performing any changes')
+cache.add_argument(
+    '-t', '--type', dest='cache_types',
     action=CacheNegations, default=CacheNegations.default,
     help='target cache types')
 
@@ -594,6 +597,12 @@ def _setup_cache_addons(parser, namespace):
 
 @cache.bind_final_check
 def _validate_cache_args(parser, namespace):
+    # filter cache addons based on specified type
+    namespace.cache_types = {k for k, v in namespace.cache_types.items() if v}
+    namespace.cache_addons = [
+        addon for addon in namespace.cache_addons
+        if addon.cache_data.type in namespace.cache_types]
+
     namespace.target_repo = namespace.config.get_default('repo')
     try:
         for addon in namespace.cache_addons:
@@ -607,25 +616,24 @@ def _validate_cache_args(parser, namespace):
 @cache.bind_main_func
 def _cache(options, out, err):
     ret = 0
-    caches = [init_addon(addon, options) for addon in options.pop('cache_addons')]
     if options.remove_cache:
-        ret = base.Cache.remove_caches(options, caches)
+        ret = base.Cache.remove_caches(options)
     elif options.update_cache:
+        caches = [init_addon(addon, options) for addon in options.pop('cache_addons')]
         ret = base.Cache.update_caches(options, caches)
     else:
         # list existing caches
-        caches_map = defaultdict(list)
-        for cache in sorted(caches, key=attrgetter('cache_data.type')):
-            for repo in sorted(options.domain.ebuild_repos, key=attrgetter('repo_id')):
-                cache_file = cache.cache_file(repo)
-                if os.path.exists(cache_file):
-                    caches_map[cache.cache_data.type].append(repo)
-        for cache_type, repos in caches_map.items():
-            out.write(f'{cache_type} caches: ', autoline=False)
-            if options.verbosity < 1:
-                out.write(', '.join(r.repo_id for r in repos))
-            else:
-                out.write('\n' + '\n'.join(f'  {cache.cache_file(repo)}' for repo in repos))
+        repos_dir = pjoin(base.CACHE_DIR, 'repos')
+        for cache_type, paths in base.Cache.existing().items():
+            if cache_type in options.cache_types:
+                if paths and len(options.cache_types) > 1:
+                    out.write(out.fg('yellow'), f'{cache_type} caches: ', out.reset)
+                for path in paths:
+                    repo = str(path.parent)[len(repos_dir):]
+                    # non-path repo ids get path separator stripped
+                    if repo.count(os.sep) == 1:
+                        repo = repo.lstrip(os.sep)
+                    out.write(repo)
 
     return ret
 
