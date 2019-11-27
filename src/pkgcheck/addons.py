@@ -199,7 +199,6 @@ class ProfileAddon(base.Addon, base.Cache):
             enabled = set(target_repo.profiles)
 
         profiles = enabled.difference(disabled)
-        namespace.forced_cache = 'profiles' in namespace.cache
 
         namespace.arch_profiles = defaultdict(list)
         for p in sorted(profiles):
@@ -437,10 +436,7 @@ class ProfileAddon(base.Addon, base.Cache):
                     msg = (
                         f'failed dumping {repo.repo_id} profiles cache: '
                         f'{cache_file!r}: {e.strerror}')
-                    if not self.options.forced_cache:
-                        logger.warning(msg)
-                    else:
-                        raise UserException(msg)
+                    raise UserException(msg)
 
         profile_evaluate_dict = {}
         for key, profile_list in profile_filters.items():
