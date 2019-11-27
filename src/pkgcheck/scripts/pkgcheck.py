@@ -92,6 +92,8 @@ def _setup_reporter(parser, namespace):
 class CacheNegations(arghparse.CommaSeparatedNegations):
     """Split comma-separated enabled and disabled cache types."""
 
+    default = {cache.type: True for cache in base.Cache.caches.values()}
+
     def parse_values(self, values):
         all_cache_types = {cache.type for cache in base.Cache.caches.values()}
         disabled, enabled = [], list(all_cache_types)
@@ -117,13 +119,6 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
         for cache in base.Cache.caches.values():
             caches[cache.type] = cache.type in enabled
         setattr(namespace, self.dest, caches)
-
-    @staticmethod
-    def default():
-        caches = {}
-        for cache in base.Cache.caches.values():
-            caches[cache.type] = True
-        return caches
 
 
 # These are all set based on other options, so have no default setting.
@@ -159,7 +154,7 @@ main_options.add_argument(
         Number of asynchronous tasks to run concurrently (defaults to 5 * CPU count).
     """)
 main_options.add_argument(
-    '--cache', action=CacheNegations, default=CacheNegations.default(),
+    '--cache', action=CacheNegations, default=CacheNegations.default,
     help='forcibly enable/disable caches',
     docs="""
         All cache types are enabled by default, this option explicitly sets
@@ -581,7 +576,7 @@ cache.add_argument(
     help='forcibly update/remove caches')
 cache.add_argument(
     '-t', '--type', dest='cache',
-    action=CacheNegations, default=CacheNegations.default(),
+    action=CacheNegations, default=CacheNegations.default,
     help='target cache types')
 
 
