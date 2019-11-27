@@ -170,9 +170,8 @@ main_options.add_argument(
         sign must be used, e.g. ``--cache=-git``, otherwise the disabled
         argument is treated as an option.
 
-        In order to disable all cache usage, it's easiest to use something
-        similar to ``--cache false`` instead of explicitly listing all disabled
-        cache types.
+        In order to disable all cache usage, it's easiest to use ``--cache
+        false`` instead of explicitly listing all disabled cache types.
 
         When disabled, no caches will be saved to disk and results requiring
         caches (e.g. git-related checks) will be skipped.
