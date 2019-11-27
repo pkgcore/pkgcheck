@@ -67,8 +67,8 @@ reporter_options.add_argument(
         ``--format {foo}`` will never produce any output because no result has the
         ``foo`` attribute.
     """)
-@reporter_argparser.bind_parse_priority(20)
-def _setup_reporter(namespace):
+@reporter_argparser.bind_final_check
+def _setup_reporter(parser, namespace):
     if namespace.reporter is None:
         namespace.reporter = sorted(
             const.REPORTERS.values(), key=attrgetter('priority'), reverse=True)[0]
@@ -77,16 +77,16 @@ def _setup_reporter(namespace):
             namespace.reporter = const.REPORTERS[namespace.reporter]
         except KeyError:
             available = ', '.join(const.REPORTERS.keys())
-            argparser.error(
+            parser.error(
                 f"no reporter matches {namespace.reporter!r} "
                 f"(available: {available})")
 
     if namespace.reporter is reporters.FormatReporter:
         if not namespace.format_str:
-            argparser.error('missing or empty --format option required by FormatReporter')
+            parser.error('missing or empty --format option required by FormatReporter')
         namespace.reporter = partial(namespace.reporter, namespace.format_str)
     elif namespace.format_str is not None:
-        argparser.error('--format option is only valid when using FormatReporter')
+        parser.error('--format option is only valid when using FormatReporter')
 
 
 class CacheNegations(arghparse.CommaSeparatedNegations):
@@ -326,7 +326,7 @@ def _setup_scan_addons(parser, namespace):
 
 
 @scan.bind_final_check
-def _validate_args(parser, namespace):
+def _validate_scan_args(parser, namespace):
     namespace.enabled_checks = list(const.CHECKS.values())
     namespace.enabled_keywords = list(const.KEYWORDS.values())
 
@@ -595,7 +595,7 @@ def _setup_cache_addons(parser, namespace):
 
 
 @cache.bind_final_check
-def _validate_args(parser, namespace):
+def _validate_cache_args(parser, namespace):
     try:
         for addon in namespace.cache_addons:
             addon.check_args(parser, namespace)
