@@ -108,8 +108,9 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
         unknown = (disabled | enabled) - all_cache_types
         if unknown:
             unknowns = ', '.join(map(repr, unknown))
+            choices = ', '.join(map(repr, sorted(self.default)))
             raise argparse.ArgumentError(
-                self, f'unknown cache type{_pl(unknown)}: {unknowns}')
+                self, f'unknown cache type{_pl(unknown)}: {unknowns} (choose from {choices})')
         enabled = set(enabled).difference(disabled)
         return enabled
 
