@@ -1,0 +1,9 @@
+diff -Naur visibility/VisibilityCheck/NonsolvableDepsInDev/NonsolvableDepsInDev-0.ebuild fixed/VisibilityCheck/NonsolvableDepsInDev/NonsolvableDepsInDev-0.ebuild
+--- visibility/VisibilityCheck/NonsolvableDepsInDev/NonsolvableDepsInDev-0.ebuild	2019-11-27 06:49:14.119368110 -0700
++++ fixed/VisibilityCheck/NonsolvableDepsInDev/NonsolvableDepsInDev-0.ebuild	2019-11-27 11:19:46.333758197 -0700
+@@ -4,4 +4,4 @@
+ SLOT="0"
+ LICENSE="BSD"
+ KEYWORDS="~amd64"
+-DEPEND="stub/masked"
++DEPEND="stub/unstable"

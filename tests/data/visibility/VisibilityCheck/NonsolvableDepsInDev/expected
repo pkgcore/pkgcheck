@@ -1,0 +1,2 @@
+VisibilityCheck/NonsolvableDepsInDev
+  NonsolvableDepsInDev: version 0: nonsolvable depset(depend) keyword(~amd64) dev profile (visibility/amd64/dev) (1 total): solutions: [ stub/masked ]

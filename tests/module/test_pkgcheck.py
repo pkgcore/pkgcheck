@@ -374,8 +374,8 @@ class TestPkgcheckScan(object):
 
                 # determine what test target to use
                 try:
-                    target = open(pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/target'))
-                    args.extend(shlex.split(target.read()))
+                    with open(pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/target')) as f:
+                        args.extend(shlex.split(f.read()))
                 except FileNotFoundError:
                     if base.repository_scope in (result.scope, check.scope):
                         args.extend(['-k', keyword])
@@ -385,6 +385,13 @@ class TestPkgcheckScan(object):
                         args.append(f'{check_name}/{keyword}')
                     else:
                         pytest.fail(f'{keyword} result for {check_name} check has unknown scope')
+
+                # add any defined extra repo args
+                try:
+                    with open(f'{repo_dir}/metadata/pkgcheck-args') as f:
+                        args.extend(shlex.split(f.read()))
+                except FileNotFoundError:
+                    pass
 
                 with open(expected_path) as f:
                     expected = f.read()
@@ -451,6 +458,14 @@ class TestPkgcheckScan(object):
                     repo_dir = triggered_repo
 
                 args = ['-r', repo_dir, '-c', ','.join(self._checks_run[repo])]
+
+                # add any defined extra repo args
+                try:
+                    with open(f'{repo_dir}/metadata/pkgcheck-args') as f:
+                        args.extend(shlex.split(f.read()))
+                except FileNotFoundError:
+                    pass
+
                 with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
                         patch('pkgcheck.base.CACHE_DIR', cache_dir):
                     with pytest.raises(SystemExit) as excinfo:
@@ -508,6 +523,13 @@ class TestPkgcheckScan(object):
                 args.append(f'{check_name}/{keyword}')
             else:
                 pytest.fail(f'{keyword} result for {check_name} check has unknown scope')
+
+            # add any defined extra repo args
+            try:
+                with open(f'{repo_dir}/metadata/pkgcheck-args') as f:
+                    args.extend(shlex.split(f.read()))
+            except FileNotFoundError:
+                pass
 
             cmd = self.args + args
             with patch('sys.argv', cmd), \

@@ -1,0 +1,6 @@
+amd64 visibility/amd64/stable stable
+amd64 visibility/amd64/dev dev
+amd64 visibility/amd64/exp exp
+x86 visibility/x86/stable stable
+x86 visibility/x86/dev dev
+x86 visibility/x86/exp exp
