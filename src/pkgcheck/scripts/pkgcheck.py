@@ -587,15 +587,19 @@ cache.add_argument(
 
 @cache.bind_pre_parse
 def _setup_cache_addons(parser, namespace):
+    all_addons = set()
     cache_addons = set()
     for addon in base.Cache.caches:
-        add_addon(addon, cache_addons)
+        cache_addons.add(addon)
+        add_addon(addon, all_addons)
+    for addon in all_addons:
         addon.mangle_argparser(parser)
     namespace.cache_addons = cache_addons
 
 
 @cache.bind_final_check
 def _validate_cache_args(parser, namespace):
+    namespace.target_repo = namespace.config.get_default('repo')
     try:
         for addon in namespace.cache_addons:
             addon.check_args(parser, namespace)
