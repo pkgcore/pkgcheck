@@ -211,12 +211,16 @@ class Cache(metaclass=_RegisterCache):
                             else:
                                 path.unlink()
                                 # remove empty cache dirs
-                                while str(path) != CACHE_DIR:
-                                    path.parent.rmdir()
-                                    path = path.parent
+                                try:
+                                    while str(path) != CACHE_DIR:
+                                        path.parent.rmdir()
+                                        path = path.parent
+                                except OSError as e:
+                                    if e.errno == errno.ENOTEMPTY:
+                                        continue
+                                    raise
             except IOError as e:
-                if e.errno != errno.ENOTEMPTY:
-                    raise UserException(f'failed removing {cache_type} cache: {path!r}: {e}')
+                raise UserException(f'failed removing {cache_type} cache: {path!r}: {e}')
         return 0
 
 
