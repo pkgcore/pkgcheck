@@ -1,0 +1,5 @@
+SourcingCheck/InvalidSlot
+  InvalidSlot: version 0: invalid SLOT: '?'
+  InvalidSlot: version 1: invalid SLOT: '0/1'
+  InvalidSlot: version 2: invalid SLOT: '0/-1'
+  InvalidSlot: version 3: invalid SLOT: '0/foo?'
