@@ -405,7 +405,7 @@ class TestPkgcheckScan(object):
                                     self._results[repo].add(deserialized_result)
                             # compare rendered fancy out to expected
                             assert self._render_results(
-                                sorted(results), verbosity=verbosity) == expected
+                                results, verbosity=verbosity) == expected
                 tested = True
                 self._checks_run[repo].add(check_name)
 
@@ -416,7 +416,7 @@ class TestPkgcheckScan(object):
         """Render a given set of result objects into their related string form."""
         with tempfile.TemporaryFile() as f:
             with reporters.FancyReporter(out=PlainTextFormatter(f), **kwargs) as reporter:
-                for result in results:
+                for result in sorted(results):
                     reporter.report(result)
             f.seek(0)
             output = f.read().decode()
