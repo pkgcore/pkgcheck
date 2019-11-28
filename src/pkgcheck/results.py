@@ -99,8 +99,8 @@ class CategoryResult(Result):
 
     def __lt__(self, other):
         try:
-            if self.category < other.category:
-                return True
+            if self.category != other.category:
+                return self.category < other.category
         except AttributeError:
             pass
         return super().__lt__(other)
@@ -118,8 +118,8 @@ class PackageResult(CategoryResult):
 
     def __lt__(self, other):
         try:
-            if self.package < other.package:
-                return True
+            if self.package != other.package:
+                return self.package < other.package
         except AttributeError:
             pass
         return super().__lt__(other)
