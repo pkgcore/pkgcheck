@@ -277,7 +277,9 @@ class TestPkgcheckScan(object):
     @pytest.fixture(autouse=True)
     def _setup(self, testconfig):
         self.args = [project, '--config', testconfig, 'scan']
-        self.testdir = os.path.dirname(os.path.dirname(__file__))
+        testdir = os.path.dirname(os.path.dirname(__file__))
+        self.repos_data = pjoin(testdir, 'data', 'repos')
+        self.repos_dir = pjoin(testdir, 'repos')
 
     @staticmethod
     def _patch(fix, repo_path):
@@ -310,16 +312,16 @@ class TestPkgcheckScan(object):
         """Make sure the test repos are up to date check/result naming wise."""
         # grab custom targets
         custom_targets = set()
-        for repo in os.listdir(pjoin(self.testdir, 'data')):
-            for root, _dirs, files in os.walk(pjoin(self.testdir, 'data', repo)):
+        for repo in os.listdir(self.repos_data):
+            for root, _dirs, files in os.walk(pjoin(self.repos_data, repo)):
                 for f in files:
                     if f == 'target':
                         with open(pjoin(root, f)) as target:
                             custom_targets.add(target.read().strip())
 
         # all pkgs that aren't custom targets or stubs must be check/keyword
-        for repo_dir in os.listdir(pjoin(self.testdir, 'repos')):
-            repo = UnconfiguredTree(pjoin(self.testdir, 'repos', repo_dir))
+        for repo_dir in os.listdir(self.repos_dir):
+            repo = UnconfiguredTree(pjoin(self.repos_dir, repo_dir))
 
             # determine pkg stubs added to the repo
             stubs = set()
@@ -345,10 +347,10 @@ class TestPkgcheckScan(object):
 
     def test_pkgcheck_test_data(self):
         """Make sure the test data is up to date check/result naming wise."""
-        for repo in os.listdir(pjoin(self.testdir, 'data')):
-            for check in os.listdir(pjoin(self.testdir, f'data/{repo}')):
+        for repo in os.listdir(self.repos_data):
+            for check in os.listdir(pjoin(self.repos_data, repo)):
                 assert check in const.CHECKS
-                for keyword in os.listdir(pjoin(self.testdir, f'data/{repo}/{check}')):
+                for keyword in os.listdir(pjoin(self.repos_data, repo, check)):
                     assert keyword in const.KEYWORDS
 
     @pytest.mark.parametrize('check, result', results)
@@ -357,16 +359,16 @@ class TestPkgcheckScan(object):
         tested = False
         check_name = check.__name__
         keyword = result.__name__
-        for repo in os.listdir(pjoin(self.testdir, 'data')):
+        for repo in os.listdir(self.repos_data):
             for verbosity, file in ((0, 'expected'), (1, 'expected-verbose')):
-                expected_path = pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/{file}')
+                expected_path = pjoin(self.repos_data, f'{repo}/{check_name}/{keyword}/{file}')
                 if not os.path.exists(expected_path):
                     continue
 
-                repo_dir = pjoin(self.testdir, 'repos', repo)
+                repo_dir = pjoin(self.repos_dir, repo)
 
                 # create issue related to keyword as required
-                trigger = pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/trigger.sh')
+                trigger = pjoin(self.repos_data, f'{repo}/{check_name}/{keyword}/trigger.sh')
                 if os.path.exists(trigger):
                     triggered_repo = str(tmp_path / f'triggered-{repo}')
                     shutil.copytree(repo_dir, triggered_repo)
@@ -429,13 +431,13 @@ class TestPkgcheckScan(object):
         if not self._results:
             pytest.skip('test_pkgcheck_scan() must be run before this to populate results')
         else:
-            for repo in os.listdir(pjoin(self.testdir, 'data')):
+            for repo in os.listdir(self.repos_data):
                 unknown_results = []
-                repo_dir = pjoin(self.testdir, 'repos', repo)
+                repo_dir = pjoin(self.repos_dir, repo)
 
                 # create issues related to keyword as required
                 triggers = []
-                for root, _dirs, files in os.walk(pjoin(self.testdir, 'data', repo)):
+                for root, _dirs, files in os.walk(pjoin(self.repos_data, repo)):
                     for f in files:
                         if f == 'trigger.sh':
                             triggers.append(pjoin(root, f))
@@ -486,8 +488,8 @@ class TestPkgcheckScan(object):
         check_name = check.__name__
         keyword = result.__name__
         tested = False
-        for repo in os.listdir(pjoin(self.testdir, 'data')):
-            keyword_dir = pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}')
+        for repo in os.listdir(self.repos_data):
+            keyword_dir = pjoin(self.repos_data, f'{repo}/{check_name}/{keyword}')
             if os.path.exists(pjoin(keyword_dir, 'fix.patch')):
                 fix = pjoin(keyword_dir, 'fix.patch')
                 func = self._patch
@@ -498,7 +500,7 @@ class TestPkgcheckScan(object):
                 continue
 
             # apply a fix if one exists and make sure the related result doesn't appear
-            repo_dir = pjoin(self.testdir, 'repos', repo)
+            repo_dir = pjoin(self.repos_dir, repo)
             fixed_repo = str(tmp_path / f'fixed-{repo}')
             shutil.copytree(repo_dir, fixed_repo)
             func(fix, fixed_repo)
