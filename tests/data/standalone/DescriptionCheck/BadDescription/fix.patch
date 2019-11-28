@@ -1,0 +1,44 @@
+diff -Naur standalone/DescriptionCheck/BadDescription/BadDescription-0.ebuild fixed/DescriptionCheck/BadDescription/BadDescription-0.ebuild
+--- standalone/DescriptionCheck/BadDescription/BadDescription-0.ebuild	2019-11-28 00:33:38.457040594 -0700
++++ fixed/DescriptionCheck/BadDescription/BadDescription-0.ebuild	2019-11-28 00:34:26.983325843 -0700
+@@ -1,3 +1,4 @@
++DESCRIPTION="Ebuild with a sane DESCRIPTION"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/DescriptionCheck/BadDescription/BadDescription-1.ebuild fixed/DescriptionCheck/BadDescription/BadDescription-1.ebuild
+--- standalone/DescriptionCheck/BadDescription/BadDescription-1.ebuild	2019-11-28 00:33:38.457040594 -0700
++++ fixed/DescriptionCheck/BadDescription/BadDescription-1.ebuild	2019-11-28 00:34:39.109397112 -0700
+@@ -1,4 +1,4 @@
+-DESCRIPTION=""
++DESCRIPTION="Ebuild with a sane DESCRIPTION"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/DescriptionCheck/BadDescription/BadDescription-2.ebuild fixed/DescriptionCheck/BadDescription/BadDescription-2.ebuild
+--- standalone/DescriptionCheck/BadDescription/BadDescription-2.ebuild	2019-11-28 00:33:38.457040594 -0700
++++ fixed/DescriptionCheck/BadDescription/BadDescription-2.ebuild	2019-11-28 00:34:47.788448129 -0700
+@@ -1,4 +1,4 @@
+-DESCRIPTION="bad desc"
++DESCRIPTION="Ebuild with a sane DESCRIPTION"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/DescriptionCheck/BadDescription/BadDescription-3.ebuild fixed/DescriptionCheck/BadDescription/BadDescription-3.ebuild
+--- standalone/DescriptionCheck/BadDescription/BadDescription-3.ebuild	2019-11-28 00:33:38.457040594 -0700
++++ fixed/DescriptionCheck/BadDescription/BadDescription-3.ebuild	2019-11-28 00:34:53.796483445 -0700
+@@ -1,4 +1,4 @@
+-DESCRIPTION="BadDescription"
++DESCRIPTION="Ebuild with a sane DESCRIPTION"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+diff -Naur standalone/DescriptionCheck/BadDescription/BadDescription-4.ebuild fixed/DescriptionCheck/BadDescription/BadDescription-4.ebuild
+--- standalone/DescriptionCheck/BadDescription/BadDescription-4.ebuild	2019-11-28 00:33:38.457040594 -0700
++++ fixed/DescriptionCheck/BadDescription/BadDescription-4.ebuild	2019-11-28 00:34:59.065514420 -0700
+@@ -1,4 +1,4 @@
+-DESCRIPTION="Ebuild with DESCRIPTION that is far too long and will be flagged by the BadDescription result since the check triggers at greater than 150 characters long."
++DESCRIPTION="Ebuild with a sane DESCRIPTION"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"

@@ -1,0 +1,6 @@
+DescriptionCheck/BadDescription
+  BadDescription: version 0: empty/unset
+  BadDescription: version 1: empty/unset
+  BadDescription: version 2: DESCRIPTION="bad desc" under 10 chars in length
+  BadDescription: version 3: DESCRIPTION="BadDescription" generic package description
+  BadDescription: version 4: over 150 chars in length
