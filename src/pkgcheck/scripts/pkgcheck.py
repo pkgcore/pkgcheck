@@ -145,9 +145,10 @@ main_options.add_argument(
     '--sorted', action='store_true',
     help='sort all generated results',
     docs="""
-        Forcibly sort all generated results. Note that this is only useful for
-        small, known runs (e.g. generating expected test output) since it
-        causes all generated results to be stored in memory.
+        Globally sort all generated results. Note that this is only useful for
+        limited runs (e.g. using -k to restrict output to a single result type)
+        since it causes all generated results to be stored in memory and sorts
+        on a global scope.
     """)
 main_options.add_argument(
     '-j', '--jobs', type=arghparse.positive_int, default=os.cpu_count(),
