@@ -373,21 +373,7 @@ class TestPkgcheckScan(object):
                     self._script(trigger, triggered_repo)
                     repo_dir = triggered_repo
 
-                args = (['-v'] * verbosity) + ['-r', repo_dir, '-c', check_name]
-
-                # determine what test target to use
-                try:
-                    with open(pjoin(self.testdir, f'data/{repo}/{check_name}/{keyword}/target')) as f:
-                        args.extend(shlex.split(f.read()))
-                except FileNotFoundError:
-                    if base.repository_scope in (result.scope, check.scope):
-                        args.extend(['-k', keyword])
-                    elif result.scope == base.category_scope:
-                        args.append(f'{keyword}/*')
-                    elif result.scope in (base.package_scope, base.version_scope):
-                        args.append(f'{check_name}/{keyword}')
-                    else:
-                        pytest.fail(f'{keyword} result for {check_name} check has unknown scope')
+                args = (['-v'] * verbosity) + ['-r', repo_dir, '-c', check_name, '-k', keyword]
 
                 # add any defined extra repo args
                 try:
@@ -517,15 +503,7 @@ class TestPkgcheckScan(object):
             shutil.copytree(repo_dir, fixed_repo)
             func(fix, fixed_repo)
 
-            args = ['-r', fixed_repo, '-c', check_name]
-            if base.repository_scope in (result.scope, check.scope):
-                args.extend(['-k', keyword])
-            elif result.scope == base.category_scope:
-                args.append(f'{keyword}/*')
-            elif result.scope in (base.package_scope, base.version_scope):
-                args.append(f'{check_name}/{keyword}')
-            else:
-                pytest.fail(f'{keyword} result for {check_name} check has unknown scope')
+            args = ['-r', fixed_repo, '-c', check_name, '-k', keyword]
 
             # add any defined extra repo args
             try:
