@@ -32,13 +32,13 @@ class Reporter:
         self.report = self._add_report().send
         self.process = self._process_report().send
 
-    def __call__(self, pipe):
+    def __call__(self, pipe, sort=False):
         results_q = SimpleQueue()
         orig_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)
         p = Process(target=pipe.run, args=(results_q,))
         p.start()
         signal.signal(signal.SIGINT, orig_sigint_handler)
-        if pipe.pkg_scan:
+        if pipe.pkg_scan or sort:
             # sort versioned package results, removing duplicate MetadataError results
             results = set(chain.from_iterable(iter(results_q.get, None)))
             for result in sorted(results):

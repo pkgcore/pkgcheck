@@ -142,6 +142,14 @@ main_options.add_argument(
         ACCEPT_LICENSE, and package.mask.
     """)
 main_options.add_argument(
+    '--sorted', action='store_true',
+    help='sort all generated results',
+    docs="""
+        Forcibly sort all generated results. Note that this is only useful for
+        small, known runs (e.g. generating expected test output) since it
+        causes all generated results to be stored in memory.
+    """)
+main_options.add_argument(
     '-j', '--jobs', type=arghparse.positive_int, default=os.cpu_count(),
     help='number of checks to run in parallel',
     docs="""
@@ -553,7 +561,8 @@ def _scan(options, out, err):
                     err.write(f'restriction: {restrict}')
                 err.flush()
 
-                reporter(pipeline.Pipeline(options, scan_scope, pipes, restrict))
+                pipe = pipeline.Pipeline(options, scan_scope, pipes, restrict)
+                reporter(pipe, sort=options.sorted)
 
     return 0
 
