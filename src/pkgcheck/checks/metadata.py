@@ -222,10 +222,29 @@ class BannedEapi(_EapiResult, results.Error):
     _type = 'banned'
 
 
+class EapiCheck(Check):
+    """Scan for packages with banned or deprecated EAPIs."""
+
+    known_results = frozenset([DeprecatedEapi, BannedEapi])
+
+    def feed(self, pkg):
+        eapi_str = str(pkg.eapi)
+        if eapi_str in self.options.target_repo.config.eapis_banned:
+            yield BannedEapi(pkg.eapi, pkg=pkg)
+        elif eapi_str in self.options.target_repo.config.eapis_deprecated:
+            yield DeprecatedEapi(pkg.eapi, pkg=pkg)
+
+
 class InvalidEapi(results.MetadataError):
     """Package's EAPI is invalid."""
 
     _attr = 'eapi'
+
+
+class InvalidSlot(results.MetadataError):
+    """Package's SLOT is invalid."""
+
+    _attr = 'slot'
 
 
 class SourcingError(results.MetadataError):
@@ -234,21 +253,10 @@ class SourcingError(results.MetadataError):
     _attr = 'data'
 
 
-class EapiCheck(Check):
-    """Scan for packages with banned/deprecated/invalid EAPIs.
+class SourcingCheck(Check):
+    """Scan for packages with sourcing errors or invalid, sourced metadata variables."""
 
-    This check also flags ebuilds with invalid metadata causing sourcing
-    errors.
-    """
-
-    known_results = frozenset([DeprecatedEapi, BannedEapi, InvalidEapi, SourcingError])
-
-    def feed(self, pkg):
-        eapi_str = str(pkg.eapi)
-        if eapi_str in self.options.target_repo.config.eapis_banned:
-            yield BannedEapi(pkg.eapi, pkg=pkg)
-        elif eapi_str in self.options.target_repo.config.eapis_deprecated:
-            yield DeprecatedEapi(pkg.eapi, pkg=pkg)
+    known_results = frozenset([SourcingError, InvalidEapi, InvalidSlot])
 
 
 class RequiredUseDefaults(results.VersionResult, results.Warning):

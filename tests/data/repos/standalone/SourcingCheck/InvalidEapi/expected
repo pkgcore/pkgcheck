@@ -1,3 +1,3 @@
-EapiCheck/InvalidEapi
+SourcingCheck/InvalidEapi
   InvalidEapi: version 0: EAPI '9999' is not supported
   InvalidEapi: version 1: invalid EAPI: 'invalid!'

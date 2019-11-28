@@ -1,0 +1,8 @@
+diff -Naur standalone/SourcingCheck/SourcingError/SourcingError-0.ebuild fixed/SourcingCheck/SourcingError/SourcingError-0.ebuild
+--- standalone/SourcingCheck/SourcingError/SourcingError-0.ebuild	2019-11-23 13:25:06.594993776 -0700
++++ fixed/SourcingCheck/SourcingError/SourcingError-0.ebuild	2019-11-23 13:25:58.559311296 -0700
+@@ -2,4 +2,3 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-foo
