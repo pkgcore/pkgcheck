@@ -141,9 +141,10 @@ class VersionResult(PackageResult):
         revision = cpv._Revision(revision)
         return version, revision
 
-    def __lt__(self, other):
+    def __lt__(self, other, cmp=None):
         try:
-            cmp = cpv.ver_cmp(*(self.ver_rev + other.ver_rev))
+            if cmp is None:
+                cmp = cpv.ver_cmp(*(self.ver_rev + other.ver_rev))
             if cmp < 0:
                 return True
             elif cmp > 0:
@@ -162,16 +163,18 @@ class LineResult(VersionResult):
         self.lineno = lineno
 
     def __lt__(self, other):
+        cmp = None
         try:
             # sort by line number for matching versions
-            if cpv.ver_cmp(*(self.ver_rev + other.ver_rev)) == 0:
+            cmp = cpv.ver_cmp(*(self.ver_rev + other.ver_rev))
+            if cmp == 0:
                 if self.lineno < other.lineno:
                     return True
                 elif self.lineno > other.lineno:
                     return False
         except AttributeError:
             pass
-        return super().__lt__(other)
+        return super().__lt__(other, cmp=cmp)
 
 
 class FilteredVersionResult(VersionResult):
