@@ -1080,13 +1080,15 @@ class SrcUriCheck(Check):
 class BadDescription(results.VersionResult, results.Warning):
     """Package's description is bad for some reason."""
 
-    def __init__(self, msg, **kwargs):
+    def __init__(self, msg, pkg_desc=None, **kwargs):
         super().__init__(**kwargs)
         self.msg = msg
+        self.pkg_desc = pkg_desc
 
     @property
     def desc(self):
-        return f"bad DESCRIPTION: {self.msg}"
+        pkg_desc = f'DESCRIPTION="{self.pkg_desc}" ' if self.pkg_desc else ''
+        return f'{pkg_desc}{self.msg}'
 
 
 class DescriptionCheck(Check):
@@ -1099,21 +1101,20 @@ class DescriptionCheck(Check):
     known_results = frozenset([BadDescription])
 
     def feed(self, pkg):
-        s = pkg.description.lower()
+        desc = pkg.description
+        s = desc.lower()
         if s.startswith("based on") and "eclass" in s:
-            yield BadDescription("generic eclass defined description", pkg=pkg)
+            yield BadDescription("generic eclass defined description", pkg_desc=desc, pkg=pkg)
         elif s in (pkg.package, pkg.key):
-            yield BadDescription(
-                "using the pkg name as the description isn't very helpful", pkg=pkg)
+            yield BadDescription("generic package description", pkg_desc=desc, pkg=pkg)
         else:
-            l = len(pkg.description)
+            l = len(desc)
             if not l:
                 yield BadDescription("empty/unset", pkg=pkg)
             elif l > 150:
-                yield BadDescription("over 150 chars in length, bit long", pkg=pkg)
+                yield BadDescription("over 150 chars in length", pkg=pkg)
             elif l < 10:
-                yield BadDescription(
-                    f"{pkg.description!r} under 10 chars in length- too short", pkg=pkg)
+                yield BadDescription(f"under 10 chars in length", pkg_desc=desc, pkg=pkg)
 
 
 class BadHomepage(results.VersionResult, results.Warning):

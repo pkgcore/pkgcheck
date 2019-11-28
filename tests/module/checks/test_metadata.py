@@ -39,7 +39,7 @@ class TestDescriptionCheck(misc.ReportTestCase):
     def test_desc_length(self):
         r = self.assertReport(self.check, self.mk_pkg())
         assert isinstance(r, metadata.BadDescription)
-        assert 'bad DESCRIPTION: empty/unset' == str(r)
+        assert 'empty/unset' in str(r)
 
         self.assertNoReport(self.check, self.mk_pkg('s' * 150))
         r = self.assertReport(self.check, self.mk_pkg('s' * 151))
