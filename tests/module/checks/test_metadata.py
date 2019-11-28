@@ -370,20 +370,84 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
             assert r.eapi == eapi_str
             assert f'uses banned EAPI {eapi_str}' == str(r)
 
-    def test_unknown_eapis(self):
-        deprecated = ('0', '2', '4', '5')
-        banned = ('1', '3')
-        check = self.mk_check(deprecated=deprecated, banned=banned)
 
+class TestSourcingCheck(misc.ReportTestCase, misc.Tmpdir):
+
+    check_kls = metadata.SourcingCheck
+    _repo_id = 0
+
+    def mk_check(self):
+        # TODO: switch to using a repo fixture when available
+        repo_dir = pjoin(self.dir, str(self._repo_id))
+        self._repo_id += 1
+        os.makedirs(pjoin(repo_dir, 'profiles'))
+        os.makedirs(pjoin(repo_dir, 'metadata'))
+        with open(pjoin(repo_dir, 'profiles', 'repo_name'), 'w') as f:
+            f.write('fake\n')
+        with open(pjoin(repo_dir, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('masters =\n')
+        repo_config = repo_objs.RepoConfig(location=repo_dir)
+        self.repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
+        options = misc.Options(target_repo=self.repo, verbosity=False)
+        return self.check_kls(options)
+
+    def mk_pkg(self, eapi):
+        return misc.FakePkg('dev-util/diffball-2.7.1', data={'EAPI': eapi})
+
+    def test_repo_with_no_settings(self):
+        check = self.mk_check()
+        for eapi_str in eapi.EAPI.known_eapis.keys():
+            self.assertNoReport(check, self.mk_pkg(eapi=eapi_str))
+
+    def test_unknown_eapis(self):
+        for eapi in ('blah', '9999'):
+            check = self.mk_check()
+            pkg_path = pjoin(self.repo.location, 'dev-util', 'foo')
+            os.makedirs(pkg_path)
+            with open(pjoin(pkg_path, 'foo-0.ebuild'), 'w') as f:
+                f.write(textwrap.dedent(f"""\
+                    EAPI={eapi}
+                """))
+            r = self.assertReport(check, self.repo)
+            assert isinstance(r, metadata.InvalidEapi)
+            assert f"EAPI '{eapi}' is not supported" == str(r)
+
+    def test_invalid_eapis(self):
+        for eapi in ('invalid!', '${EAPI}'):
+            check = self.mk_check()
+            pkg_path = pjoin(self.repo.location, 'dev-util', 'foo')
+            os.makedirs(pkg_path)
+            with open(pjoin(pkg_path, 'foo-0.ebuild'), 'w') as f:
+                f.write(textwrap.dedent(f"""\
+                    EAPI="{eapi}"
+                """))
+            r = self.assertReport(check, self.repo)
+            assert isinstance(r, metadata.InvalidEapi)
+            assert f"invalid EAPI: '{eapi}'" == str(r)
+
+    def test_sourcing_error(self):
+        check = self.mk_check()
         pkg_path = pjoin(self.repo.location, 'dev-util', 'foo')
         os.makedirs(pkg_path)
         with open(pjoin(pkg_path, 'foo-0.ebuild'), 'w') as f:
             f.write(textwrap.dedent("""\
-                EAPI=blah
+                foo
             """))
         r = self.assertReport(check, self.repo)
-        assert isinstance(r, metadata.InvalidEapi)
-        assert "EAPI 'blah' is not supported" == str(r)
+        assert isinstance(r, metadata.SourcingError)
+
+    def test_invalid_slots(self):
+        for slot in ('?', '0/1'):
+            check = self.mk_check()
+            pkg_path = pjoin(self.repo.location, 'dev-util', 'foo')
+            os.makedirs(pkg_path)
+            with open(pjoin(pkg_path, 'foo-0.ebuild'), 'w') as f:
+                f.write(textwrap.dedent(f"""\
+                    SLOT="{slot}"
+                """))
+            r = self.assertReport(check, self.repo)
+            assert isinstance(r, metadata.InvalidSlot)
+            assert f"invalid SLOT: '{slot}'" == str(r)
 
 
 class TestRequiredUseCheck(IUSE_Options, misc.ReportTestCase):
