@@ -1105,7 +1105,7 @@ class DescriptionCheck(Check):
         s = desc.lower()
         if s.startswith("based on") and "eclass" in s:
             yield BadDescription("generic eclass defined description", pkg_desc=desc, pkg=pkg)
-        elif s in (pkg.package, pkg.key):
+        elif s in (pkg.package.lower(), pkg.key.lower()):
             yield BadDescription("generic package description", pkg_desc=desc, pkg=pkg)
         else:
             l = len(desc)
