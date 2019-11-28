@@ -1,6 +1,6 @@
-diff -Naur visibility/VisibilityCheck/NonsolvableDepsInExp/NonsolvableDepsInExp-0.ebuild fixed/VisibilityCheck/NonsolvableDepsInExp/NonsolvableDepsInExp-0.ebuild
---- visibility/VisibilityCheck/NonsolvableDepsInExp/NonsolvableDepsInExp-0.ebuild	2019-11-27 06:49:14.119368110 -0700
-+++ fixed/VisibilityCheck/NonsolvableDepsInExp/NonsolvableDepsInExp-0.ebuild	2019-11-27 11:20:43.055979598 -0700
+diff -Naur visibility/NonsolvableDepsInExp/masked/masked-0.ebuild fixed/NonsolvableDepsInExp/masked/masked-0.ebuild
+--- visibility/NonsolvableDepsInExp/masked/masked-0.ebuild	2019-11-27 18:23:39.530850730 -0700
++++ fixed/NonsolvableDepsInExp/masked/masked-0.ebuild	2019-11-27 18:38:54.209440054 -0700
 @@ -4,4 +4,4 @@
  SLOT="0"
  LICENSE="BSD"

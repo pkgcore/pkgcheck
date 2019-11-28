@@ -1,2 +1,3 @@
-VisibilityCheck/NonsolvableDepsInDev
-VisibilityCheck/NonsolvableDepsInStable
+NonsolvableDepsInDev/masked
+NonsolvableDepsInStable/masked
+NonsolvableDepsInStable/unstable

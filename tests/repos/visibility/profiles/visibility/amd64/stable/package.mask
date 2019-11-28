@@ -1,2 +1,2 @@
-VisibilityCheck/NonsolvableDepsInDev
-VisibilityCheck/NonsolvableDepsInExp
+NonsolvableDepsInDev/masked
+NonsolvableDepsInExp/masked

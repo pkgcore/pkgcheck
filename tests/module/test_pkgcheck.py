@@ -338,7 +338,10 @@ class TestPkgcheckScan(object):
                     if pkg.startswith('stub'):
                         continue
                     if f'{cat}/{pkg}' not in allowed:
-                        assert (cat, pkg) in results
+                        if pkg in const.KEYWORDS:
+                            assert (cat, pkg) in results
+                        else:
+                            assert cat in const.KEYWORDS
 
     def test_pkgcheck_test_data(self):
         """Make sure the test data is up to date check/result naming wise."""

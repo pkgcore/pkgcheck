@@ -1,2 +1,2 @@
-VisibilityCheck/NonsolvableDepsInExp
+NonsolvableDepsInExp/masked
   NonsolvableDepsInExp: version 0: nonsolvable depset(depend) keyword(~amd64) exp profile (visibility/amd64/exp) (1 total): solutions: [ stub/masked ]
