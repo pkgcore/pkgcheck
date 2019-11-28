@@ -1,0 +1,10 @@
+diff -Naur standalone/MissingSlotDepCheck/MissingSlotDep/MissingSlotDep-0.ebuild fixed/MissingSlotDepCheck/MissingSlotDep/MissingSlotDep-0.ebuild
+--- standalone/MissingSlotDepCheck/MissingSlotDep/MissingSlotDep-0.ebuild	2019-11-28 01:46:30.606468149 -0700
++++ fixed/MissingSlotDepCheck/MissingSlotDep/MissingSlotDep-0.ebuild	2019-11-28 01:50:03.520400413 -0700
+@@ -3,5 +3,5 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-RDEPEND="stub/slotted"
++RDEPEND="stub/slotted:1="
+ DEPEND="${RDEPEND}"
