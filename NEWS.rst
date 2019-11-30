@@ -3,6 +3,56 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.7.1 (2019-11-30)
+---------------------------
+
+- DeprecatedPkg: Add initial result for flagging package dependencies
+  deprecated via package.deprecated.
+
+- DeprecatedEclassCheck: Add support for conditionally deprecating eclasses
+  with epatch and versionator being the first eclasses to be flagged for
+  conditional deprecation.
+
+- SourcingCheck: Add separate check to validate ebuild sourcing and flag
+  invalid SLOTs via a new InvalidSlot result.
+
+- pkgcheck scan: Add --sorted option to forcibly perform a global sort -- only
+  useful for limited cases such as generating expected test output.
+
+- pkgcheck cache: Add support for listing and removing cache types for
+  non-registered repos.
+
+- pkgcheck scan: Replace --git-disable/--profile-cache options with --cache. By
+  default all caches are enabled. To disable all of them, use something similar
+  to '--cache false'.
+
+  Cache types can also be enabled or disabled individually using a
+  comma-separated cache type list, e.g. '--cache profiles' will only enable
+  profiles caches and '--cache=-git' will only disable git caches leaving
+  all other caches enabled.
+
+- Prioritize checks that scan for metadata errors so they get run before checks
+  that use the related metadata attrs.
+
+- Fix memory leak when generating caches for certain git repos (#178).
+
+- pkgcheck scan: Drop --profiles-base option.
+
+- Avoid caching a repo's base package.mask for profile filters in order to
+  avoid more cases of profile cache invalidation.
+
+- Split InvalidDependency into individual attr results, e.g. InvalidRdepend.
+
+- Split RestrictsCheck into separate checks for RESTRICT and PROPERTIES.
+
+- AbsoluteSymlinkCheck: Report dosym usage with path variables, e.g. ${ED}.
+
+- BadHomepage: Flag packages using a generic Gentoo HOMEPAGE (#177).
+
+- Add initial support for using a repo's .gitignore file to avoid reporting
+  matching files for certain results (#140).
+
+---------------------------
 pkgcheck 0.7.0 (2019-11-08)
 ---------------------------
 
