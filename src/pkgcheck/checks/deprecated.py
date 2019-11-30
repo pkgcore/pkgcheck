@@ -116,7 +116,15 @@ class DeprecatedEclassCheck(Check):
         ", ".join(sorted(blacklist))
 
     def feed(self, pkg):
-        deprecated = set(pkg.inherit).intersection(self.blacklist)
-        if deprecated:
-            eclasses = tuple((old, self.blacklist[old]) for old in sorted(deprecated))
-            yield DeprecatedEclass(eclasses, pkg=pkg)
+        deprecated_eclasses = []
+
+        for eclass in set(pkg.inherit).intersection(self.blacklist):
+            replacement = self.blacklist[eclass]
+            if isinstance(replacement, tuple):
+                replacement, conditional = replacement
+                if not conditional(pkg):
+                    continue
+            deprecated_eclasses.append((eclass, replacement))
+
+        if deprecated_eclasses:
+            yield DeprecatedEclass(sorted(deprecated_eclasses), pkg=pkg)
