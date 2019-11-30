@@ -394,7 +394,7 @@ class ProfileAddon(base.Addon, base.Cache):
                 # note that the cache/insoluble are inversly paired;
                 # stable cache is usable for unstable, but not vice versa.
                 # unstable insoluble is usable for stable, but not vice versa
-                vfilter = domain.generate_filter(target_repo.masks | masks, unmasks)
+                vfilter = domain.generate_filter(target_repo.pkg_masks | masks, unmasks)
                 profile_filters[stable_key].append(ProfileData(
                     profile.path, stable_key,
                     provides_repo,
