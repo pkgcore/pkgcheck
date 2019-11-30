@@ -730,6 +730,7 @@ class DependencyCheck(Check):
 
             outdated_blockers = set()
             nonexistent_blockers = set()
+            deprecated = set()
 
             for node in nodes:
                 if isinstance(node, boolean.OrRestriction):
@@ -739,7 +740,7 @@ class DependencyCheck(Check):
 
                 for atom in iflatten_instance(node, (atom_cls,)):
                     if self.deprecated(atom) and not self.masked(atom):
-                        yield DeprecatedPkg(attr.upper(), atom, pkg=pkg)
+                        deprecated.add(atom)
 
                     if in_or_restriction and atom.slot_operator == '=':
                         yield BadDependency(
@@ -776,12 +777,14 @@ class DependencyCheck(Check):
                                     if years > 2:
                                         outdated_blockers.add((atom, years))
                                 else:
-                                    nonexistent_blockers.add((atom))
+                                    nonexistent_blockers.add(atom)
 
             for atom, years in sorted(outdated_blockers):
                 yield OutdatedBlocker(attr.upper(), str(atom), years, pkg=pkg)
             for atom in sorted(nonexistent_blockers):
                 yield NonexistentBlocker(attr.upper(), str(atom), pkg=pkg)
+            for atom in sorted(deprecated):
+                yield DeprecatedPkg(attr.upper(), str(atom), pkg=pkg)
 
 
 class BadKeywords(results.VersionResult, results.Warning):
