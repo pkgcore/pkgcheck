@@ -626,6 +626,19 @@ class NonexistentBlocker(results.VersionResult, results.Warning):
         )
 
 
+class DeprecatedPkg(results.VersionResult, results.Warning):
+    """Package has a dependency that is flagged in package.deprecated."""
+
+    def __init__(self, attr, atom, **kwargs):
+        super().__init__(**kwargs)
+        self.attr = attr
+        self.atom = atom
+
+    @property
+    def desc(self):
+        return f'deprecated {self.attr}: {self.atom}'
+
+
 class BadDependency(results.VersionResult, results.Error):
     """Package has a bad dependency."""
 
@@ -670,12 +683,14 @@ class DependencyCheck(Check):
     required_addons = (addons.UseAddon, git.GitAddon)
     known_results = frozenset([
         BadDependency, MissingPackageRevision, MissingUseDepDefault,
-        OutdatedBlocker, NonexistentBlocker, UnstatedIuse,
+        OutdatedBlocker, NonexistentBlocker, UnstatedIuse, DeprecatedPkg,
         InvalidDepend, InvalidRdepend, InvalidPdepend, InvalidBdepend,
     ])
 
     def __init__(self, *args, use_addon, git_addon):
         super().__init__(*args)
+        self.deprecated = self.options.target_repo.deprecated.match
+        self.masked = self.options.target_repo.masked.match
         self.iuse_filter = use_addon.get_filter()
         self.conditional_ops = {'?', '='}
         self.use_defaults = {'(+)', '(-)'}
@@ -723,6 +738,9 @@ class DependencyCheck(Check):
                     in_or_restriction = False
 
                 for atom in iflatten_instance(node, (atom_cls,)):
+                    if self.deprecated(atom) and not self.masked(atom):
+                        yield DeprecatedPkg(attr.upper(), atom, pkg=pkg)
+
                     if in_or_restriction and atom.slot_operator == '=':
                         yield BadDependency(
                             attr, atom, '= slot operator used inside || block', pkg=pkg)
