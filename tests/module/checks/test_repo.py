@@ -4,7 +4,7 @@ from unittest import mock
 from pkgcore.ebuild import atom
 from pkgcore.test.misc import FakeRepo
 from snakeoil.fileutils import touch
-from snakeoil.osutils import pjoin
+from snakeoil.osutils import pjoin, ensure_dirs
 
 from pkgcheck import git
 from pkgcheck.checks import repo
@@ -100,10 +100,14 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         assert isinstance(r, repo.BinaryFile)
         assert "distfiles/foo-0.tar.gz" in str(r)
 
-        # but results are suppressed if a matching .gitignore entry exists
-        with open(pjoin(self.repo.location, '.gitignore'), 'w') as f:
-            f.write('/distfiles/')
-        self.assertNoReport(self.mk_check(), [])
+        # but results are suppressed if a matching git ignore entry exists
+        for ignore_file in ('.gitignore', '.git/info/exclude'):
+            path = pjoin(self.repo.location, ignore_file)
+            ensure_dirs(os.path.dirname(path))
+            with open(path, 'w') as f:
+                f.write('/distfiles/')
+            self.assertNoReport(self.mk_check(), [])
+            os.unlink(path)
 
     def test_non_utf8_encodings(self):
         # non-english languages courtesy of google translate mangling

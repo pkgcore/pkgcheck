@@ -7,7 +7,7 @@ import pytest
 from pkgcore.test.misc import FakeRepo
 from snakeoil import fileutils
 from snakeoil.fileutils import touch
-from snakeoil.osutils import pjoin
+from snakeoil.osutils import pjoin, ensure_dirs
 
 from pkgcheck import git
 from pkgcheck.checks import pkgdir
@@ -346,10 +346,14 @@ class TestBannedCharacter(PkgDirCheckBase):
         assert isinstance(r, pkgdir.BannedCharacter)
         assert 'files/foo.init~' in str(r)
 
-        # but results are suppressed if a matching .gitignore entry exists
-        with open(pjoin(self.repo.location, '.gitignore'), 'w') as f:
-            f.write('*~')
-        self.assertNoReport(self.mk_check(), [pkg])
+        # but results are suppressed if a matching git ignore entry exists
+        for ignore_file in ('.gitignore', '.git/info/exclude'):
+            path = pjoin(self.repo.location, ignore_file)
+            ensure_dirs(os.path.dirname(path))
+            with open(path, 'w') as f:
+                f.write('*~')
+            self.assertNoReport(self.mk_check(), [pkg])
+            os.unlink(path)
 
 
 class TestUnknownPkgDirEntry(PkgDirCheckBase):
