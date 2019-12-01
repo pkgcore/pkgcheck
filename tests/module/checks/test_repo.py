@@ -105,6 +105,13 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
             f.write('/distfiles/')
         self.assertNoReport(self.mk_check(), [])
 
+        # also results are suppressed if a matching .git/info/exclude entry exists
+        os.unlink(pjoin(self.repo.location, '.gitignore'))
+        os.makedirs(pjoin(self.repo.location, '.git/info'), exist_ok=True)
+        with open(pjoin(self.repo.location, '.git/info/exclude'), 'w') as f:
+            f.write('/distfiles/')
+        self.assertNoReport(self.mk_check(), [])
+
     def test_non_utf8_encodings(self):
         # non-english languages courtesy of google translate mangling
         langs = (

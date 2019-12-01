@@ -337,15 +337,18 @@ class GitAddon(base.Addon, base.Cache):
     @jit_attr
     def gitignore(self):
         """Load a repo's .gitignore file for path matching usage."""
-        path = pjoin(self.options.target_repo.location, '.gitignore')
+        paths = (pjoin(self.options.target_repo.location, p) for p in 
+                ('.gitignore', '.git/info/exclude'))
+
         patterns = []
-        try:
-            with open(path) as f:
-                patterns = f.readlines()
-        except FileNotFoundError:
-            pass
-        except IOError as e:
-            logger.warning(f'failed reading {path!r}: {e}')
+        for path in paths:
+            try:
+                with open(path) as f:
+                    patterns += f.readlines()
+            except FileNotFoundError:
+                pass
+            except IOError as e:
+                logger.warning(f'failed reading {path!r}: {e}')
         return PathSpec.from_lines('gitwildmatch', patterns)
 
     def gitignored(self, path):
