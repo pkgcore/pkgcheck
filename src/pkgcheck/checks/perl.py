@@ -55,7 +55,7 @@ class PerlCheck(Check):
         perl_script = pjoin(const.DATA_PATH, 'perl-version.pl')
         try:
             self.perl_client = subprocess.Popen(
-                ['perl', perl_script, socket_path], bufsize=1, stderr=subprocess.PIPE)
+                ['perl', perl_script, socket_path], stderr=subprocess.PIPE)
         except FileNotFoundError:
             raise SkipOptionalCheck(self, 'perl not installed on system')
 
