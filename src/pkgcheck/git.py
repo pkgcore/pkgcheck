@@ -100,7 +100,8 @@ class ParsedGitRepo(UserDict):
             '%cd', # commit date
             '%an <%ae>', # Author Name <author@email.com>
             '%cn <%ce>', # Committer Name <committer@email.com>
-            '%B# END MESSAGE BODY', # commit message
+            '%B', # commit message
+            '# END MESSAGE BODY',
         ]
         format_str = '%n'.join(format_lines)
         cmd.append(f'--pretty=tformat:{format_str}')
@@ -132,7 +133,7 @@ class ParsedGitRepo(UserDict):
                 message = []
                 while True:
                     line = git_log.stdout.readline().decode('utf-8', 'replace').strip('\n')
-                    if line == '# END MESSAGE BODY' or not line:
+                    if line == '# END MESSAGE BODY':
                         break
                     message.append(line)
 
