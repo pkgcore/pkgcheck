@@ -189,6 +189,7 @@ class ProfilesCheck(Check):
             'packages': ('packages', _pkg_atoms),
             'package.mask': ('masks', _pkg_atoms),
             'package.unmask': ('unmasks', _pkg_atoms),
+            'package.deprecated': ('pkg_deprecated', _pkg_atoms),
             'package.use': ('pkg_use', _pkg_use),
             'package.use.force': ('pkg_use_force', _pkg_use),
             'package.use.stable.force': ('pkg_use_stable_force', _pkg_use),
