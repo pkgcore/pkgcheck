@@ -359,6 +359,8 @@ def _validate_scan_args(parser, namespace):
     # multiplex of target repo and its masters used for package existence queries
     namespace.search_repo = multiplex.tree(*namespace.target_repo.trees)
 
+    cwd_in_repo = cwd in namespace.target_repo
+
     if namespace.targets:
         repo = namespace.target_repo
 
@@ -374,15 +376,15 @@ def _validate_scan_args(parser, namespace):
 
         def restrictions():
             for target in namespace.targets:
-                try:
-                    r = parserestrict.parse_match(target)
-                except parserestrict.ParseError as e:
-                    if os.path.exists(target):
-                        try:
-                            r = _path_restrict(target, namespace)
-                        except ValueError as e:
-                            parser.error(e)
-                    else:
+                if os.path.isabs(target) or (os.path.exists(target) and cwd_in_repo):
+                    try:
+                        r = _path_restrict(target, namespace)
+                    except ValueError as e:
+                        parser.error(e)
+                else:
+                    try:
+                        r = parserestrict.parse_match(target)
+                    except parserestrict.ParseError as e:
                         parser.error(e)
                 yield _restrict_to_scope(r), r
 
@@ -403,7 +405,7 @@ def _validate_scan_args(parser, namespace):
                 combined_restrict = boolean.OrRestriction(*(r for s, r in namespace.restrictions))
                 namespace.restrictions = [(scopes.pop(), combined_restrict)]
     else:
-        if cwd in namespace.target_repo:
+        if cwd_in_repo:
             restrict = _path_restrict(cwd, namespace)
         else:
             restrict = packages.AlwaysTrue
