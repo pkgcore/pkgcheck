@@ -1,0 +1,11 @@
+diff -Naur standalone/WhitespaceCheck/BadWhitespaceCharacter/BadWhitespaceCharacter-0.ebuild fixed/WhitespaceCheck/BadWhitespaceCharacter/BadWhitespaceCharacter-0.ebuild
+--- standalone/WhitespaceCheck/BadWhitespaceCharacter/BadWhitespaceCharacter-0.ebuild	2019-12-02 18:58:31.312559463 -0700
++++ fixed/WhitespaceCheck/BadWhitespaceCharacter/BadWhitespaceCharacter-0.ebuild	2019-12-02 18:59:44.859861442 -0700
+@@ -5,6 +5,6 @@
+ LICENSE="BSD"
+ 
+ src_test() {
+-	cd "${S}"/cpp || die
++	cd "${S}"/cpp || die
+ 	default
+ }

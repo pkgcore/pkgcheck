@@ -1,3 +1,7 @@
+import re
+import sys
+from collections import namedtuple
+
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.strings import pluralism as _pl
 
@@ -63,14 +67,51 @@ class NoFinalNewline(results.VersionResult, results.Warning):
     desc = "ebuild lacks an ending newline"
 
 
+class BadWhitespaceCharacter(results.LineResult, results.Error):
+    """Ebuild uses whitespace that isn't one of '\t', '\n', or ' '."""
+
+    def __init__(self, char, **kwargs):
+        super().__init__(**kwargs)
+        self.char = char
+
+    @property
+    def desc(self):
+        return f"bad whitespace character {self.char} on line {self.lineno}: {self.line}"
+
+    @staticmethod
+    def bad_whitespace_chars():
+        """Generate tuple of bad whitespace characters."""
+        all_whitespace_chars = set(
+            re.findall(r'\s', ''.join(chr(c) for c in range(sys.maxunicode + 1))))
+        allowed_whitespace_chars = {'\t', '\n', ' '}
+        return tuple(sorted(all_whitespace_chars - allowed_whitespace_chars))
+
+
+WhitespaceData = namedtuple('WhitespaceData', ['unicode_version', 'chars'])
+whitespace_data = WhitespaceData(
+    '12.1.0', 
+    (
+        '\x0b', '\x0c', '\r', '\x1c', '\x1d', '\x1e', '\x1f', '\x85',
+        '\xa0', '\u1680', '\u2000', '\u2001', '\u2002', '\u2003', '\u2004',
+        '\u2005', '\u2006', '\u2007', '\u2008', '\u2009', '\u200a',
+        '\u2028', '\u2029', '\u202f', '\u205f', '\u3000',
+    )
+)
+
+
 class WhitespaceCheck(Check):
     """Scan ebuild for useless whitespace."""
 
     _source = sources.EbuildFileRepoSource
     known_results = frozenset([
         WhitespaceFound, WrongIndentFound, DoubleEmptyLine,
-        TrailingEmptyLine, NoFinalNewline,
+        TrailingEmptyLine, NoFinalNewline, BadWhitespaceCharacter
     ])
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        bad_whitespace = ''.join(whitespace_data.chars)
+        self.bad_whitespace_regex = re.compile(rf'(?P<char>[{bad_whitespace}])')
 
     def feed(self, pkg):
         lastlineempty = False
@@ -80,6 +121,11 @@ class WhitespaceCheck(Check):
         double_empty = []
 
         for lineno, line in enumerate(pkg.lines, 1):
+            if line[0] != '#':
+                for match in self.bad_whitespace_regex.finditer(line):
+                    yield BadWhitespaceCharacter(
+                        repr(match.group('char')), line=repr(line), lineno=lineno, pkg=pkg)
+
             if line != '\n':
                 lastlineempty = False
                 if line[-2:-1] == ' ' or line[-2:-1] == '\t':

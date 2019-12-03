@@ -1,3 +1,5 @@
+import unicodedata
+
 from pkgcheck.checks import whitespace
 
 from .. import misc
@@ -99,6 +101,28 @@ class TestTrailingNewLineOnEnd(WhitespaceCheckTest):
         r = self.assertReport(self.check, fake_pkg)
         assert isinstance(r, whitespace.TrailingEmptyLine)
         assert 'trailing blank line(s)' in str(r)
+
+
+class TestBadWhitespaceCharacter(WhitespaceCheckTest):
+
+    def test_outdated_bad_whitespace_chars(self):
+        if unicodedata.unidata_version != whitespace.whitespace_data.unicode_version:
+            bad_whitespace_chars = whitespace.BadWhitespaceCharacter.bad_whitespace_chars()
+            assert bad_whitespace_chars == whitespace.whitespace_data.chars, \
+                f'outdated character list for Unicode version {unicodedata.unidata_version}'
+
+    def test_bad_whitespace_chars(self):
+        for char in whitespace.whitespace_data.chars:
+            fake_src = [
+                'src_prepare() {\n',
+                f'\tcd "${{S}}"/cpp ||{char}die\n',
+                '}\n',
+            ]
+            fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+
+            r = self.assertReport(self.check, fake_pkg)
+            assert isinstance(r, whitespace.BadWhitespaceCharacter)
+            assert f'bad whitespace character {repr(char)} on line 2' in str(r)
 
 
 class TestMultipleChecks(WhitespaceCheckTest):

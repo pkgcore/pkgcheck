@@ -1,0 +1,2 @@
+WhitespaceCheck/BadWhitespaceCharacter
+  BadWhitespaceCharacter: version 0: bad whitespace character '\xa0' on line 8: '\tcd "${S}"/cpp ||\xa0die\n'
