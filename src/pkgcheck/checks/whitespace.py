@@ -67,7 +67,7 @@ class NoFinalNewline(results.VersionResult, results.Warning):
     desc = "ebuild lacks an ending newline"
 
 
-class BadWhitespaceCharacter(results.LineResult, results.Error):
+class BadWhitespaceCharacter(results.LineResult, results.Warning):
     """Ebuild uses whitespace that isn't a tab, newline, or single space."""
 
     def __init__(self, char, position, **kwargs):
