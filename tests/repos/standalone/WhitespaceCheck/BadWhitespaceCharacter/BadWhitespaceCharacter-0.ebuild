@@ -5,6 +5,7 @@ SLOT="0"
 LICENSE="BSD"
 
 src_test() {
-	cd "${S}"/cpp || die
+	# bad chars aren't ignored in comments
+	cd "${S}"/cpp || die # or inline comments
 	default
 }

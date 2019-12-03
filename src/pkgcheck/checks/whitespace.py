@@ -124,10 +124,9 @@ class WhitespaceCheck(Check):
         double_empty = []
 
         for lineno, line in enumerate(pkg.lines, 1):
-            if line[0] != '#':
-                for match in self.bad_whitespace_regex.finditer(line):
-                    yield BadWhitespaceCharacter(
-                        repr(match.group('char')), line=repr(line), lineno=lineno, pkg=pkg)
+            for match in self.bad_whitespace_regex.finditer(line):
+                yield BadWhitespaceCharacter(
+                    repr(match.group('char')), line=repr(line), lineno=lineno, pkg=pkg)
 
             if line != '\n':
                 lastlineempty = False
