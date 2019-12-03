@@ -1,0 +1,9 @@
+diff -Naur standalone/EclassCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild fixed/EclassCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild
+--- standalone/EclassCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild	2019-11-29 20:01:31.799165522 -0700
++++ fixed/EclassCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild	2019-11-29 20:02:35.175423269 -0700
+@@ -1,5 +1,4 @@
+ EAPI=7
+-inherit versionator
+ DESCRIPTION="Ebuild with deprecated eclass usage"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"

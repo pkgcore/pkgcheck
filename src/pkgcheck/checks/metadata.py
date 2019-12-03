@@ -259,44 +259,6 @@ class SourcingCheck(Check):
     known_results = frozenset([SourcingError, InvalidEapi, InvalidSlot])
 
 
-class DuplicateEclassInherits(results.VersionResult, results.Warning):
-    """An ebuild directly inherits the same eclass multiple times.
-
-    Note that this will flag ebuilds that conditionalize global metadata by
-    package version (or some other fashion) while inheriting the same eclass
-    under both branches, e.g. conditional live ebuilds. In this case, shared
-    eclasses should be loaded in a separate, unconditional inherit call.
-    """
-
-    def __init__(self, eclasses, **kwargs):
-        super().__init__(**kwargs)
-        self.eclasses = tuple(eclasses)
-
-    @property
-    def desc(self):
-        eclasses = ', '.join(self.eclasses)
-        plural = _pl(self.eclasses, plural='es')
-        return f'duplicate inherits for eclass{plural}: {eclasses}'
-
-
-class EclassCheck(Check):
-    """Scan packages for eclass-related issues."""
-
-    known_results = frozenset([DuplicateEclassInherits])
-
-    def feed(self, pkg):
-        seen = set()
-        duplicates = set()
-        for eclass in pkg.inherit:
-            if eclass not in seen:
-                seen.add(eclass)
-            else:
-                duplicates.add(eclass)
-
-        if duplicates:
-            yield DuplicateEclassInherits(sorted(duplicates), pkg=pkg)
-
-
 class RequiredUseDefaults(results.VersionResult, results.Warning):
     """Default USE flag settings don't satisfy REQUIRED_USE.
 

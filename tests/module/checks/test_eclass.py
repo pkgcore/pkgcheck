@@ -1,6 +1,6 @@
 import random
 
-from pkgcheck.checks import deprecated
+from pkgcheck.checks import eclass as eclass_mod
 
 from .. import misc
 
@@ -9,10 +9,10 @@ def mk_pkg(ver, fake_src, eapi='0'):
     return misc.FakePkg(f"dev-util/diffball-{ver}", data={'EAPI': eapi}, ebuild=fake_src)
 
 
-class TestDeprecatedEclass(misc.ReportTestCase):
+class TestEclassCheck(misc.ReportTestCase):
 
-    check_kls = deprecated.DeprecatedEclassCheck
-    check = deprecated.DeprecatedEclassCheck(None)
+    check_kls = eclass_mod.EclassCheck
+    check = eclass_mod.EclassCheck(None)
 
     def test_no_eclasses(self):
         fake_src = """
@@ -41,7 +41,7 @@ class TestDeprecatedEclass(misc.ReportTestCase):
         """
 
         r = self.assertReport(self.check, mk_pkg("0.1", fake_src, eapi='2'))
-        assert isinstance(r, deprecated.DeprecatedEclass)
+        assert isinstance(r, eclass_mod.DeprecatedEclass)
         assert r.eclasses == ((eclass, None),)
         assert f"uses deprecated eclass: [ {eclass} (no replacement) ]" == str(r)
 
@@ -57,7 +57,7 @@ class TestDeprecatedEclass(misc.ReportTestCase):
         """
 
         r = self.assertReport(self.check, mk_pkg("0.1", fake_src, eapi='4'))
-        assert isinstance(r, deprecated.DeprecatedEclass)
+        assert isinstance(r, eclass_mod.DeprecatedEclass)
         assert r.eclasses == ((eclass, replacement),)
         assert f"uses deprecated eclass: [ {eclass} (migrate to {replacement}) ]" == str(r)
 
@@ -73,7 +73,7 @@ class TestDeprecatedEclass(misc.ReportTestCase):
         """
 
         r = self.assertReport(self.check, mk_pkg("0.1", fake_src, eapi='1'))
-        assert isinstance(r, deprecated.DeprecatedEclass)
+        assert isinstance(r, eclass_mod.DeprecatedEclass)
         assert r.eclasses == ((eclass, replacement),)
         assert f"uses deprecated eclass: [ {eclass} (migrate to {replacement}) ]" == str(r)
 
@@ -86,7 +86,7 @@ class TestDeprecatedEclass(misc.ReportTestCase):
         """
 
         r = self.assertReport(self.check, mk_pkg("0.1", fake_src, eapi='7'))
-        assert isinstance(r, deprecated.DeprecatedEclass)
+        assert isinstance(r, eclass_mod.DeprecatedEclass)
         assert 'versionator' in str(r)
 
     def test_nondeprecated_conditional(self):

@@ -26,10 +26,30 @@ class DeprecatedEclass(results.VersionResult, results.Warning):
             _pl(eclass_migration, plural='es'), ', '.join(eclass_migration))
 
 
-class DeprecatedEclassCheck(Check):
-    """Check for ebuilds using deprecated eclasses."""
+class DuplicateEclassInherits(results.VersionResult, results.Warning):
+    """An ebuild directly inherits the same eclass multiple times.
 
-    known_results = frozenset([DeprecatedEclass])
+    Note that this will flag ebuilds that conditionalize global metadata by
+    package version (or some other fashion) while inheriting the same eclass
+    under both branches, e.g. conditional live ebuilds. In this case, shared
+    eclasses should be loaded in a separate, unconditional inherit call.
+    """
+
+    def __init__(self, eclasses, **kwargs):
+        super().__init__(**kwargs)
+        self.eclasses = tuple(eclasses)
+
+    @property
+    def desc(self):
+        eclasses = ', '.join(self.eclasses)
+        plural = _pl(self.eclasses, plural='es')
+        return f'duplicate inherits for eclass{plural}: {eclasses}'
+
+
+class EclassCheck(Check):
+    """Scan packages for various eclass-related issues."""
+
+    known_results = frozenset([DeprecatedEclass, DuplicateEclassInherits])
 
     blacklist = ImmutableDict({
         '64-bit': None,
@@ -117,19 +137,28 @@ class DeprecatedEclassCheck(Check):
         'xfree': None,
     })
 
-    __doc__ = "Scan for deprecated eclass usage.\n\ndeprecated eclasses: %s\n" % \
-        ", ".join(sorted(blacklist))
-
     def feed(self, pkg):
-        deprecated_eclasses = []
+        deprecated = []
+        duplicates = set()
+        inherited = set()
 
-        for eclass in set(pkg.inherit).intersection(self.blacklist):
+        for eclass in pkg.inherit:
+            if eclass not in inherited:
+                inherited.add(eclass)
+            else:
+                duplicates.add(eclass)
+
+        for eclass in inherited.intersection(self.blacklist):
             replacement = self.blacklist[eclass]
             if isinstance(replacement, tuple):
                 replacement, conditional = replacement
                 if not conditional(pkg):
                     continue
-            deprecated_eclasses.append((eclass, replacement))
+            deprecated.append((eclass, replacement))
 
-        if deprecated_eclasses:
-            yield DeprecatedEclass(sorted(deprecated_eclasses), pkg=pkg)
+        if duplicates:
+            yield DuplicateEclassInherits(sorted(duplicates), pkg=pkg)
+        if deprecated:
+            yield DeprecatedEclass(sorted(deprecated), pkg=pkg)
+
+
