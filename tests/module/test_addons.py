@@ -40,8 +40,8 @@ class TestArchesAddon(ArgparseCheck):
     def test_opts(self):
         for arg in ('-a', '--arches'):
             self.process_check([arg, 'x86'], arches=('x86',))
+            self.process_check([arg, 'ppc'], arches=('ppc',))
             self.process_check([arg, 'x86,ppc'], arches=('ppc', 'x86'))
-            self.process_check([arg, 'x86,ppc,-x86'], arches=('ppc',))
 
     def test_default(self):
         self.process_check([], arches=())
@@ -164,17 +164,6 @@ class TestProfileAddon(ProfilesMixin):
         assert sorted(check.desired_arches) == ['x86']
         assert sorted(check.profile_evaluate_dict) == ['x86', '~x86']
         self.assertProfiles(check, 'x86', 'profile1', 'profile1/2')
-
-    def test_fallback_defaults(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux/dev": ["x86", "dev"],
-            "default-linux/exp": ["x86", "exp"],
-            "default-linux": ["x86"],
-        })
-        options = self.process_check(['--profiles=stable,-stable'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/dev', 'default-linux/exp')
 
     def test_profiles_base(self):
         self.mk_profiles({
