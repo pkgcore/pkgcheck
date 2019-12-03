@@ -78,25 +78,28 @@ class BadWhitespaceCharacter(results.LineResult, results.Error):
     def desc(self):
         return f"bad whitespace character {self.char} on line {self.lineno}: {self.line}"
 
-    @staticmethod
-    def bad_whitespace_chars():
-        """Generate tuple of bad whitespace characters."""
-        all_whitespace_chars = set(
-            re.findall(r'\s', ''.join(chr(c) for c in range(sys.maxunicode + 1))))
-        allowed_whitespace_chars = {'\t', '\n', ' '}
-        return tuple(sorted(all_whitespace_chars - allowed_whitespace_chars))
 
-
+# hardcoded list of bad whitespace characters for BadWhitespaceCharacter result
 WhitespaceData = namedtuple('WhitespaceData', ['unicode_version', 'chars'])
 whitespace_data = WhitespaceData(
-    '12.1.0', 
-    (
-        '\x0b', '\x0c', '\r', '\x1c', '\x1d', '\x1e', '\x1f', '\x85',
-        '\xa0', '\u1680', '\u2000', '\u2001', '\u2002', '\u2003', '\u2004',
-        '\u2005', '\u2006', '\u2007', '\u2008', '\u2009', '\u200a',
-        '\u2028', '\u2029', '\u202f', '\u205f', '\u3000',
+    unicode_version='12.1.0',
+    chars=(
+        '\x0b', '\x0c', '\r', '\x1c', '\x1d', '\x1e', '\x1f', '\x85', '\xa0',
+        '\u1680', '\u2000', '\u2001', '\u2002', '\u2003', '\u2004', '\u2005',
+        '\u2006', '\u2007', '\u2008', '\u2009', '\u200a', '\u2028', '\u2029',
+        '\u202f', '\u205f', '\u3000',
     )
 )
+
+
+def generate_whitespace_data():
+    """Generate bad whitespace list for the current python version."""
+    import unicodedata
+    all_whitespace_chars = set(
+        re.findall(r'\s', ''.join(chr(c) for c in range(sys.maxunicode + 1))))
+    allowed_whitespace_chars = {'\t', '\n', ' '}
+    bad_whitespace_chars = tuple(sorted(all_whitespace_chars - allowed_whitespace_chars))
+    return WhitespaceData(unicodedata.unidata_version, bad_whitespace_chars)
 
 
 class WhitespaceCheck(Check):

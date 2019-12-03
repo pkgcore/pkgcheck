@@ -1,5 +1,3 @@
-import unicodedata
-
 from pkgcheck.checks import whitespace
 
 from .. import misc
@@ -106,9 +104,10 @@ class TestTrailingNewLineOnEnd(WhitespaceCheckTest):
 class TestBadWhitespaceCharacter(WhitespaceCheckTest):
 
     def test_outdated_bad_whitespace_chars(self):
-        if unicodedata.unidata_version != whitespace.whitespace_data.unicode_version:
-            bad_whitespace_chars = whitespace.BadWhitespaceCharacter.bad_whitespace_chars()
-            assert bad_whitespace_chars == whitespace.whitespace_data.chars, \
+        """Check if the hardcoded bad whitespace character list is outdated."""
+        updated_whitespace_data = whitespace.generate_whitespace_data()
+        if updated_whitespace_data.unicode_version != whitespace.whitespace_data.unicode_version:
+            assert updated_whitespace_data.chars == whitespace.whitespace_data.chars, \
                 f'outdated character list for Unicode version {unicodedata.unidata_version}'
 
     def test_bad_whitespace_chars(self):
