@@ -920,15 +920,14 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         # USE flag exists on all matching pkgs
         self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/foo[bar?]'))
 
-        # USE flag doesn't exist but has proper default
-        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo(-)?]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[!foo(-)?]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', depset='!dev-libs/bar[foo(+)?]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', depset='!dev-libs/bar[!foo(+)?]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo(-)=]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[!foo(-)=]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[foo(+)=]'))
-        self.assertNoReport(chk, mk_pkg(eapi='4', depset='dev-libs/bar[!foo(+)=]'))
+        use_deps = (
+            'foo(-)?', '!foo(-)?', 'foo(+)?', '!foo(+)?', 'foo(-)=', '!foo(-)=',
+            'foo(+)=', '!foo(+)=', '-foo(-)', '-foo(+)',
+        )
+        for use_dep in use_deps:
+            # USE flag doesn't exist but has proper default
+            self.assertNoReport(chk, mk_pkg(eapi='4', depset=f'dev-libs/bar[{use_dep}]'))
+            self.assertNoReport(chk, mk_pkg(eapi='4', depset=f'!dev-libs/bar[{use_dep}]'))
 
         # result triggers when all matching pkgs don't have requested USE flag
         for dep in (
@@ -936,11 +935,13 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
                 'dev-libs/bar[!foo?]',
                 'dev-libs/bar[foo=]',
                 'dev-libs/bar[!foo=]',
+                'dev-libs/bar[-foo]',
+                '|| ( dev-libs/foo[bar] dev-libs/bar[foo] )',
+                '|| ( dev-libs/foo[bar] dev-libs/bar[-foo] )',
                 '!dev-libs/bar[foo?]',
                 ):
             r = self.assertReport(chk, mk_pkg(eapi='4', depset=dep))
             assert isinstance(r, metadata.MissingUseDepDefault)
-            assert r.atom == dep
             assert r.pkgs == ('dev-libs/bar-2',)
             assert r.flag == 'foo'
             assert "USE flag 'foo' missing" in str(r)

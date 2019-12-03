@@ -703,9 +703,13 @@ class DependencyCheck(Check):
 
     def _check_use_deps(self, attr, atom):
         """Check dependencies for missing USE dep defaults."""
-        stripped_use = [
-            x[:-1].lstrip('!') for x in atom.use
-            if (x[-1] in self.conditional_ops and x[-4:-1] not in self.use_defaults)]
+        stripped_use = []
+        for x in atom.use:
+            if x[-1] in self.conditional_ops:
+                x = x[:-1]
+            if x[-3:] in self.use_defaults:
+                continue
+            stripped_use.append(x.lstrip('!-'))
         if stripped_use:
             missing_use_deps = defaultdict(set)
             for pkg in self.options.search_repo.match(atom.no_usedeps):
