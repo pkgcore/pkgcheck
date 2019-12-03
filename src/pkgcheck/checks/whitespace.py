@@ -70,13 +70,17 @@ class NoFinalNewline(results.VersionResult, results.Warning):
 class BadWhitespaceCharacter(results.LineResult, results.Error):
     """Ebuild uses whitespace that isn't a tab, newline, or single space."""
 
-    def __init__(self, char, **kwargs):
+    def __init__(self, char, position, **kwargs):
         super().__init__(**kwargs)
         self.char = char
+        self.position = position
 
     @property
     def desc(self):
-        return f"bad whitespace character {self.char} on line {self.lineno}: {self.line}"
+        return (
+            f'bad whitespace character {self.char} on line {self.lineno}'
+            f', char {self.position}: {self.line}'
+        )
 
 
 # hardcoded list of bad whitespace characters for BadWhitespaceCharacter result
@@ -126,7 +130,8 @@ class WhitespaceCheck(Check):
         for lineno, line in enumerate(pkg.lines, 1):
             for match in self.bad_whitespace_regex.finditer(line):
                 yield BadWhitespaceCharacter(
-                    repr(match.group('char')), line=repr(line), lineno=lineno, pkg=pkg)
+                    repr(match.group('char')), match.end('char'),
+                    line=repr(line), lineno=lineno, pkg=pkg)
 
             if line != '\n':
                 lastlineempty = False

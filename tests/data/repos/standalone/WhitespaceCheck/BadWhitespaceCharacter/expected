@@ -1,3 +1,4 @@
 WhitespaceCheck/BadWhitespaceCharacter
-  BadWhitespaceCharacter: version 0: bad whitespace character '\xa0' on line 8: "\t# bad chars aren't ignored\xa0in comments\n"
-  BadWhitespaceCharacter: version 0: bad whitespace character '\xa0' on line 9: '\tcd "${S}"/cpp ||\xa0die # or\xa0inline comments\n'
+  BadWhitespaceCharacter: version 0: bad whitespace character '\xa0' on line 8, char 28: "\t# bad chars aren't ignored\xa0in comments\n"
+  BadWhitespaceCharacter: version 0: bad whitespace character '\xa0' on line 9, char 18: '\tcd "${S}"/cpp ||\xa0die # or\xa0inline comments\n'
+  BadWhitespaceCharacter: version 0: bad whitespace character '\xa0' on line 9, char 27: '\tcd "${S}"/cpp ||\xa0die # or\xa0inline comments\n'
