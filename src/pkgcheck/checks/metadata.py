@@ -627,7 +627,7 @@ class NonexistentBlocker(results.VersionResult, results.Warning):
 
 
 class DeprecatedPkg(results.VersionResult, results.Warning):
-    """Package has a dependency that is flagged in package.deprecated."""
+    """Package dependency is flagged in profiles/package.deprecated."""
 
     def __init__(self, attr, atom, **kwargs):
         super().__init__(**kwargs)
@@ -640,7 +640,7 @@ class DeprecatedPkg(results.VersionResult, results.Warning):
 
 
 class BadDependency(results.VersionResult, results.Error):
-    """Package has a bad dependency."""
+    """Package dependency is bad for some reason."""
 
     def __init__(self, depset, atom, msg, **kwargs):
         super().__init__(**kwargs)
