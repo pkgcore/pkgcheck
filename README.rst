@@ -7,10 +7,10 @@ pkgcheck
 Dependencies
 ============
 
-pkgcheck is developed alongside pkgcore_. To run the development version of
-pkgcheck you will need the development version of pkgcore.
+pkgcheck is developed alongside pkgcore_ and snakeoil_. Running pkgcheck from
+git will often require both pkgcore and snakeoil from git as well.
 
-The metadata.xml checks require lxml to be installed.
+For releases, see the required runtime dependencies_.
 
 Installing
 ==========
@@ -49,6 +49,8 @@ the following::
 
 .. _`Installing python modules`: http://docs.python.org/inst/
 .. _pkgcore: https://github.com/pkgcore/pkgcore
+.. _snakeoil: https://github.com/pkgcore/snakeoil
+.. _dependencies: https://github.com/pkgcore/pkgcheck/blob/master/requirements/install.txt
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcheck.svg
     :target: https://pypi.python.org/pypi/pkgcheck
