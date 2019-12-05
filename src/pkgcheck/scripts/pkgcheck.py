@@ -590,7 +590,7 @@ cache.add_argument(
     '-n', '--dry-run', action='store_true',
     help='dry run without performing any changes')
 cache.add_argument(
-    '-t', '--type', dest='cache_types',
+    '-t', '--type', dest='cache',
     action=CacheNegations, default=CacheNegations.default,
     help='target cache types')
 
@@ -610,10 +610,9 @@ def _setup_cache_addons(parser, namespace):
 @cache.bind_final_check
 def _validate_cache_args(parser, namespace):
     # filter cache addons based on specified type
-    namespace.cache_types = {k for k, v in namespace.cache_types.items() if v}
     namespace.cache_addons = [
         addon for addon in namespace.cache_addons
-        if addon.cache_data.type in namespace.cache_types]
+        if namespace.cache.get(addon.cache_data.type, False)]
 
     namespace.target_repo = namespace.config.get_default('repo')
     try:
@@ -637,8 +636,8 @@ def _cache(options, out, err):
         # list existing caches
         repos_dir = pjoin(base.CACHE_DIR, 'repos')
         for cache_type, paths in base.Cache.existing().items():
-            if cache_type in options.cache_types:
-                if paths and len(options.cache_types) > 1:
+            if cache_type in options.cache:
+                if paths and len(options.cache) > 1:
                     out.write(out.fg('yellow'), f'{cache_type} caches: ', out.reset)
                 for path in paths:
                     repo = str(path.parent)[len(repos_dir):]
