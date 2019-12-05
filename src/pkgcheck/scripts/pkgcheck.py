@@ -636,8 +636,8 @@ def _cache(options, out, err):
         # list existing caches
         repos_dir = pjoin(base.CACHE_DIR, 'repos')
         for cache_type, paths in base.Cache.existing().items():
-            if cache_type in options.cache:
-                if paths and len(options.cache) > 1:
+            if options.cache.get(cache_type, False):
+                if paths:
                     out.write(out.fg('yellow'), f'{cache_type} caches: ', out.reset)
                 for path in paths:
                     repo = str(path.parent)[len(repos_dir):]
