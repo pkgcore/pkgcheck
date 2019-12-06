@@ -107,15 +107,15 @@ class ProfileData:
         return immutable, enabled
 
 
-class _ProfilesCache(UserDict):
+class _ProfilesCache(UserDict, base.Cache):
     """Class used to encapsulate cached profile data."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.cache_version = ProfileAddon.cache_version
+    def __init__(self, data):
+        super().__init__(data)
+        self._cache = ProfileAddon.cache
 
 
-class ProfileAddon(base.Addon, base.Cache):
+class ProfileAddon(base.Addon, base.CachedAddon):
 
     required_addons = (ArchesAddon,)
 
@@ -123,10 +123,8 @@ class ProfileAddon(base.Addon, base.Cache):
     # the gentoo repo, but could be in overlays as well
     non_profile_dirs = frozenset(['desc', 'updates'])
 
-    # used to check cache compatibility
-    cache_version = 2
-    # attributes for cache registry
-    cache_data = base.CacheData('profiles', 'profiles.pickle')
+    # cache registry
+    cache = base.CacheData(type='profiles', file='profiles.pickle', version=2)
 
     @staticmethod
     def mangle_argparser(parser):
@@ -277,14 +275,13 @@ class ProfileAddon(base.Addon, base.Cache):
 
         if self.options.cache['profiles']:
             for repo in target_repo.trees:
-                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
-                cache_file = pjoin(cache_dir, 'profiles.pickle')
+                cache_file = self.cache_file(repo)
                 # add profiles-base -> repo mapping to ease storage procedure
                 cached_profiles[repo.config.profiles_base]['repo'] = repo
                 try:
                     with open(cache_file, 'rb') as f:
                         cache = pickle.load(f)
-                    if cache.cache_version == self.cache_version:
+                    if cache.version == self.cache.version:
                         cached_profiles[repo.config.profiles_base].update(cache)
                     else:
                         logger.debug(
@@ -425,8 +422,7 @@ class ProfileAddon(base.Addon, base.Cache):
         for k, v in cached_profiles.items():
             if v.pop('update', False):
                 repo = v.pop('repo')
-                cache_dir = pjoin(base.CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
-                cache_file = pjoin(cache_dir, 'profiles.pickle')
+                cache_file = self.cache_file(repo)
                 try:
                     os.makedirs(os.path.dirname(cache_file), exist_ok=True)
                     with open(cache_file, 'wb+') as f:

@@ -169,6 +169,6 @@ def init_checks(enabled_addons, options):
                 source = sources.init_source(addon.source, options, addons_map)
                 source_map[addon.source] = source
             enabled[addon.scope][(source, is_async)].append(addon)
-        if isinstance(addon, base.Cache):
+        if isinstance(addon, base.CachedAddon):
             caches.append(addon)
     return enabled, caches

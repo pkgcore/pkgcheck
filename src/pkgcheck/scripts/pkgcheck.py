@@ -92,10 +92,10 @@ def _setup_reporter(parser, namespace):
 class CacheNegations(arghparse.CommaSeparatedNegations):
     """Split comma-separated enabled and disabled cache types."""
 
-    default = {cache.type: True for cache in base.Cache.caches.values()}
+    default = {cache.type: True for cache in base.CachedAddon.caches.values()}
 
     def parse_values(self, values):
-        all_cache_types = {cache.type for cache in base.Cache.caches.values()}
+        all_cache_types = {cache.type for cache in base.CachedAddon.caches.values()}
         disabled, enabled = [], list(all_cache_types)
         if values is None or values in ('y', 'yes', 'true'):
             pass
@@ -117,7 +117,7 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
     def __call__(self, parser, namespace, values, option_string=None):
         enabled = self.parse_values(values)
         caches = {}
-        for cache in base.Cache.caches.values():
+        for cache in base.CachedAddon.caches.values():
             caches[cache.type] = cache.type in enabled
         setattr(namespace, self.dest, caches)
 
@@ -540,7 +540,7 @@ def _scan(options, out, err):
 
     # force cache updates
     if caches:
-        base.Cache.update_caches(options, caches)
+        base.CachedAddon.update_caches(options, caches)
 
     with options.reporter(out, verbosity=options.verbosity,
                           keywords=options.filtered_keywords) as reporter:
@@ -599,7 +599,7 @@ cache.add_argument(
 def _setup_cache_addons(parser, namespace):
     all_addons = set()
     cache_addons = set()
-    for addon in base.Cache.caches:
+    for addon in base.CachedAddon.caches:
         cache_addons.add(addon)
         add_addon(addon, all_addons)
     for addon in all_addons:
@@ -612,7 +612,7 @@ def _validate_cache_args(parser, namespace):
     # filter cache addons based on specified type
     namespace.cache_addons = [
         addon for addon in namespace.cache_addons
-        if namespace.cache.get(addon.cache_data.type, False)]
+        if namespace.cache.get(addon.cache.type, False)]
 
     namespace.target_repo = namespace.config.get_default('repo')
     try:
@@ -628,14 +628,14 @@ def _validate_cache_args(parser, namespace):
 def _cache(options, out, err):
     ret = 0
     if options.remove_cache:
-        ret = base.Cache.remove_caches(options)
+        ret = base.CachedAddon.remove_caches(options)
     elif options.update_cache:
         caches = [init_addon(addon, options) for addon in options.pop('cache_addons')]
-        ret = base.Cache.update_caches(options, caches)
+        ret = base.CachedAddon.update_caches(options, caches)
     else:
         # list existing caches
         repos_dir = pjoin(base.CACHE_DIR, 'repos')
-        for cache_type, paths in base.Cache.existing().items():
+        for cache_type, paths in base.CachedAddon.existing().items():
             if options.cache.get(cache_type, False):
                 if paths:
                     out.write(out.fg('yellow'), f'{cache_type} caches: ', out.reset)

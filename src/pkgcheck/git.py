@@ -37,7 +37,7 @@ _GitPkgChange = namedtuple('GitPkgChange', [
     'atom', 'status', 'commit', 'commit_date', 'author', 'committer', 'message'])
 
 
-class ParsedGitRepo(UserDict):
+class ParsedGitRepo(UserDict, base.Cache):
     """Parse repository git logs."""
 
     # git command to run on the targeted repo
@@ -46,7 +46,7 @@ class ParsedGitRepo(UserDict):
     def __init__(self, repo, commit=None, **kwargs):
         super().__init__()
         self.location = repo.location
-        self.cache_version = GitAddon.cache_version
+        self._cache = GitAddon.cache
 
         if commit is None:
             self.commit = 'origin/HEAD..master'
@@ -268,7 +268,7 @@ class _ScanCommits(argparse.Action):
         setattr(namespace, self.dest, True)
 
 
-class GitAddon(base.Addon, base.Cache):
+class GitAddon(base.Addon, base.CachedAddon):
     """Git repo support for various checks.
 
     Pkgcheck can create virtual package repos from a given git repo's history
@@ -285,10 +285,8 @@ class GitAddon(base.Addon, base.Cache):
     origin master`` or similar will also create the reference.
     """
 
-    # used to check cache compatibility
-    cache_version = 3
-    # attributes for cache registry
-    cache_data = base.CacheData('git', 'git.pickle')
+    # cache registry
+    cache = base.CacheData(type='git', file='git.pickle', version=3)
 
     @classmethod
     def mangle_argparser(cls, parser):
@@ -394,7 +392,7 @@ class GitAddon(base.Addon, base.Cache):
                     try:
                         with open(cache_file, 'rb') as f:
                             git_repo = pickle.load(f)
-                        if git_repo.cache_version != self.cache_version:
+                        if git_repo.version != self.cache.version:
                             logger.debug('forcing git repo cache regen due to outdated version')
                             os.remove(cache_file)
                             git_repo = None

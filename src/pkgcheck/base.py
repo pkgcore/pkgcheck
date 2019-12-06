@@ -13,15 +13,16 @@ minimally accepted scope.
 import concurrent.futures
 import errno
 import os
+import pathlib
 import re
 import shutil
 import sys
 from collections import namedtuple
 from contextlib import AbstractContextManager
 from operator import attrgetter
-from pathlib import Path
 
 from pkgcore import const as pkgcore_const
+from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
@@ -128,7 +129,13 @@ class Addon:
         """
 
 
-CacheData = namedtuple('Cache', ['type', 'file'])
+CacheData = namedtuple('CacheData', ['type', 'file', 'version'])
+
+
+class Cache:
+    """Mixin for data caches."""
+
+    __getattr__ = klass.GetAttrProxy('_cache')
 
 
 class _RegisterCache(type):
@@ -136,21 +143,18 @@ class _RegisterCache(type):
 
     def __new__(cls, name, bases, class_dict):
         new_cls = type.__new__(cls, name, bases, class_dict)
-        if new_cls.__name__ != 'Cache':
-            try:
-                new_cls.caches[new_cls] = new_cls.cache_data
-            except TypeError:
-                raise ValueError(f'invalid cache_data attribute: {new_cls!r}')
+        if new_cls.__name__ != 'CachedAddon':
+            if new_cls.cache is None:
+                raise ValueError(f'invalid cache registry: {new_cls!r}')
+            new_cls.caches[new_cls] = new_cls.cache
         return new_cls
 
 
-class Cache(metaclass=_RegisterCache):
+class CachedAddon(metaclass=_RegisterCache):
     """Mixin for addon classes that create/use data caches."""
 
-    # used to check on-disk cache compatibility
-    cache_version = 0
     # attributes for cache registry
-    cache_data = None
+    cache = None
     # registered cache types
     caches = {}
 
@@ -165,16 +169,16 @@ class Cache(metaclass=_RegisterCache):
 
     def cache_file(self, repo):
         """Return the cache file for a given repository."""
-        return pjoin(self.cache_dir(repo), self.cache_data.file)
+        return pjoin(self.cache_dir(repo), self.cache.file)
 
     @classmethod
     def existing(cls):
         """Mapping of all existing cache types to file paths."""
         caches_map = {}
         repos_dir = pjoin(CACHE_DIR, 'repos')
-        for cache in sorted(cls.caches, key=attrgetter('cache_data.type')):
-            caches_map[cache.cache_data.type] = tuple(sorted(
-                Path(repos_dir).rglob(cache.cache_data.file)))
+        for cache in sorted(cls.caches.values(), key=attrgetter('type')):
+            caches_map[cache.type] = tuple(sorted(
+                pathlib.Path(repos_dir).rglob(cache.file)))
         return ImmutableDict(caches_map)
 
     @staticmethod
@@ -204,7 +208,7 @@ class Cache(metaclass=_RegisterCache):
         else:
             try:
                 for cache_type, paths in cls.existing().items():
-                    if cache_type in options.cache_types:
+                    if options.cache.get(cache_type, False):
                         for path in paths:
                             if options.dry_run:
                                 print(f'Would remove {path}')
