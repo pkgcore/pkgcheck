@@ -2,7 +2,7 @@ from collections import defaultdict
 from itertools import chain
 
 from pkgcore.restrictions import packages, values
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import addons, base, results, sources
 from . import Check
@@ -19,9 +19,11 @@ class PotentialStable(results.VersionResult, results.Info):
 
     @property
     def desc(self):
-        return "slot(%s), stabled arch%s: [ %s ], potential%s: [ %s ]" % (
-            self.slot, _pl(self.stable, plural='es'), ', '.join(self.stable),
-            _pl(self.keywords), ', '.join(self.keywords))
+        es = pluralism(self.stable, plural='es')
+        stable = ', '.join(self.stable)
+        s = pluralism(self.keywords)
+        keywords = ', '.join(self.keywords)
+        return f'slot({self.slot}), stabled arch{es}: [ {stable} ], potential{s}: [ {keywords} ]'
 
 
 class LaggingStable(results.VersionResult, results.Info):
@@ -35,9 +37,10 @@ class LaggingStable(results.VersionResult, results.Info):
 
     @property
     def desc(self):
-        return "slot(%s), stabled arch%s: [ %s ], lagging: [ %s ]" % (
-            self.slot, _pl(self.stable, plural='es'),
-            ', '.join(self.stable), ', '.join(self.keywords))
+        es = pluralism(self.stable, plural='es')
+        stable = ', '.join(self.stable)
+        keywords = ', '.join(self.keywords)
+        return f'slot({self.slot}), stabled arch{es}: [ {stable} ], lagging: [ {keywords} ]'
 
 
 class ImlateCheck(Check):
@@ -64,8 +67,7 @@ class ImlateCheck(Check):
         super().__init__(*args)
         self.all_arches = frozenset(self.options.arches)
         self.stable_arches = frozenset(arch.strip().lstrip("~") for arch in self.options.stable_arches)
-        self.target_arches = frozenset(
-            "~%s" % arch.strip().lstrip("~") for arch in self.stable_arches)
+        self.target_arches = frozenset(f'~{arch}' for arch in self.stable_arches)
 
         source_arches = self.options.source_arches
         if source_arches is None:

@@ -3,7 +3,7 @@ from datetime import datetime
 from itertools import chain
 
 from snakeoil.klass import jit_attr
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
 from . import GentooRepoCheck
@@ -22,9 +22,11 @@ class StableRequest(results.VersionResult, results.Info):
 
     @property
     def desc(self):
+        s = pluralism(self.keywords)
+        keywords = ', '.join(self.keywords)
         return (
-            f"slot({self.slot}) no change in {self.age} days for unstable "
-            "keyword%s: [ %s ]" % (_pl(self.keywords), ', '.join(self.keywords))
+            f"slot({self.slot}) no change in {self.age} days "
+            f"for unstable keyword{s}: [ {keywords} ]"
         )
 
 

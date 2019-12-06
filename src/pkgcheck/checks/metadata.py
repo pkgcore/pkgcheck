@@ -16,7 +16,7 @@ from pkgcore.restrictions import packages, values, boolean
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import addons, base, git, results, sources
 from ..addons import UnstatedIuse
@@ -33,8 +33,9 @@ class MissingLicenseFile(results.VersionResult, results.Error):
 
     @property
     def desc(self):
+        s = pluralism(self.licenses)
         licenses = ', '.join(self.licenses)
-        return f"no matching license file{_pl(self.licenses)}: {licenses}"
+        return f'no matching license file{s}: {licenses}'
 
 
 class MissingLicense(results.VersionResult, results.Error):
@@ -159,8 +160,9 @@ class _UseFlagsResult(results.VersionResult, results.Error):
 
     @property
     def desc(self):
+        s = pluralism(self.flags)
         flags = ', '.join(map(repr, sorted(self.flags)))
-        return f'{self._type} USE flag{_pl(self.flags)}: {flags}'
+        return f'{self._type} USE flag{s}: {flags}'
 
 
 class InvalidUseFlags(_UseFlagsResult):
@@ -370,8 +372,9 @@ class UnusedLocalUse(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return "metadata.xml unused local USE flag%s: [ %s ]" % (
-            _pl(self.flags), ', '.join(self.flags))
+        s = pluralism(self.flags)
+        flags = ', '.join(self.flags)
+        return f'metadata.xml unused local USE flag{s}: [ {flags} ]'
 
 
 class MatchingGlobalUse(results.PackageResult, results.Error):
@@ -578,9 +581,11 @@ class MissingUseDepDefault(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
+        s = pluralism(self.pkgs)
+        pkgs = ', '.join(self.pkgs)
         return (
             f'{self.attr}="{self.atom}": USE flag {self.flag!r} missing from '
-            f"package{_pl(self.pkgs)}: [ {', '.join(self.pkgs)} ]"
+            f'package{s}: [ {pkgs} ]'
         )
 
 
@@ -956,8 +961,9 @@ class MissingUri(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
+        s = pluralism(self.filenames)
         filenames = ', '.join(map(repr, self.filenames))
-        return f'unfetchable file{_pl(self.filenames)}: {filenames}'
+        return f'unfetchable file{s}: {filenames}'
 
 
 class UnknownMirror(results.VersionResult, results.Error):
@@ -986,8 +992,9 @@ class BadProtocol(results.VersionResult, results.Error):
 
     @property
     def desc(self):
+        s = pluralism(self.uris)
         uris = ', '.join(map(repr, self.uris))
-        return f'bad protocol {self.protocol!r} in URI{_pl(self.uris)}: {uris}'
+        return f'bad protocol {self.protocol!r} in URI{s}: {uris}'
 
 
 class BadFilename(results.VersionResult, results.Warning):
@@ -1002,8 +1009,9 @@ class BadFilename(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
+        s = pluralism(self.filenames)
         filenames = ', '.join(self.filenames)
-        return f'bad filename{_pl(self.filenames)}: [ {filenames} ]'
+        return f'bad filename{s}: [ {filenames} ]'
 
 
 class TarballAvailable(results.VersionResult, results.Warning):
@@ -1019,8 +1027,9 @@ class TarballAvailable(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return (f"zip archive{_pl(self.uris)} used when tarball available: "
-                f"[ {' '.join(self.uris)} ]")
+        s = pluralism(self.uris)
+        uris = ' '.join(self.uris)
+        return f'zip archive{s} used when tarball available: [ {uris} ]'
 
 
 class InvalidSrcUri(results.MetadataError):
@@ -1345,11 +1354,9 @@ class MissingUnpackerDep(results.VersionResult, results.Warning):
         else:
             dep = f"|| ( {' '.join(self.unpackers)} )"
 
-        return (
-            f'missing {dep_type}="{dep}" '
-            f"for SRC_URI archive{_pl(self.filenames)}: "
-            f"[ {', '.join(self.filenames)} ]"
-        )
+        s = pluralism(self.filenames)
+        filenames = ', '.join(self.filenames)
+        return f'missing {dep_type}="{dep}" for SRC_URI archive{s}: [ {filenames} ]'
 
 
 class MissingUnpackerDepCheck(Check):

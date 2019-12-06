@@ -9,7 +9,7 @@ from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import listdir_dirs, pjoin
 from snakeoil.sequences import iflatten_instance
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import addons, base, results, sources
 from . import Check
@@ -25,8 +25,9 @@ class UnknownProfilePackages(results.Warning):
 
     @property
     def desc(self):
-        return "%r: unknown package%s: [ %s ]" % (
-            self.path, _pl(self.packages), ', '.join(map(repr, self.packages)))
+        s = pluralism(self.packages)
+        packages = ', '.join(map(repr, self.packages))
+        return f'{self.path!r}: unknown package{s}: [ {packages} ]'
 
 
 class UnknownProfilePackageUse(results.Warning):
@@ -40,9 +41,9 @@ class UnknownProfilePackageUse(results.Warning):
 
     @property
     def desc(self):
-        return "%r: unknown package USE flag%s: [ '%s[%s]' ]" % (
-            self.path, _pl(self.flags), self.package,
-            ','.join(self.flags))
+        s = pluralism(self.flags)
+        flags = ', '.join(self.flags)
+        return f'{self.path!r}: unknown package USE flag{s}: [ {self.package}[{flags}] ]'
 
 
 class UnknownProfileUse(results.Warning):
@@ -55,8 +56,9 @@ class UnknownProfileUse(results.Warning):
 
     @property
     def desc(self):
-        return "%r: unknown USE flag%s: [ %s ]" % (
-            self.path, _pl(self.flags), ', '.join(map(repr, self.flags)))
+        s = pluralism(self.flags)
+        flags = ', '.join(map(repr, self.flags))
+        return f'{self.path!r}: unknown USE flag{s}: [ {flags} ]'
 
 
 class UnknownProfilePackageKeywords(results.Warning):
@@ -70,9 +72,9 @@ class UnknownProfilePackageKeywords(results.Warning):
 
     @property
     def desc(self):
-        return "%r: unknown package keyword%s: %s: [ %s ]" % (
-            self.path, _pl(self.keywords), self.package,
-            ', '.join(map(repr, self.keywords)))
+        s = pluralism(self.keywords)
+        keywords = ', '.join(map(repr, self.keywords))
+        return f'{self.path!r}: unknown package keyword{s}: {self.package}: [ {keywords} ]'
 
 
 class ProfileWarning(results.LogWarning):
@@ -263,8 +265,9 @@ class UnusedProfileDirs(results.Warning):
 
     @property
     def desc(self):
+        s = pluralism(self.dirs)
         dirs = ', '.join(map(repr, self.dirs))
-        return f'unused profile dir{_pl(self.dirs)}: {dirs}'
+        return f'unused profile dir{s}: {dirs}'
 
 
 class ArchesWithoutProfiles(results.Warning):
@@ -276,8 +279,9 @@ class ArchesWithoutProfiles(results.Warning):
 
     @property
     def desc(self):
+        es = pluralism(self.arches, plural='es')
         arches = ', '.join(self.arches)
-        return f"arch{_pl(self.arches, plural='es')} without profile: {arches}"
+        return f'arch{es} without profiles: {arches}'
 
 
 class NonexistentProfilePath(results.Error):
@@ -323,7 +327,7 @@ class UnknownCategories(results.Warning):
     @property
     def desc(self):
         categories = ', '.join(self.categories)
-        y = _pl(self.categories, singular='y', plural='ies')
+        y = pluralism(self.categories, singular='y', plural='ies')
         return f'unknown categor{y}: {categories}'
 
 

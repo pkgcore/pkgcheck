@@ -1,4 +1,4 @@
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import base, results, sources
 from . import Check
@@ -14,8 +14,9 @@ class RedundantVersion(results.VersionResult, results.Info):
 
     @property
     def desc(self):
-        return "slot(%s) keywords are overshadowed by version%s: %s" % (
-            self.slot, _pl(self.later_versions), ', '.join(self.later_versions))
+        s = pluralism(self.later_versions)
+        versions = ', '.join(self.later_versions)
+        return f'slot({self.slot}) keywords are overshadowed by version{s}: {versions}'
 
 
 class RedundantVersionCheck(Check):

@@ -1,5 +1,5 @@
 from snakeoil.sequences import iflatten_instance
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import base, results, sources
 from . import ExplicitlyEnabledCheck, OverlayRepoCheck, repo_metadata
@@ -17,8 +17,9 @@ class UnusedInMastersLicenses(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return "unused license%s in master repo(s): %s" % (
-            _pl(self.licenses), ', '.join(self.licenses))
+        s = pluralism(self.licenses)
+        licenses = ', '.join(self.licenses)
+        return f'unused license{s} in master repo(s): {licenses}'
 
 
 class UnusedInMastersMirrors(results.VersionResult, results.Warning):
@@ -33,8 +34,9 @@ class UnusedInMastersMirrors(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return "unused mirror%s in master repo(s): %s" % (
-            _pl(self.mirrors), ', '.join(self.mirrors))
+        s = pluralism(self.mirrors)
+        mirrors = ', '.join(self.mirrors)
+        return f'unused mirror{s} in master repo(s): {mirrors}'
 
 
 class UnusedInMastersEclasses(results.VersionResult, results.Warning):
@@ -49,8 +51,9 @@ class UnusedInMastersEclasses(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return "unused eclass%s in master repo(s): %s" % (
-            _pl(self.eclasses, plural='es'), ', '.join(self.eclasses))
+        es = pluralism(self.eclasses, plural='es')
+        eclasses = ', '.join(self.eclasses)
+        return f'unused eclass{es} in master repo(s): {eclasses}'
 
 
 class UnusedInMastersGlobalUse(results.VersionResult, results.Warning):
@@ -65,8 +68,9 @@ class UnusedInMastersGlobalUse(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return "use.desc unused flag%s in master repo(s): %s" % (
-            _pl(self.flags), ', '.join(self.flags))
+        s = pluralism(self.flags)
+        flags = ', '.join(self.flags)
+        return f'use.desc unused flag{s} in master repo(s): {flags}'
 
 
 class UnusedInMastersCheck(repo_metadata._MirrorsCheck,

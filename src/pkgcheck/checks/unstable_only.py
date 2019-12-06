@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.restrictions import packages, values
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import addons, base, results, sources
 from . import GentooRepoCheck
@@ -18,8 +18,10 @@ class UnstableOnly(results.PackageResult, results.Info):
 
     @property
     def desc(self):
-        return "for arch%s: [ %s ], all versions are unstable: [ %s ]" % (
-            _pl(self.arches, plural='es'), ', '.join(self.arches), ', '.join(self.versions))
+        es = pluralism(self.arches, plural='es')
+        arches = ', '.join(self.arches)
+        versions = ', '.join(self.versions)
+        return f'for arch{es}: [ {arches} ], all versions are unstable: [ {versions} ]'
 
 
 class UnstableOnlyCheck(GentooRepoCheck):

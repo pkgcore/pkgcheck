@@ -12,7 +12,7 @@ from pkgcore.exceptions import PkgcoreException
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
 from ..log import logger
@@ -95,8 +95,9 @@ class DirectStableKeywords(results.VersionResult, results.Error):
 
     @property
     def desc(self):
-        return f'directly committed with stable keyword%s: [ %s ]' % (
-            _pl(self.keywords), ', '.join(self.keywords))
+        s = pluralism(self.keywords)
+        keywords = ', '.join(self.keywords)
+        return f'directly committed with stable keyword{s}: [ {keywords} ]'
 
 
 class _DroppedKeywords(results.PackageResult):
@@ -111,10 +112,11 @@ class _DroppedKeywords(results.PackageResult):
 
     @property
     def desc(self):
+        s = pluralism(self.keywords)
         keywords = ', '.join(self.keywords)
         return (
             f'commit {self.commit} (or later) dropped {self._status} '
-            f'keyword{_pl(self.keywords)}: [ {keywords} ]'
+            f'keyword{s}: [ {keywords} ]'
         )
 
 
@@ -311,11 +313,9 @@ class MissingSignOff(results.CommitResult, results.Error):
 
     @property
     def desc(self):
+        s = pluralism(self.missing_sign_offs)
         sign_offs = ', '.join(self.missing_sign_offs)
-        return (
-            f'commit {self.commit}, '
-            f'missing sign-off{_pl(self.missing_sign_offs)}: {sign_offs}'
-        )
+        return f'commit {self.commit}, missing sign-off{s}: {sign_offs}'
 
 
 class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):

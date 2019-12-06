@@ -1,5 +1,5 @@
 from snakeoil.mappings import ImmutableDict
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import results
 from . import Check
@@ -22,8 +22,9 @@ class DeprecatedEclass(results.VersionResult, results.Warning):
                 update_path = 'no replacement'
             eclass_migration.append(f'{old_eclass} ({update_path})')
 
-        return "uses deprecated eclass%s: [ %s ]" % (
-            _pl(eclass_migration, plural='es'), ', '.join(eclass_migration))
+        es = pluralism(eclass_migration, plural='es')
+        eclasses = ', '.join(eclass_migration)
+        return f'uses deprecated eclass{es}: [ {eclasses} ]'
 
 
 class DuplicateEclassInherits(results.VersionResult, results.Warning):
@@ -42,8 +43,8 @@ class DuplicateEclassInherits(results.VersionResult, results.Warning):
     @property
     def desc(self):
         eclasses = ', '.join(self.eclasses)
-        plural = _pl(self.eclasses, plural='es')
-        return f'duplicate inherits for eclass{plural}: {eclasses}'
+        es = pluralism(self.eclasses, plural='es')
+        return f'duplicate inherits for eclass{es}: {eclasses}'
 
 
 class EclassCheck(Check):

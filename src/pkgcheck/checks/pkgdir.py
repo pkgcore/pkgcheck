@@ -6,7 +6,7 @@ from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from snakeoil.chksum import get_chksums
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
 from . import Check
@@ -28,8 +28,9 @@ class MismatchedPN(results.PackageResult, results.Error):
 
     @property
     def desc(self):
-        return "mismatched package name%s: [ %s ]" % (
-            _pl(self.ebuilds), ', '.join(self.ebuilds))
+        s = pluralism(self.ebuilds)
+        ebuilds = ', '.join(self.ebuilds)
+        return f'mismatched package name{s}: [ {ebuilds} ]'
 
 
 class InvalidPN(results.PackageResult, results.Error):
@@ -41,8 +42,9 @@ class InvalidPN(results.PackageResult, results.Error):
 
     @property
     def desc(self):
-        return "invalid package name%s: [ %s ]" % (
-            _pl(self.ebuilds), ', '.join(self.ebuilds))
+        s = pluralism(self.ebuilds)
+        ebuilds = ', '.join(self.ebuilds)
+        return f'invalid package name{s}: [ {ebuilds} ]'
 
 
 class EqualVersions(results.PackageResult, results.Error):
@@ -71,8 +73,8 @@ class DuplicateFiles(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return 'duplicate identical files in FILESDIR: %s' % (
-            ', '.join(map(repr, self.files)))
+        files = ', '.join(map(repr, self.files))
+        return f'duplicate identical files in FILESDIR: {files}'
 
 
 class EmptyFile(results.PackageResult, results.Warning):
@@ -113,7 +115,7 @@ class UnknownPkgDirEntry(results.PackageResult, results.Warning):
     @property
     def desc(self):
         files = ', '.join(map(repr, self.filenames))
-        y = _pl(self.filenames, singular='y', plural='ies')
+        y = pluralism(self.filenames, singular='y', plural='ies')
         return f'unknown entr{y}: {files}'
 
 
@@ -145,11 +147,9 @@ class BannedCharacter(results.PackageResult, results.Error):
 
     @property
     def desc(self):
+        s = pluralism(self.chars)
         chars = ', '.join(map(repr, self.chars))
-        return (
-            f'filename {self.filename!r} character{_pl(self.chars)} '
-            f'outside allowed set: {chars}'
-        )
+        return f'filename {self.filename!r} character{s} outside allowed set: {chars}'
 
 
 class InvalidUTF8(results.PackageResult, results.Error):

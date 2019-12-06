@@ -6,7 +6,7 @@ from pkgcore import fetch
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
 from snakeoil.sequences import iflatten_instance
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import addons, base, results, sources
 from . import Check
@@ -144,8 +144,9 @@ class UnusedLicenses(results.Warning):
 
     @property
     def desc(self):
+        s = pluralism(self.licenses)
         licenses = ', '.join(self.licenses)
-        return f'unused license{_pl(self.licenses)}: {licenses}'
+        return f'unused license{s}: {licenses}'
 
 
 class UnusedLicensesCheck(Check):
@@ -182,8 +183,9 @@ class UnusedMirrors(results.Warning):
 
     @property
     def desc(self):
+        s = pluralism(self.mirrors)
         mirrors = ', '.join(self.mirrors)
-        return f'unused mirror{_pl(self.mirrors)}: {mirrors}'
+        return f'unused mirror{s}: {mirrors}'
 
 
 class _MirrorsCheck(Check):
@@ -238,8 +240,9 @@ class UnusedEclasses(results.Warning):
 
     @property
     def desc(self):
+        es = pluralism(self.eclasses, plural='es')
         eclasses = ', '.join(self.eclasses)
-        return f"unused eclass{_pl(self.eclasses, plural='es')}: {eclasses}"
+        return f'unused eclass{es}: {eclasses}'
 
 
 class UnusedEclassesCheck(Check):
@@ -278,8 +281,9 @@ class UnknownLicenses(results.Warning):
 
     @property
     def desc(self):
-        return "license group %r has unknown license%s: [ %s ]" % (
-            self.group, _pl(self.licenses), ', '.join(self.licenses))
+        s = pluralism(self.licenses)
+        licenses = ', '.join(self.licenses)
+        return f'license group {self.group!r} has unknown license{s}: [ {licenses} ]'
 
 
 class LicenseGroupsCheck(Check):
@@ -310,9 +314,12 @@ class PotentialLocalUse(results.Info):
 
     @property
     def desc(self):
+        s = pluralism(self.pkgs)
+        pkgs = ', '.join(self.pkgs)
         return (
-            f"global USE flag {self.flag!r} is a potential local, "
-            f"used by {len(self.pkgs)} package{_pl(len(self.pkgs))}: {', '.join(self.pkgs)}")
+            f'global USE flag {self.flag!r} is a potential local, '
+            f'used by {len(self.pkgs)} package{s}: {pkgs}'
+        )
 
 
 class UnusedGlobalUse(results.Warning):
@@ -324,8 +331,9 @@ class UnusedGlobalUse(results.Warning):
 
     @property
     def desc(self):
-        return "use.desc unused flag%s: %s" % (
-            _pl(self.flags), ', '.join(self.flags))
+        s = pluralism(self.flags)
+        flags = ', '.join(self.flags)
+        return f'use.desc unused flag{s}: {flags}'
 
 
 class PotentialGlobalUse(results.Info):
@@ -484,10 +492,9 @@ class DeprecatedChksum(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return (
-            f"{self.filename!r} has deprecated checksum{_pl(self.deprecated)}: "
-            f"{', '.join(self.deprecated)}"
-        )
+        s = pluralism(self.deprecated)
+        deprecated = ', '.join(self.deprecated)
+        return f'{self.filename!r} has deprecated checksum{s}: {deprecated}'
 
 
 class MissingManifest(results.VersionResult, results.Error):
@@ -499,8 +506,9 @@ class MissingManifest(results.VersionResult, results.Error):
 
     @property
     def desc(self):
-        return "distfile%s missing from Manifest: [ %s ]" % (
-            _pl(self.files), ', '.join(self.files),)
+        s = pluralism(self.files)
+        files = ', '.join(self.files)
+        return f'distfile{s} missing from Manifest: [ {files} ]'
 
 
 class UnknownManifest(results.PackageResult, results.Warning):
@@ -512,8 +520,9 @@ class UnknownManifest(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return "unknown distfile%s in Manifest: [ %s ]" % (
-            _pl(self.files), ', '.join(self.files),)
+        s = pluralism(self.files)
+        files = ', '.join(self.files)
+        return f'unknown distfile{s} in Manifest: [ {files} ]'
 
 
 class UnnecessaryManifest(results.PackageResult, results.Warning):
@@ -525,8 +534,9 @@ class UnnecessaryManifest(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return "unnecessary file%s in Manifest: [ %s ]" % (
-            _pl(self.files), ', '.join(self.files),)
+        s = pluralism(self.files)
+        files = ', '.join(self.files)
+        return f'unnecessary file{s} in Manifest: [ {files} ]'
 
 
 class ManifestCheck(Check):
@@ -607,11 +617,13 @@ class ConflictingChksums(results.VersionResult, results.Error):
 
     @property
     def desc(self):
-        pkgs = ', '.join(self.pkgs)
+        s = pluralism(self.chksums)
         chksums = ', '.join(self.chksums)
+        pkgs_s = pluralism(self.pkgs)
+        pkgs = ', '.join(self.pkgs)
         return (
-            f'distfile {self.filename!r} has different checksum{_pl(self.chksums)} '
-            f'({chksums}) for package{_pl(self.pkgs)}: {pkgs}'
+            f'distfile {self.filename!r} has different checksum{s} '
+            f'({chksums}) for package{pkgs_s}: {pkgs}'
         )
 
 
