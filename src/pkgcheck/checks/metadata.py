@@ -695,7 +695,6 @@ class DependencyCheck(Check):
     def __init__(self, *args, use_addon, git_addon):
         super().__init__(*args)
         self.deprecated = self.options.target_repo.deprecated.match
-        self.masked = self.options.target_repo.masked.match
         self.iuse_filter = use_addon.get_filter()
         self.conditional_ops = {'?', '='}
         self.use_defaults = {'(+)', '(-)'}
@@ -748,7 +747,7 @@ class DependencyCheck(Check):
                     in_or_restriction = False
 
                 for atom in iflatten_instance(node, (atom_cls,)):
-                    if self.deprecated(atom) and not self.masked(atom):
+                    if self.deprecated(atom):
                         deprecated.add(atom)
 
                     if in_or_restriction and atom.slot_operator == '=':
