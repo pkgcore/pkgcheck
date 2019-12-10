@@ -1,6 +1,6 @@
 import re
 import sys
-from collections import namedtuple
+from typing import NamedTuple
 
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.strings import pluralism
@@ -85,8 +85,12 @@ class BadWhitespaceCharacter(results.LineResult, results.Warning):
         )
 
 
-# hardcoded list of bad whitespace characters for BadWhitespaceCharacter result
-WhitespaceData = namedtuple('WhitespaceData', ['unicode_version', 'chars'])
+class WhitespaceData(NamedTuple):
+    """Data format to register hardcoded list of bad whitespace characters."""
+    unicode_version: str
+    chars: tuple
+
+
 whitespace_data = WhitespaceData(
     unicode_version='12.1.0',
     chars=(

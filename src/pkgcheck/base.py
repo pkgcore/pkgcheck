@@ -17,9 +17,9 @@ import pathlib
 import re
 import shutil
 import sys
-from collections import namedtuple
 from contextlib import AbstractContextManager
 from operator import attrgetter
+from typing import NamedTuple
 
 from pkgcore import const as pkgcore_const
 from snakeoil import klass
@@ -129,7 +129,11 @@ class Addon:
         """
 
 
-CacheData = namedtuple('CacheData', ['type', 'file', 'version'])
+class CacheData(NamedTuple):
+    """Cache registry data."""
+    type: str
+    file: str
+    version: int
 
 
 class Cache:

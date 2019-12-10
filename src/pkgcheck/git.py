@@ -5,7 +5,8 @@ import os
 import pickle
 import shlex
 import subprocess
-from collections import namedtuple, UserDict
+from collections import UserDict
+from typing import NamedTuple
 
 from pathspec import PathSpec
 from pkgcore.ebuild import cpv
@@ -31,10 +32,25 @@ _ebuild_path_regex = '(?P<category>[^/]+)/(?P<PN>[^/]+)/(?P<P>[^/]+)\\.ebuild'
 demand_compile_regexp('ebuild_ADM_regex', fr'^(?P<status>[ADM])\t{_ebuild_path_regex}$')
 demand_compile_regexp('ebuild_R_regex', fr'^(?P<status>R)\d+\t{_ebuild_path_regex_raw}\t{_ebuild_path_regex}$')
 
-_GitCommit = namedtuple('GitCommit', [
-    'commit', 'commit_date', 'author', 'committer', 'message'])
-_GitPkgChange = namedtuple('GitPkgChange', [
-    'atom', 'status', 'commit', 'commit_date', 'author', 'committer', 'message'])
+
+class GitCommit(NamedTuple):
+    """Data format for git commit objects."""
+    commit: str
+    commit_date: str
+    author: str
+    committer: str
+    message: list
+
+
+class GitPkgChange(NamedTuple):
+    """Data format for git package change objects."""
+    atom: atom_cls
+    status: str
+    commit: str
+    commit_date: str
+    author: str
+    committer: str
+    message: list
 
 
 class ParsedGitRepo(UserDict, base.Cache):
@@ -142,7 +158,7 @@ class ParsedGitRepo(UserDict, base.Cache):
                 count += 1
 
                 if not pkgs:
-                    yield _GitCommit(commit, commit_date, author, committer, message)
+                    yield GitCommit(commit, commit_date, author, committer, message)
 
                 # file changes
                 while True:
@@ -153,7 +169,7 @@ class ParsedGitRepo(UserDict, base.Cache):
                         parsed = cls._parse_file_line(line.strip())
                         if parsed is not None:
                             atom, status = parsed
-                            yield _GitPkgChange(
+                            yield GitPkgChange(
                                 atom, status, commit, commit_date,
                                 author, committer, message)
 
