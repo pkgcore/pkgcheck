@@ -103,6 +103,7 @@ class ProfilesCheck(Check):
     def __init__(self, *args, use_addon):
         super().__init__(*args)
         self.repo = self.options.target_repo
+        self.search_repo = self.options.search_repo
         self.iuse_handler = use_addon
         self.profiles_dir = self.repo.config.profiles_base
         self.non_profile_dirs = frozenset(
@@ -131,7 +132,7 @@ class ProfilesCheck(Check):
 
         def _pkg_atoms(filename, profile, vals):
             for a in iflatten_instance(vals, atom.atom):
-                if not self.repo.match(a):
+                if not self.search_repo.match(a):
                     unknown_pkgs[profile.path][filename].append(a)
 
         def _pkg_keywords(filename, profile, vals):
@@ -148,7 +149,7 @@ class ProfilesCheck(Check):
 
             for _pkg, entries in d.items():
                 for a, disabled, enabled in entries:
-                    pkgs = self.repo.match(a)
+                    pkgs = self.search_repo.match(a)
                     if not pkgs:
                         unknown_pkgs[profile.path][filename].append(a)
                     else:
