@@ -5,7 +5,7 @@ from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.util import collect_package_restrictions
 from snakeoil.cli.arghparse import existent_dir
 from snakeoil.osutils import abspath, pjoin
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import results
 from ..log import logger
@@ -22,8 +22,9 @@ class VulnerablePackage(results.VersionResult, results.Error):
 
     @property
     def desc(self):
+        s = pluralism(self.arches)
         arches = ', '.join(self.arches)
-        return f'vulnerable via {self.glsa}, keyword{_pl(self.arches)}: {arches}'
+        return f'vulnerable via {self.glsa}, keyword{s}: {arches}'
 
 
 class GlsaCheck(GentooRepoCheck):

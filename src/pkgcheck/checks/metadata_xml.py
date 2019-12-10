@@ -4,7 +4,7 @@ from lxml import etree
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from snakeoil.osutils import pjoin
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import base, results, sources
 from . import Check
@@ -109,9 +109,9 @@ class MaintainerWithoutProxy(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return (
-            f"proxied maintainer{_pl(self.maintainers)} missing proxy dev/project: "
-            f"[ {', '.join(self.maintainers)} ]")
+        s = pluralism(self.maintainers)
+        maintainers = ', '.join(self.maintainers)
+        return f'proxied maintainer{s} missing proxy dev/project: {maintainers}'
 
 
 class StaleProxyMaintProject(results.PackageResult, results.Warning):
@@ -141,8 +141,9 @@ class NonexistentProjectMaintainer(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
+        s = pluralism(self.emails)
         emails = ', '.join(self.emails)
-        return f'nonexistent project maintainer{_pl(self.emails)}: [ {emails} ]'
+        return f'nonexistent project maintainer{s}: {emails}'
 
 
 class WrongMaintainerType(results.PackageResult, results.Warning):
@@ -155,8 +156,9 @@ class WrongMaintainerType(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
+        s = pluralism(self.emails)
         emails = ', '.join(self.emails)
-        return f'project maintainer{_pl(self.emails)} with type="person": [ {emails} ]'
+        return f'project maintainer{s} with type="person": {emails}'
 
 
 class PkgMissingMetadataXml(_MissingXml, results.PackageResult):
@@ -212,11 +214,9 @@ class _MetadataXmlIndentation(results.Warning):
 
     @property
     def desc(self):
+        s = pluralism(self.lines)
         lines = ', '.join(self.lines)
-        return (
-            'metadata.xml has inconsistent indentation '
-            f'on line{_pl(self.lines)}: {lines}'
-        )
+        return f'metadata.xml has inconsistent indentation on line{s}: {lines}'
 
 
 class CatMetadataXmlIndentation(_MetadataXmlIndentation, results.CategoryResult):

@@ -8,7 +8,7 @@ from snakeoil.demandload import demand_compile_regexp
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import stable_unique
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import results, sources
 from . import Check, GentooRepoCheck
@@ -121,8 +121,9 @@ class MissingSlash(results.VersionResult, results.Error):
 
     @property
     def desc(self):
+        s = pluralism(self.lines)
         lines = ', '.join(map(str, self.lines))
-        return f"{self.match} missing trailing slash on line{_pl(self.lines)}: {lines}"
+        return f'{self.match} missing trailing slash on line{s}: {lines}'
 
 
 class UnnecessarySlashStrip(results.VersionResult, results.Warning):
@@ -135,8 +136,9 @@ class UnnecessarySlashStrip(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
+        s = pluralism(self.lines)
         lines = ', '.join(map(str, self.lines))
-        return f"{self.match} unnecessary slash strip on line{_pl(self.lines)}: {lines}"
+        return f'{self.match} unnecessary slash strip on line{s}: {lines}'
 
 
 class DoublePrefixInPath(results.VersionResult, results.Error):
@@ -157,9 +159,9 @@ class DoublePrefixInPath(results.VersionResult, results.Error):
 
     @property
     def desc(self):
+        s = pluralism(self.lines)
         lines = ', '.join(map(str, self.lines))
-        return (f"{self.match}: concatenates two paths containing EPREFIX "
-                f"on line{_pl(self.lines)} {lines}")
+        return f'{self.match}: concatenates two paths containing EPREFIX on line{s} {lines}'
 
 
 class PathVariablesCheck(Check):
@@ -555,8 +557,9 @@ class VariableInHomepage(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        var_list = ', '.join(self.variables)
-        return f'HOMEPAGE includes variable{_pl(self.variables)}: {var_list}'
+        s = pluralism(self.variables)
+        variables = ', '.join(self.variables)
+        return f'HOMEPAGE includes variable{s}: {variables}'
 
 
 class RawEbuildCheck(Check):

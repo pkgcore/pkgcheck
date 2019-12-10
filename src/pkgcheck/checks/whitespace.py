@@ -3,7 +3,7 @@ import sys
 from collections import namedtuple
 
 from snakeoil.demandload import demand_compile_regexp
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import results, sources
 from . import Check
@@ -15,7 +15,9 @@ class _Whitespace(results.VersionResult, results.Warning):
 
     @property
     def lines_str(self):
-        return f"line{_pl(self.lines)}: {', '.join(str(x) for x in self.lines)}"
+        s = pluralism(self.lines)
+        lines = ', '.join(map(str, self.lines))
+        return f'line{s}: {lines}'
 
 
 class WhitespaceFound(_Whitespace):

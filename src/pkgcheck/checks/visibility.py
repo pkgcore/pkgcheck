@@ -5,7 +5,7 @@ from pkgcore.ebuild.atom import atom, transitive_use_atom
 from snakeoil import klass
 from snakeoil.iterables import caching_iter
 from snakeoil.sequences import iflatten_func, iflatten_instance, stable_unique
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import addons, feeds, results
 from . import Check
@@ -122,10 +122,9 @@ class NonexistentDeps(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return (
-            f"{self.attr}: nonexistent package{_pl(self.nonexistent)}: "
-            f"[ {', '.join(self.nonexistent)} ]"
-        )
+        s = pluralism(self.nonexistent)
+        nonexistent = ', '.join(self.nonexistent)
+        return f'{self.attr}: nonexistent package{s}: {nonexistent}'
 
 
 class UncheckableDep(results.VersionResult, results.Warning):
