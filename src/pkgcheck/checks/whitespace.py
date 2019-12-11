@@ -70,7 +70,13 @@ class NoFinalNewline(results.VersionResult, results.Warning):
 
 
 class BadWhitespaceCharacter(results.LineResult, results.Warning):
-    """Ebuild uses whitespace that isn't a tab, newline, or single space."""
+    """Ebuild uses whitespace that isn't a tab, newline, or single space.
+
+    Bash does not treat unicode whitespace characters as regular whitespace so
+    commands or operators separated by such characters will be treated as one
+    string. This usually causes execution errors if the characters are used for
+    separation purposes outside of comments or regular strings.
+    """
 
     def __init__(self, char, position, **kwargs):
         super().__init__(**kwargs)
