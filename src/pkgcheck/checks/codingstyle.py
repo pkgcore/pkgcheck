@@ -549,7 +549,13 @@ class StaticSrcUri(results.VersionResult, results.Warning):
 
 
 class VariableInHomepage(results.VersionResult, results.Warning):
-    """HOMEPAGE includes a variable."""
+    """HOMEPAGE includes a variable.
+
+    The HOMEPAGE ebuild variable entry in the devmanual [#]_ states only raw
+    text should be used.
+
+    .. [#] https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables
+    """
 
     def __init__(self, variables, **kwargs):
         super().__init__(**kwargs)
