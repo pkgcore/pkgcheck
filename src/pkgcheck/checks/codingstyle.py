@@ -537,7 +537,11 @@ class HomepageInSrcUri(results.VersionResult, results.Warning):
 
 
 class StaticSrcUri(results.VersionResult, results.Warning):
-    """SRC_URI contains static value instead of the dynamic equivalent."""
+    """SRC_URI contains static value instead of the dynamic equivalent.
+
+    For example, using static text to relate to the package version in SRC_URI
+    instead of ${P} or ${PV} where relevant.
+    """
 
     def __init__(self, static_str, **kwargs):
         super().__init__(**kwargs)
