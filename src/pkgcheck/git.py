@@ -325,7 +325,7 @@ class GitAddon(base.Addon, base.CachedAddon):
                     f'target{_pl(namespace.targets)}: {targets}')
             repo = namespace.target_repo
             ret, out = spawn_get_output(
-                ['git', 'diff', 'origin', '--name-only'] + list(repo.categories),
+                ['git', 'diff', 'origin', '--name-only'] + list(repo.category_dirs),
                 cwd=repo.location)
             if ret != 0:
                 parser.error('git not available to determine targets for --commits')
