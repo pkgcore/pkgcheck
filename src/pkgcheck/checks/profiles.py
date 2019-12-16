@@ -7,7 +7,7 @@ from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.ebuild.repo_objs import Profiles
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
-from snakeoil.osutils import listdir_dirs, pjoin
+from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
@@ -375,10 +375,7 @@ class RepoProfilesCheck(Check):
     def finish(self):
         # don't check for unknown category dirs on overlays
         if self.options.gentoo_repo:
-            category_dirs = set(filterfalse(
-                self.repo.false_categories.__contains__,
-                (x for x in listdir_dirs(self.repo.location) if x[0] != '.')))
-            unknown_categories = category_dirs.difference(self.repo.categories)
+            unknown_categories = set(self.repo.category_dirs).difference(self.repo.categories)
             if unknown_categories:
                 yield UnknownCategories(sorted(unknown_categories))
 
