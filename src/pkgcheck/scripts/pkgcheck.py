@@ -136,11 +136,17 @@ main_options.add_argument(
     action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
     help='repo to pull packages from')
 main_options.add_argument(
-    '-f', '--filter', choices=('repo',),
-    help="enable all license and visibility filtering for packages",
+    '-f', '--filter', choices=('latest', 'repo',),
+    help='limit targeted packages for scanning',
     docs="""
-        Enable all package filtering mechanisms such as ACCEPT_KEYWORDS,
-        ACCEPT_LICENSE, and package.mask.
+        Support limiting targeted packages for scanning using a chosen filter.
+
+        If the 'repo' argument is used, all package visibility mechanisms used
+        by the package manager when resolving package dependencies such as
+        ACCEPT_KEYWORDS, ACCEPT_LICENSE, and package.mask will be enabled.
+
+        If the 'latest' argument is used, only the latest package per slot of
+        both VCS and non-VCS types will be scanned.
     """)
 main_options.add_argument(
     '--sorted', action='store_true',
@@ -513,6 +519,11 @@ def _validate_scan_args(parser, namespace):
     # skip checks that may be disabled
     namespace.enabled_checks = [
         c for c in namespace.enabled_checks if not c.skip(namespace)]
+
+    # only run version scope checks when using a package filter
+    if namespace.filter in ('latest',):
+        namespace.enabled_checks = [
+            c for c in namespace.enabled_checks if c.scope == base.version_scope]
 
     if not namespace.enabled_checks:
         parser.error('no active checks')

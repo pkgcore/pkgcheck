@@ -46,7 +46,11 @@ class RepoSource(Source):
     def itermatch(self, restrict, **kwargs):
         """Yield packages matching the given restriction from the selected source."""
         kwargs.setdefault('sorter', sorted)
-        yield from self.source.itermatch(restrict, **kwargs)
+        unfiltered_iter = self.source.itermatch(restrict, **kwargs)
+        if self._options.filter == 'latest':
+            yield from LatestPkgsFilter(unfiltered_iter)
+        else:
+            yield from unfiltered_iter
 
 
 class EmptySource(Source):
@@ -153,10 +157,13 @@ class RawRepoSource(RepoSource):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self._repo = _RawRepo(self._repo)
 
     def itermatch(self, restrict, **kwargs):
-        yield from super().itermatch(restrict, raw_pkg_cls=RawCPV, **kwargs)
+        if self._options.filter == 'latest':
+            yield from LatestPkgsFilter(super().itermatch(restrict, **kwargs))
+        else:
+            self._repo = _RawRepo(self._repo)
+            yield from super().itermatch(restrict, raw_pkg_cls=RawCPV, **kwargs)
 
 
 class RestrictionRepoSource(RepoSource):
