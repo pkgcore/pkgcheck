@@ -136,7 +136,7 @@ main_options.add_argument(
     action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
     help='repo to pull packages from')
 main_options.add_argument(
-    '--filtered', action='store_true', default=False,
+    '-f', '--filter', choices=('repo',),
     help="enable all license and visibility filtering for packages",
     docs="""
         Enable all package filtering mechanisms such as ACCEPT_KEYWORDS,
@@ -350,8 +350,8 @@ def _validate_scan_args(parser, namespace):
             target_repo = namespace.config.get_default('repo')
         namespace.target_repo = target_repo
 
-    # use filtered repo if filtering is enabled
-    if namespace.filtered:
+    # use filtered repo if requested
+    if namespace.filter == 'repo':
         namespace.target_repo = namespace.domain.ebuild_repos[namespace.target_repo.repo_id]
 
     # determine if we're running in the gentoo repo or a clone
