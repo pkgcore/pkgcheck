@@ -21,7 +21,7 @@ from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.process.spawn import spawn_get_output
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from . import base
 from .log import logger
@@ -320,9 +320,8 @@ class GitAddon(base.Addon, base.CachedAddon):
         if namespace.commits:
             if namespace.targets:
                 targets = ' '.join(namespace.targets)
-                parser.error(
-                    '--commits is mutually exclusive with '
-                    f'target{_pl(namespace.targets)}: {targets}')
+                s = pluralism(namespace.targets)
+                parser.error(f'--commits is mutually exclusive with target{s}: {targets}')
             repo = namespace.target_repo
             ret, out = spawn_get_output(
                 ['git', 'diff', 'origin', '--name-only'] + list(repo.category_dirs),

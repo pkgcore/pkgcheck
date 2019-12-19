@@ -23,7 +23,7 @@ from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import abspath, pjoin
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import base, const, pipeline, reporters, results
 from ..addons import init_addon
@@ -109,8 +109,9 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
         if unknown:
             unknowns = ', '.join(map(repr, unknown))
             choices = ', '.join(map(repr, sorted(self.default)))
+            s = pluralism(unknown)
             raise argparse.ArgumentError(
-                self, f'unknown cache type{_pl(unknown)}: {unknowns} (choose from {choices})')
+                self, f'unknown cache type{s}: {unknowns} (choose from {choices})')
         enabled = set(enabled).difference(disabled)
         return enabled
 
@@ -425,9 +426,8 @@ def _validate_scan_args(parser, namespace):
         if unknown_scopes:
             unknown = ', '.join(map(repr, unknown_scopes))
             available = ', '.join(base.scopes)
-            parser.error(
-                f'unknown scope{_pl(unknown_scopes)}: '
-                f'{unknown} (available scopes: {available})')
+            s = pluralism(unknown_scopes)
+            parser.error(f'unknown scope{s}: {unknown} (available scopes: {available})')
 
         disabled_scopes = {base.scopes[x] for x in disabled_scopes}
         enabled_scopes = {base.scopes[x] for x in enabled_scopes}
@@ -462,7 +462,8 @@ def _validate_scan_args(parser, namespace):
         unknown_keywords = selected_keywords - available_keywords
         if unknown_keywords:
             unknown = ', '.join(map(repr, unknown_keywords))
-            parser.error(f'unknown keyword{_pl(unknown_keywords)}: {unknown}')
+            s = pluralism(unknown_keywords)
+            parser.error(f'unknown keyword{s}: {unknown}')
 
         # filter outputted keywords
         namespace.enabled_keywords = base.filter_update(
@@ -492,7 +493,8 @@ def _validate_scan_args(parser, namespace):
         unknown_checks = selected_checks.difference(available_checks)
         if unknown_checks:
             unknown = ', '.join(map(repr, unknown_checks))
-            parser.error(f'unknown check{_pl(unknown_checks)}: {unknown} ')
+            s = pluralism(unknown_checks)
+            parser.error(f'unknown check{s}: {unknown}')
     elif namespace.filtered_keywords is not None:
         # enable checks based on enabled keyword -> check mapping
         enabled_checks = []

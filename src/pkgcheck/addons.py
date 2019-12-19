@@ -18,7 +18,7 @@ from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import iflatten_instance
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from . import base, results
 from .log import logger
@@ -66,10 +66,10 @@ class ArchesAddon(base.Addon):
         if all_arches:
             unknown_arches = arches.difference(all_arches)
             if unknown_arches:
-                parser.error('unknown arch%s: %s (valid arches: %s)' % (
-                    _pl(unknown_arches, plural='es'),
-                    ', '.join(unknown_arches),
-                    ', '.join(sorted(all_arches))))
+                es = pluralism(unknown_arches, plural='es')
+                unknown = ', '.join(unknown_arches)
+                valid = ', '.join(sorted(all_arches))
+                parser.error(f'unknown arch{es}: {unknown} (valid arches: {valid})')
 
         namespace.arches = tuple(sorted(arches))
 
@@ -527,7 +527,8 @@ class UnstatedIuse(results.VersionResult, results.Error):
                 num_profiles = ''
             msg.append(f'profile {self.profile!r}{num_profiles}')
         flags = ', '.join(self.flags)
-        msg.extend([f'unstated flag{_pl(self.flags)}', f'[ {flags} ]'])
+        s = pluralism(self.flags)
+        msg.extend([f'unstated flag{s}', f'[ {flags} ]'])
         return ': '.join(msg)
 
 
