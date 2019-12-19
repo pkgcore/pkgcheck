@@ -521,7 +521,7 @@ def _validate_scan_args(parser, namespace):
         c for c in namespace.enabled_checks if not c.skip(namespace)]
 
     # only run version scope checks when using a package filter
-    if namespace.filter in ('latest',):
+    if namespace.filter is not None:
         namespace.enabled_checks = [
             c for c in namespace.enabled_checks if c.scope == base.version_scope]
 
