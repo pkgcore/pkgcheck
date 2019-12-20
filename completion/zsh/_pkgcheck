@@ -149,7 +149,7 @@ case $state in
         scan_opts=(
           {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_repos'
           {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter]:reporters:_reporters"
-          "--filtered[enable all license and visibility filtering for packages]:yes/no:((y\:'yes' n\:'no'))"
+          {'(--filter)-f','(-f)--filter'}"[limit targeted packages for scanning]:filter:(latest repo)"
           {'(--jobs)-j','(-j)--jobs'}'[number of checks to run in parallel]:jobs'
           {'(--tasks)-t','(-t)--tasks'}'[number of asynchronous tasks to run concurrently]:tasks'
           '--cache[forcibly enable/disable caches]:cache types:{_values -s , "cache types" $caches}'
