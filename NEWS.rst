@@ -3,6 +3,29 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.7.2 (2019-12-20)
+---------------------------
+
+- pkgcheck scan: Change --filtered option to -f/--filter which supports both
+  'repo' and 'latest' arguments to filter scanned packages (#184).
+
+- Fix ``pkgcheck scan --commits`` usage with overlays (#188).
+
+- MissingUseDepDefault: Check unconditional use deps for missing defaults,
+  previously only conditional flags were being checked.
+
+- DuplicateEclassInherits: Add initial result for flagging duplicate eclass
+  inherits.
+
+- BadWhitespaceCharacter: Add initial result for flagging unicode whitespace in
+  ebuilds that bash doesn't treat as regular whitespace.
+
+- ProfilesCheck: Add support for validating package.deprecated entries.
+
+- Use .git/info/exclude from repos in addition to .gitignore to ignore files
+  for relevant checks.
+
+---------------------------
 pkgcheck 0.7.1 (2019-11-30)
 ---------------------------
 
