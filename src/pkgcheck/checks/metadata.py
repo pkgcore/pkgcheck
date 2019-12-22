@@ -747,7 +747,10 @@ class DependencyCheck(Check):
                     in_or_restriction = False
 
                 for atom in iflatten_instance(node, (atom_cls,)):
-                    if self.deprecated(atom):
+                    # Skip reporting blockers on deprecated packages; the primary
+                    # purpose of deprecations is to get rid of dependencies
+                    # holding them in the repo.
+                    if not atom.blocks and self.deprecated(atom):
                         deprecated.add(atom)
 
                     if in_or_restriction and atom.slot_operator == '=':
