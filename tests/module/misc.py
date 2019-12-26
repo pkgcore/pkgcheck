@@ -80,6 +80,7 @@ default_scope_attrs = {
     base.category_scope: ('category',),
     base.package_scope: ('category', 'package'),
     base.version_scope: ('category', 'package', 'version'),
+    base.commit_scope: ('commit',),
 }
 
 
@@ -110,6 +111,8 @@ class ReportTestCase(object):
     def assertReportSanity(self, *reports):
         for report in reports:
             attrs = self._scope_attrs.get(report.scope)
+            assert attrs is not None, \
+                f"scope {report.scope} isn't fully supported by ReportTestCase, please fix"
             for attr in attrs:
                 assert hasattr(report, attr), (
                     f"missing attr {attr}: {report.__class__!r} {report}")
