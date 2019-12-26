@@ -5,6 +5,7 @@ import tarfile
 from datetime import datetime
 from itertools import chain
 from tempfile import TemporaryDirectory
+from urllib.parse import urlparse
 
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.ebuild.repository import UnconfiguredTree
@@ -318,19 +319,54 @@ class MissingSignOff(results.CommitResult, results.Error):
         return f'commit {self.commit}, missing sign-off{s}: {sign_offs}'
 
 
+class InvalidTagFormat(results.CommitResult, results.Error):
+    """Local commit has a tag that is incompliant.
+
+    Commit tags have restrictions as to the allowed format and data
+    used per GLEP 66 [#]_.
+
+    .. [#] https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin
+    """
+
+    def __init__(self, tag, value, error, **kwargs):
+        super().__init__(**kwargs)
+        self.tag, self.value, self.error = tag, value, error
+
+    @property
+    def desc(self):
+        return f'commit {self.commit}, tag {self.tag} value {self.value}: {self.error}'
+
+
 class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
     """Check unpushed git commits for various issues."""
 
     scope = base.commit_scope
     _source = GitCommitsSource
-    known_results = frozenset([MissingSignOff])
+    known_results = frozenset([MissingSignOff, InvalidTagFormat])
 
     def feed(self, commit):
-        # check for missing git sign offs
+        # check for missing git sign offs-
         sign_offs = {
-            line[15:].strip() for line in commit.message
-            if line.startswith('Signed-off-by: ')}
+           line[15:].strip() for line in commit.message
+           if line.startswith('Signed-off-by: ')}
         required_sign_offs = {commit.author, commit.committer}
         missing_sign_offs = required_sign_offs - sign_offs
         if missing_sign_offs:
             yield MissingSignOff(tuple(sorted(missing_sign_offs)), commit=commit)
+
+        url_tags = (x.split(": ", 1) for x in commit.message)
+        url_tags = [
+            (x[0], x[1])
+            for x in url_tags if len(x) == 2 and x[0] in ('Bug', 'Closes')
+        ]
+        # check tag formats.
+        for tag, value in url_tags:
+            parsed = urlparse(value)
+            if not parsed.scheme:
+                yield InvalidTagFormat(tag, value, "value isn't a URL", commit=commit)
+                continue
+            if parsed.scheme.lower() not in ("http", "https"):
+                yield InvalidTagFormat(
+                    tag, value,
+                    "Invalid protocol; should be http or https",
+                    commit=commit)
