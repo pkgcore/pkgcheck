@@ -113,6 +113,8 @@ class ReportTestCase(object):
             for attr in attrs:
                 assert hasattr(report, attr), (
                     f"missing attr {attr}: {report.__class__!r} {report}")
+            # pull desc to force a render for basic sanity checks.
+            report.desc
 
     def assertReports(self, check, data):
         l = []
