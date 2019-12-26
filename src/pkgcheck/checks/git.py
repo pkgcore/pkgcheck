@@ -23,6 +23,10 @@ demand_compile_regexp(
     'ebuild_copyright_regex',
     r'^# Copyright (\d\d\d\d(-\d\d\d\d)?) .+')
 
+demand_compile_regexp(
+    'commit_footer',
+    r'^(?P<tag>[a-zA-Z0-9_-]+): (?P<value>.*)$')
+
 
 class GitCommitsRepoSource(sources.RepoSource):
     """Repository source for locally changed packages in git history.
@@ -337,14 +341,30 @@ class InvalidTagFormat(results.CommitResult, results.Error):
         return f'commit {self.commit}, tag {self.tag} value {self.value}: {self.error}'
 
 
+class InvalidCommitMessage(results.CommitResult, results.Error):
+    """Local commit has issues with it's commit message"""
+    def __init__(self, error, **kwargs):
+        super().__init__(**kwargs)
+        self.error = error
+
+    @property
+    def desc(self):
+        return f'commit {self.commit}: {self.error}'
+
+
 class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
     """Check unpushed git commits for various issues."""
 
     scope = base.commit_scope
     _source = GitCommitsSource
-    known_results = frozenset([MissingSignOff, InvalidTagFormat])
+    known_results = frozenset([MissingSignOff, InvalidTagFormat, InvalidCommitMessage])
 
     def feed(self, commit):
+        yield from self.enforce_sign_off_policy(commit)
+        yield from self.enforce_tag_policy(commit)
+        yield from self.enforce_message_structure(commit)
+
+    def enforce_sign_off_policy(self, commit):
         # check for missing git sign offs-
         sign_offs = {
            line[15:].strip() for line in commit.message
@@ -354,13 +374,21 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
         if missing_sign_offs:
             yield MissingSignOff(tuple(sorted(missing_sign_offs)), commit=commit)
 
+    def enforce_tag_policy(self, commit):
         url_tags = (x.split(": ", 1) for x in commit.message)
         url_tags = [
             (x[0], x[1])
-            for x in url_tags if len(x) == 2 and x[0] in ('Bug', 'Closes')
+            for x in url_tags if len(x) == 2
+            and x[0] in ('Bug', 'Closes', 'Gentoo-Bug')
         ]
         # check tag formats.
         for tag, value in url_tags:
+            if tag == 'Gentoo-Bug':
+                yield InvalidTagFormat(
+                    tag, value,
+                    "Gentoo-Bug tag is no longer valid, use Bug: instead",
+                    commit=commit)
+                continue
             parsed = urlparse(value)
             if not parsed.scheme:
                 yield InvalidTagFormat(tag, value, "value isn't a URL", commit=commit)
@@ -370,3 +398,41 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
                     tag, value,
                     "Invalid protocol; should be http or https",
                     commit=commit)
+
+    def enforce_message_structure(self, commit):
+        if len(commit.message) == 0:
+            yield InvalidCommitMessage("No commit message", commit=commit)
+            return
+        # Drop the leading word; assume it was a package.
+        summary = commit.message[0]
+        words = summary.split(None, 1)
+        if len(words) > 1 and len(words[-1]) > 69:
+            yield InvalidCommitMessage("Summary is too long", commit=commit)
+
+        i = iter(commit.message[1:])
+        for line in i:
+            if not line:
+                continue
+            m = commit_footer.match(line)
+            if m is None:
+                # still processing the body.
+                if len(line.split()) > 1 and len(line) > 80:
+                    yield InvalidCommitMessage(
+                        f"Line greater than 80 chars: {line!r}",
+                        commit=commit)
+            else:
+                # push it back on the stack
+                i = chain([line], i)
+                break
+        for line in i:
+            if not line:
+                yield InvalidCommitMessage(
+                    "there should not be newlines between footer blocks",
+                    commit=commit)
+                continue
+            m = commit_footer.match(line)
+            if m is None:
+                yield InvalidCommitMessage(
+                    f"found non-footer block {line!r} while processing footer block",
+                    commit=commit)
+                break
