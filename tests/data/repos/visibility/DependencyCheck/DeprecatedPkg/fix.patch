@@ -1,6 +1,6 @@
 diff -Naur visibility/DeprecatedPkg/nonoptional/nonoptional-0.ebuild fixed/DeprecatedPkg/nonoptional/nonoptional-0.ebuild
---- visibility/DeprecatedPkg/nonoptional/nonoptional-0.ebuild	2019-11-30 04:17:38.664181249 -0700
-+++ fixed/DeprecatedPkg/nonoptional/nonoptional-0.ebuild	2019-11-30 04:26:06.206411351 -0700
+--- visibility/DeprecatedPkg/nonoptional/nonoptional-0.ebuild	2019-12-04 01:58:11.110158861 -0700
++++ fixed/DeprecatedPkg/nonoptional/nonoptional-0.ebuild	2019-12-26 20:39:32.575678628 -0700
 @@ -4,4 +4,4 @@
  SLOT="0"
  LICENSE="BSD"
@@ -8,11 +8,12 @@ diff -Naur visibility/DeprecatedPkg/nonoptional/nonoptional-0.ebuild fixed/Depre
 -RDEPEND="stub/deprecated"
 +RDEPEND="stub/unstable"
 diff -Naur visibility/DeprecatedPkg/optional/optional-0.ebuild fixed/DeprecatedPkg/optional/optional-0.ebuild
---- visibility/DeprecatedPkg/optional/optional-0.ebuild	2019-11-30 04:17:38.664181249 -0700
-+++ fixed/DeprecatedPkg/optional/optional-0.ebuild	2019-11-30 04:26:17.882459004 -0700
-@@ -4,4 +4,4 @@
- SLOT="0"
- LICENSE="BSD"
+--- visibility/DeprecatedPkg/optional/optional-0.ebuild	2019-12-26 20:39:13.559577724 -0700
++++ fixed/DeprecatedPkg/optional/optional-0.ebuild	2019-12-26 20:39:47.650758627 -0700
+@@ -6,5 +6,5 @@
  KEYWORDS="~amd64"
--RDEPEND="|| ( stub/unstable stub/deprecated )"
-+RDEPEND="stub/unstable"
+ RDEPEND="
+ 	!stub/deprecated
+-	|| ( stub/unstable stub/deprecated )
++	stub/unstable
+ "
