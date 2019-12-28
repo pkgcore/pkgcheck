@@ -439,7 +439,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
                     if m is not None:
                         value = m.group('object')
                         status = m.group('status')
-                        if not status.startswith('commit'):
+                        if not status.startswith('commit '):
                             results.append(InvalidCommitTag(
                                 tag, value, f'{status} commit', commit=commit))
             yield results
