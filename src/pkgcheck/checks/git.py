@@ -329,7 +329,7 @@ class InvalidCommitTag(results.CommitResult, results.Error):
     Commit tags have restrictions as to the allowed format and data
     used per GLEP 66 [#]_.
 
-    .. [#] https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin
+    .. [#] https://www.gentoo.org/glep/glep-0066.html#commit-messages
     """
 
     def __init__(self, tag, value, error, **kwargs):
