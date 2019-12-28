@@ -365,7 +365,6 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
         yield from self.enforce_message_structure(commit)
 
     def enforce_sign_off_policy(self, commit):
-        # check for missing git sign offs-
         sign_offs = {
            line[15:].strip() for line in commit.message
            if line.startswith('Signed-off-by: ')}
@@ -375,18 +374,18 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
             yield MissingSignOff(tuple(sorted(missing_sign_offs)), commit=commit)
 
     def enforce_tag_policy(self, commit):
-        url_tags = (x.split(": ", 1) for x in commit.message)
-        url_tags = [
+        url_tags = (x.split(': ', 1) for x in commit.message)
+        url_tags = (
             (x[0], x[1])
             for x in url_tags if len(x) == 2
             and x[0] in ('Bug', 'Closes', 'Gentoo-Bug')
-        ]
-        # check tag formats.
+        )
+        # check tag formats
         for tag, value in url_tags:
             if tag == 'Gentoo-Bug':
                 yield InvalidCommitTag(
                     tag, value,
-                    "Gentoo-Bug tag is no longer valid, use Bug: instead",
+                    "Gentoo-Bug tag is no longer valid, use Bug instead",
                     commit=commit)
                 continue
             parsed = urlparse(value)
@@ -396,12 +395,12 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
             if parsed.scheme.lower() not in ("http", "https"):
                 yield InvalidCommitTag(
                     tag, value,
-                    "Invalid protocol; should be http or https",
+                    "invalid protocol; should be http or https",
                     commit=commit)
 
     def enforce_message_structure(self, commit):
         if len(commit.message) == 0:
-            yield InvalidCommitMessage("No commit message", commit=commit)
+            yield InvalidCommitMessage("no commit message", commit=commit)
             return
         # Drop the leading word; assume it was a package.
         summary = commit.message[0]
@@ -415,10 +414,10 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
                 continue
             m = commit_footer.match(line)
             if m is None:
-                # still processing the body.
+                # still processing the body
                 if len(line.split()) > 1 and len(line) > 80:
                     yield InvalidCommitMessage(
-                        f"Line greater than 80 chars: {line!r}",
+                        f"line greater than 80 chars: {line!r}",
                         commit=commit)
             else:
                 # push it back on the stack
@@ -433,6 +432,6 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
             m = commit_footer.match(line)
             if m is None:
                 yield InvalidCommitMessage(
-                    f"found non-footer block {line!r} while processing footer block",
+                    f"found non-footer block while processing footer: {line!r}",
                     commit=commit)
                 break
