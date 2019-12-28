@@ -342,7 +342,8 @@ class InvalidCommitTag(results.CommitResult, results.Warning):
 
 
 class InvalidCommitMessage(results.CommitResult, results.Warning):
-    """Local commit has issues with it's commit message"""
+    """Local commit has issues with its commit message."""
+
     def __init__(self, error, **kwargs):
         super().__init__(**kwargs)
         self.error = error
@@ -408,6 +409,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
         if len(summary.split(': ', 1)[-1]) > 69:
             yield InvalidCommitMessage("summary is too long", commit=commit)
 
+        # verify message body
         i = iter(commit.message[1:])
         for line in i:
             if not line:
@@ -423,6 +425,8 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
                 # push it back on the stack
                 i = chain([line], i)
                 break
+
+        # verify footer
         for line in i:
             if not line:
                 yield InvalidCommitMessage(
