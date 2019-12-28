@@ -66,13 +66,13 @@ class TestGitCheck(misc.ReportTestCase):
         self.assertNoReport(self.check, self.SO_commit("Close: https://gentoo.org/blah"))
 
         r = self.assertReport(self.check, self.SO_commit("Bug: 123455"))
-        assert isinstance(r, git_mod.InvalidTagFormat)
+        assert isinstance(r, git_mod.InvalidCommitTag)
         assert (r.tag, r.value, r.error) == ('Bug', '123455', "value isn't a URL")
 
         # do a protocol check; this is more of an assertion against the parsing model
         # used in the implementation.
         r = self.assertReport(self.check, self.SO_commit("Closes: ftp://blah.com/asdf"))
-        assert isinstance(r, git_mod.InvalidTagFormat)
+        assert isinstance(r, git_mod.InvalidCommitTag)
         assert r.tag == 'Closes'
         assert "protocol" in r.error
 

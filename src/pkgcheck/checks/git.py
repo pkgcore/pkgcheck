@@ -323,7 +323,7 @@ class MissingSignOff(results.CommitResult, results.Error):
         return f'commit {self.commit}, missing sign-off{s}: {sign_offs}'
 
 
-class InvalidTagFormat(results.CommitResult, results.Error):
+class InvalidCommitTag(results.CommitResult, results.Error):
     """Local commit has a tag that is incompliant.
 
     Commit tags have restrictions as to the allowed format and data
@@ -357,7 +357,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
 
     scope = base.commit_scope
     _source = GitCommitsSource
-    known_results = frozenset([MissingSignOff, InvalidTagFormat, InvalidCommitMessage])
+    known_results = frozenset([MissingSignOff, InvalidCommitTag, InvalidCommitMessage])
 
     def feed(self, commit):
         yield from self.enforce_sign_off_policy(commit)
@@ -384,17 +384,17 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
         # check tag formats.
         for tag, value in url_tags:
             if tag == 'Gentoo-Bug':
-                yield InvalidTagFormat(
+                yield InvalidCommitTag(
                     tag, value,
                     "Gentoo-Bug tag is no longer valid, use Bug: instead",
                     commit=commit)
                 continue
             parsed = urlparse(value)
             if not parsed.scheme:
-                yield InvalidTagFormat(tag, value, "value isn't a URL", commit=commit)
+                yield InvalidCommitTag(tag, value, "value isn't a URL", commit=commit)
                 continue
             if parsed.scheme.lower() not in ("http", "https"):
-                yield InvalidTagFormat(
+                yield InvalidCommitTag(
                     tag, value,
                     "Invalid protocol; should be http or https",
                     commit=commit)
