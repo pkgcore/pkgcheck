@@ -402,11 +402,11 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
         if len(commit.message) == 0:
             yield InvalidCommitMessage("no commit message", commit=commit)
             return
-        # Drop the leading word; assume it was a package.
+
+        # drop leading '*: ' prefix assuming it's a package/eclass/file/path
         summary = commit.message[0]
-        words = summary.split(None, 1)
-        if len(words) > 1 and len(words[-1]) > 69:
-            yield InvalidCommitMessage("Summary is too long", commit=commit)
+        if len(summary.split(': ', 1)[-1]) > 69:
+            yield InvalidCommitMessage("summary is too long", commit=commit)
 
         i = iter(commit.message[1:])
         for line in i:
