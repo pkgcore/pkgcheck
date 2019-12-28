@@ -323,7 +323,7 @@ class MissingSignOff(results.CommitResult, results.Error):
         return f'commit {self.commit}, missing sign-off{s}: {sign_offs}'
 
 
-class InvalidCommitTag(results.CommitResult, results.Error):
+class InvalidCommitTag(results.CommitResult, results.Warning):
     """Local commit has a tag that is incompliant.
 
     Commit tags have restrictions as to the allowed format and data
@@ -341,7 +341,7 @@ class InvalidCommitTag(results.CommitResult, results.Error):
         return f'commit {self.commit}, tag {self.tag} value {self.value}: {self.error}'
 
 
-class InvalidCommitMessage(results.CommitResult, results.Error):
+class InvalidCommitMessage(results.CommitResult, results.Warning):
     """Local commit has issues with it's commit message"""
     def __init__(self, error, **kwargs):
         super().__init__(**kwargs)
