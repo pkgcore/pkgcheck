@@ -149,6 +149,9 @@ class ParsedGitRepo(UserDict, base.Cache):
                 while True:
                     line = git_log.stdout.readline().decode('utf-8', 'replace').strip('\n')
                     if line == '# END MESSAGE BODY':
+                        # drop trailing newline if it exists
+                        if not message[-1]:
+                            message.pop()
                         break
                     message.append(line)
 
