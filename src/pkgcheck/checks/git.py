@@ -436,6 +436,6 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
             m = commit_footer.match(line)
             if m is None:
                 yield InvalidCommitMessage(
-                    f"found non-footer block while processing footer: {line!r}",
+                    f"non-footer line in footer: {line!r}",
                     commit=commit)
                 break

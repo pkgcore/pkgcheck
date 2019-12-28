@@ -97,7 +97,7 @@ class TestGitCheck(misc.ReportTestCase):
         self.assertNoReport(self.check, self.SO_commit(f'asdf\n\n{long_line}'))
 
     def test_footer_block(self):
-        assert 'non-footer block' in \
+        assert 'non-footer line in footer' in \
             self.assertReport(
                 self.check,
                 self.SO_commit(textwrap.dedent("""\
