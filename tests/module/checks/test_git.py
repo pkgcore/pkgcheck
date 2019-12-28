@@ -1,6 +1,9 @@
+import textwrap
+
 from pkgcheck.checks import git as git_mod
-from .. import misc
 from pkgcheck.git import GitCommit
+
+from .. import misc
 
 
 class FakeCommit(GitCommit):
@@ -50,46 +53,57 @@ class TestGitCheck(misc.ReportTestCase):
         author = kwargs.pop('author', 'user')
         committer = kwargs.pop('committer', 'user')
         sign_offs = [f'Signed-off-by: {user}' for user in (author, committer)]
-        message = message.rstrip().splitlines() + [''] + sign_offs
+        message = message.rstrip().splitlines() + sign_offs
         return FakeCommit(author=author, committer=committer, message=message)
 
-    def test_invalid_tag_format(self):
+    def test_invalid_commit_tag(self):
         # assert it doesn't puke if there are no tags
-        self.assertNoReport(self.check, self.SO_commit(""))
+        self.assertNoReport(self.check, self.SO_commit(''))
 
-        self.assertNoReport(self.check, self.SO_commit("Bug: https://gentoo.org/blah"))
-        self.assertNoReport(self.check, self.SO_commit("Close: https://gentoo.org/blah"))
+        self.assertNoReport(self.check, self.SO_commit('Bug: https://gentoo.org/blah'))
+        self.assertNoReport(self.check, self.SO_commit('Close: https://gentoo.org/blah'))
 
-        r = self.assertReport(self.check, self.SO_commit("Bug: 123455"))
+        r = self.assertReport(self.check, self.SO_commit('Bug: 123455'))
         assert isinstance(r, git_mod.InvalidCommitTag)
         assert (r.tag, r.value, r.error) == ('Bug', '123455', "value isn't a URL")
 
         # Do a protocol check; this is more of an assertion against the parsing model
         # used in the implementation.
-        r = self.assertReport(self.check, self.SO_commit("Closes: ftp://blah.com/asdf"))
+        r = self.assertReport(self.check, self.SO_commit('Closes: ftp://blah.com/asdf'))
         assert isinstance(r, git_mod.InvalidCommitTag)
         assert r.tag == 'Closes'
-        assert "protocol" in r.error
+        assert 'protocol' in r.error
 
     def test_gentoo_bug_tag(self):
-        assert 'Bug:' in \
-            self.assertReport(self.check, self.SO_commit('blah\nGentoo-Bug: foon')).error
+        commit = self.SO_commit('blah\n\nGentoo-Bug: https://bugs.gentoo.org/1')
+        assert 'use Bug instead' in self.assertReport(self.check, commit).error
 
-    def test_commit_message_structure(self):
+    def test_summary_length(self):
         self.assertNoReport(self.check, self.SO_commit('single summary headline'))
-        assert "too long" in \
-            self.assertReport(self.check, self.SO_commit("a "*40)).error
-        assert "80 char" in \
-            self.assertReport(
-                self.check,
-                self.SO_commit("asdf\n\n{}".format("a "*80))).error
+        self.assertNoReport(self.check, self.SO_commit('a' * 69))
+        assert 'too long' in \
+            self.assertReport(self.check, self.SO_commit('a' * 70)).error
 
-        assert "non-footer block" in \
+    def test_message_body_length(self):
+        # message body lines longer than 80 chars are flagged
+        long_line = 'a' + ' b' * 40
+        assert '80 char' in \
             self.assertReport(
                 self.check,
-                self.SO_commit("""foon
+                self.SO_commit(f'asdf\n\n{long_line}')).error
+
+        # but not non-word lines
+        long_line = 'a' * 81
+        self.assertNoReport(self.check, self.SO_commit(f'asdf\n\n{long_line}'))
+
+    def test_footer_block(self):
+        assert 'non-footer block' in \
+            self.assertReport(
+                self.check,
+                self.SO_commit(textwrap.dedent("""\
+                    foon
 
                     blah: dar
                     footer: yep
                     some random line
-                    """)).error
+                    """))).error
