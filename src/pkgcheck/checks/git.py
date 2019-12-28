@@ -29,6 +29,10 @@ demand_compile_regexp(
     'commit_footer',
     r'^(?P<tag>[a-zA-Z0-9_-]+): (?P<value>.*)$')
 
+demand_compile_regexp(
+    'git_cat_file_regex',
+    r'^(?P<object>.+?) (?P<status>.+)$')
+
 
 class GitCommitsRepoSource(sources.RepoSource):
     """Repository source for locally changed packages in git history.
@@ -340,7 +344,7 @@ class InvalidCommitTag(results.CommitResult, results.Warning):
 
     @property
     def desc(self):
-        return f'commit {self.commit}, tag {self.tag} value {self.value}: {self.error}'
+        return f'commit {self.commit}, tag "{self.tag}: {self.value}": {self.error}'
 
 
 class InvalidCommitMessage(results.CommitResult, results.Warning):
@@ -416,6 +420,28 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
                         tag, value,
                         "invalid protocol; should be http or https",
                         commit=commit))
+            yield results
+
+    @verify_tags('Fixes', 'Reverts')
+    @coroutine
+    def _commit_tag(self):
+        while True:
+            results = []
+            tag, values, commit = (yield)
+            p = subprocess.run(
+                ['git', 'cat-file', '--batch-check'],
+                cwd=self.options.target_repo.location,
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                input='\n'.join(values), encoding='utf8')
+            if p.returncode == 0:
+                for line in p.stdout.splitlines():
+                    m = git_cat_file_regex.match(line)
+                    if m is not None:
+                        value = m.group('object')
+                        status = m.group('status')
+                        if not status.startswith('commit'):
+                            results.append(InvalidCommitTag(
+                                tag, value, f'{status} commit', commit=commit))
             yield results
 
     def feed(self, commit):

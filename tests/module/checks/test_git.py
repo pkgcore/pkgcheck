@@ -1,4 +1,7 @@
+from unittest.mock import patch
 import textwrap
+
+from pkgcore.test.misc import FakeRepo
 
 from pkgcheck.checks import git as git_mod
 from pkgcheck.git import GitCommit
@@ -23,7 +26,7 @@ class FakeCommit(GitCommit):
 
 class TestGitCheck(misc.ReportTestCase):
     check_kls = git_mod.GitCommitsCheck
-    check = git_mod.GitCommitsCheck(None)
+    check = git_mod.GitCommitsCheck(misc.Options(target_repo=FakeRepo()))
 
     def test_sign_offs(self):
         # assert that it checks for both author and comitter
@@ -77,6 +80,34 @@ class TestGitCheck(misc.ReportTestCase):
     def test_gentoo_bug_tag(self):
         commit = self.SO_commit('blah\n\nGentoo-Bug: https://bugs.gentoo.org/1')
         assert 'Gentoo-Bug tag is no longer valid' in self.assertReport(self.check, commit).error
+
+    def test_commit_tags(self):
+        ref = 'd8337304f09'
+
+        for tag in ('Fixes', 'Reverts'):
+            # no results on `git cat-file` failure
+            with patch('subprocess.run') as git_cat:
+                git_cat.return_value.returncode = -1
+                git_cat.return_value.stdout = f'{ref} missing'
+                commit = self.SO_commit(f'blah\n\n{tag}: {ref}')
+                self.assertNoReport(self.check, commit)
+
+            # missing and ambiguous object refs
+            for status in ('missing', 'ambiguous'):
+                with patch('subprocess.run') as git_cat:
+                    git_cat.return_value.returncode = 0
+                    git_cat.return_value.stdout = f'{ref} {status}'
+                    commit = self.SO_commit(f'blah\n\n{tag}: {ref}')
+                    r = self.assertReport(self.check, commit)
+                    assert isinstance(r, git_mod.InvalidCommitTag)
+                    assert f'{status} commit' in r.error
+
+            # valid tag reference
+            with patch('subprocess.run') as git_cat:
+                git_cat.return_value.returncode = 0
+                git_cat.return_value.stdout = f'{ref} commit 1234'
+                commit = self.SO_commit(f'blah\n\n{tag}: {ref}')
+                self.assertNoReport(self.check, commit)
 
     def test_summary_length(self):
         self.assertNoReport(self.check, self.SO_commit('single summary headline'))
