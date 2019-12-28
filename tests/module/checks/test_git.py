@@ -39,14 +39,14 @@ class TestGitCheck(misc.ReportTestCase):
             self.check,
             FakeCommit(
                 author='user@user.com', committer='user@user.com',
-                message=['Signed-off-by: user@user.com']))
+                message=['summary', '', 'Signed-off-by: user@user.com']))
 
         # assert it can handle multiple sign offs.
         self.assertNoReport(
             self.check,
             FakeCommit(
                 author='user1', committer='user2',
-                message=['Signed-off-by: user2', 'Signed-off-by: user1']))
+                message=['summary', '', 'Signed-off-by: user2', 'Signed-off-by: user1']))
 
     def SO_commit(self, message, **kwargs):
         """Create a commit object with valid Signed-off-by tags"""
@@ -60,23 +60,23 @@ class TestGitCheck(misc.ReportTestCase):
         # assert it doesn't puke if there are no tags
         self.assertNoReport(self.check, self.SO_commit(''))
 
-        self.assertNoReport(self.check, self.SO_commit('Bug: https://gentoo.org/blah'))
-        self.assertNoReport(self.check, self.SO_commit('Close: https://gentoo.org/blah'))
+        self.assertNoReport(self.check, self.SO_commit('summary\n\nBug: https://gentoo.org/blah'))
+        self.assertNoReport(self.check, self.SO_commit('summary\n\nClose: https://gentoo.org/blah'))
 
-        r = self.assertReport(self.check, self.SO_commit('Bug: 123455'))
+        r = self.assertReport(self.check, self.SO_commit('summary\n\nBug: 123455'))
         assert isinstance(r, git_mod.InvalidCommitTag)
         assert (r.tag, r.value, r.error) == ('Bug', '123455', "value isn't a URL")
 
         # Do a protocol check; this is more of an assertion against the parsing model
         # used in the implementation.
-        r = self.assertReport(self.check, self.SO_commit('Closes: ftp://blah.com/asdf'))
+        r = self.assertReport(self.check, self.SO_commit('summary\n\nCloses: ftp://blah.com/asdf'))
         assert isinstance(r, git_mod.InvalidCommitTag)
         assert r.tag == 'Closes'
         assert 'protocol' in r.error
 
     def test_gentoo_bug_tag(self):
         commit = self.SO_commit('blah\n\nGentoo-Bug: https://bugs.gentoo.org/1')
-        assert 'use Bug instead' in self.assertReport(self.check, commit).error
+        assert 'Gentoo-Bug tag is no longer valid' in self.assertReport(self.check, commit).error
 
     def test_summary_length(self):
         self.assertNoReport(self.check, self.SO_commit('single summary headline'))

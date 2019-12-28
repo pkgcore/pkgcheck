@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 import tarfile
+from collections import defaultdict
 from datetime import datetime
 from itertools import chain
 from tempfile import TemporaryDirectory
@@ -10,6 +11,7 @@ from urllib.parse import urlparse
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.exceptions import PkgcoreException
+from snakeoil.decorators import coroutine
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
@@ -353,6 +355,18 @@ class InvalidCommitMessage(results.CommitResult, results.Warning):
         return f'commit {self.commit}: {self.error}'
 
 
+# mapping between known commit tags and verification methods
+_known_tags = {}
+
+
+def verify_tags(*tags, required=False):
+    """Decorator to register commit tag verification methods."""
+    def wrapper(func):
+        for tag in tags:
+            _known_tags[tag] = (func, required)
+    return wrapper
+
+
 class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
     """Check unpushed git commits for various issues."""
 
@@ -360,46 +374,51 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
     _source = GitCommitsSource
     known_results = frozenset([MissingSignOff, InvalidCommitTag, InvalidCommitMessage])
 
+    @verify_tags('Signed-off-by', required=True)
+    @coroutine
+    def _signed_off_by_tag(self):
+        while True:
+            results = []
+            tag, values, commit = (yield)
+            required_sign_offs = {commit.author, commit.committer}
+            missing_sign_offs = required_sign_offs.difference(values)
+            if missing_sign_offs:
+                results.append(MissingSignOff(tuple(sorted(missing_sign_offs)), commit=commit))
+            yield results
+
+    @verify_tags('Gentoo-Bug')
+    @coroutine
+    def _deprecated_tag(self):
+        while True:
+            results = []
+            tag, values, commit = (yield)
+            for value in values:
+                results.append(InvalidCommitTag(
+                    tag, value,
+                    f"{tag} tag is no longer valid",
+                    commit=commit))
+            yield results
+
+    @verify_tags('Bug', 'Closes')
+    @coroutine
+    def _bug_tag(self):
+        while True:
+            results = []
+            tag, values, commit = (yield)
+            for value in values:
+                parsed = urlparse(value)
+                if not parsed.scheme:
+                    results.append(
+                        InvalidCommitTag(tag, value, "value isn't a URL", commit=commit))
+                    continue
+                if parsed.scheme.lower() not in ("http", "https"):
+                    results.append(InvalidCommitTag(
+                        tag, value,
+                        "invalid protocol; should be http or https",
+                        commit=commit))
+            yield results
+
     def feed(self, commit):
-        yield from self.enforce_sign_off_policy(commit)
-        yield from self.enforce_tag_policy(commit)
-        yield from self.enforce_message_structure(commit)
-
-    def enforce_sign_off_policy(self, commit):
-        sign_offs = {
-           line[15:].strip() for line in commit.message
-           if line.startswith('Signed-off-by: ')}
-        required_sign_offs = {commit.author, commit.committer}
-        missing_sign_offs = required_sign_offs - sign_offs
-        if missing_sign_offs:
-            yield MissingSignOff(tuple(sorted(missing_sign_offs)), commit=commit)
-
-    def enforce_tag_policy(self, commit):
-        url_tags = (x.split(': ', 1) for x in commit.message)
-        url_tags = (
-            (x[0], x[1])
-            for x in url_tags if len(x) == 2
-            and x[0] in ('Bug', 'Closes', 'Gentoo-Bug')
-        )
-        # check tag formats
-        for tag, value in url_tags:
-            if tag == 'Gentoo-Bug':
-                yield InvalidCommitTag(
-                    tag, value,
-                    "Gentoo-Bug tag is no longer valid, use Bug instead",
-                    commit=commit)
-                continue
-            parsed = urlparse(value)
-            if not parsed.scheme:
-                yield InvalidCommitTag(tag, value, "value isn't a URL", commit=commit)
-                continue
-            if parsed.scheme.lower() not in ("http", "https"):
-                yield InvalidCommitTag(
-                    tag, value,
-                    "invalid protocol; should be http or https",
-                    commit=commit)
-
-    def enforce_message_structure(self, commit):
         if len(commit.message) == 0:
             yield InvalidCommitMessage("no commit message", commit=commit)
             return
@@ -426,6 +445,13 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
                 i = chain([line], i)
                 break
 
+        # mapping of defined tags to any existing verification methods
+        tag_mapping = defaultdict(list)
+        # forcibly run verifications methods for required tags
+        tag_mapping.update(
+            ((tag, verify), [])
+            for tag, (verify, required) in _known_tags.items() if required)
+
         # verify footer
         for line in i:
             if not line:
@@ -438,4 +464,15 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
                 yield InvalidCommitMessage(
                     f"non-footer line in footer: {line!r}",
                     commit=commit)
-                break
+            else:
+                # register known tags for verification
+                tag = m.group('tag')
+                try:
+                    verify, required = _known_tags[tag]
+                    tag_mapping[(tag, verify)].append(m.group('value'))
+                except KeyError:
+                    continue
+
+        # run tag verification methods
+        for (tag, coro), values in tag_mapping.items():
+            yield from coro(self).send((tag, values, commit))
