@@ -6,7 +6,6 @@ import pickle
 import shlex
 import subprocess
 from collections import UserDict
-from typing import NamedTuple
 
 from pathspec import PathSpec
 from pkgcore.ebuild import cpv
@@ -33,24 +32,24 @@ demand_compile_regexp('ebuild_ADM_regex', fr'^(?P<status>[ADM])\t{_ebuild_path_r
 demand_compile_regexp('ebuild_R_regex', fr'^(?P<status>R)\d+\t{_ebuild_path_regex_raw}\t{_ebuild_path_regex}$')
 
 
-class GitCommit(NamedTuple):
-    """Data format for git commit objects."""
-    commit: str
-    commit_date: str
-    author: str
-    committer: str
-    message: list
+class GitCommit:
+    """Git commit objects."""
+
+    def __init__(self, commit, commit_date, author, committer, message):
+        self.commit = commit
+        self.commit_date = commit_date
+        self.author = author
+        self.committer = committer
+        self.message = message
 
 
-class GitPkgChange(NamedTuple):
-    """Data format for git package change objects."""
-    atom: atom_cls
-    status: str
-    commit: str
-    commit_date: str
-    author: str
-    committer: str
-    message: list
+class GitPkgChange(GitCommit):
+    """Git package change objects."""
+
+    def __init__(self, atom, status, *args, **kwargs):
+        self.atom = atom
+        self.status = status
+        super().__init__(*args, **kwargs)
 
 
 class ParsedGitRepo(UserDict, base.Cache):
