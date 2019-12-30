@@ -433,7 +433,8 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
 
         # verify message body
         i = iter(commit.message[1:])
-        for line in i:
+        lineno = 1
+        for lineno, line in enumerate(i, lineno):
             if not line:
                 continue
             m = commit_footer.match(line)
@@ -441,7 +442,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
                 # still processing the body
                 if len(line.split()) > 1 and len(line) > 80:
                     yield InvalidCommitMessage(
-                        f"line greater than 80 chars: {line!r}",
+                        f"line {lineno} greater than 80 chars: {line!r}",
                         commit=commit)
             else:
                 # push it back on the stack
@@ -456,13 +457,13 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
             for tag, (verify, required) in _known_tags.items() if required)
 
         # verify footer
-        for line in i:
+        for lineno, line in enumerate(i, lineno + 1):
             if not line.strip():
-                yield InvalidCommitMessage('empty line in footer', commit=commit)
+                yield InvalidCommitMessage(f'empty line {lineno} in footer', commit=commit)
                 continue
             m = commit_footer.match(line)
             if m is None:
-                yield InvalidCommitMessage(f'non-tag in footer: {line!r}', commit=commit)
+                yield InvalidCommitMessage(f'non-tag in footer, line {lineno}: {line!r}', commit=commit)
             else:
                 # register known tags for verification
                 tag = m.group('tag')

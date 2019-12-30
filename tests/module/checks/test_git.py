@@ -117,7 +117,7 @@ class TestGitCheck(misc.ReportTestCase):
     def test_message_body_length(self):
         # message body lines longer than 80 chars are flagged
         long_line = 'a' + ' b' * 40
-        assert '80 char' in \
+        assert 'line 2 greater than 80 chars' in \
             self.assertReport(
                 self.check,
                 self.SO_commit(f'asdf\n\n{long_line}')).error
@@ -129,7 +129,7 @@ class TestGitCheck(misc.ReportTestCase):
     def test_footer_empty_lines(self):
         for whitespace in ('\t', ' ', ''):
             # empty lines in footer are flagged
-            assert 'empty line in footer' in \
+            assert 'empty line 4 in footer' in \
                 self.assertReport(
                     self.check,
                     self.SO_commit(f"""\
@@ -152,7 +152,7 @@ footer: yep
 """))
 
     def test_footer_non_tags(self):
-        assert 'non-tag in footer' in \
+        assert 'non-tag in footer, line 5' in \
             self.assertReport(
                 self.check,
                 self.SO_commit("""\
