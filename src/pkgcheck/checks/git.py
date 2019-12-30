@@ -11,7 +11,6 @@ from urllib.parse import urlparse
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.exceptions import PkgcoreException
-from snakeoil.decorators import coroutine
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
@@ -379,70 +378,44 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
     known_results = frozenset([MissingSignOff, InvalidCommitTag, InvalidCommitMessage])
 
     @verify_tags('Signed-off-by', required=True)
-    @coroutine
-    def _signed_off_by_tag(self):
-        while True:
-            results = []
-            tag, values, commit = (yield)
-            required_sign_offs = {commit.author, commit.committer}
-            missing_sign_offs = required_sign_offs.difference(values)
-            if missing_sign_offs:
-                results.append(MissingSignOff(tuple(sorted(missing_sign_offs)), commit=commit))
-            yield results
+    def _signed_off_by_tag(self, tag, values, commit):
+        required_sign_offs = {commit.author, commit.committer}
+        missing_sign_offs = required_sign_offs.difference(values)
+        if missing_sign_offs:
+            yield MissingSignOff(tuple(sorted(missing_sign_offs)), commit=commit)
 
     @verify_tags('Gentoo-Bug')
-    @coroutine
-    def _deprecated_tag(self):
-        while True:
-            results = []
-            tag, values, commit = (yield)
-            for value in values:
-                results.append(InvalidCommitTag(
-                    tag, value,
-                    f"{tag} tag is no longer valid",
-                    commit=commit))
-            yield results
+    def _deprecated_tag(self, tag, values, commit):
+        for value in values:
+            yield InvalidCommitTag(
+                tag, value, f"{tag} tag is no longer valid", commit=commit)
 
     @verify_tags('Bug', 'Closes')
-    @coroutine
-    def _bug_tag(self):
-        while True:
-            results = []
-            tag, values, commit = (yield)
-            for value in values:
-                parsed = urlparse(value)
-                if not parsed.scheme:
-                    results.append(
-                        InvalidCommitTag(tag, value, "value isn't a URL", commit=commit))
-                    continue
-                if parsed.scheme.lower() not in ("http", "https"):
-                    results.append(InvalidCommitTag(
-                        tag, value,
-                        "invalid protocol; should be http or https",
-                        commit=commit))
-            yield results
+    def _bug_tag(self, tag, values, commit):
+        for value in values:
+            parsed = urlparse(value)
+            if not parsed.scheme:
+                yield InvalidCommitTag(tag, value, "value isn't a URL", commit=commit)
+                continue
+            if parsed.scheme.lower() not in ("http", "https"):
+                yield InvalidCommitTag(
+                    tag, value, "invalid protocol; should be http or https", commit=commit)
 
     @verify_tags('Fixes', 'Reverts')
-    @coroutine
-    def _commit_tag(self):
-        while True:
-            results = []
-            tag, values, commit = (yield)
-            p = subprocess.run(
-                ['git', 'cat-file', '--batch-check'],
-                cwd=self.options.target_repo.location,
-                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                input='\n'.join(values), encoding='utf8')
-            if p.returncode == 0:
-                for line in p.stdout.splitlines():
-                    m = git_cat_file_regex.match(line)
-                    if m is not None:
-                        value = m.group('object')
-                        status = m.group('status')
-                        if not status.startswith('commit '):
-                            results.append(InvalidCommitTag(
-                                tag, value, f'{status} commit', commit=commit))
-            yield results
+    def _commit_tag(self, tag, values, commit):
+        p = subprocess.run(
+            ['git', 'cat-file', '--batch-check'],
+            cwd=self.options.target_repo.location,
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            input='\n'.join(values), encoding='utf8')
+        if p.returncode == 0:
+            for line in p.stdout.splitlines():
+                m = git_cat_file_regex.match(line)
+                if m is not None:
+                    value = m.group('object')
+                    status = m.group('status')
+                    if not status.startswith('commit '):
+                        yield InvalidCommitTag(tag, value, f'{status} commit', commit=commit)
 
     def feed(self, commit):
         if len(commit.message) == 0:
@@ -494,11 +467,11 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
                 # register known tags for verification
                 tag = m.group('tag')
                 try:
-                    verify, required = _known_tags[tag]
-                    tag_mapping[(tag, verify)].append(m.group('value'))
+                    func, required = _known_tags[tag]
+                    tag_mapping[(tag, func)].append(m.group('value'))
                 except KeyError:
                     continue
 
         # run tag verification methods
-        for (tag, coro), values in tag_mapping.items():
-            yield from coro(self).send((tag, values, commit))
+        for (tag, func), values in tag_mapping.items():
+            yield from func(self, tag, values, commit)
