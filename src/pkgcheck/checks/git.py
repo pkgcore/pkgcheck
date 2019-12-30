@@ -458,15 +458,11 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
         # verify footer
         for line in i:
             if not line:
-                yield InvalidCommitMessage(
-                    "there should not be newlines between footer blocks",
-                    commit=commit)
+                yield InvalidCommitMessage('newline in footer', commit=commit)
                 continue
             m = commit_footer.match(line)
             if m is None:
-                yield InvalidCommitMessage(
-                    f"non-footer line in footer: {line!r}",
-                    commit=commit)
+                yield InvalidCommitMessage(f'non-tag in footer: {line!r}', commit=commit)
             else:
                 # register known tags for verification
                 tag = m.group('tag')

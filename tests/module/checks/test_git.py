@@ -127,8 +127,31 @@ class TestGitCheck(misc.ReportTestCase):
         long_line = 'a' * 81
         self.assertNoReport(self.check, self.SO_commit(f'asdf\n\n{long_line}'))
 
-    def test_footer_block(self):
-        assert 'non-footer line in footer' in \
+    def test_footer_newlines(self):
+        assert 'newline in footer' in \
+            self.assertReport(
+                self.check,
+                self.SO_commit(textwrap.dedent("""\
+                    foon
+
+                    blah: dar
+
+                    footer: yep
+                    """))).error
+
+        # newlines at the end of a commit message are ignored
+        self.assertNoReport(
+            self.check,
+            self.SO_commit(textwrap.dedent("""\
+                foon
+
+                blah: dar
+                footer: yep
+
+                """)))
+
+    def test_footer_non_tags(self):
+        assert 'non-tag in footer' in \
             self.assertReport(
                 self.check,
                 self.SO_commit(textwrap.dedent("""\
