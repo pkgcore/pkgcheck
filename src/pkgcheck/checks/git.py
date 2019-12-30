@@ -457,8 +457,8 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
 
         # verify footer
         for line in i:
-            if not line:
-                yield InvalidCommitMessage('newline in footer', commit=commit)
+            if not line.strip():
+                yield InvalidCommitMessage('empty line in footer', commit=commit)
                 continue
             m = commit_footer.match(line)
             if m is None:

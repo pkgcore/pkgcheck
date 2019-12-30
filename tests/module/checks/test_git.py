@@ -1,5 +1,4 @@
 from unittest.mock import patch
-import textwrap
 
 from pkgcore.test.misc import FakeRepo
 
@@ -127,37 +126,39 @@ class TestGitCheck(misc.ReportTestCase):
         long_line = 'a' * 81
         self.assertNoReport(self.check, self.SO_commit(f'asdf\n\n{long_line}'))
 
-    def test_footer_newlines(self):
-        assert 'newline in footer' in \
-            self.assertReport(
+    def test_footer_empty_lines(self):
+        for whitespace in ('\t', ' ', ''):
+            # empty lines in footer are flagged
+            assert 'empty line in footer' in \
+                self.assertReport(
+                    self.check,
+                    self.SO_commit(f"""\
+foon
+
+blah: dar
+{whitespace}
+footer: nope
+""")).error
+
+            # empty lines at the end of a commit message are ignored
+            self.assertNoReport(
                 self.check,
-                self.SO_commit(textwrap.dedent("""\
-                    foon
+                self.SO_commit(f"""\
+foon
 
-                    blah: dar
-
-                    footer: yep
-                    """))).error
-
-        # newlines at the end of a commit message are ignored
-        self.assertNoReport(
-            self.check,
-            self.SO_commit(textwrap.dedent("""\
-                foon
-
-                blah: dar
-                footer: yep
-
-                """)))
+blah: dar
+footer: yep
+{whitespace}
+"""))
 
     def test_footer_non_tags(self):
         assert 'non-tag in footer' in \
             self.assertReport(
                 self.check,
-                self.SO_commit(textwrap.dedent("""\
-                    foon
+                self.SO_commit("""\
+foon
 
-                    blah: dar
-                    footer: yep
-                    some random line
-                    """))).error
+blah: dar
+footer: yep
+some random line
+""")).error
