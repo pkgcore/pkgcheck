@@ -379,6 +379,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
 
     @verify_tags('Signed-off-by', required=True)
     def _signed_off_by_tag(self, tag, values, commit):
+        """Verify commit contains all required sign offs in accordance with GLEP 76."""
         required_sign_offs = {commit.author, commit.committer}
         missing_sign_offs = required_sign_offs.difference(values)
         if missing_sign_offs:
@@ -386,12 +387,14 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
 
     @verify_tags('Gentoo-Bug')
     def _deprecated_tag(self, tag, values, commit):
+        """Flag deprecated tags that shouldn't be used."""
         for value in values:
             yield InvalidCommitTag(
                 tag, value, f"{tag} tag is no longer valid", commit=commit)
 
     @verify_tags('Bug', 'Closes')
     def _bug_tag(self, tag, values, commit):
+        """Verify values are URLs for Bug/Closes tags."""
         for value in values:
             parsed = urlparse(value)
             if not parsed.scheme:
@@ -403,6 +406,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
 
     @verify_tags('Fixes', 'Reverts')
     def _commit_tag(self, tag, values, commit):
+        """Verify referenced commits exist for Fixes/Reverts tags."""
         p = subprocess.run(
             ['git', 'cat-file', '--batch-check'],
             cwd=self.options.target_repo.location,
