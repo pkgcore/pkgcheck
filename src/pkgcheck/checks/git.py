@@ -423,28 +423,38 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
 
     def feed(self, commit):
         if len(commit.message) == 0:
-            yield InvalidCommitMessage("no commit message", commit=commit)
+            yield InvalidCommitMessage('no commit message', commit=commit)
             return
 
         # drop leading '*: ' prefix assuming it's a package/eclass/file/path
         summary = commit.message[0]
         if len(summary.split(': ', 1)[-1]) > 69:
-            yield InvalidCommitMessage("summary is too long", commit=commit)
+            yield InvalidCommitMessage('summary is too long', commit=commit)
 
         # verify message body
         i = iter(commit.message[1:])
         lineno = 1
+        body = False
         for lineno, line in enumerate(i, lineno):
-            if not line:
+            if not line.strip():
                 continue
             m = commit_footer.match(line)
             if m is None:
+                if not body and commit.message[1] != '':
+                    yield InvalidCommitMessage(
+                        'missing empty line before body',
+                        commit=commit)
                 # still processing the body
+                body = True
                 if len(line.split()) > 1 and len(line) > 80:
                     yield InvalidCommitMessage(
-                        f"line {lineno} greater than 80 chars: {line!r}",
+                        f'line {lineno} greater than 80 chars: {line!r}',
                         commit=commit)
             else:
+                if commit.message[lineno - 1] != '':
+                    yield InvalidCommitMessage(
+                        f'missing empty line before tags',
+                        commit=commit)
                 # push it back on the stack
                 i = chain([line], i)
                 break
@@ -459,7 +469,9 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
         # verify footer
         for lineno, line in enumerate(i, lineno + 1):
             if not line.strip():
-                yield InvalidCommitMessage(f'empty line {lineno} in footer', commit=commit)
+                # single empty end line is ignored
+                if lineno != len(commit.message):
+                    yield InvalidCommitMessage(f'empty line {lineno} in footer', commit=commit)
                 continue
             m = commit_footer.match(line)
             if m is None:
