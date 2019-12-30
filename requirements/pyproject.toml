@@ -4,7 +4,7 @@ requires = [
 	"chardet",
 	"lxml",
 	"pathspec",
-	"snakeoil~=0.8.4",
+	"snakeoil~=0.8.5",
 	"pkgcore~=0.10.9",
 ]
 build-backend = "setuptools.build_meta"

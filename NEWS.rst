@@ -3,6 +3,15 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.7.3 (2019-12-29)
+---------------------------
+
+- Flag git tags and commit messages that don't follow specifications described
+  in GLEP 66 (#186) via InvalidCommitTag and InvalidCommitMessage results.
+
+- Skip reporting blocker dependencies marked as deprecated.
+
+---------------------------
 pkgcheck 0.7.2 (2019-12-20)
 ---------------------------
 
