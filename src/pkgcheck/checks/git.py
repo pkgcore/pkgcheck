@@ -418,7 +418,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
         """Verify referenced commits exist for Fixes/Reverts tags."""
         self.git_cat_file.stdin.write('\n'.join(values) + '\n')
         if self.git_cat_file.poll() is None:
-            for _i in range(len(values)):
+            for _ in range(len(values)):
                 line = self.git_cat_file.stdout.readline().strip()
                 m = git_cat_file_regex.match(line)
                 if m is not None:
