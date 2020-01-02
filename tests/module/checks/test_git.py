@@ -88,26 +88,29 @@ class TestGitCheck(misc.ReportTestCase):
 
         for tag in ('Fixes', 'Reverts'):
             # no results on `git cat-file` failure
-            with patch('subprocess.run') as git_cat:
-                git_cat.return_value.returncode = -1
-                git_cat.return_value.stdout = f'{ref} missing'
+            with patch('subprocess.Popen') as git_cat:
+                # force using a new `git cat-file` process for each iteration
+                self.check._git_cat_file = None
+                git_cat.return_value.poll.return_value = -1
                 commit = self.SO_commit(tags=[f'{tag}: {ref}'])
                 self.assertNoReport(self.check, commit)
 
             # missing and ambiguous object refs
             for status in ('missing', 'ambiguous'):
-                with patch('subprocess.run') as git_cat:
-                    git_cat.return_value.returncode = 0
-                    git_cat.return_value.stdout = f'{ref} {status}'
+                self.check._git_cat_file = None
+                with patch('subprocess.Popen') as git_cat:
+                    git_cat.return_value.poll.return_value = None
+                    git_cat.return_value.stdout.readline.return_value = f'{ref} {status}'
                     commit = self.SO_commit(tags=[f'{tag}: {ref}'])
                     r = self.assertReport(self.check, commit)
                     assert isinstance(r, git_mod.InvalidCommitTag)
                     assert f'{status} commit' in r.error
 
             # valid tag reference
-            with patch('subprocess.run') as git_cat:
-                git_cat.return_value.returncode = 0
-                git_cat.return_value.stdout = f'{ref} commit 1234'
+            with patch('subprocess.Popen') as git_cat:
+                self.check._git_cat_file = None
+                git_cat.return_value.poll.return_value = None
+                git_cat.return_value.stdout.readline.return_value = f'{ref} commit 1234'
                 commit = self.SO_commit(tags=[f'{tag}: {ref}'])
                 self.assertNoReport(self.check, commit)
 

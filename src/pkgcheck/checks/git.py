@@ -11,8 +11,8 @@ from urllib.parse import urlparse
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.exceptions import PkgcoreException
+from snakeoil import klass
 from snakeoil.demandload import demand_compile_regexp
-from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism
 
@@ -219,12 +219,12 @@ class GitPkgCommitsCheck(GentooRepoCheck):
         self.valid_arches = self.options.target_repo.known_arches
         self._git_addon = git_addon
 
-    @jit_attr
+    @klass.jit_attr
     def removal_repo(self):
         """Create a repository of packages removed from git."""
         return _RemovalRepo(self.repo)
 
-    @jit_attr
+    @klass.jit_attr
     def added_repo(self):
         """Create/load cached repo of packages added to git."""
         return self._git_addon.cached_repo(git.GitAddedRepo)
@@ -404,22 +404,33 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
                 yield InvalidCommitTag(
                     tag, value, "invalid protocol; should be http or https", commit=commit)
 
+    @klass.jit_attr_none
+    def git_cat_file(self):
+        """Start a `git cat-file` process to verify git repo hashes."""
+        return subprocess.Popen(
+            ['git', 'cat-file', '--batch-check'],
+            cwd=self.options.target_repo.location,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            encoding='utf8', bufsize=1)
+
     @verify_tags('Fixes', 'Reverts')
     def _commit_tag(self, tag, values, commit):
         """Verify referenced commits exist for Fixes/Reverts tags."""
-        p = subprocess.run(
-            ['git', 'cat-file', '--batch-check'],
-            cwd=self.options.target_repo.location,
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-            input='\n'.join(values), encoding='utf8')
-        if p.returncode == 0:
-            for line in p.stdout.splitlines():
+        self.git_cat_file.stdin.write('\n'.join(values) + '\n')
+        if self.git_cat_file.poll() is None:
+            for _i in range(len(values)):
+                line = self.git_cat_file.stdout.readline().strip()
                 m = git_cat_file_regex.match(line)
                 if m is not None:
                     value = m.group('object')
                     status = m.group('status')
                     if not status.startswith('commit '):
                         yield InvalidCommitTag(tag, value, f'{status} commit', commit=commit)
+
+    def __del__(self):
+        # at this point, we don't care about being nice to the `git cat-file` process
+        if self._git_cat_file is not None:
+            self.git_cat_file.kill()
 
     def feed(self, commit):
         if len(commit.message) == 0:
