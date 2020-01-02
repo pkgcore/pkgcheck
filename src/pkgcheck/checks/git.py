@@ -429,7 +429,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
 
     def __del__(self):
         # at this point, we don't care about being nice to the `git cat-file` process
-        if self._git_cat_file is not None:
+        if getattr(self, '_git_cat_file', None) is not None:
             self.git_cat_file.kill()
 
     def feed(self, commit):
