@@ -61,8 +61,8 @@ class GitCommitsSource(sources.Source):
         super().__init__(*args, source=git_addon.commits())
 
 
-class OutdatedCopyright(results.VersionResult, results.Warning):
-    """Changed ebuild with outdated copyright."""
+class IncorrectCopyright(results.VersionResult, results.Warning):
+    """Changed ebuild with incorrect copyright date."""
 
     def __init__(self, year, line, **kwargs):
         super().__init__(**kwargs)
@@ -71,7 +71,7 @@ class OutdatedCopyright(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f'outdated copyright year {self.year!r}: {self.line!r}'
+        return f'incorrect copyright year {self.year}: {self.line!r}'
 
 
 class BadCommitSummary(results.PackageResult, results.Warning):
@@ -209,7 +209,7 @@ class GitPkgCommitsCheck(GentooRepoCheck):
     required_addons = (git.GitAddon,)
     known_results = frozenset([
         DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,
-        OutdatedCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
+        IncorrectCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
     ])
 
     def __init__(self, *args, git_addon):
@@ -291,8 +291,8 @@ class GitPkgCommitsCheck(GentooRepoCheck):
             copyright = ebuild_copyright_regex.match(line)
             if copyright:
                 year = copyright.group(1).split('-')[-1]
-                if int(year) < self.today.year:
-                    yield OutdatedCopyright(year, line.strip('\n'), pkg=pkg)
+                if int(year) != self.today.year:
+                    yield IncorrectCopyright(year, line.strip('\n'), pkg=pkg)
 
             # checks for newly added ebuilds
             if git_pkg.status == 'A':
