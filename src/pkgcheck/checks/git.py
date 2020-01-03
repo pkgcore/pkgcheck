@@ -276,11 +276,12 @@ class GitPkgCommitsCheck(GentooRepoCheck):
                 error = 'summary missing matching package prefix'
                 yield BadCommitSummary(error, summary, git_pkg.commit, pkg=git_pkg)
 
-            try:
-                pkg = self.repo.match(git_pkg.versioned_atom)[0]
-            except IndexError:
-                # weird situation where an ebuild was locally committed and then removed
-                return
+            # remaining checks are irrelevant for removed packages
+            if git_pkg in removed:
+                continue
+
+            # pull actual package object from repo
+            pkg = self.repo.match(git_pkg.versioned_atom)[0]
 
             # check copyright on new/modified ebuilds
             try:
