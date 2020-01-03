@@ -181,12 +181,10 @@ class _RemovalRepo(UnconfiguredTree):
     def _populate(self, pkgs, eclasses=False):
         """Populate the repo with a given sequence of historical packages."""
         pkg = pkgs[0]
-        commit = pkgs[0].commit
-
         paths = [pjoin(pkg.category, pkg.package)]
         if eclasses:
             paths.append('eclass')
-        git_cmd = f"git archive {commit}~1 {' '.join(paths)}"
+        git_cmd = f"git archive {pkg.commit}~1 {' '.join(paths)}"
 
         old_files = subprocess.Popen(
             git_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -232,7 +230,6 @@ class GitPkgCommitsCheck(GentooRepoCheck):
     def removal_checks(self, removed):
         """Check for issues due to package removals."""
         pkg = removed[0]
-        commit = removed[0].commit
 
         try:
             removal_repo = self.removal_repo(removed)
@@ -255,10 +252,10 @@ class GitPkgCommitsCheck(GentooRepoCheck):
 
         if dropped_stable_keywords:
             yield DroppedStableKeywords(
-                sort_keywords(dropped_stable_keywords), commit, pkg=pkg)
+                sort_keywords(dropped_stable_keywords), pkg.commit, pkg=pkg)
         if dropped_unstable_keywords:
             yield DroppedUnstableKeywords(
-                sort_keywords(dropped_unstable_keywords), commit, pkg=pkg)
+                sort_keywords(dropped_unstable_keywords), pkg.commit, pkg=pkg)
 
     def feed(self, pkgset):
         removed = [pkg for pkg in pkgset if pkg.status == 'D']
