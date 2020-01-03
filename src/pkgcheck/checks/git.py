@@ -184,10 +184,10 @@ class _RemovalRepo(UnconfiguredTree):
         paths = [pjoin(pkg.category, pkg.package)]
         if eclasses:
             paths.append('eclass')
-        git_cmd = f"git archive {pkg.commit}~1 {' '.join(paths)}"
 
         old_files = subprocess.Popen(
-            git_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            ['git', 'archive', f'{pkg.commit}~1'] + paths,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             cwd=self.__parent_repo.location)
         with tarfile.open(mode='r|', fileobj=old_files.stdout) as tar:
             tar.extractall(path=self.location)
