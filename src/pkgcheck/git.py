@@ -276,14 +276,14 @@ class _ScanCommits(argparse.Action):
     """Argparse action that enables git commit checks."""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, nargs=0, **kwargs)
+        super().__init__(*args, **kwargs)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser, namespace, value, option_string=None):
         # avoid cyclic imports
         from . import const
         namespace.forced_checks.extend(
             name for name, cls in const.CHECKS.items() if cls.scope == base.commit_scope)
-        setattr(namespace, self.dest, True)
+        setattr(namespace, self.dest, value)
 
 
 class GitAddon(base.Addon, base.CachedAddon):
@@ -310,11 +310,16 @@ class GitAddon(base.Addon, base.CachedAddon):
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('git', docs=cls.__doc__)
         group.add_argument(
-            '--commits', action=_ScanCommits, default=False,
+            '--commits', action=_ScanCommits, nargs='?', const='origin', default=False,
             help="determine scan targets from local git repo commits",
             docs="""
                 For a local git repo, pkgcheck will pull package targets to
-                scan from the changes compared to the repo's origin.
+                scan from the changes compared to a given reference that
+                defaults to the repo's origin.
+
+                For example, to scan all the packages that have been changed in
+                the current branch compared to the branch named 'old' use
+                ``pkgcheck scan --commits old``.
             """)
 
     @classmethod
@@ -324,16 +329,26 @@ class GitAddon(base.Addon, base.CachedAddon):
                 targets = ' '.join(namespace.targets)
                 s = pluralism(namespace.targets)
                 parser.error(f'--commits is mutually exclusive with target{s}: {targets}')
+
+            ref = namespace.commits
             repo = namespace.target_repo
-            ret, out = spawn_get_output(
-                ['git', 'diff', 'origin', '--name-only'] + list(repo.category_dirs),
-                cwd=repo.location)
-            if ret != 0:
+            try:
+                p = subprocess.run(
+                    ['git', 'diff', ref, '--name-only'] + list(repo.category_dirs),
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    cwd=repo.location, encoding='utf8')
+            except FileNotFoundError:
                 parser.error('git not available to determine targets for --commits')
-            elif not out:
+
+            if p.returncode != 0:
+                error = p.stderr.splitlines()[0]
+                parser.error(f'failed running git: {error}')
+            elif not p.stdout:
                 # no pkg changes exist
                 parser.exit()
-            pkgs = sorted(atom_cls(os.sep.join(x.split(os.sep, 2)[:2])) for x in out)
+
+            changes = p.stdout.splitlines()
+            pkgs = sorted(atom_cls(os.sep.join(x.split(os.sep, 2)[:2])) for x in changes)
             combined_restrict = packages.OrRestriction(*pkgs)
             namespace.restrictions = [(base.package_scope, combined_restrict)]
 

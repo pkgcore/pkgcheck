@@ -143,16 +143,16 @@ class TestPkgcheckScanParseArgs(object):
 
     def test_commits_with_targets(self, capsys):
         with pytest.raises(SystemExit) as excinfo:
-            options, _func = self.tool.parse_args(self.args + ['--commits', 'dev-util/foo'])
+            options, _func = self.tool.parse_args(self.args + ['--commits', 'ref', 'dev-util/foo'])
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         err = err.strip().split('\n')
         assert err[-1].startswith(
             "pkgcheck scan: error: --commits is mutually exclusive with target: dev-util/foo")
 
-    def test_commits_git_error(self, capsys):
-        with patch('pkgcheck.git.spawn_get_output') as spawn_get_output:
-            spawn_get_output.return_value = (1, [])
+    def test_commits_git_unavailable(self, capsys):
+        with patch('subprocess.run') as git_diff:
+            git_diff.side_effect = FileNotFoundError
             with pytest.raises(SystemExit) as excinfo:
                 options, _func = self.tool.parse_args(self.args + ['--commits'])
             assert excinfo.value.code == 2
@@ -161,9 +161,22 @@ class TestPkgcheckScanParseArgs(object):
             assert err[-1].startswith(
                 "pkgcheck scan: error: git not available to determine targets for --commits")
 
+    def test_git_error(self, capsys):
+        with patch('subprocess.run') as git_diff:
+            git_diff.return_value.returncode = -1
+            error = "fatal: ambiguous argument 'foo'"
+            git_diff.return_value.stderr = error
+            with pytest.raises(SystemExit) as excinfo:
+                options, _func = self.tool.parse_args(self.args + ['--commits'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[-1].startswith(f'pkgcheck scan: error: failed running git: {error}')
+
     def test_commits_nonexistent(self):
-        with patch('pkgcheck.git.spawn_get_output') as spawn_get_output:
-            spawn_get_output.return_value = (0, [])
+        with patch('subprocess.run') as git_diff:
+            git_diff.return_value.returncode = 0
+            git_diff.return_value.stdout = ''
             with pytest.raises(SystemExit) as excinfo:
                 options, _func = self.tool.parse_args(self.args + ['--commits'])
             assert excinfo.value.code == 0
@@ -173,8 +186,9 @@ class TestPkgcheckScanParseArgs(object):
             'dev-libs/foo/metadata.xml\n',
             'media-libs/bar/bar-0.ebuild\n',
         ]
-        with patch('pkgcheck.git.spawn_get_output') as spawn_get_output:
-            spawn_get_output.return_value = (0, output)
+        with patch('subprocess.run') as git_diff:
+            git_diff.return_value.returncode = 0
+            git_diff.return_value.stdout = ''.join(output)
             options, _func = self.tool.parse_args(self.args + ['--commits'])
             restrictions = [atom.atom('dev-libs/foo'), atom.atom('media-libs/bar')]
             assert options.restrictions == \
