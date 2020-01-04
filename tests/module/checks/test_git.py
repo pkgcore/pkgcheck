@@ -13,7 +13,7 @@ class FakeCommit(GitCommit):
 
     def __init__(self, **kwargs):
         commit_data =  {
-            'commit': '7f9abd7ec2d079b1d0c36fc2f5d626ae0691757e',
+            'hash': '7f9abd7ec2d079b1d0c36fc2f5d626ae0691757e',
             'commit_date': 'Sun Dec 8 02:13:58 2019 -0700',
             'author': 'author@domain.com',
             'committer': 'committer@domain.com',

@@ -35,8 +35,8 @@ demand_compile_regexp('ebuild_R_regex', fr'^(?P<status>R)\d+\t{_ebuild_path_rege
 class GitCommit:
     """Git commit objects."""
 
-    def __init__(self, commit, commit_date, author, committer, message):
-        self.commit = commit
+    def __init__(self, hash, commit_date, author, committer, message):
+        self.hash = hash
         self.commit_date = commit_date
         self.author = author
         self.committer = committer
@@ -140,7 +140,7 @@ class ParsedGitRepo(UserDict, base.Cache):
         count = 1
         with base.ProgressManager(debug=debug) as progress:
             while line:
-                commit = git_log.stdout.readline().decode().strip()
+                hash = git_log.stdout.readline().decode().strip()
                 commit_date = git_log.stdout.readline().decode().strip()
                 author = git_log.stdout.readline().decode('utf-8', 'replace').strip()
                 committer = git_log.stdout.readline().decode('utf-8', 'replace').strip()
@@ -156,7 +156,7 @@ class ParsedGitRepo(UserDict, base.Cache):
                     message.append(line)
 
                 # update progress output
-                progress(f'{commit} commit #{count}, {commit_date}')
+                progress(f'{hash} commit #{count}, {commit_date}')
                 count += 1
 
                 if not pkgs:
