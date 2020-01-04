@@ -42,14 +42,20 @@ class GitCommit:
         self.committer = committer
         self.message = message
 
+    def __str__(self):
+        return self.hash
 
-class GitPkgChange(GitCommit):
+    def __eq__(self, other):
+        return self.hash == other.hash
+
+
+class GitPkgChange:
     """Git package change objects."""
 
-    def __init__(self, atom, status, *args, **kwargs):
+    def __init__(self, atom, status, commit):
         self.atom = atom
         self.status = status
-        super().__init__(*args, **kwargs)
+        self.commit = commit
 
 
 class ParsedGitRepo(UserDict, base.Cache):
@@ -159,8 +165,9 @@ class ParsedGitRepo(UserDict, base.Cache):
                 progress(f'{hash} commit #{count}, {commit_date}')
                 count += 1
 
+                commit = GitCommit(hash, commit_date, author, committer, message)
                 if not pkgs:
-                    yield GitCommit(commit, commit_date, author, committer, message)
+                    yield commit
 
                 # file changes
                 while True:
@@ -171,9 +178,7 @@ class ParsedGitRepo(UserDict, base.Cache):
                         parsed = cls._parse_file_line(line.strip())
                         if parsed is not None:
                             atom, status = parsed
-                            yield GitPkgChange(
-                                atom, status, commit, commit_date,
-                                author, committer, message)
+                            yield GitPkgChange(atom, status, commit)
 
     def _pkg_changes(self, local=False, **kwargs):
         """Parse package changes from git log output."""
@@ -186,22 +191,16 @@ class ParsedGitRepo(UserDict, base.Cache):
             if key not in seen:
                 seen.add(key)
                 data = {
-                    'date': pkg.commit_date,
+                    'date': pkg.commit.commit_date,
                     'status': pkg.status,
-                    'commit': pkg.commit,
+                    'commit': pkg.commit.hash if not local else pkg.commit,
                 }
-                if local:
-                    data.update({
-                        'author': pkg.author,
-                        'committer': pkg.committer,
-                        'message': pkg.message,
-                    })
                 self.data.setdefault(atom.category, {}).setdefault(
                     atom.package, {})[(atom.fullver, pkg.status)] = data
 
 
-class _UpstreamCommitPkg(cpv.VersionedCPV):
-    """Fake packages encapsulating upstream commits parsed from git log."""
+class _GitCommitPkg(cpv.VersionedCPV):
+    """Fake packages encapsulating commits parsed from git log."""
 
     def __init__(self, *args, date, status, commit):
         super().__init__(*args)
@@ -213,19 +212,6 @@ class _UpstreamCommitPkg(cpv.VersionedCPV):
         sf(self, 'commit', commit)
 
 
-class _LocalCommitPkg(_UpstreamCommitPkg):
-    """Fake packages encapsulating local commits parsed from git log."""
-
-    def __init__(self, *args, author, committer, message, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # add additional attrs
-        sf = object.__setattr__
-        sf(self, 'author', author)
-        sf(self, 'committer', committer)
-        sf(self, 'message', message)
-
-
 class _HistoricalRepo(SimpleTree):
     """Repository encapsulating historical git data."""
 
@@ -233,7 +219,7 @@ class _HistoricalRepo(SimpleTree):
     _status_filter = None
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('pkg_klass', _UpstreamCommitPkg)
+        kwargs.setdefault('pkg_klass', _GitCommitPkg)
         super().__init__(*args, **kwargs)
 
     def _get_versions(self, cp_key):
@@ -502,7 +488,7 @@ class GitAddon(base.Addon, base.CachedAddon):
                 if str(e):
                     logger.warning('skipping git commit checks: %s', e)
 
-        return repo_cls(git_repo, pkg_klass=_LocalCommitPkg, repo_id=repo_id)
+        return repo_cls(git_repo, repo_id=repo_id)
 
     def commits(self, repo=None):
         path = repo.location if repo is not None else self.options.target_repo.location

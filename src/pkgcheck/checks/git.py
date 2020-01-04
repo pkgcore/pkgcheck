@@ -265,7 +265,7 @@ class GitPkgCommitsCheck(GentooRepoCheck):
         for git_pkg in pkgset:
             # check git commit summary formatting
             try:
-                summary = git_pkg.message[0]
+                summary = git_pkg.commit.message[0]
             except IndexError:
                 summary = ''
             summary_prefix_re = rf'^({git_pkg.key}|{git_pkg.cpvstr}): '
