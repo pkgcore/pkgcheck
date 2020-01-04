@@ -190,13 +190,12 @@ class ParsedGitRepo(UserDict, base.Cache):
             key = (atom, pkg.status)
             if key not in seen:
                 seen.add(key)
-                data = {
-                    'date': pkg.commit.commit_date,
-                    'status': pkg.status,
-                    'commit': pkg.commit.hash if not local else pkg.commit,
-                }
                 self.data.setdefault(atom.category, {}).setdefault(
-                    atom.package, {})[(atom.fullver, pkg.status)] = data
+                    atom.package, {})[(atom.fullver, pkg.status)] = {
+                        'date': pkg.commit.commit_date,
+                        'status': pkg.status,
+                        'commit': pkg.commit.hash if not local else pkg.commit,
+                    }
 
 
 class _GitCommitPkg(cpv.VersionedCPV):
