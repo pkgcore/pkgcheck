@@ -74,7 +74,7 @@ class IncorrectCopyright(results.VersionResult, results.Warning):
         return f'incorrect copyright year {self.year}: {self.line!r}'
 
 
-class BadCommitSummary(results.PackageResult, results.Warning):
+class BadCommitSummary(results.CommitResult, results.Warning):
     """Local package commit with poorly formatted or unmatching commit summary.
 
     Git commit messages for packages should be formatted in the standardized
@@ -85,11 +85,10 @@ class BadCommitSummary(results.PackageResult, results.Warning):
     .. [#] https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format
     """
 
-    def __init__(self, error, summary, commit, **kwargs):
+    def __init__(self, error, summary, **kwargs):
         super().__init__(**kwargs)
         self.error = error
         self.summary = summary
-        self.commit = commit
 
     @property
     def desc(self):
@@ -271,7 +270,7 @@ class GitPkgCommitsCheck(GentooRepoCheck):
             summary_prefix_re = rf'^({git_pkg.key}|{git_pkg.cpvstr}): '
             if not re.match(summary_prefix_re, summary):
                 error = 'summary missing matching package prefix'
-                yield BadCommitSummary(error, summary, git_pkg.commit, pkg=git_pkg)
+                yield BadCommitSummary(error, summary, commit=git_pkg.commit)
 
             # remaining checks are irrelevant for removed packages
             if git_pkg in removed:
