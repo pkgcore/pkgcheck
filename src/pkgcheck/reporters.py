@@ -53,7 +53,7 @@ class Reporter:
                     except KeyError:
                         self.report(result)
             # output repo and commit results after package-related results
-            for result in chain.from_iterable(ordered_results.values()):
+            for result in chain.from_iterable(sorted(x) for x in ordered_results.values()):
                 self.report(result)
 
         p.join()
