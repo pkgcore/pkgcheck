@@ -136,7 +136,7 @@ class FancyReporter(Reporter):
             elif result.scope == base.category_scope:
                 key = result.category
             else:
-                key = 'repo'
+                key = str(result.scope)
 
             if key != self.key:
                 if self.key is not None:
