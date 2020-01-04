@@ -38,15 +38,24 @@ class Reporter:
         p = Process(target=pipe.run, args=(results_q,))
         p.start()
         signal.signal(signal.SIGINT, orig_sigint_handler)
+
         if pipe.pkg_scan or sort:
             # sort all generated results, removing duplicate MetadataError results
             results = set(chain.from_iterable(iter(results_q.get, None)))
             for result in sorted(results):
                 self.report(result)
         else:
+            ordered_results = {base.repository_scope: [], base.commit_scope: []}
             for results in iter(results_q.get, None):
                 for result in sorted(results):
-                    self.report(result)
+                    try:
+                        ordered_results[result.scope].append(result)
+                    except KeyError:
+                        self.report(result)
+            # output repo and commit results after package-related results
+            for result in chain.from_iterable(ordered_results.values()):
+                self.report(result)
+
         p.join()
 
     def __enter__(self):

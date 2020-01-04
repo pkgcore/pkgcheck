@@ -14,17 +14,6 @@ from .results import MetadataError
 from .sources import UnversionedSource, VersionedSource
 
 
-class GitPipeline:
-
-    def __init__(self, *args, **kwargs):
-        self.checkrunner = CheckRunner(*args, **kwargs)
-        self.checkrunner.start()
-
-    def __iter__(self):
-        yield from self.checkrunner.run()
-        yield from self.checkrunner.finish()
-
-
 class Pipeline:
 
     def __init__(self, options, scan_scope, pipes, restrict):

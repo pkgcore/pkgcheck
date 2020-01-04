@@ -557,28 +557,24 @@ def _scan(options, out, err):
 
     with options.reporter(out, verbosity=options.verbosity,
                           keywords=options.filtered_keywords) as reporter:
-        # run git commit checks separately from pkg-related checks
-        for (source, is_async), checks in enabled_checks.pop(base.commit_scope, {}).items():
-            for result in pipeline.GitPipeline(options, source, checks):
-                reporter.report(result)
+        for scan_scope, restrict in options.restrictions:
+            # Skip checks higher than the current scan scope level, e.g. skip repo
+            # level checks when scanning at package level.
+            selected = lambda scope: (
+                scope <= scan_scope or (options.commits and scope == base.commit_scope))
+            pipes = [d for scope, d in enabled_checks.items() if selected(scope)]
+            if not pipes:
+                err.write(f'{scan.prog}: no matching checks available for current scope')
+                continue
 
-        if enabled_checks:
-            for scan_scope, restrict in options.restrictions:
-                # Skip checks higher than the current scan scope level, e.g. skip repo
-                # level checks when scanning at package level.
-                pipes = [d for scope, d in enabled_checks.items() if scope <= scan_scope]
-                if not pipes:
-                    err.write(f'{scan.prog}: no matching checks available for current scope')
-                    continue
+            if options.verbosity >= 1:
+                err.write(f'Running {len(pipes)} tests')
+            if options.debug:
+                err.write(f'restriction: {restrict}')
+            err.flush()
 
-                if options.verbosity >= 1:
-                    err.write(f'Running {len(pipes)} tests')
-                if options.debug:
-                    err.write(f'restriction: {restrict}')
-                err.flush()
-
-                pipe = pipeline.Pipeline(options, scan_scope, pipes, restrict)
-                reporter(pipe, sort=options.sorted)
+            pipe = pipeline.Pipeline(options, scan_scope, pipes, restrict)
+            reporter(pipe, sort=options.sorted)
 
     return 0
 
