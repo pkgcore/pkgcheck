@@ -77,7 +77,7 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
                            OverlayRepoCheck, ExplicitlyEnabledCheck):
     """Check for various metadata that may be removed from master repos."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = sources.RepositoryRepoSource
     known_results = frozenset([
         UnusedInMastersLicenses, UnusedInMastersMirrors, UnusedInMastersEclasses,

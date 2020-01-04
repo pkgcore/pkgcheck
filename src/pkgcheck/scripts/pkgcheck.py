@@ -324,7 +324,7 @@ def _restrict_to_scope(restrict):
             (base.category_scope, ['category'])):
         if any(collect_package_restrictions(restrict, attrs)):
             return scope
-    return base.repository_scope
+    return base.repo_scope
 
 
 @scan.bind_pre_parse

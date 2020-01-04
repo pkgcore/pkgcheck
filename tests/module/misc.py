@@ -76,7 +76,7 @@ class FakeFilesDirPkg(package):
 
 
 default_scope_attrs = {
-    base.repository_scope: (),
+    base.repo_scope: (),
     base.category_scope: ('category',),
     base.package_scope: ('category', 'package'),
     base.version_scope: ('category', 'package', 'version'),

@@ -13,7 +13,7 @@ class Result:
     # all results are shown by default
     _filtered = False
     # default to repository level results
-    scope = base.repository_scope
+    scope = base.repo_scope
     # priority level and color
     level = None
     color = None

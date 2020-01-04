@@ -104,12 +104,12 @@ class TestPkgcheckScanParseArgs(object):
         # selected repo
         options, _func = self.tool.parse_args(self.args + ['-r', 'stubrepo'])
         assert options.target_repo.repo_id == 'stubrepo'
-        assert options.restrictions == [(base.repository_scope, packages.AlwaysTrue)]
+        assert options.restrictions == [(base.repo_scope, packages.AlwaysTrue)]
 
         # dir path
         options, _func = self.tool.parse_args(self.args + [fakerepo])
         assert options.target_repo.repo_id == 'fakerepo'
-        assert options.restrictions == [(base.repository_scope, packages.AlwaysTrue)]
+        assert options.restrictions == [(base.repo_scope, packages.AlwaysTrue)]
 
         # file path
         os.makedirs(pjoin(fakerepo, 'dev-util', 'foo'))
@@ -139,7 +139,7 @@ class TestPkgcheckScanParseArgs(object):
         with chdir(stubrepo):
             options, _func = self.tool.parse_args(self.args)
             assert options.target_repo.repo_id == 'stubrepo'
-            assert list(options.restrictions) == [(base.repository_scope, packages.AlwaysTrue)]
+            assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
     def test_commits_with_targets(self, capsys):
         with pytest.raises(SystemExit) as excinfo:

@@ -45,7 +45,7 @@ class Reporter:
             for result in sorted(results):
                 self.report(result)
         else:
-            ordered_results = {base.repository_scope: [], base.commit_scope: []}
+            ordered_results = {base.repo_scope: [], base.commit_scope: []}
             for results in iter(results_q.get, None):
                 for result in sorted(results):
                     try:
@@ -202,7 +202,7 @@ class JsonReporter(Reporter):
             result = (yield)
             data = self._json_dict()
 
-            if result.scope == base.repository_scope:
+            if result.scope == base.repo_scope:
                 d = data
             elif result.scope == base.category_scope:
                 d = data[result.category]
@@ -241,7 +241,7 @@ class XmlReporter(Reporter):
         "<class>%(class)s</class><msg>%(msg)s</msg></result>")
 
     scope_map = {
-        base.repository_scope: repo_template,
+        base.repo_scope: repo_template,
         base.category_scope: cat_template,
         base.package_scope: pkg_template,
         base.version_scope: ver_template,

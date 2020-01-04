@@ -62,7 +62,7 @@ class AcctCheck(Check):
     UIDs/GIDs.
     """
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _restricted_source = (sources.RestrictionRepoSource, (packages.OrRestriction(*(
         restricts.CategoryDep('acct-user'), restricts.CategoryDep('acct-group'))),))
     _source = (sources.RepositoryRepoSource, (), (('source', _restricted_source),))

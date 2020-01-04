@@ -23,7 +23,7 @@ class BinaryFile(results.Error):
 class RepoDirCheck(GentooRepoCheck):
     """Scan all files in the repository for issues."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = sources.EmptySource
     required_addons = (git.GitAddon,)
     known_results = frozenset([BinaryFile])
@@ -55,7 +55,7 @@ class RepoDirCheck(GentooRepoCheck):
 class EmptyCategoryDir(results.CategoryResult, results.Warning):
     """Empty category directory in the repository."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
 
     @property
     def desc(self):
@@ -65,7 +65,7 @@ class EmptyCategoryDir(results.CategoryResult, results.Warning):
 class EmptyPackageDir(results.PackageResult, results.Warning):
     """Empty package directory in the repository."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
 
     @property
     def desc(self):
@@ -75,7 +75,7 @@ class EmptyPackageDir(results.PackageResult, results.Warning):
 class EmptyDirsCheck(GentooRepoCheck):
     """Scan for empty category or package directories."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = sources.EmptySource
     known_results = frozenset([EmptyCategoryDir, EmptyPackageDir])
 

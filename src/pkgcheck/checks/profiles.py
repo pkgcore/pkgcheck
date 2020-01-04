@@ -93,7 +93,7 @@ class ProfilesCheck(Check):
     """Scan repo profiles for unknown flags/packages."""
 
     required_addons = (addons.UseAddon,)
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = sources.EmptySource
     known_results = frozenset([
         UnknownProfilePackages, UnknownProfilePackageUse, UnknownProfileUse,
@@ -354,7 +354,7 @@ class RepoProfilesCheck(Check):
     """
 
     required_addons = (addons.ProfileAddon,)
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = sources.EmptySource
     known_results = frozenset([
         ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,

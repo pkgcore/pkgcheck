@@ -67,7 +67,7 @@ class BadPackageUpdate(results.LogError):
 class PackageUpdatesCheck(Check):
     """Scan profiles/updates/* for outdated entries and other issues."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = sources.EmptySource
     known_results = frozenset([
         MultiMovePackageUpdate, OldMultiMovePackageUpdate,
@@ -152,7 +152,7 @@ class UnusedLicenses(results.Warning):
 class UnusedLicensesCheck(Check):
     """Check for unused license files."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = sources.RepositoryRepoSource
     known_results = frozenset([UnusedLicenses])
 
@@ -212,7 +212,7 @@ class _MirrorsCheck(Check):
 class UnusedMirrorsCheck(_MirrorsCheck):
     """Check for unused mirrors."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = sources.RepositoryRepoSource
     known_results = frozenset([UnusedMirrors])
 
@@ -248,7 +248,7 @@ class UnusedEclasses(results.Warning):
 class UnusedEclassesCheck(Check):
     """Check for unused eclasses."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = sources.RepositoryRepoSource
     known_results = frozenset([UnusedEclasses])
 
@@ -289,7 +289,7 @@ class UnknownLicenses(results.Warning):
 class LicenseGroupsCheck(Check):
     """Scan license groups for unknown licenses."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = sources.EmptySource
     known_results = frozenset([UnknownLicenses])
 
@@ -363,7 +363,7 @@ def _dfs(graph, start, visited=None):
 class GlobalUseCheck(Check):
     """Check global USE and USE_EXPAND flags for various issues."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
     required_addons = (addons.UseAddon,)
     known_results = frozenset([PotentialLocalUse, PotentialGlobalUse, UnusedGlobalUse])
@@ -651,7 +651,7 @@ class ManifestCollisionCheck(Check):
     different filenames with matching checksums.
     """
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
     known_results = frozenset([ConflictingChksums, MatchingChksums])
 
@@ -715,7 +715,7 @@ class EmptyProject(results.Warning):
 class ProjectMetadataCheck(Check):
     """Check projects.xml for issues."""
 
-    scope = base.repository_scope
+    scope = base.repo_scope
     _source = sources.EmptySource
     known_results = frozenset([
         EmptyProject,

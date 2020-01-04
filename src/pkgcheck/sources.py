@@ -15,7 +15,7 @@ from .packages import FilteredPkg, RawCPV, WrappedPkg
 class Source:
     """Base template for a source."""
 
-    feed_type = base.repository_scope
+    feed_type = base.repo_scope
     required_addons = ()
 
     def __init__(self, options, source):
@@ -56,7 +56,7 @@ class RepoSource(Source):
 class EmptySource(Source):
     """Empty source meant for skipping feed."""
 
-    feed_type = base.repository_scope
+    feed_type = base.repo_scope
 
     def __init__(self, options):
         super().__init__(options, source=())
@@ -246,7 +246,7 @@ class CategoryRepoSource(_CombinedSource):
 class RepositoryRepoSource(RepoSource):
     """Ebuild repository source yielding lists of versioned packages per package."""
 
-    feed_type = base.repository_scope
+    feed_type = base.repo_scope
 
 
 class _FilteredSource(RawRepoSource):
