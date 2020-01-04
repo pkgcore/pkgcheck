@@ -83,8 +83,19 @@ class CommitResult(Result):
 
     def __init__(self, commit, **kwargs):
         super().__init__(**kwargs)
-        self.commit = commit.commit
+        self.commit = commit
         self._attr = 'commit'
+
+    def __lt__(self, other):
+        try:
+            # if hashes match, sort by name/desc
+            if self.commit == other.commit:
+                if self.__class__.__name__ == other.__class__.__name__:
+                    return self.desc < other.desc
+                return self.__class__.__name__ < other.__class__.__name__
+        except AttributeError as e:
+            pass
+        return False
 
 
 class CategoryResult(Result):
