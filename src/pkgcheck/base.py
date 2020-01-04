@@ -64,7 +64,7 @@ class Scope:
 version_scope = Scope('version', 0)
 package_scope = Scope('package', 1)
 category_scope = Scope('category', 2)
-repository_scope = Scope('repository', 3)
+repository_scope = Scope('repo', 3)
 commit_scope = Scope('commit', 4)
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
