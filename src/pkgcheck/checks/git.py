@@ -317,7 +317,7 @@ class MissingSignOff(results.CommitResult, results.Error):
 
     def __init__(self, missing_sign_offs, **kwargs):
         super().__init__(**kwargs)
-        self.missing_sign_offs = missing_sign_offs
+        self.missing_sign_offs = tuple(missing_sign_offs)
 
     @property
     def desc(self):
@@ -381,7 +381,7 @@ class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
         required_sign_offs = {commit.author, commit.committer}
         missing_sign_offs = required_sign_offs.difference(values)
         if missing_sign_offs:
-            yield MissingSignOff(tuple(sorted(missing_sign_offs)), commit=commit)
+            yield MissingSignOff(sorted(missing_sign_offs), commit=commit)
 
     @verify_tags('Gentoo-Bug')
     def _deprecated_tag(self, tag, values, commit):
