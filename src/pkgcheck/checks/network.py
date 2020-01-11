@@ -111,7 +111,7 @@ class _UrlCheck(NetworkCheck):
         """Check http:// and https:// URLs using requests."""
         result = None
         try:
-            r = self.session.get(url)
+            r = self.session.head(url)
 
             redirected_url = None
             for response in r.history:
@@ -138,7 +138,7 @@ class _UrlCheck(NetworkCheck):
         """Check if https:// alternatives exist for http:// URLs."""
         result = None
         try:
-            r = self.session.get(url)
+            r = self.session.head(url)
 
             redirected_url = None
             for response in r.history:
