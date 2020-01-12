@@ -3,6 +3,34 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.7.4 (2020-01-11)
+---------------------------
+
+- BinaryFile: Ignore some classes of false positives that use multiple
+  encodings.
+
+- Output repo and commit related results after any package related results
+  found during scanning if using a relevant scan scope level.
+
+- Sort git commit-related results by name or description for multiple results
+  against a single commit.
+
+- BadCommitSummary: Convert to commit result instead of package result since it
+  directly relates to the commit made more than the package itself.
+
+- Add optional ref argument support for --commits option. This allows passing a
+  commit or reference to diff the current tree against in order to determine
+  scanning targets.
+
+- GitPkgCommitsCheck: Flag all incorrect copyright dates instead of just
+  outdated ones.
+
+- GitCommitsCheck: Use a single ``git cat-file`` process for verifying all
+  Fixes/Reverts tags instead of one per commit.
+
+- InvalidCommitMessage: Check for empty lines between summary, body, and tags.
+
+---------------------------
 pkgcheck 0.7.3 (2019-12-29)
 ---------------------------
 
