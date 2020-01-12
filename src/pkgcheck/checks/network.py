@@ -10,8 +10,8 @@ from .. import addons, results
 from . import NetworkCheck
 
 
-class _DeadUrlResult(results.FilteredVersionResult, results.Warning):
-    """Generic result for a dead URL."""
+class _UrlResult(results.FilteredVersionResult, results.Warning):
+    """Generic result for a URL with some type of failed status."""
 
     def __init__(self, url, message, **kwargs):
         super().__init__(**kwargs)
@@ -23,11 +23,11 @@ class _DeadUrlResult(results.FilteredVersionResult, results.Warning):
         return f'{self.message}: {self.url}'
 
 
-class DeadHomepage(_DeadUrlResult):
+class DeadHomepage(_UrlResult):
     """Package with a dead HOMEPAGE."""
 
 
-class DeadSrcUrl(_DeadUrlResult):
+class DeadSrcUrl(_UrlResult):
     """Package with a dead SRC_URI target."""
 
 
