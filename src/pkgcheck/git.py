@@ -295,7 +295,8 @@ class GitAddon(base.Addon, base.CachedAddon):
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('git', docs=cls.__doc__)
         group.add_argument(
-            '--commits', action=_ScanCommits, nargs='?', const='origin', default=False,
+            '--commits', action=_ScanCommits, nargs='?',
+            metavar='COMMIT', const='origin', default=False,
             help="determine scan targets from local git repo commits",
             docs="""
                 For a local git repo, pkgcheck will pull package targets to
