@@ -91,7 +91,7 @@ def is_binary(path, blocksize=1024):
 
         # guess character encoding using chardet
         detected_encoding = chardet.detect(byte_str)
-        if detected_encoding['confidence'] > 0.6:
+        if detected_encoding['confidence'] > 0.8:
             try:
                 byte_str.decode(encoding=detected_encoding['encoding'])
                 decodable = True
@@ -101,6 +101,6 @@ def is_binary(path, blocksize=1024):
     # finally use all the checks to decide binary or text
     if decodable:
         return False
-    if is_likely_binary or b'\x00' in byte_str or b'\xff' in byte_str:
+    if is_likely_binary or b'\x00' in byte_str:
         return True
     return False
