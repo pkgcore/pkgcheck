@@ -107,12 +107,12 @@ class StrReporter(Reporter):
     def _process_report(self):
         while True:
             result = (yield)
-            if result.scope == base.version_scope:
+            if result.scope is base.version_scope:
                 self.out.write(
                     f"{result.category}/{result.package}-{result.version}: {result.desc}")
-            elif result.scope == base.package_scope:
+            elif result.scope is base.package_scope:
                 self.out.write(f"{result.category}/{result.package}: {result.desc}")
-            elif result.scope == base.category_scope:
+            elif result.scope is base.category_scope:
                 self.out.write(f"{result.category}: {result.desc}")
             else:
                 self.out.write(result.desc)
@@ -142,7 +142,7 @@ class FancyReporter(Reporter):
             result = (yield)
             if result.scope in (base.version_scope, base.package_scope):
                 key = f'{result.category}/{result.package}'
-            elif result.scope == base.category_scope:
+            elif result.scope is base.category_scope:
                 key = result.category
             else:
                 key = str(result.scope)
@@ -155,7 +155,7 @@ class FancyReporter(Reporter):
             self.out.first_prefix.append('  ')
             self.out.later_prefix.append('    ')
             s = ''
-            if result.scope == base.version_scope:
+            if result.scope is base.version_scope:
                 s = f"version {result.version}: "
             self.out.write(
                 self.out.fg(result.color),
@@ -202,11 +202,11 @@ class JsonReporter(Reporter):
             result = (yield)
             data = self._json_dict()
 
-            if result.scope == base.version_scope:
+            if result.scope is base.version_scope:
                 d = data[result.category][result.package][result.version]
-            elif result.scope == base.package_scope:
+            elif result.scope is base.package_scope:
                 d = data[result.category][result.package]
-            elif result.scope == base.category_scope:
+            elif result.scope is base.category_scope:
                 d = data[result.category]
             else: # repo or commit scope
                 d = data
