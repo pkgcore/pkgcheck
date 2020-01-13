@@ -8,7 +8,7 @@ import pytest
 from snakeoil.formatters import PlainTextFormatter
 
 from pkgcheck import base, reporters, results
-from pkgcheck.checks import pkgdir, profiles, metadata, metadata_xml
+from pkgcheck.checks import pkgdir, profiles, metadata, metadata_xml, git
 
 
 class BaseReporter(object):
@@ -20,6 +20,7 @@ class BaseReporter(object):
         self.log_warning = profiles.ProfileWarning('profile warning')
         self.log_error = profiles.ProfileError('profile error')
         pkg = FakePkg('dev-libs/foo-0')
+        self.commit_result = git.InvalidCommitMessage('no commit message', commit='8d86269bb4c7')
         self.category_result = metadata_xml.CatMissingMetadataXml('metadata.xml', pkg=pkg)
         self.package_result = pkgdir.InvalidPN(('bar', 'baz'), pkg=pkg)
         self.versioned_result = metadata.BadFilename(('0.tar.gz', 'foo.tar.gz'), pkg=pkg)
@@ -33,6 +34,7 @@ class BaseReporter(object):
 
     def test_add_report(self, capsys):
         with self.mk_reporter() as reporter:
+            reporter.report(self.commit_result)
             reporter.report(self.log_warning)
             reporter.report(self.category_result)
             reporter.report(self.package_result)
@@ -54,6 +56,7 @@ class TestStrReporter(BaseReporter):
 
     reporter_cls = reporters.StrReporter
     add_report_output = dedent("""\
+        commit 8d86269bb4c7: no commit message
         profile warning
         dev-libs: category is missing metadata.xml
         dev-libs/foo: invalid package names: [ bar, baz ]
@@ -66,6 +69,9 @@ class TestFancyReporter(BaseReporter):
 
     reporter_cls = reporters.FancyReporter
     add_report_output = dedent("""\
+        commit
+          InvalidCommitMessage: commit 8d86269bb4c7: no commit message
+
         repo
           ProfileWarning: profile warning
 
@@ -93,6 +99,7 @@ class TestJsonReporter(BaseReporter):
 
     reporter_cls = reporters.JsonReporter
     add_report_output = dedent("""\
+        {"_warning": {"InvalidCommitMessage": ["commit 8d86269bb4c7: no commit message"]}}
         {"_warning": {"ProfileWarning": ["profile warning"]}}
         {"dev-libs": {"_error": {"CatMissingMetadataXml": ["category is missing metadata.xml"]}}}
         {"dev-libs": {"foo": {"_error": {"InvalidPN": ["invalid package names: [ bar, baz ]"]}}}}
@@ -108,6 +115,7 @@ class TestXmlReporter(BaseReporter):
     reporter_cls = reporters.XmlReporter
     add_report_output = dedent("""\
         <checks>
+        <result><class>InvalidCommitMessage</class><msg>commit 8d86269bb4c7: no commit message</msg></result>
         <result><class>ProfileWarning</class><msg>profile warning</msg></result>
         <result><category>dev-libs</category><class>CatMissingMetadataXml</class><msg>category is missing metadata.xml</msg></result>
         <result><category>dev-libs</category><package>foo</package><class>InvalidPN</class><msg>invalid package names: [ bar, baz ]</msg></result>
@@ -125,6 +133,7 @@ class TestCsvReporter(BaseReporter):
 
     reporter_cls = reporters.CsvReporter
     add_report_output = dedent("""\
+        ,,,commit 8d86269bb4c7: no commit message
         ,,,profile warning
         dev-libs,,,category is missing metadata.xml
         dev-libs,foo,,"invalid package names: [ bar, baz ]"
@@ -137,7 +146,7 @@ class TestFormatReporter(BaseReporter):
 
     def test_add_report(self, capsys):
         for format_str, expected in (
-                    ('r', 'r\n' * 4),
+                    ('r', 'r\n' * 5),
                     ('{category}', 'dev-libs\n' * 3),
                     ('{category}/{package}', 'dev-libs/foo\n' * 2),
                     ('{category}/{package}-{version}', 'dev-libs/foo-0\n'),
@@ -173,8 +182,9 @@ class TestPickleStream(BaseReporter):
 
     def test_add_report(self, capsysbinary):
         with self.mk_reporter() as reporter:
-            for result in (self.log_warning, self.log_error, self.category_result,
-                           self.package_result, self.versioned_result):
+            for result in (
+                    self.log_warning, self.log_error, self.commit_result,
+                    self.category_result, self.package_result, self.versioned_result):
                 reporter.report(result)
                 out, err = capsysbinary.readouterr()
                 assert not err
@@ -208,8 +218,9 @@ class TestJsonStream(BaseReporter):
 
     def test_add_report(self, capsys):
         with self.mk_reporter() as reporter:
-            for result in (self.log_warning, self.log_error, self.category_result,
-                        self.package_result, self.versioned_result):
+            for result in (
+                    self.log_warning, self.log_error, self.commit_result,
+                    self.category_result, self.package_result, self.versioned_result):
                 reporter.report(result)
                 out, err = capsys.readouterr()
                 assert not err
