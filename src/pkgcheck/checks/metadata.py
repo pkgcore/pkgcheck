@@ -13,6 +13,7 @@ from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import packages, values, boolean
+from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
@@ -999,6 +1000,18 @@ class BadProtocol(results.VersionResult, results.Error):
         return f'bad protocol {self.protocol!r} in URI{s}: {uris}'
 
 
+class RedundantSrcUriRename(results.VersionResult, results.Warning):
+    """URI uses a redundant rename that doesn't change the filename."""
+
+    def __init__(self, pkg, message):
+        super().__init__(pkg=pkg)
+        self.message = message
+
+    @property
+    def desc(self):
+        return self.message
+
+
 class BadFilename(results.VersionResult, results.Warning):
     """URI uses unspecific or poor filename(s).
 
@@ -1049,8 +1062,8 @@ class SrcUriCheck(Check):
 
     required_addons = (addons.UseAddon,)
     known_results = frozenset([
-        BadFilename, BadProtocol, MissingUri, InvalidSrcUri, TarballAvailable,
-        UnknownMirror, UnstatedIuse,
+        BadFilename, BadProtocol, MissingUri, InvalidSrcUri,
+        RedundantSrcUriRename, TarballAvailable, UnknownMirror, UnstatedIuse,
     ])
 
     valid_protos = frozenset(["http", "https", "ftp"])
@@ -1068,11 +1081,19 @@ class SrcUriCheck(Check):
         seen = set()
         bad_filenames = set()
         tarball_available = set()
-        fetchables, unstated = self.iuse_filter(
-            (fetchable,), pkg,
-            pkg._get_attr['fetchables'](
-                pkg, allow_missing_checksums=True,
-                ignore_unknown_mirrors=True, skip_default_mirrors=True))
+
+        uri_reports = []
+        report_uri_logs = lambda x: uri_reports.append(RedundantSrcUriRename(pkg, x))
+
+        with patch('pkgcore.log.logger.info', report_uri_logs):
+            fetchables, unstated = self.iuse_filter(
+                (fetchable,), pkg,
+                pkg._get_attr['fetchables'](
+                    pkg, allow_missing_checksums=True,
+                    ignore_unknown_mirrors=True, skip_default_mirrors=True))
+
+        yield from uri_reports
+
         yield from unstated
         for f_inst, restrictions in fetchables.items():
             if f_inst.filename in seen:
