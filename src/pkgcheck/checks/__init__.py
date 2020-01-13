@@ -108,6 +108,10 @@ class ExplicitlyEnabledCheck(Check):
         return super().skip(namespace, skip=skip)
 
 
+class GitCheck(ExplicitlyEnabledCheck):
+    """Check that is only run when explicitly enabled or via the --commits git option."""
+
+
 class AsyncCheck(Check):
     """Check that schedules tasks to be run asynchronously."""
 

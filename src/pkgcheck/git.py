@@ -23,6 +23,7 @@ from snakeoil.process.spawn import spawn_get_output
 from snakeoil.strings import pluralism
 
 from . import base
+from .checks import GitCheck
 from .log import logger
 
 # hacky ebuild path regexes for git log parsing, proper atom validation is handled later
@@ -267,7 +268,7 @@ class _ScanCommits(argparse.Action):
         # avoid cyclic imports
         from . import const
         namespace.forced_checks.extend(
-            name for name, cls in const.CHECKS.items() if cls.scope == base.commit_scope)
+            name for name, cls in const.CHECKS.items() if issubclass(cls, GitCheck))
         setattr(namespace, self.dest, value)
 
 

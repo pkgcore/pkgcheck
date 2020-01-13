@@ -18,7 +18,7 @@ from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
 from ..log import logger
-from . import ExplicitlyEnabledCheck, GentooRepoCheck
+from . import GentooRepoCheck, GitCheck
 
 demand_compile_regexp(
     'ebuild_copyright_regex',
@@ -198,7 +198,7 @@ class _RemovalRepo(UnconfiguredTree):
         self.__tmpdir.cleanup()
 
 
-class GitPkgCommitsCheck(GentooRepoCheck):
+class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     """Check unpushed git package commits for various issues."""
 
     scope = base.package_scope
@@ -367,7 +367,7 @@ def verify_tags(*tags, required=False):
     return wrapper
 
 
-class GitCommitsCheck(GentooRepoCheck, ExplicitlyEnabledCheck):
+class GitCommitsCheck(GentooRepoCheck, GitCheck):
     """Check unpushed git commits for various issues."""
 
     scope = base.commit_scope
