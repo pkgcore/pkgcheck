@@ -202,15 +202,14 @@ class JsonReporter(Reporter):
             result = (yield)
             data = self._json_dict()
 
-            if result.scope in (base.commit_scope, base.repo_scope):
-                d = data
-            elif result.scope == base.category_scope:
-                d = data[result.category]
+            if result.scope == base.version_scope:
+                d = data[result.category][result.package][result.version]
             elif result.scope == base.package_scope:
                 d = data[result.category][result.package]
-            else:
-                # versioned or ebuild feed
-                d = data[result.category][result.package][result.version]
+            elif result.scope == base.category_scope:
+                d = data[result.category]
+            else: # repo or commit scope
+                d = data
 
             name = result.__class__.__name__
             d['_' + result.level][name] = [result.desc]
