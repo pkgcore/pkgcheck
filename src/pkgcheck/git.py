@@ -305,7 +305,8 @@ class GitAddon(base.Addon, base.CachedAddon):
 
                 For example, to scan all the packages that have been changed in
                 the current branch compared to the branch named 'old' use
-                ``pkgcheck scan --commits old``.
+                ``pkgcheck scan --commits old``. For two separate branches
+                named 'old' and 'new' use ``pkgcheck scan --commits old..new``.
             """)
 
     @classmethod
