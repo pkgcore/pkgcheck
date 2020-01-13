@@ -1102,14 +1102,14 @@ class SrcUriCheck(Check):
                 lacks_uri.add(f_inst.filename)
             else:
                 bad_protocols = defaultdict(set)
-                for x in f_inst.uri:
-                    i = x.find("://")
+                for uri in f_inst.uri:
+                    i = uri.find("://")
                     if i == -1:
-                        lacks_uri.add(x)
-                    elif x[:i] not in self.valid_protos:
-                        bad_protocols[x[:i]].add(x)
-                    elif self.zip_to_tar_re.match(x):
-                        tarball_available.add(x)
+                        lacks_uri.add(uri)
+                    elif uri[:i] not in self.valid_protos:
+                        bad_protocols[uri[:i]].add(uri)
+                    elif self.zip_to_tar_re.match(uri):
+                        tarball_available.add(uri)
                 for protocol, uris in bad_protocols.items():
                     yield BadProtocol(protocol, sorted(uris), pkg=pkg)
 
