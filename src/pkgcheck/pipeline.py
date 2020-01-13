@@ -29,12 +29,12 @@ class Pipeline:
     def _queue_work(self, scoped_pipes, async_pipes, work_q):
         # queue restriction tasks based on scope for check running parallelism
         for scope, pipes in sorted(scoped_pipes.items()):
-            if scope == base.version_scope:
+            if scope is base.version_scope:
                 versioned_source = VersionedSource(self.options)
                 for restrict in versioned_source.itermatch(self.restrict):
                     for i in range(len(pipes)):
                         work_q.put((scope, restrict, i))
-            elif scope == base.package_scope:
+            elif scope is base.package_scope:
                 unversioned_source = UnversionedSource(self.options)
                 for restrict in unversioned_source.itermatch(self.restrict):
                     work_q.put((scope, restrict, 0))
@@ -53,7 +53,7 @@ class Pipeline:
 
     def _run_checks(self, sync_pipes, work_q, results_q):
         for scope, restrict, pipe_idx in iter(work_q.get, None):
-            if scope == base.version_scope:
+            if scope is base.version_scope:
                 results_q.put(list(sync_pipes[scope][pipe_idx].run(restrict)))
             elif scope in (base.package_scope, base.category_scope):
                 results = []
@@ -84,7 +84,7 @@ class Pipeline:
         scoped_pipes = defaultdict(lambda: defaultdict(list))
         if self.pkg_scan:
             for (scope, is_async), runners in checkrunners.items():
-                if scope == base.version_scope:
+                if scope is base.version_scope:
                     scoped_pipes[is_async][base.version_scope].extend(runners)
                 else:
                     scoped_pipes[is_async][base.package_scope].extend(runners)
@@ -135,7 +135,7 @@ class CheckRunner:
 
         self._itermatch_kwargs = {}
         # only use set metadata error callback for version scope runners
-        if scope == base.version_scope:
+        if scope is base.version_scope:
             self._itermatch_kwargs['error_callback'] = self._metadata_error_cb
 
         self._metadata_errors = deque()

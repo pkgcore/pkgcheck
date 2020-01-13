@@ -523,7 +523,7 @@ def _validate_scan_args(parser, namespace):
     # only run version scope checks when using a package filter
     if namespace.filter is not None:
         namespace.enabled_checks = [
-            c for c in namespace.enabled_checks if c.scope == base.version_scope]
+            c for c in namespace.enabled_checks if c.scope is base.version_scope]
 
     if not namespace.enabled_checks:
         parser.error('no active checks')
@@ -561,7 +561,7 @@ def _scan(options, out, err):
             # Skip checks higher than the current scan scope level, e.g. skip repo
             # level checks when scanning at package level.
             selected = lambda scope: (
-                scope <= scan_scope or (options.commits and scope == base.commit_scope))
+                scope <= scan_scope or (options.commits and scope is base.commit_scope))
             pipes = [d for scope, d in enabled_checks.items() if selected(scope)]
             if not pipes:
                 err.write(f'{scan.prog}: no matching checks available for current scope')

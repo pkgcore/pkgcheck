@@ -48,7 +48,7 @@ class Result:
         return hash(tuple(sorted(self._attrs)))
 
     def __lt__(self, other):
-        if self.scope == other.scope:
+        if self.scope is other.scope:
             if self.__class__.__name__ == other.__class__.__name__:
                 return self.desc < other.desc
             return self.__class__.__name__ < other.__class__.__name__
