@@ -202,7 +202,7 @@ class JsonReporter(Reporter):
             result = (yield)
             data = self._json_dict()
 
-            if result.scope == base.repo_scope:
+            if result.scope in (base.commit_scope, base.repo_scope):
                 d = data
             elif result.scope == base.category_scope:
                 d = data[result.category]
@@ -225,7 +225,7 @@ class XmlReporter(Reporter):
 
     priority = -1000
 
-    repo_template = (
+    result_template = (
         "<result><class>%(class)s</class>"
         "<msg>%(msg)s</msg></result>")
     cat_template = (
@@ -241,7 +241,8 @@ class XmlReporter(Reporter):
         "<class>%(class)s</class><msg>%(msg)s</msg></result>")
 
     scope_map = {
-        base.repo_scope: repo_template,
+        base.commit_scope: result_template,
+        base.repo_scope: result_template,
         base.category_scope: cat_template,
         base.package_scope: pkg_template,
         base.version_scope: ver_template,
