@@ -322,7 +322,7 @@ class GitAddon(base.Addon, base.CachedAddon):
             repo = namespace.target_repo
             try:
                 p = subprocess.run(
-                    ['git', 'diff', ref, '--name-only'] + list(repo.category_dirs),
+                    ['git', 'diff', '--cached', ref, '--name-only'] + list(repo.category_dirs),
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                     cwd=repo.location, encoding='utf8')
             except FileNotFoundError:
