@@ -103,19 +103,21 @@ class StrReporter(Reporter):
 
     priority = 0
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # scope to result prefix mapping
+        self._scope_prefix_map = {
+            base.version_scope: '{category}/{package}-{version}: ',
+            base.package_scope: '{category}/{package}: ',
+            base.category_scope: '{category}: ',
+        }
+
     @coroutine
     def _process_report(self):
         while True:
             result = (yield)
-            if result.scope is base.version_scope:
-                self.out.write(
-                    f"{result.category}/{result.package}-{result.version}: {result.desc}")
-            elif result.scope is base.package_scope:
-                self.out.write(f"{result.category}/{result.package}: {result.desc}")
-            elif result.scope is base.category_scope:
-                self.out.write(f"{result.category}: {result.desc}")
-            else:
-                self.out.write(result.desc)
+            prefix = self._scope_prefix_map.get(result.scope, '').format(**vars(result))
+            self.out.write(f'{prefix}{result.desc}')
             self.out.stream.flush()
 
 
