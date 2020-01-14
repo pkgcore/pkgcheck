@@ -122,7 +122,7 @@ class StrReporter(Reporter):
 
 
 class FancyReporter(Reporter):
-    """grouped colored output
+    """Colored output grouped by result scope.
 
     Example::
 
@@ -180,7 +180,7 @@ class NullReporter(Reporter):
 
 
 class JsonReporter(Reporter):
-    """Dump a json feed of reports.
+    """Feed of newline-delimited JSON records.
 
     Note that the format is newline-delimited JSON with each line being related
     to a separate report. To merge the objects together a tool such as jq can
@@ -217,7 +217,7 @@ class JsonReporter(Reporter):
 
 
 class XmlReporter(Reporter):
-    """dump an xml feed of reports"""
+    """Feed of newline-delimited XML reports."""
 
     priority = -1000
 
