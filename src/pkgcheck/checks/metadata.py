@@ -1000,7 +1000,7 @@ class BadProtocol(results.VersionResult, results.Error):
         return f'bad protocol {self.protocol!r} in URI{s}: {uris}'
 
 
-class RedundantSrcUriRename(results.VersionResult, results.Warning):
+class RedundantUriRename(results.VersionResult, results.Warning):
     """URI uses a redundant rename that doesn't change the filename."""
 
     def __init__(self, pkg, message):
@@ -1063,7 +1063,7 @@ class SrcUriCheck(Check):
     required_addons = (addons.UseAddon,)
     known_results = frozenset([
         BadFilename, BadProtocol, MissingUri, InvalidSrcUri,
-        RedundantSrcUriRename, TarballAvailable, UnknownMirror, UnstatedIuse,
+        RedundantUriRename, TarballAvailable, UnknownMirror, UnstatedIuse,
     ])
 
     valid_protos = frozenset(["http", "https", "ftp"])
@@ -1083,7 +1083,7 @@ class SrcUriCheck(Check):
         tarball_available = set()
 
         uri_reports = []
-        report_uri_logs = lambda x: uri_reports.append(RedundantSrcUriRename(pkg, x))
+        report_uri_logs = lambda x: uri_reports.append(RedundantUriRename(pkg, x))
 
         with patch('pkgcore.log.logger.info', report_uri_logs):
             fetchables, unstated = self.iuse_filter(
