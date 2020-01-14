@@ -195,25 +195,20 @@ class JsonReporter(Reporter):
         super().__init__(*args, **kwargs)
         # arbitrarily nested defaultdicts
         self._json_dict = lambda: defaultdict(self._json_dict)
+        # scope to data conversion mapping
+        self._scope_map = {
+            base.version_scope: lambda data, r: data[r.category][r.package][r.version],
+            base.package_scope: lambda data, r: data[r.category][r.package],
+            base.category_scope: lambda data, r: data[r.category],
+        }
 
     @coroutine
     def _process_report(self):
         while True:
             result = (yield)
             data = self._json_dict()
-
-            if result.scope is base.version_scope:
-                d = data[result.category][result.package][result.version]
-            elif result.scope is base.package_scope:
-                d = data[result.category][result.package]
-            elif result.scope is base.category_scope:
-                d = data[result.category]
-            else: # repo or commit scope
-                d = data
-
-            name = result.__class__.__name__
-            d['_' + result.level][name] = [result.desc]
-
+            d = self._scope_map.get(result.scope, lambda x, y: x)(data, result)
+            d['_' + result.level][result.__class__.__name__] = [result.desc]
             self.out.write(json.dumps(data))
             # flush output so partial objects aren't written
             self.out.stream.flush()
