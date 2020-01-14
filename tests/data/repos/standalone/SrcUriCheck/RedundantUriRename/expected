@@ -1,0 +1,3 @@
+SrcUriCheck/RedundantUriRename
+  RedundantUriRename: version 0: redundant rename: https://github.com/pkgcore/pkgcheck/RedundantUriRename-0.tar.gz -> RedundantUriRename-0.tar.gz
+  RedundantUriRename: version 1: redundant rename: mirror://used/pkgcore/pkgcheck/RedundantUriRename-1.tar.gz -> RedundantUriRename-1.tar.gz
