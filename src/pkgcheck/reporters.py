@@ -208,7 +208,7 @@ class JsonReporter(Reporter):
             result = (yield)
             data = self._json_dict()
             d = self._scope_map.get(result.scope, lambda x, y: x)(data, result)
-            d['_' + result.level][result.__class__.__name__] = [result.desc]
+            d['_' + result.level][result.__class__.__name__] = result.desc
             self.out.write(json.dumps(data))
             # flush output so partial objects aren't written
             self.out.stream.flush()
