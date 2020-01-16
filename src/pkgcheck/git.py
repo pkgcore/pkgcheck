@@ -301,8 +301,8 @@ class GitAddon(base.Addon, base.CachedAddon):
             help="determine scan targets from local git repo commits",
             docs="""
                 For a local git repo, pkgcheck will pull package targets to
-                scan from the changes compared to a given reference that
-                defaults to the repo's origin.
+                scan from the committed changes compared to a given reference
+                that defaults to the repo's origin.
 
                 For example, to scan all the packages that have been changed in
                 the current branch compared to the branch named 'old' use
