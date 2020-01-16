@@ -16,6 +16,7 @@ from textwrap import dedent
 from snakeoil.strings import pluralism as _pl
 
 from pkgcheck import base, const
+from pkgcheck.checks import GentooRepoCheck
 
 
 def main(f=sys.stdout, **kwargs):
@@ -35,7 +36,7 @@ def main(f=sys.stdout, **kwargs):
     related_checks = defaultdict(set)
     for check in const.CHECKS.values():
         for keyword in check.known_results:
-            related_checks[keyword].add(check.__name__)
+            related_checks[keyword].add(check)
 
     for scope in base.scopes.values():
         _rst_header('-', scope.desc.capitalize() + ' scope')
@@ -57,9 +58,11 @@ def main(f=sys.stdout, **kwargs):
                 if explanation:
                     explanation = '\n'.join(dedent(explanation).strip().split('\n'))
                     out('\n' + explanation)
-                checks = ', '.join(
-                    f'`{c}`_' for c in sorted(related_checks[keyword]))
+                if all(issubclass(x, GentooRepoCheck) for x in related_checks[keyword]):
+                    out(f'- Gentoo repo specific')
                 out('\n' + f'- level: {keyword.level}')
+                checks = ', '.join(sorted(
+                    f'`{c.__name__}`_' for c in related_checks[keyword]))
                 out(f'- related check{_pl(related_checks[keyword])}: {checks}')
 
 

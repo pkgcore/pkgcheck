@@ -21,6 +21,7 @@ from textwrap import dedent, TextWrapper
 from snakeoil.strings import pluralism as _pl
 
 from pkgcheck import base, const
+from pkgcheck.checks import GentooRepoCheck
 
 
 def main(f=sys.stdout, **kwargs):
@@ -59,6 +60,8 @@ def main(f=sys.stdout, **kwargs):
                 if explanation:
                     explanation = '\n'.join(dedent(explanation).strip().split('\n'))
                     out('\n' + explanation)
+                if issubclass(check, GentooRepoCheck):
+                    out(f'\n- Gentoo repo specific')
                 known_results = ', '.join(
                     f'`{r.__name__}`_' for r in
                     sorted(check.known_results, key=attrgetter('__name__')))
