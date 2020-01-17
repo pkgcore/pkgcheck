@@ -240,6 +240,17 @@ class MetadataUrlCheck(_UrlCheck):
     scope = base.package_scope
     _source = sources.PackageRepoSource
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.protocols = ('http://', 'https://', 'ftp://')
+        self.remote_map = {
+            'bitbucket': 'https://bitbucket.org/{project}',
+            'github': 'https://github.com/{project}',
+            'gitlab': 'https://gitlab.com/{project}',
+            'pypi': 'https://pypi.org/project/{project}/',
+            'sourceforge': 'https://sourceforge.net/projects/{project}/',
+        }
+
     def _get_urls(self, pkg):
         try:
             tree = etree.parse(pkg._shared_pkg_data.metadata_xml._source)
@@ -248,11 +259,18 @@ class MetadataUrlCheck(_UrlCheck):
 
         # TODO: Add support for remote-id and move upstream parsing to a
         # pkgcore pkg attribute?
-        for element in ('changelog', 'doc', 'bugs-to'):
+        for element in ('changelog', 'doc', 'bugs-to', 'remote-id'):
             for x in tree.xpath(f'//upstream/{element}'):
-                # skip mailto URLs from bugs-to
-                if x.text and x.text.startswith(('http://', 'https://', 'ftp://')):
-                    yield f'metadata.xml: {element}', x.text
+                if x.text:
+                    url = x.text
+                    if element == 'remote-id':
+                        try:
+                            url = self.remote_map[x.attrib['type']].format(project=url)
+                        except KeyError:
+                            continue
+                    # skip unsupported protocols, e.g. mailto URLs from bugs-to
+                    if url.startswith(self.protocols):
+                        yield f'metadata.xml: {element}', url
 
     def schedule(self, pkgs, *args, **kwargs):
         super().schedule(pkgs[0], *args, **kwargs)
