@@ -246,7 +246,8 @@ class MetadataUrlCheck(_UrlCheck):
         except etree.XMLSyntaxError:
             return
 
-        # TODO: add support for remote-id
+        # TODO: Add support for remote-id and move upstream parsing to a
+        # pkgcore pkg attribute?
         for element in ('changelog', 'doc', 'bugs-to'):
             for x in tree.xpath(f'//upstream/{element}'):
                 # skip mailto URLs from bugs-to
