@@ -1,12 +1,13 @@
 import socket
 import urllib.request
+from lxml import etree
 from functools import partial
 from itertools import chain
 
 from pkgcore.fetch import fetchable
 from snakeoil.iterables import partition
 
-from .. import addons, results
+from .. import addons, base, results, sources
 from . import NetworkCheck
 
 
@@ -31,6 +32,10 @@ class DeadSrcUrl(_UrlResult):
     """Package with a dead SRC_URI target."""
 
 
+class DeadMetadataUrl(_UrlResult):
+    """Package with a dead metadata.xml URL."""
+
+
 class _RedirectedUrlResult(results.FilteredVersionResult, results.Warning):
     """Generic result for a URL that permanently redirects to a different site."""
 
@@ -50,6 +55,10 @@ class RedirectedHomepage(_RedirectedUrlResult):
 
 class RedirectedSrcUrl(_RedirectedUrlResult):
     """Package with a SRC_URI target that permanently redirects to a different site."""
+
+
+class RedirectedMetadataUrl(_RedirectedUrlResult):
+    """Package with a metadata.xml URL that permanently redirects to a different site."""
 
 
 class SSLCertificateError(results.FilteredVersionResult, results.Warning):
@@ -225,7 +234,7 @@ class HomepageUrlCheck(_UrlCheck):
         self.redirected_result = RedirectedHomepage
 
     def _get_urls(self, pkg):
-        return pkg.homepage
+        yield from pkg.homepage
 
 
 class FetchablesUrlCheck(_UrlCheck):
@@ -248,4 +257,36 @@ class FetchablesUrlCheck(_UrlCheck):
             pkg._get_attr['fetchables'](
                 pkg, allow_missing_checksums=True,
                 ignore_unknown_mirrors=True, skip_default_mirrors=True))
-        return chain.from_iterable(f.uri for f in fetchables.keys())
+        for f in fetchables.keys():
+            yield from f.uri
+
+
+class MetadataUrlCheck(_UrlCheck):
+    """Various metadata.xml related checks that require internet access."""
+
+    scope = base.package_scope
+    _source = sources.PackageRepoSource
+    known_results = frozenset([
+        DeadMetadataUrl, RedirectedMetadataUrl, HttpsUrlAvailable, SSLCertificateError])
+    required_addons = (addons.UseAddon,)
+
+    def __init__(self, *args, use_addon, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dead_result = DeadMetadataUrl
+        self.redirected_result = RedirectedMetadataUrl
+
+    def _get_urls(self, pkg):
+        try:
+            tree = etree.parse(pkg._shared_pkg_data.metadata_xml._source)
+        except etree.XMLSyntaxError:
+            return
+
+        # TODO: add support for remote-id
+        for element in ('changelog', 'doc', 'bugs-to'):
+            for x in tree.xpath(f'//upstream/{element}'):
+                # skip mailto URLs from bugs-to
+                if x.text and x.text.startswith(('http://', 'https://', 'ftp://')):
+                    yield x.text
+
+    def schedule(self, pkgs, *args, **kwargs):
+        super().schedule(pkgs[0], *args, **kwargs)
