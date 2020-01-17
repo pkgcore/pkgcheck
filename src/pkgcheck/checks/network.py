@@ -28,8 +28,18 @@ class DeadUrl(_UrlResult):
     """Package with a dead URL of some type."""
 
 
-class _RedirectedUrlResult(results.FilteredVersionResult, results.Warning):
-    """Generic result for a URL that permanently redirects to a different site."""
+class SSLCertificateError(_UrlResult):
+    """Package with https:// HOMEPAGE with an invalid SSL cert."""
+
+    @property
+    def desc(self):
+        return f'{self.attr}: SSL cert error: {self.message}: {self.url}'
+
+
+class _UpdatedUrlResult(results.FilteredVersionResult, results.Warning):
+    """Generic result for a URL that should be updated to an alternative."""
+
+    message = None
 
     def __init__(self, attr, url, new_url, **kwargs):
         super().__init__(**kwargs)
@@ -39,39 +49,23 @@ class _RedirectedUrlResult(results.FilteredVersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.attr}: permanently redirected: {self.url} -> {self.new_url}'
+        msg = [self.attr]
+        if self.message is not None:
+            msg.append(self.message)
+        msg.append(f'{self.url} -> {self.new_url}')
+        return ': '.join(msg)
 
 
-class RedirectedUrl(_RedirectedUrlResult):
+class RedirectedUrl(_UpdatedUrlResult):
     """Package with a URL that permanently redirects to a different site."""
 
-
-class SSLCertificateError(results.FilteredVersionResult, results.Warning):
-    """Package with https:// HOMEPAGE with an invalid SSL cert."""
-
-    def __init__(self, attr, url, message, **kwargs):
-        super().__init__(**kwargs)
-        self.attr = attr
-        self.url = url
-        self.message = message
-
-    @property
-    def desc(self):
-        return f'{self.attr}: SSL cert error: {self.message}: {self.url}'
+    message = 'permanently redirected'
 
 
-class HttpsUrlAvailable(results.FilteredVersionResult, results.Warning):
+class HttpsUrlAvailable(_UpdatedUrlResult):
     """URL uses http:// when https:// is available."""
 
-    def __init__(self, attr, http_url, https_url, **kwargs):
-        super().__init__(**kwargs)
-        self.attr = attr
-        self.http_url = http_url
-        self.https_url = https_url
-
-    @property
-    def desc(self):
-        return f'{self.attr}: HTTPS url available: {self.http_url} -> {self.https_url}'
+    message = 'HTTPS url available'
 
 
 class _RequestException(Exception):
