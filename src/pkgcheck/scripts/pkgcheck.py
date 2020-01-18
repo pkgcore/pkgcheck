@@ -246,9 +246,39 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
         namespace.enabled_keywords |= {const.KEYWORDS[k] for k in enabled}
 
 
+class CheckArgs(arghparse.CommaSeparatedNegations):
+    """Determine checks to run on selection."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        disabled, enabled = self.parse_values(values)
+        available = set(const.CHECKS.keys())
+
+        alias_map = {'all': available}
+        replace_aliases = lambda x: alias_map.get(x, [x])
+
+        # expand check aliases to check lists
+        disabled = set(chain.from_iterable(map(replace_aliases, disabled)))
+        enabled = set(chain.from_iterable(map(replace_aliases, enabled)))
+
+        # validate selected checks
+        unknown_checks = (disabled | enabled) - available
+        if unknown_checks:
+            unknown = ', '.join(map(repr, unknown_checks))
+            s = pluralism(unknown_checks)
+            parser.error(f'unknown check{s}: {unknown}')
+
+        if enabled:
+            namespace.enabled_checks |= {const.CHECKS[c] for c in enabled}
+        elif disabled:
+            namespace.enabled_checks = (
+                set(const.CHECKS.values()) - {const.CHECKS[c] for c in disabled})
+
+        setattr(namespace, self.dest, (disabled, enabled))
+
+
 check_options = scan.add_argument_group('check selection')
 check_options.add_argument(
-    '-c', '--checks', metavar='CHECK', action='csv_negations', dest='selected_checks',
+    '-c', '--checks', metavar='CHECK', action=CheckArgs, dest='selected_checks',
     help='limit checks to run (comma-separated list)',
     docs="""
         Comma separated list of checks to enable and disable for
@@ -378,7 +408,7 @@ def _restrict_to_scope(restrict):
 @scan.bind_reset_defaults
 def _setup_scan_defaults(parser, namespace):
     namespace.forced_checks = []
-    namespace.enabled_checks = list(const.CHECKS.values())
+    namespace.enabled_checks = set()
     namespace.disabled_keywords = set()
     namespace.enabled_keywords = set()
 
@@ -474,47 +504,20 @@ def _validate_scan_args(parser, namespace):
     # determine keywords to filter
     namespace.filtered_keywords = None
     if namespace.enabled_keywords or namespace.disabled_keywords:
-        # by default, all keywords are selected
+        # all keywords are selected by default
         if not namespace.enabled_keywords:
             namespace.enabled_keywords = set(const.KEYWORD.values())
         namespace.filtered_keywords = namespace.enabled_keywords - namespace.disabled_keywords
 
-    disabled_checks, enabled_checks = ((), ())
-    if namespace.selected_checks is not None:
-        disabled_checks, enabled_checks = namespace.selected_checks
-        available_checks = list(const.CHECKS.keys())
-
-        alias_map = {'all': available_checks}
-        replace_aliases = lambda x: alias_map.get(x, [x])
-
-        # expand check aliases to check lists
-        disabled_checks = list(chain.from_iterable(map(replace_aliases, disabled_checks)))
-        enabled_checks = list(chain.from_iterable(map(replace_aliases, enabled_checks)))
-
-        # overwrite selected checks with expanded aliases
-        namespace.selected_checks = (disabled_checks, enabled_checks)
-
-        # validate selected checks
-        selected_checks = set(disabled_checks + enabled_checks)
-        unknown_checks = selected_checks.difference(available_checks)
-        if unknown_checks:
-            unknown = ', '.join(map(repr, unknown_checks))
-            s = pluralism(unknown_checks)
-            parser.error(f'unknown check{s}: {unknown}')
-    elif namespace.filtered_keywords is not None:
         # enable checks based on enabled keyword -> check mapping
-        enabled_checks = []
-        for check, cls in const.CHECKS.items():
-            if namespace.filtered_keywords.intersection(cls.known_results):
-                enabled_checks.append(check)
+        if not namespace.selected_checks:
+            for cls in const.CHECKS.values():
+                if namespace.filtered_keywords.intersection(cls.known_results):
+                    namespace.enabled_checks.add(cls)
 
-    # filter checks to run
-    if enabled_checks:
-        whitelist = base.Whitelist(enabled_checks)
-        namespace.enabled_checks = list(whitelist.filter(namespace.enabled_checks))
-    if disabled_checks:
-        blacklist = base.Blacklist(disabled_checks)
-        namespace.enabled_checks = list(blacklist.filter(namespace.enabled_checks))
+    # all checks are run by default
+    if not namespace.enabled_checks:
+        namespace.enabled_checks = list(const.CHECKS.values())
 
     # skip checks that may be disabled
     namespace.enabled_checks = [
