@@ -126,7 +126,12 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
 # These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser(
     'scan', parents=(reporter_argparser,), description='scan targets for QA issues')
-scan.set_defaults(forced_checks=[])
+scan.set_defaults(
+    forced_checks=[],
+    enabled_checks=list(const.CHECKS.values()),
+    enabled_keywords=list(const.KEYWORDS.values()),
+)
+
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
@@ -136,7 +141,7 @@ main_options.add_argument(
     action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
     help='repo to pull packages from')
 main_options.add_argument(
-    '-f', '--filter', choices=('latest', 'repo',),
+    '-f', '--filter', choices=('latest', 'repo'),
     help='limit targeted packages for scanning',
     docs="""
         Support limiting targeted packages for scanning using a chosen filter.
@@ -338,9 +343,6 @@ def _setup_scan_addons(parser, namespace):
 
 @scan.bind_final_check
 def _validate_scan_args(parser, namespace):
-    namespace.enabled_checks = list(const.CHECKS.values())
-    namespace.enabled_keywords = list(const.KEYWORDS.values())
-
     # Get the current working directory for repo detection and restriction
     # creation, fallback to the root dir if it's be removed out from under us.
     try:
