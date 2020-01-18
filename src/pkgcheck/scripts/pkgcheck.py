@@ -123,34 +123,6 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
         setattr(namespace, self.dest, caches)
 
 
-class ScopeArgs(arghparse.CommaSeparatedNegations):
-    """Filter enabled keywords by selected scopes."""
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        disabled, enabled = self.parse_values(values)
-
-        # validate selected scopes
-        unknown_scopes = set(disabled + enabled) - set(base.scopes)
-        if unknown_scopes:
-            unknown = ', '.join(map(repr, unknown_scopes))
-            available = ', '.join(base.scopes)
-            s = pluralism(unknown_scopes)
-            parser.error(f'unknown scope{s}: {unknown} (available scopes: {available})')
-
-        disabled = {base.scopes[x] for x in disabled}
-        enabled = {base.scopes[x] for x in enabled}
-
-        # convert scopes to keyword lists
-        disabled_keywords = [
-            k.__name__ for k in const.KEYWORDS.values() if k.scope in disabled]
-        enabled_keywords = [
-            k.__name__ for k in const.KEYWORDS.values() if k.scope in enabled]
-
-        # filter outputted keywords
-        namespace.enabled_keywords = base.filter_update(
-            namespace.enabled_keywords, enabled_keywords, disabled_keywords)
-
-
 # These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser(
     'scan', parents=(reporter_argparser,), description='scan targets for QA issues')
@@ -227,6 +199,63 @@ main_options.add_argument(
     """)
 
 
+class ScopeArgs(arghparse.CommaSeparatedNegations):
+    """Filter enabled keywords by selected scopes."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        disabled, enabled = self.parse_values(values)
+
+        # validate selected scopes
+        unknown_scopes = set(disabled + enabled) - set(base.scopes)
+        if unknown_scopes:
+            unknown = ', '.join(map(repr, unknown_scopes))
+            available = ', '.join(base.scopes)
+            s = pluralism(unknown_scopes)
+            parser.error(f'unknown scope{s}: {unknown} (available scopes: {available})')
+
+        disabled = {base.scopes[x] for x in disabled}
+        enabled = {base.scopes[x] for x in enabled}
+
+        # convert scopes to keyword lists
+        disabled_keywords = [
+            k.__name__ for k in const.KEYWORDS.values() if k.scope in disabled]
+        enabled_keywords = [
+            k.__name__ for k in const.KEYWORDS.values() if k.scope in enabled]
+
+        # filter outputted keywords
+        namespace.enabled_keywords = base.filter_update(
+            namespace.enabled_keywords, enabled_keywords, disabled_keywords)
+
+
+class KeywordArgs(arghparse.CommaSeparatedNegations):
+    """Filter enabled keywords by selected keywords."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        disabled, enabled = self.parse_values(values)
+
+        error = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Error))
+        warning = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Warning))
+        info = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Info))
+
+        alias_map = {'error': error, 'warning': warning, 'info': info}
+        replace_aliases = lambda x: alias_map.get(x, [x])
+
+        # expand keyword aliases to keyword lists
+        disabled = list(chain.from_iterable(map(replace_aliases, disabled)))
+        enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
+
+        # validate selected keywords
+        unknown_keywords = set(disabled + enabled) - set(const.KEYWORDS)
+        if unknown_keywords:
+            unknown = ', '.join(map(repr, unknown_keywords))
+            s = pluralism(unknown_keywords)
+            parser.error(f'unknown keyword{s}: {unknown}')
+
+        # filter outputted keywords
+        namespace.enabled_keywords = base.filter_update(
+            namespace.enabled_keywords, enabled, disabled)
+
+
 check_options = scan.add_argument_group('check selection')
 check_options.add_argument(
     '-c', '--checks', metavar='CHECK', action='csv_negations', dest='selected_checks',
@@ -251,7 +280,7 @@ check_options.add_argument(
     config_type='pkgcheck_checkset',
     help='preconfigured set of checks to run')
 check_options.add_argument(
-    '-k', '--keywords', metavar='KEYWORD', action='csv_negations', dest='selected_keywords',
+    '-k', '--keywords', metavar='KEYWORD', action=KeywordArgs,
     help='limit keywords to scan for (comma-separated list)',
     docs="""
         Comma separated list of keywords to enable and disable for
@@ -452,33 +481,6 @@ def _validate_scan_args(parser, namespace):
         namespace.checkset = namespace.config.get_default('pkgcheck_checkset')
     if namespace.checkset is not None:
         namespace.enabled_checks = list(namespace.checkset.filter(namespace.enabled_checks))
-
-    if namespace.selected_keywords is not None:
-        disabled_keywords, enabled_keywords = namespace.selected_keywords
-
-        error = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Error))
-        warning = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Warning))
-        info = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Info))
-
-        alias_map = {'error': error, 'warning': warning, 'info': info}
-        replace_aliases = lambda x: alias_map.get(x, [x])
-
-        # expand keyword aliases to keyword lists
-        disabled_keywords = list(chain.from_iterable(map(replace_aliases, disabled_keywords)))
-        enabled_keywords = list(chain.from_iterable(map(replace_aliases, enabled_keywords)))
-
-        # validate selected keywords
-        selected_keywords = set(disabled_keywords + enabled_keywords)
-        available_keywords = set(const.KEYWORDS.keys())
-        unknown_keywords = selected_keywords - available_keywords
-        if unknown_keywords:
-            unknown = ', '.join(map(repr, unknown_keywords))
-            s = pluralism(unknown_keywords)
-            parser.error(f'unknown keyword{s}: {unknown}')
-
-        # filter outputted keywords
-        namespace.enabled_keywords = base.filter_update(
-            namespace.enabled_keywords, enabled_keywords, disabled_keywords)
 
     namespace.filtered_keywords = set(namespace.enabled_keywords)
     if namespace.filtered_keywords == set(const.KEYWORDS.values()):
