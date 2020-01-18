@@ -161,5 +161,3 @@ class EclassCheck(Check):
             yield DuplicateEclassInherits(sorted(duplicates), pkg=pkg)
         if deprecated:
             yield DeprecatedEclass(sorted(deprecated), pkg=pkg)
-
-
