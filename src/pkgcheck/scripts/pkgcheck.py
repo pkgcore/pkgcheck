@@ -663,16 +663,15 @@ def _cache(options, out, err):
 
 replay = subparsers.add_parser(
     'replay', parents=(reporter_argparser,),
-    description='replay results streams',
+    description='replay result streams',
     docs="""
-        Replay previous results streams from pkgcheck, feeding the results into
-        a reporter. Currently supports replaying streams from pickle or JSON
-        stream reporters.
+        Replay previous result streams, feeding the results into a reporter.
+        Currently supports replaying streams from PickleStream or JsonStream
+        reporters.
 
         Useful if you need to delay acting on results until it can be done in
-        one minimal window (say updating a database), or want to generate
-        several different reports without using a config defined multiplex
-        reporter.
+        one minimal window, e.g. updating a database, or want to generate
+        several different reports.
     """)
 replay.add_argument(
     dest='results', metavar='FILE',
