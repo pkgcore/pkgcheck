@@ -510,10 +510,10 @@ def _validate_scan_args(parser, namespace):
         namespace.filtered_keywords = namespace.enabled_keywords - namespace.disabled_keywords
 
         # enable checks based on enabled keyword -> check mapping
-        if not namespace.selected_checks:
-            for cls in const.CHECKS.values():
-                if namespace.filtered_keywords.intersection(cls.known_results):
-                    namespace.enabled_checks.add(cls)
+        if not namespace.enabled_checks:
+            namespace.enabled_checks = {
+                c for c in const.CHECKS.values()
+                if namespace.filtered_keywords.intersection(c.known_results)}
 
     # all checks are run by default
     if not namespace.enabled_checks:
