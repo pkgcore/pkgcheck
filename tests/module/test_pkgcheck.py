@@ -245,7 +245,7 @@ class TestPkgcheckScanParseArgs(object):
         for opt in ('-k', '--keywords'):
             options, _func = self.tool.parse_args(self.args + [opt, 'InvalidPN'])
             result_cls = next(v for k, v in const.KEYWORDS.items() if k == 'InvalidPN')
-            assert options.enabled_keywords == [result_cls]
+            assert options.filtered_keywords == {result_cls}
             check = next(x for x in const.CHECKS.values() if result_cls in x.known_results)
             assert options.enabled_checks == [check]
 

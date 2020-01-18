@@ -123,17 +123,11 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
         setattr(namespace, self.dest, caches)
 
 
-# These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser(
     'scan', parents=(reporter_argparser,), description='scan targets for QA issues')
-scan.set_defaults(
-    forced_checks=[],
-    enabled_checks=list(const.CHECKS.values()),
-    enabled_keywords=list(const.KEYWORDS.values()),
-)
-
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
+
 
 main_options = scan.add_argument_group('main options')
 main_options.add_argument(
@@ -216,15 +210,11 @@ class ScopeArgs(arghparse.CommaSeparatedNegations):
         disabled = {base.scopes[x] for x in disabled}
         enabled = {base.scopes[x] for x in enabled}
 
-        # convert scopes to keyword lists
-        disabled_keywords = [
-            k.__name__ for k in const.KEYWORDS.values() if k.scope in disabled]
-        enabled_keywords = [
-            k.__name__ for k in const.KEYWORDS.values() if k.scope in enabled]
-
         # filter outputted keywords
-        namespace.enabled_keywords = base.filter_update(
-            namespace.enabled_keywords, enabled_keywords, disabled_keywords)
+        namespace.disabled_keywords |= {
+            k for k in const.KEYWORDS.values() if k.scope in disabled}
+        namespace.enabled_keywords |= {
+            k for k in const.KEYWORDS.values() if k.scope in enabled}
 
 
 class KeywordArgs(arghparse.CommaSeparatedNegations):
@@ -252,8 +242,8 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
             parser.error(f'unknown keyword{s}: {unknown}')
 
         # filter outputted keywords
-        namespace.enabled_keywords = base.filter_update(
-            namespace.enabled_keywords, enabled, disabled)
+        namespace.disabled_keywords |= {const.KEYWORDS[k] for k in disabled}
+        namespace.enabled_keywords |= {const.KEYWORDS[k] for k in enabled}
 
 
 check_options = scan.add_argument_group('check selection')
@@ -389,6 +379,14 @@ def _restrict_to_scope(restrict):
     return base.repo_scope
 
 
+@scan.bind_reset_defaults
+def _setup_scan_defaults(parser, namespace):
+    namespace.forced_checks = []
+    namespace.enabled_checks = list(const.CHECKS.values())
+    namespace.disabled_keywords = set()
+    namespace.enabled_keywords = set()
+
+
 @scan.bind_pre_parse
 def _setup_scan_addons(parser, namespace):
     all_addons = set()
@@ -482,9 +480,13 @@ def _validate_scan_args(parser, namespace):
     if namespace.checkset is not None:
         namespace.enabled_checks = list(namespace.checkset.filter(namespace.enabled_checks))
 
-    namespace.filtered_keywords = set(namespace.enabled_keywords)
-    if namespace.filtered_keywords == set(const.KEYWORDS.values()):
-        namespace.filtered_keywords = None
+    # determine keywords to filter
+    namespace.filtered_keywords = None
+    if namespace.enabled_keywords or namespace.disabled_keywords:
+        # by default, all keywords are selected
+        if not namespace.enabled_keywords:
+            namespace.enabled_keywords = set(const.KEYWORD.values())
+        namespace.filtered_keywords = namespace.enabled_keywords - namespace.disabled_keywords
 
     disabled_checks, enabled_checks = ((), ())
     if namespace.selected_checks is not None:

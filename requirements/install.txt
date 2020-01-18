@@ -1,5 +1,5 @@
 chardet
 lxml
 pathspec
-snakeoil~=0.8.5
+snakeoil~=0.8.6
 pkgcore~=0.10.10
