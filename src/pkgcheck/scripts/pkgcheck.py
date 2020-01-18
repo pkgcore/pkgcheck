@@ -266,10 +266,6 @@ check_options.add_argument(
         Use ``pkgcheck show --checks`` see available options.
     """)
 check_options.add_argument(
-    '-C', '--checkset', metavar='CHECKSET', action=commandline.StoreConfigObject,
-    config_type='pkgcheck_checkset',
-    help='preconfigured set of checks to run')
-check_options.add_argument(
     '-k', '--keywords', metavar='KEYWORD', action=KeywordArgs,
     help='limit keywords to scan for (comma-separated list)',
     docs="""
@@ -474,11 +470,6 @@ def _validate_scan_args(parser, namespace):
         else:
             restrict = packages.AlwaysTrue
         namespace.restrictions = [(_restrict_to_scope(restrict), restrict)]
-
-    if namespace.checkset is None:
-        namespace.checkset = namespace.config.get_default('pkgcheck_checkset')
-    if namespace.checkset is not None:
-        namespace.enabled_checks = list(namespace.checkset.filter(namespace.enabled_checks))
 
     # determine keywords to filter
     namespace.filtered_keywords = None

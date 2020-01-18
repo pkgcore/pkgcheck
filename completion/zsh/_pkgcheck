@@ -157,7 +157,6 @@ case $state in
 
         check_opts=(
           {'(--checks)-c','(-c)--checks'}'[comma separated list of checks to enable/disable]:checks:{_values -s , checks $(_checks -p)}'
-          {'(--checkset)-C','(-C)--checkset'}'[preconfigured set of checks to run]'
           {'(--keywords)-k','(-k)--keywords'}'[comma separated list of keywords to enable/disable]:keywords:{_values -s , keywords $(_keywords -p)}'
           {'(--scopes)-s','(-s)--scopes'}'[comma separated list of keyword scopes to enable/disable]:scopes:{_values -s . scopes $(_scopes -p)}'
           '--net[run checks that require internet access]'
