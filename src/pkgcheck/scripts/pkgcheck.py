@@ -123,6 +123,34 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
         setattr(namespace, self.dest, caches)
 
 
+class ScopeArgs(arghparse.CommaSeparatedNegations):
+    """Filter enabled keywords by selected scopes."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        disabled, enabled = self.parse_values(values)
+
+        # validate selected scopes
+        unknown_scopes = set(disabled + enabled) - set(base.scopes)
+        if unknown_scopes:
+            unknown = ', '.join(map(repr, unknown_scopes))
+            available = ', '.join(base.scopes)
+            s = pluralism(unknown_scopes)
+            parser.error(f'unknown scope{s}: {unknown} (available scopes: {available})')
+
+        disabled = {base.scopes[x] for x in disabled}
+        enabled = {base.scopes[x] for x in enabled}
+
+        # convert scopes to keyword lists
+        disabled_keywords = [
+            k.__name__ for k in const.KEYWORDS.values() if k.scope in disabled]
+        enabled_keywords = [
+            k.__name__ for k in const.KEYWORDS.values() if k.scope in enabled]
+
+        # filter outputted keywords
+        namespace.enabled_keywords = base.filter_update(
+            namespace.enabled_keywords, enabled_keywords, disabled_keywords)
+
+
 # These are all set based on other options, so have no default setting.
 scan = subparsers.add_parser(
     'scan', parents=(reporter_argparser,), description='scan targets for QA issues')
@@ -242,7 +270,7 @@ check_options.add_argument(
         Use ``pkgcheck show --keywords`` to see available options.
     """)
 check_options.add_argument(
-    '-s', '--scopes', metavar='SCOPE', action='csv_negations', dest='selected_scopes',
+    '-s', '--scopes', metavar='SCOPE', action=ScopeArgs,
     help='limit keywords to scan for by scope (comma-separated list)',
     docs="""
         Comma separated list of scopes to enable and disable for scanning. Any
@@ -424,31 +452,6 @@ def _validate_scan_args(parser, namespace):
         namespace.checkset = namespace.config.get_default('pkgcheck_checkset')
     if namespace.checkset is not None:
         namespace.enabled_checks = list(namespace.checkset.filter(namespace.enabled_checks))
-
-    if namespace.selected_scopes is not None:
-        disabled_scopes, enabled_scopes = namespace.selected_scopes
-
-        # validate selected scopes
-        selected_scopes = set(disabled_scopes + enabled_scopes)
-        unknown_scopes = selected_scopes - set(base.scopes)
-        if unknown_scopes:
-            unknown = ', '.join(map(repr, unknown_scopes))
-            available = ', '.join(base.scopes)
-            s = pluralism(unknown_scopes)
-            parser.error(f'unknown scope{s}: {unknown} (available scopes: {available})')
-
-        disabled_scopes = {base.scopes[x] for x in disabled_scopes}
-        enabled_scopes = {base.scopes[x] for x in enabled_scopes}
-
-        # convert scopes to keyword lists
-        disabled_keywords = [
-            k.__name__ for k in const.KEYWORDS.values() if k.scope in disabled_scopes]
-        enabled_keywords = [
-            k.__name__ for k in const.KEYWORDS.values() if k.scope in enabled_scopes]
-
-        # filter outputted keywords
-        namespace.enabled_keywords = base.filter_update(
-            namespace.enabled_keywords, enabled_keywords, disabled_keywords)
 
     if namespace.selected_keywords is not None:
         disabled_keywords, enabled_keywords = namespace.selected_keywords
