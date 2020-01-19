@@ -98,7 +98,7 @@ class CommitResult(Result):
         return False
 
 
-class ProfileResult(Result):
+class ProfilesResult(Result):
     """Result related to profiles."""
 
     scope = base.profiles_scope

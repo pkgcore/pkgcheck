@@ -12,7 +12,7 @@ from .. import addons, base, results, sources
 from . import Check
 
 
-class MultiMovePackageUpdate(results.Warning):
+class MultiMovePackageUpdate(results.ProfilesResult, results.Warning):
     """Entry for package moved multiple times in profiles/updates files."""
 
     def __init__(self, pkg, moves):
@@ -25,7 +25,7 @@ class MultiMovePackageUpdate(results.Warning):
         return f"{self.pkg!r}: multi-move update: {' -> '.join(self.moves)}"
 
 
-class OldMultiMovePackageUpdate(results.Warning):
+class OldMultiMovePackageUpdate(results.ProfilesResult, results.Warning):
     """Old entry for removed package moved multiple times in profiles/updates files.
 
     This means that the reported pkg has been moved at least three times and
@@ -43,7 +43,7 @@ class OldMultiMovePackageUpdate(results.Warning):
         return f"{self.pkg!r} unavailable: old multi-move update: {' -> '.join(self.moves)}"
 
 
-class OldPackageUpdate(results.Warning):
+class OldPackageUpdate(results.ProfilesResult, results.Warning):
     """Old entry for removed package in profiles/updates files."""
 
     def __init__(self, pkg, updates):
@@ -56,18 +56,18 @@ class OldPackageUpdate(results.Warning):
         return f"{self.pkg!r} unavailable: old update line: {' '.join(self.updates)!r}"
 
 
-class MovedPackageUpdate(results.LogWarning):
+class MovedPackageUpdate(results.ProfilesResult, results.LogWarning):
     """Entry for package already moved in profiles/updates files."""
 
 
-class BadPackageUpdate(results.LogError):
+class BadPackageUpdate(results.ProfilesResult, results.LogError):
     """Badly formatted package update in profiles/updates files."""
 
 
 class PackageUpdatesCheck(Check):
     """Scan profiles/updates/* for outdated entries and other issues."""
 
-    scope = base.repo_scope
+    scope = base.profiles_scope
     _source = sources.EmptySource
     known_results = frozenset([
         MultiMovePackageUpdate, OldMultiMovePackageUpdate,
