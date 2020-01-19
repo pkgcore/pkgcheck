@@ -94,7 +94,7 @@ class ProfilesCheck(Check):
 
     required_addons = (addons.UseAddon,)
     scope = base.profiles_scope
-    _source = sources.EmptySource
+    _source = (sources.EmptySource, (), (('scope', base.profiles_scope),))
     known_results = frozenset([
         UnknownProfilePackages, UnknownProfilePackageUse, UnknownProfileUse,
         UnknownProfilePackageKeywords, ProfileWarning, ProfileError,
@@ -355,7 +355,7 @@ class RepoProfilesCheck(Check):
 
     required_addons = (addons.ProfileAddon,)
     scope = base.profiles_scope
-    _source = sources.EmptySource
+    _source = (sources.EmptySource, (), (('scope', base.profiles_scope),))
     known_results = frozenset([
         ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,
         UnknownCategories, LaggingProfileEapi,

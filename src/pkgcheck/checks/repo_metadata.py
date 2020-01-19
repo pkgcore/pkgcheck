@@ -68,7 +68,7 @@ class PackageUpdatesCheck(Check):
     """Scan profiles/updates/* for outdated entries and other issues."""
 
     scope = base.profiles_scope
-    _source = sources.EmptySource
+    _source = (sources.EmptySource, (), (('scope', base.profiles_scope),))
     known_results = frozenset([
         MultiMovePackageUpdate, OldMultiMovePackageUpdate,
         OldPackageUpdate, MovedPackageUpdate, BadPackageUpdate,
