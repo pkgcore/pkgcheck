@@ -4,18 +4,13 @@ import re
 from collections import defaultdict
 
 from pkgcore.ebuild.eapi import EAPI
-from snakeoil.demandload import demand_compile_regexp
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import stable_unique
 from snakeoil.strings import pluralism
 
 from .. import results, sources
-from . import Check, GentooRepoCheck
-
-demand_compile_regexp(
-    'copyright_regex',
-    r'^# Copyright (?P<begin>\d{4}-)?(?P<end>\d{4}) (?P<holder>.+)$')
+from . import Check, HeaderCheck
 
 PREFIXED_VARIABLES = ('EROOT', 'ED')
 PATH_VARIABLES = ('BROOT', 'ROOT', 'D') + PREFIXED_VARIABLES
@@ -434,7 +429,7 @@ class EbuildInvalidLicenseHeader(results.InvalidLicenseHeader, results.VersionRe
     __doc__ = results.InvalidLicenseHeader.__doc__
 
 
-class EbuildHeaderCheck(GentooRepoCheck):
+class EbuildHeaderCheck(HeaderCheck):
     """Scan ebuild for incorrect copyright/license headers."""
 
     _source = sources.EbuildFileRepoSource
@@ -443,36 +438,7 @@ class EbuildHeaderCheck(GentooRepoCheck):
     _old_copyright = EbuildOldGentooCopyright
     _non_gentoo_authors = EbuildNonGentooAuthorsCopyright
     _invalid_license = EbuildInvalidLicenseHeader
-    known_results = frozenset(
-        [_invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license])
     _item_attr = 'pkg'
-
-    license_header = '# Distributed under the terms of the GNU General Public License v2'
-
-    def args(self, item):
-        return {self._item_attr: item}
-
-    def feed(self, item):
-        if item.lines:
-            line = item.lines[0].strip()
-            copyright = copyright_regex.match(line)
-            if copyright is None:
-                yield self._invalid_copyright(line, **self.args(item))
-            # Copyright policy is active since 2018-10-21, so it applies
-            # to all ebuilds committed in 2019 and later
-            elif int(copyright.group('end')) >= 2019:
-                if copyright.group('holder') == 'Gentoo Foundation':
-                    yield self._old_copyright(line, **self.args(item))
-                # Gentoo policy requires 'Gentoo Authors'
-                elif copyright.group('holder') != 'Gentoo Authors':
-                    yield self._non_gentoo_authors(line, **self.args(item))
-
-            try:
-                line = item.lines[1].strip('\n')
-            except IndexError:
-                line = ''
-            if line != self.license_header:
-                yield self._invalid_license(line, **self.args(item))
 
 
 class HomepageInSrcUri(results.VersionResult, results.Warning):
