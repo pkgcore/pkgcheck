@@ -113,7 +113,15 @@ class ExplicitlyEnabledCheck(Check):
 
 
 class GitCheck(ExplicitlyEnabledCheck):
-    """Check that is only run when explicitly enabled or via the --commits git option."""
+    """Check that is only run when explicitly enabled via the --commits git option."""
+
+    @classmethod
+    def skip(cls, namespace, skip=False):
+        if not skip:
+            skip = namespace.commits is None
+            if skip:
+                logger.info(f'skipping {cls.__name__}, not explicitly enabled')
+        return super().skip(namespace, skip=skip)
 
 
 class AsyncCheck(Check):

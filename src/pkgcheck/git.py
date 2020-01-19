@@ -300,7 +300,7 @@ class GitAddon(base.Addon, base.CachedAddon):
         group = parser.add_argument_group('git', docs=cls.__doc__)
         group.add_argument(
             '--commits', action=_ScanCommits, nargs='?',
-            metavar='COMMIT', const='origin', default=False,
+            metavar='COMMIT', const='origin', default=None,
             help="determine scan targets from local git repo commits",
             docs="""
                 For a local git repo, pkgcheck will pull package targets to
