@@ -568,7 +568,7 @@ def selected_check(options, scan_scope, scope):
                 # Allow checks with special scopes to be run when specifically
                 # requested, e.g. eclass-only scanning.
                 return True
-    elif scope > 0 and scope <= scan_scope:
+    elif scan_scope > 0 and scope >= scan_scope:
         # Only run pkg-related checks at or below the current scan scope level, if
         # pkg scanning is requested, e.g. skip repo level checks when scanning at
         # package level.

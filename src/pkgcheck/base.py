@@ -72,22 +72,22 @@ class Scope:
 
 
 # pkg-related scope levels
-version_scope = Scope('version', 1)
-package_scope = Scope('package', 2)
-category_scope = Scope('category', 3)
-repo_scope = Scope('repo', 4)
+repo_scope = Scope('repo', 1)
+category_scope = Scope('category', 2)
+package_scope = Scope('package', 3)
+version_scope = Scope('version', 4)
 
 # Special scope levels, scopes with negative levels are only enabled under
 # certain circumstances while location specific scopes have a level of 0.
 commit_scope = Scope('commit', -1)
-eclass_scope = Scope('eclass', 0)
 profiles_scope = Scope('profiles', 0)
+eclass_scope = Scope('eclass', 0)
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
 scopes = ImmutableDict({
     'git': commit_scope,
-    'eclass': eclass_scope,
     'profiles': profiles_scope,
+    'eclass': eclass_scope,
     'repo': repo_scope,
     'cat': category_scope,
     'pkg': package_scope,

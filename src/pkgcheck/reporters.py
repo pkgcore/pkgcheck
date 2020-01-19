@@ -46,10 +46,8 @@ class Reporter:
                 self.report(result)
         else:
             ordered_results = {
-                base.eclass_scope: [],
-                base.profiles_scope: [],
-                base.repo_scope: [],
-                base.commit_scope: [],
+                scope: [] for scope in reversed(list(base.scopes.values()))
+                if scope.level <= base.repo_scope
             }
             for results in iter(results_q.get, None):
                 for result in sorted(results):
