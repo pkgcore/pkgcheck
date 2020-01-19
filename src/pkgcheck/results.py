@@ -115,6 +115,7 @@ class EclassResult(Result):
                 if self.__class__.__name__ == other.__class__.__name__:
                     return self.desc < other.desc
                 return self.__class__.__name__ < other.__class__.__name__
+            return self.eclass < other.eclass
         except AttributeError as e:
             pass
         return False
