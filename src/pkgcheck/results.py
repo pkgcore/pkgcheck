@@ -280,6 +280,19 @@ class MetadataError(VersionResult, Error, metaclass=_RegisterMetadataErrors):
             return f'attr({self.attr}): {self.msg}'
 
 
+class IncorrectCopyright(Warning):
+    """Changed file with incorrect copyright date."""
+
+    def __init__(self, year, line, **kwargs):
+        super().__init__(**kwargs)
+        self.year = year
+        self.line = line
+
+    @property
+    def desc(self):
+        return f'incorrect copyright year {self.year}: {self.line!r}'
+
+
 class _FileHeaderResult(Result):
     """Generic file header result."""
 

@@ -61,20 +61,7 @@ class GitCommitsSource(sources.Source):
         super().__init__(*args, source=git_addon.commits())
 
 
-class _IncorrectCopyright(results.Warning):
-    """Changed file with incorrect copyright date."""
-
-    def __init__(self, year, line, **kwargs):
-        super().__init__(**kwargs)
-        self.year = year
-        self.line = line
-
-    @property
-    def desc(self):
-        return f'incorrect copyright year {self.year}: {self.line!r}'
-
-
-class IncorrectEbuildCopyright(_IncorrectCopyright, results.VersionResult):
+class EbuildIncorrectCopyright(results.IncorrectCopyright, results.VersionResult):
     """Changed ebuild with incorrect copyright date."""
 
 
@@ -210,7 +197,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     required_addons = (git.GitAddon,)
     known_results = frozenset([
         DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,
-        IncorrectEbuildCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
+        EbuildIncorrectCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
     ])
 
     def __init__(self, *args, git_addon):
@@ -291,7 +278,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             if copyright:
                 year = copyright.group(1).split('-')[-1]
                 if int(year) != self.today.year:
-                    yield IncorrectEbuildCopyright(year, line.strip('\n'), pkg=pkg)
+                    yield EbuildIncorrectCopyright(year, line.strip('\n'), pkg=pkg)
 
             # checks for newly added ebuilds
             if git_pkg.status == 'A':
@@ -500,7 +487,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
             yield from func(self, tag, values, commit)
 
 
-class IncorrectEclassCopyright(_IncorrectCopyright, results.EclassResult):
+class EclassIncorrectCopyright(results.IncorrectCopyright, results.EclassResult):
     """Changed eclass with incorrect copyright date."""
 
     @property
@@ -513,7 +500,7 @@ class GitEclassCommitsCheck(GentooRepoCheck, GitCheck):
 
     scope = base.eclass_scope
     _source = sources.EclassRepoSource
-    known_results = frozenset([IncorrectEclassCopyright])
+    known_results = frozenset([EclassIncorrectCopyright])
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -526,4 +513,4 @@ class GitEclassCommitsCheck(GentooRepoCheck, GitCheck):
         if copyright:
             year = copyright.group(1).split('-')[-1]
             if int(year) != self.today.year:
-                yield IncorrectEclassCopyright(year, line.strip('\n'), eclass=eclass)
+                yield EclassIncorrectCopyright(year, line.strip('\n'), eclass=eclass)
