@@ -508,7 +508,7 @@ class GitEclassCommitsCheck(GentooRepoCheck, GitCheck):
 
     def feed(self, eclass):
         # check copyright on new/modified eclasses
-        line = next(eclass.lines)
+        line = next(iter(eclass.lines))
         copyright = copyright_regex.match(line)
         if copyright:
             year = copyright.group(1).split('-')[-1]
