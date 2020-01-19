@@ -14,7 +14,7 @@ from .. import results, sources
 from . import Check, GentooRepoCheck
 
 demand_compile_regexp(
-    'ebuild_copyright_regex',
+    'copyright_regex',
     r'^# Copyright (?P<begin>\d{4}-)?(?P<end>\d{4}) (?P<holder>.+)$')
 
 PREFIXED_VARIABLES = ('EROOT', 'ED')
@@ -418,109 +418,61 @@ class ObsoleteUriCheck(Check):
                     yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)
 
 
-class _EbuildHeaderResult(results.VersionResult):
-    """Generic ebuild header result."""
-
-    def __init__(self, line, **kwargs):
-        super().__init__(**kwargs)
-        self.line = line
+class EbuildInvalidCopyright(results.InvalidCopyright, results.VersionResult):
+    __doc__ = results.InvalidCopyright.__doc__
 
 
-class InvalidCopyright(_EbuildHeaderResult, results.Error):
-    """Ebuild with invalid copyright.
-
-    The ebuild does not start with a valid copyright line. Each ebuild must
-    start with a copyright line of the form:
-
-        # Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]... [and others]
-
-    Ebuilds in the Gentoo repository must use:
-
-        # Copyright YEARS Gentoo Authors
-    """
-
-    @property
-    def desc(self):
-        return f'invalid copyright: {self.line!r}'
+class EbuildOldGentooCopyright(results.OldGentooCopyright, results.VersionResult):
+    __doc__ = results.OldGentooCopyright.__doc__
 
 
-class OldGentooCopyright(_EbuildHeaderResult, results.Warning):
-    """Ebuild with old Gentoo Foundation copyright.
-
-    The ebuild still assigns copyright to the Gentoo Foundation even though
-    it has been committed after the new copyright policy was approved
-    (2018-10-21).
-
-    The ebuilds in Gentoo repository must use 'Gentoo Authors' instead. Ebuilds
-    in other repositories may specify an explicit copyright holder instead.
-    """
-
-    @property
-    def desc(self):
-        return f'old copyright, update to "Gentoo Authors": {self.line!r}'
+class EbuildNonGentooAuthorsCopyright(results.NonGentooAuthorsCopyright, results.VersionResult):
+    __doc__ = results.NonGentooAuthorsCopyright.__doc__
 
 
-class NonGentooAuthorsCopyright(_EbuildHeaderResult, results.Error):
-    """Ebuild with copyright stating owner other than "Gentoo Authors".
-
-    The ebuild specifies explicit copyright owner, while the Gentoo repository
-    policy specifies that all ebuilds must use "Gentoo Authors". If the owner
-    is not listed in metadata/AUTHORS, addition can be requested via
-    bugs.gentoo.org.
-    """
-
-    @property
-    def desc(self):
-        return f'copyright line must state "Gentoo Authors": {self.line!r}'
-
-
-class InvalidLicenseHeader(_EbuildHeaderResult, results.Error):
-    """Ebuild with invalid license header.
-
-    The ebuild does not have with a valid license header.
-
-    Ebuilds in the Gentoo repository must use:
-
-        # Distributed under the terms of the GNU General Public License v2
-    """
-
-    @property
-    def desc(self):
-        return f'invalid license header: {self.line!r}'
+class EbuildInvalidLicenseHeader(results.InvalidLicenseHeader, results.VersionResult):
+    __doc__ = results.InvalidLicenseHeader.__doc__
 
 
 class EbuildHeaderCheck(GentooRepoCheck):
     """Scan ebuild for incorrect copyright/license headers."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = frozenset([
-        InvalidCopyright, OldGentooCopyright, NonGentooAuthorsCopyright,
-        InvalidLicenseHeader,
-    ])
+
+    _invalid_copyright = EbuildInvalidCopyright
+    _old_copyright = EbuildOldGentooCopyright
+    _non_gentoo_authors = EbuildNonGentooAuthorsCopyright
+    _invalid_license = EbuildInvalidLicenseHeader
+    known_results = frozenset(
+        [_invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license])
+    _item_attr = 'pkg'
 
     license_header = '# Distributed under the terms of the GNU General Public License v2'
 
-    def feed(self, pkg):
-        if pkg.lines:
-            line = pkg.lines[0].strip()
-            copyright = ebuild_copyright_regex.match(line)
+    def args(self, item):
+        return {self._item_attr: item}
+
+    def feed(self, item):
+        if item.lines:
+            line = item.lines[0].strip()
+            copyright = copyright_regex.match(line)
             if copyright is None:
-                yield InvalidCopyright(line, pkg=pkg)
+                yield self._invalid_copyright(line, **self.args(item))
             # Copyright policy is active since 2018-10-21, so it applies
             # to all ebuilds committed in 2019 and later
             elif int(copyright.group('end')) >= 2019:
                 if copyright.group('holder') == 'Gentoo Foundation':
-                    yield OldGentooCopyright(line, pkg=pkg)
+                    yield self._old_copyright(line, **self.args(item))
                 # Gentoo policy requires 'Gentoo Authors'
                 elif copyright.group('holder') != 'Gentoo Authors':
-                    yield NonGentooAuthorsCopyright(line, pkg=pkg)
+                    yield self._non_gentoo_authors(line, **self.args(item))
 
             try:
-                line = pkg.lines[1].strip('\n')
+                line = item.lines[1].strip('\n')
             except IndexError:
                 line = ''
             if line != self.license_header:
-                yield InvalidLicenseHeader(line, pkg=pkg)
+                yield self._invalid_license(line, **self.args(item))
 
 
 class HomepageInSrcUri(results.VersionResult, results.Warning):

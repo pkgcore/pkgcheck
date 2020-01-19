@@ -1,8 +1,8 @@
 from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism
 
-from .. import results
-from . import Check
+from .. import base, results, sources
+from . import Check, codingstyle
 
 
 class DeprecatedEclass(results.VersionResult, results.Warning):
@@ -161,3 +161,50 @@ class EclassUsageCheck(Check):
             yield DuplicateEclassInherits(sorted(duplicates), pkg=pkg)
         if deprecated:
             yield DeprecatedEclass(sorted(deprecated), pkg=pkg)
+
+
+class EclassInvalidCopyright(results.InvalidCopyright, results.EclassResult):
+    __doc__ = results.InvalidCopyright.__doc__
+
+    @property
+    def desc(self):
+        return f'{self.eclass}: {super().desc}'
+
+
+class EclassOldGentooCopyright(results.OldGentooCopyright, results.EclassResult):
+    __doc__ = results.OldGentooCopyright.__doc__
+
+    @property
+    def desc(self):
+        return f'{self.eclass}: {super().desc}'
+
+
+class EclassNonGentooAuthorsCopyright(results.NonGentooAuthorsCopyright, results.EclassResult):
+    __doc__ = results.NonGentooAuthorsCopyright.__doc__
+
+    @property
+    def desc(self):
+        return f'{self.eclass}: {super().desc}'
+
+
+class EclassInvalidLicenseHeader(results.InvalidLicenseHeader, results.EclassResult):
+    __doc__ = results.InvalidLicenseHeader.__doc__
+
+    @property
+    def desc(self):
+        return f'{self.eclass}: {super().desc}'
+
+
+class EclassHeaderCheck(codingstyle.EbuildHeaderCheck):
+    """Scan eclasses for incorrect copyright/license headers."""
+
+    scope = base.eclass_scope
+    _source = sources.EclassRepoSource
+
+    _invalid_copyright = EclassInvalidCopyright
+    _old_copyright = EclassOldGentooCopyright
+    _non_gentoo_authors = EclassNonGentooAuthorsCopyright
+    _invalid_license = EclassInvalidLicenseHeader
+    known_results = frozenset(
+        [_invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license])
+    _item_attr = 'eclass'

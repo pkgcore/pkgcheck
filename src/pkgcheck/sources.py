@@ -121,10 +121,13 @@ class Eclass:
         self.name = name
         self.path = path
 
+    def __str__(self):
+        return self.name
+
     @property
     def lines(self):
         with open(self.path) as f:
-            yield from f
+            return tuple(f)
 
     def __lt__(self, other):
         if isinstance(other, Eclass):

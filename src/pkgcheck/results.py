@@ -105,7 +105,7 @@ class EclassResult(Result):
 
     def __init__(self, eclass, **kwargs):
         super().__init__(**kwargs)
-        self.eclass = eclass
+        self.eclass = str(eclass)
         self._attr = 'eclass'
 
     def __lt__(self, other):
@@ -278,3 +278,75 @@ class MetadataError(VersionResult, Error, metaclass=_RegisterMetadataErrors):
             return self.msg
         else:
             return f'attr({self.attr}): {self.msg}'
+
+
+class _FileHeaderResult(Result):
+    """Generic file header result."""
+
+    def __init__(self, line, **kwargs):
+        super().__init__(**kwargs)
+        self.line = line
+
+
+class InvalidCopyright(_FileHeaderResult, Error):
+    """File with invalid copyright.
+
+    The file does not start with a valid copyright line. Each ebuild or eclass
+    file must start with a copyright line of the form:
+
+        # Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]... [and others]
+
+    Files in the Gentoo repository must use:
+
+        # Copyright YEARS Gentoo Authors
+    """
+
+    @property
+    def desc(self):
+        return f'invalid copyright: {self.line!r}'
+
+
+class OldGentooCopyright(_FileHeaderResult, Warning):
+    """File with old Gentoo Foundation copyright.
+
+    The file still assigns copyright to the Gentoo Foundation even though
+    it has been committed after the new copyright policy was approved
+    (2018-10-21).
+
+    Ebuilds and eclasses in Gentoo repository must use 'Gentoo Authors'
+    instead. Files in other repositories may specify an explicit copyright
+    holder instead.
+    """
+
+    @property
+    def desc(self):
+        return f'old copyright, update to "Gentoo Authors": {self.line!r}'
+
+
+class NonGentooAuthorsCopyright(_FileHeaderResult, Error):
+    """File with copyright stating owner other than "Gentoo Authors".
+
+    The file specifies explicit copyright owner, while the Gentoo repository
+    policy specifies that all ebuilds and eclasses must use "Gentoo Authors".
+    If the owner is not listed in metadata/AUTHORS, addition can be requested
+    via bugs.gentoo.org.
+    """
+
+    @property
+    def desc(self):
+        return f'copyright line must state "Gentoo Authors": {self.line!r}'
+
+
+class InvalidLicenseHeader(_FileHeaderResult, Error):
+    """File with invalid license header.
+
+    The file does not have with a valid license header.
+
+    Ebuilds and eclasses in the Gentoo repository must use:
+
+        # Distributed under the terms of the GNU General Public License v2
+    """
+
+    @property
+    def desc(self):
+        return f'invalid license header: {self.line!r}'

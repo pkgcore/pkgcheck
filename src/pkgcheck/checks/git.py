@@ -505,7 +505,7 @@ class IncorrectEclassCopyright(_IncorrectCopyright, results.EclassResult):
 
     @property
     def desc(self):
-        return f'{self.eclass.name}: {super().desc}'
+        return f'{self.eclass}: {super().desc}'
 
 
 class GitEclassCommitsCheck(GentooRepoCheck, GitCheck):
