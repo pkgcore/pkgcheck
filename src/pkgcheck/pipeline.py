@@ -130,7 +130,7 @@ class CheckRunner:
         scope = base.version_scope
         self._known_results = set()
         for check in self.checks:
-            if check.scope > scope:
+            if check.scope < scope:
                 scope = check.scope
             self._known_results.update(check.known_results)
 
