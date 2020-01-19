@@ -562,11 +562,10 @@ def selected_check(options, scan_scope, scope):
             if scan_scope is base.repo_scope or scope is scan_scope:
                 # Allow repo scans or cwd scope to trigger location specific checks.
                 return True
-        else:
-            if scope in options.selected_scope[1]:
-                # Allow checks with special scopes to be run when specifically
-                # requested, e.g. eclass-only scanning.
-                return True
+        elif scope in options.selected_scope[1]:
+            # Allow checks with special scopes to be run when specifically
+            # requested, e.g. eclass-only scanning.
+            return True
     elif scan_scope > 0 and scope >= scan_scope:
         # Only run pkg-related checks at or below the current scan scope level, if
         # pkg scanning is requested, e.g. skip repo level checks when scanning at
