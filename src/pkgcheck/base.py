@@ -43,19 +43,29 @@ class Scope:
         return f'<{self.__class__.__name__} desc={self.desc!r} {address}>'
 
     def __lt__(self, other):
-        return self.level < other.level
+        if isinstance(other, Scope):
+            return self.level < other.level
+        return self.level < other
 
     def __gt__(self, other):
-        return self.level > other.level
+        if isinstance(other, Scope):
+            return self.level > other.level
+        return self.level > other
 
     def __le__(self, other):
-        return self.level <= other.level
+        if isinstance(other, Scope):
+            return self.level <= other.level
+        return self.level <= other
 
     def __ge__(self, other):
-        return self.level >= other.level
+        if isinstance(other, Scope):
+            return self.level >= other.level
+        return self.level >= other
 
     def __eq__(self, other):
-        return self.level == other.level
+        if isinstance(other, Scope):
+            return self.level == other.level
+        return self.level == other
 
     def __hash__(self):
         return hash(self.level)
