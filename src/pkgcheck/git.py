@@ -6,6 +6,7 @@ import pickle
 import shlex
 import subprocess
 from collections import UserDict
+from functools import partial
 
 from pathspec import PathSpec
 from pkgcore.ebuild import cpv
@@ -13,9 +14,10 @@ from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
-from pkgcore.restrictions import packages
+from pkgcore.restrictions import packages, values
 from snakeoil.cli.exceptions import UserException
 from snakeoil.demandload import demand_compile_regexp
+from snakeoil.iterables import partition
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
@@ -26,11 +28,12 @@ from . import base
 from .checks import GitCheck
 from .log import logger
 
-# hacky ebuild path regexes for git log parsing, proper atom validation is handled later
+# hacky path regexes for git log parsing, proper validation is handled later
 _ebuild_path_regex_raw = '([^/]+)/([^/]+)/([^/]+)\\.ebuild'
 _ebuild_path_regex = '(?P<category>[^/]+)/(?P<PN>[^/]+)/(?P<P>[^/]+)\\.ebuild'
 demand_compile_regexp('ebuild_ADM_regex', fr'^(?P<status>[ADM])\t{_ebuild_path_regex}$')
 demand_compile_regexp('ebuild_R_regex', fr'^(?P<status>R)\d+\t{_ebuild_path_regex_raw}\t{_ebuild_path_regex}$')
+demand_compile_regexp('eclass_regex', r'^eclass/(?P<eclass>\w+)\.eclass$')
 
 
 class GitCommit:
@@ -310,6 +313,11 @@ class GitAddon(base.Addon, base.CachedAddon):
                 named 'old' and 'new' use ``pkgcheck scan --commits old..new``.
             """)
 
+    @staticmethod
+    def _committed_eclass(committed, eclass):
+        """Stub method for matching eclasses against commits."""
+        return eclass in committed
+
     @classmethod
     def check_args(cls, parser, namespace):
         if namespace.commits:
@@ -320,9 +328,10 @@ class GitAddon(base.Addon, base.CachedAddon):
 
             ref = namespace.commits
             repo = namespace.target_repo
+            targets = list(repo.category_dirs) + ['eclass']
             try:
                 p = subprocess.run(
-                    ['git', 'diff', '--cached', ref, '--name-only'] + list(repo.category_dirs),
+                    ['git', 'diff', '--cached', ref, '--name-only'] + targets,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                     cwd=repo.location, encoding='utf8')
             except FileNotFoundError:
@@ -332,13 +341,29 @@ class GitAddon(base.Addon, base.CachedAddon):
                 error = p.stderr.splitlines()[0]
                 parser.error(f'failed running git: {error}')
             elif not p.stdout:
-                # no pkg changes exist
+                # no changes exist, exit early
                 parser.exit()
 
-            changes = p.stdout.splitlines()
-            pkgs = sorted(atom_cls(os.sep.join(x.split(os.sep, 2)[:2])) for x in changes)
-            combined_restrict = packages.OrRestriction(*pkgs)
-            namespace.restrictions = [(base.package_scope, combined_restrict)]
+            pkgs, eclasses = partition(
+                p.stdout.splitlines(), predicate=lambda x: x.startswith('eclass/'))
+            pkgs = sorted(atom_cls(os.sep.join(x.split(os.sep, 2)[:2])) for x in pkgs)
+            eclasses = filter(None, (eclass_regex.match(x) for x in eclasses))
+            eclasses = sorted(x.group('eclass') for x in eclasses)
+
+            restrictions = []
+            if pkgs:
+                restrict = packages.OrRestriction(*pkgs)
+                restrictions.append((base.package_scope, restrict))
+            if eclasses:
+                func = partial(cls._committed_eclass, frozenset(eclasses))
+                restrict = values.AnyMatch(values.FunctionRestriction(func))
+                restrictions.append((base.eclass_scope, restrict))
+
+            # no pkgs or eclasses to check, exit early
+            if not restrictions:
+                parser.exit()
+
+            namespace.restrictions = restrictions
 
     def __init__(self, *args):
         super().__init__(*args)
