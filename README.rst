@@ -12,6 +12,13 @@ git will often require both pkgcore and snakeoil from git as well.
 
 For releases, see the required runtime dependencies_.
 
+There are also several optional runtime dependencies that add or extend check
+support in various ways if found on the host system including the following:
+
+- git_: supports historical queries for git-based repos
+- requests_: supports various network-related checks
+- Gentoo-PerlMod-Version_: supports Perl version checks
+
 Installing
 ==========
 
@@ -51,6 +58,9 @@ the following::
 .. _pkgcore: https://github.com/pkgcore/pkgcore
 .. _snakeoil: https://github.com/pkgcore/snakeoil
 .. _dependencies: https://github.com/pkgcore/pkgcheck/blob/master/requirements/install.txt
+.. _git: https://git-scm.com/
+.. _requests: https://pypi.org/project/requests/
+.. _Gentoo-PerlMod-version: https://metacpan.org/release/Gentoo-PerlMod-Version
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcheck.svg
     :target: https://pypi.python.org/pypi/pkgcheck
