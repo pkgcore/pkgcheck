@@ -544,6 +544,23 @@ def _validate_scan_args(parser, namespace):
         parser.error(str(e))
 
 
+def selected_check(options, scan_scope, scope):
+    """Verify check scope against current scan scope to determine check activation."""
+    if scope > 0 and scope <= scan_scope:
+        # Only run pkg-related checks at or below the current scan scope level,
+        # if pkg scanning is requested, e.g. skip repo level checks when
+        # scanning at package level.
+        return True
+    elif scan_scope == 0 and scope is scan_scope:
+        # Allow checks with special scopes to be run when specifically
+        # requested, e.g. eclass-only scanning.
+        return True
+    elif options.commits and scan_scope != 0 and scope is base.commit_scope:
+        # Only enable commit-related checks when --commits is specified.
+        return True
+    return False
+
+
 @scan.bind_main_func
 def _scan(options, out, err):
     enabled_checks, caches = init_checks(options.pop('addons'), options)
@@ -561,13 +578,12 @@ def _scan(options, out, err):
     with options.reporter(out, verbosity=options.verbosity,
                           keywords=options.filtered_keywords) as reporter:
         for scan_scope, restrict in options.restrictions:
-            # Skip checks higher than the current scan scope level, e.g. skip repo
-            # level checks when scanning at package level.
-            selected = lambda scope: (
-                (scope > 0 and scope <= scan_scope) or
-                (scan_scope == 0 and scope is scan_scope) or
-                (options.commits and scan_scope != 0 and scope is base.commit_scope))
-            pipes = [d for scope, d in enabled_checks.items() if selected(scope)]
+            # filter enabled checks based on the current scanning scope
+            pipes = [
+                d for scope, d in enabled_checks.items()
+                if selected_check(options, scan_scope, scope)
+            ]
+
             if not pipes:
                 err.write(f'{scan.prog}: no matching checks available for {scan_scope} scope')
                 continue
