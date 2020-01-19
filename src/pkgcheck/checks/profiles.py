@@ -15,7 +15,7 @@ from .. import addons, base, results, sources
 from . import Check
 
 
-class UnknownProfilePackages(results.Warning):
+class UnknownProfilePackages(results.ProfileResult, results.Warning):
     """Profile files include package entries that don't exist in the repo."""
 
     def __init__(self, path, packages):
@@ -30,7 +30,7 @@ class UnknownProfilePackages(results.Warning):
         return f'{self.path!r}: unknown package{s}: [ {packages} ]'
 
 
-class UnknownProfilePackageUse(results.Warning):
+class UnknownProfilePackageUse(results.ProfileResult, results.Warning):
     """Profile files include entries with USE flags that aren't used on any matching packages."""
 
     def __init__(self, path, package, flags):
@@ -46,7 +46,7 @@ class UnknownProfilePackageUse(results.Warning):
         return f'{self.path!r}: unknown package USE flag{s}: [ {self.package}[{flags}] ]'
 
 
-class UnknownProfileUse(results.Warning):
+class UnknownProfileUse(results.ProfileResult, results.Warning):
     """Profile files include USE flags that don't exist."""
 
     def __init__(self, path, flags):
@@ -61,7 +61,7 @@ class UnknownProfileUse(results.Warning):
         return f'{self.path!r}: unknown USE flag{s}: [ {flags} ]'
 
 
-class UnknownProfilePackageKeywords(results.Warning):
+class UnknownProfilePackageKeywords(results.ProfileResult, results.Warning):
     """Profile files include package keywords that don't exist."""
 
     def __init__(self, path, package, keywords):
@@ -77,11 +77,11 @@ class UnknownProfilePackageKeywords(results.Warning):
         return f'{self.path!r}: unknown package keyword{s}: {self.package}: [ {keywords} ]'
 
 
-class ProfileWarning(results.LogWarning):
+class ProfileWarning(results.ProfileResult, results.LogWarning):
     """Badly formatted data in various profile files."""
 
 
-class ProfileError(results.LogError):
+class ProfileError(results.ProfileResult, results.LogError):
     """Erroneously formatted data in various profile files."""
 
 
@@ -93,7 +93,7 @@ class ProfilesCheck(Check):
     """Scan repo profiles for unknown flags/packages."""
 
     required_addons = (addons.UseAddon,)
-    scope = base.repo_scope
+    scope = base.profiles_scope
     _source = sources.EmptySource
     known_results = frozenset([
         UnknownProfilePackages, UnknownProfilePackageUse, UnknownProfileUse,
@@ -257,7 +257,7 @@ class ProfilesCheck(Check):
                         str(pkg), keywords)
 
 
-class UnusedProfileDirs(results.Warning):
+class UnusedProfileDirs(results.ProfileResult, results.Warning):
     """Unused profile directories detected."""
 
     def __init__(self, dirs):
@@ -271,7 +271,7 @@ class UnusedProfileDirs(results.Warning):
         return f'unused profile dir{s}: {dirs}'
 
 
-class ArchesWithoutProfiles(results.Warning):
+class ArchesWithoutProfiles(results.ProfileResult, results.Warning):
     """Arches without corresponding profile listings."""
 
     def __init__(self, arches):
@@ -285,7 +285,7 @@ class ArchesWithoutProfiles(results.Warning):
         return f'arch{es} without profiles: {arches}'
 
 
-class NonexistentProfilePath(results.Error):
+class NonexistentProfilePath(results.ProfileResult, results.Error):
     """Specified profile path in profiles.desc doesn't exist."""
 
     def __init__(self, path):
@@ -297,7 +297,7 @@ class NonexistentProfilePath(results.Error):
         return f'nonexistent profile path: {self.path!r}'
 
 
-class LaggingProfileEapi(results.Warning):
+class LaggingProfileEapi(results.ProfileResult, results.Warning):
     """Profile has an EAPI that is older than one of its parents."""
 
     def __init__(self, profile, eapi, parent, parent_eapi):
@@ -315,7 +315,7 @@ class LaggingProfileEapi(results.Warning):
         )
 
 
-class UnknownCategories(results.Warning):
+class UnknownCategories(results.ProfileResult, results.Warning):
     """Category directories that aren't listed in a repo's categories.
 
     Or the categories of the repo's masters as well.
@@ -354,7 +354,7 @@ class RepoProfilesCheck(Check):
     """
 
     required_addons = (addons.ProfileAddon,)
-    scope = base.repo_scope
+    scope = base.profiles_scope
     _source = sources.EmptySource
     known_results = frozenset([
         ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,

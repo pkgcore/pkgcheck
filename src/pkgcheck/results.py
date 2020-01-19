@@ -98,6 +98,12 @@ class CommitResult(Result):
         return False
 
 
+class ProfileResult(Result):
+    """Result related to profiles."""
+
+    scope = base.profiles_scope
+
+
 class EclassResult(Result):
     """Result related to a specific eclass."""
 

@@ -47,6 +47,7 @@ class Reporter:
         else:
             ordered_results = {
                 base.eclass_scope: [],
+                base.profiles_scope: [],
                 base.repo_scope: [],
                 base.commit_scope: [],
             }

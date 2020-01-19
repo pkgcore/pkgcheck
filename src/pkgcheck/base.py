@@ -81,11 +81,13 @@ repo_scope = Scope('repo', 4)
 # certain circumstances while location specific scopes have a level of 0.
 commit_scope = Scope('commit', -1)
 eclass_scope = Scope('eclass', 0)
+profiles_scope = Scope('profiles', 0)
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
 scopes = ImmutableDict({
     'git': commit_scope,
     'eclass': eclass_scope,
+    'profiles': profiles_scope,
     'repo': repo_scope,
     'cat': category_scope,
     'pkg': package_scope,
