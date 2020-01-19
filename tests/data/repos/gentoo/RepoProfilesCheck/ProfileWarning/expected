@@ -1,2 +1,2 @@
-repo
+profiles
   ProfileWarning: gentoo::profiles/profiles.desc, line 1: unknown profile status: 'unknown'

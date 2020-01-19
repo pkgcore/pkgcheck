@@ -1,4 +1,4 @@
-repo
+profiles
   ProfileError: deprecated profile missing replacement: 'deprecated/empty/deprecated'
   ProfileError: nonexistent replacement 'default/nonexistent' for deprecated profile: 'deprecated/nonexistent'
   ProfileError: repo 'profiledir': 'default/bad_parent/parent' (line 1), bad profile parent '../nonexistent': nonexistent profile directory

@@ -1,2 +1,2 @@
-repo
+profiles
   LaggingProfileEapi: 'default/linux/lagging' profile has EAPI 0, 'default/linux' parent has EAPI 5
