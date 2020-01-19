@@ -560,6 +560,9 @@ def selected_check(options, scan_scope, scope):
         # Allow checks with special scopes to be run when specifically
         # requested, e.g. eclass-only scanning.
         return True
+    elif scan_scope is base.repo_scope and scope == 0:
+        # Allow repo scans to trigger location specific checks, e.g. eclass checks.
+        return True
     elif options.commits and scan_scope != 0 and scope is base.commit_scope:
         # Only enable commit-related checks when --commits is specified.
         return True
