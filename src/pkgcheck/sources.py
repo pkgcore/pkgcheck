@@ -26,6 +26,15 @@ class Source:
         yield from self.source
 
 
+class EmptySource(Source):
+    """Empty source meant for skipping item feed."""
+
+    feed_type = base.repo_scope
+
+    def __init__(self, options):
+        super().__init__(options, source=())
+
+
 class RepoSource(Source):
     """Base template for a repository source."""
 
@@ -51,15 +60,6 @@ class RepoSource(Source):
             yield from LatestPkgsFilter(unfiltered_iter)
         else:
             yield from unfiltered_iter
-
-
-class EmptySource(Source):
-    """Empty source meant for skipping feed."""
-
-    feed_type = base.repo_scope
-
-    def __init__(self, options):
-        super().__init__(options, source=())
 
 
 class LatestPkgsFilter:
@@ -112,6 +112,44 @@ class LatestPkgsFilter:
                 self._pkg_cache.extend(selected_pkgs.values())
 
         return self._pkg_cache.popleft()
+
+
+class Eclass:
+    """Generic eclass object."""
+
+    def __init__(self, name, path):
+        self.name = name
+        self.path = path
+
+    @property
+    def lines(self):
+        with open(self.path) as f:
+            yield from f
+
+    def __lt__(self, other):
+        if isinstance(other, Eclass):
+            return self.name < other.name
+        return self.name < other
+
+    def __eq__(self, other):
+        if isinstance(other, Eclass):
+            return self.name == other.name
+        return self.name == other
+
+
+class EclassRepoSource(RepoSource):
+    """Repository eclass source."""
+
+    feed_type = base.eclass_scope
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.eclasses = self._repo.eclass_cache.eclasses
+
+    def itermatch(self, restrict, **kwargs):
+        for x in self.eclasses:
+            if restrict.match([x]):
+                yield Eclass(x, self.eclasses[x].path)
 
 
 class FilteredRepoSource(RepoSource):

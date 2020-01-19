@@ -98,6 +98,28 @@ class CommitResult(Result):
         return False
 
 
+class EclassResult(Result):
+    """Result related to a specific eclass."""
+
+    scope = base.eclass_scope
+
+    def __init__(self, eclass, **kwargs):
+        super().__init__(**kwargs)
+        self.eclass = eclass
+        self._attr = 'eclass'
+
+    def __lt__(self, other):
+        try:
+            # if eclasses match, sort by name/desc
+            if self.eclass == other.eclass:
+                if self.__class__.__name__ == other.__class__.__name__:
+                    return self.desc < other.desc
+                return self.__class__.__name__ < other.__class__.__name__
+        except AttributeError as e:
+            pass
+        return False
+
+
 class CategoryResult(Result):
     """Result related to a specific category."""
 

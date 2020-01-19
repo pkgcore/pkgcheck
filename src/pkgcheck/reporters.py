@@ -45,7 +45,11 @@ class Reporter:
             for result in sorted(results):
                 self.report(result)
         else:
-            ordered_results = {base.repo_scope: [], base.commit_scope: []}
+            ordered_results = {
+                base.eclass_scope: [],
+                base.repo_scope: [],
+                base.commit_scope: [],
+            }
             for results in iter(results_q.get, None):
                 for result in sorted(results):
                     try:

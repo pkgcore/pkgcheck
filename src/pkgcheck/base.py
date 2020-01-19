@@ -71,15 +71,20 @@ class Scope:
         return hash(self.level)
 
 
-version_scope = Scope('version', 0)
-package_scope = Scope('package', 1)
-category_scope = Scope('category', 2)
-repo_scope = Scope('repo', 3)
-commit_scope = Scope('commit', 4)
+# pkg-related scope levels
+version_scope = Scope('version', 1)
+package_scope = Scope('package', 2)
+category_scope = Scope('category', 3)
+repo_scope = Scope('repo', 4)
+
+# special scope levels
+commit_scope = Scope('commit', -1)
+eclass_scope = Scope('eclass', 0)
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
 scopes = ImmutableDict({
     'git': commit_scope,
+    'eclass': eclass_scope,
     'repo': repo_scope,
     'cat': category_scope,
     'pkg': package_scope,

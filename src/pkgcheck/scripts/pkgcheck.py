@@ -564,10 +564,12 @@ def _scan(options, out, err):
             # Skip checks higher than the current scan scope level, e.g. skip repo
             # level checks when scanning at package level.
             selected = lambda scope: (
-                scope <= scan_scope or (options.commits and scope is base.commit_scope))
+                (scope > 0 and scope <= scan_scope) or
+                (scan_scope == 0 and scope is scan_scope) or
+                (options.commits and scan_scope != 0 and scope is base.commit_scope))
             pipes = [d for scope, d in enabled_checks.items() if selected(scope)]
             if not pipes:
-                err.write(f'{scan.prog}: no matching checks available for current scope')
+                err.write(f'{scan.prog}: no matching checks available for {scan_scope} scope')
                 continue
 
             if options.verbosity >= 1:

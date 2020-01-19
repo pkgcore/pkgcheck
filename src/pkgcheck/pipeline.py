@@ -90,7 +90,7 @@ class Pipeline:
                     scoped_pipes[is_async][base.package_scope].extend(runners)
         else:
             for (scope, is_async), runners in checkrunners.items():
-                if scope <= base.package_scope:
+                if scope in (base.version_scope, base.package_scope):
                     scoped_pipes[is_async][base.package_scope].extend(runners)
                 else:
                     scoped_pipes[is_async][scope].extend(runners)
