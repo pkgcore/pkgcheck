@@ -21,7 +21,7 @@ from ..log import logger
 from . import GentooRepoCheck, GitCheck
 
 demand_compile_regexp(
-    'ebuild_copyright_regex',
+    'copyright_regex',
     r'^# Copyright (\d\d\d\d(-\d\d\d\d)?) .+')
 
 demand_compile_regexp(
@@ -61,8 +61,8 @@ class GitCommitsSource(sources.Source):
         super().__init__(*args, source=git_addon.commits())
 
 
-class IncorrectCopyright(results.VersionResult, results.Warning):
-    """Changed ebuild with incorrect copyright date."""
+class _IncorrectCopyright(results.Warning):
+    """Changed file with incorrect copyright date."""
 
     def __init__(self, year, line, **kwargs):
         super().__init__(**kwargs)
@@ -72,6 +72,10 @@ class IncorrectCopyright(results.VersionResult, results.Warning):
     @property
     def desc(self):
         return f'incorrect copyright year {self.year}: {self.line!r}'
+
+
+class IncorrectEbuildCopyright(_IncorrectCopyright, results.VersionResult):
+    """Changed ebuild with incorrect copyright date."""
 
 
 class BadCommitSummary(results.CommitResult, results.Warning):
@@ -206,7 +210,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     required_addons = (git.GitAddon,)
     known_results = frozenset([
         DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,
-        IncorrectCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
+        IncorrectEbuildCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
     ])
 
     def __init__(self, *args, git_addon):
@@ -283,11 +287,11 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             line = next(pkg.ebuild.text_fileobj())
 
             # check copyright on new/modified ebuilds
-            copyright = ebuild_copyright_regex.match(line)
+            copyright = copyright_regex.match(line)
             if copyright:
                 year = copyright.group(1).split('-')[-1]
                 if int(year) != self.today.year:
-                    yield IncorrectCopyright(year, line.strip('\n'), pkg=pkg)
+                    yield IncorrectEbuildCopyright(year, line.strip('\n'), pkg=pkg)
 
             # checks for newly added ebuilds
             if git_pkg.status == 'A':
@@ -494,3 +498,32 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
         # run tag verification methods
         for (tag, func), values in tag_mapping.items():
             yield from func(self, tag, values, commit)
+
+
+class IncorrectEclassCopyright(_IncorrectCopyright, results.EclassResult):
+    """Changed eclass with incorrect copyright date."""
+
+    @property
+    def desc(self):
+        return f'{self.eclass.name}: {super().desc}'
+
+
+class GitEclassCommitsCheck(GentooRepoCheck, GitCheck):
+    """Check unpushed git eclass commits for various issues."""
+
+    scope = base.eclass_scope
+    _source = sources.EclassRepoSource
+    known_results = frozenset([IncorrectEclassCopyright])
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.today = datetime.today()
+
+    def feed(self, eclass):
+        # check copyright on new/modified eclasses
+        line = next(eclass.lines)
+        copyright = copyright_regex.match(line)
+        if copyright:
+            year = copyright.group(1).split('-')[-1]
+            if int(year) != self.today.year:
+                yield IncorrectEclassCopyright(year, line.strip('\n'), eclass=eclass)
