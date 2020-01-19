@@ -497,9 +497,14 @@ def _validate_scan_args(parser, namespace):
     else:
         if cwd_in_repo:
             restrict = _path_restrict(cwd, namespace)
+            scope = _restrict_to_scope(restrict)
+            # allow specific repo locations to override the restrict scope
+            if cwd == pjoin(namespace.target_repo.location, 'eclass'):
+                scope = base.eclass_scope
         else:
             restrict = packages.AlwaysTrue
-        namespace.restrictions = [(_restrict_to_scope(restrict), restrict)]
+            scope = base.repo_scope
+        namespace.restrictions = [(scope, restrict)]
 
     # determine keywords to filter
     namespace.filtered_keywords = None
