@@ -29,10 +29,9 @@ class Source:
 class EmptySource(Source):
     """Empty source meant for skipping item feed."""
 
-    feed_type = base.repo_scope
-
-    def __init__(self, options):
+    def __init__(self, options, scope=base.repo_scope):
         super().__init__(options, source=())
+        self.feed_type = scope
 
 
 class RepoSource(Source):
