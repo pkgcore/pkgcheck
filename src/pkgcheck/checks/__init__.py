@@ -158,14 +158,10 @@ class HeaderCheck(GentooRepoCheck):
     _old_copyright = results.OldGentooCopyright
     _non_gentoo_authors = results.NonGentooAuthorsCopyright
     _invalid_license = results.InvalidLicenseHeader
+    known_results = frozenset([
+        _invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license,
+    ])
     _item_attr = 'pkg'
-
-    def __new__(cls, *args, **kwargs):
-        cls.known_results = frozenset([
-            cls._invalid_copyright, cls._old_copyright,
-            cls._non_gentoo_authors, cls._invalid_license,
-        ])
-        return super().__new__(cls)
 
     license_header = '# Distributed under the terms of the GNU General Public License v2'
 

@@ -438,6 +438,9 @@ class EbuildHeaderCheck(HeaderCheck):
     _old_copyright = EbuildOldGentooCopyright
     _non_gentoo_authors = EbuildNonGentooAuthorsCopyright
     _invalid_license = EbuildInvalidLicenseHeader
+    known_results = frozenset([
+        _invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license,
+    ])
     _item_attr = 'pkg'
 
 

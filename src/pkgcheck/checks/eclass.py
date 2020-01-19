@@ -205,4 +205,7 @@ class EclassHeaderCheck(codingstyle.EbuildHeaderCheck):
     _old_copyright = EclassOldGentooCopyright
     _non_gentoo_authors = EclassNonGentooAuthorsCopyright
     _invalid_license = EclassInvalidLicenseHeader
+    known_results = frozenset([
+        _invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license,
+    ])
     _item_attr = 'eclass'
