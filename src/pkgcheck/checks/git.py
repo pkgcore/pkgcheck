@@ -276,15 +276,13 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             if git_pkg in removed:
                 continue
 
-            # pull actual package object from repo
-            pkg = self.repo.match(git_pkg.versioned_atom)[0]
+            # Pull actual package object from repo. Note that ebuilds with
+            # sourcing errors will cause StopIteration to be raised,
+            # terminating this check, and should be caught by other checks.
+            pkg = next(self.repo.itermatch(git_pkg.versioned_atom))
+            line = next(pkg.ebuild.text_fileobj())
 
             # check copyright on new/modified ebuilds
-            try:
-                line = next(pkg.ebuild.text_fileobj())
-            except StopIteration:
-                # empty ebuild, should be caught by other checks
-                return
             copyright = ebuild_copyright_regex.match(line)
             if copyright:
                 year = copyright.group(1).split('-')[-1]
