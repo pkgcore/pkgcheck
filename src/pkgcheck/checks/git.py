@@ -140,6 +140,14 @@ class DirectNoMaintainer(results.PackageResult, results.Error):
         return 'directly committed with no package maintainer'
 
 
+class RdependChange(results.PackageResult, results.Warning):
+    """Package RDEPEND was modified without adding a new ebuild revision."""
+
+    @property
+    def desc(self):
+        return 'RDEPEND modified without revbump'
+
+
 class _RemovalRepo(UnconfiguredTree):
     """Repository of removed packages stored in a temporary directory."""
 
@@ -196,7 +204,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     _source = (sources.PackageRepoSource, (), (('source', GitCommitsRepoSource),))
     required_addons = (git.GitAddon,)
     known_results = frozenset([
-        DirectStableKeywords, DirectNoMaintainer, BadCommitSummary,
+        DirectStableKeywords, DirectNoMaintainer, BadCommitSummary, RdependChange,
         EbuildIncorrectCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
     ])
 
@@ -210,6 +218,11 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     @klass.jit_attr
     def removal_repo(self):
         """Create a repository of packages removed from git."""
+        return _RemovalRepo(self.repo)
+
+    @klass.jit_attr
+    def modified_repo(self):
+        """Create a repository of old packages newly modified in git."""
         return _RemovalRepo(self.repo)
 
     @klass.jit_attr
@@ -247,10 +260,29 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             yield DroppedUnstableKeywords(
                 sort_keywords(dropped_unstable_keywords), pkg.commit, pkg=pkg)
 
+    def modified_checks(self, modified):
+        """Check for issues due to package modifications."""
+        pkg = modified[0]
+
+        try:
+            modified_repo = self.modified_repo(modified)
+        except PkgcoreException as e:
+            logger.warning('skipping git modified checks: %s', e)
+            return
+
+        old_pkg = modified_repo.match(pkg.versioned_atom)[0]
+        new_pkg = self.repo.match(pkg.versioned_atom)[0]
+
+        if old_pkg.rdepend != new_pkg.rdepend:
+            yield RdependChange(pkg=new_pkg)
+
     def feed(self, pkgset):
         removed = [pkg for pkg in pkgset if pkg.status == 'D']
         if removed:
             yield from self.removal_checks(removed)
+        modified = [pkg for pkg in pkgset if pkg.status == 'M']
+        if modified:
+            yield from self.modified_checks(modified)
 
         for git_pkg in pkgset:
             # check git commit summary formatting
