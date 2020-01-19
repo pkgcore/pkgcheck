@@ -1,0 +1,26 @@
+diff -Naur standalone/EclassUsageCheck/DuplicateEclassInherits/DuplicateEclassInherits-0.ebuild fixed/EclassUsageCheck/DuplicateEclassInherits/DuplicateEclassInherits-0.ebuild
+--- standalone/EclassUsageCheck/DuplicateEclassInherits/DuplicateEclassInherits-0.ebuild	2019-12-02 23:03:22.911180740 -0700
++++ fixed/EclassUsageCheck/DuplicateEclassInherits/DuplicateEclassInherits-0.ebuild	2019-12-02 23:11:30.421070360 -0700
+@@ -1,4 +1,4 @@
+-inherit stub vcs stub
++inherit stub vcs
+ 
+ DESCRIPTION="Ebuild with deprecated insinto usage"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+diff -Naur standalone/EclassUsageCheck/DuplicateEclassInherits/DuplicateEclassInherits-1.ebuild fixed/EclassUsageCheck/DuplicateEclassInherits/DuplicateEclassInherits-1.ebuild
+--- standalone/EclassUsageCheck/DuplicateEclassInherits/DuplicateEclassInherits-1.ebuild	2019-12-02 23:11:04.127968443 -0700
++++ fixed/EclassUsageCheck/DuplicateEclassInherits/DuplicateEclassInherits-1.ebuild	2019-12-02 23:11:38.339101046 -0700
+@@ -1,10 +1,11 @@
+ EAPI=7
+ 
++inherit stub
++
+ if [[ ${PV} == "9999" ]] ; then
+ 	EVCS_REPO_URI="https://github.com/pkgcore/pkgcheck.git"
+-	inherit stub vcs
++	inherit vcs
+ else
+-	inherit stub
+ 	KEYWORDS="~amd64 ~x86"
+ fi
+ 

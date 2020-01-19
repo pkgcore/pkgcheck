@@ -1,2 +1,2 @@
-EclassCheck/DeprecatedEclass
+EclassUsageCheck/DeprecatedEclass
   DeprecatedEclass: version 0: uses deprecated eclass: [ versionator (migrate to ver_* functions from EAPI 7) ]

@@ -47,7 +47,7 @@ class DuplicateEclassInherits(results.VersionResult, results.Warning):
         return f'duplicate inherits for eclass{es}: {eclasses}'
 
 
-class EclassCheck(Check):
+class EclassUsageCheck(Check):
     """Scan packages for various eclass-related issues."""
 
     known_results = frozenset([DeprecatedEclass, DuplicateEclassInherits])

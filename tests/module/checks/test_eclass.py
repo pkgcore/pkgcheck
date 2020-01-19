@@ -9,10 +9,10 @@ def mk_pkg(ver, fake_src, eapi='0'):
     return misc.FakePkg(f"dev-util/diffball-{ver}", data={'EAPI': eapi}, ebuild=fake_src)
 
 
-class TestEclassCheck(misc.ReportTestCase):
+class TestEclassUsageCheck(misc.ReportTestCase):
 
-    check_kls = eclass_mod.EclassCheck
-    check = eclass_mod.EclassCheck(None)
+    check_kls = eclass_mod.EclassUsageCheck
+    check = eclass_mod.EclassUsageCheck(None)
 
     def test_no_eclasses(self):
         fake_src = """
