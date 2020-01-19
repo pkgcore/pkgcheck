@@ -499,10 +499,15 @@ def _validate_scan_args(parser, namespace):
     else:
         if cwd_in_repo:
             restrict = _path_restrict(cwd, namespace)
-            scope = _restrict_to_scope(restrict)
-            # allow specific repo locations to override the restrict scope
-            if cwd == pjoin(namespace.target_repo.location, 'eclass'):
-                scope = base.eclass_scope
+            location_specific_scopes = {
+                pjoin(namespace.target_repo.location, x.desc): x
+                for x in base.scopes.values() if x.level == 0
+            }
+            # allow location specific scopes to override the path restrict scope
+            try:
+                scope = location_specific_scopes[cwd]
+            except KeyError:
+                scope = _restrict_to_scope(restrict)
         else:
             restrict = packages.AlwaysTrue
             scope = base.repo_scope
