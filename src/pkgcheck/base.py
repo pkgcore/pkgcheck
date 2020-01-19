@@ -31,9 +31,10 @@ from snakeoil.osutils import pjoin
 class Scope:
     """Generic scope for scans, checks, and results."""
 
-    def __init__(self, desc, level):
+    def __init__(self, desc, level, attrs=()):
         self.desc = desc
         self.level = level
+        self.attrs = attrs
 
     def __str__(self):
         return self.desc
@@ -73,15 +74,15 @@ class Scope:
 
 # pkg-related scope levels
 repo_scope = Scope('repo', 1)
-category_scope = Scope('category', 2)
-package_scope = Scope('package', 3)
-version_scope = Scope('version', 4)
+category_scope = Scope('category', 2, ('category',))
+package_scope = Scope('package', 3, ('category', 'package'))
+version_scope = Scope('version', 4, ('category', 'package', 'version'))
 
 # Special scope levels, scopes with negative levels are only enabled under
 # certain circumstances while location specific scopes have a level of 0.
-commit_scope = Scope('commit', -1)
+commit_scope = Scope('commit', -1, ('commit',))
 profiles_scope = Scope('profiles', 0)
-eclass_scope = Scope('eclass', 0)
+eclass_scope = Scope('eclass', 0, ('eclass',))
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
 scopes = ImmutableDict({
