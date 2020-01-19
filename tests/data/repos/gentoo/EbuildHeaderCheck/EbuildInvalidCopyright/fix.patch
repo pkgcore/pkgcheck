@@ -1,0 +1,9 @@
+diff -Naur gentoo/EbuildHeaderCheck/EbuildInvalidCopyright/EbuildInvalidCopyright-0.ebuild fixed/EbuildHeaderCheck/EbuildInvalidCopyright/EbuildInvalidCopyright-0.ebuild
+--- gentoo/EbuildHeaderCheck/EbuildInvalidCopyright/EbuildInvalidCopyright-0.ebuild	2019-09-14 16:07:50.141255904 -0600
++++ fixed/EbuildHeaderCheck/EbuildInvalidCopyright/EbuildInvalidCopyright-0.ebuild	2019-09-14 16:16:05.713160938 -0600
+@@ -1,4 +1,4 @@
+-# Invalid copyright
++# Copyright 1999-2019 Gentoo Authors
+ # Distributed under the terms of the GNU General Public License v2
+ 
+ DESCRIPTION="Ebuild with an invalid copyright header"

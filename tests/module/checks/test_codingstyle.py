@@ -400,7 +400,7 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
             fake_src = [line, self.check_kls.license_header]
             fake_pkg = self.mk_pkg(lines=fake_src)
             r = self.assertReport(self.check_kls(None), fake_pkg)
-            assert isinstance(r, codingstyle.InvalidCopyright)
+            assert isinstance(r, codingstyle.EbuildInvalidCopyright)
             assert line.strip() in str(r)
 
     def test_new_foundation_copyright(self):
@@ -415,7 +415,7 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
             fake_src = [line, self.check_kls.license_header]
             fake_pkg = self.mk_pkg(lines=fake_src)
             r = self.assertReport(self.check_kls(None), fake_pkg)
-            assert isinstance(r, codingstyle.OldGentooCopyright)
+            assert isinstance(r, codingstyle.EbuildOldGentooCopyright)
             assert line.strip() in str(r)
 
     def test_old_foundation_copyright(self):
@@ -440,7 +440,7 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
             fake_src = [line, self.check_kls.license_header]
             fake_pkg = self.mk_pkg(lines=fake_src)
             r = self.assertReport(self.check_kls(None), fake_pkg)
-            assert isinstance(r, codingstyle.NonGentooAuthorsCopyright)
+            assert isinstance(r, codingstyle.EbuildNonGentooAuthorsCopyright)
             assert line.strip() in str(r)
 
     def test_license_headers(self):
@@ -460,7 +460,7 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
             fake_src = [copyright, line]
             fake_pkg = self.mk_pkg(lines=fake_src)
             r = self.assertReport(self.check_kls(None), fake_pkg)
-            assert isinstance(r, codingstyle.InvalidLicenseHeader)
+            assert isinstance(r, codingstyle.EbuildInvalidLicenseHeader)
             assert line.strip() in str(r)
 
 

@@ -1,0 +1,9 @@
+diff -Naur gentoo/EbuildHeaderCheck/EbuildNonGentooAuthorsCopyright/EbuildNonGentooAuthorsCopyright-0.ebuild fixed/EbuildHeaderCheck/EbuildNonGentooAuthorsCopyright/EbuildNonGentooAuthorsCopyright-0.ebuild
+--- gentoo/EbuildHeaderCheck/EbuildNonGentooAuthorsCopyright/EbuildNonGentooAuthorsCopyright-0.ebuild	2019-09-14 16:12:03.488229816 -0600
++++ fixed/EbuildHeaderCheck/EbuildNonGentooAuthorsCopyright/EbuildNonGentooAuthorsCopyright-0.ebuild	2019-09-14 16:17:37.351513204 -0600
+@@ -1,4 +1,4 @@
+-# Copyright 1999-2019 Random Person
++# Copyright 1999-2019 Gentoo Authors
+ # Distributed under the terms of the GNU General Public License v2
+ 
+ DESCRIPTION="Ebuild with non-Gentoo copyright header"

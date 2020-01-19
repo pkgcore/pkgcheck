@@ -1,0 +1,9 @@
+diff -Naur gentoo/EbuildHeaderCheck/EbuildOldGentooCopyright/EbuildOldGentooCopyright-0.ebuild fixed/EbuildHeaderCheck/EbuildOldGentooCopyright/EbuildOldGentooCopyright-0.ebuild
+--- gentoo/EbuildHeaderCheck/EbuildOldGentooCopyright/EbuildOldGentooCopyright-0.ebuild	2019-09-14 16:10:32.585880396 -0600
++++ fixed/EbuildHeaderCheck/EbuildOldGentooCopyright/EbuildOldGentooCopyright-0.ebuild	2019-09-14 16:18:07.890630610 -0600
+@@ -1,4 +1,4 @@
+-# Copyright 1999-2019 Gentoo Foundation
++# Copyright 1999-2019 Gentoo Authors
+ # Distributed under the terms of the GNU General Public License v2
+ 
+ DESCRIPTION="Ebuild with old copyright header"
