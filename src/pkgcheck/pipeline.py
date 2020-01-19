@@ -28,7 +28,8 @@ class Pipeline:
 
     def _queue_work(self, scoped_pipes, async_pipes, work_q):
         # queue restriction tasks based on scope for check running parallelism
-        for scope, pipes in sorted(scoped_pipes.items()):
+        for scope in sorted(scoped_pipes, reverse=True):
+            pipes = scoped_pipes[scope]
             if scope is base.version_scope:
                 versioned_source = VersionedSource(self.options)
                 for restrict in versioned_source.itermatch(self.restrict):
