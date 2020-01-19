@@ -193,9 +193,9 @@ class _SourcePkg(WrappedPkg):
 
     __slots__ = ('lines',)
 
-    def __init__(self, lines, **kwargs):
-        super().__init__(**kwargs)
-        self.lines = lines
+    def __init__(self, pkg):
+        super().__init__(pkg)
+        self.lines = tuple(pkg.ebuild.text_fileobj())
 
 
 class EbuildFileRepoSource(RepoSource):
@@ -203,7 +203,7 @@ class EbuildFileRepoSource(RepoSource):
 
     def itermatch(self, restrict, **kwargs):
         for pkg in super().itermatch(restrict, **kwargs):
-            yield _SourcePkg(pkg=pkg, lines=tuple(pkg.ebuild.text_fileobj()))
+            yield _SourcePkg(pkg)
 
 
 class _CombinedSource(RepoSource):
