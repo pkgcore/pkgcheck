@@ -242,8 +242,6 @@ class XmlReporter(Reporter):
         "<class>%(class)s</class><msg>%(msg)s</msg></result>")
 
     scope_map = {
-        base.commit_scope: result_template,
-        base.repo_scope: result_template,
         base.category_scope: cat_template,
         base.package_scope: pkg_template,
         base.version_scope: ver_template,
@@ -262,7 +260,7 @@ class XmlReporter(Reporter):
             d = {k: getattr(result, k, '') for k in ('category', 'package', 'version')}
             d['class'] = xml_escape(result.__class__.__name__)
             d['msg'] = xml_escape(result.desc)
-            self.out.write(self.scope_map[result.scope] % d)
+            self.out.write(self.scope_map.get(result.scope, self.result_template) % d)
 
 
 class CsvReporter(Reporter):

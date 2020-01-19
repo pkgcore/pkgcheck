@@ -72,7 +72,7 @@ class TestFancyReporter(BaseReporter):
         commit
           InvalidCommitMessage: commit 8d86269bb4c7: no commit message
 
-        repo
+        profiles
           ProfileWarning: profile warning
 
         dev-libs
@@ -83,7 +83,7 @@ class TestFancyReporter(BaseReporter):
           BadFilename: version 0: bad filenames: [ 0.tar.gz, foo.tar.gz ]
     """)
     filtered_report_output = dedent("""\
-        repo
+        profiles
           ProfileError: profile error
     """)
 
