@@ -68,7 +68,7 @@ class Scope:
         return self.level == other
 
     def __hash__(self):
-        return hash(self.level)
+        return hash(self.desc)
 
 
 # pkg-related scope levels
@@ -77,7 +77,8 @@ package_scope = Scope('package', 2)
 category_scope = Scope('category', 3)
 repo_scope = Scope('repo', 4)
 
-# special scope levels
+# Special scope levels, scopes with negative levels are only enabled under
+# certain circumstances while location specific scopes have a level of 0.
 commit_scope = Scope('commit', -1)
 eclass_scope = Scope('eclass', 0)
 
