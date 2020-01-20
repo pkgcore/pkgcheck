@@ -1,4 +1,5 @@
 from snakeoil.mappings import ImmutableDict
+from snakeoil.process.spawn import spawn_get_output
 from snakeoil.strings import pluralism
 
 from .. import base, results, sources
@@ -209,3 +210,36 @@ class EclassHeaderCheck(codingstyle.EbuildHeaderCheck):
         _invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license,
     ])
     _item_attr = 'eclass'
+
+
+class EclassBashSyntaxError(results.EclassResult, results.Error):
+    """Bash syntax error in the related eclass."""
+
+    def __init__(self, lineno, error, **kwargs):
+        super().__init__(**kwargs)
+        self.lineno = lineno
+        self.error = error
+
+    @property
+    def desc(self):
+        return f'{self.eclass}: bash syntax error, line {self.lineno}: {self.error}'
+
+
+class EclassCheck(Check):
+    """Scan eclasses for various issues."""
+
+    scope = base.eclass_scope
+    _source = sources.EclassRepoSource
+    known_results = frozenset([EclassBashSyntaxError])
+
+    def feed(self, eclass):
+        ret, err = spawn_get_output(['bash', '-n', eclass.path], collect_fds=(2,))
+        if ret != 0 and err:
+            lineno = 0
+            error = []
+            for line in err:
+                path, line, msg = line.split(': ', 2)
+                lineno = line[5:]
+                error.append(msg.strip('\n'))
+            error = ': '.join(error)
+            yield EclassBashSyntaxError(lineno, error, eclass=eclass)
