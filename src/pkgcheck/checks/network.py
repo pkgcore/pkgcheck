@@ -1,4 +1,5 @@
 import socket
+import traceback
 import urllib.request
 from lxml import etree
 from functools import partial
@@ -162,8 +163,13 @@ class _UrlCheck(NetworkCheck):
         return result
 
     def task_done(self, results_q, pkg, future):
+        # output exceptions that occurred in threads
+        if future.exception() is not None:
+            traceback.print_exc()
+            return
+
         result = future.result()
-        if result:
+        if result is not None:
             if pkg is not None:
                 # recreate result object with different pkg target
                 data = result.attrs_to_pkg(result._attrs)
