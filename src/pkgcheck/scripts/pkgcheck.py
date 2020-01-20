@@ -387,6 +387,7 @@ def _path_restrict(path, namespace):
     """
     repo = namespace.target_repo
     restrictions = []
+    path = os.path.realpath(path)
     try:
         restrictions = repo.path_restrict(path)[1:]
     except ValueError as e:
