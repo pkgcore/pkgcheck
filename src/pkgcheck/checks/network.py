@@ -163,9 +163,12 @@ class _UrlCheck(NetworkCheck):
         return result
 
     def task_done(self, results_q, pkg, future):
-        # output exceptions that occurred in threads
-        if future.exception() is not None:
-            traceback.print_exc()
+        exc = future.exception()
+        if exc is not None:
+            # traceback objects can't be pickled so fake it
+            exc.__traceback_list__ = traceback.format_exc().strip()
+            # return exceptions that occurred in threads
+            results_q.put([exc])
             return
 
         result = future.result()
