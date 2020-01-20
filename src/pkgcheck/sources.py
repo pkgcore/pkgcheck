@@ -149,9 +149,9 @@ class EclassRepoSource(RepoSource):
         self.eclasses = self._repo.eclass_cache.eclasses
 
     def itermatch(self, restrict, **kwargs):
-        for x in self.eclasses:
-            if restrict.match([x]):
-                yield Eclass(x, self.eclasses[x].path)
+        for name in sorted(self.eclasses):
+            if restrict.match([name]):
+                yield Eclass(name, self.eclasses[name].path)
 
 
 class FilteredRepoSource(RepoSource):
