@@ -2,6 +2,7 @@
 
 import csv
 import json
+import os
 import pickle
 import signal
 from collections import defaultdict
@@ -42,22 +43,38 @@ class Reporter:
         if pipe.pkg_scan or sort:
             # sort all generated results, removing duplicate MetadataError results
             results = set(chain.from_iterable(iter(results_q.get, None)))
-            for result in sorted(results):
-                self.report(result)
+            try:
+                for result in sorted(results):
+                    self.report(result)
+            except TypeError:
+                # handle exceptions returned from async checks
+                for result in results:
+                    if isinstance(result, Exception):
+                        print(result.__traceback_list__)
+                        os.kill(p.pid, signal.SIGINT)
+                        break
         else:
             ordered_results = {
                 scope: [] for scope in reversed(list(base.scopes.values()))
                 if scope.level <= base.repo_scope
             }
-            for results in iter(results_q.get, None):
-                for result in sorted(results):
-                    try:
-                        ordered_results[result.scope].append(result)
-                    except KeyError:
-                        self.report(result)
-            # output repo and commit results after package-related results
-            for result in chain.from_iterable(sorted(x) for x in ordered_results.values()):
-                self.report(result)
+            try:
+                for results in iter(results_q.get, None):
+                    for result in sorted(results):
+                        try:
+                            ordered_results[result.scope].append(result)
+                        except KeyError:
+                            self.report(result)
+                # output repo and commit results after package-related results
+                for result in chain.from_iterable(sorted(x) for x in ordered_results.values()):
+                    self.report(result)
+            except (TypeError, AttributeError):
+                # handle exceptions returned from async checks
+                for result in results:
+                    if isinstance(result, Exception):
+                        print(result.__traceback_list__)
+                        os.kill(p.pid, signal.SIGINT)
+                        break
 
         p.join()
 
