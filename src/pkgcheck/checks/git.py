@@ -264,6 +264,11 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
         """Check for issues due to package modifications."""
         pkg = modified[0]
 
+        # don't flag live ebuilds for RDEPEND changes
+        new_pkg = self.repo.match(pkg.versioned_atom)[0]
+        if new_pkg.live:
+            return
+
         try:
             modified_repo = self.modified_repo(modified)
         except PkgcoreException as e:
@@ -271,7 +276,6 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             return
 
         old_pkg = modified_repo.match(pkg.versioned_atom)[0]
-        new_pkg = self.repo.match(pkg.versioned_atom)[0]
 
         if old_pkg.rdepend != new_pkg.rdepend:
             yield RdependChange(pkg=new_pkg)
