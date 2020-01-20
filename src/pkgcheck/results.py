@@ -48,11 +48,15 @@ class Result:
         return hash(tuple(sorted(self._attrs)))
 
     def __lt__(self, other):
-        if self.scope is other.scope:
-            if self.__class__.__name__ == other.__class__.__name__:
-                return self.desc < other.desc
-            return self.__class__.__name__ < other.__class__.__name__
-        return self.scope < other.scope
+        try:
+            if self.scope is other.scope:
+                if self.__class__.__name__ == other.__class__.__name__:
+                    return self.desc < other.desc
+                return self.__class__.__name__ < other.__class__.__name__
+            return self.scope < other.scope
+        except AttributeError:
+            pass
+        return False
 
 
 class Error(Result):
@@ -93,7 +97,7 @@ class CommitResult(Result):
                 if self.__class__.__name__ == other.__class__.__name__:
                     return self.desc < other.desc
                 return self.__class__.__name__ < other.__class__.__name__
-        except AttributeError as e:
+        except AttributeError:
             pass
         return False
 
@@ -122,7 +126,7 @@ class EclassResult(Result):
                     return self.desc < other.desc
                 return self.__class__.__name__ < other.__class__.__name__
             return self.eclass < other.eclass
-        except AttributeError as e:
+        except AttributeError:
             pass
         return False
 
