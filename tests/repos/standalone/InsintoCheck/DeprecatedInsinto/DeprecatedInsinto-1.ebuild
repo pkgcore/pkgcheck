@@ -7,8 +7,12 @@ LICENSE="BSD"
 src_install() {
 	insinto /usr/share/doc/${PF}
 	doins foo
+	insinto /usr/share/doc/"${PF}"
+	doins bar
 	insinto /usr/share/doc/${PF}/
 	doins -r html
 	insinto /usr/share/doc/${PF}/examples
 	doins samples/*
+	insinto /usr/share/doc/"${PF}"/examples
+	doins foo/examples/*
 }

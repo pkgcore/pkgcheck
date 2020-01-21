@@ -334,7 +334,7 @@ class InsintoCheck(Check):
         self._insinto_re = re.compile(
             rf'(?P<insinto>insinto[ \t]+(?P<path>{paths})(?!/\w+))(?:$|[/ \t])')
         self._insinto_doc_re = re.compile(
-            r'(?P<insinto>insinto[ \t]+/usr/share/doc/\$\{PF?\}(/\w+)*)(?:$|[/ \t])')
+            r'(?P<insinto>insinto[ \t]+/usr/share/doc/(")?\$\{PF?\}(?(2)\2)(/\w+)*)(?:$|[/ \t])')
 
     def feed(self, pkg):
         for lineno, line in enumerate(pkg.lines, 1):
