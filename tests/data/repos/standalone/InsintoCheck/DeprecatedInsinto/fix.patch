@@ -1,6 +1,29 @@
+diff -Naur standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-0.ebuild fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-0.ebuild
+--- standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-0.ebuild	2020-01-16 10:35:45.612624381 -0700
++++ fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-0.ebuild	2020-01-21 13:28:02.414341321 -0700
+@@ -4,14 +4,9 @@
+ LICENSE="BSD"
+ 
+ src_install() {
+-	insinto /etc/conf.d
+-	doins foo
+-	insinto /etc/env.d
+-	doins foo
+-	insinto /etc/init.d
+-	doins foo
+-	insinto /etc/pam.d
+-	doins foo
+-	insinto /usr/share/applications
+-	doins foo
++	doconf.d foo
++	doenvd foo
++	doinitd foo
++	dopamd foo
++	domenu foo
+ }
 diff -Naur standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild
 --- standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild	2020-01-21 13:20:18.815286720 -0700
-+++ fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild	2020-01-21 13:23:51.965234839 -0700
++++ fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild	2020-01-21 13:26:43.359992323 -0700
 @@ -5,14 +5,11 @@
  LICENSE="BSD"
  
