@@ -36,6 +36,7 @@ class Reporter:
     def __call__(self, pipe, sort=False):
         results_q = SimpleQueue()
         orig_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)
+        orig_pid = os.getpid()
         p = Process(target=pipe.run, args=(results_q,))
         p.start()
         signal.signal(signal.SIGINT, orig_sigint_handler)
@@ -51,7 +52,7 @@ class Reporter:
                 for result in results:
                     if isinstance(result, Exception):
                         print(result.__traceback_list__)
-                        os.kill(p.pid, signal.SIGINT)
+                        os.kill(orig_pid, signal.SIGINT)
                         break
         else:
             ordered_results = {
@@ -73,7 +74,7 @@ class Reporter:
                 for result in results:
                     if isinstance(result, Exception):
                         print(result.__traceback_list__)
-                        os.kill(p.pid, signal.SIGINT)
+                        os.kill(orig_pid, signal.SIGINT)
                         break
 
         p.join()
