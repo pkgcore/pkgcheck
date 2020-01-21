@@ -168,6 +168,7 @@ class UnusedLicensesCheck(Check):
 
     def feed(self, pkg):
         self.unused_licenses.difference_update(iflatten_instance(pkg.license))
+        yield from ()
 
     def finish(self):
         if self.unused_licenses:
@@ -225,6 +226,7 @@ class UnusedMirrorsCheck(_MirrorsCheck):
     def feed(self, pkg):
         if self.unused_mirrors:
             self.unused_mirrors.difference_update(self._get_mirrors(pkg))
+        yield from ()
 
     def finish(self):
         if self.unused_mirrors:
@@ -265,6 +267,7 @@ class UnusedEclassesCheck(Check):
 
     def feed(self, pkg):
         self.unused_eclasses.difference_update(pkg.inherited)
+        yield from ()
 
     def finish(self):
         if self.unused_eclasses:
@@ -399,6 +402,7 @@ class GlobalUseCheck(Check):
             pkg_global_use = pkg.iuse_stripped.difference(local_use)
             for flag in pkg_global_use:
                 self.global_flag_usage[flag].add(pkg.unversioned_atom)
+        yield from ()
 
     @staticmethod
     def _similar_flags(pkgs):
