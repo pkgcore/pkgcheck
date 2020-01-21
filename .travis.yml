@@ -14,7 +14,7 @@ cache:
   - $HOME/downloads
 
 install:
-- pip install -U pip tox codecov
+- pip install -U tox codecov
 # install deps for perl checks
 - sudo cpanm --quiet --notest Gentoo::PerlMod::Version
 before_script:
