@@ -522,7 +522,7 @@ def _validate_scan_args(parser, namespace):
     if namespace.enabled_keywords or namespace.disabled_keywords:
         # all keywords are selected by default
         if not namespace.enabled_keywords:
-            namespace.enabled_keywords = set(const.KEYWORD.values())
+            namespace.enabled_keywords = set(const.KEYWORDS.values())
         namespace.filtered_keywords = namespace.enabled_keywords - namespace.disabled_keywords
 
         # enable checks based on enabled keyword -> check mapping
