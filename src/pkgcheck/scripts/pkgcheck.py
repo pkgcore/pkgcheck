@@ -392,9 +392,18 @@ def _path_restrict(path, namespace):
         restrictions = repo.path_restrict(path)[1:]
     except ValueError as e:
         raise UserException(str(e))
-    if restrictions:
-        return packages.AndRestriction(*restrictions)
-    return packages.AlwaysTrue
+
+    restrict = packages.AndRestriction(*restrictions) if restrictions else packages.AlwaysTrue
+
+    # allow location specific scopes to override the path restrict scope
+    for scope in (x for x in base.scopes.values() if x.level == 0):
+        scope_path = pjoin(namespace.target_repo.location, scope.desc)
+        if path.startswith(scope_path):
+            break
+    else:
+        scope = _restrict_to_scope(restrict)
+
+    return scope, restrict
 
 
 def _restrict_to_scope(restrict):
@@ -470,16 +479,19 @@ def _validate_scan_args(parser, namespace):
         def restrictions():
             for target in namespace.targets:
                 if os.path.isabs(target) or (os.path.exists(target) and cwd_in_repo):
+                    # try to use target as a path restrict if it exists on the filesystem
                     try:
-                        r = _path_restrict(target, namespace)
+                        scope, restrict = _path_restrict(target, namespace)
                     except ValueError as e:
                         parser.error(e)
                 else:
+                    # otherwise assume it's a package restriction of some type
                     try:
-                        r = parserestrict.parse_match(target)
+                        restrict = parserestrict.parse_match(target)
+                        scope = _restrict_to_scope(restrict)
                     except parserestrict.ParseError as e:
                         parser.error(e)
-                yield _restrict_to_scope(r), r
+                yield scope, restrict
 
         # Collapse restrictions for passed in targets while keeping the
         # generator intact for piped in targets.
@@ -499,15 +511,7 @@ def _validate_scan_args(parser, namespace):
                 namespace.restrictions = [(scopes.pop(), combined_restrict)]
     else:
         if cwd_in_repo:
-            restrict = _path_restrict(cwd, namespace)
-            # allow location specific scopes to override the path restrict scope
-            for scope in (x for x in base.scopes.values() if x.level == 0):
-                path = pjoin(namespace.target_repo.location, scope.desc) + os.path.sep
-                cwd_path = cwd.rstrip(os.path.sep) + os.path.sep
-                if cwd_path.startswith(path):
-                    break
-            else:
-                scope = _restrict_to_scope(restrict)
+            scope, restrict = _path_restrict(cwd, namespace)
         else:
             restrict = packages.AlwaysTrue
             scope = base.repo_scope
