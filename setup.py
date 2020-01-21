@@ -21,7 +21,7 @@ class install(pkgdist.install):
     """Install wrapper to generate and install pkgcheck-related files."""
 
     def run(self):
-        pkgdist.install.run(self)
+        super().run()
         target = self.install_data
         root = self.root or '/'
         if target.startswith(root):
