@@ -19,6 +19,7 @@ class Feed(base.Addon):
 
     def feed(self, item):
         """Handle functionality against the passed in item."""
+        yield from ()
 
 
 class QueryCache(Feed):

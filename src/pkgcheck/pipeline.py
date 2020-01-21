@@ -167,9 +167,7 @@ class CheckRunner:
             for check in self.checks:
                 self._running_check = check
                 try:
-                    reports = check.feed(item)
-                    if reports is not None:
-                        yield from reports
+                    yield from check.feed(item)
                 except MetadataException as e:
                     self._metadata_error_cb(e)
             self._running_check = None
@@ -183,9 +181,7 @@ class CheckRunner:
 
     def finish(self):
         for check in self.checks:
-            reports = check.finish()
-            if reports is not None:
-                yield from reports
+            yield from check.finish()
 
     # The plugger tests use these.
     def __eq__(self, other):

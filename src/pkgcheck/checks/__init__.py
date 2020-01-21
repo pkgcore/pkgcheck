@@ -59,6 +59,7 @@ class Check(feeds.Feed):
 
     def finish(self):
         """Do cleanup and yield final results here."""
+        yield from ()
 
     def __lt__(self, other):
         if self.priority == other.priority:
