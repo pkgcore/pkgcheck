@@ -7,16 +7,29 @@ from . import base
 from .packages import FilteredPkg, RawCPV
 
 
-class Result:
+class _ResultAttrs(type):
+    """Metaclass for setting attributes on base class objects."""
+
+    @property
+    def name(cls):
+        return cls._name if cls._name is not None else cls.__name__
+
+
+class Result(metaclass=_ResultAttrs):
     """Generic report result returned from a check."""
 
     # all results are shown by default
     _filtered = False
     # default to repository level results
     scope = base.repo_scope
-    # priority level and color
+    # priority level, color, and name
     level = None
     color = None
+    _name = None
+
+    @property
+    def name(self):
+        return self._name if self._name is not None else self.__class__.__name__
 
     def __str__(self):
         return self.desc
@@ -50,9 +63,9 @@ class Result:
     def __lt__(self, other):
         try:
             if self.scope is other.scope:
-                if self.__class__.__name__ == other.__class__.__name__:
+                if self.name == other.name:
                     return self.desc < other.desc
-                return self.__class__.__name__ < other.__class__.__name__
+                return self.name < other.name
             return self.scope < other.scope
         except AttributeError:
             pass
@@ -94,9 +107,9 @@ class CommitResult(Result):
         try:
             # if hashes match, sort by name/desc
             if self.commit == other.commit:
-                if self.__class__.__name__ == other.__class__.__name__:
+                if self.name == other.name:
                     return self.desc < other.desc
-                return self.__class__.__name__ < other.__class__.__name__
+                return self.name < other.name
         except AttributeError:
             pass
         return False
@@ -122,9 +135,9 @@ class EclassResult(Result):
         try:
             # if eclasses match, sort by name/desc
             if self.eclass == other.eclass:
-                if self.__class__.__name__ == other.__class__.__name__:
+                if self.name == other.name:
                     return self.desc < other.desc
-                return self.__class__.__name__ < other.__class__.__name__
+                return self.name < other.name
             return self.eclass < other.eclass
         except AttributeError:
             pass
@@ -251,7 +264,7 @@ class LogError(_LogResult, Error):
     """Error caught from a logger instance."""
 
 
-class _RegisterMetadataErrors(type):
+class _RegisterMetadataErrors(_ResultAttrs):
     """Metaclass for registering known metadata results."""
 
     def __new__(cls, name, bases, class_dict):

@@ -182,7 +182,7 @@ class FancyReporter(Reporter):
                 s = f"version {result.version}: "
             self.out.write(
                 self.out.fg(result.color),
-                result.__class__.__name__, self.out.reset,
+                result.name, self.out.reset,
                 ': ', s, result.desc)
             self.out.first_prefix.pop()
             self.out.later_prefix.pop()
@@ -231,7 +231,7 @@ class JsonReporter(Reporter):
             result = (yield)
             data = self._json_dict()
             d = self._scope_map.get(result.scope, lambda x, y: x)(data, result)
-            d['_' + result.level][result.__class__.__name__] = result.desc
+            d['_' + result.level][result.name] = result.desc
             self.out.write(json.dumps(data))
             # flush output so partial objects aren't written
             self.out.stream.flush()
@@ -274,7 +274,7 @@ class XmlReporter(Reporter):
         while True:
             result = (yield)
             d = {k: getattr(result, k, '') for k in ('category', 'package', 'version')}
-            d['class'] = xml_escape(result.__class__.__name__)
+            d['class'] = xml_escape(result.name)
             d['msg'] = xml_escape(result.desc)
             self.out.write(self.scope_map.get(result.scope, self.result_template) % d)
 

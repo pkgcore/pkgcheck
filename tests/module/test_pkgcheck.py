@@ -415,7 +415,7 @@ class TestPkgcheckScan(object):
                             results = []
                             for line in out.rstrip('\n').split('\n'):
                                 deserialized_result = reporters.JsonStream.from_json(line)
-                                assert deserialized_result.__class__.__name__ == keyword
+                                assert deserialized_result.__class__ == result
                                 results.append(deserialized_result)
                                 if not verbosity:
                                     self._results[repo].add(deserialized_result)
