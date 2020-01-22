@@ -523,13 +523,19 @@ def _validate_scan_args(parser, namespace):
         # all keywords are selected by default
         if not namespace.enabled_keywords:
             namespace.enabled_keywords = set(const.KEYWORDS.values())
-        namespace.filtered_keywords = namespace.enabled_keywords - namespace.disabled_keywords
 
-        # enable checks based on enabled keyword -> check mapping
+        # translate requested keywords to their actual classes
+        namespace.filtered_keywords = {}
+        for keyword in namespace.enabled_keywords - namespace.disabled_keywords:
+            for check in const.CHECKS.values():
+                for result in check.known_results:
+                    if issubclass(result, keyword):
+                        namespace.filtered_keywords[result] = check
+
+        # only enable checks for the requested keywords
         if not namespace.enabled_checks:
-            namespace.enabled_checks = {
-                c for c in const.CHECKS.values()
-                if namespace.filtered_keywords.intersection(c.known_results)}
+            namespace.enabled_checks = frozenset(namespace.filtered_keywords.values())
+        namespace.filtered_keywords = frozenset(namespace.filtered_keywords)
 
     # all checks are run by default
     if not namespace.enabled_checks:
