@@ -1,2 +1,2 @@
 EbuildHeaderCheck/EbuildInvalidLicenseHeader
-  EbuildInvalidLicenseHeader: version 0: invalid license header: '# Distributed under the terms of the GNU General Public License v3'
+  InvalidLicenseHeader: version 0: invalid license header: '# Distributed under the terms of the GNU General Public License v3'
