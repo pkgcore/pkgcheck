@@ -61,7 +61,22 @@ class GitCommitsSource(sources.Source):
         super().__init__(*args, source=git_addon.commits())
 
 
-class EbuildIncorrectCopyright(results.IncorrectCopyright, results.VersionResult):
+class IncorrectCopyright(results.Warning):
+    """Changed file with incorrect copyright date."""
+
+    _name = 'IncorrectCopyright'
+
+    def __init__(self, year, line, **kwargs):
+        super().__init__(**kwargs)
+        self.year = year
+        self.line = line
+
+    @property
+    def desc(self):
+        return f'incorrect copyright year {self.year}: {self.line!r}'
+
+
+class EbuildIncorrectCopyright(IncorrectCopyright, results.VersionResult):
     """Changed ebuild with incorrect copyright date."""
 
 
@@ -523,7 +538,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
             yield from func(self, tag, values, commit)
 
 
-class EclassIncorrectCopyright(results.IncorrectCopyright, results.EclassResult):
+class EclassIncorrectCopyright(IncorrectCopyright, results.EclassResult):
     """Changed eclass with incorrect copyright date."""
 
     @property
