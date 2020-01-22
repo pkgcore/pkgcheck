@@ -4,14 +4,9 @@ from collections import defaultdict
 
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
-from snakeoil.demandload import demand_compile_regexp
 
 from .. import addons, base, feeds, results, sources
 from ..log import logger
-
-demand_compile_regexp(
-    'copyright_regex',
-    r'^# Copyright (?P<begin>\d{4}-)?(?P<end>\d{4}) (?P<holder>.+)$')
 
 
 class Check(feeds.Feed):
@@ -158,46 +153,6 @@ class SkipOptionalCheck(UserException):
     def __init__(self, check, msg):
         check_name = check.__class__.__name__
         super().__init__(f'{check_name}: {msg}')
-
-
-class HeaderCheck(GentooRepoCheck):
-    """Scan files for incorrect copyright/license headers."""
-
-    _invalid_copyright = results.InvalidCopyright
-    _old_copyright = results.OldGentooCopyright
-    _non_gentoo_authors = results.NonGentooAuthorsCopyright
-    _invalid_license = results.InvalidLicenseHeader
-    known_results = frozenset([
-        _invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license,
-    ])
-    _item_attr = 'pkg'
-
-    license_header = '# Distributed under the terms of the GNU General Public License v2'
-
-    def args(self, item):
-        return {self._item_attr: item}
-
-    def feed(self, item):
-        if item.lines:
-            line = item.lines[0].strip()
-            copyright = copyright_regex.match(line)
-            if copyright is None:
-                yield self._invalid_copyright(line, **self.args(item))
-            # Copyright policy is active since 2018-10-21, so it applies
-            # to all ebuilds committed in 2019 and later
-            elif int(copyright.group('end')) >= 2019:
-                if copyright.group('holder') == 'Gentoo Foundation':
-                    yield self._old_copyright(line, **self.args(item))
-                # Gentoo policy requires 'Gentoo Authors'
-                elif copyright.group('holder') != 'Gentoo Authors':
-                    yield self._non_gentoo_authors(line, **self.args(item))
-
-            try:
-                line = item.lines[1].strip('\n')
-            except IndexError:
-                line = ''
-            if line != self.license_header:
-                yield self._invalid_license(line, **self.args(item))
 
 
 def init_checks(enabled_addons, options):

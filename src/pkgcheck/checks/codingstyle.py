@@ -10,7 +10,7 @@ from snakeoil.sequences import stable_unique
 from snakeoil.strings import pluralism
 
 from .. import results, sources
-from . import Check, HeaderCheck
+from . import Check
 
 PREFIX_VARIABLES = ('EROOT', 'ED', 'EPREFIX')
 PATH_VARIABLES = ('BROOT', 'ROOT', 'D') + PREFIX_VARIABLES
@@ -411,37 +411,6 @@ class ObsoleteUriCheck(Check):
                 if matches is not None:
                     uri = matches.group('uri')
                     yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)
-
-
-class EbuildInvalidCopyright(results.InvalidCopyright, results.VersionResult):
-    __doc__ = results.InvalidCopyright.__doc__
-
-
-class EbuildOldGentooCopyright(results.OldGentooCopyright, results.VersionResult):
-    __doc__ = results.OldGentooCopyright.__doc__
-
-
-class EbuildNonGentooAuthorsCopyright(results.NonGentooAuthorsCopyright, results.VersionResult):
-    __doc__ = results.NonGentooAuthorsCopyright.__doc__
-
-
-class EbuildInvalidLicenseHeader(results.InvalidLicenseHeader, results.VersionResult):
-    __doc__ = results.InvalidLicenseHeader.__doc__
-
-
-class EbuildHeaderCheck(HeaderCheck):
-    """Scan ebuild for incorrect copyright/license headers."""
-
-    _source = sources.EbuildFileRepoSource
-
-    _invalid_copyright = EbuildInvalidCopyright
-    _old_copyright = EbuildOldGentooCopyright
-    _non_gentoo_authors = EbuildNonGentooAuthorsCopyright
-    _invalid_license = EbuildInvalidLicenseHeader
-    known_results = frozenset([
-        _invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license,
-    ])
-    _item_attr = 'pkg'
 
 
 class HomepageInSrcUri(results.VersionResult, results.Warning):
