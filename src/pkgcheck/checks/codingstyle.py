@@ -12,8 +12,8 @@ from snakeoil.strings import pluralism
 from .. import results, sources
 from . import Check, HeaderCheck
 
-PREFIXED_VARIABLES = ('EROOT', 'ED')
-PATH_VARIABLES = ('BROOT', 'ROOT', 'D') + PREFIXED_VARIABLES
+PREFIX_VARIABLES = ('EROOT', 'ED', 'EPREFIX')
+PATH_VARIABLES = ('BROOT', 'ROOT', 'D') + PREFIX_VARIABLES
 
 
 class _CommandResult(results.LineResult):
@@ -209,7 +209,7 @@ class PathVariablesCheck(Check):
         self.unnecessary_regex = re.compile(r'(\${(%s)%%/})' % r'|'.join(PATH_VARIABLES))
         self.double_prefix_regex = re.compile(
             r'(\${(%s)(%%/)?}/?\$(\((%s)\)|{(%s)}))' % (
-                r'|'.join(PREFIXED_VARIABLES + ('EPREFIX',)),
+                r'|'.join(PREFIX_VARIABLES),
                 r'|'.join(self.prefixed_getters),
                 r'|'.join(self.prefixed_rhs_variables)))
         self.double_prefix_func_regex = re.compile(
