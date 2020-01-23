@@ -22,19 +22,11 @@ support in various ways if found on the host system including the following:
 Installing
 ==========
 
-No installation is strictly required, just run the ``pkgcheck`` script and
-things should work. For a more permanent install see the following options:
-
-Installing latest pypi release in a virtualenv::
+Installing latest release from pypi::
 
     pip install pkgcheck
 
-Installing from git in a virtualenv::
-
-    git clone https://github.com/pkgcore/pkgcheck.git
-    ./pkgcheck/requirements/pip.sh ./pkgcheck
-
-Installing from a tarball or git repo::
+Installing from a release tarball::
 
     python setup.py install
 
