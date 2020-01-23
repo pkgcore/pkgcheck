@@ -1,3 +1,5 @@
+"""Various checks that require network support."""
+
 import socket
 import traceback
 import urllib.request
@@ -91,14 +93,14 @@ class RequestError(_RequestException):
 
 
 class _UrlCheck(NetworkCheck):
-    """Various URL related checks that require internet access."""
+    """Generic URL verification check requiring network support."""
 
     known_results = frozenset([
         DeadUrl, RedirectedUrl, HttpsUrlAvailable, SSLCertificateError,
     ])
 
     def _http_check(self, attr, url, *, pkg):
-        """Check http:// and https:// URLs using requests."""
+        """Verify http:// and https:// URLs."""
         result = None
         try:
             r = self.session.head(url)
@@ -152,7 +154,7 @@ class _UrlCheck(NetworkCheck):
         return result
 
     def _ftp_check(self, attr, url, *, pkg):
-        """Check ftp:// URLs using urllib."""
+        """Verify ftp:// URLs with urllib."""
         result = None
         try:
             response = urllib.request.urlopen(url, timeout=self.timeout)
@@ -163,6 +165,7 @@ class _UrlCheck(NetworkCheck):
         return result
 
     def task_done(self, results_q, pkg, future):
+        """Determine the result of a given URL verification task."""
         exc = future.exception()
         if exc is not None:
             # traceback objects can't be pickled so fake it
@@ -181,9 +184,16 @@ class _UrlCheck(NetworkCheck):
             results_q.put([result])
 
     def _get_urls(self, pkg):
+        """Get URLs to verify for a given package."""
         raise NotImplementedError
 
     def _schedule_check(self, func, attr, url, executor, futures, results_q, **kwargs):
+        """Schedule verification method to run in a separate thread against a given URL.
+
+        Note that this tries to avoid hitting the network for the same URL
+        twice using a mapping from requested URLs to future objects, adding
+        result-checking callbacks to the futures of existing URLs.
+        """
         future = futures.get(url)
         if future is None:
             future = executor.submit(func, attr, url, **kwargs)
@@ -193,6 +203,7 @@ class _UrlCheck(NetworkCheck):
             future.add_done_callback(partial(self.task_done, results_q, kwargs['pkg']))
 
     def schedule(self, pkg, executor, futures, results_q):
+        """Schedule verification methods to run in separate threads for all flagged URLs."""
         http_urls = []
         for attr, url in self._get_urls(pkg):
             if url.startswith('ftp://'):
@@ -215,7 +226,7 @@ class _UrlCheck(NetworkCheck):
 
 
 class HomepageUrlCheck(_UrlCheck):
-    """Various HOMEPAGE related checks that require internet access."""
+    """Verify HOMEPAGE URLs."""
 
     def _get_urls(self, pkg):
         for url in pkg.homepage:
@@ -223,7 +234,7 @@ class HomepageUrlCheck(_UrlCheck):
 
 
 class FetchablesUrlCheck(_UrlCheck):
-    """Various SRC_URI related checks that require internet access."""
+    """Verify SRC_URI URLs."""
 
     required_addons = (addons.UseAddon,)
 
@@ -244,7 +255,7 @@ class FetchablesUrlCheck(_UrlCheck):
 
 
 class MetadataUrlCheck(_UrlCheck):
-    """Various metadata.xml related checks that require internet access."""
+    """Verify metadata.xml URLs."""
 
     scope = base.package_scope
     _source = sources.PackageRepoSource
