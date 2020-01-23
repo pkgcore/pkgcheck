@@ -27,10 +27,10 @@ class Pipeline:
             scan_scope in (base.version_scope, base.package_scope) and
             isinstance(restrict, boolean.AndRestriction))
 
-    def _queue_work(self, scoped_pipes, async_pipes, work_q):
+    def _queue_work(self, scoped_pipes, work_q):
         """Producer that queues scanning tasks against granular scope restrictions."""
-        for scope in sorted(scoped_pipes, reverse=True):
-            pipes = scoped_pipes[scope]
+        for scope in sorted(scoped_pipes['sync'], reverse=True):
+            pipes = scoped_pipes['sync'][scope]
             if scope is base.version_scope:
                 versioned_source = VersionedSource(self.options)
                 for restrict in versioned_source.itermatch(self.restrict):
@@ -49,23 +49,23 @@ class Pipeline:
             work_q.put(None)
 
         # schedule all async checks from a single process
-        for scope, pipes in async_pipes.items():
+        for scope, pipes in scoped_pipes['async'].items():
             for pipe in pipes:
                 pipe.run(self.restrict)
 
-    def _run_checks(self, sync_pipes, work_q, results_q):
+    def _run_checks(self, pipes, work_q, results_q):
         """Consumer that runs scanning tasks, queuing results for output."""
         for scope, restrict, pipe_idx in iter(work_q.get, None):
             if scope is base.version_scope:
-                results_q.put(list(sync_pipes[scope][pipe_idx].run(restrict)))
+                results_q.put(list(pipes[scope][pipe_idx].run(restrict)))
             elif scope in (base.package_scope, base.category_scope):
                 results = []
-                for pipe in sync_pipes[scope]:
+                for pipe in pipes[scope]:
                     results.extend(pipe.run(restrict))
                 results_q.put(results)
             else:
                 results = []
-                pipe = sync_pipes[scope][pipe_idx]
+                pipe = pipes[scope][pipe_idx]
                 pipe.start()
                 results.extend(pipe.run(restrict))
                 results.extend(pipe.finish())
@@ -76,38 +76,36 @@ class Pipeline:
         # initialize checkrunners per source type, using separate runner for async checks
         checkrunners = defaultdict(list)
         for pipe_mapping in self.pipes:
-            for (source, is_async), checks in pipe_mapping.items():
-                if is_async:
+            for (source, exec_type), checks in pipe_mapping.items():
+                if exec_type == 'async':
                     runner = AsyncCheckRunner(
                         self.options, source, checks, results_q=results_q)
                 else:
                     runner = CheckRunner(self.options, source, checks)
-                checkrunners[(source.feed_type, is_async)].append(runner)
+                checkrunners[(source.feed_type, exec_type)].append(runner)
 
         # categorize checkrunners for parallelization based on the scan and source scope
         scoped_pipes = defaultdict(lambda: defaultdict(list))
         if self.pkg_scan:
-            for (scope, is_async), runners in checkrunners.items():
+            for (scope, exec_type), runners in checkrunners.items():
                 if scope is base.version_scope:
-                    scoped_pipes[is_async][base.version_scope].extend(runners)
+                    scoped_pipes[exec_type][base.version_scope].extend(runners)
                 else:
-                    scoped_pipes[is_async][base.package_scope].extend(runners)
+                    scoped_pipes[exec_type][base.package_scope].extend(runners)
         else:
-            for (scope, is_async), runners in checkrunners.items():
+            for (scope, exec_type), runners in checkrunners.items():
                 if scope in (base.version_scope, base.package_scope):
-                    scoped_pipes[is_async][base.package_scope].extend(runners)
+                    scoped_pipes[exec_type][base.package_scope].extend(runners)
                 else:
-                    scoped_pipes[is_async][scope].extend(runners)
+                    scoped_pipes[exec_type][scope].extend(runners)
 
-        sync_pipes = scoped_pipes[False]
-        async_pipes = scoped_pipes[True]
         work_q = SimpleQueue()
 
         # split target restriction into tasks for parallelization
-        p = Process(target=self._queue_work, args=(sync_pipes, async_pipes, work_q))
+        p = Process(target=self._queue_work, args=(scoped_pipes, work_q))
         p.start()
-        # run tasks using process pool, queuing generated results for reporting
-        pool = Pool(self.jobs, self._run_checks, (sync_pipes, work_q, results_q))
+        # run synchronous checks using process pool, queuing generated results for reporting
+        pool = Pool(self.jobs, self._run_checks, (scoped_pipes['sync'], work_q, results_q))
         pool.close()
         p.join()
         pool.join()

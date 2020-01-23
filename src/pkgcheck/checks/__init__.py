@@ -175,12 +175,12 @@ def init_checks(enabled_addons, options):
                 raise
             continue
         if isinstance(addon, Check):
-            is_async = isinstance(addon, AsyncCheck)
             source = source_map.get(addon.source)
             if source is None:
                 source = sources.init_source(addon.source, options, addons_map)
                 source_map[addon.source] = source
-            enabled[addon.scope][(source, is_async)].append(addon)
+            exec_type = 'async' if isinstance(addon, AsyncCheck) else 'sync'
+            enabled[addon.scope][(source, exec_type)].append(addon)
         if isinstance(addon, base.CachedAddon):
             caches.append(addon)
     return enabled, caches
