@@ -265,9 +265,11 @@ class MetadataUrlCheck(_UrlCheck):
         self.protocols = ('http://', 'https://', 'ftp://')
         self.remote_map = {
             'bitbucket': 'https://bitbucket.org/{project}',
+            'cpan': 'https://metacpan.org/release/{project}',
             'github': 'https://github.com/{project}',
             'gitlab': 'https://gitlab.com/{project}',
             'launchpad': 'https://launchpad.net/{project}',
+            'pear': 'https://pear.php.net/package/{project}',
             'pypi': 'https://pypi.org/project/{project}/',
             'rubygems': 'https://rubygems.org/gems/{project}',
             'sourceforge': 'https://sourceforge.net/projects/{project}/',
