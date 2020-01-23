@@ -267,7 +267,9 @@ class MetadataUrlCheck(_UrlCheck):
             'bitbucket': 'https://bitbucket.org/{project}',
             'github': 'https://github.com/{project}',
             'gitlab': 'https://gitlab.com/{project}',
+            'launchpad': 'https://launchpad.net/{project}',
             'pypi': 'https://pypi.org/project/{project}/',
+            'rubygems': 'https://rubygems.org/gems/{project}',
             'sourceforge': 'https://sourceforge.net/projects/{project}/',
         }
 
