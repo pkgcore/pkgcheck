@@ -76,7 +76,7 @@ def _setup_reporter(parser, namespace):
         try:
             namespace.reporter = const.REPORTERS[namespace.reporter]
         except KeyError:
-            available = ', '.join(const.REPORTERS.keys())
+            available = ', '.join(const.REPORTERS)
             parser.error(
                 f"no reporter matches {namespace.reporter!r} "
                 f"(available: {available})")
@@ -254,7 +254,7 @@ class CheckArgs(arghparse.CommaSeparatedNegations):
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
 
-        available = set(const.CHECKS.keys())
+        available = set(const.CHECKS)
         network = (c for c, v in const.CHECKS.items() if issubclass(v, NetworkCheck))
 
         alias_map = {'all': available, 'net': network}
@@ -789,7 +789,7 @@ def dump_docstring(out, obj, prefix=None):
 @decorate_forced_wrapping()
 def display_keywords(out, options):
     if options.verbosity < 1:
-        out.write('\n'.join(sorted(const.KEYWORDS.keys())), wrap=False)
+        out.write('\n'.join(sorted(const.KEYWORDS)), wrap=False)
     else:
         scopes = defaultdict(set)
         for keyword in const.KEYWORDS.values():
@@ -814,7 +814,7 @@ def display_keywords(out, options):
 @decorate_forced_wrapping()
 def display_checks(out, options):
     if options.verbosity < 1:
-        out.write('\n'.join(sorted(const.CHECKS.keys())), wrap=False)
+        out.write('\n'.join(sorted(const.CHECKS)), wrap=False)
     else:
         d = defaultdict(list)
         for x in const.CHECKS.values():
@@ -849,7 +849,7 @@ def display_checks(out, options):
 @decorate_forced_wrapping()
 def display_reporters(out, options):
     if options.verbosity < 1:
-        out.write('\n'.join(sorted(const.REPORTERS.keys())), wrap=False)
+        out.write('\n'.join(sorted(const.REPORTERS)), wrap=False)
     else:
         out.write()
         out.write("reporters:")
@@ -916,7 +916,7 @@ def _show(options, out, err):
 
     if options.scopes:
         if options.verbosity < 1:
-            out.write('\n'.join(base.scopes.keys()))
+            out.write('\n'.join(base.scopes))
         else:
             for name, scope in base.scopes.items():
                 out.write(f'{name} -- {scope.desc} scope')
