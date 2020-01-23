@@ -1,3 +1,6 @@
+import random
+import string
+
 import pytest
 
 from pkgcore.ebuild import domain, repo_objs
@@ -189,3 +192,8 @@ class Tmpdir(object):
     @pytest.fixture(autouse=True)
     def _create_tmpdir(self, tmpdir):
         self.dir = str(tmpdir)
+
+
+def random_str(length=10):
+    """Generate a random string of ASCII characters of a given length."""
+    return ''.join(random.choice(string.ascii_letters) for _ in range(length))

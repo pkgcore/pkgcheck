@@ -1,5 +1,4 @@
 import os
-import uuid
 
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.test.misc import FakePkg
@@ -17,7 +16,7 @@ class TestPackageUpdatesCheck(misc.Tmpdir, misc.ReportTestCase):
 
     def mk_check(self, pkgs=(), **kwargs):
         # TODO: switch to using a repo fixture when available
-        repo_dir = pjoin(self.dir, uuid.uuid4().hex)
+        repo_dir = pjoin(self.dir, misc.random_str())
         os.makedirs(pjoin(repo_dir, 'metadata'))
         with open(pjoin(repo_dir, 'metadata', 'layout.conf'), 'w') as f:
             f.write('masters =\n')

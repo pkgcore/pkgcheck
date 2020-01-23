@@ -1,6 +1,5 @@
 import os
 import tempfile
-import uuid
 
 import pytest
 
@@ -33,13 +32,13 @@ class PkgDirCheckBase(misc.ReportTestCase):
 
     def mk_pkg(self, files={}, category=None, package=None, version='0.7.1', revision=''):
         # generate random cat/PN
-        category = uuid.uuid4().hex if category is None else category
-        package = uuid.uuid4().hex if package is None else package
+        category = misc.random_str() if category is None else category
+        package = misc.random_str() if package is None else package
 
         pkg = f"{category}/{package}-{version}{revision}"
         self.filesdir = pjoin(self.repo.location, category, package, 'files')
         # create files dir with random empty subdir
-        os.makedirs(pjoin(self.filesdir, uuid.uuid4().hex), exist_ok=True)
+        os.makedirs(pjoin(self.filesdir, misc.random_str()), exist_ok=True)
 
         # create dirs that should be ignored
         for d in getattr(self.check_kls, 'ignore_dirs', ()):
