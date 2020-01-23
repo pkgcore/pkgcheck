@@ -524,7 +524,6 @@ class RedundantDodirCheck(Check):
         self.dodir_regex = re.compile(rf'^\s*(?P<call>dodir\s+(?P<path>\S+))')
 
     def feed(self, pkg):
-        dodir_calls = {}
         lines = enumerate(pkg.lines, 1)
         for lineno, line in lines:
             line = line.strip()
