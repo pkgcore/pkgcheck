@@ -344,13 +344,6 @@ check_options.add_argument(
 scan.plugin = scan.add_argument_group('plugin options')
 
 
-def add_addon(addon, addon_set):
-    if addon not in addon_set:
-        addon_set.add(addon)
-        for dep in addon.required_addons:
-            add_addon(dep, addon_set)
-
-
 def _determine_target_repo(namespace, parser, cwd):
     """Determine a target repo when none was explicitly selected.
 
@@ -425,14 +418,24 @@ def _restrict_to_scope(restrict):
 
 @scan.bind_reset_defaults
 def _setup_scan_defaults(parser, namespace):
+    """Re-initialize default namespace settings per arg parsing run."""
     namespace.forced_checks = []
     namespace.enabled_checks = set()
     namespace.disabled_keywords = set()
     namespace.enabled_keywords = set()
 
 
+def add_addon(addon, addon_set):
+    """Determine the set of required addons for a given addon."""
+    if addon not in addon_set:
+        addon_set.add(addon)
+        for dep in addon.required_addons:
+            add_addon(dep, addon_set)
+
+
 @scan.bind_pre_parse
 def _setup_scan_addons(parser, namespace):
+    """Load all checks and their argparser changes before parsing."""
     all_addons = set()
     for check in const.CHECKS.values():
         add_addon(check, all_addons)
@@ -572,7 +575,7 @@ def _validate_scan_args(parser, namespace):
         parser.error(str(e))
 
 
-def selected_check(options, scan_scope, scope):
+def _selected_check(options, scan_scope, scope):
     """Verify check scope against current scan scope to determine check activation."""
     if scope == 0:
         if options.selected_scope is None:
@@ -614,7 +617,7 @@ def _scan(options, out, err):
             # filter enabled checks based on the current scanning scope
             pipes = [
                 d for scope, d in enabled_checks.items()
-                if selected_check(options, scan_scope, scope)
+                if _selected_check(options, scan_scope, scope)
             ]
 
             if not pipes:
@@ -660,6 +663,7 @@ cache.add_argument(
 
 @cache.bind_pre_parse
 def _setup_cache_addons(parser, namespace):
+    """Load all addons using caches and their argparser changes before parsing."""
     all_addons = set()
     cache_addons = set()
     for addon in base.CachedAddon.caches:
