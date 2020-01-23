@@ -497,3 +497,44 @@ class RawEbuildCheck(Check):
             attr = match.lastgroup
             func = getattr(self, f'check_{attr}')
             yield from func(pkg, match.group(attr))
+
+
+class RedundantDodir(results.LineResult, results.Warning):
+    """Ebuild using a redundant dodir call."""
+
+    def __init__(self, cmd, **kwargs):
+        super().__init__(**kwargs)
+        self.cmd = cmd
+
+    @property
+    def desc(self):
+        return f"dodir called before {self.cmd}, line {self.lineno}: {self.line}"
+
+
+class RedundantDodirCheck(Check):
+    """Scan ebuild for redundant dodir usage."""
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset([RedundantDodir])
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        cmds = r'|'.join(('insinto', 'exeinto', 'docinto'))
+        self.cmds_regex = re.compile(rf'^\s*(?P<cmd>({cmds}))\s+(?P<path>\S+)')
+        self.dodir_regex = re.compile(rf'^\s*(?P<call>dodir\s+(?P<path>\S+))')
+
+    def feed(self, pkg):
+        dodir_calls = {}
+        lines = enumerate(pkg.lines, 1)
+        for lineno, line in lines:
+            line = line.strip()
+            if not line or line[0] == '#':
+                continue
+            dodir = self.dodir_regex.match(line)
+            if dodir:
+                lineno, line = next(lines)
+                cmd = self.cmds_regex.match(line)
+                if cmd and dodir.group('path') == cmd.group('path'):
+                    yield RedundantDodir(
+                        cmd.group('cmd'), line=dodir.group('call'),
+                        lineno=lineno - 1, pkg=pkg)
