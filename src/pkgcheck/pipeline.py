@@ -15,6 +15,7 @@ from .sources import UnversionedSource, VersionedSource
 
 
 class Pipeline:
+    """Check-running pipeline leveraging scope-based parallelism."""
 
     def __init__(self, options, scan_scope, pipes, restrict):
         self.options = options
@@ -27,7 +28,7 @@ class Pipeline:
             isinstance(restrict, boolean.AndRestriction))
 
     def _queue_work(self, scoped_pipes, async_pipes, work_q):
-        # queue restriction tasks based on scope for check running parallelism
+        """Producer that queues scanning tasks against granular scope restrictions."""
         for scope in sorted(scoped_pipes, reverse=True):
             pipes = scoped_pipes[scope]
             if scope is base.version_scope:
@@ -43,16 +44,17 @@ class Pipeline:
                 for i in range(len(pipes)):
                     work_q.put((scope, self.restrict, i))
 
-        # insert flags to notify processes that no more work exists
+        # insert flags to notify consumers that no more work exists
         for i in range(self.jobs):
             work_q.put(None)
 
-        # run all async checks from a single process
+        # schedule all async checks from a single process
         for scope, pipes in async_pipes.items():
             for pipe in pipes:
                 pipe.run(self.restrict)
 
     def _run_checks(self, sync_pipes, work_q, results_q):
+        """Consumer that runs scanning tasks, queuing results for output."""
         for scope, restrict, pipe_idx in iter(work_q.get, None):
             if scope is base.version_scope:
                 results_q.put(list(sync_pipes[scope][pipe_idx].run(restrict)))
@@ -70,6 +72,7 @@ class Pipeline:
                 results_q.put(results)
 
     def run(self, results_q):
+        """Run the scanning pipeline in parallel by check and scanning scope."""
         # initialize checkrunners per source type, using separate runner for async checks
         checkrunners = defaultdict(list)
         for pipe_mapping in self.pipes:
@@ -142,6 +145,7 @@ class CheckRunner:
         self._metadata_errors = deque()
 
     def _metadata_error_cb(self, e):
+        """Callback handling MetadataError related results."""
         cls = MetadataError.result_mapping.get(e.attr, MetadataError)
         process_callback = (
             cls is MetadataError or
@@ -158,6 +162,7 @@ class CheckRunner:
             check.start()
 
     def run(self, restrict=packages.AlwaysTrue):
+        """Run registered checks against all matching source items."""
         try:
             source = self.source.itermatch(restrict, **self._itermatch_kwargs)
         except AttributeError:
@@ -183,14 +188,10 @@ class CheckRunner:
         for check in self.checks:
             yield from check.finish()
 
-    # The plugger tests use these.
     def __eq__(self, other):
         return (
             self.__class__ is other.__class__ and
             frozenset(self.checks) == frozenset(other.checks))
-
-    def __ne__(self, other):
-        return not self == other
 
     def __hash__(self):
         return hash(frozenset(self.checks))
@@ -201,6 +202,12 @@ class CheckRunner:
 
 
 class AsyncCheckRunner(CheckRunner):
+    """Generic runner for asynchronous checks.
+
+    Checks that would otherwise block for uncertain amounts of time due to I/O
+    or network access are run in separate threads, queuing any relevant results
+    on completion.
+    """
 
     def __init__(self, *args, results_q, **kwargs):
         super().__init__(*args, **kwargs)
