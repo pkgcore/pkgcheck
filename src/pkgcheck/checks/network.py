@@ -285,6 +285,8 @@ class MetadataUrlCheck(_UrlCheck):
                 if x.text:
                     url = x.text
                     if element == 'remote-id':
+                        # Use remote-id -> URL map to determine actual URL,
+                        # skipping verification for unmapped remote-ids.
                         try:
                             url = self.remote_map[x.attrib['type']].format(project=url)
                         except KeyError:
