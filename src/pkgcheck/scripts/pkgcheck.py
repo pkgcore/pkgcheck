@@ -27,7 +27,7 @@ from snakeoil.strings import pluralism
 
 from .. import base, const, pipeline, reporters, results
 from ..addons import init_addon
-from ..checks import init_checks
+from ..checks import NetworkCheck, init_checks
 from ..log import logger
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
@@ -253,9 +253,11 @@ class CheckArgs(arghparse.CommaSeparatedNegations):
 
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
-        available = set(const.CHECKS.keys())
 
-        alias_map = {'all': available}
+        available = set(const.CHECKS.keys())
+        network = (c for c, v in const.CHECKS.items() if issubclass(v, NetworkCheck))
+
+        alias_map = {'all': available, 'net': network}
         replace_aliases = lambda x: alias_map.get(x, [x])
 
         # expand check aliases to check lists
@@ -292,8 +294,12 @@ check_options.add_argument(
         be used, e.g. ``-c=-check``, otherwise the disabled check argument is
         treated as an option.
 
-        The special argument of ``all`` corresponds to the list of all checks,
-        respectively. Therefore, to forcibly enable all checks use ``-c all``.
+        The special argument of ``all`` corresponds to the list of all checks.
+        Therefore, to forcibly enable all checks use ``-c all``.
+
+        In addition, all network-related checks (which are disabled by default)
+        can be enabled using ``-c net``. This allows for easily running only
+        network checks without having to explicitly list them.
 
         Use ``pkgcheck show --checks`` see available options.
     """)
