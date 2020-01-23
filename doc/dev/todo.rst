@@ -6,4 +6,3 @@
   likely to be a major false positive source.
 - some form of exemption syntax, for spots where the ebuild is doing something
   normally bad, but valid in this scenario
-- some form of -jN test (complex/hard)
