@@ -34,3 +34,7 @@ jobs:
       run: |
         coverage combine
         coverage report
+    - name: Submit code coverage to codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}

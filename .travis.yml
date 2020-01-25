@@ -14,17 +14,13 @@ cache:
   - $HOME/downloads
 
 install:
-- pip install -U tox codecov
+- pip install -U tox
 # install deps for perl checks
 - sudo cpanm --quiet --notest Gentoo::PerlMod::Version
 before_script:
 - git clone https://github.com/pkgcore/pkgdist.git
 - pkgdist/ci.sh
 script: tox -e travis
-after_success:
-# upload coverage data
-- tox -e coverage-report
-- codecov
 
 stages:
   - name: test
