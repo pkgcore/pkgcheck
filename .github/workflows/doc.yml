@@ -17,14 +17,14 @@ jobs:
 
     - name: Install dependencies
       run: |
-        # force using an older version of pip that allows URL deps in pyproject.toml
-        python -m pip install --upgrade 'pip<20'
+        python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
         pip install -r requirements/docs.txt
 
     - name: Build sphinx documentation
       run: |
         python setup.py build_docs
+        # notify github this isn't a jekyll site
         touch build/sphinx/html/.nojekyll
 
     # install ssh client to use for deploying
