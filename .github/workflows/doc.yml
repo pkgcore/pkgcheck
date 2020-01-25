@@ -1,9 +1,12 @@
-name: Build docs
+name: Build and deploy docs
 
-on: [push]
+on:
+  push:
+    branches:
+    - master
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -11,12 +14,29 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.6
+
     - name: Install dependencies
       run: |
         # force using an older version of pip that allows URL deps in pyproject.toml
         python -m pip install --upgrade 'pip<20'
         pip install -r requirements/dev.txt
         pip install -r requirements/docs.txt
+
     - name: Build sphinx documentation
       run: |
         python setup.py build_docs
+        touch build/sphinx/html/.nojekyll
+
+    # install ssh client to use for deploying
+    # TODO: replace this once GITHUB_TOKEN works as expected
+    - name: Install SSH Client
+      uses: webfactory/ssh-agent@v0.2.0
+      with:
+        ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+    - name: Deploy docs to gh-pages
+      uses: JamesIves/github-pages-deploy-action@releases/v3
+      with:
+        SSH: true
+        BRANCH: gh-pages
+        FOLDER: build/sphinx/html

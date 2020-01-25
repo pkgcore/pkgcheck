@@ -1,4 +1,4 @@
-|pypi| |docs| |test| |coverage|
+|pypi| |test| |coverage|
 
 ========
 pkgcheck
@@ -56,8 +56,6 @@ the following::
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcheck.svg
     :target: https://pypi.python.org/pypi/pkgcheck
-.. |docs| image:: https://github.com/pkgcore/pkgcheck/workflows/Build%20docs/badge.svg
-    :target: https://github.com/pkgcore/pkgcheck/actions?query=workflow%3A%22Build+docs%22
 .. |test| image:: https://github.com/pkgcore/pkgcheck/workflows/Run%20tests/badge.svg
     :target: https://github.com/pkgcore/pkgcheck/actions?query=workflow%3A%22Run+tests%22
 .. |coverage| image:: https://codecov.io/gh/pkgcore/pkgcheck/branch/master/graph/badge.svg
