@@ -1,4 +1,5 @@
 import os
+from difflib import SequenceMatcher
 
 from lxml import etree
 from pkgcore import const as pkgcore_const
@@ -254,6 +255,22 @@ class PkgMetadataXmlEmptyElement(_MetadataXmlEmptyElement, results.PackageResult
     """Empty element in package metadata.xml file."""
 
 
+class RedundantLongDescription(results.PackageResult, results.Warning):
+    """Package's longdescription element in metadata.xml and DESCRIPTION are interchangeable.
+
+    The longdescription element is for providing extended information that
+    doesn't fit in DESCRIPTION.
+    """
+
+    def __init__(self, msg, **kwargs):
+        super().__init__(**kwargs)
+        self.msg = msg
+
+    @property
+    def desc(self):
+        return f'{self.msg}'
+
+
 class _XmlBaseCheck(Check):
     """Base class for metadata.xml scans."""
 
@@ -373,7 +390,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
         PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
         PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, EmptyMaintainer,
-        MaintainerWithoutProxy, StaleProxyMaintProject,
+        MaintainerWithoutProxy, StaleProxyMaintProject, RedundantLongDescription,
         NonexistentProjectMaintainer, WrongMaintainerType,
     ])
 
@@ -413,6 +430,16 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
                 if wrong_maintainers:
                     yield WrongMaintainerType(
                         os.path.basename(loc), sorted(wrong_maintainers), pkg=pkg)
+
+    def _check_longdescription(self, pkg, loc, doc):
+        if pkg.longdescription is not None:
+            match_ratio = SequenceMatcher(None, pkg.description, pkg.longdescription).ratio()
+            if match_ratio > 0.75:
+                msg = 'metadata.xml longdescription closely matches DESCRIPTION'
+                yield RedundantLongDescription(msg, pkg=pkg)
+            elif len(pkg.longdescription) < 100:
+                msg = 'metadata.xml longdescription is too short'
+                yield RedundantLongDescription(msg, pkg=pkg)
 
     def _get_xml_location(self, pkg):
         """Return the metadata.xml location for a given package."""
