@@ -351,7 +351,7 @@ class _XmlBaseCheck(Check):
         # empty category or package without ebuilds, skipping check
         if not pkgs:
             return
-        pkg = pkgs[0]
+        pkg = pkgs[-1]
         loc = self._get_xml_location(pkg)
         yield from self._parse_xml(pkg, loc)
 
