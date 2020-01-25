@@ -4,23 +4,10 @@ python:
 - 3.6
 - 3.7
 - 3.8
-addons:
-  apt:
-    packages:
-    - cpanminus
 cache:
   pip: true
   directories:
   - $HOME/downloads
-
-install:
-- pip install -U tox
-# install deps for perl checks
-- sudo cpanm --quiet --notest Gentoo::PerlMod::Version
-before_script:
-- git clone https://github.com/pkgcore/pkgdist.git
-- pkgdist/ci.sh
-script: tox -e travis
 
 stages:
   - name: test
