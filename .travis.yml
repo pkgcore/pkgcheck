@@ -11,7 +11,7 @@ cache:
 
 stages:
   - name: test
-    if: NOT branch IN (lint, deploy)
+    if: branch = travis-ci
   - name: deploy
     if: (type = api) OR (branch = deploy) OR (tag IS present)
 
