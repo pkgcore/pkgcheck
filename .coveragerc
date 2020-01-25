@@ -8,7 +8,8 @@ omit =
 
 [paths]
 source =
-    src/pkgcheck
+	src/pkgcheck
+	build/lib/pkgcheck
 	.tox/*/lib/python*/site-packages/pkgcheck
 	.tox/pypy*/site-packages/pkgcheck
 
