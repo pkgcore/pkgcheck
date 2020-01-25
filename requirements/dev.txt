@@ -2,5 +2,5 @@ cython
 chardet
 lxml
 pathspec
-https://github.com/pkgcore/snakeoil/archive/master.tar.gz#egg=snakeoil
-https://github.com/pkgcore/pkgcore/archive/master.tar.gz#egg=pkgcore
+snakeoil @ https://github.com/pkgcore/snakeoil/archive/master.tar.gz#egg=snakeoil
+pkgcore @ https://github.com/pkgcore/pkgcore/archive/master.tar.gz#egg=pkgcore
