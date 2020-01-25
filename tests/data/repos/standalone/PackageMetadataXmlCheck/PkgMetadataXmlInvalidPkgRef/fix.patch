@@ -1,11 +1,13 @@
 diff -Naur standalone/PackageMetadataXmlCheck/PkgMetadataXmlInvalidPkgRef/metadata.xml fixed/PackageMetadataXmlCheck/PkgMetadataXmlInvalidPkgRef/metadata.xml
---- standalone/PackageMetadataXmlCheck/PkgMetadataXmlInvalidPkgRef/metadata.xml	2019-08-24 04:30:18.815352489 -0600
-+++ fixed/PackageMetadataXmlCheck/PkgMetadataXmlInvalidPkgRef/metadata.xml	2019-08-24 04:59:01.512634198 -0600
-@@ -5,6 +5,6 @@
-		<email>radhermit@gentoo.org</email>
-	</maintainer>
-	<longdescription>
--		Package with invalid package reference to <pkg>nonexistent/pkg</pkg>.
-+		Package with valid package reference to <pkg>app-arch/unzip</pkg>.
-	</longdescription>
+--- standalone/PackageMetadataXmlCheck/PkgMetadataXmlInvalidPkgRef/metadata.xml	2020-01-25 07:53:11.402203396 -0700
++++ fixed/PackageMetadataXmlCheck/PkgMetadataXmlInvalidPkgRef/metadata.xml	2020-01-25 08:14:00.559343459 -0700
+@@ -5,7 +5,7 @@
+ 		<email>radhermit@gentoo.org</email>
+ 	</maintainer>
+ 	<longdescription>
+-		Package with metadata.xml longdescription that has an invalid package
+-		reference to a nonexistent package of <pkg>nonexistent/pkg</pkg>.
++		Package with metadata.xml longdescription that has a valid package
++		reference to an existent package of <pkg>app-arch/unzip</pkg>.
+ 	</longdescription>
  </pkgmetadata>
