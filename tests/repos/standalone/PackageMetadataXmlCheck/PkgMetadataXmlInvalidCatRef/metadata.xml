@@ -5,6 +5,7 @@
 		<email>radhermit@gentoo.org</email>
 	</maintainer>
 	<longdescription>
-		Package with invalid category reference to <cat>virtul</cat>.
+		Package with metadata.xml longdescription that has an invalid category
+		reference to a nonexistent category of <cat>virtul</cat>.
 	</longdescription>
 </pkgmetadata>

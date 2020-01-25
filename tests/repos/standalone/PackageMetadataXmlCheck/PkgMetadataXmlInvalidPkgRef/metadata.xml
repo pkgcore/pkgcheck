@@ -5,6 +5,7 @@
 		<email>radhermit@gentoo.org</email>
 	</maintainer>
 	<longdescription>
-		Package with invalid package reference to <pkg>nonexistent/pkg</pkg>.
+		Package with metadata.xml longdescription that has an invalid package
+		reference to a nonexistent package of <pkg>nonexistent/pkg</pkg>.
 	</longdescription>
 </pkgmetadata>
