@@ -41,5 +41,5 @@ jobs:
 
     - name: Upload files for tagged releases
       run: |
-        echo "Uploading files..."
+        echo "Uploading files for tag ${GIT_TAG}..."
       if: env.GIT_TAG != ''
