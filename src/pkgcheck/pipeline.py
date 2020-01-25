@@ -1,6 +1,7 @@
 """Pipeline building support for connecting sources and checks."""
 
 import os
+import traceback
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
@@ -173,6 +174,10 @@ class CheckRunner:
                     yield from check.feed(item)
                 except MetadataException as e:
                     self._metadata_error_cb(e)
+                except Exception as e:
+                    # traceback objects can't be pickled so fake it
+                    e.__traceback_list__ = traceback.format_exc().strip()
+                    yield e
             self._running_check = None
 
         while self._metadata_errors:
