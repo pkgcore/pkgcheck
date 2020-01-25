@@ -22,7 +22,7 @@ jobs:
       run: |
         # pull in pkgdist dep lists
         git clone https://github.com/pkgcore/pkgdist.git
-        cp -Rv pkgdist/requirements requirements/
+        cp -Rv pkgdist/requirements/* requirements/
 
         # install deps required for building sdist/wheels
         python -m pip install --upgrade pip
