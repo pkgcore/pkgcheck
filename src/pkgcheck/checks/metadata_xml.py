@@ -268,7 +268,7 @@ class RedundantLongDescription(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.msg}'
+        return self.msg
 
 
 class _XmlBaseCheck(Check):
