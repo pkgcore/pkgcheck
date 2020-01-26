@@ -3,6 +3,54 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.7.5 (2020-01-26)
+---------------------------
+
+- RedundantLongDescription: Flag redundant longdescription metadata.xml
+  elements (#205).
+
+- RedundantDodir: Flag redundant dodir usage (#169).
+
+- pkgcheck scan: Add special argument 'net' for -c/--checks option that enables
+  all network checks. This allows for easily running all network checks using
+  something similar to ``pkgcheck scan --net -c net``.
+
+- AbsoluteSymlink: Flag dosym calls using paths starting with ${EPREFIX}.
+
+- DeprecatedInsinto: Flag deprecated insinto usage with unnecessary quote usage.
+
+- pkgcheck scan: Show a traceback and forcibly exit on unexpected exceptions
+  when running checks.
+
+- EclassBashSyntaxError: Report bash syntax errors in eclasses.
+
+- pkgcheck scan: Allow location specific scopes to override target path
+  restrict scope. This makes scanning against a file path target like
+  ${REPO_PATH}/eclass only enable eclass checks instead of doing a full repo
+  scan.
+
+- pkgcheck scan: Allow path target args of '.' or '..' to work as expected.
+
+- RdependChange: Flag non-live, locally committed packages with altered RDEPEND
+  lacking revbumps.
+
+- ``pkgcheck scan --commits`` now enables eclass checks if it notices any
+  relevant eclass changes in the local repo.
+
+- EclassHeaderCheck: Add initial eclass header checks similar to the ones done
+  against ebuilds in the gentoo repo.
+
+- pkgcheck scan: Drop the -C/--checkset option, it might return in some form
+  once reworked config file support is done.
+
+- MetadataUrlCheck: Add initial check for metadata.xml URL validity (#167).
+
+- Ignore unstaged changes when generating targets for ``pkgcheck scan
+  --commits``.
+
+- RedundantUriRename: Flag redundant SRC_URI renames (#196).
+
+---------------------------
 pkgcheck 0.7.4 (2020-01-11)
 ---------------------------
 
