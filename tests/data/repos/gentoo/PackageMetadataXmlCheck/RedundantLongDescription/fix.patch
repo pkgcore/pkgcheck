@@ -1,0 +1,11 @@
+diff -Naur gentoo/PackageMetadataXmlCheck/RedundantLongDescription/metadata.xml fixed/PackageMetadataXmlCheck/RedundantLongDescription/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/RedundantLongDescription/metadata.xml	2020-01-25 20:15:23.263971596 -0700
++++ fixed/PackageMetadataXmlCheck/RedundantLongDescription/metadata.xml	2020-01-25 20:15:55.499091459 -0700
+@@ -4,7 +4,4 @@
+ 	<maintainer type="person">
+ 		<email>radhermit@gentoo.org</email>
+ 	</maintainer>
+-	<longdescription>
+-		Long description that is too short.
+-	</longdescription>
+ </pkgmetadata>

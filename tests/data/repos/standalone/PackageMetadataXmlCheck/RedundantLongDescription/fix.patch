@@ -1,0 +1,11 @@
+diff -Naur standalone/PackageMetadataXmlCheck/RedundantLongDescription/metadata.xml fixed/PackageMetadataXmlCheck/RedundantLongDescription/metadata.xml
+--- standalone/PackageMetadataXmlCheck/RedundantLongDescription/metadata.xml	2020-01-25 20:10:08.394800745 -0700
++++ fixed/PackageMetadataXmlCheck/RedundantLongDescription/metadata.xml	2020-01-25 20:14:03.958676673 -0700
+@@ -4,7 +4,4 @@
+ 	<maintainer type="person">
+ 		<email>radhermit@gentoo.org</email>
+ 	</maintainer>
+-	<longdescription>
+-		Ebuild with redundant metadata.xml longdescription.
+-	</longdescription>
+ </pkgmetadata>
