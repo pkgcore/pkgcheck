@@ -1,0 +1,24 @@
+diff -Naur standalone/RedundantDodirCheck/RedundantDodir/RedundantDodir-0.ebuild fixed/RedundantDodirCheck/RedundantDodir/RedundantDodir-0.ebuild
+--- standalone/RedundantDodirCheck/RedundantDodir/RedundantDodir-0.ebuild	2020-01-25 20:21:40.686366299 -0700
++++ fixed/RedundantDodirCheck/RedundantDodir/RedundantDodir-0.ebuild	2020-01-25 20:23:11.888699916 -0700
+@@ -6,7 +6,6 @@
+ 
+ src_install() {
+ 	touch blah
+-	dodir /foo/bar
+ 	insinto /foo/bar
+ 	doins blah
+ 
+@@ -16,12 +15,10 @@
+ 	doins blah
+ 
+ 	touch blaz
+-	dodir /foo/bin
+ 	exeinto /foo/bin
+ 	doexe blaz
+ 
+ 	touch blob
+-	dodir /foo/doc
+ 	docinto /foo/doc
+ 	dodoc blob
+ }

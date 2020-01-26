@@ -1,0 +1,4 @@
+RedundantDodirCheck/RedundantDodir
+  RedundantDodir: version 0: dodir called before insinto, line 9: dodir /foo/bar
+  RedundantDodir: version 0: dodir called before exeinto, line 19: dodir /foo/bin
+  RedundantDodir: version 0: dodir called before docinto, line 24: dodir /foo/doc
