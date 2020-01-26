@@ -17,6 +17,10 @@ jobs:
       with:
         python-version: 3.6
 
+    - name: Set env variables
+      # get the name of the branch or tag we're building against
+      run: echo "::set-env name=GIT_REF::$(echo ${GITHUB_REF##*/})"
+
     - name: Install dependencies
       run: |
         # pull in pkgdist dep lists
@@ -46,6 +50,6 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        echo "Uploading files for tag ${GITHUB_REF##*/}..."
+        echo "Uploading files for tag ${GIT_REF}..."
       # only upload files for tagged releases
-      if: ${GITHUB_REF##*/} != 'deploy'
+      if: env.GIT_REF != 'deploy'
