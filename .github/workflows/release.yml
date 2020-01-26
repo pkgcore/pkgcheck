@@ -37,6 +37,9 @@ jobs:
         sha512sum dist/*
 
     - name: Upload files for tagged releases
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         echo "Uploading files for tag ${GITHUB_REF##*/}..."
       # only upload files for tagged releases
