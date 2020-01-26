@@ -23,8 +23,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip coverage pytest
+        python -m pip install --upgrade pip coverage
         pip install -r requirements/dev.txt
+        pip install -r requirements/test.txt
 
     - name: Install non-python dependencies
       run: |
