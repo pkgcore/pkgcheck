@@ -6,7 +6,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
@@ -15,27 +14,33 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip coverage pytest
         pip install -r requirements/dev.txt
+
     - name: Install non-python dependencies
       run: |
         sudo apt-get install cpanminus
         # dep for perl checks
         sudo cpanm --quiet --notest Gentoo::PerlMod::Version
+
     - name: Test with pytest
       run: |
         coverage run -p setup.py test
+
     - name: Report code coverage
       run: |
         coverage combine
         coverage report
         coverage xml
+
     - name: Submit code coverage to codecov
       uses: codecov/codecov-action@v1
       with:
