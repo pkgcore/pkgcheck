@@ -52,5 +52,6 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         echo "Uploading files for tag ${GIT_REF}..."
+        twine upload dist/*
       # only upload files for tagged releases
       if: env.GIT_REF != 'deploy'
