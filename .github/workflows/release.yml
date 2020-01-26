@@ -25,6 +25,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements/dist.txt
 
+    - name: Test with pytest
+      run: python setup.py test
+
     - name: Build release files
       run: |
         # use release version of pyproject.toml (without URL dev deps)
