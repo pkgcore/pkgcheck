@@ -38,6 +38,6 @@ jobs:
 
     - name: Upload files for tagged releases
       run: |
-        echo "Uploading files for tag ${GIT_TAG}..."
+        echo "Uploading files for tag ${GITHUB_REF##*/}..."
       # only upload files for tagged releases
       if: ${GITHUB_REF##*/} != 'deploy'
