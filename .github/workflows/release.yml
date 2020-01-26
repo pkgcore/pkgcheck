@@ -15,9 +15,6 @@ jobs:
       with:
         python-version: 3.6
 
-    - name: Set env variables
-      run: echo "::set-env name=GIT_TAG::$(git tag --points-at HEAD)"
-
     - name: Install dependencies
       run: |
         # pull in pkgdist dep lists
@@ -42,4 +39,5 @@ jobs:
     - name: Upload files for tagged releases
       run: |
         echo "Uploading files for tag ${GIT_TAG}..."
-      if: env.GIT_TAG != ''
+      # only upload files for tagged releases
+      if: ${GITHUB_REF##*/} != 'deploy'
