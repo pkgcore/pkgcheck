@@ -34,6 +34,12 @@ class PerlCheck(Check):
     def __init__(self, *args):
         super().__init__(*args)
         self.dist_version_re = re.compile('DIST_VERSION=(?P<dist_version>\d+(\.\d+)*)\s*\n')
+
+        # Initialize perl script the check is going to communicate with. This
+        # is done during __init__() since we only want one running version of
+        # the script that is shared between however many scanning processes
+        # will be run. Also, it makes it easier to disable this check if the
+        # required perl deps are missing.
         self.connection = None
         self.perl_client = None
         self.process_lock = multiprocessing.Lock()
@@ -82,9 +88,10 @@ class PerlCheck(Check):
                         yield MismatchedPerlVersion(dist_version, normalized, pkg=pkg)
 
     def __del__(self):
+        # Clean up perl cruft if it exists, we don't care about being nice to
+        # the perl side at this point.
         if self.connection is not None:
             self.connection.close()
         self.socket_dir.cleanup()
-        # at this point, we don't care about being nice to the perl side
         if self.perl_client is not None:
             self.perl_client.kill()
