@@ -29,8 +29,6 @@ if os.path.exists(libdir):
 os.environ['PKGDIST_REPODIR'] = os.path.abspath('..')
 from snakeoil.dist import distutils_extensions as pkgdist
 
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-
 
 # -- General configuration ------------------------------------------------
 
@@ -116,11 +114,6 @@ pygments_style = 'sphinx'
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
-
-# auto-generate required files for RTD build environment
-if on_rtd:
-    pkgdist.generate_man()
-    pkgdist.generate_html()
 
 # -- Options for HTML output ----------------------------------------------
 
