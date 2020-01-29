@@ -88,6 +88,18 @@ def _GET_VALS(attr, func):
         result = func()
     return result
 
+
+# determine XDG compatible paths
+for xdg_var, var_name, fallback_dir in (
+        ('XDG_CONFIG_HOME', 'USER_CONFIG_PATH', '~/.config'),
+        ('XDG_CACHE_HOME', 'USER_CACHE_PATH', '~/.cache'),
+        ('XDG_DATA_HOME', 'USER_DATA_PATH', '~/.local/share')):
+    setattr(_module, var_name,
+            os.environ.get(xdg_var, os.path.join(os.path.expanduser(fallback_dir), __title__)))
+
+USER_CONF_FILE = os.path.join(getattr(_module, 'USER_CONFIG_PATH'), 'pkgcheck.conf')
+SYSTEM_CONF_FILE = '/etc/pkgcheck/pkgcheck.conf'
+
 REPO_PATH = _GET_CONST('REPO_PATH', _reporoot, allow_environment_override=True)
 DATA_PATH = _GET_CONST('DATA_PATH', '%(REPO_PATH)s/data')
 
