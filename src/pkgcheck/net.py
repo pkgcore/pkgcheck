@@ -36,6 +36,13 @@ class Session(requests.Session):
         kwargs['timeout'] = self.timeout
         try:
             r = super().send(req, **kwargs)
+
+            # Some servers deny HEAD requests with 501 or 405, but allow GET so
+            # fallback to that in those situations.
+            if r.status_code in (405, 501) and req.method == 'HEAD':
+                req.method = 'GET'
+                return self.send(req, **kwargs)
+
             r.raise_for_status()
             return r
         except requests.exceptions.SSLError as e:
