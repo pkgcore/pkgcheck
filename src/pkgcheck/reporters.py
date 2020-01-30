@@ -16,6 +16,35 @@ from snakeoil.decorators import coroutine
 from . import base, const, results
 
 
+class _ResultsIter:
+    """Iterator handling exceptions within queued results.
+
+    Due to the parallelism of check running, all results are pushed into the
+    results queue as lists of result or exception objects. This iterator forces
+    exceptions to be handled explicitly, by outputting the serialized traceback
+    and signaling scanning processes to end when an exception object is found.
+    """
+
+    def __init__(self, results_q):
+        self.pid = os.getpid()
+        self.iter = iter(results_q.get, None)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while True:
+            results = next(self.iter)
+            if results:
+                for result in results:
+                    if isinstance(result, Exception):
+                        print(result.__traceback_list__)
+                        os.kill(self.pid, signal.SIGINT)
+                        return
+                break
+        return results
+
+
 class Reporter:
     """Generic result reporter."""
 
@@ -36,46 +65,30 @@ class Reporter:
     def __call__(self, pipe, sort=False):
         results_q = SimpleQueue()
         orig_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)
-        orig_pid = os.getpid()
+        results_iter = _ResultsIter(results_q)
         p = Process(target=pipe.run, args=(results_q,))
         p.start()
         signal.signal(signal.SIGINT, orig_sigint_handler)
 
         if pipe.pkg_scan or sort:
             # sort all generated results, removing duplicate MetadataError results
-            results = set(chain.from_iterable(iter(results_q.get, None)))
-            try:
-                for result in sorted(results):
-                    self.report(result)
-            except TypeError:
-                # handle exceptions returned from async checks
-                for result in results:
-                    if isinstance(result, Exception):
-                        print(result.__traceback_list__)
-                        os.kill(orig_pid, signal.SIGINT)
-                        break
+            results = set(chain.from_iterable(results_iter))
+            for result in sorted(results):
+                self.report(result)
         else:
             ordered_results = {
                 scope: [] for scope in reversed(list(base.scopes.values()))
                 if scope.level <= base.repo_scope
             }
-            try:
-                for results in iter(results_q.get, None):
-                    for result in sorted(results):
-                        try:
-                            ordered_results[result.scope].append(result)
-                        except KeyError:
-                            self.report(result)
-                # output repo and commit results after package-related results
-                for result in chain.from_iterable(sorted(x) for x in ordered_results.values()):
-                    self.report(result)
-            except (TypeError, AttributeError):
-                # handle exceptions returned from async checks
-                for result in results:
-                    if isinstance(result, Exception):
-                        print(result.__traceback_list__)
-                        os.kill(orig_pid, signal.SIGINT)
-                        break
+            for results in results_iter:
+                for result in sorted(results):
+                    try:
+                        ordered_results[result.scope].append(result)
+                    except KeyError:
+                        self.report(result)
+            # output repo and commit results after package-related results
+            for result in chain.from_iterable(sorted(x) for x in ordered_results.values()):
+                self.report(result)
 
         p.join()
 
