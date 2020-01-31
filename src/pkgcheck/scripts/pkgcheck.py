@@ -700,7 +700,7 @@ cache.add_argument(
 
 
 @cache.bind_pre_parse
-def _setup_cache_addons(parser, namespace, args):
+def _setup_cache_addons(parser, namespace):
     """Load all addons using caches and their argparser changes before parsing."""
     all_addons = set()
     cache_addons = set()
