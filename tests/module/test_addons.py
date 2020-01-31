@@ -157,7 +157,7 @@ class TestProfileAddon(ProfilesMixin):
             "profile1": ["x86"],
             "profile1/2": ["x86"],
         })
-        options = self.process_check([], profiles=None)
+        options = self.process_check([], selected_profiles=None)
         # override the default
         check = self.addon_kls(options)
         assert sorted(check.official_arches) == ['x86']

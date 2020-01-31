@@ -309,7 +309,7 @@ check_options.add_argument(
         Use ``pkgcheck show --keywords`` to see available options.
     """)
 check_options.add_argument(
-    '-s', '--scopes', metavar='SCOPE', action=ScopeArgs, dest='selected_scope',
+    '-s', '--scopes', metavar='SCOPE', action=ScopeArgs, dest='selected_scopes',
     help='limit keywords to scan for by scope (comma-separated list)',
     docs="""
         Comma separated list of scopes to enable and disable for scanning. Any
@@ -515,11 +515,11 @@ def _validate_scan_args(parser, namespace):
     namespace.enabled_keywords = set()
 
     # selected scopes
-    if namespace.selected_scope is not None:
+    if namespace.selected_scopes is not None:
         namespace.disabled_keywords |= {
-            k for k in const.KEYWORDS.values() if k.scope in namespace.selected_scope[0]}
+            k for k in const.KEYWORDS.values() if k.scope in namespace.selected_scopes[0]}
         namespace.enabled_keywords |= {
-            k for k in const.KEYWORDS.values() if k.scope in namespace.selected_scope[1]}
+            k for k in const.KEYWORDS.values() if k.scope in namespace.selected_scopes[1]}
 
     # selected checks
     if namespace.selected_checks is not None:
@@ -587,11 +587,11 @@ def _validate_scan_args(parser, namespace):
 def _selected_check(options, scan_scope, scope):
     """Verify check scope against current scan scope to determine check activation."""
     if scope == 0:
-        if options.selected_scope is None:
+        if options.selected_scopes is None:
             if scan_scope is base.repo_scope or scope is scan_scope:
                 # Allow repo scans or cwd scope to trigger location specific checks.
                 return True
-        elif scope in options.selected_scope[1]:
+        elif scope in options.selected_scopes[1]:
             # Allow checks with special scopes to be run when specifically
             # requested, e.g. eclass-only scanning.
             return True

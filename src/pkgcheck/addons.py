@@ -131,7 +131,7 @@ class ProfileAddon(base.Addon, base.CachedAddon):
         group = parser.add_argument_group('profiles')
         group.add_argument(
             '-p', '--profiles', metavar='PROFILE', action='csv_negations',
-            dest='profiles',
+            dest='selected_profiles',
             help='comma separated list of profiles to enable/disable',
             docs="""
                 Comma separated list of profiles to enable and disable for
@@ -159,7 +159,7 @@ class ProfileAddon(base.Addon, base.CachedAddon):
     @staticmethod
     def check_args(parser, namespace):
         target_repo = namespace.target_repo
-        selected_profiles = namespace.profiles
+        selected_profiles = namespace.selected_profiles
         if selected_profiles is None:
             # disable exp profiles by default if no profiles are selected
             selected_profiles = (('exp',), ())
@@ -208,13 +208,13 @@ class ProfileAddon(base.Addon, base.CachedAddon):
             except profiles_mod.ProfileError as e:
                 # Only throw errors if the profile was selected by the user, bad
                 # repo profiles will be caught during repo metadata scans.
-                if namespace.profiles is not None:
+                if namespace.selected_profiles is not None:
                     parser.error(f'invalid profile: {e.path!r}: {e.error}')
                 continue
 
             if profile.arch is None:
                 # throw error if profiles have been explicitly selected, otherwise skip it
-                if namespace.profiles is not None:
+                if namespace.selected_profiles is not None:
                     parser.error(f'profile make.defaults lacks ARCH setting: {p.path!r}')
                 continue
 
