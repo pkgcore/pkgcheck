@@ -28,10 +28,11 @@ from snakeoil.strings import pluralism
 from .. import base, const, pipeline, reporters, results
 from ..addons import init_addon
 from ..checks import NetworkCheck, init_checks
+from ..cli import ArgumentParser
 from ..log import logger
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
-argparser = commandline.ArgumentParser(
+argparser = ArgumentParser(
     suppress=True, description=__doc__, parents=(pkgcore_config_opts,),
     script=(__file__, __name__))
 # TODO: rework pkgcore's config system to allow more lazy loading
@@ -124,12 +125,15 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
 
 
 scan = subparsers.add_parser(
-    'scan', parents=(reporter_argparser,), description='scan targets for QA issues')
+    'scan', parents=(reporter_argparser,),
+    description='scan targets for QA issues',
+    configs=(const.SYSTEM_CONF_FILE, const.USER_CONF_FILE))
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', help='optional target atom(s)')
 
-
 main_options = scan.add_argument_group('main options')
+main_options.add_argument(
+    '--config', dest='config_file', help='config file to load scan settings from')
 main_options.add_argument(
     '-r', '--repo', metavar='REPO', dest='target_repo',
     action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
@@ -330,12 +334,12 @@ check_options.add_argument(
 scan.plugin = scan.add_argument_group('plugin options')
 
 
-def _determine_target_repo(namespace, parser, cwd):
+def _determine_target_repo(namespace, parser):
     """Determine a target repo when none was explicitly selected.
 
     Returns a repository object if a matching one is found, otherwise None.
     """
-    target_dir = cwd
+    target_dir = namespace.cwd
 
     # pull a target directory from target args if they're path-based
     if namespace.targets and len(namespace.targets) == 1:
@@ -426,18 +430,28 @@ def _setup_scan_addons(parser, namespace):
         addon.mangle_argparser(parser)
 
 
-@scan.bind_final_check
-def _validate_scan_args(parser, namespace):
+@scan.bind_early_parse
+def _setup_scan(parser, namespace, args):
+    # determine target repo early in order to load relevant config settings if they exist
+    namespace, _ = parser._parse_known_args(args, namespace)
+
+    # add support to override/diable config file support
+    if namespace.config_file is not None:
+        if namespace.config_file.lower() in ('false', 'no', 'n'):
+            parser.configs = ()
+        else:
+            parser.configs = (namespace.config_file,)
+
     # Get the current working directory for repo detection and restriction
     # creation, fallback to the root dir if it's be removed out from under us.
     try:
-        cwd = abspath(os.getcwd())
+        namespace.cwd = abspath(os.getcwd())
     except FileNotFoundError as e:
-        cwd = '/'
+        namespace.cwd = '/'
 
     # if we have no target repo figure out what to use
     if namespace.target_repo is None:
-        target_repo = _determine_target_repo(namespace, parser, cwd)
+        target_repo = _determine_target_repo(namespace, parser)
         # fallback to the default repo
         if target_repo is None:
             target_repo = namespace.config.get_default('repo')
@@ -453,7 +467,22 @@ def _validate_scan_args(parser, namespace):
     # multiplex of target repo and its masters used for package existence queries
     namespace.search_repo = multiplex.tree(*namespace.target_repo.trees)
 
-    cwd_in_repo = cwd in namespace.target_repo
+    # load default args from config if they exist, command line args override these
+    for section in namespace.target_repo.aliases:
+        if section in parser.config:
+            break
+    else:
+        section = 'DEFAULT'
+    config_args = [f'--{k}={v}' for k, v in parser.config.items(section)]
+    if config_args:
+        namespace, unknown = parser.parse_known_optionals(config_args, namespace)
+
+    return namespace, args
+
+
+@scan.bind_final_check
+def _validate_scan_args(parser, namespace):
+    cwd_in_repo = namespace.cwd in namespace.target_repo
 
     if namespace.targets:
         repo = namespace.target_repo
@@ -503,7 +532,7 @@ def _validate_scan_args(parser, namespace):
                 namespace.restrictions = [(scopes.pop(), combined_restrict)]
     else:
         if cwd_in_repo:
-            scope, restrict = _path_restrict(cwd, namespace)
+            scope, restrict = _path_restrict(namespace.cwd, namespace)
         else:
             restrict = packages.AlwaysTrue
             scope = base.repo_scope
@@ -671,7 +700,7 @@ cache.add_argument(
 
 
 @cache.bind_pre_parse
-def _setup_cache_addons(parser, namespace):
+def _setup_cache_addons(parser, namespace, args):
     """Load all addons using caches and their argparser changes before parsing."""
     all_addons = set()
     cache_addons = set()

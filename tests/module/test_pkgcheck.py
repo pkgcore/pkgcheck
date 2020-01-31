@@ -290,7 +290,7 @@ class TestPkgcheckScan(object):
 
     @pytest.fixture(autouse=True)
     def _setup(self, testconfig):
-        self.args = [project, '--config', testconfig, 'scan']
+        self.args = [project, '--config', testconfig, 'scan', '--config', 'no']
         testdir = os.path.dirname(os.path.dirname(__file__))
         self.repos_data = pjoin(testdir, 'data', 'repos')
         self.repos_dir = pjoin(testdir, 'repos')
