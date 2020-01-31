@@ -20,9 +20,10 @@ class _ResultsIter:
     """Iterator handling exceptions within queued results.
 
     Due to the parallelism of check running, all results are pushed into the
-    results queue as lists of result or exception objects. This iterator forces
-    exceptions to be handled explicitly, by outputting the serialized traceback
-    and signaling scanning processes to end when an exception object is found.
+    results queue as lists of result objects or exception tuples. This iterator
+    forces exceptions to be handled explicitly, by outputting the serialized
+    traceback and signaling scanning processes to end when an exception object
+    is found.
     """
 
     def __init__(self, results_q):
@@ -36,6 +37,8 @@ class _ResultsIter:
         while True:
             results = next(self.iter)
             if results:
+                # Catch propagated exceptions, output their traceback, and
+                # signal the scanning process to end.
                 if isinstance(results, tuple):
                     exc, tb = results
                     print(tb.strip())
@@ -71,11 +74,20 @@ class Reporter:
         signal.signal(signal.SIGINT, orig_sigint_handler)
 
         if pipe.pkg_scan or sort:
-            # sort all generated results, removing duplicate MetadataError results
+            # Running on a package scope level, i.e. running within a package
+            # directory in an ebuild repo. This sorts all generated results,
+            # removing duplicate MetadataError results.
             results = set(chain.from_iterable(results_iter))
             for result in sorted(results):
                 self.report(result)
         else:
+            # Running at a category scope level or higher. This outputs
+            # version/package/category results in a stream sorted per package
+            # while caching any repo, commit, and specific location (e.g.
+            # profiles or eclass) results. Those are then outputted in sorted
+            # fashion in order of their scope level from greatest to least
+            # (displaying repo results first) after all
+            # version/package/category results have been output.
             ordered_results = {
                 scope: [] for scope in reversed(list(base.scopes.values()))
                 if scope.level <= base.repo_scope
@@ -86,7 +98,6 @@ class Reporter:
                         ordered_results[result.scope].append(result)
                     except KeyError:
                         self.report(result)
-            # output repo and commit results after package-related results
             for result in chain.from_iterable(sorted(x) for x in ordered_results.values()):
                 self.report(result)
 
