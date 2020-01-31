@@ -68,5 +68,5 @@ class RedundantVersionCheck(Check):
                 bad.append((pkg, matches))
 
         for pkg, matches in reversed(bad):
-            later_versions = (x.fullver for x in matches)
+            later_versions = (x.fullver for x in sorted(matches))
             yield RedundantVersion(pkg.slot, later_versions, pkg=pkg)
