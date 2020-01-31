@@ -42,7 +42,7 @@ class TestRedundantVersion(misc.ReportTestCase):
             self.check, [self.mk_pkg(x) for x in ("0.7", "0.8", "0.9")])
         assert (
             [list(x.later_versions) for x in reports] ==
-            [["0.9", "0.8"], ["0.9"]])
+            [["0.8", "0.9"], ["0.9"]])
         for x in reports:
             assert isinstance(x, cleanup.RedundantVersion)
 
