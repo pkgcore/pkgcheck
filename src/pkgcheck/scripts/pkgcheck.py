@@ -475,7 +475,7 @@ def _setup_scan(parser, namespace, args):
         section = 'DEFAULT'
     config_args = [f'--{k}={v}' for k, v in parser.config.items(section)]
     if config_args:
-        namespace, unknown = parser.parse_known_optionals(config_args, namespace)
+        namespace, _ = parser.parse_known_optionals(config_args, namespace)
 
     return namespace, args
 
