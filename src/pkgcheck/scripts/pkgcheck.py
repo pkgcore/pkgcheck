@@ -210,12 +210,6 @@ class ScopeArgs(arghparse.CommaSeparatedNegations):
         disabled = {base.scopes[x] for x in disabled}
         enabled = {base.scopes[x] for x in enabled}
 
-        # filter outputted keywords
-        namespace.disabled_keywords |= {
-            k for k in const.KEYWORDS.values() if k.scope in disabled}
-        namespace.enabled_keywords |= {
-            k for k in const.KEYWORDS.values() if k.scope in enabled}
-
         setattr(namespace, self.dest, (disabled, enabled))
 
 
@@ -243,9 +237,7 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
             s = pluralism(unknown_keywords)
             parser.error(f'unknown keyword{s}: {unknown}')
 
-        # filter outputted keywords
-        namespace.disabled_keywords |= {const.KEYWORDS[k] for k in disabled}
-        namespace.enabled_keywords |= {const.KEYWORDS[k] for k in enabled}
+        setattr(namespace, self.dest, (disabled, enabled))
 
 
 class CheckArgs(arghparse.CommaSeparatedNegations):
@@ -270,12 +262,6 @@ class CheckArgs(arghparse.CommaSeparatedNegations):
             unknown = ', '.join(map(repr, unknown_checks))
             s = pluralism(unknown_checks)
             parser.error(f'unknown check{s}: {unknown}')
-
-        if enabled:
-            namespace.enabled_checks |= {const.CHECKS[c] for c in enabled}
-        elif disabled:
-            namespace.enabled_checks = (
-                set(const.CHECKS.values()) - {const.CHECKS[c] for c in disabled})
 
         setattr(namespace, self.dest, (disabled, enabled))
 
@@ -304,7 +290,7 @@ check_options.add_argument(
         Use ``pkgcheck show --checks`` see available options.
     """)
 check_options.add_argument(
-    '-k', '--keywords', metavar='KEYWORD', action=KeywordArgs,
+    '-k', '--keywords', metavar='KEYWORD', action=KeywordArgs, dest='selected_keywords',
     help='limit keywords to scan for (comma-separated list)',
     docs="""
         Comma separated list of keywords to enable and disable for
@@ -420,9 +406,6 @@ def _restrict_to_scope(restrict):
 def _setup_scan_defaults(parser, namespace):
     """Re-initialize default namespace settings per arg parsing run."""
     namespace.forced_checks = []
-    namespace.enabled_checks = set()
-    namespace.disabled_keywords = set()
-    namespace.enabled_keywords = set()
 
 
 def add_addon(addon, addon_set):
@@ -525,6 +508,32 @@ def _validate_scan_args(parser, namespace):
             restrict = packages.AlwaysTrue
             scope = base.repo_scope
         namespace.restrictions = [(scope, restrict)]
+
+    # determine enabled checks and keywords
+    namespace.enabled_checks = set()
+    namespace.disabled_keywords = set()
+    namespace.enabled_keywords = set()
+
+    # selected scopes
+    if namespace.selected_scope is not None:
+        namespace.disabled_keywords |= {
+            k for k in const.KEYWORDS.values() if k.scope in namespace.selected_scope[0]}
+        namespace.enabled_keywords |= {
+            k for k in const.KEYWORDS.values() if k.scope in namespace.selected_scope[1]}
+
+    # selected checks
+    if namespace.selected_checks is not None:
+        if namespace.selected_checks[1]:
+            namespace.enabled_checks |= {const.CHECKS[c] for c in namespace.selected_checks[1]}
+        elif namespace.selected_checks[0]:
+            # only specifying disabled checks enables all checks by default and removes selected checks
+            namespace.enabled_checks = (
+                set(const.CHECKS.values()) - {const.CHECKS[c] for c in namespace.selected_checks[0]})
+
+    # selected keywords
+    if namespace.selected_keywords is not None:
+        namespace.disabled_keywords |= {const.KEYWORDS[k] for k in namespace.selected_keywords[0]}
+        namespace.enabled_keywords |= {const.KEYWORDS[k] for k in namespace.selected_keywords[1]}
 
     # determine keywords to filter
     namespace.filtered_keywords = None
