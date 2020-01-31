@@ -176,8 +176,8 @@ class CheckRunner:
                     self._metadata_error_cb(e)
                 except Exception as e:
                     # traceback objects can't be pickled so fake it
-                    e.__traceback_list__ = traceback.format_exc().strip()
-                    yield e
+                    tb = traceback.format_exc()
+                    yield e, tb
             self._running_check = None
 
         while self._metadata_errors:

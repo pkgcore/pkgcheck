@@ -36,11 +36,11 @@ class _ResultsIter:
         while True:
             results = next(self.iter)
             if results:
-                for result in results:
-                    if isinstance(result, Exception):
-                        print(result.__traceback_list__)
-                        os.kill(self.pid, signal.SIGINT)
-                        return
+                if isinstance(results, tuple):
+                    exc, tb = results
+                    print(tb.strip())
+                    os.kill(self.pid, signal.SIGINT)
+                    return
                 break
         return results
 
