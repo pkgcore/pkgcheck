@@ -435,7 +435,7 @@ def _setup_scan(parser, namespace, args):
     # determine target repo early in order to load relevant config settings if they exist
     namespace, _ = parser._parse_known_args(args, namespace)
 
-    # add support to override/diable config file support
+    # add support to override/disable config file support
     if namespace.config_file is not None:
         if namespace.config_file.lower() in ('false', 'no', 'n'):
             parser.configs = ()
