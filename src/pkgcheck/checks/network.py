@@ -168,7 +168,7 @@ class _UrlCheck(NetworkCheck):
         """Determine the result of a given URL verification task."""
         exc = future.exception()
         if exc is not None:
-            # traceback objects can't be pickled so serialize it
+            # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
             # return exceptions that occurred in threads
             results_q.put((exc, tb))

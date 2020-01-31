@@ -175,7 +175,7 @@ class CheckRunner:
                 except MetadataException as e:
                     self._metadata_error_cb(e)
                 except Exception as e:
-                    # traceback objects can't be pickled so fake it
+                    # traceback can't be pickled so serialize it
                     tb = traceback.format_exc()
                     yield e, tb
             self._running_check = None
