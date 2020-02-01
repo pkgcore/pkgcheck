@@ -6,6 +6,7 @@ import os
 from pkgcore.util import commandline
 from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
+from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr
 from snakeoil.log import suppress_logging
 
@@ -40,5 +41,10 @@ class ConfigArgumentParser(arghparse.ArgumentParser):
         """Parse options from config if they exist."""
         config_args = [f'--{k}={v}' if v else f'--{k}' for k, v in self.config.items(section)]
         if config_args:
-            namespace, _ = self.parse_known_optionals(config_args, namespace)
+            with patch('snakeoil.cli.arghparse.ArgumentParser.error', self._config_error):
+                namespace, _ = self.parse_known_optionals(config_args, namespace)
         return namespace
+
+    def _config_error(self, message, status=2):
+        """Stub to replace error method that notes config failure."""
+        self.exit(status, f'{self.prog}: failed loading config: {message}\n')
