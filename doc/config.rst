@@ -55,3 +55,10 @@ Use the JSON reporter by default for scanning output and disable all cache usage
     [DEFAULT]
     reporter = JsonReporter
     cache = no
+
+Example 6
+---------
+Set the default repo to target when scanning::
+
+    [DEFAULT]
+    repo = my_overlay
