@@ -1,10 +1,11 @@
 """Various command-line specific support."""
 
+import configparser
 import os
-from configparser import ConfigParser
 
 from pkgcore.util import commandline
 from snakeoil.cli import arghparse
+from snakeoil.cli.exceptions import UserException
 from snakeoil.klass import jit_attr
 from snakeoil.log import suppress_logging
 
@@ -27,7 +28,10 @@ class ArgumentParser(arghparse.ArgumentParser):
     @jit_attr
     def config(self):
         """Config file object related to a given parser."""
-        config = ConfigParser()
-        for f in self.configs:
-            config.read(f)
+        config = configparser.ConfigParser()
+        try:
+            for f in self.configs:
+                config.read(f)
+        except configparser.ParsingError as e:
+            raise UserException(f'parsing config file failed: {e}')
         return config
