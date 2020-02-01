@@ -435,13 +435,6 @@ def _setup_scan(parser, namespace, args):
     # determine target repo early in order to load relevant config settings if they exist
     namespace, _ = parser._parse_known_args(args, namespace)
 
-    # add support to override/disable config file support
-    if namespace.config_file is not None:
-        if namespace.config_file.lower() in ('false', 'no', 'n'):
-            parser.configs = ()
-        else:
-            parser.configs = (namespace.config_file,)
-
     # Get the current working directory for repo detection and restriction
     # creation, fallback to the root dir if it's be removed out from under us.
     try:
@@ -466,6 +459,19 @@ def _setup_scan(parser, namespace, args):
 
     # multiplex of target repo and its masters used for package existence queries
     namespace.search_repo = multiplex.tree(*namespace.target_repo.trees)
+
+    # repo specific config settings from metadata/pkgcheck.conf take precedence
+    # over system/user settings
+    repo_config_file = os.path.join(namespace.target_repo.location, 'metadata', 'pkgcheck.conf')
+    if os.path.exists(repo_config_file):
+        parser.configs += (repo_config_file,)
+
+    # support overriding/disabling config file support
+    if namespace.config_file is not None:
+        if namespace.config_file.lower() in ('false', 'no', 'n'):
+            parser.configs = ()
+        else:
+            parser.configs = (namespace.config_file,)
 
     # load default args from config if they exist, command line args override these
     for section in namespace.target_repo.aliases:
