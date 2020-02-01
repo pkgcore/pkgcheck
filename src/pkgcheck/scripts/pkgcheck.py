@@ -479,7 +479,7 @@ def _setup_scan(parser, namespace, args):
             break
     else:
         section = 'DEFAULT'
-    config_args = [f'--{k}={v}' for k, v in parser.config.items(section)]
+    config_args = [f'--{k}={v}' if v else f'--{k}' for k, v in parser.config.items(section)]
     if config_args:
         namespace, _ = parser.parse_known_optionals(config_args, namespace)
 
