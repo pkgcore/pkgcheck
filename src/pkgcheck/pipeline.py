@@ -28,49 +28,59 @@ class Pipeline:
             scan_scope in (base.version_scope, base.package_scope) and
             isinstance(restrict, boolean.AndRestriction))
 
-    def _queue_work(self, scoped_pipes, work_q):
+    def _queue_work(self, scoped_pipes, work_q, results_q):
         """Producer that queues scanning tasks against granular scope restrictions."""
-        for scope in sorted(scoped_pipes['sync'], reverse=True):
-            pipes = scoped_pipes['sync'][scope]
-            if scope is base.version_scope:
-                versioned_source = VersionedSource(self.options)
-                for restrict in versioned_source.itermatch(self.restrict):
+        try:
+            for scope in sorted(scoped_pipes['sync'], reverse=True):
+                pipes = scoped_pipes['sync'][scope]
+                if scope is base.version_scope:
+                    versioned_source = VersionedSource(self.options)
+                    for restrict in versioned_source.itermatch(self.restrict):
+                        for i in range(len(pipes)):
+                            work_q.put((scope, restrict, i))
+                elif scope is base.package_scope:
+                    unversioned_source = UnversionedSource(self.options)
+                    for restrict in unversioned_source.itermatch(self.restrict):
+                        work_q.put((scope, restrict, 0))
+                else:
                     for i in range(len(pipes)):
-                        work_q.put((scope, restrict, i))
-            elif scope is base.package_scope:
-                unversioned_source = UnversionedSource(self.options)
-                for restrict in unversioned_source.itermatch(self.restrict):
-                    work_q.put((scope, restrict, 0))
-            else:
-                for i in range(len(pipes)):
-                    work_q.put((scope, self.restrict, i))
+                        work_q.put((scope, self.restrict, i))
 
-        # insert flags to notify consumers that no more work exists
-        for i in range(self.jobs):
-            work_q.put(None)
+            # insert flags to notify consumers that no more work exists
+            for i in range(self.jobs):
+                work_q.put(None)
 
-        # schedule all async checks from a single process
-        for scope, pipes in scoped_pipes['async'].items():
-            for pipe in pipes:
-                pipe.run(self.restrict)
+            # schedule all async checks from a single process
+            for scope, pipes in scoped_pipes['async'].items():
+                for pipe in pipes:
+                    pipe.run(self.restrict)
+        except Exception as e:
+            # traceback can't be pickled so serialize it
+            tb = traceback.format_exc()
+            results_q.put((e, tb))
 
     def _run_checks(self, pipes, work_q, results_q):
         """Consumer that runs scanning tasks, queuing results for output."""
-        for scope, restrict, pipe_idx in iter(work_q.get, None):
-            if scope is base.version_scope:
-                results_q.put(list(pipes[scope][pipe_idx].run(restrict)))
-            elif scope in (base.package_scope, base.category_scope):
-                results = []
-                for pipe in pipes[scope]:
+        try:
+            for scope, restrict, pipe_idx in iter(work_q.get, None):
+                if scope is base.version_scope:
+                    results_q.put(list(pipes[scope][pipe_idx].run(restrict)))
+                elif scope in (base.package_scope, base.category_scope):
+                    results = []
+                    for pipe in pipes[scope]:
+                        results.extend(pipe.run(restrict))
+                    results_q.put(results)
+                else:
+                    results = []
+                    pipe = pipes[scope][pipe_idx]
+                    pipe.start()
                     results.extend(pipe.run(restrict))
-                results_q.put(results)
-            else:
-                results = []
-                pipe = pipes[scope][pipe_idx]
-                pipe.start()
-                results.extend(pipe.run(restrict))
-                results.extend(pipe.finish())
-                results_q.put(results)
+                    results.extend(pipe.finish())
+                    results_q.put(results)
+        except Exception as e:
+            # traceback can't be pickled so serialize it
+            tb = traceback.format_exc()
+            results_q.put((e, tb))
 
     def run(self, results_q):
         """Run the scanning pipeline in parallel by check and scanning scope."""
@@ -103,7 +113,7 @@ class Pipeline:
         work_q = SimpleQueue()
 
         # split target restriction into tasks for parallelization
-        p = Process(target=self._queue_work, args=(scoped_pipes, work_q))
+        p = Process(target=self._queue_work, args=(scoped_pipes, work_q, results_q))
         p.start()
         # run synchronous checks using process pool, queuing generated results for reporting
         pool = Pool(self.jobs, self._run_checks, (scoped_pipes['sync'], work_q, results_q))
@@ -174,10 +184,6 @@ class CheckRunner:
                     yield from check.feed(item)
                 except MetadataException as e:
                     self._metadata_error_cb(e)
-                except Exception as e:
-                    # traceback can't be pickled so serialize it
-                    tb = traceback.format_exc()
-                    yield e, tb
             self._running_check = None
 
         while self._metadata_errors:
