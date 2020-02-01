@@ -35,3 +35,10 @@ class ArgumentParser(arghparse.ArgumentParser):
         except configparser.ParsingError as e:
             raise UserException(f'parsing config file failed: {e}')
         return config
+
+    def parse_config_options(self, namespace, section='DEFAULT'):
+        """Parse options from config if they exist."""
+        config_args = [f'--{k}={v}' if v else f'--{k}' for k, v in self.config.items(section)]
+        if config_args:
+            namespace, _ = self.parse_known_optionals(config_args, namespace)
+        return namespace

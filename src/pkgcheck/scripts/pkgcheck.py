@@ -432,6 +432,9 @@ def _setup_scan_addons(parser, namespace):
 
 @scan.bind_early_parse
 def _setup_scan(parser, namespace, args):
+    # load default args from config if they exist
+    namespace = parser.parse_config_options(namespace)
+
     # determine target repo early in order to load relevant config settings if they exist
     namespace, _ = parser._parse_known_args(args, namespace)
 
@@ -473,15 +476,11 @@ def _setup_scan(parser, namespace, args):
         # repo settings take precedence over system/user settings
         parser.configs += (repo_config_file,)
 
-    # load default args from config if they exist, command line args override these
+    # load repo-specific args from config if they exist, command line args override these
     for section in namespace.target_repo.aliases:
         if section in parser.config:
+            namespace = parser.parse_config_options(namespace, section)
             break
-    else:
-        section = 'DEFAULT'
-    config_args = [f'--{k}={v}' if v else f'--{k}' for k, v in parser.config.items(section)]
-    if config_args:
-        namespace, _ = parser.parse_known_optionals(config_args, namespace)
 
     return namespace, args
 
