@@ -16,49 +16,37 @@ In terms of file structure, basic INI formatting is required and allows
 creating a default section for system-wide settings or repo-specific sections.
 The INI key-value pairs directly relate to the available long-options supported
 by ``pkgcheck scan`` and their related values. See the following examples for
-how certain config settings affect scanning runs.
+how certain config settings affect scanning runs:
 
-Example 1
----------
-Disable selected checks by default for all scanning runs::
+- Disable selected checks by default for all scanning runs::
 
     [DEFAULT]
     checks = -UnstableOnlyCheck,-RedundantVersionCheck
 
-Example 2
----------
-Disable showing info level results for the gentoo repo::
+- Disable showing info level results for the gentoo repo::
 
     [gentoo]
     keywords = -info
 
-Example 3
----------
-Restrict scanning to the amd64 and x86 arches/profiles for the gentoo repo::
+- Restrict scanning to the amd64 and x86 arches/profiles for the gentoo repo::
 
     [gentoo]
     arches = amd64,x86
 
-Example 4
----------
-Enable network checks that require Internet access for the gentoo repo using
-a custom timeout of 15 seconds::
+- Enable network checks that require Internet access for the gentoo repo using
+  a custom timeout of 15 seconds::
 
     [gentoo]
     net =
     timeout = 15
 
-Example 5
----------
-Use the JSON reporter by default for scanning output and disable all cache usage::
+- Use the JSON reporter by default for scanning output and disable all cache usage::
 
     [DEFAULT]
     reporter = JsonReporter
     cache = no
 
-Example 6
----------
-Set the default repo to target when scanning::
+- Set the default repo to target when scanning::
 
     [DEFAULT]
     repo = my_overlay
