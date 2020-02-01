@@ -149,7 +149,7 @@ setup(**dict(pkgdist_setup,
     license='BSD',
     author='Tim Harder',
     author_email='radhermit@gmail.com',
-    description='pkgcore-based QA utility',
+    description='pkgcore-based QA utility for ebuild repos',
     url='https://github.com/pkgcore/pkgcheck',
     data_files=list(chain(
         pkgdist.data_mapping('share/zsh/site-functions', 'completion/zsh'),

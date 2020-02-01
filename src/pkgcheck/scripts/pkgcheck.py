@@ -1,5 +1,5 @@
 """
-pkgcore-based QA utility
+pkgcore-based QA utility for ebuild repos
 
 pkgcheck is a QA utility based on **pkgcore**\\(5) that supports scanning
 ebuild repositories for various issues.
