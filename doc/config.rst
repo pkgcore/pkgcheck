@@ -47,3 +47,11 @@ a custom timeout of 15 seconds::
     [gentoo]
     net =
     timeout = 15
+
+Example 5
+---------
+Use the JSON reporter by default for scanning output and disable all cache usage::
+
+    [DEFAULT]
+    reporter = JsonReporter
+    cache = no
