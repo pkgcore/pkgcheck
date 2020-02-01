@@ -221,7 +221,7 @@ class TestPkgcheckScanParseArgs(object):
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
-            assert err[-1].startswith("pkgcheck scan: error: unknown scope: 'foo'")
+            assert "unknown scope: 'foo'" in err[-1]
 
     def test_unknown_check(self, capsys):
         for opt in ('-c', '--checks'):
@@ -230,7 +230,7 @@ class TestPkgcheckScanParseArgs(object):
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
-            assert err[-1].startswith("pkgcheck scan: error: unknown check: 'foo'")
+            assert "unknown check: 'foo'" in err[-1]
 
     def test_unknown_keyword(self, capsys):
         for opt in ('-k', '--keywords'):
@@ -239,7 +239,7 @@ class TestPkgcheckScanParseArgs(object):
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
-            assert err[-1].startswith("pkgcheck scan: error: unknown keyword: 'foo'")
+            assert "unknown keyword: 'foo'" in err[-1]
 
     def test_selected_keywords(self):
         for opt in ('-k', '--keywords'):
