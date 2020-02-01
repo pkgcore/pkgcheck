@@ -28,11 +28,11 @@ from snakeoil.strings import pluralism
 from .. import base, const, pipeline, reporters, results
 from ..addons import init_addon
 from ..checks import NetworkCheck, init_checks
-from ..cli import ArgumentParser
+from ..cli import ConfigArgumentParser
 from ..log import logger
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
-argparser = ArgumentParser(
+argparser = ConfigArgumentParser(
     suppress=True, description=__doc__, parents=(pkgcore_config_opts,),
     script=(__file__, __name__))
 # TODO: rework pkgcore's config system to allow more lazy loading

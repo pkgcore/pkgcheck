@@ -18,8 +18,8 @@ class Tool(commandline.Tool):
             return super().main()
 
 
-class ArgumentParser(arghparse.ArgumentParser):
-    """Argument parser that supports loading default settings from specified config files."""
+class ConfigArgumentParser(arghparse.ArgumentParser):
+    """Argument parser that supports loading settings from specified config files."""
 
     def __init__(self, configs=(), **kwargs):
         super().__init__(**kwargs)
