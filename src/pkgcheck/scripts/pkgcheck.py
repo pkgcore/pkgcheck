@@ -209,7 +209,8 @@ class ScopeArgs(arghparse.CommaSeparatedNegations):
             unknown = ', '.join(map(repr, unknown_scopes))
             available = ', '.join(base.scopes)
             s = pluralism(unknown_scopes)
-            parser.error(f'unknown scope{s}: {unknown} (available scopes: {available})')
+            raise argparse.ArgumentError(
+                self, f'unknown scope{s}: {unknown} (available scopes: {available})')
 
         disabled = {base.scopes[x] for x in disabled}
         enabled = {base.scopes[x] for x in enabled}
@@ -239,7 +240,7 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
         if unknown_keywords:
             unknown = ', '.join(map(repr, unknown_keywords))
             s = pluralism(unknown_keywords)
-            parser.error(f'unknown keyword{s}: {unknown}')
+            raise argparse.ArgumentError(self, f'unknown keyword{s}: {unknown}')
 
         setattr(namespace, self.dest, (disabled, enabled))
 
@@ -265,7 +266,7 @@ class CheckArgs(arghparse.CommaSeparatedNegations):
         if unknown_checks:
             unknown = ', '.join(map(repr, unknown_checks))
             s = pluralism(unknown_checks)
-            parser.error(f'unknown check{s}: {unknown}')
+            raise argparse.ArgumentError(self, f'unknown check{s}: {unknown}')
 
         setattr(namespace, self.dest, (disabled, enabled))
 
