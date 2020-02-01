@@ -13,7 +13,7 @@ from .checks.network import RequestError, SSLError
 class Session(requests.Session):
     """Custom requests session handling timeout, concurrency, and header settings."""
 
-    def __init__(self, concurrent=None, timeout=None):
+    def __init__(self, concurrent=None, timeout=None, user_agent=None):
         super().__init__()
         if timeout == 0:
             # set timeout to 0 to never timeout
@@ -28,8 +28,8 @@ class Session(requests.Session):
         self.mount('https://', a)
         self.mount('http://', a)
 
-        # spoof user agent similar to what would be used when fetching files
-        self.headers['User-Agent'] = 'Wget/1.20.3 (linux-gnu)'
+        # spoof user agent
+        self.headers['User-Agent'] = user_agent
 
     def send(self, req, **kwargs):
         # forcibly use the session timeout
