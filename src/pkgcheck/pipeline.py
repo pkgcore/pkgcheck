@@ -85,43 +85,48 @@ class Pipeline:
     def run(self, results_q):
         """Run the scanning pipeline in parallel by check and scanning scope."""
         # initialize checkrunners per source type, using separate runner for async checks
-        checkrunners = defaultdict(list)
-        for pipe_mapping in self.pipes:
-            for (source, exec_type), checks in pipe_mapping.items():
-                if exec_type == 'async':
-                    runner = AsyncCheckRunner(
-                        self.options, source, checks, results_q=results_q)
-                else:
-                    runner = CheckRunner(self.options, source, checks)
-                checkrunners[(source.feed_type, exec_type)].append(runner)
+        try:
+            checkrunners = defaultdict(list)
+            for pipe_mapping in self.pipes:
+                for (source, exec_type), checks in pipe_mapping.items():
+                    if exec_type == 'async':
+                        runner = AsyncCheckRunner(
+                            self.options, source, checks, results_q=results_q)
+                    else:
+                        runner = CheckRunner(self.options, source, checks)
+                    checkrunners[(source.feed_type, exec_type)].append(runner)
 
-        # categorize checkrunners for parallelization based on the scan and source scope
-        scoped_pipes = defaultdict(lambda: defaultdict(list))
-        if self.pkg_scan:
-            for (scope, exec_type), runners in checkrunners.items():
-                if scope is base.version_scope:
-                    scoped_pipes[exec_type][base.version_scope].extend(runners)
-                else:
-                    scoped_pipes[exec_type][base.package_scope].extend(runners)
-        else:
-            for (scope, exec_type), runners in checkrunners.items():
-                if scope in (base.version_scope, base.package_scope):
-                    scoped_pipes[exec_type][base.package_scope].extend(runners)
-                else:
-                    scoped_pipes[exec_type][scope].extend(runners)
+            # categorize checkrunners for parallelization based on the scan and source scope
+            scoped_pipes = defaultdict(lambda: defaultdict(list))
+            if self.pkg_scan:
+                for (scope, exec_type), runners in checkrunners.items():
+                    if scope is base.version_scope:
+                        scoped_pipes[exec_type][base.version_scope].extend(runners)
+                    else:
+                        scoped_pipes[exec_type][base.package_scope].extend(runners)
+            else:
+                for (scope, exec_type), runners in checkrunners.items():
+                    if scope in (base.version_scope, base.package_scope):
+                        scoped_pipes[exec_type][base.package_scope].extend(runners)
+                    else:
+                        scoped_pipes[exec_type][scope].extend(runners)
 
-        work_q = SimpleQueue()
+            work_q = SimpleQueue()
 
-        # split target restriction into tasks for parallelization
-        p = Process(target=self._queue_work, args=(scoped_pipes, work_q, results_q))
-        p.start()
-        # run synchronous checks using process pool, queuing generated results for reporting
-        pool = Pool(self.jobs, self._run_checks, (scoped_pipes['sync'], work_q, results_q))
-        pool.close()
-        p.join()
-        pool.join()
+            # split target restriction into tasks for parallelization
+            p = Process(target=self._queue_work, args=(scoped_pipes, work_q, results_q))
+            p.start()
+            # run synchronous checks using process pool, queuing generated results for reporting
+            pool = Pool(self.jobs, self._run_checks, (scoped_pipes['sync'], work_q, results_q))
+            pool.close()
+            p.join()
+            pool.join()
 
-        results_q.put(None)
+            results_q.put(None)
+        except Exception as e:
+            # traceback can't be pickled so serialize it
+            tb = traceback.format_exc()
+            results_q.put((e, tb))
 
 
 class CheckRunner:
