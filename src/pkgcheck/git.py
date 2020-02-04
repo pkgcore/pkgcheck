@@ -5,6 +5,7 @@ import os
 import pickle
 import shlex
 import subprocess
+import sys
 from collections import UserDict
 from functools import partial
 
@@ -414,7 +415,7 @@ class GitAddon(base.Addon, base.CachedAddon):
                 f'for git repo: {repo_location}')
         return out[0].strip()
 
-    def update_cache(self, force=False):
+    def update_cache(self, output_lock, force=False):
         """Update related cache and push updates to disk."""
         try:
             # running from scan subcommand
@@ -454,14 +455,21 @@ class GitAddon(base.Addon, base.CachedAddon):
                 if (git_repo is not None and
                         repo.location == getattr(git_repo, 'location', None)):
                     if commit != git_repo.commit:
-                        logger.debug(
-                            'updating cached git repo: %s -> %s',
-                            git_repo.commit[:10], commit[:10])
+                        with output_lock:
+                            old, new = git_repo.commit[:13], commit[:13]
+                            print(
+                                f'updating {repo} git repo cache: {old} -> {new}',
+                                file=sys.stderr,
+                            )
                         git_repo.update(commit, debug=self.options.debug)
                     else:
                         cache_repo = False
                 else:
-                    logger.debug('creating cached git repo: %s', commit[:10])
+                    with output_lock:
+                        print(
+                            f'creating {repo} git repo cache: {commit[:13]}',
+                            file=sys.stderr,
+                        )
                     git_repo = ParsedGitRepo(repo, commit, debug=self.options.debug)
 
                 if git_repo:
