@@ -25,7 +25,8 @@ from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.strings import pluralism
 
-from .. import base, caches, const, pipeline, reporters, results
+from .. import base, const, objects, pipeline, reporters, results
+from ..caches import CachedAddon
 from ..addons import init_addon
 from ..checks import NetworkCheck, init_checks
 from ..cli import ConfigArgumentParser
@@ -72,12 +73,12 @@ reporter_options.add_argument(
 def _setup_reporter(parser, namespace):
     if namespace.reporter is None:
         namespace.reporter = sorted(
-            const.REPORTERS.values(), key=attrgetter('priority'), reverse=True)[0]
+            objects.REPORTERS.values(), key=attrgetter('priority'), reverse=True)[0]
     else:
         try:
-            namespace.reporter = const.REPORTERS[namespace.reporter]
+            namespace.reporter = objects.REPORTERS[namespace.reporter]
         except KeyError:
-            available = ', '.join(const.REPORTERS)
+            available = ', '.join(objects.REPORTERS)
             parser.error(
                 f"no reporter matches {namespace.reporter!r} "
                 f"(available: {available})")
@@ -93,10 +94,10 @@ def _setup_reporter(parser, namespace):
 class CacheNegations(arghparse.CommaSeparatedNegations):
     """Split comma-separated enabled and disabled cache types."""
 
-    default = {cache.type: True for cache in caches.CachedAddon.caches.values()}
+    default = {cache.type: True for cache in CachedAddon.caches.values()}
 
     def parse_values(self, values):
-        all_cache_types = {cache.type for cache in caches.CachedAddon.caches.values()}
+        all_cache_types = {cache.type for cache in CachedAddon.caches.values()}
         disabled, enabled = [], list(all_cache_types)
         if values is None or values in ('y', 'yes', 'true'):
             pass
@@ -119,7 +120,7 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
     def __call__(self, parser, namespace, values, option_string=None):
         enabled = self.parse_values(values)
         caches = {}
-        for cache in caches.CachedAddon.caches.values():
+        for cache in CachedAddon.caches.values():
             caches[cache.type] = cache.type in enabled
         setattr(namespace, self.dest, caches)
 
@@ -224,9 +225,9 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
 
-        error = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Error))
-        warning = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Warning))
-        info = (k for k, v in const.KEYWORDS.items() if issubclass(v, results.Info))
+        error = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Error))
+        warning = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Warning))
+        info = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Info))
 
         alias_map = {'error': error, 'warning': warning, 'info': info}
         replace_aliases = lambda x: alias_map.get(x, [x])
@@ -236,7 +237,7 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
         enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
 
         # validate selected keywords
-        unknown_keywords = set(disabled + enabled) - set(const.KEYWORDS)
+        unknown_keywords = set(disabled + enabled) - set(objects.KEYWORDS)
         if unknown_keywords:
             unknown = ', '.join(map(repr, unknown_keywords))
             s = pluralism(unknown_keywords)
@@ -251,8 +252,8 @@ class CheckArgs(arghparse.CommaSeparatedNegations):
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
 
-        available = set(const.CHECKS)
-        network = (c for c, v in const.CHECKS.items() if issubclass(v, NetworkCheck))
+        available = set(objects.CHECKS)
+        network = (c for c, v in objects.CHECKS.items() if issubclass(v, NetworkCheck))
 
         alias_map = {'all': available, 'net': network}
         replace_aliases = lambda x: alias_map.get(x, [x])
@@ -425,7 +426,7 @@ def add_addon(addon, addon_set):
 def _setup_scan_addons(parser, namespace):
     """Load all checks and their argparser changes before parsing."""
     all_addons = set()
-    for check in const.CHECKS.values():
+    for check in objects.CHECKS.values():
         add_addon(check, all_addons)
     for addon in all_addons:
         addon.mangle_argparser(parser)
@@ -552,35 +553,35 @@ def _validate_scan_args(parser, namespace):
     # selected scopes
     if namespace.selected_scopes is not None:
         namespace.disabled_keywords |= {
-            k for k in const.KEYWORDS.values() if k.scope in namespace.selected_scopes[0]}
+            k for k in objects.KEYWORDS.values() if k.scope in namespace.selected_scopes[0]}
         namespace.enabled_keywords |= {
-            k for k in const.KEYWORDS.values() if k.scope in namespace.selected_scopes[1]}
+            k for k in objects.KEYWORDS.values() if k.scope in namespace.selected_scopes[1]}
 
     # selected checks
     if namespace.selected_checks is not None:
         if namespace.selected_checks[1]:
-            namespace.enabled_checks |= {const.CHECKS[c] for c in namespace.selected_checks[1]}
+            namespace.enabled_checks |= {objects.CHECKS[c] for c in namespace.selected_checks[1]}
         elif namespace.selected_checks[0]:
             # only specifying disabled checks enables all checks by default and removes selected checks
             namespace.enabled_checks = (
-                set(const.CHECKS.values()) - {const.CHECKS[c] for c in namespace.selected_checks[0]})
+                set(objects.CHECKS.values()) - {objects.CHECKS[c] for c in namespace.selected_checks[0]})
 
     # selected keywords
     if namespace.selected_keywords is not None:
-        namespace.disabled_keywords |= {const.KEYWORDS[k] for k in namespace.selected_keywords[0]}
-        namespace.enabled_keywords |= {const.KEYWORDS[k] for k in namespace.selected_keywords[1]}
+        namespace.disabled_keywords |= {objects.KEYWORDS[k] for k in namespace.selected_keywords[0]}
+        namespace.enabled_keywords |= {objects.KEYWORDS[k] for k in namespace.selected_keywords[1]}
 
     # determine keywords to filter
     namespace.filtered_keywords = None
     if namespace.enabled_keywords or namespace.disabled_keywords:
         # all keywords are selected by default
         if not namespace.enabled_keywords:
-            namespace.enabled_keywords = set(const.KEYWORDS.values())
+            namespace.enabled_keywords = set(objects.KEYWORDS.values())
 
         # translate requested keywords to their actual classes
         namespace.filtered_keywords = {}
         for keyword in namespace.enabled_keywords - namespace.disabled_keywords:
-            for check in const.CHECKS.values():
+            for check in objects.CHECKS.values():
                 for result in check.known_results:
                     if issubclass(result, keyword):
                         namespace.filtered_keywords[result] = check
@@ -592,7 +593,7 @@ def _validate_scan_args(parser, namespace):
 
     # all checks are run by default
     if not namespace.enabled_checks:
-        namespace.enabled_checks = list(const.CHECKS.values())
+        namespace.enabled_checks = list(objects.CHECKS.values())
 
     # skip checks that may be disabled
     namespace.enabled_checks = [
@@ -653,7 +654,7 @@ def _scan(options, out, err):
 
     # force cache updates
     if caches:
-        caches.CachedAddon.update_caches(options, caches)
+        CachedAddon.update_caches(options, caches)
 
     with options.reporter(out, verbosity=options.verbosity,
                           keywords=options.filtered_keywords) as reporter:
@@ -710,7 +711,7 @@ def _setup_cache_addons(parser, namespace):
     """Load all addons using caches and their argparser changes before parsing."""
     all_addons = set()
     cache_addons = set()
-    for addon in caches.CachedAddon.caches:
+    for addon in CachedAddon.caches:
         cache_addons.add(addon)
         add_addon(addon, all_addons)
     for addon in all_addons:
@@ -739,14 +740,14 @@ def _validate_cache_args(parser, namespace):
 def _cache(options, out, err):
     ret = 0
     if options.remove_cache:
-        ret = caches.CachedAddon.remove_caches(options)
+        ret = CachedAddon.remove_caches(options)
     elif options.update_cache:
         caches = [init_addon(addon, options) for addon in options.pop('cache_addons')]
-        ret = caches.CachedAddon.update_caches(options, caches)
+        ret = CachedAddon.update_caches(options, caches)
     else:
         # list existing caches
         repos_dir = pjoin(const.USER_CACHE_DIR, 'repos')
-        for cache_type, paths in caches.CachedAddon.existing().items():
+        for cache_type, paths in CachedAddon.existing().items():
             if options.cache.get(cache_type, False):
                 if paths:
                     out.write(out.fg('yellow'), f'{cache_type} caches: ', out.reset)
@@ -837,10 +838,10 @@ def dump_docstring(out, obj, prefix=None):
 @decorate_forced_wrapping()
 def display_keywords(out, options):
     if options.verbosity < 1:
-        out.write('\n'.join(sorted(const.KEYWORDS)), wrap=False)
+        out.write('\n'.join(sorted(objects.KEYWORDS)), wrap=False)
     else:
         scopes = defaultdict(set)
-        for keyword in const.KEYWORDS.values():
+        for keyword in objects.KEYWORDS.values():
             scopes[keyword.scope].add(keyword)
 
         for scope in reversed(sorted(scopes)):
@@ -862,10 +863,10 @@ def display_keywords(out, options):
 @decorate_forced_wrapping()
 def display_checks(out, options):
     if options.verbosity < 1:
-        out.write('\n'.join(sorted(const.CHECKS)), wrap=False)
+        out.write('\n'.join(sorted(objects.CHECKS)), wrap=False)
     else:
         d = defaultdict(list)
-        for x in const.CHECKS.values():
+        for x in objects.CHECKS.values():
             d[x.__module__].append(x)
 
         for module_name in sorted(d):
@@ -897,14 +898,14 @@ def display_checks(out, options):
 @decorate_forced_wrapping()
 def display_reporters(out, options):
     if options.verbosity < 1:
-        out.write('\n'.join(sorted(const.REPORTERS)), wrap=False)
+        out.write('\n'.join(sorted(objects.REPORTERS)), wrap=False)
     else:
         out.write()
         out.write("reporters:")
         out.write()
         out.first_prefix.append('  ')
         out.later_prefix.append('  ')
-        for reporter in sorted(const.REPORTERS.values(), key=attrgetter('__name__')):
+        for reporter in sorted(objects.REPORTERS.values(), key=attrgetter('__name__')):
             out.write(out.bold, out.fg('yellow'), reporter.__name__)
             dump_docstring(out, reporter, prefix='  ')
 

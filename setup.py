@@ -57,12 +57,12 @@ def write_obj_lists(python_base, install_prefix):
             return self.module
 
     with pkgdist.syspath(pkgdist.PACKAGEDIR):
-        from pkgcheck import const
+        from pkgcheck import objects
 
     modules = defaultdict(set)
     objs = defaultdict(list)
     for obj in ('KEYWORDS', 'CHECKS', 'REPORTERS'):
-        for name, cls in getattr(const, obj).items():
+        for name, cls in getattr(objects, obj).items():
             parent, module = cls.__module__.rsplit('.', 1)
             modules[parent].add(module)
             objs[obj].append((name, _kls(f'{module}.{name}')))
@@ -114,7 +114,7 @@ class install_data(dst_install_data.install_data):
 
     def __generate_files(self):
         with pkgdist.syspath(pkgdist.PACKAGEDIR):
-            from pkgcheck import const
+            from pkgcheck import objects
 
         os.makedirs(os.path.join(pkgdist.REPODIR, '.generated'), exist_ok=True)
         files = []
@@ -122,7 +122,7 @@ class install_data(dst_install_data.install_data):
             log.info(f'Generating {obj.lower()} list')
             path = os.path.join(pkgdist.REPODIR, '.generated', obj.lower())
             with open(path, 'w') as f:
-                f.write('\n'.join(getattr(const, obj).keys()) + '\n')
+                f.write('\n'.join(getattr(objects, obj).keys()) + '\n')
             files.append(os.path.join('.generated', obj.lower()))
         self.data_files.append(('share/pkgcheck', files))
 

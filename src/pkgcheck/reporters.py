@@ -13,7 +13,7 @@ from xml.sax.saxutils import escape as xml_escape
 from snakeoil import pickling
 from snakeoil.decorators import coroutine
 
-from . import base, const, results
+from . import base, objects, results
 
 
 class _ResultsIter:
@@ -387,7 +387,7 @@ class JsonStream(Reporter):
             raise DeserializationError(f'failed loading: {data!r}') from e
 
         try:
-            cls = const.KEYWORDS[d.pop('__class__')]
+            cls = objects.KEYWORDS[d.pop('__class__')]
         except KeyError:
             raise DeserializationError(f'missing result class: {data!r}')
 
