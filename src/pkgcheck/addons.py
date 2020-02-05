@@ -20,7 +20,7 @@ from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
-from . import base, results
+from . import base, caches, results
 from .log import logger
 
 
@@ -107,7 +107,7 @@ class ProfileData:
         return immutable, enabled
 
 
-class _ProfilesCache(UserDict, base.Cache):
+class _ProfilesCache(UserDict, caches.Cache):
     """Class used to encapsulate cached profile data."""
 
     def __init__(self, data):
@@ -115,7 +115,7 @@ class _ProfilesCache(UserDict, base.Cache):
         self._cache = ProfileAddon.cache
 
 
-class ProfileAddon(base.Addon, base.CachedAddon):
+class ProfileAddon(base.Addon, caches.CachedAddon):
 
     required_addons = (ArchesAddon,)
 
@@ -124,7 +124,7 @@ class ProfileAddon(base.Addon, base.CachedAddon):
     non_profile_dirs = frozenset(['desc', 'updates'])
 
     # cache registry
-    cache = base.CacheData(type='profiles', file='profiles.pickle', version=2)
+    cache = caches.CacheData(type='profiles', file='profiles.pickle', version=2)
 
     @staticmethod
     def mangle_argparser(parser):

@@ -25,7 +25,7 @@ from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.process.spawn import spawn_get_output
 from snakeoil.strings import pluralism
 
-from . import base
+from . import base, caches
 from .checks import GitCheck
 from .log import logger
 
@@ -63,7 +63,7 @@ class GitPkgChange:
         self.commit = commit
 
 
-class ParsedGitRepo(UserDict, base.Cache):
+class ParsedGitRepo(UserDict, caches.Cache):
     """Parse repository git logs."""
 
     # git command to run on the targeted repo
@@ -276,7 +276,7 @@ class _ScanCommits(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
-class GitAddon(base.Addon, base.CachedAddon):
+class GitAddon(base.Addon, caches.CachedAddon):
     """Git repo support for various checks.
 
     Pkgcheck can create virtual package repos from a given git repo's history
@@ -294,7 +294,7 @@ class GitAddon(base.Addon, base.CachedAddon):
     """
 
     # cache registry
-    cache = base.CacheData(type='git', file='git.pickle', version=3)
+    cache = caches.CacheData(type='git', file='git.pickle', version=3)
 
     @classmethod
     def mangle_argparser(cls, parser):

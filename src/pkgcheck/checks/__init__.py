@@ -6,6 +6,7 @@ from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
 
 from .. import addons, base, feeds, results, sources
+from .. import caches as caches_mod
 from ..log import logger
 
 
@@ -181,6 +182,6 @@ def init_checks(enabled_addons, options):
                 source_map[addon.source] = source
             exec_type = 'async' if isinstance(addon, AsyncCheck) else 'sync'
             enabled[addon.scope][(source, exec_type)].append(addon)
-        if isinstance(addon, base.CachedAddon):
+        if isinstance(addon, caches_mod.CachedAddon):
             caches.append(addon)
     return enabled, caches

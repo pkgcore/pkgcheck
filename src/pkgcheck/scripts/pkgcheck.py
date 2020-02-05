@@ -25,7 +25,7 @@ from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.strings import pluralism
 
-from .. import base, const, pipeline, reporters, results
+from .. import base, caches, const, pipeline, reporters, results
 from ..addons import init_addon
 from ..checks import NetworkCheck, init_checks
 from ..cli import ConfigArgumentParser
@@ -93,10 +93,10 @@ def _setup_reporter(parser, namespace):
 class CacheNegations(arghparse.CommaSeparatedNegations):
     """Split comma-separated enabled and disabled cache types."""
 
-    default = {cache.type: True for cache in base.CachedAddon.caches.values()}
+    default = {cache.type: True for cache in caches.CachedAddon.caches.values()}
 
     def parse_values(self, values):
-        all_cache_types = {cache.type for cache in base.CachedAddon.caches.values()}
+        all_cache_types = {cache.type for cache in caches.CachedAddon.caches.values()}
         disabled, enabled = [], list(all_cache_types)
         if values is None or values in ('y', 'yes', 'true'):
             pass
@@ -119,7 +119,7 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
     def __call__(self, parser, namespace, values, option_string=None):
         enabled = self.parse_values(values)
         caches = {}
-        for cache in base.CachedAddon.caches.values():
+        for cache in caches.CachedAddon.caches.values():
             caches[cache.type] = cache.type in enabled
         setattr(namespace, self.dest, caches)
 
@@ -653,7 +653,7 @@ def _scan(options, out, err):
 
     # force cache updates
     if caches:
-        base.CachedAddon.update_caches(options, caches)
+        caches.CachedAddon.update_caches(options, caches)
 
     with options.reporter(out, verbosity=options.verbosity,
                           keywords=options.filtered_keywords) as reporter:
@@ -710,7 +710,7 @@ def _setup_cache_addons(parser, namespace):
     """Load all addons using caches and their argparser changes before parsing."""
     all_addons = set()
     cache_addons = set()
-    for addon in base.CachedAddon.caches:
+    for addon in caches.CachedAddon.caches:
         cache_addons.add(addon)
         add_addon(addon, all_addons)
     for addon in all_addons:
@@ -739,14 +739,14 @@ def _validate_cache_args(parser, namespace):
 def _cache(options, out, err):
     ret = 0
     if options.remove_cache:
-        ret = base.CachedAddon.remove_caches(options)
+        ret = caches.CachedAddon.remove_caches(options)
     elif options.update_cache:
         caches = [init_addon(addon, options) for addon in options.pop('cache_addons')]
-        ret = base.CachedAddon.update_caches(options, caches)
+        ret = caches.CachedAddon.update_caches(options, caches)
     else:
         # list existing caches
         repos_dir = pjoin(base.CACHE_DIR, 'repos')
-        for cache_type, paths in base.CachedAddon.existing().items():
+        for cache_type, paths in caches.CachedAddon.existing().items():
             if options.cache.get(cache_type, False):
                 if paths:
                     out.write(out.fg('yellow'), f'{cache_type} caches: ', out.reset)
