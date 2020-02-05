@@ -15,7 +15,7 @@ from textwrap import dedent
 
 from snakeoil.strings import pluralism as _pl
 
-from pkgcheck import base, const
+from pkgcheck import base, objects
 from pkgcheck.checks import GentooRepoCheck
 
 
@@ -34,14 +34,14 @@ def main(f=sys.stdout, **kwargs):
         out(__doc__.strip())
 
     related_checks = defaultdict(set)
-    for check in const.CHECKS.values():
+    for check in objects.CHECKS.values():
         for keyword in check.known_results:
             related_checks[keyword].add(check)
 
     for scope in base.scopes.values():
         _rst_header('-', scope.desc.capitalize() + ' scope')
 
-        keywords = (x for x in const.KEYWORDS.values() if x.scope == scope)
+        keywords = (x for x in objects.KEYWORDS.values() if x.scope == scope)
         for keyword in keywords:
             if keyword.__doc__ is not None:
                 try:

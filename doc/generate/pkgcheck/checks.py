@@ -20,7 +20,7 @@ from textwrap import dedent, TextWrapper
 
 from snakeoil.strings import pluralism as _pl
 
-from pkgcheck import base, const
+from pkgcheck import base, objects
 from pkgcheck.checks import GentooRepoCheck
 
 
@@ -43,7 +43,7 @@ def main(f=sys.stdout, **kwargs):
     for i, scope in enumerate(base.scopes.values()):
         _rst_header('-', scope.desc.capitalize() + ' scope')
 
-        checks = (x for x in const.CHECKS.values() if x.scope == scope)
+        checks = (x for x in objects.CHECKS.values() if x.scope == scope)
         for check in checks:
             if check.__doc__ is not None:
                 try:

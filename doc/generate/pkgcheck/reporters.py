@@ -5,7 +5,7 @@
 import sys
 from textwrap import dedent
 
-from pkgcheck import const
+from pkgcheck import objects
 
 
 def main(f=sys.stdout, **kwargs):
@@ -24,7 +24,7 @@ def main(f=sys.stdout, **kwargs):
 
     _rst_header('=', 'Reporters', newline=False)
 
-    for reporter in const.REPORTERS.values():
+    for reporter in objects.REPORTERS.values():
         if reporter.__doc__ is not None:
             try:
                 summary, explanation = reporter.__doc__.split('\n', 1)
