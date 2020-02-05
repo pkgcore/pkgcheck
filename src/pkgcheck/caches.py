@@ -14,6 +14,8 @@ from snakeoil.cli.exceptions import UserException
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
+from . import const
+
 
 class CacheData(NamedTuple):
     """Cache registry data."""
@@ -55,7 +57,7 @@ class CachedAddon(metaclass=_RegisterCache):
     @staticmethod
     def cache_dir(repo):
         """Return the cache directory for a given repository."""
-        return pjoin(CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
+        return pjoin(const.USER_CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
 
     def cache_file(self, repo):
         """Return the cache file for a given repository."""
@@ -65,7 +67,7 @@ class CachedAddon(metaclass=_RegisterCache):
     def existing(cls):
         """Mapping of all existing cache types to file paths."""
         caches_map = {}
-        repos_dir = pjoin(CACHE_DIR, 'repos')
+        repos_dir = pjoin(const.USER_CACHE_DIR, 'repos')
         for cache in sorted(cls.caches.values(), key=attrgetter('type')):
             caches_map[cache.type] = tuple(sorted(
                 pathlib.Path(repos_dir).rglob(cache.file)))
@@ -91,7 +93,7 @@ class CachedAddon(metaclass=_RegisterCache):
         force = getattr(options, 'force_cache', False)
         if force:
             try:
-                shutil.rmtree(CACHE_DIR)
+                shutil.rmtree(const.USER_CACHE_DIR)
             except FileNotFoundError:
                 pass
             except IOError as e:
@@ -107,7 +109,7 @@ class CachedAddon(metaclass=_RegisterCache):
                                 path.unlink()
                                 # remove empty cache dirs
                                 try:
-                                    while str(path) != CACHE_DIR:
+                                    while str(path) != const.USER_CACHE_DIR:
                                         path.parent.rmdir()
                                         path = path.parent
                                 except OSError as e:

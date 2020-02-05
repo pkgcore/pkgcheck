@@ -33,7 +33,7 @@ def _GET_CONST(attr, default_value, allow_environment_override=False):
 
     result = getattr(_defaults, attr, default_value)
     if allow_environment_override:
-        result = os.environ.get(f'PKGCHECK_OVERRIDE_{attr}', result)
+        result = os.environ.get(f'{__title__.upper()}_OVERRIDE_{attr}', result)
     if is_tuple:
         result = tuple(result)
     return result
@@ -97,8 +97,9 @@ for xdg_var, var_name, fallback_dir in (
     setattr(_module, var_name,
             os.environ.get(xdg_var, os.path.join(os.path.expanduser(fallback_dir), __title__)))
 
-USER_CONF_FILE = os.path.join(getattr(_module, 'USER_CONFIG_PATH'), 'pkgcheck.conf')
-SYSTEM_CONF_FILE = '/etc/pkgcheck/pkgcheck.conf'
+USER_CACHE_DIR = getattr(_module, 'USER_CACHE_PATH')
+USER_CONF_FILE = os.path.join(getattr(_module, 'USER_CONFIG_PATH'), f'{__title__}.conf')
+SYSTEM_CONF_FILE = f'/etc/{__title__}/{__title__}.conf'
 
 REPO_PATH = _GET_CONST('REPO_PATH', _reporoot, allow_environment_override=True)
 DATA_PATH = _GET_CONST('DATA_PATH', '%(REPO_PATH)s/data')

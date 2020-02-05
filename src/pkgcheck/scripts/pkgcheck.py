@@ -745,7 +745,7 @@ def _cache(options, out, err):
         ret = caches.CachedAddon.update_caches(options, caches)
     else:
         # list existing caches
-        repos_dir = pjoin(base.CACHE_DIR, 'repos')
+        repos_dir = pjoin(const.USER_CACHE_DIR, 'repos')
         for cache_type, paths in caches.CachedAddon.existing().items():
             if options.cache.get(cache_type, False):
                 if paths:

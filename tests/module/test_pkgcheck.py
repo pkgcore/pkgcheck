@@ -310,7 +310,7 @@ class TestPkgcheckScan(object):
     def test_empty_repo(self, capsys, cache_dir):
         # no reports should be generated since the default repo is empty
         with patch('sys.argv', self.args), \
-                patch('pkgcheck.base.CACHE_DIR', cache_dir):
+                patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             assert excinfo.value.code == 0
@@ -402,7 +402,7 @@ class TestPkgcheckScan(object):
                     expected = f.read()
                     # JsonStream reporter, cache results to compare against repo run
                     with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
-                            patch('pkgcheck.base.CACHE_DIR', cache_dir):
+                            patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
                         with pytest.raises(SystemExit) as excinfo:
                             self.script()
                         out, err = capsys.readouterr()
@@ -472,7 +472,7 @@ class TestPkgcheckScan(object):
                     pass
 
                 with patch('sys.argv', self.args + ['-R', 'JsonStream'] + args), \
-                        patch('pkgcheck.base.CACHE_DIR', cache_dir):
+                        patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
                     with pytest.raises(SystemExit) as excinfo:
                         self.script()
                     out, err = capsys.readouterr()
@@ -530,7 +530,7 @@ class TestPkgcheckScan(object):
 
             cmd = self.args + args
             with patch('sys.argv', cmd), \
-                    patch('pkgcheck.base.CACHE_DIR', cache_dir):
+                    patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
                 with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 out, err = capsys.readouterr()

@@ -85,8 +85,6 @@ scopes = ImmutableDict({
     'ver': version_scope,
 })
 
-CACHE_DIR = pjoin(pkgcore_const.USER_CACHE_PATH, 'pkgcheck')
-
 
 class Addon:
     """Base class for extra functionality for pkgcheck other than a check.
