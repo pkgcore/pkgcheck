@@ -13,7 +13,7 @@ from xml.sax.saxutils import escape as xml_escape
 from snakeoil import pickling
 from snakeoil.decorators import coroutine
 
-from . import base, objects, results
+from . import base, results
 
 
 class _ResultsIter:
@@ -386,6 +386,8 @@ class JsonStream(Reporter):
         except (json.decoder.JSONDecodeError, UnicodeDecodeError) as e:
             raise DeserializationError(f'failed loading: {data!r}') from e
 
+        # avoid cyclic imports
+        from . import objects
         try:
             cls = objects.KEYWORDS[d.pop('__class__')]
         except KeyError:

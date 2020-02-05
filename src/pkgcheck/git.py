@@ -25,7 +25,7 @@ from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.process.spawn import spawn_get_output
 from snakeoil.strings import pluralism
 
-from . import base, caches, objects
+from . import base, caches
 from .checks import GitCheck
 from .log import logger
 
@@ -269,6 +269,8 @@ class _ScanCommits(argparse.Action):
         super().__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
+        # avoid cyclic imports
+        from . import objects
         namespace.forced_checks.extend(
             name for name, cls in objects.CHECKS.items() if issubclass(cls, GitCheck))
         setattr(namespace, self.dest, value)
