@@ -5,7 +5,8 @@ from collections import defaultdict
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
 
-from .. import addons, base, feeds, results, sources
+from .. import addons, base, feeds, sources
+from ..results import FilteredVersionResult, MetadataError
 from ..caches import CachedAddon
 from ..log import logger
 
@@ -27,7 +28,7 @@ class Check(feeds.Feed):
     @klass.jit_attr
     def priority(self):
         # raise priority for checks that scan for metadata errors
-        if self._priority == 0 and self.known_results & results.MetadataError.results:
+        if self._priority == 0 and self.known_results & MetadataError.results:
             return -1
         return self._priority
 
@@ -36,7 +37,7 @@ class Check(feeds.Feed):
         # replace versioned pkg feeds with filtered ones as required
         if self._filtering and self.options.verbosity < 1 and self.scope is base.version_scope:
             filtered_results = [
-                x for x in self.known_results if issubclass(x, results.FilteredVersionResult)]
+                x for x in self.known_results if issubclass(x, FilteredVersionResult)]
             if filtered_results:
                 partial_filtered = len(filtered_results) != len(self.known_results)
                 return (
