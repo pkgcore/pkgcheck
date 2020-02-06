@@ -236,6 +236,8 @@ class HomepageUrlCheck(_UrlCheck):
 class FetchablesUrlCheck(_UrlCheck):
     """Verify SRC_URI URLs."""
 
+    # disable package feed filtering so all defined URLs are scanned
+    _filtering = False
     required_addons = (addons.UseAddon,)
 
     def __init__(self, *args, use_addon, **kwargs):

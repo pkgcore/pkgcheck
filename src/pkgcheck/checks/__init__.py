@@ -20,6 +20,8 @@ class Check(feeds.Feed):
 
     # check priority that affects runtime ordering
     _priority = 0
+    # flag to allow package feed filtering
+    _filtering = True
     known_results = frozenset()
 
     @klass.jit_attr
@@ -32,7 +34,7 @@ class Check(feeds.Feed):
     @property
     def source(self):
         # replace versioned pkg feeds with filtered ones as required
-        if self.options.verbosity < 1 and self.scope is base.version_scope:
+        if self._filtering and self.options.verbosity < 1 and self.scope is base.version_scope:
             filtered_results = [
                 x for x in self.known_results if issubclass(x, results.FilteredVersionResult)]
             if filtered_results:
