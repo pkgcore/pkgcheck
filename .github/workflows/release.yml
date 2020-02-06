@@ -17,10 +17,6 @@ jobs:
       with:
         python-version: 3.6
 
-    - name: Set env variables
-      # get the name of the branch or tag we're building against
-      run: echo "::set-env name=GIT_REF::$(echo ${GITHUB_REF##*/})"
-
     - name: Install dependencies
       run: |
         # pull in pkgdist dep lists
@@ -48,10 +44,8 @@ jobs:
 
     - name: Upload files for tagged releases
       env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        echo "Uploading files for tag ${GIT_REF}..."
-        twine upload dist/*
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       # only upload files for tagged releases
-      if: env.GIT_REF != 'deploy'
+      if: startsWith(github.ref, 'refs/tags/')
+      run: twine upload dist/*
