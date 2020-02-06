@@ -18,15 +18,16 @@ class Check(feeds.Feed):
     :cvar known_results: result keywords the check can possibly yield
     """
 
-    __priority = 0
+    # check priority that affects runtime ordering
+    _priority = 0
     known_results = frozenset()
 
     @klass.jit_attr
     def priority(self):
         # raise priority for checks that scan for metadata errors
-        if self.__priority == 0 and self.known_results & results.MetadataError.results:
+        if self._priority == 0 and self.known_results & results.MetadataError.results:
             return -1
-        return self.__priority
+        return self._priority
 
     @property
     def source(self):
