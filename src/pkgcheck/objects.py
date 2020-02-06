@@ -7,7 +7,7 @@ import pkgutil
 from functools import partial
 from importlib import import_module
 
-from snakeoil.klass import jit_attr
+from snakeoil import klass
 
 from . import __title__
 
@@ -17,7 +17,7 @@ try:
     # running from a git checkout or a tarball.
     from . import _const as _defaults
 except ImportError:
-    _defaults = object()
+    _defaults = klass._sentinel
 
 
 def _find_modules(module):
@@ -65,11 +65,16 @@ def _find_obj_classes(module_name, cls_module, cls_name):
 
 class _LazyDict(Mapping):
 
-    def __init__(self, attr, func):
+    def __init__(self, attr, func, collapse=False):
         self._attr = attr
         self._func = func
 
-    @jit_attr
+        # Forcibly collapse mapping on instantiation, used to force cache
+        # registration to occur when the related modules are imported.
+        if collapse and _defaults is klass._sentinel:
+            self._dict
+
+    @klass.jit_attr
     def _dict(self):
         try:
             result = getattr(_defaults, self._attr)
@@ -98,10 +103,17 @@ class _LazyDict(Mapping):
 
 try:
     KEYWORDS = _LazyDict(
-        'KEYWORDS', partial(_find_obj_classes, 'checks', 'results', 'Result'))
+        'KEYWORDS',
+        partial(_find_obj_classes, 'checks', 'results', 'Result'),
+    )
     CHECKS = _LazyDict(
-        'CHECKS', partial(_find_obj_classes, 'checks', 'checks', 'Check'))
+        'CHECKS',
+        partial(_find_obj_classes, 'checks', 'checks', 'Check'),
+        collapse=True
+    )
     REPORTERS = _LazyDict(
-        'REPORTERS', partial(_find_obj_classes, 'reporters', 'reporters', 'Reporter'))
+        'REPORTERS',
+        partial(_find_obj_classes, 'reporters', 'reporters', 'Reporter'),
+    )
 except SyntaxError as e:
     raise SyntaxError(f'invalid syntax: {e.filename}, line {e.lineno}')
