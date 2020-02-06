@@ -1,14 +1,15 @@
 """Registration for keywords, checks, and reporters."""
 
+from collections.abc import Mapping
 import inspect
 import os
 import pkgutil
 from functools import partial
 from importlib import import_module
 
-from snakeoil import mappings
+from snakeoil.klass import jit_attr
 
-from . import __title__, checks, reporters, results
+from . import __title__
 
 try:
     # This is a file written during installation;
@@ -40,8 +41,9 @@ def _find_classes(module, matching_cls):
             yield cls
 
 
-def _find_obj_classes(module_name, matching_cls):
+def _find_obj_classes(module_name, cls_module, cls_name):
     module = import_module(f'.{module_name}', __title__)
+    matching_cls = getattr(import_module(f'.{cls_module}', __title__), cls_name)
 
     # skip top-level, base classes
     base_classes = {matching_cls.__name__: matching_cls}
@@ -61,20 +63,45 @@ def _find_obj_classes(module_name, matching_cls):
     return classes
 
 
-def _GET_VALS(attr, func):
-    try:
-        result = getattr(_defaults, attr)
-    except AttributeError:
-        result = func()
-    return result
+class _LazyDict(Mapping):
+
+    def __init__(self, attr, func):
+        self._attr = attr
+        self._func = func
+
+    @jit_attr
+    def _dict(self):
+        try:
+            result = getattr(_defaults, self._attr)
+        except AttributeError:
+            result = self._func()
+        return dict(result)
+
+    def __iter__(self):
+        return iter(self._dict.keys())
+
+    def __len__(self):
+        return len(list(self._dict.keys()))
+
+    def __getitem__(self, key):
+        return self._dict[key]
+
+    def keys(self):
+        return iter(self._dict.keys())
+
+    def values(self):
+        return iter(self._dict.values())
+
+    def items(self):
+        return iter(self._dict.items())
 
 
 try:
-    KEYWORDS = mappings.ImmutableDict(_GET_VALS(
-        'KEYWORDS', partial(_find_obj_classes, 'checks', results.Result)))
-    CHECKS = mappings.ImmutableDict(_GET_VALS(
-        'CHECKS', partial(_find_obj_classes, 'checks', checks.Check)))
-    REPORTERS = mappings.ImmutableDict(_GET_VALS(
-        'REPORTERS', partial(_find_obj_classes, 'reporters', reporters.Reporter)))
+    KEYWORDS = _LazyDict(
+        'KEYWORDS', partial(_find_obj_classes, 'checks', 'results', 'Result'))
+    CHECKS = _LazyDict(
+        'CHECKS', partial(_find_obj_classes, 'checks', 'checks', 'Check'))
+    REPORTERS = _LazyDict(
+        'REPORTERS', partial(_find_obj_classes, 'reporters', 'reporters', 'Reporter'))
 except SyntaxError as e:
     raise SyntaxError(f'invalid syntax: {e.filename}, line {e.lineno}')
