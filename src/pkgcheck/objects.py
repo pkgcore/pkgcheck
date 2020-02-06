@@ -4,7 +4,6 @@ from collections.abc import Mapping
 import inspect
 import os
 import pkgutil
-from functools import partial
 from importlib import import_module
 
 from snakeoil import klass
