@@ -28,7 +28,7 @@ class MismatchedPerlVersion(results.VersionResult, results.Warning):
 class _PerlConnection:
     """Connection to perl script the check is going to communicate with."""
 
-    def __init__(self):
+    def __init__(self, options):
         self.connection = None
         self.perl_client = None
         self.process_lock = multiprocessing.Lock()
@@ -59,7 +59,7 @@ class _PerlConnection:
             self.connection, _address = sock.accept()
         except socket.timeout:
             err_msg = 'failed to connect to perl client'
-            if self.options.verbosity > 0:
+            if options.verbosity > 0:
                 stderr = self.perl_client.stderr.read().decode().strip()
                 err_msg += f': {stderr}'
             raise SkipOptionalCheck(self, err_msg)
@@ -94,7 +94,7 @@ class PerlCheck(Check):
         # __init__() since only one running version of the script is shared
         # between however many scanning processes will be run. Also, it makes
         # it easier to disable this check if required perl deps are missing.
-        self.perl = _PerlConnection()
+        self.perl = _PerlConnection(self.options)
 
     def feed(self, pkg):
         if 'perl-module' in pkg.inherited:
