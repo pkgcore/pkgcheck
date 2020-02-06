@@ -71,9 +71,9 @@ class _LazyDict(Mapping):
 
     Used to stall module imports to avoid cyclic import issues."""
 
-    def __init__(self, attr, func):
+    def __init__(self, attr, func_args):
         self._attr = attr
-        self._func = func
+        self._func_args = func_args
 
         # Forcibly collapse mapping when running from the git repo, used to
         # force cache registration to occur as related modules are imported.
@@ -85,7 +85,7 @@ class _LazyDict(Mapping):
         try:
             result = getattr(_defaults, self._attr)
         except AttributeError:
-            result = self._func()
+            result = _find_obj_classes(*self._func_args)
         return dict(result)
 
     def __iter__(self):
@@ -107,15 +107,6 @@ class _LazyDict(Mapping):
         return iter(self._dict.items())
 
 
-KEYWORDS = _LazyDict(
-    'KEYWORDS',
-    partial(_find_obj_classes, 'checks', 'results', 'Result'),
-)
-CHECKS = _LazyDict(
-    'CHECKS',
-    partial(_find_obj_classes, 'checks', 'checks', 'Check'),
-)
-REPORTERS = _LazyDict(
-    'REPORTERS',
-    partial(_find_obj_classes, 'reporters', 'reporters', 'Reporter'),
-)
+KEYWORDS = _LazyDict('KEYWORDS', ('checks', 'results', 'Result'))
+CHECKS = _LazyDict('CHECKS', ('checks', 'checks', 'Check'))
+REPORTERS = _LazyDict('REPORTERS', ('reporters', 'reporters', 'Reporter'))
