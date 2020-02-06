@@ -101,19 +101,16 @@ class _LazyDict(Mapping):
         return iter(self._dict.items())
 
 
-try:
-    KEYWORDS = _LazyDict(
-        'KEYWORDS',
-        partial(_find_obj_classes, 'checks', 'results', 'Result'),
-    )
-    CHECKS = _LazyDict(
-        'CHECKS',
-        partial(_find_obj_classes, 'checks', 'checks', 'Check'),
-        collapse=True
-    )
-    REPORTERS = _LazyDict(
-        'REPORTERS',
-        partial(_find_obj_classes, 'reporters', 'reporters', 'Reporter'),
-    )
-except SyntaxError as e:
-    raise SyntaxError(f'invalid syntax: {e.filename}, line {e.lineno}')
+KEYWORDS = _LazyDict(
+    'KEYWORDS',
+    partial(_find_obj_classes, 'checks', 'results', 'Result'),
+)
+CHECKS = _LazyDict(
+    'CHECKS',
+    partial(_find_obj_classes, 'checks', 'checks', 'Check'),
+    collapse=True
+)
+REPORTERS = _LazyDict(
+    'REPORTERS',
+    partial(_find_obj_classes, 'reporters', 'reporters', 'Reporter'),
+)
