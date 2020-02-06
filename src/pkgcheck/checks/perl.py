@@ -6,6 +6,7 @@ import socket
 import subprocess
 import tempfile
 
+from pkgcore.restrictions import packages, values
 from snakeoil.osutils import pjoin
 
 from .. import const, results, sources
@@ -84,7 +85,9 @@ class _PerlConnection:
 class PerlCheck(Check):
     """Perl ebuild related checks."""
 
-    _source = sources.EbuildFileRepoSource
+    _restricted_source = (sources.RestrictionRepoSource, (
+        packages.PackageRestriction('inherited', values.ContainmentMatch2('perl-module')),))
+    _source = (sources.EbuildFileRepoSource, (), (('source', _restricted_source),))
     known_results = frozenset([MismatchedPerlVersion])
 
     def __init__(self, *args):
@@ -97,10 +100,9 @@ class PerlCheck(Check):
         self.perl = _PerlConnection(self.options)
 
     def feed(self, pkg):
-        if 'perl-module' in pkg.inherited:
-            match = self.dist_version_re.search(''.join(pkg.lines))
-            if match is not None:
-                dist_version = match.group('dist_version')
-                normalized = self.perl.normalize(dist_version)
-                if normalized != pkg.version:
-                    yield MismatchedPerlVersion(dist_version, normalized, pkg=pkg)
+        match = self.dist_version_re.search(''.join(pkg.lines))
+        if match is not None:
+            dist_version = match.group('dist_version')
+            normalized = self.perl.normalize(dist_version)
+            if normalized != pkg.version:
+                yield MismatchedPerlVersion(dist_version, normalized, pkg=pkg)

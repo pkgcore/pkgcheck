@@ -57,10 +57,6 @@ class TestPerlCheck(misc.ReportTestCase):
             assert r.normalized == '1.700.0'
             assert 'DIST_VERSION=1.7 normalizes to 1.700.0' == str(r)
 
-    def test_no_perl_module_eclass_inherit(self):
-        """Ebuilds that don't inherit the perl-module eclass are skipped."""
-        self.assertNoReport(self.mk_check(), self.mk_pkg('1.7.0', '1.07', eclasses=()))
-
     def test_no_dist_version(self):
         """Ebuilds without DIST_VERSION defined are skipped."""
         self.assertNoReport(self.mk_check(), self.mk_pkg('1.7.0'))
