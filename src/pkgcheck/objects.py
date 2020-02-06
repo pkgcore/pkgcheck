@@ -8,7 +8,7 @@ from importlib import import_module
 
 from snakeoil import klass
 
-from . import __title__
+from . import __title__ as _pkg
 
 try:
     # This is a file written during installation;
@@ -44,9 +44,9 @@ def _find_classes(module, matching_cls):
 
 def _find_obj_classes(module_name, target_cls):
     """Determine mapping of object class names to class objects."""
-    module = import_module(f'.{module_name}', __title__)
+    module = import_module(f'.{module_name}', _pkg)
     cls_module, cls_name = target_cls.rsplit('.', 1)
-    matching_cls = getattr(import_module(f'.{cls_module}', __title__), cls_name)
+    matching_cls = getattr(import_module(f'.{cls_module}', _pkg), cls_name)
 
     # skip top-level, base classes
     base_classes = {matching_cls.__name__: matching_cls}

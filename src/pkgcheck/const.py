@@ -5,7 +5,7 @@ import sys
 
 from snakeoil import mappings
 
-from . import __title__
+from . import __title__ as _pkg
 
 _reporoot = os.path.realpath(__file__).rsplit(os.path.sep, 3)[0]
 _module = sys.modules[__name__]
@@ -29,7 +29,7 @@ def _GET_CONST(attr, default_value, allow_environment_override=False):
 
     result = getattr(_defaults, attr, default_value)
     if allow_environment_override:
-        result = os.environ.get(f'{__title__.upper()}_OVERRIDE_{attr}', result)
+        result = os.environ.get(f'{_pkg.upper()}_OVERRIDE_{attr}', result)
     if is_tuple:
         result = tuple(result)
     return result
@@ -40,12 +40,13 @@ for xdg_var, var_name, fallback_dir in (
         ('XDG_CONFIG_HOME', 'USER_CONFIG_PATH', '~/.config'),
         ('XDG_CACHE_HOME', 'USER_CACHE_PATH', '~/.cache'),
         ('XDG_DATA_HOME', 'USER_DATA_PATH', '~/.local/share')):
-    setattr(_module, var_name,
-            os.environ.get(xdg_var, os.path.join(os.path.expanduser(fallback_dir), __title__)))
+    setattr(
+        _module, var_name,
+        os.environ.get(xdg_var, os.path.join(os.path.expanduser(fallback_dir), _pkg)))
 
 USER_CACHE_DIR = getattr(_module, 'USER_CACHE_PATH')
-USER_CONF_FILE = os.path.join(getattr(_module, 'USER_CONFIG_PATH'), f'{__title__}.conf')
-SYSTEM_CONF_FILE = f'/etc/{__title__}/{__title__}.conf'
+USER_CONF_FILE = os.path.join(getattr(_module, 'USER_CONFIG_PATH'), f'{_pkg}.conf')
+SYSTEM_CONF_FILE = f'/etc/{_pkg}/{_pkg}.conf'
 
 REPO_PATH = _GET_CONST('REPO_PATH', _reporoot, allow_environment_override=True)
 DATA_PATH = _GET_CONST('DATA_PATH', '%(REPO_PATH)s/data')
