@@ -42,9 +42,10 @@ def _find_classes(module, matching_cls):
             yield cls
 
 
-def _find_obj_classes(module_name, cls_module, cls_name):
+def _find_obj_classes(module_name, target_cls):
     """Determine mapping of object class names to class objects."""
     module = import_module(f'.{module_name}', __title__)
+    cls_module, cls_name = target_cls.rsplit('.', 1)
     matching_cls = getattr(import_module(f'.{cls_module}', __title__), cls_name)
 
     # skip top-level, base classes
@@ -106,6 +107,6 @@ class _LazyDict(Mapping):
         return iter(self._dict.items())
 
 
-KEYWORDS = _LazyDict('KEYWORDS', ('checks', 'results', 'Result'))
-CHECKS = _LazyDict('CHECKS', ('checks', 'checks', 'Check'))
-REPORTERS = _LazyDict('REPORTERS', ('reporters', 'reporters', 'Reporter'))
+KEYWORDS = _LazyDict('KEYWORDS', ('checks', 'results.Result'))
+CHECKS = _LazyDict('CHECKS', ('checks', 'checks.Check'))
+REPORTERS = _LazyDict('REPORTERS', ('reporters', 'reporters.Reporter'))
