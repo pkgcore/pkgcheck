@@ -25,21 +25,10 @@ class MismatchedPerlVersion(results.VersionResult, results.Warning):
         return f'DIST_VERSION={self.dist_version} normalizes to {self.normalized}'
 
 
-class PerlCheck(Check):
-    """Perl ebuild related checks."""
+class _PerlConnection:
+    """Connection to perl script the check is going to communicate with."""
 
-    _source = sources.EbuildFileRepoSource
-    known_results = frozenset([MismatchedPerlVersion])
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.dist_version_re = re.compile('DIST_VERSION=(?P<dist_version>\d+(\.\d+)*)\s*\n')
-
-        # Initialize perl script the check is going to communicate with. This
-        # is done during __init__() since we only want one running version of
-        # the script that is shared between however many scanning processes
-        # will be run. Also, it makes it easier to disable this check if the
-        # required perl deps are missing.
+    def __init__(self):
         self.connection = None
         self.perl_client = None
         self.process_lock = multiprocessing.Lock()
@@ -75,17 +64,12 @@ class PerlCheck(Check):
                 err_msg += f': {stderr}'
             raise SkipOptionalCheck(self, err_msg)
 
-    def feed(self, pkg):
-        if 'perl-module' in pkg.inherited:
-            match = self.dist_version_re.search(''.join(pkg.lines))
-            if match is not None:
-                dist_version = match.group('dist_version')
-                with self.process_lock:
-                    self.connection.send(dist_version.encode() + b'\n')
-                    size = int(self.connection.recv(2))
-                    normalized = self.connection.recv(size).decode('utf-8', 'replace')
-                    if normalized != pkg.version:
-                        yield MismatchedPerlVersion(dist_version, normalized, pkg=pkg)
+    def normalize(self, version):
+        """Normalize a given version number to its perl equivalent."""
+        with self.process_lock:
+            self.connection.send(version.encode() + b'\n')
+            size = int(self.connection.recv(2))
+            return self.connection.recv(size).decode('utf-8', 'replace')
 
     def __del__(self):
         # Clean up perl cruft if it exists, we don't care about being nice to
@@ -95,3 +79,28 @@ class PerlCheck(Check):
         self.socket_dir.cleanup()
         if self.perl_client is not None:
             self.perl_client.kill()
+
+
+class PerlCheck(Check):
+    """Perl ebuild related checks."""
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset([MismatchedPerlVersion])
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.dist_version_re = re.compile('DIST_VERSION=(?P<dist_version>\d+(\.\d+)*)\s*\n')
+        # Initialize connection with perl script. This is done during
+        # __init__() since only one running version of the script is shared
+        # between however many scanning processes will be run. Also, it makes
+        # it easier to disable this check if required perl deps are missing.
+        self.perl = _PerlConnection()
+
+    def feed(self, pkg):
+        if 'perl-module' in pkg.inherited:
+            match = self.dist_version_re.search(''.join(pkg.lines))
+            if match is not None:
+                dist_version = match.group('dist_version')
+                normalized = self.perl.normalize(dist_version)
+                if normalized != pkg.version:
+                    yield MismatchedPerlVersion(dist_version, normalized, pkg=pkg)
