@@ -21,6 +21,7 @@ except ImportError:
 
 
 def _find_modules(module):
+    """Generator of all public modules under a given module."""
     if getattr(module, '__path__', False):
         for _imp, name, _ in pkgutil.walk_packages(module.__path__, module.__name__ + '.'):
             # skip "private" modules
@@ -35,6 +36,7 @@ def _find_modules(module):
 
 
 def _find_classes(module, matching_cls):
+    """Generator of all subclasses of a selected class under a given module."""
     for _name, cls in inspect.getmembers(module):
         if (inspect.isclass(cls) and issubclass(cls, matching_cls)
                 and cls.__name__[0] != '_'):
@@ -42,6 +44,7 @@ def _find_classes(module, matching_cls):
 
 
 def _find_obj_classes(module_name, cls_module, cls_name):
+    """Determine mapping of object class names to class objects."""
     module = import_module(f'.{module_name}', __title__)
     matching_cls = getattr(import_module(f'.{cls_module}', __title__), cls_name)
 
@@ -64,6 +67,9 @@ def _find_obj_classes(module_name, cls_module, cls_name):
 
 
 class _LazyDict(Mapping):
+    """Lazy dictionary of object mappings.
+
+    Used to stall module imports to avoid cyclic import issues."""
 
     def __init__(self, attr, func):
         self._attr = attr
