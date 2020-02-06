@@ -65,13 +65,13 @@ def _find_obj_classes(module_name, cls_module, cls_name):
 
 class _LazyDict(Mapping):
 
-    def __init__(self, attr, func, collapse=False):
+    def __init__(self, attr, func):
         self._attr = attr
         self._func = func
 
-        # Forcibly collapse mapping on instantiation, used to force cache
-        # registration to occur when the related modules are imported.
-        if collapse and _defaults is klass._sentinel:
+        # Forcibly collapse mapping when running from the git repo, used to
+        # force cache registration to occur as related modules are imported.
+        if _defaults is klass._sentinel:
             self._dict
 
     @klass.jit_attr
@@ -108,7 +108,6 @@ KEYWORDS = _LazyDict(
 CHECKS = _LazyDict(
     'CHECKS',
     partial(_find_obj_classes, 'checks', 'checks', 'Check'),
-    collapse=True
 )
 REPORTERS = _LazyDict(
     'REPORTERS',
