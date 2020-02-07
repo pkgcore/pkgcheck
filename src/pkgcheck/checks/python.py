@@ -217,9 +217,10 @@ class PythonCheck(Check):
                 yield MissingPythonEclass(recomm, attr.upper(), str(p), pkg=pkg)
         elif eclass in ('python-r1', 'python-single-r1'):
             # grab Python implementations from IUSE
-            flags = {x[len(IUSE_PREFIX):] for x in pkg.iuse if x.startswith(IUSE_PREFIX)}
+            iuse = [x.lstrip('+-') for x in pkg.iuse]
+            flags = {x[len(IUSE_PREFIX):] for x in iuse if x.startswith(IUSE_PREFIX)}
             s_flags = {
-                x[len(IUSE_PREFIX_S):] for x in pkg.iuse if x.startswith(IUSE_PREFIX_S)}
+                x[len(IUSE_PREFIX_S):] for x in iuse if x.startswith(IUSE_PREFIX_S)}
 
             if eclass == 'python-r1':
                 req_use_args = (flags, IUSE_PREFIX, OrRestriction)
