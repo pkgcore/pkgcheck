@@ -48,31 +48,6 @@ class MissingPythonEclass(results.VersionResult, results.Warning):
         return f'missing {self.eclass} eclass usage for {self.dep_type}="{self.dep}"'
 
 
-class PythonSingleUseMismatch(results.VersionResult, results.Warning):
-    """Package has mismatched PYTHON_SINGLE_TARGET and PYTHON_TARGETS flags.
-
-    The package declares both PYTHON_SINGLE_TARGET and PYTHON_TARGETS flags but
-    each includes a different set of supported Python implementations. This
-    either indicates a bug in the eclasses or the package is manually changing
-    the flags.
-    """
-
-    def __init__(self, flags, single_flags, **kwargs):
-        super().__init__(**kwargs)
-        self.flags = tuple(flags)
-        self.single_flags = tuple(single_flags)
-
-    @property
-    def desc(self):
-        flags = ' '.join(self.flags)
-        single_flags = ' '.join(self.single_flags)
-        return (
-            "mismatched flags in IUSE: "
-            f"PYTHON_TARGETS=( {flags} ) but "
-            f"PYTHON_SINGLE_TARGET=( {single_flags} )"
-        )
-
-
 class PythonMissingRequiredUse(results.VersionResult, results.Warning):
     """Package is missing PYTHON_REQUIRED_USE.
 
@@ -149,7 +124,7 @@ class PythonCheck(Check):
     """
 
     known_results = frozenset([
-        MissingPythonEclass, PythonSingleUseMismatch, PythonMissingRequiredUse,
+        MissingPythonEclass, PythonMissingRequiredUse,
         PythonMissingDeps, PythonRuntimeDepInAnyR1, PythonEclassError,
     ])
 
@@ -246,14 +221,7 @@ class PythonCheck(Check):
             s_flags = {
                 x[len(IUSE_PREFIX_S):] for x in pkg.iuse if x.startswith(IUSE_PREFIX_S)}
 
-            # python-single-r1 should have matching PT and PST
-            # (except when there is only one impl, whereas PST is not generated)
-            got_single_impl = len(flags) == 1 and not s_flags
-            if (eclass == 'python-single-r1' and flags != s_flags
-                    and not got_single_impl):
-                yield PythonSingleUseMismatch(sorted(flags), sorted(s_flags), pkg=pkg)
-
-            if eclass == 'python-r1' or got_single_impl:
+            if eclass == 'python-r1':
                 req_use_args = (flags, IUSE_PREFIX, OrRestriction)
             else:
                 req_use_args = (s_flags, IUSE_PREFIX_S, JustOneRestriction)
