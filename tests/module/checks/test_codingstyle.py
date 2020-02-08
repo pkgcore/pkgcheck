@@ -428,13 +428,12 @@ class TestRawEbuildCheck(misc.ReportTestCase):
             assert isinstance(r, codingstyle.StaticSrcUri)
 
     def test_single_homepage_variable(self):
-        for var in ('${PN}', '$PN'):
-            fake_src = [f'HOMEPAGE="https://example.com/{var}"\n']
-            fake_pkg = self.mk_pkg(lines=fake_src)
-            r = self.assertReport(self.check_kls(None), fake_pkg)
-            assert isinstance(r, codingstyle.VariableInHomepage)
-            assert r.variables == (var,)
-            assert var in str(r)
+        fake_src = ['HOMEPAGE="https://example.com/${PN}"\n']
+        fake_pkg = self.mk_pkg(lines=fake_src)
+        r = self.assertReport(self.check_kls(None), fake_pkg)
+        assert isinstance(r, codingstyle.VariableInHomepage)
+        assert r.variables == ('${PN}',)
+        assert '${PN}' in str(r)
 
     def test_multiple_homepage_variables(self):
         fake_src = ['HOMEPAGE="https://example.com/${PN}/${FOO}"\n']
