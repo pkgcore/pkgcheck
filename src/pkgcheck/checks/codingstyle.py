@@ -473,7 +473,7 @@ class RawEbuildCheck(Check):
         attr_vars = ('HOMEPAGE', 'SRC_URI')
         self.attr_regex = re.compile(
             rf'|'.join(f'^\s*(?P<{x.lower()}>{x}="[^"]*")' for x in attr_vars), re.MULTILINE)
-        self.var_regex = re.compile(r'\${?\w+}?')
+        self.var_regex = re.compile(r'\${?[^}]+}?')
 
     def check_homepage(self, pkg, s):
         matches = self.var_regex.findall(s)
