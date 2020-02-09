@@ -3,6 +3,32 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.7.6 (2020-02-09)
+---------------------------
+
+- VariableInHomepage: Include parameter expansion chars in flagged variable and
+  drop flagging for unbracketed variables until bash parsing support exists.
+
+- Drop PythonSingleUseMismatch result since python-single-r1.eclass will no
+  longer generate PYTHON_TARGETS.
+
+- FetchablesUrlCheck: Disable package feed filtering so all defined SRC_URI
+  URLs are scanned by default.
+
+- Output create/update git repo cache message to stderr by default to help tell
+  the user what's happening during possibly long scan delays.
+
+- Add config file support at /etc/pkgcheck/pkgcheck.conf,
+  ~/.config/pkgcheck/pkgcheck.conf, and metadata/pkgcheck.conf for system-wide,
+  user, and repo-specific default settings respectively. Any settings found in
+  those config files will be overridden by matching command line arguments.
+  Almost all command line arguments can be set in config files, see the man
+  page or online docs for config examples.
+
+- For network checks, add fallback to GET requests if HEAD requests fail with
+  501 or 405 HTTP errors (#208).
+
+---------------------------
 pkgcheck 0.7.5 (2020-01-26)
 ---------------------------
 
