@@ -189,6 +189,9 @@ class CheckRunner:
                     yield from check.feed(item)
                 except MetadataException as e:
                     self._metadata_error_cb(e)
+                except ValueError:
+                    # These pkgcore errors are reported as PkgInvalidXml issues
+                    pass
             self._running_check = None
 
         while self._metadata_errors:
