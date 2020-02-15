@@ -1,3 +1,6 @@
 PackageMetadataXmlCheck/PkgInvalidXml
   PkgInvalidXml: package metadata.xml violates metadata.xsd:
+line 5, col 0: (SCHEMAV_CVC_PATTERN_VALID) Element 'email': [facet 'pattern'] The value '' is not accepted by the pattern '[^@]+@[^.]+\..+'.
+line 5, col 0: (SCHEMAV_CVC_IDC) Element 'email': Warning: No precomputed value available, the value was either invalid or something strange happened.
+line 4, col 0: (SCHEMAV_CVC_IDC) Element 'maintainer': Not all fields of key identity-constraint 'maintainerKeyConstraint' evaluate to a node.
 line 7, col 0: (SCHEMAV_ELEMENT_CONTENT) Element 'description': This element is not expected.
