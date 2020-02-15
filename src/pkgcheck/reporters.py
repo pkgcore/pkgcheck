@@ -364,6 +364,7 @@ class FormatReporter(Reporter):
             result = (yield)
             attrs = vars(result)
             attrs.update((k, getattr(result, k)) for k in self._properties)
+            attrs['class'] = result.__class__.__name__
             self.out.write(self.formatter.format(self.format_str, **attrs))
             self.out.stream.flush()
 
