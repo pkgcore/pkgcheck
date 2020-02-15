@@ -147,10 +147,12 @@ class TestFormatReporter(BaseReporter):
     def test_add_report(self, capsys):
         for format_str, expected in (
                     ('r', 'r\n' * 5),
-                    ('{category}', 'dev-libs\n' * 3),
-                    ('{category}/{package}', 'dev-libs/foo\n' * 2),
-                    ('{category}/{package}-{version}', 'dev-libs/foo-0\n'),
-                    ('{foo}', ''),
+                    ('{category}', '\n\n' + 'dev-libs\n' * 3),
+                    ('{category}/{package}', '/\n' * 2 + 'dev-libs/\n'
+                        + 'dev-libs/foo\n' * 2),
+                    ('{category}/{package}-{version}', '/-\n' * 2
+                        + 'dev-libs/-\n' + 'dev-libs/foo-\n' + 'dev-libs/foo-0\n'),
+                    ('{foo}', '\n' * 5),
                 ):
             self.reporter_cls = partial(reporters.FormatReporter, format_str)
             self.add_report_output = expected
@@ -159,10 +161,10 @@ class TestFormatReporter(BaseReporter):
     def test_filtered_report(self, capsys):
         for format_str, expected in (
                     ('r', 'r\n'),
-                    ('{category}', ''),
-                    ('{category}/{package}', ''),
-                    ('{category}/{package}-{version}', ''),
-                    ('{foo}', ''),
+                    ('{category}', '\n'),
+                    ('{category}/{package}', '/\n'),
+                    ('{category}/{package}-{version}', '/-\n'),
+                    ('{foo}', '\n'),
                     ('{desc}', 'profile error\n'),
                 ):
             self.reporter_cls = partial(reporters.FormatReporter, format_str)

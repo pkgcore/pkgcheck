@@ -8,6 +8,7 @@ import signal
 from collections import defaultdict
 from itertools import chain
 from multiprocessing import Process, SimpleQueue
+from string import Formatter
 from xml.sax.saxutils import escape as xml_escape
 
 from snakeoil import pickling
@@ -338,11 +339,22 @@ class CsvReporter(Reporter):
 class FormatReporter(Reporter):
     """Custom format string reporter."""
 
+    class EmptyStringIfMissing(Formatter):
+        def get_value(self, key, args, kwds):
+            if isinstance(key, str):
+                try:
+                    return kwds[key]
+                except KeyError:
+                    return ''
+            else:
+                return Formatter.get_value(key, args, kwds)
+
     priority = -1001
 
     def __init__(self, format_str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.format_str = format_str
+        self.formatter = self.EmptyStringIfMissing()
         # provide expansions for result desc and level properties
         self._properties = ('desc', 'level')
 
@@ -352,12 +364,8 @@ class FormatReporter(Reporter):
             result = (yield)
             attrs = vars(result)
             attrs.update((k, getattr(result, k)) for k in self._properties)
-            try:
-                self.out.write(self.format_str.format(**attrs))
-                self.out.stream.flush()
-            except KeyError:
-                # ignore results missing requested attributes
-                pass
+            self.out.write(self.formatter.format(self.format_str, **attrs))
+            self.out.stream.flush()
 
 
 class DeserializationError(Exception):
