@@ -1,5 +1,5 @@
 DependencyCheck/MissingUseDepDefault
-  MissingUseDepDefault: version 0: BDEPEND="stub/stub3[foo?]": USE flag 'foo' missing from package: [ stub/stub3-0 ]
-  MissingUseDepDefault: version 0: DEPEND="stub/stub1[foo]": USE flag 'foo' missing from package: [ stub/stub1-0 ]
-  MissingUseDepDefault: version 0: PDEPEND="stub/stub4[!foo?]": USE flag 'foo' missing from package: [ stub/stub4-0 ]
-  MissingUseDepDefault: version 0: RDEPEND="stub/stub2[-foo]": USE flag 'foo' missing from package: [ stub/stub2-0 ]
+  MissingUseDepDefault: version 0: [PG0021] BDEPEND="stub/stub3[foo?]": USE flag 'foo' missing from package: [ stub/stub3-0 ]
+  MissingUseDepDefault: version 0: [PG0021] DEPEND="stub/stub1[foo]": USE flag 'foo' missing from package: [ stub/stub1-0 ]
+  MissingUseDepDefault: version 0: [PG0021] PDEPEND="stub/stub4[!foo?]": USE flag 'foo' missing from package: [ stub/stub4-0 ]
+  MissingUseDepDefault: version 0: [PG0021] RDEPEND="stub/stub2[-foo]": USE flag 'foo' missing from package: [ stub/stub2-0 ]

@@ -158,6 +158,8 @@ class DirectNoMaintainer(results.PackageResult, results.Error):
 class RdependChange(results.PackageResult, results.Warning):
     """Package RDEPEND was modified without adding a new ebuild revision."""
 
+    pgid = 'PG0003'
+
     @property
     def desc(self):
         return 'RDEPEND modified without revbump'

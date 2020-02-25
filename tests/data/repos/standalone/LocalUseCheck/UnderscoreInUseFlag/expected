@@ -1,2 +1,2 @@
 LocalUseCheck/UnderscoreInUseFlag
-  UnderscoreInUseFlag: USE flag 'foo_bar' uses reserved underscore character
+  UnderscoreInUseFlag: [PG0803] USE flag 'foo_bar' uses reserved underscore character

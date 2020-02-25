@@ -1,2 +1,2 @@
 RawEbuildCheck/HomepageInSrcUri
-  HomepageInSrcUri: version 0: ${HOMEPAGE} in SRC_URI
+  HomepageInSrcUri: version 0: [PG0104] ${HOMEPAGE} in SRC_URI

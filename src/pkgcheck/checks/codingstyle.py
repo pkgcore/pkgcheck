@@ -265,6 +265,8 @@ class PathVariablesCheck(Check):
 class AbsoluteSymlink(results.LineResult, results.Warning):
     """Ebuild uses dosym with absolute paths instead of relative."""
 
+    pgid = 'PG0206'
+
     def __init__(self, cmd, **kwargs):
         super().__init__(**kwargs)
         self.cmd = cmd
@@ -421,6 +423,8 @@ class HomepageInSrcUri(results.VersionResult, results.Warning):
     not accidentally affect SRC_URI.
     """
 
+    pgid = 'PG0104'
+
     @property
     def desc(self):
         return '${HOMEPAGE} in SRC_URI'
@@ -450,6 +454,8 @@ class VariableInHomepage(results.VersionResult, results.Warning):
 
     .. [#] https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables
     """
+
+    pgid = 'PG0103'
 
     def __init__(self, variables, **kwargs):
         super().__init__(**kwargs)

@@ -37,6 +37,8 @@ class MissingPythonEclass(results.VersionResult, results.Warning):
     .. [#] https://wiki.gentoo.org/wiki/Project:Python/Eclasses
     """
 
+    pgid = 'PG0501'
+
     def __init__(self, eclass, dep_type, dep, **kwargs):
         super().__init__(**kwargs)
         self.eclass = eclass
@@ -56,6 +58,8 @@ class PythonMissingRequiredUse(results.VersionResult, results.Warning):
     conditionally, it can be wrapped in appropriate USE conditionals.
     """
 
+    pgid = 'PG0501'
+
     @property
     def desc(self):
         return 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"'
@@ -71,6 +75,8 @@ class PythonMissingDeps(results.VersionResult, results.Warning):
     If Python is used conditionally, the dependency can be wrapped
     in appropriate USE conditionals.
     """
+
+    pgid = 'PG0501'
 
     def __init__(self, dep_type, **kwargs):
         super().__init__(**kwargs)
@@ -90,6 +96,8 @@ class PythonRuntimeDepInAnyR1(results.VersionResult, results.Warning):
     python-r1 or python-single-r1 eclass, otherwise the runtime dependency
     should be removed.
     """
+
+    pgid = 'PG0501'
 
     def __init__(self, dep_type, dep, **kwargs):
         super().__init__(**kwargs)

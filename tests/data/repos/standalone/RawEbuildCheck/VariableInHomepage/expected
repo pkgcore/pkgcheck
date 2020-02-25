@@ -1,2 +1,2 @@
 RawEbuildCheck/VariableInHomepage
-  VariableInHomepage: version 0: HOMEPAGE includes variable: ${PN}
+  VariableInHomepage: version 0: [PG0103] HOMEPAGE includes variable: ${PN}

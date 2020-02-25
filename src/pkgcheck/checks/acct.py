@@ -27,6 +27,8 @@ class MissingAccountIdentifier(results.VersionResult, results.Warning):
 class ConflictingAccountIdentifiers(results.Error):
     """Same UID/GID is used by multiple packages."""
 
+    pgid = 'PG0901'
+
     def __init__(self, kind, identifier, pkgs):
         super().__init__()
         self.kind = kind
@@ -42,6 +44,8 @@ class ConflictingAccountIdentifiers(results.Error):
 
 class OutsideRangeAccountIdentifier(results.VersionResult, results.Error):
     """UID/GID outside allowed allocation range."""
+
+    pgid = 'PG0901'
 
     def __init__(self, kind, identifier, **kwargs):
         super().__init__(**kwargs)

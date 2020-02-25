@@ -1,5 +1,5 @@
 HomepageCheck/BadHomepage
-  BadHomepage: version 0: HOMEPAGE empty/unset
-  BadHomepage: version 1: HOMEPAGE='github.com/pkgcore/pkgcheck' lacks protocol
-  BadHomepage: version 2: HOMEPAGE='gopher://github.com/pkgcore/pkgcheck' uses unsupported protocol 'gopher'
-  BadHomepage: version 3: unspecific HOMEPAGE: https://www.gentoo.org
+  BadHomepage: version 0: [PG0702] HOMEPAGE empty/unset
+  BadHomepage: version 1: [PG0702] HOMEPAGE='github.com/pkgcore/pkgcheck' lacks protocol
+  BadHomepage: version 2: [PG0702] HOMEPAGE='gopher://github.com/pkgcore/pkgcheck' uses unsupported protocol 'gopher'
+  BadHomepage: version 3: [PG0702] unspecific HOMEPAGE: https://www.gentoo.org

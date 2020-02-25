@@ -1,2 +1,2 @@
 MissingSlotDepCheck/MissingSlotDep
-  MissingSlotDep: version 0: 'stub/slotted' matches more than one slot: [ 0, 1 ]
+  MissingSlotDep: version 0: [PG0011] 'stub/slotted' matches more than one slot: [ 0, 1 ]

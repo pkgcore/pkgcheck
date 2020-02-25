@@ -436,6 +436,8 @@ class UnderscoreInUseFlag(results.PackageResult, results.Warning):
     .. [#] https://projects.gentoo.org/pms/7/pms.html#x1-200003.1.4
     """
 
+    pgid = 'PG0803'
+
     def __init__(self, flag, **kwargs):
         super().__init__(**kwargs)
         self.flag = flag
@@ -510,6 +512,8 @@ class MissingSlotDep(results.VersionResult, results.Warning):
     .. [#] https://devmanual.gentoo.org/general-concepts/dependencies/#slot-dependencies
     """
 
+    pgid = 'PG0011'
+
     def __init__(self, dep, dep_slots, **kwargs):
         super().__init__(**kwargs)
         self.dep = dep
@@ -560,6 +564,8 @@ class MissingPackageRevision(results.VersionResult, results.Warning):
     allowed, ``-r0`` should be appended in order to make the intent explicit.
     """
 
+    pgid = 'PG0002'
+
     def __init__(self, dep, atom, **kwargs):
         super().__init__(**kwargs)
         self.dep = dep.upper()
@@ -572,6 +578,8 @@ class MissingPackageRevision(results.VersionResult, results.Warning):
 
 class MissingUseDepDefault(results.VersionResult, results.Warning):
     """Package dependencies with USE dependencies missing defaults."""
+
+    pgid = 'PG0021'
 
     def __init__(self, attr, atom, flag, pkgs, **kwargs):
         super().__init__(**kwargs)
@@ -1191,6 +1199,8 @@ class BadHomepage(results.VersionResult, results.Warning):
     .. [#] https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables
     """
 
+    pgid = 'PG0702'
+
     def __init__(self, msg, **kwargs):
         super().__init__(**kwargs)
         self.msg = msg
@@ -1325,6 +1335,8 @@ class MissingTestRestrict(results.VersionResult, results.Warning):
     be skipped when the flag is disabled and therefore test dependencies may
     not be installed.
     """
+
+    pgid = 'PG0703'
 
     @property
     def desc(self):
