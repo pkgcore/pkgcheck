@@ -162,7 +162,8 @@ class StrReporter(Reporter):
         while True:
             result = (yield)
             prefix = self._scope_prefix_map.get(result.scope, '').format(**vars(result))
-            self.out.write(f'{prefix}{result.desc}')
+            idprefix = f'[{result.pgid}] ' if result.pgid is not None else ''
+            self.out.write(f'{prefix}{idprefix}{result.desc}')
             self.out.stream.flush()
 
 
@@ -204,6 +205,8 @@ class FancyReporter(Reporter):
             s = ''
             if result.scope is base.version_scope:
                 s = f"version {result.version}: "
+            if result.pgid is not None:
+                s += f"[{result.pgid}] "
             self.out.write(
                 self.out.fg(result.color),
                 result.name, self.out.reset,
@@ -267,19 +270,19 @@ class XmlReporter(Reporter):
     priority = -1000
 
     result_template = (
-        "<result><class>%(class)s</class>"
+        "<result><class>%(class)s</class>%(pgid)s"
         "<msg>%(msg)s</msg></result>")
     cat_template = (
         "<result><category>%(category)s</category>"
-        "<class>%(class)s</class><msg>%(msg)s</msg></result>")
+        "<class>%(class)s</class>%(pgid)s<msg>%(msg)s</msg></result>")
     pkg_template = (
         "<result><category>%(category)s</category>"
-        "<package>%(package)s</package><class>%(class)s</class>"
+        "<package>%(package)s</package><class>%(class)s</class>%(pgid)s"
         "<msg>%(msg)s</msg></result>")
     ver_template = (
         "<result><category>%(category)s</category>"
         "<package>%(package)s</package><version>%(version)s</version>"
-        "<class>%(class)s</class><msg>%(msg)s</msg></result>")
+        "<class>%(class)s</class>%(pgid)s<msg>%(msg)s</msg></result>")
 
     scope_map = {
         base.category_scope: cat_template,
@@ -300,6 +303,8 @@ class XmlReporter(Reporter):
             d = {k: getattr(result, k, '') for k in ('category', 'package', 'version')}
             d['class'] = xml_escape(result.name)
             d['msg'] = xml_escape(result.desc)
+            d['pgid'] = ('<pgid>' + xml_escape(result.pgid) + '</pgid>'
+                         if result.pgid is not None else '')
             self.out.write(self.scope_map.get(result.scope, self.result_template) % d)
 
 
@@ -328,11 +333,12 @@ class CsvReporter(Reporter):
     def _process_report(self):
         while True:
             result = (yield)
+            pgid = f'[{result.pgid}] ' if result.pgid is not None else ''
             self._writer.writerow((
                 getattr(result, 'category', ''),
                 getattr(result, 'package', ''),
                 getattr(result, 'version', ''),
-                result.desc))
+                pgid + result.desc))
 
 
 class FormatReporter(Reporter):

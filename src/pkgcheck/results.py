@@ -26,6 +26,8 @@ class Result(metaclass=_ResultAttrs):
     level = None
     color = None
     _name = None
+    # Policy Guide identifier ('PGnnnn')
+    pgid = None
 
     @property
     def name(self):
