@@ -853,7 +853,9 @@ def display_keywords(out, options):
                 out.first_prefix.append('  ')
                 out.later_prefix.append('  ')
                 for keyword in keywords:
-                    out.write(out.fg(keyword.color), keyword.__name__, out.reset, ':')
+                    out.write(out.fg(keyword.color), keyword.__name__, out.reset,
+                              f' [{keyword.pgid}]' if keyword.pgid is not None else '',
+                              ':')
                     dump_docstring(out, keyword, prefix='  ')
             finally:
                 out.first_prefix.pop()
