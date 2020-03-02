@@ -217,7 +217,7 @@ class DeprecatedEapi(_EapiResult, results.Warning):
     """Package's EAPI is deprecated according to repo metadata."""
 
     _type = 'deprecated'
-    pgid = '1001'
+    pgid = 'PG1001'
 
 
 class BannedEapi(_EapiResult, results.Error):
