@@ -1,2 +1,2 @@
 EclassUsageCheck/DeprecatedEclass
-  DeprecatedEclass: version 0: uses deprecated eclass: [ versionator (migrate to ver_* functions from EAPI 7) ]
+  DeprecatedEclass: version 0: [PG1003] uses deprecated eclass: [ versionator (migrate to ver_* functions from EAPI 7) ]

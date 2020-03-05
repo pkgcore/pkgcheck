@@ -9,6 +9,8 @@ from . import Check
 class DeprecatedEclass(results.VersionResult, results.Warning):
     """Package uses an eclass that is deprecated/abandoned."""
 
+    pgid = 'PG1003'
+
     def __init__(self, eclasses, **kwargs):
         super().__init__(**kwargs)
         self.eclasses = tuple(eclasses)
