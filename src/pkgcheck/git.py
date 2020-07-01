@@ -288,41 +288,34 @@ class GitStash(AbstractContextManager):
         self._stashed = False
 
     def __enter__(self):
-        try:
-            # check for untracked or modified/uncommitted files
-            p = subprocess.run(
-                ['git', 'ls-files', '-mo', '--exclude-standard'],
-                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                cwd=self.repo.location, encoding='utf8')
-            if p.returncode != 0 or not p.stdout:
-                return
+        # check for untracked or modified/uncommitted files
+        p = subprocess.run(
+            ['git', 'ls-files', '-mo', '--exclude-standard'],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            cwd=self.repo.location, encoding='utf8')
+        if p.returncode != 0 or not p.stdout:
+            return
 
-            # stash all existing untracked or modified/uncommitted files
+        # stash all existing untracked or modified/uncommitted files
+        p = subprocess.run(
+            ['git', 'stash', 'push', '-u', '-m', 'pkgcheck scan --commits'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+            cwd=self.repo.location, encoding='utf8')
+        if p.returncode != 0:
+            error = p.stderr.splitlines()[0]
+            self.parser.error(f'git failed stashing files: {error}')
+        self._stashed = True
+
+    def __exit__(self, _exc_type, _exc_value, _traceback):
+        if self._stashed:
+            # apply previously stashed files back to the working tree
             p = subprocess.run(
-                ['git', 'stash', 'push', '-u', '-m', 'pkgcheck scan --commits'],
+                ['git', 'stash', 'pop'],
                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                 cwd=self.repo.location, encoding='utf8')
             if p.returncode != 0:
                 error = p.stderr.splitlines()[0]
-                self.parser.error(f'git failed stashing files: {error}')
-            self._stashed = True
-        except FileNotFoundError:
-            pass
-
-    def __exit__(self, _exc_type, _exc_value, _traceback):
-        if self._stashed:
-            try:
-                # apply previously stashed files back to the working tree
-                p = subprocess.run(
-                    ['git', 'stash', 'pop'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                    cwd=self.repo.location, encoding='utf8')
-                if p.returncode != 0:
-                    error = p.stderr.splitlines()[0]
-                    self.parser.error(f'git failed applying stash: {error}')
-            except FileNotFoundError:
-                pass
-        pass
+                self.parser.error(f'git failed applying stash: {error}')
 
 
 class GitAddon(base.Addon, caches.CachedAddon):
