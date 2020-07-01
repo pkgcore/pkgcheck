@@ -276,7 +276,7 @@ class _ScanCommits(argparse.Action):
 
 
 class GitStash(AbstractContextManager):
-    """Context manager for stashing untracked or unmodified files.
+    """Context manager for stashing untracked or modified/uncommitted files.
 
     This assumes that no git actions are performed on the repo while a scan is
     underway otherwise `git stash` usage may cause issues.
@@ -289,7 +289,7 @@ class GitStash(AbstractContextManager):
 
     def __enter__(self):
         try:
-            # check for untracked/unmodified files
+            # check for untracked or modified/uncommitted files
             p = subprocess.run(
                 ['git', 'ls-files', '-mo', '--exclude-standard'],
                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
@@ -297,7 +297,7 @@ class GitStash(AbstractContextManager):
             if p.returncode != 0 or not p.stdout:
                 return
 
-            # stash all existing untracked/unmodified files
+            # stash all existing untracked or modified/uncommitted files
             p = subprocess.run(
                 ['git', 'stash', 'push', '-u', '-m', 'pkgcheck scan --commits'],
                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
