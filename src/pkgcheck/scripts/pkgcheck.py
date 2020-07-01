@@ -10,6 +10,7 @@ import os
 import sys
 import textwrap
 from collections import defaultdict
+from contextlib import ExitStack
 from functools import partial
 from itertools import chain
 from operator import attrgetter
@@ -412,6 +413,7 @@ def _restrict_to_scope(restrict):
 def _setup_scan_defaults(parser, namespace):
     """Re-initialize default namespace settings per arg parsing run."""
     namespace.forced_checks = []
+    namespace.contexts = []
 
 
 def add_addon(addon, addon_set):
@@ -656,8 +658,12 @@ def _scan(options, out, err):
     if caches:
         CachedAddon.update_caches(options, caches)
 
-    with options.reporter(out, verbosity=options.verbosity,
-                          keywords=options.filtered_keywords) as reporter:
+    with ExitStack() as stack:
+        reporter = options.reporter(
+            out, verbosity=options.verbosity, keywords=options.filtered_keywords)
+        for c in options.pop('contexts') + [reporter]:
+            stack.enter_context(c)
+
         for scan_scope, restrict in options.restrictions:
             # filter enabled checks based on the current scanning scope
             pipes = [

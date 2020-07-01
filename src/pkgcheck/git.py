@@ -7,6 +7,7 @@ import shlex
 import subprocess
 import sys
 from collections import UserDict
+from contextlib import AbstractContextManager
 from functools import partial
 
 from pathspec import PathSpec
@@ -274,6 +275,56 @@ class _ScanCommits(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
+class GitStash(AbstractContextManager):
+    """Context manager for stashing untracked or unmodified files.
+
+    This assumes that no git actions are performed on the repo while a scan is
+    underway otherwise `git stash` usage may cause issues.
+    """
+
+    def __init__(self, parser, repo):
+        self.parser = parser
+        self.repo = repo
+        self._stashed = False
+
+    def __enter__(self):
+        try:
+            # check for untracked/unmodified files
+            p = subprocess.run(
+                ['git', 'ls-files', '-mo', '--exclude-standard'],
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                cwd=self.repo.location, encoding='utf8')
+            if p.returncode != 0 or not p.stdout:
+                return
+
+            # stash all existing untracked/unmodified files
+            p = subprocess.run(
+                ['git', 'stash', 'push', '-u', '-m', 'pkgcheck scan --commits'],
+                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                cwd=self.repo.location, encoding='utf8')
+            if p.returncode != 0:
+                error = p.stderr.splitlines()[0]
+                self.parser.error(f'git failed stashing files: {error}')
+            self._stashed = True
+        except FileNotFoundError:
+            pass
+
+    def __exit__(self, _exc_type, _exc_value, _traceback):
+        if self._stashed:
+            try:
+                # apply previously stashed files back to the working tree
+                p = subprocess.run(
+                    ['git', 'stash', 'pop'],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                    cwd=self.repo.location, encoding='utf8')
+                if p.returncode != 0:
+                    error = p.stderr.splitlines()[0]
+                    self.parser.error(f'git failed applying stash: {error}')
+            except FileNotFoundError:
+                pass
+        pass
+
+
 class GitAddon(base.Addon, caches.CachedAddon):
     """Git repo support for various checks.
 
@@ -367,6 +418,7 @@ class GitAddon(base.Addon, caches.CachedAddon):
             if not restrictions:
                 parser.exit()
 
+            namespace.contexts.append(GitStash(parser, repo))
             namespace.restrictions = restrictions
 
     def __init__(self, *args):
