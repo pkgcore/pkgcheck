@@ -1336,19 +1336,20 @@ class RestrictTestCheck(Check):
 
     known_results = frozenset([MissingTestRestrict])
 
+    def __init__(self, *args):
+        super().__init__(*args)
+        # create "!test? ( test )" conditional to match restrictions against
+        self.test_restrict = packages.Conditional(
+            'use', values.ContainmentMatch2('test', negate=True), ['test'])
+
     def feed(self, pkg):
         if 'test' not in pkg.iuse:
             return
 
-        # if the package has unconditional restriction, additional conditional
-        # is unnecessary
-        if 'test' in pkg.restrict:
-            return
-
-        # otherwise, it should have top-level "!test? ( test )"
-        if any(isinstance(r, packages.Conditional) and r.restriction.vals == {'test'} and
-               r.restriction.negate and 'test' in r.payload for r in pkg.restrict):
-            return
+        # conditional is unnecessary if it already exists or is in unconditional form
+        for r in pkg.restrict:
+            if r in ('test', self.test_restrict):
+                return
 
         yield MissingTestRestrict(pkg=pkg)
 
