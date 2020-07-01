@@ -288,11 +288,8 @@ class _XmlBaseCheck(Check):
         self._checks = tuple(
             getattr(self, x) for x in dir(self) if x.startswith('_check_'))
 
-        # try to use repo-bundled version of metadata.xsd and fallback to
-        # version installed with pkgcore
-        metadata_xsd = pjoin(self.repo_base, 'metadata', 'xml-schema', 'metadata.xsd')
-        if not os.path.isfile(metadata_xsd):
-            metadata_xsd = pjoin(pkgcore_const.DATA_PATH, 'xml-schema', 'metadata.xsd')
+        # use xsd file installed with pkgcore
+        metadata_xsd = pjoin(pkgcore_const.DATA_PATH, 'xml-schema', 'metadata.xsd')
         self.schema = etree.XMLSchema(etree.parse(metadata_xsd))
 
     def _check_doc(self, pkg, loc, doc):
