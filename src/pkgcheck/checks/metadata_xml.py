@@ -396,14 +396,12 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
         if self.options.gentoo_repo:
             if pkg.maintainers:
                 # check proxy maintainers
-                if not any(m.email.endswith('@gentoo.org')
-                           for m in pkg.maintainers):
+                if not any(m.email.endswith('@gentoo.org') for m in pkg.maintainers):
                     maintainers = sorted(map(str, pkg.maintainers))
                     yield MaintainerWithoutProxy(
                         os.path.basename(loc), maintainers, pkg=pkg)
-                elif (len(pkg.maintainers) == 1 and
-                      any(m.email == 'proxy-maint@gentoo.org'
-                          for m in pkg.maintainers)):
+                elif (all(m.email.endswith('@gentoo.org') for m in pkg.maintainers) and
+                      'proxy-maint@gentoo.org' in pkg.maintainers):
                     yield StaleProxyMaintProject(os.path.basename(loc), pkg=pkg)
             else:
                 # check for missing maintainer-needed comment
