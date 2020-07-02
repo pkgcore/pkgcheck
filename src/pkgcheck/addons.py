@@ -162,7 +162,10 @@ class ProfileAddon(base.Addon, caches.CachedAddon):
         selected_profiles = namespace.selected_profiles
 
         # check if experimental profiles are required for selected keywords
-        exp_required = any(r._profile == 'exp' for r in namespace.filtered_keywords)
+        filtered_keywords = getattr(namespace, 'filtered_keywords', None)
+        if filtered_keywords is None:
+            filtered_keywords = ()
+        exp_required = any(r._profile == 'exp' for r in filtered_keywords)
 
         if selected_profiles is None:
             # Disable experimental profiles by default if no profiles are
