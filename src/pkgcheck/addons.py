@@ -161,16 +161,26 @@ class ProfileAddon(base.Addon, caches.CachedAddon):
         target_repo = namespace.target_repo
         selected_profiles = namespace.selected_profiles
 
-        # check if experimental profiles are required for selected keywords
-        filtered_keywords = getattr(namespace, 'filtered_keywords', None)
-        if filtered_keywords is None:
-            filtered_keywords = ()
-        exp_required = any(r._profile == 'exp' for r in filtered_keywords)
-
         if selected_profiles is None:
+            exp_required = False
+
+            # check if any selected arch only has experimental profiles
+            if getattr(namespace, 'selected_arches', None) is not None:
+                for arch in namespace.selected_arches:
+                    if all(p.status == 'exp' for p in target_repo.profiles if p.arch == arch):
+                        exp_required = True
+                        break
+
+            # check if experimental profiles are required for selected keywords
+            if not exp_required:
+                filtered_keywords = getattr(namespace, 'filtered_keywords', None)
+                if filtered_keywords is None:
+                    filtered_keywords = ()
+                exp_required = any(r._profile == 'exp' for r in filtered_keywords)
+
             # Disable experimental profiles by default if no profiles are
-            # selected and no keywords are explicitly selected that require
-            # them to operate properly.
+            # selected and no keywords or arches have been explicitly selected
+            # that require them to operate properly.
             selected_profiles = (() if exp_required else ('exp',), ())
 
         def norm_name(s):
