@@ -14,7 +14,6 @@ import re
 import sys
 from contextlib import AbstractContextManager
 
-from pkgcore import const as pkgcore_const
 from snakeoil.mappings import ImmutableDict
 
 

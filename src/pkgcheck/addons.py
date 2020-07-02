@@ -10,13 +10,12 @@ from itertools import chain, filterfalse
 from pkgcore.ebuild import domain, misc
 from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.restrictions import packages, values
-from snakeoil.cli.arghparse import StoreBool
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
 from snakeoil.decorators import coroutine
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
-from snakeoil.osutils import abspath, pjoin
+from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 

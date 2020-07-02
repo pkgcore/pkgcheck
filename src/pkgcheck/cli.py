@@ -7,7 +7,6 @@ from pkgcore.util import commandline
 from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
 from snakeoil.contexts import patch
-from snakeoil.klass import jit_attr
 from snakeoil.log import suppress_logging
 
 

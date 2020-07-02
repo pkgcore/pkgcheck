@@ -1,10 +1,8 @@
 """Pipeline building support for connecting sources and checks."""
 
-import os
 import traceback
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
-from itertools import chain
 from multiprocessing import Pool, Process, SimpleQueue
 
 from pkgcore.package.errors import MetadataException

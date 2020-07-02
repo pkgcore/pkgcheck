@@ -31,7 +31,6 @@ from ..caches import CachedAddon
 from ..addons import init_addon
 from ..checks import NetworkCheck, init_checks
 from ..cli import ConfigArgumentParser
-from ..log import logger
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
 argparser = ConfigArgumentParser(
