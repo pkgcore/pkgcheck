@@ -136,7 +136,16 @@ scan.add_argument(
 main_options = scan.add_argument_group('main options')
 main_options.add_argument(
     '--config', dest='config_file',
-    help='use custom pkgcheck scan settings file')
+    help='use custom pkgcheck scan settings file',
+    docs="""
+        Load custom pkgcheck scan settings from a given file.
+
+        Note that custom user settings override all other system and repo-level
+        settings.
+
+        It's also possible to disable all types of settings loading by
+        specifying an argument of 'false' or 'no'.
+    """)
 main_options.add_argument(
     '-r', '--repo', metavar='REPO', dest='target_repo',
     action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
@@ -475,15 +484,20 @@ def _setup_scan(parser, namespace, args):
     # support loading repo-specific config settings from metadata/pkgcheck.conf
     repo_config_file = os.path.join(namespace.target_repo.location, 'metadata', 'pkgcheck.conf')
 
-    if namespace.config_file is not None:
-        # support overriding/disabling config file support
-        if namespace.config_file.lower() in ('false', 'no', 'n'):
-            parser.configs = ()
-        else:
-            parser.configs = (namespace.config_file,)
-    elif os.path.isfile(repo_config_file):
+    configs = ()
+    if os.path.isfile(repo_config_file):
         # repo settings take precedence over system/user settings
-        parser.configs += (repo_config_file,)
+        configs += (repo_config_file,)
+    if namespace.config_file is not None:
+        # and custom user settings take precedence over everything
+        if namespace.config_file.lower() in ('false', 'no', 'n'):
+            configs = ()
+        else:
+            configs += (namespace.config_file,)
+
+    if configs:
+        parser.parse_config(parser.configs + configs)
+        namespace = parser.parse_config_options(namespace)
 
     # load repo-specific args from config if they exist, command line args override these
     for section in namespace.target_repo.aliases:

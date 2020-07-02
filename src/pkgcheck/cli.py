@@ -25,17 +25,17 @@ class ConfigArgumentParser(arghparse.ArgumentParser):
     def __init__(self, configs=(), **kwargs):
         super().__init__(**kwargs)
         self.configs = tuple(x for x in set(configs) if os.path.isfile(x))
+        self.parse_config(self.configs)
 
-    @jit_attr
-    def config(self):
-        """Config file object related to a given parser."""
-        config = configparser.ConfigParser()
+    def parse_config(self, configs):
+        """Parse given config files."""
+        self.config = configparser.ConfigParser()
         try:
-            for f in self.configs:
-                config.read(f)
+            for f in configs:
+                self.config.read(f)
         except configparser.ParsingError as e:
             raise UserException(f'parsing config file failed: {e}')
-        return config
+        return self.config
 
     def parse_config_options(self, namespace, section='DEFAULT'):
         """Parse options from config if they exist."""
