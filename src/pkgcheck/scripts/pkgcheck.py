@@ -416,21 +416,25 @@ def _setup_scan_defaults(parser, namespace):
     namespace.contexts = []
 
 
-def add_addon(addon, addon_set):
-    """Determine the set of required addons for a given addon."""
-    if addon not in addon_set:
-        addon_set.add(addon)
-        for dep in addon.required_addons:
-            add_addon(dep, addon_set)
+def get_addons(objects):
+    """Return tuple of required addons for a given sequence of objects."""
+    required = {}
+
+    def _required_addons(objs):
+        for addon in objs:
+            if addon not in required:
+                if addon.required_addons:
+                    _required_addons(addon.required_addons)
+                required[addon] = None
+
+    _required_addons(objects)
+    return tuple(required)
 
 
 @scan.bind_pre_parse
 def _setup_scan_addons(parser, namespace):
     """Load all checks and their argparser changes before parsing."""
-    all_addons = set()
-    for check in objects.CHECKS.values():
-        add_addon(check, all_addons)
-    for addon in all_addons:
+    for addon in get_addons(objects.CHECKS.values()):
         addon.mangle_argparser(parser)
 
 
@@ -609,10 +613,7 @@ def _validate_scan_args(parser, namespace):
     if not namespace.enabled_checks:
         parser.error('no active checks')
 
-    namespace.addons = set()
-
-    for check in namespace.enabled_checks:
-        add_addon(check, namespace.addons)
+    namespace.addons = get_addons(namespace.enabled_checks)
     try:
         for addon in namespace.addons:
             addon.check_args(parser, namespace)
@@ -715,14 +716,9 @@ cache.add_argument(
 @cache.bind_pre_parse
 def _setup_cache_addons(parser, namespace):
     """Load all addons using caches and their argparser changes before parsing."""
-    all_addons = set()
-    cache_addons = set()
-    for addon in CachedAddon.caches:
-        cache_addons.add(addon)
-        add_addon(addon, all_addons)
-    for addon in all_addons:
+    for addon in get_addons(CachedAddon.caches):
         addon.mangle_argparser(parser)
-    namespace.cache_addons = cache_addons
+    namespace.cache_addons = set(CachedAddon.caches)
 
 
 @cache.bind_final_check
