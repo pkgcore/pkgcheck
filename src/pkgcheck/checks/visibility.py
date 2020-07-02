@@ -176,6 +176,9 @@ class NonsolvableDepsInDev(_NonsolvableDeps, results.Error):
 class NonsolvableDepsInExp(_NonsolvableDeps, results.Warning):
     """No potential solution for dependency on exp profile."""
 
+    # results require experimental profiles to be enabled
+    _profile = 'exp'
+
 
 class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
     """Visibility dependency scans.

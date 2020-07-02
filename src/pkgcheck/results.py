@@ -22,10 +22,11 @@ class Result(metaclass=_ResultAttrs):
     _filtered = False
     # default to repository level results
     scope = base.repo_scope
-    # priority level, color, and name
+    # priority level, color, name, and profile type
     level = None
     color = None
     _name = None
+    _profile = None
 
     @property
     def name(self):

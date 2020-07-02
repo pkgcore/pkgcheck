@@ -160,9 +160,15 @@ class ProfileAddon(base.Addon, caches.CachedAddon):
     def check_args(parser, namespace):
         target_repo = namespace.target_repo
         selected_profiles = namespace.selected_profiles
+
+        # check if experimental profiles are required for selected keywords
+        exp_required = any(r._profile == 'exp' for r in namespace.filtered_keywords)
+
         if selected_profiles is None:
-            # disable exp profiles by default if no profiles are selected
-            selected_profiles = (('exp',), ())
+            # Disable experimental profiles by default if no profiles are
+            # selected and no keywords are explicitly selected that require
+            # them to operate properly.
+            selected_profiles = (() if exp_required else ('exp',), ())
 
         def norm_name(s):
             """Expand status keywords and format paths."""
