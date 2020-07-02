@@ -5,6 +5,6 @@ requires = [
 	"lxml",
 	"pathspec",
 	"snakeoil~=0.8.8",
-	"pkgcore~=0.10.11",
+	"pkgcore~=0.10.13",
 ]
 build-backend = "setuptools.build_meta"
