@@ -257,7 +257,7 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
                     pkg, attr, depset):
                 for profile, failures in self.process_depset(
                         pkg, attr, depset, edepset, profiles):
-                    failures = tuple(map(str, stable_unique(failures)))
+                    failures = tuple(map(str, sorted(stable_unique(failures))))
                     profile_failures[failures][profile.status].add(profile)
 
             if profile_failures:
