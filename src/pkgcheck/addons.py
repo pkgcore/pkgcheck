@@ -514,11 +514,14 @@ class StableArchesAddon(base.Addon):
 
     def __init__(self, *args, arches_addon=None):
         super().__init__(*args)
-        # use known stable arches if arches aren't specified
+        target_repo = self.options.target_repo
         if self.options.selected_arches is None:
-            stable_arches = set().union(*(
-                repo.profiles.arches('stable')
-                for repo in self.options.target_repo.trees))
+            # use known stable arches (GLEP 72) if arches aren't specified
+            stable_arches = target_repo.config.arches_desc['stable']
+            # fallback to determining stable arches from profiles.desc if arches.desc doesn't exist
+            if not stable_arches:
+                stable_arches = set().union(*(
+                    repo.profiles.arches('stable') for repo in target_repo.trees))
         else:
             stable_arches = set(self.options.arches)
 
