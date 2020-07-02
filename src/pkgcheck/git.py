@@ -364,6 +364,15 @@ class GitAddon(base.Addon, caches.CachedAddon):
         """Stub method for matching eclasses against commits."""
         return eclass in committed
 
+    @staticmethod
+    def _pkg_atoms(paths):
+        """Filter package atoms from commit paths."""
+        for x in paths:
+            try:
+                yield atom_cls(os.sep.join(x.split(os.sep, 2)[:2]))
+            except MalformedAtom:
+                continue
+
     @classmethod
     def check_args(cls, parser, namespace):
         if namespace.commits:
@@ -394,7 +403,7 @@ class GitAddon(base.Addon, caches.CachedAddon):
 
             pkgs, eclasses = partition(
                 p.stdout.splitlines(), predicate=lambda x: x.startswith('eclass/'))
-            pkgs = sorted(atom_cls(os.sep.join(x.split(os.sep, 2)[:2])) for x in pkgs)
+            pkgs = sorted(cls._pkg_atoms(pkgs))
             eclasses = filter(None, (eclass_regex.match(x) for x in eclasses))
             eclasses = sorted(x.group('eclass') for x in eclasses)
 
