@@ -77,7 +77,10 @@ class _PerlConnection:
         # the perl side at this point.
         if self.connection is not None:
             self.connection.close()
-        self.socket_dir.cleanup()
+        try:
+            self.socket_dir.cleanup()
+        except FileNotFoundError:
+            pass
         if self.perl_client is not None:
             self.perl_client.kill()
 
