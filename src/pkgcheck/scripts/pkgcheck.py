@@ -459,7 +459,7 @@ def _setup_scan(parser, namespace, args):
     # creation, fallback to the root dir if it's be removed out from under us.
     try:
         namespace.cwd = abspath(os.getcwd())
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         namespace.cwd = '/'
 
     # if we have no target repo figure out what to use
