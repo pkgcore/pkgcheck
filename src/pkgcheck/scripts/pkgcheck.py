@@ -590,6 +590,11 @@ def _validate_scan_args(parser, namespace):
     if namespace.selected_keywords is not None:
         namespace.disabled_keywords |= {objects.KEYWORDS[k] for k in namespace.selected_keywords[0]}
         namespace.enabled_keywords |= {objects.KEYWORDS[k] for k in namespace.selected_keywords[1]}
+        # allow keyword args to be filtered by output name in addition to class name
+        namespace.disabled_keywords |= {
+            k for k in objects.KEYWORDS.values() if k.name in namespace.selected_keywords[0]}
+        namespace.enabled_keywords |= {
+            k for k in objects.KEYWORDS.values() if k.name in namespace.selected_keywords[1]}
 
     # determine keywords to filter
     namespace.filtered_keywords = None
