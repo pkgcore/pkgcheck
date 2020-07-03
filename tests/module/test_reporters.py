@@ -150,6 +150,8 @@ class TestFormatReporter(BaseReporter):
                     ('{category}', 'dev-libs\n' * 3),
                     ('{category}/{package}', 'dev-libs/foo\n' * 2),
                     ('{category}/{package}-{version}', 'dev-libs/foo-0\n'),
+                    ('{name}',
+                     'InvalidCommitMessage\nProfileWarning\nCatMissingMetadataXml\nInvalidPN\nBadFilename\n'),
                     ('{foo}', ''),
                 ):
             self.reporter_cls = partial(reporters.FormatReporter, format_str)
@@ -162,6 +164,7 @@ class TestFormatReporter(BaseReporter):
                     ('{category}', ''),
                     ('{category}/{package}', ''),
                     ('{category}/{package}-{version}', ''),
+                    ('{name}', 'ProfileError\n'),
                     ('{foo}', ''),
                     ('{desc}', 'profile error\n'),
                 ):

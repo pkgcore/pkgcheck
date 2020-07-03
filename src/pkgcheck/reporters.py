@@ -343,8 +343,8 @@ class FormatReporter(Reporter):
     def __init__(self, format_str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.format_str = format_str
-        # provide expansions for result desc and level properties
-        self._properties = ('desc', 'level')
+        # provide expansions for result desc, level, and output name properties
+        self._properties = ('desc', 'level', 'name')
 
     @coroutine
     def _process_report(self):
