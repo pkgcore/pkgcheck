@@ -59,7 +59,7 @@ class Reporter:
         """
         self.out = out
         self.verbosity = verbosity
-        self._filtered_keywords = set(keywords) if keywords is not None else keywords
+        self._filtered_keywords = frozenset(keywords) if keywords is not None else keywords
 
         # initialize result processing coroutines
         self.report = self._add_report().send
