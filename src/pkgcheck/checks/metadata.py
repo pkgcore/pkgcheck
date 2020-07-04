@@ -6,7 +6,7 @@ from difflib import SequenceMatcher
 from itertools import chain
 from operator import attrgetter
 
-from pkgcore.ebuild import atom
+from pkgcore.ebuild import atom as atom_mod
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
@@ -171,6 +171,7 @@ class InvalidUseFlags(_UseFlagsResult):
 
     _type = 'invalid'
 
+
 class UnknownUseFlags(_UseFlagsResult):
     """Package IUSE contains unknown USE flags."""
 
@@ -188,7 +189,7 @@ class IuseCheck(Check):
         self.iuse_handler = use_addon
 
     def feed(self, pkg):
-        invalid = [x for x in pkg.iuse_stripped if not atom.valid_use_flag.match(x)]
+        invalid = [x for x in pkg.iuse_stripped if not atom_mod.valid_use_flag.match(x)]
         if invalid:
             yield InvalidUseFlags(invalid, pkg=pkg)
 
