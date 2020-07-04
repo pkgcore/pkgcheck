@@ -221,11 +221,14 @@ class RestrictionRepoSource(RepoSource):
 class UnmaskedRepoSource(RepoSource):
     """Repository source that uses profiles/package.mask to filter packages."""
 
-    def itermatch(self, restrict, **kwargs):
-        filtered_repo = self._options.domain.filter_repo(
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._filtered_repo = self._options.domain.filter_repo(
             self._repo, pkg_masks=(), pkg_unmasks=(),
             pkg_accept_keywords=(), pkg_keywords=(), profile=False)
-        yield from filtered_repo.itermatch(restrict, **kwargs)
+
+    def itermatch(self, restrict, **kwargs):
+        yield from self._filtered_repo.itermatch(restrict, **kwargs)
 
 
 class _SourcePkg(WrappedPkg):
