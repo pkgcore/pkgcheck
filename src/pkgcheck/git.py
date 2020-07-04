@@ -34,7 +34,7 @@ from .log import logger
 _ebuild_path_regex_raw = '([^/]+)/([^/]+)/([^/]+)\\.ebuild'
 _ebuild_path_regex = '(?P<category>[^/]+)/(?P<PN>[^/]+)/(?P<P>[^/]+)\\.ebuild'
 demand_compile_regexp('ebuild_ADM_regex', fr'^(?P<status>[ADM])\t{_ebuild_path_regex}$')
-demand_compile_regexp('ebuild_R_regex', fr'^(?P<status>R)\d+\t{_ebuild_path_regex_raw}\t{_ebuild_path_regex}$')
+demand_compile_regexp('ebuild_R_regex', fr'^(?P<status>R)\d+\t{_ebuild_path_regex}\t{_ebuild_path_regex_raw}$')
 demand_compile_regexp('eclass_regex', r'^eclass/(?P<eclass>\S+)\.eclass$')
 
 
