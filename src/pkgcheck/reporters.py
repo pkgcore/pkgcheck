@@ -8,6 +8,7 @@ import signal
 from collections import defaultdict
 from itertools import chain
 from multiprocessing import Process, SimpleQueue
+from string import Formatter
 from xml.sax.saxutils import escape as xml_escape
 
 from snakeoil import pickling
@@ -335,6 +336,19 @@ class CsvReporter(Reporter):
                 result.desc))
 
 
+class _ResultFormatter(Formatter):
+    """Custom string formatter that collapses unmatched variables."""
+
+    def get_value(self, key, args, kwds):
+        """Retrieve a given field value, an empty string is returned for unmatched fields."""
+        if isinstance(key, str):
+            try:
+                return kwds[key]
+            except KeyError:
+                return ''
+        return super().get_value(key, args, kwds)
+
+
 class FormatReporter(Reporter):
     """Custom format string reporter."""
 
@@ -343,6 +357,7 @@ class FormatReporter(Reporter):
     def __init__(self, format_str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.format_str = format_str
+        self._formatter = _ResultFormatter()
         # provide expansions for result desc, level, and output name properties
         self._properties = ('desc', 'level', 'name')
 
@@ -352,12 +367,11 @@ class FormatReporter(Reporter):
             result = (yield)
             attrs = vars(result)
             attrs.update((k, getattr(result, k)) for k in self._properties)
-            try:
-                self.out.write(self.format_str.format(**attrs))
+            s = self._formatter.format(self.format_str, **attrs)
+            # output strings with at least one valid expansion or non-whitespace character
+            if s.strip():
+                self.out.write(s)
                 self.out.stream.flush()
-            except KeyError:
-                # ignore results missing requested attributes
-                pass
 
 
 class DeserializationError(Exception):

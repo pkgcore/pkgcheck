@@ -148,8 +148,8 @@ class TestFormatReporter(BaseReporter):
         for format_str, expected in (
                     ('r', 'r\n' * 5),
                     ('{category}', 'dev-libs\n' * 3),
-                    ('{category}/{package}', 'dev-libs/foo\n' * 2),
-                    ('{category}/{package}-{version}', 'dev-libs/foo-0\n'),
+                    ('{category}/{package}', '/\n/\ndev-libs/\n' + 'dev-libs/foo\n' * 2),
+                    ('{category}/{package}-{version}', '/-\n/-\ndev-libs/-\ndev-libs/foo-\ndev-libs/foo-0\n'),
                     ('{name}',
                      'InvalidCommitMessage\nProfileWarning\nCatMissingMetadataXml\nInvalidPN\nBadFilename\n'),
                     ('{foo}', ''),
@@ -162,11 +162,12 @@ class TestFormatReporter(BaseReporter):
         for format_str, expected in (
                     ('r', 'r\n'),
                     ('{category}', ''),
-                    ('{category}/{package}', ''),
-                    ('{category}/{package}-{version}', ''),
+                    ('{category}/{package}', '/\n'),
+                    ('{category}/{package}-{version}', '/-\n'),
                     ('{name}', 'ProfileError\n'),
                     ('{foo}', ''),
                     ('{desc}', 'profile error\n'),
+                    ('{level}', 'error\n'),
                 ):
             self.reporter_cls = partial(reporters.FormatReporter, format_str)
             self.filtered_report_output = expected
