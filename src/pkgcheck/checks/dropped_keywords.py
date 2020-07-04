@@ -29,8 +29,8 @@ class DroppedKeywordsCheck(Check):
         self.arches = frozenset(self.options.arches)
 
     def feed(self, pkgset):
-        # skip live ebuilds otherwise they're flagged
-        pkgset = [pkg for pkg in pkgset if not pkg.live]
+        # only consider non-live pkgs with KEYWORDS
+        pkgset = [pkg for pkg in pkgset if pkg.keywords and not pkg.live]
 
         if len(pkgset) <= 1:
             return
