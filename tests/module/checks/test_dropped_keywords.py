@@ -26,9 +26,10 @@ class TestDroppedKeywords(misc.ReportTestCase):
         # single version, shouldn't yield.
         check = self.mk_check()
         self.assertNoReport(check, [self.mk_pkg('1')])
-        reports = self.assertReports(
+
+        # ebuilds without keywords are skipped
+        self.assertNoReport(
             check, [self.mk_pkg("1", "x86 amd64"), self.mk_pkg("2")])
-        assert set(chain.from_iterable(x.arches for x in reports)) == {"x86", "amd64"}
 
         # ensure it limits itself to just the arches we care about
         # check unstable at the same time;
@@ -64,14 +65,12 @@ class TestDroppedKeywords(misc.ReportTestCase):
         check = self.mk_check(verbosity=1)
         reports = self.assertReports(
             check,
-            [self.mk_pkg("1", "x86 amd64"),
-             self.mk_pkg("2"),
-             self.mk_pkg("3")])
+            [self.mk_pkg("1", "amd64 x86"),
+             self.mk_pkg("2", "amd64"),
+             self.mk_pkg("3", "amd64")])
         assert len(reports) == 2
         assert {x.version for x in reports} == {"2", "3"}
-        assert set(chain.from_iterable(x.arches for x in reports)) == {"x86", "amd64"}
-        for r in reports:
-            assert 'amd64, x86' in str(r)
+        assert set(chain.from_iterable(x.arches for x in reports)) == {"x86"}
 
     def test_regular_mode(self):
         # regular mode outputs the most recent pkg with dropped keywords
@@ -79,9 +78,8 @@ class TestDroppedKeywords(misc.ReportTestCase):
         reports = self.assertReports(
             check,
             [self.mk_pkg("1", "x86 amd64"),
-             self.mk_pkg("2"),
-             self.mk_pkg("3")])
+             self.mk_pkg("2", "amd64"),
+             self.mk_pkg("3", "amd64")])
         assert len(reports) == 1
         assert reports[0].version == '3'
-        assert set(chain.from_iterable(x.arches for x in reports)) == {"x86", "amd64"}
-        assert 'amd64, x86' in str(reports[0])
+        assert set(chain.from_iterable(x.arches for x in reports)) == {"x86"}
