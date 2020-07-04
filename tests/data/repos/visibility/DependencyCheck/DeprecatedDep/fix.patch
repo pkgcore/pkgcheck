@@ -1,0 +1,19 @@
+diff -Naur visibility/DeprecatedDep/nonoptional/nonoptional-0.ebuild fixed/DeprecatedDep/nonoptional/nonoptional-0.ebuild
+--- visibility/DeprecatedDep/nonoptional/nonoptional-0.ebuild	2019-12-04 01:58:11.110158861 -0700
++++ fixed/DeprecatedDep/nonoptional/nonoptional-0.ebuild	2019-12-26 20:39:32.575678628 -0700
+@@ -4,4 +4,4 @@
+ SLOT="0"
+ LICENSE="BSD"
+ KEYWORDS="~amd64"
+-RDEPEND="stub/deprecated"
++RDEPEND="stub/unstable"
+diff -Naur visibility/DeprecatedDep/optional/optional-0.ebuild fixed/DeprecatedDep/optional/optional-0.ebuild
+--- visibility/DeprecatedDep/optional/optional-0.ebuild	2019-12-26 20:39:13.559577724 -0700
++++ fixed/DeprecatedDep/optional/optional-0.ebuild	2019-12-26 20:39:47.650758627 -0700
+@@ -6,5 +6,5 @@
+ KEYWORDS="~amd64"
+ RDEPEND="
+ 	!stub/deprecated
+-	|| ( stub/unstable stub/deprecated )
++	stub/unstable
+ "

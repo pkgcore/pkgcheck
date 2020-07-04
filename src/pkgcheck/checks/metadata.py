@@ -633,17 +633,18 @@ class NonexistentBlocker(results.VersionResult, results.Warning):
         )
 
 
-class DeprecatedPkg(results.VersionResult, results.Warning):
-    """Package dependency is flagged in profiles/package.deprecated."""
+class DeprecatedDep(results.VersionResult, results.Warning):
+    """Package dependencies matching deprecated packages flagged in profiles/package.deprecated."""
 
-    def __init__(self, attr, atom, **kwargs):
+    def __init__(self, attr, atoms, **kwargs):
         super().__init__(**kwargs)
         self.attr = attr
-        self.atom = atom
+        self.atoms = tuple(atoms)
 
     @property
     def desc(self):
-        return f'deprecated {self.attr}: {self.atom}'
+        ies = pluralism(self.atoms, singular='y', plural='ies')
+        return f"{self.attr}: deprecated dependenc{ies}: {' '.join(self.atoms)}"
 
 
 class BadDependency(results.VersionResult, results.Error):
@@ -690,7 +691,7 @@ class DependencyCheck(Check):
     required_addons = (addons.UseAddon, git.GitAddon)
     known_results = frozenset([
         BadDependency, MissingPackageRevision, MissingUseDepDefault,
-        OutdatedBlocker, NonexistentBlocker, UnstatedIuse, DeprecatedPkg,
+        OutdatedBlocker, NonexistentBlocker, UnstatedIuse, DeprecatedDep,
         InvalidDepend, InvalidRdepend, InvalidPdepend, InvalidBdepend,
     ])
 
@@ -796,8 +797,8 @@ class DependencyCheck(Check):
                 yield OutdatedBlocker(attr.upper(), str(atom), years, pkg=pkg)
             for atom in sorted(nonexistent_blockers):
                 yield NonexistentBlocker(attr.upper(), str(atom), pkg=pkg)
-            for atom in sorted(deprecated):
-                yield DeprecatedPkg(attr.upper(), str(atom), pkg=pkg)
+            if deprecated:
+                yield DeprecatedDep(attr.upper(), tuple(map(str, sorted(deprecated))), pkg=pkg)
 
 
 class BadKeywords(results.VersionResult, results.Warning):

@@ -1,5 +1,0 @@
-DeprecatedPkg/nonoptional
-  DeprecatedPkg: version 0: deprecated RDEPEND: stub/deprecated
-
-DeprecatedPkg/optional
-  DeprecatedPkg: version 0: deprecated RDEPEND: stub/deprecated

@@ -1,0 +1,5 @@
+DeprecatedDep/nonoptional
+  DeprecatedDep: version 0: RDEPEND: deprecated dependency: stub/deprecated
+
+DeprecatedDep/optional
+  DeprecatedDep: version 0: RDEPEND: deprecated dependency: stub/deprecated
