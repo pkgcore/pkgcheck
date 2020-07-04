@@ -902,7 +902,7 @@ class KeywordsCheck(Check):
         self.portage_keywords = {'*', '~*'}
 
     def feed(self, pkg):
-        if len(pkg.keywords) == 1 and pkg.keywords[0] == "-*":
+        if pkg.keywords == ('-*',):
             yield BadKeywords(pkg)
         else:
             # check for unknown keywords
