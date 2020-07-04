@@ -224,7 +224,7 @@ class UnmaskedRepoSource(RepoSource):
     def __init__(self, *args):
         super().__init__(*args)
         self._filtered_repo = self._options.domain.filter_repo(
-            self._repo, pkg_masks=(), pkg_unmasks=(),
+            self._repo, pkg_masks=(), pkg_unmasks=(), pkg_filters=(),
             pkg_accept_keywords=(), pkg_keywords=(), profile=False)
 
     def itermatch(self, restrict, **kwargs):
