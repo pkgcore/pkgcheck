@@ -279,8 +279,8 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
         """Check for issues due to package modifications."""
         pkg = modified[0]
 
-        # don't flag live ebuilds for RDEPEND changes
         new_pkg = self.repo.match(pkg.versioned_atom)[0]
+        # don't flag live ebuilds for RDEPEND changes
         if new_pkg.live:
             return
 
@@ -297,9 +297,12 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
 
     def feed(self, pkgset):
         removed = [pkg for pkg in pkgset if pkg.status == 'D']
+        renamed = [pkg for pkg in pkgset if pkg.status == 'R']
+        # packages not available in current repo
+        old = set(removed + renamed)
         if removed:
             yield from self.removal_checks(removed)
-        modified = [pkg for pkg in pkgset if pkg.status == 'M']
+        modified = [pkg for pkg in pkgset if pkg.status == 'M' and pkg not in old]
         if modified:
             yield from self.modified_checks(modified)
 
@@ -314,14 +317,12 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
                 error = 'summary missing matching package prefix'
                 yield BadCommitSummary(error, summary, commit=git_pkg.commit)
 
-            # remaining checks are irrelevant for removed packages
-            if git_pkg in removed:
+            # remaining checks are irrelevant for old packages
+            if git_pkg in old:
                 continue
 
-            # Pull actual package object from repo. Note that ebuilds with
-            # sourcing errors will cause StopIteration to be raised,
-            # terminating this check, and should be caught by other checks.
-            pkg = next(self.repo.itermatch(git_pkg.versioned_atom))
+            # pull actual package object from repo
+            pkg = self.repo.match(git_pkg.versioned_atom)[0]
             line = next(pkg.ebuild.text_fileobj())
 
             # check copyright on new/modified ebuilds
