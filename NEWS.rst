@@ -3,6 +3,40 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.7.7 (2020-07-05)
+---------------------------
+
+- Avoid trying to match old packages against current repo for git support (#215).
+
+- Rename DeprecatedPkg result keyword to DeprecatedDep and try to disambiguate its output
+  message (#218).
+
+- FormatReporter: Use an empty string for unmatched variables (#211) and add the result output
+  name to the available attributes.
+
+- DroppedKeywordsCheck: Disregard non-VCS pkgs without KEYWORDS (#224).
+
+- Ignore license and keyword settings from system config for StableRequest results (#229).
+
+- pkgcheck scan: Support output name arguments for -k/--keywords (#221). 
+
+- StableArchesAddon: Use known stable arches from arches.desc (GLEP 72) if available (#230).
+
+- pkgcheck scan: Fully support custom user config files via --config.
+
+- ProfilesAddon: Automatically enable experimental profiles for selected arches that only have
+  experimental profiles (#222) and selected keywords that require them (#225).
+
+- VisibilityCheck: Sort failed package atoms for NonsolvableDep results (#223).
+
+- Filter package atoms from path list when scanning git commits (#217).
+
+- Use a ``git stash`` context manager when scanning commits so untracked files or uncommitted
+  changes are ignored.
+
+- Only add eclass directory when scanning git commits if it exists in the target repo (#231).
+
+---------------------------
 pkgcheck 0.7.6 (2020-02-09)
 ---------------------------
 
