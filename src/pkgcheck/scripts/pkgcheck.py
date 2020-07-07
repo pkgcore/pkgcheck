@@ -125,6 +125,15 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
         setattr(namespace, self.dest, caches)
 
 
+class ConfigArg(argparse._StoreAction):
+    """Store config path string or False when explicitly disabled."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values.lower() in ('false', 'no', 'n'):
+            values = False
+        setattr(namespace, self.dest, values)
+
+
 scan = subparsers.add_parser(
     'scan', parents=(reporter_argparser,),
     description='scan targets for QA issues',
@@ -134,7 +143,7 @@ scan.add_argument(
 
 main_options = scan.add_argument_group('main options')
 main_options.add_argument(
-    '--config', dest='config_file',
+    '--config', action=ConfigArg, dest='config_file',
     help='use custom pkgcheck scan settings file',
     docs="""
         Load custom pkgcheck scan settings from a given file.
@@ -449,11 +458,12 @@ def _setup_scan_addons(parser, namespace):
 
 @scan.bind_early_parse
 def _setup_scan(parser, namespace, args):
-    # load default args from config if they exist
-    namespace = parser.parse_config_options(namespace)
-
     # determine target repo early in order to load relevant config settings if they exist
     namespace, _ = parser._parse_known_args(args, namespace)
+
+    # load default args from system/user configs if config-loading is allowed
+    if namespace.config_file is None:
+        namespace = parser.parse_config_options(namespace)
 
     # Get the current working directory for repo detection and restriction
     # creation, fallback to the root dir if it's be removed out from under us.
@@ -489,7 +499,7 @@ def _setup_scan(parser, namespace, args):
         configs += (repo_config_file,)
     if namespace.config_file is not None:
         # and custom user settings take precedence over everything
-        if namespace.config_file.lower() in ('false', 'no', 'n'):
+        if not namespace.config_file:
             configs = ()
         else:
             configs += (namespace.config_file,)
