@@ -61,6 +61,7 @@ class EclassUsageCheck(Check):
         'bash-completion': 'bash-completion-r1',
         'boost-utils': None,
         'clutter': 'gnome2',
+        'cmake-utils': 'cmake',
         'confutils': None,
         'darcs': None,
         'distutils': 'distutils-r1',
