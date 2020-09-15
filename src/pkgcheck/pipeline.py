@@ -61,19 +61,20 @@ class Pipeline:
         """Consumer that runs scanning tasks, queuing results for output."""
         try:
             for scope, restrict, pipe_idx in iter(work_q.get, None):
+                results = []
+
                 if scope is base.version_scope:
-                    results_q.put(list(pipes[scope][pipe_idx].run(restrict)))
+                    results.extend(pipes[scope][pipe_idx].run(restrict))
                 elif scope in (base.package_scope, base.category_scope):
-                    results = []
                     for pipe in pipes[scope]:
                         results.extend(pipe.run(restrict))
-                    results_q.put(results)
                 else:
-                    results = []
                     pipe = pipes[scope][pipe_idx]
                     pipe.start()
                     results.extend(pipe.run(restrict))
                     results.extend(pipe.finish())
+
+                if results:
                     results_q.put(results)
         except Exception as e:
             # traceback can't be pickled so serialize it
