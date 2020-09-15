@@ -35,17 +35,14 @@ class _ResultsIter:
         return self
 
     def __next__(self):
-        while True:
-            results = next(self.iter)
-            if results:
-                # Catch propagated exceptions, output their traceback, and
-                # signal the scanning process to end.
-                if isinstance(results, tuple):
-                    exc, tb = results
-                    print(tb.strip())
-                    os.kill(self.pid, signal.SIGINT)
-                    return
-                break
+        results = next(self.iter)
+        # Catch propagated exceptions, output their traceback, and
+        # signal the scanning process to end.
+        if isinstance(results, tuple):
+            exc, tb = results
+            print(tb.strip())
+            os.kill(self.pid, signal.SIGINT)
+            return
         return results
 
 
