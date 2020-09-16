@@ -8,8 +8,6 @@ from snakeoil.strings import pluralism
 from .. import base, git, results, sources
 from . import GentooRepoCheck
 
-day = 24*3600
-
 
 class StableRequest(results.VersionResult, results.Info):
     """Unstable ebuild with no changes for over 30 days."""
