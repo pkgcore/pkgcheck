@@ -58,10 +58,11 @@ class StableRequestCheck(GentooRepoCheck):
             return
 
         pkg_slotted = defaultdict(list)
+        pkg_keywords = set()
         for pkg in pkgset:
             pkg_slotted[pkg.slot].append(pkg)
+            pkg_keywords.update(pkg.keywords)
 
-        pkg_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgset))
         stable_pkg_keywords = {x for x in pkg_keywords if x[0] not in {'-', '~'}}
         if stable_pkg_keywords:
             for slot, pkgs in sorted(pkg_slotted.items()):
