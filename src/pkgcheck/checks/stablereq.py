@@ -12,7 +12,7 @@ day = 24*3600
 
 
 class StableRequest(results.VersionResult, results.Info):
-    """Unstable package added over thirty days ago that could be stabilized."""
+    """Unstable ebuild with no changes for over 30 days."""
 
     def __init__(self, slot, keywords, age, **kwargs):
         super().__init__(**kwargs)
@@ -31,7 +31,7 @@ class StableRequest(results.VersionResult, results.Info):
 
 
 class StableRequestCheck(GentooRepoCheck):
-    """Ebuilds that have sat unstable with no changes for over a month.
+    """Scan for unstable ebuilds with no changes for over 30 days.
 
     By default, only triggered for arches with stable profiles. To check
     additional arches outside the stable set specify them manually using the
