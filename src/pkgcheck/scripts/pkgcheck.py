@@ -247,7 +247,6 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
         error = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Error))
         warning = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Warning))
         info = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Info))
-
         alias_map = {'error': error, 'warning': warning, 'info': info}
         replace_aliases = lambda x: alias_map.get(x, [x])
 
@@ -271,18 +270,16 @@ class CheckArgs(arghparse.CommaSeparatedNegations):
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
 
-        available = set(objects.CHECKS)
         network = (c for c, v in objects.CHECKS.items() if issubclass(v, NetworkCheck))
-
-        alias_map = {'all': available, 'net': network}
+        alias_map = {'all': objects.CHECKS, 'net': network}
         replace_aliases = lambda x: alias_map.get(x, [x])
 
         # expand check aliases to check lists
-        disabled = set(chain.from_iterable(map(replace_aliases, disabled)))
-        enabled = set(chain.from_iterable(map(replace_aliases, enabled)))
+        disabled = list(chain.from_iterable(map(replace_aliases, disabled)))
+        enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
 
         # validate selected checks
-        unknown_checks = (disabled | enabled) - available
+        unknown_checks = set(disabled + enabled) - set(objects.CHECKS)
         if unknown_checks:
             unknown = ', '.join(map(repr, unknown_checks))
             s = pluralism(unknown_checks)
