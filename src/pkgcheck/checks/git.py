@@ -350,7 +350,9 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
 class MissingSignOff(results.CommitResult, results.Error):
     """Local commit with missing sign offs.
 
-    Sign offs are required for commits as specified by GLEP 76 [#]_.
+    Sign offs are required for commits as specified by GLEP 76 [#]_. Note that
+    sign off tags will be flagged if the name or email address doesn't match
+    the values used by the commit author.
 
     .. [#] https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin
     """
