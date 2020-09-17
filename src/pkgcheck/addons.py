@@ -24,6 +24,7 @@ from .log import logger
 
 
 class ArchesAddon(base.Addon):
+    """Addon supporting ebuild repository architectures."""
 
     @classmethod
     def mangle_argparser(cls, parser):
@@ -107,7 +108,7 @@ class ProfileData:
 
 
 class _ProfilesCache(UserDict, caches.Cache):
-    """Class used to encapsulate cached profile data."""
+    """Cache that encapsulates profile data."""
 
     def __init__(self, data):
         super().__init__(data)
@@ -115,6 +116,7 @@ class _ProfilesCache(UserDict, caches.Cache):
 
 
 class ProfileAddon(base.Addon, caches.CachedAddon):
+    """Addon supporting ebuild repository profiles."""
 
     required_addons = (ArchesAddon,)
 
@@ -511,7 +513,7 @@ class ProfileAddon(base.Addon, caches.CachedAddon):
 
 
 class StableArchesAddon(base.Addon):
-    """Check relating to stable arches by default."""
+    """Addon supporting stable architectures."""
 
     required_addons = (ArchesAddon,)
 
@@ -557,6 +559,7 @@ class UnstatedIuse(results.VersionResult, results.Error):
 
 
 class UseAddon(base.Addon):
+    """Addon supporting USE flag functionality."""
 
     required_addons = (ProfileAddon,)
 
