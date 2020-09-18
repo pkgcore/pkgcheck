@@ -478,9 +478,6 @@ pkgcheck 0.6.0 (2019-08-23)
   unknown repos passed to it or against a repo with no arguments passed that
   the current working directory is currently within.
 
-New keywords/checks
-===================
-
 - BadFilename: Flag SRC_URI targets that use unspecific ${PN}.ext filenames.
 
 - HomepageInSrcUri: Flag ${HOMEPAGE} usage in SRC_URI.
