@@ -56,6 +56,18 @@ class OldPackageUpdate(results.ProfilesResult, results.Warning):
         return f"{self.pkg!r} unavailable: old update line: {' '.join(self.updates)!r}"
 
 
+class RedundantPackageUpdate(results.ProfilesResult, results.Warning):
+    """Move entry to the same package/slot (source == target)."""
+
+    def __init__(self, updates):
+        super().__init__()
+        self.updates = tuple(updates)
+
+    @property
+    def desc(self):
+        return f"update line moves to the same package/slot: {' '.join(self.updates)!r}"
+
+
 class MovedPackageUpdate(results.ProfilesResult, results.LogWarning):
     """Entry for package already moved in profiles/updates files."""
 
@@ -72,6 +84,7 @@ class PackageUpdatesCheck(Check):
     known_results = frozenset([
         MultiMovePackageUpdate, OldMultiMovePackageUpdate,
         OldPackageUpdate, MovedPackageUpdate, BadPackageUpdate,
+        RedundantPackageUpdate,
     ])
 
     def __init__(self, *args):
@@ -106,17 +119,21 @@ class PackageUpdatesCheck(Check):
             else:
                 # scan updates for old entries with removed packages
                 for x in move_updates:
-                    _, _old, new = x
+                    _, old, new = x
                     if not self.repo.match(new):
                         old_move_updates[new] = x
+                    if old == new:
+                        yield RedundantPackageUpdate(map(str, x))
 
             # scan updates for old entries with removed packages
             for x in slotmove_updates:
                 _, pkg, newslot = x
+                orig_line = ('slotmove', str(pkg)[:-(len(pkg.slot) + 1)], pkg.slot, newslot)
                 if not self.repo.match(pkg.unversioned_atom):
                     # reproduce updates file line data for result output
-                    x = ('slotmove', str(pkg)[:-(len(pkg.slot) + 1)], pkg.slot, newslot)
-                    old_slotmove_updates[pkg.key] = x
+                    old_slotmove_updates[pkg.key] = orig_line
+                if pkg.slot == newslot:
+                    yield RedundantPackageUpdate(map(str, orig_line))
 
         for pkg, v in multi_move_updates.items():
             orig_pkg, moves = v

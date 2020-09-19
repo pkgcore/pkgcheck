@@ -110,3 +110,21 @@ class TestPackageUpdatesCheck(misc.Tmpdir, misc.ReportTestCase):
         assert r.pkg == 'dev-util/foo'
         assert r.moves == ('dev-util/foo', 'dev-util/bar', 'dev-util/blah')
         assert "'dev-util/foo': multi-move update" in str(r)
+
+    def test_move_to_self_pkg_update(self):
+        update = ['move dev-util/foo dev-util/foo']
+        pkgs = ('dev-util/foo-0',)
+        updates = {'1Q-2020': update}
+        r = self.assertReport(self.mk_check(pkgs=pkgs, **updates), [])
+        assert isinstance(r, repo_metadata.RedundantPackageUpdate)
+        assert r.updates == ('move', 'dev-util/foo', 'dev-util/foo')
+        assert "update line moves to the same package/slot" in str(r)
+
+    def test_slot_move_to_self_pkg_update(self):
+        update = ['slotmove dev-util/foo 0 0']
+        pkgs = ('dev-util/foo-0',)
+        updates = {'1Q-2020': update}
+        r = self.assertReport(self.mk_check(pkgs=pkgs, **updates), [])
+        assert isinstance(r, repo_metadata.RedundantPackageUpdate)
+        assert r.updates == ('slotmove', 'dev-util/foo', '0', '0')
+        assert "update line moves to the same package/slot" in str(r)
