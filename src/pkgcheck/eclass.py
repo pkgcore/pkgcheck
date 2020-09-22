@@ -191,7 +191,7 @@ class _EclassVarBlock(_EclassDoc):
         try:
             return lines[0]
         except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing eclass variable name')
+            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing variable name')
 
     @eclass_doc('@ECLASS-VARIABLE/@DEFAULT_UNSET')
     def default_unset(self, lines, tag, lineno):
