@@ -501,7 +501,7 @@ class EclassAddon(base.Addon, caches.CachedAddon):
                                 continue
 
                     # push eclasses to disk if any changes were found
-                    if eclasses and cache_eclasses:
+                    if cache_eclasses:
                         try:
                             os.makedirs(os.path.dirname(cache_file), exist_ok=True)
                             with open(cache_file, 'wb+') as f:
