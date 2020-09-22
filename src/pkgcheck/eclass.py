@@ -7,7 +7,6 @@ import re
 
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
-from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism
 
 from . import base, caches
@@ -396,17 +395,19 @@ class Eclass(UserDict):
 
     def __init__(self, path):
         self.path = path
-        self._data = ImmutableDict(self.parse(self.path))
         self.mtime = os.path.getmtime(self.path)
-        super().__init__(self._data)
+        data = self.parse(self.path)
+        super().__init__(data)
 
     @property
     def functions(self):
-        return tuple(d['name'] for d in self._data.get('functions', []))
+        """Tuple of documented function names in the eclass."""
+        return tuple(d['name'] for d in self.data.get('functions', []))
 
     @property
     def variables(self):
-        return tuple(d['name'] for d in self._data.get('variables', []))
+        """Tuple of documented variable names in the eclass."""
+        return tuple(d['name'] for d in self.data.get('variables', []))
 
     @classmethod
     def parse(cls, path):
