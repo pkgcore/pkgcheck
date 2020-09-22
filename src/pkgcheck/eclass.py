@@ -166,6 +166,15 @@ class _EclassBlock(_EclassDoc):
     def supported_eapis(self, lines, line, lineno):
         return tuple(lines[0].split())
 
+    # not yet added to devmanual
+    @eclass_doc('ECLASS/DEPRECATED:')
+    def deprecated(self, lines, line, lineno):
+        try:
+            return lines[0]
+        except IndexError:
+            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
+            _parsing_error_cb(exc)
+
 
 @eclass_block('ECLASS-VARIABLE', 'variables')
 class _EclassVarBlock(_EclassDoc):
@@ -249,6 +258,15 @@ class _EclassVarBlock(_EclassDoc):
             _parsing_error_cb(exc)
         return tuple(lines)
 
+    # not yet added to devmanual
+    @eclass_doc('ECLASS-VARIABLE/DEPRECATED:')
+    def deprecated(self, lines, line, lineno):
+        try:
+            return lines[0]
+        except IndexError:
+            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
+            _parsing_error_cb(exc)
+
 
 @eclass_block('FUNCTION', 'functions')
 class _EclassFuncBlock(_EclassDoc):
@@ -301,6 +319,15 @@ class _EclassFuncBlock(_EclassDoc):
             _parsing_error_cb(exc)
         return tuple(lines)
 
+    # not yet added to devmanual
+    @eclass_doc('FUNCTION/DEPRECATED:')
+    def deprecated(self, lines, line, lineno):
+        try:
+            return lines[0]
+        except IndexError:
+            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
+            _parsing_error_cb(exc)
+
 
 @eclass_block('VARIABLE', 'function-variables')
 class _EclassFuncVarBlock(_EclassDoc):
@@ -350,6 +377,15 @@ class _EclassFuncVarBlock(_EclassDoc):
             exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing description')
             _parsing_error_cb(exc)
         return tuple(lines)
+
+    # not yet added to devmanual
+    @eclass_doc('VARIABLE/DEPRECATED:')
+    def deprecated(self, lines, line, lineno):
+        try:
+            return lines[0]
+        except IndexError:
+            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
+            _parsing_error_cb(exc)
 
 
 class Eclass:
