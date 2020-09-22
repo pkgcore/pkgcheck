@@ -1,6 +1,6 @@
 """Eclass specific support and addon."""
 
-from collections import UserDict, defaultdict
+from collections import UserDict
 import os
 import pickle
 import re
@@ -14,19 +14,8 @@ from . import base, caches
 from .log import logger
 
 
-# mapping between known eclass doc tags and parsing methods
-_eclass_doc_tags = defaultdict(dict)
 # mapping between known eclass block tags and related classes
 _eclass_blocks = dict()
-
-
-def eclass_doc(tag, required=False, name=None):
-    """Decorator to register eclass doc tag parsing methods."""
-    def wrapper(func):
-        block, _, var = tag.partition('/')
-        doc_name = name if name else func.__name__
-        _eclass_doc_tags[block][var] = (func, required, doc_name)
-    return wrapper
 
 
 def eclass_block(block, name, singular=False):
@@ -55,19 +44,47 @@ class _EclassDoc:
     # eclass doc parsed block name
     _name = None
 
-    @klass.jit_attr
-    def _block_tags_re(self):
-        """Regex matching all known tags for the eclass doc block."""
-        tags = rf'|'.join(_eclass_doc_tags[self._block])
-        return re.compile(rf'^(?P<tag>{tags})(?P<value>.*)')
+    def __init__(self, boolean=(), inline=(), multiline=(), custom=()):
+        self.tags = {}
+        self.tags.update((x[0], x[1:] + (self._tag_bool,)) for x in boolean)
+        self.tags.update((x[0], x[1:] + (self._tag_inline_arg,)) for x in inline)
+        self.tags.update((x[0], x[1:] + (self._tag_multiline_args,)) for x in multiline)
+        self.tags.update((x[0], x[1:]) for x in custom)
+
+        # regex matching all known tags for the eclass doc block
+        self._block_tags_re = re.compile(rf'^(?P<tag>{"|".join(self.tags)})(?P<value>.*)')
+
+    def _tag_bool(self, block, tag, lineno):
+        """Support parsing boolean tags."""
+        if block:
+            raise EclassDocParsingError(
+                f'{repr(tag)}, line {lineno}: '
+                f'tag takes no args, got {repr(block[0])}'
+            )
+        return True
+
+    def _tag_inline_arg(self, block, tag, lineno):
+        """Support parsing tags with inline argument."""
+        lines = len(block)
+        if lines == 1:
+            return block[0]
+        elif lines == 0:
+            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing arg')
+        raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: non-inline arg')
+
+    def _tag_multiline_args(self, block, tag, lineno):
+        """Support parsing tags with multiline arguments."""
+        if not block:
+            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing args')
+        return tuple(block)
 
     @klass.jit_attr
     def _required(self):
         """Set of required eclass doc block tags."""
         tags = set()
-        for k, (_func, required, _name) in _eclass_doc_tags[self._block].items():
+        for tag, (_name, required, _func) in self.tags.items():
             if required:
-                tags.add(k)
+                tags.add(tag)
         return frozenset(tags)
 
     def parse(self, lines, line_ind):
@@ -90,9 +107,9 @@ class _EclassDoc:
 
         # parse each tag block
         for tag, line_ind, block in blocks:
-            func, required, name = _eclass_doc_tags[self._block][tag]
+            name, required, func = self.tags[tag]
             try:
-                data[name] = func(self, block, tag, line_ind)
+                data[name] = func(block, tag, line_ind)
             except EclassDocParsingError as e:
                 _parsing_error_cb(e)
 
@@ -110,59 +127,29 @@ class _EclassDoc:
 class _EclassBlock(_EclassDoc):
     """ECLASS doc block."""
 
-    @eclass_doc('@ECLASS/@ECLASS:', required=True)
-    def name(self, block, tag, lineno):
-        try:
-            return block[0]
-        except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing eclass name')
+    def __init__(self):
+        tags = {
+            'inline': (
+                ('@ECLASS:', 'name', True),
+                ('@VCSURL:', 'vcsurl', False),
+                ('@BLURB:', 'blurb', True),
+                # TODO: add to devmanual
+                ('@DEPRECATED:', 'deprecated', False),
+            ),
+            'multiline': (
+                ('@MAINTAINER:', 'maintainers', True),
+                ('@AUTHOR:', 'authors', False),
+                ('@BUGREPORTS:', 'bugreports', False),
+                ('@DESCRIPTION:', 'description', False),
+                ('@EXAMPLE:', 'example', False),
+            ),
+            'custom': (
+                # undocumented in devmanual
+                ('@SUPPORTED_EAPIS:', 'supported_eapis', False, self.supported_eapis),
+            ),
+        }
+        super().__init__(**tags)
 
-    @eclass_doc('@ECLASS/@MAINTAINER:', required=True)
-    def maintainers(self, block, tag, lineno):
-        if not block:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing maintainers')
-        return tuple(block)
-
-    @eclass_doc('@ECLASS/@AUTHOR:')
-    def authors(self, block, tag, lineno):
-        if not block:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing authors')
-        return tuple(block)
-
-    @eclass_doc('@ECLASS/@BUGREPORTS:')
-    def bugreports(self, block, tag, lineno):
-        if not block:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing bug reporting info')
-        return tuple(block)
-
-    @eclass_doc('@ECLASS/@VCSURL:')
-    def vcsurl(self, block, tag, lineno):
-        try:
-            return block[0]
-        except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing vcs url')
-
-    @eclass_doc('@ECLASS/@BLURB:', required=True)
-    def blurb(self, block, tag, lineno):
-        try:
-            return block[0]
-        except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing blurb text')
-
-    @eclass_doc('@ECLASS/@DESCRIPTION:')
-    def description(self, block, tag, lineno):
-        if not block:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing description')
-        return tuple(block)
-
-    @eclass_doc('@ECLASS/@EXAMPLE:')
-    def example(self, block, tag, lineno):
-        if not block:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing examples')
-        return tuple(block)
-
-    # undocumented in devmanual
-    @eclass_doc('@ECLASS/@SUPPORTED_EAPIS:')
     def supported_eapis(self, block, tag, lineno):
         eapis = set(block[0].split())
         unknown = eapis - set(EAPI.known_eapis)
@@ -173,204 +160,88 @@ class _EclassBlock(_EclassDoc):
                 f'{repr(tag)}, line {lineno}: unknown EAPI{s}: {unknown_str}')
         return frozenset(eapis)
 
-    # not yet added to devmanual
-    @eclass_doc('@ECLASS/@DEPRECATED:')
-    def deprecated(self, block, tag, lineno):
-        try:
-            return block[0]
-        except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing deprecated text')
-
 
 @eclass_block('@ECLASS-VARIABLE', 'variables')
 class _EclassVarBlock(_EclassDoc):
     """ECLASS-VARIABLE doc block."""
 
-    @eclass_doc('@ECLASS-VARIABLE/@ECLASS-VARIABLE:', required=True)
-    def name(self, block, tag, lineno):
-        try:
-            return block[0]
-        except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing variable name')
+    def __init__(self):
+        tags = {
+            'inline': (
+                ('@ECLASS-VARIABLE:', 'name', True),
+                # not yet added to devmanual
+                ('@DEPRECATED:', 'deprecated', False),
+            ),
+            'boolean': (
+                ('@DEFAULT_UNSET', 'default_unset', False),
+                ('@INTERNAL', 'internal', False),
+                ('@REQUIRED', 'required', False),
 
-    @eclass_doc('@ECLASS-VARIABLE/@DEFAULT_UNSET')
-    def default_unset(self, block, tag, lineno):
-        if block:
-            raise EclassDocParsingError(
-                f'{repr(tag)}, line {lineno}: '
-                f'tag takes no args, got {repr(block[0])}'
-            )
-        return True
-
-    @eclass_doc('@ECLASS-VARIABLE/@INTERNAL')
-    def internal(self, block, tag, lineno):
-        if block:
-            raise EclassDocParsingError(
-                f'{repr(tag)}, line {lineno}: '
-                f'tag takes no args, got {repr(block[0])}'
-            )
-        return True
-
-    @eclass_doc('@ECLASS-VARIABLE/@REQUIRED')
-    def required(self, block, tag, lineno):
-        if block:
-            raise EclassDocParsingError(
-                f'{repr(tag)}, line {lineno}: '
-                f'tag takes no args, got {repr(block[0])}'
-            )
-        return True
-
-    # undocumented in devmanual
-    @eclass_doc('@ECLASS-VARIABLE/@PRE_INHERIT')
-    def pre_inherit(self, block, tag, lineno):
-        if block:
-            raise EclassDocParsingError(
-                f'{repr(tag)}, line {lineno}: '
-                f'tag takes no args, got {repr(block[0])}'
-            )
-        return True
-
-    # undocumented in devmanual
-    @eclass_doc('@ECLASS-VARIABLE/@USER_VARIABLE')
-    def user_variable(self, block, tag, lineno):
-        if block:
-            raise EclassDocParsingError(
-                f'{repr(tag)}, line {lineno}: '
-                f'tag takes no args, got {repr(block[0])}'
-            )
-        return True
-
-    # undocumented in devmanual
-    @eclass_doc('@ECLASS-VARIABLE/@OUTPUT_VARIABLE')
-    def output_variable(self, block, tag, lineno):
-        if block:
-            raise EclassDocParsingError(
-                f'{repr(tag)}, line {lineno}: '
-                f'tag takes no args, got {repr(block[0])}'
-            )
-        return True
-
-    @eclass_doc('@ECLASS-VARIABLE/@DESCRIPTION:', required=True)
-    def description(self, block, tag, lineno):
-        if not block:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing description')
-        return tuple(block)
-
-    # not yet added to devmanual
-    @eclass_doc('@ECLASS-VARIABLE/@DEPRECATED:')
-    def deprecated(self, block, tag, lineno):
-        try:
-            return block[0]
-        except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing deprecated text')
+                # undocumented in devmanual
+                ('@PRE_INHERIT', 'pre_inherit', False),
+                ('@USER_VARIABLE', 'user_variable', False),
+                ('@OUTPUT_VARIABLE', 'output_variable', False),
+            ),
+            'multiline': (
+                ('@DESCRIPTION:', 'description', True),
+            ),
+        }
+        super().__init__(**tags)
 
 
 @eclass_block('@FUNCTION', 'functions')
 class _EclassFuncBlock(_EclassDoc):
     """FUNCTION doc block."""
 
-    @eclass_doc('@FUNCTION/@FUNCTION:', required=True)
-    def name(self, block, tag, lineno):
-        try:
-            return block[0]
-        except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing function name')
+    def __init__(self):
+        tags = {
+            'inline': (
+                ('@FUNCTION:', 'name', True),
+                ('@RETURN:', 'returns', False),
+                # not yet added to devmanual
+                ('@DEPRECATED:', 'deprecated', False),
+            ),
+            'boolean': (
+                ('@INTERNAL', 'internal', False),
+            ),
+            'multiline': (
+                ('@MAINTAINER:', 'maintainers', False),
+                ('@DESCRIPTION:', 'description', False),
+            ),
+            'custom': (
+                # TODO: The devmanual states this is required, but disabling for now since
+                # many phase override functions don't document usage.
+                ('@USAGE:', 'usage', False, self.usage),
+            ),
+        }
+        super().__init__(**tags)
 
-    # TODO: The devmanual states this is required, but disabling for now since
-    # many phase override functions don't document usage.
-    @eclass_doc('@FUNCTION/@USAGE:')
     def usage(self, block, tag, lineno):
-        # empty usage is allowed for functions with no arguments
+        # empty usage allowed for functions with no arguments
         return tuple(block)
-
-    @eclass_doc('@FUNCTION/@RETURN:', name='return')
-    def returns(self, block, tag, lineno):
-        try:
-            return block[0]
-        except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing return value')
-
-    @eclass_doc('@FUNCTION/@MAINTAINER:')
-    def maintainers(self, block, tag, lineno):
-        if not block:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing maintainers')
-        return tuple(block)
-
-    @eclass_doc('@FUNCTION/@INTERNAL')
-    def internal(self, block, tag, lineno):
-        if block:
-            raise EclassDocParsingError(
-                f'{repr(tag)}, line {lineno}: '
-                f'tag takes no args, got {repr(block[0])}'
-            )
-        return True
-
-    @eclass_doc('@FUNCTION/@DESCRIPTION:')
-    def description(self, block, tag, lineno):
-        if not block:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing description')
-        return tuple(block)
-
-    # not yet added to devmanual
-    @eclass_doc('@FUNCTION/@DEPRECATED:')
-    def deprecated(self, block, tag, lineno):
-        try:
-            return block[0]
-        except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing deprecated text')
 
 
 @eclass_block('@VARIABLE', 'function-variables')
 class _EclassFuncVarBlock(_EclassDoc):
     """VARIABLE doc block."""
 
-    @eclass_doc('@VARIABLE/@VARIABLE:', required=True)
-    def name(self, block, tag, lineno):
-        try:
-            return block[0]
-        except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing variable name')
-
-    @eclass_doc('@VARIABLE/@DEFAULT_UNSET')
-    def default_unset(self, block, tag, lineno):
-        if block:
-            raise EclassDocParsingError(
-                f'{repr(tag)}, line {lineno}: '
-                f'tag takes no args, got {repr(block[0])}'
-            )
-        return True
-
-    @eclass_doc('@VARIABLE/@INTERNAL')
-    def internal(self, block, tag, lineno):
-        if block:
-            raise EclassDocParsingError(
-                f'{repr(tag)}, line {lineno}: '
-                f'tag takes no args, got {repr(block[0])}'
-            )
-        return True
-
-    @eclass_doc('@VARIABLE/@REQUIRED')
-    def required(self, block, tag, lineno):
-        if block:
-            raise EclassDocParsingError(
-                f'{repr(tag)}, line {lineno}: '
-                f'tag takes no args, got {repr(block[0])}'
-            )
-        return True
-
-    @eclass_doc('@VARIABLE/@DESCRIPTION:', required=True)
-    def description(self, block, tag, lineno):
-        if not block:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing description')
-        return tuple(block)
-
-    # not yet added to devmanual
-    @eclass_doc('@VARIABLE/@DEPRECATED:')
-    def deprecated(self, block, tag, lineno):
-        try:
-            return block[0]
-        except IndexError:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing deprecated text')
+    def __init__(self):
+        tags = {
+            'inline': (
+                ('@VARIABLE:', 'name', True),
+                # not yet added to devmanual
+                ('@DEPRECATED:', 'deprecated', False),
+            ),
+            'boolean': (
+                ('@DEFAULT_UNSET', 'default_unset', False),
+                ('@INTERNAL', 'internal', False),
+                ('@REQUIRED', 'required', False),
+            ),
+            'multiline': (
+                ('@DESCRIPTION:', 'description', True),
+            ),
+        }
+        super().__init__(**tags)
 
 
 class Eclass(UserDict):
