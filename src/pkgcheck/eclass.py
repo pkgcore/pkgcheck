@@ -90,15 +90,17 @@ class _EclassDoc:
         # parse each tag block
         for tag, header, line_ind, block_lines in blocks:
             func, required, name = _eclass_doc_tags[self._block][tag]
-            data[name] = func(self, block_lines, header, line_ind)
+            try:
+                data[name] = func(self, block_lines, header, line_ind)
+            except EclassDocParsingError as e:
+                _parsing_error_cb(e)
 
         # check if any required tags are missing
         if missing_tags:
             missing_tags_str = ', '.join(map(repr, (x.rstrip(':') for x in missing_tags)))
             s = pluralism(missing_tags)
-            exc = EclassDocParsingError(
-                f'{repr(lines[0])}: missing tag{s}: {missing_tags_str}')
-            _parsing_error_cb(exc)
+            _parsing_error_cb(EclassDocParsingError(
+                f'{repr(lines[0])}: missing tag{s}: {missing_tags_str}'))
 
         return data
 
@@ -112,28 +114,24 @@ class _EclassBlock(_EclassDoc):
         try:
             return lines[0]
         except IndexError:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing eclass name')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing eclass name')
 
     @eclass_doc('ECLASS/MAINTAINER:', required=True)
     def maintainers(self, lines, line, lineno):
         if not lines:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing maintainers')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing maintainers')
         return tuple(lines)
 
     @eclass_doc('ECLASS/AUTHOR:')
     def authors(self, lines, line, lineno):
         if not lines:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing authors')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing authors')
         return tuple(lines)
 
     @eclass_doc('ECLASS/BUGREPORTS:')
     def bugreports(self, lines, line, lineno):
         if not lines:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing bug reporting info')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing bug reporting info')
         return tuple(lines)
 
     @eclass_doc('ECLASS/VCSURL:')
@@ -141,29 +139,25 @@ class _EclassBlock(_EclassDoc):
         try:
             return lines[0]
         except IndexError:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing vcs url')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing vcs url')
 
     @eclass_doc('ECLASS/BLURB:', required=True)
     def blurb(self, lines, line, lineno):
         try:
             return lines[0]
         except IndexError:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing blurb text')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing blurb text')
 
     @eclass_doc('ECLASS/DESCRIPTION:')
     def description(self, lines, line, lineno):
         if not lines:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing description')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing description')
         return tuple(lines)
 
     @eclass_doc('ECLASS/EXAMPLE:')
     def example(self, lines, line, lineno):
         if not lines:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing examples')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing examples')
         return tuple(lines)
 
     # undocumented in devmanual
@@ -177,8 +171,7 @@ class _EclassBlock(_EclassDoc):
         try:
             return lines[0]
         except IndexError:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
 
 
 @eclass_block('ECLASS-VARIABLE', 'variables')
@@ -190,77 +183,69 @@ class _EclassVarBlock(_EclassDoc):
         try:
             return lines[0]
         except IndexError:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing eclass variable name')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing eclass variable name')
 
     @eclass_doc('ECLASS-VARIABLE/DEFAULT_UNSET')
     def default_unset(self, lines, line, lineno):
         if lines:
-            exc = EclassDocParsingError(
+            raise EclassDocParsingError(
                 f'{repr(line)}, line {lineno}: '
                 f'tag takes no args, got {repr(lines[0])}'
             )
-            _parsing_error_cb(exc)
         return True
 
     @eclass_doc('ECLASS-VARIABLE/INTERNAL')
     def internal(self, lines, line, lineno):
         if lines:
-            exc = EclassDocParsingError(
+            raise EclassDocParsingError(
                 f'{repr(line)}, line {lineno}: '
                 f'tag takes no args, got {repr(lines[0])}'
             )
-            _parsing_error_cb(exc)
         return True
 
     @eclass_doc('ECLASS-VARIABLE/REQUIRED')
     def required(self, lines, line, lineno):
         if lines:
-            exc = EclassDocParsingError(
+            raise EclassDocParsingError(
                 f'{repr(line)}, line {lineno}: '
                 f'tag takes no args, got {repr(lines[0])}'
             )
-            _parsing_error_cb(exc)
         return True
 
     # undocumented in devmanual
     @eclass_doc('ECLASS-VARIABLE/PRE_INHERIT')
     def pre_inherit(self, lines, line, lineno):
         if lines:
-            exc = EclassDocParsingError(
+            raise EclassDocParsingError(
                 f'{repr(line)}, line {lineno}: '
                 f'tag takes no args, got {repr(lines[0])}'
             )
-            _parsing_error_cb(exc)
         return True
 
     # undocumented in devmanual
     @eclass_doc('ECLASS-VARIABLE/USER_VARIABLE')
     def user_variable(self, lines, line, lineno):
         if lines:
-            exc = EclassDocParsingError(
+            raise EclassDocParsingError(
                 f'{repr(line)}, line {lineno}: '
                 f'tag takes no args, got {repr(lines[0])}'
             )
-            _parsing_error_cb(exc)
         return True
 
     # undocumented in devmanual
     @eclass_doc('ECLASS-VARIABLE/OUTPUT_VARIABLE')
     def output_variable(self, lines, line, lineno):
         if lines:
-            exc = EclassDocParsingError(
+            raise EclassDocParsingError(
                 f'{repr(line)}, line {lineno}: '
                 f'tag takes no args, got {repr(lines[0])}'
             )
-            _parsing_error_cb(exc)
         return True
 
     @eclass_doc('ECLASS-VARIABLE/DESCRIPTION:', required=True)
     def description(self, lines, line, lineno):
         if not lines:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing description')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing description')
         return tuple(lines)
 
     # not yet added to devmanual
@@ -269,8 +254,7 @@ class _EclassVarBlock(_EclassDoc):
         try:
             return lines[0]
         except IndexError:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
 
 
 @eclass_block('FUNCTION', 'functions')
@@ -282,8 +266,7 @@ class _EclassFuncBlock(_EclassDoc):
         try:
             return lines[0]
         except IndexError:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing function name')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing function name')
 
     # TODO: The devmanual states this is required, but disabling for now since
     # many phase override functions don't document usage.
@@ -297,31 +280,27 @@ class _EclassFuncBlock(_EclassDoc):
         try:
             return lines[0]
         except IndexError:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing return value')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing return value')
 
     @eclass_doc('FUNCTION/MAINTAINER:')
     def maintainers(self, lines, line, lineno):
         if not lines:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing maintainers')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing maintainers')
         return tuple(lines)
 
     @eclass_doc('FUNCTION/INTERNAL')
     def internal(self, lines, line, lineno):
         if lines:
-            exc = EclassDocParsingError(
+            raise EclassDocParsingError(
                 f'{repr(line)}, line {lineno}: '
                 f'tag takes no args, got {repr(lines[0])}'
             )
-            _parsing_error_cb(exc)
         return True
 
     @eclass_doc('FUNCTION/DESCRIPTION:')
     def description(self, lines, line, lineno):
         if not lines:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing description')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing description')
         return tuple(lines)
 
     # not yet added to devmanual
@@ -330,8 +309,7 @@ class _EclassFuncBlock(_EclassDoc):
         try:
             return lines[0]
         except IndexError:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
 
 
 @eclass_block('VARIABLE', 'function-variables')
@@ -343,44 +321,39 @@ class _EclassFuncVarBlock(_EclassDoc):
         try:
             return lines[0]
         except IndexError:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing variable name')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing variable name')
 
     @eclass_doc('VARIABLE/DEFAULT_UNSET')
     def default_unset(self, lines, line, lineno):
         if lines:
-            exc = EclassDocParsingError(
+            raise EclassDocParsingError(
                 f'{repr(line)}, line {lineno}: '
                 f'tag takes no args, got {repr(lines[0])}'
             )
-            _parsing_error_cb(exc)
         return True
 
     @eclass_doc('VARIABLE/INTERNAL')
     def internal(self, lines, line, lineno):
         if lines:
-            exc = EclassDocParsingError(
+            raise EclassDocParsingError(
                 f'{repr(line)}, line {lineno}: '
                 f'tag takes no args, got {repr(lines[0])}'
             )
-            _parsing_error_cb(exc)
         return True
 
     @eclass_doc('VARIABLE/REQUIRED')
     def required(self, lines, line, lineno):
         if lines:
-            exc = EclassDocParsingError(
+            raise EclassDocParsingError(
                 f'{repr(line)}, line {lineno}: '
                 f'tag takes no args, got {repr(lines[0])}'
             )
-            _parsing_error_cb(exc)
         return True
 
     @eclass_doc('VARIABLE/DESCRIPTION:')
     def description(self, lines, line, lineno):
         if not lines:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing description')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing description')
         return tuple(lines)
 
     # not yet added to devmanual
@@ -389,8 +362,7 @@ class _EclassFuncVarBlock(_EclassDoc):
         try:
             return lines[0]
         except IndexError:
-            exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
-            _parsing_error_cb(exc)
+            raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing deprecated text')
 
 
 class Eclass(UserDict):
@@ -446,15 +418,14 @@ class Eclass(UserDict):
                     data = obj.parse(block, block_start)
                     if singular:
                         if data.keys() & d.keys():
-                            exc = EclassDocParsingError('duplicate ECLASS block')
-                            _parsing_error_cb(exc)
+                            _parsing_error_cb(EclassDocParsingError('duplicate ECLASS block'))
                         d.update(data)
                     else:
                         # check if duplicate named blocks exist
                         name = data['name']
                         if name in duplicates[tag]:
-                            exc = EclassDocParsingError(f'duplicate {repr(block[0])} block')
-                            _parsing_error_cb(exc)
+                            _parsing_error_cb(
+                                EclassDocParsingError(f'duplicate {repr(block[0])} block'))
                         duplicates[tag].add(name)
                         d.setdefault(obj._name, []).append(data)
                 else:
