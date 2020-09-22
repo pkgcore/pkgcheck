@@ -56,24 +56,27 @@ class _EclassDoc:
 
     @klass.jit_attr
     def _block_tags_re(self):
+        """Regex matching all known tags for the eclass doc block."""
         tags = rf'|'.join(_eclass_doc_tags[self._block])
         return re.compile(rf'^@(?P<tag>{tags})(?P<value>.*)')
 
     @klass.jit_attr
     def _required(self):
+        """Set of required eclass doc block tags."""
         tags = set()
-        for k, (_func, required, name) in _eclass_doc_tags[self._block].items():
+        for k, (_func, required, _name) in _eclass_doc_tags[self._block].items():
             if required:
                 tags.add(k)
         return frozenset(tags)
 
     def parse(self, lines, line_ind):
         """Parse an eclass block."""
-        # identify doc blocks
         blocks = []
         data = dict()
+        # track if all required tags are defined
         missing_tags = set(self._required)
 
+        # split eclass doc block into separate blocks by tag
         for i, line in enumerate(lines):
             m = self._block_tags_re.match(line)
             if m is not None:
@@ -84,16 +87,19 @@ class _EclassDoc:
             else:
                 blocks[-1][-1].append(line)
 
+        # parse each tag block
         for tag, header, line_ind, block_lines in blocks:
             func, required, name = _eclass_doc_tags[self._block][tag]
             data[name] = func(self, block_lines, header, line_ind)
 
+        # check if any required tags are missing
         if missing_tags:
             missing_tags_str = ', '.join(map(repr, (x.rstrip(':') for x in missing_tags)))
             s = pluralism(missing_tags)
             exc = EclassDocParsingError(
                 f'{repr(lines[0])}: missing tag{s}: {missing_tags_str}')
             _parsing_error_cb(exc)
+
         return data
 
 
@@ -419,10 +425,12 @@ class Eclass(UserDict):
             while line_ind < len(lines):
                 m = cls._eclass_blocks_re.match(lines[line_ind])
                 if m is not None:
-                    # isolate identified doc block
+                    # Isolate identified doc block by pulling all following
+                    # lines with a matching prefix before the tag.
                     prefix = m.group('prefix')
                     block = []
-                    while lines:
+                    block_start = line_ind + 1
+                    while line_ind < len(lines):
                         line = lines[line_ind]
                         if not line.startswith(prefix):
                             break
@@ -433,17 +441,17 @@ class Eclass(UserDict):
                     # parse identified doc block
                     tag = m.group('tag')
                     obj, singular = _eclass_blocks[tag]
-                    block_start = line_ind - len(block) + 1
                     data = obj.parse(block, block_start)
                     if singular:
                         if data.keys() & d.keys():
-                            exc = EclassDocParsingError('duplicate ECLASS doc block')
+                            exc = EclassDocParsingError('duplicate ECLASS block')
                             _parsing_error_cb(exc)
                         d.update(data)
                     else:
                         d.setdefault(obj._name, []).append(data)
                 else:
                     line_ind += 1
+
         return d
 
 
