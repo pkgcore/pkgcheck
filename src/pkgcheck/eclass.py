@@ -220,6 +220,28 @@ class _EclassVarBlock(_EclassDoc):
             _parsing_error_cb(exc)
         return True
 
+    # undocumented in devmanual
+    @eclass_doc('ECLASS-VARIABLE/USER_VARIABLE')
+    def user_variable(self, lines, line, lineno):
+        if lines:
+            exc = EclassDocParsingError(
+                f'{repr(line)}, line {lineno}: '
+                f'tag takes no args, got {repr(lines[0])}'
+            )
+            _parsing_error_cb(exc)
+        return True
+
+    # undocumented in devmanual
+    @eclass_doc('ECLASS-VARIABLE/OUTPUT_VARIABLE')
+    def output_variable(self, lines, line, lineno):
+        if lines:
+            exc = EclassDocParsingError(
+                f'{repr(line)}, line {lineno}: '
+                f'tag takes no args, got {repr(lines[0])}'
+            )
+            _parsing_error_cb(exc)
+        return True
+
     @eclass_doc('ECLASS-VARIABLE/DESCRIPTION:')
     def description(self, lines, line, lineno):
         if not lines:
