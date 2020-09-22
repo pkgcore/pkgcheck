@@ -11,7 +11,7 @@ from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
 from snakeoil.osutils import pjoin
 
-from pkgcheck import addons, git, results
+from pkgcheck import addons, eclass, git
 from pkgcheck.checks import metadata
 
 from .. import misc
@@ -335,7 +335,7 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
         repo_config = repo_objs.RepoConfig(location=self.dir)
         self.repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
         options = misc.Options(target_repo=self.repo, verbosity=False)
-        return self.check_kls(options)
+        return self.check_kls(options, eclass_addon=eclass.EclassAddon(options))
 
     def mk_pkg(self, eapi):
         return misc.FakePkg('dev-util/diffball-2.7.1', data={'EAPI': eapi})
