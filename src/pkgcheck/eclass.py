@@ -244,11 +244,12 @@ class _EclassFuncVarBlock(_EclassDoc):
         super().__init__(**tags)
 
 
+_eclass_blocks_re = re.compile(
+    rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(_eclass_blocks)}):(?P<value>.*)')
+
+
 class Eclass(UserDict):
     """Support parsing eclass docs for a given eclass path."""
-
-    _eclass_blocks_re = re.compile(
-        rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(_eclass_blocks)}):(?P<value>.*)')
 
     def __init__(self, path):
         self.path = path
@@ -266,8 +267,8 @@ class Eclass(UserDict):
         """Tuple of documented variable names in the eclass."""
         return tuple(d['name'] for d in self.data.get('variables', []))
 
-    @classmethod
-    def parse(cls, path):
+    @staticmethod
+    def parse(path):
         """Parse eclass docs."""
         d = dict()
         duplicates = {k: set() for k in _eclass_blocks.keys()}
@@ -276,7 +277,7 @@ class Eclass(UserDict):
             lines = f.read().splitlines()
             line_ind = 0
             while line_ind < len(lines):
-                m = cls._eclass_blocks_re.match(lines[line_ind])
+                m = _eclass_blocks_re.match(lines[line_ind])
                 if m is not None:
                     # Isolate identified doc block by pulling all following
                     # lines with a matching prefix before the tag.
