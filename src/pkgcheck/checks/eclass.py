@@ -3,6 +3,7 @@ from snakeoil.process.spawn import spawn_get_output
 from snakeoil.strings import pluralism
 
 from .. import base, results, sources
+from .. import eclass as eclass_mod
 from . import Check
 
 
@@ -177,14 +178,32 @@ class EclassBashSyntaxError(results.EclassResult, results.Error):
         return f'{self.eclass}: bash syntax error, line {self.lineno}: {self.error}'
 
 
+class EclassDocError(results.EclassResult, results.Warning):
+    """Error when parsing docs for the related eclass.
+
+    Eclass docs are parsed as specified by the devmanual [#]_.
+
+    .. [#] https://devmanual.gentoo.org/eclass-writing/#documenting-eclasses
+    """
+
+    def __init__(self, error, **kwargs):
+        super().__init__(**kwargs)
+        self.error = error
+
+    @property
+    def desc(self):
+        return f'{self.eclass}: failed parsing eclass docs: {self.error}'
+
+
 class EclassCheck(Check):
     """Scan eclasses for various issues."""
 
     scope = base.eclass_scope
     _source = sources.EclassRepoSource
-    known_results = frozenset([EclassBashSyntaxError])
+    known_results = frozenset([EclassBashSyntaxError, EclassDocError])
 
     def feed(self, eclass):
+        # check for eclass bash syntax errors
         ret, err = spawn_get_output(['bash', '-n', eclass.path], collect_fds=(2,))
         if ret != 0 and err:
             lineno = 0
@@ -195,3 +214,11 @@ class EclassCheck(Check):
                 error.append(msg.strip('\n'))
             error = ': '.join(error)
             yield EclassBashSyntaxError(lineno, error, eclass=eclass)
+
+        # check for eclass doc parsing errors in gentoo repo
+        if self.options.gentoo_repo:
+            doc_errors = []
+            error_cb = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
+            eclass_mod._parsing_error_cb = error_cb
+            eclass_mod.Eclass.parse(eclass.path)
+            yield from doc_errors
