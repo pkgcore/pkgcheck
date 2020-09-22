@@ -164,7 +164,7 @@ class _EclassBlock(_EclassDoc):
     # undocumented in devmanual
     @eclass_doc('ECLASS/SUPPORTED_EAPIS:')
     def supported_eapis(self, lines, line, lineno):
-        return tuple(lines[0].split())
+        return frozenset(lines[0].split())
 
     # not yet added to devmanual
     @eclass_doc('ECLASS/DEPRECATED:')
@@ -388,7 +388,7 @@ class _EclassFuncVarBlock(_EclassDoc):
             _parsing_error_cb(exc)
 
 
-class Eclass:
+class Eclass(UserDict):
     """Support parsing eclass docs for a given eclass path."""
 
     _eclass_blocks_re = re.compile(
@@ -398,6 +398,7 @@ class Eclass:
         self.path = path
         self._data = ImmutableDict(self.parse(self.path))
         self.mtime = os.path.getmtime(self.path)
+        super().__init__(self._data)
 
     @property
     def functions(self):
@@ -459,6 +460,10 @@ class EclassAddon(base.Addon, caches.CachedAddon):
     # cache registry
     cache = caches.CacheData(type='eclass', file='eclass.pickle', version=1)
 
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.eclasses = {}
+
     def update_cache(self, output_lock, force=False):
         """Update related cache and push updates to disk."""
         try:
@@ -516,3 +521,5 @@ class EclassAddon(base.Addon, caches.CachedAddon):
                         except IOError as e:
                             msg = f'failed dumping eclasses: {cache_file!r}: {e.strerror}'
                             raise UserException(msg)
+
+                    self.eclasses = eclasses

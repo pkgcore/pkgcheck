@@ -21,6 +21,7 @@ from snakeoil.strings import pluralism
 
 from .. import addons, base, git, results, sources
 from ..addons import UnstatedIuse
+from ..eclass import EclassAddon
 from .visibility import FakeConfigurable
 from . import Check
 
@@ -226,10 +227,28 @@ class BannedEapi(_EapiResult, results.Error):
     _type = 'banned'
 
 
+class UnsupportedEclassEapi(results.VersionResult, results.Warning):
+    """Ebuild inherits an eclass with outdated @SUPPORTED_EAPIS."""
+
+    def __init__(self, eapi, eclass, **kwargs):
+        super().__init__(**kwargs)
+        self.eapi = eapi
+        self.eclass = eclass
+
+    @property
+    def desc(self):
+        return f"{self.eclass}.eclass doesn't support EAPI {self.eapi}"
+
+
 class EapiCheck(Check):
     """Scan for packages with banned or deprecated EAPIs."""
 
-    known_results = frozenset([DeprecatedEapi, BannedEapi])
+    known_results = frozenset([DeprecatedEapi, BannedEapi, UnsupportedEclassEapi])
+    required_addons = (EclassAddon,)
+
+    def __init__(self, *args, eclass_addon):
+        super().__init__(*args)
+        self.eclass_addon = eclass_addon
 
     def feed(self, pkg):
         eapi_str = str(pkg.eapi)
@@ -237,6 +256,15 @@ class EapiCheck(Check):
             yield BannedEapi(pkg.eapi, pkg=pkg)
         elif eapi_str in self.options.target_repo.config.eapis_deprecated:
             yield DeprecatedEapi(pkg.eapi, pkg=pkg)
+
+        for eclass_name in pkg.inherit:
+            try:
+                eclass = self.eclass_addon.eclasses[eclass_name]
+                supported_eapis = eclass.get('supported_eapis', ())
+                if supported_eapis and eapi_str not in supported_eapis:
+                    yield UnsupportedEclassEapi(eapi_str, eclass, pkg=pkg)
+            except KeyError:
+                continue
 
 
 class InvalidEapi(results.MetadataError):
