@@ -350,7 +350,7 @@ class _EclassFuncVarBlock(_EclassDoc):
             )
         return True
 
-    @eclass_doc('@VARIABLE/@DESCRIPTION:')
+    @eclass_doc('@VARIABLE/@DESCRIPTION:', required=True)
     def description(self, lines, line, lineno):
         if not lines:
             raise EclassDocParsingError(f'{repr(line)}, line {lineno}: missing description')
