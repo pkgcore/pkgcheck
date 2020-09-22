@@ -482,7 +482,7 @@ class GitAddon(base.Addon, caches.CachedAddon):
             for repo in repos:
                 try:
                     commit = self.get_commit_hash(repo.location)
-                except ValueError as e:
+                except ValueError:
                     continue
 
                 # initialize cache file location
@@ -499,7 +499,7 @@ class GitAddon(base.Addon, caches.CachedAddon):
                             logger.debug('forcing git repo cache regen due to outdated version')
                             os.remove(cache_file)
                             git_repo = None
-                    except FileNotFoundError as e:
+                    except FileNotFoundError:
                         pass
                     except (AttributeError, EOFError, ImportError, IndexError) as e:
                         logger.debug('forcing git repo cache regen: %s', e)
