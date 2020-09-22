@@ -419,6 +419,8 @@ class Eclass(UserDict):
     def parse(cls, path):
         """Parse eclass docs."""
         d = dict()
+        duplicates = {k: set() for k in _eclass_blocks.keys()}
+
         with open(path) as f:
             lines = f.read().splitlines()
             line_ind = 0
@@ -448,6 +450,12 @@ class Eclass(UserDict):
                             _parsing_error_cb(exc)
                         d.update(data)
                     else:
+                        # check if duplicate named blocks exist
+                        name = data['name']
+                        if name in duplicates[tag]:
+                            exc = EclassDocParsingError(f'duplicate {repr(block[0])} block')
+                            _parsing_error_cb(exc)
+                        duplicates[tag].add(name)
                         d.setdefault(obj._name, []).append(data)
                 else:
                     line_ind += 1
