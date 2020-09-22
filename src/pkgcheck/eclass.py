@@ -44,13 +44,8 @@ class _EclassDoc:
     # eclass doc parsed block name
     _name = None
 
-    def __init__(self, boolean=(), inline=(), multiline=(), custom=()):
-        self.tags = {}
-        self.tags.update((x[0], x[1:] + (self._tag_bool,)) for x in boolean)
-        self.tags.update((x[0], x[1:] + (self._tag_inline_arg,)) for x in inline)
-        self.tags.update((x[0], x[1:] + (self._tag_multiline_args,)) for x in multiline)
-        self.tags.update((x[0], x[1:]) for x in custom)
-
+    def __init__(self, tags):
+        self.tags = tags
         # regex matching all known tags for the eclass doc block
         self._block_tags_re = re.compile(rf'^(?P<tag>{"|".join(self.tags)})(?P<value>.*)')
 
@@ -129,26 +124,22 @@ class _EclassBlock(_EclassDoc):
 
     def __init__(self):
         tags = {
-            'inline': (
-                ('@ECLASS:', 'name', True),
-                ('@VCSURL:', 'vcsurl', False),
-                ('@BLURB:', 'blurb', True),
-                # TODO: add to devmanual
-                ('@DEPRECATED:', 'deprecated', False),
-            ),
-            'multiline': (
-                ('@MAINTAINER:', 'maintainers', True),
-                ('@AUTHOR:', 'authors', False),
-                ('@BUGREPORTS:', 'bugreports', False),
-                ('@DESCRIPTION:', 'description', False),
-                ('@EXAMPLE:', 'example', False),
-            ),
-            'custom': (
-                # undocumented in devmanual
-                ('@SUPPORTED_EAPIS:', 'supported_eapis', False, self.supported_eapis),
-            ),
+            '@ECLASS:': ('name', True, self._tag_inline_arg),
+            '@VCSURL:': ('vcsurl', False, self._tag_inline_arg),
+            '@BLURB:': ('blurb', True, self._tag_inline_arg),
+            # TODO: add to devmanual
+            '@DEPRECATED:': ('deprecated', False, self._tag_inline_arg),
+
+            '@MAINTAINER:': ('maintainers', True, self._tag_multiline_args),
+            '@AUTHOR:': ('authors', False, self._tag_multiline_args),
+            '@BUGREPORTS:': ('bugreports', False, self._tag_multiline_args),
+            '@DESCRIPTION:': ('description', False, self._tag_multiline_args),
+            '@EXAMPLE:': ('example', False, self._tag_multiline_args),
+
+            # undocumented in devmanual
+            '@SUPPORTED_EAPIS:': ('supported_eapis', False, self.supported_eapis),
         }
-        super().__init__(**tags)
+        super().__init__(tags)
 
     def supported_eapis(self, block, tag, lineno):
         eapis = set(block[0].split())
@@ -167,26 +158,22 @@ class _EclassVarBlock(_EclassDoc):
 
     def __init__(self):
         tags = {
-            'inline': (
-                ('@ECLASS-VARIABLE:', 'name', True),
-                # not yet added to devmanual
-                ('@DEPRECATED:', 'deprecated', False),
-            ),
-            'boolean': (
-                ('@DEFAULT_UNSET', 'default_unset', False),
-                ('@INTERNAL', 'internal', False),
-                ('@REQUIRED', 'required', False),
+            '@ECLASS-VARIABLE:': ('name', True, self._tag_inline_arg),
+            # not yet added to devmanual
+            '@DEPRECATED:': ('deprecated', False, self._tag_inline_arg),
 
-                # undocumented in devmanual
-                ('@PRE_INHERIT', 'pre_inherit', False),
-                ('@USER_VARIABLE', 'user_variable', False),
-                ('@OUTPUT_VARIABLE', 'output_variable', False),
-            ),
-            'multiline': (
-                ('@DESCRIPTION:', 'description', True),
-            ),
+            '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool),
+            '@INTERNAL': ('internal', False, self._tag_bool),
+            '@REQUIRED': ('required', False, self._tag_bool),
+
+            # undocumented in devmanual
+            '@PRE_INHERIT': ('pre_inherit', False, self._tag_bool),
+            '@USER_VARIABLE': ('user_variable', False, self._tag_bool),
+            '@OUTPUT_VARIABLE': ('output_variable', False, self._tag_bool),
+
+            '@DESCRIPTION:': ('description', True, self._tag_multiline_args),
         }
-        super().__init__(**tags)
+        super().__init__(tags)
 
 
 @eclass_block('@FUNCTION', 'functions')
@@ -195,26 +182,21 @@ class _EclassFuncBlock(_EclassDoc):
 
     def __init__(self):
         tags = {
-            'inline': (
-                ('@FUNCTION:', 'name', True),
-                ('@RETURN:', 'returns', False),
-                # not yet added to devmanual
-                ('@DEPRECATED:', 'deprecated', False),
-            ),
-            'boolean': (
-                ('@INTERNAL', 'internal', False),
-            ),
-            'multiline': (
-                ('@MAINTAINER:', 'maintainers', False),
-                ('@DESCRIPTION:', 'description', False),
-            ),
-            'custom': (
-                # TODO: The devmanual states this is required, but disabling for now since
-                # many phase override functions don't document usage.
-                ('@USAGE:', 'usage', False, self.usage),
-            ),
+            '@FUNCTION:': ('name', True, self._tag_inline_arg),
+            '@RETURN:': ('returns', False, self._tag_inline_arg),
+            # not yet added to devmanual
+            '@DEPRECATED:': ('deprecated', False, self._tag_inline_arg),
+
+            '@INTERNAL': ('internal', False, self._tag_bool),
+
+            '@MAINTAINER:': ('maintainers', False, self._tag_multiline_args),
+            '@DESCRIPTION:': ('description', False, self._tag_multiline_args),
+
+            # TODO: The devmanual states this is required, but disabling for now since
+            # many phase override functions don't document usage.
+            '@USAGE:': ('usage', False, self.usage),
         }
-        super().__init__(**tags)
+        super().__init__(tags)
 
     def usage(self, block, tag, lineno):
         # empty usage allowed for functions with no arguments
@@ -227,21 +209,17 @@ class _EclassFuncVarBlock(_EclassDoc):
 
     def __init__(self):
         tags = {
-            'inline': (
-                ('@VARIABLE:', 'name', True),
-                # not yet added to devmanual
-                ('@DEPRECATED:', 'deprecated', False),
-            ),
-            'boolean': (
-                ('@DEFAULT_UNSET', 'default_unset', False),
-                ('@INTERNAL', 'internal', False),
-                ('@REQUIRED', 'required', False),
-            ),
-            'multiline': (
-                ('@DESCRIPTION:', 'description', True),
-            ),
+            '@VARIABLE:': ('name', True, self._tag_inline_arg),
+            # not yet added to devmanual
+            '@DEPRECATED:': ('deprecated', False, self._tag_inline_arg),
+
+            '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool),
+            '@INTERNAL': ('internal', False, self._tag_bool),
+            '@REQUIRED': ('required', False, self._tag_bool),
+
+            '@DESCRIPTION:': ('description', True, self._tag_multiline_args),
         }
-        super().__init__(**tags)
+        super().__init__(tags)
 
 
 _eclass_blocks_re = re.compile(
