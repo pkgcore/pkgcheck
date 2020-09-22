@@ -5,6 +5,7 @@ import os
 import pickle
 import re
 
+from pkgcore.ebuild.eapi import EAPI
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
 from snakeoil.strings import pluralism
@@ -163,7 +164,14 @@ class _EclassBlock(_EclassDoc):
     # undocumented in devmanual
     @eclass_doc('@ECLASS/@SUPPORTED_EAPIS:')
     def supported_eapis(self, lines, line, lineno):
-        return frozenset(lines[0].split())
+        eapis = set(lines[0].split())
+        unknown = eapis - set(EAPI.known_eapis)
+        if unknown:
+            s = pluralism(unknown)
+            unknown_str = ' '.join(sorted(unknown))
+            raise EclassDocParsingError(
+                f'{repr(line)}, line {lineno}: unknown EAPI{s}: {unknown_str}')
+        return frozenset(eapis)
 
     # not yet added to devmanual
     @eclass_doc('@ECLASS/@DEPRECATED:')
