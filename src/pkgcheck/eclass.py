@@ -256,7 +256,7 @@ class _EclassVarBlock(_EclassDoc):
             _parsing_error_cb(exc)
         return True
 
-    @eclass_doc('ECLASS-VARIABLE/DESCRIPTION:')
+    @eclass_doc('ECLASS-VARIABLE/DESCRIPTION:', required=True)
     def description(self, lines, line, lineno):
         if not lines:
             exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing description')
@@ -285,8 +285,8 @@ class _EclassFuncBlock(_EclassDoc):
             exc = EclassDocParsingError(f'{repr(line)}, line {lineno}: missing function name')
             _parsing_error_cb(exc)
 
-    # Docs state this is required, but disabling for now since many
-    # phase override functions don't document usage.
+    # TODO: The devmanual states this is required, but disabling for now since
+    # many phase override functions don't document usage.
     @eclass_doc('FUNCTION/USAGE:')
     def usage(self, lines, line, lineno):
         # empty usage is allowed for functions with no arguments
@@ -338,7 +338,7 @@ class _EclassFuncBlock(_EclassDoc):
 class _EclassFuncVarBlock(_EclassDoc):
     """VARIABLE doc block."""
 
-    @eclass_doc('VARIABLE/VARIABLE:')
+    @eclass_doc('VARIABLE/VARIABLE:', required=True)
     def name(self, lines, line, lineno):
         try:
             return lines[0]
