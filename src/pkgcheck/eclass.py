@@ -50,7 +50,7 @@ class _EclassDoc:
         self._block_tags_re = re.compile(rf'^(?P<tag>{"|".join(self.tags)})(?P<value>.*)')
 
     def _tag_bool(self, block, tag, lineno):
-        """Support parsing boolean tags."""
+        """Parse boolean tags."""
         if block:
             raise EclassDocParsingError(
                 f'{repr(tag)}, line {lineno}: '
@@ -59,7 +59,7 @@ class _EclassDoc:
         return True
 
     def _tag_inline_arg(self, block, tag, lineno):
-        """Support parsing tags with inline argument."""
+        """Parse tags with inline argument."""
         lines = len(block)
         if lines == 1:
             return block[0]
@@ -68,7 +68,7 @@ class _EclassDoc:
         raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: non-inline arg')
 
     def _tag_multiline_args(self, block, tag, lineno):
-        """Support parsing tags with multiline arguments."""
+        """Parse tags with multiline arguments."""
         if not block:
             raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing args')
         return tuple(block)
@@ -137,11 +137,12 @@ class _EclassBlock(_EclassDoc):
             '@EXAMPLE:': ('example', False, self._tag_multiline_args),
 
             # undocumented in devmanual
-            '@SUPPORTED_EAPIS:': ('supported_eapis', False, self.supported_eapis),
+            '@SUPPORTED_EAPIS:': ('supported_eapis', False, self._supported_eapis),
         }
         super().__init__(tags)
 
-    def supported_eapis(self, block, tag, lineno):
+    def _supported_eapis(self, block, tag, lineno):
+        """Parse @SUPPORTED_EAPIS tag arguments."""
         eapis = set(block[0].split())
         unknown = eapis - set(EAPI.known_eapis)
         if unknown:
@@ -194,12 +195,15 @@ class _EclassFuncBlock(_EclassDoc):
 
             # TODO: The devmanual states this is required, but disabling for now since
             # many phase override functions don't document usage.
-            '@USAGE:': ('usage', False, self.usage),
+            '@USAGE:': ('usage', False, self._usage),
         }
         super().__init__(tags)
 
-    def usage(self, block, tag, lineno):
-        # empty usage allowed for functions with no arguments
+    def _usage(self, block, tag, lineno):
+        """Parse @USAGE tag arguments.
+
+        Empty usage is allowed for functions with no arguments.
+        """
         return tuple(block)
 
 
