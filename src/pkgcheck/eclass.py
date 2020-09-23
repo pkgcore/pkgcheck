@@ -257,41 +257,48 @@ class Eclass(UserDict):
 
         with open(path) as f:
             lines = f.read().splitlines()
+            blocks = []
             line_ind = 0
+
             while line_ind < len(lines):
                 m = _eclass_blocks_re.match(lines[line_ind])
                 if m is not None:
                     # Isolate identified doc block by pulling all following
                     # lines with a matching prefix before the tag.
                     prefix = m.group('prefix')
+                    tag = m.group('tag')
                     block = []
                     block_start = line_ind + 1
                     while line_ind < len(lines):
                         line = lines[line_ind]
                         if not line.startswith(prefix):
+                            blocks.append((tag, block, block_start))
                             break
                         line = line[len(prefix) + 1:]
                         block.append(line)
                         line_ind += 1
+                line_ind += 1
 
-                    # parse identified doc block
-                    tag = m.group('tag')
-                    obj, singular = _eclass_blocks[tag]
-                    data = obj.parse(block, block_start)
-                    if singular:
-                        if data.keys() & d.keys():
-                            _parsing_error_cb(EclassDocParsingError('duplicate ECLASS block'))
-                        d.update(data)
-                    else:
-                        # check if duplicate named blocks exist
-                        name = data['name']
-                        if name in duplicates[tag]:
-                            _parsing_error_cb(
-                                EclassDocParsingError(f'duplicate {repr(block[0])} block'))
-                        duplicates[tag].add(name)
-                        d.setdefault(obj._name, []).append(data)
+            if not blocks or blocks[0][0] != '@ECLASS:':
+                _parsing_error_cb(EclassDocParsingError("'@ECLASS:' block not first"))
+
+            # parse identified doc blocks
+            for tag, block, block_start in blocks:
+                obj, singular = _eclass_blocks[tag]
+                data = obj.parse(block, block_start)
+                # check if duplicate blocks exist and merge data
+                if singular:
+                    if data.keys() & d.keys():
+                        _parsing_error_cb(EclassDocParsingError(
+                            f"'@ECLASS:', line {block_start}: duplicate block"))
+                    d.update(data)
                 else:
-                    line_ind += 1
+                    name = data['name']
+                    if name in duplicates[tag]:
+                        _parsing_error_cb(EclassDocParsingError(
+                            f'{repr(block[0])}, line {block_start}: duplicate block'))
+                    duplicates[tag].add(name)
+                    d.setdefault(obj._name, []).append(data)
 
         return d
 
