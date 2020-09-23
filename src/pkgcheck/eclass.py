@@ -37,7 +37,12 @@ def _parsing_error_cb(exc):
 
 
 class _EclassDoc:
-    """Generic block for eclass docs."""
+    """Generic block for eclass docs.
+
+    See the devmanual [#]_ for the eclass docs specification.
+
+    .. [#] https://devmanual.gentoo.org/eclass-writing/#documenting-eclasses
+    """
 
     # eclass doc block name
     _block = None
