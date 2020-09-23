@@ -8,6 +8,7 @@ import re
 from pkgcore.ebuild.eapi import EAPI
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
+from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism
 
 from . import base, caches
@@ -345,6 +346,14 @@ class EclassAddon(base.Addon, caches.CachedAddon):
     def __init__(self, *args):
         super().__init__(*args)
         self.eclasses = {}
+
+    @klass.jit_attr
+    def deprecated(self):
+        """Mapping of deprecated eclasses to their replacements (if any)."""
+        return ImmutableDict({
+            k: v['deprecated']['replacement']
+            for k, v in self.eclasses.items() if 'deprecated' in v
+        })
 
     def update_cache(self, output_lock, force=False):
         """Update related cache and push updates to disk."""

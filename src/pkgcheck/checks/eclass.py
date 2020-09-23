@@ -1,10 +1,9 @@
 from snakeoil.contexts import patch
-from snakeoil.mappings import ImmutableDict
 from snakeoil.process.spawn import spawn_get_output
 from snakeoil.strings import pluralism
 
 from .. import base, results, sources
-from .. import eclass as eclass_mod
+from ..eclass import Eclass, EclassAddon
 from . import Check
 
 
@@ -54,92 +53,11 @@ class EclassUsageCheck(Check):
     """Scan packages for various eclass-related issues."""
 
     known_results = frozenset([DeprecatedEclass, DuplicateEclassInherits])
+    required_addons = (EclassAddon,)
 
-    blacklist = ImmutableDict({
-        '64-bit': None,
-        'autotools-multilib': 'multilib-minimal',
-        'autotools-utils': None,
-        'base': None,
-        'bash-completion': 'bash-completion-r1',
-        'boost-utils': None,
-        'clutter': 'gnome2',
-        'confutils': None,
-        'darcs': None,
-        'distutils': 'distutils-r1',
-        'db4-fix': None,
-        'debian': None,
-        'embassy-2.10': None,
-        'embassy-2.9': None,
-        'epatch': (
-            'eapply from EAPI 6',
-            lambda pkg: 'eapply' in pkg.eapi.bash_funcs),
-        'fdo-mime': 'xdg-utils',
-        'games': None,
-        'gems': 'ruby-fakegem',
-        'git': 'git-r3',
-        'git-2': 'git-r3',
-        'gcc': None,
-        'gnustep-old': None,
-        'gpe': None,
-        'gst-plugins-bad': 'gstreamer',
-        'gst-plugins-base': 'gstreamer',
-        'gst-plugins-good': 'gstreamer',
-        'gst-plugins-ugly': 'gstreamer',
-        'gst-plugins10': 'gstreamer',
-        'gtk-engines': None,
-        'gtk-engines2': None,
-        'inherit': None,
-        'jakarta-commons': None,
-        'java-pkg': None,
-        'java-utils': None,
-        'kde-base': None,
-        'kde-i18n': None,
-        'kde4-meta-pkg': 'kde5-meta-pkg',
-        'kde-source': None,
-        'kmod': None,
-        'koffice-i18n': None,
-        'mono': 'mono-env',
-        'mozconfig': None,
-        'mozconfig-2': 'mozconfig-3',
-        'mozcoreconf': 'mozcoreconf-2',
-        'motif': None,
-        'mozilla': None,
-        'myth': None,
-        'pcmcia': None,
-        'perl-post': None,
-        'php': None,
-        'php-2': None,
-        'php-ext': None,
-        'php-ext-base': None,
-        'php-ext-pecl': None,
-        'php-ext-pecl-r1': 'php-ext-pecl-r2',
-        'php-ext-source': None,
-        'php-ext-source-r1': 'php-ext-source-r2',
-        'php-lib': None,
-        'php-pear': 'php-pear-r1',
-        'php-sapi': None,
-        'php5-sapi': None,
-        'php5-sapi-r1': None,
-        'php5-sapi-r2': None,
-        'php5-sapi-r3': None,
-        'python': 'python-r1 / python-single-r1 / python-any-r1',
-        'python-distutils-ng': 'python-r1 + distutils-r1',
-        'qt3': None,
-        'qt4': 'qt4-r2',
-        'ruby': 'ruby-ng',
-        'ruby-gnome2': 'ruby-ng-gnome2',
-        'tla': None,
-        'ltprune': None,
-        'user': 'acct-user/acct-group packages',
-        'versionator': (
-            'ver_* functions from EAPI 7',
-            lambda pkg: 'ver_cut' in pkg.eapi.bash_funcs),
-        'vim': None,
-        'webapp-apache': None,
-        'x-modular': 'xorg-2',
-        'xfconf': None,
-        'xfree': None,
-    })
+    def __init__(self, *args, eclass_addon):
+        super().__init__(*args)
+        self.eclass_addon = eclass_addon
 
     def feed(self, pkg):
         deprecated = []
@@ -152,12 +70,8 @@ class EclassUsageCheck(Check):
             else:
                 duplicates.add(eclass)
 
-        for eclass in inherited.intersection(self.blacklist):
-            replacement = self.blacklist[eclass]
-            if isinstance(replacement, tuple):
-                replacement, conditional = replacement
-                if not conditional(pkg):
-                    continue
+        for eclass in inherited.intersection(self.eclass_addon.deprecated):
+            replacement = self.eclass_addon.deprecated[eclass]
             deprecated.append((eclass, replacement))
 
         if duplicates:
@@ -221,5 +135,5 @@ class EclassCheck(Check):
             doc_errors = []
             parsing_error = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
             with patch('pkgcheck.eclass._parsing_error', parsing_error):
-                eclass_mod.Eclass.parse(eclass.path)
+                Eclass.parse(eclass.path)
             yield from doc_errors
