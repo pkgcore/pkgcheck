@@ -81,6 +81,19 @@ class _EclassDoc:
             raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing args')
         return tuple(block[1:])
 
+    def _tag_deprecated(self, block, tag, lineno):
+        """Parse deprecated tags."""
+        if not block[0]:
+            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing replacement')
+
+        d = {}
+        # use inline argument as replacement
+        d['replacement'] = None if block[0].lower() == 'none' else block[0]
+        # pull following lines as additional info if they exist
+        if len(block) > 1:
+            d['info'] = block[1:]
+        return d
+
     @klass.jit_attr
     def _required(self):
         """Set of required eclass doc block tags."""
@@ -136,7 +149,7 @@ class _EclassBlock(_EclassDoc):
             '@VCSURL:': ('vcsurl', False, self._tag_inline_arg),
             '@BLURB:': ('blurb', True, self._tag_inline_arg),
             # TODO: add to devmanual
-            '@DEPRECATED:': ('deprecated', False, self._tag_inline_arg),
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated),
 
             '@MAINTAINER:': ('maintainers', True, self._tag_multiline_args),
             '@AUTHOR:': ('authors', False, self._tag_multiline_args),
@@ -168,8 +181,8 @@ class _EclassVarBlock(_EclassDoc):
     def __init__(self):
         tags = {
             '@ECLASS-VARIABLE:': ('name', True, self._tag_inline_arg),
-            # not yet added to devmanual
-            '@DEPRECATED:': ('deprecated', False, self._tag_inline_arg),
+            # TODO: add to devmanual
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated),
 
             '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool),
             '@INTERNAL': ('internal', False, self._tag_bool),
@@ -193,8 +206,8 @@ class _EclassFuncBlock(_EclassDoc):
         tags = {
             '@FUNCTION:': ('name', True, self._tag_inline_arg),
             '@RETURN:': ('returns', False, self._tag_inline_arg),
-            # not yet added to devmanual
-            '@DEPRECATED:': ('deprecated', False, self._tag_inline_arg),
+            # TODO: add to devmanual
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated),
 
             '@INTERNAL': ('internal', False, self._tag_bool),
 
@@ -222,8 +235,8 @@ class _EclassFuncVarBlock(_EclassDoc):
     def __init__(self):
         tags = {
             '@VARIABLE:': ('name', True, self._tag_inline_arg),
-            # not yet added to devmanual
-            '@DEPRECATED:': ('deprecated', False, self._tag_inline_arg),
+            # TODO: add to devmanual
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated),
 
             '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool),
             '@INTERNAL': ('internal', False, self._tag_bool),
