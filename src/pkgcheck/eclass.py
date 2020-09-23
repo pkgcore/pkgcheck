@@ -253,11 +253,11 @@ class Eclass(UserDict):
     def parse(path):
         """Parse eclass docs."""
         d = dict()
+        blocks = []
         duplicates = {k: set() for k in _eclass_blocks.keys()}
 
         with open(path) as f:
             lines = f.read().splitlines()
-            blocks = []
             line_ind = 0
 
             while line_ind < len(lines):
@@ -279,28 +279,28 @@ class Eclass(UserDict):
                         line_ind += 1
                 line_ind += 1
 
-            if not blocks:
-                _parsing_error_cb(EclassDocParsingError("'@ECLASS:' block missing"))
-            elif blocks[0][0] != '@ECLASS:':
-                _parsing_error_cb(EclassDocParsingError("'@ECLASS:' block not first"))
+        if not blocks:
+            _parsing_error_cb(EclassDocParsingError("'@ECLASS:' block missing"))
+        elif blocks[0][0] != '@ECLASS:':
+            _parsing_error_cb(EclassDocParsingError("'@ECLASS:' block not first"))
 
-            # parse identified doc blocks
-            for tag, block, block_start in blocks:
-                obj, singular = _eclass_blocks[tag]
-                data = obj.parse(block, block_start)
-                # check if duplicate blocks exist and merge data
-                if singular:
-                    if data.keys() & d.keys():
-                        _parsing_error_cb(EclassDocParsingError(
-                            f"'@ECLASS:', line {block_start}: duplicate block"))
-                    d.update(data)
-                else:
-                    name = data['name']
-                    if name in duplicates[tag]:
-                        _parsing_error_cb(EclassDocParsingError(
-                            f'{repr(block[0])}, line {block_start}: duplicate block'))
-                    duplicates[tag].add(name)
-                    d.setdefault(obj._name, []).append(data)
+        # parse identified doc blocks
+        for tag, block, block_start in blocks:
+            obj, singular = _eclass_blocks[tag]
+            data = obj.parse(block, block_start)
+            # check if duplicate blocks exist and merge data
+            if singular:
+                if data.keys() & d.keys():
+                    _parsing_error_cb(EclassDocParsingError(
+                        f"'@ECLASS:', line {block_start}: duplicate block"))
+                d.update(data)
+            else:
+                name = data['name']
+                if name in duplicates[tag]:
+                    _parsing_error_cb(EclassDocParsingError(
+                        f'{repr(block[0])}, line {block_start}: duplicate block'))
+                duplicates[tag].add(name)
+                d.setdefault(obj._name, []).append(data)
 
         return d
 
