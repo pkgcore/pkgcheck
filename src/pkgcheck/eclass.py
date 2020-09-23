@@ -265,7 +265,7 @@ class Eclass(UserDict):
                 m = _eclass_blocks_re.match(lines[line_ind])
                 if m is not None:
                     # Isolate identified doc block by pulling all following
-                    # lines with a matching prefix before the tag.
+                    # lines with a matching prefix.
                     prefix = m.group('prefix')
                     tag = m.group('tag')
                     block = []
@@ -280,12 +280,13 @@ class Eclass(UserDict):
                         line_ind += 1
                 line_ind += 1
 
+        # @ECLASS block must exist and be first in eclasses
         if not blocks:
             _parsing_error_cb(EclassDocParsingError("'@ECLASS:' block missing"))
         elif blocks[0][0] != '@ECLASS:':
             _parsing_error_cb(EclassDocParsingError("'@ECLASS:' block not first"))
 
-        # parse identified doc blocks
+        # parse identified blocks
         for tag, block, block_start in blocks:
             obj, singular = _eclass_blocks[tag]
             data = obj.parse(block, block_start)
