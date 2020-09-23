@@ -1,3 +1,4 @@
+from snakeoil.contexts import patch
 from snakeoil.mappings import ImmutableDict
 from snakeoil.process.spawn import spawn_get_output
 from snakeoil.strings import pluralism
@@ -218,7 +219,7 @@ class EclassCheck(Check):
         # check for eclass doc parsing errors in gentoo repo
         if self.options.gentoo_repo:
             doc_errors = []
-            error_cb = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
-            eclass_mod._parsing_error_cb = error_cb
-            eclass_mod.Eclass.parse(eclass.path)
+            parsing_error = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
+            with patch('pkgcheck.eclass._parsing_error', parsing_error):
+                eclass_mod.Eclass.parse(eclass.path)
             yield from doc_errors
