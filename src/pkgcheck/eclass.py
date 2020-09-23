@@ -67,6 +67,7 @@ class _EclassDoc:
             raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing arg')
         raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: non-inline arg')
 
+    # TODO: add support for @CODE blocks once doc output is added
     def _tag_multiline_args(self, block, tag, lineno):
         """Parse tags with multiline arguments."""
         if not block:
