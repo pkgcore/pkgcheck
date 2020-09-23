@@ -292,11 +292,11 @@ class Eclass(UserDict):
                     while line_ind < len(lines):
                         line = lines[line_ind]
                         if not line.startswith(prefix):
-                            blocks.append((tag, block, block_start))
                             break
                         line = line[len(prefix) + 1:]
                         block.append(line)
                         line_ind += 1
+                    blocks.append((tag, block, block_start))
                 line_ind += 1
 
         # @ECLASS block must exist and be first in eclasses
