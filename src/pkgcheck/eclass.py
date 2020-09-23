@@ -118,7 +118,7 @@ class _EclassDoc:
         return data
 
 
-@eclass_block('@ECLASS', None, singular=True)
+@eclass_block('@ECLASS:', None, singular=True)
 class _EclassBlock(_EclassDoc):
     """ECLASS doc block."""
 
@@ -153,7 +153,7 @@ class _EclassBlock(_EclassDoc):
         return frozenset(eapis)
 
 
-@eclass_block('@ECLASS-VARIABLE', 'variables')
+@eclass_block('@ECLASS-VARIABLE:', 'variables')
 class _EclassVarBlock(_EclassDoc):
     """ECLASS-VARIABLE doc block."""
 
@@ -177,7 +177,7 @@ class _EclassVarBlock(_EclassDoc):
         super().__init__(tags)
 
 
-@eclass_block('@FUNCTION', 'functions')
+@eclass_block('@FUNCTION:', 'functions')
 class _EclassFuncBlock(_EclassDoc):
     """FUNCTION doc block."""
 
@@ -207,7 +207,7 @@ class _EclassFuncBlock(_EclassDoc):
         return tuple(block)
 
 
-@eclass_block('@VARIABLE', 'function-variables')
+@eclass_block('@VARIABLE:', 'function-variables')
 class _EclassFuncVarBlock(_EclassDoc):
     """VARIABLE doc block."""
 
@@ -227,7 +227,7 @@ class _EclassFuncVarBlock(_EclassDoc):
 
 
 _eclass_blocks_re = re.compile(
-    rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(_eclass_blocks)}):(?P<value>.*)')
+    rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(_eclass_blocks)})(?P<value>.*)')
 
 
 class Eclass(UserDict):
