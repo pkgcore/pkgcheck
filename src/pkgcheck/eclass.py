@@ -366,7 +366,7 @@ class EclassAddon(base.Addon, caches.CachedAddon):
 
         if self.options.cache['eclass']:
             for repo in repos:
-                if repo.repo_id == 'gentoo':
+                if 'gentoo' in repo.aliases:
                     cache_file = self.cache_file(repo)
                     cache_eclasses = False
                     eclasses = {}
