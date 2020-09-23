@@ -56,28 +56,30 @@ class _EclassDoc:
 
     def _tag_bool(self, block, tag, lineno):
         """Parse boolean tags."""
-        if block:
+        try:
+            args = next(x for x in block if x)
             raise EclassDocParsingError(
-                f'{repr(tag)}, line {lineno}: '
-                f'tag takes no args, got {repr(block[0])}'
-            )
+                f'{repr(tag)}, line {lineno}: tag takes no args, got {repr(args)}')
+        except StopIteration:
+            pass
         return True
 
     def _tag_inline_arg(self, block, tag, lineno):
         """Parse tags with inline argument."""
-        lines = len(block)
-        if lines == 1:
-            return block[0]
-        elif lines == 0:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing arg')
-        raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: non-inline arg')
+        if not block[0]:
+            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing inline arg')
+        elif len(block) > 1:
+            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: non-inline arg')
+        return block[0]
 
     # TODO: add support for @CODE blocks once doc output is added
     def _tag_multiline_args(self, block, tag, lineno):
         """Parse tags with multiline arguments."""
-        if not block:
+        if block[0]:
+            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: invalid inline arg')
+        if not block[1:]:
             raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing args')
-        return tuple(block)
+        return tuple(block[1:])
 
     @klass.jit_attr
     def _required(self):
@@ -102,7 +104,7 @@ class _EclassDoc:
                 tag = m.group('tag')
                 missing_tags.discard(tag)
                 value = m.group('value').strip()
-                blocks.append((tag, line_ind + i, [value] if value else []))
+                blocks.append((tag, line_ind + i, [value]))
             else:
                 blocks[-1][-1].append(line)
 
