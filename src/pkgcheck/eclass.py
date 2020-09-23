@@ -258,9 +258,7 @@ class Eclass(UserDict):
     @staticmethod
     def parse(path):
         """Parse eclass docs."""
-        d = dict()
         blocks = []
-        duplicates = {k: set() for k in _eclass_blocks.keys()}
 
         with open(path) as f:
             lines = f.read().splitlines()
@@ -291,25 +289,28 @@ class Eclass(UserDict):
         elif blocks[0][0] != '@ECLASS:':
             _parsing_error_cb(EclassDocParsingError("'@ECLASS:' block not first"))
 
+        data = dict()
+        duplicates = {k: set() for k in _eclass_blocks.keys()}
+
         # parse identified blocks
         for tag, block, block_start in blocks:
             obj, singular = _eclass_blocks[tag]
-            data = obj.parse(block, block_start)
+            block_data = obj.parse(block, block_start)
             # check if duplicate blocks exist and merge data
             if singular:
-                if data.keys() & d.keys():
+                if block_data.keys() & data.keys():
                     _parsing_error_cb(EclassDocParsingError(
                         f"'@ECLASS:', line {block_start}: duplicate block"))
-                d.update(data)
+                data.update(block_data)
             else:
-                name = data['name']
+                name = block_data['name']
                 if name in duplicates[tag]:
                     _parsing_error_cb(EclassDocParsingError(
                         f'{repr(block[0])}, line {block_start}: duplicate block'))
                 duplicates[tag].add(name)
-                d.setdefault(obj._name, []).append(data)
+                data.setdefault(obj._name, []).append(block_data)
 
-        return d
+        return data
 
 
 class _EclassCache(UserDict, caches.Cache):
