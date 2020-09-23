@@ -279,7 +279,9 @@ class Eclass(UserDict):
                         line_ind += 1
                 line_ind += 1
 
-            if not blocks or blocks[0][0] != '@ECLASS:':
+            if not blocks:
+                _parsing_error_cb(EclassDocParsingError("'@ECLASS:' block missing"))
+            elif blocks[0][0] != '@ECLASS:':
                 _parsing_error_cb(EclassDocParsingError("'@ECLASS:' block not first"))
 
             # parse identified doc blocks
