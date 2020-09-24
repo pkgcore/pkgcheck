@@ -19,13 +19,10 @@ from .log import logger
 _eclass_blocks = dict()
 
 
-def eclass_block(block, name, singular=False):
+def eclass_block(cls):
     """Decorator to register eclass blocks."""
-    def wrapper(cls):
-        cls._block = block
-        cls._name = name
-        _eclass_blocks[block] = (cls(), singular)
-    return wrapper
+    _eclass_blocks[cls._tag] = cls()
+    return cls
 
 
 class EclassDocParsingError(Exception):
@@ -45,10 +42,10 @@ class _EclassDoc:
     .. [#] https://devmanual.gentoo.org/eclass-writing/#documenting-eclasses
     """
 
-    # eclass doc block name
-    _block = None
-    # eclass doc parsed block name
-    _name = None
+    # block tag
+    _tag = None
+    # block key name -- None for singular block types
+    _key = None
 
     def __init__(self, tags):
         self.tags = tags
@@ -140,9 +137,11 @@ class _EclassDoc:
         return data
 
 
-@eclass_block('@ECLASS:', None, singular=True)
+@eclass_block
 class _EclassBlock(_EclassDoc):
     """ECLASS doc block."""
+
+    _tag = '@ECLASS:'
 
     def __init__(self):
         tags = {
@@ -176,9 +175,12 @@ class _EclassBlock(_EclassDoc):
         return frozenset(eapis)
 
 
-@eclass_block('@ECLASS-VARIABLE:', 'variables')
+@eclass_block
 class _EclassVarBlock(_EclassDoc):
     """ECLASS-VARIABLE doc block."""
+
+    _tag = '@ECLASS-VARIABLE:'
+    _key = 'variables'
 
     def __init__(self):
         tags = {
@@ -200,9 +202,12 @@ class _EclassVarBlock(_EclassDoc):
         super().__init__(tags)
 
 
-@eclass_block('@FUNCTION:', 'functions')
+@eclass_block
 class _EclassFuncBlock(_EclassDoc):
     """FUNCTION doc block."""
+
+    _tag = '@FUNCTION:'
+    _key = 'functions'
 
     def __init__(self):
         tags = {
@@ -232,9 +237,12 @@ class _EclassFuncBlock(_EclassDoc):
         return block[0]
 
 
-@eclass_block('@VARIABLE:', 'function-variables')
+@eclass_block
 class _EclassFuncVarBlock(_EclassDoc):
     """VARIABLE doc block."""
+
+    _tag = '@VARIABLE:'
+    _key = 'function-variables'
 
     def __init__(self):
         tags = {
@@ -313,10 +321,10 @@ class Eclass(UserDict):
 
         # parse identified blocks
         for tag, block, block_start in blocks:
-            block_obj, singular = _eclass_blocks[tag]
+            block_obj = _eclass_blocks[tag]
             block_data = block_obj.parse(block, block_start)
             # check if duplicate blocks exist and merge data
-            if singular:
+            if block_obj._key is None:
                 if block_data.keys() & data.keys():
                     _parsing_error(EclassDocParsingError(
                         f"'@ECLASS:', line {block_start}: duplicate block"))
@@ -327,7 +335,7 @@ class Eclass(UserDict):
                     _parsing_error(EclassDocParsingError(
                         f'{repr(block[0])}, line {block_start}: duplicate block'))
                 duplicates[tag].add(name)
-                data.setdefault(block_obj._name, []).append(block_data)
+                data.setdefault(block_obj._key, []).append(block_data)
 
         return data
 
