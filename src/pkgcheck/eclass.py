@@ -227,7 +227,9 @@ class _EclassFuncBlock(_EclassDoc):
 
         Empty usage is allowed for functions with no arguments.
         """
-        return tuple(block)
+        if len(block) > 1:
+            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: non-inline arg')
+        return block[0]
 
 
 @eclass_block('@VARIABLE:', 'function-variables')
