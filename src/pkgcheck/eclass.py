@@ -15,7 +15,7 @@ from . import base, caches
 from .log import logger
 
 
-# mapping between known eclass block tags and related classes
+# mapping from eclass doc blocks to parsing instances
 _eclass_blocks = dict()
 
 
