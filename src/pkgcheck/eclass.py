@@ -313,8 +313,8 @@ class Eclass(UserDict):
 
         # parse identified blocks
         for tag, block, block_start in blocks:
-            obj, singular = _eclass_blocks[tag]
-            block_data = obj.parse(block, block_start)
+            block_obj, singular = _eclass_blocks[tag]
+            block_data = block_obj.parse(block, block_start)
             # check if duplicate blocks exist and merge data
             if singular:
                 if block_data.keys() & data.keys():
@@ -327,7 +327,7 @@ class Eclass(UserDict):
                     _parsing_error(EclassDocParsingError(
                         f'{repr(block[0])}, line {block_start}: duplicate block'))
                 duplicates[tag].add(name)
-                data.setdefault(obj._name, []).append(block_data)
+                data.setdefault(block_obj._name, []).append(block_data)
 
         return data
 
