@@ -165,7 +165,8 @@ class _EclassBlock(_EclassDoc):
 
     def _supported_eapis(self, block, tag, lineno):
         """Parse @SUPPORTED_EAPIS tag arguments."""
-        eapis = set(block[0].split())
+        line = self._tag_inline_arg(block, tag, lineno)
+        eapis = set(line.split())
         unknown = eapis - set(EAPI.known_eapis)
         if unknown:
             s = pluralism(unknown)
