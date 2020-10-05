@@ -147,7 +147,7 @@ class ParsedGitRepo(UserDict, caches.Cache):
         if git_log.poll():
             error = git_log.stderr.read().decode().strip()
             logger.warning('skipping git checks: %s', error)
-            return {}
+            return
 
         count = 1
         with base.ProgressManager(debug=debug) as progress:
