@@ -590,12 +590,10 @@ class GitAddon(base.Addon, caches.CachedAddon):
             try:
                 origin = self.get_commit_hash(path)
                 master = self.get_commit_hash(path, commit='master')
+                if origin != master:
+                    commits = ParsedGitRepo.parse_git_log(path, commit='origin/HEAD..master')
             except ValueError as e:
                 if str(e):
                     logger.warning('skipping git commit checks: %s', e)
-                return commits
-
-            if origin != master:
-                commits = ParsedGitRepo.parse_git_log(path, commit='origin/HEAD..master')
 
         return commits
