@@ -162,11 +162,13 @@ class _EclassBlock(_EclassDoc):
         }
         super().__init__(tags)
 
+        self._known_eapis = frozenset(EAPI.known_eapis)
+
     def _supported_eapis(self, block, tag, lineno):
         """Parse @SUPPORTED_EAPIS tag arguments."""
         line = self._tag_inline_arg(block, tag, lineno)
         eapis = set(line.split())
-        unknown = eapis - set(EAPI.known_eapis)
+        unknown = eapis - self._known_eapis
         if unknown:
             s = pluralism(unknown)
             unknown_str = ' '.join(sorted(unknown))
