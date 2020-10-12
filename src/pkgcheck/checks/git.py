@@ -296,13 +296,27 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             yield RdependChange(pkg=new_pkg)
 
     def feed(self, pkgset):
-        removed = [pkg for pkg in pkgset if pkg.status == 'D']
-        renamed = [pkg for pkg in pkgset if pkg.status == 'R']
+        # Mapping of commit types to pkgs, available commit types can be
+        # seen under the --diff-filter `git log` option in parsing support.
+        pkg_map = {'A': set(), 'R': set(), 'M': set(), 'D': set()}
+        # Iterate over pkg commits in chronological order (git log defaults to
+        # the reverse) discarding matching pkg commits where relevant.
+        for pkg in reversed(pkgset):
+            pkg_map[pkg.status].add(pkg)
+            if pkg.status == 'A':
+                pkg_map['D'].discard(pkg)
+            elif pkg.status in ('R', 'D'):
+                pkg_map['A'].discard(pkg)
+
         # packages not available in current repo
-        old = set(removed + renamed)
-        if removed:
-            yield from self.removal_checks(removed)
-        modified = [pkg for pkg in pkgset if pkg.status == 'M' and pkg not in old]
+        old = pkg_map['D'] | pkg_map['R']
+        # modified packages in current repo
+        modified = [pkg for pkg in pkg_map['M'] if pkg not in old]
+
+        # run removed package checks
+        if pkg_map['D']:
+            yield from self.removal_checks(list(pkg_map['D']))
+        # run modified package checks
         if modified:
             yield from self.modified_checks(modified)
 
