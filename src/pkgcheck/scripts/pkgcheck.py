@@ -404,7 +404,7 @@ def _path_restrict(path, namespace):
 
     # allow location specific scopes to override the path restrict scope
     for scope in (x for x in base.scopes.values() if x.level == 0):
-        scope_path = pjoin(namespace.target_repo.location, scope.desc)
+        scope_path = os.path.realpath(pjoin(namespace.target_repo.location, scope.desc))
         if path.startswith(scope_path):
             break
     else:
