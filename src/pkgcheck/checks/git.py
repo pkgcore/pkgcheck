@@ -245,20 +245,19 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
         """Create/load cached repo of packages added to git."""
         return self._git_addon.cached_repo(git.GitAddedRepo)
 
-    def removal_checks(self, removed):
+    def removal_checks(self, pkgs):
         """Check for issues due to package removals."""
-        pkg = removed[0]
-
+        pkg = pkgs[0]
         try:
-            removal_repo = self.removal_repo(removed)
+            removal_repo = self.removal_repo(pkgs)
         except PkgcoreException as e:
             logger.warning('skipping git removal checks: %s', e)
             return
 
         old_keywords = set(chain.from_iterable(
-            pkg.keywords for pkg in removal_repo.match(pkg.unversioned_atom)))
+            p.keywords for p in removal_repo.match(pkg.unversioned_atom)))
         new_keywords = set(chain.from_iterable(
-            pkg.keywords for pkg in self.repo.match(pkg.unversioned_atom)))
+            p.keywords for p in self.repo.match(pkg.unversioned_atom)))
 
         dropped_keywords = old_keywords - new_keywords
         dropped_stable_keywords = dropped_keywords & self.valid_arches
@@ -275,9 +274,9 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             yield DroppedUnstableKeywords(
                 sort_keywords(dropped_unstable_keywords), pkg.commit, pkg=pkg)
 
-    def modified_checks(self, modified):
+    def modified_checks(self, pkgs):
         """Check for issues due to package modifications."""
-        pkg = modified[0]
+        pkg = pkgs[0]
 
         new_pkg = self.repo.match(pkg.versioned_atom)[0]
         # don't flag live ebuilds for RDEPEND changes
@@ -285,7 +284,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             return
 
         try:
-            modified_repo = self.modified_repo(modified)
+            modified_repo = self.modified_repo(pkgs)
         except PkgcoreException as e:
             logger.warning('skipping git modified checks: %s', e)
             return
