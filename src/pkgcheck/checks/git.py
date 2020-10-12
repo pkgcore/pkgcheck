@@ -295,8 +295,10 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             yield RdependChange(pkg=new_pkg)
 
     def feed(self, pkgset):
-        # Mapping of commit types to pkgs, available commit types can be
-        # seen under the --diff-filter `git log` option in parsing support.
+        # Mapping of commit types to pkgs, available commit types can be seen
+        # under the --diff-filter option in git log parsing support and are
+        # disambiguated as follows:
+        # A -> added, R -> renamed, M -> modified, D -> deleted
         pkg_map = {'A': set(), 'R': set(), 'M': set(), 'D': set()}
         # Iterate over pkg commits in chronological order (git log defaults to
         # the reverse) discarding matching pkg commits where relevant.
