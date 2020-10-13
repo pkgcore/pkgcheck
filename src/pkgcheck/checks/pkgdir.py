@@ -120,7 +120,7 @@ class UnknownPkgDirEntry(results.PackageResult, results.Warning):
 
 
 class SizeViolation(results.PackageResult, results.Warning):
-    """File in $FILESDIR is too large (current limit is 20k)."""
+    """File in $FILESDIR is too large (current limit is 20KiB)."""
 
     def __init__(self, filename, size, **kwargs):
         super().__init__(**kwargs)
