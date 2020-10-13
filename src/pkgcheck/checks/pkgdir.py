@@ -129,7 +129,7 @@ class SizeViolation(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.filename!r} exceeds 20k in size; {sizeof_fmt(self.size)} total'
+        return f'{self.filename!r} exceeds 20KiB in size; {sizeof_fmt(self.size)} total'
 
 
 class BannedCharacter(results.PackageResult, results.Error):

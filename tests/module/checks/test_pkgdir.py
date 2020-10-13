@@ -248,7 +248,7 @@ class TestEqualVersions(PkgDirCheckBase):
 class TestSizeViolation(PkgDirCheckBase):
     """Check SizeViolation results."""
 
-    def test_files_under_20k_size_limit(self):
+    def test_files_under_size_limit(self):
         pkg = self.mk_pkg()
         for name, size in (('small', 1024*10),
                            ('limit', 1024*20-1)):
