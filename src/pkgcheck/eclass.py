@@ -277,12 +277,12 @@ class Eclass(UserDict):
     @property
     def functions(self):
         """Tuple of documented function names in the eclass."""
-        return tuple(d['name'] for d in self.data.get('functions', []))
+        return frozenset(d['name'] for d in self.data.get('functions', []))
 
     @property
     def variables(self):
         """Tuple of documented variable names in the eclass."""
-        return tuple(d['name'] for d in self.data.get('variables', []))
+        return frozenset(d['name'] for d in self.data.get('variables', []))
 
     @staticmethod
     def parse(path):
