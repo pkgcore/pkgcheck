@@ -3,7 +3,6 @@ import subprocess
 
 from pkgcore.ebuild.eapi import EAPI
 from snakeoil.contexts import patch
-from snakeoil.process.spawn import spawn_get_output
 from snakeoil.strings import pluralism
 
 from .. import base, results, sources
@@ -143,11 +142,13 @@ class EclassCheck(Check):
 
     def feed(self, eclass):
         # check for eclass bash syntax errors
-        ret, err = spawn_get_output(['bash', '-n', eclass.path], collect_fds=(2,))
-        if ret != 0 and err:
+        p = subprocess.run(
+            ['bash', '-n', shlex.quote(eclass.path)],
+            stderr=subprocess.PIPE, stdout=subprocess.DEVNULL, encoding='utf8')
+        if p.returncode != 0 and p.stderr:
             lineno = 0
             error = []
-            for line in err:
+            for line in p.stderr.splitlines():
                 path, line, msg = line.split(': ', 2)
                 lineno = line[5:]
                 error.append(msg.strip('\n'))
