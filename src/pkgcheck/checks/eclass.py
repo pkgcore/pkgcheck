@@ -1,3 +1,6 @@
+import subprocess
+
+from pkgcore.ebuild.eapi import EAPI
 from snakeoil.contexts import patch
 from snakeoil.process.spawn import spawn_get_output
 from snakeoil.strings import pluralism
@@ -110,12 +113,32 @@ class EclassDocError(results.EclassResult, results.Warning):
         return f'{self.eclass}: failed parsing eclass docs: {self.error}'
 
 
+class EclassDocMissingFunc(results.EclassResult, results.Warning):
+    """Undocumented function(s) in the related eclass."""
+
+    def __init__(self, functions, **kwargs):
+        super().__init__(**kwargs)
+        self.functions = functions
+
+    @property
+    def desc(self):
+        s = pluralism(self.functions)
+        funcs = ', '.join(self.functions)
+        return f'{self.eclass}: undocumented function{s}: {funcs}'
+
+
 class EclassCheck(Check):
     """Scan eclasses for various issues."""
 
     scope = base.eclass_scope
     _source = sources.EclassRepoSource
-    known_results = frozenset([EclassBashSyntaxError, EclassDocError])
+    known_results = frozenset([
+        EclassBashSyntaxError, EclassDocError, EclassDocMissingFunc])
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        latest_eapi = sorted(EAPI.known_eapis)[-1]
+        self.known_phases = set(EAPI.known_eapis[latest_eapi].phases_rev)
 
     def feed(self, eclass):
         # check for eclass bash syntax errors
@@ -135,5 +158,21 @@ class EclassCheck(Check):
             doc_errors = []
             parsing_error = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
             with patch('pkgcheck.eclass._parsing_error', parsing_error):
-                Eclass.parse(eclass.path)
+                eclass_obj = Eclass(eclass.path)
             yield from doc_errors
+
+        p = subprocess.run(
+            ['bash', '-c', f'source {eclass.path}; compgen -A function'],
+            stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
+        if p.returncode == 0:
+            phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
+            functions = set()
+            for func in p.stdout.splitlines():
+                # TODO: ignore overridden funcs from other eclasses?
+                # ignore underscore prefixed funcs, phase funcs
+                if not func.startswith('_') and func not in phase_funcs:
+                    functions.add(func)
+            funcs_missing_docs = functions - eclass_obj.functions
+            if funcs_missing_docs:
+                missing = tuple(sorted(funcs_missing_docs))
+                yield EclassDocMissingFunc(missing, eclass=eclass)
