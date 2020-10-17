@@ -1,3 +1,4 @@
+import shlex
 import subprocess
 
 from pkgcore.ebuild.eapi import EAPI
@@ -162,7 +163,7 @@ class EclassCheck(Check):
             yield from doc_errors
 
         p = subprocess.run(
-            ['bash', '-c', f'source {eclass.path}; compgen -A function'],
+            ['bash', '-c', f'source {shlex.quote(eclass.path)}; compgen -A function'],
             stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
         if p.returncode == 0:
             phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
