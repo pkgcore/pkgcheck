@@ -167,13 +167,13 @@ class EclassCheck(Check):
                 stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
             if p.returncode == 0:
                 phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
-                functions = set()
-                for func in p.stdout.splitlines():
-                    # TODO: ignore overridden funcs from other eclasses?
-                    # ignore underscore prefixed funcs, phase funcs
-                    if not func.startswith('_') and func not in phase_funcs:
-                        functions.add(func)
-                funcs_missing_docs = functions - eclass_obj.functions
+                # TODO: ignore overridden funcs from other eclasses?
+                # ignore underscore prefixed funcs and phase funcs
+                public_funcs = {
+                    func for func in p.stdout.splitlines()
+                    if not func.startswith('_') and func not in phase_funcs
+                }
+                funcs_missing_docs = public_funcs - eclass_obj.functions
                 if funcs_missing_docs:
                     missing = tuple(sorted(funcs_missing_docs))
                     yield EclassDocMissingFunc(missing, eclass=eclass)
