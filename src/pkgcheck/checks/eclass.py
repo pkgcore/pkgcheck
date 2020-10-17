@@ -154,7 +154,7 @@ class EclassCheck(Check):
             error = ': '.join(error)
             yield EclassBashSyntaxError(lineno, error, eclass=eclass)
 
-        # check for eclass doc parsing errors in gentoo repo
+        # check for eclass doc issues when scanning the gentoo repo
         if self.options.gentoo_repo:
             doc_errors = []
             parsing_error = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
@@ -162,18 +162,18 @@ class EclassCheck(Check):
                 eclass_obj = Eclass(eclass.path)
             yield from doc_errors
 
-        p = subprocess.run(
-            ['bash', '-c', f'source {shlex.quote(eclass.path)}; compgen -A function'],
-            stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
-        if p.returncode == 0:
-            phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
-            functions = set()
-            for func in p.stdout.splitlines():
-                # TODO: ignore overridden funcs from other eclasses?
-                # ignore underscore prefixed funcs, phase funcs
-                if not func.startswith('_') and func not in phase_funcs:
-                    functions.add(func)
-            funcs_missing_docs = functions - eclass_obj.functions
-            if funcs_missing_docs:
-                missing = tuple(sorted(funcs_missing_docs))
-                yield EclassDocMissingFunc(missing, eclass=eclass)
+            p = subprocess.run(
+                ['bash', '-c', f'source {shlex.quote(eclass.path)}; compgen -A function'],
+                stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
+            if p.returncode == 0:
+                phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
+                functions = set()
+                for func in p.stdout.splitlines():
+                    # TODO: ignore overridden funcs from other eclasses?
+                    # ignore underscore prefixed funcs, phase funcs
+                    if not func.startswith('_') and func not in phase_funcs:
+                        functions.add(func)
+                funcs_missing_docs = functions - eclass_obj.functions
+                if funcs_missing_docs:
+                    missing = tuple(sorted(funcs_missing_docs))
+                    yield EclassDocMissingFunc(missing, eclass=eclass)
