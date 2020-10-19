@@ -12,6 +12,7 @@ from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.restrictions import packages, values
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
+from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.decorators import coroutine
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
@@ -448,9 +449,10 @@ class ProfileAddon(base.Addon, caches.CachedAddon):
                 cache_file = self.cache_file(repo)
                 try:
                     os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-                    with open(cache_file, 'wb+') as f:
-                        pickle.dump(_ProfilesCache(
-                            cached_profiles[repo.config.profiles_base]), f)
+                    f = AtomicWriteFile(cache_file, binary=True)
+                    f.write(pickle.dumps(_ProfilesCache(
+                        cached_profiles[repo.config.profiles_base])))
+                    f.close()
                 except IOError as e:
                     msg = (
                         f'failed dumping {repo.repo_id} profiles cache: '

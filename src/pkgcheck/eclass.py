@@ -8,6 +8,7 @@ import re
 from pkgcore.ebuild.eapi import EAPI
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
+from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism
 
@@ -406,8 +407,9 @@ class EclassAddon(base.Addon, caches.CachedAddon):
                     if cache_eclasses:
                         try:
                             os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-                            with open(cache_file, 'wb+') as f:
-                                pickle.dump(_EclassCache(eclasses), f)
+                            f = AtomicWriteFile(cache_file, binary=True)
+                            f.write(pickle.dumps(_EclassCache(eclasses)))
+                            f.close()
                         except IOError as e:
                             msg = f'failed dumping eclasses: {cache_file!r}: {e.strerror}'
                             raise UserException(msg)

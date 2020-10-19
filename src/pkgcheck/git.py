@@ -19,6 +19,7 @@ from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values
 from snakeoil.cli.exceptions import UserException
 from snakeoil.demandload import demand_compile_regexp
+from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.iterables import partition
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
@@ -532,8 +533,9 @@ class GitAddon(base.Addon, caches.CachedAddon):
                     if cache_repo:
                         try:
                             os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-                            with open(cache_file, 'wb+') as f:
-                                pickle.dump(git_repo, f)
+                            f = AtomicWriteFile(cache_file, binary=True)
+                            f.write(pickle.dumps(git_repo))
+                            f.close()
                         except IOError as e:
                             msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
                             raise UserException(msg)
