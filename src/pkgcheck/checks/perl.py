@@ -95,7 +95,7 @@ class PerlCheck(Check):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.dist_version_re = re.compile('DIST_VERSION=(?P<dist_version>\d+(\.\d+)*)\s*\n')
+        self.dist_version_re = re.compile(r'DIST_VERSION=(?P<dist_version>\d+(\.\d+)*)\s*\n')
         # Initialize connection with perl script. This is done during
         # __init__() since only one running version of the script is shared
         # between however many scanning processes will be run. Also, it makes
