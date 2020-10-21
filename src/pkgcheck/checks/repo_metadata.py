@@ -219,8 +219,7 @@ class _MirrorsCheck(Check):
         mirrors = []
         fetchables, _ = self.iuse_filter(
             (fetch.fetchable,), pkg,
-            pkg._get_attr['fetchables'](
-                pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True))
+            pkg.generate_fetchables(allow_missing_checksums=True, ignore_unknown_mirrors=True))
         for f in fetchables:
             for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
                 mirrors.append(m[0].mirror_name)
@@ -592,8 +591,7 @@ class ManifestCheck(Check):
             pkg.release_cached_data()
             fetchables, _ = self.iuse_filter(
                 (fetch.fetchable,), pkg,
-                pkg._get_attr['fetchables'](
-                    pkg, allow_missing_checksums=True, ignore_unknown_mirrors=True))
+                pkg.generate_fetchables(allow_missing_checksums=True, ignore_unknown_mirrors=True))
             fetchables = set(fetchables)
             pkg.release_cached_data()
 

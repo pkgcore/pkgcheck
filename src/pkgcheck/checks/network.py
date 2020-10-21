@@ -248,9 +248,9 @@ class FetchablesUrlCheck(_UrlCheck):
         # ignore conditionals
         fetchables, _ = self.fetch_filter(
             (fetchable,), pkg,
-            pkg._get_attr['fetchables'](
-                pkg, allow_missing_checksums=True,
-                ignore_unknown_mirrors=True, skip_default_mirrors=True))
+            pkg.generate_fetchables(
+                allow_missing_checksums=True, ignore_unknown_mirrors=True,
+                skip_default_mirrors=True))
         for f in fetchables.keys():
             for url in f.uri:
                 yield 'SRC_URI', url

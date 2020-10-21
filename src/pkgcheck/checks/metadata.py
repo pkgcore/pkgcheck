@@ -1118,9 +1118,9 @@ class SrcUriCheck(Check):
         with patch('pkgcore.log.logger.info', report_uri_logs):
             fetchables, unstated = self.iuse_filter(
                 (fetchable,), pkg,
-                pkg._get_attr['fetchables'](
-                    pkg, allow_missing_checksums=True,
-                    ignore_unknown_mirrors=True, skip_default_mirrors=True))
+                pkg.generate_fetchables(
+                    allow_missing_checksums=True, ignore_unknown_mirrors=True,
+                    skip_default_mirrors=True))
 
         yield from uri_reports
 
@@ -1436,9 +1436,9 @@ class MissingUnpackerDepCheck(Check):
         # ignore conditionals
         fetchables, _ = self.fetch_filter(
             (fetchable,), pkg,
-            pkg._get_attr['fetchables'](
-                pkg, allow_missing_checksums=True,
-                ignore_unknown_mirrors=True, skip_default_mirrors=True))
+            pkg.generate_fetchables(
+                allow_missing_checksums=True, ignore_unknown_mirrors=True,
+                skip_default_mirrors=True))
 
         missing_unpackers = defaultdict(set)
 
