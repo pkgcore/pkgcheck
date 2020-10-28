@@ -5,7 +5,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import results
-from . import Check, ExplicitlyEnabledCheck
+from . import Check
 
 # NB: distutils-r1 inherits one of the first two
 ECLASSES = frozenset(['python-r1', 'python-single-r1', 'python-any-r1'])
@@ -262,7 +262,7 @@ class PythonCompatUpdate(results.VersionResult, results.Info):
         return f'PYTHON_COMPAT update{s}: {compat}'
 
 
-class PythonCompatCheck(ExplicitlyEnabledCheck):
+class PythonCompatCheck(Check):
     """Check python ebuilds for possible PYTHON_COMPAT updates.
 
     Currently only supports ebuilds inheriting python-r1 and
