@@ -273,17 +273,18 @@ class PythonCompatCheck(Check):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        repo = self.options.target_repo
 
         # determine available PYTHON_TARGET use flags
         targets = []
-        for target, _desc in self.options.target_repo.config.use_expand_desc[IUSE_PREFIX[:-1]]:
+        for target, _desc in repo.config.use_expand_desc.get(IUSE_PREFIX[:-1], ()):
             if target[len(IUSE_PREFIX):].startswith('python'):
                 targets.append(target)
         multi_targets = tuple(sorted(targets))
 
         # determine available PYTHON_SINGLE_TARGET use flags
         targets = []
-        for target, _desc in self.options.target_repo.config.use_expand_desc[IUSE_PREFIX_S[:-1]]:
+        for target, _desc in repo.config.use_expand_desc.get(IUSE_PREFIX_S[:-1], ()):
             if target[len(IUSE_PREFIX_S):].startswith('python'):
                 targets.append(target)
         single_targets = tuple(sorted(targets))
