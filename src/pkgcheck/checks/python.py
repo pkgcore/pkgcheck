@@ -288,6 +288,12 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
                 targets.append(target)
         single_targets = tuple(sorted(targets))
 
+        targets = []
+        for target in multi_targets:
+            slot = target[len(IUSE_PREFIX) + 6:].replace('_', '.')
+            targets.append(atom(f'dev-lang/python:{slot}'))
+        any_targets = tuple(sorted(targets))
+
         self.targets = {
             'python-r1': {
                 'targets': multi_targets,
@@ -296,6 +302,10 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
             'python-single-r1': {
                 'targets': single_targets,
                 'prefix': IUSE_PREFIX_S,
+            },
+            'python-any-r1': {
+                'targets': any_targets,
+                'prefix': 'dev-lang/python',
             },
         }
 
@@ -330,7 +340,7 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
         except ValueError:
             eclass = None
 
-        if eclass in self.targets:
+        if eclass in ('python-r1', 'python-single-r1'):
             targets = self.targets[eclass]['targets']
             prefix = self.targets[eclass]['prefix']
 
@@ -371,3 +381,27 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
                 if supported:
                     supported = (x[len(prefix):] for x in sorted(supported))
                     yield PythonCompatUpdate(tuple(supported), pkg=pkg)
+        elif eclass == 'python-any-r1':
+            targets = self.targets[eclass]['targets']
+            prefix = self.targets[eclass]['prefix']
+            python_deps = set()
+            for dep in self.deps(pkg, attrs=('depend', 'bdepend')):
+                if dep.key == prefix:
+                    python_deps.add(dep.no_usedeps)
+
+            # determine if any available python targets are missing
+            try:
+                latest_target = sorted(python_deps)[-1]
+            except IndexError:
+                return
+
+            missing = set()
+            for target in reversed(targets):
+                if target == latest_target:
+                    break
+                missing.add(target)
+
+            if missing:
+                impls = (x.slot.replace('.', '_') for x in sorted(missing))
+                supported = (f'python{x}' for x in impls)
+                yield PythonCompatUpdate(tuple(supported), pkg=pkg)
