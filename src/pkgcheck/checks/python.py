@@ -341,7 +341,7 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
                 deps = set()
                 for attr in (x.lower() for x in pkg.eapi.dep_keys):
                     for p in iflatten_instance(getattr(pkg, attr), atom):
-                        if p.use is not None:
+                        if not p.blocks and p.use is not None:
                             for use in self.strip_use(p):
                                 if use.startswith(prefix):
                                     deps.add(p.no_usedeps)
