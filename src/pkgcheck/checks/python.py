@@ -331,7 +331,7 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
             for p in iflatten_instance(getattr(pkg, attr), atom):
                 if not p.blocks:
                     deps.add(p)
-        yield from deps
+        return deps
 
     def feed(self, pkg):
         try:
@@ -383,16 +383,11 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
         elif eclass == 'python-any-r1':
             targets = self.targets[eclass]['targets']
             prefix = self.targets[eclass]['prefix']
+            deps = self.deps(pkg, attrs=('depend', 'bdepend'))
             interp_deps = set()
-            python_deps = set()
-            for dep in self.deps(pkg, attrs=('depend', 'bdepend')):
+            for dep in deps:
                 if dep.key == 'dev-lang/python' and dep.slot is not None:
                     interp_deps.add(f"python{dep.slot.replace('.', '_')}")
-                elif dep.use is not None:
-                    for use in self.strip_use(dep):
-                        if use.startswith(prefix):
-                            python_deps.add(dep.no_usedeps)
-                            break
 
             # determine if any available python targets are missing
             try:
@@ -407,6 +402,15 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
                 missing.add(target)
 
             if missing:
+                # determine python-based deps
+                python_deps = set()
+                for dep in deps:
+                    if dep.use is not None:
+                        for use in self.strip_use(dep):
+                            if use.startswith(prefix):
+                                python_deps.add(dep.no_usedeps)
+                                break
+
                 # determine if deps support missing python targets
                 supported = set(missing)
                 try:
