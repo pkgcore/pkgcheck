@@ -2,9 +2,10 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import JustOneRestriction, OrRestriction
 from snakeoil.sequences import iflatten_instance
+from snakeoil.strings import pluralism
 
 from .. import results
-from . import Check
+from . import Check, ExplicitlyEnabledCheck
 
 # NB: distutils-r1 inherits one of the first two
 ECLASSES = frozenset(['python-r1', 'python-single-r1', 'python-any-r1'])
@@ -245,3 +246,119 @@ class PythonCheck(Check):
                 break
             else:
                 yield PythonMissingDeps('DEPEND', pkg=pkg)
+
+
+class PythonCompatUpdate(results.VersionResult, results.Info):
+    """PYTHON_COMPAT can be updated to support newer python version(s)."""
+
+    def __init__(self, compat, **kwargs):
+        super().__init__(**kwargs)
+        self.compat = compat
+
+    @property
+    def desc(self):
+        s = pluralism(self.compat)
+        compat = ', '.join(self.compat)
+        return f'PYTHON_COMPAT update{s}: {compat}'
+
+
+class PythonCompatCheck(ExplicitlyEnabledCheck):
+    """Check python ebuilds for possible PYTHON_COMPAT updates.
+
+    Currently only supports ebuilds inheriting python-r1 and
+    python-single-r1, not python-any-r1.
+    """
+
+    known_results = frozenset([PythonCompatUpdate])
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # determine available PYTHON_TARGET use flags
+        targets = []
+        for target, _desc in self.options.target_repo.config.use_expand_desc[IUSE_PREFIX[:-1]]:
+            if target[len(IUSE_PREFIX):].startswith('python'):
+                targets.append(target)
+        multi_targets = tuple(sorted(targets))
+
+        # determine available PYTHON_SINGLE_TARGET use flags
+        targets = []
+        for target, _desc in self.options.target_repo.config.use_expand_desc[IUSE_PREFIX_S[:-1]]:
+            if target[len(IUSE_PREFIX_S):].startswith('python'):
+                targets.append(target)
+        single_targets = tuple(sorted(targets))
+
+        self.targets = {
+            'python-r1': {
+                'targets': multi_targets,
+                'prefix': IUSE_PREFIX,
+            },
+            'python-single-r1': {
+                'targets': single_targets,
+                'prefix': IUSE_PREFIX_S,
+            },
+        }
+
+        self.conditional_ops = {'?', '='}
+        self.use_defaults = {'(+)', '(-)'}
+
+    def strip_use(self, atom):
+        stripped_use = []
+        for x in atom.use:
+            if x.startswith(('-', '!')):
+                continue
+            if x[-1] in self.conditional_ops:
+                x = x[:-1]
+            if x[-3:] in self.use_defaults:
+                x = x[:-3]
+            stripped_use.append(x)
+        return stripped_use
+
+    def feed(self, pkg):
+        try:
+            eclass = PythonCheck.get_python_eclass(pkg)
+        except ValueError:
+            eclass = None
+
+        if eclass in self.targets:
+            targets = self.targets[eclass]['targets']
+            prefix = self.targets[eclass]['prefix']
+
+            # determine if any available python targets are missing
+            try:
+                latest_target = sorted(x for x in pkg.iuse_stripped if x.startswith(prefix))[-1]
+            except IndexError:
+                return
+
+            missing = set()
+            for target in reversed(targets):
+                if target == latest_target:
+                    break
+                missing.add(target)
+
+            if missing:
+                # determine python-based deps
+                deps = set()
+                for attr in (x.lower() for x in pkg.eapi.dep_keys):
+                    for p in iflatten_instance(getattr(pkg, attr), atom):
+                        if p.use is not None:
+                            for use in self.strip_use(p):
+                                if use.startswith(prefix):
+                                    deps.add(p.no_usedeps)
+                                    break
+
+                # determine if deps support missing python targets
+                supported = set(missing)
+                try:
+                    for dep in deps:
+                        # TODO: use query caching for repo matching?
+                        latest = sorted(self.options.search_repo.match(dep))[-1]
+                        supported &= latest.iuse_stripped
+                        if not supported:
+                            return
+                except IndexError:
+                    return
+
+                if supported:
+                    supported = (x[len(prefix):] for x in sorted(supported))
+                    yield PythonCompatUpdate(tuple(supported), pkg=pkg)
