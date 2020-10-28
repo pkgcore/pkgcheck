@@ -314,6 +314,16 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
             stripped_use.append(x)
         return stripped_use
 
+    def deps(self, pkg, attrs=None):
+        """Iterator of unique dependencies for a given package."""
+        attrs = attrs if attrs is not None else pkg.eapi.dep_keys
+        deps = set()
+        for attr in (x.lower() for x in attrs):
+            for p in iflatten_instance(getattr(pkg, attr), atom):
+                if not p.blocks:
+                    deps.add(p)
+        yield from deps
+
     def feed(self, pkg):
         try:
             eclass = PythonCheck.get_python_eclass(pkg)
@@ -338,19 +348,18 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
 
             if missing:
                 # determine python-based deps
-                deps = set()
-                for attr in (x.lower() for x in pkg.eapi.dep_keys):
-                    for p in iflatten_instance(getattr(pkg, attr), atom):
-                        if not p.blocks and p.use is not None:
-                            for use in self.strip_use(p):
-                                if use.startswith(prefix):
-                                    deps.add(p.no_usedeps)
-                                    break
+                python_deps = set()
+                for dep in self.deps(pkg):
+                    if dep.use is not None:
+                        for use in self.strip_use(dep):
+                            if use.startswith(prefix):
+                                python_deps.add(dep.no_usedeps)
+                                break
 
                 # determine if deps support missing python targets
                 supported = set(missing)
                 try:
-                    for dep in deps:
+                    for dep in python_deps:
                         # TODO: use query caching for repo matching?
                         latest = sorted(self.options.search_repo.match(dep))[-1]
                         supported &= latest.iuse_stripped
