@@ -290,8 +290,7 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
 
         targets = []
         for target in multi_targets:
-            slot = target[len(IUSE_PREFIX) + 6:].replace('_', '.')
-            targets.append(atom(f'dev-lang/python:{slot}'))
+            targets.append(target[len(IUSE_PREFIX):])
         any_targets = tuple(sorted(targets))
 
         self.targets = {
@@ -305,7 +304,7 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
             },
             'python-any-r1': {
                 'targets': any_targets,
-                'prefix': 'dev-lang/python',
+                'prefix': (IUSE_PREFIX, IUSE_PREFIX_S),
             },
         }
 
@@ -384,14 +383,20 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
         elif eclass == 'python-any-r1':
             targets = self.targets[eclass]['targets']
             prefix = self.targets[eclass]['prefix']
+            interp_deps = set()
             python_deps = set()
             for dep in self.deps(pkg, attrs=('depend', 'bdepend')):
-                if dep.key == prefix:
-                    python_deps.add(dep.no_usedeps)
+                if dep.key == 'dev-lang/python' and dep.slot is not None:
+                    interp_deps.add(f"python{dep.slot.replace('.', '_')}")
+                elif dep.use is not None:
+                    for use in self.strip_use(dep):
+                        if use.startswith(prefix):
+                            python_deps.add(dep.no_usedeps)
+                            break
 
             # determine if any available python targets are missing
             try:
-                latest_target = sorted(python_deps)[-1]
+                latest_target = sorted(interp_deps)[-1]
             except IndexError:
                 return
 
@@ -402,6 +407,19 @@ class PythonCompatCheck(ExplicitlyEnabledCheck):
                 missing.add(target)
 
             if missing:
-                impls = (x.slot.replace('.', '_') for x in sorted(missing))
-                supported = (f'python{x}' for x in impls)
-                yield PythonCompatUpdate(tuple(supported), pkg=pkg)
+                # determine if deps support missing python targets
+                supported = set(missing)
+                try:
+                    for dep in python_deps:
+                        # TODO: use query caching for repo matching?
+                        latest = sorted(self.options.search_repo.match(dep))[-1]
+                        supported &= {
+                            f"python{x.rsplit('python', 1)[-1]}"
+                            for x in latest.iuse_stripped if x.startswith(prefix)}
+                        if not supported:
+                            return
+                except IndexError:
+                    return
+
+                if supported:
+                    yield PythonCompatUpdate(tuple(sorted(supported)), pkg=pkg)
