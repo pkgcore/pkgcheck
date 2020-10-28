@@ -130,13 +130,13 @@ class PythonCheck(Check):
 
     @staticmethod
     def get_python_eclass(pkg):
-        eclasses = set(ECLASSES).intersection(pkg.inherited)
+        eclasses = ECLASSES.intersection(pkg.inherited)
         # All three eclasses block one another, but check and throw an error
         # just in case it isn't caught when sourcing the ebuild.
         if len(eclasses) > 1:
             raise ValueError(
                 f"python eclasses are mutually exclusive: [ {', '.join(eclasses)} ]")
-        return eclasses.pop() if eclasses else None
+        return next(iter(eclasses)) if eclasses else None
 
     def scan_tree_recursively(self, deptree, expected_cls):
         for x in deptree:
