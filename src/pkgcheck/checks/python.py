@@ -251,15 +251,15 @@ class PythonCheck(Check):
 class PythonCompatUpdate(results.VersionResult, results.Info):
     """PYTHON_COMPAT can be updated to support newer python version(s)."""
 
-    def __init__(self, compat, **kwargs):
+    def __init__(self, updates, **kwargs):
         super().__init__(**kwargs)
-        self.compat = compat
+        self.updates = updates
 
     @property
     def desc(self):
-        s = pluralism(self.compat)
-        compat = ', '.join(self.compat)
-        return f'PYTHON_COMPAT update{s}: {compat}'
+        s = pluralism(self.updates)
+        updates = ', '.join(self.updates)
+        return f'PYTHON_COMPAT update{s} available: {updates}'
 
 
 class PythonCompatCheck(Check):
