@@ -98,16 +98,18 @@ class ExplicitlyEnabledCheck(Check):
     def skip(cls, namespace, skip=False):
         if not skip:
             if namespace.selected_checks is not None:
-                disabled, enabled = namespace.selected_checks
+                _disabled_checks, enabled_checks = namespace.selected_checks
             else:
-                disabled, enabled = [], []
+                _disabled_checks, enabled_checks = [], []
 
-            # enable checks for selected keywords
-            keywords = namespace.filtered_keywords
-            if keywords is not None:
-                keywords = keywords.intersection(cls.known_results)
+            if namespace.selected_keywords is not None:
+                _disabled_keywords, enabled_keywords = namespace.selected_keywords
+            else:
+                _disabled_keywords, enabled_keywords = [], []
 
-            skip = cls.__name__ not in enabled and not keywords
+            skip = cls.__name__ not in enabled_checks and \
+                not cls.known_results.intersection(enabled_keywords)
+
             if skip:
                 logger.info(f'skipping {cls.__name__}, not explicitly enabled')
         return super().skip(namespace, skip=skip)
