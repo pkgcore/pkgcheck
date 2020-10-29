@@ -118,7 +118,7 @@ class EclassDocMissingFunc(results.EclassResult, results.Warning):
 
     def __init__(self, functions, **kwargs):
         super().__init__(**kwargs)
-        self.functions = functions
+        self.functions = tuple(functions)
 
     @property
     def desc(self):
@@ -176,5 +176,5 @@ class EclassCheck(Check):
                 }
                 funcs_missing_docs = public_funcs - eclass_obj.functions
                 if funcs_missing_docs:
-                    missing = tuple(sorted(funcs_missing_docs))
+                    missing = sorted(funcs_missing_docs)
                     yield EclassDocMissingFunc(missing, eclass=eclass)

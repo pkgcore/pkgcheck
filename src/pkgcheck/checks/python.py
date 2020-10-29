@@ -253,7 +253,7 @@ class PythonCompatUpdate(results.VersionResult, results.Info):
 
     def __init__(self, updates, **kwargs):
         super().__init__(**kwargs)
-        self.updates = updates
+        self.updates = tuple(updates)
 
     @property
     def desc(self):
@@ -384,7 +384,7 @@ class PythonCompatCheck(Check):
 
                 if supported:
                     supported = (x[len(prefix):] for x in sorted(supported))
-                    yield PythonCompatUpdate(tuple(supported), pkg=pkg)
+                    yield PythonCompatUpdate(supported, pkg=pkg)
         elif eclass == 'python-any-r1':
             targets = self.targets[eclass]['targets']
             prefix = self.targets[eclass]['prefix']
@@ -435,4 +435,4 @@ class PythonCompatCheck(Check):
                     return
 
                 if supported:
-                    yield PythonCompatUpdate(tuple(sorted(supported)), pkg=pkg)
+                    yield PythonCompatUpdate(sorted(supported), pkg=pkg)
