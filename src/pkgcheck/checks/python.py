@@ -350,6 +350,10 @@ class PythonCompatCheck(Check):
             except IndexError:
                 return
 
+            # ignore pkgs that probably aren't py3 compatible
+            if latest_target == 'python_targets_python2_7':
+                return
+
             missing = set()
             for target in reversed(targets):
                 if target == latest_target:
@@ -390,14 +394,14 @@ class PythonCompatCheck(Check):
                 if dep.key == 'dev-lang/python' and dep.slot is not None:
                     interp_deps.add(f"python{dep.slot.replace('.', '_')}")
 
-            # ignore pkgs that are probably stuck on python2, e.g. chromium
-            if len(interp_deps) == 1 and 'python2_7' in interp_deps:
-                return
-
             # determine if any available python targets are missing
             try:
                 latest_target = sorted(interp_deps)[-1]
             except IndexError:
+                return
+
+            # ignore pkgs that are probably stuck on python2, e.g. chromium
+            if latest_target == 'python2_7':
                 return
 
             missing = set()
