@@ -1,7 +1,8 @@
 """Various line-based checks."""
 
-import re
 from collections import defaultdict
+from itertools import chain
+import re
 
 from pkgcore.ebuild.eapi import EAPI
 from snakeoil.klass import jit_attr
@@ -9,8 +10,8 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import stable_unique
 from snakeoil.strings import pluralism
 
-from .. import results, sources
-from . import Check
+from .. import eclass as eclass_mod, results, sources
+from . import Check, ExplicitlyEnabledCheck
 
 PREFIX_VARIABLES = ('EROOT', 'ED', 'EPREFIX')
 PATH_VARIABLES = ('BROOT', 'ROOT', 'D') + PREFIX_VARIABLES
@@ -497,6 +498,118 @@ class RawEbuildCheck(Check):
             attr = match.lastgroup
             func = getattr(self, f'check_{attr}')
             yield from func(pkg, match.group(attr))
+
+
+class MissingInherits(results.VersionResult, results.Warning):
+    """Ebuild uses functions from eclass(es) that aren't directly inherited."""
+
+    def __init__(self, eclasses, **kwargs):
+        super().__init__(**kwargs)
+        self.eclasses = eclasses
+
+    @property
+    def desc(self):
+        s = pluralism(self.eclasses)
+        eclasses = ', '.join(self.eclasses)
+        return f'missing inherit{s}: {eclasses}'
+
+
+class UnusedInherits(results.VersionResult, results.Warning):
+    """Ebuild inherits eclass(es) that are unused."""
+
+    def __init__(self, eclasses, **kwargs):
+        super().__init__(**kwargs)
+        self.eclasses = eclasses
+
+    @property
+    def desc(self):
+        es = pluralism(self.eclasses, plural='es')
+        eclasses = ', '.join(self.eclasses)
+        return f'unused eclass{es}: {eclasses}'
+
+
+# TODO: Enable by default once allowed indirect, phase func, and non-func
+# eclass false positives are fixed in addition to eclass doc parsing issues.
+class InheritsCheck(ExplicitlyEnabledCheck):
+    """Scan for ebuilds with missing or unused eclass inherits."""
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset([MissingInherits, UnusedInherits])
+    required_addons = (eclass_mod.EclassAddon,)
+
+    def __init__(self, *args, eclass_addon):
+        super().__init__(*args)
+        self.eclass_addon = eclass_addon
+        self.eclasses = {}
+        self.exports = defaultdict(set)
+
+    @jit_attr
+    def _eclass_re(self):
+        functions = []
+        for i, (name, eclass_obj) in enumerate(self.eclass_addon.eclasses.items()):
+            exported_funcs = [f for f in eclass_obj.functions if f[0] != '_']
+            exported_vars = [f for f in eclass_obj.variables if f[0] != '_']
+            if exported_funcs or exported_vars:
+                # Regex groups don't allow freeform strings so create a mapping
+                # back to their original names.
+                key = f'eclass_{i}'
+                exported = exported_funcs + exported_vars
+                functions.append(rf'(?P<{key}>{"|".join(re.escape(f) for f in exported)})')
+                for export in exported:
+                    self.exports[export].add(name)
+                self.eclasses[key] = name
+        return re.compile(rf'\b({"|".join(functions)})\b')
+
+    def feed(self, pkg):
+        if pkg.inherit:
+            used = defaultdict(set)
+            lines = enumerate(pkg.lines, 1)
+            for lineno, line in lines:
+                line = line.strip()
+                if not line or line[0] == '#':
+                    continue
+                m = self._eclass_re.match(line)
+                for m in re.finditer(self._eclass_re, line):
+                    match = m.group(0)
+                    # ignore EAPI-related variables eclasses are allowed to set
+                    if match in pkg.eapi.eclass_keys:
+                        continue
+                    for k, v in m.groupdict().items():
+                        if v and v not in pkg.eapi.bash_funcs:
+                            if len(self.exports[v]) > 1:
+                                # function exported by multiple eclasses
+                                inherited = self.exports[v].intersection(pkg.inherited)
+                                if len(inherited) == 1:
+                                    used[inherited.pop()].add(match)
+                            else:
+                                used[self.eclasses[k]].add(match)
+
+            # direct inherits
+            inherit = set(pkg.inherit)
+            # allowed indirect inherits
+            indirect_allowed = set(chain.from_iterable(
+                self.eclass_addon.eclasses[x].indirect_eclasses for x in inherit))
+            # missing inherits
+            missing = used.keys() - inherit - indirect_allowed
+
+            unused = inherit - used.keys()
+            # remove eclasses that use implicit phase functions
+            if unused and pkg.defined_phases:
+                phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
+                for eclass in list(unused):
+                    eclass_phases = {f'{eclass}_{phase}' for phase in phases}
+                    if self.eclass_addon.eclasses[eclass].functions & eclass_phases:
+                        unused.discard(eclass)
+
+            for eclass in list(missing):
+                # ignore probable conditional VCS eclass inherits
+                if self.eclass_addon.eclass[eclass].live:
+                    missing.discard(eclass)
+
+            if missing:
+                yield MissingInherits(tuple(sorted(missing)), pkg=pkg)
+            if unused:
+                yield UnusedInherits(tuple(sorted(unused)), pkg=pkg)
 
 
 class RedundantDodir(results.LineResult, results.Warning):
