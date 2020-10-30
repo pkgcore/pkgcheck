@@ -266,7 +266,11 @@ class Eclass(UserDict):
     def __init__(self, path):
         self.path = path
         self.mtime = os.path.getmtime(self.path)
-        data = self.parse(self.path)
+        # ignore parsing errors when constructing cache objects
+        try:
+            data = self.parse(self.path)
+        except EclassDocParsingError:
+            data = {}
         super().__init__(data)
 
     @property
