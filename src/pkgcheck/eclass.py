@@ -4,7 +4,10 @@ from collections import UserDict
 import os
 import pickle
 import re
+import shlex
+import subprocess
 
+from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.eapi import EAPI
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
@@ -271,6 +274,11 @@ class Eclass(UserDict):
         """Tuple of documented variable names in the eclass."""
         return frozenset(d['name'] for d in self.data.get('variables', []))
 
+    @property
+    def live(self):
+        """Eclass implements functionality to support a version control system."""
+        return 'live' in self.data.get('_properties', ())
+
     @staticmethod
     def parse(path):
         """Parse eclass docs."""
@@ -325,6 +333,18 @@ class Eclass(UserDict):
                         f'{repr(block[0])}, line {block_start}: duplicate block'))
                 duplicates[tag].add(name)
                 data.setdefault(block_obj._key, []).append(block_data)
+
+        # TODO: support this via pkgcore's ebd
+        # source eclass to determine PROPERTIES, currently
+        # assumes a simple whitespace separated list without
+        # depset syntax
+        p = subprocess.run(
+            ['bash', '-c', f'source {shlex.quote(path)}; echo ${{PROPERTIES}}'],
+            stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
+        if p.returncode == 0:
+            properties = p.stdout.splitlines()[0]
+            data['_properties'] = conditionals.DepSet.parse(
+                properties, str, operators={}, attr='PROPERTIES')
 
         return data
 
