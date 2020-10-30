@@ -74,6 +74,11 @@ class _EclassDoc:
             raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: non-inline arg')
         return block[0]
 
+    def _tag_inline_list(self, block, tag, lineno):
+        """Parse tags with inline, space-separated list argument."""
+        line = self._tag_inline_arg(block, tag, lineno)
+        return tuple(line.split())
+
     # TODO: add support for @CODE blocks once doc output is added
     def _tag_multiline_args(self, block, tag, lineno):
         """Parse tags with multiline arguments."""
@@ -145,6 +150,7 @@ class _EclassBlock(_EclassDoc):
             '@VCSURL:': ('vcsurl', False, self._tag_inline_arg),
             '@BLURB:': ('blurb', True, self._tag_inline_arg),
             '@DEPRECATED:': ('deprecated', False, self._tag_deprecated),
+            '@INDIRECT_ECLASSES:': ('indirect_eclasses', False, self._tag_inline_list),
 
             '@MAINTAINER:': ('maintainers', True, self._tag_multiline_args),
             '@AUTHOR:': ('authors', False, self._tag_multiline_args),
@@ -160,9 +166,8 @@ class _EclassBlock(_EclassDoc):
 
     def _supported_eapis(self, block, tag, lineno):
         """Parse @SUPPORTED_EAPIS tag arguments."""
-        line = self._tag_inline_arg(block, tag, lineno)
-        eapis = set(line.split())
-        unknown = eapis - self._known_eapis
+        eapis = self._tag_inline_list(block, tag, lineno)
+        unknown = set(eapis) - self._known_eapis
         if unknown:
             s = pluralism(unknown)
             unknown_str = ' '.join(sorted(unknown))
@@ -266,13 +271,18 @@ class Eclass(UserDict):
 
     @property
     def functions(self):
-        """Tuple of documented function names in the eclass."""
-        return frozenset(d['name'] for d in self.data.get('functions', []))
+        """Set of documented function names in the eclass."""
+        return frozenset(d['name'] for d in self.data.get('functions', ()))
 
     @property
     def variables(self):
-        """Tuple of documented variable names in the eclass."""
-        return frozenset(d['name'] for d in self.data.get('variables', []))
+        """Set of documented variable names in the eclass."""
+        return frozenset(d['name'] for d in self.data.get('variables', ()))
+
+    @property
+    def indirect_eclasses(self):
+        """Set of allowed indirect eclass inherits."""
+        return frozenset(self.data.get('indirect_eclasses', ()))
 
     @property
     def live(self):
