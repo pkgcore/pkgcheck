@@ -16,7 +16,7 @@ def test_check_scope(tool):
     # forcibly enable all checks so none are skipped
     namespace.forced_checks = [name for name, _cls in objects.CHECKS.items()]
     options, _func = tool.parse_args(['scan'], namespace)
-    enabled_checks, _ = init_checks(options.addons, options)
+    enabled_checks = init_checks(options.addons, options)
     for scope, d in enabled_checks.items():
         for (source, is_async), runners in d.items():
             for check in runners:
