@@ -547,13 +547,13 @@ class InheritsCheck(ExplicitlyEnabledCheck):
     def _eclass_re(self):
         exported_regexes = []
         for i, (name, eclass_obj) in enumerate(self.eclass_addon.eclasses.items()):
-            exported_funcs = [f for f in eclass_obj.functions if f[0] != '_']
-            exported_vars = [f for f in eclass_obj.variables if f[0] != '_']
-            if exported_funcs or exported_vars:
+            # TODO: Move to using eclass doc tagged function
+            # list once eclass doc issues are fixed.
+            exported = eclass_obj.exported_functions | eclass_obj.variables
+            if exported:
                 # Regex groups don't allow freeform strings so create a mapping
                 # back to their original names.
                 key = f'eclass_{i}'
-                exported = exported_funcs + exported_vars
                 exported_regexes.append(rf'(?P<{key}>{"|".join(re.escape(f) for f in exported)})')
                 for export in exported:
                     self.exports[export].add(name)
@@ -598,7 +598,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                 phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
                 for eclass in list(unused):
                     eclass_phases = {f'{eclass}_{phase}' for phase in phases}
-                    if self.eclass_addon.eclasses[eclass].functions & eclass_phases:
+                    if self.eclass_addon.eclasses[eclass].exported_functions & eclass_phases:
                         unused.discard(eclass)
 
             for eclass in list(missing):
