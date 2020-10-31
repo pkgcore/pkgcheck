@@ -503,7 +503,7 @@ class RawEbuildCheck(Check):
 
 
 class MissingInherits(results.VersionResult, results.Warning):
-    """Ebuild uses functions from eclass(es) that aren't directly inherited."""
+    """Ebuild uses function from eclass that isn't directly inherited."""
 
     def __init__(self, eclass, lineno, usage, **kwargs):
         super().__init__(**kwargs)
@@ -517,7 +517,7 @@ class MissingInherits(results.VersionResult, results.Warning):
 
 
 class UnusedInherits(results.VersionResult, results.Warning):
-    """Ebuild inherits eclass(es) that are unused."""
+    """Ebuild inherits eclasses that are unused."""
 
     def __init__(self, eclasses, **kwargs):
         super().__init__(**kwargs)
