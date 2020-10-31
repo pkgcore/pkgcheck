@@ -349,9 +349,7 @@ class Eclass(UserDict):
                 data.setdefault(block_obj._key, []).append(block_data)
 
         # TODO: support this via pkgcore's ebd
-        # source eclass to determine PROPERTIES, currently
-        # assumes a simple whitespace separated list without
-        # depset syntax
+        # source eclass to determine PROPERTIES
         p = subprocess.run(
             ['bash', '-c', f'source {shlex.quote(path)}; echo ${{PROPERTIES}}'],
             stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
