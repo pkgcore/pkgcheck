@@ -3,7 +3,6 @@ import subprocess
 
 from pkgcore.ebuild.eapi import EAPI
 from snakeoil.contexts import patch
-from snakeoil.klass import jit_attr
 from snakeoil.strings import pluralism
 
 from .. import base, results, sources
@@ -159,19 +158,6 @@ class EclassCheck(Check):
         super().__init__(*args)
         latest_eapi = EAPI.known_eapis[sorted(EAPI.known_eapis)[-1]]
         self.known_phases = set(latest_eapi.phases_rev)
-        self.allowed_vars = self.bash_env_vars | latest_eapi.eclass_keys
-
-    @jit_attr
-    def bash_env_vars(self):
-        """The set of all bash variables defined in the default environment."""
-        variables = []
-        # use no-op to fake a pipeline so pipeline specific vars are defined
-        p = subprocess.run(
-            ['bash', '-c', ':; compgen -A variable'],
-            stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
-        if p.returncode == 0:
-            variables = p.stdout.splitlines()
-        return frozenset(variables)
 
     def feed(self, eclass):
         # check for eclass bash syntax errors
@@ -196,31 +182,15 @@ class EclassCheck(Check):
                 eclass_obj = Eclass(eclass.path)
             yield from doc_errors
 
-            p = subprocess.run(
-                ['bash', '-c',
-                 f'source {shlex.quote(eclass.path)}; '
-                 f'compgen -A function && echo "#" && compgen -A variable'],
-                stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
-            if p.returncode == 0:
-                phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
-                funcs, variables = p.stdout.split('#\n')
-                # TODO: ignore overridden funcs from other eclasses?
-                # ignore underscore prefixed funcs and phase funcs
-                public_funcs = {
-                    func for func in funcs.split()
-                    if not func.startswith('_') and func not in phase_funcs
-                }
-                # TODO: ignore overridden vars from other eclasses?
-                # ignore underscore prefixed vars and ebuild-specific vars
-                public_vars = {
-                    var for var in variables.split()
-                    if not var.startswith('_') and var not in self.allowed_vars
-                }
-                funcs_missing_docs = public_funcs - eclass_obj.functions
-                if funcs_missing_docs:
-                    missing = sorted(funcs_missing_docs)
-                    yield EclassDocMissingFunc(missing, eclass=eclass)
-                vars_missing_docs = public_vars - eclass_obj.variables
-                if vars_missing_docs:
-                    missing = tuple(sorted(vars_missing_docs))
-                    yield EclassDocMissingVar(missing, eclass=eclass)
+            phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
+            # TODO: ignore overridden funcs from other eclasses?
+            # ignore phase funcs
+            funcs_missing_docs = eclass_obj.exported_functions - phase_funcs - eclass_obj.functions
+            if funcs_missing_docs:
+                missing = sorted(funcs_missing_docs)
+                yield EclassDocMissingFunc(missing, eclass=eclass)
+            # TODO: ignore overridden vars from other eclasses?
+            vars_missing_docs = eclass_obj.exported_variables - eclass_obj.variables
+            if vars_missing_docs:
+                missing = tuple(sorted(vars_missing_docs))
+                yield EclassDocMissingVar(missing, eclass=eclass)

@@ -102,6 +102,24 @@ class _EclassDoc:
                 tags.add(tag)
         return frozenset(tags)
 
+    @klass.jit_attr
+    def bash_env_vars(self):
+        """The set of all bash variables defined in the default environment."""
+        variables = []
+        # use no-op to fake a pipeline so pipeline specific vars are defined
+        p = subprocess.run(
+            ['bash', '-c', ':; compgen -A variable'],
+            stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
+        if p.returncode == 0:
+            variables = p.stdout.splitlines()
+        return frozenset(variables)
+
+    @klass.jit_attr
+    def ignored_exported_vars(self):
+        """The set of variables exported by eclass bash sourcing to ignore."""
+        latest_eapi = EAPI.known_eapis[sorted(EAPI.known_eapis)[-1]]
+        return self.bash_env_vars | latest_eapi.eclass_keys
+
     def parse(self, lines, line_ind):
         """Parse an eclass block."""
         blocks = []
@@ -279,9 +297,19 @@ class Eclass(UserDict):
         return frozenset(d['name'] for d in self.data.get('functions', ()))
 
     @property
+    def exported_functions(self):
+        """Set of all exported function names in the eclass."""
+        return frozenset(self.data.get('_exported_funcs', ()))
+
+    @property
     def variables(self):
         """Set of documented variable names in the eclass."""
         return frozenset(d['name'] for d in self.data.get('variables', ()))
+
+    @property
+    def exported_variables(self):
+        """Set of all exported variable names in the eclass."""
+        return frozenset(self.data.get('_exported_vars', ()))
 
     @property
     def indirect_eclasses(self):
@@ -351,10 +379,22 @@ class Eclass(UserDict):
         # TODO: support this via pkgcore's ebd
         # source eclass to determine PROPERTIES
         p = subprocess.run(
-            ['bash', '-c', f'source {shlex.quote(path)}; echo ${{PROPERTIES}}'],
+            ['bash', '-c',
+                f'source {shlex.quote(path)}; '
+                f'compgen -A function; '
+                f'echo "#"; '
+                f'compgen -A variable; '
+                f'echo "#"; '
+                f'echo ${{PROPERTIES}}'],
             stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
         if p.returncode == 0:
-            properties = p.stdout.splitlines()[0]
+            eclass_obj = _eclass_blocks['@ECLASS:']
+            funcs, variables, properties = p.stdout.split('#\n')
+            # ignore underscore prefixed funcs
+            data['_exported_funcs'] = {x for x in funcs.split() if not x.startswith('_')}
+            exported_vars = {x for x in variables.split() if not x.startswith('_')}
+            # ignore underscore prefixed vars
+            data['_exported_vars'] = exported_vars - eclass_obj.ignored_exported_vars
             data['_properties'] = conditionals.DepSet.parse(
                 properties, str, operators={}, attr='PROPERTIES')
 
