@@ -1,6 +1,7 @@
 from collections import defaultdict
 from difflib import SequenceMatcher
 from itertools import chain
+import re
 
 from pkgcore import fetch
 from snakeoil.contexts import patch
@@ -678,6 +679,8 @@ class ManifestCollisionCheck(Check):
         super().__init__(*args)
         self.seen_files = {}
         self.seen_chksums = {}
+        # ignore go.mod false positives (issue #228)
+        self._ignored_files_re = re.compile(r'^.*%2F@v.*\.mod$')
 
     def _conflicts(self, pkg):
         """Check for similarly named distfiles with different checksums."""
@@ -709,7 +712,7 @@ class ManifestCollisionCheck(Check):
                 self.seen_chksums[key] = (pkg.key, filename)
                 continue
             seen_pkg, seen_file = existing
-            if seen_file == filename:
+            if seen_file == filename or self._ignored_files_re.match(filename):
                 continue
             yield MatchingChksums(filename, seen_file, seen_pkg, pkg=pkg)
 
