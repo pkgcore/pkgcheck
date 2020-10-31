@@ -565,8 +565,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                 line = line.strip()
                 if not line or line[0] == '#':
                     continue
-                m = self._eclass_re.match(line)
-                for m in re.finditer(self._eclass_re, line):
+                for m in self._eclass_re.finditer(line):
                     for i, v in enumerate(m.groups()[1:]):
                         if v is not None and v not in pkg.eapi.bash_funcs:
                             if len(self.exports[v]) > 1:
