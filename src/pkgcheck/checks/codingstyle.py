@@ -551,9 +551,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
 
         exported_regexes = []
         for i, (name, eclass_obj) in enumerate(self.eclass_cache.items()):
-            # TODO: Move to using eclass doc tagged function
-            # list once eclass doc issues are fixed.
-            exported = eclass_obj.exported_functions | eclass_obj.variables
+            exported = eclass_obj.functions | eclass_obj.variables
             if exported:
                 # Regex groups don't allow freeform strings so create a mapping
                 # back to their original names.
