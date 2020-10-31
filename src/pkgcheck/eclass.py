@@ -114,12 +114,6 @@ class _EclassDoc:
             variables = p.stdout.splitlines()
         return frozenset(variables)
 
-    @klass.jit_attr
-    def ignored_exported_vars(self):
-        """The set of variables exported by eclass bash sourcing to ignore."""
-        latest_eapi = EAPI.known_eapis[sorted(EAPI.known_eapis)[-1]]
-        return self.bash_env_vars | latest_eapi.eclass_keys
-
     def parse(self, lines, line_ind):
         """Parse an eclass block."""
         blocks = []
@@ -314,7 +308,7 @@ class Eclass(UserDict):
             data['_exported_funcs'] = tuple(funcs.split())
             data['_exported_vars'] = tuple(
                 x for x in variables.split()
-                if x not in eclass_obj.ignored_exported_vars
+                if x not in eclass_obj.bash_env_vars
             )
             data['_properties'] = conditionals.DepSet.parse(
                 properties, str, operators={}, attr='PROPERTIES')

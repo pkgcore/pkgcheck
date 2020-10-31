@@ -604,8 +604,11 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                         unused.discard(eclass)
 
             for eclass in list(unused):
-                # ignore eclasses with parsing failures
                 if self.eclass_cache[eclass].get('_parse_failed', False):
+                    # ignore eclasses with parsing failures
+                    unused.discard(eclass)
+                elif pkg.eapi.eclass_keys & self.eclass_cache[eclass].exported_variables:
+                    # ignore eclasses that export ebuild metadata (e.g. SRC_URI, S, ...)
                     unused.discard(eclass)
 
             for eclass in list(missing):
