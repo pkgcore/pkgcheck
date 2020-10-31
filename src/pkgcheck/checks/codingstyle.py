@@ -503,14 +503,20 @@ class RawEbuildCheck(Check):
 class MissingInherits(results.VersionResult, results.Warning):
     """Ebuild uses functions from eclass(es) that aren't directly inherited."""
 
-    def __init__(self, eclasses, **kwargs):
+    def __init__(self, eclasses, usage=None, **kwargs):
         super().__init__(**kwargs)
         self.eclasses = eclasses
+        self.usage = usage
 
     @property
     def desc(self):
         s = pluralism(self.eclasses)
-        eclasses = ', '.join(self.eclasses)
+        if self.usage is not None:
+            lineno, match = self.usage
+            eclass = self.eclasses[0]
+            eclasses = f'{eclass} (usage: {match}, line {lineno})'
+        else:
+            eclasses = ', '.join(self.eclasses)
         return f'missing inherit{s}: {eclasses}'
 
 
@@ -562,7 +568,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
 
     def feed(self, pkg):
         if pkg.inherit:
-            used = defaultdict(set)
+            used = defaultdict(list)
             lines = enumerate(pkg.lines, 1)
             for lineno, line in lines:
                 line = line.strip()
@@ -580,9 +586,9 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                                 # function exported by multiple eclasses
                                 inherited = self.exports[v].intersection(pkg.inherited)
                                 if len(inherited) == 1:
-                                    used[inherited.pop()].add((lineno, match))
+                                    used[inherited.pop()].append((lineno, match))
                             else:
-                                used[self.eclasses[k]].add((lineno, match))
+                                used[self.eclasses[k]].append((lineno, match))
 
             # direct inherits
             inherit = set(pkg.inherit)
@@ -607,7 +613,13 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                     missing.discard(eclass)
 
             if missing:
-                yield MissingInherits(tuple(sorted(missing)), pkg=pkg)
+                if self.options.verbosity > 0:
+                    # support per eclass missing usage example for debugging
+                    for eclass in missing:
+                        usage = used[eclass][0]
+                        yield MissingInherits((eclass,), usage=usage, pkg=pkg)
+                else:
+                    yield MissingInherits(tuple(sorted(missing)), pkg=pkg)
             if unused:
                 yield UnusedInherits(tuple(sorted(unused)), pkg=pkg)
 
