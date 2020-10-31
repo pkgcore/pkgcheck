@@ -107,8 +107,9 @@ class ExplicitlyEnabledCheck(Check):
             else:
                 _disabled_keywords, enabled_keywords = [], []
 
+            known_results = {x.name for x in cls.known_results}
             skip = cls.__name__ not in enabled_checks and \
-                not cls.known_results.intersection(enabled_keywords)
+                not known_results.intersection(enabled_keywords)
 
             if skip:
                 logger.info(f'skipping {cls.__name__}, not explicitly enabled')
