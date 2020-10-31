@@ -137,7 +137,7 @@ class EclassDocMissingVar(results.EclassResult, results.Warning):
 
     def __init__(self, variables, **kwargs):
         super().__init__(**kwargs)
-        self.variables = variables
+        self.variables = tuple(variables)
 
     @property
     def desc(self):
@@ -187,7 +187,7 @@ class EclassCheck(Check):
             # ignore phase funcs
             funcs_missing_docs = eclass_obj.exported_functions - phase_funcs - eclass_obj.functions
             if funcs_missing_docs:
-                missing = sorted(funcs_missing_docs)
+                missing = tuple(sorted(funcs_missing_docs))
                 yield EclassDocMissingFunc(missing, eclass=eclass)
             # TODO: ignore overridden vars from other eclasses?
             vars_missing_docs = eclass_obj.exported_variables - eclass_obj.variables
