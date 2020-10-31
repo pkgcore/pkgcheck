@@ -541,11 +541,13 @@ class InheritsCheck(ExplicitlyEnabledCheck):
         super().__init__(*args)
         self.eclass_cache = eclass_addon.eclasses
         self.eclasses = {}
+        self.internals = {}
         self.exports = defaultdict(set)
 
         exported_regexes = []
         for i, (name, eclass_obj) in enumerate(self.eclass_cache.items()):
             exported = eclass_obj.functions | eclass_obj.variables
+            self.internals[name] = eclass_obj.internal_functions | eclass_obj.internal_variables
             if exported:
                 # Regex groups don't allow freeform strings so create a mapping
                 # back to their original names.
@@ -575,10 +577,12 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                             if len(self.exports[v]) > 1:
                                 # function exported by multiple eclasses
                                 inherited = self.exports[v].intersection(pkg.inherited)
-                                if len(inherited) == 1:
-                                    used[inherited.pop()].append((lineno, match))
+                                if len(inherited) != 1:
+                                    continue
+                                eclass = inherited.pop()
                             else:
-                                used[self.eclasses[k]].append((lineno, match))
+                                eclass = self.eclasses[k]
+                            used[eclass].append((lineno, match))
 
             # direct inherits
             inherit = set(pkg.inherit)
@@ -606,8 +610,11 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                     unused.discard(eclass)
 
             for eclass in list(missing):
-                # ignore probable conditional VCS eclass inherits
                 if self.eclass_cache[eclass].live:
+                    # ignore probable conditional VCS eclass inherits
+                    missing.discard(eclass)
+                elif self.internals[eclass].issuperset(x[1] for x in used[eclass]):
+                    # ignore probable badly named internal eclass variable
                     missing.discard(eclass)
 
             for eclass in missing:

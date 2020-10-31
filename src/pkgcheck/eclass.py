@@ -320,6 +320,14 @@ class Eclass(UserDict):
         return frozenset(d['name'] for d in self.data.get('functions', ()))
 
     @property
+    def internal_functions(self):
+        """Set of documented internal function names in the eclass."""
+        return frozenset(
+            d['name'] for d in self.data.get('functions', ())
+            if d.get('internal', False)
+        )
+
+    @property
     def exported_functions(self):
         """Set of all exported function names in the eclass.
 
@@ -335,6 +343,14 @@ class Eclass(UserDict):
     def variables(self):
         """Set of documented variable names in the eclass."""
         return frozenset(d['name'] for d in self.data.get('variables', ()))
+
+    @property
+    def internal_variables(self):
+        """Set of documented internal variable names in the eclass."""
+        return frozenset(
+            d['name'] for d in self.data.get('variables', ())
+            if d.get('internal', False)
+        )
 
     @property
     def exported_variables(self):
