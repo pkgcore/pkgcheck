@@ -503,21 +503,15 @@ class RawEbuildCheck(Check):
 class MissingInherits(results.VersionResult, results.Warning):
     """Ebuild uses functions from eclass(es) that aren't directly inherited."""
 
-    def __init__(self, eclasses, usage=None, **kwargs):
+    def __init__(self, eclass, lineno, usage, **kwargs):
         super().__init__(**kwargs)
-        self.eclasses = eclasses
+        self.eclass = eclass
+        self.lineno = lineno
         self.usage = usage
 
     @property
     def desc(self):
-        s = pluralism(self.eclasses)
-        if self.usage is not None:
-            lineno, match = self.usage
-            eclass = self.eclasses[0]
-            eclasses = f'{eclass} (usage: {match}, line {lineno})'
-        else:
-            eclasses = ', '.join(self.eclasses)
-        return f'missing inherit{s}: {eclasses}'
+        return f'missing inherit: {self.eclass} ({repr(self.usage)}, line {self.lineno})'
 
 
 class UnusedInherits(results.VersionResult, results.Warning):
@@ -616,14 +610,9 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                 if self.eclass_cache[eclass].live:
                     missing.discard(eclass)
 
-            if missing:
-                if self.options.verbosity > 0:
-                    # support per eclass missing usage example for debugging
-                    for eclass in missing:
-                        usage = used[eclass][0]
-                        yield MissingInherits((eclass,), usage=usage, pkg=pkg)
-                else:
-                    yield MissingInherits(tuple(sorted(missing)), pkg=pkg)
+            for eclass in missing:
+                lineno, usage = used[eclass][0]
+                yield MissingInherits(eclass, lineno, usage, pkg=pkg)
             if unused:
                 yield UnusedInherits(tuple(sorted(unused)), pkg=pkg)
 
