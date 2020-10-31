@@ -580,9 +580,9 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                                 # function exported by multiple eclasses
                                 inherited = self.exports[v].intersection(pkg.inherited)
                                 if len(inherited) == 1:
-                                    used[inherited.pop()].add(match)
+                                    used[inherited.pop()].add((lineno, match))
                             else:
-                                used[self.eclasses[k]].add(match)
+                                used[self.eclasses[k]].add((lineno, match))
 
             # direct inherits
             inherit = set(pkg.inherit)
