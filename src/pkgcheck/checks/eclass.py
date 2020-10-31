@@ -60,7 +60,7 @@ class EclassUsageCheck(Check):
 
     def __init__(self, *args, eclass_addon):
         super().__init__(*args)
-        self.eclass_addon = eclass_addon
+        self.deprecated_eclasses = eclass_addon.deprecated
 
     def feed(self, pkg):
         deprecated = []
@@ -73,8 +73,8 @@ class EclassUsageCheck(Check):
             else:
                 duplicates.add(eclass)
 
-        for eclass in inherited.intersection(self.eclass_addon.deprecated):
-            replacement = self.eclass_addon.deprecated[eclass]
+        for eclass in inherited.intersection(self.deprecated_eclasses):
+            replacement = self.deprecated_eclasses[eclass]
             deprecated.append((eclass, replacement))
 
         if duplicates:

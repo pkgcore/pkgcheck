@@ -248,7 +248,7 @@ class EapiCheck(Check):
 
     def __init__(self, *args, eclass_addon):
         super().__init__(*args)
-        self.eclass_addon = eclass_addon
+        self.eclass_cache = eclass_addon.eclasses
 
     def feed(self, pkg):
         eapi_str = str(pkg.eapi)
@@ -259,7 +259,7 @@ class EapiCheck(Check):
 
         for eclass_name in pkg.inherit:
             try:
-                eclass = self.eclass_addon.eclasses[eclass_name]
+                eclass = self.eclass_cache[eclass_name]
                 supported_eapis = eclass.get('supported_eapis', ())
                 if supported_eapis and eapi_str not in supported_eapis:
                     yield UnsupportedEclassEapi(eapi_str, eclass, pkg=pkg)
