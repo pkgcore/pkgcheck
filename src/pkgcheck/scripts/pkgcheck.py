@@ -674,17 +674,13 @@ def _selected_check(options, scan_scope, scope):
 
 @scan.bind_main_func
 def _scan(options, out, err):
-    enabled_checks, caches = init_checks(options.pop('addons'), options)
+    enabled_checks = init_checks(options.pop('addons'), options)
 
     if options.verbosity >= 1:
         msg = f'target repo: {options.target_repo.repo_id!r}'
         if options.target_repo.repo_id != options.target_repo.location:
             msg += f' at {options.target_repo.location!r}'
         err.write(msg)
-
-    # force cache updates
-    if caches:
-        CachedAddon.update_caches(options, caches)
 
     with ExitStack() as stack:
         reporter = options.reporter(

@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
+from snakeoil.iterables import partition
 
 from .. import addons, base, feeds, sources
 from ..results import FilteredVersionResult, MetadataError
@@ -168,27 +169,36 @@ def init_checks(enabled_addons, options):
     enabled = defaultdict(lambda: defaultdict(list))
     addons_map = {}
     source_map = {}
-    caches = []
 
     if options.selected_checks is not None:
         _disabled, selected_checks = options.selected_checks
     else:
         _disabled, selected_checks = [], []
 
-    for cls in enabled_addons:
+    required_caches, checks = partition(
+        enabled_addons, predicate=lambda x: issubclass(x, Check))
+
+    # initialize required caches
+    caches = []
+    for cls in required_caches:
+        caches.append(addons.init_addon(cls, options, addons_map))
+
+    # force cache updates
+    if caches:
+        CachedAddon.update_caches(options, caches)
+
+    for cls in checks:
         try:
             addon = addons.init_addon(cls, options, addons_map)
         except SkipOptionalCheck:
             if cls.__name__ in selected_checks:
                 raise
             continue
-        if isinstance(addon, Check):
-            source = source_map.get(addon.source)
-            if source is None:
-                source = sources.init_source(addon.source, options, addons_map)
-                source_map[addon.source] = source
-            exec_type = 'async' if isinstance(addon, AsyncCheck) else 'sync'
-            enabled[addon.scope][(source, exec_type)].append(addon)
-        if isinstance(addon, CachedAddon):
-            caches.append(addon)
-    return enabled, caches
+        source = source_map.get(addon.source)
+        if source is None:
+            source = sources.init_source(addon.source, options, addons_map)
+            source_map[addon.source] = source
+        exec_type = 'async' if isinstance(addon, AsyncCheck) else 'sync'
+        enabled[addon.scope][(source, exec_type)].append(addon)
+
+    return enabled
