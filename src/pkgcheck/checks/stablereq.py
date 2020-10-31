@@ -2,7 +2,6 @@ from collections import defaultdict
 from datetime import datetime
 from itertools import chain
 
-from snakeoil.klass import jit_attr
 from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
@@ -43,14 +42,10 @@ class StableRequestCheck(GentooRepoCheck):
     required_addons = (git.GitAddon,)
     known_results = frozenset([StableRequest])
 
-    def __init__(self, *args, git_addon=None):
+    def __init__(self, *args, git_addon):
         super().__init__(*args)
         self.today = datetime.today()
-        self._git_addon = git_addon
-
-    @jit_attr
-    def modified_repo(self):
-        return self._git_addon.cached_repo(git.GitModifiedRepo)
+        self.modified_repo = git_addon.cached_repo(git.GitModifiedRepo)
 
     def feed(self, pkgset):
         # disable check when git repo parsing is disabled

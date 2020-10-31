@@ -14,7 +14,6 @@ from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import packages, values, boolean
 from snakeoil.contexts import patch
-from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
@@ -730,11 +729,7 @@ class DependencyCheck(Check):
         self.conditional_ops = {'?', '='}
         self.use_defaults = {'(+)', '(-)'}
         self.today = datetime.today()
-        self._git_addon = git_addon
-
-    @jit_attr
-    def existence_repo(self):
-        return self._git_addon.cached_repo(git.GitRemovedRepo)
+        self.existence_repo = git_addon.cached_repo(git.GitRemovedRepo)
 
     def _check_use_deps(self, attr, atom):
         """Check dependencies for missing USE dep defaults."""

@@ -5,7 +5,6 @@ from itertools import chain
 import re
 
 from pkgcore.ebuild.eapi import EAPI
-from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import stable_unique
 from snakeoil.strings import pluralism
@@ -70,11 +69,14 @@ class BadCommandsCheck(Check):
 
     CMD_USAGE_REGEX = r'^(\s*|.*[|&{{(]+\s*)\b(?P<cmd>{})(?!\.)\b'
 
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.regexes = self._create_regexes()
+
     def _cmds_regex(self, cmds):
         return re.compile(self.CMD_USAGE_REGEX.format(r'|'.join(cmds)))
 
-    @jit_attr
-    def regexes(self):
+    def _create_regexes(self):
         d = {}
         for eapi_str, eapi in EAPI.known_eapis.items():
             regexes = []
