@@ -545,7 +545,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
 
     @jit_attr
     def _eclass_re(self):
-        functions = []
+        exported_regexes = []
         for i, (name, eclass_obj) in enumerate(self.eclass_addon.eclasses.items()):
             exported_funcs = [f for f in eclass_obj.functions if f[0] != '_']
             exported_vars = [f for f in eclass_obj.variables if f[0] != '_']
@@ -554,11 +554,11 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                 # back to their original names.
                 key = f'eclass_{i}'
                 exported = exported_funcs + exported_vars
-                functions.append(rf'(?P<{key}>{"|".join(re.escape(f) for f in exported)})')
+                exported_regexes.append(rf'(?P<{key}>{"|".join(re.escape(f) for f in exported)})')
                 for export in exported:
                     self.exports[export].add(name)
                 self.eclasses[key] = name
-        return re.compile(rf'\b({"|".join(functions)})\b')
+        return re.compile(rf'\b({"|".join(exported_regexes)})\b')
 
     def feed(self, pkg):
         if pkg.inherit:
