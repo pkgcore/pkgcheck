@@ -542,22 +542,19 @@ class InheritsCheck(ExplicitlyEnabledCheck):
     def __init__(self, *args, eclass_addon):
         super().__init__(*args)
         self.eclass_cache = eclass_addon.eclasses
-        self.eclasses = {}
+        self.eclasses = []
         self.internals = {}
         self.exports = defaultdict(set)
 
         exported_regexes = []
-        for i, (name, eclass_obj) in enumerate(self.eclass_cache.items()):
+        for name, eclass_obj in self.eclass_cache.items():
             exported = eclass_obj.functions
             self.internals[name] = eclass_obj.internal_functions
             if exported:
-                # Regex groups don't allow freeform strings so create a mapping
-                # back to their original names.
-                key = f'eclass_{i}'
-                exported_regexes.append(rf'(?P<{key}>{"|".join(re.escape(f) for f in exported)})')
+                exported_regexes.append(rf'({"|".join(re.escape(f) for f in exported)})')
                 for export in exported:
                     self.exports[export].add(name)
-                self.eclasses[key] = name
+                self.eclasses.append(name)
         self._eclass_re = re.compile(rf'\b({"|".join(exported_regexes)})\b')
 
     def feed(self, pkg):
@@ -570,8 +567,8 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                     continue
                 m = self._eclass_re.match(line)
                 for m in re.finditer(self._eclass_re, line):
-                    for k, v in m.groupdict().items():
-                        if v and v not in pkg.eapi.bash_funcs:
+                    for i, v in enumerate(m.groups()[1:]):
+                        if v is not None and v not in pkg.eapi.bash_funcs:
                             if len(self.exports[v]) > 1:
                                 # function exported by multiple eclasses
                                 inherited = self.exports[v].intersection(pkg.inherited)
@@ -579,7 +576,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                                     continue
                                 eclass = inherited.pop()
                             else:
-                                eclass = self.eclasses[k]
+                                eclass = self.eclasses[i]
                             used[eclass].append((lineno, v))
 
             # direct inherits
