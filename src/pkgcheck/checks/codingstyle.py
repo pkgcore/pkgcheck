@@ -546,8 +546,8 @@ class InheritsCheck(ExplicitlyEnabledCheck):
 
         exported_regexes = []
         for i, (name, eclass_obj) in enumerate(self.eclass_cache.items()):
-            exported = eclass_obj.functions | eclass_obj.variables
-            self.internals[name] = eclass_obj.internal_functions | eclass_obj.internal_variables
+            exported = eclass_obj.functions
+            self.internals[name] = eclass_obj.internal_functions
             if exported:
                 # Regex groups don't allow freeform strings so create a mapping
                 # back to their original names.
@@ -568,10 +568,6 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                     continue
                 m = self._eclass_re.match(line)
                 for m in re.finditer(self._eclass_re, line):
-                    match = m.group(0)
-                    # ignore EAPI-related variables eclasses are allowed to set
-                    if match in pkg.eapi.eclass_keys:
-                        continue
                     for k, v in m.groupdict().items():
                         if v and v not in pkg.eapi.bash_funcs:
                             if len(self.exports[v]) > 1:
@@ -582,7 +578,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                                 eclass = inherited.pop()
                             else:
                                 eclass = self.eclasses[k]
-                            used[eclass].append((lineno, match))
+                            used[eclass].append((lineno, v))
 
             # direct inherits
             inherit = set(pkg.inherit)
@@ -605,16 +601,15 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                 if self.eclass_cache[eclass].get('_parse_failed', False):
                     # ignore eclasses with parsing failures
                     unused.discard(eclass)
-                elif pkg.eapi.eclass_keys & self.eclass_cache[eclass].exported_variables:
+                elif (pkg.eapi.eclass_keys & self.eclass_cache[eclass].exported_variables or
+                        not self.eclass_cache[eclass].exported_functions):
                     # ignore eclasses that export ebuild metadata (e.g. SRC_URI, S, ...)
+                    # or only export variables
                     unused.discard(eclass)
 
             for eclass in list(missing):
                 if self.eclass_cache[eclass].live:
                     # ignore probable conditional VCS eclass inherits
-                    missing.discard(eclass)
-                elif self.internals[eclass].issuperset(x[1] for x in used[eclass]):
-                    # ignore probable badly named internal eclass variable
                     missing.discard(eclass)
 
             for eclass in missing:
