@@ -545,14 +545,12 @@ class InheritsCheck(ExplicitlyEnabledCheck):
 
     def __init__(self, *args, eclass_addon):
         super().__init__(*args)
-        self.eclass_addon = eclass_addon
+        self.eclass_cache = eclass_addon.eclasses
         self.eclasses = {}
         self.exports = defaultdict(set)
 
-    @jit_attr
-    def _eclass_re(self):
         exported_regexes = []
-        for i, (name, eclass_obj) in enumerate(self.eclass_addon.eclasses.items()):
+        for i, (name, eclass_obj) in enumerate(self.eclass_cache.items()):
             # TODO: Move to using eclass doc tagged function
             # list once eclass doc issues are fixed.
             exported = eclass_obj.exported_functions | eclass_obj.variables
@@ -564,7 +562,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                 for export in exported:
                     self.exports[export].add(name)
                 self.eclasses[key] = name
-        return re.compile(rf'\b({"|".join(exported_regexes)})\b')
+        self._eclass_re = re.compile(rf'\b({"|".join(exported_regexes)})\b')
 
     def feed(self, pkg):
         if pkg.inherit:
@@ -594,7 +592,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
             inherit = set(pkg.inherit)
             # allowed indirect inherits
             indirect_allowed = set(chain.from_iterable(
-                self.eclass_addon.eclasses[x].indirect_eclasses for x in inherit))
+                self.eclass_cache[x].indirect_eclasses for x in inherit))
             # missing inherits
             missing = used.keys() - inherit - indirect_allowed
 
@@ -604,12 +602,12 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                 phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
                 for eclass in list(unused):
                     eclass_phases = {f'{eclass}_{phase}' for phase in phases}
-                    if self.eclass_addon.eclasses[eclass].exported_functions & eclass_phases:
+                    if self.eclass_cache[eclass].exported_functions & eclass_phases:
                         unused.discard(eclass)
 
             for eclass in list(missing):
                 # ignore probable conditional VCS eclass inherits
-                if self.eclass_addon.eclasses[eclass].live:
+                if self.eclass_cache[eclass].live:
                     missing.discard(eclass)
 
             if missing:
