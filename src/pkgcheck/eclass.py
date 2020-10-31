@@ -289,7 +289,35 @@ class Eclass(UserDict):
             data = self.parse(self.path)
         except EclassDocParsingError:
             data = {}
+        # inject full lists of exported funcs and vars
+        data.update(self._source_eclass(self.path))
         super().__init__(data)
+
+    @staticmethod
+    def _source_eclass(path):
+        data = {}
+        # TODO: support this via pkgcore's ebd
+        # source eclass to determine PROPERTIES
+        p = subprocess.run(
+            ['bash', '-c',
+                f'source {shlex.quote(path)}; '
+                f'compgen -A function; '
+                f'echo "#"; '
+                f'compgen -A variable; '
+                f'echo "#"; '
+                f'echo ${{PROPERTIES}}'],
+            stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
+        if p.returncode == 0:
+            eclass_obj = _eclass_blocks['@ECLASS:']
+            funcs, variables, properties = p.stdout.split('#\n')
+            data['_exported_funcs'] = tuple(funcs.split())
+            data['_exported_vars'] = tuple(
+                x for x in variables.split()
+                if x not in eclass_obj.ignored_exported_vars
+            )
+            data['_properties'] = conditionals.DepSet.parse(
+                properties, str, operators={}, attr='PROPERTIES')
+        return data
 
     @property
     def functions(self):
@@ -298,8 +326,15 @@ class Eclass(UserDict):
 
     @property
     def exported_functions(self):
-        """Set of all exported function names in the eclass."""
-        return frozenset(self.data.get('_exported_funcs', ()))
+        """Set of all exported function names in the eclass.
+
+        Ignores functions that start with underscores since
+        it's assumed they are private.
+        """
+        return frozenset(
+            x for x in self.data.get('_exported_funcs', ())
+            if not x.startswith('_')
+        )
 
     @property
     def variables(self):
@@ -308,8 +343,15 @@ class Eclass(UserDict):
 
     @property
     def exported_variables(self):
-        """Set of all exported variable names in the eclass."""
-        return frozenset(self.data.get('_exported_vars', ()))
+        """Set of all exported variable names in the eclass.
+
+        Ignores variables that start with underscores since
+        it's assumed they are private.
+        """
+        return frozenset(
+            x for x in self.data.get('_exported_vars', ())
+            if not x.startswith('_')
+        )
 
     @property
     def indirect_eclasses(self):
@@ -355,7 +397,7 @@ class Eclass(UserDict):
         elif blocks[0][0] != '@ECLASS:':
             _parsing_error(EclassDocParsingError("'@ECLASS:' block not first"))
 
-        data = dict()
+        data = {}
         duplicates = {k: set() for k in _eclass_blocks.keys()}
 
         # parse identified blocks
@@ -375,28 +417,6 @@ class Eclass(UserDict):
                         f'{repr(block[0])}, line {block_start}: duplicate block'))
                 duplicates[tag].add(name)
                 data.setdefault(block_obj._key, []).append(block_data)
-
-        # TODO: support this via pkgcore's ebd
-        # source eclass to determine PROPERTIES
-        p = subprocess.run(
-            ['bash', '-c',
-                f'source {shlex.quote(path)}; '
-                f'compgen -A function; '
-                f'echo "#"; '
-                f'compgen -A variable; '
-                f'echo "#"; '
-                f'echo ${{PROPERTIES}}'],
-            stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
-        if p.returncode == 0:
-            eclass_obj = _eclass_blocks['@ECLASS:']
-            funcs, variables, properties = p.stdout.split('#\n')
-            # ignore underscore prefixed funcs
-            data['_exported_funcs'] = {x for x in funcs.split() if not x.startswith('_')}
-            exported_vars = {x for x in variables.split() if not x.startswith('_')}
-            # ignore underscore prefixed vars
-            data['_exported_vars'] = exported_vars - eclass_obj.ignored_exported_vars
-            data['_properties'] = conditionals.DepSet.parse(
-                properties, str, operators={}, attr='PROPERTIES')
 
         return data
 
