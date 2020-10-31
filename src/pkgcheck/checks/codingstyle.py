@@ -555,6 +555,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                 for export in exported:
                     self.exports[export].add(name)
                 self.eclasses.append(name)
+        # note that without a global group the check appears to be 2x slower
         self._eclass_re = re.compile(rf'\b({"|".join(exported_regexes)})\b')
 
     def feed(self, pkg):
@@ -566,6 +567,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                 if not line or line[0] == '#':
                     continue
                 for m in self._eclass_re.finditer(line):
+                    # iterate over all pattern groups, skipping the initial, global one
                     for i, v in enumerate(m.groups()[1:]):
                         if v is not None and v not in pkg.eapi.bash_funcs:
                             if len(self.exports[v]) > 1:
