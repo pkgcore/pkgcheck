@@ -175,8 +175,8 @@ def init_checks(enabled_addons, options):
     else:
         _disabled, selected_checks = [], []
 
-    required_caches, checks = partition(
-        enabled_addons, predicate=lambda x: issubclass(x, Check))
+    required_addons, required_caches = partition(
+        enabled_addons, predicate=lambda x: issubclass(x, CachedAddon))
 
     # initialize required caches
     caches = []
@@ -187,18 +187,19 @@ def init_checks(enabled_addons, options):
     if caches:
         CachedAddon.update_caches(options, caches)
 
-    for cls in checks:
+    for cls in required_addons:
         try:
             addon = addons.init_addon(cls, options, addons_map)
         except SkipOptionalCheck:
             if cls.__name__ in selected_checks:
                 raise
             continue
-        source = source_map.get(addon.source)
-        if source is None:
-            source = sources.init_source(addon.source, options, addons_map)
-            source_map[addon.source] = source
-        exec_type = 'async' if isinstance(addon, AsyncCheck) else 'sync'
-        enabled[addon.scope][(source, exec_type)].append(addon)
+        if isinstance(addon, Check):
+            source = source_map.get(addon.source)
+            if source is None:
+                source = sources.init_source(addon.source, options, addons_map)
+                source_map[addon.source] = source
+            exec_type = 'async' if isinstance(addon, AsyncCheck) else 'sync'
+            enabled[addon.scope][(source, exec_type)].append(addon)
 
     return enabled
