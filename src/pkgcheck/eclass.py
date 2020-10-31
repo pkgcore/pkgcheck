@@ -285,10 +285,11 @@ class Eclass(UserDict):
         self.path = path
         self.mtime = os.path.getmtime(self.path)
         # ignore parsing errors when constructing cache objects
+        data = {}
         try:
-            data = self.parse(self.path)
+            data.update(self.parse(self.path))
         except EclassDocParsingError:
-            data = {}
+            data['_parse_failed'] = True
         # inject full lists of exported funcs and vars
         data.update(self._source_eclass(self.path))
         super().__init__(data)

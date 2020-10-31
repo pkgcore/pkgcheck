@@ -603,6 +603,11 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                     if self.eclass_cache[eclass].exported_functions & eclass_phases:
                         unused.discard(eclass)
 
+            for eclass in list(unused):
+                # ignore eclasses with parsing failures
+                if self.eclass_cache[eclass].get('_parse_failed', False):
+                    unused.discard(eclass)
+
             for eclass in list(missing):
                 # ignore probable conditional VCS eclass inherits
                 if self.eclass_cache[eclass].live:
