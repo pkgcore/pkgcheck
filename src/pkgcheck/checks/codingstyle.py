@@ -530,13 +530,27 @@ class UnusedInherits(results.VersionResult, results.Warning):
         return f'unused eclass{es}: {eclasses}'
 
 
+class InternalEclassFunc(results.VersionResult, results.Warning):
+    """Ebuild uses internal functions from eclass."""
+
+    def __init__(self, eclass, lineno, usage, **kwargs):
+        super().__init__(**kwargs)
+        self.eclass = eclass
+        self.lineno = lineno
+        self.usage = usage
+
+    @property
+    def desc(self):
+        return f'{self.eclass}: internal function usage: {repr(self.usage)}, line {self.lineno}'
+
+
 # TODO: Enable by default once allowed indirect, phase func, and non-func
 # eclass false positives are fixed in addition to eclass doc parsing issues.
 class InheritsCheck(ExplicitlyEnabledCheck):
     """Scan for ebuilds with missing or unused eclass inherits."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = frozenset([MissingInherits, UnusedInherits])
+    known_results = frozenset([MissingInherits, UnusedInherits, InternalEclassFunc])
     required_addons = (eclass_mod.EclassAddon,)
 
     def __init__(self, *args, eclass_addon):
@@ -579,6 +593,8 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                             else:
                                 eclass = self.eclasses[i]
                             used[eclass].append((lineno, v))
+                            if v in self.internals[eclass]:
+                                yield InternalEclassFunc(eclass, lineno, v, pkg=pkg)
 
             # direct inherits
             inherit = set(pkg.inherit)
