@@ -603,7 +603,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
 
             for eclass in list(missing):
                 # ignore probable conditional VCS eclass inherits
-                if self.eclass_addon.eclass[eclass].live:
+                if self.eclass_addon.eclasses[eclass].live:
                     missing.discard(eclass)
 
             if missing:
