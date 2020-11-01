@@ -16,7 +16,7 @@ from itertools import chain
 from operator import attrgetter
 
 from pkgcore import const as pkgcore_const
-from pkgcore.repository import multiplex
+from pkgcore.repository import multiplex, errors as repo_errors
 from pkgcore.restrictions import boolean, packages
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.util import commandline, parserestrict
@@ -371,8 +371,11 @@ def _determine_target_repo(namespace, parser):
             return repo
 
     # determine if CWD is inside an unconfigured repo
-    return namespace.domain.find_repo(
-        target_dir, config=namespace.config, configure=False)
+    try:
+        return namespace.domain.find_repo(
+            target_dir, config=namespace.config, configure=False)
+    except repo_errors.InitializationError as e:
+        raise UserException(str(e))
 
 
 def _path_restrict(path, namespace):
