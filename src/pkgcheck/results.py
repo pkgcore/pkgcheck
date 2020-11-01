@@ -1,5 +1,7 @@
 """Base classes for check results."""
 
+from functools import total_ordering
+
 from pkgcore.ebuild import cpv
 from snakeoil import klass
 
@@ -15,6 +17,7 @@ class _ResultAttrs(type):
         return cls._name if cls._name is not None else cls.__name__
 
 
+@total_ordering
 class Result(metaclass=_ResultAttrs):
     """Generic report result returned from a check."""
 
