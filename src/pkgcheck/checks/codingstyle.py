@@ -569,7 +569,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                 for export in exported:
                     self.exports[export].add(name)
                 self.eclasses.append(name)
-        # note that without a global group the check appears to be 2x slower
+        # without a global group the regex seems roughly 2-3x slower
         self._eclass_re = re.compile(rf'\b({"|".join(exported_regexes)})\b')
 
     def feed(self, pkg):
@@ -607,19 +607,21 @@ class InheritsCheck(ExplicitlyEnabledCheck):
             if unused and pkg.defined_phases:
                 phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
                 for eclass in list(unused):
-                    eclass_phases = {f'{eclass}_{phase}' for phase in phases}
-                    if self.eclass_cache[eclass].exported_functions & eclass_phases:
+                    if self.eclass_cache[eclass].exported_functions.intersection(
+                            f'{eclass}_{phase}' for phase in phases):
                         unused.discard(eclass)
 
             for eclass in list(unused):
                 if self.eclass_cache[eclass].get('_parse_failed', False):
                     # ignore eclasses with parsing failures
                     unused.discard(eclass)
-                elif (pkg.eapi.eclass_keys & self.eclass_cache[eclass].exported_variables or
-                        not self.eclass_cache[eclass].exported_functions):
-                    # ignore eclasses that export ebuild metadata (e.g. SRC_URI, S, ...)
-                    # or only export variables
-                    unused.discard(eclass)
+                else:
+                    exported_eclass_keys = pkg.eapi.eclass_keys.intersection(
+                        self.eclass_cache[eclass].exported_variables)
+                    if not self.eclass_cache[eclass].exported_functions and exported_eclass_keys:
+                        # ignore eclasses that export ebuild metadata (e.g.
+                        # SRC_URI, S, ...) and no functions
+                        unused.discard(eclass)
 
             for eclass in list(missing):
                 if self.eclass_cache[eclass].live:
