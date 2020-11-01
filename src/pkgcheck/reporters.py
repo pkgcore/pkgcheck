@@ -402,11 +402,8 @@ class JsonStream(Reporter):
         except KeyError:
             raise DeserializationError(f'missing result class: {data!r}')
 
-        # reconstruct a package object
-        d = results.Result.attrs_to_pkg(d)
-
         try:
-            return cls(**d)
+            return cls._create(**d)
         except TypeError as e:
             raise DeserializationError(f'failed loading: {data!r}') from e
 

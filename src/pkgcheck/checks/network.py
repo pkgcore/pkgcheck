@@ -178,9 +178,7 @@ class _UrlCheck(NetworkCheck):
         if result is not None:
             if pkg is not None:
                 # recreate result object with different pkg target
-                data = result.attrs_to_pkg(result._attrs)
-                data['pkg'] = pkg
-                result = result.__class__(**data)
+                result = result._create(**result._attrs, pkg=pkg)
             results_q.put([result])
 
     def _get_urls(self, pkg):

@@ -44,16 +44,16 @@ class Result(metaclass=_ResultAttrs):
         """Return all public result attributes."""
         return {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
 
-    @staticmethod
-    def attrs_to_pkg(d):
-        """Reconstruct a package object from split attributes."""
-        category = d.pop('category', None)
-        package = d.pop('package', None)
-        version = d.pop('version', None)
-        if any((category, package, version)):
-            pkg = RawCPV(category, package, version)
-            d['pkg'] = pkg
-        return d
+    @classmethod
+    def _create(cls, **kwargs):
+        """Create a new result object from a given attributes dict."""
+        category = kwargs.pop('category', None)
+        package = kwargs.pop('package', None)
+        version = kwargs.pop('version', None)
+        # recreate pkg param from related, separated attributes
+        if 'pkg' not in kwargs and any((category, package, version)):
+            kwargs['pkg'] = RawCPV(category, package, version)
+        return cls(**kwargs)
 
     def __eq__(self, other):
         return self.name == other.name and self._attrs == other._attrs
