@@ -503,7 +503,7 @@ class RawEbuildCheck(Check):
 
 
 class MissingInherits(results.VersionResult, results.Warning):
-    """Ebuild uses function from eclass that isn't directly inherited."""
+    """Ebuild uses function from eclass that isn't inherited."""
 
     def __init__(self, eclass, lineno, usage, **kwargs):
         super().__init__(**kwargs)
@@ -513,7 +513,25 @@ class MissingInherits(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f'missing inherit: {self.eclass} ({repr(self.usage)}, line {self.lineno})'
+        return f'{self.eclass}: missing inherit usage: ({repr(self.usage)}, line {self.lineno})'
+
+
+class IndirectInherits(results.VersionResult, results.Warning):
+    """Ebuild uses function from indirectly inherited eclass.
+
+    That doesn't allow indirect inherit usage via the @INDIRECT_INHERITS eclass
+    doc tag in a parent eclass.
+    """
+
+    def __init__(self, eclass, lineno, usage, **kwargs):
+        super().__init__(**kwargs)
+        self.eclass = eclass
+        self.lineno = lineno
+        self.usage = usage
+
+    @property
+    def desc(self):
+        return f'{self.eclass}: indirect inherit usage: ({repr(self.usage)}, line {self.lineno})'
 
 
 class UnusedInherits(results.VersionResult, results.Warning):
@@ -550,7 +568,8 @@ class InheritsCheck(ExplicitlyEnabledCheck):
     """Scan for ebuilds with missing or unused eclass inherits."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = frozenset([MissingInherits, UnusedInherits, InternalEclassFunc])
+    known_results = frozenset([
+        MissingInherits, IndirectInherits, UnusedInherits, InternalEclassFunc])
     required_addons = (eclass_mod.EclassAddon,)
 
     def __init__(self, *args, eclass_addon):
@@ -634,7 +653,10 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                         yield InternalEclassFunc(eclass, lineno, usage, pkg=pkg)
             for eclass in missing:
                 lineno, usage = used[eclass][0]
-                yield MissingInherits(eclass, lineno, usage, pkg=pkg)
+                if eclass in full_inherit:
+                    yield IndirectInherits(eclass, lineno, usage, pkg=pkg)
+                else:
+                    yield MissingInherits(eclass, lineno, usage, pkg=pkg)
             if unused:
                 yield UnusedInherits(tuple(sorted(unused)), pkg=pkg)
 
