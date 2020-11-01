@@ -562,8 +562,8 @@ class InternalEclassFunc(results.VersionResult, results.Warning):
         return f'{self.eclass}: internal function usage: {repr(self.usage)}, line {self.lineno}'
 
 
-# TODO: Enable by default once allowed indirect, phase func, and non-func
-# eclass false positives are fixed in addition to eclass doc parsing issues.
+# TODO: Will remain as a nondefault check until proper bash parsing is
+# supported since the naive regex implementation has too many issues.
 class InheritsCheck(ExplicitlyEnabledCheck):
     """Scan for ebuilds with missing or unused eclass inherits."""
 
