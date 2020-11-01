@@ -63,7 +63,7 @@ class Reporter:
         self.report = self._add_report().send
         self.process = self._process_report().send
 
-    def __call__(self, pipe, sort=False):
+    def __call__(self, pipe):
         results_q = SimpleQueue()
         orig_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)
         results_iter = _ResultsIter(results_q)
@@ -71,7 +71,7 @@ class Reporter:
         p.start()
         signal.signal(signal.SIGINT, orig_sigint_handler)
 
-        if pipe.pkg_scan or sort:
+        if pipe.pkg_scan:
             # Running on a package scope level, i.e. running within a package
             # directory in an ebuild repo. This sorts all generated results,
             # removing duplicate MetadataError results.

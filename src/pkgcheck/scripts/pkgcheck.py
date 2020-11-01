@@ -172,15 +172,6 @@ main_options.add_argument(
         both VCS and non-VCS types will be scanned.
     """)
 main_options.add_argument(
-    '--sorted', action='store_true',
-    help='sort all generated results',
-    docs="""
-        Globally sort all generated results. Note that this is only useful for
-        limited runs (e.g. using -k to restrict output to a single result type)
-        since it causes all generated results to be stored in memory and sorts
-        on a global scope.
-    """)
-main_options.add_argument(
     '-j', '--jobs', type=arghparse.positive_int, default=os.cpu_count(),
     help='number of checks to run in parallel',
     docs="""
@@ -706,7 +697,7 @@ def _scan(options, out, err):
             err.flush()
 
             pipe = pipeline.Pipeline(options, scan_scope, pipes, restrict)
-            reporter(pipe, sort=options.sorted)
+            reporter(pipe)
 
     return 0
 
