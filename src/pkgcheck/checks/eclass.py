@@ -13,23 +13,18 @@ from . import Check
 class DeprecatedEclass(results.VersionResult, results.Warning):
     """Package uses an eclass that is deprecated/abandoned."""
 
-    def __init__(self, eclasses, **kwargs):
+    def __init__(self, eclass, replacement, **kwargs):
         super().__init__(**kwargs)
-        self.eclasses = tuple(eclasses)
+        self.eclass = eclass
+        self.replacement = replacement
 
     @property
     def desc(self):
-        eclass_migration = []
-        for old_eclass, new_eclass in self.eclasses:
-            if new_eclass:
-                update_path = f'migrate to {new_eclass}'
-            else:
-                update_path = 'no replacement'
-            eclass_migration.append(f'{old_eclass} ({update_path})')
-
-        es = pluralism(eclass_migration, plural='es')
-        eclasses = ', '.join(eclass_migration)
-        return f'uses deprecated eclass{es}: [ {eclasses} ]'
+        if self.replacement is not None:
+            replacement = f'migrate to {self.replacement}'
+        else:
+            replacement = 'no replacement'
+        return f'uses deprecated eclass: {self.eclass} ({replacement})'
 
 
 class DuplicateEclassInherits(results.VersionResult, results.Warning):
@@ -63,7 +58,6 @@ class EclassUsageCheck(Check):
         self.deprecated_eclasses = eclass_addon.deprecated
 
     def feed(self, pkg):
-        deprecated = []
         duplicates = set()
         inherited = set()
 
@@ -73,14 +67,12 @@ class EclassUsageCheck(Check):
             else:
                 duplicates.add(eclass)
 
-        for eclass in inherited.intersection(self.deprecated_eclasses):
-            replacement = self.deprecated_eclasses[eclass]
-            deprecated.append((eclass, replacement))
-
         if duplicates:
             yield DuplicateEclassInherits(sorted(duplicates), pkg=pkg)
-        if deprecated:
-            yield DeprecatedEclass(sorted(deprecated), pkg=pkg)
+
+        for eclass in inherited.intersection(self.deprecated_eclasses):
+            replacement = self.deprecated_eclasses[eclass]
+            yield DeprecatedEclass(eclass, replacement, pkg=pkg)
 
 
 class EclassBashSyntaxError(results.EclassResult, results.Error):
