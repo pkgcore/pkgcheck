@@ -22,7 +22,7 @@ from snakeoil.osutils import pjoin
 from pkgcheck import __title__ as project
 from pkgcheck import base, checks, objects, reporters
 from pkgcheck.checks.profiles import ProfileWarning
-from pkgcheck.scripts import pkgcheck, run
+from pkgcheck.scripts import run
 
 
 def test_script_run(capsys):
