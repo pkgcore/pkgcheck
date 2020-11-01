@@ -59,7 +59,7 @@ class Result(metaclass=_ResultAttrs):
         return self._attrs == other._attrs
 
     def __hash__(self):
-        return hash(tuple([self.name] + sorted(self._attrs)))
+        return hash((self.name, tuple(sorted(self._attrs.items()))))
 
     def __lt__(self, other):
         try:
