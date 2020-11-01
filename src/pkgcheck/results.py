@@ -56,7 +56,7 @@ class Result(metaclass=_ResultAttrs):
         return d
 
     def __eq__(self, other):
-        return self._attrs == other._attrs
+        return self.name == other.name and self._attrs == other._attrs
 
     def __hash__(self):
         return hash((self.name, tuple(sorted(self._attrs.items()))))
