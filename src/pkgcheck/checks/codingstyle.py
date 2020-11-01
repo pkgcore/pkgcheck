@@ -574,6 +574,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
 
     def feed(self, pkg):
         if pkg.inherit:
+            full_inherit = set(pkg.inherited)
             used = defaultdict(list)
             lines = enumerate(pkg.lines, 1)
             for lineno, line in lines:
@@ -582,29 +583,26 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                     continue
                 for m in self._eclass_re.finditer(line):
                     # iterate over all pattern groups, skipping the initial, global one
-                    for i, v in enumerate(m.groups()[1:]):
-                        if v is not None and v not in pkg.eapi.bash_funcs:
-                            if len(self.exports[v]) > 1:
+                    for i, usage in enumerate(m.groups()[1:]):
+                        if usage is not None and usage not in pkg.eapi.bash_funcs:
+                            if len(self.exports[usage]) > 1:
                                 # function exported by multiple eclasses
-                                inherited = self.exports[v].intersection(pkg.inherited)
+                                inherited = full_inherit.intersection(self.exports[usage])
                                 if len(inherited) != 1:
                                     continue
                                 eclass = inherited.pop()
                             else:
                                 eclass = self.eclasses[i]
-                            used[eclass].append((lineno, v))
-                            if v in self.internals[eclass]:
-                                yield InternalEclassFunc(eclass, lineno, v, pkg=pkg)
+                            used[eclass].append((lineno, usage))
 
-            # direct inherits
-            inherit = set(pkg.inherit)
+            direct_inherit = set(pkg.inherit)
             # allowed indirect inherits
             indirect_allowed = set(chain.from_iterable(
-                self.eclass_cache[x].indirect_eclasses for x in inherit))
+                self.eclass_cache[x].indirect_eclasses for x in direct_inherit))
             # missing inherits
-            missing = used.keys() - inherit - indirect_allowed
+            missing = used.keys() - direct_inherit - indirect_allowed
 
-            unused = inherit - used.keys()
+            unused = direct_inherit - used.keys()
             # remove eclasses that use implicit phase functions
             if unused and pkg.defined_phases:
                 phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
@@ -628,6 +626,10 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                     # ignore probable conditional VCS eclass inherits
                     missing.discard(eclass)
 
+            for eclass in full_inherit.intersection(used):
+                for lineno, usage in used[eclass]:
+                    if usage in self.internals[eclass]:
+                        yield InternalEclassFunc(eclass, lineno, usage, pkg=pkg)
             for eclass in missing:
                 lineno, usage = used[eclass][0]
                 yield MissingInherits(eclass, lineno, usage, pkg=pkg)
