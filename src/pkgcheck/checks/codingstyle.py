@@ -562,10 +562,12 @@ class InternalEclassFunc(results.VersionResult, results.Warning):
         return f'{self.eclass}: internal function usage: {repr(self.usage)}, line {self.lineno}'
 
 
-# TODO: Will remain as a nondefault check until proper bash parsing is
-# supported since the naive regex implementation has too many issues.
 class InheritsCheck(ExplicitlyEnabledCheck):
-    """Scan for ebuilds with missing or unused eclass inherits."""
+    """Scan for ebuilds with missing or unused eclass inherits.
+
+    Note that this check won't be run by default until proper bash parsing is
+    supported since the naive regex implementation has too many issues.
+    """
 
     _source = sources.EbuildFileRepoSource
     known_results = frozenset([
