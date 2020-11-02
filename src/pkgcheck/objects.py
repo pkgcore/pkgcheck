@@ -14,7 +14,7 @@ try:
     # This is a file written during installation;
     # if it exists, we defer to it. If it doesn't, then we're
     # running from a git checkout or a tarball.
-    from . import _const as _defaults
+    from . import _objects as _defaults
 except ImportError:
     _defaults = klass.sentinel
 

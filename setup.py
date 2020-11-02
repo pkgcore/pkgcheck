@@ -45,9 +45,9 @@ class install(pkgdist.install):
 
 def write_obj_lists(python_base, install_prefix):
     """Generate config file of keyword, check, and other object lists."""
-    path = os.path.join(python_base, pkgdist.MODULE_NAME, "_const.py")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    log.info(f'writing config to {path!r}')
+    objects_path = os.path.join(python_base, pkgdist.MODULE_NAME, "_objects.py")
+    os.makedirs(os.path.dirname(objects_path), exist_ok=True)
+    log.info(f'writing config to {objects_path!r}')
 
     # hack to drop quotes on modules in generated files
     class _kls(object):
@@ -71,8 +71,8 @@ def write_obj_lists(python_base, install_prefix):
     checks = tuple(objs['CHECKS'])
     reporters = tuple(objs['REPORTERS'])
 
-    with open(path, 'w') as f:
-        os.chmod(path, 0o644)
+    with open(objects_path, 'w') as f:
+        os.chmod(objects_path, 0o644)
         for k, v in sorted(modules.items()):
             f.write(f"from {k} import {', '.join(sorted(v))}\n")
         f.write(dedent(f"""\
@@ -81,6 +81,9 @@ def write_obj_lists(python_base, install_prefix):
             REPORTERS = {reporters}
         """))
 
+    const_path = os.path.join(python_base, pkgdist.MODULE_NAME, "_const.py")
+    with open(const_path, 'w') as f:
+        os.chmod(const_path, 0o644)
         # write install path constants to config
         if install_prefix != os.path.abspath(sys.prefix):
             # write more dynamic _const file for wheel installs
@@ -97,9 +100,10 @@ def write_obj_lists(python_base, install_prefix):
 
     # only optimize during install, skip during wheel builds
     if install_prefix == os.path.abspath(sys.prefix):
-        byte_compile([path], prefix=python_base)
-        byte_compile([path], optimize=1, prefix=python_base)
-        byte_compile([path], optimize=2, prefix=python_base)
+        for path in (const_path, objects_path):
+            byte_compile([path], prefix=python_base)
+            byte_compile([path], optimize=1, prefix=python_base)
+            byte_compile([path], optimize=2, prefix=python_base)
 
 
 class install_data(dst_install_data.install_data):
