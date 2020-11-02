@@ -2,11 +2,12 @@ import shlex
 import subprocess
 
 from pkgcore.ebuild.eapi import EAPI
+from pkgcore.ebuild.eclass import Eclass
 from snakeoil.contexts import patch
 from snakeoil.strings import pluralism
 
 from .. import base, results, sources
-from ..eclass import Eclass, EclassAddon
+from ..eclass import EclassAddon
 from . import Check
 
 
@@ -171,7 +172,7 @@ class EclassCheck(Check):
         if self.options.gentoo_repo:
             doc_errors = []
             parsing_error = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
-            with patch('pkgcheck.eclass._parsing_error', parsing_error):
+            with patch('pkgcore.ebuild.eclass._parsing_error', parsing_error):
                 eclass_obj = Eclass(eclass.path)
             yield from doc_errors
 
