@@ -173,7 +173,7 @@ class EclassCheck(Check):
             doc_errors = []
             parsing_error = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
             with patch('pkgcore.ebuild.eclass._parsing_error', parsing_error):
-                eclass_obj = Eclass(eclass.path)
+                eclass_obj = Eclass(eclass.path, sourced=True)
             yield from doc_errors
 
             phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}

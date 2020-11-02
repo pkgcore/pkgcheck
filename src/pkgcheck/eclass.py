@@ -83,7 +83,7 @@ class EclassAddon(base.Addon, caches.CachedAddon):
                                 raise KeyError
                         except (KeyError, AttributeError):
                             try:
-                                eclasses[name] = Eclass(eclass.path)
+                                eclasses[name] = Eclass(eclass.path, sourced=True)
                                 cache_eclasses = True
                             except (IOError, EclassDocParsingError):
                                 continue
