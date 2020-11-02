@@ -123,3 +123,41 @@ class CheckArgs(arghparse.CommaSeparatedNegations):
             raise argparse.ArgumentError(self, f'unknown check{s}: {unknown}')
 
         setattr(namespace, self.dest, (disabled, enabled))
+
+
+class ExitArgs(arghparse.CommaSeparatedNegations):
+    """Filter enabled keywords by selected keywords."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # default to using error results if no keywords are selected
+        if values is None:
+            values = 'error'
+
+        disabled, enabled = self.parse_values(values)
+
+        # if only disabled arguments are passed, enable error results as exit failures
+        if not enabled:
+            enabled.append('error')
+
+        error = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Error))
+        warning = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Warning))
+        info = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Info))
+        alias_map = {'error': error, 'warning': warning, 'info': info}
+        replace_aliases = lambda x: alias_map.get(x, [x])
+
+        # expand keyword aliases to keyword lists
+        disabled = list(chain.from_iterable(map(replace_aliases, disabled)))
+        enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
+
+        # validate selected keywords
+        unknown_keywords = set(disabled + enabled) - set(objects.KEYWORDS)
+        if unknown_keywords:
+            unknown = ', '.join(map(repr, unknown_keywords))
+            s = pluralism(unknown_keywords)
+            raise argparse.ArgumentError(self, f'unknown keyword{s}: {unknown}')
+
+        disabled = {objects.KEYWORDS[k] for k in disabled}
+        enabled = {objects.KEYWORDS[k] for k in enabled}
+        exit_keywords = frozenset(enabled - disabled)
+
+        setattr(namespace, self.dest, exit_keywords)

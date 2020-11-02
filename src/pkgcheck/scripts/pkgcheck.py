@@ -162,6 +162,20 @@ main_options.add_argument(
         When disabled, no caches will be saved to disk and results requiring
         caches (e.g. git-related checks) will be skipped.
     """)
+main_options.add_argument(
+    '--exit', metavar='KEYWORD', action=argparsers.ExitArgs, nargs='?', dest='exit_keywords',
+    help='keywords that trigger an error exit status (comma-separated list)',
+    docs="""
+        Comma separated list of keywords to enable and disable that
+        trigger a failed exit status. If no arguments or only disabled
+        arguments are passed, the set of error level results are used
+        as enabled arguments.
+
+        To specify disabled keywords prefix them with ``-``. Also, the special
+        arguments of ``error``, ``warning``, and ``info`` correspond to all
+        error, warning, and info keywords, respectively.
+    """)
+
 
 check_options = scan.add_argument_group('check selection')
 check_options.add_argument(
@@ -560,9 +574,11 @@ def _scan(options, out, err):
             msg += f' at {options.target_repo.location!r}'
         err.write(msg)
 
+    ret = []
     with ExitStack() as stack:
         reporter = options.reporter(
-            out, verbosity=options.verbosity, keywords=options.filtered_keywords)
+            out, verbosity=options.verbosity,
+            keywords=options.filtered_keywords, exit_keywords=options.exit_keywords)
         for c in options.pop('contexts') + [reporter]:
             stack.enter_context(c)
 
@@ -584,9 +600,9 @@ def _scan(options, out, err):
             err.flush()
 
             pipe = pipeline.Pipeline(options, scan_scope, pipes, restrict)
-            reporter(pipe)
+            ret.append(reporter(pipe))
 
-    return 0
+    return any(ret)
 
 
 cache = subparsers.add_parser(

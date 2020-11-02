@@ -49,21 +49,27 @@ class _ResultsIter:
 class Reporter:
     """Generic result reporter."""
 
-    def __init__(self, out, verbosity=0, keywords=None):
+    def __init__(self, out, verbosity=0, keywords=None, exit_keywords=None):
         """Initialize
 
         :type out: L{snakeoil.formatters.Formatter}
         :param keywords: result keywords to report, other keywords will be skipped
+        :param exit_keywords: result keywords that signify a failed exit status
         """
         self.out = out
         self.verbosity = verbosity
-        self._filtered_keywords = frozenset(keywords) if keywords is not None else keywords
+        self._filtered_keywords = frozenset(keywords) if keywords is not None else None
+        self._exit_keywords = frozenset(exit_keywords) if exit_keywords is not None else None
+        # boolean signifying a failure result was encountered (used with --exit option)
+        self._exit_failed = False
 
         # initialize result processing coroutines
         self.report = self._add_report().send
         self.process = self._process_report().send
 
     def __call__(self, pipe):
+        self._exit_failed = False
+
         results_q = SimpleQueue()
         orig_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)
         results_iter = _ResultsIter(results_q)
@@ -100,6 +106,7 @@ class Reporter:
                 self.report(result)
 
         p.join()
+        return int(self._exit_failed)
 
     def __enter__(self):
         self._start()
@@ -120,6 +127,9 @@ class Reporter:
                 # skip filtered results by default
                 if self.verbosity < 1 and result._filtered:
                     continue
+                if (not self._exit_failed and self._exit_keywords is not None
+                        and result.__class__ in self._exit_keywords):
+                    self._exit_failed = True
                 self.process(result)
 
     @coroutine
