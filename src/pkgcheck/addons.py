@@ -474,7 +474,7 @@ class ProfileAddon(base.Addon, caches.CachedAddon):
         self.profile_evaluate_dict = profile_evaluate_dict
         self.profile_filters = profile_filters
 
-    def update_cache(self, output_lock, force=False):
+    def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         # TODO: add support for generating profiles cache via cache subcommand
 

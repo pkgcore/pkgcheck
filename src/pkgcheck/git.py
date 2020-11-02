@@ -470,7 +470,7 @@ class GitAddon(base.Addon, caches.CachedAddon):
                 f'for git repo: {repo_location}')
         return out[0].strip()
 
-    def update_cache(self, output_lock, force=False):
+    def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         try:
             # running from scan subcommand
@@ -510,21 +510,19 @@ class GitAddon(base.Addon, caches.CachedAddon):
                 if (git_repo is not None and
                         repo.location == getattr(git_repo, 'location', None)):
                     if commit != git_repo.commit:
-                        with output_lock:
-                            old, new = git_repo.commit[:13], commit[:13]
-                            print(
-                                f'updating {repo} git repo cache: {old} -> {new}',
-                                file=sys.stderr,
-                            )
+                        old, new = git_repo.commit[:13], commit[:13]
+                        print(
+                            f'updating {repo} git repo cache: {old} -> {new}',
+                            file=sys.stderr,
+                        )
                         git_repo.update(commit, debug=self.options.debug)
                     else:
                         cache_repo = False
                 else:
-                    with output_lock:
-                        print(
-                            f'creating {repo} git repo cache: {commit[:13]}',
-                            file=sys.stderr,
-                        )
+                    print(
+                        f'creating {repo} git repo cache: {commit[:13]}',
+                        file=sys.stderr,
+                    )
                     git_repo = ParsedGitRepo(repo, commit, debug=self.options.debug)
 
                 if git_repo:

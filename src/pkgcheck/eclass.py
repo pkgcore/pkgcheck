@@ -458,7 +458,7 @@ class EclassAddon(base.Addon, caches.CachedAddon):
             for k, v in self.eclasses.items() if 'deprecated' in v
         })
 
-    def update_cache(self, output_lock, force=False):
+    def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         try:
             # running from scan subcommand

@@ -1,11 +1,9 @@
 """Base cache support."""
 
-import concurrent.futures
 import errno
 import os
 import pathlib
 import shutil
-import threading
 from operator import attrgetter
 from typing import NamedTuple
 
@@ -50,7 +48,7 @@ class CachedAddon(metaclass=_RegisterCache):
     # registered cache types
     caches = {}
 
-    def update_cache(self, output_lock, force=False):
+    def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         raise NotImplementedError(self.update_cache)
 
@@ -78,13 +76,8 @@ class CachedAddon(metaclass=_RegisterCache):
         """Update all known caches."""
         ret = []
         force = getattr(options, 'force_cache', False)
-        output_lock = threading.Lock()
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(addon.update_cache, output_lock, force)
-                for addon in addons]
-            for future in concurrent.futures.as_completed(futures):
-                ret.append(future.result())
+        for addon in addons:
+            ret.append(addon.update_cache(force=force))
         return any(ret)
 
     @classmethod
