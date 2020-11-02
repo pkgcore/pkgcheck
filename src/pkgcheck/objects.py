@@ -16,7 +16,7 @@ try:
     # running from a git checkout or a tarball.
     from . import _const as _defaults
 except ImportError:
-    _defaults = klass._sentinel
+    _defaults = klass.sentinel
 
 
 def _find_modules(module):
@@ -77,7 +77,7 @@ class _LazyDict(Mapping):
 
         # Forcibly collapse mapping when running from the git repo, used to
         # force cache registration to occur as related modules are imported.
-        if _defaults is klass._sentinel:
+        if _defaults is klass.sentinel:
             self._dict
 
     @klass.jit_attr
