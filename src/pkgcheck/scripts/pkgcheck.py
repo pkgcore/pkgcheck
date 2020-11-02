@@ -24,12 +24,11 @@ from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import abspath, pjoin
-from snakeoil.strings import pluralism
 
-from .. import base, const, objects, pipeline, reporters, results
+from .. import argparsers, base, const, objects, pipeline, reporters
 from ..caches import CachedAddon
 from ..addons import init_addon
-from ..checks import NetworkCheck, init_checks
+from ..checks import init_checks
 from ..cli import ConfigArgumentParser
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
@@ -91,49 +90,6 @@ def _setup_reporter(parser, namespace):
         parser.error('--format option is only valid when using FormatReporter')
 
 
-class CacheNegations(arghparse.CommaSeparatedNegations):
-    """Split comma-separated enabled and disabled cache types."""
-
-    default = {cache.type: True for cache in CachedAddon.caches.values()}
-
-    def parse_values(self, values):
-        all_cache_types = {cache.type for cache in CachedAddon.caches.values()}
-        disabled, enabled = [], list(all_cache_types)
-        if values is None or values in ('y', 'yes', 'true'):
-            pass
-        elif values in ('n', 'no', 'false'):
-            disabled = list(all_cache_types)
-        else:
-            disabled, enabled = super().parse_values(values)
-        disabled = set(disabled)
-        enabled = set(enabled) if enabled else all_cache_types
-        unknown = (disabled | enabled) - all_cache_types
-        if unknown:
-            unknowns = ', '.join(map(repr, unknown))
-            choices = ', '.join(map(repr, sorted(self.default)))
-            s = pluralism(unknown)
-            raise argparse.ArgumentError(
-                self, f'unknown cache type{s}: {unknowns} (choose from {choices})')
-        enabled = set(enabled).difference(disabled)
-        return enabled
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        enabled = self.parse_values(values)
-        caches = {}
-        for cache in CachedAddon.caches.values():
-            caches[cache.type] = cache.type in enabled
-        setattr(namespace, self.dest, caches)
-
-
-class ConfigArg(argparse._StoreAction):
-    """Store config path string or False when explicitly disabled."""
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        if values.lower() in ('false', 'no', 'n'):
-            values = False
-        setattr(namespace, self.dest, values)
-
-
 scan = subparsers.add_parser(
     'scan', parents=(reporter_argparser,),
     description='scan targets for QA issues',
@@ -143,7 +99,7 @@ scan.add_argument(
 
 main_options = scan.add_argument_group('main options')
 main_options.add_argument(
-    '--config', action=ConfigArg, dest='config_file',
+    '--config', action=argparsers.ConfigArg, dest='config_file',
     help='use custom pkgcheck scan settings file',
     docs="""
         Load custom pkgcheck scan settings from a given file.
@@ -185,7 +141,7 @@ main_options.add_argument(
         Number of asynchronous tasks to run concurrently (defaults to 5 * CPU count).
     """)
 main_options.add_argument(
-    '--cache', action=CacheNegations, default=CacheNegations.default,
+    '--cache', action=argparsers.CacheNegations, default=argparsers.CacheNegations.default,
     help='forcibly enable/disable caches',
     docs="""
         All cache types are enabled by default, this option explicitly sets
@@ -207,81 +163,9 @@ main_options.add_argument(
         caches (e.g. git-related checks) will be skipped.
     """)
 
-
-class ScopeArgs(arghparse.CommaSeparatedNegations):
-    """Filter enabled keywords by selected scopes."""
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        disabled, enabled = self.parse_values(values)
-
-        # validate selected scopes
-        unknown_scopes = set(disabled + enabled) - set(base.scopes)
-        if unknown_scopes:
-            unknown = ', '.join(map(repr, unknown_scopes))
-            available = ', '.join(base.scopes)
-            s = pluralism(unknown_scopes)
-            raise argparse.ArgumentError(
-                self, f'unknown scope{s}: {unknown} (available scopes: {available})')
-
-        disabled = {base.scopes[x] for x in disabled}
-        enabled = {base.scopes[x] for x in enabled}
-
-        setattr(namespace, self.dest, (disabled, enabled))
-
-
-class KeywordArgs(arghparse.CommaSeparatedNegations):
-    """Filter enabled keywords by selected keywords."""
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        disabled, enabled = self.parse_values(values)
-
-        error = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Error))
-        warning = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Warning))
-        info = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Info))
-        alias_map = {'error': error, 'warning': warning, 'info': info}
-        replace_aliases = lambda x: alias_map.get(x, [x])
-
-        # expand keyword aliases to keyword lists
-        disabled = list(chain.from_iterable(map(replace_aliases, disabled)))
-        enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
-
-        # validate selected keywords
-        unknown_keywords = set(disabled + enabled) - set(objects.KEYWORDS)
-        if unknown_keywords:
-            unknown = ', '.join(map(repr, unknown_keywords))
-            s = pluralism(unknown_keywords)
-            raise argparse.ArgumentError(self, f'unknown keyword{s}: {unknown}')
-
-        setattr(namespace, self.dest, (disabled, enabled))
-
-
-class CheckArgs(arghparse.CommaSeparatedNegations):
-    """Determine checks to run on selection."""
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        disabled, enabled = self.parse_values(values)
-
-        network = (c for c, v in objects.CHECKS.items() if issubclass(v, NetworkCheck))
-        alias_map = {'all': objects.CHECKS, 'net': network}
-        replace_aliases = lambda x: alias_map.get(x, [x])
-
-        # expand check aliases to check lists
-        disabled = list(chain.from_iterable(map(replace_aliases, disabled)))
-        enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
-
-        # validate selected checks
-        unknown_checks = set(disabled + enabled) - set(objects.CHECKS)
-        if unknown_checks:
-            unknown = ', '.join(map(repr, unknown_checks))
-            s = pluralism(unknown_checks)
-            raise argparse.ArgumentError(self, f'unknown check{s}: {unknown}')
-
-        setattr(namespace, self.dest, (disabled, enabled))
-
-
 check_options = scan.add_argument_group('check selection')
 check_options.add_argument(
-    '-c', '--checks', metavar='CHECK', action=CheckArgs, dest='selected_checks',
+    '-c', '--checks', metavar='CHECK', action=argparsers.CheckArgs, dest='selected_checks',
     help='limit checks to run (comma-separated list)',
     docs="""
         Comma separated list of checks to enable and disable for
@@ -303,7 +187,7 @@ check_options.add_argument(
         Use ``pkgcheck show --checks`` see available options.
     """)
 check_options.add_argument(
-    '-k', '--keywords', metavar='KEYWORD', action=KeywordArgs, dest='selected_keywords',
+    '-k', '--keywords', metavar='KEYWORD', action=argparsers.KeywordArgs, dest='selected_keywords',
     help='limit keywords to scan for (comma-separated list)',
     docs="""
         Comma separated list of keywords to enable and disable for
@@ -322,7 +206,7 @@ check_options.add_argument(
         Use ``pkgcheck show --keywords`` to see available options.
     """)
 check_options.add_argument(
-    '-s', '--scopes', metavar='SCOPE', action=ScopeArgs, dest='selected_scopes',
+    '-s', '--scopes', metavar='SCOPE', action=argparsers.ScopeArgs, dest='selected_scopes',
     help='limit keywords to scan for by scope (comma-separated list)',
     docs="""
         Comma separated list of scopes to enable and disable for scanning. Any
@@ -726,7 +610,7 @@ cache.add_argument(
     help='dry run without performing any changes')
 cache.add_argument(
     '-t', '--type', dest='cache',
-    action=CacheNegations, default=CacheNegations.default,
+    action=argparsers.CacheNegations, default=argparsers.CacheNegations.default,
     help='target cache types')
 
 
