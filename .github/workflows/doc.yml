@@ -35,16 +35,9 @@ jobs:
         # notify github this isn't a jekyll site
         touch build/sphinx/html/.nojekyll
 
-    # install ssh client to use for deploying
-    # TODO: replace this once GITHUB_TOKEN works as expected
-    - name: Install SSH Client
-      uses: webfactory/ssh-agent@v0.4.1
-      with:
-        ssh-private-key: ${{ secrets.DEPLOY_KEY }}
-
     - name: Deploy docs to gh-pages
       uses: JamesIves/github-pages-deploy-action@3.7.1
       with:
-        SSH: true
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         BRANCH: gh-pages
         FOLDER: build/sphinx/html
