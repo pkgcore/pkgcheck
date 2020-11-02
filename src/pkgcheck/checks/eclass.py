@@ -150,6 +150,7 @@ class EclassCheck(Check):
         super().__init__(*args)
         latest_eapi = EAPI.known_eapis[sorted(EAPI.known_eapis)[-1]]
         self.known_phases = set(latest_eapi.phases_rev)
+        self.eclass_keys = latest_eapi.eclass_keys
 
     def feed(self, eclass):
         # check for eclass bash syntax errors
@@ -182,7 +183,9 @@ class EclassCheck(Check):
                 missing = tuple(sorted(funcs_missing_docs))
                 yield EclassDocMissingFunc(missing, eclass=eclass)
             # TODO: ignore overridden vars from other eclasses?
-            vars_missing_docs = eclass_obj.exported_variables - eclass_obj.variables
+            # ignore exported metadata variables, e.g. SRC_URI
+            vars_missing_docs = (
+                eclass_obj.exported_variables - eclass_obj.variables - self.eclass_keys)
             if vars_missing_docs:
                 missing = tuple(sorted(vars_missing_docs))
                 yield EclassDocMissingVar(missing, eclass=eclass)
