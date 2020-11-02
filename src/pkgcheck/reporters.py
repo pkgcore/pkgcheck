@@ -127,7 +127,7 @@ class Reporter:
                 # skip filtered results by default
                 if self.verbosity < 1 and result._filtered:
                     continue
-                if (not self._exit_failed and self._exit_keywords is not None
+                if (self._exit_keywords is not None and not self._exit_failed
                         and result.__class__ in self._exit_keywords):
                     self._exit_failed = True
                 self.process(result)
