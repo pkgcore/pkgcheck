@@ -613,6 +613,9 @@ cache = subparsers.add_parser(
     """)
 cache_actions = cache.add_mutually_exclusive_group()
 cache_actions.add_argument(
+    '-l', '--list', dest='list_cache', action='store_true',
+    help='list available caches')
+cache_actions.add_argument(
     '-u', '--update', dest='update_cache', action='store_true',
     help='update caches')
 cache_actions.add_argument(
