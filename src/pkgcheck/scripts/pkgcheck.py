@@ -869,27 +869,18 @@ output_types.add_argument(
     """)
 @show.bind_main_func
 def _show(options, out, err):
-    # default to showing keywords if no output option is selected
-    list_option_selected = any(
-        getattr(options, attr) for attr in
-        ('keywords', 'checks', 'scopes', 'reporters'))
-    if not list_option_selected:
-        options.keywords = True
-
-    if options.keywords:
-        display_keywords(out, options)
-
     if options.checks:
         display_checks(out, options)
-
-    if options.scopes:
+    elif options.scopes:
         if options.verbosity < 1:
             out.write('\n'.join(base.scopes))
         else:
             for name, scope in base.scopes.items():
                 out.write(f'{name} -- {scope.desc} scope')
-
-    if options.reporters:
+    elif options.reporters:
         display_reporters(out, options)
+    else:
+        # default to showing keywords if no output option is selected
+        display_keywords(out, options)
 
     return 0
