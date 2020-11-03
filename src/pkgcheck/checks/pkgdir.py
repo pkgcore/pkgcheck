@@ -327,7 +327,7 @@ class LiveOnlyCheck(GentooRepoCheck):
 
         if all(pkg.live for pkg in pkgset):
             # assume highest package version is most recently committed
-            pkg = sorted(pkgset)[-1]
+            pkg = pkgset[0] if len(pkgset) == 1 else sorted(pkgset)[-1]
             try:
                 match = self.added_repo.match(pkg.versioned_atom)[0]
             except IndexError:
