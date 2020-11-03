@@ -106,7 +106,7 @@ class Reporter:
                 self.report(result)
 
         p.join()
-        return int(self._exit_failed)
+        return self._exit_failed
 
     def __enter__(self):
         self._start()
