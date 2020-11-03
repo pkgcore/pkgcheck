@@ -9,7 +9,7 @@ from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
-from . import Check
+from . import Check, GentooRepoCheck
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()
@@ -292,3 +292,21 @@ class EqualVersionsCheck(Check):
                 equal_versions[pkg_a.versioned_atom].update([pkg_a.fullver, pkg_b.fullver])
         for pkg, versions in equal_versions.items():
             yield EqualVersions(sorted(versions), pkg=pkg)
+
+
+class LiveOnlyPackage(results.PackageResult, results.Warning):
+    """Package only has VCS-based ebuilds."""
+
+    desc = 'all versions are VCS-based'
+
+
+class LiveOnlyCheck(GentooRepoCheck):
+    """Scan for packages with only live versions."""
+
+    scope = base.package_scope
+    _source = sources.PackageRepoSource
+    known_results = frozenset([LiveOnlyPackage])
+
+    def feed(self, pkgset):
+        if all(pkg.live for pkg in pkgset):
+            yield LiveOnlyPackage(pkg=pkgset[0])
