@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import stat
 from collections import defaultdict
@@ -295,18 +296,44 @@ class EqualVersionsCheck(Check):
 
 
 class LiveOnlyPackage(results.PackageResult, results.Warning):
-    """Package only has VCS-based ebuilds."""
+    """Package has only had VCS-based ebuilds for over a year."""
 
-    desc = 'all versions are VCS-based'
+    def __init__(self, age, **kwargs):
+        super().__init__(**kwargs)
+        self.age = age
+
+    @property
+    def desc(self):
+        return f'all versions are VCS-based added over {self.age} years ago'
 
 
 class LiveOnlyCheck(GentooRepoCheck):
-    """Scan for packages with only live versions."""
+    """Scan for old packages with only live versions."""
 
     scope = base.package_scope
     _source = sources.PackageRepoSource
+    required_addons = (git.GitAddon,)
     known_results = frozenset([LiveOnlyPackage])
 
+    def __init__(self, *args, git_addon):
+        super().__init__(*args)
+        self.today = datetime.today()
+        self.added_repo = git_addon.cached_repo(git.GitAddedRepo)
+
     def feed(self, pkgset):
+        # disable check when git repo parsing is disabled
+        if self.added_repo is None:
+            return
+
         if all(pkg.live for pkg in pkgset):
-            yield LiveOnlyPackage(pkg=pkgset[0])
+            # assume highest package version is most recently committed
+            pkg = sorted(pkgset)[-1]
+            try:
+                match = self.added_repo.match(pkg.versioned_atom)[0]
+            except IndexError:
+                # probably an uncommitted package
+                return
+            added = datetime.strptime(match.date, '%Y-%m-%d')
+            years_old = round((self.today - added).days / 365, 2)
+            if years_old > 1:
+                yield LiveOnlyPackage(years_old, pkg=pkg)
