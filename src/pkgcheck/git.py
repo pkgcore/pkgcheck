@@ -222,7 +222,7 @@ class _HistoricalRepo(SimpleTree):
     """Repository encapsulating historical git data."""
 
     # selected pkg status filter
-    _status_filter = None
+    _status_filter = {'A', 'R', 'M', 'D'}
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('pkg_klass', _GitCommitPkg)
@@ -231,7 +231,7 @@ class _HistoricalRepo(SimpleTree):
     def _get_versions(self, cp_key):
         versions = []
         for version, data in self.cpv_dict[cp_key[0]][cp_key[1]].items():
-            if self._status_filter is None or data['status'] in self._status_filter:
+            if data['status'] in self._status_filter:
                 versions.append((version, data))
         return tuple(versions)
 
@@ -249,19 +249,19 @@ class GitChangedRepo(_HistoricalRepo):
 class GitModifiedRepo(_HistoricalRepo):
     """Historical git repo consisting of the latest modified packages."""
 
-    _status_filter = frozenset(['A', 'R', 'M'])
+    _status_filter = {'A', 'R', 'M'}
 
 
 class GitAddedRepo(_HistoricalRepo):
     """Historical git repo consisting of added packages."""
 
-    _status_filter = frozenset(['A', 'R'])
+    _status_filter = {'A', 'R'}
 
 
 class GitRemovedRepo(_HistoricalRepo):
     """Historical git repo consisting of removed packages."""
 
-    _status_filter = frozenset(['D'])
+    _status_filter = {'D'}
 
 
 class _ScanCommits(argparse.Action):
