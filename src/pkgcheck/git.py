@@ -114,12 +114,9 @@ class ParsedGitRepo(UserDict, caches.Cache):
                 return None
 
     @classmethod
-    def parse_git_log(cls, repo_path, git_cmd=None, commit=None,
-                      pkgs=False, debug=False):
+    def parse_git_log(cls, repo_path, commit=None, pkgs=False, debug=False):
         """Parse git log output."""
-        if git_cmd is None:
-            git_cmd = cls._git_cmd
-        cmd = shlex.split(git_cmd) if isinstance(git_cmd, str) else git_cmd
+        cmd = shlex.split(cls._git_cmd)
         # custom git log format, see the "PRETTY FORMATS" section of the git
         # log man page for details
         format_lines = [
@@ -189,10 +186,8 @@ class ParsedGitRepo(UserDict, caches.Cache):
 
     def _pkg_changes(self, local=False, **kwargs):
         """Parse package changes from git log output."""
-        cmd = shlex.split(self._git_cmd)
-
         seen = set()
-        for pkg in self.parse_git_log(self.location, cmd, pkgs=True, **kwargs):
+        for pkg in self.parse_git_log(self.location, pkgs=True, **kwargs):
             atom = pkg.atom
             key = (atom, pkg.status)
             if key not in seen:
