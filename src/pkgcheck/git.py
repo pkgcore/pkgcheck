@@ -198,11 +198,11 @@ class ParsedGitRepo(UserDict, caches.Cache):
             if key not in seen:
                 seen.add(key)
                 self.data.setdefault(atom.category, {}).setdefault(
-                    atom.package, {})[(atom.fullver, pkg.status)] = {
+                    atom.package, {}).setdefault(atom.fullver, {}).update({
                         'date': pkg.commit.commit_date,
                         'status': pkg.status,
                         'commit': pkg.commit.hash if not local else pkg.commit,
-                    }
+                    })
 
 
 class _GitCommitPkg(cpv.VersionedCPV):
@@ -230,8 +230,8 @@ class _HistoricalRepo(SimpleTree):
 
     def _get_versions(self, cp_key):
         versions = []
-        for (version, status), data in self.cpv_dict[cp_key[0]][cp_key[1]].items():
-            if self._status_filter is None or status in self._status_filter:
+        for version, data in self.cpv_dict[cp_key[0]][cp_key[1]].items():
+            if self._status_filter is None or data['status'] in self._status_filter:
                 versions.append((version, data))
         return tuple(versions)
 
@@ -337,7 +337,7 @@ class GitAddon(base.Addon, caches.CachedAddon):
     """
 
     # cache registry
-    cache = caches.CacheData(type='git', file='git.pickle', version=3)
+    cache = caches.CacheData(type='git', file='git.pickle', version=4)
 
     @classmethod
     def mangle_argparser(cls, parser):
