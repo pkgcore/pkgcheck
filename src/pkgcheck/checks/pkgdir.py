@@ -296,7 +296,7 @@ class EqualVersionsCheck(Check):
 
 
 class LiveOnlyPackage(results.PackageResult, results.Warning):
-    """Package has only had VCS-based ebuilds for over a year."""
+    """Package has only had VCS-based ebuilds."""
 
     def __init__(self, age, **kwargs):
         super().__init__(**kwargs)
@@ -308,7 +308,7 @@ class LiveOnlyPackage(results.PackageResult, results.Warning):
 
 
 class LiveOnlyCheck(GentooRepoCheck):
-    """Scan for old packages with only live versions."""
+    """Scan for packages with only live versions."""
 
     scope = base.package_scope
     _source = sources.PackageRepoSource
@@ -335,5 +335,4 @@ class LiveOnlyCheck(GentooRepoCheck):
                 return
             added = datetime.strptime(match.date, '%Y-%m-%d')
             years_old = round((self.today - added).days / 365, 2)
-            if years_old > 1:
-                yield LiveOnlyPackage(years_old, pkg=pkg)
+            yield LiveOnlyPackage(years_old, pkg=pkg)
