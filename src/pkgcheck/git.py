@@ -2,7 +2,6 @@
 
 import argparse
 import os
-from itertools import chain
 import pickle
 import shlex
 import subprocess
@@ -202,7 +201,6 @@ class ParsedGitRepo(UserDict, caches.Cache):
                     atom.package, {}).setdefault(pkg.status, []).append((
                         atom.fullver,
                         pkg.commit.commit_date,
-                        pkg.status,
                         pkg.commit.hash if not local else pkg.commit,
                     ))
 
@@ -210,7 +208,7 @@ class ParsedGitRepo(UserDict, caches.Cache):
 class _GitCommitPkg(cpv.VersionedCPV):
     """Fake packages encapsulating commits parsed from git log."""
 
-    def __init__(self, category, package, version, date, status, commit):
+    def __init__(self, category, package, status, version, date, commit):
         super().__init__(category, package, version)
 
         # add additional attrs
@@ -231,16 +229,18 @@ class _HistoricalRepo(SimpleTree):
         super().__init__(*args, **kwargs)
 
     def _get_versions(self, cp):
-        return tuple(chain.from_iterable(
-            self.cpv_dict[cp[0]][cp[1]].get(status, ())
-            for status in self._status_filter
-        ))
+        versions = []
+        for status, data in self.cpv_dict[cp[0]][cp[1]].items():
+            if status in self._status_filter:
+                versions.append((status, data))
+        return versions
 
     def _internal_gen_candidates(self, candidates, sorter, raw_pkg_cls, **kwargs):
         for cp in sorter(candidates):
             yield from sorter(
-                raw_pkg_cls(cp[0], cp[1], *data)
-                for data in self.versions.get(cp, ()))
+                raw_pkg_cls(cp[0], cp[1], status, *commit)
+                for status, data in self.versions.get(cp, ())
+                for commit in data)
 
 
 class GitChangedRepo(_HistoricalRepo):
