@@ -11,10 +11,9 @@ from multiprocessing import Process, SimpleQueue
 from string import Formatter
 from xml.sax.saxutils import escape as xml_escape
 
-from snakeoil import pickling
 from snakeoil.decorators import coroutine
 
-from . import base, objects, results
+from . import base, results
 
 
 class _ResultsIter:
@@ -399,32 +398,20 @@ class JsonStream(Reporter):
             return d
         return str(obj)
 
-    @staticmethod
-    def from_json(data):
-        """Deserialize JSON object to its corresponding result object."""
-        try:
-            d = json.loads(data)
-        except (json.decoder.JSONDecodeError, UnicodeDecodeError) as e:
-            raise DeserializationError(f'failed loading: {data!r}') from e
-
-        try:
-            cls = objects.KEYWORDS[d.pop('__class__')]
-        except KeyError:
-            raise DeserializationError(f'missing result class: {data!r}')
-
-        try:
-            return cls._create(**d)
-        except TypeError as e:
-            raise DeserializationError(f'failed loading: {data!r}') from e
-
     @classmethod
-    def from_file(cls, f):
-        """Deserialize results from a given file handle."""
+    def from_iter(cls, iterable):
+        """Deserialize results from a given iterable."""
+        # avoid circular import issues
+        from . import objects
         try:
-            for i, line in enumerate(f, 1):
-                yield cls.from_json(line)
-        except DeserializationError as e:
-            raise DeserializationError(f'invalid entry on line {i}') from e
+            for record in iterable:
+                d = json.loads(record)
+                cls = objects.KEYWORDS[d.pop('__class__')]
+                yield cls._create(**d)
+        except (json.decoder.JSONDecodeError, UnicodeDecodeError, DeserializationError) as e:
+            raise DeserializationError(f'failed loading: {record!r}') from e
+        except KeyError:
+            raise DeserializationError(f'missing result class: {record!r}')
 
     @coroutine
     def _process_report(self):
@@ -450,10 +437,11 @@ class PickleStream(Reporter):
         self.out.autoline = False
 
     @staticmethod
-    def from_file(f):
-        """Deserialize results from a given file handle."""
+    def from_iter(iterable):
+        """Deserialize results from a given iterable."""
         try:
-            for result in pickling.iter_stream(f):
+            for obj in iterable:
+                result = pickle.loads(obj)
                 if isinstance(result, results.Result):
                     yield result
                 else:

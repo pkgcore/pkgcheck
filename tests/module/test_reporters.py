@@ -1,4 +1,3 @@
-import pickle
 import sys
 from functools import partial
 from textwrap import dedent
@@ -7,7 +6,7 @@ from pkgcore.test.misc import FakePkg
 import pytest
 from snakeoil.formatters import PlainTextFormatter
 
-from pkgcheck import base, reporters, results
+from pkgcheck import reporters, results
 from pkgcheck.checks import pkgdir, profiles, metadata, metadata_xml, git
 
 
@@ -192,8 +191,8 @@ class TestPickleStream(BaseReporter):
                 reporter.report(result)
                 out, err = capsysbinary.readouterr()
                 assert not err
-                unpickled_result = pickle.loads(out)
-                assert str(unpickled_result) == str(result)
+                deserialized_result = next(reporter.from_iter([out]))
+                assert str(deserialized_result) == str(result)
 
     def test_filtered_report(self, capsysbinary):
         with self.mk_reporter(keywords=(profiles.ProfileError,)) as reporter:
@@ -201,8 +200,8 @@ class TestPickleStream(BaseReporter):
             reporter.report(self.log_error)
         out, err = capsysbinary.readouterr()
         assert not err
-        result = pickle.loads(out)
-        assert str(result) == str(self.log_error)
+        deserialized_result = next(reporter.from_iter([out]))
+        assert str(deserialized_result) == str(self.log_error)
 
     def test_unpickleable_result(self):
         result = UnPickleableResult()
@@ -228,7 +227,7 @@ class TestJsonStream(BaseReporter):
                 reporter.report(result)
                 out, err = capsys.readouterr()
                 assert not err
-                deserialized_result = reporter.from_json(out)
+                deserialized_result = next(reporter.from_iter([out]))
                 assert str(deserialized_result) == str(result)
 
     def test_filtered_report(self, capsys):
@@ -237,5 +236,5 @@ class TestJsonStream(BaseReporter):
             reporter.report(self.log_error)
             out, err = capsys.readouterr()
             assert not err
-            result = reporter.from_json(out)
-            assert str(result) == str(self.log_error)
+            deserialized_result = next(reporter.from_iter([out]))
+            assert str(deserialized_result) == str(self.log_error)

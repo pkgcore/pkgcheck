@@ -416,8 +416,8 @@ class TestPkgcheckScan(object):
                             assert not out
                         else:
                             results = []
-                            for line in out.rstrip('\n').split('\n'):
-                                deserialized_result = reporters.JsonStream.from_json(line)
+                            lines = out.rstrip('\n').split('\n')
+                            for deserialized_result in reporters.JsonStream.from_iter(lines):
                                 assert deserialized_result.__class__ == result
                                 results.append(deserialized_result)
                                 if not verbosity:
@@ -481,8 +481,8 @@ class TestPkgcheckScan(object):
                     out, err = capsys.readouterr()
                     assert out, f'{repo} repo failed, no results'
                     assert excinfo.value.code == 0
-                    for line in out.rstrip('\n').split('\n'):
-                        result = reporters.JsonStream.from_json(line)
+                    lines = out.rstrip('\n').split('\n')
+                    for result in reporters.JsonStream.from_iter(lines):
                         # ignore results generated from stubs
                         stubs = (getattr(result, x, '') for x in ('category', 'package'))
                         if any(x.startswith('stub') for x in stubs):

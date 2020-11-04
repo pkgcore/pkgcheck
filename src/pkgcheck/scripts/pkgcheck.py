@@ -707,14 +707,14 @@ def _replay(options, out, err):
     exc = None
     with options.reporter(out) as reporter:
         try:
-            for result in reporters.JsonStream.from_file(options.results):
+            for result in reporters.JsonStream.from_iter(options.results):
                 reporter.report(result)
                 processed += 1
         except reporters.DeserializationError as e:
             if not processed:
                 options.results.seek(0)
                 try:
-                    for result in reporters.PickleStream.from_file(options.results):
+                    for result in reporters.PickleStream.from_iter(options.results):
                         reporter.report(result)
                         processed += 1
                 except reporters.DeserializationError as e:
