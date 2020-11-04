@@ -33,4 +33,4 @@ jobs:
 
     - name: Run linting tools
       run: |
-        pylint src/pkgcheck
+        pylint --exit-zero src/pkgcheck
