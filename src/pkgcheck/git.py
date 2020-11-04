@@ -114,7 +114,7 @@ class ParsedGitRepo(UserDict, caches.Cache):
                 return None
 
     @classmethod
-    def parse_git_log(cls, repo_path, commit=None, pkgs=False, debug=False):
+    def parse_git_log(cls, repo_path, commit=None, pkgs=False, verbosity=-1):
         """Parse git log output."""
         cmd = shlex.split(cls._git_cmd)
         # custom git log format, see the "PRETTY FORMATS" section of the git
@@ -148,7 +148,7 @@ class ParsedGitRepo(UserDict, caches.Cache):
             return
 
         count = 1
-        with base.ProgressManager(debug=debug) as progress:
+        with base.ProgressManager(verbosity=verbosity) as progress:
             while line:
                 hash = git_log.stdout.readline().decode().strip()
                 commit_date = git_log.stdout.readline().decode().strip()
@@ -511,7 +511,7 @@ class GitAddon(base.Addon, caches.CachedAddon):
                             f'updating {repo} git repo cache: {old} -> {new}',
                             file=sys.stderr,
                         )
-                        git_repo.update(commit, debug=self.options.debug)
+                        git_repo.update(commit, verbosity=self.options.verbosity)
                     else:
                         cache_repo = False
                 else:
@@ -519,7 +519,7 @@ class GitAddon(base.Addon, caches.CachedAddon):
                         f'creating {repo} git repo cache: {commit[:13]}',
                         file=sys.stderr,
                     )
-                    git_repo = ParsedGitRepo(repo, commit, debug=self.options.debug)
+                    git_repo = ParsedGitRepo(repo, commit, verbosity=self.options.verbosity)
 
                 if git_repo:
                     self._cached_repos[repo.location] = git_repo

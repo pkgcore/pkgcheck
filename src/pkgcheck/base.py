@@ -224,8 +224,8 @@ class ProgressManager(AbstractContextManager):
     Useful for updating the user about the status of a long running process.
     """
 
-    def __init__(self, debug=False):
-        self.debug = debug
+    def __init__(self, verbosity=0):
+        self.verbosity = verbosity
         self._triggered = False
 
     def _progress_callback(self, s):
@@ -234,10 +234,9 @@ class ProgressManager(AbstractContextManager):
         self._triggered = True
 
     def __enter__(self):
-        if self.debug:
+        if self.verbosity >= 0:
             return self._progress_callback
-        else:
-            return lambda x: None
+        return lambda x: None
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
         if self._triggered:
