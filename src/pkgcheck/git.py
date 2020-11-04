@@ -2,6 +2,7 @@
 
 import argparse
 import os
+from itertools import chain
 import pickle
 import shlex
 import subprocess
@@ -198,18 +199,19 @@ class ParsedGitRepo(UserDict, caches.Cache):
             if key not in seen:
                 seen.add(key)
                 self.data.setdefault(atom.category, {}).setdefault(
-                    atom.package, {})[(atom.fullver, pkg.status)] = {
-                        'date': pkg.commit.commit_date,
-                        'status': pkg.status,
-                        'commit': pkg.commit.hash if not local else pkg.commit,
-                    }
+                    atom.package, {}).setdefault(pkg.status, []).append((
+                        atom.fullver,
+                        pkg.commit.commit_date,
+                        pkg.status,
+                        pkg.commit.hash if not local else pkg.commit,
+                    ))
 
 
 class _GitCommitPkg(cpv.VersionedCPV):
     """Fake packages encapsulating commits parsed from git log."""
 
-    def __init__(self, *args, date, status, commit):
-        super().__init__(*args)
+    def __init__(self, category, package, version, date, status, commit):
+        super().__init__(category, package, version)
 
         # add additional attrs
         sf = object.__setattr__
@@ -228,18 +230,17 @@ class _HistoricalRepo(SimpleTree):
         kwargs.setdefault('pkg_klass', _GitCommitPkg)
         super().__init__(*args, **kwargs)
 
-    def _get_versions(self, cp_key):
-        versions = []
-        for (version, status), data in self.cpv_dict[cp_key[0]][cp_key[1]].items():
-            if status in self._status_filter:
-                versions.append((version, data))
-        return tuple(versions)
+    def _get_versions(self, cp):
+        return tuple(chain.from_iterable(
+            self.cpv_dict[cp[0]][cp[1]].get(status, ())
+            for status in self._status_filter
+        ))
 
     def _internal_gen_candidates(self, candidates, sorter, raw_pkg_cls, **kwargs):
         for cp in sorter(candidates):
             yield from sorter(
-                raw_pkg_cls(cp[0], cp[1], ver, **data)
-                for ver, data in self.versions.get(cp, ()))
+                raw_pkg_cls(cp[0], cp[1], *data)
+                for data in self.versions.get(cp, ()))
 
 
 class GitChangedRepo(_HistoricalRepo):
@@ -337,7 +338,7 @@ class GitAddon(base.Addon, caches.CachedAddon):
     """
 
     # cache registry
-    cache = caches.CacheData(type='git', file='git.pickle', version=3)
+    cache = caches.CacheData(type='git', file='git.pickle', version=4)
 
     @classmethod
     def mangle_argparser(cls, parser):
