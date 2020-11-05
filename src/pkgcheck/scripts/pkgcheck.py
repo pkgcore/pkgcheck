@@ -411,8 +411,6 @@ def _validate_scan_args(parser, namespace):
     cwd_in_repo = namespace.cwd in namespace.target_repo
 
     if namespace.targets:
-        repo = namespace.target_repo
-
         # read targets from stdin in a non-blocking manner
         if len(namespace.targets) == 1 and namespace.targets[0] == '-':
             def stdin():
