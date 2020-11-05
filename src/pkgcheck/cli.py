@@ -33,7 +33,7 @@ class ConfigArgumentParser(arghparse.ArgumentParser):
             for f in configs:
                 self.config.read(f)
         except configparser.ParsingError as e:
-            raise UserException(f'parsing config file failed: {e}')
+            self.error(f'parsing config file failed: {e}')
         return self.config
 
     def parse_config_options(self, namespace, section='DEFAULT'):
