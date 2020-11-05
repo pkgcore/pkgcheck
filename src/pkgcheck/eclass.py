@@ -76,17 +76,22 @@ class EclassAddon(base.Addon, caches.CachedAddon):
                             del eclasses[name]
                             cache_eclasses = True
 
+                    # padding for progress output
+                    padding = max(len(x) for x in repo.eclass_cache.eclasses)
+
                     # check for eclass additions and updates
-                    for name, eclass in sorted(repo.eclass_cache.eclasses.items()):
-                        try:
-                            if os.path.getmtime(eclass.path) != eclasses[name].mtime:
-                                raise KeyError
-                        except (KeyError, AttributeError):
+                    with base.ProgressManager(verbosity=self.options.verbosity) as progress:
+                        for name, eclass in sorted(repo.eclass_cache.eclasses.items()):
                             try:
-                                eclasses[name] = Eclass(eclass.path, sourced=True)
-                                cache_eclasses = True
-                            except (IOError, EclassDocParsingError):
-                                continue
+                                if os.path.getmtime(eclass.path) != eclasses[name].mtime:
+                                    raise KeyError
+                            except (KeyError, AttributeError):
+                                try:
+                                    progress(f'rebuilding eclass cache: {name:<{padding}}')
+                                    eclasses[name] = Eclass(eclass.path, sourced=True)
+                                    cache_eclasses = True
+                                except (IOError, EclassDocParsingError):
+                                    continue
 
                     # push eclasses to disk if any changes were found
                     if cache_eclasses:

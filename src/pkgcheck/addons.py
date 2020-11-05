@@ -312,135 +312,140 @@ class ProfileAddon(base.Addon, caches.CachedAddon):
                             'forcing %s profile cache regen '
                             'due to outdated version', repo.repo_id)
                         os.remove(cache_file)
-                except FileNotFoundError as e:
+                except FileNotFoundError:
                     pass
                 except (AttributeError, EOFError, ImportError, IndexError) as e:
                     logger.debug('forcing %s profile cache regen: %s', repo.repo_id, e)
                     os.remove(cache_file)
 
-        for k in sorted(self.desired_arches):
-            if k.lstrip("~") not in self.desired_arches:
-                continue
-            stable_key = k.lstrip("~")
-            unstable_key = "~" + stable_key
-            stable_r = packages.PackageRestriction(
-                "keywords", values.ContainmentMatch2((stable_key,)))
-            unstable_r = packages.PackageRestriction(
-                "keywords", values.ContainmentMatch2((stable_key, unstable_key,)))
+        with base.ProgressManager(verbosity=self.options.verbosity) as progress:
+            for k in sorted(self.desired_arches):
+                if k.lstrip("~") not in self.desired_arches:
+                    continue
+                stable_key = k.lstrip("~")
+                unstable_key = "~" + stable_key
+                stable_r = packages.PackageRestriction(
+                    "keywords", values.ContainmentMatch2((stable_key,)))
+                unstable_r = packages.PackageRestriction(
+                    "keywords", values.ContainmentMatch2((stable_key, unstable_key,)))
 
-            default_masked_use = tuple(set(
-                x for x in self.official_arches if x != stable_key))
+                default_masked_use = tuple(set(
+                    x for x in self.official_arches if x != stable_key))
 
-            for profile_obj, profile in self.options.arch_profiles.get(k, []):
-                files = self.profile_data.get(profile, None)
-                try:
-                    cached_profile = cached_profiles[profile.base][profile.path]
-                    if files != cached_profile['files']:
-                        # force refresh of outdated cache entry
-                        raise KeyError
+                # padding for progress output
+                padding = max(len(x) for x in self.desired_arches)
 
-                    masks = cached_profile['masks']
-                    unmasks = cached_profile['unmasks']
-                    immutable_flags = cached_profile['immutable_flags']
-                    stable_immutable_flags = cached_profile['stable_immutable_flags']
-                    enabled_flags = cached_profile['enabled_flags']
-                    stable_enabled_flags = cached_profile['stable_enabled_flags']
-                    pkg_use = cached_profile['pkg_use']
-                    iuse_effective = cached_profile['iuse_effective']
-                    use = cached_profile['use']
-                    provides_repo = cached_profile['provides_repo']
-                except KeyError:
-                    logger.debug('profile regen: %s', profile.path)
+                for profile_obj, profile in self.options.arch_profiles.get(k, []):
+                    files = self.profile_data.get(profile, None)
                     try:
-                        masks = profile_obj.masks
-                        unmasks = profile_obj.unmasks
+                        cached_profile = cached_profiles[profile.base][profile.path]
+                        if files != cached_profile['files']:
+                            # force refresh of outdated cache entry
+                            raise KeyError
 
-                        immutable_flags = profile_obj.masked_use.clone(unfreeze=True)
-                        immutable_flags.add_bare_global((), default_masked_use)
-                        immutable_flags.optimize(cache=chunked_data_cache)
-                        immutable_flags.freeze()
+                        masks = cached_profile['masks']
+                        unmasks = cached_profile['unmasks']
+                        immutable_flags = cached_profile['immutable_flags']
+                        stable_immutable_flags = cached_profile['stable_immutable_flags']
+                        enabled_flags = cached_profile['enabled_flags']
+                        stable_enabled_flags = cached_profile['stable_enabled_flags']
+                        pkg_use = cached_profile['pkg_use']
+                        iuse_effective = cached_profile['iuse_effective']
+                        use = cached_profile['use']
+                        provides_repo = cached_profile['provides_repo']
+                    except KeyError:
+                        try:
+                            progress(f'rebuilding profiles cache: {profile.arch:<{padding}}')
 
-                        stable_immutable_flags = profile_obj.stable_masked_use.clone(unfreeze=True)
-                        stable_immutable_flags.add_bare_global((), default_masked_use)
-                        stable_immutable_flags.optimize(cache=chunked_data_cache)
-                        stable_immutable_flags.freeze()
+                            masks = profile_obj.masks
+                            unmasks = profile_obj.unmasks
 
-                        enabled_flags = profile_obj.forced_use.clone(unfreeze=True)
-                        enabled_flags.add_bare_global((), (stable_key,))
-                        enabled_flags.optimize(cache=chunked_data_cache)
-                        enabled_flags.freeze()
+                            immutable_flags = profile_obj.masked_use.clone(unfreeze=True)
+                            immutable_flags.add_bare_global((), default_masked_use)
+                            immutable_flags.optimize(cache=chunked_data_cache)
+                            immutable_flags.freeze()
 
-                        stable_enabled_flags = profile_obj.stable_forced_use.clone(unfreeze=True)
-                        stable_enabled_flags.add_bare_global((), (stable_key,))
-                        stable_enabled_flags.optimize(cache=chunked_data_cache)
-                        stable_enabled_flags.freeze()
+                            stable_immutable_flags = profile_obj.stable_masked_use.clone(unfreeze=True)
+                            stable_immutable_flags.add_bare_global((), default_masked_use)
+                            stable_immutable_flags.optimize(cache=chunked_data_cache)
+                            stable_immutable_flags.freeze()
 
-                        pkg_use = profile_obj.pkg_use
-                        iuse_effective = profile_obj.iuse_effective
-                        provides_repo = profile_obj.provides_repo
+                            enabled_flags = profile_obj.forced_use.clone(unfreeze=True)
+                            enabled_flags.add_bare_global((), (stable_key,))
+                            enabled_flags.optimize(cache=chunked_data_cache)
+                            enabled_flags.freeze()
 
-                        # finalize enabled USE flags
-                        use = set()
-                        misc.incremental_expansion(use, profile_obj.use, 'while expanding USE')
-                        use = frozenset(use)
-                    except profiles_mod.ProfileError:
-                        # unsupported EAPI or other issue, profile checks will catch this
-                        continue
+                            stable_enabled_flags = profile_obj.stable_forced_use.clone(unfreeze=True)
+                            stable_enabled_flags.add_bare_global((), (stable_key,))
+                            stable_enabled_flags.optimize(cache=chunked_data_cache)
+                            stable_enabled_flags.freeze()
 
-                    if self.options.cache['profiles']:
-                        cached_profiles[profile.base]['update'] = True
-                        cached_profiles[profile.base][profile.path] = {
-                            'files': files,
-                            'masks': masks,
-                            'unmasks': unmasks,
-                            'immutable_flags': immutable_flags,
-                            'stable_immutable_flags': stable_immutable_flags,
-                            'enabled_flags': enabled_flags,
-                            'stable_enabled_flags': stable_enabled_flags,
-                            'pkg_use': pkg_use,
-                            'iuse_effective': iuse_effective,
-                            'use': use,
-                            'provides_repo': provides_repo,
-                        }
+                            pkg_use = profile_obj.pkg_use
+                            iuse_effective = profile_obj.iuse_effective
+                            provides_repo = profile_obj.provides_repo
 
-                # used to interlink stable/unstable lookups so that if
-                # unstable says it's not visible, stable doesn't try
-                # if stable says something is visible, unstable doesn't try.
-                stable_cache = set()
-                unstable_insoluble = ProtectedSet(self.global_insoluble)
+                            # finalize enabled USE flags
+                            use = set()
+                            misc.incremental_expansion(use, profile_obj.use, 'while expanding USE')
+                            use = frozenset(use)
+                        except profiles_mod.ProfileError:
+                            # unsupported EAPI or other issue, profile checks will catch this
+                            continue
 
-                # few notes.  for filter, ensure keywords is last, on the
-                # offchance a non-metadata based restrict foregos having to
-                # access the metadata.
-                # note that the cache/insoluble are inversly paired;
-                # stable cache is usable for unstable, but not vice versa.
-                # unstable insoluble is usable for stable, but not vice versa
-                vfilter = domain.generate_filter(target_repo.pkg_masks | masks, unmasks)
-                profile_filters[stable_key].append(ProfileData(
-                    profile.path, stable_key,
-                    provides_repo,
-                    packages.AndRestriction(vfilter, stable_r),
-                    iuse_effective,
-                    use,
-                    pkg_use,
-                    stable_immutable_flags, stable_enabled_flags,
-                    stable_cache,
-                    ProtectedSet(unstable_insoluble),
-                    profile.status,
-                    profile.deprecated))
+                        if self.options.cache['profiles']:
+                            cached_profiles[profile.base]['update'] = True
+                            cached_profiles[profile.base][profile.path] = {
+                                'files': files,
+                                'masks': masks,
+                                'unmasks': unmasks,
+                                'immutable_flags': immutable_flags,
+                                'stable_immutable_flags': stable_immutable_flags,
+                                'enabled_flags': enabled_flags,
+                                'stable_enabled_flags': stable_enabled_flags,
+                                'pkg_use': pkg_use,
+                                'iuse_effective': iuse_effective,
+                                'use': use,
+                                'provides_repo': provides_repo,
+                            }
 
-                profile_filters[unstable_key].append(ProfileData(
-                    profile.path, unstable_key,
-                    provides_repo,
-                    packages.AndRestriction(vfilter, unstable_r),
-                    iuse_effective,
-                    use,
-                    pkg_use,
-                    immutable_flags, enabled_flags,
-                    ProtectedSet(stable_cache),
-                    unstable_insoluble,
-                    profile.status,
-                    profile.deprecated))
+                    # used to interlink stable/unstable lookups so that if
+                    # unstable says it's not visible, stable doesn't try
+                    # if stable says something is visible, unstable doesn't try.
+                    stable_cache = set()
+                    unstable_insoluble = ProtectedSet(self.global_insoluble)
+
+                    # few notes.  for filter, ensure keywords is last, on the
+                    # offchance a non-metadata based restrict foregos having to
+                    # access the metadata.
+                    # note that the cache/insoluble are inversly paired;
+                    # stable cache is usable for unstable, but not vice versa.
+                    # unstable insoluble is usable for stable, but not vice versa
+                    vfilter = domain.generate_filter(target_repo.pkg_masks | masks, unmasks)
+                    profile_filters[stable_key].append(ProfileData(
+                        profile.path, stable_key,
+                        provides_repo,
+                        packages.AndRestriction(vfilter, stable_r),
+                        iuse_effective,
+                        use,
+                        pkg_use,
+                        stable_immutable_flags, stable_enabled_flags,
+                        stable_cache,
+                        ProtectedSet(unstable_insoluble),
+                        profile.status,
+                        profile.deprecated))
+
+                    profile_filters[unstable_key].append(ProfileData(
+                        profile.path, unstable_key,
+                        provides_repo,
+                        packages.AndRestriction(vfilter, unstable_r),
+                        iuse_effective,
+                        use,
+                        pkg_use,
+                        immutable_flags, enabled_flags,
+                        ProtectedSet(stable_cache),
+                        unstable_insoluble,
+                        profile.status,
+                        profile.deprecated))
 
         # dump updated profile filters
         for k, v in cached_profiles.items():
