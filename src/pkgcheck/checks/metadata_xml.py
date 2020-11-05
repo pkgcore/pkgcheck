@@ -81,16 +81,19 @@ class _MetadataXmlInvalidCatRef(results.Error):
         )
 
 
-class EmptyMaintainer(results.PackageResult, results.Warning):
-    """Package with neither a maintainer or maintainer-needed comment in metadata.xml."""
+class MaintainerNeeded(results.PackageResult, results.Warning):
+    """Package with missing or invalid maintainer-needed comment in metadata.xml."""
 
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filename, needed, **kwargs):
         super().__init__(**kwargs)
         self.filename = filename
+        self.needed = needed
 
     @property
     def desc(self):
-        return 'no package maintainer or maintainer-needed comment specified'
+        if not self.needed:
+            return 'missing maintainer-needed comment'
+        return 'invalid maintainer-needed comment'
 
 
 class MaintainerWithoutProxy(results.PackageResult, results.Warning):
@@ -386,7 +389,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
     known_results = frozenset([
         PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
-        PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, EmptyMaintainer,
+        PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, MaintainerNeeded,
         MaintainerWithoutProxy, StaleProxyMaintProject, RedundantLongDescription,
         NonexistentProjectMaintainer, WrongMaintainerType,
     ])
@@ -394,7 +397,12 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
     def _check_maintainers(self, pkg, loc, doc):
         """Validate maintainers in package metadata for the gentoo repo."""
         if self.options.gentoo_repo:
+            maintainer_needed = any(
+                c.text.strip() == 'maintainer-needed' for c in doc.xpath('//comment()'))
             if pkg.maintainers:
+                # check for invalid maintainer-needed comment
+                if maintainer_needed:
+                    yield MaintainerNeeded(os.path.basename(loc), maintainer_needed, pkg=pkg)
                 # check proxy maintainers
                 if not any(m.email.endswith('@gentoo.org') for m in pkg.maintainers):
                     maintainers = sorted(map(str, pkg.maintainers))
@@ -403,11 +411,9 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
                 elif (all(m.email.endswith('@gentoo.org') for m in pkg.maintainers) and
                       'proxy-maint@gentoo.org' in pkg.maintainers):
                     yield StaleProxyMaintProject(os.path.basename(loc), pkg=pkg)
-            else:
+            elif not maintainer_needed:
                 # check for missing maintainer-needed comment
-                if not any(c.text.strip() == 'maintainer-needed'
-                           for c in doc.xpath('//comment()')):
-                    yield EmptyMaintainer(os.path.basename(loc), pkg=pkg)
+                yield MaintainerNeeded(os.path.basename(loc), maintainer_needed, pkg=pkg)
 
             # check maintainer validity
             projects = frozenset(pkg.repo.projects_xml.projects)
