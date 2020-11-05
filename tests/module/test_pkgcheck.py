@@ -312,7 +312,7 @@ class TestPkgcheckScan(object):
 
     def test_empty_repo(self, capsys, cache_dir):
         # no reports should be generated since the default repo is empty
-        with patch('sys.argv', self.args), \
+        with patch('sys.argv', self.args + ['-q']), \
                 patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
@@ -377,7 +377,7 @@ class TestPkgcheckScan(object):
         check_name = check.__name__
         keyword = result.__name__
         for repo in os.listdir(self.repos_data):
-            for verbosity, file in ((0, 'expected'), (1, 'expected-verbose')):
+            for verbosity, file in ((False, 'expected'), (True, 'expected-verbose')):
                 expected_path = pjoin(self.repos_data, f'{repo}/{check_name}/{keyword}/{file}')
                 if not os.path.exists(expected_path):
                     continue
@@ -392,7 +392,8 @@ class TestPkgcheckScan(object):
                     self._script(trigger, triggered_repo)
                     repo_dir = triggered_repo
 
-                args = (['-v'] * verbosity) + ['-r', repo_dir, '-c', check_name, '-k', keyword]
+                verbose = ['-v'] if verbosity else ['-q']
+                args = verbose + ['-r', repo_dir, '-c', check_name, '-k', keyword]
 
                 # add any defined extra repo args
                 try:
@@ -522,7 +523,7 @@ class TestPkgcheckScan(object):
             shutil.copytree(repo_dir, fixed_repo)
             func(fix, fixed_repo)
 
-            args = ['-r', fixed_repo, '-c', check_name, '-k', keyword]
+            args = ['-q', '-r', fixed_repo, '-c', check_name, '-k', keyword]
 
             # add any defined extra repo args
             try:
