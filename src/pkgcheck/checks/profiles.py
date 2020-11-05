@@ -1,6 +1,6 @@
 import os
 from collections import defaultdict
-from itertools import chain, filterfalse
+from itertools import chain
 
 from pkgcore.ebuild import atom, misc
 from pkgcore.ebuild import profiles as profiles_mod

@@ -14,9 +14,9 @@ from . import Check, GentooRepoCheck
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()
-allowed_filename_chars_set.update(chr(x) for x in range(ord('a'), ord('z')+1))
-allowed_filename_chars_set.update(chr(x) for x in range(ord('A'), ord('Z')+1))
-allowed_filename_chars_set.update(chr(x) for x in range(ord('0'), ord('9')+1))
+allowed_filename_chars_set.update(chr(x) for x in range(ord('a'), ord('z') + 1))
+allowed_filename_chars_set.update(chr(x) for x in range(ord('A'), ord('Z') + 1))
+allowed_filename_chars_set.update(chr(x) for x in range(ord('0'), ord('9') + 1))
 allowed_filename_chars_set.update([".", "-", "_", "+", ":"])
 
 

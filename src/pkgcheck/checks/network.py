@@ -5,7 +5,6 @@ import traceback
 import urllib.request
 from lxml import etree
 from functools import partial
-from itertools import chain
 
 from pkgcore.fetch import fetchable
 
