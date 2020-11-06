@@ -1,5 +1,6 @@
 import os
 from difflib import SequenceMatcher
+import itertools
 
 from lxml import etree
 from pkgcore import const as pkgcore_const
@@ -291,9 +292,21 @@ class _XmlBaseCheck(Check):
         self._checks = tuple(
             getattr(self, x) for x in dir(self) if x.startswith('_check_'))
 
-        # use xsd file installed with pkgcore
-        metadata_xsd = pjoin(pkgcore_const.DATA_PATH, 'xml-schema', 'metadata.xsd')
-        self.schema = etree.XMLSchema(etree.parse(metadata_xsd))
+        # prefer xsd file from the repository or its masters
+        for repo in itertools.chain((self.options.target_repo,),
+                                    self.options.target_repo.masters):
+            metadata_xsd = pjoin(repo.location, 'metadata', 'xml-schema',
+                                 'metadata.xsd')
+            try:
+                self.schema = etree.XMLSchema(etree.parse(metadata_xsd))
+                break
+            except OSError:
+                pass
+        else:
+            # use xsd file installed with pkgcore
+            metadata_xsd = pjoin(pkgcore_const.DATA_PATH, 'xml-schema',
+                                 'metadata.xsd')
+            self.schema = etree.XMLSchema(etree.parse(metadata_xsd))
 
     def _check_doc(self, pkg, loc, doc):
         """Perform additional document structure checks."""
