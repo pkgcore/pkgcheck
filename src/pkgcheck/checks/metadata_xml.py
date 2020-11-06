@@ -291,9 +291,19 @@ class _XmlBaseCheck(Check):
         self._checks = tuple(
             getattr(self, x) for x in dir(self) if x.startswith('_check_'))
 
-        # use xsd file installed with pkgcore
-        metadata_xsd = pjoin(pkgcore_const.DATA_PATH, 'xml-schema', 'metadata.xsd')
-        self.schema = etree.XMLSchema(etree.parse(metadata_xsd))
+        # Prefer xsd file from the target repository or its masters, falling
+        # back to the file installed with pkgcore.
+        for repo in reversed(self.options.target_repo.trees):
+            metadata_xsd = pjoin(repo.location, 'metadata', 'xml-schema', 'metadata.xsd')
+            try:
+                self.schema = etree.XMLSchema(etree.parse(metadata_xsd))
+                break
+            except (OSError, etree.XMLSchemaParseError):
+                # ignore missing or invalid xsd files
+                pass
+        else:
+            metadata_xsd = pjoin(pkgcore_const.DATA_PATH, 'xml-schema', 'metadata.xsd')
+            self.schema = etree.XMLSchema(etree.parse(metadata_xsd))
 
     def _check_doc(self, pkg, loc, doc):
         """Perform additional document structure checks."""
