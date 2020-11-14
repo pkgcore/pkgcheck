@@ -57,7 +57,7 @@ def test_script_run(capsys):
         import_module.reset_mock()
 
 
-class TestPkgcheckScanParseArgs(object):
+class TestPkgcheckScanParseArgs:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tool):
@@ -269,7 +269,7 @@ class TestPkgcheckScanParseArgs(object):
             assert err[-1].startswith("pkgcheck scan: error: no active checks")
 
 
-class TestPkgcheck(object):
+class TestPkgcheck:
 
     script = partial(run, project)
 
@@ -282,7 +282,7 @@ class TestPkgcheck(object):
             assert out.startswith(project)
 
 
-class TestPkgcheckScan(object):
+class TestPkgcheckScan:
 
     script = partial(run, project)
     _results = defaultdict(set)
@@ -547,7 +547,7 @@ class TestPkgcheckScan(object):
             pytest.skip('fix not available')
 
 
-class TestPkgcheckShow(object):
+class TestPkgcheckShow:
 
     script = partial(run, project)
 
@@ -653,7 +653,7 @@ class TestPkgcheckShow(object):
         assert len(regular_output) < len(verbose_output)
 
 
-class TestPkgcheckReplay(object):
+class TestPkgcheckReplay:
 
     script = partial(run, project)
 

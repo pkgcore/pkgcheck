@@ -1,7 +1,7 @@
 from pkgcheck import base
 
 
-class TestUtilities(object):
+class TestUtilities:
 
     def test_convert_check_filter(self):
         assert base.convert_check_filter('foo')('a.foO.b')

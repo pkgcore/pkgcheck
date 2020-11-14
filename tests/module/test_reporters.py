@@ -10,7 +10,7 @@ from pkgcheck import reporters, results
 from pkgcheck.checks import pkgdir, profiles, metadata, metadata_xml, git
 
 
-class BaseReporter(object):
+class BaseReporter:
 
     reporter_cls = reporters.Reporter
 

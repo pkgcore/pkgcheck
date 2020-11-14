@@ -13,7 +13,7 @@ from pkgcheck import addons, base
 from .misc import FakePkg, FakeProfile, Options, Tmpdir
 
 
-class ArgparseCheck(object):
+class ArgparseCheck:
 
     def process_check(self, args, preset_values={},
                       namespace=None, addon_kls=None, **settings):
@@ -47,7 +47,7 @@ class TestArchesAddon(ArgparseCheck):
         self.process_check([], arches=())
 
 
-class Test_profile_data(object):
+class Test_profile_data:
 
     def assertResults(self, profile, known_flags, required_immutable,
                       required_forced, cpv="dev-util/diffball-0.1",

@@ -78,7 +78,7 @@ class FakeFilesDirPkg(package):
             repo.location, cpv.category, cpv.package, f'{cpv.package}-{cpv.fullver}.ebuild'))
 
 
-class ReportTestCase(object):
+class ReportTestCase:
     """Base class for verifying report generation."""
 
     def _assert_known_results(self, *reports):
@@ -137,7 +137,7 @@ class Options(dict):
     __delattr__ = dict.__delitem__
 
 
-class FakeProfile(object):
+class FakeProfile:
 
     def __init__(self, masked_use={}, stable_masked_use={}, forced_use={},
                  stable_forced_use={}, pkg_use={}, provides={}, iuse_effective=[],
@@ -186,7 +186,7 @@ class FakeProfile(object):
 
 
 # TODO: move to snakeoil.test or somewhere more generic
-class Tmpdir(object):
+class Tmpdir:
     """Provide access to a temporary directory across all test methods."""
 
     @pytest.fixture(autouse=True)

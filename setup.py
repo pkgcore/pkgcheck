@@ -50,7 +50,7 @@ def write_obj_lists(python_base, install_prefix):
     log.info(f'writing config to {objects_path!r}')
 
     # hack to drop quotes on modules in generated files
-    class _kls(object):
+    class _kls:
         def __init__(self, module):
             self.module = module
         def __repr__(self):
