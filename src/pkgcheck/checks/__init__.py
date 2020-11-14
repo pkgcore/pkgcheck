@@ -99,14 +99,14 @@ class ExplicitlyEnabledCheck(Check):
     def skip(cls, namespace, skip=False):
         if not skip:
             if namespace.selected_checks is not None:
-                _disabled_checks, enabled_checks = namespace.selected_checks
+                enabled_checks = namespace.selected_checks[1]
             else:
-                _disabled_checks, enabled_checks = [], []
+                enabled_checks = []
 
             if namespace.selected_keywords is not None:
-                _disabled_keywords, enabled_keywords = namespace.selected_keywords
+                enabled_keywords = namespace.selected_keywords[1]
             else:
-                _disabled_keywords, enabled_keywords = [], []
+                enabled_keywords = []
 
             known_results = {x.name for x in cls.known_results}
             skip = cls.__name__ not in enabled_checks and \
@@ -171,9 +171,9 @@ def init_checks(enabled_addons, options):
     source_map = {}
 
     if options.selected_checks is not None:
-        _disabled, selected_checks = options.selected_checks
+        selected_checks = options.selected_checks[1]
     else:
-        _disabled, selected_checks = [], []
+        selected_checks = []
 
     required_addons, required_caches = partition(
         enabled_addons, predicate=lambda x: issubclass(x, CachedAddon))
