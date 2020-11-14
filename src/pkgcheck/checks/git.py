@@ -163,6 +163,25 @@ class RdependChange(results.VersionResult, results.Warning):
         return 'RDEPEND modified without revbump'
 
 
+class MissingSlotmove(results.VersionResult, results.Error):
+    """Package SLOT was changed without adding a slotmove package update.
+
+    When changing an existing ebuild's SLOT, a new entry must be
+    created in profiles/updates. See the devmanual [#]_ for more info.
+
+    .. [#] https://devmanual.gentoo.org/ebuild-maintenance/package-moves/
+    """
+
+    def __init__(self, old_slot, new_slot, **kwargs):
+        super().__init__(**kwargs)
+        self.old_slot = old_slot
+        self.new_slot = new_slot
+
+    @property
+    def desc(self):
+        return f'changed SLOT: {self.old_slot} -> {self.new_slot}'
+
+
 class _RemovalRepo(UnconfiguredTree):
     """Repository of removed packages stored in a temporary directory."""
 
@@ -221,12 +240,14 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     known_results = frozenset([
         DirectStableKeywords, DirectNoMaintainer, BadCommitSummary, RdependChange,
         EbuildIncorrectCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
+        MissingSlotmove,
     ])
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
         self.today = datetime.today()
         self.repo = self.options.target_repo
+        self.pkg_updates = self.repo.config.updates
         self.valid_arches = self.options.target_repo.known_arches
         self._git_addon = git_addon
 
@@ -293,6 +314,17 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
 
         if old_pkg.rdepend != new_pkg.rdepend:
             yield RdependChange(pkg=new_pkg)
+
+        old_slot, new_slot = old_pkg.slot, new_pkg.slot
+        if old_slot != new_slot:
+            slotmoves = (
+                x[1:] for x in self.pkg_updates.get(new_pkg.key, ())
+                if x[0] == 'slotmove')
+            for atom, moved_slot in slotmoves:
+                if atom.match(old_pkg) and new_slot == moved_slot:
+                    break
+            else:
+                yield MissingSlotmove(old_slot, new_slot, pkg=new_pkg)
 
     def feed(self, pkgset):
         # Mapping of commit types to pkgs, available commit types can be seen
