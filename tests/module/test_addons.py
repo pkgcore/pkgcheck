@@ -8,7 +8,7 @@ from snakeoil.cli import arghparse
 from snakeoil.fileutils import write_file
 from snakeoil.osutils import pjoin, ensure_dirs
 
-from pkgcheck import addons, base
+from pkgcheck import addons
 
 from .misc import FakePkg, FakeProfile, Options, Tmpdir
 
@@ -159,11 +159,9 @@ class TestProfileAddon(ProfilesMixin):
         })
         options = self.process_check([], selected_profiles=None)
         # override the default
-        check = self.addon_kls(options)
-        assert sorted(check.official_arches) == ['x86']
-        assert sorted(check.desired_arches) == ['x86']
-        assert sorted(check.profile_evaluate_dict) == ['x86', '~x86']
-        self.assertProfiles(check, 'x86', 'profile1', 'profile1/2')
+        addon = addons.init_addon(self.addon_kls, options)
+        assert sorted(addon.profile_evaluate_dict) == ['x86', '~x86']
+        self.assertProfiles(addon, 'x86', 'profile1', 'profile1/2')
 
     def test_profiles_base(self):
         self.mk_profiles({
@@ -172,14 +170,14 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/x86": ["x86"],
         })
         options = self.process_check([])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux', 'default-linux/x86')
 
     def test_nonexistent(self, capsys):
         self.mk_profiles({"x86": ["x86"]})
         for profiles in ('bar', '-bar', 'x86,bar', 'bar,x86', 'x86,-bar'):
             with pytest.raises(SystemExit) as excinfo:
-                options = self.process_check([f'--profiles={profiles}'])
+                self.process_check([f'--profiles={profiles}'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             assert not out
@@ -190,16 +188,16 @@ class TestProfileAddon(ProfilesMixin):
             "amd64": ["amd64"],
             "prefix/amd64": ["amd64-linux"]},
             make_defaults=['ARCH="amd64"'])
-        options = self.process_check([f'--profiles=prefix/amd64'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'amd64', 'prefix/amd64')
+        options = self.process_check(['--profiles=prefix/amd64'])
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'amd64', 'prefix/amd64')
 
     def test_make_defaults_missing_arch(self, capsys):
         self.mk_profiles({
             "arch/amd64": ["amd64"]},
             make_defaults=[])
         with pytest.raises(SystemExit) as excinfo:
-            options = self.process_check([f'--profiles=arch/amd64'])
+            self.process_check(['--profiles=arch/amd64'])
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         assert not out
@@ -213,8 +211,8 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux": ["x86"],
         })
         options = self.process_check(['--profiles=stable'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux')
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux')
 
     def test_disable_stable(self):
         self.mk_profiles({
@@ -224,8 +222,8 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux": ["x86"],
         })
         options = self.process_check(['--profiles=-stable'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux/dev', 'default-linux/exp')
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux/dev', 'default-linux/exp')
 
     def test_enable_dev(self):
         self.mk_profiles({
@@ -234,8 +232,8 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/x86": ["x86"],
         })
         options = self.process_check(['--profiles=dev'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux/dev')
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux/dev')
 
     def test_disable_dev(self):
         self.mk_profiles({
@@ -244,8 +242,8 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/x86": ["x86"],
         })
         options = self.process_check(['--profiles=-dev'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux/x86')
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux/x86')
 
     def test_enable_exp(self):
         self.mk_profiles({
@@ -254,8 +252,8 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/x86": ["x86"],
         })
         options = self.process_check(['--profiles=exp'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux/exp')
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux/exp')
 
     def test_disable_exp(self):
         self.mk_profiles({
@@ -264,8 +262,8 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/x86": ["x86"],
         })
         options = self.process_check(['--profiles=-exp'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux/x86')
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux/x86')
 
     def test_enable_deprecated(self):
         self.mk_profiles({
@@ -273,8 +271,8 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/x86": ["x86"],
         })
         options = self.process_check(['--profiles=deprecated'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux/dep')
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux/dep')
 
     def test_disable_deprecated(self):
         self.mk_profiles({
@@ -282,8 +280,8 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/x86": ["x86"],
         })
         options = self.process_check(['--profiles=-deprecated'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux/x86')
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux/x86')
 
     def test_profile_enable(self):
         self.mk_profiles({
@@ -292,8 +290,8 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/x86": ["x86"],
         })
         options = self.process_check(['--profiles', 'default-linux/x86'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux/x86')
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux/x86')
 
     def test_profile_disable(self):
         self.mk_profiles({
@@ -302,8 +300,8 @@ class TestProfileAddon(ProfilesMixin):
             "default-linux/x86": ["x86"],
         })
         options = self.process_check(['--profiles=-default-linux/x86'])
-        check = self.addon_kls(options)
-        self.assertProfiles(check, 'x86', 'default-linux')
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux')
 
     def test_profile_collapsing(self):
         self.mk_profiles({
@@ -312,32 +310,32 @@ class TestProfileAddon(ProfilesMixin):
             'default-linux/ppc': ['ppc'],
         })
         options = self.process_check([])
-        check = self.addon_kls(options)
+        addon = addons.init_addon(self.addon_kls, options)
 
         # assert they're collapsed properly.
-        self.assertProfiles(check, 'x86', 'default-linux', 'default-linux/x86')
-        assert len(check.profile_evaluate_dict['x86']) == 1
-        assert len(check.profile_evaluate_dict['x86'][0]) == 2
-        self.assertProfiles(check, 'ppc', 'default-linux/ppc')
+        self.assertProfiles(addon, 'x86', 'default-linux', 'default-linux/x86')
+        assert len(addon.profile_evaluate_dict['x86']) == 1
+        assert len(addon.profile_evaluate_dict['x86'][0]) == 2
+        self.assertProfiles(addon, 'ppc', 'default-linux/ppc')
 
-        l = check.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': 'x86'}))
+        l = addon.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': 'x86'}))
         assert len(l) == 2, f"checking for profile collapsing: {l!r}"
         assert len(l[0]) == 2, f"checking for proper # of profiles: {l[0]!r}"
         assert sorted(x.name for x in l[0]) == sorted(['default-linux', 'default-linux/x86'])
 
         # check arch vs ~arch runs (i.e. arch KEYWORDS should also trigger ~arch runs)
-        l = check.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': '~x86'}))
+        l = addon.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': '~x86'}))
         assert len(l) == 1, f"checking for profile collapsing: {l!r}"
         assert len(l[0]) == 2, f"checking for proper # of profiles: {l[0]!r}"
         assert sorted(x.name for x in l[0]) == sorted(['default-linux', 'default-linux/x86'])
 
         # check keyword collapsing
-        l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'ppc'}))
+        l = addon.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'ppc'}))
         assert len(l) == 2, f"checking for profile collapsing: {l!r}"
         assert len(l[0]) == 1, f"checking for proper # of profiles: {l[0]!r}"
         assert l[0][0].name == 'default-linux/ppc'
 
-        l = check.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'foon'}))
+        l = addon.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'foon'}))
         assert len(l) == 0, f"checking for profile collapsing: {l!r}"
 
 

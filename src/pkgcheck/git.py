@@ -310,7 +310,7 @@ class GitStash(AbstractContextManager):
                 self.parser.error(f'git failed applying stash: {error}')
 
 
-class GitAddon(base.Addon, caches.CachedAddon):
+class GitAddon(caches.CachedAddon):
     """Git repo support for various checks.
 
     Pkgcheck can create virtual package repos from a given git repo's history

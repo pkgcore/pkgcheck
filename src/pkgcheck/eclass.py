@@ -22,7 +22,7 @@ class _EclassCache(UserDict, caches.Cache):
         self._cache = EclassAddon.cache
 
 
-class EclassAddon(base.Addon, caches.CachedAddon):
+class EclassAddon(caches.CachedAddon):
     """Eclass support for various checks."""
 
     # cache registry

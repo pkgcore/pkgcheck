@@ -37,7 +37,7 @@ class TestEvaluateDepSet(ProfilesMixin):
         # relies on it.
         profile_options = self.process_check(
             [f"--profiles={','.join(profiles)}"], addon_kls=addons.ProfileAddon)
-        profile_addon = addons.ProfileAddon(profile_options)
+        profile_addon = addons.init_addon(addons.ProfileAddon, profile_options)
         return self.addon_kls(profile_options, profile_addon=profile_addon)
 
     def test_it(self):

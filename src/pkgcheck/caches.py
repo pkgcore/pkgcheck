@@ -12,7 +12,7 @@ from snakeoil.cli.exceptions import UserException
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
-from . import const
+from . import base, const
 
 
 class CacheData(NamedTuple):
@@ -40,7 +40,7 @@ class _RegisterCache(type):
         return new_cls
 
 
-class CachedAddon(metaclass=_RegisterCache):
+class CachedAddon(base.Addon, metaclass=_RegisterCache):
     """Mixin for addon classes that create/use data caches."""
 
     # attributes for cache registry
