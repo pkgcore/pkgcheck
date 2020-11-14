@@ -429,7 +429,7 @@ class GitAddon(base.Addon, caches.CachedAddon):
         self._cached_repos = {}
 
     @jit_attr
-    def gitignore(self):
+    def _gitignore(self):
         """Load a repo's .gitignore and .git/info/exclude files for path matching."""
         patterns = []
         for path in ('.gitignore', '.git/info/exclude'):
@@ -447,10 +447,10 @@ class GitAddon(base.Addon, caches.CachedAddon):
         if path.startswith(self.options.target_repo.location):
             repo_prefix_len = len(self.options.target_repo.location) + 1
             path = path[repo_prefix_len:]
-        return self.gitignore.match_file(path)
+        return self._gitignore.match_file(path)
 
     @staticmethod
-    def get_commit_hash(repo_location, commit='origin/HEAD'):
+    def _get_commit_hash(repo_location, commit='origin/HEAD'):
         """Retrieve a git repo's commit hash for a specific commit object."""
         if not os.path.exists(pjoin(repo_location, '.git')):
             raise ValueError
@@ -474,7 +474,7 @@ class GitAddon(base.Addon, caches.CachedAddon):
         if self.options.cache['git']:
             for repo in repos:
                 try:
-                    commit = self.get_commit_hash(repo.location)
+                    commit = self._get_commit_hash(repo.location)
                 except ValueError:
                     continue
 
@@ -564,8 +564,8 @@ class GitAddon(base.Addon, caches.CachedAddon):
 
         if options.cache['git']:
             try:
-                origin = self.get_commit_hash(target_repo.location)
-                master = self.get_commit_hash(target_repo.location, commit='master')
+                origin = self._get_commit_hash(target_repo.location)
+                master = self._get_commit_hash(target_repo.location, commit='master')
                 if origin != master:
                     git_repo = ParsedGitRepo(target_repo, local=True)
             except ValueError as e:
@@ -580,8 +580,8 @@ class GitAddon(base.Addon, caches.CachedAddon):
 
         if self.options.cache['git']:
             try:
-                origin = self.get_commit_hash(path)
-                master = self.get_commit_hash(path, commit='master')
+                origin = self._get_commit_hash(path)
+                master = self._get_commit_hash(path, commit='master')
                 if origin != master:
                     commits = ParsedGitRepo.parse_git_log(path, commit='origin/HEAD..master')
             except ValueError as e:
