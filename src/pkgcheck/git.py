@@ -5,7 +5,6 @@ import os
 import pickle
 import shlex
 import subprocess
-import sys
 from collections import UserDict
 from contextlib import AbstractContextManager
 from functools import partial
@@ -503,18 +502,12 @@ class GitAddon(base.Addon, caches.CachedAddon):
                         repo.location == getattr(git_repo, 'location', None)):
                     if commit != git_repo.commit:
                         old, new = git_repo.commit[:13], commit[:13]
-                        print(
-                            f'updating {repo} git repo cache: {old} -> {new}',
-                            file=sys.stderr,
-                        )
+                        logger.debug('updating %s git repo cache: %s -> %s', repo, old, new)
                         git_repo.update(commit, verbosity=self.options.verbosity)
                     else:
                         cache_repo = False
                 else:
-                    print(
-                        f'creating {repo} git repo cache: {commit[:13]}',
-                        file=sys.stderr,
-                    )
+                    logger.debug('creating %s git repo cache: %s', repo, commit[:13])
                     git_repo = ParsedGitRepo(repo, commit, verbosity=self.options.verbosity)
 
                 if git_repo:
