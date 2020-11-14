@@ -87,7 +87,7 @@ class EclassAddon(base.Addon, caches.CachedAddon):
                                     raise KeyError
                             except (KeyError, AttributeError):
                                 try:
-                                    progress(f'rebuilding eclass cache: {name:<{padding}}')
+                                    progress(f'updating eclass cache: {name:<{padding}}')
                                     eclasses[name] = Eclass(eclass.path, sourced=True)
                                     cache_eclasses = True
                                 except (IOError, EclassDocParsingError):

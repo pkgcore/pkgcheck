@@ -165,7 +165,7 @@ class ParsedGitRepo(UserDict, caches.Cache):
                     message.append(line)
 
                 # update progress output
-                progress(f'{hash} commit #{count}, {commit_date}')
+                progress(f'updating git cache: {hash} commit #{count}, {commit_date}')
                 count += 1
 
                 commit = GitCommit(hash, commit_date, author, committer, message)

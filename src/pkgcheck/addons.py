@@ -355,7 +355,7 @@ class ProfileAddon(base.Addon, caches.CachedAddon):
                         provides_repo = cached_profile['provides_repo']
                     except KeyError:
                         try:
-                            progress(f'rebuilding profiles cache: {profile.arch:<{padding}}')
+                            progress(f'updating profiles cache: {profile.arch:<{padding}}')
 
                             masks = profile_obj.masks
                             unmasks = profile_obj.unmasks
