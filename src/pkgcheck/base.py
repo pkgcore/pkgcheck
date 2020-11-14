@@ -234,7 +234,7 @@ class ProgressManager(AbstractContextManager):
         self._triggered = True
 
     def __enter__(self):
-        if self.verbosity >= 0:
+        if self.verbosity >= 0 and sys.stdout.isatty():
             return self._progress_callback
         return lambda x: None
 
