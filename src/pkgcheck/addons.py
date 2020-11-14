@@ -487,7 +487,7 @@ class ProfileAddon(caches.CachedAddon):
     def identify_profiles(self, pkg):
         # yields groups of profiles; the 'groups' are grouped by the ability to share
         # the use processing across each of 'em.
-        l = []
+        groups = []
         keywords = pkg.keywords
         unstable_keywords = tuple(f'~{x}' for x in keywords if x[0] != '~')
         for key in keywords + unstable_keywords:
@@ -495,11 +495,11 @@ class ProfileAddon(caches.CachedAddon):
             if profile_grps is None:
                 continue
             for profiles in profile_grps:
-                l2 = [x for x in profiles if x.visible(pkg)]
-                if not l2:
+                group = [x for x in profiles if x.visible(pkg)]
+                if not group:
                     continue
-                l.append(l2)
-        return l
+                groups.append(group)
+        return groups
 
     def __getitem__(self, key):
         """Return profiles matching a given keyword."""

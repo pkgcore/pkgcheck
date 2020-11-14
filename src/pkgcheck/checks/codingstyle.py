@@ -685,7 +685,7 @@ class RedundantDodirCheck(Check):
         super().__init__(*args)
         cmds = r'|'.join(('insinto', 'exeinto', 'docinto'))
         self.cmds_regex = re.compile(rf'^\s*(?P<cmd>({cmds}))\s+(?P<path>\S+)')
-        self.dodir_regex = re.compile(rf'^\s*(?P<call>dodir\s+(?P<path>\S+))')
+        self.dodir_regex = re.compile(r'^\s*(?P<call>dodir\s+(?P<path>\S+))')
 
     def feed(self, pkg):
         lines = enumerate(pkg.lines, 1)

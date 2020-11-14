@@ -229,6 +229,7 @@ class CatMetadataXmlIndentation(_MetadataXmlIndentation, results.CategoryResult)
     Either all tabs or all spaces should be used, not a mixture of both.
     """
 
+
 class PkgMetadataXmlIndentation(_MetadataXmlIndentation, results.PackageResult):
     """Inconsistent indentation in package metadata.xml file.
 
@@ -348,8 +349,8 @@ class _XmlBaseCheck(Check):
 
     @staticmethod
     def _format_lxml_errors(error_log):
-        for l in error_log:
-            yield f'line {l.line}, col {l.column}: ({l.type_name}) {l.message}'
+        for x in error_log:
+            yield f'line {x.line}, col {x.column}: ({x.type_name}) {x.message}'
 
     def _parse_xml(self, pkg, loc):
         try:

@@ -88,8 +88,8 @@ class AcctCheck(Check):
         except KeyError:
             return
 
-        for l in pkg.ebuild.text_fileobj():
-            m = self.id_re.match(l)
+        for line in pkg.ebuild.text_fileobj():
+            m = self.id_re.match(line)
             if m is not None:
                 if m.group('var') == expected_var:
                     found_id = int(m.group('id'))

@@ -1,5 +1,4 @@
-"""
-pkgcore-based QA utility for ebuild repos
+"""pkgcore-based QA utility for ebuild repos
 
 pkgcheck is a QA utility based on **pkgcore**\\(5) that supports scanning
 ebuild repositories for various issues.
@@ -68,6 +67,8 @@ reporter_options.add_argument(
         ``--format {foo}`` will never produce any output because no result has the
         ``foo`` attribute.
     """)
+
+
 @reporter_argparser.bind_final_check
 def _setup_reporter(parser, namespace):
     if namespace.reporter is None:
@@ -792,13 +793,13 @@ def display_checks(out, options):
         for module_name in sorted(d):
             out.write(out.bold, f"{module_name}:")
             out.write()
-            l = d[module_name]
-            l.sort(key=attrgetter('__name__'))
+            checks = d[module_name]
+            checks.sort(key=attrgetter('__name__'))
 
             try:
                 out.first_prefix.append('  ')
                 out.later_prefix.append('  ')
-                for check in l:
+                for check in checks:
                     out.write(out.fg('yellow'), check.__name__, out.reset, ':')
                     dump_docstring(out, check, prefix='  ')
 
@@ -868,6 +869,8 @@ output_types.add_argument(
 
         Use -v/--verbose to show reporter descriptions.
     """)
+
+
 @show.bind_main_func
 def _show(options, out, err):
     if options.checks:

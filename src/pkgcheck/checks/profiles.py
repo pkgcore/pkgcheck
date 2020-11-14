@@ -2,7 +2,8 @@ import os
 from collections import defaultdict
 from itertools import chain
 
-from pkgcore.ebuild import atom, misc
+from pkgcore.ebuild import misc
+from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.ebuild.repo_objs import Profiles
 from snakeoil.contexts import patch
@@ -131,9 +132,9 @@ class ProfilesCheck(Check):
         unknown_keywords = defaultdict(lambda: defaultdict(list))
 
         def _pkg_atoms(filename, profile, vals):
-            for a in iflatten_instance(vals, atom.atom):
-                if not self.search_repo.match(a):
-                    unknown_pkgs[profile.path][filename].append(a)
+            for x in iflatten_instance(vals, atom_cls):
+                if not self.search_repo.match(x):
+                    unknown_pkgs[profile.path][filename].append(x)
 
         def _pkg_keywords(filename, profile, vals):
             for atom, keywords in vals:
@@ -183,7 +184,7 @@ class ProfilesCheck(Check):
                 replacement, msg = vals
                 try:
                     _ProfileNode(pjoin(self.profiles_dir, replacement))
-                except profiles_mod.ProfileError as e:
+                except profiles_mod.ProfileError:
                     yield ProfileError(
                         f'nonexistent replacement {replacement!r} '
                         f'for deprecated profile: {profile.name!r}')
@@ -219,7 +220,6 @@ class ProfilesCheck(Check):
                 profile = _ProfileNode(root)
                 for f in set(files).intersection(file_parse_map.keys()):
                     attr, func = file_parse_map[f]
-                    file_path = pjoin(root[len(self.profiles_dir) + 1:], f)
                     # convert log warnings/errors into reports
                     with patch('pkgcore.log.logger.error', report_profile_errors), \
                             patch('pkgcore.log.logger.warning', report_profile_warnings):

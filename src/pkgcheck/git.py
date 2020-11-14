@@ -120,11 +120,11 @@ class ParsedGitRepo(UserDict, caches.Cache):
         # log man page for details
         format_lines = [
             '# BEGIN COMMIT',
-            '%h', # abbreviated commit hash
-            '%cd', # commit date
-            '%an <%ae>', # Author Name <author@email.com>
-            '%cn <%ce>', # Committer Name <committer@email.com>
-            '%B', # commit message
+            '%h',  # abbreviated commit hash
+            '%cd',  # commit date
+            '%an <%ae>',  # Author Name <author@email.com>
+            '%cn <%ce>',  # Committer Name <committer@email.com>
+            '%B',  # commit message
             '# END MESSAGE BODY',
         ]
         format_str = '%n'.join(format_lines)

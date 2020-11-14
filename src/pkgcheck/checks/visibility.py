@@ -72,6 +72,7 @@ class FakeConfigurable:
     def __setattr__(self, attr, val):
         raise AttributeError(self, 'is immutable')
 
+
 class _BlockMemoryExhaustion(Exception):
     pass
 
@@ -242,7 +243,7 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
                     elif not self.query_cache[node]:
                         nonexistent.add(node)
 
-            except _BlockMemoryExhaustion as e:
+            except _BlockMemoryExhaustion:
                 yield UncheckableDep(attr, pkg=pkg)
                 suppressed_depsets.append(attr)
             if nonexistent:

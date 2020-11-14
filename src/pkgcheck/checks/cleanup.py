@@ -61,7 +61,7 @@ class RedundantVersionCheck(Check):
             # stable.
 
             # also, yes, have to use list comp here- we're adding as we go
-            curr_set.update(["~"+x for x in curr_set if not x.startswith("~")])
+            curr_set.update([f'~{x}' for x in curr_set if not x.startswith('~')])
 
             stack.append([pkg, curr_set])
             if matches:

@@ -519,7 +519,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
             else:
                 if commit.message[lineno - 1] != '':
                     yield InvalidCommitMessage(
-                        f'missing empty line before tags',
+                        'missing empty line before tags',
                         commit=commit)
                 # push it back on the stack
                 i = chain([line], i)

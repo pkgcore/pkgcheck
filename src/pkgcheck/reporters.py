@@ -228,7 +228,7 @@ class NullReporter(Reporter):
     @coroutine
     def _process_report(self):
         while True:
-            _result = (yield)
+            _ = (yield)
 
 
 class JsonReporter(Reporter):
@@ -447,7 +447,7 @@ class PickleStream(Reporter):
                 else:
                     raise DeserializationError(f'invalid data type: {result!r}')
         except pickle.UnpicklingError as e:
-            raise DeserializationError(f'failed unpickling result') from e
+            raise DeserializationError('failed unpickling result') from e
 
     @coroutine
     def _process_report(self):

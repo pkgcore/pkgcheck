@@ -200,7 +200,7 @@ class PkgDirCheck(Check):
             if self.gitignored(path):
                 continue
 
-            if os.path.isfile(path) and  os.stat(path).st_mode & 0o111:
+            if os.path.isfile(path) and os.stat(path).st_mode & 0o111:
                 yield ExecutableFile(filename, pkg=pkg)
 
             # While this may seem odd, written this way such that the filtering

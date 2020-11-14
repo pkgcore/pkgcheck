@@ -148,7 +148,7 @@ class _UrlCheck(NetworkCheck):
                         result = HttpsUrlAvailable(attr, orig_url, redirected_url, pkg=pkg)
                 else:
                     result = HttpsUrlAvailable(attr, orig_url, url, pkg=pkg)
-        except (RequestError, SSLError) as e:
+        except (RequestError, SSLError):
             pass
         return result
 
@@ -156,7 +156,7 @@ class _UrlCheck(NetworkCheck):
         """Verify ftp:// URLs with urllib."""
         result = None
         try:
-            response = urllib.request.urlopen(url, timeout=self.timeout)
+            urllib.request.urlopen(url, timeout=self.timeout)
         except urllib.error.URLError as e:
             result = DeadUrl(attr, url, str(e.reason), pkg=pkg)
         except socket.timeout as e:

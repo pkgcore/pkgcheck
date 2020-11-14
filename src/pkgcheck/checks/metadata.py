@@ -1198,13 +1198,13 @@ class DescriptionCheck(Check):
         elif s in (pkg.package.lower(), pkg.key.lower()):
             yield BadDescription("generic package description", pkg_desc=desc, pkg=pkg)
         else:
-            l = len(desc)
-            if not l:
+            desc_len = len(desc)
+            if not desc_len:
                 yield BadDescription("empty/unset", pkg=pkg)
-            elif l > 150:
+            elif desc_len > 150:
                 yield BadDescription("over 150 chars in length", pkg=pkg)
-            elif l < 10:
-                yield BadDescription(f"under 10 chars in length", pkg_desc=desc, pkg=pkg)
+            elif desc_len < 10:
+                yield BadDescription("under 10 chars in length", pkg_desc=desc, pkg=pkg)
 
 
 class BadHomepage(results.VersionResult, results.Warning):
