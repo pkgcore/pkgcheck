@@ -213,8 +213,8 @@ class _GitCommitPkg(cpv.VersionedCPV):
         sf(self, 'commit', commit)
 
 
-class _HistoricalRepo(SimpleTree):
-    """Repository encapsulating historical git data."""
+class GitChangedRepo(SimpleTree):
+    """Historical git repo consisting of the latest changed packages."""
 
     # selected pkg status filter
     _status_filter = {'A', 'R', 'M', 'D'}
@@ -238,23 +238,19 @@ class _HistoricalRepo(SimpleTree):
                 for commit in data)
 
 
-class GitChangedRepo(_HistoricalRepo):
-    """Historical git repo consisting of the latest changed packages."""
-
-
-class GitModifiedRepo(_HistoricalRepo):
+class GitModifiedRepo(GitChangedRepo):
     """Historical git repo consisting of the latest modified packages."""
 
     _status_filter = {'A', 'R', 'M'}
 
 
-class GitAddedRepo(_HistoricalRepo):
+class GitAddedRepo(GitChangedRepo):
     """Historical git repo consisting of added packages."""
 
     _status_filter = {'A', 'R'}
 
 
-class GitRemovedRepo(_HistoricalRepo):
+class GitRemovedRepo(GitChangedRepo):
     """Historical git repo consisting of removed packages."""
 
     _status_filter = {'D'}
