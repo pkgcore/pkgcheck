@@ -155,7 +155,7 @@ class DirectNoMaintainer(results.PackageResult, results.Error):
         return 'directly committed with no package maintainer'
 
 
-class RdependChange(results.PackageResult, results.Warning):
+class RdependChange(results.VersionResult, results.Warning):
     """Package RDEPEND was modified without adding a new ebuild revision."""
 
     @property
