@@ -4,7 +4,6 @@ from collections import defaultdict
 
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
-from snakeoil.iterables import partition
 
 from .. import addons, base, feeds, sources
 from ..results import FilteredVersionResult, MetadataError
@@ -175,19 +174,10 @@ def init_checks(enabled_addons, options):
     else:
         selected_checks = []
 
-    required_addons, required_caches = partition(
-        enabled_addons, predicate=lambda x: issubclass(x, CachedAddon))
+    # initialize required caches before other addons
+    enabled_addons = sorted(enabled_addons, key=lambda x: not issubclass(x, CachedAddon))
 
-    # initialize required caches
-    caches = []
-    for cls in required_caches:
-        caches.append(addons.init_addon(cls, options, addons_map))
-
-    # force cache updates
-    if caches:
-        CachedAddon.update_caches(options, caches)
-
-    for cls in required_addons:
+    for cls in enabled_addons:
         try:
             addon = addons.init_addon(cls, options, addons_map)
         except SkipOptionalCheck:
