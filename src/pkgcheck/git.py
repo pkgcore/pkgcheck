@@ -146,7 +146,7 @@ class ParsedGitRepo(UserDict, caches.Cache):
 
                 # file changes
                 while True:
-                    line = git_log.stdout.readline().decode()
+                    line = git_log.stdout.readline().decode('utf-8', 'replace')
                     if line == '# BEGIN COMMIT\n' or not line:
                         break
                     line = line.strip()
