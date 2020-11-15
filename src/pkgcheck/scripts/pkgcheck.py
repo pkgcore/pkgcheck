@@ -642,10 +642,11 @@ def _setup_cache_addons(parser, namespace):
 
 @cache.bind_final_check
 def _validate_cache_args(parser, namespace):
-    # filter cache addons based on specified type
-    namespace.cache_addons = [
+    cache_addons = (
         addon for addon in namespace.cache_addons
-        if namespace.cache.get(addon.cache.type, False)]
+        if namespace.cache.get(addon.cache.type, False))
+    # sort caches by type
+    namespace.cache_addons = sorted(cache_addons, key=lambda x: x.cache.type)
 
     namespace.target_repo = namespace.config.get_default('repo')
     try:
