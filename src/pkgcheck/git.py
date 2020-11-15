@@ -58,10 +58,11 @@ class GitCommit:
 class GitPkgChange:
     """Git package change objects."""
 
-    def __init__(self, atom, status, commit):
+    def __init__(self, atom, status, commit, **kwargs):
         self.atom = atom
         self.status = status
         self.commit = commit
+        self.data = kwargs
 
 
 class ParsedGitRepo(UserDict, caches.Cache):
@@ -79,19 +80,19 @@ class ParsedGitRepo(UserDict, caches.Cache):
     def update(self, commit_range, local=False, **kwargs):
         """Update an existing repo starting at a given commit hash."""
         seen = set()
-        for pkg in self.parse_git_log(commit_range, pkgs=True, **kwargs):
+        for pkg in self.parse_git_log(commit_range, pkgs=True, local=local, **kwargs):
             atom = pkg.atom
             key = (atom, pkg.status)
             if key not in seen:
                 seen.add(key)
+                if local:
+                    data = (atom.fullver, pkg.commit.commit_date, pkg.commit, pkg.data)
+                else:
+                    data = (atom.fullver, pkg.commit.commit_date, pkg.commit.hash)
                 self.data.setdefault(atom.category, {}).setdefault(
-                    atom.package, {}).setdefault(pkg.status, []).append((
-                        atom.fullver,
-                        pkg.commit.commit_date,
-                        pkg.commit.hash if not local else pkg.commit,
-                    ))
+                    atom.package, {}).setdefault(pkg.status, []).append(data)
 
-    def parse_git_log(self, commit_range, pkgs=False, verbosity=-1):
+    def parse_git_log(self, commit_range, pkgs=False, local=False, verbosity=-1):
         """Parse git log output."""
         cmd = shlex.split(self._git_cmd)
         # custom git log format, see the "PRETTY FORMATS" section of the git
@@ -153,15 +154,23 @@ class ParsedGitRepo(UserDict, caches.Cache):
                         match = git_log_regex.match(line)
                         if match is not None:
                             data = match.groups()
-                            if data[0] is not None:
-                                # matched ADM status change
-                                status, category, pkg = data[0:3]
-                            else:
-                                # matched R status change
-                                status, category, pkg = data[3:6]
                             try:
-                                yield GitPkgChange(
-                                    atom_cls(f'={category}/{pkg}'), status, commit)
+                                if data[0] is not None:
+                                    # matched ADM status change
+                                    status, category, pkg = data[0:3]
+                                    yield GitPkgChange(
+                                        atom_cls(f'={category}/{pkg}'), status, commit)
+                                else:
+                                    # matched R status change
+                                    status, category, pkg = data[3:6]
+                                    old_atom = atom_cls(f'={category}/{pkg}')
+                                    yield GitPkgChange(old_atom, status, commit)
+                                    # include old, renamed pkg for local commits repo
+                                    if local:
+                                        category, pkg = data[6:]
+                                        yield GitPkgChange(
+                                            atom_cls(f'={category}/{pkg}'),
+                                            status, commit, old_atom=old_atom)
                             except MalformedAtom:
                                 pass
 
@@ -169,7 +178,7 @@ class ParsedGitRepo(UserDict, caches.Cache):
 class _GitCommitPkg(cpv.VersionedCPV):
     """Fake packages encapsulating commits parsed from git log."""
 
-    def __init__(self, category, package, status, version, date, commit):
+    def __init__(self, category, package, status, version, date, commit, data=None):
         super().__init__(category, package, version)
 
         # add additional attrs
@@ -177,6 +186,9 @@ class _GitCommitPkg(cpv.VersionedCPV):
         sf(self, 'date', date)
         sf(self, 'status', status)
         sf(self, 'commit', commit)
+        if data is not None:
+            for k, v in data.items():
+                sf(self, k, v)
 
 
 class GitChangedRepo(SimpleTree):
