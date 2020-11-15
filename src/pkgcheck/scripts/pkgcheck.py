@@ -659,12 +659,11 @@ def _validate_cache_args(parser, namespace):
 
 @cache.bind_main_func
 def _cache(options, out, err):
-    ret = 0
     if options.remove_cache:
-        ret = CachedAddon.remove_caches(options)
+        CachedAddon.remove_caches(options)
     elif options.update_cache:
-        caches = [init_addon(addon, options) for addon in options.pop('cache_addons')]
-        ret = CachedAddon.update_caches(options, caches)
+        for addon in options.pop('cache_addons'):
+            init_addon(addon, options)
     else:
         # list existing caches
         repos_dir = pjoin(const.USER_CACHE_DIR, 'repos')
@@ -679,7 +678,7 @@ def _cache(options, out, err):
                         repo = repo.lstrip(os.sep)
                     out.write(repo)
 
-    return ret
+    return 0
 
 
 replay = subparsers.add_parser(

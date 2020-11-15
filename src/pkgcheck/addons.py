@@ -712,7 +712,8 @@ def init_addon(cls, options, addons_map=None):
         addon = addons_map[cls] = cls(options, **kwargs)
 
         # force cache updates
+        force_cache = getattr(options, 'force_cache', False)
         if isinstance(addon, caches.CachedAddon):
-            addon.update_cache()
+            addon.update_cache(force=force_cache)
 
     return addon

@@ -71,15 +71,6 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
                 pathlib.Path(repos_dir).rglob(cache.file)))
         return ImmutableDict(caches_map)
 
-    @staticmethod
-    def update_caches(options, addons):
-        """Update all known caches."""
-        ret = []
-        force = getattr(options, 'force_cache', False)
-        for addon in addons:
-            ret.append(addon.update_cache(force=force))
-        return any(ret)
-
     @classmethod
     def remove_caches(cls, options):
         """Remove all or selected caches."""
@@ -111,4 +102,3 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
                                     raise
             except IOError as e:
                 raise UserException(f'failed removing {cache_type} cache: {path!r}: {e}')
-        return 0
