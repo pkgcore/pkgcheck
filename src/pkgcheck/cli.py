@@ -40,7 +40,9 @@ class ConfigArgumentParser(arghparse.ArgumentParser):
         config_args = [f'--{k}={v}' if v else f'--{k}' for k, v in self.config.items(section)]
         if config_args:
             with patch('snakeoil.cli.arghparse.ArgumentParser.error', self._config_error):
-                namespace, _ = self.parse_known_optionals(config_args, namespace)
+                namespace, args = self.parse_known_optionals(config_args, namespace)
+                if args:
+                    self.error(f"unknown arguments: {'  '.join(args)}")
         return namespace
 
     def _config_error(self, message, status=2):
