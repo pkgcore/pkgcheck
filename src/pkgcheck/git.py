@@ -31,10 +31,10 @@ from .checks import GitCheck
 from .log import logger
 
 # hacky path regexes for git log parsing, proper validation is handled later
-_ebuild_path_regex_raw = '([^/]+)/([^/]+)/([^/]+)\\.ebuild'
-_ebuild_path_regex = '(?P<category>[^/]+)/(?P<PN>[^/]+)/(?P<P>[^/]+)\\.ebuild'
-demand_compile_regexp('ebuild_ADM_regex', fr'^(?P<status>[ADM])\t{_ebuild_path_regex}$')
-demand_compile_regexp('ebuild_R_regex', fr'^(?P<status>R)\d+\t{_ebuild_path_regex}\t{_ebuild_path_regex_raw}$')
+_ebuild_regex = '([^/]+)/[^/]+/([^/]+)\\.ebuild'
+demand_compile_regexp(
+    'git_log_regex',
+    fr'^([ADM])\t{_ebuild_regex}|(R)\d+\t{_ebuild_regex}\t{_ebuild_regex}$')
 demand_compile_regexp('eclass_regex', r'^eclass/(?P<eclass>\S+)\.eclass$')
 
 
@@ -90,27 +90,21 @@ class ParsedGitRepo(UserDict, caches.Cache):
     @staticmethod
     def _parse_file_line(line):
         """Pull atoms and status from file change lines."""
-        # match initially added ebuilds
-        match = ebuild_ADM_regex.match(line)
+        match = git_log_regex.match(line)
         if match:
-            status = match.group('status')
-            category = match.group('category')
-            pkg = match.group('P')
+            data = match.groups()
+            if data[0] is not None:
+                # matched ADM status change
+                status, category, pkg = data[0:3]
+            else:
+                # matched R status change
+                status, category, pkg = data[3:6]
             try:
                 return atom_cls(f'={category}/{pkg}'), status
             except MalformedAtom:
-                return None
+                pass
 
-        # match renamed ebuilds
-        match = ebuild_R_regex.match(line)
-        if match:
-            status = match.group('status')
-            category = match.group('category')
-            pkg = match.group('P')
-            try:
-                return atom_cls(f'={category}/{pkg}'), status
-            except MalformedAtom:
-                return None
+        return None
 
     @classmethod
     def parse_git_log(cls, repo_path, commit=None, pkgs=False, verbosity=-1):
