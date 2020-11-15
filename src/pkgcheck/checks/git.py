@@ -333,7 +333,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
         pkg = pkgs[0]
 
         new_pkg = self.repo.match(pkg.versioned_atom)[0]
-        # don't flag live ebuilds for RDEPEND changes
+        # ignore live ebuilds
         if new_pkg.live:
             return
 
