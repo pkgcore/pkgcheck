@@ -70,25 +70,28 @@ class ParsedGitRepo(UserDict, caches.Cache):
     # git command to run on the targeted repo
     _git_cmd = 'git log --name-status --date=short --diff-filter=ARMD'
 
-    def __init__(self, repo, commit=None, **kwargs):
+    def __init__(self, path, commit=None):
         super().__init__()
-        self.location = repo.location
+        self.path = path
         self._cache = GitAddon.cache
-
-        if commit is None:
-            self.commit = 'origin/HEAD..master'
-            self._pkg_changes(commit=self.commit, **kwargs)
-        else:
-            self.commit = commit
-            self._pkg_changes(**kwargs)
-
-    def update(self, commit, **kwargs):
-        """Update an existing repo starting at a given commit hash."""
-        self._pkg_changes(commit=self.commit, **kwargs)
         self.commit = commit
 
-    @staticmethod
-    def _parse_file_line(line):
+    def update(self, commit_range, local=False, **kwargs):
+        """Update an existing repo starting at a given commit hash."""
+        seen = set()
+        for pkg in self.parse_git_log(commit_range, pkgs=True, **kwargs):
+            atom = pkg.atom
+            key = (atom, pkg.status)
+            if key not in seen:
+                seen.add(key)
+                self.data.setdefault(atom.category, {}).setdefault(
+                    atom.package, {}).setdefault(pkg.status, []).append((
+                        atom.fullver,
+                        pkg.commit.commit_date,
+                        pkg.commit.hash if not local else pkg.commit,
+                    ))
+
+    def _parse_file_line(self, line):
         """Pull atoms and status from file change lines."""
         match = git_log_regex.match(line)
         if match:
@@ -106,10 +109,9 @@ class ParsedGitRepo(UserDict, caches.Cache):
 
         return None
 
-    @classmethod
-    def parse_git_log(cls, repo_path, commit=None, pkgs=False, verbosity=-1):
+    def parse_git_log(self, commit_range, pkgs=False, verbosity=-1):
         """Parse git log output."""
-        cmd = shlex.split(cls._git_cmd)
+        cmd = shlex.split(self._git_cmd)
         # custom git log format, see the "PRETTY FORMATS" section of the git
         # log man page for details
         format_lines = [
@@ -123,17 +125,10 @@ class ParsedGitRepo(UserDict, caches.Cache):
         ]
         format_str = '%n'.join(format_lines)
         cmd.append(f'--pretty=tformat:{format_str}')
-
-        if commit:
-            if '..' in commit:
-                cmd.append(commit)
-            else:
-                cmd.append(f'{commit}..origin/HEAD')
-        else:
-            cmd.append('origin/HEAD')
+        cmd.append(commit_range)
 
         git_log = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=repo_path)
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.path)
         line = git_log.stdout.readline().decode().strip()
         if git_log.poll():
             error = git_log.stderr.read().decode().strip()
@@ -173,25 +168,10 @@ class ParsedGitRepo(UserDict, caches.Cache):
                         break
                     line = line.strip()
                     if pkgs and line:
-                        parsed = cls._parse_file_line(line)
+                        parsed = self._parse_file_line(line)
                         if parsed is not None:
                             atom, status = parsed
                             yield GitPkgChange(atom, status, commit)
-
-    def _pkg_changes(self, local=False, **kwargs):
-        """Parse package changes from git log output."""
-        seen = set()
-        for pkg in self.parse_git_log(self.location, pkgs=True, **kwargs):
-            atom = pkg.atom
-            key = (atom, pkg.status)
-            if key not in seen:
-                seen.add(key)
-                self.data.setdefault(atom.category, {}).setdefault(
-                    atom.package, {}).setdefault(pkg.status, []).append((
-                        atom.fullver,
-                        pkg.commit.commit_date,
-                        pkg.commit.hash if not local else pkg.commit,
-                    ))
 
 
 class _GitCommitPkg(cpv.VersionedCPV):
@@ -493,17 +473,18 @@ class GitAddon(caches.CachedAddon):
                         os.remove(cache_file)
                         git_repo = None
 
-                if (git_repo is not None and
-                        repo.location == getattr(git_repo, 'location', None)):
+                if git_repo is None:
+                    logger.debug('creating %s git repo cache: %s', repo, commit[:13])
+                    git_repo = ParsedGitRepo(repo.location)
+
+                if repo.location == git_repo.path:
                     if commit != git_repo.commit:
-                        old, new = git_repo.commit[:13], commit[:13]
-                        logger.debug('updating %s git repo cache: %s -> %s', repo, old, new)
-                        git_repo.update(commit, verbosity=self.options.verbosity)
+                        logger.debug('updating %s git repo cache to %s', repo, commit[:13])
+                        commit_range = 'origin/HEAD' if git_repo.commit is None else f'{commit}..origin/HEAD'
+                        git_repo.update(commit_range, verbosity=self.options.verbosity)
+                        git_repo.commit = commit
                     else:
                         cache_repo = False
-                else:
-                    logger.debug('creating %s git repo cache: %s', repo, commit[:13])
-                    git_repo = ParsedGitRepo(repo, commit, verbosity=self.options.verbosity)
 
                 if git_repo:
                     self._cached_repos[repo.location] = git_repo
@@ -555,7 +536,8 @@ class GitAddon(caches.CachedAddon):
                 origin = self._get_commit_hash(target_repo.location)
                 master = self._get_commit_hash(target_repo.location, commit='master')
                 if origin != master:
-                    git_repo = ParsedGitRepo(target_repo, local=True)
+                    git_repo = ParsedGitRepo(target_repo.location)
+                    git_repo.update('origin/HEAD..master', local=True)
             except ValueError as e:
                 if str(e):
                     logger.warning('skipping git commit checks: %s', e)
@@ -571,7 +553,8 @@ class GitAddon(caches.CachedAddon):
                 origin = self._get_commit_hash(path)
                 master = self._get_commit_hash(path, commit='master')
                 if origin != master:
-                    commits = ParsedGitRepo.parse_git_log(path, commit='origin/HEAD..master')
+                    git_repo = ParsedGitRepo(path)
+                    commits = git_repo.parse_git_log('origin/HEAD..master')
             except ValueError as e:
                 if str(e):
                     logger.warning('skipping git commit checks: %s', e)
