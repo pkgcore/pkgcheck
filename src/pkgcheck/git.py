@@ -91,24 +91,6 @@ class ParsedGitRepo(UserDict, caches.Cache):
                         pkg.commit.hash if not local else pkg.commit,
                     ))
 
-    def _parse_file_line(self, line):
-        """Pull atoms and status from file change lines."""
-        match = git_log_regex.match(line)
-        if match:
-            data = match.groups()
-            if data[0] is not None:
-                # matched ADM status change
-                status, category, pkg = data[0:3]
-            else:
-                # matched R status change
-                status, category, pkg = data[3:6]
-            try:
-                return atom_cls(f'={category}/{pkg}'), status
-            except MalformedAtom:
-                pass
-
-        return None
-
     def parse_git_log(self, commit_range, pkgs=False, verbosity=-1):
         """Parse git log output."""
         cmd = shlex.split(self._git_cmd)
@@ -168,10 +150,20 @@ class ParsedGitRepo(UserDict, caches.Cache):
                         break
                     line = line.strip()
                     if pkgs and line:
-                        parsed = self._parse_file_line(line)
-                        if parsed is not None:
-                            atom, status = parsed
-                            yield GitPkgChange(atom, status, commit)
+                        match = git_log_regex.match(line)
+                        if match is not None:
+                            data = match.groups()
+                            if data[0] is not None:
+                                # matched ADM status change
+                                status, category, pkg = data[0:3]
+                            else:
+                                # matched R status change
+                                status, category, pkg = data[3:6]
+                            try:
+                                yield GitPkgChange(
+                                    atom_cls(f'={category}/{pkg}'), status, commit)
+                            except MalformedAtom:
+                                pass
 
 
 class _GitCommitPkg(cpv.VersionedCPV):
