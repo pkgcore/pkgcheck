@@ -172,14 +172,33 @@ class MissingSlotmove(results.VersionResult, results.Error):
     .. [#] https://devmanual.gentoo.org/ebuild-maintenance/package-moves/
     """
 
-    def __init__(self, old_slot, new_slot, **kwargs):
+    def __init__(self, old, new, **kwargs):
         super().__init__(**kwargs)
-        self.old_slot = old_slot
-        self.new_slot = new_slot
+        self.old = old
+        self.new = new
 
     @property
     def desc(self):
-        return f'changed SLOT: {self.old_slot} -> {self.new_slot}'
+        return f'changed SLOT: {self.old} -> {self.new}'
+
+
+class MissingMove(results.PackageResult, results.Error):
+    """Package was renamed without adding a move package update.
+
+    When moving/renaming a package, a new entry must be created in
+    profiles/updates. See the devmanual [#]_ for more info.
+
+    .. [#] https://devmanual.gentoo.org/ebuild-maintenance/package-moves/
+    """
+
+    def __init__(self, old, new, **kwargs):
+        super().__init__(**kwargs)
+        self.old = old
+        self.new = new
+
+    @property
+    def desc(self):
+        return f'renamed package: {self.old} -> {self.new}'
 
 
 class _RemovalRepo(UnconfiguredTree):
@@ -240,7 +259,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     known_results = frozenset([
         DirectStableKeywords, DirectNoMaintainer, BadCommitSummary, RdependChange,
         EbuildIncorrectCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
-        MissingSlotmove,
+        MissingSlotmove, MissingMove
     ])
 
     def __init__(self, *args, git_addon):
@@ -293,6 +312,21 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
         if dropped_unstable_keywords:
             yield DroppedUnstableKeywords(
                 sort_keywords(dropped_unstable_keywords), pkg.commit, pkg=pkg)
+
+    def rename_checks(self, pkgs):
+        """Check for issues due to package modifications."""
+        pkg = pkgs[0]
+        old_key, new_key = pkg.old_atom.key, pkg.key
+
+        pkgmoves = (
+            x[1:] for x in self.repo.config.updates.get(old_key, ())
+            if x[0] == 'move')
+
+        for old, new in pkgmoves:
+            if old.key == old_key and new.key == new_key:
+                break
+        else:
+            yield MissingMove(old_key, new_key, pkg=pkg)
 
     def modified_checks(self, pkgs):
         """Check for issues due to package modifications."""
@@ -348,6 +382,9 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
         # run removed package checks
         if pkg_map['D']:
             yield from self.removal_checks(list(pkg_map['D']))
+        # run renamed package checks
+        if pkg_map['R']:
+            yield from self.rename_checks(list(pkg_map['R']))
         # run modified package checks
         if modified:
             yield from self.modified_checks(modified)
