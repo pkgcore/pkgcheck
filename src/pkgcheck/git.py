@@ -171,8 +171,9 @@ class ParsedGitRepo(UserDict, caches.Cache):
                     line = git_log.stdout.readline().decode()
                     if line == '# BEGIN COMMIT\n' or not line:
                         break
-                    if pkgs:
-                        parsed = cls._parse_file_line(line.strip())
+                    line = line.strip()
+                    if pkgs and line:
+                        parsed = cls._parse_file_line(line)
                         if parsed is not None:
                             atom, status = parsed
                             yield GitPkgChange(atom, status, commit)
