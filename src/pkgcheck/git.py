@@ -472,7 +472,7 @@ class GitAddon(caches.CachedAddon):
                 if repo.location == git_repo.path:
                     if commit != git_repo.commit:
                         logger.debug('updating %s git repo cache to %s', repo, commit[:13])
-                        commit_range = 'origin/HEAD' if git_repo.commit is None else f'{commit}..origin/HEAD'
+                        commit_range = 'origin/HEAD' if git_repo.commit is None else f'{git_repo.commit}..origin/HEAD'
                         git_repo.update(commit_range, verbosity=self.options.verbosity)
                         git_repo.commit = commit
                     else:
