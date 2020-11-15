@@ -247,7 +247,6 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
         super().__init__(*args)
         self.today = datetime.today()
         self.repo = self.options.target_repo
-        self.pkg_updates = self.repo.config.updates
         self.valid_arches = self.options.target_repo.known_arches
         self._git_addon = git_addon
 
@@ -318,7 +317,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
         old_slot, new_slot = old_pkg.slot, new_pkg.slot
         if old_slot != new_slot:
             slotmoves = (
-                x[1:] for x in self.pkg_updates.get(new_pkg.key, ())
+                x[1:] for x in self.repo.config.updates.get(new_pkg.key, ())
                 if x[0] == 'slotmove')
             for atom, moved_slot in slotmoves:
                 if atom.match(old_pkg) and new_slot == moved_slot:
