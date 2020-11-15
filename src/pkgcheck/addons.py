@@ -310,21 +310,22 @@ class ProfileAddon(caches.CachedAddon):
                     cache_file = self.cache_file(repo)
                     # add profiles-base -> repo mapping to ease storage procedure
                     cached_profiles[repo.config.profiles_base]['repo'] = repo
-                    try:
-                        with open(cache_file, 'rb') as f:
-                            cache = pickle.load(f)
-                        if cache.version == self.cache.version:
-                            cached_profiles[repo.config.profiles_base].update(cache)
-                        else:
-                            logger.debug(
-                                'forcing %s profile cache regen '
-                                'due to outdated version', repo.repo_id)
+                    if not force:
+                        try:
+                            with open(cache_file, 'rb') as f:
+                                cache = pickle.load(f)
+                            if cache.version == self.cache.version:
+                                cached_profiles[repo.config.profiles_base].update(cache)
+                            else:
+                                logger.debug(
+                                    'forcing %s profile cache regen '
+                                    'due to outdated version', repo.repo_id)
+                                os.remove(cache_file)
+                        except FileNotFoundError:
+                            pass
+                        except (AttributeError, EOFError, ImportError, IndexError) as e:
+                            logger.debug('forcing %s profile cache regen: %s', repo.repo_id, e)
                             os.remove(cache_file)
-                    except FileNotFoundError:
-                        pass
-                    except (AttributeError, EOFError, ImportError, IndexError) as e:
-                        logger.debug('forcing %s profile cache regen: %s', repo.repo_id, e)
-                        os.remove(cache_file)
 
                 chunked_data_cache = {}
 
