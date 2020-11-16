@@ -97,10 +97,10 @@ local curcontext=$curcontext state state_descr line ret=1
 
 common_pkgcore_args=(
   '(- :)'--version'[show version information and exit]'
-  '--add-config[modify an existing configuration section]'
-  '--new-config[add a new configuration section]'
-  '--empty-config[do not load user/system configuration]'
-  '--config[override location of config files]:config path:_files'
+  '--add-config[modify existing pkgcore config section]'
+  '--new-config[add new pkgcore config section]'
+  '--empty-config[skip loading user/system pkgcore config]'
+  '--config[use custom pkgcore config file]:config path:_files'
 )
 
 common_output_args=(
