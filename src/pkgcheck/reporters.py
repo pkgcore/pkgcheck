@@ -446,7 +446,7 @@ class PickleStream(Reporter):
                     yield result
                 else:
                     raise DeserializationError(f'invalid data type: {result!r}')
-        except pickle.UnpicklingError as e:
+        except (pickle.UnpicklingError, TypeError) as e:
             raise DeserializationError('failed unpickling result') from e
 
     @coroutine
