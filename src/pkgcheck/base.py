@@ -13,10 +13,12 @@ minimally accepted scope.
 import re
 import sys
 from contextlib import AbstractContextManager
+from functools import total_ordering
 
 from snakeoil.mappings import ImmutableDict
 
 
+@total_ordering
 class Scope:
     """Generic scope for scans, checks, and results."""
 
@@ -36,21 +38,6 @@ class Scope:
         if isinstance(other, Scope):
             return self.level < other.level
         return self.level < other
-
-    def __gt__(self, other):
-        if isinstance(other, Scope):
-            return self.level > other.level
-        return self.level > other
-
-    def __le__(self, other):
-        if isinstance(other, Scope):
-            return self.level <= other.level
-        return self.level <= other
-
-    def __ge__(self, other):
-        if isinstance(other, Scope):
-            return self.level >= other.level
-        return self.level >= other
 
     def __eq__(self, other):
         if isinstance(other, Scope):

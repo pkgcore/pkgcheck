@@ -1,6 +1,7 @@
 """Core check classes."""
 
 from collections import defaultdict
+from functools import total_ordering
 
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
@@ -11,6 +12,7 @@ from ..caches import CachedAddon
 from ..log import logger
 
 
+@total_ordering
 class Check(feeds.Feed):
     """Base template for a check.
 
@@ -60,6 +62,9 @@ class Check(feeds.Feed):
     def finish(self):
         """Do cleanup and yield final results here."""
         yield from ()
+
+    def __eq__(self, other):
+        return self.__class__.__name__ == other.__class__.__name__
 
     def __lt__(self, other):
         if self.priority == other.priority:

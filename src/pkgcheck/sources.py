@@ -2,6 +2,7 @@
 
 import os
 from collections import deque
+from functools import total_ordering
 from operator import attrgetter
 
 from pkgcore.ebuild.repository import UnconfiguredTree
@@ -113,6 +114,7 @@ class LatestPkgsFilter:
         return self._pkg_cache.popleft()
 
 
+@total_ordering
 class Eclass:
     """Generic eclass object."""
 

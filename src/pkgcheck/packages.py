@@ -1,9 +1,12 @@
 """Various custom package objects."""
 
+from functools import total_ordering
+
 from pkgcore.ebuild import atom, cpv
 from snakeoil import klass
 
 
+@total_ordering
 class RawCPV:
     """Raw CPV objects supporting basic restrictions/sorting."""
 
@@ -37,6 +40,9 @@ class RawCPV:
     def __lt__(self, other):
         return self.versioned_atom < other.versioned_atom
 
+    def __eq__(self, other):
+        return self.versioned_atom == other.versioned_atom
+
     def __str__(self):
         if self.fullver:
             return f'{self.category}/{self.package}-{self.fullver}'
@@ -47,6 +53,7 @@ class RawCPV:
         return f'<{self.__class__.__name__} cpv={self.versioned_atom.cpvstr!r} {address}>'
 
 
+@total_ordering
 class WrappedPkg:
     """Generic package wrapper used to inject attributes into package objects."""
 
@@ -63,6 +70,9 @@ class WrappedPkg:
 
     def __lt__(self, other):
         return self.versioned_atom < other.versioned_atom
+
+    def __eq__(self, other):
+        return self.versioned_atom == other.versioned_atom
 
     __getattr__ = klass.GetAttrProxy('_pkg')
     __dir__ = klass.DirProxy('_pkg')
