@@ -80,7 +80,7 @@ class GentooRepoCheck(Check):
         if not skip:
             skip = not namespace.gentoo_repo
             if skip:
-                logger.info(f'skipping {cls.__name__}, not running against gentoo repo')
+                logger.info('skipping %s, not running against gentoo repo', cls.__name__)
         return super().skip(namespace, skip=skip)
 
 
@@ -92,7 +92,7 @@ class OverlayRepoCheck(Check):
         if not skip:
             skip = not namespace.target_repo.masters
             if skip:
-                logger.info(f'skipping {cls.__name__}, not running against overlay repo')
+                logger.info('skipping %s, not running against overlay repo', cls.__name__)
         return super().skip(namespace, skip=skip)
 
 
@@ -117,7 +117,7 @@ class ExplicitlyEnabledCheck(Check):
                 not known_results.intersection(enabled_keywords)
 
             if skip:
-                logger.info(f'skipping {cls.__name__}, not explicitly enabled')
+                logger.info('skipping %s, not explicitly enabled', cls.__name__)
         return super().skip(namespace, skip=skip)
 
 
@@ -129,7 +129,7 @@ class GitCheck(ExplicitlyEnabledCheck):
         if not skip:
             skip = namespace.commits is None
             if skip:
-                logger.info(f'skipping {cls.__name__}, not explicitly enabled')
+                logger.info('skipping %s, not explicitly enabled', cls.__name__)
         return super().skip(namespace, skip=skip)
 
 
@@ -152,7 +152,7 @@ class NetworkCheck(AsyncCheck):
         if not skip:
             skip = not namespace.net
             if skip:
-                logger.info(f'skipping {cls.__name__}, network checks not enabled')
+                logger.info('skipping %s, network checks not enabled', cls.__name__)
         return super().skip(namespace, skip=skip)
 
 
