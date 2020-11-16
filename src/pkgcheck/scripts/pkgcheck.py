@@ -627,7 +627,7 @@ cache.add_argument(
     '-n', '--dry-run', action='store_true',
     help='dry run without performing any changes')
 cache.add_argument(
-    '-t', '--type', dest='cache',
+    '-t', '--type', dest='cache_types',
     action=argparsers.CacheNegations, default=argparsers.CacheNegations.default,
     help='target cache types')
 
@@ -644,7 +644,7 @@ def _setup_cache_addons(parser, namespace):
 def _validate_cache_args(parser, namespace):
     cache_addons = (
         addon for addon in namespace.cache_addons
-        if namespace.cache.get(addon.cache.type, False))
+        if namespace.cache_types.get(addon.cache.type, False))
     # sort caches by type
     namespace.cache_addons = sorted(cache_addons, key=lambda x: x.cache.type)
 
@@ -669,7 +669,7 @@ def _cache(options, out, err):
         # list existing caches
         repos_dir = pjoin(const.USER_CACHE_DIR, 'repos')
         for cache_type, paths in CachedAddon.existing().items():
-            if options.cache.get(cache_type, False):
+            if options.cache_types.get(cache_type, False):
                 if paths:
                     out.write(out.fg('yellow'), f'{cache_type} caches: ', out.reset)
                 for path in paths:
