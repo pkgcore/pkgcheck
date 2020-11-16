@@ -140,7 +140,7 @@ class CheckRunner:
     def __init__(self, options, source, checks):
         self.options = options
         self.source = source
-        self.checks = sorted(checks)
+        self.checks = tuple(sorted(checks))
         self._running_check = None
 
         scope = base.version_scope
@@ -202,12 +202,10 @@ class CheckRunner:
             yield from check.finish()
 
     def __eq__(self, other):
-        return (
-            self.__class__ is other.__class__ and
-            frozenset(self.checks) == frozenset(other.checks))
+        return self.__class__ is other.__class__ and self.checks == other.checks
 
     def __hash__(self):
-        return hash(frozenset(self.checks))
+        return hash(self.checks)
 
     def __repr__(self):
         checks = ', '.join(sorted(str(check) for check in self.checks))
