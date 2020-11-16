@@ -1,3 +1,4 @@
+import pickle
 import sys
 from functools import partial
 from textwrap import dedent
@@ -207,6 +208,25 @@ class TestPickleStream(BaseReporter):
         with self.mk_reporter() as reporter:
             with pytest.raises(TypeError):
                 reporter.report(result)
+
+    def test_deserialize_error(self):
+        with self.mk_reporter() as reporter:
+            obj = pickle.dumps(object(), protocol=reporter.protocol)
+
+            # deserializing non-result objects raises exception
+            with pytest.raises(reporters.DeserializationError) as excinfo:
+                next(reporter.from_iter([obj]))
+            assert 'invalid data type' in str(excinfo.value)
+
+            # pickle loading TypeError raises exception
+            with pytest.raises(reporters.DeserializationError) as excinfo:
+                next(reporter.from_iter(['result']))
+            assert str(excinfo.value) == 'failed unpickling result'
+
+            # generic unpickling error raises exception
+            with pytest.raises(reporters.DeserializationError) as excinfo:
+                next(reporter.from_iter([b'result']))
+            assert str(excinfo.value) == 'failed unpickling result'
 
 
 class TestBinaryPickleStream(TestPickleStream):
