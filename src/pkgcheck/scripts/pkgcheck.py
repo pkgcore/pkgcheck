@@ -15,7 +15,8 @@ from itertools import chain
 from operator import attrgetter
 
 from pkgcore import const as pkgcore_const
-from pkgcore.repository import multiplex, errors as repo_errors
+from pkgcore.repository import errors as repo_errors
+from pkgcore.repository import multiplex
 from pkgcore.restrictions import boolean, packages
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.util import commandline, parserestrict
@@ -25,8 +26,8 @@ from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import abspath, pjoin
 
 from .. import argparsers, base, const, objects, pipeline, reporters
-from ..caches import CachedAddon
 from ..addons import init_addon
+from ..caches import CachedAddon
 from ..checks import init_checks
 from ..cli import ConfigArgumentParser
 

@@ -7,9 +7,9 @@ from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
 
 from .. import addons, base, feeds, sources
-from ..results import FilteredVersionResult, MetadataError
 from ..caches import CachedAddon
 from ..log import logger
+from ..results import FilteredVersionResult, MetadataError
 
 
 @total_ordering

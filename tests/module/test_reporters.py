@@ -2,12 +2,11 @@ import sys
 from functools import partial
 from textwrap import dedent
 
-from pkgcore.test.misc import FakePkg
 import pytest
-from snakeoil.formatters import PlainTextFormatter
-
 from pkgcheck import reporters, results
-from pkgcheck.checks import pkgdir, profiles, metadata, metadata_xml, git
+from pkgcheck.checks import git, metadata, metadata_xml, pkgdir, profiles
+from pkgcore.test.misc import FakePkg
+from snakeoil.formatters import PlainTextFormatter
 
 
 class BaseReporter:

@@ -1,8 +1,8 @@
 """Eclass specific support and addon."""
 
-from collections import UserDict
 import os
 import pickle
+from collections import UserDict
 
 from pkgcore.ebuild.eclass import Eclass, EclassDocParsingError
 from snakeoil import klass

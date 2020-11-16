@@ -1,9 +1,9 @@
 """Registration for keywords, checks, and reporters."""
 
-from collections.abc import Mapping
 import inspect
 import os
 import pkgutil
+from collections.abc import Mapping
 from importlib import import_module
 
 from snakeoil import klass

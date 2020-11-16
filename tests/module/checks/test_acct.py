@@ -1,8 +1,8 @@
 from pkgcheck.checks import acct
-
 from pkgcore.test.misc import FakeRepo
 
 from .. import misc
+
 
 class TestAcctUser(misc.ReportTestCase):
 

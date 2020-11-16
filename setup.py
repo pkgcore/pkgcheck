@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
+import os
+import sys
 from collections import defaultdict
 from distutils import log
 from distutils.command import install_data as dst_install_data
 from distutils.util import byte_compile
 from itertools import chain
-import os
-import sys
 from textwrap import dedent
 
 from setuptools import setup
-
 from snakeoil.dist import distutils_extensions as pkgdist
+
 pkgdist_setup, pkgdist_cmds = pkgdist.setup()
 
 DATA_INSTALL_OFFSET = 'share/pkgcheck'

@@ -3,8 +3,8 @@ from collections import defaultdict
 from itertools import chain
 
 from pkgcore.ebuild import misc
-from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild import profiles as profiles_mod
+from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.repo_objs import Profiles
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr

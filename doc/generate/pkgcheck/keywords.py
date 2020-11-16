@@ -9,8 +9,8 @@ Keywords
 List of result keywords that can be produced by pkgcheck.
 """
 
-from collections import defaultdict
 import sys
+from collections import defaultdict
 from textwrap import dedent
 
 from snakeoil.strings import pluralism as _pl

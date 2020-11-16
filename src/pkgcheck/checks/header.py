@@ -5,7 +5,6 @@ import re
 from .. import base, results, sources
 from . import GentooRepoCheck
 
-
 copyright_regex = re.compile(
     r'^# Copyright (?P<begin>\d{4}-)?(?P<end>\d{4}) (?P<holder>.+)$')
 

@@ -10,6 +10,10 @@ from operator import attrgetter
 from unittest.mock import patch
 
 import pytest
+from pkgcheck import __title__ as project
+from pkgcheck import base, checks, objects, reporters
+from pkgcheck.checks.profiles import ProfileWarning
+from pkgcheck.scripts import run
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import atom, restricts
 from pkgcore.ebuild.repository import UnconfiguredTree
@@ -18,11 +22,6 @@ from snakeoil.contexts import chdir
 from snakeoil.fileutils import touch
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
-
-from pkgcheck import __title__ as project
-from pkgcheck import base, checks, objects, reporters
-from pkgcheck.checks.profiles import ProfileWarning
-from pkgcheck.scripts import run
 
 
 def test_script_run(capsys):

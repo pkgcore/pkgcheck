@@ -2,12 +2,10 @@ import os
 import textwrap
 
 import pytest
-
+from pkgcheck.scripts import pkgcheck
 from pkgcore import const as pkgcore_const
 from pkgcore.util.commandline import Tool
 from snakeoil.osutils import pjoin
-
-from pkgcheck.scripts import pkgcheck
 
 
 @pytest.fixture(scope="session")

@@ -2,7 +2,7 @@ import random
 import string
 
 import pytest
-
+from pkgcheck import base, pipeline
 from pkgcore.ebuild import domain, repo_objs
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import VersionedCPV
@@ -16,8 +16,6 @@ from snakeoil.data_source import text_data_source
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
-
-from pkgcheck import base, pipeline
 
 
 # TODO: merge this with the pkgcore-provided equivalent

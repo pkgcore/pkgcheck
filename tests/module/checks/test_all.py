@@ -1,7 +1,6 @@
-from snakeoil.cli import arghparse
-
 from pkgcheck import objects
 from pkgcheck.checks import init_checks
+from snakeoil.cli import arghparse
 
 
 def test_checks():

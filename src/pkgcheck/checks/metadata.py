@@ -12,7 +12,7 @@ from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.package.errors import MetadataException
-from pkgcore.restrictions import packages, values, boolean
+from pkgcore.restrictions import boolean, packages, values
 from snakeoil.contexts import patch
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
@@ -21,8 +21,8 @@ from snakeoil.strings import pluralism
 from .. import addons, base, git, results, sources
 from ..addons import UnstatedIuse
 from ..eclass import EclassAddon
-from .visibility import FakeConfigurable
 from . import Check
+from .visibility import FakeConfigurable
 
 
 class MissingLicenseFile(results.VersionResult, results.Error):

@@ -1,9 +1,8 @@
 from itertools import chain
 
+from pkgcheck.checks import codingstyle
 from pkgcore.ebuild.eapi import EAPI
 from pkgcore.test.misc import FakeRepo
-
-from pkgcheck.checks import codingstyle
 
 from .. import misc
 

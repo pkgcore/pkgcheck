@@ -3,9 +3,9 @@
 import socket
 import traceback
 import urllib.request
-from lxml import etree
 from functools import partial
 
+from lxml import etree
 from pkgcore.fetch import fetchable
 
 from .. import addons, base, results, sources

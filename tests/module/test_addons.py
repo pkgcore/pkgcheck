@@ -1,14 +1,13 @@
 import os
 
+import pytest
+from pkgcheck import addons
 from pkgcore.ebuild import repo_objs, repository
 from pkgcore.restrictions import packages
 from pkgcore.util import commandline
-import pytest
 from snakeoil.cli import arghparse
 from snakeoil.fileutils import write_file
-from snakeoil.osutils import pjoin, ensure_dirs
-
-from pkgcheck import addons
+from snakeoil.osutils import ensure_dirs, pjoin
 
 from .misc import FakePkg, FakeProfile, Options, Tmpdir
 

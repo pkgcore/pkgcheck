@@ -1,15 +1,16 @@
 """Various line-based checks."""
 
+import re
 from collections import defaultdict
 from itertools import chain
-import re
 
 from pkgcore.ebuild.eapi import EAPI
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import stable_unique
 from snakeoil.strings import pluralism
 
-from .. import eclass as eclass_mod, results, sources
+from .. import eclass as eclass_mod
+from .. import results, sources
 from . import Check, ExplicitlyEnabledCheck
 
 PREFIX_VARIABLES = ('EROOT', 'ED', 'EPREFIX')

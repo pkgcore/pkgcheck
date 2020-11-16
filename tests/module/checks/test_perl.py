@@ -3,7 +3,6 @@ import socket
 from unittest.mock import patch
 
 import pytest
-
 from pkgcheck.checks import SkipOptionalCheck, perl
 
 from .. import misc

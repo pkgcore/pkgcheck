@@ -1,6 +1,5 @@
-from snakeoil.osutils import pjoin
-
 from pkgcheck import addons, feeds
+from snakeoil.osutils import pjoin
 
 from .misc import FakePkg
 from .test_addons import ArgparseCheck, ProfilesMixin

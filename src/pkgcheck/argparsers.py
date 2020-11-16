@@ -6,9 +6,9 @@ from itertools import chain
 from snakeoil.cli import arghparse
 from snakeoil.strings import pluralism
 
+from . import base, objects, results
 from .caches import CachedAddon
 from .checks import NetworkCheck
-from . import base, objects, results
 
 
 class ConfigArg(argparse._StoreAction):

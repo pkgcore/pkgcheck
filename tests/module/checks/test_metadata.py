@@ -1,18 +1,17 @@
-from functools import partial
-from itertools import combinations
-from operator import attrgetter
 import os
 import tempfile
 import textwrap
+from functools import partial
+from itertools import combinations
+from operator import attrgetter
 
 import pytest
-from pkgcore.ebuild import eapi, repository, repo_objs
+from pkgcheck import addons, eclass, git
+from pkgcheck.checks import metadata
+from pkgcore.ebuild import eapi, repo_objs, repository
 from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
 from snakeoil.osutils import pjoin
-
-from pkgcheck import addons, eclass, git
-from pkgcheck.checks import metadata
 
 from .. import misc
 

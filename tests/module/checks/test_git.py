@@ -1,9 +1,8 @@
 from unittest.mock import patch
 
-from pkgcore.test.misc import FakeRepo
-
 from pkgcheck.checks import git as git_mod
 from pkgcheck.git import GitCommit
+from pkgcore.test.misc import FakeRepo
 
 from .. import misc
 

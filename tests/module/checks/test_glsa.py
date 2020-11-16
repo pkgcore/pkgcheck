@@ -1,8 +1,7 @@
-from pkgcore.test.misc import mk_glsa
 import pytest
-from snakeoil.osutils import pjoin
-
 from pkgcheck.checks import glsa
+from pkgcore.test.misc import mk_glsa
+from snakeoil.osutils import pjoin
 
 from .. import misc
 

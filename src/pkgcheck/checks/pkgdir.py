@@ -1,7 +1,7 @@
-from datetime import datetime
 import os
 import stat
 from collections import defaultdict
+from datetime import datetime
 
 from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls

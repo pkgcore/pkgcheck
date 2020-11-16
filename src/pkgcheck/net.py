@@ -1,7 +1,7 @@
 """Various support for network checks."""
 
-import os
 import logging
+import os
 
 import requests
 

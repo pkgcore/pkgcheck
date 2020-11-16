@@ -14,9 +14,9 @@ that operate at a package or version scope will be run. On the other hand, when
 running against an entire repo, all defined checks will be run.
 """
 
-from operator import attrgetter
 import sys
-from textwrap import dedent, TextWrapper
+from operator import attrgetter
+from textwrap import TextWrapper, dedent
 
 from snakeoil.strings import pluralism as _pl
 

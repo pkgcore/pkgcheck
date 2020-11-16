@@ -12,8 +12,8 @@ from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.restrictions import packages, values
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
-from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.decorators import coroutine
+from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
