@@ -1,3 +1,4 @@
+import json
 import pickle
 import sys
 from functools import partial
@@ -257,3 +258,19 @@ class TestJsonStream(BaseReporter):
             assert not err
             deserialized_result = next(reporter.from_iter([out]))
             assert str(deserialized_result) == str(self.log_error)
+
+    def test_deserialize_error(self):
+        with self.mk_reporter() as reporter:
+            # deserializing non-result objects raises exception
+            obj = reporter.to_json(['result'])
+            with pytest.raises(reporters.DeserializationError) as excinfo:
+                next(reporter.from_iter([obj]))
+            assert 'failed loading' in str(excinfo.value)
+
+            # deserializing mangled JSON result objects raises exception
+            obj = reporter.to_json(self.versioned_result)
+            del obj['__class__']
+            json_obj = json.dumps(obj)
+            with pytest.raises(reporters.DeserializationError) as excinfo:
+                next(reporter.from_iter([json_obj]))
+            assert 'missing result class' in str(excinfo.value)
