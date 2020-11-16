@@ -3,6 +3,7 @@
 import argparse
 import os
 import pickle
+import re
 import shlex
 import subprocess
 from collections import UserDict
@@ -17,7 +18,6 @@ from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values
 from snakeoil.cli.exceptions import UserException
-from snakeoil.demandload import demand_compile_regexp
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.iterables import partition
 from snakeoil.klass import jit_attr
@@ -29,13 +29,6 @@ from snakeoil.strings import pluralism
 from . import base, caches, objects
 from .checks import GitCheck
 from .log import logger
-
-# hacky path regexes for git log parsing, proper validation is handled later
-_ebuild_regex = '([^/]+)/[^/]+/([^/]+)\\.ebuild'
-demand_compile_regexp(
-    'git_log_regex',
-    fr'^([ADM])\t{_ebuild_regex}|(R)\d+\t{_ebuild_regex}\t{_ebuild_regex}$')
-demand_compile_regexp('eclass_regex', r'^eclass/(?P<eclass>\S+)\.eclass$')
 
 
 class GitCommit:
@@ -70,6 +63,11 @@ class ParsedGitRepo(UserDict, caches.Cache):
 
     # git command to run on the targeted repo
     _git_cmd = 'git log --name-status --date=short --diff-filter=ARMD'
+
+    # hacky path regexes for git log parsing, proper validation is handled later
+    _ebuild_regex = '([^/]+)/[^/]+/([^/]+)\\.ebuild'
+    _git_log_regex = re.compile(
+        fr'^([ADM])\t{_ebuild_regex}|(R)\d+\t{_ebuild_regex}\t{_ebuild_regex}$')
 
     def __init__(self, path, commit=None):
         super().__init__()
@@ -151,7 +149,7 @@ class ParsedGitRepo(UserDict, caches.Cache):
                         break
                     line = line.strip()
                     if pkgs and line:
-                        match = git_log_regex.match(line)
+                        match = self._git_log_regex.match(line)
                         if match is not None:
                             data = match.groups()
                             try:
@@ -375,6 +373,8 @@ class GitAddon(caches.CachedAddon):
             pkgs, eclasses = partition(
                 p.stdout.splitlines(), predicate=lambda x: x.startswith('eclass/'))
             pkgs = sorted(cls._pkg_atoms(pkgs))
+
+            eclass_regex = re.compile(r'^eclass/(?P<eclass>\S+)\.eclass$')
             eclasses = filter(None, (eclass_regex.match(x) for x in eclasses))
             eclasses = sorted(x.group('eclass') for x in eclasses)
 
