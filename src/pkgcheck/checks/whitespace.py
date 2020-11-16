@@ -2,13 +2,10 @@ import re
 import sys
 from typing import NamedTuple
 
-from snakeoil.demandload import demand_compile_regexp
 from snakeoil.strings import pluralism
 
 from .. import results, sources
 from . import Check
-
-demand_compile_regexp('indent_regexp', '^\t* \t+')
 
 
 class _Whitespace(results.VersionResult, results.Warning):
@@ -127,6 +124,8 @@ class WhitespaceCheck(Check):
         TrailingEmptyLine, NoFinalNewline, BadWhitespaceCharacter
     ])
 
+    _indent_regex = re.compile('^\t* \t+')
+
     def __init__(self, *args):
         super().__init__(*args)
         bad_whitespace = ''.join(whitespace_data.chars)
@@ -151,7 +150,7 @@ class WhitespaceCheck(Check):
                     trailing.append(lineno)
                 elif line[0] == ' ':
                     leading.append(lineno)
-                if indent_regexp.match(line):
+                if self._indent_regex.match(line):
                     indent.append(lineno)
             elif lastlineempty:
                 double_empty.append(lineno)

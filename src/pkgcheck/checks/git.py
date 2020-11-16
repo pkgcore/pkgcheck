@@ -12,7 +12,6 @@ from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.exceptions import PkgcoreException
 from snakeoil import klass
-from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism
 
@@ -20,15 +19,6 @@ from .. import base, git, results, sources
 from ..log import logger
 from . import GentooRepoCheck, GitCheck
 from .header import copyright_regex
-
-
-demand_compile_regexp(
-    'commit_footer',
-    r'^(?P<tag>[a-zA-Z0-9_-]+): (?P<value>.*)$')
-
-demand_compile_regexp(
-    'git_cat_file_regex',
-    r'^(?P<object>.+?) (?P<status>.+)$')
 
 
 class GitCommitsRepoSource(sources.RepoSource):
@@ -498,6 +488,9 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
     _source = GitCommitsSource
     known_results = frozenset([MissingSignOff, InvalidCommitTag, InvalidCommitMessage])
 
+    _commit_footer_regex = re.compile(r'^(?P<tag>[a-zA-Z0-9_-]+): (?P<value>.*)$')
+    _git_cat_file_regex = re.compile(r'^(?P<object>.+?) (?P<status>.+)$')
+
     @verify_tags('Signed-off-by', required=True)
     def _signed_off_by_tag(self, tag, values, commit):
         """Verify commit contains all required sign offs in accordance with GLEP 76."""
@@ -541,7 +534,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
         if self.git_cat_file.poll() is None:
             for _ in range(len(values)):
                 line = self.git_cat_file.stdout.readline().strip()
-                m = git_cat_file_regex.match(line)
+                m = self._git_cat_file_regex.match(line)
                 if m is not None:
                     value = m.group('object')
                     status = m.group('status')
@@ -570,7 +563,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
         for lineno, line in enumerate(i, lineno):
             if not line.strip():
                 continue
-            m = commit_footer.match(line)
+            m = self._commit_footer_regex.match(line)
             if m is None:
                 if not body and commit.message[1] != '':
                     yield InvalidCommitMessage(
@@ -605,7 +598,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
                 if lineno != len(commit.message):
                     yield InvalidCommitMessage(f'empty line {lineno} in footer', commit=commit)
                 continue
-            m = commit_footer.match(line)
+            m = self._commit_footer_regex.match(line)
             if m is None:
                 yield InvalidCommitMessage(f'non-tag in footer, line {lineno}: {line!r}', commit=commit)
             else:
