@@ -443,15 +443,8 @@ class GitAddon(caches.CachedAddon):
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
-        try:
-            # running from scan subcommand
-            repos = self.options.target_repo.trees
-        except AttributeError:
-            # running from cache subcommand
-            repos = self.options.domain.ebuild_repos
-
         if self.options.cache['git']:
-            for repo in repos:
+            for repo in self.repos:
                 try:
                     commit = self._get_commit_hash(repo.location)
                 except ValueError:

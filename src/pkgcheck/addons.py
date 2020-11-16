@@ -290,13 +290,6 @@ class ProfileAddon(caches.CachedAddon):
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
-        try:
-            # running from scan subcommand
-            repos = self.options.target_repo.trees
-        except AttributeError:
-            # running from cache subcommand
-            repos = self.options.domain.ebuild_repos
-
         cached_profiles = defaultdict(dict)
         official_arches = self.options.target_repo.known_arches
         desired_arches = getattr(self.options, 'arches', None)
@@ -305,7 +298,7 @@ class ProfileAddon(caches.CachedAddon):
             desired_arches = set(official_arches)
 
         with base.ProgressManager(verbosity=self.options.verbosity) as progress:
-            for repo in repos:
+            for repo in self.repos:
                 if self.options.cache['profiles']:
                     cache_file = self.cache_file(repo)
                     # add profiles-base -> repo mapping to ease storage procedure

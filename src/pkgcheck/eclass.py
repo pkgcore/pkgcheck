@@ -42,15 +42,8 @@ class EclassAddon(caches.CachedAddon):
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
-        try:
-            # running from scan subcommand
-            repos = self.options.target_repo.trees
-        except AttributeError:
-            # running from cache subcommand
-            repos = self.options.domain.ebuild_repos
-
         if self.options.cache['eclass']:
-            for repo in repos:
+            for repo in self.repos:
                 if 'gentoo' in repo.aliases:
                     cache_file = self.cache_file(repo)
                     cache_eclasses = False

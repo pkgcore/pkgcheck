@@ -61,6 +61,16 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
         """Return the cache file for a given repository."""
         return pjoin(self.cache_dir(repo), self.cache.file)
 
+    @property
+    def repos(self):
+        """Relevant repositories to target for cache operations."""
+        try:
+            # running from scan subcommand
+            return self.options.target_repo.trees
+        except AttributeError:
+            # running from cache subcommand
+            return self.options.domain.ebuild_repos
+
     @classmethod
     def existing(cls):
         """Mapping of all existing cache types to file paths."""
