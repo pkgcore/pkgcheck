@@ -627,7 +627,7 @@ cache.add_argument(
     '-n', '--dry-run', action='store_true',
     help='dry run without performing any changes')
 cache.add_argument(
-    '-t', '--type', dest='cache_types',
+    '-t', '--type', dest='cache',
     action=argparsers.CacheNegations, default=argparsers.CacheNegations.default,
     help='target cache types')
 
@@ -642,9 +642,10 @@ def _setup_cache_addons(parser, namespace):
 
 @cache.bind_final_check
 def _validate_cache_args(parser, namespace):
+    enabled_caches = {k for k, v in namespace.cache.items() if v}
     cache_addons = (
         addon for addon in namespace.cache_addons
-        if namespace.cache_types.get(addon.cache.type, False))
+        if addon.cache.type in enabled_caches)
     # sort caches by type
     namespace.cache_addons = sorted(cache_addons, key=lambda x: x.cache.type)
 
@@ -657,6 +658,8 @@ def _validate_cache_args(parser, namespace):
             raise
         parser.error(str(e))
 
+    namespace.enabled_caches = enabled_caches
+
 
 @cache.bind_main_func
 def _cache(options, out, err):
@@ -668,16 +671,17 @@ def _cache(options, out, err):
     else:
         # list existing caches
         repos_dir = pjoin(const.USER_CACHE_DIR, 'repos')
-        for cache_type, paths in CachedAddon.existing().items():
-            if options.cache_types.get(cache_type, False):
-                if paths:
-                    out.write(out.fg('yellow'), f'{cache_type} caches: ', out.reset)
-                for path in paths:
-                    repo = str(path.parent)[len(repos_dir):]
-                    # non-path repo ids get path separator stripped
-                    if repo.count(os.sep) == 1:
-                        repo = repo.lstrip(os.sep)
-                    out.write(repo)
+        caches = CachedAddon.existing()
+        for cache_type in sorted(options.enabled_caches):
+            paths = caches[cache_type]
+            if paths:
+                out.write(out.fg('yellow'), f'{cache_type} caches: ', out.reset)
+            for path in paths:
+                repo = str(path.parent)[len(repos_dir):]
+                # non-path repo ids get path separator stripped
+                if repo.count(os.sep) == 1:
+                    repo = repo.lstrip(os.sep)
+                out.write(repo)
 
     return 0
 
