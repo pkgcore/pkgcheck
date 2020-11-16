@@ -250,8 +250,6 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
                 nonexistent = map(str, sorted(nonexistent))
                 yield NonexistentDeps(attr.upper(), nonexistent, pkg=pkg)
 
-        del nonexistent
-
         for attr in (x.lower() for x in pkg.eapi.dep_keys):
             if attr in suppressed_depsets:
                 continue

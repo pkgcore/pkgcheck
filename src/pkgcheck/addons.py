@@ -279,7 +279,6 @@ class ProfileAddon(caches.CachedAddon):
                 mtime, files = gen_profile_data.send(profile_obj)
                 data[profile] = (mtime, files)
                 next(gen_profile_data)
-            del gen_profile_data
         return ImmutableDict(data)
 
     def __init__(self, *args, arches_addon=None, **kwargs):
