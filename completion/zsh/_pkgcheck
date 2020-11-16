@@ -147,12 +147,14 @@ case $state in
         typeset -a scan_opts check_opts arch_opts profile_opts plugin_opts
 
         scan_opts=(
+          '--config[use custom pkgcheck scan settings file]:config path:_files'
           {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_repos'
           {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter]:reporters:_reporters"
           {'(--filter)-f','(-f)--filter'}"[limit targeted packages for scanning]:filter:(latest repo)"
           {'(--jobs)-j','(-j)--jobs'}'[number of checks to run in parallel]:jobs'
           {'(--tasks)-t','(-t)--tasks'}'[number of asynchronous tasks to run concurrently]:tasks'
           '--cache[forcibly enable/disable caches]:cache types:{_values -s , "cache types" $caches}'
+          '--exit[comma separated list of keywords that trigger an error exit status]:keywords:{_values -s , keywords $(_keywords -p)}'
         )
 
         check_opts=(
