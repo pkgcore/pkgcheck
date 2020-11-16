@@ -19,10 +19,8 @@ from snakeoil.strings import pluralism
 from .. import base, git, results, sources
 from ..log import logger
 from . import GentooRepoCheck, GitCheck
+from .header import copyright_regex
 
-demand_compile_regexp(
-    'copyright_regex',
-    r'^# Copyright (\d\d\d\d(-\d\d\d\d)?) .+')
 
 demand_compile_regexp(
     'commit_footer',
@@ -411,7 +409,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             # check copyright on new/modified ebuilds
             copyright = copyright_regex.match(line)
             if copyright:
-                year = copyright.group(1).split('-')[-1]
+                year = copyright.group('end')
                 if int(year) != self.today.year:
                     yield EbuildIncorrectCopyright(year, line.strip('\n'), pkg=pkg)
 
@@ -648,6 +646,6 @@ class GitEclassCommitsCheck(GentooRepoCheck, GitCheck):
         line = next(iter(eclass.lines))
         copyright = copyright_regex.match(line)
         if copyright:
-            year = copyright.group(1).split('-')[-1]
+            year = copyright.group('end')
             if int(year) != self.today.year:
                 yield EclassIncorrectCopyright(year, line.strip('\n'), eclass=eclass)
