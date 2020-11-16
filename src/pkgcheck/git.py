@@ -23,7 +23,6 @@ from snakeoil.iterables import partition
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
-from snakeoil.process.spawn import spawn_get_output
 from snakeoil.strings import pluralism
 
 from . import base, caches, objects
@@ -432,13 +431,15 @@ class GitAddon(caches.CachedAddon):
         """Retrieve a git repo's commit hash for a specific commit object."""
         if not os.path.exists(pjoin(repo_location, '.git')):
             raise ValueError
-        ret, out = spawn_get_output(
-            ['git', 'rev-parse', commit], cwd=repo_location)
-        if ret != 0:
+        p = subprocess.run(
+            ['git', 'rev-parse', commit],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            cwd=repo_location, encoding='utf8')
+        if p.returncode != 0 or not p.stdout:
             raise ValueError(
                 f'failed retrieving {commit} commit hash '
                 f'for git repo: {repo_location}')
-        return out[0].strip()
+        return p.stdout.strip()
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
