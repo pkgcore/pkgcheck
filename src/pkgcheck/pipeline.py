@@ -7,6 +7,7 @@ from multiprocessing import Pool, Process, SimpleQueue
 
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import boolean, packages
+from snakeoil.currying import post_curry
 
 from . import base
 from .results import MetadataError
@@ -150,10 +151,16 @@ class CheckRunner:
                 scope = check.scope
             self._known_results.update(check.known_results)
 
-        self._itermatch_kwargs = {}
-        # only use set metadata error callback for version scope runners
-        if scope is base.version_scope:
-            self._itermatch_kwargs['error_callback'] = self._metadata_error_cb
+        try:
+            # only use set metadata error callback for version scope runners
+            if scope is base.version_scope:
+                self._source_itermatch = post_curry(
+                    self.source.itermatch, error_callback=self._metadata_error_cb)
+            else:
+                self._source_itermatch = self.source.itermatch
+        except AttributeError:
+            # probably using a faked source for testing
+            self._source_itermatch = lambda x: self.source
 
         self._metadata_errors = deque()
 
@@ -176,12 +183,7 @@ class CheckRunner:
 
     def run(self, restrict=packages.AlwaysTrue):
         """Run registered checks against all matching source items."""
-        try:
-            source = self.source.itermatch(restrict, **self._itermatch_kwargs)
-        except AttributeError:
-            source = self.source
-
-        for item in source:
+        for item in self._source_itermatch(restrict):
             for check in self.checks:
                 self._running_check = check
                 try:
@@ -225,13 +227,8 @@ class AsyncCheckRunner(CheckRunner):
         self.results_q = results_q
 
     def run(self, restrict=packages.AlwaysTrue):
-        try:
-            source = self.source.itermatch(restrict, **self._itermatch_kwargs)
-        except AttributeError:
-            source = self.source
-
         with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
             futures = {}
-            for item in source:
+            for item in self._source_itermatch(restrict):
                 for check in self.checks:
                     check.schedule(item, executor, futures, self.results_q)
