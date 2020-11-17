@@ -28,9 +28,9 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
     def parse_values(self, values):
         all_cache_types = {cache.type for cache in CachedAddon.caches.values()}
         disabled, enabled = [], list(all_cache_types)
-        if values is None or values in ('y', 'yes', 'true'):
+        if values is None or values.lower() in ('y', 'yes', 'true'):
             pass
-        elif values in ('n', 'no', 'false'):
+        elif values.lower() in ('n', 'no', 'false'):
             disabled = list(all_cache_types)
         else:
             disabled, enabled = super().parse_values(values)
