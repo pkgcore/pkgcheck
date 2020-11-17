@@ -151,16 +151,12 @@ class CheckRunner:
                 scope = check.scope
             self._known_results.update(check.known_results)
 
-        try:
-            # only use set metadata error callback for version scope runners
-            if scope is base.version_scope:
-                self._source_itermatch = post_curry(
-                    self.source.itermatch, error_callback=self._metadata_error_cb)
-            else:
-                self._source_itermatch = self.source.itermatch
-        except AttributeError:
-            # probably using a faked source for testing
-            self._source_itermatch = lambda x: self.source
+        # only use set metadata error callback for version scope runners
+        if scope is base.version_scope:
+            self._source_itermatch = post_curry(
+                self.source.itermatch, error_callback=self._metadata_error_cb)
+        else:
+            self._source_itermatch = self.source.itermatch
 
         self._metadata_errors = deque()
 

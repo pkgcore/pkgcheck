@@ -2,7 +2,8 @@ import random
 import string
 
 import pytest
-from pkgcheck import base, pipeline
+from pkgcheck.pipeline import CheckRunner
+from pkgcheck.sources import RepoSource, Source
 from pkgcore.ebuild import domain, repo_objs
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import VersionedCPV
@@ -13,7 +14,6 @@ from pkgcore.package.metadata import factory
 from pkgcore.repository import prototype
 from pkgcore.repository.util import SimpleTree
 from snakeoil.data_source import text_data_source
-from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
 
@@ -84,19 +84,25 @@ class ReportTestCase:
             assert report.__class__ in self.check_kls.known_results
 
     def assertNoReport(self, check, data, msg=""):
-        l = []
+        results = []
         if msg:
             msg = f"{msg}: "
-        if isinstance(data, (prototype.tree, tuple)):
-            source = data
+
+        if isinstance(data, prototype.tree):
+            options = Options(target_repo=data)
+            source = RepoSource(options)
         else:
-            source = [data]
-        runner = pipeline.CheckRunner(Options(), source, [check])
+            if not isinstance(data, tuple):
+                data = [data]
+            options = Options()
+            source = Source(options, data)
+
+        runner = CheckRunner(options, source, [check])
         runner.start()
-        l.extend(runner.run())
-        l.extend(runner.finish())
-        self._assert_known_results(*l)
-        assert l == [], f"{msg}{list(report.desc for report in l)}"
+        results.extend(runner.run())
+        results.extend(runner.finish())
+        self._assert_known_results(*results)
+        assert results == [], f"{msg}{list(report.desc for report in results)}"
 
     def assertReportSanity(self, *reports):
         for report in reports:
@@ -107,19 +113,25 @@ class ReportTestCase:
             assert report.desc
 
     def assertReports(self, check, data):
-        l = []
-        if isinstance(data, (prototype.tree, tuple)):
-            source = data
+        results = []
+
+        if isinstance(data, prototype.tree):
+            options = Options(target_repo=data)
+            source = RepoSource(options)
         else:
-            source = [data]
-        runner = pipeline.CheckRunner(Options(), source, [check])
+            if not isinstance(data, tuple):
+                data = [data]
+            options = Options()
+            source = Source(options, data)
+
+        runner = CheckRunner(options, source, [check])
         runner.start()
-        l.extend(runner.run())
-        l.extend(runner.finish())
-        self._assert_known_results(*l)
-        assert l, f"must get a report from {check} {data}, got none"
-        self.assertReportSanity(*l)
-        return l
+        results.extend(runner.run())
+        results.extend(runner.finish())
+        self._assert_known_results(*results)
+        assert results, f"must get a report from {check} {data}, got none"
+        self.assertReportSanity(*results)
+        return results
 
     def assertReport(self, check, data):
         r = self.assertReports(check, data)
