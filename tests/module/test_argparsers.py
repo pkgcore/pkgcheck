@@ -2,6 +2,7 @@ import random
 
 import pytest
 from pkgcheck import argparsers, objects, results
+from pkgcheck.caches import CachedAddon
 from snakeoil.cli import arghparse
 
 
@@ -12,6 +13,10 @@ class TestConfigArg:
         self.parser = arghparse.ArgumentParser()
         self.parser.add_argument('--config', action=argparsers.ConfigArg)
 
+    def test_none(self):
+        args = self.parser.parse_args([])
+        assert args.config is None
+
     def test_enabled(self):
         for arg in ('config_file', '/path/to/config/file'):
             args = self.parser.parse_args(['--config', arg])
@@ -21,6 +26,57 @@ class TestConfigArg:
         for arg in ('False', 'false', 'No', 'no', 'N', 'n'):
             args = self.parser.parse_args(['--config', arg])
             assert args.config is False
+
+
+class TestCacheNegations:
+
+    @pytest.fixture(autouse=True)
+    def _create_argparser(self):
+        self.parser = arghparse.ArgumentParser()
+        self.parser.add_argument('--cache', action=argparsers.CacheNegations)
+        self.caches = [x.type for x in CachedAddon.caches.values()]
+
+    def test_no_arg(self):
+        args = self.parser.parse_args([])
+        assert args.cache is None
+
+    def test_unknown(self, capsys):
+        with pytest.raises(SystemExit) as excinfo:
+            self.parser.parse_args(['--cache', 'foo'])
+        out, err = capsys.readouterr()
+        assert not out
+        assert "unknown cache type: 'foo'" in err
+        assert excinfo.value.code == 2
+
+    def test_all(self):
+        for arg in ('True', 'true', 'Yes', 'yes', 'Y', 'y'):
+            args = self.parser.parse_args(['--cache', arg])
+            for k, v in args.cache.items():
+                assert v is True
+
+    def test_none(self):
+        for arg in ('False', 'false', 'No', 'no', 'N', 'n'):
+            args = self.parser.parse_args(['--cache', arg])
+            for k, v in args.cache.items():
+                assert v is False
+
+    def test_enabled(self):
+        cache = self.caches[random.randrange(len(self.caches))]
+        args = self.parser.parse_args(['--cache', cache])
+        for k, v in args.cache.items():
+            if k == cache:
+                assert v is True
+            else:
+                assert v is False
+
+    def test_disabled(self):
+        cache = self.caches[random.randrange(len(self.caches))]
+        args = self.parser.parse_args([f'--cache=-{cache}'])
+        for k, v in args.cache.items():
+            if k == cache:
+                assert v is False
+            else:
+                assert v is True
 
 
 class TestExitArgs:
