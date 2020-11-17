@@ -63,13 +63,12 @@ class StableRequestCheck(GentooRepoCheck):
                 slot_keywords = set().union(*(pkg.keywords for pkg in pkgs))
                 stable_slot_keywords = slot_keywords.intersection(stable_pkg_keywords)
                 for pkg in reversed(pkgs):
-                    # skip unkeyworded/live pkgs
+                    # skip unkeyworded pkgs
                     if not pkg.keywords:
                         continue
 
-                    # stop scanning pkgs if one newer than 30 days has stable keywords
-                    # from the stable arches set
-                    if set(pkg.keywords).intersection(stable_pkg_keywords):
+                    # stop if stable keywords are found
+                    if stable_pkg_keywords.intersection(pkg.keywords):
                         break
 
                     try:
@@ -77,6 +76,7 @@ class StableRequestCheck(GentooRepoCheck):
                     except IndexError:
                         # probably an uncommitted, local ebuild... skipping
                         continue
+
                     added = datetime.strptime(match.date, '%Y-%m-%d')
                     days_old = (self.today - added).days
                     if days_old >= 30:
