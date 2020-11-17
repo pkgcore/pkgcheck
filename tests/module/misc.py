@@ -131,8 +131,18 @@ class ReportTestCase:
 
 class Options(dict):
     __setattr__ = dict.__setitem__
-    __getattr__ = dict.__getitem__
-    __delattr__ = dict.__delitem__
+
+    def __getattr__(self, key):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            raise AttributeError
+
+    def __delattr__(self, key):
+        try:
+            self.__delitem__(key)
+        except KeyError:
+            raise AttributeError
 
 
 class FakeProfile:
