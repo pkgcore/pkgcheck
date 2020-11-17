@@ -14,6 +14,14 @@ from . import base, caches
 from .log import logger
 
 
+def matching_eclass(eclasses_set, eclass):
+    """Stub method for matching eclasses against a given set.
+
+    Used to create pickleable eclass scanning restrictions.
+    """
+    return eclass in eclasses_set
+
+
 class _EclassCache(UserDict, caches.Cache):
     """Cache that encapsulates eclass data."""
 

@@ -16,7 +16,7 @@ from operator import attrgetter
 from pkgcore import const as pkgcore_const
 from pkgcore.repository import errors as repo_errors
 from pkgcore.repository import multiplex
-from pkgcore.restrictions import boolean, packages
+from pkgcore.restrictions import boolean, packages, values
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
@@ -29,6 +29,7 @@ from ..addons import init_addon
 from ..caches import CachedAddon
 from ..checks import init_checks
 from ..cli import ConfigArgumentParser
+from ..eclass import matching_eclass
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
 argparser = ConfigArgumentParser(
@@ -288,12 +289,18 @@ def _path_restrict(path, namespace):
     repo = namespace.target_repo
     restrictions = []
     path = os.path.realpath(path)
+
     try:
         restrictions = repo.path_restrict(path)[1:]
+        restrict = packages.AndRestriction(*restrictions) if restrictions else packages.AlwaysTrue
     except ValueError as e:
-        raise UserException(str(e))
-
-    restrict = packages.AndRestriction(*restrictions) if restrictions else packages.AlwaysTrue
+        # support eclass target restrictions
+        if path.endswith('.eclass'):
+            eclass = os.path.basename(path)[:-7]
+            func = partial(matching_eclass, {eclass})
+            restrict = values.AnyMatch(values.FunctionRestriction(func))
+        else:
+            raise UserException(str(e))
 
     # allow location specific scopes to override the path restrict scope
     for scope in (x for x in base.scopes.values() if x.level == 0):

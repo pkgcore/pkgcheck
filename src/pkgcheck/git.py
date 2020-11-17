@@ -27,6 +27,7 @@ from snakeoil.strings import pluralism
 
 from . import base, caches, objects
 from .checks import GitCheck
+from .eclass import matching_eclass
 from .log import logger
 
 
@@ -328,11 +329,6 @@ class GitAddon(caches.CachedAddon):
             """)
 
     @staticmethod
-    def _committed_eclass(committed, eclass):
-        """Stub method for matching eclasses against commits."""
-        return eclass in committed
-
-    @staticmethod
     def _pkg_atoms(paths):
         """Filter package atoms from commit paths."""
         for x in paths:
@@ -382,7 +378,7 @@ class GitAddon(caches.CachedAddon):
                 restrict = packages.OrRestriction(*pkgs)
                 restrictions.append((base.package_scope, restrict))
             if eclasses:
-                func = partial(cls._committed_eclass, frozenset(eclasses))
+                func = partial(matching_eclass, set(eclasses))
                 restrict = values.AnyMatch(values.FunctionRestriction(func))
                 restrictions.append((base.eclass_scope, restrict))
 
