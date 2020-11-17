@@ -1,11 +1,11 @@
 import os
-import tempfile
 
 import pytest
 from pkgcheck import git
 from pkgcheck.checks import pkgdir
 from pkgcore.test.misc import FakeRepo
 from snakeoil import fileutils
+from snakeoil.cli import arghparse
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, pjoin
 
@@ -22,7 +22,8 @@ class PkgDirCheckBase(misc.ReportTestCase):
         self.repo = FakeRepo(repo_id='repo', location=str(tmpdir))
 
     def mk_check(self, gentoo=False):
-        options = misc.Options(target_repo=self.repo, cache={'git': False}, gentoo_repo=gentoo)
+        options = arghparse.Namespace(
+            target_repo=self.repo, cache={'git': False}, gentoo_repo=gentoo)
         kwargs = {}
         if git.GitAddon in self.check_kls.required_addons:
             kwargs['git_addon'] = git.GitAddon(options)

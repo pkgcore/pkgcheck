@@ -13,6 +13,7 @@ from pkgcore.ebuild.misc import ChunkedDataDict, chunked_data
 from pkgcore.package.metadata import factory
 from pkgcore.repository import prototype
 from pkgcore.repository.util import SimpleTree
+from snakeoil.cli import arghparse
 from snakeoil.data_source import text_data_source
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
@@ -89,12 +90,12 @@ class ReportTestCase:
             msg = f"{msg}: "
 
         if isinstance(data, prototype.tree):
-            options = Options(target_repo=data)
+            options = arghparse.Namespace(target_repo=data)
             source = RepoSource(options)
         else:
             if not isinstance(data, tuple):
                 data = [data]
-            options = Options()
+            options = arghparse.Namespace()
             source = Source(options, data)
 
         runner = CheckRunner(options, source, [check])
@@ -116,12 +117,12 @@ class ReportTestCase:
         results = []
 
         if isinstance(data, prototype.tree):
-            options = Options(target_repo=data)
+            options = arghparse.Namespace(target_repo=data)
             source = RepoSource(options)
         else:
             if not isinstance(data, tuple):
                 data = [data]
-            options = Options()
+            options = arghparse.Namespace()
             source = Source(options, data)
 
         runner = CheckRunner(options, source, [check])
@@ -139,22 +140,6 @@ class ReportTestCase:
         assert len(r) == 1, f"expected one report, got {len(r)}: {r}"
         self.assertReportSanity(r[0])
         return r[0]
-
-
-class Options(dict):
-    __setattr__ = dict.__setitem__
-
-    def __getattr__(self, key):
-        try:
-            return self.__getitem__(key)
-        except KeyError:
-            raise AttributeError
-
-    def __delattr__(self, key):
-        try:
-            self.__delitem__(key)
-        except KeyError:
-            raise AttributeError
 
 
 class FakeProfile:

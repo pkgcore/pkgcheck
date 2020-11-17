@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck.checks import SkipOptionalCheck, perl
+from snakeoil.cli import arghparse
 
 from .. import misc
 
@@ -14,7 +15,7 @@ def perl_deps_missing():
     """Check if perl deps are missing."""
     global REASON
     try:
-        perl.PerlCheck(misc.Options(verbosity=1))
+        perl.PerlCheck(arghparse.Namespace(verbosity=1))
     except SkipOptionalCheck as e:
         REASON = str(e)
         return True
@@ -27,7 +28,7 @@ class TestPerlCheck(misc.ReportTestCase):
     check_kls = perl.PerlCheck
 
     def mk_check(self, verbosity=0):
-        return self.check_kls(misc.Options(verbosity=verbosity))
+        return self.check_kls(arghparse.Namespace(verbosity=verbosity))
 
     def mk_pkg(self, PVR, dist_version='', eclasses=('perl-module',), **kwargs):
         lines = ['inherit perl-module\n']

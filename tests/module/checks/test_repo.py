@@ -5,6 +5,7 @@ from pkgcheck import git
 from pkgcheck.checks import repo
 from pkgcore.ebuild import atom
 from pkgcore.test.misc import FakeRepo
+from snakeoil.cli import arghparse
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, pjoin
 
@@ -17,7 +18,7 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
 
     def mk_check(self):
         self.repo = FakeRepo(repo_id='repo', location=self.dir)
-        options = misc.Options(target_repo=self.repo, cache={'git': False})
+        options = arghparse.Namespace(target_repo=self.repo, cache={'git': False})
         git_addon = git.GitAddon(options)
         return repo.RepoDirCheck(options, git_addon=git_addon)
 

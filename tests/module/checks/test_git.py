@@ -3,6 +3,7 @@ from unittest.mock import patch
 from pkgcheck.checks import git as git_mod
 from pkgcheck.git import GitCommit
 from pkgcore.test.misc import FakeRepo
+from snakeoil.cli import arghparse
 
 from .. import misc
 
@@ -24,7 +25,7 @@ class FakeCommit(GitCommit):
 
 class TestGitCheck(misc.ReportTestCase):
     check_kls = git_mod.GitCommitsCheck
-    check = git_mod.GitCommitsCheck(misc.Options(target_repo=FakeRepo()))
+    check = git_mod.GitCommitsCheck(arghparse.Namespace(target_repo=FakeRepo()))
 
     def test_sign_offs(self):
         # assert that it checks for both author and comitter

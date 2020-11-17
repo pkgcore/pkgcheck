@@ -1,5 +1,6 @@
 from pkgcheck.checks import acct
 from pkgcore.test.misc import FakeRepo
+from snakeoil.cli import arghparse
 
 from .. import misc
 
@@ -12,7 +13,7 @@ class TestAcctUser(misc.ReportTestCase):
 
     def mk_check(self, pkgs):
         self.repo = FakeRepo(pkgs=pkgs, repo_id='test')
-        check = self.check_kls(misc.Options(target_repo=self.repo))
+        check = self.check_kls(arghparse.Namespace(target_repo=self.repo))
         return check
 
     def mk_pkg(self, name, identifier, version=1, ebuild=None):

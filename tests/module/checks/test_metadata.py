@@ -11,6 +11,7 @@ from pkgcheck.checks import metadata
 from pkgcore.ebuild import eapi, repo_objs, repository
 from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
+from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 
 from .. import misc
@@ -126,7 +127,7 @@ class IUSE_Options(misc.Tmpdir):
         kwargs['target_repo'] = repository.UnconfiguredTree(repo_base)
         kwargs.setdefault('verbosity', 0)
         kwargs.setdefault('cache', {'git': False})
-        return misc.Options(**kwargs)
+        return arghparse.Namespace(**kwargs)
 
 
 class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
@@ -333,7 +334,7 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
             f.write(f"eapis-banned = {' '.join(banned)}\n")
         repo_config = repo_objs.RepoConfig(location=self.dir)
         self.repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
-        options = misc.Options(target_repo=self.repo, verbosity=False)
+        options = arghparse.Namespace(target_repo=self.repo, verbosity=False)
         return self.check_kls(options, eclass_addon=eclass.EclassAddon(options))
 
     def mk_pkg(self, eapi):
@@ -387,7 +388,7 @@ class TestSourcingCheck(misc.ReportTestCase, misc.Tmpdir):
             f.write('masters =\n')
         repo_config = repo_objs.RepoConfig(location=repo_dir)
         self.repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
-        options = misc.Options(target_repo=self.repo, verbosity=False)
+        options = arghparse.Namespace(target_repo=self.repo, verbosity=False)
         return self.check_kls(options)
 
     def mk_pkg(self, eapi):

@@ -1,6 +1,7 @@
 from itertools import chain
 
 from pkgcheck.checks import dropped_keywords
+from snakeoil.cli import arghparse
 
 from .. import misc
 
@@ -19,7 +20,7 @@ class TestDroppedKeywords(misc.ReportTestCase):
             })
 
     def mk_check(self, arches=('x86', 'amd64'), verbosity=0):
-        options = misc.Options(arches=arches, verbosity=verbosity)
+        options = arghparse.Namespace(arches=arches, verbosity=verbosity)
         return self.check_kls(options, arches_addon=None)
 
     def test_it(self):

@@ -1,4 +1,5 @@
 from pkgcheck.checks import imlate
+from snakeoil.cli import arghparse
 
 from .. import misc
 
@@ -10,8 +11,9 @@ def mk_check(selected_arches=("x86", "ppc", "amd64"), arches=None,
     if stable_arches is None:
         stable_arches = selected_arches
     return imlate.ImlateCheck(
-        misc.Options(selected_arches=selected_arches, arches=arches,
-                     stable_arches=stable_arches, source_arches=source_arches))
+        arghparse.Namespace(
+            selected_arches=selected_arches, arches=arches,
+            stable_arches=stable_arches, source_arches=source_arches))
 
 
 def mk_pkg(ver, keywords="", slot="0"):

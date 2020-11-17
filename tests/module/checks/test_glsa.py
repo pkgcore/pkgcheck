@@ -1,6 +1,7 @@
 import pytest
 from pkgcheck.checks import glsa
 from pkgcore.test.misc import mk_glsa
+from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 
 from .. import misc
@@ -17,7 +18,7 @@ def check(tmpdir):
     with open(pjoin(str(tmpdir), "glsa-200611-02.xml"), "w") as f:
         f.write(mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
     return glsa.GlsaCheck(
-        misc.Options(glsa_location=str(tmpdir), glsa_enabled=True))
+        arghparse.Namespace(glsa_location=str(tmpdir), glsa_enabled=True))
 
 
 class TestVulnerabilitiesCheck(misc.ReportTestCase):

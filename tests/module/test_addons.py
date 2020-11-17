@@ -9,7 +9,7 @@ from snakeoil.cli import arghparse
 from snakeoil.fileutils import write_file
 from snakeoil.osutils import ensure_dirs, pjoin
 
-from .misc import FakePkg, FakeProfile, Options, Tmpdir
+from .misc import FakePkg, FakeProfile, Tmpdir
 
 
 class ArgparseCheck:
@@ -138,7 +138,7 @@ class ProfilesMixin(ArgparseCheck, Tmpdir):
         repo_config = repo_objs.RepoConfig(location=self.dir)
         namespace.target_repo = repository.UnconfiguredTree(
             repo_config.location, repo_config=repo_config)
-        namespace.search_repo = Options()
+        namespace.search_repo = arghparse.Namespace()
         namespace.cache = {'profiles': False}
         options = ArgparseCheck.process_check(self, namespace=namespace, *args, **kwds)
         return options
