@@ -26,6 +26,9 @@ class Source:
     def __iter__(self):
         yield from self.source
 
+    def itermatch(self, restrict, **kwargs):
+        yield from self.source
+
 
 class EmptySource(Source):
     """Empty source meant for skipping item feed."""
