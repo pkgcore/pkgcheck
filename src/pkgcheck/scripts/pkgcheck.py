@@ -11,7 +11,6 @@ import textwrap
 from collections import defaultdict
 from contextlib import ExitStack
 from functools import partial
-from itertools import chain
 from operator import attrgetter
 
 from pkgcore import const as pkgcore_const
@@ -512,8 +511,7 @@ def _validate_scan_args(parser, namespace):
 
         # only enable checks for the requested keywords
         if not namespace.enabled_checks:
-            namespace.enabled_checks = frozenset(
-                chain.from_iterable(namespace.filtered_keywords.values()))
+            namespace.enabled_checks = frozenset().union(*namespace.filtered_keywords.values())
         namespace.filtered_keywords = frozenset(namespace.filtered_keywords)
 
     # all checks are run by default

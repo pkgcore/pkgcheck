@@ -1,5 +1,3 @@
-from itertools import chain
-
 from pkgcheck.checks import dropped_keywords
 from snakeoil.cli import arghparse
 
@@ -71,7 +69,7 @@ class TestDroppedKeywords(misc.ReportTestCase):
              self.mk_pkg("3", "amd64")])
         assert len(reports) == 2
         assert {x.version for x in reports} == {"2", "3"}
-        assert set(chain.from_iterable(x.arches for x in reports)) == {"x86"}
+        assert set().union(*(x.arches for x in reports)) == {"x86"}
 
     def test_regular_mode(self):
         # regular mode outputs the most recent pkg with dropped keywords
@@ -83,4 +81,4 @@ class TestDroppedKeywords(misc.ReportTestCase):
              self.mk_pkg("3", "amd64")])
         assert len(reports) == 1
         assert reports[0].version == '3'
-        assert set(chain.from_iterable(x.arches for x in reports)) == {"x86"}
+        assert set().union(*(x.arches for x in reports)) == {"x86"}

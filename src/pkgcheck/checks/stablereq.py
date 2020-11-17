@@ -1,6 +1,5 @@
 from collections import defaultdict
 from datetime import datetime
-from itertools import chain
 
 from snakeoil.strings import pluralism
 
@@ -61,7 +60,7 @@ class StableRequestCheck(GentooRepoCheck):
         stable_pkg_keywords = {x for x in pkg_keywords if x[0] not in {'-', '~'}}
         if stable_pkg_keywords:
             for slot, pkgs in sorted(pkg_slotted.items()):
-                slot_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgs))
+                slot_keywords = set().union(*(pkg.keywords for pkg in pkgs))
                 stable_slot_keywords = slot_keywords.intersection(stable_pkg_keywords)
                 for pkg in reversed(pkgs):
                     # skip unkeyworded/live pkgs

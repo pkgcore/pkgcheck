@@ -3,7 +3,6 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from difflib import SequenceMatcher
-from itertools import chain
 from operator import attrgetter
 
 from pkgcore.ebuild import atom as atom_mod
@@ -121,8 +120,7 @@ class LicenseCheck(Check):
         # check for restrictive licenses with missing RESTRICT
         if self.eula is not None:
             for license, restrictions in self._required_licenses(self.eula, pkg.license):
-                restricts = frozenset(chain.from_iterable(
-                    x.vals for x in restrictions if not x.negate))
+                restricts = set().union(*(x.vals for x in restrictions if not x.negate))
                 license_restrictions = pkg.restrict.evaluate_depset(restricts)
                 missing_restricts = []
                 if 'bindist' not in license_restrictions:
@@ -1142,8 +1140,7 @@ class SrcUriCheck(Check):
             if re.match(bad_filenames_re, f_inst.filename):
                 bad_filenames.add(f_inst.filename)
 
-            restricts = frozenset(chain.from_iterable(
-                x.vals for x in restrictions if not x.negate))
+            restricts = set().union(*(x.vals for x in restrictions if not x.negate))
             if not f_inst.uri and 'fetch' not in pkg.restrict.evaluate_depset(restricts):
                 lacks_uri.add(f_inst.filename)
             else:

@@ -13,7 +13,8 @@ from xml.sax.saxutils import escape as xml_escape
 
 from snakeoil.decorators import coroutine
 
-from . import base, results
+from . import base
+from .results import Result
 
 
 class _ResultsIter:
@@ -80,8 +81,7 @@ class Reporter:
             # Running on a package scope level, i.e. running within a package
             # directory in an ebuild repo. This sorts all generated results,
             # removing duplicate MetadataError results.
-            results = set(chain.from_iterable(results_iter))
-            for result in sorted(results):
+            for result in sorted(set().union(*results_iter)):
                 self.report(result)
         else:
             # Running at a category scope level or higher. This outputs
@@ -392,7 +392,7 @@ class JsonStream(Reporter):
     @staticmethod
     def to_json(obj):
         """Serialize results and other objects to JSON."""
-        if isinstance(obj, results.Result):
+        if isinstance(obj, Result):
             d = {'__class__': obj.__class__.__name__}
             d.update(obj._attrs)
             return d
@@ -442,7 +442,7 @@ class PickleStream(Reporter):
         try:
             for obj in iterable:
                 result = pickle.loads(obj)
-                if isinstance(result, results.Result):
+                if isinstance(result, Result):
                     yield result
                 else:
                     raise DeserializationError(f'invalid data type: {result!r}')

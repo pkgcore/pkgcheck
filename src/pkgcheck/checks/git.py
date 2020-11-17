@@ -281,9 +281,9 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             logger.warning('skipping git removal checks: %s', e)
             return
 
-        old_keywords = set(chain.from_iterable(
+        old_keywords = set().union(*(
             p.keywords for p in removal_repo.match(pkg.unversioned_atom)))
-        new_keywords = set(chain.from_iterable(
+        new_keywords = set().union(*(
             p.keywords for p in self.repo.match(pkg.unversioned_atom)))
 
         dropped_keywords = old_keywords - new_keywords

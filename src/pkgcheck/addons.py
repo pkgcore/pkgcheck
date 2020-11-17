@@ -212,8 +212,8 @@ class ProfileAddon(caches.CachedAddon):
 
         # Expand status keywords, e.g. 'stable' -> set of stable profiles, and
         # translate selections into profile objs.
-        disabled = set(chain.from_iterable(map(norm_name, disabled)))
-        enabled = set(chain.from_iterable(map(norm_name, enabled)))
+        disabled = set().union(*map(norm_name, disabled))
+        enabled = set().union(*map(norm_name, enabled))
 
         # If no profiles are enabled, then all that are defined in
         # profiles.desc are scanned except ones that are explicitly disabled.

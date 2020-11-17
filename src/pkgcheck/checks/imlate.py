@@ -1,5 +1,4 @@
 from collections import defaultdict
-from itertools import chain
 
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism
@@ -84,7 +83,7 @@ class ImlateCheck(Check):
 
         fmatch = self.source_filter.match
         for slot, pkgs in sorted(pkg_slotted.items()):
-            slot_keywords = set(chain.from_iterable(pkg.keywords for pkg in pkgs))
+            slot_keywords = set().union(*(pkg.keywords for pkg in pkgs))
             stable_slot_keywords = self.all_arches.intersection(slot_keywords)
             potential_slot_stables = {'~' + x for x in stable_slot_keywords}
             newer_slot_stables = set()

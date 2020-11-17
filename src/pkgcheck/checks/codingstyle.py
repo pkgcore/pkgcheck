@@ -2,7 +2,6 @@
 
 import re
 from collections import defaultdict
-from itertools import chain
 
 from pkgcore.ebuild.eapi import EAPI
 from snakeoil.mappings import ImmutableDict
@@ -619,7 +618,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
 
             direct_inherit = set(pkg.inherit)
             # allowed indirect inherits
-            indirect_allowed = set(chain.from_iterable(
+            indirect_allowed = set().union(*(
                 self.eclass_cache[x].indirect_eclasses for x in direct_inherit))
             # missing inherits
             missing = used.keys() - direct_inherit - indirect_allowed
