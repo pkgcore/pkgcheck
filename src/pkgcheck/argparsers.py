@@ -23,7 +23,7 @@ class ConfigArg(argparse._StoreAction):
 class CacheNegations(arghparse.CommaSeparatedNegations):
     """Split comma-separated enabled and disabled cache types."""
 
-    default = {cache.type: True for cache in CachedAddon.caches.values()}
+    caches = {cache.type: True for cache in CachedAddon.caches.values()}
 
     def parse_values(self, values):
         all_cache_types = {cache.type for cache in CachedAddon.caches.values()}
@@ -39,7 +39,7 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
         unknown = (disabled | enabled) - all_cache_types
         if unknown:
             unknowns = ', '.join(map(repr, unknown))
-            choices = ', '.join(map(repr, sorted(self.default)))
+            choices = ', '.join(map(repr, sorted(self.caches)))
             s = pluralism(unknown)
             raise argparse.ArgumentError(
                 self, f'unknown cache type{s}: {unknowns} (choose from {choices})')
