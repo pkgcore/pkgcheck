@@ -151,7 +151,7 @@ class EclassRepoSource(RepoSource):
         self.eclasses = self._repo.eclass_cache.eclasses
 
     def itermatch(self, restrict, **kwargs):
-        for name in sorted(self.eclasses):
+        for name in self.eclasses:
             if restrict.match([name]):
                 yield Eclass(name, self.eclasses[name].path)
 
