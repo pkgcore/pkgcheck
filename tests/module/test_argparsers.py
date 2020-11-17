@@ -109,6 +109,66 @@ class TestScopeArgs:
         assert args.scopes == (set(), {base.scopes[scope]})
 
 
+class TestKeywordArgs:
+
+    @pytest.fixture(autouse=True)
+    def _create_argparser(self):
+        self.parser = arghparse.ArgumentParser()
+        self.parser.add_argument('--keywords', action=argparsers.KeywordArgs)
+
+    def test_no_arg(self):
+        args = self.parser.parse_args([])
+        assert args.keywords is None
+
+    def test_unknown(self, capsys):
+        with pytest.raises(SystemExit) as excinfo:
+            self.parser.parse_args(['--keywords', 'foo'])
+        out, err = capsys.readouterr()
+        assert not out
+        assert "unknown keyword: 'foo'" in err
+        assert excinfo.value.code == 2
+
+    def test_enabled(self):
+        keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
+        args = self.parser.parse_args(['--keywords', keyword])
+        assert args.keywords == ([], [keyword])
+
+    def test_disabled(self):
+        keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
+        args = self.parser.parse_args([f'--keywords=-{keyword}'])
+        assert args.keywords == ([keyword], [])
+
+
+class TestCheckArgs:
+
+    @pytest.fixture(autouse=True)
+    def _create_argparser(self):
+        self.parser = arghparse.ArgumentParser()
+        self.parser.add_argument('--checks', action=argparsers.CheckArgs)
+
+    def test_no_arg(self):
+        args = self.parser.parse_args([])
+        assert args.checks is None
+
+    def test_unknown(self, capsys):
+        with pytest.raises(SystemExit) as excinfo:
+            self.parser.parse_args(['--checks', 'foo'])
+        out, err = capsys.readouterr()
+        assert not out
+        assert "unknown check: 'foo'" in err
+        assert excinfo.value.code == 2
+
+    def test_enabled(self):
+        check = list(objects.CHECKS)[random.randrange(len(objects.CHECKS))]
+        args = self.parser.parse_args(['--checks', check])
+        assert args.checks == ([], [check])
+
+    def test_disabled(self):
+        check = list(objects.CHECKS)[random.randrange(len(objects.CHECKS))]
+        args = self.parser.parse_args([f'--checks=-{check}'])
+        assert args.checks == ([check], [])
+
+
 class TestExitArgs:
 
     # set of all result error classes
