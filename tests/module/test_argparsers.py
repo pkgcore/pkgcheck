@@ -1,7 +1,7 @@
 import random
 
 import pytest
-from pkgcheck import argparsers, objects, results
+from pkgcheck import argparsers, base, objects, results
 from pkgcheck.caches import CachedAddon
 from snakeoil.cli import arghparse
 
@@ -77,6 +77,36 @@ class TestCacheNegations:
                 assert v is False
             else:
                 assert v is True
+
+
+class TestScopeArgs:
+
+    @pytest.fixture(autouse=True)
+    def _create_argparser(self):
+        self.parser = arghparse.ArgumentParser()
+        self.parser.add_argument('--scopes', action=argparsers.ScopeArgs)
+
+    def test_no_arg(self):
+        args = self.parser.parse_args([])
+        assert args.scopes is None
+
+    def test_unknown(self, capsys):
+        with pytest.raises(SystemExit) as excinfo:
+            self.parser.parse_args(['--scopes', 'foo'])
+        out, err = capsys.readouterr()
+        assert not out
+        assert "unknown scope: 'foo'" in err
+        assert excinfo.value.code == 2
+
+    def test_disabled(self):
+        scope = list(base.scopes)[random.randrange(len(base.scopes))]
+        args = self.parser.parse_args([f'--scopes=-{scope}'])
+        assert args.scopes == ({base.scopes[scope]}, set())
+
+    def test_enabled(self):
+        scope = list(base.scopes)[random.randrange(len(base.scopes))]
+        args = self.parser.parse_args(['--scopes', scope])
+        assert args.scopes == (set(), {base.scopes[scope]})
 
 
 class TestExitArgs:
