@@ -143,15 +143,10 @@ class CheckRunner:
         self.source = source
         self.checks = tuple(sorted(checks))
         self._running_check = None
+        self._known_results = set().union(*(x.known_results for x in self.checks))
 
-        scope = base.version_scope
-        self._known_results = set()
-        for check in self.checks:
-            if check.scope < scope:
-                scope = check.scope
-            self._known_results.update(check.known_results)
-
-        # only use set metadata error callback for version scope runners
+        # only report metadata errors when running at version level
+        scope = min(check.scope for check in self.checks)
         if scope is base.version_scope:
             self._source_itermatch = post_curry(
                 self.source.itermatch, error_callback=self._metadata_error_cb)
