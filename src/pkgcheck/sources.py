@@ -47,6 +47,7 @@ class RepoSource(Source):
         self._options = options
         self._repo = options.target_repo
         self._source = source
+        self._filter = getattr(options, 'filter', None)
 
     @property
     def source(self):
@@ -59,7 +60,7 @@ class RepoSource(Source):
         """Yield packages matching the given restriction from the selected source."""
         kwargs.setdefault('sorter', sorted)
         unfiltered_iter = self.source.itermatch(restrict, **kwargs)
-        if self._options.filter == 'latest':
+        if self._filter == 'latest':
             yield from LatestPkgsFilter(unfiltered_iter)
         else:
             yield from unfiltered_iter
@@ -204,7 +205,7 @@ class RawRepoSource(RepoSource):
         super().__init__(*args)
 
     def itermatch(self, restrict, **kwargs):
-        if self._options.filter == 'latest':
+        if self._filter == 'latest':
             yield from LatestPkgsFilter(super().itermatch(restrict, **kwargs))
         else:
             self._repo = _RawRepo(self._repo)
