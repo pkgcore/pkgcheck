@@ -498,9 +498,8 @@ class GitAddon(caches.CachedAddon):
                     if cache_repo:
                         try:
                             os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-                            f = AtomicWriteFile(cache_file, binary=True)
-                            pickle.dump(git_cache, f, protocol=-1)
-                            f.close()
+                            with AtomicWriteFile(cache_file, binary=True) as f:
+                                pickle.dump(git_cache, f, protocol=-1)
                         except IOError as e:
                             msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
                             raise UserException(msg)

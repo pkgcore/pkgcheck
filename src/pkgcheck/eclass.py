@@ -91,9 +91,9 @@ class EclassAddon(caches.CachedAddon):
                 if cache_eclasses:
                     try:
                         os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-                        f = AtomicWriteFile(cache_file, binary=True)
-                        pickle.dump(caches.DictCache(eclasses, self.cache), f, protocol=-1)
-                        f.close()
+                        cache = caches.DictCache(eclasses, self.cache)
+                        with AtomicWriteFile(cache_file, binary=True) as f:
+                            pickle.dump(cache, f, protocol=-1)
                     except IOError as e:
                         msg = f'failed dumping eclasses: {cache_file!r}: {e.strerror}'
                         raise UserException(msg)

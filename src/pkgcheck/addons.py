@@ -448,10 +448,10 @@ class ProfileAddon(caches.CachedAddon):
                 cache_file = self.cache_file(repo)
                 try:
                     os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-                    f = AtomicWriteFile(cache_file, binary=True)
-                    data = cached_profiles[repo.config.profiles_base]
-                    pickle.dump(caches.DictCache(data, self.cache), f, protocol=-1)
-                    f.close()
+                    cache = caches.DictCache(
+                        cached_profiles[repo.config.profiles_base], self.cache)
+                    with AtomicWriteFile(cache_file, binary=True) as f:
+                        pickle.dump(cache, f, protocol=-1)
                 except IOError as e:
                     msg = (
                         f'failed dumping {repo.repo_id} profiles cache: '
