@@ -56,11 +56,13 @@ class EclassAddon(caches.CachedAddon):
                         if eclasses.version != self.cache.version:
                             logger.debug('forcing eclass repo cache regen due to outdated version')
                             os.remove(cache_file)
+                            eclasses = {}
                     except FileNotFoundError:
                         pass
                     except (AttributeError, EOFError, ImportError, IndexError) as e:
                         logger.debug('forcing eclass cache regen: %s', e)
                         os.remove(cache_file)
+                        eclasses = {}
 
                 # check for eclass removals
                 for name, eclass in list(eclasses.items()):
