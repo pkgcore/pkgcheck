@@ -3,7 +3,7 @@
 import os
 import pickle
 import stat
-from collections import UserDict, defaultdict
+from collections import defaultdict
 from functools import partial
 from itertools import chain, filterfalse
 
@@ -106,14 +106,6 @@ class ProfileData:
         if force_disabled:
             enabled = enabled.difference(force_disabled)
         return immutable, enabled
-
-
-class _ProfilesCache(UserDict, caches.Cache):
-    """Cache that encapsulates profile data."""
-
-    def __init__(self, data):
-        super().__init__(data)
-        self._cache = ProfileAddon.cache
 
 
 class ProfileAddon(caches.CachedAddon):
@@ -457,8 +449,8 @@ class ProfileAddon(caches.CachedAddon):
                 try:
                     os.makedirs(os.path.dirname(cache_file), exist_ok=True)
                     f = AtomicWriteFile(cache_file, binary=True)
-                    f.write(pickle.dumps(_ProfilesCache(
-                        cached_profiles[repo.config.profiles_base]), protocol=-1))
+                    data = cached_profiles[repo.config.profiles_base]
+                    pickle.dump(caches.DictCache(data, self.cache), f, protocol=-1)
                     f.close()
                 except IOError as e:
                     msg = (

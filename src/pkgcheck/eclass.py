@@ -2,7 +2,6 @@
 
 import os
 import pickle
-from collections import UserDict
 
 from pkgcore.ebuild.eclass import Eclass, EclassDocParsingError
 from snakeoil import klass
@@ -20,14 +19,6 @@ def matching_eclass(eclasses_set, eclass):
     Used to create pickleable eclass scanning restrictions.
     """
     return eclass in eclasses_set
-
-
-class _EclassCache(UserDict, caches.Cache):
-    """Cache that encapsulates eclass data."""
-
-    def __init__(self, data):
-        super().__init__(data)
-        self._cache = EclassAddon.cache
 
 
 class EclassAddon(caches.CachedAddon):
@@ -99,7 +90,7 @@ class EclassAddon(caches.CachedAddon):
                     try:
                         os.makedirs(os.path.dirname(cache_file), exist_ok=True)
                         f = AtomicWriteFile(cache_file, binary=True)
-                        f.write(pickle.dumps(_EclassCache(eclasses), protocol=-1))
+                        pickle.dump(caches.DictCache(eclasses, self.cache), f, protocol=-1)
                         f.close()
                     except IOError as e:
                         msg = f'failed dumping eclasses: {cache_file!r}: {e.strerror}'

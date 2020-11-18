@@ -4,6 +4,7 @@ import errno
 import os
 import pathlib
 import shutil
+from collections import UserDict
 from operator import attrgetter
 from typing import NamedTuple
 
@@ -26,6 +27,14 @@ class Cache:
     """Mixin for data caches."""
 
     __getattr__ = klass.GetAttrProxy('_cache')
+
+
+class DictCache(UserDict, Cache):
+    """Dictionary-based cache that encapsulates data."""
+
+    def __init__(self, data, cache):
+        super().__init__(data)
+        self._cache = cache
 
 
 class _RegisterCache(type):
