@@ -294,17 +294,11 @@ def _path_restrict(path, namespace):
         restrictions = repo.path_restrict(path)[1:]
         restrict = packages.AndRestriction(*restrictions) if restrictions else packages.AlwaysTrue
     except ValueError as e:
-        # support eclass target restrictions
-        if path.endswith('.eclass'):
-            eclass = os.path.basename(path)[:-7]
-            func = partial(matching_eclass, {eclass})
-            restrict = values.AnyMatch(values.FunctionRestriction(func))
-        else:
-            raise UserException(str(e))
+        raise UserException(str(e))
 
     # allow location specific scopes to override the path restrict scope
     for scope in (x for x in base.scopes.values() if x.level == 0):
-        scope_path = os.path.realpath(pjoin(namespace.target_repo.location, scope.desc))
+        scope_path = os.path.realpath(pjoin(repo.location, scope.desc))
         if path.startswith(scope_path):
             break
     else:
@@ -416,7 +410,8 @@ def _setup_scan(parser, namespace, args):
 
 @scan.bind_final_check
 def _validate_scan_args(parser, namespace):
-    cwd_in_repo = namespace.cwd in namespace.target_repo
+    repo = namespace.target_repo
+    cwd_in_repo = namespace.cwd in repo
 
     if namespace.targets:
         # read targets from stdin in a non-blocking manner
@@ -430,21 +425,31 @@ def _validate_scan_args(parser, namespace):
             namespace.targets = stdin()
 
         def restrictions():
+            eclasses = set()
             for target in namespace.targets:
                 if os.path.isabs(target) or (os.path.exists(target) and cwd_in_repo):
-                    # try to use target as a path restrict if it exists on the filesystem
-                    try:
-                        scope, restrict = _path_restrict(target, namespace)
-                    except ValueError as e:
-                        parser.error(e)
+                    if target.endswith('.eclass') and target.startswith(repo.location):
+                        eclasses.add(os.path.basename(target)[:-7])
+                    else:
+                        # try to use target as a path restrict if it exists on the filesystem
+                        try:
+                            yield _path_restrict(target, namespace)
+                        except ValueError as e:
+                            parser.error(e)
                 else:
                     # otherwise assume it's a package restriction of some type
                     try:
                         restrict = parserestrict.parse_match(target)
                         scope = _restrict_to_scope(restrict)
+                        yield scope, restrict
                     except parserestrict.ParseError as e:
                         parser.error(e)
-                yield scope, restrict
+
+            # support eclass target restrictions
+            if eclasses:
+                func = partial(matching_eclass, frozenset(eclasses))
+                restrict = values.AnyMatch(values.FunctionRestriction(func))
+                yield base.eclass_scope, restrict
 
         # Collapse restrictions for passed in targets while keeping the
         # generator intact for piped in targets.

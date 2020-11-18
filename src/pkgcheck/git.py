@@ -378,7 +378,7 @@ class GitAddon(caches.CachedAddon):
                 restrict = packages.OrRestriction(*pkgs)
                 restrictions.append((base.package_scope, restrict))
             if eclasses:
-                func = partial(matching_eclass, set(eclasses))
+                func = partial(matching_eclass, frozenset(eclasses))
                 restrict = values.AnyMatch(values.FunctionRestriction(func))
                 restrictions.append((base.eclass_scope, restrict))
 
