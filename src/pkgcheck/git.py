@@ -6,7 +6,6 @@ import pickle
 import re
 import shlex
 import subprocess
-from collections import UserDict
 from contextlib import AbstractContextManager
 from functools import partial
 
@@ -62,7 +61,15 @@ class GitError(Exception):
     """Generic git-related error."""
 
 
-class ParsedGitRepo(UserDict, caches.Cache):
+class GitCache(caches.DictCache):
+    """Dictionary-based cache that encapsulates git commit data."""
+
+    def __init__(self, *args, commit):
+        super().__init__(*args)
+        self.commit = commit
+
+
+class ParsedGitRepo:
     """Parse repository git logs."""
 
     # git command to run on the targeted repo
@@ -73,14 +80,13 @@ class ParsedGitRepo(UserDict, caches.Cache):
     _git_log_regex = re.compile(
         fr'^([ADM])\t{_ebuild_regex}|(R)\d+\t{_ebuild_regex}\t{_ebuild_regex}$')
 
-    def __init__(self, path, commit=None):
-        super().__init__()
+    def __init__(self, path):
         self.path = path
-        self._cache = GitAddon.cache
-        self.commit = commit
 
-    def update(self, commit_range, local=False, **kwargs):
-        """Update an existing repo starting at a given commit hash."""
+    def update(self, commit_range, data=None, local=False, **kwargs):
+        """Generate git commit data starting at a given commit hash."""
+        if data is None:
+            data = {}
         seen = set()
         for pkg in self.parse_git_log(commit_range, pkgs=True, local=local, **kwargs):
             atom = pkg.atom
@@ -88,11 +94,12 @@ class ParsedGitRepo(UserDict, caches.Cache):
             if key not in seen:
                 seen.add(key)
                 if local:
-                    data = (atom.fullver, pkg.commit.commit_date, pkg.commit, pkg.data)
+                    commit = (atom.fullver, pkg.commit.commit_date, pkg.commit, pkg.data)
                 else:
-                    data = (atom.fullver, pkg.commit.commit_date, pkg.commit.hash)
-                self.data.setdefault(atom.category, {}).setdefault(
-                    atom.package, {}).setdefault(pkg.status, []).append(data)
+                    commit = (atom.fullver, pkg.commit.commit_date, pkg.commit.hash)
+                data.setdefault(atom.category, {}).setdefault(
+                    atom.package, {}).setdefault(pkg.status, []).append(commit)
+        return data
 
     def parse_git_log(self, commit_range, pkgs=False, local=False, verbosity=-1):
         """Parse git log output."""
@@ -453,45 +460,46 @@ class GitAddon(caches.CachedAddon):
                 # initialize cache file location
                 cache_file = self.cache_file(repo)
 
-                git_repo = None
+                git_cache = None
                 cache_repo = True
                 if not force:
                     # try loading cached, historical repo data
                     try:
                         with open(cache_file, 'rb') as f:
-                            git_repo = pickle.load(f)
-                        if git_repo.version != self.cache.version:
+                            git_cache = pickle.load(f)
+                        if git_cache.version != self.cache.version:
                             logger.debug('forcing git repo cache regen due to outdated version')
                             os.remove(cache_file)
-                            git_repo = None
+                            git_cache = None
                     except FileNotFoundError:
                         pass
                     except (AttributeError, EOFError, ImportError, IndexError) as e:
                         logger.debug('forcing git repo cache regen: %s', e)
                         os.remove(cache_file)
-                        git_repo = None
+                        git_cache = None
 
-                if git_repo is None:
-                    logger.debug('creating %s git repo cache: %s', repo, commit[:13])
-                    git_repo = ParsedGitRepo(repo.location)
-
-                if repo.location == git_repo.path:
-                    if commit != git_repo.commit:
-                        logger.debug('updating %s git repo cache to %s', repo, commit[:13])
-                        commit_range = 'origin/HEAD' if git_repo.commit is None else f'{git_repo.commit}..origin/HEAD'
-                        git_repo.update(commit_range, verbosity=self.options.verbosity)
-                        git_repo.commit = commit
+                if git_cache is None or commit != git_cache.commit:
+                    logger.debug('updating %s git repo cache to %s', repo, commit[:13])
+                    if git_cache is None:
+                        data = {}
+                        commit_range = 'origin/HEAD'
                     else:
-                        cache_repo = False
+                        data = git_cache.data
+                        commit_range = f'{git_cache.commit}..origin/HEAD'
+                    git_repo = ParsedGitRepo(repo.location)
+                    git_repo.update(commit_range, data=data, verbosity=self.options.verbosity)
+                    git_cache = GitCache(data, self.cache, commit=commit)
+                else:
+                    cache_repo = False
 
-                if git_repo:
-                    self._cached_repos[repo.location] = git_repo
+                if git_cache is not None:
+                    self._cached_repos[repo.location] = git_cache
                     # push repo to disk if it was created or updated
                     if cache_repo:
                         try:
                             os.makedirs(os.path.dirname(cache_file), exist_ok=True)
                             f = AtomicWriteFile(cache_file, binary=True)
-                            pickle.dump(git_repo, f, protocol=-1)
+                            pickle.dump(git_cache, f, protocol=-1)
                             f.close()
                         except IOError as e:
                             msg = f'failed dumping git pkg repo: {cache_file!r}: {e.strerror}'
@@ -505,11 +513,11 @@ class GitAddon(caches.CachedAddon):
         if self.options.cache['git']:
             git_repos = []
             for repo in target_repo.trees:
-                git_repo = self._cached_repos.get(repo.location, None)
+                git_cache = self._cached_repos.get(repo.location, None)
                 # only enable repo queries if history was found, e.g. a
                 # shallow clone with a depth of 1 won't have any history
-                if git_repo:
-                    git_repos.append(repo_cls(git_repo, repo_id=f'{repo.repo_id}-history'))
+                if git_cache:
+                    git_repos.append(repo_cls(git_cache, repo_id=f'{repo.repo_id}-history'))
                 else:
                     logger.warning('skipping git checks for %s repo', repo)
                     break
@@ -526,7 +534,7 @@ class GitAddon(caches.CachedAddon):
         if target_repo is None:
             target_repo = options.target_repo
 
-        git_repo = {}
+        commits = {}
         repo_id = f'{target_repo.repo_id}-commits'
 
         if options.cache['git']:
@@ -535,11 +543,11 @@ class GitAddon(caches.CachedAddon):
                 master = self._get_commit_hash(target_repo.location, commit='master')
                 if origin != master:
                     git_repo = ParsedGitRepo(target_repo.location)
-                    git_repo.update('origin/HEAD..master', local=True)
+                    commits = git_repo.update('origin/HEAD..master', local=True)
             except GitError as e:
                 logger.warning('skipping git commit checks: %s', e)
 
-        return repo_cls(git_repo, repo_id=repo_id)
+        return repo_cls(commits, repo_id=repo_id)
 
     def commits(self, repo=None):
         path = repo.location if repo is not None else self.options.target_repo.location
