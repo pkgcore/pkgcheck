@@ -253,23 +253,19 @@ def _determine_target_repo(namespace):
     target_dir = namespace.cwd
 
     # pull a target directory from target args if they're path-based
-    if namespace.targets:
-        try:
-            initial_target = namespace.targets[0]
-            if os.path.exists(initial_target):
-                # if initial target is an existing path, use it instead of cwd
-                target = os.path.abspath(initial_target)
-                if os.path.isfile(target):
-                    target = os.path.dirname(target)
-                target_dir = target
-            else:
-                # initial target doesn't exist as a path, perhaps a repo ID?
-                for repo in namespace.domain.ebuild_repos_raw:
-                    if initial_target == repo.repo_id:
-                        return repo
-        except TypeError:
-            # targets are being piped in
-            pass
+    if namespace.targets and isinstance(namespace.targets, list):
+        initial_target = namespace.targets[0]
+        if os.path.exists(initial_target):
+            # if initial target is an existing path, use it instead of cwd
+            target = os.path.abspath(initial_target)
+            if os.path.isfile(target):
+                target = os.path.dirname(target)
+            target_dir = target
+        else:
+            # initial target doesn't exist as a path, perhaps a repo ID?
+            for repo in namespace.domain.ebuild_repos_raw:
+                if initial_target == repo.repo_id:
+                    return repo
 
     # determine target repo from the target directory
     for repo in namespace.domain.ebuild_repos_raw:
