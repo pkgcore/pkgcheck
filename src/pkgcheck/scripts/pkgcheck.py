@@ -277,7 +277,7 @@ def _determine_target_repo(namespace, parser):
         return namespace.domain.find_repo(
             target_dir, config=namespace.config, configure=False)
     except repo_errors.InitializationError as e:
-        raise UserException(str(e))
+        parser.error(str(e))
 
 
 def _path_restrict(path, namespace):
@@ -292,11 +292,8 @@ def _path_restrict(path, namespace):
     restrictions = []
     path = os.path.realpath(path)
 
-    try:
-        restrictions = repo.path_restrict(path)[1:]
-        restrict = packages.AndRestriction(*restrictions) if restrictions else packages.AlwaysTrue
-    except ValueError as e:
-        raise UserException(str(e))
+    restrictions = repo.path_restrict(path)[1:]
+    restrict = packages.AndRestriction(*restrictions) if restrictions else packages.AlwaysTrue
 
     # allow location specific scopes to override the path restrict scope
     for scope in (x for x in base.scopes.values() if x.level == 0):
@@ -413,7 +410,6 @@ def _setup_scan(parser, namespace, args):
 @scan.bind_final_check
 def _validate_scan_args(parser, namespace):
     repo = namespace.target_repo
-    cwd_in_repo = namespace.cwd in repo
 
     if namespace.targets:
         # read targets from stdin in a non-blocking manner
@@ -429,23 +425,25 @@ def _validate_scan_args(parser, namespace):
         def restrictions():
             eclasses = set()
             for target in namespace.targets:
-                if os.path.isabs(target) or (os.path.exists(target) and cwd_in_repo):
-                    if target.endswith('.eclass') and target.startswith(repo.location):
-                        eclasses.add(os.path.basename(target)[:-7])
-                    else:
-                        # try to use target as a path restrict if it exists on the filesystem
-                        try:
-                            yield _path_restrict(target, namespace)
-                        except ValueError as e:
-                            parser.error(e)
-                else:
-                    # otherwise assume it's a package restriction of some type
+                # assume package restriction by default
+                try:
+                    restrict = parserestrict.parse_match(target)
+                    scope = _restrict_to_scope(restrict)
+                    yield scope, restrict
+                except parserestrict.ParseError as exc:
+                    # fallback to trying to create a path restrict
+                    path = os.path.realpath(target)
                     try:
-                        restrict = parserestrict.parse_match(target)
-                        scope = _restrict_to_scope(restrict)
-                        yield scope, restrict
-                    except parserestrict.ParseError as e:
-                        parser.error(e)
+                        yield _path_restrict(path, namespace)
+                        continue
+                    except ValueError as e:
+                        # support direct eclass path targets
+                        if target.endswith('.eclass') and path in repo:
+                            eclasses.add(os.path.basename(target)[:-7])
+                            continue
+                        if os.path.exists(path) or os.path.isabs(target):
+                            parser.error(str(e))
+                    parser.error(str(exc))
 
             # support eclass target restrictions
             if eclasses:
@@ -470,11 +468,10 @@ def _validate_scan_args(parser, namespace):
                 combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
                 restrictions = [(scopes.pop(), combined_restrict)]
     else:
-        if cwd_in_repo:
+        try:
             scope, restrict = _path_restrict(namespace.cwd, namespace)
-        else:
-            restrict = packages.AlwaysTrue
-            scope = base.repo_scope
+        except ValueError:
+            scope, restrict = base.repo_scope, packages.AlwaysTrue
         restrictions = [(scope, restrict)]
 
     # determine enabled checks and keywords
