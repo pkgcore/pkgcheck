@@ -6,7 +6,6 @@ ebuild repositories for various issues.
 
 import argparse
 import os
-import sys
 import textwrap
 from collections import defaultdict
 from contextlib import ExitStack
@@ -99,7 +98,9 @@ scan = subparsers.add_parser(
     description='scan targets for QA issues',
     configs=(const.SYSTEM_CONF_FILE, const.USER_CONF_FILE))
 scan.add_argument(
-    'targets', metavar='TARGET', nargs='*', help='optional targets')
+    'targets', metavar='TARGET', nargs='*',
+    action=arghparse.ParseNonblockingStdin, allow_stdin=True,
+    help='optional targets')
 
 main_options = scan.add_argument_group('main options')
 main_options.add_argument(
@@ -253,19 +254,23 @@ def _determine_target_repo(namespace):
     target_dir = namespace.cwd
 
     # pull a target directory from target args if they're path-based
-    if namespace.targets and len(namespace.targets) == 1:
-        initial_target = namespace.targets[0]
-        if os.path.exists(initial_target):
-            # if initial target is an existing path, use it instead of cwd
-            target = os.path.abspath(initial_target)
-            if os.path.isfile(target):
-                target = os.path.dirname(target)
-            target_dir = target
-        else:
-            # initial target doesn't exist as a path, perhaps a repo ID?
-            for repo in namespace.domain.ebuild_repos_raw:
-                if initial_target == repo.repo_id:
-                    return repo
+    if namespace.targets:
+        try:
+            initial_target = namespace.targets[0]
+            if os.path.exists(initial_target):
+                # if initial target is an existing path, use it instead of cwd
+                target = os.path.abspath(initial_target)
+                if os.path.isfile(target):
+                    target = os.path.dirname(target)
+                target_dir = target
+            else:
+                # initial target doesn't exist as a path, perhaps a repo ID?
+                for repo in namespace.domain.ebuild_repos_raw:
+                    if initial_target == repo.repo_id:
+                        return repo
+        except TypeError:
+            # targets are being piped in
+            pass
 
     # determine target repo from the target directory
     for repo in namespace.domain.ebuild_repos_raw:
@@ -441,16 +446,6 @@ def generate_restricts(repo, targets):
 def _validate_scan_args(parser, namespace):
     repo = namespace.target_repo
     if namespace.targets:
-        # read targets from stdin in a non-blocking manner
-        if len(namespace.targets) == 1 and namespace.targets[0] == '-':
-            def stdin():
-                while True:
-                    line = sys.stdin.readline()
-                    if not line:
-                        break
-                    yield line.rstrip()
-            namespace.targets = stdin()
-
         # Collapse restrictions for passed in targets while keeping the
         # generator intact for piped in targets.
         restrictions = generate_restricts(repo, namespace.targets)
@@ -538,7 +533,10 @@ def _validate_scan_args(parser, namespace):
 
     # pull scan scope from the given restriction targets
     restrictions = iter(restrictions)
-    scan_scope, restrict = next(restrictions)
+    try:
+        scan_scope, restrict = next(restrictions)
+    except StopIteration:
+        parser.error('no targets piped in')
     namespace.restrictions = chain([(scan_scope, restrict)], restrictions)
 
     # filter enabled checks based on the scanning scope
