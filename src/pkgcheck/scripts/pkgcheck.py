@@ -98,8 +98,7 @@ scan = subparsers.add_parser(
     description='scan targets for QA issues',
     configs=(const.SYSTEM_CONF_FILE, const.USER_CONF_FILE))
 scan.add_argument(
-    'targets', metavar='TARGET', nargs='*',
-    action=arghparse.ParseNonblockingStdin, allow_stdin=True,
+    'targets', metavar='TARGET', nargs='*', action=arghparse.ParseNonblockingStdin,
     help='optional targets')
 
 main_options = scan.add_argument_group('main options')
