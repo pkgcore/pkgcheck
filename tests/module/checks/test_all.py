@@ -16,11 +16,10 @@ def test_check_scope(tool):
     namespace.forced_checks = [name for name, _cls in objects.CHECKS.items()]
     options, _func = tool.parse_args(['scan'], namespace)
     enabled_checks = init_checks(options.addons, options)
-    for scope, d in enabled_checks.items():
-        for (source, is_async), runners in d.items():
-            for check in runners:
-                assert check.scope == source.feed_type, \
-                    f"check scope doesn't match source scope: {check}"
+    for (source, is_async), runners in enabled_checks.items():
+        for check in runners:
+            assert check.scope == source.feed_type, \
+                f"check scope doesn't match source scope: {check}"
 
 
 def test_keywords():

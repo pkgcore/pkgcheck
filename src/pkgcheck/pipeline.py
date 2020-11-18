@@ -87,14 +87,13 @@ class Pipeline:
         # initialize checkrunners per source type, using separate runner for async checks
         try:
             checkrunners = defaultdict(list)
-            for pipe_mapping in self.pipes:
-                for (source, exec_type), checks in pipe_mapping.items():
-                    if exec_type == 'async':
-                        runner = AsyncCheckRunner(
-                            self.options, source, checks, results_q=results_q)
-                    else:
-                        runner = CheckRunner(self.options, source, checks)
-                    checkrunners[(source.feed_type, exec_type)].append(runner)
+            for (source, exec_type), checks in self.pipes.items():
+                if exec_type == 'async':
+                    runner = AsyncCheckRunner(
+                        self.options, source, checks, results_q=results_q)
+                else:
+                    runner = CheckRunner(self.options, source, checks)
+                checkrunners[(source.feed_type, exec_type)].append(runner)
 
             # categorize checkrunners for parallelization based on the scan and source scope
             scoped_pipes = defaultdict(lambda: defaultdict(list))

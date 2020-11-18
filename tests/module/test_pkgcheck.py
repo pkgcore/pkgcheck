@@ -103,12 +103,12 @@ class TestPkgcheckScanParseArgs:
         # selected repo
         options, _func = self.tool.parse_args(self.args + ['-r', 'stubrepo'])
         assert options.target_repo.repo_id == 'stubrepo'
-        assert options.restrictions == [(base.repo_scope, packages.AlwaysTrue)]
+        assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
         # dir path
         options, _func = self.tool.parse_args(self.args + [fakerepo])
         assert options.target_repo.repo_id == 'fakerepo'
-        assert options.restrictions == [(base.repo_scope, packages.AlwaysTrue)]
+        assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
         # file path
         os.makedirs(pjoin(fakerepo, 'dev-util', 'foo'))
@@ -190,7 +190,7 @@ class TestPkgcheckScanParseArgs:
             git_diff.return_value.stdout = ''.join(output)
             options, _func = self.tool.parse_args(self.args + ['--commits'])
             restrictions = [atom.atom('dev-libs/foo'), atom.atom('media-libs/bar')]
-            assert options.restrictions == \
+            assert list(options.restrictions) == \
                 [(base.package_scope, packages.OrRestriction(*restrictions))]
 
     def test_unknown_repo(self, capsys):
@@ -259,13 +259,13 @@ class TestPkgcheckScanParseArgs:
                 'pkgcheck scan: error: argument -s/--scopes: expected one argument')
 
     def test_no_active_checks(self, capsys):
-            args = self.args + ['-c', 'UnusedInMastersCheck']
-            with pytest.raises(SystemExit) as excinfo:
-                options, _func = self.tool.parse_args(args)
-            assert excinfo.value.code == 2
-            out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert err[-1].startswith("pkgcheck scan: error: no active checks")
+        args = self.args + ['-c', 'UnusedInMastersCheck']
+        with pytest.raises(SystemExit) as excinfo:
+            options, _func = self.tool.parse_args(args)
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        err = err.strip().split('\n')
+        assert err[-1].startswith("pkgcheck scan: error: no matching checks available")
 
 
 class TestPkgcheck:

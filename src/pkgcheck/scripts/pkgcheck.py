@@ -11,6 +11,7 @@ import textwrap
 from collections import defaultdict
 from contextlib import ExitStack
 from functools import partial
+from itertools import chain
 from operator import attrgetter
 
 from pkgcore import const as pkgcore_const
@@ -24,12 +25,13 @@ from snakeoil.cli.exceptions import UserException
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import abspath, pjoin
 
-from .. import argparsers, base, const, objects, pipeline, reporters
+from .. import argparsers, base, const, objects, reporters
 from ..addons import init_addon
 from ..caches import CachedAddon
 from ..checks import init_checks
 from ..cli import ConfigArgumentParser
 from ..eclass import matching_eclass
+from ..pipeline import Pipeline
 
 pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
 argparser = ConfigArgumentParser(
@@ -453,30 +455,30 @@ def _validate_scan_args(parser, namespace):
 
         # Collapse restrictions for passed in targets while keeping the
         # generator intact for piped in targets.
-        namespace.restrictions = restrictions()
+        restrictions = restrictions()
         if isinstance(namespace.targets, list):
-            namespace.restrictions = list(namespace.restrictions)
+            restrictions = list(restrictions)
 
             # collapse restrictions in order to run them in parallel
-            if len(namespace.restrictions) > 1:
+            if len(restrictions) > 1:
                 # multiple targets are restricted to a single scanning scope
-                scopes = {scope for scope, restrict in namespace.restrictions}
+                scopes = {scope for scope, restrict in restrictions}
                 if len(scopes) > 1:
                     scan_scopes = ', '.join(sorted(map(str, scopes)))
                     parser.error(f'targets specify multiple scan scope levels: {scan_scopes}')
 
-                combined_restrict = boolean.OrRestriction(*(r for s, r in namespace.restrictions))
-                namespace.restrictions = [(scopes.pop(), combined_restrict)]
+                combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
+                restrictions = [(scopes.pop(), combined_restrict)]
     else:
         if cwd_in_repo:
             scope, restrict = _path_restrict(namespace.cwd, namespace)
         else:
             restrict = packages.AlwaysTrue
             scope = base.repo_scope
-        namespace.restrictions = [(scope, restrict)]
+        restrictions = [(scope, restrict)]
 
     # determine enabled checks and keywords
-    namespace.enabled_checks = set()
+    enabled_checks = set()
     namespace.disabled_keywords = set()
     namespace.enabled_keywords = set()
 
@@ -490,10 +492,10 @@ def _validate_scan_args(parser, namespace):
     # selected checks
     if namespace.selected_checks is not None:
         if namespace.selected_checks[1]:
-            namespace.enabled_checks |= {objects.CHECKS[c] for c in namespace.selected_checks[1]}
+            enabled_checks |= {objects.CHECKS[c] for c in namespace.selected_checks[1]}
         elif namespace.selected_checks[0]:
             # only specifying disabled checks enables all checks by default and removes selected checks
-            namespace.enabled_checks = (
+            enabled_checks = (
                 set(objects.CHECKS.values()) - {objects.CHECKS[c] for c in namespace.selected_checks[0]})
 
     # selected keywords
@@ -522,34 +524,47 @@ def _validate_scan_args(parser, namespace):
                         namespace.filtered_keywords[result].add(check)
 
         # only enable checks for the requested keywords
-        if not namespace.enabled_checks:
-            namespace.enabled_checks = frozenset().union(*namespace.filtered_keywords.values())
+        if not enabled_checks:
+            enabled_checks = set().union(*namespace.filtered_keywords.values())
         namespace.filtered_keywords = frozenset(namespace.filtered_keywords)
 
     # all checks are run by default
-    if not namespace.enabled_checks:
-        namespace.enabled_checks = list(objects.CHECKS.values())
+    if not enabled_checks:
+        enabled_checks = objects.CHECKS.values()
 
     # skip checks that may be disabled
-    namespace.enabled_checks = [
-        c for c in namespace.enabled_checks if not c.skip(namespace)]
+    enabled_checks = (c for c in enabled_checks if not c.skip(namespace))
 
     # only run version scope checks when using a package filter
     if namespace.filter is not None:
-        namespace.enabled_checks = [
-            c for c in namespace.enabled_checks if c.scope is base.version_scope]
+        enabled_checks = (c for c in enabled_checks if c.scope is base.version_scope)
 
-    if not namespace.enabled_checks:
-        parser.error('no active checks')
+    # pull scan scope from the given restriction targets
+    restrictions = iter(restrictions)
+    scan_scope, restrict = next(restrictions)
+    namespace.restrictions = chain([(scan_scope, restrict)], restrictions)
 
-    namespace.addons = get_addons(namespace.enabled_checks)
+    # filter enabled checks based on the scanning scope
+    enabled_checks = [
+        check for check in enabled_checks
+        if _selected_check(namespace, scan_scope, check.scope)
+    ]
+
+    if not enabled_checks:
+        parser.error(f'no matching checks available for {scan_scope} scope')
+
+    addons = get_addons(enabled_checks)
+
     try:
-        for addon in namespace.addons:
+        for addon in addons:
             addon.check_args(parser, namespace)
     except argparse.ArgumentError as e:
         if namespace.debug:
             raise
         parser.error(str(e))
+
+    namespace.addons = addons
+    namespace.enabled_checks = enabled_checks
 
 
 def _selected_check(options, scan_scope, scope):
@@ -591,25 +606,8 @@ def _scan(options, out, err):
             keywords=options.filtered_keywords, exit_keywords=options.exit_keywords)
         for c in options.pop('contexts') + [reporter]:
             stack.enter_context(c)
-
         for scan_scope, restrict in options.restrictions:
-            # filter enabled checks based on the current scanning scope
-            pipes = [
-                d for scope, d in enabled_checks.items()
-                if _selected_check(options, scan_scope, scope)
-            ]
-
-            if not pipes:
-                err.write(f'{scan.prog}: no matching checks available for {scan_scope} scope')
-                continue
-
-            if options.verbosity >= 1:
-                err.write(f'Running {len(pipes)} tests')
-            if options.debug:
-                err.write(f'restriction: {restrict}')
-            err.flush()
-
-            pipe = pipeline.Pipeline(options, scan_scope, pipes, restrict)
+            pipe = Pipeline(options, scan_scope, enabled_checks, restrict)
             ret.append(reporter(pipe))
 
     return any(ret)

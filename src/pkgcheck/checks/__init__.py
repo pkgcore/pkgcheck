@@ -170,7 +170,7 @@ class SkipOptionalCheck(UserException):
 
 def init_checks(enabled_addons, options):
     """Initialize selected checks."""
-    enabled = defaultdict(lambda: defaultdict(list))
+    enabled = defaultdict(list)
     addons_map = {}
     source_map = {}
 
@@ -195,6 +195,6 @@ def init_checks(enabled_addons, options):
                 source = sources.init_source(addon.source, options, addons_map)
                 source_map[addon.source] = source
             exec_type = 'async' if isinstance(addon, AsyncCheck) else 'sync'
-            enabled[addon.scope][(source, exec_type)].append(addon)
+            enabled[(source, exec_type)].append(addon)
 
     return enabled
