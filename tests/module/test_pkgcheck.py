@@ -92,8 +92,6 @@ class TestPkgcheckScanParseArgs:
     def test_invalid_targets(self, capsys):
         with pytest.raises(SystemExit) as excinfo:
             options, _func = self.tool.parse_args(self.args + ['dev-util/f$o'])
-            # force target parsing
-            list(options.restrictions)
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         err = err.strip()
