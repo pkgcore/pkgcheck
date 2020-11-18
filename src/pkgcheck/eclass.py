@@ -99,7 +99,7 @@ class EclassAddon(caches.CachedAddon):
                     try:
                         os.makedirs(os.path.dirname(cache_file), exist_ok=True)
                         f = AtomicWriteFile(cache_file, binary=True)
-                        f.write(pickle.dumps(_EclassCache(eclasses)))
+                        f.write(pickle.dumps(_EclassCache(eclasses), protocol=-1))
                         f.close()
                     except IOError as e:
                         msg = f'failed dumping eclasses: {cache_file!r}: {e.strerror}'

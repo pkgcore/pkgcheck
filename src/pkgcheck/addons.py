@@ -458,7 +458,7 @@ class ProfileAddon(caches.CachedAddon):
                     os.makedirs(os.path.dirname(cache_file), exist_ok=True)
                     f = AtomicWriteFile(cache_file, binary=True)
                     f.write(pickle.dumps(_ProfilesCache(
-                        cached_profiles[repo.config.profiles_base])))
+                        cached_profiles[repo.config.profiles_base]), protocol=-1))
                     f.close()
                 except IOError as e:
                     msg = (
