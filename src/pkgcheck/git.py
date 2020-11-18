@@ -58,6 +58,10 @@ class GitPkgChange:
         self.data = kwargs
 
 
+class GitError(Exception):
+    """Generic git-related error."""
+
+
 class ParsedGitRepo(UserDict, caches.Cache):
     """Parse repository git logs."""
 
@@ -423,18 +427,15 @@ class GitAddon(caches.CachedAddon):
         return self._gitignore.match_file(path)
 
     @staticmethod
-    def _get_commit_hash(repo_location, commit='origin/HEAD'):
+    def _get_commit_hash(path, commit='origin/HEAD'):
         """Retrieve a git repo's commit hash for a specific commit object."""
-        if not os.path.exists(pjoin(repo_location, '.git')):
-            raise ValueError
-        p = subprocess.run(
-            ['git', 'rev-parse', commit],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-            cwd=repo_location, encoding='utf8')
-        if p.returncode != 0 or not p.stdout:
-            raise ValueError(
-                f'failed retrieving {commit} commit hash '
-                f'for git repo: {repo_location}')
+        try:
+            p = subprocess.run(
+                ['git', 'rev-parse', commit],
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                cwd=path, check=True, encoding='utf8')
+        except subprocess.CalledProcessError:
+            raise GitError(f'failed retrieving commit hash for git repo: {path}')
         return p.stdout.strip()
 
     def update_cache(self, force=False):
@@ -443,7 +444,7 @@ class GitAddon(caches.CachedAddon):
             for repo in self.repos:
                 try:
                     commit = self._get_commit_hash(repo.location)
-                except ValueError:
+                except GitError:
                     continue
 
                 # initialize cache file location
@@ -532,9 +533,8 @@ class GitAddon(caches.CachedAddon):
                 if origin != master:
                     git_repo = ParsedGitRepo(target_repo.location)
                     git_repo.update('origin/HEAD..master', local=True)
-            except ValueError as e:
-                if str(e):
-                    logger.warning('skipping git commit checks: %s', e)
+            except GitError as e:
+                logger.warning('skipping git commit checks: %s', e)
 
         return repo_cls(git_repo, repo_id=repo_id)
 
@@ -549,8 +549,7 @@ class GitAddon(caches.CachedAddon):
                 if origin != master:
                     git_repo = ParsedGitRepo(path)
                     commits = git_repo.parse_git_log('origin/HEAD..master')
-            except ValueError as e:
-                if str(e):
-                    logger.warning('skipping git commit checks: %s', e)
+            except GitError as e:
+                logger.warning('skipping git commit checks: %s', e)
 
         return commits
