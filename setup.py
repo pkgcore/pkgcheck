@@ -33,15 +33,6 @@ class install(pkgdist.install):
             # rather than assuming it is running from a tarball/git repo.
             write_obj_lists(self.install_purelib, target)
 
-            # Install module plugincache
-            # TODO: move this to pkgdist once plugin support is moved to snakeoil
-            with pkgdist.syspath(pkgdist.PACKAGEDIR):
-                from pkgcheck import plugins
-                from pkgcore import plugin
-                log.info('Generating plugin cache')
-                path = os.path.join(self.install_purelib, 'pkgcheck', 'plugins')
-                plugin.initialize_cache(plugins, force=True, cache_dir=path)
-
 
 def write_obj_lists(python_base, install_prefix):
     """Generate config file of keyword, check, and other object lists."""
