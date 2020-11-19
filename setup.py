@@ -106,10 +106,10 @@ class install_data(dst_install_data.install_data):
     """
 
     def run(self):
-        self.__generate_files()
+        self._generate_files()
         super().run()
 
-    def __generate_files(self):
+    def _generate_files(self):
         with pkgdist.syspath(pkgdist.PACKAGEDIR):
             from pkgcheck import objects
 
