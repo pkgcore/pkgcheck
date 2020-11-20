@@ -53,10 +53,10 @@ class Pipeline:
             for scope, pipes in scoped_pipes['async'].items():
                 for pipe in pipes:
                     pipe.run(self.restrict)
-        except Exception as e:
+        except Exception:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
-            results_q.put((e, tb))
+            results_q.put(tb)
 
     def _run_checks(self, pipes, work_q, results_q):
         """Consumer that runs scanning tasks, queuing results for output."""
@@ -77,10 +77,10 @@ class Pipeline:
 
                 if results:
                     results_q.put(results)
-        except Exception as e:
+        except Exception:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
-            results_q.put((e, tb))
+            results_q.put(tb)
 
     def run(self, results_q):
         """Run the scanning pipeline in parallel by check and scanning scope."""
@@ -122,10 +122,10 @@ class Pipeline:
             pool.join()
 
             results_q.put(None)
-        except Exception as e:
+        except Exception:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
-            results_q.put((e, tb))
+            results_q.put(tb)
 
 
 class CheckRunner:

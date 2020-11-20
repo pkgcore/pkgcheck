@@ -38,9 +38,8 @@ class _ResultsIter:
         results = next(self.iter)
         # Catch propagated exceptions, output their traceback, and
         # signal the scanning process to end.
-        if isinstance(results, tuple):
-            exc, tb = results
-            print(tb.strip())
+        if isinstance(results, str):
+            print(results.strip())
             os.kill(self.pid, signal.SIGINT)
             return
         return results

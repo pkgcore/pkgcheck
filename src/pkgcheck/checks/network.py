@@ -170,7 +170,7 @@ class _UrlCheck(NetworkCheck):
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
             # return exceptions that occurred in threads
-            results_q.put((exc, tb))
+            results_q.put(tb)
             return
 
         result = future.result()
