@@ -259,7 +259,7 @@ class EapiCheck(Check):
                 eclass = self.eclass_cache[eclass_name]
                 supported_eapis = eclass.get('supported_eapis', ())
                 if supported_eapis and eapi_str not in supported_eapis:
-                    yield UnsupportedEclassEapi(eapi_str, eclass, pkg=pkg)
+                    yield UnsupportedEclassEapi(eapi_str, eclass_name, pkg=pkg)
             except KeyError:
                 continue
 
