@@ -560,7 +560,7 @@ class UnnecessaryManifest(results.PackageResult, results.Warning):
         return f'unnecessary file{s} in Manifest: [ {files} ]'
 
 
-class InvalidManifest(results.MetadataError):
+class InvalidManifest(results.MetadataError, results.PackageResult):
     """Package's Manifest file is invalid."""
 
     _attr = 'manifest'

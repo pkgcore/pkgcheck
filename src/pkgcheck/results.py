@@ -285,7 +285,7 @@ class _RegisterMetadataErrors(_ResultAttrs):
         return new_cls
 
 
-class MetadataError(VersionResult, Error, metaclass=_RegisterMetadataErrors):
+class MetadataError(Error, metaclass=_RegisterMetadataErrors):
     """Problem detected with a package's metadata."""
 
     # specific metadata attributes handled by the result class

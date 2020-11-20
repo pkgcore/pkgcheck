@@ -44,7 +44,7 @@ class MissingLicense(results.VersionResult, results.Error):
     desc = 'no license defined'
 
 
-class InvalidLicense(results.MetadataError):
+class InvalidLicense(results.MetadataError, results.VersionResult):
     """Package's LICENSE is invalid."""
 
     _attr = 'license'
@@ -264,19 +264,19 @@ class EapiCheck(Check):
                 continue
 
 
-class InvalidEapi(results.MetadataError):
+class InvalidEapi(results.MetadataError, results.VersionResult):
     """Package's EAPI is invalid."""
 
     _attr = 'eapi'
 
 
-class InvalidSlot(results.MetadataError):
+class InvalidSlot(results.MetadataError, results.VersionResult):
     """Package's SLOT is invalid."""
 
     _attr = 'slot'
 
 
-class SourcingError(results.MetadataError):
+class SourcingError(results.MetadataError, results.VersionResult):
     """Failed sourcing ebuild."""
 
     _attr = 'data'
@@ -329,7 +329,7 @@ class RequiredUseDefaults(results.VersionResult, results.Warning):
         )
 
 
-class InvalidRequiredUse(results.MetadataError):
+class InvalidRequiredUse(results.MetadataError, results.VersionResult):
     """Package's REQUIRED_USE is invalid."""
 
     _attr = 'required_use'
@@ -686,25 +686,25 @@ class BadDependency(results.VersionResult, results.Error):
         return f'{self.msg}: {self.depset.upper()}="{self.atom}"'
 
 
-class InvalidDepend(results.MetadataError):
+class InvalidDepend(results.MetadataError, results.VersionResult):
     """Package has invalid DEPEND."""
 
     _attr = 'depend'
 
 
-class InvalidRdepend(results.MetadataError):
+class InvalidRdepend(results.MetadataError, results.VersionResult):
     """Package has invalid RDEPEND."""
 
     _attr = 'rdepend'
 
 
-class InvalidPdepend(results.MetadataError):
+class InvalidPdepend(results.MetadataError, results.VersionResult):
     """Package has invalid PDEPEND."""
 
     _attr = 'pdepend'
 
 
-class InvalidBdepend(results.MetadataError):
+class InvalidBdepend(results.MetadataError, results.VersionResult):
     """Package has invalid BDEPEND."""
 
     _attr = 'bdepend'
@@ -1070,7 +1070,7 @@ class TarballAvailable(results.VersionResult, results.Warning):
         return f'zip archive{s} used when tarball available: [ {uris} ]'
 
 
-class InvalidSrcUri(results.MetadataError):
+class InvalidSrcUri(results.MetadataError, results.VersionResult):
     """Package's SRC_URI is invalid."""
 
     _attr = 'fetchables'
@@ -1281,13 +1281,13 @@ class UnknownProperties(results.VersionResult, results.Warning):
         return f'unknown PROPERTIES="{properties}"'
 
 
-class InvalidRestrict(results.MetadataError):
+class InvalidRestrict(results.MetadataError, results.VersionResult):
     """Package's RESTRICT is invalid."""
 
     _attr = 'restrict'
 
 
-class InvalidProperties(results.MetadataError):
+class InvalidProperties(results.MetadataError, results.VersionResult):
     """Package's PROPERTIES is invalid."""
 
     _attr = 'properties'
