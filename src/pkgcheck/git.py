@@ -364,18 +364,19 @@ class GitAddon(caches.CachedAddon):
             targets = sorted(repo.category_dirs)
             if os.path.isdir(pjoin(repo.location, 'eclass')):
                 targets.append('eclass')
+            git_diff_cmd = ['git', 'diff', '--cached', ref, '--name-only']
             try:
                 p = subprocess.run(
-                    ['git', 'diff', '--cached', ref, '--name-only'] + targets,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    cwd=repo.location, encoding='utf8')
+                    git_diff_cmd + targets,
+                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                    cwd=repo.location, check=True, encoding='utf8')
             except FileNotFoundError:
                 parser.error('git not available to determine targets for --commits')
+            except subprocess.CalledProcessError:
+                cmd = repr(' '.join(git_diff_cmd))
+                parser.error(f'failed running: {cmd}')
 
-            if p.returncode != 0:
-                error = p.stderr.splitlines()[0]
-                parser.error(f'failed running git: {error}')
-            elif not p.stdout:
+            if not p.stdout:
                 # no changes exist, exit early
                 parser.exit()
 
