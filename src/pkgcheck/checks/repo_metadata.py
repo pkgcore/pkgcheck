@@ -560,6 +560,12 @@ class UnnecessaryManifest(results.PackageResult, results.Warning):
         return f'unnecessary file{s} in Manifest: [ {files} ]'
 
 
+class InvalidManifest(results.MetadataError):
+    """Package's Manifest file is invalid."""
+
+    _attr = 'manifest'
+
+
 class ManifestCheck(Check):
     """Manifest related checks.
 
@@ -572,7 +578,7 @@ class ManifestCheck(Check):
     _source = sources.PackageRepoSource
     known_results = frozenset([
         MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
-        DeprecatedChksum,
+        DeprecatedChksum, InvalidManifest,
     ])
 
     def __init__(self, *args, use_addon):
