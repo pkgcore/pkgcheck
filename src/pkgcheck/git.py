@@ -361,7 +361,7 @@ class GitAddon(caches.CachedAddon):
 
             ref = namespace.commits
             repo = namespace.target_repo
-            targets = list(repo.category_dirs)
+            targets = sorted(repo.category_dirs)
             if os.path.isdir(pjoin(repo.location, 'eclass')):
                 targets.append('eclass')
             try:
