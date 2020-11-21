@@ -35,8 +35,9 @@ class ConfigArgumentParser(arghparse.ArgumentParser):
             self.error(f'parsing config file failed: {e}')
         return self.config
 
-    def parse_config_options(self, namespace, section='DEFAULT'):
+    def parse_config_options(self, namespace=None, section='DEFAULT'):
         """Parse options from config if they exist."""
+        namespace = arghparse.Namespace() if namespace is None else namespace
         config_args = [f'--{k}={v}' if v else f'--{k}' for k, v in self.config.items(section)]
         if config_args:
             with patch('snakeoil.cli.arghparse.ArgumentParser.error', self._config_error):
