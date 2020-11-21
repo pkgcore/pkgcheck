@@ -104,7 +104,7 @@ class CommitResult(Result):
 
     def __init__(self, commit, **kwargs):
         super().__init__(**kwargs)
-        self.commit = commit
+        self.commit = str(commit)
         self._attr = 'commit'
 
     def __lt__(self, other):

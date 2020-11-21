@@ -111,7 +111,7 @@ class _DroppedKeywords(results.PackageResult):
     def __init__(self, keywords, commit, **kwargs):
         super().__init__(**kwargs)
         self.keywords = tuple(keywords)
-        self.commit = commit
+        self.commit = str(commit)
 
     @property
     def desc(self):
