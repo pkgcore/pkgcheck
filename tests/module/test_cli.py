@@ -14,6 +14,8 @@ class TestConfigArgumentParser:
     def test_no_configs(self):
         config = self.parser.parse_config(())
         assert config.sections() == []
+        namespace = self.parser.parse_config_options()
+        assert vars(namespace) == {}
 
     def test_ignored_configs(self):
         # nonexistent config files are ignored
@@ -53,5 +55,8 @@ class TestConfigArgumentParser:
                 foo=bar
             """))
         self.parser.parse_config((self.config_file,))
-        namespace = self.parser.parse_config_options()
+        namespace = self.parser.parse_args(['--foo', 'foo'])
+        assert namespace.foo == 'foo'
+        # config args override matching namespace attrs
+        namespace = self.parser.parse_config_options(namespace)
         assert namespace.foo == 'bar'
