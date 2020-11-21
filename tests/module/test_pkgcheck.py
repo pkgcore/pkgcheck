@@ -584,6 +584,14 @@ class TestPkgcheckCache:
                 assert out[-1] == 'stubrepo'
                 assert excinfo.value.code == 0
 
+            # pretend to remove it
+            with patch('sys.argv', self.args + ['-rnt', 'profiles']):
+                with pytest.raises(SystemExit):
+                    self.script()
+                out, err = capsys.readouterr()
+                assert err == ''
+                assert out.startswith(f'Would remove {cache_dir}')
+
             # forcibly remove it
             with patch('sys.argv', self.args + ['-rt', 'profiles']):
                 with pytest.raises(SystemExit):
