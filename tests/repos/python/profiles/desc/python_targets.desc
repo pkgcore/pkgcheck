@@ -1,0 +1,4 @@
+# available PYTHON_TARGETS USE_EXPAND flags
+python3_7 - Build with Python 3.7
+python3_8 - Build with Python 3.8
+python3_9 - Build with Python 3.9

@@ -1,0 +1,30 @@
+diff -Naur python/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-0.ebuild fixed/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-0.ebuild
+--- python/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-0.ebuild	2020-11-21 15:47:48.863638819 -0700
++++ fixed/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-0.ebuild	2020-11-21 16:07:10.141152848 -0700
+@@ -1,5 +1,5 @@
+ EAPI=7
+-PYTHON_COMPAT=( python3_7 )
++PYTHON_COMPAT=( python3_{7..9} )
+ 
+ inherit python-r1
+ 
+diff -Naur python/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-1.ebuild fixed/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-1.ebuild
+--- python/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-1.ebuild	2020-11-21 16:01:09.313228270 -0700
++++ fixed/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-1.ebuild	2020-11-21 16:07:24.796474707 -0700
+@@ -1,5 +1,5 @@
+ EAPI=7
+-PYTHON_COMPAT=( python3_{7,8} )
++PYTHON_COMPAT=( python3_{7..9} )
+ 
+ inherit python-single-r1
+ 
+diff -Naur python/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-2.ebuild fixed/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-2.ebuild
+--- python/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-2.ebuild	2020-11-21 15:48:45.729888922 -0700
++++ fixed/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-2.ebuild	2020-11-21 16:07:30.224593936 -0700
+@@ -1,5 +1,5 @@
+ EAPI=7
+-PYTHON_COMPAT=( python3_{7,8} )
++PYTHON_COMPAT=( python3_{7..9} )
+ 
+ inherit python-any-r1
+ 
