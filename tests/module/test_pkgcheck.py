@@ -171,7 +171,6 @@ class TestPkgcheckScanParseArgs:
 
     def test_commits_nonexistent(self):
         with patch('subprocess.run') as git_diff:
-            git_diff.return_value.returncode = 0
             git_diff.return_value.stdout = ''
             with pytest.raises(SystemExit) as excinfo:
                 options, _func = self.tool.parse_args(self.args + ['--commits'])
@@ -183,12 +182,28 @@ class TestPkgcheckScanParseArgs:
             'media-libs/bar/bar-0.ebuild\n',
         ]
         with patch('subprocess.run') as git_diff:
-            git_diff.return_value.returncode = 0
             git_diff.return_value.stdout = ''.join(output)
             options, _func = self.tool.parse_args(self.args + ['--commits'])
-            restrictions = [atom.atom('dev-libs/foo'), atom.atom('media-libs/bar')]
+            atom_restricts = [atom.atom('dev-libs/foo'), atom.atom('media-libs/bar')]
             assert list(options.restrictions) == \
-                [(base.package_scope, packages.OrRestriction(*restrictions))]
+                [(base.package_scope, packages.OrRestriction(*atom_restricts))]
+
+    def test_commits_eclasses(self):
+        output = [
+            'dev-libs/foo/metadata.xml\n',
+            'media-libs/bar/bar-0.ebuild\n',
+            'eclass/foo.eclass\n',
+        ]
+        with patch('subprocess.run') as git_diff:
+            git_diff.return_value.stdout = ''.join(output)
+            options, _func = self.tool.parse_args(self.args + ['--commits'])
+            atom_restricts = [atom.atom('dev-libs/foo'), atom.atom('media-libs/bar')]
+            restrictions = list(options.restrictions)
+            assert len(restrictions) == 2
+            assert restrictions[0] == \
+                (base.package_scope, packages.OrRestriction(*atom_restricts))
+            assert restrictions[1][0] == base.eclass_scope
+            assert restrictions[1][1].match(['foo'])
 
     def test_unknown_repo(self, capsys):
         for opt in ('-r', '--repo'):
