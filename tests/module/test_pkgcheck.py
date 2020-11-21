@@ -316,6 +316,18 @@ class TestPkgcheckScan:
             out, err = capsys.readouterr()
             assert out == err == ''
 
+    def test_unhandled_exception(self, capsys, cache_dir):
+        with patch('sys.argv', self.args), \
+                patch('pkgcheck.pipeline.Process') as fakeproc, \
+                patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
+            fakeproc.side_effect = Exception('foobar')
+            with pytest.raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 1
+            out, err = capsys.readouterr()
+            assert out == ''
+            assert err.splitlines()[-1] == 'Exception: foobar'
+
     results = []
     for name, cls in sorted(objects.CHECKS.items()):
         for result in sorted(cls.known_results, key=attrgetter('__name__')):
