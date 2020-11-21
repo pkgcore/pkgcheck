@@ -564,8 +564,8 @@ class TestPkgcheckCache:
     script = partial(run, project)
 
     @pytest.fixture(autouse=True)
-    def _setup(self, testconfig):
-        self.args = [project, '--config', testconfig, 'cache']
+    def _setup(self, fakeconfig):
+        self.args = [project, '--config', fakeconfig, 'cache']
 
     def test_cache_profiles(self, capsys, cache_dir):
         with patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
