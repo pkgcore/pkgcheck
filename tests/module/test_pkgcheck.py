@@ -564,11 +564,12 @@ class TestPkgcheckCache:
     script = partial(run, project)
 
     @pytest.fixture(autouse=True)
-    def _setup(self, fakeconfig):
+    def _setup(self, fakeconfig, tmp_path):
         self.args = [project, '--config', fakeconfig, 'cache']
+        self.cache_dir = str(tmp_path)
 
-    def test_cache_profiles(self, capsys, cache_dir):
-        with patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
+    def test_cache_profiles(self, capsys):
+        with patch('pkgcheck.const.USER_CACHE_DIR', self.cache_dir):
             # force stubrepo profiles cache regen
             for args in (['-u', '-f'], ['--update', '--force']):
                 with patch('sys.argv', self.args + args + ['-t', 'profiles']):
@@ -592,7 +593,7 @@ class TestPkgcheckCache:
                         self.script()
                     out, err = capsys.readouterr()
                     assert err == ''
-                    assert out.startswith(f'Would remove {cache_dir}')
+                    assert out.startswith(f'Would remove {self.cache_dir}')
 
             # forcibly remove it
             for arg in ('-r', '--remove'):
