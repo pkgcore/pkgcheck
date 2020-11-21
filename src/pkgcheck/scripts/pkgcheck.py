@@ -93,16 +93,9 @@ def _setup_reporter(parser, namespace):
         parser.error('--format option is only valid when using FormatReporter')
 
 
-scan = subparsers.add_parser(
-    'scan', parents=(reporter_argparser,),
-    description='scan targets for QA issues',
-    configs=(const.SYSTEM_CONF_FILE, const.USER_CONF_FILE))
-scan.add_argument(
-    'targets', metavar='TARGET', nargs='*', action=arghparse.ParseNonblockingStdin,
-    help='optional targets')
-
-main_options = scan.add_argument_group('main options')
-main_options.add_argument(
+config_argparser = commandline.ArgumentParser(suppress=True)
+config_options = config_argparser.add_argument_group('config options')
+config_options.add_argument(
     '--config', action=argparsers.ConfigArg, dest='config_file',
     help='use custom pkgcheck scan settings file',
     docs="""
@@ -114,6 +107,16 @@ main_options.add_argument(
         It's also possible to disable all types of settings loading by
         specifying an argument of 'false' or 'no'.
     """)
+
+scan = subparsers.add_parser(
+    'scan', parents=(config_argparser, reporter_argparser,),
+    description='scan targets for QA issues',
+    configs=(const.SYSTEM_CONF_FILE, const.USER_CONF_FILE))
+scan.add_argument(
+    'targets', metavar='TARGET', nargs='*', action=arghparse.ParseNonblockingStdin,
+    help='optional targets')
+
+main_options = scan.add_argument_group('main options')
 main_options.add_argument(
     '-r', '--repo', metavar='REPO', dest='target_repo',
     action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
@@ -348,12 +351,15 @@ def _setup_scan_addons(parser, namespace):
 
 @scan.bind_early_parse
 def _setup_scan(parser, namespace, args):
-    # determine target repo early in order to load relevant config settings if they exist
-    namespace, _ = parser._parse_known_args(args, namespace)
+    # parse --config option from command line args
+    namespace, args = config_argparser.parse_known_args(args, namespace)
 
     # load default args from system/user configs if config-loading is allowed
     if namespace.config_file is None:
         namespace = parser.parse_config_options(namespace)
+
+    # re-parse command line args to override config defaults
+    namespace, _ = parser._parse_known_args(args, namespace)
 
     # Get the current working directory for repo detection and restriction
     # creation, fallback to the root dir if it's be removed out from under us.
