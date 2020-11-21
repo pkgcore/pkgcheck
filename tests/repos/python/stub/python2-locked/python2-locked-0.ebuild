@@ -1,9 +1,9 @@
 EAPI=7
-PYTHON_COMPAT=( python2_7 python3_{7,8,9} )
+PYTHON_COMPAT=( python2_7 )
 
 inherit python-r1
 
-DESCRIPTION="Stub ebuild with complete PYTHON_COMPAT support"
+DESCRIPTION="Ebuild locked on python2"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 LICENSE="BSD"
 SLOT="0"
