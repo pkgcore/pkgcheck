@@ -316,11 +316,15 @@ class TestPkgcheckScan:
             out, err = capsys.readouterr()
             assert out == err == ''
 
-    def test_unhandled_exception(self, capsys, cache_dir):
+    @pytest.mark.parametrize(
+        'action, module',
+        (('init', 'Process'), ('queue', 'UnversionedSource'), ('run', 'CheckRunner.run')))
+    def test_pipeline_exceptions(self, action, module, capsys, cache_dir):
+        """Test checkrunner pipeline against unhandled exceptions."""
         with patch('sys.argv', self.args), \
-                patch('pkgcheck.pipeline.Process') as fakeproc, \
-                patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
-            fakeproc.side_effect = Exception('foobar')
+                patch('pkgcheck.const.USER_CACHE_DIR', cache_dir), \
+                patch(f'pkgcheck.pipeline.{module}') as faked:
+            faked.side_effect = Exception('foobar')
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             assert excinfo.value.code == 1
