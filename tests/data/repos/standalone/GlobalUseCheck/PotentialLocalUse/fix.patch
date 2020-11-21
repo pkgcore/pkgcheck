@@ -1,0 +1,24 @@
+diff -Naur standalone/GlobalUseCheck/PotentialLocalUse/metadata.xml fixed/GlobalUseCheck/PotentialLocalUse/metadata.xml
+--- standalone/GlobalUseCheck/PotentialLocalUse/metadata.xml	1969-12-31 17:00:00.000000000 -0700
++++ fixed/GlobalUseCheck/PotentialLocalUse/metadata.xml	2020-11-21 13:41:35.139251785 -0700
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
++<pkgmetadata>
++	<maintainer type="person">
++		<email>radhermit@gentoo.org</email>
++	</maintainer>
++	<use>
++		<flag name="potential">potential local use flag</flag>
++	</use>
++</pkgmetadata>
+diff -Naur standalone/profiles/use.desc fixed/profiles/use.desc
+--- standalone/profiles/use.desc	2020-11-21 13:30:59.218350554 -0700
++++ fixed/profiles/use.desc	2020-11-21 13:40:12.314441234 -0700
+@@ -1,6 +1,5 @@
+ used - used global flag
+ unused - unused global flag
+ matching - matching global flag
+-potential - potential local use flag
+ probable - probable global flag
+ test - enable tests

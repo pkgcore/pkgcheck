@@ -1,5 +1,6 @@
 used - used global flag
 unused - unused global flag
 matching - matching global flag
+potential - potential local use flag
 probable - probable global flag
 test - enable tests
