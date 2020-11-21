@@ -1,6 +1,5 @@
 [run]
 source = pkgcheck
-concurrency = multiprocessing
 branch = True
 omit =
 	tests/*
