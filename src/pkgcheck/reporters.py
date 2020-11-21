@@ -5,6 +5,7 @@ import json
 import os
 import pickle
 import signal
+import sys
 from collections import defaultdict
 from itertools import chain
 from multiprocessing import Process, SimpleQueue
@@ -27,8 +28,8 @@ class _ResultsIter:
     is found.
     """
 
-    def __init__(self, results_q):
-        self.pid = os.getpid()
+    def __init__(self, results_q, pid):
+        self.pid = pid
         self.iter = iter(results_q.get, None)
 
     def __iter__(self):
@@ -39,9 +40,9 @@ class _ResultsIter:
         # Catch propagated exceptions, output their traceback, and
         # signal the scanning process to end.
         if isinstance(results, str):
-            print(results.strip())
-            os.kill(self.pid, signal.SIGINT)
-            return
+            print(results.strip(), file=sys.stderr)
+            os.killpg(self.pid, signal.SIGINT)
+            raise SystemExit(1)
         return results
 
 
@@ -71,9 +72,11 @@ class Reporter:
 
         results_q = SimpleQueue()
         orig_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)
-        results_iter = _ResultsIter(results_q)
         p = Process(target=pipe.run, args=(results_q,))
         p.start()
+        # pipeline uses separate process group so it can be shutdown on demand
+        os.setpgid(p.pid, 0)
+        results_iter = _ResultsIter(results_q, p.pid)
         signal.signal(signal.SIGINT, orig_sigint_handler)
 
         if pipe.pkg_scan:
