@@ -559,6 +559,45 @@ class TestPkgcheckScan:
             pytest.skip('fix not available')
 
 
+class TestPkgcheckCache:
+
+    script = partial(run, project)
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, testconfig):
+        self.args = [project, '--config', testconfig, 'cache']
+
+    def test_cache_profiles(self, capsys, cache_dir):
+        with patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
+            # force stubrepo profiles cache regen
+            with patch('sys.argv', self.args + ['-uft', 'profiles']):
+                with pytest.raises(SystemExit):
+                    self.script()
+
+            # verify the profiles cache shows up
+            with patch('sys.argv', self.args):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                out = out.strip().splitlines()
+                assert out[-1] == 'stubrepo'
+                assert excinfo.value.code == 0
+
+            # forcibly remove it
+            with patch('sys.argv', self.args + ['-rt', 'profiles']):
+                with pytest.raises(SystemExit):
+                    self.script()
+
+            # verify it's gone
+            with patch('sys.argv', self.args):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert (out, err) == ('', '')
+                assert excinfo.value.code == 0
+
+
 class TestPkgcheckShow:
 
     script = partial(run, project)
