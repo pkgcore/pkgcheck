@@ -205,6 +205,17 @@ class TestPkgcheckScanParseArgs:
             assert restrictions[1][0] == base.eclass_scope
             assert restrictions[1][1].match(['foo'])
 
+    def test_commits_ignored_changes(self):
+        output = [
+            'foo/bar.txt\n',
+            'eclass/tests/check.sh\n',
+        ]
+        with patch('subprocess.run') as git_diff:
+            git_diff.return_value.stdout = ''.join(output)
+            with pytest.raises(SystemExit) as excinfo:
+                self.tool.parse_args(self.args + ['--commits'])
+            assert excinfo.value.code == 0
+
     def test_unknown_repo(self, capsys):
         for opt in ('-r', '--repo'):
             with pytest.raises(SystemExit) as excinfo:
