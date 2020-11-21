@@ -644,14 +644,13 @@ def _setup_cache_addons(parser, namespace):
     """Load all addons using caches and their argparser changes before parsing."""
     for addon in get_addons(CachedAddon.caches):
         addon.mangle_argparser(parser)
-    namespace.cache_addons = set(CachedAddon.caches)
 
 
 @cache.bind_final_check
 def _validate_cache_args(parser, namespace):
     enabled_caches = {k for k, v in namespace.cache.items() if v}
     cache_addons = (
-        addon for addon in namespace.cache_addons
+        addon for addon in CachedAddon.caches
         if addon.cache.type in enabled_caches)
     # sort caches by type
     namespace.cache_addons = sorted(cache_addons, key=lambda x: x.cache.type)
