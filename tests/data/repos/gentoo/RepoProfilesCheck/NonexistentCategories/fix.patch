@@ -1,0 +1,8 @@
+diff -Naur gentoo/profiles/categories fixed/profiles/categories
+--- gentoo/profiles/categories	2020-11-20 18:26:25.802515680 -0700
++++ fixed/profiles/categories	2020-11-20 18:28:23.102064311 -0700
+@@ -6,4 +6,3 @@
+ PackageMetadataXmlCheck
+ PkgDirCheck
+ UnstableOnlyCheck
+-nonexistent

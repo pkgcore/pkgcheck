@@ -6,3 +6,4 @@ EmptyDirsCheck
 PackageMetadataXmlCheck
 PkgDirCheck
 UnstableOnlyCheck
+nonexistent

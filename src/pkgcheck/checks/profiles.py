@@ -332,6 +332,20 @@ class UnknownCategoryDirs(results.ProfilesResult, results.Warning):
         return f'unknown category dir{s}: {dirs}'
 
 
+class NonexistentCategories(results.ProfilesResult, results.Warning):
+    """Category entries in profiles/categories that don't exist in the repo."""
+
+    def __init__(self, categories):
+        super().__init__()
+        self.categories = tuple(categories)
+
+    @property
+    def desc(self):
+        categories = ', '.join(self.categories)
+        ies = pluralism(self.categories, singular='y', plural='ies')
+        return f'nonexistent profiles/categories entr{ies}: {categories}'
+
+
 def dir_parents(path):
     """Yield all directory path parents excluding the root directory.
 
@@ -358,7 +372,7 @@ class RepoProfilesCheck(Check):
     _source = (sources.EmptySource, (), (('scope', base.profiles_scope),))
     known_results = frozenset([
         ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,
-        UnknownCategoryDirs, LaggingProfileEapi,
+        UnknownCategoryDirs, NonexistentCategories, LaggingProfileEapi,
         ProfileError, ProfileWarning,
     ])
 
@@ -373,10 +387,12 @@ class RepoProfilesCheck(Check):
         self.non_profile_dirs = profile_addon.non_profile_dirs
 
     def finish(self):
-        # don't check for unknown category dirs on overlays
         unknown_category_dirs = set(self.repo.category_dirs).difference(self.repo.categories)
         if unknown_category_dirs:
             yield UnknownCategoryDirs(sorted(unknown_category_dirs))
+        nonexistent_categories = set(self.repo.config.categories).difference(self.repo.category_dirs)
+        if nonexistent_categories:
+            yield NonexistentCategories(sorted(nonexistent_categories))
 
         arches_without_profiles = set(self.arches) - set(self.repo.profiles.arches())
         if arches_without_profiles:

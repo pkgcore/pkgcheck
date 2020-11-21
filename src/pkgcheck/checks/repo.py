@@ -85,7 +85,8 @@ class EmptyDirsCheck(GentooRepoCheck):
 
     def finish(self):
         for cat, pkgs in sorted(self.repo.packages.items()):
-            if not pkgs:
+            # ignore entries in profiles/categories with nonexistent dirs
+            if not pkgs and cat in self.repo.category_dirs:
                 yield EmptyCategoryDir(pkg=RawCPV(cat, None, None))
                 continue
             for pkg in sorted(pkgs):
