@@ -575,7 +575,6 @@ class TestPkgcheckShow:
             out, err = capsys.readouterr()
             assert not err
             out = out.strip().split('\n')
-            regular_output = out
             assert out == sorted(objects.KEYWORDS.keys())
             assert excinfo.value.code == 0
 
