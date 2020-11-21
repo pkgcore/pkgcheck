@@ -161,12 +161,13 @@ class TestPkgcheckScanParseArgs:
     def test_git_error(self, capsys):
         with patch('subprocess.run') as git_diff:
             git_diff.side_effect = subprocess.CalledProcessError(1, 'git')
+            git_diff.side_effect.stderr = 'git error: foobar'
             with pytest.raises(SystemExit) as excinfo:
                 options, _func = self.tool.parse_args(self.args + ['--commits'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
-            assert err[-1].startswith('pkgcheck scan: error: failed running: ')
+            assert err[-1].startswith('pkgcheck scan: error: failed running git: ')
 
     def test_commits_nonexistent(self):
         with patch('subprocess.run') as git_diff:

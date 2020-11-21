@@ -16,6 +16,7 @@ from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values
+from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.iterables import partition
@@ -249,10 +250,70 @@ class _ScanCommits(argparse.Action):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    @staticmethod
+    def _pkg_atoms(paths):
+        """Filter package atoms from commit paths."""
+        for x in paths:
+            try:
+                yield atom_cls(os.sep.join(x.split(os.sep, 2)[:2]))
+            except MalformedAtom:
+                continue
+
     def __call__(self, parser, namespace, value, option_string=None):
+        if namespace.targets:
+            targets = ' '.join(namespace.targets)
+            s = pluralism(namespace.targets)
+            parser.error(f'--commits is mutually exclusive with target{s}: {targets}')
+
         namespace.forced_checks.extend(
             name for name, cls in objects.CHECKS.items() if issubclass(cls, GitCheck))
-        setattr(namespace, self.dest, value)
+        ref = value if value is not None else 'origin'
+        setattr(namespace, self.dest, ref)
+
+        # generate restrictions based on git commit changes
+        repo = namespace.target_repo
+        targets = sorted(repo.category_dirs)
+        if os.path.isdir(pjoin(repo.location, 'eclass')):
+            targets.append('eclass')
+        git_diff_cmd = ['git', 'diff', '--cached', ref, '--name-only']
+        try:
+            p = subprocess.run(
+                git_diff_cmd + targets,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                cwd=repo.location, check=True, encoding='utf8')
+        except FileNotFoundError:
+            parser.error('git not available to determine targets for --commits')
+        except subprocess.CalledProcessError as e:
+            error = e.stderr.splitlines()[0]
+            parser.error(f'failed running git: {error}')
+
+        if not p.stdout:
+            # no changes exist, exit early
+            parser.exit()
+
+        pkgs, eclasses = partition(
+            p.stdout.splitlines(), predicate=lambda x: x.startswith('eclass/'))
+        pkgs = sorted(self._pkg_atoms(pkgs))
+
+        eclass_regex = re.compile(r'^eclass/(?P<eclass>\S+)\.eclass$')
+        eclasses = filter(None, (eclass_regex.match(x) for x in eclasses))
+        eclasses = sorted(x.group('eclass') for x in eclasses)
+
+        restrictions = []
+        if pkgs:
+            restrict = packages.OrRestriction(*pkgs)
+            restrictions.append((base.package_scope, restrict))
+        if eclasses:
+            func = partial(matching_eclass, frozenset(eclasses))
+            restrict = values.AnyMatch(values.FunctionRestriction(func))
+            restrictions.append((base.eclass_scope, restrict))
+
+        # no pkgs or eclasses to check, exit early
+        if not restrictions:
+            parser.exit()
+
+        namespace.contexts.append(GitStash(parser, repo))
+        namespace.restrictions = restrictions
 
 
 class GitStash(AbstractContextManager):
@@ -325,8 +386,8 @@ class GitAddon(caches.CachedAddon):
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('git', docs=cls.__doc__)
         group.add_argument(
-            '--commits', action=_ScanCommits, nargs='?',
-            metavar='COMMIT', const='origin', default=None,
+            '--commits', action=arghparse.Delayed, target=_ScanCommits,
+            nargs='?', metavar='COMMIT',
             help="determine scan targets from local git repo commits",
             docs="""
                 For a local git repo, pkgcheck will determine targets to scan
@@ -341,68 +402,6 @@ class GitAddon(caches.CachedAddon):
                 Note that will also enable eclass-specific checks if it
                 determines any commits have been made to eclasses.
             """)
-
-    @staticmethod
-    def _pkg_atoms(paths):
-        """Filter package atoms from commit paths."""
-        for x in paths:
-            try:
-                yield atom_cls(os.sep.join(x.split(os.sep, 2)[:2]))
-            except MalformedAtom:
-                continue
-
-    @classmethod
-    def check_args(cls, parser, namespace):
-        if namespace.commits:
-            if namespace.targets:
-                targets = ' '.join(namespace.targets)
-                s = pluralism(namespace.targets)
-                parser.error(f'--commits is mutually exclusive with target{s}: {targets}')
-
-            ref = namespace.commits
-            repo = namespace.target_repo
-            targets = sorted(repo.category_dirs)
-            if os.path.isdir(pjoin(repo.location, 'eclass')):
-                targets.append('eclass')
-            git_diff_cmd = ['git', 'diff', '--cached', ref, '--name-only']
-            try:
-                p = subprocess.run(
-                    git_diff_cmd + targets,
-                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                    cwd=repo.location, check=True, encoding='utf8')
-            except FileNotFoundError:
-                parser.error('git not available to determine targets for --commits')
-            except subprocess.CalledProcessError:
-                cmd = repr(' '.join(git_diff_cmd))
-                parser.error(f'failed running: {cmd}')
-
-            if not p.stdout:
-                # no changes exist, exit early
-                parser.exit()
-
-            pkgs, eclasses = partition(
-                p.stdout.splitlines(), predicate=lambda x: x.startswith('eclass/'))
-            pkgs = sorted(cls._pkg_atoms(pkgs))
-
-            eclass_regex = re.compile(r'^eclass/(?P<eclass>\S+)\.eclass$')
-            eclasses = filter(None, (eclass_regex.match(x) for x in eclasses))
-            eclasses = sorted(x.group('eclass') for x in eclasses)
-
-            restrictions = []
-            if pkgs:
-                restrict = packages.OrRestriction(*pkgs)
-                restrictions.append((base.package_scope, restrict))
-            if eclasses:
-                func = partial(matching_eclass, frozenset(eclasses))
-                restrict = values.AnyMatch(values.FunctionRestriction(func))
-                restrictions.append((base.eclass_scope, restrict))
-
-            # no pkgs or eclasses to check, exit early
-            if not restrictions:
-                parser.exit()
-
-            namespace.contexts.append(GitStash(parser, repo))
-            namespace.restrictions = restrictions
 
     def __init__(self, *args):
         super().__init__(*args)

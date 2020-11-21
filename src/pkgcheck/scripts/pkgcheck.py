@@ -321,6 +321,7 @@ def _setup_scan_defaults(parser, namespace):
     """Re-initialize default namespace settings per arg parsing run."""
     namespace.forced_checks = []
     namespace.contexts = []
+    namespace.restrictions = []
 
 
 def get_addons(objects):
@@ -440,6 +441,7 @@ def generate_restricts(repo, targets):
 @scan.bind_final_check
 def _validate_scan_args(parser, namespace):
     repo = namespace.target_repo
+    restrictions = namespace.restrictions
     if namespace.targets:
         # Collapse restrictions for passed in targets while keeping the
         # generator intact for piped in targets.
@@ -457,7 +459,7 @@ def _validate_scan_args(parser, namespace):
 
                 combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
                 restrictions = [(scopes.pop(), combined_restrict)]
-    else:
+    elif not restrictions:
         try:
             scope, restrict = _path_restrict(namespace.cwd, repo)
         except ValueError:
