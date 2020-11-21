@@ -539,7 +539,8 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
                     value = m.group('object')
                     status = m.group('status')
                     if not status.startswith('commit '):
-                        yield InvalidCommitTag(tag, value, f'{status} commit', commit=commit)
+                        yield InvalidCommitTag(
+                            tag, value, f'{status} commit', commit=commit)
 
     def __del__(self):
         # at this point, we don't care about being nice to the `git cat-file` process
@@ -567,19 +568,16 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
             if m is None:
                 if not body and commit.message[1] != '':
                     yield InvalidCommitMessage(
-                        'missing empty line before body',
-                        commit=commit)
+                        'missing empty line before body', commit=commit)
                 # still processing the body
                 body = True
                 if len(line.split()) > 1 and len(line) > 80:
                     yield InvalidCommitMessage(
-                        f'line {lineno} greater than 80 chars: {line!r}',
-                        commit=commit)
+                        f'line {lineno} greater than 80 chars: {line!r}', commit=commit)
             else:
                 if commit.message[lineno - 1] != '':
                     yield InvalidCommitMessage(
-                        'missing empty line before tags',
-                        commit=commit)
+                        'missing empty line before tags', commit=commit)
                 # push it back on the stack
                 i = chain([line], i)
                 break
@@ -596,11 +594,13 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
             if not line.strip():
                 # single empty end line is ignored
                 if lineno != len(commit.message):
-                    yield InvalidCommitMessage(f'empty line {lineno} in footer', commit=commit)
+                    yield InvalidCommitMessage(
+                        f'empty line {lineno} in footer', commit=commit)
                 continue
             m = self._commit_footer_regex.match(line)
             if m is None:
-                yield InvalidCommitMessage(f'non-tag in footer, line {lineno}: {line!r}', commit=commit)
+                yield InvalidCommitMessage(
+                    f'non-tag in footer, line {lineno}: {line!r}', commit=commit)
             else:
                 # register known tags for verification
                 tag = m.group('tag')
