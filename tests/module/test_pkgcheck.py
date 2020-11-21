@@ -629,7 +629,6 @@ class TestPkgcheckCache:
 
             # actually forcibly remove all
             with patch('sys.argv', self.args + ['-rf']):
-                rmtree.side_effect = IOError('bad perms')
                 with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 out, err = capsys.readouterr()
@@ -638,6 +637,14 @@ class TestPkgcheckCache:
 
             # verify it's gone
             with patch('sys.argv', self.args):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert (out, err) == ('', '')
+                assert excinfo.value.code == 0
+
+            # forcing removal again does nothing
+            with patch('sys.argv', self.args + ['-rf']):
                 with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 out, err = capsys.readouterr()
