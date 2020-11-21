@@ -570,9 +570,10 @@ class TestPkgcheckCache:
     def test_cache_profiles(self, capsys, cache_dir):
         with patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
             # force stubrepo profiles cache regen
-            with patch('sys.argv', self.args + ['-uft', 'profiles']):
-                with pytest.raises(SystemExit):
-                    self.script()
+            for args in (['-u', '-f'], ['--update', '--force']):
+                with patch('sys.argv', self.args + args + ['-t', 'profiles']):
+                    with pytest.raises(SystemExit):
+                        self.script()
 
             # verify the profiles cache shows up
             with patch('sys.argv', self.args):
@@ -585,17 +586,19 @@ class TestPkgcheckCache:
                 assert excinfo.value.code == 0
 
             # pretend to remove it
-            with patch('sys.argv', self.args + ['-rnt', 'profiles']):
-                with pytest.raises(SystemExit):
-                    self.script()
-                out, err = capsys.readouterr()
-                assert err == ''
-                assert out.startswith(f'Would remove {cache_dir}')
+            for arg in ('-n', '--dry-run'):
+                with patch('sys.argv', self.args + [arg] + ['-rt', 'profiles']):
+                    with pytest.raises(SystemExit):
+                        self.script()
+                    out, err = capsys.readouterr()
+                    assert err == ''
+                    assert out.startswith(f'Would remove {cache_dir}')
 
             # forcibly remove it
-            with patch('sys.argv', self.args + ['-rt', 'profiles']):
-                with pytest.raises(SystemExit):
-                    self.script()
+            for arg in ('-r', '--remove'):
+                with patch('sys.argv', self.args + [arg] + ['-t', 'profiles']):
+                    with pytest.raises(SystemExit):
+                        self.script()
 
             # verify it's gone
             with patch('sys.argv', self.args):
