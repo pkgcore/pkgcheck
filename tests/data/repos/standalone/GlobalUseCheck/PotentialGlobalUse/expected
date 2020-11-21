@@ -1,0 +1,2 @@
+repo
+  PotentialGlobalUse: local USE flag 'potential-global' is a potential global used by 5 packages: GlobalUseCheck/PotentialGlobalUse, stub/potential-global1, stub/potential-global2, stub/potential-global3, stub/potential-global4

@@ -1,0 +1,5 @@
+DESCRIPTION="Stub ebuild used to trigger PotentialGlobalUse"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SLOT="0"
+LICENSE="BSD"
+IUSE="potential-global"

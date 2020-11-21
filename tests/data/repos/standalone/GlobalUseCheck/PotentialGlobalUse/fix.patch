@@ -1,0 +1,75 @@
+diff -Naur standalone/GlobalUseCheck/PotentialGlobalUse/metadata.xml fixed/GlobalUseCheck/PotentialGlobalUse/metadata.xml
+--- standalone/GlobalUseCheck/PotentialGlobalUse/metadata.xml	2020-11-21 13:48:52.752825975 -0700
++++ fixed/GlobalUseCheck/PotentialGlobalUse/metadata.xml	1969-12-31 17:00:00.000000000 -0700
+@@ -1,7 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<pkgmetadata>
+-	<use>
+-		<flag name="potential-global">potential global flag</flag>
+-	</use>
+-</pkgmetadata>
+diff -Naur standalone/profiles/use.desc fixed/profiles/use.desc
+--- standalone/profiles/use.desc	2020-11-21 13:45:14.164041827 -0700
++++ fixed/profiles/use.desc	2020-11-21 14:02:46.539079781 -0700
+@@ -1,6 +1,7 @@
+ used - used global flag
+ unused - unused global flag
+ matching - matching global flag
++potential-global - potential global use flag
+ potential-local - potential local use flag
+ probable - probable global flag
+ test - enable tests
+diff -Naur standalone/profiles/use.local.desc fixed/profiles/use.local.desc
+--- standalone/profiles/use.local.desc	2020-11-21 13:58:53.153966686 -0700
++++ fixed/profiles/use.local.desc	1969-12-31 17:00:00.000000000 -0700
+@@ -1,5 +0,0 @@
+-GlobalUseCheck/PotentialGlobalUse:potential-global - potential global flag
+-stub/potential-global1:potential-global - potential global flag
+-stub/potential-global2:potential-global - potential global flag
+-stub/potential-global3:potential-global - potential global flag
+-stub/potential-global4:potential-global - potential global flag
+diff -Naur standalone/stub/potential-global1/metadata.xml fixed/stub/potential-global1/metadata.xml
+--- standalone/stub/potential-global1/metadata.xml	2020-11-21 13:51:43.065553535 -0700
++++ fixed/stub/potential-global1/metadata.xml	1969-12-31 17:00:00.000000000 -0700
+@@ -1,7 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<pkgmetadata>
+-	<use>
+-		<flag name="potential-global">potential global flag</flag>
+-	</use>
+-</pkgmetadata>
+diff -Naur standalone/stub/potential-global2/metadata.xml fixed/stub/potential-global2/metadata.xml
+--- standalone/stub/potential-global2/metadata.xml	2020-11-21 13:51:43.065553535 -0700
++++ fixed/stub/potential-global2/metadata.xml	1969-12-31 17:00:00.000000000 -0700
+@@ -1,7 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<pkgmetadata>
+-	<use>
+-		<flag name="potential-global">potential global flag</flag>
+-	</use>
+-</pkgmetadata>
+diff -Naur standalone/stub/potential-global3/metadata.xml fixed/stub/potential-global3/metadata.xml
+--- standalone/stub/potential-global3/metadata.xml	2020-11-21 13:51:43.065553535 -0700
++++ fixed/stub/potential-global3/metadata.xml	1969-12-31 17:00:00.000000000 -0700
+@@ -1,7 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<pkgmetadata>
+-	<use>
+-		<flag name="potential-global">potential global flag</flag>
+-	</use>
+-</pkgmetadata>
+diff -Naur standalone/stub/potential-global4/metadata.xml fixed/stub/potential-global4/metadata.xml
+--- standalone/stub/potential-global4/metadata.xml	2020-11-21 13:51:43.065553535 -0700
++++ fixed/stub/potential-global4/metadata.xml	1969-12-31 17:00:00.000000000 -0700
+@@ -1,7 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<pkgmetadata>
+-	<use>
+-		<flag name="potential-global">potential global flag</flag>
+-	</use>
+-</pkgmetadata>

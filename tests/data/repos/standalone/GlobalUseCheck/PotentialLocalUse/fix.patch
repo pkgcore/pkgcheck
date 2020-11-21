@@ -9,7 +9,7 @@ diff -Naur standalone/GlobalUseCheck/PotentialLocalUse/metadata.xml fixed/Global
 +		<email>radhermit@gentoo.org</email>
 +	</maintainer>
 +	<use>
-+		<flag name="potential">potential local use flag</flag>
++		<flag name="potential-local">potential local use flag</flag>
 +	</use>
 +</pkgmetadata>
 diff -Naur standalone/profiles/use.desc fixed/profiles/use.desc
@@ -19,6 +19,6 @@ diff -Naur standalone/profiles/use.desc fixed/profiles/use.desc
  used - used global flag
  unused - unused global flag
  matching - matching global flag
--potential - potential local use flag
+-potential-local - potential local use flag
  probable - probable global flag
  test - enable tests
