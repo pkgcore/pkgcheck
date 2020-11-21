@@ -315,21 +315,21 @@ class LaggingProfileEapi(results.ProfilesResult, results.Warning):
         )
 
 
-class UnknownCategories(results.ProfilesResult, results.Warning):
+class UnknownCategoryDirs(results.ProfilesResult, results.Warning):
     """Category directories that aren't listed in a repo's categories.
 
     Or the categories of the repo's masters as well.
     """
 
-    def __init__(self, categories):
+    def __init__(self, dirs):
         super().__init__()
-        self.categories = tuple(categories)
+        self.dirs = tuple(dirs)
 
     @property
     def desc(self):
-        categories = ', '.join(self.categories)
-        y = pluralism(self.categories, singular='y', plural='ies')
-        return f'unknown categor{y}: {categories}'
+        dirs = ', '.join(self.dirs)
+        s = pluralism(self.dirs)
+        return f'unknown category dir{s}: {dirs}'
 
 
 def dir_parents(path):
@@ -358,7 +358,7 @@ class RepoProfilesCheck(Check):
     _source = (sources.EmptySource, (), (('scope', base.profiles_scope),))
     known_results = frozenset([
         ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,
-        UnknownCategories, LaggingProfileEapi,
+        UnknownCategoryDirs, LaggingProfileEapi,
         ProfileError, ProfileWarning,
     ])
 
@@ -374,10 +374,9 @@ class RepoProfilesCheck(Check):
 
     def finish(self):
         # don't check for unknown category dirs on overlays
-        if self.options.gentoo_repo:
-            unknown_categories = set(self.repo.category_dirs).difference(self.repo.categories)
-            if unknown_categories:
-                yield UnknownCategories(sorted(unknown_categories))
+        unknown_category_dirs = set(self.repo.category_dirs).difference(self.repo.categories)
+        if unknown_category_dirs:
+            yield UnknownCategoryDirs(sorted(unknown_category_dirs))
 
         arches_without_profiles = set(self.arches) - set(self.repo.profiles.arches())
         if arches_without_profiles:
