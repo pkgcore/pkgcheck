@@ -265,8 +265,7 @@ class PythonCompatUpdate(results.VersionResult, results.Info):
 class PythonCompatCheck(Check):
     """Check python ebuilds for possible PYTHON_COMPAT updates.
 
-    Currently only supports ebuilds inheriting python-r1 and
-    python-single-r1, not python-any-r1.
+    Supports ebuilds inheriting python-r1, python-single-r1, and python-any-r1.
     """
 
     known_results = frozenset([PythonCompatUpdate])
