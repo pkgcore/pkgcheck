@@ -350,7 +350,7 @@ class PythonCompatCheck(Check):
                 return
 
             # ignore pkgs that probably aren't py3 compatible
-            if latest_target == 'python_targets_python2_7':
+            if latest_target.endswith('python2_7'):
                 return
 
             missing = set()
