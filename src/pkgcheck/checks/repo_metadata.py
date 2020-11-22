@@ -733,7 +733,7 @@ class EmptyProject(results.Warning):
 
     def __init__(self, project):
         super().__init__()
-        self.project = project
+        self.project = str(project)
 
     @property
     def desc(self):
@@ -745,9 +745,7 @@ class ProjectMetadataCheck(Check):
 
     scope = base.repo_scope
     _source = sources.EmptySource
-    known_results = frozenset([
-        EmptyProject,
-    ])
+    known_results = frozenset([EmptyProject])
 
     def __init__(self, *args):
         super().__init__(*args)
