@@ -1,0 +1,1 @@
+{"__class__": "UnstatedIuse", "category": "RestrictCheck", "package": "UnstatedIuse", "version": "0", "attr": "restrict", "flags": ["used"], "profile": "default/amd64", "num_profiles": 2}

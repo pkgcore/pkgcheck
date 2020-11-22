@@ -1,0 +1,1 @@
+{"__class__": "SourcingError", "category": "SourcingCheck", "package": "SourcingError", "version": "0", "attr": "data", "msg": "failed sourcing ebuild: external commands disallowed during metadata regen: 'foo'"}

@@ -1,0 +1,3 @@
+{"__class__": "ProfileError", "msg": "deprecated profile missing replacement: 'deprecated/empty/deprecated'"}
+{"__class__": "ProfileError", "msg": "nonexistent replacement 'default/nonexistent' for deprecated profile: 'deprecated/nonexistent'"}
+{"__class__": "ProfileError", "msg": "repo 'profiledir': 'default/bad_parent/parent' (line 1), bad profile parent '../nonexistent': nonexistent profile directory"}

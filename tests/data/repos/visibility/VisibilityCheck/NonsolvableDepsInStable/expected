@@ -1,5 +1,0 @@
-NonsolvableDepsInStable/masked
-  NonsolvableDepsInStable: version 0: nonsolvable depset(depend) keyword(amd64) stable profile (visibility/amd64/stable) (2 total): solutions: [ stub/masked ]
-
-NonsolvableDepsInStable/unstable
-  NonsolvableDepsInStable: version 0: nonsolvable depset(depend) keyword(amd64) stable profile (visibility/amd64/stable) (1 total): solutions: [ stub/unstable ]

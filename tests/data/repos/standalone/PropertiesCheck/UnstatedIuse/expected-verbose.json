@@ -1,0 +1,2 @@
+{"__class__": "UnstatedIuse", "category": "PropertiesCheck", "package": "UnstatedIuse", "version": "0", "attr": "properties", "flags": ["used"], "profile": "default/amd64", "num_profiles": null}
+{"__class__": "UnstatedIuse", "category": "PropertiesCheck", "package": "UnstatedIuse", "version": "0", "attr": "properties", "flags": ["used"], "profile": "default/x86", "num_profiles": null}

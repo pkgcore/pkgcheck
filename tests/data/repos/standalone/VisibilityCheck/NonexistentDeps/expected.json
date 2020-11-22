@@ -1,0 +1,2 @@
+{"__class__": "NonexistentDeps", "category": "VisibilityCheck", "package": "NonexistentDeps", "version": "0", "attr": "DEPEND", "nonexistent": ["cat/nonexistent"]}
+{"__class__": "NonexistentDeps", "category": "VisibilityCheck", "package": "NonexistentDeps", "version": "0", "attr": "RDEPEND", "nonexistent": ["cat/nonexistent"]}

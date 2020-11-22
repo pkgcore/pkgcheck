@@ -1,2 +1,0 @@
-KeywordsCheck/BadKeywords
-  BadKeywords: version 0: use package.mask or undefined keywords instead of KEYWORDS="-*"

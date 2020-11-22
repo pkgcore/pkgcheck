@@ -1,0 +1,5 @@
+{"__class__": "BadDescription", "category": "DescriptionCheck", "package": "BadDescription", "version": "0", "msg": "empty/unset", "pkg_desc": null}
+{"__class__": "BadDescription", "category": "DescriptionCheck", "package": "BadDescription", "version": "1", "msg": "empty/unset", "pkg_desc": null}
+{"__class__": "BadDescription", "category": "DescriptionCheck", "package": "BadDescription", "version": "2", "msg": "under 10 chars in length", "pkg_desc": "bad desc"}
+{"__class__": "BadDescription", "category": "DescriptionCheck", "package": "BadDescription", "version": "3", "msg": "generic package description", "pkg_desc": "BadDescription"}
+{"__class__": "BadDescription", "category": "DescriptionCheck", "package": "BadDescription", "version": "4", "msg": "over 150 chars in length", "pkg_desc": null}

@@ -1,0 +1,1 @@
+{"__class__": "PkgBadlyFormedXml", "category": "PackageMetadataXmlCheck", "package": "PkgBadlyFormedXml", "filename": "metadata.xml", "error": "xmlParseEntityRef: no name, line 7, column 34 (metadata.xml, line 7)"}

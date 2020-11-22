@@ -1,2 +1,0 @@
-PackageMetadataXmlCheck/PkgMetadataXmlInvalidPkgRef
-  PkgMetadataXmlInvalidPkgRef: package metadata.xml <pkg/> references unknown/invalid package: 'nonexistent/pkg'

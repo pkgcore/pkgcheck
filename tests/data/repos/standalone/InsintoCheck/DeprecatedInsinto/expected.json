@@ -1,0 +1,10 @@
+{"__class__": "DeprecatedInsinto", "category": "InsintoCheck", "package": "DeprecatedInsinto", "version": "0", "line": "insinto /etc/conf.d", "lineno": 7, "cmd": "doconfd or newconfd"}
+{"__class__": "DeprecatedInsinto", "category": "InsintoCheck", "package": "DeprecatedInsinto", "version": "0", "line": "insinto /etc/env.d", "lineno": 9, "cmd": "doenvd or newenvd"}
+{"__class__": "DeprecatedInsinto", "category": "InsintoCheck", "package": "DeprecatedInsinto", "version": "0", "line": "insinto /etc/init.d", "lineno": 11, "cmd": "doinitd or newinitd"}
+{"__class__": "DeprecatedInsinto", "category": "InsintoCheck", "package": "DeprecatedInsinto", "version": "0", "line": "insinto /etc/pam.d", "lineno": 13, "cmd": "dopamd or newpamd from pam.eclass"}
+{"__class__": "DeprecatedInsinto", "category": "InsintoCheck", "package": "DeprecatedInsinto", "version": "0", "line": "insinto /usr/share/applications", "lineno": 15, "cmd": "domenu or newmenu from desktop.eclass"}
+{"__class__": "DeprecatedInsinto", "category": "InsintoCheck", "package": "DeprecatedInsinto", "version": "1", "line": "insinto /usr/share/doc/${PF}", "lineno": 8, "cmd": "docinto/dodoc"}
+{"__class__": "DeprecatedInsinto", "category": "InsintoCheck", "package": "DeprecatedInsinto", "version": "1", "line": "insinto /usr/share/doc/\"${PF}\"", "lineno": 10, "cmd": "docinto/dodoc"}
+{"__class__": "DeprecatedInsinto", "category": "InsintoCheck", "package": "DeprecatedInsinto", "version": "1", "line": "insinto /usr/share/doc/${PF}", "lineno": 12, "cmd": "docinto/dodoc"}
+{"__class__": "DeprecatedInsinto", "category": "InsintoCheck", "package": "DeprecatedInsinto", "version": "1", "line": "insinto /usr/share/doc/${PF}/examples", "lineno": 14, "cmd": "docinto/dodoc"}
+{"__class__": "DeprecatedInsinto", "category": "InsintoCheck", "package": "DeprecatedInsinto", "version": "1", "line": "insinto /usr/share/doc/\"${PF}\"/examples", "lineno": 16, "cmd": "docinto/dodoc"}

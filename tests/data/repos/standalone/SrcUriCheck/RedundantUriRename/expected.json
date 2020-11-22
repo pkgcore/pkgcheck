@@ -1,0 +1,2 @@
+{"__class__": "RedundantUriRename", "category": "SrcUriCheck", "package": "RedundantUriRename", "version": "0", "message": "redundant rename: https://github.com/pkgcore/pkgcheck/RedundantUriRename-0.tar.gz -> RedundantUriRename-0.tar.gz"}
+{"__class__": "RedundantUriRename", "category": "SrcUriCheck", "package": "RedundantUriRename", "version": "1", "message": "redundant rename: mirror://used/pkgcore/pkgcheck/RedundantUriRename-1.tar.gz -> RedundantUriRename-1.tar.gz"}

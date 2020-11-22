@@ -1,0 +1,3 @@
+{"__class__": "RedundantDodir", "category": "RedundantDodirCheck", "package": "RedundantDodir", "version": "0", "line": "dodir /foo/bar", "lineno": 9, "cmd": "insinto"}
+{"__class__": "RedundantDodir", "category": "RedundantDodirCheck", "package": "RedundantDodir", "version": "0", "line": "dodir /foo/bin", "lineno": 19, "cmd": "exeinto"}
+{"__class__": "RedundantDodir", "category": "RedundantDodirCheck", "package": "RedundantDodir", "version": "0", "line": "dodir /foo/doc", "lineno": 24, "cmd": "docinto"}

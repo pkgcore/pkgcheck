@@ -1,0 +1,1 @@
+{"__class__": "UnstatedIuse", "category": "SrcUriCheck", "package": "UnstatedIuse", "version": "0", "attr": "fetchables", "flags": ["used"], "profile": "default/amd64", "num_profiles": 2}

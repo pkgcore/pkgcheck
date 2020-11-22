@@ -1,0 +1,1 @@
+{"__class__": "InvalidBdepend", "category": "DependencyCheck", "package": "InvalidBdepend", "version": "0", "attr": "bdepend", "msg": "failed parsing BDEPEND: 'stub1' is unparseable: flagged token- invalid package atom: 'stub1'"}

@@ -1,0 +1,1 @@
+{"__class__": "MissingChksum", "category": "ManifestCheck", "package": "MissingChksum", "version": "0", "filename": "MissingChksum-0.tar.gz", "missing": ["blake2b"], "existing": ["rmd160", "sha1", "sha256", "size"]}

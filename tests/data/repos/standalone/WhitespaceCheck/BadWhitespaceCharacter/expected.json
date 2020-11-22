@@ -1,0 +1,3 @@
+{"__class__": "BadWhitespaceCharacter", "category": "WhitespaceCheck", "package": "BadWhitespaceCharacter", "version": "0", "line": "\"\\t# bad chars aren't ignored\\xa0in comments\\n\"", "lineno": 8, "char": "'\\xa0'", "position": 28}
+{"__class__": "BadWhitespaceCharacter", "category": "WhitespaceCheck", "package": "BadWhitespaceCharacter", "version": "0", "line": "'\\tcd \"${S}\"/cpp ||\\xa0die # or\\xa0inline comments\\n'", "lineno": 9, "char": "'\\xa0'", "position": 18}
+{"__class__": "BadWhitespaceCharacter", "category": "WhitespaceCheck", "package": "BadWhitespaceCharacter", "version": "0", "line": "'\\tcd \"${S}\"/cpp ||\\xa0die # or\\xa0inline comments\\n'", "lineno": 9, "char": "'\\xa0'", "position": 27}

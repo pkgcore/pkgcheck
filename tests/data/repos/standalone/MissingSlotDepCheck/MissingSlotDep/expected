@@ -1,2 +1,0 @@
-MissingSlotDepCheck/MissingSlotDep
-  MissingSlotDep: version 0: 'stub/slotted' matches more than one slot: [ 0, 1 ]

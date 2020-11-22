@@ -1,0 +1,2 @@
+{"__class__": "DeprecatedDep", "category": "DeprecatedDep", "package": "nonoptional", "version": "0", "attr": "RDEPEND", "atoms": ["stub/deprecated"]}
+{"__class__": "DeprecatedDep", "category": "DeprecatedDep", "package": "optional", "version": "0", "attr": "RDEPEND", "atoms": ["stub/deprecated"]}

@@ -1,7 +1,0 @@
-profiles
-  UnknownProfileUse: 'unknown_use/unknown_stable_use/use.force': unknown USE flag: [ '-use_force' ]
-  UnknownProfileUse: 'unknown_use/unknown_stable_use/use.stable.force': unknown USE flag: [ 'use_stable_force' ]
-  UnknownProfileUse: 'unknown_use/unknown_stable_use_mask/use.mask': unknown USE flag: [ '-use_mask' ]
-  UnknownProfileUse: 'unknown_use/unknown_stable_use_mask/use.stable.mask': unknown USE flag: [ 'use_stable_mask' ]
-  UnknownProfileUse: 'unknown_use/use.force': unknown USE flag: [ 'use_force' ]
-  UnknownProfileUse: 'unknown_use/use.mask': unknown USE flag: [ 'use_mask' ]

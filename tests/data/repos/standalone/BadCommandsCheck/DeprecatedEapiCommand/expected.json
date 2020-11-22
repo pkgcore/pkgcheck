@@ -1,0 +1,1 @@
+{"__class__": "DeprecatedEapiCommand", "category": "BadCommandsCheck", "package": "DeprecatedEapiCommand", "version": "0", "line": "dohtml doc/*", "lineno": 8, "command": "dohtml", "eapi": "6"}

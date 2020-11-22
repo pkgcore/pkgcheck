@@ -1,0 +1,1 @@
+{"__class__": "RequiredUseDefaults", "category": "RequiredUseCheck", "package": "RequiredUseDefaults", "version": "0", "required_use": "exactly-one-of ( required used )", "use": [], "keyword": null, "profile": "default/amd64", "num_profiles": 1}

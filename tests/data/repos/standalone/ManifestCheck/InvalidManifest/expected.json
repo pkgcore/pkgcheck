@@ -1,0 +1,1 @@
+{"__class__": "InvalidManifest", "category": "ManifestCheck", "package": "InvalidManifest", "attr": "manifest", "msg": "failed parsing 'ManifestCheck/InvalidManifest/Manifest': invalid data format"}

@@ -1,2 +1,0 @@
-RequiredUseCheck/RequiredUseDefaults
-  RequiredUseDefaults: version 0: profile: 'default/amd64' failed REQUIRED_USE: exactly-one-of ( required used )

@@ -1,0 +1,3 @@
+{"__class__": "InvalidSrcUri", "category": "SrcUriCheck", "package": "InvalidSrcUri", "version": "0", "attr": "fetchables", "msg": "failed parsing SRC_URI: '?' is unparseable: flagged token- ?"}
+{"__class__": "InvalidSrcUri", "category": "SrcUriCheck", "package": "InvalidSrcUri", "version": "1", "attr": "fetchables", "msg": "failed parsing SRC_URI: '( )' is unparseable"}
+{"__class__": "InvalidSrcUri", "category": "SrcUriCheck", "package": "InvalidSrcUri", "version": "2", "attr": "fetchables", "msg": "failed parsing SRC_URI: 'https://github.com/pkgcore/pkgcheck/InvalidSrcUri-2.tar.gz/' is unparseable: flagged token- missing filename: 'https://github.com/pkgcore/pkgcheck/InvalidSrcUri-2.tar.gz/'"}

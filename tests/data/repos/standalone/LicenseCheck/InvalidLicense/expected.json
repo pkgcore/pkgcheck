@@ -1,0 +1,3 @@
+{"__class__": "InvalidLicense", "category": "LicenseCheck", "package": "InvalidLicense", "version": "0", "attr": "license", "msg": "failed parsing LICENSE: '( )' is unparseable"}
+{"__class__": "InvalidLicense", "category": "LicenseCheck", "package": "InvalidLicense", "version": "1", "attr": "license", "msg": "failed parsing LICENSE: '?' is unparseable: flagged token- ?"}
+{"__class__": "InvalidLicense", "category": "LicenseCheck", "package": "InvalidLicense", "version": "2", "attr": "license", "msg": "failed parsing LICENSE: 'used?' is unparseable: flagged token- used?"}

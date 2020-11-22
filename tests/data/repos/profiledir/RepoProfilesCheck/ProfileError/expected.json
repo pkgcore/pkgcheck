@@ -1,0 +1,1 @@
+{"__class__": "ProfileError", "msg": "profiledir::profiles/profiles.desc, line 1: invalid profile line format: should be 'arch profile status'"}

@@ -1,0 +1,2 @@
+{"__class__": "UnstatedIuse", "category": "LicenseCheck", "package": "UnstatedIuse", "version": "0", "attr": "license", "flags": ["used"], "profile": "default/amd64", "num_profiles": null}
+{"__class__": "UnstatedIuse", "category": "LicenseCheck", "package": "UnstatedIuse", "version": "0", "attr": "license", "flags": ["used"], "profile": "default/x86", "num_profiles": null}

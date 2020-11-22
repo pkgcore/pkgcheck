@@ -1,0 +1,1 @@
+{"__class__": "InvalidRdepend", "category": "DependencyCheck", "package": "InvalidRdepend", "version": "0", "attr": "rdepend", "msg": "failed parsing RDEPEND: 'stub1' is unparseable: flagged token- invalid package atom: 'stub1'"}

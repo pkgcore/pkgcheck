@@ -1,0 +1,6 @@
+{"__class__": "UnknownProfileUse", "path": "unknown_use/unknown_stable_use/use.force", "flags": ["-use_force"]}
+{"__class__": "UnknownProfileUse", "path": "unknown_use/unknown_stable_use/use.stable.force", "flags": ["use_stable_force"]}
+{"__class__": "UnknownProfileUse", "path": "unknown_use/unknown_stable_use_mask/use.mask", "flags": ["-use_mask"]}
+{"__class__": "UnknownProfileUse", "path": "unknown_use/unknown_stable_use_mask/use.stable.mask", "flags": ["use_stable_mask"]}
+{"__class__": "UnknownProfileUse", "path": "unknown_use/use.force", "flags": ["use_force"]}
+{"__class__": "UnknownProfileUse", "path": "unknown_use/use.mask", "flags": ["use_mask"]}

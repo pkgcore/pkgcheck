@@ -1,0 +1,2 @@
+{"__class__": "VisibleVcsPkg", "category": "VisibilityCheck", "package": "VisibleVcsPkg", "version": "0", "arch": "amd64", "profile": "default/amd64", "num_profiles": 2}
+{"__class__": "VisibleVcsPkg", "category": "VisibilityCheck", "package": "VisibleVcsPkg", "version": "1", "arch": "~x86", "profile": "default/x86", "num_profiles": 1}

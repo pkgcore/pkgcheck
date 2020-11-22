@@ -1,0 +1,4 @@
+{"__class__": "BadHomepage", "category": "HomepageCheck", "package": "BadHomepage", "version": "0", "msg": "HOMEPAGE empty/unset"}
+{"__class__": "BadHomepage", "category": "HomepageCheck", "package": "BadHomepage", "version": "1", "msg": "HOMEPAGE='github.com/pkgcore/pkgcheck' lacks protocol"}
+{"__class__": "BadHomepage", "category": "HomepageCheck", "package": "BadHomepage", "version": "2", "msg": "HOMEPAGE='gopher://github.com/pkgcore/pkgcheck' uses unsupported protocol 'gopher'"}
+{"__class__": "BadHomepage", "category": "HomepageCheck", "package": "BadHomepage", "version": "3", "msg": "unspecific HOMEPAGE: https://www.gentoo.org"}

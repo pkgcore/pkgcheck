@@ -1,0 +1,1 @@
+{"__class__": "ConflictingChksums", "category": "test", "package": "ConflictingChksums", "version": "0", "filename": "foo.tar.gz", "chksums": ["blake2b"], "pkgs": ["ManifestCollisionCheck/ConflictingChksums"]}

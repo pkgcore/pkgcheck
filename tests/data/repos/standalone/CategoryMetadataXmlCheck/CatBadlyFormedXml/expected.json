@@ -1,0 +1,1 @@
+{"__class__": "CatBadlyFormedXml", "category": "CatBadlyFormedXml", "filename": "metadata.xml", "error": "xmlParseEntityRef: no name, line 4, column 34 (metadata.xml, line 4)"}

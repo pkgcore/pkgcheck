@@ -1,0 +1,1 @@
+{"__class__": "MissingSlotDep", "category": "MissingSlotDepCheck", "package": "MissingSlotDep", "version": "0", "dep": "stub/slotted", "dep_slots": ["0", "1"]}

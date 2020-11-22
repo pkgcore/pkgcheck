@@ -1,0 +1,1 @@
+{"__class__": "NonsolvableDepsInDev", "category": "NonsolvableDepsInDev", "package": "masked", "version": "0", "attr": "depend", "keyword": "~amd64", "profile": "visibility/amd64/dev", "deps": ["stub/masked"], "profile_status": "dev", "profile_deprecated": false, "num_profiles": null}

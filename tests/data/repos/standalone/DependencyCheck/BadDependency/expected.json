@@ -1,0 +1,4 @@
+{"__class__": "BadDependency", "category": "DependencyCheck", "package": "BadDependency", "version": "0", "depset": "depend", "atom": "!!stub/stub3:=", "msg": "= slot operator used in blocker"}
+{"__class__": "BadDependency", "category": "DependencyCheck", "package": "BadDependency", "version": "0", "depset": "depend", "atom": "stub/stub1:=", "msg": "= slot operator used inside || block"}
+{"__class__": "BadDependency", "category": "DependencyCheck", "package": "BadDependency", "version": "0", "depset": "depend", "atom": "stub/stub2:=", "msg": "= slot operator used inside || block"}
+{"__class__": "BadDependency", "category": "DependencyCheck", "package": "BadDependency", "version": "0", "depset": "depend", "atom": "!DependencyCheck/BadDependency", "msg": "package blocks itself"}

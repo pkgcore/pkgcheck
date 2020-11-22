@@ -1,3 +1,0 @@
-IuseCheck/InvalidUseFlags
-  InvalidUseFlags: version 0: invalid USE flags: '+', '+flag1', '-', '-flag2'
-  InvalidUseFlags: version 4: invalid USE flags: '+', '-'

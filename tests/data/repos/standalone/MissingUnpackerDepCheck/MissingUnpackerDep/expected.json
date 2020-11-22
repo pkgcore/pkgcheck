@@ -1,0 +1,1 @@
+{"__class__": "MissingUnpackerDep", "category": "MissingUnpackerDepCheck", "package": "MissingUnpackerDep", "version": "0", "eapi": "0", "filenames": ["MissingUnpackerDep-0.zip"], "unpackers": ["app-arch/unzip"]}

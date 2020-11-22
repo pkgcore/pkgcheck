@@ -1,0 +1,1 @@
+{"__class__": "PkgInvalidXml", "category": "PackageMetadataXmlCheck", "package": "PkgInvalidXml", "filename": "metadata.xml", "message": "line 7, col 0: (SCHEMAV_ELEMENT_CONTENT) Element 'description': This element is not expected."}

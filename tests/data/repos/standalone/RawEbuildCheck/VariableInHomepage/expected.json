@@ -1,0 +1,1 @@
+{"__class__": "VariableInHomepage", "category": "RawEbuildCheck", "package": "VariableInHomepage", "version": "0", "variables": ["${PN}"]}

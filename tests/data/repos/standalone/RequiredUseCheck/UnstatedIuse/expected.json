@@ -1,0 +1,1 @@
+{"__class__": "UnstatedIuse", "category": "RequiredUseCheck", "package": "UnstatedIuse", "version": "0", "attr": "required_use", "flags": ["used"], "profile": "default/amd64", "num_profiles": 2}

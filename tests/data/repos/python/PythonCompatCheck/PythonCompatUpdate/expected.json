@@ -1,0 +1,3 @@
+{"__class__": "PythonCompatUpdate", "category": "PythonCompatCheck", "package": "PythonCompatUpdate", "version": "0", "updates": ["python3_8", "python3_9"]}
+{"__class__": "PythonCompatUpdate", "category": "PythonCompatCheck", "package": "PythonCompatUpdate", "version": "1", "updates": ["python3_9"]}
+{"__class__": "PythonCompatUpdate", "category": "PythonCompatCheck", "package": "PythonCompatUpdate", "version": "2", "updates": ["python3_9"]}

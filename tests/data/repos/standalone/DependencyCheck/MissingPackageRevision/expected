@@ -1,2 +1,0 @@
-DependencyCheck/MissingPackageRevision
-  MissingPackageRevision: version 0: "=" operator used without package revision: RDEPEND="=stub/stub1-0"

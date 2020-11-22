@@ -1,0 +1,2 @@
+{"__class__": "InvalidEapi", "category": "SourcingCheck", "package": "InvalidEapi", "version": "0", "attr": "eapi", "msg": "EAPI '9999' is not supported"}
+{"__class__": "InvalidEapi", "category": "SourcingCheck", "package": "InvalidEapi", "version": "1", "attr": "eapi", "msg": "invalid EAPI: 'invalid!'"}

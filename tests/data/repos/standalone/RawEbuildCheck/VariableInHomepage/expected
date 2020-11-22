@@ -1,2 +1,0 @@
-RawEbuildCheck/VariableInHomepage
-  VariableInHomepage: version 0: HOMEPAGE includes variable: ${PN}

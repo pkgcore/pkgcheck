@@ -1,0 +1,1 @@
+{"__class__": "BannedEapiCommand", "category": "BadCommandsCheck", "package": "BannedEapiCommand", "version": "0", "line": "dohtml doc/*", "lineno": 8, "command": "dohtml", "eapi": "7"}

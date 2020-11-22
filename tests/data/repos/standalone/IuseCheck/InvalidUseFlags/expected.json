@@ -1,0 +1,2 @@
+{"__class__": "InvalidUseFlags", "category": "IuseCheck", "package": "InvalidUseFlags", "version": "0", "flags": ["+", "+flag1", "-", "-flag2"]}
+{"__class__": "InvalidUseFlags", "category": "IuseCheck", "package": "InvalidUseFlags", "version": "4", "flags": ["+", "-"]}

@@ -1,0 +1,4 @@
+{"__class__": "MissingUseDepDefault", "category": "DependencyCheck", "package": "MissingUseDepDefault", "version": "0", "attr": "BDEPEND", "atom": "stub/stub3[foo?]", "flag": "foo", "pkgs": ["stub/stub3-0"]}
+{"__class__": "MissingUseDepDefault", "category": "DependencyCheck", "package": "MissingUseDepDefault", "version": "0", "attr": "DEPEND", "atom": "stub/stub1[foo]", "flag": "foo", "pkgs": ["stub/stub1-0"]}
+{"__class__": "MissingUseDepDefault", "category": "DependencyCheck", "package": "MissingUseDepDefault", "version": "0", "attr": "PDEPEND", "atom": "stub/stub4[!foo?]", "flag": "foo", "pkgs": ["stub/stub4-0"]}
+{"__class__": "MissingUseDepDefault", "category": "DependencyCheck", "package": "MissingUseDepDefault", "version": "0", "attr": "RDEPEND", "atom": "stub/stub2[-foo]", "flag": "foo", "pkgs": ["stub/stub2-0"]}

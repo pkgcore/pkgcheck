@@ -1,0 +1,1 @@
+{"__class__": "InvalidDepend", "category": "DependencyCheck", "package": "InvalidDepend", "version": "0", "attr": "depend", "msg": "failed parsing DEPEND: 'stub1' is unparseable: flagged token- invalid package atom: 'stub1'"}

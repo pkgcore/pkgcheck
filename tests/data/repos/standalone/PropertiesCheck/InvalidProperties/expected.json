@@ -1,0 +1,1 @@
+{"__class__": "InvalidProperties", "category": "PropertiesCheck", "package": "InvalidProperties", "version": "0", "attr": "properties", "msg": "failed parsing PROPERTIES: '!used ( interactive )' is unparseable: flagged token- string index out of range"}

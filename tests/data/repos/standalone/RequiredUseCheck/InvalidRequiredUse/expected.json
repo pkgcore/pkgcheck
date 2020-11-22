@@ -1,0 +1,3 @@
+{"__class__": "InvalidRequiredUse", "category": "RequiredUseCheck", "package": "InvalidRequiredUse", "version": "0", "attr": "required_use", "msg": "failed parsing REQUIRED_USE: '|| ( )' is unparseable"}
+{"__class__": "InvalidRequiredUse", "category": "RequiredUseCheck", "package": "InvalidRequiredUse", "version": "1", "attr": "required_use", "msg": "failed parsing REQUIRED_USE: '?' is unparseable: flagged token- ?"}
+{"__class__": "InvalidRequiredUse", "category": "RequiredUseCheck", "package": "InvalidRequiredUse", "version": "2", "attr": "required_use", "msg": "failed parsing REQUIRED_USE: 'required?' is unparseable: flagged token- required?"}
