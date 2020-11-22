@@ -338,48 +338,12 @@ class TestPkgcheckScan:
         return self.test_scan_repo(repo, capsysbinary, cache_dir, tmp_path, verbosity=1)
 
     def _get_results(self, path):
+        """Return the set of result objects from a given json stream file."""
         try:
             with open(pjoin(self.repos_data, path)) as f:
                 return set(reporters.JsonStream.from_iter(f))
         except FileNotFoundError:
             return set()
-
-    @pytest.mark.parametrize('check, result', _all_results)
-    def test_scan_verify_result(self, check, result, capsys, cache_dir, tmp_path):
-        """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
-        tested = False
-        check_name = check.__name__
-        keyword = result.__name__
-        for repo in os.listdir(self.repos_data):
-            try:
-                if keyword not in self._checks[repo][check_name]:
-                    continue
-            except KeyError:
-                continue
-
-            # verify the expected results were seen during the repo scans
-            expected_results = self._get_results(f'{repo}/{check_name}/{keyword}/expected.json')
-            if not expected_results:
-                continue
-            assert expected_results, 'regular results must always exist'
-            assert self._render_results(expected_results), 'failed rendering results'
-            assert expected_results <= self._results[repo]
-            self._results[repo] -= expected_results
-
-            # when expected verbose results exist use them, otherwise fallback to using the regular ones
-            expected_verbose_results = self._get_results(f'{repo}/{check_name}/{keyword}/expected-verbose.json')
-            if expected_verbose_results:
-                assert expected_verbose_results <= self._verbose_results[repo]
-                assert self._render_results(expected_verbose_results), 'failed rendering verbose results'
-                self._verbose_results[repo] -= expected_verbose_results
-            else:
-                assert expected_results <= self._verbose_results[repo]
-                self._verbose_results[repo] -= expected_results
-
-            tested = True
-
-        if not tested:
-            pytest.skip('expected test data not available')
 
     def _render_results(self, results, **kwargs):
         """Render a given set of result objects into their related string form."""
@@ -392,14 +356,32 @@ class TestPkgcheckScan:
             return output
 
     @pytest.mark.parametrize('repo', repos)
-    def test_scan_verify_repo(self, repo):
-        """Verify repo scans didn't return any extra, unknown results."""
-        if self._results[repo]:
-            output = self._render_results(self._results[repo])
-            pytest.fail(f'{repo} repo missing results:\n{output}')
-        if self._verbose_results[repo]:
-            output = self._render_results(self._verbose_results[repo])
-            pytest.fail(f'{repo} repo missing verbose results:\n{output}')
+    def test_scan_verify(self, repo, capsys, cache_dir, tmp_path):
+        """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
+        results = set()
+        verbose_results = set()
+        for check, keywords in self._checks[repo].items():
+            for keyword in keywords:
+                # verify the expected results were seen during the repo scans
+                expected_results = self._get_results(f'{repo}/{check}/{keyword}/expected.json')
+                assert expected_results, 'regular results must always exist'
+                assert self._render_results(expected_results), 'failed rendering results'
+                results.update(expected_results)
+
+                # when expected verbose results exist use them, otherwise fallback to using the regular ones
+                expected_verbose_results = self._get_results(f'{repo}/{check}/{keyword}/expected-verbose.json')
+                if expected_verbose_results:
+                    assert self._render_results(expected_verbose_results), 'failed rendering verbose results'
+                    verbose_results.update(expected_verbose_results)
+                else:
+                    verbose_results.update(expected_results)
+
+        if results != self._results[repo]:
+            output = self._render_results(results ^ self._results[repo])
+            pytest.fail(f'{repo} repo conflicting results:\n{output}')
+        if verbose_results != self._verbose_results[repo]:
+            output = self._render_results(verbose_results ^ self._verbose_results[repo])
+            pytest.fail(f'{repo} repo conflicting results:\n{output}')
 
     @pytest.mark.parametrize('check, result', _all_results)
     def test_scan_fix(self, check, result, capsys, cache_dir, tmp_path):
