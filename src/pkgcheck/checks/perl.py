@@ -53,7 +53,7 @@ class _PerlConnection:
             self.perl_client = subprocess.Popen(
                 ['perl', perl_script, socket_path], stderr=subprocess.PIPE)
         except FileNotFoundError:
-            raise SkipOptionalCheck(self, 'perl not installed on system')
+            raise SkipOptionalCheck(PerlCheck, 'perl not installed on system')
 
         sock.settimeout(1)
         try:
@@ -63,7 +63,7 @@ class _PerlConnection:
             if options.verbosity > 0:
                 stderr = self.perl_client.stderr.read().decode().strip()
                 err_msg += f': {stderr}'
-            raise SkipOptionalCheck(self, err_msg)
+            raise SkipOptionalCheck(PerlCheck, err_msg)
 
     def normalize(self, version):
         """Normalize a given version number to its perl equivalent."""

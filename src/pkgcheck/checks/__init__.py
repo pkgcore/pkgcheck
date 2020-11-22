@@ -164,7 +164,11 @@ class SkipOptionalCheck(UserException):
     """
 
     def __init__(self, check, msg):
-        check_name = check.__class__.__name__
+        if isinstance(check, Check):
+            check_name = check.__class__.__name__
+        else:
+            # assume the check param is a raw class object
+            check_name = check.__name__
         super().__init__(f'{check_name}: {msg}')
 
 
