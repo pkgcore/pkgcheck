@@ -27,6 +27,16 @@ IUSE_PREFIX = 'python_targets_'
 IUSE_PREFIX_S = 'python_single_target_'
 
 
+def get_python_eclass(pkg):
+    eclasses = ECLASSES.intersection(pkg.inherited)
+    # All three eclasses block one another, but check and throw an error
+    # just in case it isn't caught when sourcing the ebuild.
+    if len(eclasses) > 1:
+        raise ValueError(
+            f"python eclasses are mutually exclusive: [ {', '.join(eclasses)} ]")
+    return next(iter(eclasses)) if eclasses else None
+
+
 class MissingPythonEclass(results.VersionResult, results.Warning):
     """Package depends on Python but does not use the eclasses.
 
@@ -129,16 +139,6 @@ class PythonCheck(Check):
         PythonMissingDeps, PythonRuntimeDepInAnyR1, PythonEclassError,
     ])
 
-    @staticmethod
-    def get_python_eclass(pkg):
-        eclasses = ECLASSES.intersection(pkg.inherited)
-        # All three eclasses block one another, but check and throw an error
-        # just in case it isn't caught when sourcing the ebuild.
-        if len(eclasses) > 1:
-            raise ValueError(
-                f"python eclasses are mutually exclusive: [ {', '.join(eclasses)} ]")
-        return next(iter(eclasses)) if eclasses else None
-
     def scan_tree_recursively(self, deptree, expected_cls):
         for x in deptree:
             if not isinstance(x, expected_cls):
@@ -189,7 +189,7 @@ class PythonCheck(Check):
 
     def feed(self, pkg):
         try:
-            eclass = self.get_python_eclass(pkg)
+            eclass = get_python_eclass(pkg)
         except ValueError as e:
             yield PythonEclassError(str(e), pkg=pkg)
             return
@@ -293,22 +293,25 @@ class PythonCompatCheck(Check):
             targets.append(target[len(IUSE_PREFIX):])
         any_targets = tuple(sorted(targets))
 
-        self.targets = {
+        self.params = {
             'python-r1': {
                 'targets': multi_targets,
                 'prefix': IUSE_PREFIX,
-                'func': self._python_r1,
             },
             'python-single-r1': {
                 'targets': single_targets,
                 'prefix': IUSE_PREFIX_S,
-                'func': self._python_r1,
             },
             'python-any-r1': {
                 'targets': any_targets,
                 'prefix': (IUSE_PREFIX, IUSE_PREFIX_S),
-                'func': self._python_any_r1,
             },
+        }
+
+        self.funcs = {
+            'python-r1': self._python_r1,
+            'python-single-r1': self._python_r1,
+            'python-any-r1': self._python_any_r1,
         }
 
         self.conditional_ops = {'?', '='}
@@ -336,10 +339,7 @@ class PythonCompatCheck(Check):
                     deps.add(p)
         return deps
 
-    def _python_r1(self, eclass, pkg):
-        targets = self.targets[eclass]['targets']
-        prefix = self.targets[eclass]['prefix']
-
+    def _python_r1(self, pkg, targets, prefix):
         # determine if any available python targets are missing
         try:
             latest_target = sorted(x for x in pkg.iuse_stripped if x.startswith(prefix))[-1]
@@ -382,9 +382,7 @@ class PythonCompatCheck(Check):
                 supported = (x[len(prefix):] for x in sorted(supported))
                 yield PythonCompatUpdate(supported, pkg=pkg)
 
-    def _python_any_r1(self, eclass, pkg):
-        targets = self.targets[eclass]['targets']
-        prefix = self.targets[eclass]['prefix']
+    def _python_any_r1(self, pkg, targets, prefix):
         deps = self.deps(pkg, attrs=('depend', 'bdepend'))
         interp_deps = set()
         for dep in deps:
@@ -436,9 +434,7 @@ class PythonCompatCheck(Check):
 
     def feed(self, pkg):
         try:
-            eclass = PythonCheck.get_python_eclass(pkg)
-        except ValueError:
+            eclass = get_python_eclass(pkg)
+            yield from self.funcs[eclass](pkg, **self.params[eclass])
+        except (KeyError, ValueError):
             return
-
-        if eclass is not None:
-            yield from self.targets[eclass]['func'](eclass, pkg)
