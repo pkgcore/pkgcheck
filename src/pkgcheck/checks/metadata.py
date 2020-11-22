@@ -151,29 +151,30 @@ class LicenseCheck(Check):
 class _UseFlagsResult(results.VersionResult, results.Error):
     """Generic USE flags result."""
 
-    _type = None
-
     def __init__(self, flags, **kwargs):
         super().__init__(**kwargs)
         self.flags = tuple(flags)
 
-    @property
-    def desc(self):
+    def _desc(self, flag_type):
         s = pluralism(self.flags)
         flags = ', '.join(map(repr, sorted(self.flags)))
-        return f'{self._type} USE flag{s}: {flags}'
+        return f'{flag_type} USE flag{s}: {flags}'
 
 
 class InvalidUseFlags(_UseFlagsResult):
     """Package IUSE contains invalid USE flags."""
 
-    _type = 'invalid'
+    @property
+    def desc(self):
+        return self._desc('invalid')
 
 
 class UnknownUseFlags(_UseFlagsResult):
     """Package IUSE contains unknown USE flags."""
 
-    _type = 'unknown'
+    @property
+    def desc(self):
+        return self._desc('unknown')
 
 
 class IuseCheck(Check):
