@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+# Script to run pkgcheck with a fake config used for more easily working
+# with test data.
+
+import atexit
+import os
+import sys
+import tempfile
+import textwrap
+import subprocess
+from functools import partial
+
+from pkgcore import const as pkgcore_const
+from snakeoil.osutils import pjoin
+
+
+def _remove_config(tempdir):
+    try:
+        tempdir.cleanup()
+    except IOError:
+        pass
+
+
+tempdir = tempfile.TemporaryDirectory(prefix='pkgcheck-test-config-')
+atexit.register(partial(_remove_config, tempdir))
+
+stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
+main_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+repo_dir = pjoin(main_dir, 'tests', 'repos')
+with open(pjoin(tempdir.name, 'repos.conf'), 'w') as f:
+    f.write(textwrap.dedent(f"""\
+        [DEFAULT]
+        main-repo = stubrepo
+
+        [stubrepo]
+        location = {stubrepo}
+    """))
+    for repo in os.listdir(repo_dir):
+        f.write(f'[{repo}]\nlocation = {pjoin(repo_dir, repo)}\n')
+
+pkgcheck = pjoin(main_dir, 'bin', 'pkgcheck')
+args = sys.argv[1:]
+if args[0] == 'scan':
+    # ignore system/user config settings
+    args = ['scan', '--config', 'no'] + args[1:]
+cmd = [pkgcheck, '--config', tempdir.name] + args
+subprocess.run(cmd)
