@@ -321,13 +321,11 @@ class PythonCompatCheck(Check):
             return
 
         deps = self.deps(pkg, attrs=attrs)
-        interp_deps = set()
-        for dep in deps:
-            if dep.key == 'dev-lang/python' and dep.slot is not None:
-                interp_deps.add(f"python{dep.slot.replace('.', '_')}")
 
         try:
-            latest_target = sorted(interp_deps)[-1]
+            latest_target = sorted(
+                f"python{x.slot.replace('.', '_')}" for x in deps
+                if x.key == 'dev-lang/python' and x.slot is not None)[-1]
         except IndexError:
             return
 
