@@ -317,8 +317,7 @@ class PythonCompatCheck(Check):
         self.conditional_ops = {'?', '='}
         self.use_defaults = {'(+)', '(-)'}
 
-    def strip_use(self, atom):
-        stripped_use = []
+    def python_use_flags(self, atom, prefix):
         for x in atom.use:
             if x.startswith(('-', '!')):
                 continue
@@ -326,8 +325,14 @@ class PythonCompatCheck(Check):
                 x = x[:-1]
             if x[-3:] in self.use_defaults:
                 x = x[:-3]
-            stripped_use.append(x)
-        return stripped_use
+            if x.startswith(prefix):
+                yield x
+
+    def python_deps(self, deps, prefix):
+        for dep in (x for x in deps if x.use):
+            for use in self.python_use_flags(dep, prefix):
+                yield dep.no_usedeps
+                break
 
     def deps(self, pkg, attrs=None):
         """Iterator of unique dependencies for a given package."""
@@ -357,19 +362,10 @@ class PythonCompatCheck(Check):
             missing.add(target)
 
         if missing:
-            # determine python-based deps
-            python_deps = set()
-            for dep in self.deps(pkg):
-                if dep.use is not None:
-                    for use in self.strip_use(dep):
-                        if use.startswith(prefix):
-                            python_deps.add(dep.no_usedeps)
-                            break
-
             # determine if deps support missing python targets
             supported = set(missing)
             try:
-                for dep in python_deps:
+                for dep in self.python_deps(self.deps(pkg), prefix):
                     # TODO: use query caching for repo matching?
                     latest = sorted(self.options.search_repo.match(dep))[-1]
                     supported &= latest.iuse_stripped
@@ -406,19 +402,10 @@ class PythonCompatCheck(Check):
             missing.add(target)
 
         if missing:
-            # determine python-based deps
-            python_deps = set()
-            for dep in deps:
-                if dep.use is not None:
-                    for use in self.strip_use(dep):
-                        if use.startswith(prefix):
-                            python_deps.add(dep.no_usedeps)
-                            break
-
             # determine if deps support missing python targets
             supported = set(missing)
             try:
-                for dep in python_deps:
+                for dep in self.python_deps(deps, prefix):
                     # TODO: use query caching for repo matching?
                     latest = sorted(self.options.search_repo.match(dep))[-1]
                     supported &= {
