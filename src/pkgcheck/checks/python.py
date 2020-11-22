@@ -278,61 +278,30 @@ class PythonCompatCheck(Check):
         targets = []
         for target, _desc in repo.config.use_expand_desc.get(IUSE_PREFIX[:-1], ()):
             if target[len(IUSE_PREFIX):].startswith('python'):
-                targets.append(target)
+                targets.append(target[len(IUSE_PREFIX):])
         multi_targets = tuple(sorted(targets))
 
         # determine available PYTHON_SINGLE_TARGET use flags
         targets = []
         for target, _desc in repo.config.use_expand_desc.get(IUSE_PREFIX_S[:-1], ()):
             if target[len(IUSE_PREFIX_S):].startswith('python'):
-                targets.append(target)
+                targets.append(target[len(IUSE_PREFIX_S):])
         single_targets = tuple(sorted(targets))
 
-        targets = []
-        for target in multi_targets:
-            targets.append(target[len(IUSE_PREFIX):])
-        any_targets = tuple(sorted(targets))
-
         self.params = {
-            'python-r1': {
-                'targets': multi_targets,
-                'prefix': IUSE_PREFIX,
-            },
-            'python-single-r1': {
-                'targets': single_targets,
-                'prefix': IUSE_PREFIX_S,
-            },
-            'python-any-r1': {
-                'targets': any_targets,
-                'prefix': (IUSE_PREFIX, IUSE_PREFIX_S),
-            },
+            'python-r1': (multi_targets, IUSE_PREFIX),
+            'python-single-r1': (single_targets, IUSE_PREFIX_S),
+            'python-any-r1': (multi_targets, (IUSE_PREFIX, IUSE_PREFIX_S)),
         }
-
-        self.funcs = {
-            'python-r1': self._python_r1,
-            'python-single-r1': self._python_r1,
-            'python-any-r1': self._python_any_r1,
-        }
-
-        self.conditional_ops = {'?', '='}
-        self.use_defaults = {'(+)', '(-)'}
-
-    def python_use_flags(self, atom, prefix):
-        for x in atom.use:
-            if x.startswith(('-', '!')):
-                continue
-            if x[-1] in self.conditional_ops:
-                x = x[:-1]
-            if x[-3:] in self.use_defaults:
-                x = x[:-3]
-            if x.startswith(prefix):
-                yield x
 
     def python_deps(self, deps, prefix):
         for dep in (x for x in deps if x.use):
-            for use in self.python_use_flags(dep, prefix):
-                yield dep.no_usedeps
-                break
+            for x in dep.use:
+                if x.startswith(('-', '!')):
+                    continue
+                if x.startswith(prefix):
+                    yield dep.no_usedeps
+                    break
 
     def deps(self, pkg, attrs=None):
         """Iterator of unique dependencies for a given package."""
@@ -344,54 +313,33 @@ class PythonCompatCheck(Check):
                     deps.add(p)
         return deps
 
-    def _python_r1(self, pkg, targets, prefix):
-        # determine if any available python targets are missing
+    def feed(self, pkg):
         try:
-            latest_target = sorted(x for x in pkg.iuse_stripped if x.startswith(prefix))[-1]
-        except IndexError:
+            eclass = get_python_eclass(pkg)
+            targets, prefix = self.params[eclass]
+        except (KeyError, ValueError):
             return
 
-        # ignore pkgs that probably aren't py3 compatible
-        if latest_target.endswith('python2_7'):
-            return
-
-        missing = set()
-        for target in reversed(targets):
-            if target == latest_target:
-                break
-            missing.add(target)
-
-        if missing:
-            # determine if deps support missing python targets
-            supported = set(missing)
+        if eclass in ('python-r1', 'python-single-r1'):
+            deps = self.deps(pkg)
             try:
-                for dep in self.python_deps(self.deps(pkg), prefix):
-                    # TODO: use query caching for repo matching?
-                    latest = sorted(self.options.search_repo.match(dep))[-1]
-                    supported &= latest.iuse_stripped
-                    if not supported:
-                        return
+                latest_target = sorted(
+                    x[len(prefix):] for x in pkg.iuse_stripped if x.startswith(prefix))[-1]
+            except IndexError:
+                return
+        else:
+            deps = self.deps(pkg, attrs=('depend', 'bdepend'))
+            _interp_deps = set()
+            for dep in deps:
+                if dep.key == 'dev-lang/python' and dep.slot is not None:
+                    _interp_deps.add(f"python{dep.slot.replace('.', '_')}")
+
+            try:
+                latest_target = sorted(_interp_deps)[-1]
             except IndexError:
                 return
 
-            if supported:
-                supported = (x[len(prefix):] for x in sorted(supported))
-                yield PythonCompatUpdate(supported, pkg=pkg)
-
-    def _python_any_r1(self, pkg, targets, prefix):
-        deps = self.deps(pkg, attrs=('depend', 'bdepend'))
-        interp_deps = set()
-        for dep in deps:
-            if dep.key == 'dev-lang/python' and dep.slot is not None:
-                interp_deps.add(f"python{dep.slot.replace('.', '_')}")
-
-        # determine if any available python targets are missing
-        try:
-            latest_target = sorted(interp_deps)[-1]
-        except IndexError:
-            return
-
-        # ignore pkgs that are probably stuck on python2, e.g. chromium
+        # ignore pkgs that probably aren't py3 compatible
         if latest_target == 'python2_7':
             return
 
@@ -408,9 +356,9 @@ class PythonCompatCheck(Check):
                 for dep in self.python_deps(deps, prefix):
                     # TODO: use query caching for repo matching?
                     latest = sorted(self.options.search_repo.match(dep))[-1]
-                    supported &= {
+                    supported.intersection_update(
                         f"python{x.rsplit('python', 1)[-1]}"
-                        for x in latest.iuse_stripped if x.startswith(prefix)}
+                        for x in latest.iuse_stripped if x.startswith(prefix))
                     if not supported:
                         return
             except IndexError:
@@ -418,10 +366,3 @@ class PythonCompatCheck(Check):
 
             if supported:
                 yield PythonCompatUpdate(sorted(supported), pkg=pkg)
-
-    def feed(self, pkg):
-        try:
-            eclass = get_python_eclass(pkg)
-            yield from self.funcs[eclass](pkg, **self.params[eclass])
-        except (KeyError, ValueError):
-            return
