@@ -6,6 +6,7 @@ import pickle
 from pkgcore.ebuild.eclass import Eclass, EclassDocParsingError
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.mappings import ImmutableDict
 
@@ -57,9 +58,11 @@ class EclassAddon(caches.CachedAddon):
                             logger.debug('forcing eclass repo cache regen due to outdated version')
                             os.remove(cache_file)
                             eclasses = {}
+                    except IGNORED_EXCEPTIONS:
+                        raise
                     except FileNotFoundError:
                         pass
-                    except (AttributeError, EOFError, ImportError, IndexError) as e:
+                    except Exception as e:
                         logger.debug('forcing eclass cache regen: %s', e)
                         os.remove(cache_file)
                         eclasses = {}

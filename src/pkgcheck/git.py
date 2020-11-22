@@ -18,6 +18,7 @@ from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values
 from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.iterables import partition
 from snakeoil.klass import jit_attr
@@ -471,9 +472,11 @@ class GitAddon(caches.CachedAddon):
                             logger.debug('forcing git repo cache regen due to outdated version')
                             os.remove(cache_file)
                             git_cache = None
+                    except IGNORED_EXCEPTIONS:
+                        raise
                     except FileNotFoundError:
                         pass
-                    except (AttributeError, EOFError, ImportError, IndexError) as e:
+                    except Exception as e:
                         logger.debug('forcing git repo cache regen: %s', e)
                         os.remove(cache_file)
                         git_cache = None

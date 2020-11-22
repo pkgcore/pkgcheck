@@ -12,6 +12,7 @@ from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.restrictions import packages, values
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.decorators import coroutine
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.klass import jit_attr
@@ -305,9 +306,11 @@ class ProfileAddon(caches.CachedAddon):
                                     'forcing %s profile cache regen '
                                     'due to outdated version', repo.repo_id)
                                 os.remove(cache_file)
+                        except IGNORED_EXCEPTIONS:
+                            raise
                         except FileNotFoundError:
                             pass
-                        except (AttributeError, EOFError, ImportError, IndexError) as e:
+                        except Exception as e:
                             logger.debug('forcing %s profile cache regen: %s', repo.repo_id, e)
                             os.remove(cache_file)
 
