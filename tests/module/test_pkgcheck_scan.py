@@ -191,6 +191,11 @@ class TestPkgcheckScan:
     repos_dir = pjoin(testdir, 'repos')
     repos = tuple(sorted(os.listdir(repos_data)))
 
+    _all_results = []
+    for name, cls in sorted(objects.CHECKS.items()):
+        for result in sorted(cls.known_results, key=attrgetter('__name__')):
+            _all_results.append((cls, result))
+
     @pytest.fixture(autouse=True)
     def _setup(self, testconfig):
         self.args = [project, '--config', testconfig, 'scan', '--config', 'no']
@@ -255,7 +260,7 @@ class TestPkgcheckScan:
 
         # all pkgs that aren't custom targets or stubs must be check/keyword
         allowed = custom_targets | stubs
-        results = {(check.__name__, result.__name__) for check, result in self.results}
+        results = {(check.__name__, result.__name__) for check, result in self._all_results}
         for cat, pkgs in sorted(repo_obj.packages.items()):
             if cat.startswith('stub'):
                 continue
@@ -331,11 +336,6 @@ class TestPkgcheckScan:
     def test_scan_repo_verbose(self, repo, capsysbinary, cache_dir, tmp_path):
         """Scan a target repo in verbose mode, saving results for verfication."""
         return self.test_scan_repo(repo, capsysbinary, cache_dir, tmp_path, verbosity=1)
-
-    _all_results = []
-    for name, cls in sorted(objects.CHECKS.items()):
-        for result in sorted(cls.known_results, key=attrgetter('__name__')):
-            _all_results.append((cls, result))
 
     def _get_results(self, path):
         try:
