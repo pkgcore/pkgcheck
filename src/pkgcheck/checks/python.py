@@ -289,9 +289,9 @@ class PythonCompatCheck(Check):
         single_targets = tuple(sorted(targets))
 
         self.params = {
-            'python-r1': (multi_targets, IUSE_PREFIX),
-            'python-single-r1': (single_targets, IUSE_PREFIX_S),
-            'python-any-r1': (multi_targets, (IUSE_PREFIX, IUSE_PREFIX_S)),
+            'python-r1': (multi_targets, IUSE_PREFIX, None),
+            'python-single-r1': (single_targets, IUSE_PREFIX_S, None),
+            'python-any-r1': (multi_targets, (IUSE_PREFIX, IUSE_PREFIX_S), ('depend', 'bdepend')),
         }
 
     def python_deps(self, deps, prefix):
@@ -316,28 +316,20 @@ class PythonCompatCheck(Check):
     def feed(self, pkg):
         try:
             eclass = get_python_eclass(pkg)
-            targets, prefix = self.params[eclass]
+            targets, prefix, attrs = self.params[eclass]
         except (KeyError, ValueError):
             return
 
-        if eclass == 'python-any-r1':
-            deps = self.deps(pkg, attrs=('depend', 'bdepend'))
-            _interp_deps = set()
-            for dep in deps:
-                if dep.key == 'dev-lang/python' and dep.slot is not None:
-                    _interp_deps.add(f"python{dep.slot.replace('.', '_')}")
+        deps = self.deps(pkg, attrs=attrs)
+        interp_deps = set()
+        for dep in deps:
+            if dep.key == 'dev-lang/python' and dep.slot is not None:
+                interp_deps.add(f"python{dep.slot.replace('.', '_')}")
 
-            try:
-                latest_target = sorted(_interp_deps)[-1]
-            except IndexError:
-                return
-        else:
-            deps = self.deps(pkg)
-            try:
-                latest_target = sorted(
-                    x[len(prefix):] for x in pkg.iuse_stripped if x.startswith(prefix))[-1]
-            except IndexError:
-                return
+        try:
+            latest_target = sorted(interp_deps)[-1]
+        except IndexError:
+            return
 
         # ignore pkgs that probably aren't py3 compatible
         if latest_target == 'python2_7':
