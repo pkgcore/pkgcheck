@@ -312,7 +312,7 @@ class _XmlBaseCheck(Check):
         for el in doc.getroot().iterdescendants():
             if (not el.getchildren() and (el.text is None or not el.text.strip())
                     and not el.tag == 'stabilize-allarches'):
-                yield self.empty_element(loc, el.tag, el.sourceline, pkg=pkg)
+                yield self.empty_element(os.path.basename(loc), el.tag, el.sourceline, pkg=pkg)
 
         for el in doc.findall('.//cat'):
             c = el.text.strip()
@@ -345,7 +345,7 @@ class _XmlBaseCheck(Check):
                         else:
                             indents.add(lineno)
         if indents:
-            yield self.indent_error(loc, map(str, sorted(indents)), pkg=pkg)
+            yield self.indent_error(os.path.basename(loc), map(str, sorted(indents)), pkg=pkg)
 
     @staticmethod
     def _format_lxml_errors(error_log):
