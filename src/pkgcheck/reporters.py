@@ -12,6 +12,7 @@ from multiprocessing import Process, SimpleQueue
 from string import Formatter
 from xml.sax.saxutils import escape as xml_escape
 
+from snakeoil import pickling
 from snakeoil.decorators import coroutine
 
 from . import base
@@ -439,11 +440,10 @@ class PickleStream(Reporter):
         self.out.autoline = False
 
     @staticmethod
-    def from_iter(iterable):
-        """Deserialize results from a given iterable."""
+    def from_file(f):
+        """Deserialize results from a given file handle."""
         try:
-            for obj in iterable:
-                result = pickle.loads(obj)
+            for result in pickling.iter_stream(f):
                 if isinstance(result, Result):
                     yield result
                 else:

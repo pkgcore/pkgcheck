@@ -723,7 +723,7 @@ def _replay(options, out, err):
             if not processed:
                 options.results.seek(0)
                 try:
-                    for result in reporters.PickleStream.from_iter(options.results):
+                    for result in reporters.PickleStream.from_file(options.results):
                         reporter.report(result)
                         processed += 1
                 except reporters.DeserializationError as e:

@@ -1,3 +1,4 @@
+import io
 import json
 import pickle
 import sys
@@ -192,7 +193,7 @@ class TestPickleStream(BaseReporter):
                 reporter.report(result)
                 out, err = capsysbinary.readouterr()
                 assert not err
-                deserialized_result = next(reporter.from_iter([out]))
+                deserialized_result = next(reporter.from_file(io.BytesIO(out)))
                 assert str(deserialized_result) == str(result)
 
     def test_filtered_report(self, capsysbinary):
@@ -201,7 +202,7 @@ class TestPickleStream(BaseReporter):
             reporter.report(self.log_error)
         out, err = capsysbinary.readouterr()
         assert not err
-        deserialized_result = next(reporter.from_iter([out]))
+        deserialized_result = next(reporter.from_file(io.BytesIO(out)))
         assert str(deserialized_result) == str(self.log_error)
 
     def test_unpickleable_result(self):
@@ -216,17 +217,17 @@ class TestPickleStream(BaseReporter):
 
             # deserializing non-result objects raises exception
             with pytest.raises(reporters.DeserializationError) as excinfo:
-                next(reporter.from_iter([obj]))
+                next(reporter.from_file(io.BytesIO(obj)))
             assert 'invalid data type' in str(excinfo.value)
 
             # pickle loading TypeError raises exception
             with pytest.raises(reporters.DeserializationError) as excinfo:
-                next(reporter.from_iter(['result']))
+                next(reporter.from_file(io.StringIO('result')))
             assert str(excinfo.value) == 'failed unpickling result'
 
             # generic unpickling error raises exception
             with pytest.raises(reporters.DeserializationError) as excinfo:
-                next(reporter.from_iter([b'result']))
+                next(reporter.from_file(io.BytesIO(b'result')))
             assert str(excinfo.value) == 'failed unpickling result'
 
 
