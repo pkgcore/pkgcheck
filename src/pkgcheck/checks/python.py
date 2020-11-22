@@ -316,7 +316,7 @@ class PythonCompatCheck(Check):
     def feed(self, pkg):
         try:
             eclass = get_python_eclass(pkg)
-            targets, prefix, attrs = self.params[eclass]
+            available_targets, prefix, attrs = self.params[eclass]
         except (KeyError, ValueError):
             return
 
@@ -333,26 +333,25 @@ class PythonCompatCheck(Check):
         if latest_target == 'python2_7':
             return
 
-        missing = set()
-        for target in reversed(targets):
+        # determine python impls to target
+        targets = set()
+        for target in reversed(available_targets):
             if target == latest_target:
                 break
-            missing.add(target)
+            targets.add(target)
 
-        if missing:
+        if targets:
             # determine if deps support missing python targets
-            supported = set(missing)
             try:
                 for dep in self.python_deps(deps, prefix):
                     # TODO: use query caching for repo matching?
                     latest = sorted(self.options.search_repo.match(dep))[-1]
-                    supported.intersection_update(
+                    targets.intersection_update(
                         f"python{x.rsplit('python', 1)[-1]}"
                         for x in latest.iuse_stripped if x.startswith(prefix))
-                    if not supported:
+                    if not targets:
                         return
             except IndexError:
                 return
 
-            if supported:
-                yield PythonCompatUpdate(sorted(supported), pkg=pkg)
+            yield PythonCompatUpdate(sorted(targets), pkg=pkg)
