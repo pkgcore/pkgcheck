@@ -92,8 +92,8 @@ class MaintainerNeeded(results.PackageResult, results.Warning):
     @property
     def desc(self):
         if not self.needed:
-            return 'missing maintainer-needed comment'
-        return 'invalid maintainer-needed comment'
+            return f'{self.filename}: missing maintainer-needed comment'
+        return f'{self.filename}: invalid maintainer-needed comment'
 
 
 class MaintainerWithoutProxy(results.PackageResult, results.Warning):
@@ -115,7 +115,7 @@ class MaintainerWithoutProxy(results.PackageResult, results.Warning):
     def desc(self):
         s = pluralism(self.maintainers)
         maintainers = ', '.join(self.maintainers)
-        return f'proxied maintainer{s} missing proxy dev/project: {maintainers}'
+        return f'{self.filename}: proxied maintainer{s} missing proxy dev/project: {maintainers}'
 
 
 class StaleProxyMaintProject(results.PackageResult, results.Warning):
@@ -132,7 +132,7 @@ class StaleProxyMaintProject(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return "proxy-maint maintainer with no proxies"
+        return '{self.filename}: proxy-maint maintainer with no proxies'
 
 
 class NonexistentProjectMaintainer(results.PackageResult, results.Warning):
@@ -147,7 +147,7 @@ class NonexistentProjectMaintainer(results.PackageResult, results.Warning):
     def desc(self):
         s = pluralism(self.emails)
         emails = ', '.join(self.emails)
-        return f'nonexistent project maintainer{s}: {emails}'
+        return f'{self.filename}: nonexistent project maintainer{s}: {emails}'
 
 
 class WrongMaintainerType(results.PackageResult, results.Warning):
@@ -162,7 +162,7 @@ class WrongMaintainerType(results.PackageResult, results.Warning):
     def desc(self):
         s = pluralism(self.emails)
         emails = ', '.join(self.emails)
-        return f'project maintainer{s} with type="person": {emails}'
+        return f'{self.filename}: project maintainer{s} with type="person": {emails}'
 
 
 class PkgMissingMetadataXml(_MissingXml, results.PackageResult):
@@ -220,7 +220,7 @@ class _MetadataXmlIndentation(results.Warning):
     def desc(self):
         s = pluralism(self.lines)
         lines = ', '.join(self.lines)
-        return f'metadata.xml has inconsistent indentation on line{s}: {lines}'
+        return f'{self.filename}: metadata.xml has inconsistent indentation on line{s}: {lines}'
 
 
 class CatMetadataXmlIndentation(_MetadataXmlIndentation, results.CategoryResult):
@@ -248,7 +248,7 @@ class _MetadataXmlEmptyElement(results.Warning):
 
     @property
     def desc(self):
-        return f"metadata.xml has empty element {self.element!r} on line {self.line}"
+        return f'{self.filename}: empty element {self.element!r} on line {self.line}'
 
 
 class CatMetadataXmlEmptyElement(_MetadataXmlEmptyElement, results.CategoryResult):
