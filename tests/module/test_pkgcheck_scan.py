@@ -286,8 +286,8 @@ class TestPkgcheckScan:
                 self._checks[repo][check].add(keyword)
 
     # mapping of repos to scanned results
-    _results = defaultdict(set)
-    _verbose_results = defaultdict(set)
+    _results = {}
+    _verbose_results = {}
 
     @pytest.mark.parametrize('repo', repos)
     def test_scan_repo(self, repo, capsysbinary, cache_dir, tmp_path, verbosity=0):
@@ -315,6 +315,8 @@ class TestPkgcheckScan:
         except FileNotFoundError:
             pass
 
+        results = []
+        verbose_results = []
         with patch('sys.argv', self.args + ['-R', 'BinaryPickleStream'] + args), \
                 patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
             with pytest.raises(SystemExit) as excinfo:
@@ -328,9 +330,16 @@ class TestPkgcheckScan:
                 if any(x.startswith('stub') for x in stubs):
                     continue
                 if verbosity:
-                    self._verbose_results[repo].add(result)
+                    verbose_results.append(result)
                 else:
-                    self._results[repo].add(result)
+                    results.append(result)
+
+        if verbosity:
+            self._verbose_results[repo] = set(verbose_results)
+            assert len(verbose_results) == len(self._verbose_results[repo])
+        else:
+            self._results[repo] = set(results)
+            assert len(results) == len(self._results[repo])
 
     @pytest.mark.parametrize('repo', repos)
     def test_scan_repo_verbose(self, repo, capsysbinary, cache_dir, tmp_path):
