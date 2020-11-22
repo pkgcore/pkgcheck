@@ -320,14 +320,7 @@ class PythonCompatCheck(Check):
         except (KeyError, ValueError):
             return
 
-        if eclass in ('python-r1', 'python-single-r1'):
-            deps = self.deps(pkg)
-            try:
-                latest_target = sorted(
-                    x[len(prefix):] for x in pkg.iuse_stripped if x.startswith(prefix))[-1]
-            except IndexError:
-                return
-        else:
+        if eclass == 'python-any-r1':
             deps = self.deps(pkg, attrs=('depend', 'bdepend'))
             _interp_deps = set()
             for dep in deps:
@@ -336,6 +329,13 @@ class PythonCompatCheck(Check):
 
             try:
                 latest_target = sorted(_interp_deps)[-1]
+            except IndexError:
+                return
+        else:
+            deps = self.deps(pkg)
+            try:
+                latest_target = sorted(
+                    x[len(prefix):] for x in pkg.iuse_stripped if x.startswith(prefix))[-1]
             except IndexError:
                 return
 
