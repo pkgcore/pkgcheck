@@ -188,7 +188,7 @@ class IuseCheck(Check):
         self.iuse_handler = use_addon
 
     def feed(self, pkg):
-        invalid = [x for x in pkg.iuse_stripped if not atom_mod.valid_use_flag.match(x)]
+        invalid = sorted(x for x in pkg.iuse_stripped if not atom_mod.valid_use_flag.match(x))
         if invalid:
             yield InvalidUseFlags(invalid, pkg=pkg)
 
@@ -196,7 +196,7 @@ class IuseCheck(Check):
             unknown = pkg.iuse_stripped.difference(self.iuse_handler.allowed_iuse(pkg))
             unknown = unknown.difference(invalid)
             if unknown:
-                yield UnknownUseFlags(unknown, pkg=pkg)
+                yield UnknownUseFlags(sorted(unknown), pkg=pkg)
 
 
 class _EapiResult(results.VersionResult):
