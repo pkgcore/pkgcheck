@@ -61,14 +61,17 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
         """Update related cache and push updates to disk."""
         raise NotImplementedError(self.update_cache)
 
-    @staticmethod
-    def cache_dir(repo):
+    @klass.jit_attr
+    def cache_dir(self):
         """Return the cache directory for a given repository."""
-        return pjoin(const.USER_CACHE_DIR, 'repos', repo.repo_id.lstrip(os.sep))
+        path = getattr(self.options, 'cache_dir', const.USER_CACHE_DIR)
+        return os.path.realpath(path)
 
     def cache_file(self, repo):
         """Return the cache file for a given repository."""
-        return pjoin(self.cache_dir(repo), self.cache.file)
+        return pjoin(
+            self.cache_dir, 'repos',
+            repo.repo_id.lstrip(os.sep), self.cache.file)
 
     @property
     def repos(self):
@@ -80,39 +83,38 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
             # running from cache subcommand
             return self.options.domain.ebuild_repos
 
-    @classmethod
-    def existing(cls):
+    @klass.jit_attr
+    def existing_caches(self):
         """Mapping of all existing cache types to file paths."""
         caches_map = {}
-        repos_dir = pjoin(const.USER_CACHE_DIR, 'repos')
-        for cache in sorted(cls.caches.values(), key=attrgetter('type')):
+        repos_dir = pjoin(self.cache_dir, 'repos')
+        for cache in sorted(self.caches.values(), key=attrgetter('type')):
             caches_map[cache.type] = tuple(sorted(
                 pathlib.Path(repos_dir).rglob(cache.file)))
         return ImmutableDict(caches_map)
 
-    @classmethod
-    def remove_caches(cls, options):
+    def remove_caches(self):
         """Remove all or selected caches."""
-        force = getattr(options, 'force_cache', False)
+        force = getattr(self.options, 'force_cache', False)
         if force:
             try:
-                shutil.rmtree(const.USER_CACHE_DIR)
+                shutil.rmtree(self.cache_dir)
             except FileNotFoundError:
                 pass
             except IOError as e:
                 raise UserException(f'failed removing cache dir: {e}')
         else:
             try:
-                for cache_type, paths in cls.existing().items():
-                    if options.cache.get(cache_type, False):
+                for cache_type, paths in self.existing_caches.items():
+                    if self.options.cache.get(cache_type, False):
                         for path in paths:
-                            if options.dry_run:
+                            if self.options.dry_run:
                                 print(f'Would remove {path}')
                             else:
                                 path.unlink()
                                 # remove empty cache dirs
                                 try:
-                                    while str(path) != const.USER_CACHE_DIR:
+                                    while str(path) != self.cache_dir:
                                         path.parent.rmdir()
                                         path = path.parent
                                 except OSError as e:

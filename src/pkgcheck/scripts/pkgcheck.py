@@ -670,16 +670,17 @@ def _validate_cache_args(parser, namespace):
 @cache.bind_main_func
 def _cache(options, out, err):
     if options.remove_cache:
-        CachedAddon.remove_caches(options)
+        cache_obj = CachedAddon(options)
+        cache_obj.remove_caches()
     elif options.update_cache:
         for addon in options.pop('cache_addons'):
             init_addon(addon, options)
     else:
         # list existing caches
-        repos_dir = pjoin(const.USER_CACHE_DIR, 'repos')
-        caches = CachedAddon.existing()
+        cache_obj = CachedAddon(options)
+        repos_dir = pjoin(cache_obj.cache_dir, 'repos')
         for cache_type in sorted(options.enabled_caches):
-            paths = caches[cache_type]
+            paths = cache_obj.existing_caches[cache_type]
             if paths:
                 out.write(out.fg('yellow'), f'{cache_type} caches: ', out.reset)
             for path in paths:
