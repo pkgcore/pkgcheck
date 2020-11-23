@@ -485,14 +485,15 @@ class LocalUseCheck(Check):
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
+        repo_config = self.options.target_repo.config
         self.iuse_handler = use_addon
         self.global_use = {
-            flag: desc for matcher, (flag, desc) in self.options.target_repo.config.use_desc}
+            flag: desc for matcher, (flag, desc) in repo_config.use_desc}
 
-        self.use_expand_groups = dict()
-        for key in self.options.target_repo.config.use_expand_desc.keys():
-            self.use_expand_groups[key] = {
-                flag for flag, desc in self.options.target_repo.config.use_expand_desc[key]}
+        self.use_expand = dict()
+        for group in repo_config.use_expand_desc.keys():
+            self.use_expand[group] = {
+                flag for flag, desc in repo_config.use_expand_desc[group]}
 
     def feed(self, pkgs):
         pkg = pkgs[0]
@@ -506,9 +507,9 @@ class LocalUseCheck(Check):
                 elif ratio >= 0.75:
                     yield ProbableGlobalUse(flag, pkg=pkg)
             elif '_' in flag:
-                for group in self.use_expand_groups:
+                for group in self.use_expand:
                     if flag.startswith(f'{group}_'):
-                        if flag not in self.use_expand_groups[group]:
+                        if flag not in self.use_expand[group]:
                             yield ProbableUseExpand(flag, group.upper(), pkg=pkg)
                         break
                 else:
