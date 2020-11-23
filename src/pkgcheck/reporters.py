@@ -401,8 +401,8 @@ class JsonStream(Reporter):
             return d
         return str(obj)
 
-    @classmethod
-    def from_iter(cls, iterable):
+    @staticmethod
+    def from_iter(iterable):
         """Deserialize results from a given iterable."""
         # avoid circular import issues
         from . import objects
