@@ -1,3 +1,4 @@
+import argparse
 import io
 import os
 import shlex
@@ -58,17 +59,8 @@ class TestPkgcheckScanParseArgs:
             options, _func = self.tool.parse_args(self.args + ['-'])
             assert list(options.restrictions) == [(base.package_scope, atom.atom('dev-util/foo'))]
 
-    def test_stdin_targets_with_no_piping(self, capsys):
-        with pytest.raises(SystemExit) as excinfo:
-            self.tool.parse_args(self.args + ['-'])
-        assert excinfo.value.code == 2
-        out, err = capsys.readouterr()
-        err = err.strip().split('\n')
-        assert err[-1].startswith(
-            "pkgcheck scan: error: argument TARGET: '-' is only valid when piping data in")
-
     def test_stdin_targets_with_no_args(self, capsys):
-        with patch('sys.stdin', StringIO('')):
+        with patch('sys.stdin', StringIO()):
             with pytest.raises(SystemExit) as excinfo:
                 self.tool.parse_args(self.args + ['-'])
                 assert excinfo.value.code == 2
@@ -237,6 +229,26 @@ class TestPkgcheckScanParseArgs:
         profiles_path = pjoin(fakerepo, 'profiles')
         options, _func = self.tool.parse_args(self.args + [profiles_path])
         assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
+
+    def test_argparse_error(self, capsys):
+        """Argparse errors are used for error mesages under normal operation."""
+        action = argparse.Action(['--foo'], 'foo')
+        with patch('pkgcheck.addons.ProfileAddon.check_args') as check_args:
+            check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
+            with pytest.raises(SystemExit) as excinfo:
+                self.tool.parse_args(self.args + ['cat/pkg'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[-1].startswith('pkgcheck scan: error: argument --foo: invalid arg')
+
+    def test_argparse_error_debug(self, capsys):
+        """Argparse errors are raised when parsing args under debug mode."""
+        action = argparse.Action(['--foo'], 'foo')
+        with patch('pkgcheck.addons.ProfileAddon.check_args') as check_args:
+            check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
+            with pytest.raises(argparse.ArgumentError):
+                self.tool.parse_args(self.args + ['--debug', 'cat/pkg'])
 
 
 class TestPkgcheckScan:
