@@ -181,6 +181,23 @@ class TestPkgcheckScanParseArgs:
         err = err.strip().split('\n')
         assert err[-1].startswith("pkgcheck scan: error: no matching checks available")
 
+    def test_conflicting_scan_scopes(self, capsys, fakerepo):
+        """Multiple targets can't specify different scopes."""
+        with pytest.raises(SystemExit) as excinfo:
+            self.tool.parse_args(self.args + [fakerepo, 'cat/pkg'])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        err = err.strip().split('\n')
+        assert err[-1].startswith(
+            "pkgcheck scan: error: targets specify multiple scan scope levels: package, repo")
+
+    def test_collapsed_restrictions(self):
+        """Multiple targets get collapsed into one restriction to run in parallel."""
+        options, _ = self.tool.parse_args(self.args + ['cat/pkg1', 'cat/pkg2'])
+        scope, restrict = list(options.restrictions)[0]
+        assert scope is base.package_scope
+        assert restrict.restrictions == (atom.atom('cat/pkg1'), atom.atom('cat/pkg2'))
+
 
 class TestPkgcheckScan:
 
