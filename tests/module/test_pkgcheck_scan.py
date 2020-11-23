@@ -489,11 +489,19 @@ class TestPkgcheckScan:
                     verbose_results.update(expected_results)
 
         if results != self._results[repo]:
-            output = self._render_results(results ^ self._results[repo])
-            pytest.fail(f'{repo} repo conflicting results:\n{output}')
+            missing = self._render_results(results - self._results[repo])
+            if missing:
+                pytest.fail(f'{repo} repo missing expected results:\n{missing}')
+            unknown = self._render_results(self._results[repo] - results)
+            if unknown:
+                pytest.fail(f'{repo} repo unknown results:\n{unknown}')
         if verbose_results != self._verbose_results[repo]:
-            output = self._render_results(verbose_results ^ self._verbose_results[repo])
-            pytest.fail(f'{repo} repo conflicting results:\n{output}')
+            missing = self._render_results(verbose_results - self._verbose_results[repo])
+            if missing:
+                pytest.fail(f'{repo} repo missing expected verbose results:\n{missing}')
+            unknown = self._render_results(self._verbose_results[repo] - verbose_results)
+            if unknown:
+                pytest.fail(f'{repo} repo unknown verbose results:\n{unknown}')
 
     @pytest.mark.parametrize('check, result', _all_results)
     def test_scan_fix(self, check, result, capsys, cache_dir, tmp_path):
