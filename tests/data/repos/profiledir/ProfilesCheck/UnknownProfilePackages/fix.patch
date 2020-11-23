@@ -2,25 +2,25 @@ diff -Naur profiledir/profiles/unknown_pkgs/package.mask fixed/profiles/unknown_
 --- profiledir/profiles/unknown_pkgs/package.mask	2020-07-04 04:01:46.893309905 -0600
 +++ fixed/profiles/unknown_pkgs/package.mask	2020-11-23 11:06:47.945186157 -0700
 @@ -1,2 +1 @@
- stub/stub3
+ cat/pkg3
 -unknown/pkg_mask
 diff -Naur profiledir/profiles/unknown_pkgs/packages fixed/profiles/unknown_pkgs/packages
 --- profiledir/profiles/unknown_pkgs/packages	2020-07-04 04:01:46.893309905 -0600
 +++ fixed/profiles/unknown_pkgs/packages	2020-11-23 11:06:47.945186157 -0700
 @@ -1,4 +1,2 @@
- *stub/stub1
+ *cat/pkg1
 -*unknown/pkg
- -*stub/stub2
+ -*cat/pkg2
 --*unknown/disabled_pkg
 diff -Naur profiledir/profiles/unknown_pkgs/package.unmask fixed/profiles/unknown_pkgs/package.unmask
 --- profiledir/profiles/unknown_pkgs/package.unmask	2020-07-04 04:01:46.893309905 -0600
 +++ fixed/profiles/unknown_pkgs/package.unmask	2020-11-23 11:06:47.945186157 -0700
 @@ -1,2 +1 @@
- stub/stub4
+ cat/pkg4
 -unknown/pkg_unmask
 diff -Naur profiledir/profiles/unknown_pkgs/package.use fixed/profiles/unknown_pkgs/package.use
 --- profiledir/profiles/unknown_pkgs/package.use	2020-11-23 11:06:37.942968132 -0700
 +++ fixed/profiles/unknown_pkgs/package.use	2020-11-23 11:06:57.803401042 -0700
 @@ -1,2 +1 @@
- stub/stub1 used
+ cat/pkg1 used
 -unknown/pkg_use used

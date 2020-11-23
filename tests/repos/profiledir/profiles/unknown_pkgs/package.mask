@@ -1,2 +1,2 @@
-stub/stub3
+cat/pkg3
 unknown/pkg_mask

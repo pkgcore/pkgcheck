@@ -1,4 +1,4 @@
-*stub/stub1
+*cat/pkg1
 *unknown/pkg
--*stub/stub2
+-*cat/pkg2
 -*unknown/disabled_pkg
