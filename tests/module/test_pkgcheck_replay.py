@@ -1,3 +1,5 @@
+import os
+import subprocess
 import tempfile
 from functools import partial
 from unittest.mock import patch
@@ -44,3 +46,46 @@ class TestPkgcheckReplay:
                     assert not err
                     assert out == 'profile warning: foo\n'
                     assert excinfo.value.code == 0
+
+    def test_corrupted_resuts(self, capsys):
+        result = ProfileWarning('profile warning: foo')
+        for reporter_cls in (reporters.BinaryPickleStream, reporters.JsonStream):
+            with tempfile.NamedTemporaryFile() as f:
+                out = PlainTextFormatter(f)
+                with reporter_cls(out) as reporter:
+                    reporter.report(result)
+                f.write(b'corrupted')
+                f.seek(0)
+                with patch('sys.argv', self.args + ['-R', 'StrReporter', f.name]):
+                    with pytest.raises(SystemExit) as excinfo:
+                        self.script()
+                    out, err = capsys.readouterr()
+                    assert 'corrupted results file' in err
+                    assert excinfo.value.code == 2
+
+    def test_invalid_file(self, capsys):
+        with tempfile.NamedTemporaryFile(mode='wt') as f:
+            f.write('invalid file')
+            f.seek(0)
+            with patch('sys.argv', self.args + ['-R', 'StrReporter', f.name]):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert err.strip() == 'pkgcheck replay: error: invalid or unsupported replay file'
+                assert excinfo.value.code == 2
+
+    def test_replay_pipe_stdin(self):
+        repo_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        script = os.path.join(repo_dir, 'bin', 'pkgcheck')
+        result = ProfileWarning('profile warning: foo')
+        for reporter_cls in (reporters.BinaryPickleStream, reporters.JsonStream):
+            with tempfile.NamedTemporaryFile() as f:
+                out = PlainTextFormatter(f)
+                with reporter_cls(out) as reporter:
+                    reporter.report(result)
+                f.seek(0)
+                p = subprocess.run(
+                    [script, 'replay', '-R', 'StrReporter', '-'],
+                    stdin=f, stdout=subprocess.PIPE)
+                assert p.stdout.decode() == 'profile warning: foo\n'
+                assert p.returncode == 0
