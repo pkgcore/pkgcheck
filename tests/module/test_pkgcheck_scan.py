@@ -341,41 +341,6 @@ class TestPkgcheckScan:
             assert out == ''
             assert err.splitlines()[-1] == 'Exception: foobar'
 
-    @pytest.mark.parametrize('repo', repos)
-    def test_pkgcheck_test_repo(self, repo):
-        """Make sure the test repos are up to date check/result naming wise."""
-        custom_targets = set()
-        for root, _dirs, files in os.walk(pjoin(self.repos_data, repo)):
-            for f in files:
-                if f == 'target':
-                    with open(pjoin(root, f)) as target:
-                        custom_targets.add(target.read().strip())
-
-        repo_obj = UnconfiguredTree(pjoin(self.repos_dir, repo))
-
-        # determine pkg stubs added to the repo
-        stubs = set()
-        try:
-            with open(pjoin(repo_obj.location, 'metadata', 'stubs')) as f:
-                stubs.update(x.rstrip() for x in f)
-        except FileNotFoundError:
-            pass
-
-        # all pkgs that aren't custom targets or stubs must be check/keyword
-        allowed = custom_targets | stubs
-        results = {(check.__name__, result.__name__) for check, result in self._all_results}
-        for cat, pkgs in sorted(repo_obj.packages.items()):
-            if cat.startswith('stub'):
-                continue
-            for pkg in sorted(pkgs):
-                if pkg.startswith('stub'):
-                    continue
-                if f'{cat}/{pkg}' not in allowed:
-                    if pkg in objects.KEYWORDS:
-                        assert (cat, pkg) in results
-                    else:
-                        assert cat in objects.KEYWORDS
-
     # nested mapping of repos to checks/keywords they cover
     _checks = defaultdict(lambda: defaultdict(set))
 
