@@ -146,6 +146,29 @@ class TestPkgcheckScanParseArgs:
             assert err[-1].startswith(
                 "pkgcheck scan: error: no reporter matches 'foo'")
 
+    def test_format_reporter(self, capsys):
+        # missing --format
+        with pytest.raises(SystemExit) as excinfo:
+            self.tool.parse_args(self.args + ['-R', 'FormatReporter'])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        err = err.strip().split('\n')
+        assert err[-1].endswith(
+            "missing or empty --format option required by FormatReporter")
+
+        # missing -R FormatReporter
+        with pytest.raises(SystemExit) as excinfo:
+            self.tool.parse_args(self.args + ['--format', 'foo'])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        err = err.strip().split('\n')
+        assert err[-1].endswith(
+            "--format option is only valid when using FormatReporter")
+
+        # properly set
+        options, _ = self.tool.parse_args(
+            self.args + ['-R', 'FormatReporter', '--format', 'foo'])
+
     def test_unknown_scope(self, capsys):
         for opt in ('-s', '--scopes'):
             with pytest.raises(SystemExit) as excinfo:
@@ -172,6 +195,17 @@ class TestPkgcheckScanParseArgs:
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
             assert "unknown keyword: 'foo'" in err[-1]
+
+    def test_cwd(self, capsys):
+        # regularly working
+        options, _func = self.tool.parse_args(self.args + ['cat/pkg'])
+        assert options.cwd == os.getcwd()
+
+        # pretend the CWD was removed out from under us
+        with patch('os.getcwd') as getcwd:
+            getcwd.side_effect = FileNotFoundError('CWD is gone')
+            options, _func = self.tool.parse_args(self.args + ['cat/pkg'])
+            assert options.cwd == '/'
 
     def test_selected_keywords(self):
         for opt in ('-k', '--keywords'):
