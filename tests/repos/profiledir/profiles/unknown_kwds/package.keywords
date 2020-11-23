@@ -1,0 +1,2 @@
+cat/pkg1 -amd64 -~amd64
+cat/pkg2 -unknown

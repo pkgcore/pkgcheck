@@ -4,6 +4,7 @@ amd64 default/bad_parent dev
 amd64 nonexistent exp
 
 amd64 unknown_pkgs exp
+amd64 unknown_kwds exp
 
 amd64 unknown_use exp
 amd64 unknown_use/unknown_stable_use exp

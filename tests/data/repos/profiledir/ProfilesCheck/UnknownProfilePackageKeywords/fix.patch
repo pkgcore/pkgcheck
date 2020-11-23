@@ -1,0 +1,12 @@
+diff -Naur profiledir/profiles/unknown_kwds/package.accept_keywords fixed/profiles/unknown_kwds/package.accept_keywords
+--- profiledir/profiles/unknown_kwds/package.accept_keywords	2020-11-23 12:31:02.428598313 -0700
++++ fixed/profiles/unknown_kwds/package.accept_keywords	2020-11-23 12:35:00.012798840 -0700
+@@ -1,2 +1 @@
+ cat/pkg3 amd64
+-cat/pkg4 unknown
+diff -Naur profiledir/profiles/unknown_kwds/package.keywords fixed/profiles/unknown_kwds/package.keywords
+--- profiledir/profiles/unknown_kwds/package.keywords	2020-11-23 12:34:02.655543272 -0700
++++ fixed/profiles/unknown_kwds/package.keywords	2020-11-23 12:34:54.034667942 -0700
+@@ -1,2 +1 @@
+ cat/pkg1 -amd64 -~amd64
+-cat/pkg2 -unknown
