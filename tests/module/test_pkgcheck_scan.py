@@ -58,6 +58,24 @@ class TestPkgcheckScanParseArgs:
             options, _func = self.tool.parse_args(self.args + ['-'])
             assert list(options.restrictions) == [(base.package_scope, atom.atom('dev-util/foo'))]
 
+    def test_stdin_targets_with_no_piping(self, capsys):
+        with pytest.raises(SystemExit) as excinfo:
+            self.tool.parse_args(self.args + ['-'])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        err = err.strip().split('\n')
+        assert err[-1].startswith(
+            "pkgcheck scan: error: argument TARGET: '-' is only valid when piping data in")
+
+    def test_stdin_targets_with_no_args(self, capsys):
+        with patch('sys.stdin', StringIO('')):
+            with pytest.raises(SystemExit) as excinfo:
+                self.tool.parse_args(self.args + ['-'])
+                assert excinfo.value.code == 2
+                out, err = capsys.readouterr()
+                err = err.strip().split('\n')
+                assert err[-1] == 'no targets piped in'
+
     def test_invalid_targets(self, capsys):
         with pytest.raises(SystemExit) as excinfo:
             options, _func = self.tool.parse_args(self.args + ['dev-util/f$o'])
@@ -65,6 +83,15 @@ class TestPkgcheckScanParseArgs:
         out, err = capsys.readouterr()
         err = err.strip()
         assert err == "pkgcheck scan: error: invalid package atom: 'dev-util/f$o'"
+
+    def test_unknown_path_target(self, capsys):
+        with pytest.raises(SystemExit) as excinfo:
+            self.tool.parse_args(self.args + ['/foo/bar'])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        err = err.strip().split('\n')
+        assert err[-1].startswith(
+            "pkgcheck scan: error: 'stubrepo' repo doesn't contain: '/foo/bar'")
 
     def test_selected_targets(self, fakerepo):
         # selected repo
