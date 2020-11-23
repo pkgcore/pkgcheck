@@ -352,7 +352,8 @@ class ProfileAddon(caches.CachedAddon):
                             provides_repo = cached_profile['provides_repo']
                         except KeyError:
                             try:
-                                progress(f'updating {repo} profiles cache: {profile.arch:<{padding}}')
+                                if self.options.cache['profiles']:
+                                    progress(f'updating {repo} profiles cache: {profile.arch:<{padding}}')
 
                                 masks = profile_obj.masks
                                 unmasks = profile_obj.unmasks
