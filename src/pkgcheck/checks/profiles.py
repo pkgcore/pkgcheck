@@ -34,17 +34,17 @@ class UnknownProfilePackages(results.ProfilesResult, results.Warning):
 class UnknownProfilePackageUse(results.ProfilesResult, results.Warning):
     """Profile files include entries with USE flags that aren't used on any matching packages."""
 
-    def __init__(self, path, package, flags):
+    def __init__(self, path, atom, flags):
         super().__init__()
         self.path = path
-        self.package = package
+        self.atom = str(atom)
         self.flags = tuple(flags)
 
     @property
     def desc(self):
         s = pluralism(self.flags)
         flags = ', '.join(self.flags)
-        return f'{self.path!r}: unknown package USE flag{s}: [ {self.package}[{flags}] ]'
+        return f'{self.path!r}: unknown package USE flag{s}: [ {self.atom}[{flags}] ]'
 
 
 class UnknownProfileUse(results.ProfilesResult, results.Warning):
@@ -65,17 +65,17 @@ class UnknownProfileUse(results.ProfilesResult, results.Warning):
 class UnknownProfilePackageKeywords(results.ProfilesResult, results.Warning):
     """Profile files include package keywords that don't exist."""
 
-    def __init__(self, path, package, keywords):
+    def __init__(self, path, atom, keywords):
         super().__init__()
         self.path = path
-        self.package = package
+        self.atom = str(atom)
         self.keywords = tuple(keywords)
 
     @property
     def desc(self):
         s = pluralism(self.keywords)
         keywords = ', '.join(map(repr, self.keywords))
-        return f'{self.path!r}: unknown package keyword{s}: {self.package}: [ {keywords} ]'
+        return f'{self.path!r}: unknown package keyword{s}: {self.atom}: [ {keywords} ]'
 
 
 class ProfileWarning(results.ProfilesResult, results.LogWarning):
@@ -241,7 +241,7 @@ class ProfilesCheck(Check):
                 for pkg, flags in vals:
                     yield UnknownProfilePackageUse(
                         pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
-                        str(pkg), flags)
+                        pkg, flags)
 
         for path, filenames in sorted(unknown_use.items()):
             for filename, vals in filenames.items():
@@ -254,7 +254,7 @@ class ProfilesCheck(Check):
                 for pkg, keywords in vals:
                     yield UnknownProfilePackageKeywords(
                         pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
-                        str(pkg), keywords)
+                        pkg, keywords)
 
 
 class UnusedProfileDirs(results.ProfilesResult, results.Warning):

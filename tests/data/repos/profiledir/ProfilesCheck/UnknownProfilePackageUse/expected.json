@@ -1,2 +1,2 @@
-{"__class__": "UnknownProfilePackageUse", "path": "default/package.use", "package": "cat/pkg2", "flags": ["unknown"]}
-{"__class__": "UnknownProfilePackageUse", "path": "default/package.use", "package": "cat/pkg3", "flags": ["-unknown"]}
+{"__class__": "UnknownProfilePackageUse", "path": "default/package.use", "atom": "cat/pkg2", "flags": ["unknown"]}
+{"__class__": "UnknownProfilePackageUse", "path": "default/package.use", "atom": "cat/pkg3", "flags": ["-unknown"]}
