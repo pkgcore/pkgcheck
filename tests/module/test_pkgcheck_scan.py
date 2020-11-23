@@ -198,6 +198,19 @@ class TestPkgcheckScanParseArgs:
         assert scope is base.package_scope
         assert restrict.restrictions == (atom.atom('cat/pkg1'), atom.atom('cat/pkg2'))
 
+    def test_eclass_target(self, fakerepo):
+        os.makedirs(pjoin(fakerepo, 'eclass'))
+        eclass_path = pjoin(fakerepo, 'eclass', 'foo.eclass')
+        touch(eclass_path)
+        options, _func = self.tool.parse_args(self.args + [eclass_path])
+        scope, restrict = list(options.restrictions)[0]
+        assert scope == base.eclass_scope
+
+    def test_profiles_target(self, fakerepo):
+        profiles_path = pjoin(fakerepo, 'profiles')
+        options, _func = self.tool.parse_args(self.args + [profiles_path])
+        assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
+
 
 class TestPkgcheckScan:
 
