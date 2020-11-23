@@ -6,7 +6,7 @@ diff -Naur gentoo/EmptyDirsCheck/EmptyPackageDir/metadata.xml fixed/EmptyDirsChe
 -<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 -<pkgmetadata>
 -	<maintainer type="person">
--		<email>radhermit@gentoo.org</email>
+-		<email>random.gentoo.dev@gentoo.org</email>
 -	</maintainer>
 -</pkgmetadata>
 diff -Naur gentoo/EmptyDirsCheck/metadata.xml fixed/EmptyDirsCheck/metadata.xml

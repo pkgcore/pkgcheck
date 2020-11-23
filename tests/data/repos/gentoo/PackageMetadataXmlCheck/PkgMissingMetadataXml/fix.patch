@@ -6,6 +6,6 @@ diff -Naur gentoo/PackageMetadataXmlCheck/PkgMissingMetadataXml/metadata.xml fix
 +<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 +<pkgmetadata>
 +	<maintainer type="person">
-+		<email>radhermit@gentoo.org</email>
++		<email>random.gentoo.dev@gentoo.org</email>
 +	</maintainer>
 +</pkgmetadata>

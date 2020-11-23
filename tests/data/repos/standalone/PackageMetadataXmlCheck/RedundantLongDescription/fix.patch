@@ -3,7 +3,7 @@ diff -Naur standalone/PackageMetadataXmlCheck/RedundantLongDescription/metadata.
 +++ fixed/PackageMetadataXmlCheck/RedundantLongDescription/metadata.xml	2020-01-25 20:14:03.958676673 -0700
 @@ -4,7 +4,4 @@
  	<maintainer type="person">
- 		<email>radhermit@gentoo.org</email>
+ 		<email>maintainer@random.email</email>
  	</maintainer>
 -	<longdescription>
 -		Ebuild with redundant metadata.xml longdescription.

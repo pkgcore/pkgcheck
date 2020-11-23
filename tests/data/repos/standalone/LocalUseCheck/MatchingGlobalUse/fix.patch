@@ -3,7 +3,7 @@ diff -Naur standalone/LocalUseCheck/MatchingGlobalUse/metadata.xml fixed/LocalUs
 +++ fixed/LocalUseCheck/MatchingGlobalUse/metadata.xml	2019-08-21 00:06:32.021181563 -0600
 @@ -4,7 +4,4 @@
 	<maintainer type="person">
-		<email>radhermit@gentoo.org</email>
+		<email>maintainer@random.email</email>
 	</maintainer>
 -	<use>
 -		<flag name="matching">matching global flag</flag>

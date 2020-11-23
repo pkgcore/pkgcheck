@@ -5,7 +5,7 @@ diff -Naur standalone/PackageMetadataXmlCheck/PkgMetadataXmlIndentation/metadata
  <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
  <pkgmetadata>
 	<maintainer type="person">
--	    <email>radhermit@gentoo.org</email>
-+		<email>radhermit@gentoo.org</email>
+-	    <email>maintainer@random.email</email>
++		<email>maintainer@random.email</email>
 	</maintainer>
  </pkgmetadata>

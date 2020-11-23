@@ -2,7 +2,7 @@ diff -Naur standalone/PackageMetadataXmlCheck/PkgMetadataXmlInvalidPkgRef/metada
 --- standalone/PackageMetadataXmlCheck/PkgMetadataXmlInvalidPkgRef/metadata.xml	2020-01-25 07:53:11.402203396 -0700
 +++ fixed/PackageMetadataXmlCheck/PkgMetadataXmlInvalidPkgRef/metadata.xml	2020-01-25 08:14:00.559343459 -0700
 @@ -5,7 +5,7 @@
- 		<email>radhermit@gentoo.org</email>
+ 		<email>maintainer@random.email</email>
  	</maintainer>
  	<longdescription>
 -		Package with metadata.xml longdescription that has an invalid package

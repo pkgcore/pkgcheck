@@ -6,7 +6,7 @@ diff -Naur standalone/GlobalUseCheck/PotentialLocalUse/metadata.xml fixed/Global
 +<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 +<pkgmetadata>
 +	<maintainer type="person">
-+		<email>radhermit@gentoo.org</email>
++		<email>maintainer@random.email</email>
 +	</maintainer>
 +	<use>
 +		<flag name="potential-local">potential local use flag</flag>
