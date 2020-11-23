@@ -1,7 +1,8 @@
 diff -Naur profiledir/profiles/use.desc fixed/profiles/use.desc
---- profiledir/profiles/use.desc	1969-12-31 17:00:00.000000000 -0700
-+++ fixed/profiles/use.desc	2019-11-12 14:27:46.250872533 -0700
-@@ -0,0 +1,4 @@
+--- profiledir/profiles/use.desc	2020-11-23 10:54:01.018477444 -0700
++++ fixed/profiles/use.desc	2020-11-23 11:54:08.071178614 -0700
+@@ -1 +1,5 @@
+ used - used global flag
 +use_force - use.force
 +use_mask - use.mask
 +use_stable_force - use.stable.force
