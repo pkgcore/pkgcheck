@@ -4,9 +4,9 @@ import os
 import pickle
 
 from pkgcore.ebuild.eclass import Eclass, EclassDocParsingError
-from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
+from snakeoil.klass import jit_attr
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.mappings import ImmutableDict
 
@@ -30,21 +30,31 @@ class EclassAddon(caches.CachedAddon):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.eclasses = {}
+        # mapping of repo locations to their corresponding eclass caches
+        self._eclass_repos = {}
 
-    @klass.jit_attr
+    @jit_attr
+    def eclasses(self, repo=None):
+        """Mapping of available eclasses to eclass doc info."""
+        d = {}
+        for r in self.options.target_repo.trees:
+            d.update(self._eclass_repos.get(r.location, ()))
+        return ImmutableDict(d)
+
+    @jit_attr
     def deprecated(self):
         """Mapping of deprecated eclasses to their replacements (if any)."""
-        return ImmutableDict({
-            k: v['deprecated']
-            for k, v in self.eclasses.items() if 'deprecated' in v
-        })
+        d = {}
+        for r in self.options.target_repo.trees:
+            for k, v in self._eclass_repos.get(r.location, ()).items():
+                if 'deprecated' in v:
+                    d[k] = v['deprecated']
+        return ImmutableDict(d)
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         if self.options.cache['eclass']:
-            repos = (r for r in self.repos if 'gentoo' in r.aliases)
-            for repo in repos:
+            for repo in self.repos:
                 cache_file = self.cache_file(repo)
                 cache_eclasses = False
                 eclasses = {}
@@ -73,22 +83,25 @@ class EclassAddon(caches.CachedAddon):
                         del eclasses[name]
                         cache_eclasses = True
 
-                # padding for progress output
-                padding = max(len(x) for x in repo.eclass_cache.eclasses)
+                # verify the repo has eclasses
+                repo_eclasses = repo.eclass_cache.eclasses
+                if repo_eclasses:
+                    # padding for progress output
+                    padding = max(len(x) for x in repo_eclasses)
 
-                # check for eclass additions and updates
-                with base.ProgressManager(verbosity=self.options.verbosity) as progress:
-                    for name, eclass in sorted(repo.eclass_cache.eclasses.items()):
-                        try:
-                            if os.path.getmtime(eclass.path) != eclasses[name].mtime:
-                                raise KeyError
-                        except (KeyError, AttributeError):
+                    # check for eclass additions and updates
+                    with base.ProgressManager(verbosity=self.options.verbosity) as progress:
+                        for name, eclass in sorted(repo_eclasses.items()):
                             try:
-                                progress(f'updating eclass cache: {name:<{padding}}')
-                                eclasses[name] = Eclass(eclass.path, sourced=True)
-                                cache_eclasses = True
-                            except (IOError, EclassDocParsingError):
-                                continue
+                                if os.path.getmtime(eclass.path) != eclasses[name].mtime:
+                                    raise KeyError
+                            except (KeyError, AttributeError):
+                                try:
+                                    progress(f'updating eclass cache: {name:<{padding}}')
+                                    eclasses[name] = Eclass(eclass.path, sourced=True)
+                                    cache_eclasses = True
+                                except (IOError, EclassDocParsingError):
+                                    continue
 
                 # push eclasses to disk if any changes were found
                 if cache_eclasses:
@@ -101,4 +114,4 @@ class EclassAddon(caches.CachedAddon):
                         msg = f'failed dumping eclasses: {cache_file!r}: {e.strerror}'
                         raise UserException(msg)
 
-                self.eclasses = eclasses
+                self._eclass_repos[repo.location] = eclasses
