@@ -1,0 +1,17 @@
+diff -Naur standalone/LocalUseCheck/ProbableUseExpand/metadata.xml fixed/LocalUseCheck/ProbableUseExpand/metadata.xml
+--- standalone/LocalUseCheck/ProbableUseExpand/metadata.xml	2020-11-23 13:00:32.285357931 -0700
++++ fixed/LocalUseCheck/ProbableUseExpand/metadata.xml	2020-11-23 13:01:14.488282723 -0700
+@@ -3,6 +3,5 @@
+ <pkgmetadata>
+ 	<use>
+ 		<flag name="local">local USE flag stub</flag>
+-		<flag name="use_flag_probable">probable USE_EXPAND flag</flag>
+ 	</use>
+ </pkgmetadata>
+diff -Naur standalone/profiles/desc/use_flag.desc fixed/profiles/desc/use_flag.desc
+--- standalone/profiles/desc/use_flag.desc	2020-11-23 12:55:27.633682108 -0700
++++ fixed/profiles/desc/use_flag.desc	2020-11-23 13:01:34.559722536 -0700
+@@ -1,2 +1,3 @@
+ flag1 - USE_EXPAND stub flag
+ flag2 - USE_EXPAND stub flag
++probable - USE_EXPAND probable flag
