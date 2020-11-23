@@ -42,6 +42,6 @@ pkgcheck = pjoin(main_dir, 'bin', 'pkgcheck')
 args = sys.argv[1:]
 if args[0] == 'scan':
     # ignore system/user config settings
-    args = ['scan', '--config', 'no'] + args[1:]
+    args = ['scan', '--config', 'no', '--cache', 'no'] + args[1:]
 cmd = [pkgcheck, '--config', tempdir.name] + args
 subprocess.run(cmd)
