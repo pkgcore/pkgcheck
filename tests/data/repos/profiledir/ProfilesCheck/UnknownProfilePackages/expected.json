@@ -1,3 +1,4 @@
 {"__class__": "UnknownProfilePackages", "path": "unknown_pkgs/package.mask", "packages": ["unknown/pkg_mask"]}
 {"__class__": "UnknownProfilePackages", "path": "unknown_pkgs/package.unmask", "packages": ["unknown/pkg_unmask"]}
+{"__class__": "UnknownProfilePackages", "path": "unknown_pkgs/package.use", "packages": ["unknown/pkg_use"]}
 {"__class__": "UnknownProfilePackages", "path": "unknown_pkgs/packages", "packages": ["unknown/disabled_pkg", "unknown/pkg"]}
