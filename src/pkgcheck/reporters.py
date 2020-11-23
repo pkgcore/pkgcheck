@@ -16,7 +16,7 @@ from snakeoil import pickling
 from snakeoil.decorators import coroutine
 
 from . import base
-from .results import Result
+from .results import InvalidResult, Result
 
 
 class _ResultsIter:
@@ -412,7 +412,7 @@ class JsonStream(Reporter):
                 yield cls._create(**data)
         except (json.decoder.JSONDecodeError, UnicodeDecodeError, DeserializationError) as e:
             raise DeserializationError('failed loading') from e
-        except KeyError:
+        except (KeyError, InvalidResult):
             raise DeserializationError('unknown result')
 
     @coroutine

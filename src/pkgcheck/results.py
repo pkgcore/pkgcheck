@@ -9,6 +9,10 @@ from . import base
 from .packages import FilteredPkg, RawCPV
 
 
+class InvalidResult(Exception):
+    """Creating a result object failed in some fashion."""
+
+
 class _ResultAttrs(type):
     """Metaclass for setting attributes on base class objects."""
 
@@ -50,11 +54,17 @@ class Result(metaclass=_ResultAttrs):
     @classmethod
     def _create(cls, **kwargs):
         """Create a new result object from a given attributes dict."""
-        category = kwargs.pop('category', None)
-        package = kwargs.pop('package', None)
-        version = kwargs.pop('version', None)
-        # recreate pkg param from related, separated attributes
-        if 'pkg' not in kwargs and any((category, package, version)):
+        if 'pkg' not in kwargs and issubclass(cls, CategoryResult):
+            # recreate pkg param from related, separated attributes
+            category = kwargs.pop('category', None)
+            if category is None:
+                raise InvalidResult('missing category')
+            package = kwargs.pop('package', None)
+            if issubclass(cls, PackageResult) and package is None:
+                raise InvalidResult('missing package')
+            version = kwargs.pop('version', None)
+            if issubclass(cls, VersionResult) and version is None:
+                raise InvalidResult('missing version')
             kwargs['pkg'] = RawCPV(category, package, version)
         return cls(**kwargs)
 
