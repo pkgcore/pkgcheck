@@ -279,7 +279,7 @@ def _determine_target_repo(namespace):
     try:
         return namespace.domain.find_repo(
             target_dir, config=namespace.config, configure=False)
-    except repo_errors.InitializationError as e:
+    except (repo_errors.InitializationError, IOError) as e:
         raise UserException(str(e))
 
 
