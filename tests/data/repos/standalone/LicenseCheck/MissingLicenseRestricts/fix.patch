@@ -1,0 +1,16 @@
+diff -Naur standalone/LicenseCheck/MissingLicenseRestricts/MissingLicenseRestricts-0.ebuild fixed/LicenseCheck/MissingLicenseRestricts/MissingLicenseRestricts-0.ebuild
+--- standalone/LicenseCheck/MissingLicenseRestricts/MissingLicenseRestricts-0.ebuild	2020-11-23 16:06:20.488571579 -0700
++++ fixed/LicenseCheck/MissingLicenseRestricts/MissingLicenseRestricts-0.ebuild	2020-11-23 16:13:05.534435811 -0700
+@@ -2,3 +2,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="eula"
++RESTRICT="bindist"
+diff -Naur standalone/LicenseCheck/MissingLicenseRestricts/MissingLicenseRestricts-1.ebuild fixed/LicenseCheck/MissingLicenseRestricts/MissingLicenseRestricts-1.ebuild
+--- standalone/LicenseCheck/MissingLicenseRestricts/MissingLicenseRestricts-1.ebuild	2020-11-23 16:08:03.779832055 -0700
++++ fixed/LicenseCheck/MissingLicenseRestricts/MissingLicenseRestricts-1.ebuild	2020-11-23 16:13:14.194625333 -0700
+@@ -3,3 +3,4 @@
+ SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
+ SLOT="0"
+ LICENSE="eula"
++RESTRICT="bindist mirror"
