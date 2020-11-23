@@ -274,4 +274,4 @@ class TestJsonStream(BaseReporter):
             json_obj = json.dumps(obj)
             with pytest.raises(reporters.DeserializationError) as excinfo:
                 next(reporter.from_iter([json_obj]))
-            assert 'missing result class' in str(excinfo.value)
+            assert 'unknown result' in str(excinfo.value)

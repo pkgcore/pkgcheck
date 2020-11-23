@@ -407,14 +407,13 @@ class JsonStream(Reporter):
         # avoid circular import issues
         from . import objects
         try:
-            for record in iterable:
-                d = json.loads(record)
-                cls = objects.KEYWORDS[d.pop('__class__')]
-                yield cls._create(**d)
+            for data in map(json.loads, iterable):
+                cls = objects.KEYWORDS[data.pop('__class__')]
+                yield cls._create(**data)
         except (json.decoder.JSONDecodeError, UnicodeDecodeError, DeserializationError) as e:
-            raise DeserializationError(f'failed loading: {record!r}') from e
+            raise DeserializationError('failed loading') from e
         except KeyError:
-            raise DeserializationError(f'missing result class: {record!r}')
+            raise DeserializationError('unknown result')
 
     @coroutine
     def _process_report(self):
