@@ -1,0 +1,9 @@
+diff -Naur eclass/EapiCheck/UnsupportedEclassEapi/UnsupportedEclassEapi-0.ebuild fixed/EapiCheck/UnsupportedEclassEapi/UnsupportedEclassEapi-0.ebuild
+--- eclass/EapiCheck/UnsupportedEclassEapi/UnsupportedEclassEapi-0.ebuild	2020-11-23 14:46:17.796410079 -0700
++++ fixed/EapiCheck/UnsupportedEclassEapi/UnsupportedEclassEapi-0.ebuild	2020-11-23 14:48:31.215334207 -0700
+@@ -1,4 +1,4 @@
+-EAPI=5
++EAPI=7
+ 
+ inherit stub
+ 
