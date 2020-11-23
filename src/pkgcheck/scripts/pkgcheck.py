@@ -170,6 +170,9 @@ main_options.add_argument(
         caches (e.g. git-related checks) will be skipped.
     """)
 main_options.add_argument(
+    '--cache-dir', type=arghparse.create_dir, default=const.USER_CACHE_DIR,
+    help='directory to use for storing cache files')
+main_options.add_argument(
     '--exit', metavar='KEYWORD', action=argparsers.ExitArgs, nargs='?', dest='exit_keywords',
     help='keywords that trigger an error exit status (comma-separated list)',
     docs="""
@@ -617,6 +620,9 @@ cache = subparsers.add_parser(
         Caches of various types are used by pkgcheck. This command allows the
         user to manually force cache updates or removals.
     """)
+cache.add_argument(
+    '--cache-dir', type=arghparse.create_dir, default=const.USER_CACHE_DIR,
+    help='directory to use for storing cache files')
 cache_actions = cache.add_mutually_exclusive_group()
 cache_actions.add_argument(
     '-l', '--list', dest='list_cache', action='store_true',
@@ -678,7 +684,7 @@ def _cache(options, out, err):
     else:
         # list existing caches
         cache_obj = CachedAddon(options)
-        repos_dir = pjoin(cache_obj.cache_dir, 'repos')
+        repos_dir = pjoin(options.cache_dir, 'repos')
         for cache_type in sorted(options.enabled_caches):
             paths = cache_obj.existing_caches[cache_type]
             if paths:

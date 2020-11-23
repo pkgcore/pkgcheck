@@ -13,7 +13,7 @@ from snakeoil.cli.exceptions import UserException
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
-from . import base, const
+from . import base
 
 
 class CacheData(NamedTuple):
@@ -61,16 +61,10 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
         """Update related cache and push updates to disk."""
         raise NotImplementedError(self.update_cache)
 
-    @klass.jit_attr
-    def cache_dir(self):
-        """Return the cache directory for a given repository."""
-        path = getattr(self.options, 'cache_dir', const.USER_CACHE_DIR)
-        return os.path.realpath(path)
-
     def cache_file(self, repo):
         """Return the cache file for a given repository."""
         return pjoin(
-            self.cache_dir, 'repos',
+            self.options.cache_dir, 'repos',
             repo.repo_id.lstrip(os.sep), self.cache.file)
 
     @property
@@ -87,7 +81,7 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
     def existing_caches(self):
         """Mapping of all existing cache types to file paths."""
         caches_map = {}
-        repos_dir = pjoin(self.cache_dir, 'repos')
+        repos_dir = pjoin(self.options.cache_dir, 'repos')
         for cache in sorted(self.caches.values(), key=attrgetter('type')):
             caches_map[cache.type] = tuple(sorted(
                 pathlib.Path(repos_dir).rglob(cache.file)))
@@ -98,7 +92,7 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
         force = getattr(self.options, 'force_cache', False)
         if force:
             try:
-                shutil.rmtree(self.cache_dir)
+                shutil.rmtree(self.options.cache_dir)
             except FileNotFoundError:
                 pass
             except IOError as e:
@@ -114,7 +108,7 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
                                 path.unlink()
                                 # remove empty cache dirs
                                 try:
-                                    while str(path) != self.cache_dir:
+                                    while str(path) != self.options.cache_dir:
                                         path.parent.rmdir()
                                         path = path.parent
                                 except OSError as e:

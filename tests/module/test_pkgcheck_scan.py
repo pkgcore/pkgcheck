@@ -18,7 +18,6 @@ from pkgcheck import checks as checks_mod
 from pkgcheck.scripts import run
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import atom, restricts
-from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.restrictions import packages
 from snakeoil.contexts import chdir
 from snakeoil.fileutils import touch
@@ -29,9 +28,10 @@ from snakeoil.osutils import pjoin
 class TestPkgcheckScanParseArgs:
 
     @pytest.fixture(autouse=True)
-    def _setup(self, tool):
+    def _setup(self, tool, tmp_path):
         self.tool = tool
-        self.args = ['scan']
+        self.cache_dir = str(tmp_path)
+        self.args = ['scan', '--cache-dir', self.cache_dir]
 
     def test_skipped_checks(self):
         options, _func = self.tool.parse_args(self.args)
@@ -300,8 +300,12 @@ class TestPkgcheckScan:
             _all_results.append((cls, result))
 
     @pytest.fixture(autouse=True)
-    def _setup(self, testconfig):
-        self.args = [project, '--config', testconfig, 'scan', '--config', 'no']
+    def _setup(self, testconfig, tmp_path):
+        self.cache_dir = str(tmp_path)
+        self.args = [
+            project, '--config', testconfig,
+            'scan', '--config', 'no', '--cache-dir', self.cache_dir,
+        ]
 
     @staticmethod
     def _patch(fix, repo_path):
@@ -317,8 +321,7 @@ class TestPkgcheckScan:
 
     def test_empty_repo(self, capsys, cache_dir):
         # no reports should be generated since the default repo is empty
-        with patch('sys.argv', self.args), \
-                patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
+        with patch('sys.argv', self.args):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             assert excinfo.value.code == 0
@@ -331,7 +334,6 @@ class TestPkgcheckScan:
     def test_pipeline_exceptions(self, action, module, capsys, cache_dir):
         """Test checkrunner pipeline against unhandled exceptions."""
         with patch('sys.argv', self.args), \
-                patch('pkgcheck.const.USER_CACHE_DIR', cache_dir), \
                 patch(f'pkgcheck.pipeline.{module}') as faked:
             faked.side_effect = Exception('foobar')
             with pytest.raises(SystemExit) as excinfo:
@@ -385,8 +387,7 @@ class TestPkgcheckScan:
 
         results = []
         verbose_results = []
-        with patch('sys.argv', self.args + ['-R', 'BinaryPickleStream'] + args), \
-                patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
+        with patch('sys.argv', self.args + ['-R', 'BinaryPickleStream'] + args):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsysbinary.readouterr()
@@ -501,8 +502,7 @@ class TestPkgcheckScan:
                 pass
 
             cmd = self.args + args
-            with patch('sys.argv', cmd), \
-                    patch('pkgcheck.const.USER_CACHE_DIR', cache_dir):
+            with patch('sys.argv', cmd):
                 with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 out, err = capsys.readouterr()
