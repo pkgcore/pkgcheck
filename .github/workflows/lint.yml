@@ -2,7 +2,7 @@ name: Run linting
 
 on:
   push:
-    branches-ignore: [deploy]
+    branches: [master, lint]
   pull_request:
     branches: [master]
 
