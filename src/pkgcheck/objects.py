@@ -115,19 +115,25 @@ class _KeywordsLazyDict(_LazyDict):
     def error(self):
         """Mapping of all error level keywords."""
         from . import results
-        return ImmutableDict({k: v for k, v in self._dict.items() if issubclass(v, results.Error)})
+        return ImmutableDict({
+            k: v for k, v in self._dict.items()
+            if issubclass(v, results.Error)})
 
     @klass.jit_attr
     def warning(self):
         """Mapping of all warning level keywords."""
         from . import results
-        return ImmutableDict({k: v for k, v in self._dict.items() if issubclass(v, results.Warning)})
+        return ImmutableDict({
+            k: v for k, v in self._dict.items()
+            if issubclass(v, results.Warning)})
 
     @klass.jit_attr
     def info(self):
         """Mapping of all info level keywords."""
         from . import results
-        return ImmutableDict({k: v for k, v in self._dict.items() if issubclass(v, results.Info)})
+        return ImmutableDict({
+            k: v for k, v in self._dict.items()
+            if issubclass(v, results.Info)})
 
 
 KEYWORDS = _KeywordsLazyDict('KEYWORDS', ('checks', 'results.Result'))

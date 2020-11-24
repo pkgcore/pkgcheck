@@ -1,7 +1,7 @@
 import random
 
 import pytest
-from pkgcheck import argparsers, base, objects
+from pkgcheck import argparsers, base, checks, objects
 from pkgcheck.caches import CachedAddon
 from snakeoil.cli import arghparse
 
@@ -138,6 +138,12 @@ class TestKeywordArgs:
         args = self.parser.parse_args([f'--keywords=-{keyword}'])
         assert args.keywords == ([keyword], [])
 
+    def test_aliases(self):
+        for alias in ('error', 'warning', 'info'):
+            args = self.parser.parse_args(['--keywords', alias])
+            alias_keywords = list(getattr(objects.KEYWORDS, alias))
+            assert args.keywords == ([], alias_keywords)
+
 
 class TestCheckArgs:
 
@@ -167,6 +173,17 @@ class TestCheckArgs:
         check = list(objects.CHECKS)[random.randrange(len(objects.CHECKS))]
         args = self.parser.parse_args([f'--checks=-{check}'])
         assert args.checks == ([check], [])
+
+    def test_aliases(self):
+        # net
+        args = self.parser.parse_args(['--checks', 'net'])
+        network_checks = [
+            c for c, v in objects.CHECKS.items() if issubclass(v, checks.NetworkCheck)]
+        assert args.checks == ([], network_checks)
+
+        # all
+        args = self.parser.parse_args(['--checks', 'all'])
+        assert args.checks == ([], list(objects.CHECKS))
 
 
 class TestExitArgs:
@@ -203,3 +220,8 @@ class TestExitArgs:
         cls = objects.KEYWORDS[keyword]
         args = self.parser.parse_args([f'--exit=-{keyword}'])
         assert args.exit == frozenset(objects.KEYWORDS.error.values()) - frozenset([cls])
+
+    def test_aliases(self):
+        for alias in ('error', 'warning', 'info'):
+            args = self.parser.parse_args([f'--exit={alias}'])
+            assert args.exit == frozenset(getattr(objects.KEYWORDS, alias).values())
