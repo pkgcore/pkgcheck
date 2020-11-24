@@ -23,6 +23,8 @@ class _UrlResult(results.FilteredVersionResult, results.Warning):
 
     @property
     def desc(self):
+        if self.url in self.message:
+            return f'{self.attr}: {self.message}'
         return f'{self.attr}: {self.message}: {self.url}'
 
 
@@ -35,6 +37,8 @@ class SSLCertificateError(_UrlResult):
 
     @property
     def desc(self):
+        if self.url in self.message:
+            return f'{self.attr}: SSL cert error: {self.message}'
         return f'{self.attr}: SSL cert error: {self.message}: {self.url}'
 
 
