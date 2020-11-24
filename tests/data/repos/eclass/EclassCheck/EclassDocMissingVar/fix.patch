@@ -1,0 +1,11 @@
+diff -Naur eclass/eclass/missing.eclass fixed/eclass/missing.eclass
+--- eclass/eclass/missing.eclass	2020-11-24 01:48:04.220381235 -0700
++++ fixed/eclass/missing.eclass	2020-11-24 01:49:26.259166752 -0700
+@@ -6,4 +6,7 @@
+ 
+ missing-docs_public_function() { :; }
+ 
++# @ECLASS-VARIABLE: MISSING_DOCS_PUBLIC_VAR
++# @DESCRIPTION:
++# Public stub variable.
+ MISSING_DOCS_PUBLIC_VAR=""
