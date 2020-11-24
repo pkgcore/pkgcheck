@@ -539,7 +539,7 @@ class UnusedInherits(results.VersionResult, results.Warning):
 
     def __init__(self, eclasses, **kwargs):
         super().__init__(**kwargs)
-        self.eclasses = eclasses
+        self.eclasses = tuple(eclasses)
 
     @property
     def desc(self):
@@ -660,7 +660,7 @@ class InheritsCheck(ExplicitlyEnabledCheck):
                 else:
                     yield MissingInherits(eclass, lineno, usage, pkg=pkg)
             if unused:
-                yield UnusedInherits(tuple(sorted(unused)), pkg=pkg)
+                yield UnusedInherits(sorted(unused), pkg=pkg)
 
 
 class RedundantDodir(results.LineResult, results.Warning):
