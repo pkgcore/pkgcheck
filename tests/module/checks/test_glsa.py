@@ -17,8 +17,7 @@ def check(tmpdir):
         f.write(mk_glsa(("dev-util/diffball", ([], [">0.7"]))))
     with open(pjoin(str(tmpdir), "glsa-200611-02.xml"), "w") as f:
         f.write(mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
-    return glsa.GlsaCheck(
-        arghparse.Namespace(glsa_location=str(tmpdir), glsa_enabled=True))
+    return glsa.GlsaCheck(arghparse.Namespace(glsa_dir=str(tmpdir)))
 
 
 class TestVulnerabilitiesCheck(misc.ReportTestCase):
