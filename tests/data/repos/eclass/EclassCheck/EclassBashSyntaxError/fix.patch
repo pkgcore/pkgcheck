@@ -1,0 +1,9 @@
+diff -Naur eclass/eclass/bad.eclass fixed/eclass/bad.eclass
+--- eclass/eclass/bad.eclass	2020-11-23 20:18:19.820785272 -0700
++++ fixed/eclass/bad.eclass	2020-11-23 20:18:47.337385963 -0700
+@@ -8,4 +8,4 @@
+ # @USAGE:
+ # @DESCRIPTION:
+ # Public stub function.
+-bad_public_function() { : }
++bad_public_function() { :; }
