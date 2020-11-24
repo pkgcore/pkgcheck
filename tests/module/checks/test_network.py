@@ -1,3 +1,4 @@
+import glob
 import importlib.util
 import io
 import os
@@ -57,38 +58,37 @@ class TestNetworkChecks:
         result_dir = pjoin(self.repos_dir, 'network', check_name, keyword)
         data_dir = pjoin(self.repos_data, 'network', check_name, keyword)
 
-        if not os.path.exists(result_dir):
-            pytest.skip('ebuild unavailable')
+        paths = glob.glob(f'{result_dir}*')
+        if not paths:
+            pytest.skip('data unavailable')
 
-        # load response data to fake
-        try:
-            module_path = pjoin(data_dir, 'responses.py')
+        for path in paths:
+            # load response data to fake
+            module_path = pjoin(path, 'responses.py')
             spec = importlib.util.spec_from_file_location('responses_mod', module_path)
             responses_mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(responses_mod)
-        except FileNotFoundError:
-            pytest.skip('data unavailable')
 
-        results = []
-        args = ['-c', check_name, '-k', keyword, f'{check_name}/{keyword}']
-        with patch('pkgcheck.net.requests.Session.send') as send:
-            with patch('sys.argv', self.args + args):
-                send.side_effect = responses_mod.responses
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                out, err = capsys.readouterr()
-                assert out, 'no results exist'
-                assert excinfo.value.code == 0
-                for result in reporters.JsonStream.from_iter(io.StringIO(out)):
-                    results.append(result)
+            results = []
+            args = ['-c', check_name, '-k', keyword, f'{check_name}/{keyword}']
+            with patch('pkgcheck.net.requests.Session.send') as send:
+                with patch('sys.argv', self.args + args):
+                    send.side_effect = responses_mod.responses
+                    with pytest.raises(SystemExit) as excinfo:
+                        self.script()
+                    out, err = capsys.readouterr()
+                    assert out, 'no results exist'
+                    assert excinfo.value.code == 0
+                    for result in reporters.JsonStream.from_iter(io.StringIO(out)):
+                        results.append(result)
 
-        # load expected results
-        try:
-            with open(pjoin(data_dir, 'expected.json')) as f:
-                expected_results = set(reporters.JsonStream.from_iter(f))
-        except FileNotFoundError:
-            pytest.skip('data unavailable')
+            # load expected results if they exist
+            try:
+                with open(pjoin(data_dir, 'expected.json')) as f:
+                    expected_results = set(reporters.JsonStream.from_iter(f))
+            except FileNotFoundError:
+                continue
 
-        assert expected_results, 'regular results must always exist'
-        assert self._render_results(results), 'failed rendering results'
-        assert set(results) == expected_results
+            assert expected_results, 'regular results must always exist'
+            assert self._render_results(results), 'failed rendering results'
+            assert set(results) == expected_results
