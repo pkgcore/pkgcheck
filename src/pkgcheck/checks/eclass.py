@@ -168,25 +168,23 @@ class EclassCheck(Check):
             error = ': '.join(error)
             yield EclassBashSyntaxError(lineno, error, eclass=eclass)
 
-        # check for eclass doc issues when scanning the gentoo repo
-        if self.options.gentoo_repo:
-            doc_errors = []
-            parsing_error = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
-            with patch('pkgcore.ebuild.eclass._parsing_error', parsing_error):
-                eclass_obj = Eclass(eclass.path, sourced=True)
-            yield from doc_errors
+        doc_errors = []
+        parsing_error = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
+        with patch('pkgcore.ebuild.eclass._parsing_error', parsing_error):
+            eclass_obj = Eclass(eclass.path, sourced=True)
+        yield from doc_errors
 
-            phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
-            # TODO: ignore overridden funcs from other eclasses?
-            # ignore phase funcs
-            funcs_missing_docs = eclass_obj.exported_functions - phase_funcs - eclass_obj.functions
-            if funcs_missing_docs:
-                missing = tuple(sorted(funcs_missing_docs))
-                yield EclassDocMissingFunc(missing, eclass=eclass)
-            # TODO: ignore overridden vars from other eclasses?
-            # ignore exported metadata variables, e.g. SRC_URI
-            vars_missing_docs = (
-                eclass_obj.exported_variables - eclass_obj.variables - self.eclass_keys)
-            if vars_missing_docs:
-                missing = tuple(sorted(vars_missing_docs))
-                yield EclassDocMissingVar(missing, eclass=eclass)
+        phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
+        # TODO: ignore overridden funcs from other eclasses?
+        # ignore phase funcs
+        funcs_missing_docs = eclass_obj.exported_functions - phase_funcs - eclass_obj.functions
+        if funcs_missing_docs:
+            missing = tuple(sorted(funcs_missing_docs))
+            yield EclassDocMissingFunc(missing, eclass=eclass)
+        # TODO: ignore overridden vars from other eclasses?
+        # ignore exported metadata variables, e.g. SRC_URI
+        vars_missing_docs = (
+            eclass_obj.exported_variables - eclass_obj.variables - self.eclass_keys)
+        if vars_missing_docs:
+            missing = tuple(sorted(vars_missing_docs))
+            yield EclassDocMissingVar(missing, eclass=eclass)
