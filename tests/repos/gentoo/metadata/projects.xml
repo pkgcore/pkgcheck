@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<projects>
+  <project>
+    <email>stub.project@gentoo.org</email>
+    <name>Stub project</name>
+    <url>https://random.url/to/nowhere</url>
+    <description>Packages with no purpose.</description>
+    <member is-lead="1">
+      <email>random.developer@gentoo.org</email>
+      <name>Random Developer</name>
+      <role>Member</role>
+    </member>
+  </project>
+</projects>
