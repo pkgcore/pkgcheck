@@ -173,7 +173,8 @@ main_options.add_argument(
     '--cache-dir', type=arghparse.create_dir, default=const.USER_CACHE_DIR,
     help='directory to use for storing cache files')
 main_options.add_argument(
-    '--exit', metavar='KEYWORD', action=argparsers.ExitArgs, nargs='?', dest='exit_keywords',
+    '--exit', metavar='KEYWORD', dest='exit_keywords',
+    action=argparsers.ExitArgs, nargs='?', default=(),
     help='keywords that trigger an error exit status (comma-separated list)',
     docs="""
         Comma separated list of keywords to enable and disable that

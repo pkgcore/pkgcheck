@@ -50,7 +50,7 @@ class _ResultsIter:
 class Reporter:
     """Generic result reporter."""
 
-    def __init__(self, out, verbosity=0, keywords=None, exit_keywords=None):
+    def __init__(self, out, verbosity=0, keywords=None, exit_keywords=()):
         """Initialize
 
         :type out: L{snakeoil.formatters.Formatter}
@@ -60,7 +60,7 @@ class Reporter:
         self.out = out
         self.verbosity = verbosity
         self._filtered_keywords = frozenset(keywords) if keywords is not None else None
-        self._exit_keywords = frozenset(exit_keywords) if exit_keywords is not None else None
+        self._exit_keywords = frozenset(exit_keywords)
         # boolean signifying a failure result was encountered (used with --exit option)
         self._exit_failed = False
 
@@ -129,8 +129,7 @@ class Reporter:
                 # skip filtered results by default
                 if self.verbosity < 1 and result._filtered:
                     continue
-                if (self._exit_keywords is not None and not self._exit_failed
-                        and result.__class__ in self._exit_keywords):
+                if result.__class__ in self._exit_keywords:
                     self._exit_failed = True
                 self.process(result)
 
