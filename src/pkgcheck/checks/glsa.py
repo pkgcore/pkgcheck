@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 
 from pkgcore.pkgsets.glsa import GlsaDirSet
 from pkgcore.restrictions import packages, values
@@ -52,16 +53,13 @@ class GlsaCheck(GentooRepoCheck):
                 raise SkipOptionalCheck(self, 'no available glsa source')
 
         # this is a bit brittle
-        self.vulns = {}
+        self.vulns = defaultdict(list)
         for r in GlsaDirSet(glsa_dir):
-            if len(r) > 2:
-                self.vulns.setdefault(
-                    r[0].key, []).append(packages.AndRestriction(*r[1:]))
-            else:
-                self.vulns.setdefault(r[0].key, []).append(r[1])
+            val = r[1] if len(r) <= 2 else packages.AndRestriction(*r[1:])
+            self.vulns[r[0].key].append(val)
 
     def feed(self, pkg):
-        for vuln in self.vulns.get(pkg.key, []):
+        for vuln in self.vulns.get(pkg.key, ()):
             if vuln.match(pkg):
                 arches = set()
                 for v in collect_package_restrictions(vuln, ['keywords']):
