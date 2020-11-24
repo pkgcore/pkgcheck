@@ -1,0 +1,11 @@
+diff -Naur eclass/InheritsCheck/MissingInherits/MissingInherits-0.ebuild fixed/InheritsCheck/MissingInherits/MissingInherits-0.ebuild
+--- eclass/InheritsCheck/MissingInherits/MissingInherits-0.ebuild	2020-11-23 19:52:15.485639639 -0700
++++ fixed/InheritsCheck/MissingInherits/MissingInherits-0.ebuild	2020-11-23 20:00:27.389375988 -0700
+@@ -1,5 +1,7 @@
+ EAPI=7
+ 
++inherit inherit
++
+ DESCRIPTION="Ebuild missing an eclass inherit"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
