@@ -52,6 +52,14 @@ class BaseReporter:
         assert not err
         assert out == self.filtered_report_output
 
+    def test_exit_status(self):
+        with self.mk_reporter(exit_keywords=(profiles.ProfileError,)) as reporter:
+            assert not reporter._exit_failed
+            reporter.report(self.log_warning)
+            assert not reporter._exit_failed
+            reporter.report(self.log_error)
+            assert reporter._exit_failed
+
 
 class TestStrReporter(BaseReporter):
 
@@ -144,6 +152,8 @@ class TestCsvReporter(BaseReporter):
 
 
 class TestFormatReporter(BaseReporter):
+
+    reporter_cls = partial(reporters.FormatReporter, '')
 
     def test_add_report(self, capsys):
         for format_str, expected in (
