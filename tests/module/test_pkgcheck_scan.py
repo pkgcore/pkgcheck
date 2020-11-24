@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck import __title__ as project
-from pkgcheck import base, objects, reporters, results
+from pkgcheck import base, objects, reporters
 from pkgcheck import checks as checks_mod
 from pkgcheck.scripts import run
 from pkgcore import const as pkgcore_const
@@ -328,7 +328,7 @@ class TestPkgcheckScan:
         p = subprocess.run([fix], cwd=repo_path)
         p.check_returncode()
 
-    def test_empty_repo(self, capsys, cache_dir):
+    def test_empty_repo(self, capsys):
         # no reports should be generated since the default repo is empty
         with patch('sys.argv', self.args):
             with pytest.raises(SystemExit) as excinfo:
@@ -340,7 +340,7 @@ class TestPkgcheckScan:
     @pytest.mark.parametrize(
         'action, module',
         (('init', 'Process'), ('queue', 'UnversionedSource'), ('run', 'CheckRunner.run')))
-    def test_pipeline_exceptions(self, action, module, capsys, cache_dir):
+    def test_pipeline_exceptions(self, action, module, capsys):
         """Test checkrunner pipeline against unhandled exceptions."""
         with patch('sys.argv', self.args), \
                 patch(f'pkgcheck.pipeline.{module}') as faked:
@@ -369,7 +369,7 @@ class TestPkgcheckScan:
     _verbose_results = {}
 
     @pytest.mark.parametrize('repo', repos)
-    def test_scan_repo(self, repo, capsysbinary, cache_dir, tmp_path, verbosity=0):
+    def test_scan_repo(self, repo, capsysbinary, tmp_path, verbosity=0):
         """Scan a target repo, saving results for verfication."""
         repo_dir = pjoin(self.repos_dir, repo)
 
@@ -420,9 +420,9 @@ class TestPkgcheckScan:
             assert len(results) == len(self._results[repo])
 
     @pytest.mark.parametrize('repo', repos)
-    def test_scan_repo_verbose(self, repo, capsysbinary, cache_dir, tmp_path):
+    def test_scan_repo_verbose(self, repo, capsysbinary, tmp_path):
         """Scan a target repo in verbose mode, saving results for verfication."""
-        return self.test_scan_repo(repo, capsysbinary, cache_dir, tmp_path, verbosity=1)
+        return self.test_scan_repo(repo, capsysbinary, tmp_path, verbosity=1)
 
     def _get_results(self, path):
         """Return the set of result objects from a given json stream file."""
@@ -443,7 +443,7 @@ class TestPkgcheckScan:
             return output
 
     @pytest.mark.parametrize('repo', repos)
-    def test_scan_verify(self, repo, capsys, cache_dir, tmp_path):
+    def test_scan_verify(self, repo, capsys, tmp_path):
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
         results = set()
         verbose_results = set()
@@ -479,7 +479,7 @@ class TestPkgcheckScan:
                 pytest.fail(f'{repo} repo unknown verbose results:\n{unknown}')
 
     @pytest.mark.parametrize('check, result', _all_results)
-    def test_scan_fix(self, check, result, capsys, cache_dir, tmp_path):
+    def test_scan_fix(self, check, result, capsys, tmp_path):
         """Apply fixes to pkgs, verifying the related results are fixed."""
         check_name = check.__name__
         keyword = result.__name__
