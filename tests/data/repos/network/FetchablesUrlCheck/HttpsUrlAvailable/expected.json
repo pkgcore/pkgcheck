@@ -1,0 +1,1 @@
+{"__class__": "HttpsUrlAvailable", "category": "FetchablesUrlCheck", "package": "HttpsUrlAvailable", "version": "0", "attr": "SRC_URI", "url": "http://github.com/pkgcore/pkgcheck/foo.tar.gz", "new_url": "https://github.com/pkgcore/pkgcheck/foo.tar.gz"}

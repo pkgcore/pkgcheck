@@ -1,0 +1,1 @@
+{"__class__": "SSLCertificateError", "category": "FetchablesUrlCheck", "package": "SSLCertificateError", "version": "0", "attr": "SRC_URI", "url": "https://github.com/pkgcore/pkgcheck/foo.tar.gz", "message": "Certificate verification failed"}

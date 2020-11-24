@@ -1,0 +1,1 @@
+{"__class__": "RedirectedUrl", "category": "FetchablesUrlCheck", "package": "RedirectedUrl", "version": "0", "attr": "SRC_URI", "url": "https://github.com/pkgcore/pkgcheck/foo.tar.gz", "new_url": "https://github.com/pkgcore/pkgcheck/foo-moved.tar.gz"}
