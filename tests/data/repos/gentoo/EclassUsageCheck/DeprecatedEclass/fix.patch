@@ -1,11 +1,23 @@
 diff -Naur gentoo/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild fixed/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild
 --- gentoo/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild	2020-09-23 17:09:37.751307423 -0600
-+++ fixed/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild	2020-09-23 17:10:04.757889915 -0600
++++ fixed/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild	2020-11-23 20:12:40.262372590 -0700
 @@ -2,7 +2,6 @@
  # Distributed under the terms of the GNU General Public License v2
  
  EAPI=7
 -inherit deprecated
+ DESCRIPTION="Ebuild with deprecated eclass usage"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+diff -Naur gentoo/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-1.ebuild fixed/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-1.ebuild
+--- gentoo/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-1.ebuild	2020-11-23 20:11:57.449437968 -0700
++++ fixed/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-1.ebuild	2020-11-23 20:12:51.320614003 -0700
+@@ -2,7 +2,7 @@
+ # Distributed under the terms of the GNU General Public License v2
+ 
+ EAPI=7
+-inherit deprecated2
++inherit replacement
  DESCRIPTION="Ebuild with deprecated eclass usage"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
  SLOT="0"

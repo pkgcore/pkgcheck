@@ -1,1 +1,2 @@
 {"__class__": "DeprecatedEclass", "category": "EclassUsageCheck", "package": "DeprecatedEclass", "version": "0", "eclass": "deprecated", "replacement": null}
+{"__class__": "DeprecatedEclass", "category": "EclassUsageCheck", "package": "DeprecatedEclass", "version": "1", "eclass": "deprecated2", "replacement": "replacement"}
