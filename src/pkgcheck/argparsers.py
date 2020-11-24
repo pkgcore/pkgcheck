@@ -6,7 +6,7 @@ from itertools import chain
 from snakeoil.cli import arghparse
 from snakeoil.strings import pluralism
 
-from . import base, objects, results
+from . import base, objects
 from .caches import CachedAddon
 from .checks import NetworkCheck
 
@@ -81,10 +81,11 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
 
-        error = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Error))
-        warning = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Warning))
-        info = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Info))
-        alias_map = {'error': error, 'warning': warning, 'info': info}
+        alias_map = {
+            'error': objects.KEYWORDS.error,
+            'warning': objects.KEYWORDS.warning,
+            'info': objects.KEYWORDS.info,
+        }
         replace_aliases = lambda x: alias_map.get(x, [x])
 
         # expand keyword aliases to keyword lists
@@ -139,10 +140,11 @@ class ExitArgs(arghparse.CommaSeparatedNegations):
         if not enabled:
             enabled.append('error')
 
-        error = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Error))
-        warning = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Warning))
-        info = (k for k, v in objects.KEYWORDS.items() if issubclass(v, results.Info))
-        alias_map = {'error': error, 'warning': warning, 'info': info}
+        alias_map = {
+            'error': objects.KEYWORDS.error,
+            'warning': objects.KEYWORDS.warning,
+            'info': objects.KEYWORDS.info,
+        }
         replace_aliases = lambda x: alias_map.get(x, [x])
 
         # expand keyword aliases to keyword lists

@@ -7,6 +7,7 @@ from collections.abc import Mapping
 from importlib import import_module
 
 from snakeoil import klass
+from snakeoil.mappings import ImmutableDict
 
 from . import __title__ as _pkg
 
@@ -107,6 +108,28 @@ class _LazyDict(Mapping):
         return iter(self._dict.items())
 
 
-KEYWORDS = _LazyDict('KEYWORDS', ('checks', 'results.Result'))
+class _KeywordsLazyDict(_LazyDict):
+    """Lazy dictionary of keyword mappings with added filtered attributes."""
+
+    @klass.jit_attr
+    def error(self):
+        """Mapping of all error level keywords."""
+        from . import results
+        return ImmutableDict({k: v for k, v in self._dict.items() if issubclass(v, results.Error)})
+
+    @klass.jit_attr
+    def warning(self):
+        """Mapping of all warning level keywords."""
+        from . import results
+        return ImmutableDict({k: v for k, v in self._dict.items() if issubclass(v, results.Warning)})
+
+    @klass.jit_attr
+    def info(self):
+        """Mapping of all info level keywords."""
+        from . import results
+        return ImmutableDict({k: v for k, v in self._dict.items() if issubclass(v, results.Info)})
+
+
+KEYWORDS = _KeywordsLazyDict('KEYWORDS', ('checks', 'results.Result'))
 CHECKS = _LazyDict('CHECKS', ('checks', 'checks.Check'))
 REPORTERS = _LazyDict('REPORTERS', ('reporters', 'reporters.Reporter'))

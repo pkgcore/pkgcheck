@@ -291,8 +291,7 @@ class TestPkgcheckScanParseArgs:
 
         # default error keywords
         options, _ = self.tool.parse_args(self.args + ['--exit'])
-        assert options.exit_keywords == frozenset(
-            v for k, v in objects.KEYWORDS.items() if issubclass(v, results.Error))
+        assert options.exit_keywords == frozenset(objects.KEYWORDS.error.values())
 
 
 class TestPkgcheckScan:
