@@ -15,12 +15,13 @@ def mk_pkg(ver, key="dev-util/diffball"):
 
 
 @pytest.fixture
-def check(tmpdir):
-    with open(pjoin(str(tmpdir), "glsa-200611-01.xml"), "w") as f:
+def check(tmp_path):
+    glsa_dir = str(tmp_path)
+    with open(pjoin(glsa_dir, "glsa-200611-01.xml"), "w") as f:
         f.write(mk_glsa(("dev-util/diffball", ([], [">0.7"]))))
-    with open(pjoin(str(tmpdir), "glsa-200611-02.xml"), "w") as f:
+    with open(pjoin(glsa_dir, "glsa-200611-02.xml"), "w") as f:
         f.write(mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
-    return glsa.GlsaCheck(arghparse.Namespace(glsa_dir=str(tmpdir)))
+    return glsa.GlsaCheck(arghparse.Namespace(glsa_dir=glsa_dir))
 
 
 class TestVulnerabilitiesCheck(misc.ReportTestCase):
@@ -42,6 +43,23 @@ class TestVulnerabilitiesCheck(misc.ReportTestCase):
         with pytest.raises(SkipOptionalCheck) as excinfo:
             glsa.GlsaCheck(options)
         assert 'no available glsa source' in str(excinfo)
+
+    def test_repo_glsa_dir(self, tmp_path):
+        # TODO: switch to using a repo fixture when available
+        repo_dir = str(tmp_path)
+        os.makedirs(pjoin(repo_dir, 'profiles'))
+        os.makedirs(pjoin(repo_dir, 'metadata', 'glsa'))
+        with open(pjoin(repo_dir, 'profiles', 'repo_name'), 'w') as f:
+            f.write('fake\n')
+        with open(pjoin(repo_dir, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('masters =\n')
+        with open(pjoin(repo_dir, 'metadata', 'glsa', 'glsa-202010-01.xml'), 'w') as f:
+            f.write(mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
+        repo_config = repo_objs.RepoConfig(location=repo_dir)
+        repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
+        options = arghparse.Namespace(glsa_dir=None, target_repo=repo)
+        check = glsa.GlsaCheck(options)
+        assert 'dev-util/diffball' in check.vulns
 
     def test_non_matching(self, check):
         self.assertNoReport(check, mk_pkg("0.5.1"))
