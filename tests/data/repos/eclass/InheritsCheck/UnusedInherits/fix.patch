@@ -1,0 +1,11 @@
+diff -Naur eclass/InheritsCheck/UnusedInherits/UnusedInherits-0.ebuild fixed/InheritsCheck/UnusedInherits/UnusedInherits-0.ebuild
+--- eclass/InheritsCheck/UnusedInherits/UnusedInherits-0.ebuild	2020-11-23 19:33:59.985731662 -0700
++++ fixed/InheritsCheck/UnusedInherits/UnusedInherits-0.ebuild	2020-11-23 19:35:32.489750140 -0700
+@@ -1,6 +1,6 @@
+ EAPI=7
+ 
+-inherit inherit unused
++inherit inherit
+ 
+ DESCRIPTION="Ebuild inheriting an unused eclass"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
