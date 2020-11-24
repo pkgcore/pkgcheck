@@ -1,0 +1,9 @@
+diff -Naur eclass/eclass/no-maintainer.eclass fixed/eclass/no-maintainer.eclass
+--- eclass/eclass/no-maintainer.eclass	2020-11-24 02:13:39.405830997 -0700
++++ fixed/eclass/no-maintainer.eclass	2020-11-24 02:15:16.000937293 -0700
+@@ -1,3 +1,5 @@
+ # @ECLASS: no-maintainer.eclass
++# @MAINTAINER:
++# Random Person <maintainer@random.email>
+ # @SUPPORTED_EAPIS: 6 7
+ # @BLURB: Stub eclass with no maintainer for testing the EclassDocError result.
