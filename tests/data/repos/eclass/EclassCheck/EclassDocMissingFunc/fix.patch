@@ -1,14 +1,14 @@
 diff -Naur eclass/eclass/missing.eclass fixed/eclass/missing.eclass
---- eclass/eclass/missing.eclass	2020-11-24 01:48:04.220381235 -0700
-+++ fixed/eclass/missing.eclass	2020-11-24 01:48:43.302231824 -0700
-@@ -4,6 +4,10 @@
- # @SUPPORTED_EAPIS: 6 7
- # @BLURB: Stub eclass with missing function and variable documentation.
+--- eclass/eclass/missing.eclass	2020-11-24 02:09:50.259835420 -0700
++++ fixed/eclass/missing.eclass	2020-11-24 02:12:01.756701701 -0700
+@@ -10,6 +10,10 @@
+ # Public documented stub function.
+ missing-docs_documented_func() { :; }
  
-+# @FUNCTION: missing-docs_public_function
++# @FUNCTION: missing-docs_public_func
 +# @USAGE:
 +# @DESCRIPTION:
 +# Public stub function.
- missing-docs_public_function() { :; }
+ missing-docs_public_func() { :; }
  
  MISSING_DOCS_PUBLIC_VAR=""

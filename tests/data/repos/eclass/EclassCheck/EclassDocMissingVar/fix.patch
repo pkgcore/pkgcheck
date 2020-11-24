@@ -1,11 +1,30 @@
 diff -Naur eclass/eclass/missing.eclass fixed/eclass/missing.eclass
---- eclass/eclass/missing.eclass	2020-11-24 01:48:04.220381235 -0700
-+++ fixed/eclass/missing.eclass	2020-11-24 01:49:26.259166752 -0700
-@@ -6,4 +6,7 @@
+--- eclass/eclass/missing.eclass	2020-11-24 02:09:50.259835420 -0700
++++ fixed/eclass/missing.eclass	2020-11-24 02:13:08.172149921 -0700
+@@ -12,4 +12,7 @@
  
- missing-docs_public_function() { :; }
+ missing-docs_public_func() { :; }
  
 +# @ECLASS-VARIABLE: MISSING_DOCS_PUBLIC_VAR
 +# @DESCRIPTION:
 +# Public stub variable.
  MISSING_DOCS_PUBLIC_VAR=""
+diff -Naur eclass/eclass/missing.eclass.orig fixed/eclass/missing.eclass.orig
+--- eclass/eclass/missing.eclass.orig	1969-12-31 17:00:00.000000000 -0700
++++ fixed/eclass/missing.eclass.orig	2020-11-24 02:09:50.259835420 -0700
+@@ -0,0 +1,15 @@
++# @ECLASS: missing-docs.eclass
++# @MAINTAINER:
++# Random Person <maintainer@random.email>
++# @SUPPORTED_EAPIS: 6 7
++# @BLURB: Stub eclass with missing function and variable documentation.
++
++# @FUNCTION: missing-docs_documented_func
++# @USAGE:
++# @DESCRIPTION:
++# Public documented stub function.
++missing-docs_documented_func() { :; }
++
++missing-docs_public_func() { :; }
++
++MISSING_DOCS_PUBLIC_VAR=""
