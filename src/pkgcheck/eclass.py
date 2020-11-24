@@ -6,7 +6,7 @@ import pickle
 from pkgcore.ebuild.eclass import Eclass, EclassDocParsingError
 from snakeoil.cli.exceptions import UserException
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.klass import jit_attr
+from snakeoil.klass import jit_attr_none
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.mappings import ImmutableDict
 
@@ -33,7 +33,7 @@ class EclassAddon(caches.CachedAddon):
         # mapping of repo locations to their corresponding eclass caches
         self._eclass_repos = {}
 
-    @jit_attr
+    @jit_attr_none
     def eclasses(self, repo=None):
         """Mapping of available eclasses to eclass doc info."""
         d = {}
@@ -41,7 +41,7 @@ class EclassAddon(caches.CachedAddon):
             d.update(self._eclass_repos.get(r.location, ()))
         return ImmutableDict(d)
 
-    @jit_attr
+    @jit_attr_none
     def deprecated(self):
         """Mapping of deprecated eclasses to their replacements (if any)."""
         d = {}
@@ -105,6 +105,9 @@ class EclassAddon(caches.CachedAddon):
 
                 # push eclasses to disk if any changes were found
                 if cache_eclasses:
+                    # reset jit attrs
+                    self._eclasses = None
+                    self._deprecated = None
                     try:
                         os.makedirs(os.path.dirname(cache_file), exist_ok=True)
                         cache = caches.DictCache(eclasses, self.cache)
