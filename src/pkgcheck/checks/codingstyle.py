@@ -594,73 +594,72 @@ class InheritsCheck(ExplicitlyEnabledCheck):
         self._eclass_re = re.compile(rf'\b({"|".join(exported_regexes)})\b')
 
     def feed(self, pkg):
-        if pkg.inherit:
-            full_inherit = set(pkg.inherited)
-            used = defaultdict(list)
-            lines = enumerate(pkg.lines, 1)
-            for lineno, line in lines:
-                line = line.strip()
-                if not line or line[0] == '#':
-                    continue
-                for m in self._eclass_re.finditer(line):
-                    # iterate over all pattern groups, skipping the initial, global one
-                    for i, usage in enumerate(m.groups()[1:]):
-                        if usage is not None and usage not in pkg.eapi.bash_funcs:
-                            if len(self.exports[usage]) > 1:
-                                # function exported by multiple eclasses
-                                inherited = full_inherit.intersection(self.exports[usage])
-                                if len(inherited) != 1:
-                                    continue
-                                eclass = inherited.pop()
-                            else:
-                                eclass = self.eclasses[i]
-                            used[eclass].append((lineno, usage))
+        full_inherit = set(pkg.inherited)
+        used = defaultdict(list)
+        lines = enumerate(pkg.lines, 1)
+        for lineno, line in lines:
+            line = line.strip()
+            if not line or line[0] == '#':
+                continue
+            for m in self._eclass_re.finditer(line):
+                # iterate over all pattern groups, skipping the initial, global one
+                for i, usage in enumerate(m.groups()[1:]):
+                    if usage is not None and usage not in pkg.eapi.bash_funcs:
+                        if len(self.exports[usage]) > 1:
+                            # function exported by multiple eclasses
+                            inherited = full_inherit.intersection(self.exports[usage])
+                            if len(inherited) != 1:
+                                continue
+                            eclass = inherited.pop()
+                        else:
+                            eclass = self.eclasses[i]
+                        used[eclass].append((lineno, usage))
 
-            direct_inherit = set(pkg.inherit)
-            # allowed indirect inherits
-            indirect_allowed = set().union(*(
-                self.eclass_cache[x].indirect_eclasses for x in direct_inherit))
-            # missing inherits
-            missing = used.keys() - direct_inherit - indirect_allowed
+        direct_inherit = set(pkg.inherit)
+        # allowed indirect inherits
+        indirect_allowed = set().union(*(
+            self.eclass_cache[x].indirect_eclasses for x in direct_inherit))
+        # missing inherits
+        missing = used.keys() - direct_inherit - indirect_allowed
 
-            unused = direct_inherit - used.keys()
-            # remove eclasses that use implicit phase functions
-            if unused and pkg.defined_phases:
-                phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
-                for eclass in list(unused):
-                    if self.eclass_cache[eclass].exported_functions.intersection(
-                            f'{eclass}_{phase}' for phase in phases):
-                        unused.discard(eclass)
-
+        unused = direct_inherit - used.keys()
+        # remove eclasses that use implicit phase functions
+        if unused and pkg.defined_phases:
+            phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
             for eclass in list(unused):
-                if self.eclass_cache[eclass].get('_parse_failed', False):
-                    # ignore eclasses with parsing failures
+                if self.eclass_cache[eclass].exported_functions.intersection(
+                        f'{eclass}_{phase}' for phase in phases):
                     unused.discard(eclass)
-                else:
-                    exported_eclass_keys = pkg.eapi.eclass_keys.intersection(
-                        self.eclass_cache[eclass].exported_variables)
-                    if not self.eclass_cache[eclass].exported_functions and exported_eclass_keys:
-                        # ignore eclasses that export ebuild metadata (e.g.
-                        # SRC_URI, S, ...) and no functions
-                        unused.discard(eclass)
 
-            for eclass in list(missing):
-                if self.eclass_cache[eclass].live:
-                    # ignore probable conditional VCS eclass inherits
-                    missing.discard(eclass)
+        for eclass in list(unused):
+            if self.eclass_cache[eclass].get('_parse_failed', False):
+                # ignore eclasses with parsing failures
+                unused.discard(eclass)
+            else:
+                exported_eclass_keys = pkg.eapi.eclass_keys.intersection(
+                    self.eclass_cache[eclass].exported_variables)
+                if not self.eclass_cache[eclass].exported_functions and exported_eclass_keys:
+                    # ignore eclasses that export ebuild metadata (e.g.
+                    # SRC_URI, S, ...) and no functions
+                    unused.discard(eclass)
 
-            for eclass in full_inherit.intersection(used):
-                for lineno, usage in used[eclass]:
-                    if usage in self.internals[eclass]:
-                        yield InternalEclassFunc(eclass, lineno, usage, pkg=pkg)
-            for eclass in missing:
-                lineno, usage = used[eclass][0]
-                if eclass in full_inherit:
-                    yield IndirectInherits(eclass, lineno, usage, pkg=pkg)
-                else:
-                    yield MissingInherits(eclass, lineno, usage, pkg=pkg)
-            if unused:
-                yield UnusedInherits(sorted(unused), pkg=pkg)
+        for eclass in list(missing):
+            if self.eclass_cache[eclass].live:
+                # ignore probable conditional VCS eclass inherits
+                missing.discard(eclass)
+
+        for eclass in full_inherit.intersection(used):
+            for lineno, usage in used[eclass]:
+                if usage in self.internals[eclass]:
+                    yield InternalEclassFunc(eclass, lineno, usage, pkg=pkg)
+        for eclass in missing:
+            lineno, usage = used[eclass][0]
+            if eclass in full_inherit:
+                yield IndirectInherits(eclass, lineno, usage, pkg=pkg)
+            else:
+                yield MissingInherits(eclass, lineno, usage, pkg=pkg)
+        if unused:
+            yield UnusedInherits(sorted(unused), pkg=pkg)
 
 
 class RedundantDodir(results.LineResult, results.Warning):
