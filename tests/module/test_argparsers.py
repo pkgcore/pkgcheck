@@ -1,7 +1,7 @@
 import random
 
 import pytest
-from pkgcheck import argparsers, base, objects, results
+from pkgcheck import argparsers, base, objects
 from pkgcheck.caches import CachedAddon
 from snakeoil.cli import arghparse
 
@@ -171,10 +171,6 @@ class TestCheckArgs:
 
 class TestExitArgs:
 
-    # set of all result error classes
-    errors = frozenset(
-        v for k, v in objects.KEYWORDS.items() if issubclass(v, results.Error))
-
     @pytest.fixture(autouse=True)
     def _create_argparser(self):
         self.parser = arghparse.ArgumentParser()
@@ -194,7 +190,7 @@ class TestExitArgs:
 
     def test_default(self):
         args = self.parser.parse_args(['--exit'])
-        assert args.exit == self.errors
+        assert args.exit == frozenset(objects.KEYWORDS.error.values())
 
     def test_enabled(self):
         keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
@@ -206,4 +202,4 @@ class TestExitArgs:
         keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
         cls = objects.KEYWORDS[keyword]
         args = self.parser.parse_args([f'--exit=-{keyword}'])
-        assert args.exit == self.errors - frozenset([cls])
+        assert args.exit == frozenset(objects.KEYWORDS.error.values()) - frozenset([cls])
