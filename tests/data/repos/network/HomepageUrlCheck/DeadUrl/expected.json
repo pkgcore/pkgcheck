@@ -1,0 +1,1 @@
+{"__class__": "DeadUrl", "category": "HomepageUrlCheck", "package": "DeadUrl", "version": "0", "attr": "HOMEPAGE", "url": "https://github.com/pkgcore/pkgcheck", "message": "404 Client Error: Not Found for url: https://github.com/pkgcore/pkgcheck"}

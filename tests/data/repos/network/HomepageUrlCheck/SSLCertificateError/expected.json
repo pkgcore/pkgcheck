@@ -1,0 +1,1 @@
+{"__class__": "SSLCertificateError", "category": "HomepageUrlCheck", "package": "SSLCertificateError", "version": "0", "attr": "HOMEPAGE", "url": "https://github.com/pkgcore/pkgcheck", "message": "Certificate verification failed"}
