@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck import __title__ as project
-from pkgcheck import base, objects, reporters
+from pkgcheck import base, objects, reporters, results
 from pkgcheck import checks as checks_mod
 from pkgcheck.scripts import run
 from pkgcore import const as pkgcore_const
@@ -283,6 +283,16 @@ class TestPkgcheckScanParseArgs:
             check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
             with pytest.raises(argparse.ArgumentError):
                 self.tool.parse_args(self.args + ['--debug', 'cat/pkg'])
+
+    def test_exit_keywords(self):
+        # no exit arg
+        options, _ = self.tool.parse_args(self.args)
+        assert options.exit_keywords == ()
+
+        # default error keywords
+        options, _ = self.tool.parse_args(self.args + ['--exit'])
+        assert options.exit_keywords == frozenset(
+            v for k, v in objects.KEYWORDS.items() if issubclass(v, results.Error))
 
 
 class TestPkgcheckScan:
