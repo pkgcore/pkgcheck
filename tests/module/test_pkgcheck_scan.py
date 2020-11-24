@@ -34,29 +34,29 @@ class TestPkgcheckScanParseArgs:
         self.args = ['scan', '--cache-dir', self.cache_dir]
 
     def test_skipped_checks(self):
-        options, _func = self.tool.parse_args(self.args)
+        options, _ = self.tool.parse_args(self.args)
         assert options.enabled_checks
         # some checks should always be skipped by default
         assert set(options.enabled_checks) != set(objects.CHECKS.values())
 
     def test_enabled_check(self):
-        options, _func = self.tool.parse_args(self.args + ['-c', 'PkgDirCheck'])
+        options, _ = self.tool.parse_args(self.args + ['-c', 'PkgDirCheck'])
         assert options.enabled_checks == [checks_mod.pkgdir.PkgDirCheck]
 
     def test_disabled_check(self):
-        options, _func = self.tool.parse_args(self.args)
+        options, _ = self.tool.parse_args(self.args)
         assert checks_mod.pkgdir.PkgDirCheck in options.enabled_checks
-        options, _func = self.tool.parse_args(self.args + ['-c=-PkgDirCheck'])
+        options, _ = self.tool.parse_args(self.args + ['-c=-PkgDirCheck'])
         assert options.enabled_checks
         assert checks_mod.pkgdir.PkgDirCheck not in options.enabled_checks
 
     def test_targets(self):
-        options, _func = self.tool.parse_args(self.args + ['dev-util/foo'])
+        options, _ = self.tool.parse_args(self.args + ['dev-util/foo'])
         assert list(options.restrictions) == [(base.package_scope, atom.atom('dev-util/foo'))]
 
     def test_stdin_targets(self):
         with patch('sys.stdin', StringIO('dev-util/foo')):
-            options, _func = self.tool.parse_args(self.args + ['-'])
+            options, _ = self.tool.parse_args(self.args + ['-'])
             assert list(options.restrictions) == [(base.package_scope, atom.atom('dev-util/foo'))]
 
     def test_stdin_targets_with_no_args(self, capsys):
@@ -70,7 +70,7 @@ class TestPkgcheckScanParseArgs:
 
     def test_invalid_targets(self, capsys):
         with pytest.raises(SystemExit) as excinfo:
-            options, _func = self.tool.parse_args(self.args + ['dev-util/f$o'])
+            options, _ = self.tool.parse_args(self.args + ['dev-util/f$o'])
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         err = err.strip()
@@ -87,12 +87,12 @@ class TestPkgcheckScanParseArgs:
 
     def test_selected_targets(self, fakerepo):
         # selected repo
-        options, _func = self.tool.parse_args(self.args + ['-r', 'stubrepo'])
+        options, _ = self.tool.parse_args(self.args + ['-r', 'stubrepo'])
         assert options.target_repo.repo_id == 'stubrepo'
         assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
         # dir path
-        options, _func = self.tool.parse_args(self.args + [fakerepo])
+        options, _ = self.tool.parse_args(self.args + [fakerepo])
         assert options.target_repo.repo_id == 'fakerepo'
         assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
@@ -100,7 +100,7 @@ class TestPkgcheckScanParseArgs:
         os.makedirs(pjoin(fakerepo, 'dev-util', 'foo'))
         ebuild_path = pjoin(fakerepo, 'dev-util', 'foo', 'foo-0.ebuild')
         touch(ebuild_path)
-        options, _func = self.tool.parse_args(self.args + [ebuild_path])
+        options, _ = self.tool.parse_args(self.args + [ebuild_path])
         restrictions = [
             restricts.CategoryDep('dev-util'),
             restricts.PackageDep('foo'),
@@ -111,7 +111,7 @@ class TestPkgcheckScanParseArgs:
 
         # cwd path in unconfigured repo
         with chdir(pjoin(fakerepo, 'dev-util', 'foo')):
-            options, _func = self.tool.parse_args(self.args)
+            options, _ = self.tool.parse_args(self.args)
             assert options.target_repo.repo_id == 'fakerepo'
             restrictions = [
                 restricts.CategoryDep('dev-util'),
@@ -122,14 +122,14 @@ class TestPkgcheckScanParseArgs:
         # cwd path in configured repo
         stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
         with chdir(stubrepo):
-            options, _func = self.tool.parse_args(self.args)
+            options, _ = self.tool.parse_args(self.args)
             assert options.target_repo.repo_id == 'stubrepo'
             assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
     def test_unknown_repo(self, capsys):
         for opt in ('-r', '--repo'):
             with pytest.raises(SystemExit) as excinfo:
-                options, _func = self.tool.parse_args(self.args + [opt, 'foo'])
+                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
@@ -139,7 +139,7 @@ class TestPkgcheckScanParseArgs:
     def test_unknown_reporter(self, capsys):
         for opt in ('-R', '--reporter'):
             with pytest.raises(SystemExit) as excinfo:
-                options, _func = self.tool.parse_args(self.args + [opt, 'foo'])
+                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
@@ -172,7 +172,7 @@ class TestPkgcheckScanParseArgs:
     def test_unknown_scope(self, capsys):
         for opt in ('-s', '--scopes'):
             with pytest.raises(SystemExit) as excinfo:
-                options, _func = self.tool.parse_args(self.args + [opt, 'foo'])
+                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
@@ -181,7 +181,7 @@ class TestPkgcheckScanParseArgs:
     def test_unknown_check(self, capsys):
         for opt in ('-c', '--checks'):
             with pytest.raises(SystemExit) as excinfo:
-                options, _func = self.tool.parse_args(self.args + [opt, 'foo'])
+                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
@@ -190,7 +190,7 @@ class TestPkgcheckScanParseArgs:
     def test_unknown_keyword(self, capsys):
         for opt in ('-k', '--keywords'):
             with pytest.raises(SystemExit) as excinfo:
-                options, _func = self.tool.parse_args(self.args + [opt, 'foo'])
+                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
@@ -198,18 +198,18 @@ class TestPkgcheckScanParseArgs:
 
     def test_cwd(self, capsys):
         # regularly working
-        options, _func = self.tool.parse_args(self.args + ['cat/pkg'])
+        options, _ = self.tool.parse_args(self.args + ['cat/pkg'])
         assert options.cwd == os.getcwd()
 
         # pretend the CWD was removed out from under us
         with patch('os.getcwd') as getcwd:
             getcwd.side_effect = FileNotFoundError('CWD is gone')
-            options, _func = self.tool.parse_args(self.args + ['cat/pkg'])
+            options, _ = self.tool.parse_args(self.args + ['cat/pkg'])
             assert options.cwd == '/'
 
     def test_selected_keywords(self):
         for opt in ('-k', '--keywords'):
-            options, _func = self.tool.parse_args(self.args + [opt, 'InvalidPN'])
+            options, _ = self.tool.parse_args(self.args + [opt, 'InvalidPN'])
             result_cls = next(v for k, v in objects.KEYWORDS.items() if k == 'InvalidPN')
             assert options.filtered_keywords == {result_cls}
             check = next(x for x in objects.CHECKS.values() if result_cls in x.known_results)
@@ -218,7 +218,7 @@ class TestPkgcheckScanParseArgs:
     def test_missing_scope(self, capsys):
         for opt in ('-s', '--scopes'):
             with pytest.raises(SystemExit) as excinfo:
-                options, _func = self.tool.parse_args(self.args + [opt])
+                options, _ = self.tool.parse_args(self.args + [opt])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
@@ -228,7 +228,7 @@ class TestPkgcheckScanParseArgs:
     def test_no_active_checks(self, capsys):
         args = self.args + ['-c', 'UnusedInMastersCheck']
         with pytest.raises(SystemExit) as excinfo:
-            options, _func = self.tool.parse_args(args)
+            options, _ = self.tool.parse_args(args)
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         err = err.strip().split('\n')
@@ -255,13 +255,13 @@ class TestPkgcheckScanParseArgs:
         os.makedirs(pjoin(fakerepo, 'eclass'))
         eclass_path = pjoin(fakerepo, 'eclass', 'foo.eclass')
         touch(eclass_path)
-        options, _func = self.tool.parse_args(self.args + [eclass_path])
+        options, _ = self.tool.parse_args(self.args + [eclass_path])
         scope, restrict = list(options.restrictions)[0]
         assert scope == base.eclass_scope
 
     def test_profiles_target(self, fakerepo):
         profiles_path = pjoin(fakerepo, 'profiles')
-        options, _func = self.tool.parse_args(self.args + [profiles_path])
+        options, _ = self.tool.parse_args(self.args + [profiles_path])
         assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
 
     def test_argparse_error(self, capsys):
