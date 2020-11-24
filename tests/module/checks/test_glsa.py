@@ -1,5 +1,8 @@
+import os
+
 import pytest
-from pkgcheck.checks import glsa
+from pkgcore.ebuild import repo_objs, repository
+from pkgcheck.checks import SkipOptionalCheck, glsa
 from pkgcore.test.misc import mk_glsa
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
@@ -23,6 +26,22 @@ def check(tmpdir):
 class TestVulnerabilitiesCheck(misc.ReportTestCase):
 
     check_kls = glsa.GlsaCheck
+
+    def test_no_glsa_dir(self, tmp_path):
+        # TODO: switch to using a repo fixture when available
+        repo_dir = str(tmp_path)
+        os.makedirs(pjoin(repo_dir, 'profiles'))
+        os.makedirs(pjoin(repo_dir, 'metadata'))
+        with open(pjoin(repo_dir, 'profiles', 'repo_name'), 'w') as f:
+            f.write('fake\n')
+        with open(pjoin(repo_dir, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('masters =\n')
+        repo_config = repo_objs.RepoConfig(location=repo_dir)
+        repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
+        options = arghparse.Namespace(glsa_dir=None, target_repo=repo)
+        with pytest.raises(SkipOptionalCheck) as excinfo:
+            glsa.GlsaCheck(options)
+        assert 'no available glsa source' in str(excinfo)
 
     def test_non_matching(self, check):
         self.assertNoReport(check, mk_pkg("0.5.1"))
