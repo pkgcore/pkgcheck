@@ -301,12 +301,13 @@ class TestPkgcheckScan:
     testdir = os.path.dirname(os.path.dirname(__file__))
     repos_data = pjoin(testdir, 'data', 'repos')
     repos_dir = pjoin(testdir, 'repos')
-    repos = tuple(sorted(os.listdir(repos_data)))
+    repos = tuple(x for x in sorted(os.listdir(repos_data)) if x != 'network')
 
     _all_results = []
     for name, cls in sorted(objects.CHECKS.items()):
-        for result in sorted(cls.known_results, key=attrgetter('__name__')):
-            _all_results.append((cls, result))
+        if not issubclass(cls, checks_mod.NetworkCheck):
+            for result in sorted(cls.known_results, key=attrgetter('__name__')):
+                _all_results.append((cls, result))
 
     @pytest.fixture(autouse=True)
     def _setup(self, testconfig, tmp_path):
@@ -484,7 +485,7 @@ class TestPkgcheckScan:
         check_name = check.__name__
         keyword = result.__name__
         tested = False
-        for repo in os.listdir(self.repos_data):
+        for repo in self.repos:
             keyword_dir = pjoin(self.repos_data, f'{repo}/{check_name}/{keyword}')
             if os.path.exists(pjoin(keyword_dir, 'fix.patch')):
                 fix = pjoin(keyword_dir, 'fix.patch')
