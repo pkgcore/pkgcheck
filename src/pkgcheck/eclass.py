@@ -46,9 +46,12 @@ class EclassAddon(caches.CachedAddon):
         """Mapping of deprecated eclasses to their replacements (if any)."""
         d = {}
         for r in self.options.target_repo.trees:
-            for k, v in self._eclass_repos.get(r.location, ()).items():
-                if 'deprecated' in v:
-                    d[k] = v['deprecated']
+            try:
+                for k, v in self._eclass_repos[r.location].items():
+                    if 'deprecated' in v:
+                        d[k] = v['deprecated']
+            except KeyError:
+                continue
         return ImmutableDict(d)
 
     def update_cache(self, force=False):

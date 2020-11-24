@@ -36,6 +36,13 @@ class TestEclassAddon:
         self.addon = EclassAddon(options)
         self.cache_file = self.addon.cache_file(self.repo)
 
+    def test_cache_disabled(self, tool):
+        args = ['scan', '--cache', 'no', '--repo', self.repo.location]
+        options, _ = tool.parse_args(args)
+        self.addon = EclassAddon(options)
+        assert not self.addon.eclasses
+        assert not self.addon.deprecated
+
     def test_no_eclasses(self):
         self.addon.update_cache()
         assert not self.addon.eclasses
