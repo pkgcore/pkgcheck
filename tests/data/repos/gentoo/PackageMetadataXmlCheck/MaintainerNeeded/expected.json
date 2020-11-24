@@ -1,1 +1,2 @@
 {"__class__": "MaintainerNeeded", "category": "PackageMetadataXmlCheck", "package": "MaintainerNeeded", "filename": "metadata.xml", "needed": false}
+{"__class__": "MaintainerNeeded", "category": "PackageMetadataXmlCheck", "package": "MaintainerNeeded2", "filename": "metadata.xml", "needed": true}
