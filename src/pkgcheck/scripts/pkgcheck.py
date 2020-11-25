@@ -493,9 +493,11 @@ def _validate_scan_args(parser, namespace):
         if namespace.selected_checks[1]:
             enabled_checks |= {objects.CHECKS[c] for c in namespace.selected_checks[1]}
         elif namespace.selected_checks[0]:
-            # only specifying disabled checks enables all checks by default and removes selected checks
+            # only specifying disabled checks enables all non-optional checks
+            # by default and removes selected checks
             enabled_checks = (
-                set(objects.CHECKS.values()) - {objects.CHECKS[c] for c in namespace.selected_checks[0]})
+                set(objects.CHECKS.default.values())
+                - {objects.CHECKS[c] for c in namespace.selected_checks[0]})
 
     # selected keywords
     if namespace.selected_keywords is not None:
@@ -510,9 +512,10 @@ def _validate_scan_args(parser, namespace):
     # determine keywords to filter
     namespace.filtered_keywords = None
     if namespace.enabled_keywords or namespace.disabled_keywords:
-        # all keywords are selected by default
+        # all keywords for non-optional checks are selected by default
         if not namespace.enabled_keywords:
-            namespace.enabled_keywords = set(objects.KEYWORDS.values())
+            namespace.enabled_keywords = set().union(
+                *(c.known_results for c in objects.CHECKS.default.values()))
 
         namespace.filtered_keywords = frozenset(
             namespace.enabled_keywords - namespace.disabled_keywords)
@@ -522,9 +525,9 @@ def _validate_scan_args(parser, namespace):
                 if namespace.filtered_keywords.intersection(check.known_results):
                     enabled_checks.add(check)
 
-    # all checks are run by default
+    # all non-optional checks are run by default
     if not enabled_checks:
-        enabled_checks = objects.CHECKS.values()
+        enabled_checks = objects.CHECKS.default.values()
 
     # skip checks that may be disabled
     enabled_checks = (c for c in enabled_checks if not c.skip(namespace))
