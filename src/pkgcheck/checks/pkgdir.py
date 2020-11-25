@@ -10,7 +10,7 @@ from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
-from . import Check, GentooRepoCheck
+from . import Check, GentooRepoCheck, SkipOptionalCheck
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()
@@ -319,12 +319,10 @@ class LiveOnlyCheck(GentooRepoCheck):
         super().__init__(*args)
         self.today = datetime.today()
         self.added_repo = git_addon.cached_repo(git.GitAddedRepo)
+        if self.added_repo is None:
+            raise SkipOptionalCheck(self, 'git cache support required')
 
     def feed(self, pkgset):
-        # disable check when git repo parsing is disabled
-        if self.added_repo is None:
-            return
-
         if all(pkg.live for pkg in pkgset):
             # assume highest package version is most recently committed
             pkg = pkgset[0] if len(pkgset) == 1 else sorted(pkgset)[-1]
