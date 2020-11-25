@@ -1,4 +1,5 @@
 from pkgcheck.checks import header
+from snakeoil.cli import arghparse
 
 from .. import misc
 
@@ -7,12 +8,16 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
 
     check_kls = header.EbuildHeaderCheck
 
+    def mk_check(self):
+        options = arghparse.Namespace(gentoo_repo=True)
+        return self.check_kls(options)
+
     def mk_pkg(self, **kwargs):
         return misc.FakePkg("dev-util/diffball-0.5", **kwargs)
 
     def test_empty_file(self):
         fake_pkg = self.mk_pkg(lines=())
-        self.assertNoReport(self.check_kls(None), fake_pkg)
+        self.assertNoReport(self.mk_check(), fake_pkg)
 
     def test_good_copyright(self):
         good_copyrights = [
@@ -23,7 +28,7 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
         for line in good_copyrights:
             fake_src = [line, self.check_kls.license_header]
             fake_pkg = self.mk_pkg(lines=fake_src)
-            self.assertNoReport(self.check_kls(None), fake_pkg)
+            self.assertNoReport(self.mk_check(), fake_pkg)
 
     def test_invalid_copyright(self):
         bad_copyrights = [
@@ -36,7 +41,7 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
         for line in bad_copyrights:
             fake_src = [line, self.check_kls.license_header]
             fake_pkg = self.mk_pkg(lines=fake_src)
-            r = self.assertReport(self.check_kls(None), fake_pkg)
+            r = self.assertReport(self.mk_check(), fake_pkg)
             assert isinstance(r, header.EbuildInvalidCopyright)
             assert line.strip() in str(r)
 
@@ -51,7 +56,7 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
         for line in bad_copyrights:
             fake_src = [line, self.check_kls.license_header]
             fake_pkg = self.mk_pkg(lines=fake_src)
-            r = self.assertReport(self.check_kls(None), fake_pkg)
+            r = self.assertReport(self.mk_check(), fake_pkg)
             assert isinstance(r, header.EbuildOldGentooCopyright)
             assert line.strip() in str(r)
 
@@ -65,7 +70,7 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
         for line in good_copyrights:
             fake_src = [line, self.check_kls.license_header]
             fake_pkg = self.mk_pkg(lines=fake_src)
-            self.assertNoReport(self.check_kls(None), fake_pkg)
+            self.assertNoReport(self.mk_check(), fake_pkg)
 
     def test_non_gentoo_authors_copyright_in_gentoo(self):
         """Ebuilds in the gentoo repo must use 'Gentoo Authors'."""
@@ -76,7 +81,7 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
         for line in bad_copyrights:
             fake_src = [line, self.check_kls.license_header]
             fake_pkg = self.mk_pkg(lines=fake_src)
-            r = self.assertReport(self.check_kls(None), fake_pkg)
+            r = self.assertReport(self.mk_check(), fake_pkg)
             assert isinstance(r, header.EbuildNonGentooAuthorsCopyright)
             assert line.strip() in str(r)
 
@@ -84,7 +89,7 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
         copyright = '# Copyright 1999-2019 Gentoo Authors\n'
         fake_src = [copyright, self.check_kls.license_header]
         fake_pkg = self.mk_pkg(lines=fake_src)
-        self.assertNoReport(self.check_kls(None), fake_pkg)
+        self.assertNoReport(self.mk_check(), fake_pkg)
 
         bad_license_headers = [
             '',
@@ -96,6 +101,6 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
         for line in bad_license_headers:
             fake_src = [copyright, line]
             fake_pkg = self.mk_pkg(lines=fake_src)
-            r = self.assertReport(self.check_kls(None), fake_pkg)
+            r = self.assertReport(self.mk_check(), fake_pkg)
             assert isinstance(r, header.EbuildInvalidLicenseHeader)
             assert line.strip() in str(r)

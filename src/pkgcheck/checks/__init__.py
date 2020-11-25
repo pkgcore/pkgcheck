@@ -8,7 +8,6 @@ from snakeoil.cli.exceptions import UserException
 
 from .. import addons, base, feeds, sources
 from ..caches import CachedAddon
-from ..log import logger
 from ..results import FilteredVersionResult, MetadataError
 
 
@@ -49,13 +48,6 @@ class Check(feeds.Feed):
                 )
         return self._source
 
-    @classmethod
-    def skip(cls, namespace, skip=False):
-        """Conditionally skip check when running all enabled checks."""
-        if skip and namespace.forced_checks:
-            return cls.__name__ not in namespace.forced_checks
-        return skip
-
     def start(self):
         """Do startup here."""
 
@@ -75,69 +67,39 @@ class Check(feeds.Feed):
 class GentooRepoCheck(Check):
     """Check that is only run against the gentoo repo."""
 
-    @classmethod
-    def skip(cls, namespace, skip=False):
-        if not skip:
-            skip = not namespace.gentoo_repo
-            if skip:
-                logger.info('skipping %s, not running against gentoo repo', cls.__name__)
-        return super().skip(namespace, skip=skip)
+    def __init__(self, *args):
+        super().__init__(*args)
+        if not self.options.gentoo_repo:
+            raise SkipCheck(self, 'not running against gentoo repo')
 
 
 class OverlayRepoCheck(Check):
     """Check that is only run against overlay repos."""
 
-    @classmethod
-    def skip(cls, namespace, skip=False):
-        if not skip:
-            skip = not namespace.target_repo.masters
-            if skip:
-                logger.info('skipping %s, not running against overlay repo', cls.__name__)
-        return super().skip(namespace, skip=skip)
+    def __init__(self, *args):
+        super().__init__(*args)
+        if not self.options.target_repo.masters:
+            raise SkipCheck(self, 'not running against overlay')
 
 
 class OptionalCheck(Check):
     """Check that is only run when explicitly enabled."""
 
-    @classmethod
-    def skip(cls, namespace, skip=False):
-        if not skip:
-            if namespace.selected_checks is not None:
-                enabled_checks = namespace.selected_checks[1]
-            else:
-                enabled_checks = []
-
-            if namespace.selected_keywords is not None:
-                enabled_keywords = namespace.selected_keywords[1]
-            else:
-                enabled_keywords = []
-
-            known_results = {x.name for x in cls.known_results}
-            skip = cls.__name__ not in enabled_checks and \
-                not known_results.intersection(enabled_keywords)
-
-            if skip:
-                logger.info('skipping %s, not explicitly enabled', cls.__name__)
-        return super().skip(namespace, skip=skip)
-
 
 class GitCheck(OptionalCheck):
     """Check that is only run when explicitly enabled via the --commits git option."""
 
-    @classmethod
-    def skip(cls, namespace, skip=False):
-        if not skip:
-            skip = namespace.commits is None
-            if skip:
-                logger.info('skipping %s, not explicitly enabled', cls.__name__)
-        return super().skip(namespace, skip=skip)
+    def __init__(self, *args):
+        super().__init__(*args)
+        if not self.options.commits:
+            raise SkipCheck(self, 'not scanning against git commits')
 
 
 class AsyncCheck(Check):
     """Check that schedules tasks to be run asynchronously."""
 
 
-class NetworkCheck(AsyncCheck):
+class NetworkCheck(AsyncCheck, OptionalCheck):
     """Check that is only run when network support is enabled."""
 
     required_addons = (addons.NetAddon,)

@@ -12,7 +12,7 @@ class FakeCommit(GitCommit):
     """Fake git commit objects with default values."""
 
     def __init__(self, **kwargs):
-        commit_data =  {
+        commit_data = {
             'hash': '7f9abd7ec2d079b1d0c36fc2f5d626ae0691757e',
             'commit_date': 'Sun Dec 8 02:13:58 2019 -0700',
             'author': 'author@domain.com',
@@ -25,7 +25,9 @@ class FakeCommit(GitCommit):
 
 class TestGitCheck(misc.ReportTestCase):
     check_kls = git_mod.GitCommitsCheck
-    check = git_mod.GitCommitsCheck(arghparse.Namespace(target_repo=FakeRepo()))
+    options = arghparse.Namespace(
+        target_repo=FakeRepo(), commits='origin', gentoo_repo=True)
+    check = git_mod.GitCommitsCheck(options)
 
     def test_sign_offs(self):
         # assert that it checks for both author and comitter

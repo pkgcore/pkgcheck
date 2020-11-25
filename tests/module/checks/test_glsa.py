@@ -21,7 +21,7 @@ def check(tmp_path):
         f.write(mk_glsa(("dev-util/diffball", ([], [">0.7"]))))
     with open(pjoin(glsa_dir, "glsa-200611-02.xml"), "w") as f:
         f.write(mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
-    return glsa.GlsaCheck(arghparse.Namespace(glsa_dir=glsa_dir))
+    return glsa.GlsaCheck(arghparse.Namespace(glsa_dir=glsa_dir, gentoo_repo=True))
 
 
 class TestVulnerabilitiesCheck(misc.ReportTestCase):
@@ -39,7 +39,7 @@ class TestVulnerabilitiesCheck(misc.ReportTestCase):
             f.write('masters =\n')
         repo_config = repo_objs.RepoConfig(location=repo_dir)
         repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
-        options = arghparse.Namespace(glsa_dir=None, target_repo=repo)
+        options = arghparse.Namespace(glsa_dir=None, target_repo=repo, gentoo_repo=True)
         with pytest.raises(SkipCheck) as excinfo:
             glsa.GlsaCheck(options)
         assert 'no available glsa source' in str(excinfo)
@@ -57,7 +57,7 @@ class TestVulnerabilitiesCheck(misc.ReportTestCase):
             f.write(mk_glsa(("dev-util/diffball", ([], ["~>=0.5-r3"]))))
         repo_config = repo_objs.RepoConfig(location=repo_dir)
         repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
-        options = arghparse.Namespace(glsa_dir=None, target_repo=repo)
+        options = arghparse.Namespace(glsa_dir=None, target_repo=repo, gentoo_repo=True)
         check = glsa.GlsaCheck(options)
         assert 'dev-util/diffball' in check.vulns
 

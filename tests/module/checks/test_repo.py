@@ -18,7 +18,8 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
 
     def mk_check(self):
         self.repo = FakeRepo(repo_id='repo', location=self.dir)
-        options = arghparse.Namespace(target_repo=self.repo, cache={'git': False})
+        options = arghparse.Namespace(
+            target_repo=self.repo, cache={'git': False}, gentoo_repo=True)
         git_addon = git.GitAddon(options)
         return repo.RepoDirCheck(options, git_addon=git_addon)
 

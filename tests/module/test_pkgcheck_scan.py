@@ -225,15 +225,6 @@ class TestPkgcheckScanParseArgs:
             assert err[0] == (
                 'pkgcheck scan: error: argument -s/--scopes: expected one argument')
 
-    def test_no_active_checks(self, capsys):
-        args = self.args + ['-c', 'UnusedInMastersCheck']
-        with pytest.raises(SystemExit) as excinfo:
-            options, _ = self.tool.parse_args(args)
-        assert excinfo.value.code == 2
-        out, err = capsys.readouterr()
-        err = err.strip().split('\n')
-        assert err[-1].startswith("pkgcheck scan: error: no matching checks available")
-
     def test_conflicting_scan_scopes(self, capsys, fakerepo):
         """Multiple targets can't specify different scopes."""
         with pytest.raises(SystemExit) as excinfo:

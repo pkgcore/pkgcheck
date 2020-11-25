@@ -529,9 +529,6 @@ def _validate_scan_args(parser, namespace):
     if not enabled_checks:
         enabled_checks = objects.CHECKS.default.values()
 
-    # skip checks that may be disabled
-    enabled_checks = (c for c in enabled_checks if not c.skip(namespace))
-
     # only run version scope checks when using a package filter
     if namespace.filter is not None:
         enabled_checks = (c for c in enabled_checks if c.scope is base.version_scope)
