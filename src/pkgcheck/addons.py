@@ -669,11 +669,11 @@ class NetAddon(base.Addon):
             '--user-agent', default='Wget/1.20.3 (linux-gnu)',
             help='custom user agent spoofing')
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    @property
+    def session(self):
         try:
             from .net import Session
-            self.session = Session(
+            return Session(
                 concurrent=self.options.tasks, timeout=self.options.timeout,
                 user_agent=self.options.user_agent)
         except ImportError as e:

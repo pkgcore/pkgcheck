@@ -144,16 +144,10 @@ class NetworkCheck(AsyncCheck):
 
     def __init__(self, *args, net_addon):
         super().__init__(*args)
+        if not self.options.net:
+            raise SkipCheck(self, 'network checks not enabled')
         self.timeout = self.options.timeout
         self.session = net_addon.session
-
-    @classmethod
-    def skip(cls, namespace, skip=False):
-        if not skip:
-            skip = not namespace.net
-            if skip:
-                logger.info('skipping %s, network checks not enabled', cls.__name__)
-        return super().skip(namespace, skip=skip)
 
 
 class SkipCheck(UserException):
