@@ -136,6 +136,18 @@ class _KeywordsLazyDict(_LazyDict):
             if issubclass(v, results.Info)})
 
 
+class _ChecksLazyDict(_LazyDict):
+    """Lazy dictionary of keyword mappings with added filtered attributes."""
+
+    @klass.jit_attr
+    def default(self):
+        """Mapping of all default-enabled checks."""
+        from . import checks
+        return ImmutableDict({
+            k: v for k, v in self._dict.items()
+            if not issubclass(v, checks.OptionalCheck)})
+
+
 KEYWORDS = _KeywordsLazyDict('KEYWORDS', ('checks', 'results.Result'))
-CHECKS = _LazyDict('CHECKS', ('checks', 'checks.Check'))
+CHECKS = _ChecksLazyDict('CHECKS', ('checks', 'checks.Check'))
 REPORTERS = _LazyDict('REPORTERS', ('reporters', 'reporters.Reporter'))
