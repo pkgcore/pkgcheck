@@ -26,6 +26,10 @@ class MismatchedPerlVersion(results.VersionResult, results.Warning):
         return f'DIST_VERSION={self.dist_version} normalizes to {self.normalized}'
 
 
+class _PerlException(Exception):
+    """Generic error during perl script initialization."""
+
+
 class _PerlConnection:
     """Connection to perl script the check is going to communicate with."""
 
@@ -53,7 +57,7 @@ class _PerlConnection:
             self.perl_client = subprocess.Popen(
                 ['perl', perl_script, socket_path], stderr=subprocess.PIPE)
         except FileNotFoundError:
-            raise SkipOptionalCheck(PerlCheck, 'perl not installed on system')
+            raise _PerlException('perl not installed on system')
 
         sock.settimeout(1)
         try:
@@ -63,7 +67,7 @@ class _PerlConnection:
             if options.verbosity > 0:
                 stderr = self.perl_client.stderr.read().decode().strip()
                 err_msg += f': {stderr}'
-            raise SkipOptionalCheck(PerlCheck, err_msg)
+            raise _PerlException(err_msg)
 
     def normalize(self, version):
         """Normalize a given version number to its perl equivalent."""
@@ -100,7 +104,10 @@ class PerlCheck(Check):
         # __init__() since only one running version of the script is shared
         # between however many scanning processes will be run. Also, it makes
         # it easier to disable this check if required perl deps are missing.
-        self.perl = _PerlConnection(self.options)
+        try:
+            self.perl = _PerlConnection(self.options)
+        except _PerlException as e:
+            raise SkipOptionalCheck(self, str(e))
 
     def feed(self, pkg):
         match = self.dist_version_re.search(''.join(pkg.lines))
