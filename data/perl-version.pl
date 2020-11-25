@@ -2,7 +2,7 @@
 
 use strict;
 
-use Gentoo::PerlMod::Version qw( :all );
+use Gentoo::PerlMod::Version "gentooize_version";
 use IO::Socket::UNIX;
 
 my $SOCK_PATH = $ARGV[0];
