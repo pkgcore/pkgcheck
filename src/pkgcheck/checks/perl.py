@@ -10,7 +10,7 @@ from pkgcore.restrictions import packages, values
 from snakeoil.osutils import pjoin
 
 from .. import const, results, sources
-from . import Check, SkipOptionalCheck
+from . import Check, SkipCheck
 
 
 class MismatchedPerlVersion(results.VersionResult, results.Warning):
@@ -107,7 +107,7 @@ class PerlCheck(Check):
         try:
             self.perl = _PerlConnection(self.options)
         except _PerlException as e:
-            raise SkipOptionalCheck(self, str(e))
+            raise SkipCheck(self, str(e))
 
     def feed(self, pkg):
         match = self.dist_version_re.search(''.join(pkg.lines))

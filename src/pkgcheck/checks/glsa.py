@@ -9,7 +9,7 @@ from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism
 
 from .. import results
-from . import GentooRepoCheck, SkipOptionalCheck
+from . import GentooRepoCheck, SkipCheck
 
 
 class VulnerablePackage(results.VersionResult, results.Error):
@@ -50,7 +50,7 @@ class GlsaCheck(GentooRepoCheck):
                     glsa_dir = path
                     break
             else:
-                raise SkipOptionalCheck(self, 'no available glsa source')
+                raise SkipCheck(self, 'no available glsa source')
 
         # this is a bit brittle
         self.vulns = defaultdict(list)

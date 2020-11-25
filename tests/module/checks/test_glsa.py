@@ -2,7 +2,7 @@ import os
 
 import pytest
 from pkgcore.ebuild import repo_objs, repository
-from pkgcheck.checks import SkipOptionalCheck, glsa
+from pkgcheck.checks import SkipCheck, glsa
 from pkgcore.test.misc import mk_glsa
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
@@ -40,7 +40,7 @@ class TestVulnerabilitiesCheck(misc.ReportTestCase):
         repo_config = repo_objs.RepoConfig(location=repo_dir)
         repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
         options = arghparse.Namespace(glsa_dir=None, target_repo=repo)
-        with pytest.raises(SkipOptionalCheck) as excinfo:
+        with pytest.raises(SkipCheck) as excinfo:
             glsa.GlsaCheck(options)
         assert 'no available glsa source' in str(excinfo)
 

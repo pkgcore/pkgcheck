@@ -4,7 +4,7 @@ from datetime import datetime
 from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
-from . import GentooRepoCheck, SkipOptionalCheck
+from . import GentooRepoCheck, SkipCheck
 
 
 class StableRequest(results.VersionResult, results.Info):
@@ -46,7 +46,7 @@ class StableRequestCheck(GentooRepoCheck):
         self.today = datetime.today()
         self.modified_repo = git_addon.cached_repo(git.GitModifiedRepo)
         if self.modified_repo is None:
-            raise SkipOptionalCheck(self, 'git cache support required')
+            raise SkipCheck(self, 'git cache support required')
 
     def feed(self, pkgset):
         pkg_slotted = defaultdict(list)

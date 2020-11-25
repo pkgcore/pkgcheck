@@ -3,7 +3,7 @@ import socket
 from unittest.mock import patch
 
 import pytest
-from pkgcheck.checks import SkipOptionalCheck, perl
+from pkgcheck.checks import SkipCheck, perl
 from snakeoil.cli import arghparse
 
 from .. import misc
@@ -16,7 +16,7 @@ def perl_deps_missing():
     global REASON
     try:
         perl.PerlCheck(arghparse.Namespace(verbosity=1))
-    except SkipOptionalCheck as e:
+    except SkipCheck as e:
         REASON = str(e)
         return True
     return False
@@ -65,7 +65,7 @@ class TestPerlCheck(misc.ReportTestCase):
         """Check initialization fails if perl isn't installed."""
         with patch('subprocess.Popen') as popen:
             popen.side_effect = FileNotFoundError('perl not available')
-            with pytest.raises(SkipOptionalCheck) as excinfo:
+            with pytest.raises(SkipCheck) as excinfo:
                 self.mk_check()
             assert 'perl not installed' in str(excinfo.value)
 
@@ -74,7 +74,7 @@ class TestPerlCheck(misc.ReportTestCase):
         with patch('socket.socket') as mock_socket:
             mock_socket.return_value.accept.side_effect = socket.timeout
             for verbosity in (0, 1):
-                with pytest.raises(SkipOptionalCheck) as excinfo:
+                with pytest.raises(SkipCheck) as excinfo:
                     self.mk_check(verbosity=verbosity)
                 assert 'failed to connect to perl client' in str(excinfo.value)
 
