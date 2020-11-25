@@ -55,9 +55,6 @@ class Check(feeds.Feed):
         """Do cleanup and yield final results here."""
         yield from ()
 
-    def __eq__(self, other):
-        return self.__class__.__name__ == other.__class__.__name__
-
     def __lt__(self, other):
         if self.priority == other.priority:
             return self.__class__.__name__ < other.__class__.__name__

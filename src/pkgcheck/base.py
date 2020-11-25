@@ -121,6 +121,12 @@ class Addon:
         they are instantiated.
         """
 
+    def __hash__(self):
+        return hash(self.__class__)
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
 
 def param_name(cls):
     """Restructure class names for injected parameters.
