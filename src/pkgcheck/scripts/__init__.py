@@ -9,6 +9,14 @@ from importlib import import_module
 
 def run(script_name):
     """Run a given script module."""
+    # Remove the current working directory to avoid implicit
+    # namespace package (PEP 420) imports due to directories
+    # matching module names.
+    try:
+        sys.path.remove(os.getcwd())
+    except ValueError:
+        pass
+
     try:
         from pkgcheck.cli import Tool
         script_module = '.'.join(
