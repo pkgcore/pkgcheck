@@ -96,7 +96,7 @@ class OverlayRepoCheck(Check):
         return super().skip(namespace, skip=skip)
 
 
-class ExplicitlyEnabledCheck(Check):
+class OptionalCheck(Check):
     """Check that is only run when explicitly enabled."""
 
     @classmethod
@@ -121,7 +121,7 @@ class ExplicitlyEnabledCheck(Check):
         return super().skip(namespace, skip=skip)
 
 
-class GitCheck(ExplicitlyEnabledCheck):
+class GitCheck(OptionalCheck):
     """Check that is only run when explicitly enabled via the --commits git option."""
 
     @classmethod
