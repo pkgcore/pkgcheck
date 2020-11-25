@@ -514,18 +514,13 @@ def _validate_scan_args(parser, namespace):
         if not namespace.enabled_keywords:
             namespace.enabled_keywords = set(objects.KEYWORDS.values())
 
-        # translate requested keywords to their actual classes
-        namespace.filtered_keywords = defaultdict(set)
-        for keyword in namespace.enabled_keywords - namespace.disabled_keywords:
-            for check in objects.CHECKS.values():
-                for result in check.known_results:
-                    if issubclass(result, keyword):
-                        namespace.filtered_keywords[result].add(check)
-
-        # only enable checks for the requested keywords
+        namespace.filtered_keywords = frozenset(
+            namespace.enabled_keywords - namespace.disabled_keywords)
         if not enabled_checks:
-            enabled_checks = set().union(*namespace.filtered_keywords.values())
-        namespace.filtered_keywords = frozenset(namespace.filtered_keywords)
+            # only enable checks for the requested keywords
+            for check in objects.CHECKS.values():
+                if namespace.filtered_keywords.intersection(check.known_results):
+                    enabled_checks.add(check)
 
     # all checks are run by default
     if not enabled_checks:
