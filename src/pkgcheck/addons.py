@@ -50,15 +50,11 @@ class ArchesAddon(base.Addon):
 
     @staticmethod
     def check_args(parser, namespace):
-        arches = namespace.selected_arches
-        target_repo = getattr(namespace, "target_repo", None)
-        if target_repo is not None:
-            all_arches = target_repo.known_arches
-        else:
-            all_arches = set()
-
-        if arches is None:
+        all_arches = namespace.target_repo.known_arches
+        if namespace.selected_arches is None:
             arches = (set(), all_arches)
+        else:
+            arches = namespace.selected_arches
         disabled, enabled = arches
         if not enabled:
             # enable all non-prefix arches

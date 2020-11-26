@@ -33,18 +33,69 @@ class ArgparseCheck:
         return args
 
 
-class TestArchesAddon(ArgparseCheck):
+class TestArchesAddon:
 
-    addon_kls = addons.ArchesAddon
+    @pytest.fixture(autouse=True)
+    def _setup(self, repo):
+        self.repo = repo
+        self.namespace = arghparse.Namespace(target_repo=repo)
+        self.parser = commandline.ArgumentParser(domain=False, color=False)
+        addons.ArchesAddon.mangle_argparser(self.parser)
+        self.addon = addons.ArchesAddon(self.namespace)
 
-    def test_opts(self):
-        for arg in ('-a', '--arches'):
-            self.process_check([arg, 'x86'], arches=('x86',))
-            self.process_check([arg, 'ppc'], arches=('ppc',))
-            self.process_check([arg, 'x86,ppc'], arches=('ppc', 'x86'))
+    def test_empty_default(self):
+        args, _ = self.parser.parse_known_args([], self.namespace)
+        self.addon.check_args(self.parser, self.namespace)
+        assert self.namespace.arches == ()
 
-    def test_default(self):
-        self.process_check([], arches=())
+    def test_repo_default(self):
+        with open(pjoin(self.repo.location, 'profiles', 'arch.list'), 'w') as f:
+            f.write("arm64\namd64\n")
+        args, _ = self.parser.parse_known_args([], self.namespace)
+        self.addon.check_args(self.parser, self.namespace)
+        assert self.namespace.arches == ('amd64', 'arm64')
+
+    def test_enabled(self):
+        data = (
+            ('x86', ('x86',)),
+            ('ppc', ('ppc',)),
+            ('x86,ppc', ('ppc', 'x86')),
+        )
+        for arg, expected in data:
+            for opt in ('-a', '--arches'):
+                args, _ = self.parser.parse_known_args([f'{opt}={arg}'], self.namespace)
+                self.addon.check_args(self.parser, self.namespace)
+                assert self.namespace.arches == expected
+
+    def test_disabled(self):
+        # set repo defaults
+        with open(pjoin(self.repo.location, 'profiles', 'arch.list'), 'w') as f:
+            f.write("arm64\namd64\narm64-linux\n")
+
+        data = (
+            ('-x86', ('amd64', 'arm64',)),
+            ('-x86,-amd64', ('arm64',)),
+        )
+        for arg, expected in data:
+            for opt in ('-a', '--arches'):
+                args, _ = self.parser.parse_known_args([f'{opt}={arg}'], self.namespace)
+                self.addon.check_args(self.parser, self.namespace)
+                assert self.namespace.arches == expected
+
+    def test_unknown(self, capsys):
+        # unknown arch checking requires repo defaults
+        with open(pjoin(self.repo.location, 'profiles', 'arch.list'), 'w') as f:
+            f.write("arm64\namd64\narm64-linux\n")
+
+        for arg in ('foo', 'bar'):
+            for opt in ('-a', '--arches'):
+                args, _ = self.parser.parse_known_args([f'{opt}={arg}'], self.namespace)
+                with pytest.raises(SystemExit) as excinfo:
+                    self.addon.check_args(self.parser, self.namespace)
+                assert excinfo.value.code == 2
+                out, err = capsys.readouterr()
+                assert not out
+                assert f'unknown arch: {arg}' in err
 
 
 class Test_profile_data:
