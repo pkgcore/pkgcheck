@@ -16,7 +16,6 @@ from pkgcheck import __title__ as project
 from pkgcheck import base, objects, reporters
 from pkgcheck import checks as checks_mod
 from pkgcheck.scripts import run
-from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import atom, restricts
 from pkgcore.restrictions import packages
 from snakeoil.contexts import chdir
@@ -85,20 +84,20 @@ class TestPkgcheckScanParseArgs:
         assert err[-1].startswith(
             "pkgcheck scan: error: 'stubrepo' repo doesn't contain: '/foo/bar'")
 
-    def test_selected_targets(self, fakerepo):
-        # selected repo
+    def test_target_repo_id(self):
         options, _ = self.tool.parse_args(self.args + ['-r', 'stubrepo'])
         assert options.target_repo.repo_id == 'stubrepo'
         assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
+    def test_target_dir_path(self, repo):
         # dir path
-        options, _ = self.tool.parse_args(self.args + [fakerepo])
-        assert options.target_repo.repo_id == 'fakerepo'
+        options, _ = self.tool.parse_args(self.args + [repo.location])
+        assert options.target_repo.repo_id == 'fake'
         assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
-        # file path
-        os.makedirs(pjoin(fakerepo, 'dev-util', 'foo'))
-        ebuild_path = pjoin(fakerepo, 'dev-util', 'foo', 'foo-0.ebuild')
+    def test_target_file_path(self, repo):
+        os.makedirs(pjoin(repo.location, 'dev-util', 'foo'))
+        ebuild_path = pjoin(repo.location, 'dev-util', 'foo', 'foo-0.ebuild')
         touch(ebuild_path)
         options, _ = self.tool.parse_args(self.args + [ebuild_path])
         restrictions = [
@@ -107,23 +106,23 @@ class TestPkgcheckScanParseArgs:
             restricts.VersionMatch('=', '0'),
         ]
         assert list(options.restrictions) == [(base.version_scope, packages.AndRestriction(*restrictions))]
-        assert options.target_repo.repo_id == 'fakerepo'
+        assert options.target_repo.repo_id == 'fake'
 
-        # cwd path in unconfigured repo
-        with chdir(pjoin(fakerepo, 'dev-util', 'foo')):
+    def test_target_package_dir_cwd(self, repo):
+        os.makedirs(pjoin(repo.location, 'dev-util', 'foo'))
+        with chdir(pjoin(repo.location, 'dev-util', 'foo')):
             options, _ = self.tool.parse_args(self.args)
-            assert options.target_repo.repo_id == 'fakerepo'
+            assert options.target_repo.repo_id == 'fake'
             restrictions = [
                 restricts.CategoryDep('dev-util'),
                 restricts.PackageDep('foo'),
             ]
             assert list(options.restrictions) == [(base.package_scope, packages.AndRestriction(*restrictions))]
 
-        # cwd path in configured repo
-        stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
-        with chdir(stubrepo):
+    def test_target_repo_dir_cwd(self, repo):
+        with chdir(repo.location):
             options, _ = self.tool.parse_args(self.args)
-            assert options.target_repo.repo_id == 'stubrepo'
+            assert options.target_repo.repo_id == 'fake'
             assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
     def test_unknown_repo(self, capsys):
