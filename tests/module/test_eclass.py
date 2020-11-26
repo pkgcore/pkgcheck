@@ -90,6 +90,19 @@ class TestEclassAddon:
         assert list(self.addon.eclasses) == ['foo']
         assert st.st_mtime != os.lstat(self.cache_file).st_mtime
 
+    def test_eclass_changes(self):
+        """The cache stores eclass mtimes and regenerates entries if they differ."""
+        eclass_path = pjoin(self.eclass_dir, 'foo.eclass')
+        touch(eclass_path)
+        self.addon.update_cache()
+        assert list(self.addon.eclasses) == ['foo']
+        st = os.lstat(self.cache_file)
+        with open(eclass_path, 'w') as f:
+            f.write('# changed eclass\n')
+        self.addon.update_cache()
+        assert list(self.addon.eclasses) == ['foo']
+        assert st.st_mtime != os.lstat(self.cache_file).st_mtime
+
     def test_error_loading_cache(self):
         touch(pjoin(self.eclass_dir, 'foo.eclass'))
         self.addon.update_cache()
