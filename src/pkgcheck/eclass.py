@@ -30,15 +30,18 @@ class Eclass:
 
     def __init__(self, name, path):
         self.name = name
-        self.path = path
+        self.path = os.path.realpath(path)
 
     def __str__(self):
         return self.name
 
     @property
     def lines(self):
-        with open(self.path) as f:
-            return tuple(f)
+        try:
+            with open(self.path) as f:
+                return tuple(f)
+        except FileNotFoundError:
+            return ()
 
     def __lt__(self, other):
         if isinstance(other, Eclass):
@@ -47,8 +50,8 @@ class Eclass:
 
     def __eq__(self, other):
         if isinstance(other, Eclass):
-            return self.name == other.name
-        return self.name == other
+            return self.path == other.path
+        return self.path == other
 
 
 class EclassAddon(caches.CachedAddon):

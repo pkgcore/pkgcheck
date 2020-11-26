@@ -4,12 +4,40 @@ import textwrap
 from unittest.mock import patch
 
 import pytest
-from pkgcheck.eclass import EclassAddon
+from pkgcheck.eclass import Eclass, EclassAddon
 from pkgcore.ebuild import repo_objs, repository
 from pkgcore.ebuild.eclass import EclassDocParsingError
 from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
+
+
+class TestEclass:
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path):
+        path = str(tmp_path / 'foo.eclass')
+        with open(path, 'w') as f:
+            f.write(textwrap.dedent("""\
+                # eclass header
+                foo () { :; }
+            """))
+        self.eclass1 = Eclass('foo', path)
+        path = str(tmp_path / 'bar.eclass')
+        self.eclass2 = Eclass('bar', path)
+
+    def test_lines(self):
+        assert self.eclass1.lines == ('# eclass header\n', 'foo () { :; }\n')
+        assert self.eclass2.lines == ()
+
+    def test_lt(self):
+        assert self.eclass2 < self.eclass1
+        assert self.eclass1 < 'zoo.eclass'
+
+    def test_eq(self):
+        assert self.eclass1 == self.eclass1
+        assert self.eclass1 == self.eclass1.path
+        assert not self.eclass1 == self.eclass2
 
 
 class TestEclassAddon:
