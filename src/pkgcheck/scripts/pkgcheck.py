@@ -471,9 +471,9 @@ def _validate_scan_args(parser, namespace):
                 combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
                 restrictions = [(scopes.pop(), combined_restrict)]
     elif not restrictions:
-        try:
+        if namespace.cwd in repo:
             scope, restrict = _path_restrict(namespace.cwd, repo)
-        except ValueError:
+        else:
             scope, restrict = base.repo_scope, packages.AlwaysTrue
         restrictions = [(scope, restrict)]
 
