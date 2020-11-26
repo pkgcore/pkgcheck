@@ -105,11 +105,11 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
                             if self.options.dry_run:
                                 print(f'Would remove {path}')
                             else:
-                                path.unlink()
+                                os.unlink(path)
                                 # remove empty cache dirs
                                 try:
                                     while str(path) != self.options.cache_dir:
-                                        path.parent.rmdir()
+                                        os.rmdir(path.parent)
                                         path = path.parent
                                 except OSError as e:
                                     if e.errno == errno.ENOTEMPTY:
