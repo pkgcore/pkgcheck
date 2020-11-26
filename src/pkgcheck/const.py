@@ -21,17 +21,11 @@ except ImportError:
 
 def _GET_CONST(attr, default_value, allow_environment_override=False):
     consts = mappings.ProxiedAttrs(_module)
-    is_tuple = not isinstance(default_value, str)
-    if is_tuple:
-        default_value = tuple(x % consts for x in default_value)
-    else:
-        default_value %= consts
+    default_value %= consts
 
     result = getattr(_defaults, attr, default_value)
     if allow_environment_override:
         result = os.environ.get(f'{_pkg.upper()}_OVERRIDE_{attr}', result)
-    if is_tuple:
-        result = tuple(result)
     return result
 
 
