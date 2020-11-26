@@ -134,10 +134,3 @@ class EbuildRepo:
 def repo(tmp_path):
     """Create a generic ebuild repository."""
     return EbuildRepo(str(tmp_path))
-
-
-@pytest.fixture
-def namespace():
-    """Create a argparse namespace with profile override default."""
-    stub_profile = pjoin(pkgcore_const.DATA_PATH, 'stubrepo', 'profiles', 'default')
-    return arghparse.Namespace(profile_override=stub_profile)
