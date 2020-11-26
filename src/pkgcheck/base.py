@@ -92,7 +92,7 @@ class Addon:
 
     required_addons = ()
 
-    def __init__(self, options):
+    def __init__(self, options, **kwargs):
         """Initialize.
 
         An instance of every addon in required_addons is passed as extra arg.
