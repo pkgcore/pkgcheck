@@ -74,7 +74,20 @@ class TestPkgcheckCache:
                 assert err == ''
                 assert out.startswith(f'Would remove {self.cache_dir}')
 
-        # forcibly remove it
+        # fail to remove it
+        for arg in ('-r', '--remove'):
+            with patch('pkgcheck.caches.os.unlink') as unlink, \
+                    patch('sys.argv', self.args + [arg] + ['-t', 'profiles']):
+                unlink.side_effect = IOError('bad perms')
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not out
+                assert os.listdir(self.cache_dir)
+                assert err.startswith('pkgcheck cache: error: failed removing profiles cache')
+                assert excinfo.value.code == 2
+
+        # actually remove it
         for arg in ('-r', '--remove'):
             with patch('sys.argv', self.args + [arg] + ['-t', 'profiles']):
                 with pytest.raises(SystemExit):
