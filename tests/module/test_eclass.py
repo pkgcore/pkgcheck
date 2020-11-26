@@ -40,6 +40,8 @@ class TestEclassAddon:
         args = ['scan', '--cache', 'no', '--repo', self.repo.location]
         options, _ = tool.parse_args(args)
         self.addon = EclassAddon(options)
+        touch(pjoin(self.eclass_dir, 'foo.eclass'))
+        self.addon.update_cache()
         assert not self.addon.eclasses
         assert not self.addon.deprecated
 
