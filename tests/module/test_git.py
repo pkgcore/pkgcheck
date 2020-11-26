@@ -1,10 +1,15 @@
+import os
 import subprocess
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from pkgcore.ebuild import atom
 from pkgcore.restrictions import packages
 from pkgcheck import base
+from pkgcheck.git import GitStash
+from snakeoil.cli.exceptions import UserException
+from snakeoil.fileutils import touch
+from snakeoil.osutils import pjoin
 
 
 class TestPkgcheckScanCommitsParseArgs:
@@ -91,3 +96,47 @@ class TestPkgcheckScanCommitsParseArgs:
             with pytest.raises(SystemExit) as excinfo:
                 self.tool.parse_args(self.args + ['--commits'])
             assert excinfo.value.code == 0
+
+
+class TestGitStash:
+
+    def test_non_git_repo(self, tmp_path):
+        with pytest.raises(ValueError) as excinfo:
+            with GitStash(tmp_path):
+                pass
+        assert 'not a git repo' in str(excinfo.value)
+
+    def test_empty_git_repo(self, git_repo):
+        with GitStash(git_repo.path):
+            pass
+
+    def test_untracked_file(self, git_repo):
+        path = pjoin(git_repo.path, 'foo')
+        touch(path)
+        assert os.path.exists(path)
+        with GitStash(git_repo.path):
+            assert not os.path.exists(path)
+        assert os.path.exists(path)
+
+    def test_failed_stashing(self, git_repo):
+        path = pjoin(git_repo.path, 'foo')
+        touch(path)
+        assert os.path.exists(path)
+        with patch('subprocess.run') as run:
+            err = subprocess.CalledProcessError(1, 'git stash')
+            err.stderr = 'git stash failed'
+            run.side_effect = [Mock(stdout='foo'), err]
+            with pytest.raises(UserException) as excinfo:
+                with GitStash(git_repo.path):
+                    pass
+            assert 'git failed stashing files' in str(excinfo.value)
+
+    def test_failed_unstashing(self, git_repo):
+        path = pjoin(git_repo.path, 'foo')
+        touch(path)
+        assert os.path.exists(path)
+        with pytest.raises(UserException) as excinfo:
+            with GitStash(git_repo.path):
+                assert not os.path.exists(path)
+                touch(path)
+        assert 'git failed applying stash' in str(excinfo.value)

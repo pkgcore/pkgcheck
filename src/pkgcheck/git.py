@@ -338,7 +338,7 @@ class _ScanCommits(argparse.Action):
         if namespace.filtered_keywords is not None:
             namespace.filtered_keywords.update(*(c.known_results for c in git_checks))
 
-        namespace.contexts.append(GitStash(parser, repo))
+        namespace.contexts.append(GitStash(repo.location))
         namespace.restrictions = restrictions
 
 
@@ -349,19 +349,22 @@ class GitStash(AbstractContextManager):
     underway otherwise `git stash` usage may cause issues.
     """
 
-    def __init__(self, parser, repo):
-        self.parser = parser
-        self.repo = repo
+    def __init__(self, path):
+        self.path = path
         self._stashed = False
 
     def __enter__(self):
         """Stash all untracked or modified files in working tree."""
         # check for untracked or modified/uncommitted files
-        p = subprocess.run(
-            ['git', 'ls-files', '-mo', '--exclude-standard'],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-            cwd=self.repo.location, encoding='utf8')
-        if p.returncode != 0 or not p.stdout:
+        try:
+            p = subprocess.run(
+                ['git', 'ls-files', '-mo', '--exclude-standard'],
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                cwd=self.path, encoding='utf8', check=True)
+        except subprocess.CalledProcessError:
+            raise ValueError(f'not a git repo: {self.path}')
+
+        if not p.stdout:
             return
 
         # stash all existing untracked or modified/uncommitted files
@@ -369,10 +372,10 @@ class GitStash(AbstractContextManager):
             subprocess.run(
                 ['git', 'stash', 'push', '-u', '-m', 'pkgcheck scan --commits'],
                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                cwd=self.repo.location, check=True, encoding='utf8')
+                cwd=self.path, check=True, encoding='utf8')
         except subprocess.CalledProcessError as e:
             error = e.stderr.splitlines()[0]
-            self.parser.error(f'git failed stashing files: {error}')
+            raise UserException(f'git failed stashing files: {error}')
         self._stashed = True
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
@@ -382,10 +385,10 @@ class GitStash(AbstractContextManager):
                 subprocess.run(
                     ['git', 'stash', 'pop'],
                     stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                    cwd=self.repo.location, check=True, encoding='utf8')
+                    cwd=self.path, check=True, encoding='utf8')
             except subprocess.CalledProcessError as e:
                 error = e.stderr.splitlines()[0]
-                self.parser.error(f'git failed applying stash: {error}')
+                raise UserException(f'git failed applying stash: {error}')
 
 
 class GitAddon(caches.CachedAddon):

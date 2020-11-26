@@ -1,10 +1,12 @@
 import os
+import subprocess
 import textwrap
 
 import pytest
 from pkgcheck.scripts import pkgcheck
 from pkgcore import const as pkgcore_const
 from pkgcore.util.commandline import Tool
+from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
 
@@ -74,3 +76,31 @@ def tool(fakeconfig):
     tool = Tool(pkgcheck.argparser)
     tool.parser.set_defaults(override_config=fakeconfig)
     return tool
+
+
+class GitRepo:
+    """Class for creating/manipulating git repos."""
+
+    def __init__(self, path, init=True):
+        self.path = path
+        if init:
+            # initialize the repo
+            subprocess.run(['git', 'init'], cwd=self.path)
+            # and add a stub initial commit
+            self.admit(pjoin(self.path, '.init'), create=True)
+
+    def __str__(self):
+        return self.path
+
+    def admit(self, path, create=False):
+        """Add a file and commit it to the repo."""
+        if create:
+            touch(path)
+        subprocess.run(['git', 'add', path], cwd=self.path)
+        subprocess.run(['git', 'commit', '-m', path], cwd=self.path)
+
+
+@pytest.fixture
+def git_repo(tmp_path):
+    """Create an empty git repo."""
+    return GitRepo(str(tmp_path))
