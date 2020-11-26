@@ -22,7 +22,6 @@ class ArgparseCheck:
         addon_kls.mangle_argparser(p)
         args, unknown_args = p.parse_known_args(args, namespace)
         assert unknown_args == []
-        orig_out, orig_err = None, None
         for attr, val in preset_values.items():
             setattr(args, attr, val)
         addon_kls.check_args(p, args)
@@ -51,8 +50,6 @@ class Test_profile_data:
     def assertResults(self, profile, known_flags, required_immutable,
                       required_forced, cpv="dev-util/diffball-0.1",
                       key_override=None, data_override=None):
-        if key_override is None:
-            key = profile.key
         profile_data = addons.ProfileData(
             "test-profile", key_override,
             profile.provides_repo,
