@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 
 import pytest
 from pkgcheck import addons
@@ -6,6 +7,7 @@ from pkgcore.ebuild import repo_objs, repository
 from pkgcore.restrictions import packages
 from pkgcore.util import commandline
 from snakeoil.cli import arghparse
+from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import write_file
 from snakeoil.osutils import ensure_dirs, pjoin
 
@@ -342,3 +344,23 @@ class TestUseAddon(ArgparseCheck, Tmpdir):
     def test_it(self):
         pass
     test_it.skip = "todo"
+
+
+class TestNetAddon:
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tool):
+        self.tool = tool
+        options, _ = self.tool.parse_args(['scan'])
+        self.addon = addons.NetAddon(options)
+
+    def test_failed_import(self):
+        with patch('pkgcheck.net.Session') as net:
+            net.side_effect = ImportError('import failed', name='foo')
+            with pytest.raises(ImportError):
+                self.addon.session
+            # failing to import requests specifically returns a nicer user exception
+            net.side_effect = ImportError('import failed', name='requests')
+            with pytest.raises(UserException) as excinfo:
+                self.addon.session
+            assert 'network checks require requests' in str(excinfo)
