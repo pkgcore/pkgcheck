@@ -34,6 +34,11 @@ class TestEclass:
         assert self.eclass2 < self.eclass1
         assert self.eclass1 < 'zoo.eclass'
 
+    def test_hash(self):
+        eclasses = {self.eclass1, self.eclass2}
+        assert self.eclass1 in eclasses and self.eclass2 in eclasses
+        assert {self.eclass1, self.eclass1} == {self.eclass1}
+
     def test_eq(self):
         assert self.eclass1 == self.eclass1
         assert self.eclass1 == self.eclass1.path

@@ -48,6 +48,9 @@ class Eclass:
             return self.name < other.name
         return self.name < other
 
+    def __hash__(self):
+        return hash(self.path)
+
     def __eq__(self, other):
         if isinstance(other, Eclass):
             return self.path == other.path
