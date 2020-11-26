@@ -5,7 +5,9 @@ import textwrap
 import pytest
 from pkgcheck.scripts import pkgcheck
 from pkgcore import const as pkgcore_const
+from pkgcore.ebuild import repo_objs, repository
 from pkgcore.util.commandline import Tool
+from snakeoil import klass
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
@@ -106,3 +108,27 @@ class GitRepo:
 def git_repo(tmp_path):
     """Create an empty git repo."""
     return GitRepo(str(tmp_path))
+
+
+class EbuildRepo:
+    """Class for creating/manipulating ebuild repos."""
+
+    def __init__(self, path):
+        self.path = path
+        os.makedirs(pjoin(path, 'profiles'))
+        os.makedirs(pjoin(path, 'metadata'))
+        with open(pjoin(path, 'profiles', 'repo_name'), 'w') as f:
+            f.write('fake\n')
+        with open(pjoin(path, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('masters =\n')
+        repo_config = repo_objs.RepoConfig(location=path)
+        self._repo = repository.UnconfiguredTree(
+            repo_config.location, repo_config=repo_config)
+
+    __getattr__ = klass.GetAttrProxy('_repo')
+    __dir__ = klass.DirProxy('_repo')
+
+
+@pytest.fixture
+def repo(tmp_path):
+    return EbuildRepo(str(tmp_path))
