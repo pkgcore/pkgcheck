@@ -145,8 +145,7 @@ class CheckRunner:
         self._known_results = set().union(*(x.known_results for x in self.checks))
 
         # only report metadata errors when running at version level
-        scope = min(check.scope for check in self.checks)
-        if scope is base.version_scope:
+        if self.source.scope is base.version_scope:
             self._source_itermatch = post_curry(
                 self.source.itermatch, error_callback=self._metadata_error_cb)
         else:
