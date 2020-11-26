@@ -91,7 +91,7 @@ class CheckArgs(arghparse.CommaSeparatedNegations):
         for token in enabled:
             if token[0] == '+':
                 if not token[1:]:
-                    raise argparse.ArgumentError(self, f'invalid token: {token!r}')
+                    raise argparse.ArgumentTypeError("'+' without a token")
                 additive.append(token[1:])
             else:
                 singular.append(token)

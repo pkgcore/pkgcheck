@@ -1,3 +1,4 @@
+import argparse
 import random
 
 import pytest
@@ -131,6 +132,13 @@ class TestCheckArgs:
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
             assert "unknown check: 'foo'" in err[-1]
+
+    def test_token_errors(self):
+        for opt in ('-c', '--checks'):
+            for operation in ('-', '+'):
+                with pytest.raises(argparse.ArgumentTypeError) as excinfo:
+                    options, _ = self.tool.parse_args(self.args + [f'{opt}={operation}'])
+                assert 'without a token' in str(excinfo.value)
 
     def test_missing_check(self, capsys):
         for opt in ('-c', '--checks'):
