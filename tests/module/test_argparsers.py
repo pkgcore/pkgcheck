@@ -143,24 +143,36 @@ class TestCheckArgs:
                 'pkgcheck scan: error: argument -c/--checks: expected one argument')
 
     def test_enabled(self):
-        args, _ = self.tool.parse_args(self.args + ['--checks', 'UnusedLicensesCheck'])
-        assert args.selected_checks == frozenset(['UnusedLicensesCheck'])
+        for opt in ('-c', '--checks'):
+            args, _ = self.tool.parse_args(self.args + [opt, 'UnusedLicensesCheck'])
+            assert args.selected_checks == frozenset(['UnusedLicensesCheck'])
 
     def test_disabled(self):
-        check = list(objects.CHECKS)[random.randrange(len(objects.CHECKS))]
-        args, _ = self.tool.parse_args(self.args + [f'--checks=-{check}'])
-        assert args.selected_checks == frozenset()
+        for opt in ('-c', '--checks'):
+            check = list(objects.CHECKS)[random.randrange(len(objects.CHECKS))]
+            args, _ = self.tool.parse_args(self.args + [f'{opt}=-{check}'])
+            assert args.selected_checks == frozenset()
+
+    def test_additive(self):
+        for opt in ('-c', '--checks'):
+            args, _ = self.tool.parse_args(self.args)
+            assert issubclass(checks.perl.PerlCheck, checks.OptionalCheck)
+            assert checks.perl.PerlCheck not in set(args.enabled_checks)
+            args, _ = self.tool.parse_args(self.args + [f'{opt}=+PerlCheck'])
+            assert checks.perl.PerlCheck in set(args.enabled_checks)
+            assert args.selected_checks == frozenset(['PerlCheck'])
 
     def test_aliases(self):
-        # net
-        args, _ = self.tool.parse_args(self.args + ['--checks', 'net'])
-        network_checks = [
-            c for c, v in objects.CHECKS.items() if issubclass(v, checks.NetworkCheck)]
-        assert args.selected_checks == frozenset(network_checks)
+        for opt in ('-c', '--checks'):
+            # net
+            args, _ = self.tool.parse_args(self.args + [opt, 'net'])
+            network_checks = [
+                c for c, v in objects.CHECKS.items() if issubclass(v, checks.NetworkCheck)]
+            assert args.selected_checks == frozenset(network_checks)
 
-        # all
-        args, _ = self.tool.parse_args(self.args + ['--checks', 'all'])
-        assert args.selected_checks == frozenset(objects.CHECKS)
+            # all
+            args, _ = self.tool.parse_args(self.args + [opt, 'all'])
+            assert args.selected_checks == frozenset(objects.CHECKS)
 
 
 class TestKeywordArgs:
