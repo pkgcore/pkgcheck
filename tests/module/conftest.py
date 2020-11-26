@@ -8,6 +8,7 @@ from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import repo_objs, repository
 from pkgcore.util.commandline import Tool
 from snakeoil import klass
+from snakeoil.cli import arghparse
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
@@ -131,4 +132,12 @@ class EbuildRepo:
 
 @pytest.fixture
 def repo(tmp_path):
+    """Create a generic ebuild repository."""
     return EbuildRepo(str(tmp_path))
+
+
+@pytest.fixture
+def namespace():
+    """Create a argparse namespace with profile override default."""
+    stub_profile = pjoin(pkgcore_const.DATA_PATH, 'stubrepo', 'profiles', 'default')
+    return arghparse.Namespace(profile_override=stub_profile)

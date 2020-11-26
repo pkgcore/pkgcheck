@@ -36,9 +36,10 @@ class ArgparseCheck:
 class TestArchesAddon:
 
     @pytest.fixture(autouse=True)
-    def _setup(self, repo):
+    def _setup(self, repo, namespace):
+        self.namespace = namespace
         self.repo = repo
-        self.namespace = arghparse.Namespace(target_repo=repo)
+        self.namespace.target_repo = repo
         self.parser = commandline.ArgumentParser(domain=False, color=False)
         addons.ArchesAddon.mangle_argparser(self.parser)
         self.addon = addons.ArchesAddon(self.namespace)
