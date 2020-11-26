@@ -14,18 +14,18 @@ class TestConfigArg:
         self.parser.add_argument('--config', action=argparsers.ConfigArg)
 
     def test_none(self):
-        args = self.parser.parse_args([])
-        assert args.config is None
+        options = self.parser.parse_args([])
+        assert options.config is None
 
     def test_enabled(self):
         for arg in ('config_file', '/path/to/config/file'):
-            args = self.parser.parse_args(['--config', arg])
-            assert args.config == arg
+            options = self.parser.parse_args(['--config', arg])
+            assert options.config == arg
 
     def test_disabled(self):
         for arg in ('False', 'false', 'No', 'no', 'N', 'n'):
-            args = self.parser.parse_args(['--config', arg])
-            assert args.config is False
+            options = self.parser.parse_args(['--config', arg])
+            assert options.config is False
 
 
 class TestCacheNegations:
@@ -37,8 +37,8 @@ class TestCacheNegations:
         self.caches = [x.type for x in CachedAddon.caches.values()]
 
     def test_no_arg(self):
-        args = self.parser.parse_args([])
-        assert args.cache is None
+        options = self.parser.parse_args([])
+        assert options.cache is None
 
     def test_unknown(self, capsys):
         with pytest.raises(SystemExit) as excinfo:
@@ -50,20 +50,20 @@ class TestCacheNegations:
 
     def test_all(self):
         for arg in ('True', 'true', 'Yes', 'yes', 'Y', 'y'):
-            args = self.parser.parse_args(['--cache', arg])
-            for k, v in args.cache.items():
+            options = self.parser.parse_args(['--cache', arg])
+            for k, v in options.cache.items():
                 assert v is True
 
     def test_none(self):
         for arg in ('False', 'false', 'No', 'no', 'N', 'n'):
-            args = self.parser.parse_args(['--cache', arg])
-            for k, v in args.cache.items():
+            options = self.parser.parse_args(['--cache', arg])
+            for k, v in options.cache.items():
                 assert v is False
 
     def test_enabled(self):
         cache = self.caches[random.randrange(len(self.caches))]
-        args = self.parser.parse_args(['--cache', cache])
-        for k, v in args.cache.items():
+        options = self.parser.parse_args(['--cache', cache])
+        for k, v in options.cache.items():
             if k == cache:
                 assert v is True
             else:
@@ -71,8 +71,8 @@ class TestCacheNegations:
 
     def test_disabled(self):
         cache = self.caches[random.randrange(len(self.caches))]
-        args = self.parser.parse_args([f'--cache=-{cache}'])
-        for k, v in args.cache.items():
+        options = self.parser.parse_args([f'--cache=-{cache}'])
+        for k, v in options.cache.items():
             if k == cache:
                 assert v is False
             else:
@@ -107,12 +107,12 @@ class TestScopeArgs:
                 'pkgcheck scan: error: argument -s/--scopes: expected one argument')
 
     def test_disabled(self):
-        args, _ = self.tool.parse_args(self.args + ['--scopes=-eclass'])
-        assert args.selected_scopes == frozenset()
+        options, _ = self.tool.parse_args(self.args + ['--scopes=-eclass'])
+        assert options.selected_scopes == frozenset()
 
     def test_enabled(self):
-        args, _ = self.tool.parse_args(self.args + ['--scopes', 'repo'])
-        assert args.selected_scopes == frozenset([base.scopes['repo']])
+        options, _ = self.tool.parse_args(self.args + ['--scopes', 'repo'])
+        assert options.selected_scopes == frozenset([base.scopes['repo']])
 
 
 class TestCheckArgs:
@@ -144,35 +144,35 @@ class TestCheckArgs:
 
     def test_enabled(self):
         for opt in ('-c', '--checks'):
-            args, _ = self.tool.parse_args(self.args + [opt, 'UnusedLicensesCheck'])
-            assert args.selected_checks == frozenset(['UnusedLicensesCheck'])
+            options, _ = self.tool.parse_args(self.args + [opt, 'UnusedLicensesCheck'])
+            assert options.selected_checks == frozenset(['UnusedLicensesCheck'])
 
     def test_disabled(self):
         for opt in ('-c', '--checks'):
             check = list(objects.CHECKS)[random.randrange(len(objects.CHECKS))]
-            args, _ = self.tool.parse_args(self.args + [f'{opt}=-{check}'])
-            assert args.selected_checks == frozenset()
+            options, _ = self.tool.parse_args(self.args + [f'{opt}=-{check}'])
+            assert options.selected_checks == frozenset()
 
     def test_additive(self):
         for opt in ('-c', '--checks'):
-            args, _ = self.tool.parse_args(self.args)
+            options, _ = self.tool.parse_args(self.args)
             assert issubclass(checks.perl.PerlCheck, checks.OptionalCheck)
-            assert checks.perl.PerlCheck not in set(args.enabled_checks)
-            args, _ = self.tool.parse_args(self.args + [f'{opt}=+PerlCheck'])
-            assert checks.perl.PerlCheck in set(args.enabled_checks)
-            assert args.selected_checks == frozenset(['PerlCheck'])
+            assert checks.perl.PerlCheck not in set(options.enabled_checks)
+            options, _ = self.tool.parse_args(self.args + [f'{opt}=+PerlCheck'])
+            assert checks.perl.PerlCheck in set(options.enabled_checks)
+            assert options.selected_checks == frozenset(['PerlCheck'])
 
     def test_aliases(self):
         for opt in ('-c', '--checks'):
             # net
-            args, _ = self.tool.parse_args(self.args + [opt, 'net'])
+            options, _ = self.tool.parse_args(self.args + [opt, 'net'])
             network_checks = [
                 c for c, v in objects.CHECKS.items() if issubclass(v, checks.NetworkCheck)]
-            assert args.selected_checks == frozenset(network_checks)
+            assert options.selected_checks == frozenset(network_checks)
 
             # all
-            args, _ = self.tool.parse_args(self.args + [opt, 'all'])
-            assert args.selected_checks == frozenset(objects.CHECKS)
+            options, _ = self.tool.parse_args(self.args + [opt, 'all'])
+            assert options.selected_checks == frozenset(objects.CHECKS)
 
 
 class TestKeywordArgs:
@@ -203,19 +203,42 @@ class TestKeywordArgs:
                 'pkgcheck scan: error: argument -k/--keywords: expected one argument')
 
     def test_enabled(self):
-        args, _ = self.tool.parse_args(self.args + ['--keywords', 'UnusedLicenses'])
-        assert args.selected_keywords == frozenset(['UnusedLicenses'])
+        for opt in ('-k', '--keywords'):
+            options, _ = self.tool.parse_args(self.args + [opt, 'UnusedLicenses'])
+            assert options.selected_keywords == frozenset(['UnusedLicenses'])
+            assert options.filtered_keywords == frozenset([objects.KEYWORDS['UnusedLicenses']])
+            assert options.enabled_checks == [checks.repo_metadata.UnusedLicensesCheck]
+
+    def test_disabled_check(self):
+        """Disabling all keywords for a given check also disables the check."""
+        for opt in ('-k', '--keywords'):
+            default_checks = set(objects.CHECKS.default.values())
+            default_keywords = set().union(*(v.known_results for v in default_checks))
+            keyword = checks.repo_metadata.UnusedLicenses
+            check = checks.repo_metadata.UnusedLicensesCheck
+            assert check in default_checks
+            assert check.known_results == frozenset([keyword])
+            options, _ = self.tool.parse_args(self.args + [f'{opt}=-UnusedLicenses'])
+            assert options.selected_keywords == frozenset()
+            assert options.filtered_keywords == frozenset(default_keywords - {keyword})
+            assert check not in set(options.enabled_checks)
 
     def test_disabled(self):
-        keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
-        args, _ = self.tool.parse_args(self.args + [f'--keywords=-{keyword}'])
-        assert args.selected_keywords == frozenset()
+        for opt in ('-k', '--keywords'):
+            default_keywords = set().union(
+                *(v.known_results for v in objects.CHECKS.default.values()))
+            keyword_cls = list(default_keywords)[random.randrange(len(default_keywords))]
+            keyword = keyword_cls.__name__
+            options, _ = self.tool.parse_args(self.args + [f'{opt}=-{keyword}'])
+            assert options.selected_keywords == frozenset()
+            assert options.filtered_keywords == frozenset(default_keywords - {keyword_cls})
 
     def test_aliases(self):
-        for alias in ('error', 'warning', 'info'):
-            args, _ = self.tool.parse_args(self.args + ['--keywords', alias])
-            alias_keywords = list(getattr(objects.KEYWORDS, alias))
-            assert args.selected_keywords == frozenset(alias_keywords)
+        for opt in ('-k', '--keywords'):
+            for alias in ('error', 'warning', 'info'):
+                options, _ = self.tool.parse_args(self.args + [opt, alias])
+                alias_keywords = list(getattr(objects.KEYWORDS, alias))
+                assert options.selected_keywords == frozenset(alias_keywords)
 
 
 class TestExitArgs:
@@ -235,26 +258,26 @@ class TestExitArgs:
         assert excinfo.value.code == 2
 
     def test_none(self):
-        args, _ = self.tool.parse_args(self.args)
-        assert args.exit_keywords == ()
+        options, _ = self.tool.parse_args(self.args)
+        assert options.exit_keywords == ()
 
     def test_default(self):
-        args, _ = self.tool.parse_args(self.args + ['--exit'])
-        assert args.exit_keywords == frozenset(objects.KEYWORDS.error.values())
+        options, _ = self.tool.parse_args(self.args + ['--exit'])
+        assert options.exit_keywords == frozenset(objects.KEYWORDS.error.values())
 
     def test_enabled(self):
         keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
         cls = objects.KEYWORDS[keyword]
-        args, _ = self.tool.parse_args(self.args + ['--exit', keyword])
-        assert args.exit_keywords == frozenset([cls])
+        options, _ = self.tool.parse_args(self.args + ['--exit', keyword])
+        assert options.exit_keywords == frozenset([cls])
 
     def test_disabled(self):
         keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
         cls = objects.KEYWORDS[keyword]
-        args, _ = self.tool.parse_args(self.args + [f'--exit=-{keyword}'])
-        assert args.exit_keywords == frozenset(objects.KEYWORDS.error.values()) - frozenset([cls])
+        options, _ = self.tool.parse_args(self.args + [f'--exit=-{keyword}'])
+        assert options.exit_keywords == frozenset(objects.KEYWORDS.error.values()) - frozenset([cls])
 
     def test_aliases(self):
         for alias in ('error', 'warning', 'info'):
-            args, _ = self.tool.parse_args(self.args + [f'--exit={alias}'])
-            assert args.exit_keywords == frozenset(getattr(objects.KEYWORDS, alias).values())
+            options, _ = self.tool.parse_args(self.args + [f'--exit={alias}'])
+            assert options.exit_keywords == frozenset(getattr(objects.KEYWORDS, alias).values())
