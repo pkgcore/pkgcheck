@@ -18,7 +18,7 @@ def test_check_scope(tool):
     enabled_checks = init_checks(options.addons, options)
     for (source, is_async), runners in enabled_checks.items():
         for check in runners:
-            assert check.scope == source.feed_type, \
+            assert check.scope == source.scope, \
                 f"check scope doesn't match source scope: {check}"
 
 

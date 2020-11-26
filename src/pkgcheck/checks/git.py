@@ -42,7 +42,7 @@ class GitCommitsSource(sources.Source):
     upstream yet.
     """
 
-    feed_type = base.commit_scope
+    scope = base.commit_scope
     required_addons = (git.GitAddon,)
 
     def __init__(self, *args, git_addon):

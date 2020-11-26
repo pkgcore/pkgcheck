@@ -93,7 +93,7 @@ class Pipeline:
                         self.options, source, checks, results_q=results_q)
                 else:
                     runner = CheckRunner(self.options, source, checks)
-                checkrunners[(source.feed_type, exec_type)].append(runner)
+                checkrunners[(source.scope, exec_type)].append(runner)
 
             # categorize checkrunners for parallelization based on the scan and source scope
             scoped_pipes = defaultdict(lambda: defaultdict(list))
