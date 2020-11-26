@@ -164,22 +164,21 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
             k for k in objects.KEYWORDS.values() if k.name in enabled)
 
         # determine keywords to filter
-        if enabled_keywords or disabled_keywords:
-            if not enabled_keywords:
-                # disable checks that have all their keywords disabled
-                for check in list(namespace.enabled_checks):
-                    if check.known_results.issubset(disabled_keywords):
-                        namespace.enabled_checks.discard(check)
-                enabled_keywords = set().union(
-                    *(c.known_results for c in namespace.enabled_checks))
+        if not enabled_keywords:
+            # disable checks that have all their keywords disabled
+            for check in list(namespace.enabled_checks):
+                if check.known_results.issubset(disabled_keywords):
+                    namespace.enabled_checks.discard(check)
+            enabled_keywords = set().union(
+                *(c.known_results for c in namespace.enabled_checks))
 
-            namespace.filtered_keywords = enabled_keywords - disabled_keywords
-            # restrict enabled checks if none have been selected
-            if not namespace.selected_checks:
-                namespace.enabled_checks = set()
-                for check in objects.CHECKS.values():
-                    if namespace.filtered_keywords.intersection(check.known_results):
-                        namespace.enabled_checks.add(check)
+        namespace.filtered_keywords = enabled_keywords - disabled_keywords
+        # restrict enabled checks if none have been selected
+        if not namespace.selected_checks:
+            namespace.enabled_checks = set()
+            for check in objects.CHECKS.values():
+                if namespace.filtered_keywords.intersection(check.known_results):
+                    namespace.enabled_checks.add(check)
 
         setattr(namespace, self.dest, frozenset(enabled))
 
