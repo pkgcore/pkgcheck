@@ -3,7 +3,7 @@
 import os
 import pickle
 
-from pkgcore.ebuild.eclass import Eclass, EclassDocParsingError
+from pkgcore.ebuild.eclass import EclassDoc, EclassDocParsingError
 from snakeoil.cli.exceptions import UserException
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.klass import jit_attr_none
@@ -101,7 +101,7 @@ class EclassAddon(caches.CachedAddon):
                             except (KeyError, AttributeError):
                                 try:
                                     progress(f'updating eclass cache: {name:<{padding}}')
-                                    eclasses[name] = Eclass(eclass.path, sourced=True)
+                                    eclasses[name] = EclassDoc(path, sourced=True)
                                     cache_eclasses = True
                                 except (IOError, EclassDocParsingError):
                                     continue
