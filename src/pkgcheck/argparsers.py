@@ -85,8 +85,21 @@ class ScopeArgs(arghparse.CommaSeparatedNegations):
 class CheckArgs(arghparse.CommaSeparatedNegations):
     """Determine checks to run on selection."""
 
+    def split_enabled(self, enabled):
+        """Split explicitly enabled checks into singular and additive groups."""
+        singular, additive = [], []
+        for token in enabled:
+            if token[0] == '+':
+                if not token[1:]:
+                    raise argparse.ArgumentError(self, f'invalid token: {token!r}')
+                additive.append(token[1:])
+            else:
+                singular.append(token)
+        return singular, additive
+
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
+        enabled, additive = self.split_enabled(enabled)
 
         network = (c for c, v in objects.CHECKS.items() if issubclass(v, NetworkCheck))
         alias_map = {'all': objects.CHECKS, 'net': network}
@@ -95,21 +108,27 @@ class CheckArgs(arghparse.CommaSeparatedNegations):
         # expand check aliases to check lists
         disabled = list(chain.from_iterable(map(replace_aliases, disabled)))
         enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
+        additive = list(chain.from_iterable(map(replace_aliases, additive)))
 
         # validate selected checks
-        unknown_checks = set(disabled + enabled) - set(objects.CHECKS)
+        unknown_checks = set(disabled + enabled + additive) - set(objects.CHECKS)
         if unknown_checks:
             unknown = ', '.join(map(repr, unknown_checks))
             s = pluralism(unknown_checks)
             raise argparse.ArgumentError(self, f'unknown check{s}: {unknown}')
 
         if enabled:
+            # replace the default check set
             namespace.enabled_checks = {objects.CHECKS[c] for c in enabled}
+        if additive:
+            # add to the default check set
+            namespace.enabled_checks.update(objects.CHECKS[c] for c in additive)
         if disabled:
+            # remove from the default check set
             namespace.enabled_checks.difference_update(
                 objects.CHECKS[c] for c in disabled)
 
-        setattr(namespace, self.dest, frozenset(enabled))
+        setattr(namespace, self.dest, frozenset(enabled + additive))
 
 
 class KeywordArgs(arghparse.CommaSeparatedNegations):
