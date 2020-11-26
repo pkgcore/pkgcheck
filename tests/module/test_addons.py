@@ -91,6 +91,43 @@ class TestArchesAddon:
                 assert f'unknown arch: {arg}' in err
 
 
+class TestStableArchesAddon:
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tool, repo):
+        self.tool = tool
+        self.repo = repo
+        self.args = ['scan', '--repo', repo.location]
+
+    def test_empty_default(self):
+        options, _ = self.tool.parse_args(self.args)
+        assert options.stable_arches == set()
+
+    def test_repo_arches_default(self):
+        """Use GLEP 72 arches.desc file if it exists."""
+        with open(pjoin(self.repo.location, 'profiles', 'arch.list'), 'w') as f:
+            f.write("arm64\namd64\nriscv\n")
+        with open(pjoin(self.repo.location, 'profiles', 'arches.desc'), 'w') as f:
+            f.write("arm64 stable\namd64 stable\nriscv testing")
+        options, _ = self.tool.parse_args(self.args)
+        assert options.stable_arches == {'amd64', 'arm64'}
+
+    def test_repo_profiles_default(self):
+        """Otherwise arch stability is determined from the profiles.desc file."""
+        with open(pjoin(self.repo.location, 'profiles', 'arch.list'), 'w') as f:
+            f.write("arm64\namd64\nriscv\n")
+        os.mkdir(pjoin(self.repo.location, 'profiles', 'default'))
+        with open(pjoin(self.repo.location, 'profiles', 'profiles.desc'), 'w') as f:
+            f.write("arm64 default dev\namd64 default stable\nriscv default exp")
+        options, _ = self.tool.parse_args(self.args)
+        assert options.stable_arches == {'amd64'}
+
+    def test_selected_arches(self):
+        for opt in ('-a', '--arches'):
+            options, _ = self.tool.parse_args(self.args + [f'{opt}=amd64'])
+            assert options.stable_arches == {'amd64'}
+
+
 class Test_profile_data:
 
     def assertResults(self, profile, known_flags, required_immutable,
