@@ -107,14 +107,12 @@ class TestScopeArgs:
                 'pkgcheck scan: error: argument -s/--scopes: expected one argument')
 
     def test_disabled(self):
-        scope = list(base.scopes)[random.randrange(len(base.scopes))]
-        args, _ = self.tool.parse_args(self.args + [f'--scopes=-{scope}'])
+        args, _ = self.tool.parse_args(self.args + ['--scopes=-eclass'])
         assert args.selected_scopes == frozenset()
 
     def test_enabled(self):
-        scope = list(base.scopes)[random.randrange(len(base.scopes))]
-        args, _ = self.tool.parse_args(self.args + ['--scopes', scope])
-        assert args.selected_scopes == frozenset([base.scopes[scope]])
+        args, _ = self.tool.parse_args(self.args + ['--scopes', 'repo'])
+        assert args.selected_scopes == frozenset([base.scopes['repo']])
 
 
 class TestCheckArgs:
@@ -145,9 +143,8 @@ class TestCheckArgs:
                 'pkgcheck scan: error: argument -c/--checks: expected one argument')
 
     def test_enabled(self):
-        check = list(objects.CHECKS)[random.randrange(len(objects.CHECKS))]
-        args, _ = self.tool.parse_args(self.args + ['--checks', check])
-        assert args.selected_checks == frozenset([check])
+        args, _ = self.tool.parse_args(self.args + ['--checks', 'UnusedLicensesCheck'])
+        assert args.selected_checks == frozenset(['UnusedLicensesCheck'])
 
     def test_disabled(self):
         check = list(objects.CHECKS)[random.randrange(len(objects.CHECKS))]
@@ -194,9 +191,8 @@ class TestKeywordArgs:
                 'pkgcheck scan: error: argument -k/--keywords: expected one argument')
 
     def test_enabled(self):
-        keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
-        args, _ = self.tool.parse_args(self.args + ['--keywords', keyword])
-        assert args.selected_keywords == frozenset([keyword])
+        args, _ = self.tool.parse_args(self.args + ['--keywords', 'UnusedLicenses'])
+        assert args.selected_keywords == frozenset(['UnusedLicenses'])
 
     def test_disabled(self):
         keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
