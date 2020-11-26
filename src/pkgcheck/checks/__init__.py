@@ -127,11 +127,6 @@ def init_checks(enabled_addons, options):
     addons_map = {}
     source_map = {}
 
-    if options.selected_checks is not None:
-        selected_checks = options.selected_checks[1]
-    else:
-        selected_checks = []
-
     # initialize required caches before other addons
     enabled_addons = sorted(enabled_addons, key=lambda x: not issubclass(x, CachedAddon))
 
@@ -139,7 +134,7 @@ def init_checks(enabled_addons, options):
         try:
             addon = addons.init_addon(cls, options, addons_map)
         except SkipCheck:
-            if cls.__name__ in selected_checks:
+            if cls.__name__ in options.selected_checks:
                 raise
             continue
         if isinstance(addon, Check):

@@ -55,7 +55,7 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
 
 
 class ScopeArgs(arghparse.CommaSeparatedNegations):
-    """Filter enabled keywords by selected scopes."""
+    """Filter enabled checks by selected scopes."""
 
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
@@ -72,7 +72,44 @@ class ScopeArgs(arghparse.CommaSeparatedNegations):
         disabled = {base.scopes[x] for x in disabled}
         enabled = {base.scopes[x] for x in enabled}
 
-        setattr(namespace, self.dest, (disabled, enabled))
+        if enabled:
+            namespace.enabled_checks = {
+                c for c in objects.CHECKS.values() if c.scope in enabled}
+        if disabled:
+            namespace.enabled_checks.difference_update(
+                c for c in objects.CHECKS.values() if c.scope in disabled)
+
+        setattr(namespace, self.dest, frozenset(enabled))
+
+
+class CheckArgs(arghparse.CommaSeparatedNegations):
+    """Determine checks to run on selection."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        disabled, enabled = self.parse_values(values)
+
+        network = (c for c, v in objects.CHECKS.items() if issubclass(v, NetworkCheck))
+        alias_map = {'all': objects.CHECKS, 'net': network}
+        replace_aliases = lambda x: alias_map.get(x, [x])
+
+        # expand check aliases to check lists
+        disabled = list(chain.from_iterable(map(replace_aliases, disabled)))
+        enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
+
+        # validate selected checks
+        unknown_checks = set(disabled + enabled) - set(objects.CHECKS)
+        if unknown_checks:
+            unknown = ', '.join(map(repr, unknown_checks))
+            s = pluralism(unknown_checks)
+            raise argparse.ArgumentError(self, f'unknown check{s}: {unknown}')
+
+        if enabled:
+            namespace.enabled_checks = {objects.CHECKS[c] for c in enabled}
+        if disabled:
+            namespace.enabled_checks.difference_update(
+                objects.CHECKS[c] for c in disabled)
+
+        setattr(namespace, self.dest, frozenset(enabled))
 
 
 class KeywordArgs(arghparse.CommaSeparatedNegations):
@@ -99,31 +136,33 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
             s = pluralism(unknown_keywords)
             raise argparse.ArgumentError(self, f'unknown keyword{s}: {unknown}')
 
-        setattr(namespace, self.dest, (disabled, enabled))
+        disabled_keywords = {objects.KEYWORDS[k] for k in disabled}
+        enabled_keywords = {objects.KEYWORDS[k] for k in enabled}
+        # allow keyword args to be filtered by output name in addition to class name
+        disabled_keywords.update(
+            k for k in objects.KEYWORDS.values() if k.name in disabled)
+        enabled_keywords.update(
+            k for k in objects.KEYWORDS.values() if k.name in enabled)
 
+        # determine keywords to filter
+        if enabled_keywords or disabled_keywords:
+            if not enabled_keywords:
+                # disable checks that have all their keywords disabled
+                for check in list(namespace.enabled_checks):
+                    if check.known_results.issubset(disabled_keywords):
+                        namespace.enabled_checks.discard(check)
+                enabled_keywords = set().union(
+                    *(c.known_results for c in namespace.enabled_checks))
 
-class CheckArgs(arghparse.CommaSeparatedNegations):
-    """Determine checks to run on selection."""
+            namespace.filtered_keywords = enabled_keywords - disabled_keywords
+            # restrict enabled checks if none have been selected
+            if not namespace.selected_checks:
+                namespace.enabled_checks = set()
+                for check in objects.CHECKS.values():
+                    if namespace.filtered_keywords.intersection(check.known_results):
+                        namespace.enabled_checks.add(check)
 
-    def __call__(self, parser, namespace, values, option_string=None):
-        disabled, enabled = self.parse_values(values)
-
-        network = (c for c, v in objects.CHECKS.items() if issubclass(v, NetworkCheck))
-        alias_map = {'all': objects.CHECKS, 'net': network}
-        replace_aliases = lambda x: alias_map.get(x, [x])
-
-        # expand check aliases to check lists
-        disabled = list(chain.from_iterable(map(replace_aliases, disabled)))
-        enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
-
-        # validate selected checks
-        unknown_checks = set(disabled + enabled) - set(objects.CHECKS)
-        if unknown_checks:
-            unknown = ', '.join(map(repr, unknown_checks))
-            s = pluralism(unknown_checks)
-            raise argparse.ArgumentError(self, f'unknown check{s}: {unknown}')
-
-        setattr(namespace, self.dest, (disabled, enabled))
+        setattr(namespace, self.dest, frozenset(enabled))
 
 
 class ExitArgs(arghparse.CommaSeparatedNegations):

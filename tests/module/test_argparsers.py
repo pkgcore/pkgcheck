@@ -82,146 +82,171 @@ class TestCacheNegations:
 class TestScopeArgs:
 
     @pytest.fixture(autouse=True)
-    def _create_argparser(self):
-        self.parser = arghparse.ArgumentParser()
-        self.parser.add_argument('--scopes', action=argparsers.ScopeArgs)
+    def _setup(self, tool, tmp_path):
+        self.tool = tool
+        self.cache_dir = str(tmp_path)
+        self.args = ['scan', '--cache-dir', self.cache_dir]
 
-    def test_no_arg(self):
-        args = self.parser.parse_args([])
-        assert args.scopes is None
+    def test_unknown_scope(self, capsys):
+        for opt in ('-s', '--scopes'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert "unknown scope: 'foo'" in err[-1]
 
-    def test_unknown(self, capsys):
-        with pytest.raises(SystemExit) as excinfo:
-            self.parser.parse_args(['--scopes', 'foo'])
-        out, err = capsys.readouterr()
-        assert not out
-        assert "unknown scope: 'foo'" in err
-        assert excinfo.value.code == 2
+    def test_missing_scope(self, capsys):
+        for opt in ('-s', '--scopes'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _ = self.tool.parse_args(self.args + [opt])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[0] == (
+                'pkgcheck scan: error: argument -s/--scopes: expected one argument')
 
     def test_disabled(self):
         scope = list(base.scopes)[random.randrange(len(base.scopes))]
-        args = self.parser.parse_args([f'--scopes=-{scope}'])
-        assert args.scopes == ({base.scopes[scope]}, set())
+        args, _ = self.tool.parse_args(self.args + [f'--scopes=-{scope}'])
+        assert args.selected_scopes == frozenset()
 
     def test_enabled(self):
         scope = list(base.scopes)[random.randrange(len(base.scopes))]
-        args = self.parser.parse_args(['--scopes', scope])
-        assert args.scopes == (set(), {base.scopes[scope]})
-
-
-class TestKeywordArgs:
-
-    @pytest.fixture(autouse=True)
-    def _create_argparser(self):
-        self.parser = arghparse.ArgumentParser()
-        self.parser.add_argument('--keywords', action=argparsers.KeywordArgs)
-
-    def test_no_arg(self):
-        args = self.parser.parse_args([])
-        assert args.keywords is None
-
-    def test_unknown(self, capsys):
-        with pytest.raises(SystemExit) as excinfo:
-            self.parser.parse_args(['--keywords', 'foo'])
-        out, err = capsys.readouterr()
-        assert not out
-        assert "unknown keyword: 'foo'" in err
-        assert excinfo.value.code == 2
-
-    def test_enabled(self):
-        keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
-        args = self.parser.parse_args(['--keywords', keyword])
-        assert args.keywords == ([], [keyword])
-
-    def test_disabled(self):
-        keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
-        args = self.parser.parse_args([f'--keywords=-{keyword}'])
-        assert args.keywords == ([keyword], [])
-
-    def test_aliases(self):
-        for alias in ('error', 'warning', 'info'):
-            args = self.parser.parse_args(['--keywords', alias])
-            alias_keywords = list(getattr(objects.KEYWORDS, alias))
-            assert args.keywords == ([], alias_keywords)
+        args, _ = self.tool.parse_args(self.args + ['--scopes', scope])
+        assert args.selected_scopes == frozenset([base.scopes[scope]])
 
 
 class TestCheckArgs:
 
     @pytest.fixture(autouse=True)
-    def _create_argparser(self):
-        self.parser = arghparse.ArgumentParser()
-        self.parser.add_argument('--checks', action=argparsers.CheckArgs)
+    def _setup(self, tool, tmp_path):
+        self.tool = tool
+        self.cache_dir = str(tmp_path)
+        self.args = ['scan', '--cache-dir', self.cache_dir]
 
-    def test_no_arg(self):
-        args = self.parser.parse_args([])
-        assert args.checks is None
+    def test_unknown_check(self, capsys):
+        for opt in ('-c', '--checks'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert "unknown check: 'foo'" in err[-1]
 
-    def test_unknown(self, capsys):
-        with pytest.raises(SystemExit) as excinfo:
-            self.parser.parse_args(['--checks', 'foo'])
-        out, err = capsys.readouterr()
-        assert not out
-        assert "unknown check: 'foo'" in err
-        assert excinfo.value.code == 2
+    def test_missing_check(self, capsys):
+        for opt in ('-c', '--checks'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _ = self.tool.parse_args(self.args + [opt])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[0] == (
+                'pkgcheck scan: error: argument -c/--checks: expected one argument')
 
     def test_enabled(self):
         check = list(objects.CHECKS)[random.randrange(len(objects.CHECKS))]
-        args = self.parser.parse_args(['--checks', check])
-        assert args.checks == ([], [check])
+        args, _ = self.tool.parse_args(self.args + ['--checks', check])
+        assert args.selected_checks == frozenset([check])
 
     def test_disabled(self):
         check = list(objects.CHECKS)[random.randrange(len(objects.CHECKS))]
-        args = self.parser.parse_args([f'--checks=-{check}'])
-        assert args.checks == ([check], [])
+        args, _ = self.tool.parse_args(self.args + [f'--checks=-{check}'])
+        assert args.selected_checks == frozenset()
 
     def test_aliases(self):
         # net
-        args = self.parser.parse_args(['--checks', 'net'])
+        args, _ = self.tool.parse_args(self.args + ['--checks', 'net'])
         network_checks = [
             c for c, v in objects.CHECKS.items() if issubclass(v, checks.NetworkCheck)]
-        assert args.checks == ([], network_checks)
+        assert args.selected_checks == frozenset(network_checks)
 
         # all
-        args = self.parser.parse_args(['--checks', 'all'])
-        assert args.checks == ([], list(objects.CHECKS))
+        args, _ = self.tool.parse_args(self.args + ['--checks', 'all'])
+        assert args.selected_checks == frozenset(objects.CHECKS)
+
+
+class TestKeywordArgs:
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tool, tmp_path):
+        self.tool = tool
+        self.cache_dir = str(tmp_path)
+        self.args = ['scan', '--cache-dir', self.cache_dir]
+
+    def test_unknown_keyword(self, capsys):
+        for opt in ('-k', '--keywords'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert "unknown keyword: 'foo'" in err[-1]
+
+    def test_missing_keyword(self, capsys):
+        for opt in ('-k', '--keywords'):
+            with pytest.raises(SystemExit) as excinfo:
+                options, _ = self.tool.parse_args(self.args + [opt])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[0] == (
+                'pkgcheck scan: error: argument -k/--keywords: expected one argument')
+
+    def test_enabled(self):
+        keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
+        args, _ = self.tool.parse_args(self.args + ['--keywords', keyword])
+        assert args.selected_keywords == frozenset([keyword])
+
+    def test_disabled(self):
+        keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
+        args, _ = self.tool.parse_args(self.args + [f'--keywords=-{keyword}'])
+        assert args.selected_keywords == frozenset()
+
+    def test_aliases(self):
+        for alias in ('error', 'warning', 'info'):
+            args, _ = self.tool.parse_args(self.args + ['--keywords', alias])
+            alias_keywords = list(getattr(objects.KEYWORDS, alias))
+            assert args.selected_keywords == frozenset(alias_keywords)
 
 
 class TestExitArgs:
 
     @pytest.fixture(autouse=True)
-    def _create_argparser(self):
-        self.parser = arghparse.ArgumentParser()
-        self.parser.add_argument('--exit', nargs='?', action=argparsers.ExitArgs)
+    def _setup(self, tool, tmp_path):
+        self.tool = tool
+        self.cache_dir = str(tmp_path)
+        self.args = ['scan', '--cache-dir', self.cache_dir]
 
     def test_unknown(self, capsys):
         with pytest.raises(SystemExit) as excinfo:
-            self.parser.parse_args(['--exit', 'foo'])
+            self.tool.parse_args(self.args + ['--exit', 'foo'])
         out, err = capsys.readouterr()
         assert not out
         assert "unknown keyword: 'foo'" in err
         assert excinfo.value.code == 2
 
     def test_none(self):
-        args = self.parser.parse_args([])
-        assert args.exit is None
+        args, _ = self.tool.parse_args(self.args)
+        assert args.exit_keywords == ()
 
     def test_default(self):
-        args = self.parser.parse_args(['--exit'])
-        assert args.exit == frozenset(objects.KEYWORDS.error.values())
+        args, _ = self.tool.parse_args(self.args + ['--exit'])
+        assert args.exit_keywords == frozenset(objects.KEYWORDS.error.values())
 
     def test_enabled(self):
         keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
         cls = objects.KEYWORDS[keyword]
-        args = self.parser.parse_args(['--exit', keyword])
-        assert args.exit == frozenset([cls])
+        args, _ = self.tool.parse_args(self.args + ['--exit', keyword])
+        assert args.exit_keywords == frozenset([cls])
 
     def test_disabled(self):
         keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
         cls = objects.KEYWORDS[keyword]
-        args = self.parser.parse_args([f'--exit=-{keyword}'])
-        assert args.exit == frozenset(objects.KEYWORDS.error.values()) - frozenset([cls])
+        args, _ = self.tool.parse_args(self.args + [f'--exit=-{keyword}'])
+        assert args.exit_keywords == frozenset(objects.KEYWORDS.error.values()) - frozenset([cls])
 
     def test_aliases(self):
         for alias in ('error', 'warning', 'info'):
-            args = self.parser.parse_args([f'--exit={alias}'])
-            assert args.exit == frozenset(getattr(objects.KEYWORDS, alias).values())
+            args, _ = self.tool.parse_args(self.args + [f'--exit={alias}'])
+            assert args.exit_keywords == frozenset(getattr(objects.KEYWORDS, alias).values())

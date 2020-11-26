@@ -283,8 +283,6 @@ class _ScanCommits(argparse.Action):
             s = pluralism(namespace.targets)
             parser.error(f'--commits is mutually exclusive with target{s}: {targets}')
 
-        namespace.forced_checks.extend(
-            name for name, cls in objects.CHECKS.items() if issubclass(cls, GitCheck))
         ref = value if value is not None else 'origin'
         setattr(namespace, self.dest, ref)
 
@@ -329,6 +327,13 @@ class _ScanCommits(argparse.Action):
         # no pkgs or eclasses to check, exit early
         if not restrictions:
             parser.exit()
+
+        # make sure git checks and keywords are properly enabled
+        git_checks = [
+            cls for cls in objects.CHECKS.values() if issubclass(cls, GitCheck)]
+        namespace.enabled_checks.update(git_checks)
+        if namespace.filtered_keywords is not None:
+            namespace.filtered_keywords.update(*(c.known_results for c in git_checks))
 
         namespace.contexts.append(GitStash(parser, repo))
         namespace.restrictions = restrictions
@@ -404,8 +409,8 @@ class GitAddon(caches.CachedAddon):
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('git', docs=cls.__doc__)
         group.add_argument(
-            '--commits', action=arghparse.Delayed, target=_ScanCommits,
-            nargs='?', metavar='COMMIT',
+            '--commits', nargs='?', metavar='COMMIT',
+            action=arghparse.Delayed, target=_ScanCommits, priority=100,
             help="determine scan targets from local git repo commits",
             docs="""
                 For a local git repo, pkgcheck will determine targets to scan

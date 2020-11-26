@@ -190,7 +190,20 @@ main_options.add_argument(
 
 check_options = scan.add_argument_group('check selection')
 check_options.add_argument(
-    '-c', '--checks', metavar='CHECK', action=argparsers.CheckArgs, dest='selected_checks',
+    '-s', '--scopes', metavar='SCOPE', dest='selected_scopes', default=(),
+    action=arghparse.Delayed, target=argparsers.ScopeArgs, priority=1,
+    help='limit checks to run by scope (comma-separated list)',
+    docs="""
+        Comma separated list of scopes to enable and disable for scanning. Any
+        scopes specified in this fashion will affect the checks that get
+        run. For example, running pkgcheck with only the repo scope
+        enabled will cause only repo-level checks to run.
+
+        Available scopes: %s
+    """ % (', '.join(base.scopes)))
+check_options.add_argument(
+    '-c', '--checks', metavar='CHECK', dest='selected_checks', default=(),
+    action=arghparse.Delayed, target=argparsers.CheckArgs, priority=2,
     help='limit checks to run (comma-separated list)',
     docs="""
         Comma separated list of checks to enable and disable for
@@ -212,7 +225,8 @@ check_options.add_argument(
         Use ``pkgcheck show --checks`` see available options.
     """)
 check_options.add_argument(
-    '-k', '--keywords', metavar='KEYWORD', action=argparsers.KeywordArgs, dest='selected_keywords',
+    '-k', '--keywords', metavar='KEYWORD', dest='selected_keywords', default=(),
+    action=arghparse.Delayed, target=argparsers.KeywordArgs, priority=3,
     help='limit keywords to scan for (comma-separated list)',
     docs="""
         Comma separated list of keywords to enable and disable for
@@ -230,21 +244,6 @@ check_options.add_argument(
 
         Use ``pkgcheck show --keywords`` to see available options.
     """)
-check_options.add_argument(
-    '-s', '--scopes', metavar='SCOPE', action=argparsers.ScopeArgs, dest='selected_scopes',
-    help='limit keywords to scan for by scope (comma-separated list)',
-    docs="""
-        Comma separated list of scopes to enable and disable for scanning. Any
-        scopes specified in this fashion will affect the keywords that get
-        reported. For example, running pkgcheck with only the repo scope
-        enabled will cause only repo-level keywords to be scanned for and
-        reported.
-
-        To specify disabled scopes prefix them with ``-`` similar to the
-        -k/--keywords option.
-
-        Available scopes: %s
-    """ % (', '.join(base.scopes)))
 check_options.add_argument(
     '--net', action='store_true',
     help='run checks that require internet access')
@@ -326,9 +325,11 @@ def _restrict_to_scope(restrict):
 @scan.bind_reset_defaults
 def _setup_scan_defaults(parser, namespace):
     """Re-initialize default namespace settings per arg parsing run."""
-    namespace.forced_checks = []
     namespace.contexts = []
     namespace.restrictions = []
+    namespace.filtered_keywords = None
+    # all non-optional checks are run by default
+    namespace.enabled_checks = set(objects.CHECKS.default.values())
 
 
 def get_addons(objects):
@@ -476,62 +477,10 @@ def _validate_scan_args(parser, namespace):
             scope, restrict = base.repo_scope, packages.AlwaysTrue
         restrictions = [(scope, restrict)]
 
-    # determine enabled checks and keywords
-    enabled_checks = set()
-    namespace.disabled_keywords = set()
-    namespace.enabled_keywords = set()
-
-    # selected scopes
-    if namespace.selected_scopes is not None:
-        namespace.disabled_keywords |= {
-            k for k in objects.KEYWORDS.values() if k.scope in namespace.selected_scopes[0]}
-        namespace.enabled_keywords |= {
-            k for k in objects.KEYWORDS.values() if k.scope in namespace.selected_scopes[1]}
-
-    # selected checks
-    if namespace.selected_checks is not None:
-        if namespace.selected_checks[1]:
-            enabled_checks |= {objects.CHECKS[c] for c in namespace.selected_checks[1]}
-        elif namespace.selected_checks[0]:
-            # only specifying disabled checks enables all non-optional checks
-            # by default and removes selected checks
-            enabled_checks = (
-                set(objects.CHECKS.default.values())
-                - {objects.CHECKS[c] for c in namespace.selected_checks[0]})
-
-    # selected keywords
-    if namespace.selected_keywords is not None:
-        namespace.disabled_keywords |= {objects.KEYWORDS[k] for k in namespace.selected_keywords[0]}
-        namespace.enabled_keywords |= {objects.KEYWORDS[k] for k in namespace.selected_keywords[1]}
-        # allow keyword args to be filtered by output name in addition to class name
-        namespace.disabled_keywords |= {
-            k for k in objects.KEYWORDS.values() if k.name in namespace.selected_keywords[0]}
-        namespace.enabled_keywords |= {
-            k for k in objects.KEYWORDS.values() if k.name in namespace.selected_keywords[1]}
-
-    # determine keywords to filter
-    namespace.filtered_keywords = None
-    if namespace.enabled_keywords or namespace.disabled_keywords:
-        # all keywords for non-optional checks are selected by default
-        if not namespace.enabled_keywords:
-            namespace.enabled_keywords = set().union(
-                *(c.known_results for c in objects.CHECKS.default.values()))
-
-        namespace.filtered_keywords = frozenset(
-            namespace.enabled_keywords - namespace.disabled_keywords)
-        if not enabled_checks:
-            # only enable checks for the requested keywords
-            for check in objects.CHECKS.values():
-                if namespace.filtered_keywords.intersection(check.known_results):
-                    enabled_checks.add(check)
-
-    # all non-optional checks are run by default
-    if not enabled_checks:
-        enabled_checks = objects.CHECKS.default.values()
-
     # only run version scope checks when using a package filter
     if namespace.filter is not None:
-        enabled_checks = (c for c in enabled_checks if c.scope is base.version_scope)
+        namespace.enabled_checks = (
+            c for c in namespace.enabled_checks if c.scope is base.version_scope)
 
     # pull scan scope from the given restriction targets
     restrictions = iter(restrictions)
@@ -542,15 +491,15 @@ def _validate_scan_args(parser, namespace):
     namespace.restrictions = chain([(scan_scope, restrict)], restrictions)
 
     # filter enabled checks based on the scanning scope
-    enabled_checks = [
-        check for check in enabled_checks
+    namespace.enabled_checks = [
+        check for check in namespace.enabled_checks
         if _selected_check(namespace, scan_scope, check.scope)
     ]
 
-    if not enabled_checks:
+    if not namespace.enabled_checks:
         parser.error(f'no matching checks available for {scan_scope} scope')
 
-    addons = get_addons(enabled_checks)
+    addons = get_addons(namespace.enabled_checks)
 
     try:
         for addon in addons:
@@ -561,17 +510,16 @@ def _validate_scan_args(parser, namespace):
         parser.error(str(e))
 
     namespace.addons = addons
-    namespace.enabled_checks = enabled_checks
 
 
 def _selected_check(options, scan_scope, scope):
     """Verify check scope against current scan scope to determine check activation."""
     if scope == 0:
-        if options.selected_scopes is None:
+        if not options.selected_scopes:
             if scan_scope is base.repo_scope or scope is scan_scope:
                 # Allow repo scans or cwd scope to trigger location specific checks.
                 return True
-        elif scope in options.selected_scopes[1]:
+        elif scope in options.selected_scopes:
             # Allow checks with special scopes to be run when specifically
             # requested, e.g. eclass-only scanning.
             return True

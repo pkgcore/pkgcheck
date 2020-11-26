@@ -168,11 +168,10 @@ class ProfileAddon(caches.CachedAddon):
 
             # check if experimental profiles are required for explicitly selected keywords
             if not exp_required:
-                selected_keywords = getattr(namespace, 'selected_keywords', None)
-                if selected_keywords is not None and selected_keywords[1]:
-                    enabled = set(selected_keywords[1])
+                selected_keywords = getattr(namespace, 'selected_keywords', ())
+                if selected_keywords:
                     for r in getattr(namespace, 'filtered_keywords', ()):
-                        if r.name in enabled and r._profile == 'exp':
+                        if r.name in selected_keywords and r._profile == 'exp':
                             exp_required = True
                             break
 

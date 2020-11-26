@@ -169,33 +169,6 @@ class TestPkgcheckScanParseArgs:
         options, _ = self.tool.parse_args(
             self.args + ['-R', 'FormatReporter', '--format', 'foo'])
 
-    def test_unknown_scope(self, capsys):
-        for opt in ('-s', '--scopes'):
-            with pytest.raises(SystemExit) as excinfo:
-                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
-            assert excinfo.value.code == 2
-            out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert "unknown scope: 'foo'" in err[-1]
-
-    def test_unknown_check(self, capsys):
-        for opt in ('-c', '--checks'):
-            with pytest.raises(SystemExit) as excinfo:
-                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
-            assert excinfo.value.code == 2
-            out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert "unknown check: 'foo'" in err[-1]
-
-    def test_unknown_keyword(self, capsys):
-        for opt in ('-k', '--keywords'):
-            with pytest.raises(SystemExit) as excinfo:
-                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
-            assert excinfo.value.code == 2
-            out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert "unknown keyword: 'foo'" in err[-1]
-
     def test_cwd(self, capsys):
         # regularly working
         options, _ = self.tool.parse_args(self.args + ['cat/pkg'])
@@ -206,24 +179,6 @@ class TestPkgcheckScanParseArgs:
             getcwd.side_effect = FileNotFoundError('CWD is gone')
             options, _ = self.tool.parse_args(self.args + ['cat/pkg'])
             assert options.cwd == '/'
-
-    def test_selected_keywords(self):
-        for opt in ('-k', '--keywords'):
-            options, _ = self.tool.parse_args(self.args + [opt, 'InvalidPN'])
-            result_cls = next(v for k, v in objects.KEYWORDS.items() if k == 'InvalidPN')
-            assert options.filtered_keywords == {result_cls}
-            check = next(x for x in objects.CHECKS.values() if result_cls in x.known_results)
-            assert options.enabled_checks == [check]
-
-    def test_missing_scope(self, capsys):
-        for opt in ('-s', '--scopes'):
-            with pytest.raises(SystemExit) as excinfo:
-                options, _ = self.tool.parse_args(self.args + [opt])
-            assert excinfo.value.code == 2
-            out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert err[0] == (
-                'pkgcheck scan: error: argument -s/--scopes: expected one argument')
 
     def test_conflicting_scan_scopes(self, capsys, fakerepo):
         """Multiple targets can't specify different scopes."""
@@ -274,15 +229,6 @@ class TestPkgcheckScanParseArgs:
             check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
             with pytest.raises(argparse.ArgumentError):
                 self.tool.parse_args(self.args + ['--debug', 'cat/pkg'])
-
-    def test_exit_keywords(self):
-        # no exit arg
-        options, _ = self.tool.parse_args(self.args)
-        assert options.exit_keywords == ()
-
-        # default error keywords
-        options, _ = self.tool.parse_args(self.args + ['--exit'])
-        assert options.exit_keywords == frozenset(objects.KEYWORDS.error.values())
 
 
 class TestPkgcheckScan:
