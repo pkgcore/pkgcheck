@@ -2,7 +2,9 @@ import glob
 import importlib.util
 import io
 import os
+import socket
 import tempfile
+import urllib.request
 from functools import partial
 from operator import attrgetter
 from unittest.mock import patch
@@ -10,6 +12,8 @@ from unittest.mock import patch
 from pkgcheck import __title__ as project
 from pkgcheck import objects, reporters
 from pkgcheck.checks import NetworkCheck
+from pkgcheck.checks.network import HomepageUrlCheck, FetchablesUrlCheck, DeadUrl
+from pkgcheck.packages import RawCPV
 from pkgcheck.scripts import run
 import pytest
 from snakeoil.formatters import PlainTextFormatter
@@ -32,7 +36,6 @@ class TestNetworkChecks:
             project, '--config', testconfig,
             'scan', '--config', 'no', '--cache', 'no', '--net',
             '-r', pjoin(self.repos_dir, 'network'),
-            '-R', 'JsonStream',
         ]
 
     _net_results = []
@@ -70,7 +73,10 @@ class TestNetworkChecks:
             spec.loader.exec_module(responses_mod)
 
             results = []
-            args = ['-c', check_name, '-k', keyword, f'{check_name}/{keyword}']
+            args = [
+                '-R' 'JsonStream', '-c', check_name, '-k', keyword,
+                f'{check_name}/{keyword}'
+            ]
             with patch('pkgcheck.net.requests.Session.send') as send:
                 with patch('sys.argv', self.args + args):
                     send.side_effect = responses_mod.responses
@@ -92,3 +98,46 @@ class TestNetworkChecks:
             assert expected_results, 'regular results must always exist'
             assert self._render_results(results), 'failed rendering results'
             assert set(results) == expected_results
+
+    @pytest.mark.parametrize(
+        'check, result', ((HomepageUrlCheck, DeadUrl), (FetchablesUrlCheck, DeadUrl)))
+    def test_scan_ftp(self, check, result, capsys):
+        check_name = check.__name__
+        keyword = result.__name__
+
+        pkg = RawCPV(check_name, f'ftp-{keyword}', '0')
+        if check_name == 'HomepageUrlCheck':
+            deadurl = DeadUrl('HOMEPAGE', 'ftp://pkgcheck.net/pkgcheck/', 'dead ftp', pkg=pkg)
+        else:
+            deadurl = DeadUrl('SRC_URI', 'ftp://pkgcheck.net/pkgcheck/foo.tar.gz', 'dead ftp', pkg=pkg)
+
+        data = (
+            (urllib.error.URLError('dead ftp'), deadurl),
+            (socket.timeout('dead ftp'), deadurl),
+            (None, None),  # faking a clean connection
+        )
+
+        args = [
+            '-R', 'JsonStream', '-c', check_name, '-k', keyword,
+            f'{check_name}/ftp-{keyword}'
+        ]
+        for side_effect, expected_result in data:
+            with patch('urllib.request.urlopen') as urlopen:
+                with patch('sys.argv', self.args + args):
+                    if side_effect is not None:
+                        urlopen.side_effect = side_effect
+                    with pytest.raises(SystemExit) as excinfo:
+                        self.script()
+                    out, err = capsys.readouterr()
+                    assert not err
+                    if side_effect is None:
+                        assert not out
+                    else:
+                        assert out, 'no results exist'
+                        assert excinfo.value.code == 0
+                        results = []
+                        for result in reporters.JsonStream.from_iter(io.StringIO(out)):
+                            results.append(result)
+                        assert len(results) == 1
+                        assert results[0] == expected_result
+                        assert self._render_results(results), 'failed rendering results'

@@ -1,0 +1,5 @@
+DESCRIPTION="Ebuild with a dead ftp SRC_URI"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SRC_URI="ftp://pkgcheck.net/pkgcheck/foo.tar.gz"
+LICENSE="BSD"
+SLOT="0"
