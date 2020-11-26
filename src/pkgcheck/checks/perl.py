@@ -10,7 +10,7 @@ from pkgcore.restrictions import packages, values
 from snakeoil.osutils import pjoin
 
 from .. import const, results, sources
-from . import Check, SkipCheck
+from . import OptionalCheck, SkipCheck
 
 
 class MismatchedPerlVersion(results.VersionResult, results.Warning):
@@ -89,7 +89,7 @@ class _PerlConnection:
             self.perl_client.kill()
 
 
-class PerlCheck(Check):
+class PerlCheck(OptionalCheck):
     """Perl ebuild related checks."""
 
     _restricted_source = (sources.RestrictionRepoSource, (
