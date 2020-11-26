@@ -86,6 +86,8 @@ class GitRepo:
         if init:
             # initialize the repo
             subprocess.run(['git', 'init'], cwd=self.path)
+            subprocess.run(['git', 'config', 'user.email', 'person@email.com'], cwd=self.path)
+            subprocess.run(['git', 'config', 'user.name', 'Person'], cwd=self.path)
             # and add a stub initial commit
             self.admit(pjoin(self.path, '.init'), create=True)
 
