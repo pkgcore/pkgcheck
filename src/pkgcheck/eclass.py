@@ -141,8 +141,6 @@ class EclassAddon(caches.CachedAddon):
                                     cache_eclasses = True
                                 except (IOError, EclassDocParsingError):
                                     continue
-                            except FileNotFoundError:
-                                cache_eclasses = True
 
                 # push eclasses to disk if any changes were found
                 if cache_eclasses:
