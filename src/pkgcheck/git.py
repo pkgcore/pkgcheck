@@ -45,6 +45,9 @@ class GitCommit:
     def __str__(self):
         return self.hash
 
+    def __hash__(self):
+        return hash(self.hash)
+
     def __eq__(self, other):
         return self.hash == other.hash
 
