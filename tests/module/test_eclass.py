@@ -130,7 +130,7 @@ class TestEclassAddon:
     def test_eclass_parsing_failure(self):
         """Eclasses with doc parsing failures are ignored."""
         touch(pjoin(self.eclass_dir, 'foo.eclass'))
-        with patch('pkgcheck.eclass.Eclass') as eclass_cls:
+        with patch('pkgcheck.eclass.EclassDoc') as eclass_cls:
             eclass_cls.side_effect = EclassDocParsingError('failed parsing')
             self.addon.update_cache()
         assert list(self.addon.eclasses) == []

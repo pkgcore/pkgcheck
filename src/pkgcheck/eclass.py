@@ -2,6 +2,7 @@
 
 import os
 import pickle
+from functools import total_ordering
 
 from pkgcore.ebuild.eclass import EclassDoc, EclassDocParsingError
 from snakeoil.cli.exceptions import UserException
@@ -9,6 +10,7 @@ from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.klass import jit_attr_none
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.mappings import ImmutableDict
+from snakeoil.osutils import pjoin
 
 from . import base, caches
 from .log import logger
@@ -20,6 +22,33 @@ def matching_eclass(eclasses_set, eclass):
     Used to create pickleable eclass scanning restrictions.
     """
     return eclass in eclasses_set
+
+
+@total_ordering
+class Eclass:
+    """Generic eclass object."""
+
+    def __init__(self, name, path):
+        self.name = name
+        self.path = path
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def lines(self):
+        with open(self.path) as f:
+            return tuple(f)
+
+    def __lt__(self, other):
+        if isinstance(other, Eclass):
+            return self.name < other.name
+        return self.name < other
+
+    def __eq__(self, other):
+        if isinstance(other, Eclass):
+            return self.name == other.name
+        return self.name == other
 
 
 class EclassAddon(caches.CachedAddon):
@@ -87,16 +116,23 @@ class EclassAddon(caches.CachedAddon):
                         cache_eclasses = True
 
                 # verify the repo has eclasses
-                repo_eclasses = repo.eclass_cache.eclasses
+                eclass_dir = pjoin(repo.location, 'eclass')
+                try:
+                    repo_eclasses = sorted(
+                        (x[:-7], pjoin(eclass_dir, x)) for x in os.listdir(eclass_dir)
+                        if x.endswith('.eclass'))
+                except FileNotFoundError:
+                    repo_eclasses = []
+
                 if repo_eclasses:
                     # padding for progress output
-                    padding = max(len(x) for x in repo_eclasses)
+                    padding = max(len(x[0]) for x in repo_eclasses)
 
                     # check for eclass additions and updates
                     with base.ProgressManager(verbosity=self.options.verbosity) as progress:
-                        for name, eclass in sorted(repo_eclasses.items()):
+                        for name, path in repo_eclasses:
                             try:
-                                if os.path.getmtime(eclass.path) != eclasses[name].mtime:
+                                if os.path.getmtime(path) != eclasses[name].mtime:
                                     raise KeyError
                             except (KeyError, AttributeError):
                                 try:

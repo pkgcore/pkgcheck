@@ -2,7 +2,6 @@
 
 import os
 from collections import deque
-from functools import total_ordering
 from operator import attrgetter
 
 from pkgcore.ebuild.repository import UnconfiguredTree
@@ -10,6 +9,7 @@ from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files, pjoin
 
 from . import addons, base
+from .eclass import Eclass, EclassAddon
 from .packages import FilteredPkg, RawCPV, WrappedPkg
 
 
@@ -20,7 +20,7 @@ class Source:
     required_addons = ()
 
     def __init__(self, options, source):
-        self._options = options
+        self.options = options
         self.source = source
 
     def __iter__(self):
@@ -44,7 +44,7 @@ class RepoSource(Source):
     scope = base.version_scope
 
     def __init__(self, options, source=None):
-        self._options = options
+        self.options = options
         self._repo = options.target_repo
         self._source = source
         self._filter = getattr(options, 'filter', None)
@@ -118,41 +118,16 @@ class LatestPkgsFilter:
         return self._pkg_cache.popleft()
 
 
-@total_ordering
-class Eclass:
-    """Generic eclass object."""
-
-    def __init__(self, name, path):
-        self.name = name
-        self.path = path
-
-    def __str__(self):
-        return self.name
-
-    @property
-    def lines(self):
-        with open(self.path) as f:
-            return tuple(f)
-
-    def __lt__(self, other):
-        if isinstance(other, Eclass):
-            return self.name < other.name
-        return self.name < other
-
-    def __eq__(self, other):
-        if isinstance(other, Eclass):
-            return self.name == other.name
-        return self.name == other
-
-
 class EclassRepoSource(RepoSource):
     """Repository eclass source."""
 
     scope = base.eclass_scope
+    required_addons = (EclassAddon,)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.eclasses = self._repo.eclass_cache.eclasses
+    def __init__(self, *args, eclass_addon):
+        super().__init__(*args)
+        repo = self.options.target_repo
+        self.eclasses = eclass_addon._eclass_repos[repo.location]
 
     def itermatch(self, restrict, **kwargs):
         for name in self.eclasses:
@@ -229,7 +204,7 @@ class UnmaskedRepoSource(RepoSource):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self._filtered_repo = self._options.domain.filter_repo(
+        self._filtered_repo = self.options.domain.filter_repo(
             self._repo, pkg_masks=(), pkg_unmasks=(), pkg_filters=(),
             pkg_accept_keywords=(), pkg_keywords=(), profile=False)
 
