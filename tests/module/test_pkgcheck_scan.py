@@ -125,10 +125,11 @@ class TestPkgcheckScanParseArgs:
             assert options.target_repo.repo_id == 'fake'
             assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
-    def test_unknown_repo(self, capsys):
+    def test_unknown_repo(self, tmp_path, capsys):
         for opt in ('-r', '--repo'):
             with pytest.raises(SystemExit) as excinfo:
-                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
+                with chdir(str(tmp_path)):
+                    options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
