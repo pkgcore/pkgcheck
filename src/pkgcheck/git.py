@@ -87,20 +87,6 @@ class ParsedGitRepo:
 
     def __init__(self, path):
         self.path = os.path.realpath(path)
-        self._root = self._get_repo_root(self.path)
-        self._relpath = os.path.relpath(self.path, self._root)
-
-    @staticmethod
-    def _get_repo_root(path):
-        """Retrieve a git repo's top-level dir for a given path."""
-        try:
-            p = subprocess.run(
-                ['git', 'rev-parse', '--show-toplevel'],
-                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                cwd=path, check=True, encoding='utf8')
-        except subprocess.CalledProcessError:
-            raise GitError(f'failed retrieving top-level dir for git repo: {path!r}')
-        return p.stdout.strip()
 
     def update(self, commit_range, data=None, local=False, **kwargs):
         """Generate git commit data starting at a given commit hash."""
@@ -136,9 +122,6 @@ class ParsedGitRepo:
         ]
         format_str = '%n'.join(format_lines)
         cmd.append(f'--pretty=tformat:{format_str}')
-        # support ebuild repos in git repo subdirs
-        if self._relpath != '.':
-            cmd.append(f'--relative={self._relpath}')
         cmd.append(commit_range)
 
         git_log = subprocess.Popen(
