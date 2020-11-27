@@ -9,7 +9,6 @@ from pkgcore.ebuild import cpv as cpv_mod
 from pkgcore.ebuild import repo_objs, repository
 from pkgcore.util.commandline import Tool
 from snakeoil import klass
-from snakeoil.currying import post_curry
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
@@ -97,18 +96,24 @@ class GitRepo:
             self._run(['git', 'config', 'user.email', 'person@email.com'])
             self._run(['git', 'config', 'user.name', 'Person'])
         if commit:
-            if os.listdir(self.path):
-                # if files exist in the repo root, add them in an initial commit
+            if self.changes:
+                # if files exist in the repo, add them in an initial commit
                 self.add_all(msg='initial commit')
             else:
                 # otherwise add a stub initial commit
                 self.add(pjoin(self.path, '.init'), create=True)
 
+    def _run(self, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **kwargs):
+        return subprocess.run(
+            cmd, cwd=self.path, encoding='utf8', check=True,
+            stdout=stdout, stderr=stderr, **kwargs)
+
     @property
-    def _run(self):
-        return post_curry(
-            subprocess.run, cwd=self.path, check=True,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    def changes(self):
+        """Return a list of any untracked or modified files in the repo."""
+        cmd = ['git', 'ls-files', '-mo', '--exclude-standard']
+        p = self._run(cmd, stdout=subprocess.PIPE)
+        return p.stdout.splitlines()
 
     def __str__(self):
         return self.path
