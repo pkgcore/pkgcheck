@@ -10,7 +10,14 @@ from pkgcheck.git import GitAddon, GitError, GitStash, ParsedGitRepo
 from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
-from snakeoil.process import CommandNotFound
+from snakeoil.process import CommandNotFound, find_binary
+
+
+# skip testing module if git isn't installed
+try:
+    find_binary('git')
+except CommandNotFound:
+    pytestmark = pytest.mark.skipif(True, reason='git not installed')
 
 
 class TestPkgcheckScanCommitsParseArgs:
