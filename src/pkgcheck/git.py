@@ -194,13 +194,17 @@ class ParsedGitRepo:
                                     # matched R status change
                                     status, category, pkg = data[3:6]
                                     old_atom = atom_cls(f'={category}/{pkg}')
-                                    yield GitPkgChange(old_atom, status, commit)
-                                    # include old, renamed pkg for local commits repo
+                                    category, pkg = data[6:]
+                                    new_atom = atom_cls(f'={category}/{pkg}')
+                                    # treat rename as addition and removal
+                                    yield GitPkgChange(new_atom, 'A', commit)
+                                    yield GitPkgChange(old_atom, 'D', commit)
+                                    # Include rename pkg in local
+                                    # commits repo for rename specific
+                                    # results (e.g. MissingMove).
                                     if local:
-                                        category, pkg = data[6:]
                                         yield GitPkgChange(
-                                            atom_cls(f'={category}/{pkg}'),
-                                            status, commit, old_atom=old_atom)
+                                            new_atom, 'R', commit, old_atom=old_atom)
                             except MalformedAtom:
                                 pass
 
@@ -249,13 +253,13 @@ class GitChangedRepo(SimpleTree):
 class GitModifiedRepo(GitChangedRepo):
     """Historical git repo consisting of the latest modified packages."""
 
-    _status_filter = {'A', 'R', 'M'}
+    _status_filter = {'A', 'M'}
 
 
 class GitAddedRepo(GitChangedRepo):
     """Historical git repo consisting of added packages."""
 
-    _status_filter = {'A', 'R'}
+    _status_filter = {'A'}
 
 
 class GitRemovedRepo(GitChangedRepo):

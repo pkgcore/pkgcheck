@@ -186,9 +186,18 @@ class TestParsedGitRepo:
         p = git.ParsedGitRepo(git_repo.path)
 
         # initialize the dict cache
-        data = {}
-        p.update('HEAD', data=data)
+        data = p.update('HEAD')
         assert data == {}
+
+        # overlay repo objects on top of the dict cache
+        changed_repo = git.GitChangedRepo(data)
+        assert len(changed_repo) == 0
+        modified_repo = git.GitModifiedRepo(data)
+        assert len(modified_repo) == 0
+        added_repo = git.GitAddedRepo(data)
+        assert len(added_repo) == 0
+        removed_repo = git.GitRemovedRepo(data)
+        assert len(removed_repo) == 0
 
         # create a pkg and commit it
         repo.create_ebuild('cat/pkg-0')
@@ -202,8 +211,17 @@ class TestParsedGitRepo:
 
         # update the dict cache
         p.update('HEAD', data=data)
-        assert len(data['cat']['pkg']['A']) == 1
         commit = git_repo.HEAD
+
+        # overlay repo objects on top of the dict cache
+        changed_repo = git.GitChangedRepo(data)
+        assert len(changed_repo) == 1
+        modified_repo = git.GitModifiedRepo(data)
+        assert len(modified_repo) == 1
+        added_repo = git.GitAddedRepo(data)
+        assert len(added_repo) == 1
+        removed_repo = git.GitRemovedRepo(data)
+        assert len(removed_repo) == 0
 
         # add a new version and commit it
         repo.create_ebuild('cat/pkg-1')
@@ -216,8 +234,17 @@ class TestParsedGitRepo:
 
         # update the dict cache
         p.update(f'{commit}..HEAD', data=data)
-        assert len(data['cat']['pkg']['A']) == 2
         commit = git_repo.HEAD
+
+        # overlay repo objects on top of the dict cache
+        changed_repo = git.GitChangedRepo(data)
+        assert len(changed_repo) == 2
+        modified_repo = git.GitModifiedRepo(data)
+        assert len(modified_repo) == 2
+        added_repo = git.GitAddedRepo(data)
+        assert len(added_repo) == 2
+        removed_repo = git.GitRemovedRepo(data)
+        assert len(removed_repo) == 0
 
         # remove the old version
         git_repo.remove('cat/pkg/pkg-0.ebuild')
@@ -229,34 +256,41 @@ class TestParsedGitRepo:
 
         # update the dict cache
         p.update(f'{commit}..HEAD', data=data)
-        assert len(data['cat']['pkg']['A']) == 2
-        assert len(data['cat']['pkg']['D']) == 1
-        commit = git_repo.HEAD
-
-        # rename the pkg
-        git_repo.move('cat', 'cat2')
-        pkgs = list(p.parse_git_log('HEAD', pkgs=True))
-        assert len(pkgs) == 4
-        pkg = pkgs[0]
-        assert pkg.atom == atom.atom('=cat/pkg-1')
-        assert pkg.status == 'R'
-
-        # update the dict cache
-        p.update(f'{commit}..HEAD', data=data)
-        assert len(data['cat']['pkg']['A']) == 2
-        assert len(data['cat']['pkg']['D']) == 1
-        assert len(data['cat']['pkg']['R']) == 1
         commit = git_repo.HEAD
 
         # overlay repo objects on top of the dict cache
         changed_repo = git.GitChangedRepo(data)
-        assert len(changed_repo) == 4
+        assert len(changed_repo) == 3
+        modified_repo = git.GitModifiedRepo(data)
+        assert len(modified_repo) == 2
+        added_repo = git.GitAddedRepo(data)
+        assert len(added_repo) == 2
+        removed_repo = git.GitRemovedRepo(data)
+        assert len(removed_repo) == 1
+
+        # rename the pkg
+        git_repo.move('cat', 'cat2')
+        pkgs = list(p.parse_git_log('HEAD', pkgs=True))
+        assert len(pkgs) == 5
+        new_pkg, old_pkg = pkgs[:2]
+        assert old_pkg.atom == atom.atom('=cat/pkg-1')
+        assert old_pkg.status == 'D'
+        assert new_pkg.atom == atom.atom('=cat2/pkg-1')
+        assert new_pkg.status == 'A'
+
+        # update the dict cache
+        p.update(f'{commit}..HEAD', data=data)
+        commit = git_repo.HEAD
+
+        # overlay repo objects on top of the dict cache
+        changed_repo = git.GitChangedRepo(data)
+        assert len(changed_repo) == 5
         modified_repo = git.GitModifiedRepo(data)
         assert len(modified_repo) == 3
         added_repo = git.GitAddedRepo(data)
         assert len(added_repo) == 3
         removed_repo = git.GitRemovedRepo(data)
-        assert len(removed_repo) == 1
+        assert len(removed_repo) == 2
 
 
 class TestGitAddon:
