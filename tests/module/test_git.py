@@ -6,10 +6,11 @@ import pytest
 from pkgcore.ebuild import atom
 from pkgcore.restrictions import packages
 from pkgcheck import base
-from pkgcheck.git import GitStash
+from pkgcheck.git import GitAddon, GitStash
 from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
+from snakeoil.process import CommandNotFound
 
 
 class TestPkgcheckScanCommitsParseArgs:
@@ -140,3 +141,47 @@ class TestGitStash:
                 assert not os.path.exists(path)
                 touch(path)
         assert 'git failed applying stash' in str(excinfo.value)
+
+
+class TestGitAddon:
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tool, tmp_path, repo):
+        self.repo = repo
+        self.cache_dir = str(tmp_path)
+
+        args = ['scan', '--cache-dir', self.cache_dir, '--repo', self.repo.location]
+        options, _ = tool.parse_args(args)
+        self.addon = GitAddon(options)
+        self.cache_file = self.addon.cache_file(self.repo)
+
+    def test_git_unavailable(self, tool):
+        args = ['scan', '--cache-dir', self.cache_dir, '--repo', self.repo.location]
+        options, _ = tool.parse_args(args)
+        assert options.cache['git']
+        with patch('pkgcheck.git.find_binary') as find_binary:
+            find_binary.side_effect = CommandNotFound('git not found')
+            addon = GitAddon(options)
+            assert not addon.options.cache['git']
+
+    def test_no_gitignore(self):
+        assert self.addon._gitignore is None
+        assert not self.addon.gitignored('')
+
+    def test_failed_gitignore(self):
+        with open(pjoin(self.repo.location, '.gitignore'), 'w') as f:
+            f.write('.*.swp\n')
+        with patch('pkgcheck.git.open') as fake_open:
+            fake_open.side_effect = IOError('file reading failure')
+            assert self.addon._gitignore is None
+
+    def test_gitignore(self):
+        for path in ('.gitignore', '.git/info/exclude'):
+            file_path = pjoin(self.repo.location, path)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, 'w') as f:
+                f.write('.*.swp\n')
+            assert self.addon.gitignored('.foo.swp')
+            assert self.addon.gitignored(pjoin(self.repo.location, '.foo.swp'))
+            assert not self.addon.gitignored('foo.swp')
+            assert not self.addon.gitignored(pjoin(self.repo.location, 'foo.swp'))
