@@ -146,8 +146,7 @@ class ParsedGitRepo:
         line = git_log.stdout.readline().decode().strip()
         if git_log.poll():
             error = git_log.stderr.read().decode().strip()
-            logger.warning('skipping git checks: %s', error)
-            return
+            raise GitError(f'failed running git log: {error}')
 
         count = 1
         with base.ProgressManager(verbosity=verbosity) as progress:
@@ -517,8 +516,11 @@ class GitAddon(caches.CachedAddon):
                     else:
                         data = git_cache.data
                         commit_range = f'{git_cache.commit}..origin/HEAD'
-                    git_repo = ParsedGitRepo(repo.location)
-                    git_repo.update(commit_range, data=data, verbosity=self.options.verbosity)
+                    try:
+                        git_repo = ParsedGitRepo(repo.location)
+                        git_repo.update(commit_range, data=data, verbosity=self.options.verbosity)
+                    except GitError as e:
+                        raise UserException(str(e))
                     git_cache = GitCache(data, self.cache, commit=commit)
                 else:
                     cache_repo = False
