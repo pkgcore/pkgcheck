@@ -457,10 +457,22 @@ class TestGitAddon:
         child_repo = make_repo(child_git_repo.path)
         child_repo.create_ebuild('cat/pkg-1')
         child_git_repo.add_all('cat/pkg-1')
+
         # pkg commits now exist locally in the child repo
         commits_repo = self.addon.commits_repo(git.GitChangedRepo)
         assert len(commits_repo) == 1
         assert atom_cls('=cat/pkg-1') in commits_repo
+
+        # failing to parse git log yields an empty repo
+        with patch('pkgcheck.git.ParsedGitRepo.parse_git_log') as parse_git_log:
+            parse_git_log.side_effect = git.GitError('git parsing failed')
+            commits_repo = self.addon.commits_repo(git.GitChangedRepo)
+            assert len(commits_repo) == 0
+
+        # disabled git cache support also yields an empty repo
+        self.addon.options.cache['git'] = False
+        commits_repo = self.addon.commits_repo(git.GitChangedRepo)
+        assert len(commits_repo) == 0
 
     def test_commits(self, repo, make_repo, make_git_repo):
         parent_repo = repo
@@ -482,7 +494,17 @@ class TestGitAddon:
         child_repo = make_repo(child_git_repo.path)
         child_repo.create_ebuild('cat/pkg-1')
         child_git_repo.add_all('cat/pkg-1')
+
         # commits now exist locally in the child repo
         commits = list(self.addon.commits())
         assert len(commits) == 1
         assert commits[0].message == ['cat/pkg-1']
+
+        # failing to parse git log yields no commits
+        with patch('pkgcheck.git.ParsedGitRepo.parse_git_log') as parse_git_log:
+            parse_git_log.side_effect = git.GitError('git parsing failed')
+            assert len(list(self.addon.commits())) == 0
+
+        # disabled git cache support also yields no commits
+        self.addon.options.cache['git'] = False
+        assert len(list(self.addon.commits())) == 0
