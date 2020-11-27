@@ -455,14 +455,18 @@ class GitAddon(caches.CachedAddon):
                 pass
             except IOError as e:
                 logger.warning(f'failed reading {path!r}: {e}')
-        return PathSpec.from_lines('gitwildmatch', patterns)
+        if patterns:
+            return PathSpec.from_lines('gitwildmatch', patterns)
+        return None
 
     def gitignored(self, path):
         """Determine if a given path in a repository is matched by .gitignore settings."""
-        if path.startswith(self.options.target_repo.location):
-            repo_prefix_len = len(self.options.target_repo.location) + 1
-            path = path[repo_prefix_len:]
-        return self._gitignore.match_file(path)
+        if self._gitignore is not None:
+            if path.startswith(self.options.target_repo.location):
+                repo_prefix_len = len(self.options.target_repo.location) + 1
+                path = path[repo_prefix_len:]
+            return self._gitignore.match_file(path)
+        return False
 
     @staticmethod
     def _get_commit_hash(path, commit='origin/HEAD'):
