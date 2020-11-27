@@ -37,9 +37,9 @@ class TestCacheNegations:
         self.parser.add_argument('--cache', action=argparsers.CacheNegations)
         self.caches = [x.type for x in CachedAddon.caches.values()]
 
-    def test_no_arg(self):
+    def test_defaults(self):
         options = self.parser.parse_args([])
-        assert options.cache is None
+        assert options.cache == dict(argparsers.CacheNegations.caches)
 
     def test_unknown(self, capsys):
         with pytest.raises(SystemExit) as excinfo:

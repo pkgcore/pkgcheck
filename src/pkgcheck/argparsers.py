@@ -4,6 +4,7 @@ import argparse
 from itertools import chain
 
 from snakeoil.cli import arghparse
+from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism
 
 from . import base, objects
@@ -23,7 +24,15 @@ class ConfigArg(argparse._StoreAction):
 class CacheNegations(arghparse.CommaSeparatedNegations):
     """Split comma-separated enabled and disabled cache types."""
 
-    caches = {cache.type: True for cache in CachedAddon.caches.values()}
+    caches = ImmutableDict({cache.type: True for cache in CachedAddon.caches.values()})
+
+    def __init__(self, *args, **kwargs):
+        # delay setting default since it has to be mutable
+        default = arghparse.DelayedValue(self._cache_defaults, 100)
+        super().__init__(*args, default=default, **kwargs)
+
+    def _cache_defaults(self, namespace, attr):
+        setattr(namespace, attr, dict(self.caches))
 
     def parse_values(self, values):
         all_cache_types = {cache.type for cache in CachedAddon.caches.values()}

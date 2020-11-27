@@ -148,7 +148,7 @@ main_options.add_argument(
         Number of asynchronous tasks to run concurrently (defaults to 5 * CPU count).
     """)
 main_options.add_argument(
-    '--cache', action=argparsers.CacheNegations, default=argparsers.CacheNegations.caches,
+    '--cache', action=argparsers.CacheNegations,
     help='forcibly enable/disable caches',
     docs="""
         All cache types are enabled by default, this option explicitly sets
@@ -584,8 +584,7 @@ cache.add_argument(
     '-n', '--dry-run', action='store_true',
     help='dry run without performing any changes')
 cache.add_argument(
-    '-t', '--type', dest='cache',
-    action=argparsers.CacheNegations, default=argparsers.CacheNegations.caches,
+    '-t', '--type', dest='cache', action=argparsers.CacheNegations,
     help='target cache types')
 
 
