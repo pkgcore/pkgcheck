@@ -235,15 +235,15 @@ class GitChangedRepo(SimpleTree):
         versions = []
         for status, data in self.cpv_dict[cp[0]][cp[1]].items():
             if status in self._status_filter:
-                versions.append((status, data))
+                for commit in data:
+                    versions.append((status, commit))
         return versions
 
     def _internal_gen_candidates(self, candidates, sorter, raw_pkg_cls, **kwargs):
         for cp in sorter(candidates):
             yield from sorter(
                 raw_pkg_cls(cp[0], cp[1], status, *commit)
-                for status, data in self.versions.get(cp, ())
-                for commit in data)
+                for status, commit in self.versions.get(cp, ()))
 
 
 class GitModifiedRepo(GitChangedRepo):
