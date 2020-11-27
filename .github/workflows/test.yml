@@ -45,12 +45,6 @@ jobs:
         # dep for perl checks
         sudo cpanm --quiet --notest Gentoo::PerlMod::Version
 
-    - name: Set up git repo
-      run: |
-        # forcibly create the origin/HEAD ref so git support works
-        git remote set-head origin master
-        git rev-parse origin/HEAD
-
     - name: Test with pytest
       run: |
         coverage run -p setup.py test
