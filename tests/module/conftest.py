@@ -171,12 +171,15 @@ class EbuildRepo:
 
     def __init__(self, path):
         self.path = path
-        os.makedirs(pjoin(path, 'profiles'))
-        os.makedirs(pjoin(path, 'metadata'))
-        with open(pjoin(path, 'profiles', 'repo_name'), 'w') as f:
-            f.write('fake\n')
-        with open(pjoin(path, 'metadata', 'layout.conf'), 'w') as f:
-            f.write('masters =\n')
+        try:
+            os.makedirs(pjoin(path, 'profiles'))
+            os.makedirs(pjoin(path, 'metadata'))
+            with open(pjoin(path, 'profiles', 'repo_name'), 'w') as f:
+                f.write('fake\n')
+            with open(pjoin(path, 'metadata', 'layout.conf'), 'w') as f:
+                f.write('masters =\n')
+        except FileExistsError:
+            pass
         repo_config = repo_objs.RepoConfig(location=path)
         self._repo = repository.UnconfiguredTree(
             repo_config.location, repo_config=repo_config)
@@ -196,3 +199,12 @@ class EbuildRepo:
 def repo(tmp_path):
     """Create a generic ebuild repository."""
     return EbuildRepo(str(tmp_path))
+
+
+@pytest.fixture
+def make_repo(tmp_path):
+    """Factory for ebuild repo creation."""
+    def _make_repo(path=None, **kwargs):
+        path = str(tmp_path) if path is None else path
+        return EbuildRepo(path)
+    return _make_repo

@@ -435,3 +435,54 @@ class TestGitAddon:
             with pytest.raises(UserException) as excinfo:
                 self.addon.update_cache()
             assert 'failed dumping git repo' in str(excinfo.value)
+
+    def test_commits_repo(self, repo, make_repo, make_git_repo):
+        parent_repo = repo
+        parent_git_repo = make_git_repo(repo.location, commit=True)
+        # create a pkg and commit it
+        parent_repo.create_ebuild('cat/pkg-0')
+        parent_git_repo.add_all('cat/pkg-0')
+
+        child_git_repo = make_git_repo(self.repo.location, commit=False)
+        child_git_repo.run(['git', 'remote', 'add', 'origin', parent_git_repo.path])
+        child_git_repo.run(['git', 'fetch', 'origin'])
+        child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.addon.update_cache()
+
+        # no new pkg commits exist locally in the child repo
+        commits_repo = self.addon.commits_repo(git.GitChangedRepo)
+        assert len(commits_repo) == 0
+
+        # create a pkg in the child repo and commit it
+        child_repo = make_repo(child_git_repo.path)
+        child_repo.create_ebuild('cat/pkg-1')
+        child_git_repo.add_all('cat/pkg-1')
+        # pkg commits now exist locally in the child repo
+        commits_repo = self.addon.commits_repo(git.GitChangedRepo)
+        assert len(commits_repo) == 1
+        assert atom_cls('=cat/pkg-1') in commits_repo
+
+    def test_commits(self, repo, make_repo, make_git_repo):
+        parent_repo = repo
+        parent_git_repo = make_git_repo(repo.location, commit=True)
+        # create a pkg and commit it
+        parent_repo.create_ebuild('cat/pkg-0')
+        parent_git_repo.add_all('cat/pkg-0')
+
+        child_git_repo = make_git_repo(self.repo.location, commit=False)
+        child_git_repo.run(['git', 'remote', 'add', 'origin', parent_git_repo.path])
+        child_git_repo.run(['git', 'fetch', 'origin'])
+        child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.addon.update_cache()
+
+        # no new commits exist locally in the child repo
+        assert len(list(self.addon.commits())) == 0
+
+        # create a pkg in the child repo and commit it
+        child_repo = make_repo(child_git_repo.path)
+        child_repo.create_ebuild('cat/pkg-1')
+        child_git_repo.add_all('cat/pkg-1')
+        # commits now exist locally in the child repo
+        commits = list(self.addon.commits())
+        assert len(commits) == 1
+        assert commits[0].message == ['cat/pkg-1']
