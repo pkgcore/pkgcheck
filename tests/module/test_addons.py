@@ -427,21 +427,43 @@ class TestUseAddon(ArgparseCheck, Tmpdir):
     test_it.skip = "todo"
 
 
+try:
+    import requests
+    net_skip = False
+except ImportError:
+    net_skip = True
+
+
+@pytest.mark.skipif(net_skip, reason="requests isn't installed")
 class TestNetAddon:
 
-    @pytest.fixture(autouse=True)
-    def _setup(self, tool):
-        self.tool = tool
-        options, _ = self.tool.parse_args(['scan'])
-        self.addon = addons.NetAddon(options)
-
-    def test_failed_import(self):
+    def test_failed_import(self, tool):
+        options, _ = tool.parse_args(['scan'])
+        addon = addons.NetAddon(options)
         with patch('pkgcheck.net.Session') as net:
             net.side_effect = ImportError('import failed', name='foo')
             with pytest.raises(ImportError):
-                self.addon.session
+                addon.session
             # failing to import requests specifically returns a nicer user exception
             net.side_effect = ImportError('import failed', name='requests')
             with pytest.raises(UserException) as excinfo:
-                self.addon.session
+                addon.session
             assert 'network checks require requests' in str(excinfo)
+
+    def test_custom_timeout(self, tool):
+        options, _ = tool.parse_args(['scan', '--timeout', '10'])
+        addon = addons.NetAddon(options)
+        assert isinstance(addon.session, requests.Session)
+        assert addon.session.timeout == 10
+        # a timeout of zero disables timeouts entirely
+        options, _ = tool.parse_args(['scan', '--timeout', '0'])
+        addon = addons.NetAddon(options)
+        assert addon.session.timeout is None
+
+    def test_args(self, tool):
+        options, _ = tool.parse_args(
+            ['scan', '--timeout', '10', '--tasks', '50', '--user-agent', 'firefox'])
+        addon = addons.NetAddon(options)
+        with patch('pkgcheck.net.Session') as net:
+            addon.session
+        net.assert_called_once_with(concurrent=50, timeout=10, user_agent='firefox')
