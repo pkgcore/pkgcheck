@@ -1,4 +1,5 @@
 import os
+import pickle
 import subprocess
 from unittest.mock import Mock, patch
 
@@ -376,7 +377,6 @@ class TestGitAddon:
         child_repo.run(['git', 'fetch', 'origin'])
         child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
         self.addon.update_cache()
-        assert os.path.exists(self.cache_file)
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
 
         # verify the cache was loaded and not regenerated
@@ -390,6 +390,60 @@ class TestGitAddon:
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
         assert st.st_mtime != os.lstat(self.cache_file).st_mtime
 
+        # create another pkg and commit it to the parent repo
+        repo.create_ebuild('cat/pkg-1')
+        parent_repo.add_all('cat/pkg-1')
+        self.addon.update_cache()
+        assert atom_cls('=cat/pkg-1') not in self.addon.cached_repo(git.GitAddedRepo)
+
+        # new package is seen after child repo pulls changes
+        child_repo.run(['git', 'pull', 'origin', 'master'])
+        self.addon.update_cache()
+        assert atom_cls('=cat/pkg-1') in self.addon.cached_repo(git.GitAddedRepo)
+
+    def test_outdated_cache(self, repo, make_git_repo):
+        parent_repo = make_git_repo(repo.location, commit=True)
+        # create a pkg and commit it
+        repo.create_ebuild('cat/pkg-0')
+        parent_repo.add_all('cat/pkg-0')
+
+        child_repo = make_git_repo(self.repo.location, commit=False)
+        child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
+        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.addon.update_cache()
+        assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
+
+        # increment cache version and dump cache
+        with open(self.cache_file, 'rb') as f:
+            cache_obj = pickle.load(f)
+        cache_obj.version += 1
+        with open(self.cache_file, 'wb') as f:
+            pickle.dump(cache_obj, f, protocol=-1)
+
+        # verify cache load causes regen
+        st = os.lstat(self.cache_file)
+        self.addon.update_cache()
+        assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
+        assert st.st_mtime != os.lstat(self.cache_file).st_mtime
+
+    def test_error_creating_cache(self, repo, make_git_repo):
+        parent_repo = make_git_repo(repo.location, commit=True)
+        # create a pkg and commit it
+        repo.create_ebuild('cat/pkg-0')
+        parent_repo.add_all('cat/pkg-0')
+
+        child_repo = make_git_repo(self.repo.location, commit=False)
+        child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
+        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+
+        with patch('pkgcheck.git.ParsedGitRepo.parse_git_log') as parse_git_log:
+            parse_git_log.side_effect = git.GitError('git parsing failed')
+            with pytest.raises(UserException) as excinfo:
+                self.addon.update_cache()
+            assert 'git parsing failed' in str(excinfo.value)
+
     def test_error_loading_cache(self, repo, make_git_repo):
         parent_repo = make_git_repo(repo.location, commit=True)
         # create a pkg and commit it
@@ -401,7 +455,6 @@ class TestGitAddon:
         child_repo.run(['git', 'fetch', 'origin'])
         child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
         self.addon.update_cache()
-        assert os.path.exists(self.cache_file)
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
         st = os.lstat(self.cache_file)
 
