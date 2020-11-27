@@ -561,38 +561,35 @@ class GitAddon(caches.CachedAddon):
 
         return cached_repo
 
-    def commits_repo(self, repo_cls, target_repo=None, options=None):
-        options = options if options is not None else self.options
-        if target_repo is None:
-            target_repo = options.target_repo
-
+    def commits_repo(self, repo_cls, repo=None):
+        repo = self.options.target_repo if repo is None else repo
         commits = {}
-        repo_id = f'{target_repo.repo_id}-commits'
 
-        if options.cache['git']:
+        if self.options.cache['git']:
             try:
-                origin = self._get_commit_hash(target_repo.location)
-                master = self._get_commit_hash(target_repo.location, commit='master')
+                origin = self._get_commit_hash(repo.location)
+                master = self._get_commit_hash(repo.location, commit='master')
                 if origin != master:
-                    git_repo = ParsedGitRepo(target_repo.location)
+                    git_repo = ParsedGitRepo(repo.location)
                     commits = git_repo.update('origin/HEAD..master', local=True)
-            except GitError as e:
-                logger.warning('skipping git commit checks: %s', e)
+            except GitError:
+                pass
 
+        repo_id = f'{repo.repo_id}-commits'
         return repo_cls(commits, repo_id=repo_id)
 
     def commits(self, repo=None):
-        path = repo.location if repo is not None else self.options.target_repo.location
+        repo = self.options.target_repo if repo is None else repo
         commits = iter(())
 
         if self.options.cache['git']:
             try:
-                origin = self._get_commit_hash(path)
-                master = self._get_commit_hash(path, commit='master')
+                origin = self._get_commit_hash(repo.location)
+                master = self._get_commit_hash(repo.location, commit='master')
                 if origin != master:
-                    git_repo = ParsedGitRepo(path)
+                    git_repo = ParsedGitRepo(repo.location)
                     commits = git_repo.parse_git_log('origin/HEAD..master')
-            except GitError as e:
-                logger.warning('skipping git commit checks: %s', e)
+            except GitError:
+                pass
 
         return commits
