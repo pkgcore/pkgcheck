@@ -5,8 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 from pkgcore.ebuild import atom
 from pkgcore.restrictions import packages
-from pkgcheck import base
-from pkgcheck.git import GitAddon, GitError, GitStash, ParsedGitRepo
+from pkgcheck import base, git
 from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
@@ -110,19 +109,19 @@ class TestGitStash:
 
     def test_non_git_repo(self, tmp_path):
         with pytest.raises(ValueError) as excinfo:
-            with GitStash(tmp_path):
+            with git.GitStash(tmp_path):
                 pass
         assert 'not a git repo' in str(excinfo.value)
 
     def test_empty_git_repo(self, git_repo):
-        with GitStash(git_repo.path):
+        with git.GitStash(git_repo.path):
             pass
 
     def test_untracked_file(self, git_repo):
         path = pjoin(git_repo.path, 'foo')
         touch(path)
         assert os.path.exists(path)
-        with GitStash(git_repo.path):
+        with git.GitStash(git_repo.path):
             assert not os.path.exists(path)
         assert os.path.exists(path)
 
@@ -135,7 +134,7 @@ class TestGitStash:
             err.stderr = 'git stash failed'
             run.side_effect = [Mock(stdout='foo'), err]
             with pytest.raises(UserException) as excinfo:
-                with GitStash(git_repo.path):
+                with git.GitStash(git_repo.path):
                     pass
             assert 'git failed stashing files' in str(excinfo.value)
 
@@ -144,7 +143,7 @@ class TestGitStash:
         touch(path)
         assert os.path.exists(path)
         with pytest.raises(UserException) as excinfo:
-            with GitStash(git_repo.path):
+            with git.GitStash(git_repo.path):
                 assert not os.path.exists(path)
                 touch(path)
         assert 'git failed applying stash' in str(excinfo.value)
@@ -153,13 +152,13 @@ class TestGitStash:
 class TestParsedGitRepo:
 
     def test_non_git(self, tmp_path):
-        with pytest.raises(GitError):
-            ParsedGitRepo(str(tmp_path))
+        with pytest.raises(git.GitError):
+            git.ParsedGitRepo(str(tmp_path))
 
     def test_empty_repo(self, make_git_repo):
         git_repo = make_git_repo()
-        p = ParsedGitRepo(git_repo.path)
-        with pytest.raises(GitError) as excinfo:
+        p = git.ParsedGitRepo(git_repo.path)
+        with pytest.raises(git.GitError) as excinfo:
             list(p.parse_git_log('HEAD'))
         assert 'failed running git log' in str(excinfo)
 
@@ -168,7 +167,7 @@ class TestParsedGitRepo:
 
         # make an initial commit
         git_repo.add('foo', msg='foo', create=True)
-        p = ParsedGitRepo(git_repo.path)
+        p = git.ParsedGitRepo(git_repo.path)
         commits = list(p.parse_git_log('HEAD'))
         assert len(commits) == 1
         orig_commit = commits[0]
@@ -184,7 +183,12 @@ class TestParsedGitRepo:
 
     def test_pkgs_parsing(self, repo, make_git_repo):
         git_repo = make_git_repo(repo.location, commit=True)
-        p = ParsedGitRepo(git_repo.path)
+        p = git.ParsedGitRepo(git_repo.path)
+
+        # initialize the dict cache
+        data = {}
+        p.update('HEAD', data=data)
+        assert data == {}
 
         # create a pkg and commit it
         repo.create_ebuild('cat/pkg-0')
@@ -196,6 +200,11 @@ class TestParsedGitRepo:
         assert pkg.status == 'A'
         assert pkg.commit.message == ['cat/pkg-0']
 
+        # update the dict cache
+        p.update('HEAD', data=data)
+        assert len(data['cat']['pkg']['A']) == 1
+        commit = git_repo.HEAD
+
         # add a new version and commit it
         repo.create_ebuild('cat/pkg-1')
         git_repo.add_all('cat/pkg-1')
@@ -205,6 +214,11 @@ class TestParsedGitRepo:
         assert pkg.atom == atom.atom('=cat/pkg-1')
         assert pkg.status == 'A'
 
+        # update the dict cache
+        p.update(f'{commit}..HEAD', data=data)
+        assert len(data['cat']['pkg']['A']) == 2
+        commit = git_repo.HEAD
+
         # remove the old version
         git_repo.remove('cat/pkg/pkg-0.ebuild')
         pkgs = list(p.parse_git_log('HEAD', pkgs=True))
@@ -213,6 +227,12 @@ class TestParsedGitRepo:
         assert pkg.atom == atom.atom('=cat/pkg-0')
         assert pkg.status == 'D'
 
+        # update the dict cache
+        p.update(f'{commit}..HEAD', data=data)
+        assert len(data['cat']['pkg']['A']) == 2
+        assert len(data['cat']['pkg']['D']) == 1
+        commit = git_repo.HEAD
+
         # rename the pkg
         git_repo.move('cat', 'cat2')
         pkgs = list(p.parse_git_log('HEAD', pkgs=True))
@@ -220,6 +240,23 @@ class TestParsedGitRepo:
         pkg = pkgs[0]
         assert pkg.atom == atom.atom('=cat/pkg-1')
         assert pkg.status == 'R'
+
+        # update the dict cache
+        p.update(f'{commit}..HEAD', data=data)
+        assert len(data['cat']['pkg']['A']) == 2
+        assert len(data['cat']['pkg']['D']) == 1
+        assert len(data['cat']['pkg']['R']) == 1
+        commit = git_repo.HEAD
+
+        # overlay repo objects on top of the dict cache
+        changed_repo = git.GitChangedRepo(data)
+        assert len(changed_repo) == 4
+        modified_repo = git.GitModifiedRepo(data)
+        assert len(modified_repo) == 3
+        added_repo = git.GitAddedRepo(data)
+        assert len(added_repo) == 3
+        removed_repo = git.GitRemovedRepo(data)
+        assert len(removed_repo) == 1
 
 
 class TestGitAddon:
@@ -231,7 +268,7 @@ class TestGitAddon:
 
         args = ['scan', '--cache-dir', self.cache_dir, '--repo', self.repo.location]
         options, _ = tool.parse_args(args)
-        self.addon = GitAddon(options)
+        self.addon = git.GitAddon(options)
         self.cache_file = self.addon.cache_file(self.repo)
 
     def test_git_unavailable(self, tool):
@@ -240,7 +277,7 @@ class TestGitAddon:
         assert options.cache['git']
         with patch('pkgcheck.git.find_binary') as find_binary:
             find_binary.side_effect = CommandNotFound('git not found')
-            addon = GitAddon(options)
+            addon = git.GitAddon(options)
             assert not addon.options.cache['git']
 
     def test_no_gitignore(self):

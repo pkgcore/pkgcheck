@@ -115,6 +115,12 @@ class GitRepo:
         p = self._run(cmd, stdout=subprocess.PIPE)
         return p.stdout.splitlines()
 
+    @property
+    def HEAD(self):
+        """Return the commit hash for git HEAD."""
+        p = self._run(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE)
+        return p.stdout.strip()
+
     def __str__(self):
         return self.path
 
