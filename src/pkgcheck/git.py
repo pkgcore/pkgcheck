@@ -516,7 +516,7 @@ class GitAddon(caches.CachedAddon):
                 else:
                     cache_repo = False
 
-                if git_cache is not None:
+                if git_cache:
                     self._cached_repos[repo.location] = git_cache
                     # push repo to disk if it was created or updated
                     if cache_repo:
