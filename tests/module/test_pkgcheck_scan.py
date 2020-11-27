@@ -136,6 +136,18 @@ class TestPkgcheckScanParseArgs:
             assert err[-1].startswith(
                 "pkgcheck scan: error: argument -r/--repo: couldn't find repo 'foo'")
 
+    def test_invalid_repo(self, tmp_path, capsys):
+        touch(pjoin(str(tmp_path), 'foo'))
+        for opt in ('-r', '--repo'):
+            with pytest.raises(SystemExit) as excinfo:
+                with chdir(str(tmp_path)):
+                    options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            err = err.strip().split('\n')
+            assert err[-1].startswith(
+                "pkgcheck scan: error: argument -r/--repo: invalid repo")
+
     def test_unknown_reporter(self, capsys):
         for opt in ('-R', '--reporter'):
             with pytest.raises(SystemExit) as excinfo:
