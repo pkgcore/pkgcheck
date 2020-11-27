@@ -5,10 +5,11 @@ import textwrap
 import pytest
 from pkgcheck.scripts import pkgcheck
 from pkgcore import const as pkgcore_const
+from pkgcore.ebuild import cpv as cpv_mod
 from pkgcore.ebuild import repo_objs, repository
 from pkgcore.util.commandline import Tool
 from snakeoil import klass
-from snakeoil.cli import arghparse
+from snakeoil.currying import post_curry
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
@@ -82,41 +83,62 @@ def tool(fakeconfig):
 
 
 class GitRepo:
-    """Class for creating/manipulating git repos."""
+    """Class for creating/manipulating git repos.
+
+    Only relies on the git binary existing in order to limit
+    dependency requirements.
+    """
 
     def __init__(self, path, init=True, commit=False):
         self.path = path
         # initialize the repo
         if init:
-            subprocess.run(
-                ['git', 'init'], cwd=self.path,
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run(
-                ['git', 'config', 'user.email', 'person@email.com'],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                cwd=self.path)
-            subprocess.run(
-                ['git', 'config', 'user.name', 'Person'],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                cwd=self.path)
+            self._run(['git', 'init'])
+            self._run(['git', 'config', 'user.email', 'person@email.com'])
+            self._run(['git', 'config', 'user.name', 'Person'])
         if commit:
-            # and add a stub initial commit
-            self.admit(pjoin(self.path, '.init'), create=True)
+            if os.listdir(self.path):
+                # if files exist in the repo root, add them in an initial commit
+                self.add_all(msg='initial commit')
+            else:
+                # otherwise add a stub initial commit
+                self.add(pjoin(self.path, '.init'), create=True)
+
+    @property
+    def _run(self):
+        return post_curry(
+            subprocess.run, cwd=self.path, check=True,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def __str__(self):
         return self.path
 
-    def admit(self, file_path, msg=None, create=False):
+    def add(self, file_path, msg='commit', create=False):
         """Add a file and commit it to the repo."""
         if create:
             touch(pjoin(self.path, file_path))
-        subprocess.run(
-            ['git', 'add', file_path], cwd=self.path,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        msg = msg if msg is not None else file_path
-        subprocess.run(
-            ['git', 'commit', '-m', msg], cwd=self.path,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self._run(['git', 'add', file_path])
+        self._run(['git', 'commit', '-m', msg])
+
+    def add_all(self, msg='commit-all'):
+        """Add and commit all tracked and untracked files."""
+        self._run(['git', 'add', '--all'])
+        self._run(['git', 'commit', '-m', msg])
+
+    def remove(self, path, msg='remove'):
+        """Remove a given file path and commit the change."""
+        self._run(['git', 'rm', path])
+        self._run(['git', 'commit', '-m', msg])
+
+    def remove_all(self, path, msg='remove-all'):
+        """Remove all files from a given path and commit the changes."""
+        self._run(['git', 'rm', '-rf', path])
+        self._run(['git', 'commit', '-m', msg])
+
+    def move(self, path, new_path, msg='move'):
+        """Move a given file path and commit the change."""
+        self._run(['git', 'mv', path, new_path])
+        self._run(['git', 'commit', '-m', msg])
 
 
 @pytest.fixture
@@ -148,6 +170,13 @@ class EbuildRepo:
         repo_config = repo_objs.RepoConfig(location=path)
         self._repo = repository.UnconfiguredTree(
             repo_config.location, repo_config=repo_config)
+
+    def create_ebuild(self, cpvstr, data=''):
+        cpv = cpv_mod.VersionedCPV(cpvstr)
+        ebuild_dir = pjoin(self.path, cpv.category, cpv.package)
+        os.makedirs(ebuild_dir, exist_ok=True)
+        with open(pjoin(ebuild_dir, f'{cpv.package}-{cpv.version}.ebuild'), 'w') as f:
+            f.write(data)
 
     __getattr__ = klass.GetAttrProxy('_repo')
     __dir__ = klass.DirProxy('_repo')
