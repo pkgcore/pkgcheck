@@ -88,13 +88,12 @@ class GitRepo:
     dependency requirements.
     """
 
-    def __init__(self, path, init=True, commit=False):
+    def __init__(self, path, commit=False):
         self.path = path
         # initialize the repo
-        if init:
-            self._run(['git', 'init'])
-            self._run(['git', 'config', 'user.email', 'person@email.com'])
-            self._run(['git', 'config', 'user.name', 'Person'])
+        self.run(['git', 'init'])
+        self.run(['git', 'config', 'user.email', 'person@email.com'])
+        self.run(['git', 'config', 'user.name', 'Person'])
         if commit:
             if self.changes:
                 # if files exist in the repo, add them in an initial commit
@@ -103,7 +102,7 @@ class GitRepo:
                 # otherwise add a stub initial commit
                 self.add(pjoin(self.path, '.init'), create=True)
 
-    def _run(self, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **kwargs):
+    def run(self, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **kwargs):
         return subprocess.run(
             cmd, cwd=self.path, encoding='utf8', check=True,
             stdout=stdout, stderr=stderr, **kwargs)
@@ -112,13 +111,13 @@ class GitRepo:
     def changes(self):
         """Return a list of any untracked or modified files in the repo."""
         cmd = ['git', 'ls-files', '-mo', '--exclude-standard']
-        p = self._run(cmd, stdout=subprocess.PIPE)
+        p = self.run(cmd, stdout=subprocess.PIPE)
         return p.stdout.splitlines()
 
     @property
     def HEAD(self):
         """Return the commit hash for git HEAD."""
-        p = self._run(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE)
+        p = self.run(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE)
         return p.stdout.strip()
 
     def __str__(self):
@@ -128,34 +127,34 @@ class GitRepo:
         """Add a file and commit it to the repo."""
         if create:
             touch(pjoin(self.path, file_path))
-        self._run(['git', 'add', file_path])
-        self._run(['git', 'commit', '-m', msg])
+        self.run(['git', 'add', file_path])
+        self.run(['git', 'commit', '-m', msg])
 
     def add_all(self, msg='commit-all'):
         """Add and commit all tracked and untracked files."""
-        self._run(['git', 'add', '--all'])
-        self._run(['git', 'commit', '-m', msg])
+        self.run(['git', 'add', '--all'])
+        self.run(['git', 'commit', '-m', msg])
 
     def remove(self, path, msg='remove'):
         """Remove a given file path and commit the change."""
-        self._run(['git', 'rm', path])
-        self._run(['git', 'commit', '-m', msg])
+        self.run(['git', 'rm', path])
+        self.run(['git', 'commit', '-m', msg])
 
     def remove_all(self, path, msg='remove-all'):
         """Remove all files from a given path and commit the changes."""
-        self._run(['git', 'rm', '-rf', path])
-        self._run(['git', 'commit', '-m', msg])
+        self.run(['git', 'rm', '-rf', path])
+        self.run(['git', 'commit', '-m', msg])
 
     def move(self, path, new_path, msg='move'):
         """Move a given file path and commit the change."""
-        self._run(['git', 'mv', path, new_path])
-        self._run(['git', 'commit', '-m', msg])
+        self.run(['git', 'mv', path, new_path])
+        self.run(['git', 'commit', '-m', msg])
 
 
 @pytest.fixture
 def git_repo(tmp_path):
     """Create an empty git repo with an initial commit."""
-    return GitRepo(str(tmp_path), init=True, commit=True)
+    return GitRepo(str(tmp_path), commit=True)
 
 
 @pytest.fixture

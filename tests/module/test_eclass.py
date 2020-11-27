@@ -65,11 +65,13 @@ class TestEclassAddon:
         self.addon = EclassAddon(options)
         touch(pjoin(self.eclass_dir, 'foo.eclass'))
         self.addon.update_cache()
+        assert not os.path.exists(self.cache_file)
         assert not self.addon.eclasses
         assert not self.addon.deprecated
 
     def test_no_eclasses(self):
         self.addon.update_cache()
+        assert not os.path.exists(self.cache_file)
         assert not self.addon.eclasses
         assert not self.addon.deprecated
 

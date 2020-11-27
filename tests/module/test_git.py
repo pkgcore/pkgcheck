@@ -3,7 +3,7 @@ import subprocess
 from unittest.mock import Mock, patch
 
 import pytest
-from pkgcore.ebuild import atom
+from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.restrictions import packages
 from pkgcheck import base, git
 from snakeoil.cli.exceptions import UserException
@@ -72,7 +72,7 @@ class TestPkgcheckScanCommitsParseArgs:
         with patch('subprocess.run') as git_diff:
             git_diff.return_value.stdout = ''.join(output)
             options, _func = self.tool.parse_args(self.args + ['--commits'])
-            atom_restricts = [atom.atom('dev-libs/foo'), atom.atom('media-libs/bar')]
+            atom_restricts = [atom_cls('dev-libs/foo'), atom_cls('media-libs/bar')]
             assert list(options.restrictions) == \
                 [(base.package_scope, packages.OrRestriction(*atom_restricts))]
 
@@ -85,7 +85,7 @@ class TestPkgcheckScanCommitsParseArgs:
         with patch('subprocess.run') as git_diff:
             git_diff.return_value.stdout = ''.join(output)
             options, _func = self.tool.parse_args(self.args + ['--commits'])
-            atom_restricts = [atom.atom('dev-libs/foo'), atom.atom('media-libs/bar')]
+            atom_restricts = [atom_cls('dev-libs/foo'), atom_cls('media-libs/bar')]
             restrictions = list(options.restrictions)
             assert len(restrictions) == 2
             assert restrictions[0] == \
@@ -109,7 +109,7 @@ class TestGitStash:
 
     def test_non_git_repo(self, tmp_path):
         with pytest.raises(ValueError) as excinfo:
-            with git.GitStash(tmp_path):
+            with git.GitStash(str(tmp_path)):
                 pass
         assert 'not a git repo' in str(excinfo.value)
 
@@ -152,8 +152,10 @@ class TestGitStash:
 class TestParsedGitRepo:
 
     def test_non_git(self, tmp_path):
-        with pytest.raises(git.GitError):
-            git.ParsedGitRepo(str(tmp_path))
+        p = git.ParsedGitRepo(str(tmp_path))
+        with pytest.raises(git.GitError) as excinfo:
+            list(p.parse_git_log('HEAD'))
+        assert 'failed running git log' in str(excinfo)
 
     def test_empty_repo(self, make_git_repo):
         git_repo = make_git_repo()
@@ -205,7 +207,7 @@ class TestParsedGitRepo:
         pkgs = list(p.parse_git_log('HEAD', pkgs=True))
         assert len(pkgs) == 1
         pkg = pkgs[0]
-        assert pkg.atom == atom.atom('=cat/pkg-0')
+        assert pkg.atom == atom_cls('=cat/pkg-0')
         assert pkg.status == 'A'
         assert pkg.commit.message == ['cat/pkg-0']
 
@@ -229,7 +231,7 @@ class TestParsedGitRepo:
         pkgs = list(p.parse_git_log('HEAD', pkgs=True))
         assert len(pkgs) == 2
         pkg = pkgs[0]
-        assert pkg.atom == atom.atom('=cat/pkg-1')
+        assert pkg.atom == atom_cls('=cat/pkg-1')
         assert pkg.status == 'A'
 
         # update the dict cache
@@ -251,7 +253,7 @@ class TestParsedGitRepo:
         pkgs = list(p.parse_git_log('HEAD', pkgs=True))
         assert len(pkgs) == 3
         pkg = pkgs[0]
-        assert pkg.atom == atom.atom('=cat/pkg-0')
+        assert pkg.atom == atom_cls('=cat/pkg-0')
         assert pkg.status == 'D'
 
         # update the dict cache
@@ -273,9 +275,9 @@ class TestParsedGitRepo:
         pkgs = list(p.parse_git_log('HEAD', pkgs=True))
         assert len(pkgs) == 5
         new_pkg, old_pkg = pkgs[:2]
-        assert old_pkg.atom == atom.atom('=cat/pkg-1')
+        assert old_pkg.atom == atom_cls('=cat/pkg-1')
         assert old_pkg.status == 'D'
-        assert new_pkg.atom == atom.atom('=cat2/pkg-1')
+        assert new_pkg.atom == atom_cls('=cat2/pkg-1')
         assert new_pkg.status == 'A'
 
         # update the dict cache
@@ -335,3 +337,101 @@ class TestGitAddon:
             assert self.addon.gitignored(pjoin(self.repo.location, '.foo.swp'))
             assert not self.addon.gitignored('foo.swp')
             assert not self.addon.gitignored(pjoin(self.repo.location, 'foo.swp'))
+
+    def test_cache_disabled(self, tool):
+        args = ['scan', '--cache', 'no', '--repo', self.repo.location]
+        options, _ = tool.parse_args(args)
+        addon = git.GitAddon(options)
+        addon.update_cache()
+        assert not os.path.exists(self.cache_file)
+
+    def test_non_git_repo(self):
+        self.addon.update_cache()
+        assert not os.path.exists(self.cache_file)
+
+    def test_git_repo_missing_origin_head(self, make_git_repo):
+        """Repos missing the origin/HEAD ref are skipped."""
+        make_git_repo(self.repo.location, commit=True)
+        self.addon.update_cache()
+        assert not os.path.exists(self.cache_file)
+
+    def test_git_repo_no_pkg_commits(self, make_git_repo):
+        """Cache file isn't updated if no relevant commits exist."""
+        parent_repo = make_git_repo(commit=True)
+        child_repo = make_git_repo(self.repo.location, commit=False)
+        child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
+        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.addon.update_cache()
+        assert not os.path.exists(self.cache_file)
+
+    def test_cache_creation_and_load(self, repo, make_git_repo):
+        parent_repo = make_git_repo(repo.location, commit=True)
+        # create a pkg and commit it
+        repo.create_ebuild('cat/pkg-0')
+        parent_repo.add_all('cat/pkg-0')
+
+        child_repo = make_git_repo(self.repo.location, commit=False)
+        child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
+        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.addon.update_cache()
+        assert os.path.exists(self.cache_file)
+        assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
+
+        # verify the cache was loaded and not regenerated
+        st = os.lstat(self.cache_file)
+        self.addon.update_cache()
+        assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
+        assert st.st_mtime == os.lstat(self.cache_file).st_mtime
+
+        # and is regenerated on a forced cache update
+        self.addon.update_cache(force=True)
+        assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
+        assert st.st_mtime != os.lstat(self.cache_file).st_mtime
+
+    def test_error_loading_cache(self, repo, make_git_repo):
+        parent_repo = make_git_repo(repo.location, commit=True)
+        # create a pkg and commit it
+        repo.create_ebuild('cat/pkg-0')
+        parent_repo.add_all('cat/pkg-0')
+
+        child_repo = make_git_repo(self.repo.location, commit=False)
+        child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
+        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.addon.update_cache()
+        assert os.path.exists(self.cache_file)
+        assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
+        st = os.lstat(self.cache_file)
+
+        # verify various load failure exceptions cause cache regen
+        with patch('pkgcheck.git.pickle.load') as pickle_load:
+            pickle_load.side_effect = Exception('unpickling failed')
+            self.addon.update_cache()
+        assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
+        assert st.st_mtime != os.lstat(self.cache_file).st_mtime
+
+        # but catastrophic errors are raised
+        with patch('pkgcheck.git.pickle.load') as pickle_load:
+            pickle_load.side_effect = MemoryError('unpickling failed')
+            with pytest.raises(MemoryError):
+                self.addon.update_cache()
+
+    def test_error_dumping_cache(self, repo, make_git_repo):
+        parent_repo = make_git_repo(repo.location, commit=True)
+        # create a pkg and commit it
+        repo.create_ebuild('cat/pkg-0')
+        parent_repo.add_all('cat/pkg-0')
+
+        child_repo = make_git_repo(self.repo.location, commit=False)
+        child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
+        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+
+        # verify IO related dump failures are raised
+        with patch('pkgcheck.git.pickle.dump') as pickle_dump:
+            pickle_dump.side_effect = IOError('unpickling failed')
+            with pytest.raises(UserException) as excinfo:
+                self.addon.update_cache()
+            assert 'failed dumping git repo' in str(excinfo.value)
