@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck.eclass import Eclass, EclassAddon
-from pkgcore.ebuild import repo_objs, repository
 from pkgcore.ebuild.eclass import EclassDocParsingError
 from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import touch
@@ -48,23 +47,14 @@ class TestEclass:
 class TestEclassAddon:
 
     @pytest.fixture(autouse=True)
-    def _setup(self, tool, tmp_path):
-        # TODO: switch to using a repo fixture when available
-        repo_dir = str(tmp_path / 'repo')
-        self.cache_dir = str(tmp_path / 'cache')
+    def _setup(self, tool, tmp_path, repo):
+        self.repo = repo
+        self.cache_dir = str(tmp_path)
 
-        self.eclass_dir = pjoin(repo_dir, 'eclass')
-        os.makedirs(pjoin(repo_dir, 'profiles'))
-        os.makedirs(pjoin(repo_dir, 'metadata'))
+        self.eclass_dir = pjoin(repo.location, 'eclass')
         os.makedirs(self.eclass_dir)
-        with open(pjoin(repo_dir, 'profiles', 'repo_name'), 'w') as f:
-            f.write('fake\n')
-        with open(pjoin(repo_dir, 'metadata', 'layout.conf'), 'w') as f:
-            f.write('masters =\n')
-        repo_config = repo_objs.RepoConfig(location=repo_dir)
-        self.repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
 
-        args = ['scan', '--cache-dir', self.cache_dir, '--repo', self.repo.location]
+        args = ['scan', '--cache-dir', self.cache_dir, '--repo', repo.location]
         options, _ = tool.parse_args(args)
         self.addon = EclassAddon(options)
         self.cache_file = self.addon.cache_file(self.repo)
@@ -170,7 +160,7 @@ class TestEclassAddon:
         for name in ('foo', 'bar'):
             touch(pjoin(self.eclass_dir, f'{name}.eclass'))
         self.addon.update_cache()
-        assert list(self.addon.eclasses) == ['bar', 'foo']
+        assert sorted(self.addon.eclasses) == ['bar', 'foo']
         os.unlink(pjoin(self.eclass_dir, 'bar.eclass'))
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
