@@ -6,7 +6,7 @@ import pytest
 from pkgcore.ebuild import atom
 from pkgcore.restrictions import packages
 from pkgcheck import base
-from pkgcheck.git import GitAddon, GitStash
+from pkgcheck.git import GitAddon, GitError, GitStash, ParsedGitRepo
 from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
@@ -141,6 +141,39 @@ class TestGitStash:
                 assert not os.path.exists(path)
                 touch(path)
         assert 'git failed applying stash' in str(excinfo.value)
+
+
+class TestParsedGitRepo:
+
+    def test_non_git(self, tmp_path):
+        with pytest.raises(GitError):
+            ParsedGitRepo(str(tmp_path))
+
+    def test_empty_repo(self, make_git_repo):
+        git_repo = make_git_repo()
+        p = ParsedGitRepo(git_repo.path)
+        with pytest.raises(GitError) as excinfo:
+            list(p.parse_git_log('HEAD'))
+        assert 'failed running git log' in str(excinfo)
+
+    def test_commits_parsing(self, make_git_repo):
+        git_repo = make_git_repo()
+
+        # make an initial commit
+        git_repo.admit('foo', msg='foo', create=True)
+        p = ParsedGitRepo(git_repo.path)
+        commits = list(p.parse_git_log('HEAD'))
+        assert len(commits) == 1
+        orig_commit = commits[0]
+        assert orig_commit.message == ['foo']
+
+        # make another commit
+        git_repo.admit('bar', msg='bar', create=True)
+        commits = list(p.parse_git_log('HEAD'))
+        assert len(commits) == 2
+        assert commits[0].message == ['bar']
+        assert commits[1] == orig_commit
+        assert len(set(commits)) == 2
 
 
 class TestGitAddon:

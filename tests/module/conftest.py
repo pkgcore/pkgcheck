@@ -84,31 +84,54 @@ def tool(fakeconfig):
 class GitRepo:
     """Class for creating/manipulating git repos."""
 
-    def __init__(self, path, init=True):
+    def __init__(self, path, init=True, commit=False):
         self.path = path
+        # initialize the repo
         if init:
-            # initialize the repo
-            subprocess.run(['git', 'init'], cwd=self.path)
-            subprocess.run(['git', 'config', 'user.email', 'person@email.com'], cwd=self.path)
-            subprocess.run(['git', 'config', 'user.name', 'Person'], cwd=self.path)
+            subprocess.run(
+                ['git', 'init'], cwd=self.path,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                ['git', 'config', 'user.email', 'person@email.com'],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                cwd=self.path)
+            subprocess.run(
+                ['git', 'config', 'user.name', 'Person'],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                cwd=self.path)
+        if commit:
             # and add a stub initial commit
             self.admit(pjoin(self.path, '.init'), create=True)
 
     def __str__(self):
         return self.path
 
-    def admit(self, path, create=False):
+    def admit(self, file_path, msg=None, create=False):
         """Add a file and commit it to the repo."""
         if create:
-            touch(path)
-        subprocess.run(['git', 'add', path], cwd=self.path)
-        subprocess.run(['git', 'commit', '-m', path], cwd=self.path)
+            touch(pjoin(self.path, file_path))
+        subprocess.run(
+            ['git', 'add', file_path], cwd=self.path,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        msg = msg if msg is not None else file_path
+        subprocess.run(
+            ['git', 'commit', '-m', msg], cwd=self.path,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 @pytest.fixture
 def git_repo(tmp_path):
-    """Create an empty git repo."""
-    return GitRepo(str(tmp_path))
+    """Create an empty git repo with an initial commit."""
+    return GitRepo(str(tmp_path), init=True, commit=True)
+
+
+@pytest.fixture
+def make_git_repo(tmp_path):
+    """Factory for git repo creation."""
+    def _make_git_repo(path=None, **kwargs):
+        path = str(tmp_path) if path is None else path
+        return GitRepo(path, **kwargs)
+    return _make_git_repo
 
 
 class EbuildRepo:
