@@ -128,6 +128,21 @@ class Addon:
         return self.__class__ == other.__class__
 
 
+def get_addons(objects):
+    """Return tuple of required addons for a given sequence of objects."""
+    required = {}
+
+    def _required_addons(objs):
+        for addon in objs:
+            if addon not in required:
+                if addon.required_addons:
+                    _required_addons(addon.required_addons)
+                required[addon] = None
+
+    _required_addons(objects)
+    return tuple(required)
+
+
 def param_name(cls):
     """Restructure class names for injected parameters.
 

@@ -332,25 +332,10 @@ def _setup_scan_defaults(parser, namespace):
     namespace.enabled_checks = set(objects.CHECKS.default.values())
 
 
-def get_addons(objects):
-    """Return tuple of required addons for a given sequence of objects."""
-    required = {}
-
-    def _required_addons(objs):
-        for addon in objs:
-            if addon not in required:
-                if addon.required_addons:
-                    _required_addons(addon.required_addons)
-                required[addon] = None
-
-    _required_addons(objects)
-    return tuple(required)
-
-
 @scan.bind_pre_parse
 def _setup_scan_addons(parser, namespace):
     """Load all checks and their argparser changes before parsing."""
-    for addon in get_addons(objects.CHECKS.values()):
+    for addon in base.get_addons(objects.CHECKS.values()):
         addon.mangle_argparser(parser)
 
 
@@ -499,7 +484,7 @@ def _validate_scan_args(parser, namespace):
     if not namespace.enabled_checks:
         parser.error(f'no matching checks available for {scan_scope} scope')
 
-    addons = get_addons(namespace.enabled_checks)
+    addons = base.get_addons(namespace.enabled_checks)
 
     try:
         for addon in addons:
@@ -591,7 +576,7 @@ cache.add_argument(
 @cache.bind_pre_parse
 def _setup_cache_addons(parser, namespace):
     """Load all addons using caches and their argparser changes before parsing."""
-    for addon in get_addons(CachedAddon.caches):
+    for addon in base.get_addons(CachedAddon.caches):
         addon.mangle_argparser(parser)
 
 
