@@ -65,23 +65,21 @@ class TestPerlCheck(misc.ReportTestCase):
         """Check initialization fails if perl isn't installed."""
         with patch('subprocess.Popen') as popen:
             popen.side_effect = FileNotFoundError('perl not available')
-            with pytest.raises(SkipCheck) as excinfo:
+            with pytest.raises(SkipCheck, match='perl not installed'):
                 self.mk_check()
-            assert 'perl not installed' in str(excinfo.value)
 
     def test_no_perl_deps(self):
         """Check initialization fails if perl deps aren't installed."""
         with patch('socket.socket') as mock_socket:
             mock_socket.return_value.accept.side_effect = socket.timeout
             for verbosity in (0, 1):
-                with pytest.raises(SkipCheck) as excinfo:
+                with pytest.raises(SkipCheck, match='failed to connect to perl client'):
                     self.mk_check(verbosity=verbosity)
-                assert 'failed to connect to perl client' in str(excinfo.value)
 
     def test_socket_bind_error(self):
         """Raise socket binding exceptions that aren't due to rebinding."""
         with patch('socket.socket') as mock_socket:
-            mock_socket.return_value.bind.side_effect = OSError(errno.ENOTSOCK, 'foo')
-            with pytest.raises(OSError) as excinfo:
+            exc = OSError(errno.ENOTSOCK, 'failed socket bind')
+            mock_socket.return_value.bind.side_effect = exc
+            with pytest.raises(OSError, match='failed socket bind'):
                 self.mk_check()
-            assert excinfo.value.errno == errno.ENOTSOCK

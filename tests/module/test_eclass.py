@@ -146,7 +146,7 @@ class TestEclassAddon:
         # but catastrophic errors are raised
         with patch('pkgcheck.eclass.pickle.load') as pickle_load:
             pickle_load.side_effect = MemoryError('unpickling failed')
-            with pytest.raises(MemoryError):
+            with pytest.raises(MemoryError, match='unpickling failed'):
                 self.addon.update_cache()
 
     def test_error_dumping_cache(self):
@@ -154,9 +154,8 @@ class TestEclassAddon:
         # verify IO related dump failures are raised
         with patch('pkgcheck.eclass.pickle.dump') as pickle_dump:
             pickle_dump.side_effect = IOError('unpickling failed')
-            with pytest.raises(UserException) as excinfo:
+            with pytest.raises(UserException, match='failed dumping eclasses'):
                 self.addon.update_cache()
-            assert 'failed dumping eclasses' in str(excinfo.value)
 
     def test_eclass_removal(self):
         for name in ('foo', 'bar'):

@@ -109,10 +109,9 @@ class TestPkgcheckScanCommitsParseArgs:
 class TestGitStash:
 
     def test_non_git_repo(self, tmp_path):
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError, match='not a git repo'):
             with git.GitStash(str(tmp_path)):
                 pass
-        assert 'not a git repo' in str(excinfo.value)
 
     def test_empty_git_repo(self, git_repo):
         with git.GitStash(git_repo.path):
@@ -134,36 +133,32 @@ class TestGitStash:
             err = subprocess.CalledProcessError(1, 'git stash')
             err.stderr = 'git stash failed'
             run.side_effect = [Mock(stdout='foo'), err]
-            with pytest.raises(UserException) as excinfo:
+            with pytest.raises(UserException, match='git failed stashing files'):
                 with git.GitStash(git_repo.path):
                     pass
-            assert 'git failed stashing files' in str(excinfo.value)
 
     def test_failed_unstashing(self, git_repo):
         path = pjoin(git_repo.path, 'foo')
         touch(path)
         assert os.path.exists(path)
-        with pytest.raises(UserException) as excinfo:
+        with pytest.raises(UserException, match='git failed applying stash'):
             with git.GitStash(git_repo.path):
                 assert not os.path.exists(path)
                 touch(path)
-        assert 'git failed applying stash' in str(excinfo.value)
 
 
 class TestParsedGitRepo:
 
     def test_non_git(self, tmp_path):
         p = git.ParsedGitRepo(str(tmp_path))
-        with pytest.raises(git.GitError) as excinfo:
+        with pytest.raises(git.GitError, match='failed running git log'):
             list(p.parse_git_log('HEAD'))
-        assert 'failed running git log' in str(excinfo)
 
     def test_empty_repo(self, make_git_repo):
         git_repo = make_git_repo()
         p = git.ParsedGitRepo(git_repo.path)
-        with pytest.raises(git.GitError) as excinfo:
+        with pytest.raises(git.GitError, match='failed running git log'):
             list(p.parse_git_log('HEAD'))
-        assert 'failed running git log' in str(excinfo)
 
     def test_commits_parsing(self, make_git_repo):
         git_repo = make_git_repo()
@@ -440,9 +435,8 @@ class TestGitAddon:
 
         with patch('pkgcheck.git.ParsedGitRepo.parse_git_log') as parse_git_log:
             parse_git_log.side_effect = git.GitError('git parsing failed')
-            with pytest.raises(UserException) as excinfo:
+            with pytest.raises(UserException, match='git parsing failed'):
                 self.addon.update_cache()
-            assert 'git parsing failed' in str(excinfo.value)
 
     def test_error_loading_cache(self, repo, make_git_repo):
         parent_repo = make_git_repo(repo.location, commit=True)
@@ -485,9 +479,8 @@ class TestGitAddon:
         # verify IO related dump failures are raised
         with patch('pkgcheck.git.pickle.dump') as pickle_dump:
             pickle_dump.side_effect = IOError('unpickling failed')
-            with pytest.raises(UserException) as excinfo:
+            with pytest.raises(UserException, match='failed dumping git repo'):
                 self.addon.update_cache()
-            assert 'failed dumping git repo' in str(excinfo.value)
 
     def test_commits_repo(self, repo, make_repo, make_git_repo):
         parent_repo = repo

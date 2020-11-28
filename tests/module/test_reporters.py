@@ -226,19 +226,16 @@ class TestPickleStream(BaseReporter):
             obj = pickle.dumps(object(), protocol=reporter.protocol)
 
             # deserializing non-result objects raises exception
-            with pytest.raises(reporters.DeserializationError) as excinfo:
+            with pytest.raises(reporters.DeserializationError, match='invalid data type'):
                 next(reporter.from_file(io.BytesIO(obj)))
-            assert 'invalid data type' in str(excinfo.value)
 
             # pickle loading TypeError raises exception
-            with pytest.raises(reporters.DeserializationError) as excinfo:
+            with pytest.raises(reporters.DeserializationError, match='failed unpickling result'):
                 next(reporter.from_file(io.StringIO('result')))
-            assert str(excinfo.value) == 'failed unpickling result'
 
             # generic unpickling error raises exception
-            with pytest.raises(reporters.DeserializationError) as excinfo:
+            with pytest.raises(reporters.DeserializationError, match='failed unpickling result'):
                 next(reporter.from_file(io.BytesIO(b'result')))
-            assert str(excinfo.value) == 'failed unpickling result'
 
 
 class TestBinaryPickleStream(TestPickleStream):
@@ -274,14 +271,12 @@ class TestJsonStream(BaseReporter):
         with self.mk_reporter() as reporter:
             # deserializing non-result objects raises exception
             obj = reporter.to_json(['result'])
-            with pytest.raises(reporters.DeserializationError) as excinfo:
+            with pytest.raises(reporters.DeserializationError, match='failed loading'):
                 next(reporter.from_iter([obj]))
-            assert 'failed loading' in str(excinfo.value)
 
             # deserializing mangled JSON result objects raises exception
             obj = reporter.to_json(self.versioned_result)
             del obj['__class__']
             json_obj = json.dumps(obj)
-            with pytest.raises(reporters.DeserializationError) as excinfo:
+            with pytest.raises(reporters.DeserializationError, match='unknown result'):
                 next(reporter.from_iter([json_obj]))
-            assert 'unknown result' in str(excinfo.value)

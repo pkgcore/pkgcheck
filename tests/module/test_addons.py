@@ -446,9 +446,8 @@ class TestNetAddon:
                 addon.session
             # failing to import requests specifically returns a nicer user exception
             net.side_effect = ImportError('import failed', name='requests')
-            with pytest.raises(UserException) as excinfo:
+            with pytest.raises(UserException, match='network checks require requests'):
                 addon.session
-            assert 'network checks require requests' in str(excinfo)
 
     def test_custom_timeout(self, tool):
         options, _ = tool.parse_args(['scan', '--timeout', '10'])

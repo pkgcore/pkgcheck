@@ -40,9 +40,8 @@ class TestVulnerabilitiesCheck(misc.ReportTestCase):
         repo_config = repo_objs.RepoConfig(location=repo_dir)
         repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
         options = arghparse.Namespace(glsa_dir=None, target_repo=repo, gentoo_repo=True)
-        with pytest.raises(SkipCheck) as excinfo:
+        with pytest.raises(SkipCheck, match='no available glsa source'):
             glsa.GlsaCheck(options)
-        assert 'no available glsa source' in str(excinfo)
 
     def test_repo_glsa_dir(self, tmp_path):
         # TODO: switch to using a repo fixture when available
