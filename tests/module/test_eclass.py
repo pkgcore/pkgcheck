@@ -1,5 +1,4 @@
 import os
-import pickle
 import textwrap
 from unittest.mock import patch
 
@@ -104,11 +103,9 @@ class TestEclassAddon:
         assert list(self.addon.eclasses) == ['foo']
 
         # increment cache version and dump cache
-        with open(self.cache_file, 'rb') as f:
-            cache_obj = pickle.load(f)
-        cache_obj.version += 1
-        with open(self.cache_file, 'wb') as f:
-            pickle.dump(cache_obj, f, protocol=-1)
+        cache = self.addon.load_cache(self.cache_file)
+        cache.version += 1
+        self.addon.save_cache(cache, self.cache_file)
 
         # verify cache load causes regen
         st = os.stat(self.cache_file)
