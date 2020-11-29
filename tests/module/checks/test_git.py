@@ -401,6 +401,15 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         expected = git_mod.MissingSlotmove('0', '1', pkg=CPV('cat/pkg-1'))
         assert r == expected
 
+        # create slot move update and the result goes away
+        updates_dir = pjoin(self.child_git_repo.path, 'profiles', 'updates')
+        os.makedirs(updates_dir, exist_ok=True)
+        with open(pjoin(updates_dir, '4Q-2020'), 'w') as f:
+            f.write('slotmove ~cat/pkg-1 0 1\n')
+        # force repo_config pkg updates jitted attr to be reset
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
     def test_missing_move(self):
         self.child_git_repo.move('cat', 'newcat', msg='newcat/pkg: moved pkg')
         self.init_check()
