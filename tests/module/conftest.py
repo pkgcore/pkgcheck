@@ -158,10 +158,10 @@ def git_repo(tmp_path):
 
 
 @pytest.fixture
-def make_git_repo(tmp_path):
+def make_git_repo(tmp_path_factory):
     """Factory for git repo creation."""
     def _make_git_repo(path=None, **kwargs):
-        path = str(tmp_path) if path is None else path
+        path = str(tmp_path_factory.mktemp('git-repo')) if path is None else path
         return GitRepo(path, **kwargs)
     return _make_git_repo
 
@@ -202,9 +202,9 @@ def repo(tmp_path):
 
 
 @pytest.fixture
-def make_repo(tmp_path):
+def make_repo(tmp_path_factory):
     """Factory for ebuild repo creation."""
     def _make_repo(path=None, **kwargs):
-        path = str(tmp_path) if path is None else path
-        return EbuildRepo(path)
+        path = str(tmp_path_factory.mktemp('repo')) if path is None else path
+        return EbuildRepo(path, **kwargs)
     return _make_repo
