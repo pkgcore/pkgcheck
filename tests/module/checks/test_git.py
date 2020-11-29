@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
@@ -406,6 +407,15 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         r = self.assertReport(self.check, self.source)
         expected = git_mod.MissingMove('cat/pkg', 'newcat/pkg', pkg=CPV('newcat/pkg-0'))
         assert r == expected
+
+        # create package move update and the result goes away
+        updates_dir = pjoin(self.child_git_repo.path, 'profiles', 'updates')
+        os.makedirs(updates_dir, exist_ok=True)
+        with open(pjoin(updates_dir, '4Q-2020'), 'w') as f:
+            f.write('move cat/pkg newcat/pkg\n')
+        # force repo_config pkg updates jitted attr to be reset
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
 
 
 class TestGitEclassCommitsCheck(ReportTestCase):
