@@ -60,6 +60,9 @@ class Check(feeds.Feed):
             return self.__class__.__name__ < other.__class__.__name__
         return self.priority < other.priority
 
+    def __eq__(self, other):
+        self.__class__ == other.__class__
+
 
 class GentooRepoCheck(Check):
     """Check that is only run against the gentoo repo."""
