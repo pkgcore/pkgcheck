@@ -393,7 +393,11 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
                 continue
 
             # pull actual package object from repo
-            pkg = self.repo.match(git_pkg.versioned_atom)[0]
+            try:
+                pkg = self.repo.match(git_pkg.versioned_atom)[0]
+            except IndexError:
+                # ignore probable broken ebuild
+                continue
             line = next(pkg.ebuild.text_fileobj())
 
             # check copyright on new/modified ebuilds
