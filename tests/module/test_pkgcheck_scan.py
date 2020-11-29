@@ -26,80 +26,74 @@ from snakeoil.osutils import pjoin
 
 class TestPkgcheckScanParseArgs:
 
-    @pytest.fixture(autouse=True)
-    def _setup(self, tool, tmp_path):
-        self.tool = tool
-        self.cache_dir = str(tmp_path)
-        self.args = ['scan', '--cache-dir', self.cache_dir]
-
-    def test_skipped_checks(self):
-        options, _ = self.tool.parse_args(self.args)
+    def test_skipped_checks(self, tool):
+        options, _ = tool.parse_args(['scan'])
         assert options.enabled_checks
         # some checks should always be skipped by default
         assert set(options.enabled_checks) != set(objects.CHECKS.values())
 
-    def test_enabled_check(self):
-        options, _ = self.tool.parse_args(self.args + ['-c', 'PkgDirCheck'])
+    def test_enabled_check(self, tool):
+        options, _ = tool.parse_args(['scan', '-c', 'PkgDirCheck'])
         assert options.enabled_checks == [checks_mod.pkgdir.PkgDirCheck]
 
-    def test_disabled_check(self):
-        options, _ = self.tool.parse_args(self.args)
+    def test_disabled_check(self, tool):
+        options, _ = tool.parse_args(['scan'])
         assert checks_mod.pkgdir.PkgDirCheck in options.enabled_checks
-        options, _ = self.tool.parse_args(self.args + ['-c=-PkgDirCheck'])
+        options, _ = tool.parse_args(['scan', '-c=-PkgDirCheck'])
         assert options.enabled_checks
         assert checks_mod.pkgdir.PkgDirCheck not in options.enabled_checks
 
-    def test_targets(self):
-        options, _ = self.tool.parse_args(self.args + ['dev-util/foo'])
+    def test_targets(self, tool):
+        options, _ = tool.parse_args(['scan', 'dev-util/foo'])
         assert list(options.restrictions) == [(base.package_scope, atom.atom('dev-util/foo'))]
 
-    def test_stdin_targets(self):
+    def test_stdin_targets(self, tool):
         with patch('sys.stdin', StringIO('dev-util/foo')):
-            options, _ = self.tool.parse_args(self.args + ['-'])
+            options, _ = tool.parse_args(['scan', '-'])
             assert list(options.restrictions) == [(base.package_scope, atom.atom('dev-util/foo'))]
 
-    def test_stdin_targets_with_no_args(self, capsys):
+    def test_stdin_targets_with_no_args(self, tool, capsys):
         with patch('sys.stdin', StringIO()):
             with pytest.raises(SystemExit) as excinfo:
-                self.tool.parse_args(self.args + ['-'])
+                tool.parse_args(['scan', '-'])
                 assert excinfo.value.code == 2
                 out, err = capsys.readouterr()
                 err = err.strip().split('\n')
                 assert err[-1] == 'no targets piped in'
 
-    def test_invalid_targets(self, capsys):
+    def test_invalid_targets(self, tool, capsys):
         with pytest.raises(SystemExit) as excinfo:
-            options, _ = self.tool.parse_args(self.args + ['dev-util/f$o'])
+            options, _ = tool.parse_args(['scan', 'dev-util/f$o'])
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         err = err.strip()
         assert err == "pkgcheck scan: error: invalid package atom: 'dev-util/f$o'"
 
-    def test_unknown_path_target(self, capsys):
+    def test_unknown_path_target(self, tool, capsys):
         with pytest.raises(SystemExit) as excinfo:
-            self.tool.parse_args(self.args + ['/foo/bar'])
+            tool.parse_args(['scan', '/foo/bar'])
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         err = err.strip().split('\n')
         assert err[-1].startswith(
             "pkgcheck scan: error: 'stubrepo' repo doesn't contain: '/foo/bar'")
 
-    def test_target_repo_id(self):
-        options, _ = self.tool.parse_args(self.args + ['-r', 'stubrepo'])
+    def test_target_repo_id(self, tool):
+        options, _ = tool.parse_args(['scan', '-r', 'stubrepo'])
         assert options.target_repo.repo_id == 'stubrepo'
         assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
-    def test_target_dir_path(self, repo):
+    def test_target_dir_path(self, repo, tool):
         # dir path
-        options, _ = self.tool.parse_args(self.args + [repo.location])
+        options, _ = tool.parse_args(['scan', repo.location])
         assert options.target_repo.repo_id == 'fake'
         assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
-    def test_target_file_path(self, repo):
+    def test_target_file_path(self, repo, tool):
         os.makedirs(pjoin(repo.location, 'dev-util', 'foo'))
         ebuild_path = pjoin(repo.location, 'dev-util', 'foo', 'foo-0.ebuild')
         touch(ebuild_path)
-        options, _ = self.tool.parse_args(self.args + [ebuild_path])
+        options, _ = tool.parse_args(['scan', ebuild_path])
         restrictions = [
             restricts.CategoryDep('dev-util'),
             restricts.PackageDep('foo'),
@@ -108,10 +102,10 @@ class TestPkgcheckScanParseArgs:
         assert list(options.restrictions) == [(base.version_scope, packages.AndRestriction(*restrictions))]
         assert options.target_repo.repo_id == 'fake'
 
-    def test_target_package_dir_cwd(self, repo):
+    def test_target_package_dir_cwd(self, repo, tool):
         os.makedirs(pjoin(repo.location, 'dev-util', 'foo'))
         with chdir(pjoin(repo.location, 'dev-util', 'foo')):
-            options, _ = self.tool.parse_args(self.args)
+            options, _ = tool.parse_args(['scan'])
             assert options.target_repo.repo_id == 'fake'
             restrictions = [
                 restricts.CategoryDep('dev-util'),
@@ -119,49 +113,49 @@ class TestPkgcheckScanParseArgs:
             ]
             assert list(options.restrictions) == [(base.package_scope, packages.AndRestriction(*restrictions))]
 
-    def test_target_repo_dir_cwd(self, repo):
+    def test_target_repo_dir_cwd(self, repo, tool):
         with chdir(repo.location):
-            options, _ = self.tool.parse_args(self.args)
+            options, _ = tool.parse_args(['scan'])
             assert options.target_repo.repo_id == 'fake'
             assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
-    def test_unknown_repo(self, tmp_path, capsys):
+    def test_unknown_repo(self, tmp_path, capsys, tool):
         for opt in ('-r', '--repo'):
             with pytest.raises(SystemExit) as excinfo:
                 with chdir(str(tmp_path)):
-                    options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
+                    options, _ = tool.parse_args(['scan', opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
             assert err[-1].startswith(
                 "pkgcheck scan: error: argument -r/--repo: couldn't find repo 'foo'")
 
-    def test_invalid_repo(self, tmp_path, capsys):
+    def test_invalid_repo(self, tmp_path, capsys, tool):
         touch(pjoin(str(tmp_path), 'foo'))
         for opt in ('-r', '--repo'):
             with pytest.raises(SystemExit) as excinfo:
                 with chdir(str(tmp_path)):
-                    options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
+                    options, _ = tool.parse_args(['scan', opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
             assert err[-1].startswith(
                 "pkgcheck scan: error: argument -r/--repo: invalid repo")
 
-    def test_unknown_reporter(self, capsys):
+    def test_unknown_reporter(self, capsys, tool):
         for opt in ('-R', '--reporter'):
             with pytest.raises(SystemExit) as excinfo:
-                options, _ = self.tool.parse_args(self.args + [opt, 'foo'])
+                options, _ = tool.parse_args(['scan', opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
             assert err[-1].startswith(
                 "pkgcheck scan: error: no reporter matches 'foo'")
 
-    def test_format_reporter(self, capsys):
+    def test_format_reporter(self, capsys, tool):
         # missing --format
         with pytest.raises(SystemExit) as excinfo:
-            self.tool.parse_args(self.args + ['-R', 'FormatReporter'])
+            tool.parse_args(['scan', '-R', 'FormatReporter'])
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         err = err.strip().split('\n')
@@ -170,7 +164,7 @@ class TestPkgcheckScanParseArgs:
 
         # missing -R FormatReporter
         with pytest.raises(SystemExit) as excinfo:
-            self.tool.parse_args(self.args + ['--format', 'foo'])
+            tool.parse_args(['scan', '--format', 'foo'])
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         err = err.strip().split('\n')
@@ -178,69 +172,69 @@ class TestPkgcheckScanParseArgs:
             "--format option is only valid when using FormatReporter")
 
         # properly set
-        options, _ = self.tool.parse_args(
-            self.args + ['-R', 'FormatReporter', '--format', 'foo'])
+        options, _ = tool.parse_args(
+            ['scan', '-R', 'FormatReporter', '--format', 'foo'])
 
-    def test_cwd(self, capsys):
+    def test_cwd(self, capsys, tool):
         # regularly working
-        options, _ = self.tool.parse_args(self.args + ['cat/pkg'])
+        options, _ = tool.parse_args(['scan', 'cat/pkg'])
         assert options.cwd == os.getcwd()
 
         # pretend the CWD was removed out from under us
         with patch('os.getcwd') as getcwd:
             getcwd.side_effect = FileNotFoundError('CWD is gone')
-            options, _ = self.tool.parse_args(self.args + ['cat/pkg'])
+            options, _ = tool.parse_args(['scan', 'cat/pkg'])
             assert options.cwd == '/'
 
-    def test_conflicting_scan_scopes(self, capsys, fakerepo):
+    def test_conflicting_scan_scopes(self, capsys, fakerepo, tool):
         """Multiple targets can't specify different scopes."""
         with pytest.raises(SystemExit) as excinfo:
-            self.tool.parse_args(self.args + [fakerepo, 'cat/pkg'])
+            tool.parse_args(['scan', fakerepo, 'cat/pkg'])
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         err = err.strip().split('\n')
         assert err[-1].startswith(
             "pkgcheck scan: error: targets specify multiple scan scope levels: package, repo")
 
-    def test_collapsed_restrictions(self):
+    def test_collapsed_restrictions(self, tool):
         """Multiple targets get collapsed into one restriction to run in parallel."""
-        options, _ = self.tool.parse_args(self.args + ['cat/pkg1', 'cat/pkg2'])
+        options, _ = tool.parse_args(['scan', 'cat/pkg1', 'cat/pkg2'])
         scope, restrict = list(options.restrictions)[0]
         assert scope is base.package_scope
         assert restrict.restrictions == (atom.atom('cat/pkg1'), atom.atom('cat/pkg2'))
 
-    def test_eclass_target(self, fakerepo):
+    def test_eclass_target(self, fakerepo, tool):
         os.makedirs(pjoin(fakerepo, 'eclass'))
         eclass_path = pjoin(fakerepo, 'eclass', 'foo.eclass')
         touch(eclass_path)
-        options, _ = self.tool.parse_args(self.args + [eclass_path])
+        options, _ = tool.parse_args(['scan', eclass_path])
         scope, restrict = list(options.restrictions)[0]
         assert scope == base.eclass_scope
 
-    def test_profiles_target(self, fakerepo):
+    def test_profiles_target(self, fakerepo, tool):
         profiles_path = pjoin(fakerepo, 'profiles')
-        options, _ = self.tool.parse_args(self.args + [profiles_path])
+        options, _ = tool.parse_args(['scan', profiles_path])
         assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
 
-    def test_argparse_error(self, capsys):
+    def test_argparse_error(self, capsys, tool):
         """Argparse errors are used for error mesages under normal operation."""
         action = argparse.Action(['--foo'], 'foo')
         with patch('pkgcheck.addons.ProfileAddon.check_args') as check_args:
             check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
             with pytest.raises(SystemExit) as excinfo:
-                self.tool.parse_args(self.args + ['cat/pkg'])
+                tool.parse_args(['scan', 'cat/pkg'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             err = err.strip().split('\n')
             assert err[-1].startswith('pkgcheck scan: error: argument --foo: invalid arg')
 
-    def test_argparse_error_debug(self, capsys):
+    def test_argparse_error_debug(self, capsys, tool):
         """Argparse errors are raised when parsing args under debug mode."""
         action = argparse.Action(['--foo'], 'foo')
         with patch('pkgcheck.addons.ProfileAddon.check_args') as check_args:
             check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
             with pytest.raises(argparse.ArgumentError):
-                self.tool.parse_args(self.args + ['--debug', 'cat/pkg'])
+                tool.parse_args(['scan', '--debug', 'cat/pkg'])
 
 
 class TestPkgcheckScan:
