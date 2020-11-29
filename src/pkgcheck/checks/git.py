@@ -235,9 +235,6 @@ class _RemovalRepo(UnconfiguredTree):
             error = old_files.stderr.read().decode().strip()
             raise PkgcoreException(error)
 
-    def __del__(self):
-        self.__tmpdir.cleanup()
-
 
 class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     """Check unpushed git package commits for various issues."""
@@ -544,11 +541,6 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
                     if not status.startswith('commit '):
                         yield InvalidCommitTag(
                             tag, value, f'{status} commit', commit=commit)
-
-    def __del__(self):
-        # at this point, we don't care about being nice to the `git cat-file` process
-        if getattr(self, '_git_cat_file', None) is not None:
-            self.git_cat_file.kill()
 
     def feed(self, commit):
         if len(commit.message) == 0:
