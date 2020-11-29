@@ -2,8 +2,9 @@ import random
 import string
 
 import pytest
+from pkgcheck import addons, base, sources
+from pkgcheck.caches import CachedAddon
 from pkgcheck.pipeline import CheckRunner
-from pkgcheck.sources import RepoSource, Source
 from pkgcore.ebuild import domain, repo_objs
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import VersionedCPV
@@ -89,14 +90,17 @@ class ReportTestCase:
         if msg:
             msg = f"{msg}: "
 
-        if isinstance(data, prototype.tree):
+        if isinstance(data, sources.Source):
+            source = data
+            options = source.options
+        elif isinstance(data, prototype.tree):
             options = arghparse.Namespace(target_repo=data)
-            source = RepoSource(options)
+            source = sources.RepoSource(options)
         else:
             if not isinstance(data, tuple):
                 data = [data]
             options = arghparse.Namespace()
-            source = Source(options, data)
+            source = sources.Source(options, data)
 
         runner = CheckRunner(options, source, [check])
         runner.start()
@@ -116,14 +120,17 @@ class ReportTestCase:
     def assertReports(self, check, data):
         results = []
 
-        if isinstance(data, prototype.tree):
+        if isinstance(data, sources.Source):
+            source = data
+            options = source.options
+        elif isinstance(data, prototype.tree):
             options = arghparse.Namespace(target_repo=data)
-            source = RepoSource(options)
+            source = sources.RepoSource(options)
         else:
             if not isinstance(data, tuple):
                 data = [data]
             options = arghparse.Namespace()
-            source = Source(options, data)
+            source = sources.Source(options, data)
 
         runner = CheckRunner(options, source, [check])
         runner.start()
@@ -202,3 +209,21 @@ class Tmpdir:
 def random_str(length=10):
     """Generate a random string of ASCII characters of a given length."""
     return ''.join(random.choice(string.ascii_letters) for _ in range(length))
+
+
+def init_check(check_cls, options):
+    """Initialize an individual check."""
+    addons_map = {}
+    enabled_addons = base.get_addons([check_cls])
+
+    # initialize required caches before other addons
+    enabled_addons = sorted(enabled_addons, key=lambda x: not issubclass(x, CachedAddon))
+
+    # check class is guaranteed to be last in the list
+    for cls in enabled_addons:
+        addon = addons.init_addon(cls, options, addons_map)
+
+    source = sources.init_source(addon.source, options, addons_map)
+    required_addons = {
+        base.param_name(x): addons_map[x] for x in addon.required_addons}
+    return addon, required_addons, source
