@@ -5,6 +5,7 @@ import os
 
 from pkgcore.util import commandline
 from snakeoil.cli import arghparse
+from snakeoil.klass import jit_attr_none
 from snakeoil.contexts import patch
 from snakeoil.log import suppress_logging
 
@@ -22,18 +23,31 @@ class ConfigArgumentParser(arghparse.ArgumentParser):
 
     def __init__(self, configs=(), **kwargs):
         super().__init__(**kwargs)
-        self.configs = tuple(x for x in set(configs) if os.path.isfile(x))
-        self.parse_config(self.configs)
+        self._configs = tuple(x for x in set(configs) if os.path.isfile(x))
+
+    @property
+    def configs(self):
+        return self._configs
+
+    @configs.setter
+    def configs(self, value):
+        self._configs += value
+        # reset jit attr to force re-parse
+        self._config = None
+
+    @jit_attr_none
+    def config(self):
+        return self.parse_config(self._configs)
 
     def parse_config(self, configs):
         """Parse given config files."""
-        self.config = configparser.ConfigParser()
+        config = configparser.ConfigParser()
         try:
             for f in configs:
-                self.config.read(f)
+                config.read(f)
         except configparser.ParsingError as e:
             self.error(f'parsing config file failed: {e}')
-        return self.config
+        return config
 
     def parse_config_options(self, namespace=None, section='DEFAULT'):
         """Parse options from config if they exist."""

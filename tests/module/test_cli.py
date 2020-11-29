@@ -39,7 +39,7 @@ class TestConfigArgumentParser:
                 [DEFAULT]
                 foo=bar
             """))
-        self.parser.parse_config((self.config_file,))
+        self.parser.configs += (self.config_file,)
         with pytest.raises(SystemExit) as excinfo:
             self.parser.parse_config_options()
         out, err = capsys.readouterr()
@@ -54,7 +54,7 @@ class TestConfigArgumentParser:
                 [DEFAULT]
                 foo=bar
             """))
-        self.parser.parse_config((self.config_file,))
+        self.parser.configs += (self.config_file,)
         namespace = self.parser.parse_args(['--foo', 'foo'])
         assert namespace.foo == 'foo'
         # config args override matching namespace attrs
