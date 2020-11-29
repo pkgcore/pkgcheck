@@ -8,6 +8,7 @@ from pkgcheck.git import GitCommit
 from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
+from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
 from ..misc import ReportTestCase, init_check
@@ -397,3 +398,85 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         r = self.assertReport(self.check, self.source)
         expected = git_mod.MissingMove('cat/pkg', 'newcat/pkg', pkg=CPV('newcat/pkg-0'))
         assert r == expected
+
+
+class TestGitEclassCommitsCheck(ReportTestCase):
+
+    check_kls = git_mod.GitEclassCommitsCheck
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path, tool, make_repo, make_git_repo):
+        self._tool = tool
+        self.cache_dir = str(tmp_path)
+
+        # initialize parent repo
+        self.parent_git_repo = make_git_repo()
+        self.parent_repo = make_repo(
+            self.parent_git_repo.path, repo_id='gentoo', arches=['amd64'])
+        self.parent_git_repo.add_all('initial commit')
+        # create a stub eclass and commit it
+        touch(pjoin(self.parent_git_repo.path, 'eclass', 'foo.eclass'))
+        self.parent_git_repo.add_all('eclass: add foo eclass')
+
+        # initialize child repo
+        self.child_git_repo = make_git_repo()
+        self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_repo = make_repo(self.child_git_repo.path)
+
+    def init_check(self, options=None, future=0):
+        self.options = options if options is not None else self._options()
+        self.check, required_addons, self.source = init_check(self.check_kls, self.options)
+        for k, v in required_addons.items():
+            setattr(self, k, v)
+        if future:
+            self.check.today = datetime.today() + timedelta(days=+future)
+
+    def _options(self, **kwargs):
+        args = [
+            'scan', '-q', '--cache-dir', self.cache_dir,
+            '--repo', self.child_repo.location, '--commits',
+        ]
+        options, _ = self._tool.parse_args(args)
+        return options
+
+    def test_no_gentoo_repo(self):
+        self.child_repo.create_ebuild('cat/pkg-1')
+        self.child_git_repo.add_all('cat/pkg-1')
+        options = self._options()
+        options.gentoo_repo = False
+        with pytest.raises(SkipCheck, match='not running against gentoo repo'):
+            self.init_check(options)
+
+    def test_no_commits_option(self):
+        self.child_repo.create_ebuild('cat/pkg-1')
+        self.child_git_repo.add_all('cat/pkg-1')
+        options = self._options()
+        options.commits = None
+        with pytest.raises(SkipCheck, match='not scanning against git commits'):
+            self.init_check(options)
+
+    def test_no_local_commits(self):
+        with pytest.raises(SystemExit) as excinfo:
+            self.init_check()
+        assert excinfo.value.code == 0
+
+    def test_eclass_incorrect_copyright(self):
+        line = '# Copyright 1999-2019 Gentoo Authors'
+        with open(pjoin(self.child_git_repo.path, 'eclass/foo.eclass'), 'w') as f:
+            f.write(f'{line}\n')
+        self.child_git_repo.add_all('eclass: update foo')
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.EclassIncorrectCopyright('2019', line, eclass='foo')
+        assert r == expected
+
+        # correcting the year results in no report
+        year = datetime.today().year
+        line = f'# Copyright 1999-{year} Gentoo Authors'
+        with open(pjoin(self.child_git_repo.path, 'eclass/foo.eclass'), 'w') as f:
+            f.write(f'{line}\n')
+        self.child_git_repo.add_all('eclass: fix copyright year')
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
