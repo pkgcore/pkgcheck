@@ -88,15 +88,15 @@ class TestEclassAddon:
         assert list(self.addon.eclasses) == ['foo']
 
         # verify the cache was loaded and not regenerated
-        st = os.lstat(self.cache_file)
+        st = os.stat(self.cache_file)
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
-        assert st.st_mtime == os.lstat(self.cache_file).st_mtime
+        assert st.st_mtime == os.stat(self.cache_file).st_mtime
 
         # and is regenerated on a forced cache update
         self.addon.update_cache(force=True)
         assert list(self.addon.eclasses) == ['foo']
-        assert st.st_mtime != os.lstat(self.cache_file).st_mtime
+        assert st.st_mtime != os.stat(self.cache_file).st_mtime
 
     def test_outdated_cache(self):
         touch(pjoin(self.eclass_dir, 'foo.eclass'))
@@ -111,10 +111,10 @@ class TestEclassAddon:
             pickle.dump(cache_obj, f, protocol=-1)
 
         # verify cache load causes regen
-        st = os.lstat(self.cache_file)
+        st = os.stat(self.cache_file)
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
-        assert st.st_mtime != os.lstat(self.cache_file).st_mtime
+        assert st.st_mtime != os.stat(self.cache_file).st_mtime
 
     def test_eclass_changes(self):
         """The cache stores eclass mtimes and regenerates entries if they differ."""
@@ -122,25 +122,25 @@ class TestEclassAddon:
         touch(eclass_path)
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
-        st = os.lstat(self.cache_file)
+        st = os.stat(self.cache_file)
         with open(eclass_path, 'w') as f:
             f.write('# changed eclass\n')
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
-        assert st.st_mtime != os.lstat(self.cache_file).st_mtime
+        assert st.st_mtime != os.stat(self.cache_file).st_mtime
 
     def test_error_loading_cache(self):
         touch(pjoin(self.eclass_dir, 'foo.eclass'))
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
-        st = os.lstat(self.cache_file)
+        st = os.stat(self.cache_file)
 
         # verify various load failure exceptions cause cache regen
         with patch('pkgcheck.eclass.pickle.load') as pickle_load:
             pickle_load.side_effect = Exception('unpickling failed')
             self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
-        assert st.st_mtime != os.lstat(self.cache_file).st_mtime
+        assert st.st_mtime != os.stat(self.cache_file).st_mtime
 
         # but catastrophic errors are raised
         with patch('pkgcheck.eclass.pickle.load') as pickle_load:

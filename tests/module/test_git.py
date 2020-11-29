@@ -375,15 +375,15 @@ class TestGitAddon:
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
 
         # verify the cache was loaded and not regenerated
-        st = os.lstat(self.cache_file)
+        st = os.stat(self.cache_file)
         self.addon.update_cache()
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
-        assert st.st_mtime == os.lstat(self.cache_file).st_mtime
+        assert st.st_mtime == os.stat(self.cache_file).st_mtime
 
         # and is regenerated on a forced cache update
         self.addon.update_cache(force=True)
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
-        assert st.st_mtime != os.lstat(self.cache_file).st_mtime
+        assert st.st_mtime != os.stat(self.cache_file).st_mtime
 
         # create another pkg and commit it to the parent repo
         repo.create_ebuild('cat/pkg-1')
@@ -417,10 +417,10 @@ class TestGitAddon:
             pickle.dump(cache_obj, f, protocol=-1)
 
         # verify cache load causes regen
-        st = os.lstat(self.cache_file)
+        st = os.stat(self.cache_file)
         self.addon.update_cache()
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
-        assert st.st_mtime != os.lstat(self.cache_file).st_mtime
+        assert st.st_mtime != os.stat(self.cache_file).st_mtime
 
     def test_error_creating_cache(self, repo, make_git_repo):
         parent_repo = make_git_repo(repo.location, commit=True)
@@ -450,14 +450,14 @@ class TestGitAddon:
         child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
         self.addon.update_cache()
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
-        st = os.lstat(self.cache_file)
+        st = os.stat(self.cache_file)
 
         # verify various load failure exceptions cause cache regen
         with patch('pkgcheck.git.pickle.load') as pickle_load:
             pickle_load.side_effect = Exception('unpickling failed')
             self.addon.update_cache()
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
-        assert st.st_mtime != os.lstat(self.cache_file).st_mtime
+        assert st.st_mtime != os.stat(self.cache_file).st_mtime
 
         # but catastrophic errors are raised
         with patch('pkgcheck.git.pickle.load') as pickle_load:
