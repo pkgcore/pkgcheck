@@ -42,13 +42,7 @@ class _PerlConnection:
         # set up Unix domain socket to communicate with perl client
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         socket_path = os.path.join(self.socket_dir.name, 'perl.socket')
-        try:
-            sock.bind(socket_path)
-        except OSError as e:
-            if e.errno == errno.EADDRINUSE:
-                # socket already set up by a previous run
-                return
-            raise
+        sock.bind(socket_path)
         sock.listen()
 
         # start perl client for normalizing perl module versions into package versions
