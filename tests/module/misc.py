@@ -117,7 +117,7 @@ class ReportTestCase:
             # pull desc to force a render for basic sanity checks
             assert report.desc
 
-    def assertReports(self, check, data):
+    def assertReports(self, check, data, expected=None):
         results = []
 
         if isinstance(data, sources.Source):
@@ -139,14 +139,19 @@ class ReportTestCase:
         self._assert_known_results(*results)
         assert results, f"must get a report from {check} {data}, got none"
         self.assertReportSanity(*results)
+        if expected is not None:
+            assert set(results) == set(expected)
         return results
 
-    def assertReport(self, check, data):
-        r = self.assertReports(check, data)
-        self._assert_known_results(*r)
-        assert len(r) == 1, f"expected one report, got {len(r)}: {r}"
-        self.assertReportSanity(r[0])
-        return r[0]
+    def assertReport(self, check, data, expected=None):
+        results = self.assertReports(check, data)
+        assert len(results) == 1, f"expected one report, got {len(results)}: {results}"
+        self._assert_known_results(*results)
+        result = results[0]
+        self.assertReportSanity(result)
+        if expected is not None:
+            assert result == expected
+        return result
 
 
 class FakeProfile:
