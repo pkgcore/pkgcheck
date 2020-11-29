@@ -186,7 +186,7 @@ def make_git_repo(tmp_path_factory):
 class EbuildRepo:
     """Class for creating/manipulating ebuild repos."""
 
-    def __init__(self, path, repo_id='fake', masters=()):
+    def __init__(self, path, repo_id='fake', masters=(), arches=()):
         self.path = path
         try:
             os.makedirs(pjoin(path, 'profiles'))
@@ -199,6 +199,8 @@ class EbuildRepo:
                     cache-formats =
                     thin-manifests = true
                 """))
+            with open(pjoin(path, 'profiles', 'arch.list'), 'w') as f:
+                f.write('\n'.join(arches))
             # create a fake 'blank' license
             os.makedirs(pjoin(path, 'licenses'))
             touch(pjoin(path, 'licenses', 'blank'))
