@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 from pkgcheck.checks import git as git_mod
 from pkgcheck.checks import SkipCheck
-from pkgcheck.git import GitCommit, GitChangedRepo
+from pkgcheck.git import GitCommit
 from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
@@ -62,10 +62,11 @@ class TestGitCheck(ReportTestCase):
         author = kwargs.pop('author', 'author@domain.com')
         committer = kwargs.pop('committer', 'author@domain.com')
         message = summary
-        if body:
-            message += '\n\n' + body
-        sign_offs = tuple(f'Signed-off-by: {user}' for user in {author, committer})
-        message += '\n\n' + '\n'.join(tuple(tags) + sign_offs)
+        if message:
+            if body:
+                message += '\n\n' + body
+            sign_offs = tuple(f'Signed-off-by: {user}' for user in {author, committer})
+            message += '\n\n' + '\n'.join(tuple(tags) + sign_offs)
         return FakeCommit(author=author, committer=committer, message=message.splitlines())
 
     def test_invalid_commit_tag(self):
@@ -124,6 +125,8 @@ class TestGitCheck(ReportTestCase):
     def test_summary_length(self):
         self.assertNoReport(self.check, self.SO_commit('single summary headline'))
         self.assertNoReport(self.check, self.SO_commit('a' * 69))
+        assert 'no commit message' in \
+            self.assertReport(self.check, self.SO_commit('')).error
         assert 'summary is too long' in \
             self.assertReport(self.check, self.SO_commit('a' * 70)).error
 
