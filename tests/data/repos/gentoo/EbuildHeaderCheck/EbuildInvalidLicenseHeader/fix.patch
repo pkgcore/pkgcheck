@@ -1,9 +1,18 @@
 diff -Naur gentoo/EbuildHeaderCheck/EbuildInvalidLicenseHeader/EbuildInvalidLicenseHeader-0.ebuild fixed/EbuildHeaderCheck/EbuildInvalidLicenseHeader/EbuildInvalidLicenseHeader-0.ebuild
---- gentoo/EbuildHeaderCheck/EbuildInvalidLicenseHeader/EbuildInvalidLicenseHeader-0.ebuild	2019-09-14 16:13:59.172674517 -0600
-+++ fixed/EbuildHeaderCheck/EbuildInvalidLicenseHeader/EbuildInvalidLicenseHeader-0.ebuild	2019-09-14 16:16:55.644352877 -0600
+--- gentoo/EbuildHeaderCheck/EbuildInvalidLicenseHeader/EbuildInvalidLicenseHeader-0.ebuild	2020-07-04 04:01:46.890309842 -0600
++++ fixed/EbuildHeaderCheck/EbuildInvalidLicenseHeader/EbuildInvalidLicenseHeader-0.ebuild	2020-11-29 02:06:10.431299658 -0700
 @@ -1,5 +1,5 @@
  # Copyright 1999-2019 Gentoo Authors
 -# Distributed under the terms of the GNU General Public License v3
++# Distributed under the terms of the GNU General Public License v2
+ 
+ DESCRIPTION="Ebuild with invalid license header"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+diff -Naur gentoo/EbuildHeaderCheck/EbuildInvalidLicenseHeader/EbuildInvalidLicenseHeader-1.ebuild fixed/EbuildHeaderCheck/EbuildInvalidLicenseHeader/EbuildInvalidLicenseHeader-1.ebuild
+--- gentoo/EbuildHeaderCheck/EbuildInvalidLicenseHeader/EbuildInvalidLicenseHeader-1.ebuild	2020-11-29 02:00:07.646501695 -0700
++++ fixed/EbuildHeaderCheck/EbuildInvalidLicenseHeader/EbuildInvalidLicenseHeader-1.ebuild	2020-11-29 02:06:25.867631454 -0700
+@@ -1,4 +1,5 @@
+ # Copyright 1999-2019 Gentoo Authors
 +# Distributed under the terms of the GNU General Public License v2
  
  DESCRIPTION="Ebuild with invalid license header"
