@@ -1,19 +1,14 @@
 """Eclass specific support and addon."""
 
 import os
-import pickle
 from functools import total_ordering
 
 from pkgcore.ebuild.eclass import EclassDoc, EclassDocParsingError
-from snakeoil.cli.exceptions import UserException
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.klass import jit_attr_none
-from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
 from . import base, caches
-from .log import logger
 
 
 def matching_eclass(eclasses_set, eclass):
@@ -98,22 +93,7 @@ class EclassAddon(caches.CachedAddon):
                 eclasses = {}
 
                 if not force:
-                    # try loading cached eclass data
-                    try:
-                        with open(cache_file, 'rb') as f:
-                            eclasses = pickle.load(f)
-                        if eclasses.version != self.cache.version:
-                            logger.debug('forcing eclass repo cache regen due to outdated version')
-                            os.remove(cache_file)
-                            eclasses = {}
-                    except IGNORED_EXCEPTIONS:
-                        raise
-                    except FileNotFoundError:
-                        pass
-                    except Exception as e:
-                        logger.debug('forcing eclass cache regen: %s', e)
-                        os.remove(cache_file)
-                        eclasses = {}
+                    eclasses = self.load_cache(cache_file, fallback={})
 
                 # check for eclass removals
                 for name, eclass in list(eclasses.items()):
@@ -148,18 +128,12 @@ class EclassAddon(caches.CachedAddon):
                                 except (IOError, EclassDocParsingError):
                                     continue
 
-                # push eclasses to disk if any changes were found
                 if cache_eclasses:
                     # reset jit attrs
                     self._eclasses = None
                     self._deprecated = None
-                    try:
-                        os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-                        cache = caches.DictCache(eclasses, self.cache)
-                        with AtomicWriteFile(cache_file, binary=True) as f:
-                            pickle.dump(cache, f, protocol=-1)
-                    except IOError as e:
-                        msg = f'failed dumping eclasses: {cache_file!r}: {e.strerror}'
-                        raise UserException(msg)
+                    # push cache updates to disk
+                    data = caches.DictCache(eclasses, self.cache)
+                    self.save_cache(data, cache_file)
 
                 self._eclass_repos[repo.location] = eclasses

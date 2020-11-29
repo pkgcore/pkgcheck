@@ -453,14 +453,14 @@ class TestGitAddon:
         st = os.stat(self.cache_file)
 
         # verify various load failure exceptions cause cache regen
-        with patch('pkgcheck.git.pickle.load') as pickle_load:
+        with patch('pkgcheck.caches.pickle.load') as pickle_load:
             pickle_load.side_effect = Exception('unpickling failed')
             self.addon.update_cache()
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
         assert st.st_mtime != os.stat(self.cache_file).st_mtime
 
         # but catastrophic errors are raised
-        with patch('pkgcheck.git.pickle.load') as pickle_load:
+        with patch('pkgcheck.caches.pickle.load') as pickle_load:
             pickle_load.side_effect = MemoryError('unpickling failed')
             with pytest.raises(MemoryError):
                 self.addon.update_cache()
@@ -477,9 +477,9 @@ class TestGitAddon:
         child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
 
         # verify IO related dump failures are raised
-        with patch('pkgcheck.git.pickle.dump') as pickle_dump:
+        with patch('pkgcheck.caches.pickle.dump') as pickle_dump:
             pickle_dump.side_effect = IOError('unpickling failed')
-            with pytest.raises(UserException, match='failed dumping git repo'):
+            with pytest.raises(UserException, match='failed dumping git cache'):
                 self.addon.update_cache()
 
     def test_commits_repo(self, repo, make_repo, make_git_repo):

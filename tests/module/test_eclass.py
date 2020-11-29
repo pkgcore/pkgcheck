@@ -136,14 +136,14 @@ class TestEclassAddon:
         st = os.stat(self.cache_file)
 
         # verify various load failure exceptions cause cache regen
-        with patch('pkgcheck.eclass.pickle.load') as pickle_load:
+        with patch('pkgcheck.caches.pickle.load') as pickle_load:
             pickle_load.side_effect = Exception('unpickling failed')
             self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
         assert st.st_mtime != os.stat(self.cache_file).st_mtime
 
         # but catastrophic errors are raised
-        with patch('pkgcheck.eclass.pickle.load') as pickle_load:
+        with patch('pkgcheck.caches.pickle.load') as pickle_load:
             pickle_load.side_effect = MemoryError('unpickling failed')
             with pytest.raises(MemoryError, match='unpickling failed'):
                 self.addon.update_cache()
@@ -151,9 +151,9 @@ class TestEclassAddon:
     def test_error_dumping_cache(self):
         touch(pjoin(self.eclass_dir, 'foo.eclass'))
         # verify IO related dump failures are raised
-        with patch('pkgcheck.eclass.pickle.dump') as pickle_dump:
+        with patch('pkgcheck.caches.pickle.dump') as pickle_dump:
             pickle_dump.side_effect = IOError('unpickling failed')
-            with pytest.raises(UserException, match='failed dumping eclasses'):
+            with pytest.raises(UserException, match='failed dumping eclass cache'):
                 self.addon.update_cache()
 
     def test_eclass_removal(self):

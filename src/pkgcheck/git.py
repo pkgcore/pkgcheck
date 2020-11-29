@@ -2,7 +2,6 @@
 
 import argparse
 import os
-import pickle
 import re
 import shlex
 import subprocess
@@ -18,8 +17,6 @@ from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values
 from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.iterables import partition
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
@@ -484,26 +481,11 @@ class GitAddon(caches.CachedAddon):
 
                 # initialize cache file location
                 cache_file = self.cache_file(repo)
-
                 git_cache = None
                 cache_repo = True
+
                 if not force:
-                    # try loading cached, historical repo data
-                    try:
-                        with open(cache_file, 'rb') as f:
-                            git_cache = pickle.load(f)
-                        if git_cache.version != self.cache.version:
-                            logger.debug('forcing git repo cache regen due to outdated version')
-                            os.remove(cache_file)
-                            git_cache = None
-                    except IGNORED_EXCEPTIONS:
-                        raise
-                    except FileNotFoundError:
-                        pass
-                    except Exception as e:
-                        logger.debug('forcing git repo cache regen: %s', e)
-                        os.remove(cache_file)
-                        git_cache = None
+                    git_cache = self.load_cache(cache_file)
 
                 if git_cache is None or commit != git_cache.commit:
                     logger.debug('updating %s git repo cache to %s', repo, commit[:13])
@@ -526,13 +508,7 @@ class GitAddon(caches.CachedAddon):
                     self._cached_repos[repo.location] = git_cache
                     # push repo to disk if it was created or updated
                     if cache_repo:
-                        try:
-                            os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-                            with AtomicWriteFile(cache_file, binary=True) as f:
-                                pickle.dump(git_cache, f, protocol=-1)
-                        except IOError as e:
-                            msg = f'failed dumping git repo: {cache_file!r}: {e.strerror}'
-                            raise UserException(msg)
+                        self.save_cache(git_cache, cache_file)
 
     def cached_repo(self, repo_cls, target_repo=None):
         cached_repo = None

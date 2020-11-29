@@ -3,6 +3,7 @@
 import errno
 import os
 import pathlib
+import pickle
 import shutil
 from collections import UserDict
 from operator import attrgetter
@@ -10,10 +11,13 @@ from typing import NamedTuple
 
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
+from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
 from . import base
+from .log import logger
 
 
 class CacheData(NamedTuple):
@@ -66,6 +70,35 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
         return pjoin(
             self.options.cache_dir, 'repos',
             repo.repo_id.lstrip(os.sep), self.cache.file)
+
+    def load_cache(self, path, fallback=None):
+        cache = fallback
+        try:
+            with open(path, 'rb') as f:
+                cache = pickle.load(f)
+            if cache.version != self.cache.version:
+                logger.debug(
+                    'forcing %s cache regen due to outdated version', self.cache.type)
+                os.remove(path)
+                cache = fallback
+        except IGNORED_EXCEPTIONS:
+            raise
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            logger.debug('forcing %s cache regen: %s', self.cache.type, e)
+            os.remove(path)
+            cache = fallback
+        return cache
+
+    def save_cache(self, data, path):
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with AtomicWriteFile(path, binary=True) as f:
+                pickle.dump(data, f, protocol=-1)
+        except IOError as e:
+            msg = f'failed dumping {self.cache.type} cache: {path!r}: {e.strerror}'
+            raise UserException(msg)
 
     @property
     def repos(self):

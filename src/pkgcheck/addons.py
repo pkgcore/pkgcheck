@@ -1,7 +1,6 @@
 """Addon functionality shared by multiple checkers."""
 
 import os
-import pickle
 import stat
 from collections import defaultdict
 from functools import partial
@@ -12,9 +11,7 @@ from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.restrictions import packages, values
 from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.decorators import coroutine
-from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
@@ -291,23 +288,8 @@ class ProfileAddon(caches.CachedAddon):
                     # add profiles-base -> repo mapping to ease storage procedure
                     cached_profiles[repo.config.profiles_base]['repo'] = repo
                     if not force:
-                        try:
-                            with open(cache_file, 'rb') as f:
-                                cache = pickle.load(f)
-                            if cache.version == self.cache.version:
-                                cached_profiles[repo.config.profiles_base].update(cache)
-                            else:
-                                logger.debug(
-                                    'forcing %s profile cache regen '
-                                    'due to outdated version', repo.repo_id)
-                                os.remove(cache_file)
-                        except IGNORED_EXCEPTIONS:
-                            raise
-                        except FileNotFoundError:
-                            pass
-                        except Exception as e:
-                            logger.debug('forcing %s profile cache regen: %s', repo.repo_id, e)
-                            os.remove(cache_file)
+                        cache = self.load_cache(cache_file, fallback={})
+                        cached_profiles[repo.config.profiles_base].update(cache)
 
                 chunked_data_cache = {}
 
@@ -445,17 +427,9 @@ class ProfileAddon(caches.CachedAddon):
             if v.pop('update', False):
                 repo = v.pop('repo')
                 cache_file = self.cache_file(repo)
-                try:
-                    os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-                    cache = caches.DictCache(
-                        cached_profiles[repo.config.profiles_base], self.cache)
-                    with AtomicWriteFile(cache_file, binary=True) as f:
-                        pickle.dump(cache, f, protocol=-1)
-                except IOError as e:
-                    msg = (
-                        f'failed dumping {repo.repo_id} profiles cache: '
-                        f'{cache_file!r}: {e.strerror}')
-                    raise UserException(msg)
+                cache = caches.DictCache(
+                    cached_profiles[repo.config.profiles_base], self.cache)
+                self.save_cache(cache, cache_file)
 
         for key, profile_list in self.profile_filters.items():
             similar = self.profile_evaluate_dict[key] = []
