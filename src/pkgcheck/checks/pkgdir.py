@@ -304,7 +304,11 @@ class LiveOnlyPackage(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return f'all versions are VCS-based added over {self.age} years ago'
+        age = int(self.age)
+        if age < 365:
+            return f'all versions are VCS-based added over {self.age} days ago'
+        years = round(age / 365, 2)
+        return f'all versions are VCS-based added over {years} years ago'
 
 
 class LiveOnlyCheck(GentooRepoCheck):
@@ -332,5 +336,5 @@ class LiveOnlyCheck(GentooRepoCheck):
                 # probably an uncommitted package
                 return
             added = datetime.strptime(match.date, '%Y-%m-%d')
-            years_old = round((self.today - added).days / 365, 2)
-            yield LiveOnlyPackage(years_old, pkg=pkg)
+            days_old = (self.today - added).days
+            yield LiveOnlyPackage(days_old, pkg=pkg)
