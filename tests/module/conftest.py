@@ -9,7 +9,7 @@ from pkgcheck.reporters import StrReporter
 from pkgcheck.results import Result
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import cpv as cpv_mod
-from pkgcore.ebuild import repository
+from pkgcore.ebuild import repo_objs, repository
 from pkgcore.util.commandline import Tool
 from snakeoil import klass
 from snakeoil.formatters import PlainTextFormatter
@@ -225,7 +225,9 @@ class EbuildRepo:
             os.makedirs(pjoin(path, 'eclass'))
         except FileExistsError:
             pass
-        self._repo = repository.UnconfiguredTree(path)
+        # forcibly create repo_config object, otherwise cached version might be used
+        repo_config = repo_objs.RepoConfig(location=path, disable_inst_caching=True)
+        self._repo = repository.UnconfiguredTree(path, repo_config=repo_config)
 
     def create_ebuild(self, cpvstr, data=None, **kwargs):
         cpv = cpv_mod.VersionedCPV(cpvstr)
