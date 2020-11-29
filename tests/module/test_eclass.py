@@ -86,16 +86,13 @@ class TestEclassAddon:
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
 
-        # verify the cache was loaded and not regenerated
-        st = os.stat(self.cache_file)
-        self.addon.update_cache()
-        assert list(self.addon.eclasses) == ['foo']
-        assert st.st_mtime == os.stat(self.cache_file).st_mtime
-
-        # and is regenerated on a forced cache update
-        self.addon.update_cache(force=True)
-        assert list(self.addon.eclasses) == ['foo']
-        assert st.st_mtime != os.stat(self.cache_file).st_mtime
+        with patch('pkgcheck.caches.CachedAddon.save_cache') as save_cache:
+            self.addon.update_cache()
+            # verify the cache was loaded and not regenerated
+            save_cache.assert_not_called()
+            self.addon.update_cache(force=True)
+            # and is regenerated on a forced cache update
+            save_cache.assert_called_once()
 
     def test_outdated_cache(self):
         touch(pjoin(self.eclass_dir, 'foo.eclass'))
@@ -108,10 +105,9 @@ class TestEclassAddon:
         self.addon.save_cache(cache, self.cache_file)
 
         # verify cache load causes regen
-        st = os.stat(self.cache_file)
-        self.addon.update_cache()
-        assert list(self.addon.eclasses) == ['foo']
-        assert st.st_mtime != os.stat(self.cache_file).st_mtime
+        with patch('pkgcheck.caches.CachedAddon.save_cache') as save_cache:
+            self.addon.update_cache()
+            save_cache.assert_called_once()
 
     def test_eclass_changes(self):
         """The cache stores eclass mtimes and regenerates entries if they differ."""
@@ -119,31 +115,28 @@ class TestEclassAddon:
         touch(eclass_path)
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
-        st = os.stat(self.cache_file)
         with open(eclass_path, 'w') as f:
             f.write('# changed eclass\n')
-        self.addon.update_cache()
-        assert list(self.addon.eclasses) == ['foo']
-        assert st.st_mtime != os.stat(self.cache_file).st_mtime
+        with patch('pkgcheck.caches.CachedAddon.save_cache') as save_cache:
+            self.addon.update_cache()
+            save_cache.assert_called_once()
 
     def test_error_loading_cache(self):
         touch(pjoin(self.eclass_dir, 'foo.eclass'))
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
-        st = os.stat(self.cache_file)
 
-        # verify various load failure exceptions cause cache regen
         with patch('pkgcheck.caches.pickle.load') as pickle_load:
-            pickle_load.side_effect = Exception('unpickling failed')
-            self.addon.update_cache()
-        assert list(self.addon.eclasses) == ['foo']
-        assert st.st_mtime != os.stat(self.cache_file).st_mtime
-
-        # but catastrophic errors are raised
-        with patch('pkgcheck.caches.pickle.load') as pickle_load:
+            # catastrophic errors are raised
             pickle_load.side_effect = MemoryError('unpickling failed')
             with pytest.raises(MemoryError, match='unpickling failed'):
                 self.addon.update_cache()
+
+            # but various load failure exceptions cause cache regen
+            pickle_load.side_effect = Exception('unpickling failed')
+            with patch('pkgcheck.caches.CachedAddon.save_cache') as save_cache:
+                self.addon.update_cache()
+                save_cache.assert_called_once()
 
     def test_error_dumping_cache(self):
         touch(pjoin(self.eclass_dir, 'foo.eclass'))
