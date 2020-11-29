@@ -268,6 +268,12 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         options, _ = self._tool.parse_args(args)
         return options
 
+    def test_broken_ebuilds_ignored(self):
+        self.child_repo.create_ebuild('newcat/pkg-1', eapi='-1')
+        self.child_git_repo.add_all('newcat/pkg: initial import')
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
     def test_direct_stable(self):
         self.child_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
         self.child_git_repo.add_all('cat/pkg: version bump to 1')
