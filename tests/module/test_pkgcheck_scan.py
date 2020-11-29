@@ -5,6 +5,7 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+import textwrap
 from collections import defaultdict
 from functools import partial
 from io import StringIO
@@ -235,6 +236,74 @@ class TestPkgcheckScanParseArgs:
             check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
             with pytest.raises(argparse.ArgumentError):
                 tool.parse_args(['scan', '--debug', 'cat/pkg'])
+
+
+class TestPkgcheckScanParseConfigArgs:
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tool, tmp_path, repo):
+        self.tool = tool
+        self.repo = repo
+        self.args = ['scan', '-r', repo.location]
+
+        # override system/user config locations
+        self.system_config = str(tmp_path / "system-config")
+        self.user_config = str(tmp_path / "user-config")
+        self.config = str(tmp_path / "custom-config")
+        self.scan_parser = self.tool.parser.subparsers['scan']
+        self.scan_parser.configs = (self.system_config, self.user_config)
+
+    def test_config_precedence(self):
+        with open(self.system_config, 'w') as f:
+            f.write(textwrap.dedent("""\
+                [DEFAULT]
+                jobs=1000
+            """))
+        options, _ = self.tool.parse_args(self.args)
+        assert options.jobs == 1000
+
+        # user config overrides system config
+        with open(self.user_config, 'w') as f:
+            f.write(textwrap.dedent("""\
+                [DEFAULT]
+                jobs=1001
+            """))
+        # reset config obj jit attr
+        self.scan_parser._config = None
+        options, _ = self.tool.parse_args(self.args)
+        assert options.jobs == 1001
+
+        # repo config overrides user config
+        with open(pjoin(self.repo.location, 'metadata', 'pkgcheck.conf'), 'w') as f:
+            f.write(textwrap.dedent("""\
+                [DEFAULT]
+                jobs=1002
+            """))
+        options, _ = self.tool.parse_args(self.args)
+        assert options.jobs == 1002
+
+        # custom config overrides user config
+        with open(self.config, 'w') as f:
+            f.write(textwrap.dedent("""\
+                [DEFAULT]
+                jobs=1003
+            """))
+        config_args = self.args + ['--config', self.config]
+        options, _ = self.tool.parse_args(config_args)
+        assert options.jobs == 1003
+
+        # repo defaults override general defaults
+        with open(self.config, 'a') as f:
+            f.write(textwrap.dedent(f"""\
+                [{self.repo.repo_id}]
+                jobs=1004
+            """))
+        options, _ = self.tool.parse_args(config_args)
+        assert options.jobs == 1004
+
+        # command line options override all config settings
+        options, _ = self.tool.parse_args(config_args + ['--jobs', '9999'])
+        assert options.jobs == 9999
 
 
 class TestPkgcheckScan:
