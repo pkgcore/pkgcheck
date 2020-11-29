@@ -1,11 +1,16 @@
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
+import pytest
 from pkgcheck.checks import git as git_mod
-from pkgcheck.git import GitCommit
+from pkgcheck.checks import SkipCheck
+from pkgcheck.git import GitCommit, GitChangedRepo
+from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
+from snakeoil.osutils import pjoin
 
-from .. import misc
+from ..misc import ReportTestCase, init_check
 
 
 class FakeCommit(GitCommit):
@@ -23,7 +28,7 @@ class FakeCommit(GitCommit):
         super().__init__(**commit_data)
 
 
-class TestGitCheck(misc.ReportTestCase):
+class TestGitCheck(ReportTestCase):
     check_kls = git_mod.GitCommitsCheck
     options = arghparse.Namespace(
         target_repo=FakeRepo(), commits='origin', gentoo_repo=True)
@@ -209,7 +214,7 @@ Signed-off-by: author@domain.com
         assert 'non-tag in footer, line 5' in \
             self.assertReport(
                 self.check,
-                FakeCommit(author='author@domain.com', committer='author@domain.com', message=f"""\
+                FakeCommit(author='author@domain.com', committer='author@domain.com', message="""\
 foon
 
 blah: dar
@@ -217,3 +222,175 @@ footer: yep
 some random line
 Signed-off-by: author@domain.com
 """.splitlines())).error
+
+
+class TestGitPkgCommitsCheck(ReportTestCase):
+
+    check_kls = git_mod.GitPkgCommitsCheck
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path, tool, make_repo, make_git_repo):
+        self._tool = tool
+        self.cache_dir = str(tmp_path)
+
+        # initialize parent repo
+        self.parent_git_repo = make_git_repo()
+        self.parent_repo = make_repo(
+            self.parent_git_repo.path, repo_id='gentoo', arches=['amd64'])
+        self.parent_git_repo.add_all('initial commit')
+        # create a stub pkg and commit it
+        self.parent_repo.create_ebuild('cat/pkg-0')
+        self.parent_git_repo.add_all('cat/pkg-0')
+
+        # initialize child repo
+        self.child_git_repo = make_git_repo()
+        self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_repo = make_repo(self.child_git_repo.path)
+
+    def init_check(self, options=None, future=0):
+        self.options = options if options is not None else self._options()
+        self.check, required_addons, self.source = init_check(self.check_kls, self.options)
+        for k, v in required_addons.items():
+            setattr(self, k, v)
+        if future:
+            self.check.today = datetime.today() + timedelta(days=+future)
+
+    def _options(self, **kwargs):
+        args = [
+            'scan', '-q', '--cache-dir', self.cache_dir,
+            '--repo', self.child_repo.location, '--commits',
+        ]
+        options, _ = self._tool.parse_args(args)
+        return options
+
+    def test_no_gentoo_repo(self):
+        self.child_repo.create_ebuild('cat/pkg-1')
+        self.child_git_repo.add_all('cat/pkg-1')
+        options = self._options()
+        options.gentoo_repo = False
+        with pytest.raises(SkipCheck, match='not running against gentoo repo'):
+            self.init_check(options)
+
+    def test_no_commits_option(self):
+        self.child_repo.create_ebuild('cat/pkg-1')
+        self.child_git_repo.add_all('cat/pkg-1')
+        options = self._options()
+        options.commits = None
+        with pytest.raises(SkipCheck, match='not scanning against git commits'):
+            self.init_check(options)
+
+    def test_no_local_commits(self):
+        with pytest.raises(SystemExit) as excinfo:
+            self.init_check()
+        assert excinfo.value.code == 0
+
+        # parent repo has new commits
+        self.parent_repo.create_ebuild('cat/pkg-1')
+        self.parent_git_repo.add_all('cat/pkg-1')
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        with pytest.raises(SystemExit) as excinfo:
+            self.init_check()
+        assert excinfo.value.code == 0
+
+    def test_direct_stable(self):
+        self.child_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
+        self.child_git_repo.add_all('cat/pkg: version bump to 1')
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.DirectStableKeywords(['amd64'], pkg=CPV('cat/pkg-1'))
+        assert r == expected
+
+    def test_direct_no_maintainer(self):
+        self.child_repo.create_ebuild('newcat/pkg-1')
+        self.child_git_repo.add_all('newcat/pkg: initial import')
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.DirectNoMaintainer(pkg=CPV('newcat/pkg-1'))
+        assert r == expected
+
+    def test_bad_commit_summary(self):
+        self.child_repo.create_ebuild('cat/pkg-1')
+        self.child_git_repo.add_all('version bump')
+        commit = self.child_git_repo.HEAD
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.BadCommitSummary(
+            'summary missing matching package prefix',
+            'version bump', commit=commit)
+        assert r == expected
+
+    def test_ebuild_incorrect_copyright(self):
+        self.child_repo.create_ebuild('cat/pkg-1')
+        line = '# Copyright 1999-2019 Gentoo Authors'
+        with open(pjoin(self.child_git_repo.path, 'cat/pkg/pkg-1.ebuild'), 'r+') as f:
+            lines = f.read().splitlines()
+            lines[0] = line
+            f.seek(0)
+            f.write('\n'.join(lines))
+        self.child_git_repo.add_all('cat/pkg: version bump to 1')
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.EbuildIncorrectCopyright('2019', line=line, pkg=CPV('cat/pkg-1'))
+        assert r == expected
+
+    def test_dropped_stable_keywords(self):
+        # add stable ebuild to parent repo
+        self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
+        self.parent_git_repo.add_all('cat/pkg: version bump to 1')
+        # pull changes and remove it from the child repo
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.remove('cat/pkg/pkg-1.ebuild', msg='cat/pkg: remove 1')
+        commit = self.child_git_repo.HEAD
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.DroppedStableKeywords(['amd64'], commit, pkg=CPV('cat/pkg-1'))
+        assert r == expected
+
+    def test_dropped_unstable_keywords(self):
+        # add stable ebuild to parent repo
+        self.parent_repo.create_ebuild('cat/pkg-1', keywords=['~amd64'])
+        self.parent_git_repo.add_all('cat/pkg: version bump to 1')
+        # pull changes and remove it from the child repo
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.remove('cat/pkg/pkg-1.ebuild', msg='cat/pkg: remove 1')
+        commit = self.child_git_repo.HEAD
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.DroppedUnstableKeywords(['~amd64'], commit, pkg=CPV('cat/pkg-1'))
+        assert r == expected
+
+    def test_rdepend_change(self):
+        # add new pkg to parent repo
+        self.parent_repo.create_ebuild('newcat/newpkg-1')
+        self.parent_git_repo.add_all('newcat/newpkg: initial import')
+        # pull changes to child repo and update previous pkg's RDEPEND
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        with open(pjoin(self.child_git_repo.path, 'cat/pkg/pkg-0.ebuild'), 'a') as f:
+            f.write('RDEPEND="newcat/newpkg"\n')
+        self.child_git_repo.add_all('cat/pkg: update deps')
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.RdependChange(pkg=CPV('cat/pkg-0'))
+        assert r == expected
+
+    def test_missing_slotmove(self):
+        # add new ebuild to parent repo
+        self.parent_repo.create_ebuild('cat/pkg-1', keywords=['~amd64'])
+        self.parent_git_repo.add_all('cat/pkg: version bump to 1')
+        # pull changes and modify its slot in the child repo
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_repo.create_ebuild('cat/pkg-1', keywords=['~amd64'], slot='1')
+        self.child_git_repo.add_all('cat/pkg: update SLOT to 1')
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.MissingSlotmove('0', '1', pkg=CPV('cat/pkg-1'))
+        assert r == expected
+
+    def test_missing_move(self):
+        self.child_git_repo.move('cat', 'newcat', msg='newcat/pkg: moved pkg')
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.MissingMove('cat/pkg', 'newcat/pkg', pkg=CPV('newcat/pkg-0'))
+        assert r == expected
