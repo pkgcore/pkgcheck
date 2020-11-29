@@ -169,27 +169,59 @@ def make_git_repo(tmp_path_factory):
 class EbuildRepo:
     """Class for creating/manipulating ebuild repos."""
 
-    def __init__(self, path):
+    def __init__(self, path, repo_id='fake', masters=()):
         self.path = path
         try:
             os.makedirs(pjoin(path, 'profiles'))
-            os.makedirs(pjoin(path, 'metadata'))
             with open(pjoin(path, 'profiles', 'repo_name'), 'w') as f:
-                f.write('fake\n')
+                f.write(f'{repo_id}\n')
+            os.makedirs(pjoin(path, 'metadata'))
             with open(pjoin(path, 'metadata', 'layout.conf'), 'w') as f:
-                f.write('masters =\n')
+                f.write(textwrap.dedent(f"""\
+                    masters = {' '.join(masters)}
+                    cache-formats =
+                    thin-manifests = true
+                """))
+            # create a fake 'blank' license
+            os.makedirs(pjoin(path, 'licenses'))
+            touch(pjoin(path, 'licenses', 'blank'))
         except FileExistsError:
             pass
-        repo_config = repo_objs.RepoConfig(location=path)
-        self._repo = repository.UnconfiguredTree(
-            repo_config.location, repo_config=repo_config)
+        self._repo = repository.UnconfiguredTree(path)
 
-    def create_ebuild(self, cpvstr, data=''):
+    def create_ebuild(self, cpvstr, data=None, **kwargs):
         cpv = cpv_mod.VersionedCPV(cpvstr)
         ebuild_dir = pjoin(self.path, cpv.category, cpv.package)
         os.makedirs(ebuild_dir, exist_ok=True)
+
+        # use defaults for some ebuild metadata if unset
+        eapi = kwargs.pop('eapi', '7')
+        slot = kwargs.pop('slot', '0')
+        desc = kwargs.pop('description', 'stub package description')
+        homepage = kwargs.pop('homepage', 'https://github.com/pkgcore/pkgcheck')
+        license = kwargs.pop('license', 'blank')
+
         with open(pjoin(ebuild_dir, f'{cpv.package}-{cpv.version}.ebuild'), 'w') as f:
-            f.write(data)
+            if self.repo_id == 'gentoo':
+                f.write(textwrap.dedent("""\
+                    # Copyright 1999-2020 Gentoo Authors
+                    # Distributed under the terms of the GNU General Public License v2
+                """))
+            f.write(f'EAPI="{eapi}"\n')
+            f.write(f'DESCRIPTION="{desc}"\n')
+            f.write(f'HOMEPAGE="{homepage}"\n')
+            f.write(f'SLOT="{slot}"\n')
+            f.write(f'LICENSE="{license}"\n')
+            for k, v in kwargs.items():
+                # handle sequences such as KEYWORDS and IUSE
+                if isinstance(v, (tuple, list)):
+                    v = ' '.join(v)
+                f.write(f'{k.upper()}="{v}"\n')
+            if data is not None:
+                f.write(data)
+
+    def __iter__(self):
+        yield from iter(self._repo)
 
     __getattr__ = klass.GetAttrProxy('_repo')
     __dir__ = klass.DirProxy('_repo')
