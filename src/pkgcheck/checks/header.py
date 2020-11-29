@@ -86,7 +86,9 @@ class InvalidLicenseHeader(_FileHeaderResult, results.Error):
 
     @property
     def desc(self):
-        return f'invalid license header: {self.line!r}'
+        if self.line:
+            return f'invalid license header: {self.line!r}'
+        return 'missing license header'
 
 
 class _HeaderCheck(GentooRepoCheck):
