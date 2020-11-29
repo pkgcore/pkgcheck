@@ -155,13 +155,10 @@ class CheckRunner:
 
     def _metadata_error_cb(self, e):
         """Callback handling MetadataError related results."""
-        cls = MetadataError.result_mapping.get(e.attr, MetadataError)
-        process_callback = (
-            cls is MetadataError or
-            cls in getattr(self._running_check, 'known_results', self._known_results)
-        )
-
-        if process_callback:
+        # Unregistered metadata attrs will raise KeyError here which is wanted
+        # so they can be noticed and fixed.
+        cls = MetadataError.result_mapping[e.attr]
+        if cls in getattr(self._running_check, 'known_results', self._known_results):
             error_str = ': '.join(e.msg().split('\n'))
             result = cls(e.attr, error_str, pkg=e.pkg)
             self._metadata_errors.append((e.pkg, result))

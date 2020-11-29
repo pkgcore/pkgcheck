@@ -312,7 +312,4 @@ class MetadataError(Error, metaclass=_RegisterMetadataErrors):
 
     @property
     def desc(self):
-        if self._attr is not None:
-            return self.msg
-        else:
-            return f'attr({self.attr}): {self.msg}'
+        return self.msg
