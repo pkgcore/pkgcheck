@@ -1,16 +1,32 @@
 import os
 import subprocess
+import tempfile
 import textwrap
 
 import pytest
 from pkgcheck.scripts import pkgcheck
+from pkgcheck.reporters import StrReporter
+from pkgcheck.results import Result
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import cpv as cpv_mod
-from pkgcore.ebuild import repo_objs, repository
+from pkgcore.ebuild import repository
 from pkgcore.util.commandline import Tool
 from snakeoil import klass
+from snakeoil.formatters import PlainTextFormatter
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
+
+
+def pytest_assertrepr_compare(op, left, right):
+    """Custom assertion failure output."""
+    if isinstance(left, Result) and isinstance(right, Result) and op == "==":
+        with tempfile.TemporaryFile() as f:
+            with StrReporter(out=PlainTextFormatter(f)) as reporter:
+                reporter.report(left)
+                reporter.report(right)
+                f.seek(0)
+                left_val, right_val = f.read().decode().splitlines()
+        return ["Result instances !=:", left_val, right_val]
 
 
 @pytest.fixture(scope="session")

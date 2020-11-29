@@ -73,5 +73,6 @@ class TestStableRequestCheck(ReportTestCase):
         self.parent_git_repo.add_all('cat/pkg-2')
         self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
         self.init_check()
+        r = self.assertReport(self.check, self.source)
         expected = StableRequest('0', ['~amd64'], 30, pkg=VersionedCPV('cat/pkg-2'))
-        self.assertReport(self.check, self.source, expected=expected)
+        assert r == expected

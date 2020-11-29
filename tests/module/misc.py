@@ -116,21 +116,17 @@ class ReportTestCase:
         results = self._run_check(check, data)
         assert results == [], f"{msg}{list(report.desc for report in results)}"
 
-    def assertReports(self, check, data, expected=None):
+    def assertReports(self, check, data):
         results = self._run_check(check, data)
         assert results, f"must get a report from {check} {data}, got none"
         self._assertReportSanity(*results)
-        if expected is not None:
-            assert set(results) == set(expected)
         return results
 
-    def assertReport(self, check, data, expected=None):
+    def assertReport(self, check, data):
         results = self.assertReports(check, data)
         assert len(results) == 1, f"expected one report, got {len(results)}: {results}"
         self._assertReportSanity(*results)
         result = results[0]
-        if expected is not None:
-            assert result == expected
         return result
 
 
