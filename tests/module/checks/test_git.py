@@ -1,4 +1,5 @@
 import os
+import textwrap
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
@@ -412,7 +413,10 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         updates_dir = pjoin(self.child_git_repo.path, 'profiles', 'updates')
         os.makedirs(updates_dir, exist_ok=True)
         with open(pjoin(updates_dir, '4Q-2020'), 'w') as f:
-            f.write('slotmove ~cat/pkg-1 0 1\n')
+            f.write(textwrap.dedent("""\
+                slotmove ~cat/foo-0 0 1
+                slotmove ~cat/pkg-1 0 1
+            """))
         # force repo_config pkg updates jitted attr to be reset
         self.init_check()
         self.assertNoReport(self.check, self.source)
@@ -434,7 +438,10 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         updates_dir = pjoin(self.child_git_repo.path, 'profiles', 'updates')
         os.makedirs(updates_dir, exist_ok=True)
         with open(pjoin(updates_dir, '4Q-2020'), 'w') as f:
-            f.write('move cat/pkg newcat/pkg\n')
+            f.write(textwrap.dedent("""\
+                move cat/foo newcat/foo
+                move cat/pkg newcat/pkg
+            """))
         # force repo_config pkg updates jitted attr to be reset
         self.init_check()
         self.assertNoReport(self.check, self.source)
