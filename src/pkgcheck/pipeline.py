@@ -192,16 +192,6 @@ class CheckRunner:
         for check in self.checks:
             yield from check.finish()
 
-    def __eq__(self, other):
-        return self.__class__ is other.__class__ and self.checks == other.checks
-
-    def __hash__(self):
-        return hash(self.checks)
-
-    def __repr__(self):
-        checks = ', '.join(sorted(str(check) for check in self.checks))
-        return f'{self.__class__.__name__}({checks})'
-
 
 class AsyncCheckRunner(CheckRunner):
     """Generic runner for asynchronous checks.
