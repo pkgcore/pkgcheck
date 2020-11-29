@@ -10,13 +10,12 @@ from urllib.parse import urlparse
 
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.ebuild.repository import UnconfiguredTree
-from pkgcore.exceptions import PkgcoreException
 from snakeoil import klass
+from snakeoil.cli.exceptions import UserException
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
-from ..log import logger
 from . import GentooRepoCheck, GitCheck
 from .header import copyright_regex
 
@@ -231,11 +230,11 @@ class _RemovalRepo(UnconfiguredTree):
             ['git', 'archive', f'{pkg.commit}~1'] + paths,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             cwd=self.__parent_repo.location)
-        with tarfile.open(mode='r|', fileobj=old_files.stdout) as tar:
-            tar.extractall(path=self.location)
         if old_files.poll():
             error = old_files.stderr.read().decode().strip()
-            raise PkgcoreException(error)
+            raise UserException(f'failed populating archive repo: {error}')
+        with tarfile.open(mode='r|', fileobj=old_files.stdout) as tar:
+            tar.extractall(path=self.location)
 
 
 class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
@@ -275,11 +274,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     def removal_checks(self, pkgs):
         """Check for issues due to package removals."""
         pkg = pkgs[0]
-        try:
-            removal_repo = self.removal_repo(pkgs)
-        except PkgcoreException as e:
-            logger.warning('skipping git removal checks: %s', e)
-            return
+        removal_repo = self.removal_repo(pkgs)
 
         old_keywords = set().union(*(
             p.keywords for p in removal_repo.match(pkg.unversioned_atom)))
@@ -325,12 +320,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
         if new_pkg.live:
             return
 
-        try:
-            modified_repo = self.modified_repo(pkgs)
-        except PkgcoreException as e:
-            logger.warning('skipping git modified checks: %s', e)
-            return
-
+        modified_repo = self.modified_repo(pkgs)
         old_pkg = modified_repo.match(pkg.versioned_atom)[0]
 
         if old_pkg.rdepend != new_pkg.rdepend:
