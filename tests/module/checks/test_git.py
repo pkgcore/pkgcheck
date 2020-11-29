@@ -312,6 +312,7 @@ class TestGitPkgCommitsCheck(ReportTestCase):
             lines = f.read().splitlines()
             lines[0] = line
             f.seek(0)
+            f.truncate()
             f.write('\n'.join(lines))
         self.child_git_repo.add_all('cat/pkg: version bump to 1')
         self.init_check()
@@ -325,6 +326,7 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         with open(pjoin(self.child_git_repo.path, 'cat/pkg/pkg-1.ebuild'), 'r+') as f:
             lines = f.read().splitlines()
             f.seek(0)
+            f.truncate()
             f.write('\n'.join(lines[1:]))
         self.child_git_repo.add_all('cat/pkg: update ebuild')
         self.init_check()
