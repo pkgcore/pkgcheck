@@ -40,8 +40,11 @@ with open(pjoin(tempdir.name, 'repos.conf'), 'w') as f:
 
 pkgcheck = pjoin(main_dir, 'bin', 'pkgcheck')
 args = sys.argv[1:]
-if args[0] == 'scan':
-    # ignore system/user config settings
-    args = ['scan', '--config', 'no', '--cache-dir', tempdir.name] + args[1:]
+try:
+    if args[0] == 'scan':
+        # ignore system/user config settings
+        args = ['scan', '--config', 'no', '--cache-dir', tempdir.name] + args[1:]
+except IndexError:
+    pass
 cmd = [pkgcheck, '--config', tempdir.name] + args
 subprocess.run(cmd)
