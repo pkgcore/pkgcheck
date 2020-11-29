@@ -356,7 +356,7 @@ class TestGitAddon:
         parent_repo = make_git_repo(commit=True)
         child_repo = make_git_repo(self.repo.location, commit=False)
         child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
-        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'pull', 'origin', 'master'])
         child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
         self.addon.update_cache()
         assert not os.path.exists(self.cache_file)
@@ -369,7 +369,7 @@ class TestGitAddon:
 
         child_repo = make_git_repo(self.repo.location, commit=False)
         child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
-        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'pull', 'origin', 'master'])
         child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
         self.addon.update_cache()
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
@@ -404,7 +404,7 @@ class TestGitAddon:
 
         child_repo = make_git_repo(self.repo.location, commit=False)
         child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
-        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'pull', 'origin', 'master'])
         child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
         self.addon.update_cache()
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
@@ -430,7 +430,7 @@ class TestGitAddon:
 
         child_repo = make_git_repo(self.repo.location, commit=False)
         child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
-        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'pull', 'origin', 'master'])
         child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
 
         with patch('pkgcheck.git.ParsedGitRepo.parse_git_log') as parse_git_log:
@@ -446,7 +446,7 @@ class TestGitAddon:
 
         child_repo = make_git_repo(self.repo.location, commit=False)
         child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
-        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'pull', 'origin', 'master'])
         child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
         self.addon.update_cache()
         assert atom_cls('=cat/pkg-0') in self.addon.cached_repo(git.GitAddedRepo)
@@ -473,7 +473,7 @@ class TestGitAddon:
 
         child_repo = make_git_repo(self.repo.location, commit=False)
         child_repo.run(['git', 'remote', 'add', 'origin', parent_repo.path])
-        child_repo.run(['git', 'fetch', 'origin'])
+        child_repo.run(['git', 'pull', 'origin', 'master'])
         child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
 
         # verify IO related dump failures are raised
@@ -491,7 +491,7 @@ class TestGitAddon:
 
         child_git_repo = make_git_repo(self.repo.location, commit=False)
         child_git_repo.run(['git', 'remote', 'add', 'origin', parent_git_repo.path])
-        child_git_repo.run(['git', 'fetch', 'origin'])
+        child_git_repo.run(['git', 'pull', 'origin', 'master'])
         child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
         self.addon.update_cache()
 
@@ -529,7 +529,7 @@ class TestGitAddon:
 
         child_git_repo = make_git_repo(self.repo.location, commit=False)
         child_git_repo.run(['git', 'remote', 'add', 'origin', parent_git_repo.path])
-        child_git_repo.run(['git', 'fetch', 'origin'])
+        child_git_repo.run(['git', 'pull', 'origin', 'master'])
         child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
         self.addon.update_cache()
 
