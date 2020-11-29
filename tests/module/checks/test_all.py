@@ -1,5 +1,5 @@
 import pytest
-from pkgcheck import objects
+from pkgcheck import objects, results
 from pkgcheck import checks as checks_mod
 from snakeoil.cli import arghparse
 
@@ -29,6 +29,20 @@ def test_keywords():
     """Scan through all public result keywords and verify various aspects."""
     for name, cls in objects.KEYWORDS.items():
         assert cls.level is not None, f"result class {name!r} missing level"
+
+
+class TestMetadataError:
+    """Test MetadataError metaclass registry."""
+
+    def test_reregister_error(self):
+        with pytest.raises(ValueError, match="metadata attribute 'eapi' already registered"):
+            class InvalidEapi2(results.MetadataError, results.VersionResult):
+                _attr = 'eapi'
+
+    def test_register_missing_attr(self):
+        with pytest.raises(ValueError, match="class missing metadata attributes"):
+            class InvalidAttr(results.MetadataError, results.VersionResult):
+                pass
 
 
 class TestGentooRepoCheck:
