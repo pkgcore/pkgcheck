@@ -1,8 +1,10 @@
+import os
 import pytest
 from datetime import datetime, timedelta
 from pkgcore.ebuild.cpv import VersionedCPV
 from pkgcheck.checks import SkipCheck
 from pkgcheck.checks.stablereq import StableRequest, StableRequestCheck
+from snakeoil.osutils import pjoin
 
 from ..misc import ReportTestCase, init_check
 
@@ -68,6 +70,14 @@ class TestStableRequestCheck(ReportTestCase):
         self.init_check()
         self.assertNoReport(self.check, self.source)
 
+    def test_uncommitted_local_ebuild(self):
+        self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
+        self.parent_git_repo.add_all('cat/pkg-1')
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'])
+        self.init_check(future=30)
+        self.assertNoReport(self.check, self.source)
+
     def test_existing_stable_keywords(self):
         self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
         self.parent_git_repo.add_all('cat/pkg-1')
@@ -86,10 +96,71 @@ class TestStableRequestCheck(ReportTestCase):
         expected = StableRequest('0', ['~amd64'], 30, pkg=VersionedCPV('cat/pkg-2'))
         assert r == expected
 
-    def test_uncommitted_local_ebuild(self):
+    def test_multislot_with_unstable_slot(self):
         self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
         self.parent_git_repo.add_all('cat/pkg-1')
+        self.parent_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'], slot='1')
+        self.parent_git_repo.add_all('cat/pkg-2')
         self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
-        self.child_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'])
         self.init_check(future=30)
-        self.assertNoReport(self.check, self.source)
+        r = self.assertReport(self.check, self.source)
+        expected = StableRequest('1', ['~amd64'], 30, pkg=VersionedCPV('cat/pkg-2'))
+        assert r == expected
+
+    def test_moved_category(self):
+        self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
+        self.parent_git_repo.add_all('cat/pkg-1')
+        self.parent_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'])
+        self.parent_git_repo.add_all('cat/pkg-2')
+        self.parent_git_repo.move('cat', 'newcat')
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.init_check(future=30)
+        r = self.assertReport(self.check, self.source)
+        expected = StableRequest('0', ['~amd64'], 30, pkg=VersionedCPV('newcat/pkg-2'))
+        assert r == expected
+
+    def test_moved_package(self):
+        self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
+        self.parent_git_repo.add_all('cat/pkg-1')
+        self.parent_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'])
+        self.parent_git_repo.add_all('cat/pkg-2')
+
+        # rename pkg and commit results
+        path = self.parent_git_repo.path
+        new_pkg_dir = pjoin(path, 'cat/newpkg')
+        os.rename(pjoin(path, 'cat/pkg'), new_pkg_dir)
+        for i, f in enumerate(sorted(os.listdir(new_pkg_dir))):
+            os.rename(pjoin(new_pkg_dir, f), pjoin(new_pkg_dir, f'newpkg-{i}.ebuild'))
+        self.parent_git_repo.add_all()
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+
+        self.init_check(future=30)
+        r = self.assertReport(self.check, self.source)
+        expected = StableRequest('0', ['~amd64'], 30, pkg=VersionedCPV('cat/newpkg-2'))
+        assert r == expected
+
+    def test_renamed_ebuild(self):
+        self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
+        self.parent_git_repo.add_all('cat/pkg-1')
+        self.parent_repo.create_ebuild('cat/pkg-2_rc1', keywords=['~amd64'])
+        self.parent_git_repo.add_all('cat/pkg-2_rc1')
+        self.parent_git_repo.move('cat/pkg/pkg-2_rc1.ebuild', 'cat/pkg/pkg-2.ebuild')
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.init_check(future=30)
+        r = self.assertReport(self.check, self.source)
+        expected = StableRequest('0', ['~amd64'], 30, pkg=VersionedCPV('cat/pkg-2'))
+        assert r == expected
+
+    def test_modified_ebuild(self):
+        self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
+        self.parent_git_repo.add_all('cat/pkg-1')
+        self.parent_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'])
+        self.parent_git_repo.add_all('cat/pkg-2')
+        with open(pjoin(self.parent_git_repo.path, 'cat/pkg/pkg-2.ebuild'), 'a') as f:
+            f.write('# comment\n')
+        self.parent_git_repo.add_all('cat/pkg-2: add comment')
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.init_check(future=30)
+        r = self.assertReport(self.check, self.source)
+        expected = StableRequest('0', ['~amd64'], 30, pkg=VersionedCPV('cat/pkg-2'))
+        assert r == expected

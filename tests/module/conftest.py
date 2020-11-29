@@ -161,8 +161,9 @@ class GitRepo:
         self.run(['git', 'rm', '-rf', path])
         self.run(['git', 'commit', '-m', msg])
 
-    def move(self, path, new_path, msg='move'):
+    def move(self, path, new_path, msg=None):
         """Move a given file path and commit the change."""
+        msg = msg if msg is not None else f'{path} -> {new_path}'
         self.run(['git', 'mv', path, new_path])
         self.run(['git', 'commit', '-m', msg])
 
