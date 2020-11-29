@@ -287,6 +287,16 @@ class TestPkgcheckScan:
             out, err = capsys.readouterr()
             assert out == err == ''
 
+    def test_explict_skip_check(self, capsys):
+        """SkipCheck exceptions are raised when triggered for explicitly enabled checks."""
+        with patch('sys.argv', self.args + ['-c', 'net']):
+            with pytest.raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 2
+            out, err = capsys.readouterr()
+            assert not out
+            assert 'network checks not enabled' in err
+
     @pytest.mark.parametrize(
         'action, module',
         (('init', 'Process'), ('queue', 'UnversionedSource'), ('run', 'CheckRunner.run')))
