@@ -319,6 +319,17 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         expected = git_mod.EbuildIncorrectCopyright('2019', line=line, pkg=CPV('cat/pkg-1'))
         assert r == expected
 
+    def test_missing_copyright(self):
+        """Ebuilds missing copyrights entirely are handled by EbuildHeaderCheck."""
+        self.child_repo.create_ebuild('cat/pkg-1')
+        with open(pjoin(self.child_git_repo.path, 'cat/pkg/pkg-1.ebuild'), 'r+') as f:
+            lines = f.read().splitlines()
+            f.seek(0)
+            f.write('\n'.join(lines[1:]))
+        self.child_git_repo.add_all('cat/pkg: update ebuild')
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
     def test_dropped_stable_keywords(self):
         # add stable ebuild to parent repo
         self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
@@ -446,5 +457,13 @@ class TestGitEclassCommitsCheck(ReportTestCase):
         with open(pjoin(self.child_git_repo.path, 'eclass/foo.eclass'), 'w') as f:
             f.write(f'{line}\n')
         self.child_git_repo.add_all('eclass: fix copyright year')
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
+    def test_eclass_missing_copyright(self):
+        """Eclasses missing copyrights entirely are handled by EclassHeaderCheck."""
+        with open(pjoin(self.child_git_repo.path, 'eclass/foo.eclass'), 'w') as f:
+            f.write('# comment\n')
+        self.child_git_repo.add_all('eclass: update foo')
         self.init_check()
         self.assertNoReport(self.check, self.source)
