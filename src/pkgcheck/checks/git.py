@@ -194,6 +194,7 @@ class _RemovalRepo(UnconfiguredTree):
 
     def __init__(self, repo):
         self.__parent_repo = repo
+        self._eclasses = os.path.exists(pjoin(repo.location, 'eclass'))
         self.__tmpdir = TemporaryDirectory()
         self.__created = False
         repo_dir = self.__tmpdir.name
@@ -209,7 +210,7 @@ class _RemovalRepo(UnconfiguredTree):
 
     def __call__(self, pkgs):
         """Update the repo with a given sequence of packages."""
-        self._populate(pkgs, eclasses=(not self.__created))
+        self._populate(pkgs)
         if self.__created:
             # notify the repo object that new pkgs were added
             for pkg in pkgs:
@@ -217,11 +218,11 @@ class _RemovalRepo(UnconfiguredTree):
         self.__created = True
         return self
 
-    def _populate(self, pkgs, eclasses=False):
+    def _populate(self, pkgs):
         """Populate the repo with a given sequence of historical packages."""
         pkg = pkgs[0]
         paths = [pjoin(pkg.category, pkg.package)]
-        if eclasses:
+        if not self.__created and self._eclasses:
             paths.append('eclass')
 
         old_files = subprocess.Popen(
