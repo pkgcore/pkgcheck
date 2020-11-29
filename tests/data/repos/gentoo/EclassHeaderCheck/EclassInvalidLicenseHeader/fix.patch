@@ -1,0 +1,19 @@
+diff -Naur gentoo/eclass/invalid-license-header.eclass fixed/eclass/invalid-license-header.eclass
+--- gentoo/eclass/invalid-license-header.eclass	2020-11-29 02:26:25.548623382 -0700
++++ fixed/eclass/invalid-license-header.eclass	2020-11-29 02:29:34.161734957 -0700
+@@ -1,5 +1,5 @@
+ # Copyright 1999-2020 Gentoo Authors
+-# Distributed under the terms of the GNU General Public License v3
++# Distributed under the terms of the GNU General Public License v2
+ 
+ # @ECLASS: invalid-license-header1.eclass
+ # @MAINTAINER:
+diff -Naur gentoo/eclass/missing-license-header.eclass fixed/eclass/missing-license-header.eclass
+--- gentoo/eclass/missing-license-header.eclass	2020-11-29 02:21:40.779415717 -0700
++++ fixed/eclass/missing-license-header.eclass	2020-11-29 02:29:27.204583288 -0700
+@@ -1,4 +1,5 @@
+ # Copyright 1999-2020 Gentoo Authors
++# Distributed under the terms of the GNU General Public License v2
+ 
+ # @ECLASS: missing-license-header.eclass
+ # @MAINTAINER:

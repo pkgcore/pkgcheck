@@ -1,7 +1,7 @@
 # Copyright 1999-2020 Gentoo Authors
-# Distributed under the terms of the GNU General Public License v2
+# Distributed under the terms of the GNU General Public License v3
 
-# @ECLASS: replacement.eclass
+# @ECLASS: invalid-license-header1.eclass
 # @MAINTAINER:
 # Random Dev <random.dev@gentoo.org>
 # @AUTHOR:

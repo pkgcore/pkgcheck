@@ -1,0 +1,9 @@
+diff -Naur gentoo/eclass/old-gentoo-copyright.eclass fixed/eclass/old-gentoo-copyright.eclass
+--- gentoo/eclass/old-gentoo-copyright.eclass	2020-11-29 02:14:25.032930964 -0700
++++ fixed/eclass/old-gentoo-copyright.eclass	2020-11-29 02:30:13.094583641 -0700
+@@ -1,4 +1,4 @@
+-# Copyright 1999-2019 Gentoo Foundation
++# Copyright 1999-2019 Gentoo Authors
+ # Distributed under the terms of the GNU General Public License v2
+ 
+ # @ECLASS: old-gentoo-copyright.eclass

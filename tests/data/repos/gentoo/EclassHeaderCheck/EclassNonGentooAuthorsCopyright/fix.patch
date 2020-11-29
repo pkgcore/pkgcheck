@@ -1,0 +1,9 @@
+diff -Naur gentoo/eclass/non-gentoo-copyright.eclass fixed/eclass/non-gentoo-copyright.eclass
+--- gentoo/eclass/non-gentoo-copyright.eclass	2020-11-29 02:19:02.210959109 -0700
++++ fixed/eclass/non-gentoo-copyright.eclass	2020-11-29 02:24:13.912753879 -0700
+@@ -1,4 +1,4 @@
+-# Copyright 1999-2020 Random Person
++# Copyright 1999-2020 Gentoo Authors
+ # Distributed under the terms of the GNU General Public License v2
+ 
+ # @ECLASS: non-gentoo-copyright.eclass

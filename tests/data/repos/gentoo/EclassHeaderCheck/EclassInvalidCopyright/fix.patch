@@ -1,0 +1,9 @@
+diff -Naur gentoo/eclass/invalid-copyright.eclass fixed/eclass/invalid-copyright.eclass
+--- gentoo/eclass/invalid-copyright.eclass	2020-11-29 02:12:59.543093386 -0700
++++ fixed/eclass/invalid-copyright.eclass	2020-11-29 02:23:04.196234125 -0700
+@@ -1,4 +1,4 @@
+-# Invalid copyright
++# Copyright 1999-2020 Gentoo Authors
+ # Distributed under the terms of the GNU General Public License v2
+ 
+ # @ECLASS: invalid-copyright.eclass
