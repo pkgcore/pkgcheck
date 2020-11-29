@@ -133,7 +133,7 @@ class GitRepo:
     @property
     def HEAD(self):
         """Return the commit hash for git HEAD."""
-        p = self.run(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE)
+        p = self.run(['git', 'rev-parse', '--short', 'HEAD'], stdout=subprocess.PIPE)
         return p.stdout.strip()
 
     def __str__(self):
