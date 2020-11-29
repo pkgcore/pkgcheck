@@ -360,13 +360,15 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             pkg_map[pkg.status].add(pkg)
             if pkg.status == 'A':
                 pkg_map['D'].discard(pkg)
-            elif pkg.status in ('R', 'D'):
+            elif pkg.status == 'D':
                 pkg_map['A'].discard(pkg)
+            elif pkg.status == 'R':
+                # create pkg add/removal for rename operation
+                pkg_map['A'].add(pkg)
+                pkg_map['D'].add(pkg._old_pkg())
 
-        # packages not available in current repo
-        old = pkg_map['D'] | pkg_map['R']
         # modified packages in current repo
-        modified = [pkg for pkg in pkg_map['M'] if pkg not in old]
+        modified = [pkg for pkg in pkg_map['M'] if pkg not in pkg_map['D']]
 
         # run removed package checks
         if pkg_map['D']:
@@ -389,8 +391,8 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
                 error = 'summary missing matching package prefix'
                 yield BadCommitSummary(error, summary, commit=git_pkg.commit)
 
-            # remaining checks are irrelevant for old packages
-            if git_pkg in old:
+            # remaining checks are irrelevant for removed packages
+            if git_pkg in pkg_map['D']:
                 continue
 
             # pull actual package object from repo

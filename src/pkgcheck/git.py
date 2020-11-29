@@ -179,13 +179,13 @@ class ParsedGitRepo:
                                     old_atom = atom_cls(f'={category}/{pkg}')
                                     category, pkg = data[6:]
                                     new_atom = atom_cls(f'={category}/{pkg}')
-                                    # treat rename as addition and removal
-                                    yield GitPkgChange(new_atom, 'A', commit)
-                                    yield GitPkgChange(old_atom, 'D', commit)
-                                    # Include rename pkg in local
-                                    # commits repo for rename specific
-                                    # results (e.g. MissingMove).
-                                    if local:
+                                    if not local:
+                                        # treat rename as addition and removal
+                                        yield GitPkgChange(new_atom, 'A', commit)
+                                        yield GitPkgChange(old_atom, 'D', commit)
+                                    else:
+                                        # renames are split into add/remove ops at
+                                        # the check level for the local commits repo
                                         yield GitPkgChange(
                                             new_atom, 'R', commit, old_atom=old_atom)
                             except MalformedAtom:
@@ -206,6 +206,12 @@ class _GitCommitPkg(cpv.VersionedCPV):
         if data is not None:
             for k, v in data.items():
                 sf(self, k, v)
+
+    def _old_pkg(self):
+        """Create a new object from a rename commit's old atom."""
+        old = self.old_atom
+        return self.__class__(
+            old.category, old.package, self.status, old.version, self.date, self.commit)
 
 
 class GitChangedRepo(SimpleTree):
