@@ -204,6 +204,7 @@ class EbuildRepo:
             # create a fake 'blank' license
             os.makedirs(pjoin(path, 'licenses'))
             touch(pjoin(path, 'licenses', 'blank'))
+            os.makedirs(pjoin(path, 'eclass'))
         except FileExistsError:
             pass
         self._repo = repository.UnconfiguredTree(path)

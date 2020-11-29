@@ -52,7 +52,6 @@ class TestEclassAddon:
         self.cache_dir = str(tmp_path)
 
         self.eclass_dir = pjoin(repo.location, 'eclass')
-        os.makedirs(self.eclass_dir)
 
         args = ['scan', '--cache-dir', self.cache_dir, '--repo', repo.location]
         options, _ = tool.parse_args(args)
