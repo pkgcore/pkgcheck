@@ -49,12 +49,6 @@ class TestStableRequestCheck(ReportTestCase):
         options, _ = self._tool.parse_args(args)
         return options
 
-    def test_no_gentoo_repo(self):
-        options = self._options()
-        options.gentoo_repo = False
-        with pytest.raises(SkipCheck, match='not running against gentoo repo'):
-            self.init_check(options)
-
     def test_no_git_support(self):
         options = self._options()
         options.cache['git'] = False

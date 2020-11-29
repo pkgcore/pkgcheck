@@ -32,41 +32,59 @@ def pytest_assertrepr_compare(op, left, right):
 @pytest.fixture(scope="session")
 def fakeconfig(tmp_path_factory):
     """Generate a portage config that sets the default repo to pkgcore's stubrepo."""
-    fakeconfig = tmp_path_factory.mktemp('fakeconfig')
-    repos_conf = fakeconfig / 'repos.conf'
+    config = tmp_path_factory.mktemp('fakeconfig')
+    repos_conf = config / 'repos.conf'
     stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
     with open(repos_conf, 'w') as f:
         f.write(textwrap.dedent(f"""\
             [DEFAULT]
             main-repo = stubrepo
-
             [stubrepo]
             location = {stubrepo}
         """))
-    return str(fakeconfig)
+    return str(config)
 
 
 @pytest.fixture(scope="session")
 def testconfig(tmp_path_factory):
-    """Generate a portage config that sets the default repo to pkgcore's stubrepo.
-
-    Also, repo entries for all the bundled test repos.
-    """
-    testconfig = tmp_path_factory.mktemp('testconfig')
-    repos_conf = testconfig / 'repos.conf'
+    """Generate a portage config that sets the default repo to pkgcore's stubrepo."""
+    config = tmp_path_factory.mktemp('testconfig')
+    repos_conf = config / 'repos.conf'
     stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
     testdir = pjoin(os.path.dirname(os.path.dirname(__file__)), 'repos')
     with open(repos_conf, 'w') as f:
         f.write(textwrap.dedent(f"""\
             [DEFAULT]
             main-repo = stubrepo
-
             [stubrepo]
             location = {stubrepo}
             [overlayed]
             location = {pjoin(testdir, 'overlayed')}
         """))
-    return str(testconfig)
+    return str(config)
+
+
+@pytest.fixture(scope="session")
+def fullconfig(tmp_path_factory):
+    """Generate a portage config that sets the default repo to pkgcore's stubrepo.
+
+    Also, repo entries for all the bundled test repos.
+    """
+    config = tmp_path_factory.mktemp('fullconfig')
+    repos_conf = config / 'repos.conf'
+    stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
+    testdir = pjoin(os.path.dirname(os.path.dirname(__file__)), 'repos')
+    with open(repos_conf, 'w') as f:
+        f.write(textwrap.dedent(f"""\
+            [DEFAULT]
+            main-repo = stubrepo
+            [stubrepo]
+            location = {stubrepo}
+        """))
+        for repo in os.listdir(testdir):
+            f.write(f'[{repo}]\n')
+            f.write(f'location = {pjoin(testdir, repo)}\n')
+    return str(config)
 
 
 @pytest.fixture(scope="session")

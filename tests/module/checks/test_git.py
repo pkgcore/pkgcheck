@@ -3,7 +3,6 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck.checks import git as git_mod
-from pkgcheck.checks import SkipCheck
 from pkgcheck.git import GitCommit
 from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakeRepo
@@ -269,35 +268,6 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         options, _ = self._tool.parse_args(args)
         return options
 
-    def test_no_gentoo_repo(self):
-        self.child_repo.create_ebuild('cat/pkg-1')
-        self.child_git_repo.add_all('cat/pkg-1')
-        options = self._options()
-        options.gentoo_repo = False
-        with pytest.raises(SkipCheck, match='not running against gentoo repo'):
-            self.init_check(options)
-
-    def test_no_commits_option(self):
-        self.child_repo.create_ebuild('cat/pkg-1')
-        self.child_git_repo.add_all('cat/pkg-1')
-        options = self._options()
-        options.commits = None
-        with pytest.raises(SkipCheck, match='not scanning against git commits'):
-            self.init_check(options)
-
-    def test_no_local_commits(self):
-        with pytest.raises(SystemExit) as excinfo:
-            self.init_check()
-        assert excinfo.value.code == 0
-
-        # parent repo has new commits
-        self.parent_repo.create_ebuild('cat/pkg-1')
-        self.parent_git_repo.add_all('cat/pkg-1')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
-        with pytest.raises(SystemExit) as excinfo:
-            self.init_check()
-        assert excinfo.value.code == 0
-
     def test_direct_stable(self):
         self.child_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
         self.child_git_repo.add_all('cat/pkg: version bump to 1')
@@ -440,27 +410,6 @@ class TestGitEclassCommitsCheck(ReportTestCase):
         ]
         options, _ = self._tool.parse_args(args)
         return options
-
-    def test_no_gentoo_repo(self):
-        self.child_repo.create_ebuild('cat/pkg-1')
-        self.child_git_repo.add_all('cat/pkg-1')
-        options = self._options()
-        options.gentoo_repo = False
-        with pytest.raises(SkipCheck, match='not running against gentoo repo'):
-            self.init_check(options)
-
-    def test_no_commits_option(self):
-        self.child_repo.create_ebuild('cat/pkg-1')
-        self.child_git_repo.add_all('cat/pkg-1')
-        options = self._options()
-        options.commits = None
-        with pytest.raises(SkipCheck, match='not scanning against git commits'):
-            self.init_check(options)
-
-    def test_no_local_commits(self):
-        with pytest.raises(SystemExit) as excinfo:
-            self.init_check()
-        assert excinfo.value.code == 0
 
     def test_eclass_incorrect_copyright(self):
         line = '# Copyright 1999-2019 Gentoo Authors'
