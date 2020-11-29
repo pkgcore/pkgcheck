@@ -255,8 +255,8 @@ class EbuildRepo:
                 if isinstance(v, (tuple, list)):
                     v = ' '.join(v)
                 f.write(f'{k.upper()}="{v}"\n')
-            if data is not None:
-                f.write(data)
+            if data:
+                f.write(data.strip() + '\n')
 
     def __iter__(self):
         yield from iter(self._repo)

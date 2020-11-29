@@ -1,8 +1,10 @@
 import os
+from datetime import datetime, timedelta
 
 import pytest
 from pkgcheck import git
-from pkgcheck.checks import pkgdir
+from pkgcheck.checks import SkipCheck, pkgdir
+from pkgcore.ebuild.cpv import UnversionedCPV
 from pkgcore.test.misc import FakeRepo
 from snakeoil import fileutils
 from snakeoil.cli import arghparse
@@ -393,3 +395,81 @@ class TestUnknownPkgDirEntry(PkgDirCheckBase):
         with open(pjoin(self.repo.location, '.gitignore'), 'w') as f:
             f.write('*.swp')
         self.assertNoReport(self.mk_check(gentoo=True), [pkg])
+
+
+class TestLiveOnlyCheck(misc.ReportTestCase):
+
+    check_kls = pkgdir.LiveOnlyCheck
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path, tool, make_repo, make_git_repo):
+        self._tool = tool
+        self.cache_dir = str(tmp_path)
+
+        # initialize parent repo
+        self.parent_git_repo = make_git_repo()
+        self.parent_repo = make_repo(self.parent_git_repo.path, repo_id='gentoo')
+        self.parent_git_repo.add_all('initial commit')
+        # create a stub pkg and commit it
+        self.parent_repo.create_ebuild('cat/pkg-0', properties='live')
+        self.parent_git_repo.add_all('cat/pkg-0')
+
+        # initialize child repo
+        self.child_git_repo = make_git_repo()
+        self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_repo = make_repo(self.child_git_repo.path)
+
+    def init_check(self, options=None, future=0):
+        self.options = options if options is not None else self._options()
+        self.check, required_addons, self.source = misc.init_check(self.check_kls, self.options)
+        for k, v in required_addons.items():
+            setattr(self, k, v)
+        if future:
+            self.check.today = datetime.today() + timedelta(days=+future)
+
+    def _options(self, **kwargs):
+        args = [
+            'scan', '-q', '--cache-dir', self.cache_dir,
+            '--repo', self.child_repo.location,
+        ]
+        options, _ = self._tool.parse_args(args)
+        return options
+
+    def test_no_git_support(self):
+        options = self._options()
+        options.cache['git'] = False
+        with pytest.raises(SkipCheck, match='git cache support required'):
+            self.init_check(options)
+
+    def test_keywords_exist(self):
+        self.parent_repo.create_ebuild('cat/pkg-1', keywords=['~amd64'])
+        self.parent_git_repo.add_all('cat/pkg-1')
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
+    def test_all_live_pkgs(self):
+        self.parent_repo.create_ebuild('cat/pkg-1', properties='live')
+        self.parent_git_repo.add_all('cat/pkg-1')
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.init_check()
+        # result will trigger for any package age
+        expected = pkgdir.LiveOnlyPackage(0, pkg=UnversionedCPV('cat/pkg'))
+        r = self.assertReport(self.check, self.source)
+        assert r == expected
+
+        # packages are now a year old
+        self.init_check(future=365)
+        expected = pkgdir.LiveOnlyPackage(365, pkg=UnversionedCPV('cat/pkg'))
+        r = self.assertReport(self.check, self.source)
+        assert r == expected
+
+    def test_uncommitted_local_ebuild(self):
+        self.parent_repo.create_ebuild('cat/pkg-1', properties='live')
+        self.parent_git_repo.add_all('cat/pkg-1')
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_repo.create_ebuild('cat/pkg-2', properties='live')
+        self.init_check(future=180)
+        self.assertNoReport(self.check, self.source)
