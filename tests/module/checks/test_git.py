@@ -8,6 +8,7 @@ from pkgcheck.git import GitCommit
 from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
+from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
@@ -97,7 +98,7 @@ class TestGitCheck(ReportTestCase):
 
         for tag in ('Fixes', 'Reverts'):
             # no results on `git cat-file` failure
-            with patch('subprocess.Popen') as git_cat:
+            with patch('pkgcheck.checks.git.subprocess.Popen') as git_cat:
                 # force using a new `git cat-file` process for each iteration
                 self.check._git_cat_file = None
                 git_cat.return_value.poll.return_value = -1
@@ -107,7 +108,7 @@ class TestGitCheck(ReportTestCase):
             # missing and ambiguous object refs
             for status in ('missing', 'ambiguous'):
                 self.check._git_cat_file = None
-                with patch('subprocess.Popen') as git_cat:
+                with patch('pkgcheck.checks.git.subprocess.Popen') as git_cat:
                     git_cat.return_value.poll.return_value = None
                     git_cat.return_value.stdout.readline.return_value = f'{ref} {status}'
                     commit = self.SO_commit(tags=[f'{tag}: {ref}'])
@@ -116,7 +117,7 @@ class TestGitCheck(ReportTestCase):
                     assert f'{status} commit' in r.error
 
             # valid tag reference
-            with patch('subprocess.Popen') as git_cat:
+            with patch('pkgcheck.checks.git.subprocess.Popen') as git_cat:
                 self.check._git_cat_file = None
                 git_cat.return_value.poll.return_value = None
                 git_cat.return_value.stdout.readline.return_value = f'{ref} commit 1234'
@@ -352,6 +353,12 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         expected = git_mod.DroppedStableKeywords(['amd64'], commit, pkg=CPV('cat/pkg-1'))
         assert r == expected
 
+        # git archive failures error out
+        with patch('pkgcheck.checks.git.subprocess.Popen') as git_archive:
+            git_archive.return_value.poll.return_value = -1
+            with pytest.raises(UserException, match='failed populating archive repo'):
+                self.assertNoReport(self.check, self.source)
+
     def test_dropped_unstable_keywords(self):
         # add stable ebuild to parent repo
         self.parent_repo.create_ebuild('cat/pkg-1', keywords=['~amd64'])
@@ -409,6 +416,12 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         # force repo_config pkg updates jitted attr to be reset
         self.init_check()
         self.assertNoReport(self.check, self.source)
+
+        # git archive failures error out
+        with patch('pkgcheck.checks.git.subprocess.Popen') as git_archive:
+            git_archive.return_value.poll.return_value = -1
+            with pytest.raises(UserException, match='failed populating archive repo'):
+                self.assertNoReport(self.check, self.source)
 
     def test_missing_move(self):
         self.child_git_repo.move('cat', 'newcat', msg='newcat/pkg: moved pkg')
