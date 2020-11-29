@@ -51,7 +51,8 @@ class StableRequestCheck(GentooRepoCheck):
     def feed(self, pkgset):
         pkg_slotted = defaultdict(list)
         pkg_keywords = set()
-        for pkg in pkgset:
+        # ebuilds without keywords are ignored
+        for pkg in (x for x in pkgset if x.keywords):
             pkg_slotted[pkg.slot].append(pkg)
             pkg_keywords.update(pkg.keywords)
 
@@ -61,10 +62,6 @@ class StableRequestCheck(GentooRepoCheck):
                 slot_keywords = set().union(*(pkg.keywords for pkg in pkgs))
                 stable_slot_keywords = slot_keywords.intersection(stable_pkg_keywords)
                 for pkg in reversed(pkgs):
-                    # skip unkeyworded pkgs
-                    if not pkg.keywords:
-                        continue
-
                     # stop if stable keywords are found
                     if stable_pkg_keywords.intersection(pkg.keywords):
                         break
