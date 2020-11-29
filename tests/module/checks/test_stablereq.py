@@ -31,17 +31,19 @@ class TestStableRequestCheck(ReportTestCase):
         self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
         self.child_repo = make_repo(self.child_git_repo.path)
 
-    def init_check(self, options=None, future=True):
+    def init_check(self, options=None, future=0):
         self.options = options if options is not None else self._options()
         self.check, required_addons, self.source = init_check(self.check_kls, self.options)
         for k, v in required_addons.items():
             setattr(self, k, v)
-        self.cache_file = self.git_addon.cache_file(self.child_repo)
         if future:
-            self.check.today = datetime.today() + timedelta(days=+30)
+            self.check.today = datetime.today() + timedelta(days=+future)
 
     def _options(self, **kwargs):
-        args = ['scan', '--cache-dir', self.cache_dir, '--repo', self.child_repo.location]
+        args = [
+            'scan', '-q', '--cache-dir', self.cache_dir,
+            '--repo', self.child_repo.location,
+        ]
         options, _ = self._tool.parse_args(args)
         return options
 
@@ -72,7 +74,22 @@ class TestStableRequestCheck(ReportTestCase):
         self.parent_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'])
         self.parent_git_repo.add_all('cat/pkg-2')
         self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
-        self.init_check()
+
+        # packages are not old enough to trigger any results
+        for days in (0, 1, 10, 20, 29):
+            self.init_check(future=days)
+            self.assertNoReport(self.check, self.source)
+
+        # packages are now >= 30 days old
+        self.init_check(future=30)
         r = self.assertReport(self.check, self.source)
         expected = StableRequest('0', ['~amd64'], 30, pkg=VersionedCPV('cat/pkg-2'))
         assert r == expected
+
+    def test_uncommitted_local_ebuild(self):
+        self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
+        self.parent_git_repo.add_all('cat/pkg-1')
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'])
+        self.init_check(future=30)
+        self.assertNoReport(self.check, self.source)
