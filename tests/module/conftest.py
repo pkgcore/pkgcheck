@@ -77,9 +77,9 @@ def cache_dir(tmp_path_factory):
 
 
 @pytest.fixture
-def fakerepo(tmp_path):
+def fakerepo(tmp_path_factory):
     """Generate a stub repo."""
-    fakerepo = str(tmp_path)
+    fakerepo = str(tmp_path_factory.mktemp('fakerepo'))
     os.makedirs(pjoin(fakerepo, 'profiles'))
     os.makedirs(pjoin(fakerepo, 'metadata'))
     with open(pjoin(fakerepo, 'profiles', 'repo_name'), 'w') as f:
@@ -169,9 +169,9 @@ class GitRepo:
 
 
 @pytest.fixture
-def git_repo(tmp_path):
+def git_repo(tmp_path_factory):
     """Create an empty git repo with an initial commit."""
-    return GitRepo(str(tmp_path), commit=True)
+    return GitRepo(str(tmp_path_factory.mktemp('git-repo')), commit=True)
 
 
 @pytest.fixture
@@ -247,9 +247,9 @@ class EbuildRepo:
 
 
 @pytest.fixture
-def repo(tmp_path):
+def repo(tmp_path_factory):
     """Create a generic ebuild repository."""
-    return EbuildRepo(str(tmp_path))
+    return EbuildRepo(str(tmp_path_factory.mktemp('repo')))
 
 
 @pytest.fixture
