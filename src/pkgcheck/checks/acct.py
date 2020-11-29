@@ -90,10 +90,9 @@ class AcctCheck(Check):
 
         for line in pkg.ebuild.text_fileobj():
             m = self.id_re.match(line)
-            if m is not None:
-                if m.group('var') == expected_var:
-                    found_id = int(m.group('id'))
-                    break
+            if m is not None and m.group('var') == expected_var:
+                found_id = int(m.group('id'))
+                break
         else:
             yield MissingAccountIdentifier(f"ACCT_{expected_var}_ID", pkg=pkg)
             return
