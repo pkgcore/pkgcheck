@@ -295,6 +295,16 @@ class TestGitPkgCommitsCheck(ReportTestCase):
             'version bump', commit=commit)
         assert r == expected
 
+    def test_no_commit_summary(self):
+        self.child_repo.create_ebuild('cat/pkg-1')
+        self.child_git_repo.run(['git', 'add', '--all'])
+        self.child_git_repo.run(['git', 'commit', '--allow-empty-message', '-m', ''])
+        commit = self.child_git_repo.HEAD
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.BadCommitSummary('no summary', '', commit=commit)
+        assert r == expected
+
     def test_ebuild_incorrect_copyright(self):
         self.child_repo.create_ebuild('cat/pkg-1')
         line = '# Copyright 1999-2019 Gentoo Authors'

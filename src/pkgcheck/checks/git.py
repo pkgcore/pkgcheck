@@ -86,6 +86,8 @@ class BadCommitSummary(results.CommitResult, results.Warning):
 
     @property
     def desc(self):
+        if not self.summary:
+            return f'commit {self.commit}, {self.error}'
         return f'commit {self.commit}, {self.error}: {self.summary!r}'
 
 
@@ -381,12 +383,12 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             # check git commit summary formatting
             try:
                 summary = git_pkg.commit.message[0]
+                summary_prefix_re = rf'^({git_pkg.key}|{git_pkg.cpvstr}): '
+                if not re.match(summary_prefix_re, summary):
+                    error = 'summary missing matching package prefix'
+                    yield BadCommitSummary(error, summary, commit=git_pkg.commit)
             except IndexError:
-                summary = ''
-            summary_prefix_re = rf'^({git_pkg.key}|{git_pkg.cpvstr}): '
-            if not re.match(summary_prefix_re, summary):
-                error = 'summary missing matching package prefix'
-                yield BadCommitSummary(error, summary, commit=git_pkg.commit)
+                yield BadCommitSummary('no summary', '', commit=git_pkg.commit)
 
             # remaining checks are irrelevant for removed packages
             if git_pkg in pkg_map['D']:
