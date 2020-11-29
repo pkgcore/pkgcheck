@@ -81,45 +81,16 @@ class FakeFilesDirPkg(package):
 class ReportTestCase:
     """Base class for verifying report generation."""
 
-    def _assert_known_results(self, *reports):
+    def _assertReportSanity(self, *reports):
         for report in reports:
             assert report.__class__ in self.check_kls.known_results
-
-    def assertNoReport(self, check, data, msg=""):
-        results = []
-        if msg:
-            msg = f"{msg}: "
-
-        if isinstance(data, sources.Source):
-            source = data
-            options = source.options
-        elif isinstance(data, prototype.tree):
-            options = arghparse.Namespace(target_repo=data)
-            source = sources.RepoSource(options)
-        else:
-            if not isinstance(data, tuple):
-                data = [data]
-            options = arghparse.Namespace()
-            source = sources.Source(options, data)
-
-        runner = CheckRunner(options, source, [check])
-        runner.start()
-        results.extend(runner.run())
-        results.extend(runner.finish())
-        self._assert_known_results(*results)
-        assert results == [], f"{msg}{list(report.desc for report in results)}"
-
-    def assertReportSanity(self, *reports):
-        for report in reports:
             for attr in report.scope.attrs:
                 assert hasattr(report, attr), (
                     f"missing attr {attr}: {report.__class__!r} {report}")
             # pull desc to force a render for basic sanity checks
             assert report.desc
 
-    def assertReports(self, check, data, expected=None):
-        results = []
-
+    def _run_check(self, check, data):
         if isinstance(data, sources.Source):
             source = data
             options = source.options
@@ -132,13 +103,23 @@ class ReportTestCase:
             options = arghparse.Namespace()
             source = sources.Source(options, data)
 
+        results = []
         runner = CheckRunner(options, source, [check])
         runner.start()
         results.extend(runner.run())
         results.extend(runner.finish())
-        self._assert_known_results(*results)
+        return results
+
+    def assertNoReport(self, check, data, msg=""):
+        if msg:
+            msg = f"{msg}: "
+        results = self._run_check(check, data)
+        assert results == [], f"{msg}{list(report.desc for report in results)}"
+
+    def assertReports(self, check, data, expected=None):
+        results = self._run_check(check, data)
         assert results, f"must get a report from {check} {data}, got none"
-        self.assertReportSanity(*results)
+        self._assertReportSanity(*results)
         if expected is not None:
             assert set(results) == set(expected)
         return results
@@ -146,9 +127,8 @@ class ReportTestCase:
     def assertReport(self, check, data, expected=None):
         results = self.assertReports(check, data)
         assert len(results) == 1, f"expected one report, got {len(results)}: {results}"
-        self._assert_known_results(*results)
+        self._assertReportSanity(*results)
         result = results[0]
-        self.assertReportSanity(result)
         if expected is not None:
             assert result == expected
         return result
