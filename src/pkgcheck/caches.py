@@ -89,8 +89,7 @@ class CachedAddon(base.Addon, metaclass=_RegisterCache):
 
     def remove_caches(self):
         """Remove all or selected caches."""
-        force = getattr(self.options, 'force_cache', False)
-        if force:
+        if self.options.force_cache:
             try:
                 shutil.rmtree(self.options.cache_dir)
             except FileNotFoundError:
