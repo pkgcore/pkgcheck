@@ -304,7 +304,7 @@ class PythonCompatCheck(Check):
                     break
 
     def deps(self, pkg, attrs=None):
-        """Iterator of unique dependencies for a given package."""
+        """Set of dependencies for a given package's attributes."""
         attrs = attrs if attrs is not None else pkg.eapi.dep_keys
         deps = set()
         for attr in (x.lower() for x in attrs):
@@ -323,6 +323,7 @@ class PythonCompatCheck(Check):
         deps = self.deps(pkg, attrs=attrs)
 
         try:
+            # determine the latest supported python version
             latest_target = sorted(
                 f"python{x.slot.replace('.', '_')}" for x in deps
                 if x.key == 'dev-lang/python' and x.slot is not None)[-1]
@@ -341,8 +342,8 @@ class PythonCompatCheck(Check):
             targets.add(target)
 
         if targets:
-            # determine if deps support missing python targets
             try:
+                # determine if deps support missing python targets
                 for dep in self.python_deps(deps, prefix):
                     # TODO: use query caching for repo matching?
                     latest = sorted(self.options.search_repo.match(dep))[-1]
