@@ -362,7 +362,7 @@ class TestPkgcheckScan:
 
     @pytest.mark.parametrize(
         'action, module',
-        (('init', 'Process'), ('queue', 'UnversionedSource'), ('run', 'CheckRunner.run')))
+        (('queue', 'UnversionedSource'), ('run', 'CheckRunner.run')))
     def test_pipeline_exceptions(self, action, module, capsys):
         """Test checkrunner pipeline against unhandled exceptions."""
         with patch('sys.argv', self.args), \

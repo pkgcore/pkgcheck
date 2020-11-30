@@ -122,7 +122,7 @@ class TestNetworkChecks:
             f'{check_name}/ftp-{keyword}'
         ]
         for side_effect, expected_result in data:
-            with patch('urllib.request.urlopen') as urlopen:
+            with patch('pkgcheck.checks.network.urllib.request.urlopen') as urlopen:
                 with patch('sys.argv', self.args + args):
                     if side_effect is not None:
                         urlopen.side_effect = side_effect

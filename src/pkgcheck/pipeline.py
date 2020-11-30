@@ -1,5 +1,8 @@
 """Pipeline building support for connecting sources and checks."""
 
+import os
+import signal
+import sys
 import traceback
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
@@ -15,53 +18,113 @@ from .sources import UnversionedSource, VersionedSource
 
 
 class Pipeline:
-    """Check-running pipeline leveraging scope-based parallelism."""
+    """Check-running pipeline leveraging scope-based parallelism.
 
-    def __init__(self, options, scan_scope, pipes, restrict):
+    All results are pushed into the results queue as lists of result objects or
+    exception tuples. This iterator forces exceptions to be handled explicitly,
+    by outputing the serialized traceback and signaling scanning processes to
+    end when an exception object is found.
+    """
+
+    def __init__(self, options, scan_scope, pipes, restriction):
         self.options = options
         self.scan_scope = scan_scope
-        self.pipes = pipes
-        self.restrict = restrict
-        self.jobs = options.jobs
+        self.restriction = restriction
+        self.results_q = SimpleQueue()
+        self.work_q = SimpleQueue()
+        self._iter = iter(self.results_q.get, None)
+        self._pid = None
+
+        # determine if scan is being run at a package level
         self.pkg_scan = (
             scan_scope in (base.version_scope, base.package_scope) and
-            isinstance(restrict, boolean.AndRestriction))
+            isinstance(restriction, boolean.AndRestriction))
 
-    def _queue_work(self, scoped_pipes, work_q, results_q):
+        # initialize checkrunners per source type, using separate runner for async checks
+        checkrunners = defaultdict(list)
+        for (source, exec_type), checks in pipes.items():
+            if exec_type == 'async':
+                runner = AsyncCheckRunner(
+                    self.options, source, checks, results_q=self.results_q)
+            else:
+                runner = CheckRunner(self.options, source, checks)
+            checkrunners[(source.scope, exec_type)].append(runner)
+
+        # categorize checkrunners for parallelization based on the scan and source scope
+        self.scoped_pipes = defaultdict(lambda: defaultdict(list))
+        if self.pkg_scan:
+            for (scope, exec_type), runners in checkrunners.items():
+                if scope is base.version_scope:
+                    self.scoped_pipes[exec_type][base.version_scope].extend(runners)
+                else:
+                    self.scoped_pipes[exec_type][base.package_scope].extend(runners)
+        else:
+            for (scope, exec_type), runners in checkrunners.items():
+                if scope in (base.version_scope, base.package_scope):
+                    self.scoped_pipes[exec_type][base.package_scope].extend(runners)
+                else:
+                    self.scoped_pipes[exec_type][scope].extend(runners)
+
+    def _kill_pipe(self, *args, exit=False):
+        if self._pid is not None:
+            os.killpg(self._pid, signal.SIGKILL)
+        if exit:
+            raise SystemExit(1)
+        raise KeyboardInterrupt
+
+    def __iter__(self):
+        # start running the check pipeline
+        signal.signal(signal.SIGINT, self._kill_pipe)
+        p = Process(target=self._run)
+        p.start()
+        self._pid = p.pid
+        return self
+
+    def __next__(self):
+        results = next(self._iter)
+        # Catch propagated exceptions, output their traceback, and
+        # signal the scanning process to end.
+        if isinstance(results, str):
+            print(results.strip(), file=sys.stderr)
+            self._kill_pipe(exit=True)
+        return results
+
+    def _queue_work(self):
         """Producer that queues scanning tasks against granular scope restrictions."""
         try:
-            for scope in sorted(scoped_pipes['sync'], reverse=True):
-                pipes = scoped_pipes['sync'][scope]
+            for scope in sorted(self.scoped_pipes['sync'], reverse=True):
+                pipes = self.scoped_pipes['sync'][scope]
                 if scope is base.version_scope:
                     versioned_source = VersionedSource(self.options)
-                    for restrict in versioned_source.itermatch(self.restrict):
+                    for restrict in versioned_source.itermatch(self.restriction):
                         for i in range(len(pipes)):
-                            work_q.put((scope, restrict, i))
+                            self.work_q.put((scope, restrict, i))
                 elif scope is base.package_scope:
                     unversioned_source = UnversionedSource(self.options)
-                    for restrict in unversioned_source.itermatch(self.restrict):
-                        work_q.put((scope, restrict, 0))
+                    for restrict in unversioned_source.itermatch(self.restriction):
+                        self.work_q.put((scope, restrict, 0))
                 else:
                     for i in range(len(pipes)):
-                        work_q.put((scope, self.restrict, i))
+                        self.work_q.put((scope, self.restriction, i))
 
             # insert flags to notify consumers that no more work exists
-            for i in range(self.jobs):
-                work_q.put(None)
+            for i in range(self.options.jobs):
+                self.work_q.put(None)
 
             # schedule all async checks from a single process
-            for scope, pipes in scoped_pipes['async'].items():
+            for scope, pipes in self.scoped_pipes['async'].items():
                 for pipe in pipes:
-                    pipe.run(self.restrict)
+                    pipe.run(self.restriction)
         except Exception:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
-            results_q.put(tb)
+            self.results_q.put(tb)
 
-    def _run_checks(self, pipes, work_q, results_q):
+    def _run_checks(self):
         """Consumer that runs scanning tasks, queuing results for output."""
+        pipes = self.scoped_pipes['sync']
         try:
-            for scope, restrict, pipe_idx in iter(work_q.get, None):
+            for scope, restrict, pipe_idx in iter(self.work_q.get, None):
                 results = []
 
                 if scope is base.version_scope:
@@ -76,56 +139,24 @@ class Pipeline:
                     results.extend(pipe.finish())
 
                 if results:
-                    results_q.put(results)
+                    self.results_q.put(results)
         except Exception:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
-            results_q.put(tb)
+            self.results_q.put(tb)
 
-    def run(self, results_q):
+    def _run(self):
         """Run the scanning pipeline in parallel by check and scanning scope."""
-        # initialize checkrunners per source type, using separate runner for async checks
-        try:
-            checkrunners = defaultdict(list)
-            for (source, exec_type), checks in self.pipes.items():
-                if exec_type == 'async':
-                    runner = AsyncCheckRunner(
-                        self.options, source, checks, results_q=results_q)
-                else:
-                    runner = CheckRunner(self.options, source, checks)
-                checkrunners[(source.scope, exec_type)].append(runner)
-
-            # categorize checkrunners for parallelization based on the scan and source scope
-            scoped_pipes = defaultdict(lambda: defaultdict(list))
-            if self.pkg_scan:
-                for (scope, exec_type), runners in checkrunners.items():
-                    if scope is base.version_scope:
-                        scoped_pipes[exec_type][base.version_scope].extend(runners)
-                    else:
-                        scoped_pipes[exec_type][base.package_scope].extend(runners)
-            else:
-                for (scope, exec_type), runners in checkrunners.items():
-                    if scope in (base.version_scope, base.package_scope):
-                        scoped_pipes[exec_type][base.package_scope].extend(runners)
-                    else:
-                        scoped_pipes[exec_type][scope].extend(runners)
-
-            work_q = SimpleQueue()
-
-            # split target restriction into tasks for parallelization
-            p = Process(target=self._queue_work, args=(scoped_pipes, work_q, results_q))
-            p.start()
-            # run synchronous checks using process pool, queuing generated results for reporting
-            pool = Pool(self.jobs, self._run_checks, (scoped_pipes['sync'], work_q, results_q))
-            pool.close()
-            p.join()
-            pool.join()
-
-            results_q.put(None)
-        except Exception:
-            # traceback can't be pickled so serialize it
-            tb = traceback.format_exc()
-            results_q.put(tb)
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        os.setpgrp()
+        # run synchronous checks using process pool, queuing generated results for reporting
+        pool = Pool(self.options.jobs, self._run_checks)
+        pool.close()
+        # split target restriction into tasks for parallelization
+        self._queue_work()
+        pool.join()
+        self.results_q.put(None)
+        os._exit(0)
 
 
 class CheckRunner:
@@ -197,9 +228,8 @@ class AsyncCheckRunner(CheckRunner):
     or network access are run in separate threads, queuing any relevant results
     on completion.
     """
-
-    def __init__(self, *args, results_q, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, results_q):
+        super().__init__(*args)
         self.results_q = results_q
 
     def run(self, restrict=packages.AlwaysTrue):

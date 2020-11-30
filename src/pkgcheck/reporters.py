@@ -2,13 +2,9 @@
 
 import csv
 import json
-import os
 import pickle
-import signal
-import sys
 from collections import defaultdict
 from itertools import chain
-from multiprocessing import Process, SimpleQueue
 from string import Formatter
 from xml.sax.saxutils import escape as xml_escape
 
@@ -17,34 +13,6 @@ from snakeoil.decorators import coroutine
 
 from . import base
 from .results import InvalidResult, Result
-
-
-class _ResultsIter:
-    """Iterator handling exceptions within queued results.
-
-    Due to the parallelism of check running, all results are pushed into the
-    results queue as lists of result objects or exception tuples. This iterator
-    forces exceptions to be handled explicitly, by outputting the serialized
-    traceback and signaling scanning processes to end when an exception object
-    is found.
-    """
-
-    def __init__(self, results_q, pid):
-        self.pid = pid
-        self.iter = iter(results_q.get, None)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        results = next(self.iter)
-        # Catch propagated exceptions, output their traceback, and
-        # signal the scanning process to end.
-        if isinstance(results, str):
-            print(results.strip(), file=sys.stderr)
-            os.killpg(self.pid, signal.SIGINT)
-            raise SystemExit(1)
-        return results
 
 
 class Reporter:
@@ -71,20 +39,11 @@ class Reporter:
     def __call__(self, pipe):
         self._exit_failed = False
 
-        results_q = SimpleQueue()
-        orig_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)
-        p = Process(target=pipe.run, args=(results_q,))
-        p.start()
-        # pipeline uses separate process group so it can be shutdown on demand
-        os.setpgid(p.pid, 0)
-        results_iter = _ResultsIter(results_q, p.pid)
-        signal.signal(signal.SIGINT, orig_sigint_handler)
-
         if pipe.pkg_scan:
             # Running on a package scope level, i.e. running within a package
             # directory in an ebuild repo. This sorts all generated results,
             # removing duplicate MetadataError results.
-            for result in sorted(set().union(*results_iter)):
+            for result in sorted(set().union(*pipe)):
                 self.report(result)
         else:
             # Running at a category scope level or higher. This outputs
@@ -98,7 +57,7 @@ class Reporter:
                 scope: [] for scope in reversed(list(base.scopes.values()))
                 if scope.level <= base.repo_scope
             }
-            for results in results_iter:
+            for results in pipe:
                 for result in sorted(results):
                     try:
                         ordered_results[result.scope].append(result)
@@ -107,7 +66,6 @@ class Reporter:
             for result in chain.from_iterable(sorted(x) for x in ordered_results.values()):
                 self.report(result)
 
-        p.join()
         return self._exit_failed
 
     def __enter__(self):
