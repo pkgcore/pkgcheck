@@ -331,8 +331,8 @@ class LiveOnlyCheck(GentooRepoCheck):
             # assume highest package version is most recently committed
             pkg = pkgset[0] if len(pkgset) == 1 else sorted(pkgset)[-1]
             try:
-                match = self.added_repo.match(pkg.versioned_atom)[0]
-            except IndexError:
+                match = next(self.added_repo.itermatch(pkg.versioned_atom))
+            except StopIteration:
                 # probably an uncommitted package
                 return
             added = datetime.strptime(match.date, '%Y-%m-%d')

@@ -67,8 +67,8 @@ class StableRequestCheck(GentooRepoCheck):
                         break
 
                     try:
-                        match = self.modified_repo.match(pkg.versioned_atom)[0]
-                    except IndexError:
+                        match = next(self.modified_repo.itermatch(pkg.versioned_atom))
+                    except StopIteration:
                         # probably an uncommitted, local ebuild... skipping
                         continue
 
