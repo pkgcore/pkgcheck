@@ -27,7 +27,6 @@ from snakeoil.osutils import abspath, pjoin
 from .. import argparsers, base, const, objects, reporters
 from ..addons import init_addon
 from ..caches import CachedAddon
-from ..checks import init_checks
 from ..cli import ConfigArgumentParser
 from ..eclass import matching_eclass
 from ..pipeline import Pipeline
@@ -521,8 +520,6 @@ def _selected_check(options, scan_scope, scope):
 
 @scan.bind_main_func
 def _scan(options, out, err):
-    enabled_checks = init_checks(options.pop('addons'), options)
-
     if options.verbosity >= 1:
         msg = f'target repo: {options.target_repo.repo_id!r}'
         if options.target_repo.repo_id != options.target_repo.location:
@@ -537,7 +534,7 @@ def _scan(options, out, err):
         for c in options.pop('contexts') + [reporter]:
             stack.enter_context(c)
         for scan_scope, restrict in options.restrictions:
-            pipe = Pipeline(options, scan_scope, enabled_checks, restrict)
+            pipe = Pipeline(options, scan_scope, restrict)
             ret.append(reporter(pipe))
 
     return any(ret)

@@ -167,14 +167,14 @@ class _UrlCheck(NetworkCheck):
             result = DeadUrl(attr, url, str(e), pkg=pkg)
         return result
 
-    def task_done(self, results_q, pkg, future):
+    def task_done(self, pkg, future):
         """Determine the result of a given URL verification task."""
         exc = future.exception()
         if exc is not None:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
             # return exceptions that occurred in threads
-            results_q.put(tb)
+            self._results_q.put(tb)
             return
 
         result = future.result()
@@ -182,13 +182,13 @@ class _UrlCheck(NetworkCheck):
             if pkg is not None:
                 # recreate result object with different pkg target
                 result = result._create(**result._attrs, pkg=pkg)
-            results_q.put([result])
+            self._results_q.put([result])
 
     def _get_urls(self, pkg):
         """Get URLs to verify for a given package."""
         raise NotImplementedError
 
-    def _schedule_check(self, func, attr, url, executor, futures, results_q, **kwargs):
+    def _schedule_check(self, func, attr, url, executor, futures, **kwargs):
         """Schedule verification method to run in a separate thread against a given URL.
 
         Note that this tries to avoid hitting the network for the same URL
@@ -198,21 +198,21 @@ class _UrlCheck(NetworkCheck):
         future = futures.get(url)
         if future is None:
             future = executor.submit(func, attr, url, **kwargs)
-            future.add_done_callback(partial(self.task_done, results_q, None))
+            future.add_done_callback(partial(self.task_done, None))
             futures[url] = future
         else:
-            future.add_done_callback(partial(self.task_done, results_q, kwargs['pkg']))
+            future.add_done_callback(partial(self.task_done, kwargs['pkg']))
 
-    def schedule(self, pkg, executor, futures, results_q):
+    def schedule(self, pkg, executor, futures):
         """Schedule verification methods to run in separate threads for all flagged URLs."""
         http_urls = []
         for attr, url in self._get_urls(pkg):
             if url.startswith('ftp://'):
                 self._schedule_check(
-                    self._ftp_check, attr, url, executor, futures, results_q, pkg=pkg)
+                    self._ftp_check, attr, url, executor, futures, pkg=pkg)
             else:
                 self._schedule_check(
-                    self._http_check, attr, url, executor, futures, results_q, pkg=pkg)
+                    self._http_check, attr, url, executor, futures, pkg=pkg)
                 http_urls.append((attr, url))
 
         http_urls = tuple(http_urls)
@@ -222,7 +222,7 @@ class _UrlCheck(NetworkCheck):
         for attr, orig_url, url in http_to_https_urls:
             future = futures[orig_url]
             self._schedule_check(
-                self._https_available_check, attr, url, executor, futures, results_q,
+                self._https_available_check, attr, url, executor, futures,
                 future=future, orig_url=orig_url, pkg=pkg)
 
 

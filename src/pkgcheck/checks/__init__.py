@@ -95,6 +95,11 @@ class GitCheck(OptionalCheck):
 class AsyncCheck(Check):
     """Check that schedules tasks to be run asynchronously."""
 
+    def __init__(self, *args):
+        super().__init__(*args)
+        # TODO: raise SkipCheck here when results_q is missing
+        self._results_q = getattr(self.options, '_results_q', None)
+
 
 class NetworkCheck(AsyncCheck, OptionalCheck):
     """Check that is only run when network support is enabled."""

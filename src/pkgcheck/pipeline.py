@@ -13,6 +13,7 @@ from pkgcore.restrictions import boolean, packages
 from snakeoil.currying import post_curry
 
 from . import base
+from .checks import init_checks
 from .results import MetadataError
 from .sources import UnversionedSource, VersionedSource
 
@@ -26,13 +27,13 @@ class Pipeline:
     end when an exception object is found.
     """
 
-    def __init__(self, options, scan_scope, pipes, restriction):
+    def __init__(self, options, scan_scope, restriction):
         self.options = options
         self.scan_scope = scan_scope
         self.restriction = restriction
-        self.results_q = SimpleQueue()
-        self.work_q = SimpleQueue()
-        self._iter = iter(self.results_q.get, None)
+        self._results_q = SimpleQueue()
+        self._work_q = SimpleQueue()
+        self._iter = iter(self._results_q.get, None)
         self._pid = None
 
         # determine if scan is being run at a package level
@@ -40,30 +41,40 @@ class Pipeline:
             scan_scope in (base.version_scope, base.package_scope) and
             isinstance(restriction, boolean.AndRestriction))
 
+        # create checkrunner pipelines
+        self.options._results_q = self._results_q
+        self._pipes = self._create_runners()
+
+    def _create_runners(self):
+        """Initialize and categorize checkrunners for results pipeline."""
+        # initialize enabled checks
+        enabled_checks = init_checks(self.options.pop('addons'), self.options)
+
         # initialize checkrunners per source type, using separate runner for async checks
         checkrunners = defaultdict(list)
-        for (source, exec_type), checks in pipes.items():
+        for (source, exec_type), checks in enabled_checks.items():
             if exec_type == 'async':
-                runner = AsyncCheckRunner(
-                    self.options, source, checks, results_q=self.results_q)
+                runner = AsyncCheckRunner(self.options, source, checks)
             else:
                 runner = CheckRunner(self.options, source, checks)
             checkrunners[(source.scope, exec_type)].append(runner)
 
         # categorize checkrunners for parallelization based on the scan and source scope
-        self.scoped_pipes = defaultdict(lambda: defaultdict(list))
+        pipes = defaultdict(lambda: defaultdict(list))
         if self.pkg_scan:
             for (scope, exec_type), runners in checkrunners.items():
                 if scope is base.version_scope:
-                    self.scoped_pipes[exec_type][base.version_scope].extend(runners)
+                    pipes[exec_type][base.version_scope].extend(runners)
                 else:
-                    self.scoped_pipes[exec_type][base.package_scope].extend(runners)
+                    pipes[exec_type][base.package_scope].extend(runners)
         else:
             for (scope, exec_type), runners in checkrunners.items():
                 if scope in (base.version_scope, base.package_scope):
-                    self.scoped_pipes[exec_type][base.package_scope].extend(runners)
+                    pipes[exec_type][base.package_scope].extend(runners)
                 else:
-                    self.scoped_pipes[exec_type][scope].extend(runners)
+                    pipes[exec_type][scope].extend(runners)
+
+        return pipes
 
     def _kill_pipe(self, *args, exit=False):
         if self._pid is not None:
@@ -89,42 +100,35 @@ class Pipeline:
             self._kill_pipe(exit=True)
         return results
 
-    def _queue_work(self):
+    def _queue_work(self, sync_pipes):
         """Producer that queues scanning tasks against granular scope restrictions."""
         try:
-            for scope in sorted(self.scoped_pipes['sync'], reverse=True):
-                pipes = self.scoped_pipes['sync'][scope]
+            for scope in sorted(sync_pipes, reverse=True):
+                pipes = sync_pipes[scope]
                 if scope is base.version_scope:
                     versioned_source = VersionedSource(self.options)
                     for restrict in versioned_source.itermatch(self.restriction):
                         for i in range(len(pipes)):
-                            self.work_q.put((scope, restrict, i))
+                            self._work_q.put((scope, restrict, i))
                 elif scope is base.package_scope:
                     unversioned_source = UnversionedSource(self.options)
                     for restrict in unversioned_source.itermatch(self.restriction):
-                        self.work_q.put((scope, restrict, 0))
+                        self._work_q.put((scope, restrict, 0))
                 else:
                     for i in range(len(pipes)):
-                        self.work_q.put((scope, self.restriction, i))
-
+                        self._work_q.put((scope, self.restriction, i))
             # insert flags to notify consumers that no more work exists
             for i in range(self.options.jobs):
-                self.work_q.put(None)
-
-            # schedule all async checks from a single process
-            for scope, pipes in self.scoped_pipes['async'].items():
-                for pipe in pipes:
-                    pipe.run(self.restriction)
+                self._work_q.put(None)
         except Exception:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
-            self.results_q.put(tb)
+            self._results_q.put(tb)
 
-    def _run_checks(self):
+    def _run_checks(self, pipes):
         """Consumer that runs scanning tasks, queuing results for output."""
-        pipes = self.scoped_pipes['sync']
         try:
-            for scope, restrict, pipe_idx in iter(self.work_q.get, None):
+            for scope, restrict, pipe_idx in iter(self._work_q.get, None):
                 results = []
 
                 if scope is base.version_scope:
@@ -139,24 +143,32 @@ class Pipeline:
                     results.extend(pipe.finish())
 
                 if results:
-                    self.results_q.put(results)
+                    self._results_q.put(results)
         except Exception:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
-            self.results_q.put(tb)
+            self._results_q.put(tb)
 
     def _run(self):
         """Run the scanning pipeline in parallel by check and scanning scope."""
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         os.setpgrp()
-        # run synchronous checks using process pool, queuing generated results for reporting
-        pool = Pool(self.options.jobs, self._run_checks)
-        pool.close()
-        # split target restriction into tasks for parallelization
-        self._queue_work()
-        pool.join()
-        self.results_q.put(None)
-        os._exit(0)
+
+        with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
+            futures = {}
+            # schedule any existing async checks
+            for scope, runners in self._pipes['async'].items():
+                for checkrunner in runners:
+                    checkrunner.run(executor, futures, self.restriction)
+            # run synchronous checks using a process pool
+            sync_pipes = self._pipes['sync']
+            if sync_pipes:
+                pool = Pool(self.options.jobs, self._run_checks, (sync_pipes,))
+                pool.close()
+                self._queue_work(sync_pipes)
+                pool.join()
+
+        self._results_q.put(None)
 
 
 class CheckRunner:
@@ -228,13 +240,7 @@ class AsyncCheckRunner(CheckRunner):
     or network access are run in separate threads, queuing any relevant results
     on completion.
     """
-    def __init__(self, *args, results_q):
-        super().__init__(*args)
-        self.results_q = results_q
-
-    def run(self, restrict=packages.AlwaysTrue):
-        with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
-            futures = {}
-            for item in self._source_itermatch(restrict):
-                for check in self.checks:
-                    check.schedule(item, executor, futures, self.results_q)
+    def run(self, executor, futures, restrict=packages.AlwaysTrue):
+        for item in self._source_itermatch(restrict):
+            for check in self.checks:
+                check.schedule(item, executor, futures)
