@@ -48,6 +48,10 @@ class RawCPV:
             return f'{self.category}/{self.package}-{self.fullver}'
         return f'{self.category}/{self.package}'
 
+    def __repr__(self):
+        address = '@%#8x' % (id(self),)
+        return f'<{self.__class__.__name__} cpv={self.versioned_atom.cpvstr!r} {address}>'
+
 
 @total_ordering
 class WrappedPkg:
