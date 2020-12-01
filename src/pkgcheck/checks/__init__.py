@@ -92,6 +92,24 @@ class GitCheck(OptionalCheck):
             raise SkipCheck(self, 'not scanning against git commits')
 
 
+class GitCacheCheck(Check):
+    """Check that requires the git cache."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        if not self.options.cache['git']:
+            raise SkipCheck(self, 'git cache support required')
+
+
+class EclassCacheCheck(Check):
+    """Check that requires the eclass cache."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        if not self.options.cache['eclass']:
+            raise SkipCheck(self, 'eclass cache support required')
+
+
 class AsyncCheck(Check):
     """Check that schedules tasks to be run asynchronously."""
 

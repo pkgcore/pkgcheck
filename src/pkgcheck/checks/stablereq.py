@@ -4,7 +4,7 @@ from datetime import datetime
 from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
-from . import GentooRepoCheck, SkipCheck
+from . import GentooRepoCheck, GitCacheCheck
 
 
 class StableRequest(results.VersionResult, results.Info):
@@ -26,7 +26,7 @@ class StableRequest(results.VersionResult, results.Info):
         )
 
 
-class StableRequestCheck(GentooRepoCheck):
+class StableRequestCheck(GentooRepoCheck, GitCacheCheck):
     """Scan for unstable ebuilds with no changes for over 30 days.
 
     By default, only triggered for arches with stable profiles. To check
@@ -45,8 +45,6 @@ class StableRequestCheck(GentooRepoCheck):
         super().__init__(*args)
         self.today = datetime.today()
         self.modified_repo = git_addon.cached_repo(git.GitModifiedRepo)
-        if self.modified_repo is None:
-            raise SkipCheck(self, 'git cache support required')
 
     def feed(self, pkgset):
         pkg_slotted = defaultdict(list)

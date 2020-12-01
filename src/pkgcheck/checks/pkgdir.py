@@ -10,7 +10,7 @@ from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
-from . import Check, GentooRepoCheck, SkipCheck
+from . import Check, GentooRepoCheck, GitCacheCheck
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()
@@ -311,7 +311,7 @@ class LiveOnlyPackage(results.PackageResult, results.Warning):
         return f'all versions are VCS-based added over {years} years ago'
 
 
-class LiveOnlyCheck(GentooRepoCheck):
+class LiveOnlyCheck(GentooRepoCheck, GitCacheCheck):
     """Scan for packages with only live versions."""
 
     scope = base.package_scope
@@ -323,8 +323,6 @@ class LiveOnlyCheck(GentooRepoCheck):
         super().__init__(*args)
         self.today = datetime.today()
         self.added_repo = git_addon.cached_repo(git.GitAddedRepo)
-        if self.added_repo is None:
-            raise SkipCheck(self, 'git cache support required')
 
     def feed(self, pkgset):
         if all(pkg.live for pkg in pkgset):

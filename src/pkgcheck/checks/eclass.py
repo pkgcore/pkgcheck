@@ -8,7 +8,7 @@ from snakeoil.strings import pluralism
 
 from .. import base, results, sources
 from ..eclass import EclassAddon
-from . import Check
+from . import Check, EclassCacheCheck
 
 
 class DeprecatedEclass(results.VersionResult, results.Warning):
@@ -139,7 +139,7 @@ class EclassDocMissingVar(results.EclassResult, results.Warning):
         return f'{self.eclass}: undocumented variable{s}: {variables}'
 
 
-class EclassCheck(Check):
+class EclassCheck(EclassCacheCheck):
     """Scan eclasses for various issues."""
 
     scope = base.eclass_scope
