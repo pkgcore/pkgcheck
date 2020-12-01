@@ -375,11 +375,8 @@ class _XmlBaseCheck(Check):
         for check in self._checks:
             yield from check(pkg, loc, doc)
 
-    def feed(self, pkgs):
-        # empty category or package without ebuilds, skipping check
-        if not pkgs:
-            return
-        pkg = pkgs[-1]
+    def feed(self, pkgset):
+        pkg = pkgset[0]
         loc = self._get_xml_location(pkg)
         yield from self._parse_xml(pkg, loc)
 
