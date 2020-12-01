@@ -7,3 +7,7 @@
 # too many local variables: R0914
 # too many statements: R0915
 disable=C0103,R0903,R0904,R0911,R0912,R0914,R0915
+
+[DESIGN]
+# increase allowed parent classes: R0901
+max-parents=15
