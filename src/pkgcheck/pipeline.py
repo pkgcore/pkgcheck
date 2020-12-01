@@ -203,7 +203,6 @@ class Pipeline:
     def _run(self):
         """Run the scanning pipeline in parallel by check and scanning scope."""
         try:
-            work_q = SimpleQueue()
             signal.signal(signal.SIGINT, signal.SIG_DFL)
             os.setpgrp()
 
@@ -216,6 +215,7 @@ class Pipeline:
                 # run synchronous checks using a process pool
                 sync_pipes = self._pipes['sync']
                 if sync_pipes:
+                    work_q = SimpleQueue()
                     pool = Pool(self.options.jobs, self._run_checks, (sync_pipes, work_q))
                     pool.close()
                     self._queue_work(sync_pipes, work_q)
