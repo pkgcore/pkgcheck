@@ -441,10 +441,8 @@ class GitAddon(caches.CachedAddon):
             try:
                 with open(pjoin(self.options.target_repo.location, path)) as f:
                     patterns.extend(f)
-            except FileNotFoundError:
+            except (FileNotFoundError, IOError):
                 pass
-            except IOError as e:
-                logger.warning(f'failed reading {path!r}: {e}')
         if patterns:
             return PathSpec.from_lines('gitwildmatch', patterns)
         return None
@@ -524,7 +522,7 @@ class GitAddon(caches.CachedAddon):
                 if git_cache:
                     git_repos.append(repo_cls(git_cache, repo_id=f'{repo.repo_id}-history'))
                 else:
-                    logger.warning('skipping git checks for %s repo', repo)
+                    # skip git checks
                     break
             else:
                 if len(git_repos) > 1:
