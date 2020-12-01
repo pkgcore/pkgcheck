@@ -14,7 +14,7 @@ class StableRequest(results.VersionResult, results.Info):
         super().__init__(**kwargs)
         self.slot = slot
         self.keywords = tuple(keywords)
-        self.age = age
+        self.age = int(age)
 
     @property
     def desc(self):

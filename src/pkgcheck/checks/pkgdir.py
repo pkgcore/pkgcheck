@@ -300,14 +300,13 @@ class LiveOnlyPackage(results.PackageResult, results.Warning):
 
     def __init__(self, age, **kwargs):
         super().__init__(**kwargs)
-        self.age = age
+        self.age = int(age)
 
     @property
     def desc(self):
-        age = int(self.age)
-        if age < 365:
+        if self.age < 365:
             return f'all versions are VCS-based added over {self.age} days ago'
-        years = round(age / 365, 2)
+        years = round(self.age / 365, 2)
         return f'all versions are VCS-based added over {years} years ago'
 
 

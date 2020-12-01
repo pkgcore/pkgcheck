@@ -628,7 +628,7 @@ class OutdatedBlocker(results.VersionResult, results.Info):
         super().__init__(**kwargs)
         self.attr = attr
         self.atom = atom
-        self.age = age
+        self.age = float(age)
 
     @property
     def desc(self):
