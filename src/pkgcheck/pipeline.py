@@ -204,9 +204,8 @@ class Pipeline:
             with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
                 # schedule any existing async checks
                 futures = {}
-                for scope, runners in pipes.items():
-                    for checkrunner in runners:
-                        checkrunner.run(executor, futures, self.restriction)
+                for runner in chain.from_iterable(pipes):
+                    runner.run(executor, futures, self.restriction)
         except Exception:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
@@ -220,7 +219,7 @@ class Pipeline:
 
             # schedule asynchronous checks in a separate process
             async_proc = None
-            async_pipes = self._pipes['async']
+            async_pipes = self._pipes['async'].values()
             if async_pipes:
                 async_proc = Process(target=self._schedule_async, args=(async_pipes,))
                 async_proc.start()
