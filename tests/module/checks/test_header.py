@@ -92,15 +92,17 @@ class TestEbuildHeaderCheck(misc.ReportTestCase):
         self.assertNoReport(self.mk_check(), fake_pkg)
 
         bad_license_headers = [
-            '',
-            '\n',
-            f'{self.check_kls.license_header} ',
-            f' {self.check_kls.license_header}',
-            '# Distributed under the terms of the GNU General Public License v3'
+            [],
+            [''],
+            ['\n'],
+            [f'{self.check_kls.license_header} '],
+            [f' {self.check_kls.license_header}'],
+            ['# Distributed under the terms of the GNU General Public License v3'],
         ]
-        for line in bad_license_headers:
-            fake_src = [copyright, line]
+        for content in bad_license_headers:
+            fake_src = [copyright] + content
             fake_pkg = self.mk_pkg(lines=fake_src)
             r = self.assertReport(self.mk_check(), fake_pkg)
             assert isinstance(r, header.EbuildInvalidLicenseHeader)
-            assert line.strip() in str(r)
+            expected = content[0].strip() if content else 'missing license header'
+            assert expected in str(r)
