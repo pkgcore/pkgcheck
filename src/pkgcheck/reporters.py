@@ -262,7 +262,8 @@ class _ResultFormatter(Formatter):
                 return kwds[key]
             except KeyError:
                 return ''
-        return super().get_value(key, args, kwds)
+        raise base.PkgcheckUserException(
+            'FormatReporter: integer indexes are not supported')
 
 
 class FormatReporter(Reporter):

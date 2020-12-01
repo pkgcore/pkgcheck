@@ -6,7 +6,7 @@ from functools import partial
 from textwrap import dedent
 
 import pytest
-from pkgcheck import reporters, results
+from pkgcheck import base, reporters, results
 from pkgcheck.checks import git, metadata, metadata_xml, pkgdir, profiles
 from pkgcore.test.misc import FakePkg
 from snakeoil.formatters import PlainTextFormatter
@@ -136,6 +136,13 @@ class TestFormatReporter(BaseReporter):
             self.reporter_cls = partial(reporters.FormatReporter, format_str)
             self.add_report_output = expected
             super().test_add_report(capsys)
+
+    def test_unsupported_index(self, capsys):
+        self.reporter_cls = partial(reporters.FormatReporter, '{0}')
+        with self.mk_reporter() as reporter:
+            with pytest.raises(base.PkgcheckUserException) as excinfo:
+                reporter.report(self.versioned_result)
+            assert 'integer indexes are not supported' in str(excinfo.value)
 
 
 class UnPickleableResult(results.Result):
