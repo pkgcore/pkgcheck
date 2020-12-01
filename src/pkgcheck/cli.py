@@ -10,7 +10,7 @@ from snakeoil.klass import jit_attr_none
 from snakeoil.contexts import patch
 from snakeoil.log import suppress_logging
 
-from .base import PkgcheckException
+from . import base
 
 
 class Tool(commandline.Tool):
@@ -20,7 +20,9 @@ class Tool(commandline.Tool):
         with suppress_logging():
             try:
                 return super().main()
-            except PkgcheckException as e:
+            except base.PkgcheckUserException as e:
+                self.parser.error(str(e))
+            except base.PkgcheckException as e:
                 sys.exit(str(e))
 
 
