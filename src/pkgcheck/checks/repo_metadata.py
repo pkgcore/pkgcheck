@@ -5,7 +5,6 @@ from itertools import chain
 
 from pkgcore import fetch
 from snakeoil.contexts import patch
-from snakeoil.klass import jit_attr
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
@@ -393,14 +392,6 @@ class GlobalUseCheck(Check):
         self.global_flag_usage = defaultdict(set)
         self.repo = self.options.target_repo
 
-    @jit_attr
-    def local_use(self):
-        return self.repo.config.use_local_desc
-
-    @jit_attr
-    def global_use(self):
-        return {flag: desc for matcher, (flag, desc) in self.repo.config.use_desc}
-
     def start(self):
         master_flags = set()
         for repo in self.options.target_repo.masters:
@@ -451,9 +442,13 @@ class GlobalUseCheck(Check):
                 yield [pkgs[i][0] for i in component]
 
     def finish(self):
+        repo_global_use = {
+            flag: desc for matcher, (flag, desc) in self.repo.config.use_desc}
+        repo_local_use = self.repo.config.use_local_desc
         unused_global_flags = []
         potential_locals = []
-        for flag in self.global_use.keys():
+
+        for flag in repo_global_use.keys():
             pkgs = self.global_flag_usage[flag]
             if not pkgs:
                 unused_global_flags.append(flag)
@@ -467,8 +462,8 @@ class GlobalUseCheck(Check):
             yield PotentialLocalUse(flag, pkgs)
 
         local_use = defaultdict(list)
-        for pkg, (flag, desc) in self.local_use:
-            if flag not in self.global_use:
+        for pkg, (flag, desc) in repo_local_use:
+            if flag not in repo_global_use:
                 local_use[flag].append((pkg, desc))
 
         potential_globals = []
