@@ -24,7 +24,7 @@ class FakeCommit(GitCommit):
             'hash': '7f9abd7ec2d079b1d0c36fc2f5d626ae0691757e',
             'commit_date': 'Sun Dec 8 02:13:58 2019 -0700',
             'author': 'author@domain.com',
-            'committer': 'committer@domain.com',
+            'committer': 'author@domain.com',
             'message': (),
         }
         commit_data.update(kwargs)
@@ -146,88 +146,86 @@ class TestGitCheck(ReportTestCase):
         self.assertNoReport(self.check, self.SO_commit(body=long_line))
 
     def test_message_empty_lines(self):
+        message = textwrap.dedent("""\
+            foo
 
-        self.assertNoReport(
-            self.check,
-            FakeCommit(author='author@domain.com', committer='author@domain.com', message="""\
-foo
+            bar
 
-bar
-
-Signed-off-by: author@domain.com
-""".splitlines()))
+            Signed-off-by: author@domain.com
+        """).splitlines()
+        commit = FakeCommit(message=message)
+        self.assertNoReport(self.check, commit)
 
         # missing empty line between summary and body
-        assert 'missing empty line before body' in \
-            self.assertReport(
-                self.check,
-                FakeCommit(author='author@domain.com', committer='author@domain.com', message="""\
-foo
-bar
+        message = textwrap.dedent("""\
+            foo
+            bar
 
-Signed-off-by: author@domain.com
-""".splitlines())).error
+            Signed-off-by: author@domain.com
+        """).splitlines()
+        commit = FakeCommit(message=message)
+        r = self.assertReport(self.check, commit)
+        assert 'missing empty line before body' in str(r)
 
         # missing empty line between summary and tags
-        assert 'missing empty line before tags' in \
-            self.assertReport(
-                self.check,
-                FakeCommit(author='author@domain.com', committer='author@domain.com', message="""\
-foo
-Signed-off-by: author@domain.com
-""".splitlines())).error
+        message = textwrap.dedent("""\
+            foo
+            Signed-off-by: author@domain.com
+        """).splitlines()
+        commit = FakeCommit(message=message)
+        r = self.assertReport(self.check, commit)
+        assert 'missing empty line before tags' in str(r)
 
         # missing empty lines between summary, body, and tags
-        reports = self.assertReports(
-            self.check,
-            FakeCommit(author='author@domain.com', committer='author@domain.com', message="""\
-foo
-bar
-Signed-off-by: author@domain.com
-""".splitlines()))
-
-        assert 'missing empty line before body' in reports[0].error
-        assert 'missing empty line before tags' in reports[1].error
+        message = textwrap.dedent("""\
+            foo
+            bar
+            Signed-off-by: author@domain.com
+        """).splitlines()
+        commit = FakeCommit(message=message)
+        reports = self.assertReports(self.check, commit)
+        assert 'missing empty line before body' in str(reports[0])
+        assert 'missing empty line before tags' in str(reports[1])
 
     def test_footer_empty_lines(self):
         for whitespace in ('\t', ' ', ''):
             # empty lines in footer are flagged
-            assert 'empty line 4 in footer' in \
-                self.assertReport(
-                    self.check,
-                    FakeCommit(author='author@domain.com', committer='author@domain.com', message=f"""\
-foon
+            message = textwrap.dedent(f"""\
+                foon
 
-blah: dar
-{whitespace}
-footer: yep
-Signed-off-by: author@domain.com
-""".splitlines())).error
+                blah: dar
+                {whitespace}
+                footer: yep
+                Signed-off-by: author@domain.com
+            """).splitlines()
+            commit = FakeCommit(message=message)
+            r = self.assertReport(self.check, commit)
+            assert 'empty line 4 in footer' in str(r)
 
             # empty lines at the end of a commit message are ignored
-            self.assertNoReport(
-                self.check,
-                FakeCommit(author='author@domain.com', committer='author@domain.com', message=f"""\
-foon
+            message = textwrap.dedent(f"""\
+                foon
 
-blah: dar
-footer: yep
-Signed-off-by: author@domain.com
-{whitespace}
-""".splitlines()))
+                blah: dar
+                footer: yep
+                Signed-off-by: author@domain.com
+                {whitespace}
+            """).splitlines()
+            commit = FakeCommit(message=message)
+            self.assertNoReport(self.check, commit)
 
     def test_footer_non_tags(self):
-        assert 'non-tag in footer, line 5' in \
-            self.assertReport(
-                self.check,
-                FakeCommit(author='author@domain.com', committer='author@domain.com', message="""\
-foon
+        message = textwrap.dedent("""\
+            foon
 
-blah: dar
-footer: yep
-some random line
-Signed-off-by: author@domain.com
-""".splitlines())).error
+            blah: dar
+            footer: yep
+            some random line
+            Signed-off-by: author@domain.com
+        """).splitlines()
+        commit = FakeCommit(message=message)
+        r = self.assertReport(self.check, commit)
+        assert 'non-tag in footer, line 5' in str(r)
 
 
 class TestGitPkgCommitsCheck(ReportTestCase):
