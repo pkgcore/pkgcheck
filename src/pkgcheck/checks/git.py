@@ -1,3 +1,5 @@
+"""Various git-related checks."""
+
 import os
 import re
 import subprocess

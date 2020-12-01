@@ -1,3 +1,5 @@
+"""Various whitespace-related checks."""
+
 import re
 import sys
 from typing import NamedTuple

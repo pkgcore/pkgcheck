@@ -28,6 +28,7 @@ class Check(feeds.Feed):
 
     @klass.jit_attr
     def priority(self):
+        """Priority that affects order in which checks are run."""
         # raise priority for checks that scan for metadata errors
         if self._priority == 0 and self.known_results & MetadataError.results:
             return -1

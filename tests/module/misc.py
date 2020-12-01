@@ -4,7 +4,7 @@ import string
 import pytest
 from pkgcheck import addons, base, sources
 from pkgcheck.caches import CachedAddon
-from pkgcheck.pipeline import CheckRunner
+from pkgcheck.pipeline import SyncCheckRunner
 from pkgcore.ebuild import domain, repo_objs
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import VersionedCPV
@@ -104,7 +104,7 @@ class ReportTestCase:
             source = sources.Source(options, data)
 
         results = []
-        runner = CheckRunner(options, source, [check])
+        runner = SyncCheckRunner(options, source, [check])
         runner.start()
         results.extend(runner.run())
         results.extend(runner.finish())

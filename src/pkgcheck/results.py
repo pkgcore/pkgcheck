@@ -26,7 +26,7 @@ class Result(metaclass=_ResultAttrs):
     """Generic report result returned from a check."""
 
     # all results are shown by default
-    _filtered = False
+    filtered = False
     # default to repository level results
     scope = base.repo_scope
     # priority level, color, name, and profile type
@@ -253,7 +253,7 @@ class FilteredVersionResult(VersionResult):
 
     def __init__(self, pkg, **kwargs):
         if isinstance(pkg, FilteredPkg):
-            self._filtered = True
+            self.filtered = True
             pkg = pkg._pkg
         super().__init__(pkg, **kwargs)
 

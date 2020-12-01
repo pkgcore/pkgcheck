@@ -29,14 +29,10 @@ class Pipeline:
 
     def __init__(self, options, scan_scope, restriction):
         self.options = options
-        self.scan_scope = scan_scope
         self.restriction = restriction
 
-        self._filtered_keywords = self.options.filtered_keywords
-        self._exit_keywords = self.options.exit_keywords
         # boolean signifying a failure result was encountered (used with --exit option)
         self._exit_failed = False
-
         # determine if scan is being run at a package level
         self._pkg_scan = (
             scan_scope in (base.version_scope, base.package_scope) and
@@ -54,11 +50,9 @@ class Pipeline:
 
         # initialize checkrunners per source type, using separate runner for async checks
         checkrunners = defaultdict(list)
+        runner_cls_map = {'async': AsyncCheckRunner, 'sync': SyncCheckRunner}
         for (source, exec_type), checks in enabled_checks.items():
-            if exec_type == 'async':
-                runner = AsyncCheckRunner(self.options, source, checks)
-            else:
-                runner = CheckRunner(self.options, source, checks)
+            runner = runner_cls_map[exec_type](self.options, source, checks)
             checkrunners[(source.scope, exec_type)].append(runner)
 
         # categorize checkrunners for parallelization based on the scan and source scope
@@ -110,11 +104,12 @@ class Pipeline:
         while True:
             try:
                 result = self._results.popleft()
-                if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
+                if (self.options.filtered_keywords is None
+                        or result.__class__ in self.options.filtered_keywords):
                     # skip filtered results by default
-                    if self.options.verbosity < 1 and result._filtered:
+                    if self.options.verbosity < 1 and result.filtered:
                         continue
-                    if result.__class__ in self._exit_keywords:
+                    if result.__class__ in self.options.exit_keywords:
                         self._exit_failed = True
                     return result
             except IndexError:
@@ -205,7 +200,7 @@ class Pipeline:
                 # schedule any existing async checks
                 futures = {}
                 for runner in chain.from_iterable(pipes):
-                    runner.run(executor, futures, self.restriction)
+                    runner.schedule(executor, futures, self.restriction)
         except Exception:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
@@ -256,6 +251,13 @@ class CheckRunner:
         self.options = options
         self.source = source
         self.checks = tuple(sorted(checks))
+
+
+class SyncCheckRunner(CheckRunner):
+    """Generic runner for synchronous checks."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
         self._running_check = None
         self._known_results = set().union(*(x.known_results for x in self.checks))
 
@@ -279,6 +281,7 @@ class CheckRunner:
             self._metadata_errors.append((e.pkg, result))
 
     def start(self):
+        """Run all check start methods."""
         for check in self.checks:
             check.start()
 
@@ -301,6 +304,7 @@ class CheckRunner:
                 yield result
 
     def finish(self):
+        """Run all check finish methods while yielding any results."""
         for check in self.checks:
             yield from check.finish()
 
@@ -312,7 +316,8 @@ class AsyncCheckRunner(CheckRunner):
     or network access are run in separate threads, queuing any relevant results
     on completion.
     """
-    def run(self, executor, futures, restrict=packages.AlwaysTrue):
-        for item in self._source_itermatch(restrict):
+    def schedule(self, executor, futures, restrict=packages.AlwaysTrue):
+        """Schedule all checks to run via the given executor."""
+        for item in self.source.itermatch(restrict):
             for check in self.checks:
                 check.schedule(item, executor, futures)
