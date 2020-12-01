@@ -72,6 +72,10 @@ scopes = ImmutableDict({
 })
 
 
+class PkgcheckException(Exception):
+    """Generic pkgcheck exception."""
+
+
 class Addon:
     """Base class for extra functionality for pkgcheck other than a check.
 

@@ -2,7 +2,6 @@
 
 import os
 import signal
-import sys
 import traceback
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
@@ -79,12 +78,12 @@ class Pipeline:
 
         return pipes
 
-    def _kill_pipe(self, *args, exit=False):
+    def _kill_pipe(self, *args, error=None):
         """Handle terminating the pipeline progress group."""
         if self._pid is not None:
             os.killpg(self._pid, signal.SIGKILL)
-        if exit:
-            raise SystemExit(1)
+        if error is not None:
+            raise base.PkgcheckException(error)
         raise KeyboardInterrupt
 
     def __iter__(self):
@@ -133,8 +132,7 @@ class Pipeline:
                 # Catch propagated exceptions, output their traceback, and
                 # signal the scanning process to end.
                 if isinstance(results, str):
-                    print(results.strip(), file=sys.stderr)
-                    self._kill_pipe(exit=True)
+                    self._kill_pipe(error=results.strip())
 
                 if self._pkg_scan:
                     # Running on a package scope level, i.e. running within a package

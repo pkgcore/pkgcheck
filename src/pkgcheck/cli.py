@@ -2,6 +2,7 @@
 
 import configparser
 import os
+import sys
 
 from pkgcore.util import commandline
 from snakeoil.cli import arghparse
@@ -9,13 +10,18 @@ from snakeoil.klass import jit_attr_none
 from snakeoil.contexts import patch
 from snakeoil.log import suppress_logging
 
+from .base import PkgcheckException
+
 
 class Tool(commandline.Tool):
     """Suppress log messages globally."""
 
     def main(self):
         with suppress_logging():
-            return super().main()
+            try:
+                return super().main()
+            except PkgcheckException as e:
+                sys.exit(str(e))
 
 
 class ConfigArgumentParser(arghparse.ArgumentParser):

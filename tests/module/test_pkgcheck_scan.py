@@ -363,17 +363,14 @@ class TestPkgcheckScan:
     @pytest.mark.parametrize(
         'action, module',
         (('run', 'Pool'), ('producer', 'UnversionedSource'), ('consumer', 'CheckRunner.run')))
-    def test_pipeline_exceptions(self, action, module, capsys):
+    def test_pipeline_exceptions(self, action, module):
         """Test checkrunner pipeline against unhandled exceptions."""
         with patch('sys.argv', self.args), \
                 patch(f'pkgcheck.pipeline.{module}') as faked:
             faked.side_effect = Exception('foobar')
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
-            assert excinfo.value.code == 1
-            out, err = capsys.readouterr()
-            assert out == ''
-            assert err.splitlines()[-1] == 'Exception: foobar'
+            assert 'Exception: foobar' in str(excinfo.value)
 
     # nested mapping of repos to checks/keywords they cover
     _checks = defaultdict(lambda: defaultdict(set))
