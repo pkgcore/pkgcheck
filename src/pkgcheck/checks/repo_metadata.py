@@ -401,12 +401,6 @@ class GlobalUseCheck(Check):
     def global_use(self):
         return {flag: desc for matcher, (flag, desc) in self.repo.config.use_desc}
 
-    @jit_attr
-    def use_expand(self):
-        return {
-            flag: desc for flags in self.repo.config.use_expand_desc.values()
-            for flag, desc in flags}
-
     def start(self):
         master_flags = set()
         for repo in self.options.target_repo.masters:
