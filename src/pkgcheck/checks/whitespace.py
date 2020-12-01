@@ -11,6 +11,10 @@ from . import Check
 
 class _Whitespace(results.VersionResult, results.Warning):
 
+    def __init__(self, lines, **kwargs):
+        super().__init__(**kwargs)
+        self.lines = tuple(lines)
+
     @property
     def lines_str(self):
         s = pluralism(self.lines)
@@ -21,9 +25,8 @@ class _Whitespace(results.VersionResult, results.Warning):
 class WhitespaceFound(_Whitespace):
     """Leading or trailing whitespace found."""
 
-    def __init__(self, leadtrail, lines, **kwargs):
+    def __init__(self, leadtrail, **kwargs):
         super().__init__(**kwargs)
-        self.lines = tuple(lines)
         self.leadtrail = leadtrail
 
     @property
@@ -34,10 +37,6 @@ class WhitespaceFound(_Whitespace):
 class WrongIndentFound(_Whitespace):
     """Incorrect indentation whitespace found."""
 
-    def __init__(self, lines, **kwargs):
-        super().__init__(**kwargs)
-        self.lines = tuple(lines)
-
     @property
     def desc(self):
         return f"ebuild has whitespace in indentation on {self.lines_str}"
@@ -45,10 +44,6 @@ class WrongIndentFound(_Whitespace):
 
 class DoubleEmptyLine(_Whitespace):
     """Unneeded blank lines found."""
-
-    def __init__(self, lines, **kwargs):
-        super().__init__(**kwargs)
-        self.lines = tuple(lines)
 
     @property
     def desc(self):
@@ -148,9 +143,9 @@ class WhitespaceCheck(Check):
             else:
                 lastlineempty = True
         if trailing:
-            yield WhitespaceFound('trailing', trailing, pkg=pkg)
+            yield WhitespaceFound('trailing', lines=trailing, pkg=pkg)
         if leading:
-            yield WhitespaceFound('leading', leading, pkg=pkg)
+            yield WhitespaceFound('leading', lines=leading, pkg=pkg)
         if indent:
             yield WrongIndentFound(indent, pkg=pkg)
         if double_empty:
