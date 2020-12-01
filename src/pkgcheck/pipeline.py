@@ -200,27 +200,44 @@ class Pipeline:
             tb = traceback.format_exc()
             self._results_q.put(tb)
 
+    def _schedule_async(self, pipes):
+        """Schedule asynchronous checks."""
+        try:
+            with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
+                # schedule any existing async checks
+                futures = {}
+                for scope, runners in pipes.items():
+                    for checkrunner in runners:
+                        checkrunner.run(executor, futures, self.restriction)
+        except Exception:
+            # traceback can't be pickled so serialize it
+            tb = traceback.format_exc()
+            self._results_q.put(tb)
+
     def _run(self):
         """Run the scanning pipeline in parallel by check and scanning scope."""
         try:
             signal.signal(signal.SIGINT, signal.SIG_DFL)
             os.setpgrp()
 
-            with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
-                futures = {}
-                # schedule any existing async checks
-                for scope, runners in self._pipes['async'].items():
-                    for checkrunner in runners:
-                        checkrunner.run(executor, futures, self.restriction)
-                # run synchronous checks using a process pool
-                sync_pipes = self._pipes['sync']
-                if sync_pipes:
-                    work_q = SimpleQueue()
-                    pool = Pool(self.options.jobs, self._run_checks, (sync_pipes, work_q))
-                    pool.close()
-                    self._queue_work(sync_pipes, work_q)
-                    pool.join()
+            # schedule asynchronous checks in a separate process
+            async_proc = None
+            async_pipes = self._pipes['async']
+            if async_pipes:
+                async_proc = Process(target=self._schedule_async, args=(async_pipes,))
+                async_proc.start()
 
+            # run synchronous checks using a process pool
+            sync_pipes = self._pipes['sync']
+            if sync_pipes:
+                work_q = SimpleQueue()
+                pool = Pool(self.options.jobs, self._run_checks, (sync_pipes, work_q))
+                pool.close()
+                self._queue_work(sync_pipes, work_q)
+                pool.join()
+
+            if async_proc is not None:
+                async_proc.join()
             # notify iterator that no more results exist
             self._results_q.put(None)
         except Exception:
