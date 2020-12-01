@@ -21,6 +21,15 @@ class ConfigArg(argparse._StoreAction):
         setattr(namespace, self.dest, values)
 
 
+class EnableNet(argparse.Action):
+    """Enable checks that require network access."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        namespace.enabled_checks.update(
+            v for v in objects.CHECKS.values() if issubclass(v, NetworkCheck))
+        setattr(namespace, self.dest, True)
+
+
 class CacheNegations(arghparse.CommaSeparatedNegations):
     """Split comma-separated enabled and disabled cache types."""
 

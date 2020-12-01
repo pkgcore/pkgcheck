@@ -189,6 +189,10 @@ main_options.add_argument(
 
 check_options = scan.add_argument_group('check selection')
 check_options.add_argument(
+    '--net', nargs=0,
+    action=arghparse.Delayed, target=argparsers.EnableNet, priority=-1,
+    help='enable checks that require network access')
+check_options.add_argument(
     '-s', '--scopes', metavar='SCOPE', dest='selected_scopes', default=(),
     action=arghparse.Delayed, target=argparsers.ScopeArgs, priority=1,
     help='limit checks to run by scope (comma-separated list)',
@@ -243,9 +247,6 @@ check_options.add_argument(
 
         Use ``pkgcheck show --keywords`` to see available options.
     """)
-check_options.add_argument(
-    '--net', action='store_true',
-    help='run checks that require internet access')
 
 scan.plugin = scan.add_argument_group('plugin options')
 
