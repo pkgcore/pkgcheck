@@ -76,6 +76,10 @@ class PkgcheckException(Exception):
     """Generic pkgcheck exception."""
 
 
+class PkgcheckUserException(PkgcheckException):
+    """Generic pkgcheck exception for user-facing cli output.."""
+
+
 class Addon:
     """Base class for extra functionality for pkgcheck other than a check.
 
