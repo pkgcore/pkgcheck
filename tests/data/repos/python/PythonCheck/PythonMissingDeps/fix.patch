@@ -1,0 +1,9 @@
+diff -Naur python/PythonCheck/PythonMissingDeps/PythonMissingDeps-0.ebuild fixed/PythonCheck/PythonMissingDeps/PythonMissingDeps-0.ebuild
+--- python/PythonCheck/PythonMissingDeps/PythonMissingDeps-0.ebuild	2020-12-01 12:19:27.856851956 -0700
++++ fixed/PythonCheck/PythonMissingDeps/PythonMissingDeps-0.ebuild	2020-12-01 12:20:13.815852958 -0700
+@@ -8,3 +8,5 @@
+ LICENSE="BSD"
+ SLOT="0"
+ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
++
++RDEPEND="${PYTHON_DEPS}"

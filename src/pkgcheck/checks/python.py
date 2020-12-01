@@ -328,6 +328,7 @@ class PythonCompatCheck(Check):
                 f"python{x.slot.replace('.', '_')}" for x in deps
                 if x.key == 'dev-lang/python' and x.slot is not None)[-1]
         except IndexError:
+            # should be flagged by PythonMissingDeps
             return
 
         # ignore pkgs that probably aren't py3 compatible
