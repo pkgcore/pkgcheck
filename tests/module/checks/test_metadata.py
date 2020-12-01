@@ -1,6 +1,7 @@
 import os
 import tempfile
 import textwrap
+from datetime import datetime, timedelta
 from functools import partial
 from itertools import combinations
 from operator import attrgetter
@@ -9,6 +10,7 @@ import pytest
 from pkgcheck import addons, eclass, git
 from pkgcheck.checks import metadata
 from pkgcore.ebuild import eapi, repo_objs, repository
+from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil import fileutils
 from snakeoil.cli import arghparse
@@ -961,6 +963,86 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         assert r.pkgs == ('dev-libs/foo-0', 'dev-libs/foo-1')
         assert r.flag == 'blah'
         assert "USE flag 'blah' missing" in str(r)
+
+
+class TestDependencyCheckBlockers(misc.ReportTestCase):
+    """Test DependencyCheck results that require git cache support."""
+
+    check_kls = metadata.DependencyCheck
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path, tool, make_repo, make_git_repo):
+        self.tool = tool
+        self.cache_dir = str(tmp_path)
+
+        # initialize parent repo
+        self.parent_git_repo = make_git_repo()
+        self.parent_repo = make_repo(self.parent_git_repo.path)
+        self.parent_git_repo.add_all('initial commit')
+        # create a stub pkg and commit it
+        self.parent_repo.create_ebuild('cat/pkg-0')
+        self.parent_git_repo.add_all('cat/pkg-0')
+
+        # initialize child repo
+        self.child_git_repo = make_git_repo()
+        self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_repo = make_repo(self.child_git_repo.path)
+
+    def init_check(self, options=None, future=0):
+        self.options = options if options is not None else self._options()
+        self.check, required_addons, self.source = misc.init_check(self.check_kls, self.options)
+        for k, v in required_addons.items():
+            setattr(self, k, v)
+        if future:
+            self.check.today = datetime.today() + timedelta(days=+future)
+
+    def _options(self, **kwargs):
+        args = [
+            'scan', '-q', '--cache-dir', self.cache_dir,
+            '--repo', self.child_repo.location,
+        ]
+        options, _ = self.tool.parse_args(args)
+        return options
+
+    def test_existent_blockers(self):
+        self.child_repo.create_ebuild('cat/pkg-1', depend='!~cat/pkg-0')
+        self.child_git_repo.add_all('cat/pkg: version bump to 1')
+        self.child_repo.create_ebuild('cat/pkg-2', depend='!!~cat/pkg-0')
+        self.child_git_repo.add_all('cat/pkg: version bump to 2')
+        self.child_repo.create_ebuild('cat/pkg-3', depend='!!=cat/pkg-0*')
+        self.child_git_repo.add_all('cat/pkg: version bump to 3')
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
+    def test_nonexistent_blockers(self):
+        self.child_repo.create_ebuild('cat/pkg-1', depend='!nonexistent/pkg')
+        self.child_git_repo.add_all('cat/pkg: version bump to 1')
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = metadata.NonexistentBlocker(
+            'DEPEND', '!nonexistent/pkg', pkg=CPV('cat/pkg-1'))
+        assert r == expected
+
+    def test_outdated_blockers(self):
+        self.parent_git_repo.remove_all('cat/pkg')
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_repo.create_ebuild('cat/pkg-1', depend='!!=cat/pkg-0*')
+        self.child_git_repo.add_all('cat/pkg: version bump to 1')
+
+        # packages are not old enough to trigger any results
+        for days in (0, 100, 365, 729):
+            self.init_check(future=days)
+            self.assertNoReport(self.check, self.source)
+
+        # blocker was removed at least 2 years ago
+        for days, years in ((730, 2), (1825, 5)):
+            self.init_check(future=days)
+            r = self.assertReport(self.check, self.source)
+            expected = metadata.OutdatedBlocker(
+                'DEPEND', '!!=cat/pkg-0*', years, pkg=CPV('cat/pkg-1'))
+            assert r == expected
 
 
 class TestSrcUriCheck(use_based(), misc.ReportTestCase):
