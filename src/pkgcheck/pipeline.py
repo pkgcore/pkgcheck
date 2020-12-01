@@ -102,28 +102,23 @@ class Pipeline:
 
     def _queue_work(self, sync_pipes):
         """Producer that queues scanning tasks against granular scope restrictions."""
-        try:
-            for scope in sorted(sync_pipes, reverse=True):
-                pipes = sync_pipes[scope]
-                if scope is base.version_scope:
-                    versioned_source = VersionedSource(self.options)
-                    for restrict in versioned_source.itermatch(self.restriction):
-                        for i in range(len(pipes)):
-                            self._work_q.put((scope, restrict, i))
-                elif scope is base.package_scope:
-                    unversioned_source = UnversionedSource(self.options)
-                    for restrict in unversioned_source.itermatch(self.restriction):
-                        self._work_q.put((scope, restrict, 0))
-                else:
+        for scope in sorted(sync_pipes, reverse=True):
+            pipes = sync_pipes[scope]
+            if scope is base.version_scope:
+                versioned_source = VersionedSource(self.options)
+                for restrict in versioned_source.itermatch(self.restriction):
                     for i in range(len(pipes)):
-                        self._work_q.put((scope, self.restriction, i))
-            # insert flags to notify consumers that no more work exists
-            for i in range(self.options.jobs):
-                self._work_q.put(None)
-        except Exception:
-            # traceback can't be pickled so serialize it
-            tb = traceback.format_exc()
-            self._results_q.put(tb)
+                        self._work_q.put((scope, restrict, i))
+            elif scope is base.package_scope:
+                unversioned_source = UnversionedSource(self.options)
+                for restrict in unversioned_source.itermatch(self.restriction):
+                    self._work_q.put((scope, restrict, 0))
+            else:
+                for i in range(len(pipes)):
+                    self._work_q.put((scope, self.restriction, i))
+        # insert flags to notify consumers that no more work exists
+        for i in range(self.options.jobs):
+            self._work_q.put(None)
 
     def _run_checks(self, pipes):
         """Consumer that runs scanning tasks, queuing results for output."""
@@ -151,24 +146,29 @@ class Pipeline:
 
     def _run(self):
         """Run the scanning pipeline in parallel by check and scanning scope."""
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
-        os.setpgrp()
+        try:
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            os.setpgrp()
 
-        with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
-            futures = {}
-            # schedule any existing async checks
-            for scope, runners in self._pipes['async'].items():
-                for checkrunner in runners:
-                    checkrunner.run(executor, futures, self.restriction)
-            # run synchronous checks using a process pool
-            sync_pipes = self._pipes['sync']
-            if sync_pipes:
-                pool = Pool(self.options.jobs, self._run_checks, (sync_pipes,))
-                pool.close()
-                self._queue_work(sync_pipes)
-                pool.join()
+            with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
+                futures = {}
+                # schedule any existing async checks
+                for scope, runners in self._pipes['async'].items():
+                    for checkrunner in runners:
+                        checkrunner.run(executor, futures, self.restriction)
+                # run synchronous checks using a process pool
+                sync_pipes = self._pipes['sync']
+                if sync_pipes:
+                    pool = Pool(self.options.jobs, self._run_checks, (sync_pipes,))
+                    pool.close()
+                    self._queue_work(sync_pipes)
+                    pool.join()
 
-        self._results_q.put(None)
+            self._results_q.put(None)
+        except Exception:
+            # traceback can't be pickled so serialize it
+            tb = traceback.format_exc()
+            self._results_q.put(tb)
 
 
 class CheckRunner:
