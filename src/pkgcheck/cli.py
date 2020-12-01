@@ -20,8 +20,6 @@ class Tool(commandline.Tool):
         with suppress_logging():
             try:
                 return super().main()
-            except base.PkgcheckUserException as e:
-                self.parser.error(str(e))
             except base.PkgcheckException as e:
                 sys.exit(str(e))
 

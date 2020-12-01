@@ -15,6 +15,7 @@ import sys
 from contextlib import AbstractContextManager
 from functools import total_ordering
 
+from snakeoil.cli.exceptions import UserException
 from snakeoil.mappings import ImmutableDict
 
 
@@ -76,7 +77,7 @@ class PkgcheckException(Exception):
     """Generic pkgcheck exception."""
 
 
-class PkgcheckUserException(PkgcheckException):
+class PkgcheckUserException(PkgcheckException, UserException):
     """Generic pkgcheck exception for user-facing cli output.."""
 
 
