@@ -281,7 +281,7 @@ class MetadataUrlCheck(_UrlCheck):
     def _get_urls(self, pkg):
         try:
             tree = etree.parse(pkg._shared_pkg_data.metadata_xml._source)
-        except etree.XMLSyntaxError:
+        except (OSError, etree.XMLSyntaxError):
             return
 
         # TODO: move upstream parsing to a pkgcore attribute?
