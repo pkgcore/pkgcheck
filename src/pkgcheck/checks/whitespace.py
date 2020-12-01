@@ -1,7 +1,6 @@
 """Various whitespace-related checks."""
 
 import re
-import sys
 from typing import NamedTuple
 
 from snakeoil.strings import pluralism
@@ -105,16 +104,6 @@ whitespace_data = WhitespaceData(
         '\u202f', '\u205f', '\u3000',
     )
 )
-
-
-def generate_whitespace_data():
-    """Generate bad whitespace list for the current python version."""
-    import unicodedata
-    all_whitespace_chars = set(
-        re.findall(r'\s', ''.join(chr(c) for c in range(sys.maxunicode + 1))))
-    allowed_whitespace_chars = {'\t', '\n', ' '}
-    bad_whitespace_chars = tuple(sorted(all_whitespace_chars - allowed_whitespace_chars))
-    return WhitespaceData(unicodedata.unidata_version, bad_whitespace_chars)
 
 
 class WhitespaceCheck(Check):

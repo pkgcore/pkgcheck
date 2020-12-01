@@ -1,3 +1,6 @@
+import re
+import sys
+import unicodedata
 from pkgcheck.checks import whitespace
 
 from .. import misc
@@ -101,11 +104,20 @@ class TestTrailingNewLineOnEnd(WhitespaceCheckTest):
         assert 'trailing blank line(s)' in str(r)
 
 
+def generate_whitespace_data():
+    """Generate bad whitespace list for the current python version."""
+    all_whitespace_chars = set(
+        re.findall(r'\s', ''.join(chr(c) for c in range(sys.maxunicode + 1))))
+    allowed_whitespace_chars = {'\t', '\n', ' '}
+    bad_whitespace_chars = tuple(sorted(all_whitespace_chars - allowed_whitespace_chars))
+    return whitespace.WhitespaceData(unicodedata.unidata_version, bad_whitespace_chars)
+
+
 class TestBadWhitespaceCharacter(WhitespaceCheckTest):
 
     def test_outdated_bad_whitespace_chars(self):
         """Check if the hardcoded bad whitespace character list is outdated."""
-        updated_whitespace_data = whitespace.generate_whitespace_data()
+        updated_whitespace_data = generate_whitespace_data()
         if updated_whitespace_data.unicode_version != whitespace.whitespace_data.unicode_version:
             assert updated_whitespace_data.chars == whitespace.whitespace_data.chars, \
                 f'outdated character list for Unicode version {unicodedata.unidata_version}'
