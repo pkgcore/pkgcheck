@@ -4,7 +4,6 @@ import csv
 import json
 import pickle
 from collections import defaultdict
-from itertools import chain
 from string import Formatter
 from xml.sax.saxutils import escape as xml_escape
 
@@ -18,55 +17,20 @@ from .results import InvalidResult, Result
 class Reporter:
     """Generic result reporter."""
 
-    def __init__(self, out, verbosity=0, keywords=None, exit_keywords=()):
+    def __init__(self, out):
         """Initialize
 
         :type out: L{snakeoil.formatters.Formatter}
-        :param keywords: result keywords to report, other keywords will be skipped
-        :param exit_keywords: result keywords that signify a failed exit status
         """
         self.out = out
-        self.verbosity = verbosity
-        self._filtered_keywords = frozenset(keywords) if keywords is not None else None
-        self._exit_keywords = frozenset(exit_keywords)
-        # boolean signifying a failure result was encountered (used with --exit option)
-        self._exit_failed = False
 
         # initialize result processing coroutines
-        self.report = self._add_report().send
-        self.process = self._process_report().send
+        self.report = self._process_report().send
 
     def __call__(self, pipe):
-        self._exit_failed = False
-
-        if pipe.pkg_scan:
-            # Running on a package scope level, i.e. running within a package
-            # directory in an ebuild repo. This sorts all generated results,
-            # removing duplicate MetadataError results.
-            for result in sorted(set().union(*pipe)):
-                self.report(result)
-        else:
-            # Running at a category scope level or higher. This outputs
-            # version/package/category results in a stream sorted per package
-            # while caching any repo, commit, and specific location (e.g.
-            # profiles or eclass) results. Those are then outputted in sorted
-            # fashion in order of their scope level from greatest to least
-            # (displaying repo results first) after all
-            # version/package/category results have been output.
-            ordered_results = {
-                scope: [] for scope in reversed(list(base.scopes.values()))
-                if scope.level <= base.repo_scope
-            }
-            for results in pipe:
-                for result in sorted(results):
-                    try:
-                        ordered_results[result.scope].append(result)
-                    except KeyError:
-                        self.report(result)
-            for result in chain.from_iterable(sorted(x) for x in ordered_results.values()):
-                self.report(result)
-
-        return self._exit_failed
+        for result in pipe:
+            self.report(result)
+        return pipe._exit_failed
 
     def __enter__(self):
         self._start()
@@ -76,20 +40,6 @@ class Reporter:
         self._finish()
         # flush output buffer
         self.out.stream.flush()
-
-    @coroutine
-    def _add_report(self):
-        """Add a report result to be processed for output."""
-        # only process reports for keywords that are enabled
-        while True:
-            result = (yield)
-            if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
-                # skip filtered results by default
-                if self.verbosity < 1 and result._filtered:
-                    continue
-                if result.__class__ in self._exit_keywords:
-                    self._exit_failed = True
-                self.process(result)
 
     @coroutine
     def _process_report(self):

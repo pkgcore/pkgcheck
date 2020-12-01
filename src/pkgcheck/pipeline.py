@@ -6,6 +6,7 @@ import sys
 import traceback
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
+from itertools import chain
 from multiprocessing import Pool, Process, SimpleQueue
 
 from pkgcore.package.errors import MetadataException
@@ -31,17 +32,19 @@ class Pipeline:
         self.options = options
         self.scan_scope = scan_scope
         self.restriction = restriction
-        self._results_q = SimpleQueue()
-        self._work_q = SimpleQueue()
-        self._iter = iter(self._results_q.get, None)
-        self._pid = None
+
+        self._filtered_keywords = self.options.filtered_keywords
+        self._exit_keywords = self.options.exit_keywords
+        # boolean signifying a failure result was encountered (used with --exit option)
+        self._exit_failed = False
 
         # determine if scan is being run at a package level
-        self.pkg_scan = (
+        self._pkg_scan = (
             scan_scope in (base.version_scope, base.package_scope) and
             isinstance(restriction, boolean.AndRestriction))
 
         # create checkrunner pipelines
+        self._results_q = SimpleQueue()
         self.options._results_q = self._results_q
         self._pipes = self._create_runners()
 
@@ -61,7 +64,7 @@ class Pipeline:
 
         # categorize checkrunners for parallelization based on the scan and source scope
         pipes = defaultdict(lambda: defaultdict(list))
-        if self.pkg_scan:
+        if self._pkg_scan:
             for (scope, exec_type), runners in checkrunners.items():
                 if scope is base.version_scope:
                     pipes[exec_type][base.version_scope].extend(runners)
@@ -77,6 +80,7 @@ class Pipeline:
         return pipes
 
     def _kill_pipe(self, *args, exit=False):
+        """Handle terminating the pipeline progress group."""
         if self._pid is not None:
             os.killpg(self._pid, signal.SIGKILL)
         if exit:
@@ -84,23 +88,74 @@ class Pipeline:
         raise KeyboardInterrupt
 
     def __iter__(self):
-        # start running the check pipeline
+        self._pid = None
         signal.signal(signal.SIGINT, self._kill_pipe)
+        # start running the check pipeline
         p = Process(target=self._run)
         p.start()
         self._pid = p.pid
+
+        # initialize settings used by __next__()
+        self._results_iter = iter(self._results_q.get, None)
+        self._results = deque()
+        self._scan_finished = False
+        # scoped mapping for caching repo and location specific results
+        self._ordered_results = {
+            scope: [] for scope in reversed(list(base.scopes.values()))
+            if scope.level <= base.repo_scope
+        }
+
         return self
 
     def __next__(self):
-        results = next(self._iter)
-        # Catch propagated exceptions, output their traceback, and
-        # signal the scanning process to end.
-        if isinstance(results, str):
-            print(results.strip(), file=sys.stderr)
-            self._kill_pipe(exit=True)
-        return results
+        while True:
+            try:
+                result = self._results.popleft()
+                if self._filtered_keywords is None or result.__class__ in self._filtered_keywords:
+                    # skip filtered results by default
+                    if self.options.verbosity < 1 and result._filtered:
+                        continue
+                    if result.__class__ in self._exit_keywords:
+                        self._exit_failed = True
+                    return result
+            except IndexError:
+                try:
+                    results = next(self._results_iter)
+                except StopIteration:
+                    if self._scan_finished:
+                        raise
+                    self._scan_finished = True
+                    # return cached repo and location specific results
+                    results = chain.from_iterable(map(sorted, self._ordered_results.values()))
+                    self._results.extend(results)
+                    continue
 
-    def _queue_work(self, sync_pipes):
+                # Catch propagated exceptions, output their traceback, and
+                # signal the scanning process to end.
+                if isinstance(results, str):
+                    print(results.strip(), file=sys.stderr)
+                    self._kill_pipe(exit=True)
+
+                if self._pkg_scan:
+                    # Running on a package scope level, i.e. running within a package
+                    # directory in an ebuild repo. This sorts all generated results,
+                    # removing duplicate MetadataError results.
+                    self._results.extend(sorted(set(results)))
+                else:
+                    # Running at a category scope level or higher. This outputs
+                    # version/package/category results in a stream sorted per package
+                    # while caching any repo, commit, and specific location (e.g.
+                    # profiles or eclass) results. Those are then outputted in sorted
+                    # fashion in order of their scope level from greatest to least
+                    # (displaying repo results first) after all
+                    # version/package/category results have been output.
+                    for result in sorted(results):
+                        try:
+                            self._ordered_results[result.scope].append(result)
+                        except KeyError:
+                            self._results.append(result)
+
+    def _queue_work(self, sync_pipes, work_q):
         """Producer that queues scanning tasks against granular scope restrictions."""
         for scope in sorted(sync_pipes, reverse=True):
             pipes = sync_pipes[scope]
@@ -108,22 +163,23 @@ class Pipeline:
                 versioned_source = VersionedSource(self.options)
                 for restrict in versioned_source.itermatch(self.restriction):
                     for i in range(len(pipes)):
-                        self._work_q.put((scope, restrict, i))
+                        work_q.put((scope, restrict, i))
             elif scope is base.package_scope:
                 unversioned_source = UnversionedSource(self.options)
                 for restrict in unversioned_source.itermatch(self.restriction):
-                    self._work_q.put((scope, restrict, 0))
+                    work_q.put((scope, restrict, 0))
             else:
                 for i in range(len(pipes)):
-                    self._work_q.put((scope, self.restriction, i))
-        # insert flags to notify consumers that no more work exists
-        for i in range(self.options.jobs):
-            self._work_q.put(None)
+                    work_q.put((scope, self.restriction, i))
 
-    def _run_checks(self, pipes):
+        # notify consumers that no more work exists
+        for i in range(self.options.jobs):
+            work_q.put(None)
+
+    def _run_checks(self, pipes, work_q):
         """Consumer that runs scanning tasks, queuing results for output."""
         try:
-            for scope, restrict, pipe_idx in iter(self._work_q.get, None):
+            for scope, restrict, pipe_idx in iter(work_q.get, None):
                 results = []
 
                 if scope is base.version_scope:
@@ -147,6 +203,7 @@ class Pipeline:
     def _run(self):
         """Run the scanning pipeline in parallel by check and scanning scope."""
         try:
+            work_q = SimpleQueue()
             signal.signal(signal.SIGINT, signal.SIG_DFL)
             os.setpgrp()
 
@@ -159,11 +216,12 @@ class Pipeline:
                 # run synchronous checks using a process pool
                 sync_pipes = self._pipes['sync']
                 if sync_pipes:
-                    pool = Pool(self.options.jobs, self._run_checks, (sync_pipes,))
+                    pool = Pool(self.options.jobs, self._run_checks, (sync_pipes, work_q))
                     pool.close()
-                    self._queue_work(sync_pipes)
+                    self._queue_work(sync_pipes, work_q)
                     pool.join()
 
+            # notify iterator that no more results exist
             self._results_q.put(None)
         except Exception:
             # traceback can't be pickled so serialize it

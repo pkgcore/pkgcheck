@@ -528,9 +528,7 @@ def _scan(options, out, err):
 
     ret = []
     with ExitStack() as stack:
-        reporter = options.reporter(
-            out, verbosity=options.verbosity,
-            keywords=options.filtered_keywords, exit_keywords=options.exit_keywords)
+        reporter = options.reporter(out)
         for c in options.pop('contexts') + [reporter]:
             stack.enter_context(c)
         for scan_scope, restrict in options.restrictions:

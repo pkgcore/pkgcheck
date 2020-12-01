@@ -31,7 +31,6 @@ class BaseReporter:
         return self.reporter_cls(out, **kwargs)
 
     add_report_output = None
-    filtered_report_output = None
 
     def test_add_report(self, capsys):
         with self.mk_reporter() as reporter:
@@ -44,22 +43,6 @@ class BaseReporter:
         assert not err
         assert out == self.add_report_output
 
-    def test_filtered_report(self, capsys):
-        with self.mk_reporter(keywords=(profiles.ProfileError,)) as reporter:
-            reporter.report(self.log_warning)
-            reporter.report(self.log_error)
-        out, err = capsys.readouterr()
-        assert not err
-        assert out == self.filtered_report_output
-
-    def test_exit_status(self):
-        with self.mk_reporter(exit_keywords=(profiles.ProfileError,)) as reporter:
-            assert not reporter._exit_failed
-            reporter.report(self.log_warning)
-            assert not reporter._exit_failed
-            reporter.report(self.log_error)
-            assert reporter._exit_failed
-
 
 class TestStrReporter(BaseReporter):
 
@@ -71,7 +54,6 @@ class TestStrReporter(BaseReporter):
         dev-libs/foo: invalid package names: [ bar, baz ]
         dev-libs/foo-0: bad filenames: [ 0.tar.gz, foo.tar.gz ]
     """)
-    filtered_report_output = """profile error\n"""
 
 
 class TestFancyReporter(BaseReporter):
@@ -91,17 +73,12 @@ class TestFancyReporter(BaseReporter):
           InvalidPN: invalid package names: [ bar, baz ]
           BadFilename: version 0: bad filenames: [ 0.tar.gz, foo.tar.gz ]
     """)
-    filtered_report_output = dedent("""\
-        profiles
-          ProfileError: profile error
-    """)
 
 
 class TestNullReporter(BaseReporter):
 
     reporter_cls = reporters.NullReporter
     add_report_output = ""
-    filtered_report_output = ""
 
 
 class TestJsonReporter(BaseReporter):
@@ -113,9 +90,6 @@ class TestJsonReporter(BaseReporter):
         {"dev-libs": {"_error": {"CatMissingMetadataXml": "category is missing metadata.xml"}}}
         {"dev-libs": {"foo": {"_error": {"InvalidPN": "invalid package names: [ bar, baz ]"}}}}
         {"dev-libs": {"foo": {"0": {"_warning": {"BadFilename": "bad filenames: [ 0.tar.gz, foo.tar.gz ]"}}}}}
-    """)
-    filtered_report_output = dedent("""\
-        {"_error": {"ProfileError": "profile error"}}
     """)
 
 
@@ -131,11 +105,6 @@ class TestXmlReporter(BaseReporter):
         <result><category>dev-libs</category><package>foo</package><version>0</version><class>BadFilename</class><msg>bad filenames: [ 0.tar.gz, foo.tar.gz ]</msg></result>
         </checks>
     """)
-    filtered_report_output = dedent("""\
-        <checks>
-        <result><class>ProfileError</class><msg>profile error</msg></result>
-        </checks>
-    """)
 
 
 class TestCsvReporter(BaseReporter):
@@ -148,7 +117,6 @@ class TestCsvReporter(BaseReporter):
         dev-libs,foo,,"invalid package names: [ bar, baz ]"
         dev-libs,foo,0,"bad filenames: [ 0.tar.gz, foo.tar.gz ]"
     """)
-    filtered_report_output = """,,,profile error\n"""
 
 
 class TestFormatReporter(BaseReporter):
@@ -168,21 +136,6 @@ class TestFormatReporter(BaseReporter):
             self.reporter_cls = partial(reporters.FormatReporter, format_str)
             self.add_report_output = expected
             super().test_add_report(capsys)
-
-    def test_filtered_report(self, capsys):
-        for format_str, expected in (
-                    ('r', 'r\n'),
-                    ('{category}', ''),
-                    ('{category}/{package}', '/\n'),
-                    ('{category}/{package}-{version}', '/-\n'),
-                    ('{name}', 'ProfileError\n'),
-                    ('{foo}', ''),
-                    ('{desc}', 'profile error\n'),
-                    ('{level}', 'error\n'),
-                ):
-            self.reporter_cls = partial(reporters.FormatReporter, format_str)
-            self.filtered_report_output = expected
-            super().test_filtered_report(capsys)
 
 
 class UnPickleableResult(results.Result):
@@ -205,15 +158,6 @@ class TestPickleStream(BaseReporter):
                 assert not err
                 deserialized_result = next(reporter.from_file(io.BytesIO(out)))
                 assert str(deserialized_result) == str(result)
-
-    def test_filtered_report(self, capsysbinary):
-        with self.mk_reporter(keywords=(profiles.ProfileError,)) as reporter:
-            reporter.report(self.log_warning)
-            reporter.report(self.log_error)
-        out, err = capsysbinary.readouterr()
-        assert not err
-        deserialized_result = next(reporter.from_file(io.BytesIO(out)))
-        assert str(deserialized_result) == str(self.log_error)
 
     def test_unpickleable_result(self):
         result = UnPickleableResult()
@@ -257,15 +201,6 @@ class TestJsonStream(BaseReporter):
                 assert not err
                 deserialized_result = next(reporter.from_iter([out]))
                 assert str(deserialized_result) == str(result)
-
-    def test_filtered_report(self, capsys):
-        with self.mk_reporter(keywords=(profiles.ProfileError,)) as reporter:
-            reporter.report(self.log_warning)
-            reporter.report(self.log_error)
-            out, err = capsys.readouterr()
-            assert not err
-            deserialized_result = next(reporter.from_iter([out]))
-            assert str(deserialized_result) == str(self.log_error)
 
     def test_deserialize_error(self):
         with self.mk_reporter() as reporter:

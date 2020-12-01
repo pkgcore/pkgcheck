@@ -43,6 +43,10 @@ class Scope:
     def __hash__(self):
         return hash(self.desc)
 
+    def __repr__(self):
+        address = '@%#8x' % (id(self),)
+        return f'<{self.__class__.__name__} desc={self.desc!r} {address}>'
+
 
 # pkg-related scope levels
 repo_scope = Scope('repo', 1)
