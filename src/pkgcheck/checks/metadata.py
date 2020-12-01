@@ -619,7 +619,7 @@ class MissingUseDepDefault(results.VersionResult, results.Warning):
 
 
 class OutdatedBlocker(results.VersionResult, results.Info):
-    """Blocker dependency removed more than two years ago from the tree.
+    """Blocker dependency removed at least two years ago from the tree.
 
     Note that this ignores slot/subslot deps and USE deps in blocker atoms.
     """
@@ -799,20 +799,20 @@ class DependencyCheck(Check):
                             yield BadDependency(
                                 attr, atom, '= slot operator used in blocker', pkg=pkg)
                         elif self.existence_repo is not None:
-                            # check for outdated blockers (2+ years old)
+                            # check for nonexistent and outdated blockers (2+ years old)
                             if atom.op == '=*':
-                                s = f"={atom.cpvstr}*"
+                                atom_str = f"={atom.cpvstr}*"
                             else:
-                                s = atom.op + atom.cpvstr
-                            unblocked = atom_cls(s)
+                                atom_str = atom.op + atom.cpvstr
+                            unblocked = atom_cls(atom_str)
                             if not self.options.search_repo.match(unblocked):
                                 matches = self.existence_repo.match(unblocked)
                                 if matches:
                                     removal = max(x.date for x in matches)
                                     removal = datetime.strptime(removal, '%Y-%m-%d')
-                                    years = round((self.today - removal).days / 365, 2)
-                                    if years > 2:
-                                        outdated_blockers.add((atom, years))
+                                    years = (self.today - removal).days / 365
+                                    if years >= 2:
+                                        outdated_blockers.add((atom, round(years, 2)))
                                 else:
                                     nonexistent_blockers.add(atom)
 
