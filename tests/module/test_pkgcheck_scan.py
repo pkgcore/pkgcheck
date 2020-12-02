@@ -44,6 +44,17 @@ class TestPkgcheckScanParseArgs:
         assert options.enabled_checks
         assert checks_mod.pkgdir.PkgDirCheck not in options.enabled_checks
 
+    def test_no_matching_checks_scope(self, tool, capsys):
+        options, _ = tool.parse_args(['scan', 'stubrepo'])
+        path = pjoin(options.target_repo.location, 'profiles')
+        with pytest.raises(SystemExit) as excinfo:
+            tool.parse_args(['scan', '-c', 'PkgDirCheck', path])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        assert not out
+        err = err.strip()
+        assert 'no matching checks available for profiles scope' in err
+
     def test_targets(self, tool):
         options, _ = tool.parse_args(['scan', 'dev-util/foo'])
         assert list(options.restrictions) == [(base.package_scope, atom.atom('dev-util/foo'))]
