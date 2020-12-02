@@ -271,6 +271,8 @@ def _determine_target_repo(namespace):
             # initial target doesn't exist as a path, perhaps a repo ID?
             for repo in namespace.domain.ebuild_repos_raw:
                 if initial_target == repo.repo_id:
+                    # set scanning restriction so targets aren't parsed again
+                    namespace.restrictions = [(base.repo_scope, packages.AlwaysTrue)]
                     return repo
 
     # determine target repo from the target directory
@@ -438,29 +440,30 @@ def generate_restricts(repo, targets):
 def _validate_scan_args(parser, namespace):
     repo = namespace.target_repo
     restrictions = namespace.restrictions
-    if namespace.targets:
-        # Collapse restrictions for passed in targets while keeping the
-        # generator intact for piped in targets.
-        restrictions = generate_restricts(repo, namespace.targets)
-        if isinstance(namespace.targets, list):
-            restrictions = list(restrictions)
+    if not restrictions:
+        if namespace.targets:
+            # Collapse restrictions for passed in targets while keeping the
+            # generator intact for piped in targets.
+            restrictions = generate_restricts(repo, namespace.targets)
+            if isinstance(namespace.targets, list):
+                restrictions = list(restrictions)
 
-            # collapse restrictions in order to run them in parallel
-            if len(restrictions) > 1:
-                # multiple targets are restricted to a single scanning scope
-                scopes = {scope for scope, restrict in restrictions}
-                if len(scopes) > 1:
-                    scan_scopes = ', '.join(sorted(map(str, scopes)))
-                    parser.error(f'targets specify multiple scan scope levels: {scan_scopes}')
+                # collapse restrictions in order to run them in parallel
+                if len(restrictions) > 1:
+                    # multiple targets are restricted to a single scanning scope
+                    scopes = {scope for scope, restrict in restrictions}
+                    if len(scopes) > 1:
+                        scan_scopes = ', '.join(sorted(map(str, scopes)))
+                        parser.error(f'targets specify multiple scan scope levels: {scan_scopes}')
 
-                combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
-                restrictions = [(scopes.pop(), combined_restrict)]
-    elif not restrictions:
-        if namespace.cwd in repo:
-            scope, restrict = _path_restrict(namespace.cwd, repo)
+                    combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
+                    restrictions = [(scopes.pop(), combined_restrict)]
         else:
-            scope, restrict = base.repo_scope, packages.AlwaysTrue
-        restrictions = [(scope, restrict)]
+            if namespace.cwd in repo:
+                scope, restrict = _path_restrict(namespace.cwd, repo)
+            else:
+                scope, restrict = base.repo_scope, packages.AlwaysTrue
+            restrictions = [(scope, restrict)]
 
     # only run version scope checks when using a package filter
     if namespace.filter is not None:
