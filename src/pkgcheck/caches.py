@@ -41,25 +41,20 @@ class DictCache(UserDict, Cache):
         self._cache = cache
 
 
-class _RegisterCache(type):
-    """Metaclass for registering caches."""
-
-    def __new__(cls, name, bases, class_dict):
-        new_cls = type.__new__(cls, name, bases, class_dict)
-        if new_cls.__name__ != 'CachedAddon':
-            if new_cls.cache is None:
-                raise ValueError(f'invalid cache registry: {new_cls!r}')
-            new_cls.caches[new_cls] = new_cls.cache
-        return new_cls
-
-
-class CachedAddon(base.Addon, metaclass=_RegisterCache):
+class CachedAddon(base.Addon):
     """Mixin for addon classes that create/use data caches."""
 
     # attributes for cache registry
     cache = None
     # registered cache types
     caches = {}
+
+    def __init_subclass__(cls, **kwargs):
+        """Register available caches."""
+        super().__init_subclass__(**kwargs)
+        if cls.cache is None:
+            raise ValueError(f'invalid cache registry: {cls!r}')
+        cls.caches[cls] = cls.cache
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
