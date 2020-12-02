@@ -138,6 +138,7 @@ case $state in
     typeset -a caches
 
     caches=(
+      'eclass'
       'git'
       'profiles'
     )
