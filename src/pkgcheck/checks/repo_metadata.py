@@ -552,7 +552,7 @@ class UnnecessaryManifest(results.PackageResult, results.Warning):
 class InvalidManifest(results.MetadataError, results.PackageResult):
     """Package's Manifest file is invalid."""
 
-    _attr = 'manifest'
+    attr = 'manifest'
 
 
 class ManifestCheck(Check):

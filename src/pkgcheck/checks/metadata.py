@@ -47,7 +47,7 @@ class MissingLicense(results.VersionResult, results.Error):
 class InvalidLicense(results.MetadataError, results.VersionResult):
     """Package's LICENSE is invalid."""
 
-    _attr = 'license'
+    attr = 'license'
 
 
 class MissingLicenseRestricts(results.VersionResult, results.Error):
@@ -268,19 +268,19 @@ class EapiCheck(Check):
 class InvalidEapi(results.MetadataError, results.VersionResult):
     """Package's EAPI is invalid."""
 
-    _attr = 'eapi'
+    attr = 'eapi'
 
 
 class InvalidSlot(results.MetadataError, results.VersionResult):
     """Package's SLOT is invalid."""
 
-    _attr = 'slot'
+    attr = 'slot'
 
 
 class SourcingError(results.MetadataError, results.VersionResult):
     """Failed sourcing ebuild."""
 
-    _attr = 'data'
+    attr = 'data'
 
 
 class SourcingCheck(Check):
@@ -333,7 +333,7 @@ class RequiredUseDefaults(results.VersionResult, results.Warning):
 class InvalidRequiredUse(results.MetadataError, results.VersionResult):
     """Package's REQUIRED_USE is invalid."""
 
-    _attr = 'required_use'
+    attr = 'required_use'
 
 
 class RequiredUseCheck(Check):
@@ -691,25 +691,25 @@ class BadDependency(results.VersionResult, results.Error):
 class InvalidDepend(results.MetadataError, results.VersionResult):
     """Package has invalid DEPEND."""
 
-    _attr = 'depend'
+    attr = 'depend'
 
 
 class InvalidRdepend(results.MetadataError, results.VersionResult):
     """Package has invalid RDEPEND."""
 
-    _attr = 'rdepend'
+    attr = 'rdepend'
 
 
 class InvalidPdepend(results.MetadataError, results.VersionResult):
     """Package has invalid PDEPEND."""
 
-    _attr = 'pdepend'
+    attr = 'pdepend'
 
 
 class InvalidBdepend(results.MetadataError, results.VersionResult):
     """Package has invalid BDEPEND."""
 
-    _attr = 'bdepend'
+    attr = 'bdepend'
 
 
 class DependencyCheck(Check):
@@ -1075,7 +1075,7 @@ class TarballAvailable(results.VersionResult, results.Warning):
 class InvalidSrcUri(results.MetadataError, results.VersionResult):
     """Package's SRC_URI is invalid."""
 
-    _attr = 'fetchables'
+    attr = 'fetchables'
 
 
 class SrcUriCheck(Check):
@@ -1286,13 +1286,13 @@ class UnknownProperties(results.VersionResult, results.Warning):
 class InvalidRestrict(results.MetadataError, results.VersionResult):
     """Package's RESTRICT is invalid."""
 
-    _attr = 'restrict'
+    attr = 'restrict'
 
 
 class InvalidProperties(results.MetadataError, results.VersionResult):
     """Package's PROPERTIES is invalid."""
 
-    _attr = 'properties'
+    attr = 'properties'
 
 
 class _RestrictPropertiesCheck(Check):

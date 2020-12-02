@@ -274,7 +274,7 @@ class MetadataError(Error):
     """Problem detected with a package's metadata."""
 
     # specific metadata attributes handled by the result class
-    _attr = None
+    attr = None
     # mapping from data attributes to result classes
     result_mapping = {}
     # set of registered result classes
@@ -283,12 +283,11 @@ class MetadataError(Error):
     def __init_subclass__(cls, **kwargs):
         """Register metadata attribute error results."""
         super().__init_subclass__(**kwargs)
-        attr = cls._attr
-        if attr is not None:
-            setting = cls.result_mapping.setdefault(attr, cls)
+        if cls.attr is not None:
+            setting = cls.result_mapping.setdefault(cls.attr, cls)
             if setting != cls:
                 raise ValueError(
-                    f'metadata attribute {cls._attr!r} already registered: {setting!r}')
+                    f'metadata attribute {cls.attr!r} already registered: {setting!r}')
         else:
             raise ValueError(f'class missing metadata attributes: {cls!r}')
 

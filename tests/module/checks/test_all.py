@@ -37,7 +37,7 @@ class TestMetadataError:
     def test_reregister_error(self):
         with pytest.raises(ValueError, match="metadata attribute 'eapi' already registered"):
             class InvalidEapi2(results.MetadataError, results.VersionResult):
-                _attr = 'eapi'
+                attr = 'eapi'
 
     def test_register_missing_attr(self):
         with pytest.raises(ValueError, match="class missing metadata attributes"):
