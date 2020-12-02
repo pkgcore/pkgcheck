@@ -124,7 +124,7 @@ case $state in
 
     subcommands=(
       scan:'scan targets for QA issues'
-      cache:'update/remove pkgcheck caches'
+      cache:'perform cache operations'
       replay:'replay results streams'
       show:'show various pkgcheck info'
     )

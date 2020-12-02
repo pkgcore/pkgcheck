@@ -540,10 +540,10 @@ def _scan(options, out, err):
 
 
 cache = subparsers.add_parser(
-    'cache', description='update/remove pkgcheck caches',
+    'cache', description='perform cache operations',
     docs="""
-        Caches of various types are used by pkgcheck. This command allows the
-        user to manually force cache updates or removals.
+        Various types of caches are used by pkgcheck. This command supports
+        running operations on them including updates and removals.
     """)
 cache.add_argument(
     '--cache-dir', type=arghparse.create_dir, default=const.USER_CACHE_DIR,
