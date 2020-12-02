@@ -13,16 +13,8 @@ class InvalidResult(Exception):
     """Creating a result object failed in some fashion."""
 
 
-class _ResultAttrs(type):
-    """Metaclass for setting attributes on base class objects."""
-
-    @property
-    def name(cls):
-        return cls._name if cls._name is not None else cls.__name__
-
-
 @total_ordering
-class Result(metaclass=_ResultAttrs):
+class Result:
     """Generic report result returned from a check."""
 
     # all results are shown by default
