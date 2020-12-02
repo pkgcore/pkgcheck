@@ -283,7 +283,7 @@ def _determine_target_repo(namespace):
         return namespace.domain.find_repo(
             target_dir, config=namespace.config, configure=False)
     except (repo_errors.InitializationError, IOError) as e:
-        raise UserException(str(e))
+        raise argparse.ArgumentError(None, str(e))
 
 
 def _path_restrict(path, repo):
