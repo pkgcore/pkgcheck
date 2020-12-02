@@ -776,7 +776,7 @@ show = subparsers.add_parser('show', description='show various pkgcheck info')
 list_options = show.add_argument_group('list options')
 output_types = list_options.add_mutually_exclusive_group()
 output_types.add_argument(
-    '--keywords', action='store_true', default=False,
+    '-k', '--keywords', action='store_true', default=False,
     help='show available warning/error keywords',
     docs="""
         List all available keywords.
@@ -786,7 +786,7 @@ output_types.add_argument(
         descriptions.
     """)
 output_types.add_argument(
-    '--checks', action='store_true', default=False,
+    '-c', '--checks', action='store_true', default=False,
     help='show available checks',
     docs="""
         List all available checks.
@@ -795,7 +795,7 @@ output_types.add_argument(
         each check.
     """)
 output_types.add_argument(
-    '--scopes', action='store_true', default=False,
+    '-s', '--scopes', action='store_true', default=False,
     help='show available keyword/check scopes',
     docs="""
         List all available keyword and check scopes.
@@ -803,7 +803,7 @@ output_types.add_argument(
         Use -v/--verbose to show scope descriptions.
     """)
 output_types.add_argument(
-    '--reporters', action='store_true', default=False,
+    '-r', '--reporters', action='store_true', default=False,
     help='show available reporters',
     docs="""
         List all available reporters.

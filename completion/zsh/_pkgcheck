@@ -209,10 +209,10 @@ case $state in
       (show)
         _arguments -C -A '-*' \
           $common_output_args \
-          '--keywords[how available warning/error keywords]' \
-          '--checks[show available checks]' \
-          '--reporters[show available reporters]' \
-          '--scopes[show available keyword/check scopes]' \
+          {'(--keywords)-k','(-k)--keywords'}'[how available warning/error keywords]' \
+          {'(--checks)-c','(-c)--checks'}'[show available checks]' \
+          {'(--reporters)-r','(-r)--reporters'}'[show available reporters]' \
+          {'(--scopes)-s','(-s)--scopes'}'[show available keyword/check scopes]' \
           && ret=0
         ;;
       (*)

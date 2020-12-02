@@ -27,86 +27,90 @@ class TestPkgcheckShow:
             assert excinfo.value.code == 0
 
     def test_show_keywords(self, capsys):
-        # regular mode
-        with patch('sys.argv', self.args + ['--keywords']):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            out, err = capsys.readouterr()
-            assert not err
-            out = out.strip().split('\n')
-            regular_output = out
-            assert out == sorted(objects.KEYWORDS.keys())
-            assert excinfo.value.code == 0
+        for arg in ('-k', '--keywords'):
+            # regular mode
+            with patch('sys.argv', self.args + [arg]):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                out = out.strip().split('\n')
+                regular_output = out
+                assert out == sorted(objects.KEYWORDS.keys())
+                assert excinfo.value.code == 0
 
-        # verbose mode
-        with patch('sys.argv', self.args + ['--keywords', '-v']):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            out, err = capsys.readouterr()
-            assert not err
-            out = out.strip().split('\n')
-            verbose_output = out
-            assert excinfo.value.code == 0
+            # verbose mode
+            with patch('sys.argv', self.args + [arg, '-v']):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                out = out.strip().split('\n')
+                verbose_output = out
+                assert excinfo.value.code == 0
 
-        # verbose output shows much more info
-        assert len(regular_output) < len(verbose_output)
+            # verbose output shows much more info
+            assert len(regular_output) < len(verbose_output)
 
     def test_show_checks(self, capsys):
-        # regular mode
-        with patch('sys.argv', self.args + ['--checks']):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            out, err = capsys.readouterr()
-            assert not err
-            out = out.strip().split('\n')
-            regular_output = out
-            assert out == sorted(objects.CHECKS.keys())
-            assert excinfo.value.code == 0
+        for arg in ('-c', '--checks'):
+            # regular mode
+            with patch('sys.argv', self.args + [arg]):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                out = out.strip().split('\n')
+                regular_output = out
+                assert out == sorted(objects.CHECKS.keys())
+                assert excinfo.value.code == 0
 
-        # verbose mode
-        with patch('sys.argv', self.args + ['--checks', '-v']):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            out, err = capsys.readouterr()
-            assert not err
-            out = out.strip().split('\n')
-            verbose_output = out
-            assert excinfo.value.code == 0
+            # verbose mode
+            with patch('sys.argv', self.args + [arg, '-v']):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                out = out.strip().split('\n')
+                verbose_output = out
+                assert excinfo.value.code == 0
 
-        # verbose output shows much more info
-        assert len(regular_output) < len(verbose_output)
+            # verbose output shows much more info
+            assert len(regular_output) < len(verbose_output)
 
     def test_show_scopes(self, capsys):
-        with patch('sys.argv', self.args + ['--scopes']):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            out, err = capsys.readouterr()
-            assert not err
-            out = out.strip().split('\n')
-            assert out == list(base.scopes)
-            assert excinfo.value.code == 0
+        for arg in ('-s', '--scopes'):
+            with patch('sys.argv', self.args + [arg]):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                out = out.strip().split('\n')
+                assert out == list(base.scopes)
+                assert excinfo.value.code == 0
 
     def test_show_reporters(self, capsys):
-        # regular mode
-        with patch('sys.argv', self.args + ['--reporters']):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            out, err = capsys.readouterr()
-            assert not err
-            out = out.strip().split('\n')
-            regular_output = out
-            assert out == sorted(objects.REPORTERS.keys())
-            assert excinfo.value.code == 0
+        for arg in ('-r', '--reporters'):
+            # regular mode
+            with patch('sys.argv', self.args + [arg]):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                out = out.strip().split('\n')
+                regular_output = out
+                assert out == sorted(objects.REPORTERS.keys())
+                assert excinfo.value.code == 0
 
-        # verbose mode
-        with patch('sys.argv', self.args + ['--reporters', '-v']):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            out, err = capsys.readouterr()
-            assert not err
-            out = out.strip().split('\n')
-            verbose_output = out
-            assert excinfo.value.code == 0
+            # verbose mode
+            with patch('sys.argv', self.args + [arg, '-v']):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                out = out.strip().split('\n')
+                verbose_output = out
+                assert excinfo.value.code == 0
 
-        # verbose output shows much more info
-        assert len(regular_output) < len(verbose_output)
+            # verbose output shows much more info
+            assert len(regular_output) < len(verbose_output)
