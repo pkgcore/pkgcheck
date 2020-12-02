@@ -132,7 +132,7 @@ class StaleProxyMaintProject(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return '{self.filename}: proxy-maint maintainer with no proxies'
+        return f'{self.filename}: proxy-maint maintainer with no proxies'
 
 
 class NonexistentProjectMaintainer(results.PackageResult, results.Warning):
