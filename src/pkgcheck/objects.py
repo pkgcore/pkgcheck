@@ -35,11 +35,11 @@ def _find_modules(module):
         yield module
 
 
-def _find_classes(module, matching_cls):
+def _find_classes(module, matching_cls, skip=()):
     """Generator of all subclasses of a selected class under a given module."""
     for _name, cls in inspect.getmembers(module):
         if (inspect.isclass(cls) and issubclass(cls, matching_cls)
-                and cls.__name__[0] != '_'):
+                and cls.__name__[0] != '_' and cls not in skip):
             yield cls
 
 
@@ -50,16 +50,13 @@ def _find_obj_classes(module_name, target_cls):
     matching_cls = getattr(import_module(f'.{cls_module}', _pkg), cls_name)
 
     # skip top-level, base classes
-    base_classes = {matching_cls.__name__: matching_cls}
+    base_classes = {matching_cls}
     if os.path.basename(module.__file__) == '__init__.py':
-        for cls in _find_classes(module, matching_cls):
-            base_classes[cls.__name__] = cls
+        base_classes.update(_find_classes(module, matching_cls))
 
     classes = {}
     for m in _find_modules(module):
-        for cls in _find_classes(m, matching_cls):
-            if cls.__name__ in base_classes:
-                continue
+        for cls in _find_classes(m, matching_cls, skip=base_classes):
             if cls.__name__ in classes and classes[cls.__name__] != cls:
                 raise Exception(f'object name overlap: {cls} and {classes[cls.__name__]}')
             classes[cls.__name__] = cls
