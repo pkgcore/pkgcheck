@@ -1,3 +1,4 @@
+import itertools
 from functools import partial
 from unittest.mock import patch
 
@@ -88,6 +89,20 @@ class TestPkgcheckShow:
                 out = out.strip().split('\n')
                 assert out == list(base.scopes)
                 assert excinfo.value.code == 0
+                regular_output = '\n'.join(itertools.chain(out))
+
+            # verbose mode
+            with patch('sys.argv', self.args + [arg, '-v']):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                out = out.strip().split('\n')
+                assert excinfo.value.code == 0
+                verbose_output = '\n'.join(itertools.chain(out))
+
+            # verbose output shows more info
+            assert len(regular_output) < len(verbose_output)
 
     def test_show_reporters(self, capsys):
         for arg in ('-r', '--reporters'):
