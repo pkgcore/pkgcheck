@@ -43,6 +43,17 @@ class Pipeline:
         self.options._results_q = self._results_q
         self._pipes = self._create_runners()
 
+        # initialize settings used by iterator support
+        self._pid = None
+        signal.signal(signal.SIGINT, self._kill_pipe)
+        self._results_iter = iter(self._results_q.get, None)
+        self._results = deque()
+        # scoped mapping for caching repo and location specific results
+        self._repo_results = {
+            scope: [] for scope in reversed(list(base.scopes.values()))
+            if scope.level <= base.repo_scope
+        }
+
     def _create_runners(self):
         """Initialize and categorize checkrunners for results pipeline."""
         # initialize enabled checks
@@ -81,23 +92,10 @@ class Pipeline:
         raise KeyboardInterrupt
 
     def __iter__(self):
-        self._pid = None
-        signal.signal(signal.SIGINT, self._kill_pipe)
         # start running the check pipeline
         p = Process(target=self._run)
         p.start()
         self._pid = p.pid
-
-        # initialize settings used by __next__()
-        self._results_iter = iter(self._results_q.get, None)
-        self._results = deque()
-        self._scan_finished = False
-        # scoped mapping for caching repo and location specific results
-        self._ordered_results = {
-            scope: [] for scope in reversed(list(base.scopes.values()))
-            if scope.level <= base.repo_scope
-        }
-
         return self
 
     def __next__(self):
@@ -116,12 +114,13 @@ class Pipeline:
                 try:
                     results = next(self._results_iter)
                 except StopIteration:
-                    if self._scan_finished:
+                    if self._repo_results is None:
                         raise
-                    self._scan_finished = True
+                    self._pid = None
                     # return cached repo and location specific results
-                    results = chain.from_iterable(map(sorted, self._ordered_results.values()))
+                    results = chain.from_iterable(map(sorted, self._repo_results.values()))
                     self._results.extend(results)
+                    self._repo_results = None
                     continue
 
                 # Catch propagated exceptions, output their traceback, and
@@ -144,7 +143,7 @@ class Pipeline:
                     # version/package/category results have been output.
                     for result in sorted(results):
                         try:
-                            self._ordered_results[result.scope].append(result)
+                            self._repo_results[result.scope].append(result)
                         except KeyError:
                             self._results.append(result)
 
