@@ -80,15 +80,40 @@ class TestPkgcheckScanParseArgs:
             "pkgcheck scan: error: 'stubrepo' repo doesn't contain: '/foo/bar'")
 
     def test_target_repo_id(self, tool):
-        options, _ = tool.parse_args(['scan', '-r', 'stubrepo'])
+        options, _ = tool.parse_args(['scan', 'stubrepo'])
         assert options.target_repo.repo_id == 'stubrepo'
         assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
     def test_target_dir_path(self, repo, tool):
-        # dir path
         options, _ = tool.parse_args(['scan', repo.location])
         assert options.target_repo.repo_id == 'fake'
         assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
+
+    def test_target_dir_path_in_repo(self, repo, tool):
+        path = pjoin(repo.location, 'profiles')
+        options, _ = tool.parse_args(['scan', path])
+        assert options.target_repo.repo_id == 'fake'
+        assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
+
+    def test_target_non_repo_path(self, tool, capsys, tmp_path):
+        with pytest.raises(SystemExit) as excinfo:
+            tool.parse_args(['scan', str(tmp_path)])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        assert not out
+        assert err.startswith(
+            f"pkgcheck scan: error: 'stubrepo' repo doesn't contain: '{str(tmp_path)}'")
+
+    def test_target_invalid_repo(self, tool, capsys, make_repo):
+        repo = make_repo(masters=['unknown'])
+        with pytest.raises(SystemExit) as excinfo:
+            tool.parse_args(['scan', repo.location])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        assert not out
+        err = err.strip()
+        assert err.startswith('pkgcheck scan: error: repo init failed')
+        assert err.endswith("has missing masters: 'unknown'")
 
     def test_target_file_path(self, repo, tool):
         os.makedirs(pjoin(repo.location, 'dev-util', 'foo'))
@@ -127,8 +152,8 @@ class TestPkgcheckScanParseArgs:
                     options, _ = tool.parse_args(['scan', opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert err[-1].startswith(
+            assert not out
+            assert err.startswith(
                 "pkgcheck scan: error: argument -r/--repo: couldn't find repo 'foo'")
 
     def test_invalid_repo(self, tmp_path, capsys, tool):
@@ -139,9 +164,15 @@ class TestPkgcheckScanParseArgs:
                     options, _ = tool.parse_args(['scan', opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert err[-1].startswith(
+            assert not out
+            assert err.startswith(
                 "pkgcheck scan: error: argument -r/--repo: invalid repo")
+
+    def test_valid_repo(self, tool):
+        for opt in ('-r', '--repo'):
+            options, _ = tool.parse_args(['scan', opt, 'stubrepo'])
+            assert options.target_repo.repo_id == 'stubrepo'
+            assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
     def test_unknown_reporter(self, capsys, tool):
         for opt in ('-R', '--reporter'):
@@ -149,9 +180,8 @@ class TestPkgcheckScanParseArgs:
                 options, _ = tool.parse_args(['scan', opt, 'foo'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert err[-1].startswith(
-                "pkgcheck scan: error: no reporter matches 'foo'")
+            assert not out
+            assert err.startswith("pkgcheck scan: error: no reporter matches 'foo'")
 
     def test_format_reporter(self, capsys, tool):
         # missing --format
