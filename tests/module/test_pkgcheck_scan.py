@@ -95,6 +95,13 @@ class TestPkgcheckScanParseArgs:
         assert options.target_repo.repo_id == 'fake'
         assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
 
+    def test_target_dir_path_in_configured_repo(self, tool):
+        options, _ = tool.parse_args(['scan', 'stubrepo'])
+        path = pjoin(options.target_repo.location, 'profiles')
+        options, _ = tool.parse_args(['scan', path])
+        assert options.target_repo.repo_id == 'stubrepo'
+        assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
+
     def test_target_non_repo_path(self, tool, capsys, tmp_path):
         with pytest.raises(SystemExit) as excinfo:
             tool.parse_args(['scan', str(tmp_path)])
