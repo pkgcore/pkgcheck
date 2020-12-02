@@ -32,7 +32,7 @@ def test_keywords():
 
 
 class TestMetadataError:
-    """Test MetadataError metaclass registry."""
+    """Test MetadataError attribute registry."""
 
     def test_reregister_error(self):
         with pytest.raises(ValueError, match="metadata attribute 'eapi' already registered"):

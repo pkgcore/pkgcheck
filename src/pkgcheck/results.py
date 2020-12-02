@@ -278,24 +278,7 @@ class LogError(_LogResult, Error):
     """Error caught from a logger instance."""
 
 
-class _RegisterMetadataErrors(_ResultAttrs):
-    """Metaclass for registering known metadata results."""
-
-    def __new__(cls, name, bases, class_dict):
-        new_cls = type.__new__(cls, name, bases, class_dict)
-        attr = new_cls._attr
-        if attr is not None:
-            new_cls.results.add(new_cls)
-            setting = new_cls.result_mapping.setdefault(attr, new_cls)
-            if setting != new_cls:
-                raise ValueError(
-                    f'metadata attribute {attr!r} already registered: {setting!r}')
-        elif new_cls.__name__ != 'MetadataError':
-            raise ValueError(f'class missing metadata attributes: {new_cls!r}')
-        return new_cls
-
-
-class MetadataError(Error, metaclass=_RegisterMetadataErrors):
+class MetadataError(Error):
     """Problem detected with a package's metadata."""
 
     # specific metadata attributes handled by the result class
@@ -304,6 +287,18 @@ class MetadataError(Error, metaclass=_RegisterMetadataErrors):
     result_mapping = {}
     # set of registered result classes
     results = set()
+
+    def __init_subclass__(cls, **kwargs):
+        """Register metadata attribute error results."""
+        super().__init_subclass__(**kwargs)
+        attr = cls._attr
+        if attr is not None:
+            setting = cls.result_mapping.setdefault(attr, cls)
+            if setting != cls:
+                raise ValueError(
+                    f'metadata attribute {cls._attr!r} already registered: {setting!r}')
+        else:
+            raise ValueError(f'class missing metadata attributes: {cls!r}')
 
     def __init__(self, attr, msg, **kwargs):
         super().__init__(**kwargs)
