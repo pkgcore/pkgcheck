@@ -99,8 +99,8 @@ class GitRepo:
         self.path = path
         # initialize the repo
         self.run(['git', 'init'])
-        self.run(['git', 'config', 'user.email', 'person@email.com'])
-        self.run(['git', 'config', 'user.name', 'Person'])
+        self.run(['git', 'config', 'user.email', 'first.last@email.com'])
+        self.run(['git', 'config', 'user.name', 'First Last'])
         if commit:
             if self.changes:
                 # if files exist in the repo, add them in an initial commit
@@ -130,33 +130,41 @@ class GitRepo:
     def __str__(self):
         return self.path
 
-    def add(self, file_path, msg='commit', create=False):
+    def commit(self, msg, signoff=False):
+        """Make a commit to the repo."""
+        if isinstance(msg, str):
+            msg = msg.splitlines()
+        if signoff:
+            msg.extend(['', 'Signed-off-by: First Last <first.last@email.com>'])
+        self.run(['git', 'commit', '-m', '\n'.join(msg)])
+
+    def add(self, file_path, msg='commit', create=False, signoff=False):
         """Add a file and commit it to the repo."""
         if create:
             touch(pjoin(self.path, file_path))
         self.run(['git', 'add', file_path])
-        self.run(['git', 'commit', '-m', msg])
+        self.commit(msg, signoff)
 
-    def add_all(self, msg='commit-all'):
+    def add_all(self, msg='commit-all', signoff=False):
         """Add and commit all tracked and untracked files."""
         self.run(['git', 'add', '--all'])
-        self.run(['git', 'commit', '-m', msg])
+        self.commit(msg, signoff)
 
-    def remove(self, path, msg='remove'):
+    def remove(self, path, msg='remove', signoff=False):
         """Remove a given file path and commit the change."""
         self.run(['git', 'rm', path])
-        self.run(['git', 'commit', '-m', msg])
+        self.commit(msg, signoff)
 
-    def remove_all(self, path, msg='remove-all'):
+    def remove_all(self, path, msg='remove-all', signoff=False):
         """Remove all files from a given path and commit the changes."""
         self.run(['git', 'rm', '-rf', path])
-        self.run(['git', 'commit', '-m', msg])
+        self.commit(msg, signoff)
 
-    def move(self, path, new_path, msg=None):
+    def move(self, path, new_path, msg=None, signoff=False):
         """Move a given file path and commit the change."""
         msg = msg if msg is not None else f'{path} -> {new_path}'
         self.run(['git', 'mv', path, new_path])
-        self.run(['git', 'commit', '-m', msg])
+        self.commit(msg, signoff)
 
 
 @pytest.fixture

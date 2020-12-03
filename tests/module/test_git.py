@@ -151,32 +151,52 @@ class TestParsedGitRepo:
     def test_non_git(self, tmp_path):
         p = git.ParsedGitRepo(str(tmp_path))
         with pytest.raises(git.GitError, match='failed running git log'):
-            list(p.parse_git_log('HEAD'))
+            list(p.parse_git_log('HEAD', commits=True))
 
     def test_empty_repo(self, make_git_repo):
         git_repo = make_git_repo()
         p = git.ParsedGitRepo(git_repo.path)
         with pytest.raises(git.GitError, match='failed running git log'):
-            list(p.parse_git_log('HEAD'))
+            list(p.parse_git_log('HEAD', commits=True))
 
-    def test_commits_parsing(self, make_git_repo):
+    def test_commits_parsing(self, make_repo, make_git_repo):
         git_repo = make_git_repo()
+        repo = make_repo(git_repo.path)
 
         # make an initial commit
         git_repo.add('foo', msg='foo', create=True)
         p = git.ParsedGitRepo(git_repo.path)
-        commits = list(p.parse_git_log('HEAD'))
+        commits = list(p.parse_git_log('HEAD', commits=True))
         assert len(commits) == 1
+        assert commits[0].message == ['foo']
+        assert commits[0].pkgs == ()
         orig_commit = commits[0]
-        assert orig_commit.message == ['foo']
 
         # make another commit
         git_repo.add('bar', msg='bar', create=True)
-        commits = list(p.parse_git_log('HEAD'))
+        commits = list(p.parse_git_log('HEAD', commits=True))
         assert len(commits) == 2
         assert commits[0].message == ['bar']
+        assert commits[0].pkgs == ()
         assert commits[1] == orig_commit
         assert len(set(commits)) == 2
+
+        # make a pkg commit
+        repo.create_ebuild('cat/pkg-0')
+        git_repo.add_all('cat/pkg-0')
+        commits = list(p.parse_git_log('HEAD', commits=True))
+        assert len(commits) == 3
+        assert commits[0].message == ['cat/pkg-0']
+        assert commits[0].pkgs == (atom_cls('=cat/pkg-0'),)
+
+        # make a multiple pkg commit
+        repo.create_ebuild('cat/new1-0')
+        repo.create_ebuild('cat/new2-0')
+        git_repo.add_all('cat: various updates')
+        commits = list(p.parse_git_log('HEAD', commits=True))
+        assert len(commits) == 4
+        assert commits[0].message == ['cat: various updates']
+        assert commits[0].pkgs == (atom_cls('=cat/new1-0'), atom_cls('=cat/new2-0'))
 
     def test_pkgs_parsing(self, repo, make_git_repo):
         git_repo = make_git_repo(repo.location, commit=True)
@@ -199,12 +219,11 @@ class TestParsedGitRepo:
         # create a pkg and commit it
         repo.create_ebuild('cat/pkg-0')
         git_repo.add_all('cat/pkg-0')
-        pkgs = list(p.parse_git_log('HEAD', pkgs=True))
+        pkgs = list(p.parse_git_log('HEAD'))
         assert len(pkgs) == 1
         pkg = pkgs[0]
         assert pkg.atom == atom_cls('=cat/pkg-0')
         assert pkg.status == 'A'
-        assert pkg.commit.message == ['cat/pkg-0']
 
         # update the dict cache
         p.update('HEAD', data=data)
@@ -223,7 +242,7 @@ class TestParsedGitRepo:
         # add a new version and commit it
         repo.create_ebuild('cat/pkg-1')
         git_repo.add_all('cat/pkg-1')
-        pkgs = list(p.parse_git_log('HEAD', pkgs=True))
+        pkgs = list(p.parse_git_log('HEAD'))
         assert len(pkgs) == 2
         pkg = pkgs[0]
         assert pkg.atom == atom_cls('=cat/pkg-1')
@@ -245,7 +264,7 @@ class TestParsedGitRepo:
 
         # remove the old version
         git_repo.remove('cat/pkg/pkg-0.ebuild')
-        pkgs = list(p.parse_git_log('HEAD', pkgs=True))
+        pkgs = list(p.parse_git_log('HEAD'))
         assert len(pkgs) == 3
         pkg = pkgs[0]
         assert pkg.atom == atom_cls('=cat/pkg-0')
@@ -267,7 +286,7 @@ class TestParsedGitRepo:
 
         # rename the pkg
         git_repo.move('cat', 'cat2')
-        pkgs = list(p.parse_git_log('HEAD', pkgs=True))
+        pkgs = list(p.parse_git_log('HEAD'))
         assert len(pkgs) == 5
         new_pkg, old_pkg = pkgs[:2]
         assert old_pkg.atom == atom_cls('=cat/pkg-1')

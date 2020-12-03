@@ -32,12 +32,13 @@ from .log import logger
 class GitCommit:
     """Git commit objects."""
 
-    def __init__(self, hash, commit_date, author, committer, message):
+    def __init__(self, hash, commit_date, author, committer, message, pkgs):
         self.hash = hash
         self.commit_date = commit_date
         self.author = author
         self.committer = committer
         self.message = message
+        self.pkgs = pkgs
 
     def __str__(self):
         return self.hash
@@ -52,10 +53,11 @@ class GitCommit:
 class GitPkgChange:
     """Git package change objects."""
 
-    def __init__(self, atom, status, commit, **kwargs):
+    def __init__(self, atom, status, commit, commit_date, **kwargs):
         self.atom = atom
         self.status = status
         self.commit = commit
+        self.commit_date = commit_date
         self.data = kwargs
 
 
@@ -90,20 +92,80 @@ class ParsedGitRepo:
         if data is None:
             data = {}
         seen = set()
-        for pkg in self.parse_git_log(commit_range, pkgs=True, local=local, **kwargs):
+        for pkg in self.parse_git_log(commit_range, local=local, **kwargs):
             atom = pkg.atom
             key = (atom, pkg.status)
             if key not in seen:
                 seen.add(key)
                 if local:
-                    commit = (atom.fullver, pkg.commit.commit_date, pkg.commit, pkg.data)
+                    commit = (atom.fullver, pkg.commit_date, pkg.commit, pkg.data)
                 else:
-                    commit = (atom.fullver, pkg.commit.commit_date, pkg.commit.hash)
+                    commit = (atom.fullver, pkg.commit_date, pkg.commit)
                 data.setdefault(atom.category, {}).setdefault(
                     atom.package, {}).setdefault(pkg.status, []).append(commit)
         return data
 
-    def parse_git_log(self, commit_range, pkgs=False, local=False, verbosity=-1):
+    def _pkgs(self, git_log):
+        """Yield changed package atoms from git log file changes."""
+        while True:
+            line = git_log.stdout.readline().decode('utf-8', 'replace')
+            if line == '# BEGIN COMMIT\n' or not line:
+                return
+            line = line.strip()
+            if line:
+                match = self._git_log_regex.match(line)
+                if match is not None:
+                    data = match.groups()
+                    try:
+                        if data[0] is not None:
+                            # matched ADM status change
+                            status, category, pn = data[0:3]
+                            yield atom_cls(f'={category}/{pn}')
+                        else:
+                            # matched R status change
+                            status, category, pn = data[3:6]
+                            yield atom_cls(f'={category}/{pn}')
+                            category, pn = data[6:]
+                            yield atom_cls(f'={category}/{pn}')
+                    except MalformedAtom:
+                        pass
+
+    def _pkg_changes(self, git_log, commit_hash, commit_date, local):
+        """Yield package change objects from git log file changes."""
+        while True:
+            line = git_log.stdout.readline().decode('utf-8', 'replace')
+            if line == '# BEGIN COMMIT\n' or not line:
+                return
+            line = line.strip()
+            if line:
+                match = self._git_log_regex.match(line)
+                if match is not None:
+                    data = match.groups()
+                    try:
+                        if data[0] is not None:
+                            # matched ADM status change
+                            status, category, pn = data[0:3]
+                            pkg = atom_cls(f'={category}/{pn}')
+                            yield GitPkgChange(pkg, status, commit_hash, commit_date)
+                        else:
+                            # matched R status change
+                            status, category, pn = data[3:6]
+                            old_pkg = atom_cls(f'={category}/{pn}')
+                            category, pn = data[6:]
+                            new_pkg = atom_cls(f'={category}/{pn}')
+                            if not local:
+                                # treat rename as addition and removal
+                                yield GitPkgChange(new_pkg, 'A', commit_hash, commit_date)
+                                yield GitPkgChange(old_pkg, 'D', commit_hash, commit_date)
+                            else:
+                                # renames are split into add/remove ops at
+                                # the check level for the local commits repo
+                                yield GitPkgChange(
+                                    new_pkg, 'R', commit_hash, commit_date, old_pkg=old_pkg)
+                    except MalformedAtom:
+                        pass
+
+    def parse_git_log(self, commit_range, commits=False, local=False, verbosity=-1):
         """Parse git log output."""
         cmd = shlex.split(self._git_cmd)
         # custom git log format, see the "PRETTY FORMATS" section of the git
@@ -130,8 +192,10 @@ class ParsedGitRepo:
 
         count = 1
         with base.ProgressManager(verbosity=verbosity) as progress:
-            while line:
-                hash = git_log.stdout.readline().decode().strip()
+            while True:
+                commit_hash = git_log.stdout.readline().decode().strip()
+                if not commit_hash:
+                    break
                 commit_date = git_log.stdout.readline().decode().strip()
                 author = git_log.stdout.readline().decode('utf-8', 'replace').strip()
                 committer = git_log.stdout.readline().decode('utf-8', 'replace').strip()
@@ -150,43 +214,11 @@ class ParsedGitRepo:
                 progress(f'updating git cache: commit #{count}, {commit_date}')
                 count += 1
 
-                commit = GitCommit(hash, commit_date, author, committer, message)
-                if not pkgs:
-                    yield commit
-
-                # file changes
-                while True:
-                    line = git_log.stdout.readline().decode('utf-8', 'replace')
-                    if line == '# BEGIN COMMIT\n' or not line:
-                        break
-                    line = line.strip()
-                    if pkgs and line:
-                        match = self._git_log_regex.match(line)
-                        if match is not None:
-                            data = match.groups()
-                            try:
-                                if data[0] is not None:
-                                    # matched ADM status change
-                                    status, category, pkg = data[0:3]
-                                    yield GitPkgChange(
-                                        atom_cls(f'={category}/{pkg}'), status, commit)
-                                else:
-                                    # matched R status change
-                                    status, category, pkg = data[3:6]
-                                    old_atom = atom_cls(f'={category}/{pkg}')
-                                    category, pkg = data[6:]
-                                    new_atom = atom_cls(f'={category}/{pkg}')
-                                    if not local:
-                                        # treat rename as addition and removal
-                                        yield GitPkgChange(new_atom, 'A', commit)
-                                        yield GitPkgChange(old_atom, 'D', commit)
-                                    else:
-                                        # renames are split into add/remove ops at
-                                        # the check level for the local commits repo
-                                        yield GitPkgChange(
-                                            new_atom, 'R', commit, old_atom=old_atom)
-                            except MalformedAtom:
-                                pass
+                if commits:
+                    pkgs = tuple(self._pkgs(git_log))
+                    yield GitCommit(commit_hash, commit_date, author, committer, message, pkgs)
+                else:
+                    yield from self._pkg_changes(git_log, commit_hash, commit_date, local)
 
 
 class _GitCommitPkg(cpv.VersionedCPV):
@@ -206,7 +238,7 @@ class _GitCommitPkg(cpv.VersionedCPV):
 
     def _old_pkg(self):
         """Create a new object from a rename commit's old atom."""
-        old = self.old_atom
+        old = self.old_pkg
         return self.__class__(
             old.category, old.package, self.status, old.version, self.date, self.commit)
 
@@ -534,7 +566,7 @@ class GitAddon(caches.CachedAddon):
 
     def commits_repo(self, repo_cls, repo=None):
         repo = self.options.target_repo if repo is None else repo
-        commits = {}
+        data = {}
 
         if self.options.cache['git']:
             try:
@@ -542,16 +574,16 @@ class GitAddon(caches.CachedAddon):
                 master = self._get_commit_hash(repo.location, commit='master')
                 if origin != master:
                     git_repo = ParsedGitRepo(repo.location)
-                    commits = git_repo.update('origin/HEAD..master', local=True)
+                    data = git_repo.update('origin/HEAD..master', local=True)
             except GitError:
                 pass
 
         repo_id = f'{repo.repo_id}-commits'
-        return repo_cls(commits, repo_id=repo_id)
+        return repo_cls(data, repo_id=repo_id)
 
     def commits(self, repo=None):
         repo = self.options.target_repo if repo is None else repo
-        commits = iter(())
+        commits = ()
 
         if self.options.cache['git']:
             try:
@@ -559,8 +591,8 @@ class GitAddon(caches.CachedAddon):
                 master = self._get_commit_hash(repo.location, commit='master')
                 if origin != master:
                     git_repo = ParsedGitRepo(repo.location)
-                    commits = git_repo.parse_git_log('origin/HEAD..master')
+                    commits = git_repo.parse_git_log('origin/HEAD..master', commits=True)
             except GitError:
                 pass
 
-        return commits
+        return iter(commits)

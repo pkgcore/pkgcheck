@@ -26,6 +26,7 @@ class FakeCommit(GitCommit):
             'author': 'author@domain.com',
             'committer': 'author@domain.com',
             'message': (),
+            'pkgs': (),
         }
         commit_data.update(kwargs)
         super().__init__(**commit_data)
@@ -228,6 +229,71 @@ class TestGitCheck(ReportTestCase):
         assert 'non-tag in footer, line 5' in str(r)
 
 
+class TestGitCommitsCheck(ReportTestCase):
+
+    check_kls = git_mod.GitCommitsCheck
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path, tool, make_repo, make_git_repo):
+        self._tool = tool
+        self.cache_dir = str(tmp_path)
+
+        # initialize parent repo
+        self.parent_git_repo = make_git_repo()
+        self.parent_repo = make_repo(
+            self.parent_git_repo.path, repo_id='gentoo', arches=['amd64'])
+        self.parent_git_repo.add_all('initial commit')
+        # create a stub pkg and commit it
+        self.parent_repo.create_ebuild('cat/pkg-0')
+        self.parent_git_repo.add_all('cat/pkg-0')
+
+        # initialize child repo
+        self.child_git_repo = make_git_repo()
+        self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_repo = make_repo(self.child_git_repo.path)
+
+    def init_check(self, options=None, future=0):
+        self.options = options if options is not None else self._options()
+        self.check, required_addons, self.source = init_check(self.check_kls, self.options)
+        for k, v in required_addons.items():
+            setattr(self, k, v)
+        if future:
+            self.check.today = datetime.today() + timedelta(days=+future)
+
+    def _options(self, **kwargs):
+        args = [
+            'scan', '-q', '--cache-dir', self.cache_dir,
+            '--repo', self.child_repo.location, '--commits',
+        ]
+        options, _ = self._tool.parse_args(args)
+        return options
+
+    def test_bad_commit_summary_pkg(self):
+        self.child_repo.create_ebuild('cat/pkg-1')
+        self.child_git_repo.add_all('version bump', signoff=True)
+        commit = self.child_git_repo.HEAD
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.BadCommitSummary(
+            "summary missing 'cat/pkg' package prefix",
+            'version bump', commit=commit)
+        assert r == expected
+
+    def test_bad_commit_summary_category(self):
+        self.child_repo.create_ebuild('cat/pkg-1')
+        self.child_repo.create_ebuild('cat/pkg2-1')
+        self.child_git_repo.add_all('cat updates', signoff=True)
+        commit = self.child_git_repo.HEAD
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.BadCommitSummary(
+            "summary missing 'cat' category prefix",
+            'cat updates', commit=commit)
+        assert r == expected
+
+
 class TestGitPkgCommitsCheck(ReportTestCase):
 
     check_kls = git_mod.GitPkgCommitsCheck
@@ -289,27 +355,6 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.init_check()
         r = self.assertReport(self.check, self.source)
         expected = git_mod.DirectNoMaintainer(pkg=CPV('newcat/pkg-1'))
-        assert r == expected
-
-    def test_bad_commit_summary(self):
-        self.child_repo.create_ebuild('cat/pkg-1')
-        self.child_git_repo.add_all('version bump')
-        commit = self.child_git_repo.HEAD
-        self.init_check()
-        r = self.assertReport(self.check, self.source)
-        expected = git_mod.BadCommitSummary(
-            'summary missing matching package prefix',
-            'version bump', commit=commit)
-        assert r == expected
-
-    def test_no_commit_summary(self):
-        self.child_repo.create_ebuild('cat/pkg-1')
-        self.child_git_repo.run(['git', 'add', '--all'])
-        self.child_git_repo.run(['git', 'commit', '--allow-empty-message', '-m', ''])
-        commit = self.child_git_repo.HEAD
-        self.init_check()
-        r = self.assertReport(self.check, self.source)
-        expected = git_mod.BadCommitSummary('no summary', '', commit=commit)
         assert r == expected
 
     def test_ebuild_incorrect_copyright(self):

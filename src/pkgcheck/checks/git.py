@@ -69,29 +69,6 @@ class EbuildIncorrectCopyright(IncorrectCopyright, results.VersionResult):
     """Changed ebuild with incorrect copyright date."""
 
 
-class BadCommitSummary(results.CommitResult, results.Warning):
-    """Local package commit with poorly formatted or unmatching commit summary.
-
-    Git commit messages for packages should be formatted in the standardized
-    fashion described in the devmanual [#]_. Specifically, a
-    ``${CATEGORY}/${PN}:`` or ``${CATEGORY}/${P}:`` prefix should be used in
-    the summary relating to the modified package.
-
-    .. [#] https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format
-    """
-
-    def __init__(self, error, summary, **kwargs):
-        super().__init__(**kwargs)
-        self.error = error
-        self.summary = summary
-
-    @property
-    def desc(self):
-        if not self.summary:
-            return f'commit {self.commit}, {self.error}'
-        return f'commit {self.commit}, {self.error}: {self.summary!r}'
-
-
 class DirectStableKeywords(results.VersionResult, results.Error):
     """Newly committed ebuild with stable keywords."""
 
@@ -246,9 +223,8 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     _source = (sources.PackageRepoSource, (), (('source', GitCommitsRepoSource),))
     required_addons = (git.GitAddon,)
     known_results = frozenset([
-        DirectStableKeywords, DirectNoMaintainer, BadCommitSummary, RdependChange,
-        EbuildIncorrectCopyright, DroppedStableKeywords, DroppedUnstableKeywords,
-        MissingSlotmove, MissingMove
+        DirectStableKeywords, DirectNoMaintainer, RdependChange, EbuildIncorrectCopyright,
+        DroppedStableKeywords, DroppedUnstableKeywords, MissingSlotmove, MissingMove,
     ])
 
     def __init__(self, *args, git_addon):
@@ -301,7 +277,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     def rename_checks(self, pkgs):
         """Check for issues due to package modifications."""
         pkg = pkgs[0]
-        old_key, new_key = pkg.old_atom.key, pkg.key
+        old_key, new_key = pkg.old_pkg.key, pkg.key
 
         pkgmoves = (
             x[1:] for x in self.repo.config.updates.get(old_key, ())
@@ -372,16 +348,6 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             yield from self.modified_checks(modified)
 
         for git_pkg in pkgset:
-            # check git commit summary formatting
-            try:
-                summary = git_pkg.commit.message[0]
-                summary_prefix_re = rf'^({git_pkg.key}|{git_pkg.cpvstr}): '
-                if not re.match(summary_prefix_re, summary):
-                    error = 'summary missing matching package prefix'
-                    yield BadCommitSummary(error, summary, commit=git_pkg.commit)
-            except IndexError:
-                yield BadCommitSummary('no summary', '', commit=git_pkg.commit)
-
             # remaining checks are irrelevant for removed packages
             if git_pkg in pkg_map['D']:
                 continue
@@ -467,6 +433,27 @@ class InvalidCommitMessage(results.CommitResult, results.Warning):
         return f'commit {self.commit}: {self.error}'
 
 
+class BadCommitSummary(results.CommitResult, results.Warning):
+    """Local package commit with poorly formatted or unmatching commit summary.
+
+    Git commit messages for packages should be formatted in the standardized
+    fashion described in the devmanual [#]_. Specifically, a
+    ``${CATEGORY}/${PN}:`` or ``${CATEGORY}/${P}:`` prefix should be used in
+    the summary relating to the modified package.
+
+    .. [#] https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format
+    """
+
+    def __init__(self, error, summary, **kwargs):
+        super().__init__(**kwargs)
+        self.error = error
+        self.summary = summary
+
+    @property
+    def desc(self):
+        return f'commit {self.commit}, {self.error}: {self.summary!r}'
+
+
 # mapping between known commit tags and verification methods
 _known_tags = {}
 
@@ -484,7 +471,9 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
 
     scope = base.commit_scope
     _source = GitCommitsSource
-    known_results = frozenset([MissingSignOff, InvalidCommitTag, InvalidCommitMessage])
+    known_results = frozenset([
+        MissingSignOff, InvalidCommitTag, InvalidCommitMessage, BadCommitSummary,
+    ])
 
     _commit_footer_regex = re.compile(r'^(?P<tag>[a-zA-Z0-9_-]+): (?P<value>.*)$')
     _git_cat_file_regex = re.compile(r'^(?P<object>.+?) (?P<status>.+)$')
@@ -549,6 +538,22 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
         summary = commit.message[0]
         if len(summary.split(': ', 1)[-1]) > 69:
             yield InvalidCommitMessage('summary is too long', commit=commit)
+
+        # check git commit summary formatting
+        if len(commit.pkgs) == 1:
+            # single cat/pn change
+            pkg = commit.pkgs[0]
+            summary_prefix_re = rf'^({pkg.key}|{pkg.cpvstr}): '
+            if not re.match(summary_prefix_re, summary):
+                error = f'summary missing {pkg.key!r} package prefix'
+                yield BadCommitSummary(error, summary, commit=commit)
+        elif len(commit.pkgs) > 1 and len({pkg.category for pkg in commit.pkgs}) == 1:
+            # mutiple pkg changes in the same category
+            pkg = commit.pkgs[0]
+            summary_prefix_re = rf'^{pkg.category}: '
+            if not re.match(summary_prefix_re, summary):
+                error = f'summary missing {pkg.category!r} category prefix'
+                yield BadCommitSummary(error, summary, commit=commit)
 
         # verify message body
         i = iter(commit.message[1:])
