@@ -13,8 +13,8 @@ class TestPkgcheckShow:
     script = partial(run, project)
 
     @pytest.fixture(autouse=True)
-    def _setup(self, stubconfig):
-        self.args = [project, '--config', stubconfig, 'show']
+    def _setup(self, testconfig):
+        self.args = [project, '--config', testconfig, 'show']
 
     def test_show_no_args(self, capsys):
         # defaults to outputting keywords list if no option is passed

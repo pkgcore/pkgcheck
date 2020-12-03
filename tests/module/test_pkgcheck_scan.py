@@ -45,7 +45,7 @@ class TestPkgcheckScanParseArgs:
         assert checks_mod.pkgdir.PkgDirCheck not in options.enabled_checks
 
     def test_no_matching_checks_scope(self, tool, capsys):
-        options, _ = tool.parse_args(['scan', 'stubrepo'])
+        options, _ = tool.parse_args(['scan', 'standalone'])
         path = pjoin(options.target_repo.location, 'profiles')
         with pytest.raises(SystemExit) as excinfo:
             tool.parse_args(['scan', '-c', 'PkgDirCheck', path])
@@ -88,11 +88,19 @@ class TestPkgcheckScanParseArgs:
         out, err = capsys.readouterr()
         err = err.strip().split('\n')
         assert err[-1].startswith(
-            "pkgcheck scan: error: 'stubrepo' repo doesn't contain: '/foo/bar'")
+            "pkgcheck scan: error: 'standalone' repo doesn't contain: '/foo/bar'")
+
+    def test_no_default_repo(self, tool, stubconfig, capsys):
+        with pytest.raises(SystemExit) as excinfo:
+            tool.parse_args(['--config', stubconfig, 'scan'])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        assert not out
+        assert err.strip() == "pkgcheck scan: error: no default repo found"
 
     def test_target_repo_id(self, tool):
-        options, _ = tool.parse_args(['scan', 'stubrepo'])
-        assert options.target_repo.repo_id == 'stubrepo'
+        options, _ = tool.parse_args(['scan', 'standalone'])
+        assert options.target_repo.repo_id == 'standalone'
         assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
     def test_target_dir_path(self, repo, tool):
@@ -107,10 +115,10 @@ class TestPkgcheckScanParseArgs:
         assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
 
     def test_target_dir_path_in_configured_repo(self, tool):
-        options, _ = tool.parse_args(['scan', 'stubrepo'])
+        options, _ = tool.parse_args(['scan', 'standalone'])
         path = pjoin(options.target_repo.location, 'profiles')
         options, _ = tool.parse_args(['scan', path])
-        assert options.target_repo.repo_id == 'stubrepo'
+        assert options.target_repo.repo_id == 'standalone'
         assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
 
     def test_target_non_repo_path(self, tool, capsys, tmp_path):
@@ -120,7 +128,7 @@ class TestPkgcheckScanParseArgs:
         out, err = capsys.readouterr()
         assert not out
         assert err.startswith(
-            f"pkgcheck scan: error: 'stubrepo' repo doesn't contain: '{str(tmp_path)}'")
+            f"pkgcheck scan: error: 'standalone' repo doesn't contain: '{str(tmp_path)}'")
 
     def test_target_invalid_repo(self, tool, capsys, make_repo):
         repo = make_repo(masters=['unknown'])
@@ -188,8 +196,8 @@ class TestPkgcheckScanParseArgs:
 
     def test_valid_repo(self, tool):
         for opt in ('-r', '--repo'):
-            options, _ = tool.parse_args(['scan', opt, 'stubrepo'])
-            assert options.target_repo.repo_id == 'stubrepo'
+            options, _ = tool.parse_args(['scan', opt, 'standalone'])
+            assert options.target_repo.repo_id == 'standalone'
             assert list(options.restrictions) == [(base.repo_scope, packages.AlwaysTrue)]
 
     def test_unknown_reporter(self, capsys, tool):
@@ -389,9 +397,9 @@ class TestPkgcheckScan:
         p = subprocess.run([fix], cwd=repo_path)
         p.check_returncode()
 
-    def test_empty_repo(self, capsys):
-        # no reports should be generated since the default repo is empty
-        with patch('sys.argv', self.args):
+    def test_empty_repo(self, capsys, repo):
+        # no reports should be generated since the stub repo is empty
+        with patch('sys.argv', self.args + ['stubrepo']):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             assert excinfo.value.code == 0

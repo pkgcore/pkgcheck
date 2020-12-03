@@ -37,7 +37,7 @@ def stubconfig():
 
 @pytest.fixture(scope="session")
 def testconfig(tmp_path_factory):
-    """Generate a portage config that sets the default repo to pkgcore's stubrepo.
+    """Generate a portage config that sets the default repo to the bundled standalone repo.
 
     Also, repo entries for all the bundled test repos.
     """
@@ -48,7 +48,7 @@ def testconfig(tmp_path_factory):
     with open(repos_conf, 'w') as f:
         f.write(textwrap.dedent(f"""\
             [DEFAULT]
-            main-repo = stubrepo
+            main-repo = standalone
             [stubrepo]
             location = {stubrepo}
         """))
@@ -81,10 +81,10 @@ def fakerepo(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def tool(stubconfig):
+def tool(testconfig):
     """Generate a tool utility for running pkgcheck."""
     tool = Tool(pkgcheck.argparser)
-    tool.parser.set_defaults(override_config=stubconfig)
+    tool.parser.set_defaults(override_config=testconfig)
     return tool
 
 
@@ -192,9 +192,6 @@ class EbuildRepo:
                 """))
             with open(pjoin(path, 'profiles', 'arch.list'), 'w') as f:
                 f.write('\n'.join(arches))
-            # create a fake 'blank' license
-            os.makedirs(pjoin(path, 'licenses'))
-            touch(pjoin(path, 'licenses', 'blank'))
             os.makedirs(pjoin(path, 'eclass'))
         except FileExistsError:
             pass
@@ -224,7 +221,13 @@ class EbuildRepo:
             f.write(f'DESCRIPTION="{desc}"\n')
             f.write(f'HOMEPAGE="{homepage}"\n')
             f.write(f'SLOT="{slot}"\n')
-            f.write(f'LICENSE="{license}"\n')
+
+            if license:
+                f.write(f'LICENSE="{license}"\n')
+                # create a fake license
+                os.makedirs(pjoin(self.path, 'licenses'), exist_ok=True)
+                touch(pjoin(self.path, 'licenses', 'blank'))
+
             for k, v in kwargs.items():
                 # handle sequences such as KEYWORDS and IUSE
                 if isinstance(v, (tuple, list)):

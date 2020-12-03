@@ -42,14 +42,14 @@ class TestPkgcheckCache:
     script = partial(run, project)
 
     @pytest.fixture(autouse=True)
-    def _setup(self, stubconfig, tmp_path):
+    def _setup(self, testconfig, tmp_path):
         self.cache_dir = str(tmp_path)
         self.args = [
-            project, '--config', stubconfig,
+            project, '--config', testconfig,
             'cache', '--cache-dir', self.cache_dir]
 
     def test_cache_profiles(self, capsys):
-        # force stubrepo profiles cache regen
+        # force standalone repo profiles cache regen
         for args in (['-u', '-f'], ['--update', '--force']):
             with patch('sys.argv', self.args + args + ['-t', 'profiles']):
                 with pytest.raises(SystemExit):
@@ -62,7 +62,7 @@ class TestPkgcheckCache:
             out, err = capsys.readouterr()
             assert not err
             out = out.strip().splitlines()
-            assert out[-1] == 'stubrepo'
+            assert out[-1] == 'standalone'
             assert excinfo.value.code == 0
 
         # pretend to remove it
@@ -102,7 +102,7 @@ class TestPkgcheckCache:
             assert excinfo.value.code == 0
 
     def test_cache_forced_removal(self, capsys):
-        # force stubrepo profiles cache regen
+        # force standalone repo profiles cache regen
         with patch('sys.argv', self.args + ['-uf']):
             with pytest.raises(SystemExit):
                 self.script()
