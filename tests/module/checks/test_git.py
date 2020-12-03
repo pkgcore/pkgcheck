@@ -270,7 +270,14 @@ class TestGitCommitsCheck(ReportTestCase):
         return options
 
     def test_bad_commit_summary_pkg(self):
+        # properly prefixed commit summary
         self.child_repo.create_ebuild('cat/pkg-1')
+        self.child_git_repo.add_all('cat/pkg: version bump to 1', signoff=True)
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
+        # poorly prefixed commit summary
+        self.child_repo.create_ebuild('cat/pkg-2')
         self.child_git_repo.add_all('version bump', signoff=True)
         commit = self.child_git_repo.HEAD
         self.init_check()
@@ -281,8 +288,16 @@ class TestGitCommitsCheck(ReportTestCase):
         assert r == expected
 
     def test_bad_commit_summary_category(self):
-        self.child_repo.create_ebuild('cat/pkg-1')
+        # properly prefixed commit summary
+        self.child_repo.create_ebuild('cat/pkg1-1')
         self.child_repo.create_ebuild('cat/pkg2-1')
+        self.child_git_repo.add_all('cat: various pkg updates', signoff=True)
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
+        # poorly prefixed commit summary
+        self.child_repo.create_ebuild('cat/pkg3-1')
+        self.child_repo.create_ebuild('cat/pkg4-1')
         self.child_git_repo.add_all('cat updates', signoff=True)
         commit = self.child_git_repo.HEAD
         self.init_check()
