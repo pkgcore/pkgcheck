@@ -406,6 +406,32 @@ class TestPkgcheckScan:
             out, err = capsys.readouterr()
             assert out == err == ''
 
+    def test_exit_status(self, capsys, repo):
+        # create an ebuild with an invalid EAPI
+        repo.create_ebuild('newcat/pkg-1', eapi='-1')
+        # exit status isn't enabled by default
+        args = ['-r', repo.location]
+        with patch('sys.argv', self.args + args):
+            with pytest.raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 0
+
+        # all error level results are flagged by default when enabled
+        with patch('sys.argv', self.args + args + ['--exit']):
+            with pytest.raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 1
+
+        # selective error results will only flag those specified
+        with patch('sys.argv', self.args + args + ['--exit', 'InvalidSlot']):
+            with pytest.raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 0
+        with patch('sys.argv', self.args + args + ['--exit', 'InvalidEapi']):
+            with pytest.raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 1
+
     def test_explict_skip_check(self, capsys):
         """SkipCheck exceptions are raised when triggered for explicitly enabled checks."""
         with patch('sys.argv', self.args + ['-c', 'net']):
