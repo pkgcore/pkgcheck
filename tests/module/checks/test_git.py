@@ -26,7 +26,6 @@ class FakeCommit(GitCommit):
             'author': 'author@domain.com',
             'committer': 'author@domain.com',
             'message': (),
-            'pkgs': (),
         }
         commit_data.update(kwargs)
         super().__init__(**commit_data)

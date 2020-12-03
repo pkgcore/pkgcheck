@@ -32,7 +32,7 @@ from .log import logger
 class GitCommit:
     """Git commit objects."""
 
-    def __init__(self, hash, commit_date, author, committer, message, pkgs):
+    def __init__(self, hash, commit_date, author, committer, message, pkgs=()):
         self.hash = hash
         self.commit_date = commit_date
         self.author = author
