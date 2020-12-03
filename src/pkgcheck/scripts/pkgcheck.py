@@ -35,8 +35,6 @@ pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
 argparser = ConfigArgumentParser(
     suppress=True, description=__doc__, parents=(pkgcore_config_opts,),
     script=(__file__, __name__))
-# TODO: rework pkgcore's config system to allow more lazy loading
-argparser.set_defaults(profile_override=pjoin(pkgcore_const.DATA_PATH, 'stubrepo/profiles/default'))
 subparsers = argparser.add_subparsers(description="check applets")
 
 reporter_argparser = commandline.ArgumentParser(suppress=True)
