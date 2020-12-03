@@ -190,7 +190,6 @@ class ParsedGitRepo:
             error = git_log.stderr.read().decode().strip()
             raise GitError(f'failed running git log: {error}')
 
-        count = 1
         with base.ProgressManager(verbosity=verbosity) as progress:
             while True:
                 commit_hash = git_log.stdout.readline().decode().strip()
@@ -211,8 +210,7 @@ class ParsedGitRepo:
                     message.append(line)
 
                 # update progress output
-                progress(f'updating git cache: commit #{count}, {commit_date}')
-                count += 1
+                progress(f'updating git cache: commit date: {commit_date}')
 
                 if commits:
                     pkgs = tuple(self._pkgs(git_log))
