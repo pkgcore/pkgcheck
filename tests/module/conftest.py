@@ -198,8 +198,9 @@ class EbuildRepo:
                     cache-formats =
                     thin-manifests = true
                 """))
-            with open(pjoin(path, 'profiles', 'arch.list'), 'w') as f:
-                f.write('\n'.join(arches))
+            if arches:
+                with open(pjoin(path, 'profiles', 'arch.list'), 'w') as f:
+                    f.write('\n'.join(arches) + '\n')
             os.makedirs(pjoin(path, 'eclass'))
         except FileExistsError:
             pass
@@ -234,7 +235,7 @@ class EbuildRepo:
                 f.write(f'LICENSE="{license}"\n')
                 # create a fake license
                 os.makedirs(pjoin(self.path, 'licenses'), exist_ok=True)
-                touch(pjoin(self.path, 'licenses', 'blank'))
+                touch(pjoin(self.path, 'licenses', license))
 
             for k, v in kwargs.items():
                 # handle sequences such as KEYWORDS and IUSE

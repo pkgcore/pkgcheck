@@ -406,8 +406,9 @@ class TestPkgcheckScan:
             out, err = capsys.readouterr()
             assert out == err == ''
 
-    def test_exit_status(self, capsys, repo):
-        # create an ebuild with an invalid EAPI
+    def test_exit_status(self, repo):
+        # create good ebuild and another with an invalid EAPI
+        repo.create_ebuild('newcat/pkg-0')
         repo.create_ebuild('newcat/pkg-1', eapi='-1')
         # exit status isn't enabled by default
         args = ['-r', repo.location]
@@ -431,6 +432,30 @@ class TestPkgcheckScan:
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             assert excinfo.value.code == 1
+
+    def test_filtered_repo(self, make_repo):
+        repo = make_repo(arches=['amd64'])
+        # create good ebuild
+        repo.create_ebuild('cat/pkg-0', keywords=['amd64'])
+        # and one with unknown keywords
+        repo.create_ebuild('cat/pkg2-1', keywords=['unknown'])
+        # and mask it
+        with open(pjoin(repo.location, 'profiles', 'package.mask'), 'w') as f:
+            f.write('cat/pkg2\n')
+
+        # bad ebuild will be flagged by default
+        args = ['-r', repo.location, '--exit', 'UnknownKeywords']
+        with patch('sys.argv', self.args + args):
+            with pytest.raises(SystemExit) as excinfo:
+                self.script()
+            assert excinfo.value.code == 1
+
+        # but will be ignored when running against a filtered repo since it's masked
+        for opt in ('-f', '--filter'):
+            with patch('sys.argv', self.args + args + [opt, 'repo']):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                assert excinfo.value.code == 0
 
     def test_explict_skip_check(self, capsys):
         """SkipCheck exceptions are raised when triggered for explicitly enabled checks."""
