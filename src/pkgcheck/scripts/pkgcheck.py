@@ -288,8 +288,8 @@ def _determine_target_repo(namespace):
     # fallback to the default repo
     if repo is None:
         repo = namespace.config.get_default('repo')
-        # if we find our bundled stub repo, there is no default
-        if repo.location == pjoin(pkgcore_const.DATA_PATH, 'stubrepo'):
+        # if the bundled stub repo is the default, no default repo exists
+        if repo is None or repo.location == pjoin(pkgcore_const.DATA_PATH, 'stubrepo'):
             raise argparse.ArgumentError(None, 'no default repo found')
 
     return repo
