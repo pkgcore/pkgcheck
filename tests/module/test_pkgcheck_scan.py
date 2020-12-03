@@ -184,7 +184,7 @@ class TestPkgcheckScanParseArgs:
             out, err = capsys.readouterr()
             assert not out
             assert err.startswith(
-                "pkgcheck scan: error: argument -r/--repo: invalid repo")
+                "pkgcheck scan: error: argument -r/--repo: repo init failed:")
 
     def test_valid_repo(self, tool):
         for opt in ('-r', '--repo'):

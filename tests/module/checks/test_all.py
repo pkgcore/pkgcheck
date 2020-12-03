@@ -63,14 +63,14 @@ class TestGentooRepoCheck:
 
 class TestOverlayCheck:
 
-    def test_non_overlay_repo(self, tool, fullconfig):
-        tool.parser.set_defaults(override_config=fullconfig)
+    def test_non_overlay_repo(self, tool, testconfig):
+        tool.parser.set_defaults(override_config=testconfig)
         options, _ = tool.parse_args(['scan', '--repo', 'gentoo'])
         with pytest.raises(checks_mod.SkipCheck, match='not running against overlay'):
             init_check(checks_mod.OverlayRepoCheck, options)
 
-    def test_overlay_repo(self, tool, fullconfig):
-        tool.parser.set_defaults(override_config=fullconfig)
+    def test_overlay_repo(self, tool, testconfig):
+        tool.parser.set_defaults(override_config=testconfig)
         options, _ = tool.parse_args(['scan', '--repo', 'overlay'])
         assert init_check(checks_mod.OverlayRepoCheck, options)
 

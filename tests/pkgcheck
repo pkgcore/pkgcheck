@@ -31,6 +31,10 @@ with tempfile.TemporaryDirectory(prefix='pkgcheck-test-config-') as tempdir:
         for repo in os.listdir(repo_dir):
             f.write(f'[{repo}]\nlocation = {pjoin(repo_dir, repo)}\n')
 
+    # create make.profile symlink
+    profile_path = pjoin(stubrepo, 'profiles', 'default')
+    os.symlink(profile_path, pjoin(tempdir, 'make.profile'))
+
     args = sys.argv[1:]
     try:
         if args[0] == 'scan':

@@ -42,10 +42,10 @@ class TestPkgcheckCache:
     script = partial(run, project)
 
     @pytest.fixture(autouse=True)
-    def _setup(self, fakeconfig, tmp_path):
+    def _setup(self, stubconfig, tmp_path):
         self.cache_dir = str(tmp_path)
         self.args = [
-            project, '--config', fakeconfig,
+            project, '--config', stubconfig,
             'cache', '--cache-dir', self.cache_dir]
 
     def test_cache_profiles(self, capsys):

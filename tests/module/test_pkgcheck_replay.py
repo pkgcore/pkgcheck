@@ -17,8 +17,8 @@ class TestPkgcheckReplay:
     script = partial(run, project)
 
     @pytest.fixture(autouse=True)
-    def _setup(self, fakeconfig):
-        self.args = [project, '--config', fakeconfig, 'replay']
+    def _setup(self, stubconfig):
+        self.args = [project, '--config', stubconfig, 'replay']
 
     def test_missing_file_arg(self, capsys):
         with patch('sys.argv', self.args):

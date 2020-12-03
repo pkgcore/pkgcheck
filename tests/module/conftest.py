@@ -30,47 +30,18 @@ def pytest_assertrepr_compare(op, left, right):
 
 
 @pytest.fixture(scope="session")
-def fakeconfig(tmp_path_factory):
+def stubconfig():
     """Generate a portage config that sets the default repo to pkgcore's stubrepo."""
-    config = tmp_path_factory.mktemp('fakeconfig')
-    repos_conf = config / 'repos.conf'
-    stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
-    with open(repos_conf, 'w') as f:
-        f.write(textwrap.dedent(f"""\
-            [DEFAULT]
-            main-repo = stubrepo
-            [stubrepo]
-            location = {stubrepo}
-        """))
-    return str(config)
+    return pjoin(pkgcore_const.DATA_PATH, 'stubconfig')
 
 
 @pytest.fixture(scope="session")
 def testconfig(tmp_path_factory):
-    """Generate a portage config that sets the default repo to pkgcore's stubrepo."""
-    config = tmp_path_factory.mktemp('testconfig')
-    repos_conf = config / 'repos.conf'
-    stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
-    testdir = pjoin(os.path.dirname(os.path.dirname(__file__)), 'repos')
-    with open(repos_conf, 'w') as f:
-        f.write(textwrap.dedent(f"""\
-            [DEFAULT]
-            main-repo = stubrepo
-            [stubrepo]
-            location = {stubrepo}
-            [overlayed]
-            location = {pjoin(testdir, 'overlayed')}
-        """))
-    return str(config)
-
-
-@pytest.fixture(scope="session")
-def fullconfig(tmp_path_factory):
     """Generate a portage config that sets the default repo to pkgcore's stubrepo.
 
     Also, repo entries for all the bundled test repos.
     """
-    config = tmp_path_factory.mktemp('fullconfig')
+    config = tmp_path_factory.mktemp('testconfig')
     repos_conf = config / 'repos.conf'
     stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
     testdir = pjoin(os.path.dirname(os.path.dirname(__file__)), 'repos')
@@ -84,6 +55,8 @@ def fullconfig(tmp_path_factory):
         for repo in os.listdir(testdir):
             f.write(f'[{repo}]\n')
             f.write(f'location = {pjoin(testdir, repo)}\n')
+    profile_path = pjoin(stubrepo, 'profiles', 'default')
+    os.symlink(profile_path, str(config / 'make.profile'))
     return str(config)
 
 
@@ -108,10 +81,10 @@ def fakerepo(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def tool(fakeconfig):
+def tool(stubconfig):
     """Generate a tool utility for running pkgcheck."""
     tool = Tool(pkgcheck.argparser)
-    tool.parser.set_defaults(override_config=fakeconfig)
+    tool.parser.set_defaults(override_config=stubconfig)
     return tool
 
 
