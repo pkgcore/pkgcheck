@@ -30,7 +30,7 @@ class Reporter:
     def __call__(self, pipe):
         for result in pipe:
             self.report(result)
-        return pipe._exit_failed
+        return pipe.exit_status
 
     def __enter__(self):
         self._start()

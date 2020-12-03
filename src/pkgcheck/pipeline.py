@@ -31,8 +31,8 @@ class Pipeline:
         self.options = options
         self.restriction = restriction
 
-        # boolean signifying a failure result was encountered (used with --exit option)
-        self._exit_failed = False
+        # number of error results encountered (used with --exit option)
+        self.exit_status = 0
         # determine if scan is being run at a package level
         self._pkg_scan = (
             scan_scope in (base.version_scope, base.package_scope) and
@@ -108,7 +108,7 @@ class Pipeline:
                     if self.options.verbosity < 1 and result.filtered:
                         continue
                     if result.__class__ in self.options.exit_keywords:
-                        self._exit_failed = True
+                        self.exit_status += 1
                     return result
             except IndexError:
                 try:
