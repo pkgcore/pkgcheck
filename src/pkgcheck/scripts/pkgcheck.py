@@ -280,10 +280,16 @@ def _determine_target_repo(namespace):
 
     # determine if CWD is inside an unconfigured repo
     try:
-        return namespace.domain.find_repo(
+        repo = namespace.domain.find_repo(
             target_dir, config=namespace.config, configure=False)
     except (repo_errors.InitializationError, IOError) as e:
         raise argparse.ArgumentError(None, str(e))
+
+    # fallback to the default repo
+    if repo is None:
+        repo = namespace.config.get_default('repo')
+
+    return repo
 
 
 def _path_restrict(path, repo):
@@ -360,11 +366,7 @@ def _setup_scan(parser, namespace, args):
 
     # if we have no target repo figure out what to use
     if namespace.target_repo is None:
-        target_repo = _determine_target_repo(namespace)
-        # fallback to the default repo
-        if target_repo is None:
-            target_repo = namespace.config.get_default('repo')
-        namespace.target_repo = target_repo
+        namespace.target_repo = _determine_target_repo(namespace)
 
     # use filtered repo if requested
     if namespace.filter == 'repo':
