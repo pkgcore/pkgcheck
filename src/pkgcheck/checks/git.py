@@ -454,16 +454,21 @@ class BadCommitSummary(results.CommitResult, results.Warning):
         return f'commit {self.commit}, {self.error}: {self.summary!r}'
 
 
-# mapping between known commit tags and verification methods
-_known_tags = {}
-
-
 def verify_tags(*tags, required=False):
     """Decorator to register commit tag verification methods."""
-    def wrapper(func):
-        for tag in tags:
-            _known_tags[tag] = (func, required)
-    return wrapper
+
+    class class_decorator:
+        """Decorator with access to the class of a decorated function."""
+
+        def __init__(self, func):
+            self.func = func
+
+        def __set_name__(self, owner, name):
+            for tag in tags:
+                owner.known_tags[tag] = (self.func, required)
+            setattr(owner, name, self.func)
+
+    return class_decorator
 
 
 class GitCommitsCheck(GentooRepoCheck, GitCheck):
@@ -475,6 +480,8 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
         MissingSignOff, InvalidCommitTag, InvalidCommitMessage, BadCommitSummary,
     ])
 
+    # mapping between known commit tags and verification methods
+    known_tags = {}
     _commit_footer_regex = re.compile(r'^(?P<tag>[a-zA-Z0-9_-]+): (?P<value>.*)$')
     _git_cat_file_regex = re.compile(r'^(?P<object>.+?) (?P<status>.+)$')
 
@@ -585,7 +592,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
         # forcibly run verifications methods for required tags
         tag_mapping.update(
             ((tag, verify), [])
-            for tag, (verify, required) in _known_tags.items() if required)
+            for tag, (verify, required) in self.known_tags.items() if required)
 
         # verify footer
         for lineno, line in enumerate(i, lineno + 1):
@@ -603,7 +610,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
                 # register known tags for verification
                 tag = m.group('tag')
                 try:
-                    func, required = _known_tags[tag]
+                    func, required = self.known_tags[tag]
                     tag_mapping[(tag, func)].append(m.group('value'))
                 except KeyError:
                     continue
