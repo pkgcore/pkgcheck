@@ -371,10 +371,6 @@ def _setup_scan(parser, namespace, args):
     if namespace.target_repo is None:
         namespace.target_repo = _determine_target_repo(namespace)
 
-    # use filtered repo if requested
-    if namespace.filter == 'repo':
-        namespace.target_repo = namespace.domain.ebuild_repos[namespace.target_repo.repo_id]
-
     # determine if we're running in the gentoo repo or a clone
     namespace.gentoo_repo = 'gentoo' in namespace.target_repo.aliases
 
@@ -441,6 +437,10 @@ def generate_restricts(repo, targets):
 
 @scan.bind_final_check
 def _validate_scan_args(parser, namespace):
+    # use filtered repo if requested
+    if namespace.filter == 'repo':
+        namespace.target_repo = namespace.domain.ebuild_repos[namespace.target_repo.repo_id]
+
     repo = namespace.target_repo
     restrictions = namespace.restrictions
     if not restrictions:
