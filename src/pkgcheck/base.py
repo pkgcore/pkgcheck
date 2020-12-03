@@ -168,12 +168,14 @@ class ProgressManager(AbstractContextManager):
 
     def __init__(self, verbosity=0):
         self.verbosity = verbosity
-        self._triggered = False
+        self._cached = None
 
     def _progress_callback(self, s):
         """Callback used for progressive output."""
-        sys.stderr.write(f'{s}\r')
-        self._triggered = True
+        # avoid rewriting the same output
+        if s != self._cached:
+            sys.stderr.write(f'{s}\r')
+            self._cached = s
 
     def __enter__(self):
         if self.verbosity >= 0 and sys.stdout.isatty():
@@ -181,5 +183,5 @@ class ProgressManager(AbstractContextManager):
         return lambda x: None
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
-        if self._triggered:
+        if self._cached is not None:
             sys.stderr.write('\n')
