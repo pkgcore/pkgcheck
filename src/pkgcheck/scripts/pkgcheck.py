@@ -542,7 +542,7 @@ def _scan(options, out, err):
             pipe = Pipeline(options, scan_scope, restrict)
             ret.append(reporter(pipe))
 
-    return any(ret)
+    return int(any(ret))
 
 
 cache = subparsers.add_parser(
