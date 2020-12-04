@@ -75,29 +75,35 @@ class TestNetworkChecks:
             results = []
             args = [
                 '-R' 'JsonStream', '-c', check_name, '-k', keyword,
-                f'{check_name}/{keyword}'
+                f'{check_name}/{keyword}*'
             ]
             with patch('pkgcheck.net.requests.Session.send') as send:
                 with patch('sys.argv', self.args + args):
-                    send.side_effect = responses_mod.responses
+                    fake_responses = responses_mod.responses
+                    send.side_effect = fake_responses
                     with pytest.raises(SystemExit) as excinfo:
                         self.script()
                     out, err = capsys.readouterr()
-                    assert out, 'no results exist'
-                    assert excinfo.value.code == 0
-                    for result in reporters.JsonStream.from_iter(io.StringIO(out)):
-                        results.append(result)
+                    if not fake_responses:
+                        # check was stopped before network requests were made
+                        assert not out
+                        assert not err
+                    else:
+                        assert excinfo.value.code == 0
+                        assert out, 'no results exist'
+                        for result in reporters.JsonStream.from_iter(io.StringIO(out)):
+                            results.append(result)
 
-            # load expected results if they exist
-            try:
-                with open(pjoin(data_dir, 'expected.json')) as f:
-                    expected_results = set(reporters.JsonStream.from_iter(f))
-            except FileNotFoundError:
-                continue
+                        # load expected results if they exist
+                        try:
+                            with open(pjoin(data_dir, 'expected.json')) as f:
+                                expected_results = set(reporters.JsonStream.from_iter(f))
+                        except FileNotFoundError:
+                            continue
 
-            assert expected_results, 'regular results must always exist'
-            assert self._render_results(results), 'failed rendering results'
-            assert set(results) == expected_results
+                        assert expected_results, 'regular results must always exist'
+                        assert self._render_results(results), 'failed rendering results'
+                        assert set(results) == expected_results
 
     @pytest.mark.parametrize(
         'check, result', ((HomepageUrlCheck, DeadUrl), (FetchablesUrlCheck, DeadUrl)))
@@ -119,7 +125,7 @@ class TestNetworkChecks:
 
         args = [
             '-R', 'JsonStream', '-c', check_name, '-k', keyword,
-            f'{check_name}/ftp-{keyword}'
+            f'{check_name}/ftp-{keyword}*'
         ]
         for side_effect, expected_result in data:
             with patch('pkgcheck.checks.network.urllib.request.urlopen') as urlopen:
