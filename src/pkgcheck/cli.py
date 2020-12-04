@@ -1,16 +1,16 @@
 """Various command-line specific support."""
 
 import configparser
-import os
 import sys
 
 from pkgcore.util import commandline
 from snakeoil.cli import arghparse
-from snakeoil.klass import jit_attr_none
 from snakeoil.contexts import patch
+from snakeoil.klass import jit_attr_none
+from snakeoil.mappings import OrderedSet
 from snakeoil.log import suppress_logging
 
-from . import base
+from . import base, const
 
 
 class Tool(commandline.Tool):
@@ -27,26 +27,19 @@ class Tool(commandline.Tool):
 class ConfigArgumentParser(arghparse.ArgumentParser):
     """Argument parser that supports loading settings from specified config files."""
 
+    default_configs = (const.SYSTEM_CONF_FILE, const.USER_CONF_FILE)
+
     def __init__(self, configs=(), **kwargs):
         super().__init__(**kwargs)
-        self._configs = tuple(x for x in set(configs) if os.path.isfile(x))
-
-    @property
-    def configs(self):
-        return self._configs
-
-    @configs.setter
-    def configs(self, value):
-        self._configs += value
-        # reset jit attr to force re-parse
-        self._config = None
+        self.configs = OrderedSet(configs)
 
     @jit_attr_none
     def config(self):
-        return self.parse_config(self._configs)
+        return self.parse_config()
 
-    def parse_config(self, configs):
+    def parse_config(self, configs=()):
         """Parse given config files."""
+        configs = configs if configs else self.configs
         config = configparser.ConfigParser()
         try:
             for f in configs:
@@ -55,8 +48,12 @@ class ConfigArgumentParser(arghparse.ArgumentParser):
             self.error(f'parsing config file failed: {e}')
         return config
 
-    def parse_config_options(self, namespace=None, section='DEFAULT'):
+    def parse_config_options(self, namespace=None, section='DEFAULT', configs=()):
         """Parse options from config if they exist."""
+        if configs:
+            self.configs.update(configs)
+            # reset jit attr to force reparse
+            self._config = None
         namespace = arghparse.Namespace() if namespace is None else namespace
         config_args = [f'--{k}={v}' if v else f'--{k}' for k, v in self.config.items(section)]
         if config_args:

@@ -107,8 +107,7 @@ config_options.add_argument(
 
 scan = subparsers.add_parser(
     'scan', parents=(config_argparser, reporter_argparser,),
-    description='scan targets for QA issues',
-    configs=(const.SYSTEM_CONF_FILE, const.USER_CONF_FILE))
+    description='scan targets for QA issues')
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', action=arghparse.ParseNonblockingStdin,
     help='optional targets')
@@ -355,7 +354,8 @@ def _setup_scan(parser, namespace, args):
 
     # load default args from system/user configs if config-loading is allowed
     if namespace.config_file is None:
-        namespace = parser.parse_config_options(namespace)
+        configs = ConfigArgumentParser.default_configs
+        namespace = parser.parse_config_options(namespace, configs=configs)
 
     # re-parse command line args to override config defaults
     namespace, _ = parser._parse_known_args(args, namespace)
@@ -392,8 +392,7 @@ def _setup_scan(parser, namespace, args):
             configs += (namespace.config_file,)
 
     if configs:
-        parser.configs += configs
-        namespace = parser.parse_config_options(namespace)
+        namespace = parser.parse_config_options(namespace, configs=configs)
 
     # load repo-specific args from config if they exist, command line args override these
     for section in namespace.target_repo.aliases:
