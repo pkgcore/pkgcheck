@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck import __title__ as project
-from pkgcheck import base, objects
+from pkgcheck import base, caches, objects
 from pkgcheck.scripts import run
 
 
@@ -128,4 +128,30 @@ class TestPkgcheckShow:
                 assert excinfo.value.code == 0
 
             # verbose output shows much more info
+            assert len(regular_output) < len(verbose_output)
+
+    def test_show_caches(self, capsys):
+        for arg in ('-C', '--caches'):
+            with patch('sys.argv', self.args + [arg]):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                out = out.strip().split('\n')
+                cache_objs = caches.CachedAddon.caches.values()
+                assert out == sorted(x.type for x in cache_objs)
+                assert excinfo.value.code == 0
+                regular_output = '\n'.join(itertools.chain(out))
+
+            # verbose mode
+            with patch('sys.argv', self.args + [arg, '-v']):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                out = out.strip().split('\n')
+                assert excinfo.value.code == 0
+                verbose_output = '\n'.join(itertools.chain(out))
+
+            # verbose output shows more info
             assert len(regular_output) < len(verbose_output)

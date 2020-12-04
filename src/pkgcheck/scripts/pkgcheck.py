@@ -760,7 +760,6 @@ def display_reporters(out, options):
     if options.verbosity < 1:
         out.write('\n'.join(sorted(objects.REPORTERS)), wrap=False)
     else:
-        out.write()
         out.write("reporters:")
         out.write()
         out.first_prefix.append('  ')
@@ -808,6 +807,14 @@ output_types.add_argument(
 
         Use -v/--verbose to show reporter descriptions.
     """)
+output_types.add_argument(
+    '-C', '--caches', action='store_true', default=False,
+    help='show available caches',
+    docs="""
+        List all available cache types.
+
+        Use -v/--verbose to show more cache information.
+    """)
 
 
 @show.bind_main_func
@@ -822,6 +829,13 @@ def _show(options, out, err):
                 out.write(f'{name} -- {scope.desc} scope')
     elif options.reporters:
         display_reporters(out, options)
+    elif options.caches:
+        if options.verbosity < 1:
+            caches = sorted(map(attrgetter('type'), CachedAddon.caches.values()))
+            out.write('\n'.join(caches))
+        else:
+            for cache in sorted(CachedAddon.caches.values(), key=attrgetter('type')):
+                out.write(f'{cache.type} -- file: {cache.file}, version: {cache.version}')
     else:
         # default to showing keywords if no output option is selected
         display_keywords(out, options)
