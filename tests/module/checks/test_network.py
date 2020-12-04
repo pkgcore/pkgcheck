@@ -59,13 +59,15 @@ class TestNetworkChecks:
         check_name = check.__name__
         keyword = result.__name__
         result_dir = pjoin(self.repos_dir, 'network', check_name, keyword)
-        data_dir = pjoin(self.repos_data, 'network', check_name, keyword)
 
         paths = glob.glob(f'{result_dir}*')
         if not paths:
             pytest.skip('data unavailable')
 
         for path in paths:
+            ebuild_name = os.path.basename(path)
+            data_dir = pjoin(self.repos_data, 'network', check_name, ebuild_name)
+
             # load response data to fake
             module_path = pjoin(path, 'responses.py')
             spec = importlib.util.spec_from_file_location('responses_mod', module_path)
@@ -75,35 +77,37 @@ class TestNetworkChecks:
             results = []
             args = [
                 '-R' 'JsonStream', '-c', check_name, '-k', keyword,
-                f'{check_name}/{keyword}*'
+                f'{check_name}/{ebuild_name}'
             ]
             with patch('pkgcheck.net.requests.Session.send') as send:
                 with patch('sys.argv', self.args + args):
-                    fake_responses = responses_mod.responses
-                    send.side_effect = fake_responses
+                    send.side_effect = responses_mod.responses
                     with pytest.raises(SystemExit) as excinfo:
                         self.script()
+                    assert excinfo.value.code == 0
+
+                    # load expected results if they exist
+                    try:
+                        with open(pjoin(data_dir, 'expected.json')) as f:
+                            expected_results = set(reporters.JsonStream.from_iter(f))
+                    except FileNotFoundError:
+                        # check stopped before making request or completed successfully
+                        continue
+
                     out, err = capsys.readouterr()
-                    if not fake_responses:
-                        # check was stopped before network requests were made
-                        assert not out
-                        assert not err
-                    else:
-                        assert excinfo.value.code == 0
-                        assert out, 'no results exist'
-                        for result in reporters.JsonStream.from_iter(io.StringIO(out)):
-                            results.append(result)
+                    assert out, 'no results exist'
+                    for result in reporters.JsonStream.from_iter(io.StringIO(out)):
+                        results.append(result)
 
-                        # load expected results if they exist
-                        try:
-                            with open(pjoin(data_dir, 'expected.json')) as f:
-                                expected_results = set(reporters.JsonStream.from_iter(f))
-                        except FileNotFoundError:
-                            continue
-
-                        assert expected_results, 'regular results must always exist'
-                        assert self._render_results(results), 'failed rendering results'
-                        assert set(results) == expected_results
+                    assert expected_results, 'regular results must always exist'
+                    rendered_results = self._render_results(results)
+                    assert rendered_results, 'failed rendering results'
+                    if set(results) != expected_results:
+                        error = ['unmatched results:']
+                        expected = self._render_results(expected_results)
+                        error.append(f'expected:\n{expected}')
+                        error.append(f'got:\n{rendered_results}')
+                        pytest.fail('\n'.join(error))
 
     @pytest.mark.parametrize(
         'check, result', ((HomepageUrlCheck, DeadUrl), (FetchablesUrlCheck, DeadUrl)))
@@ -125,7 +129,7 @@ class TestNetworkChecks:
 
         args = [
             '-R', 'JsonStream', '-c', check_name, '-k', keyword,
-            f'{check_name}/ftp-{keyword}*'
+            f'{check_name}/ftp-{keyword}'
         ]
         for side_effect, expected_result in data:
             with patch('pkgcheck.checks.network.urllib.request.urlopen') as urlopen:
