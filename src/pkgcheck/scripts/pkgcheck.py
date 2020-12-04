@@ -27,14 +27,12 @@ from snakeoil.osutils import abspath, pjoin
 from .. import argparsers, base, const, objects, reporters
 from ..addons import init_addon
 from ..caches import CachedAddon
-from ..cli import ConfigArgumentParser
+from ..cli import ConfigFileParser
 from ..eclass import matching_eclass
 from ..pipeline import Pipeline
 
-pkgcore_config_opts = commandline.ArgumentParser(script=(__file__, __name__))
-argparser = ConfigArgumentParser(
-    suppress=True, description=__doc__, parents=(pkgcore_config_opts,),
-    script=(__file__, __name__))
+argparser = commandline.ArgumentParser(
+    description=__doc__, script=(__file__, __name__))
 subparsers = argparser.add_subparsers(description="check applets")
 
 reporter_argparser = commandline.ArgumentParser(suppress=True)
@@ -352,10 +350,13 @@ def _setup_scan(parser, namespace, args):
     # parse --config option from command line args
     namespace, args = config_argparser.parse_known_args(args, namespace)
 
+    # parser supporting config file options
+    config_parser = ConfigFileParser(parser)
+
     # load default args from system/user configs if config-loading is allowed
     if namespace.config_file is None:
-        configs = ConfigArgumentParser.default_configs
-        namespace = parser.parse_config_options(namespace, configs=configs)
+        configs = ConfigFileParser.default_configs
+        namespace = config_parser.parse_config_options(namespace, configs=configs)
 
     # re-parse command line args to override config defaults
     namespace, _ = parser._parse_known_args(args, namespace)
@@ -392,12 +393,12 @@ def _setup_scan(parser, namespace, args):
             configs += (namespace.config_file,)
 
     if configs:
-        namespace = parser.parse_config_options(namespace, configs=configs)
+        namespace = config_parser.parse_config_options(namespace, configs=configs)
 
     # load repo-specific args from config if they exist, command line args override these
     for section in namespace.target_repo.aliases:
-        if section in parser.config:
-            namespace = parser.parse_config_options(namespace, section)
+        if section in config_parser.config:
+            namespace = config_parser.parse_config_options(namespace, section)
             break
 
     return namespace, args

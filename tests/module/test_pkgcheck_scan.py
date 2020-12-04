@@ -307,7 +307,7 @@ class TestPkgcheckScanParseConfigArgs:
 
     def test_config_precedence(self):
         configs = [self.system_config, self.user_config]
-        with patch('pkgcheck.cli.ConfigArgumentParser.default_configs', configs):
+        with patch('pkgcheck.cli.ConfigFileParser.default_configs', configs):
             with open(self.system_config, 'w') as f:
                 f.write(textwrap.dedent("""\
                     [DEFAULT]

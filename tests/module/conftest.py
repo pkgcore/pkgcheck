@@ -36,7 +36,7 @@ def default_session_fixture(request):
     """Fixture run globally for the entire test session."""
     stack = ExitStack()
     # don't load the default system or user config files
-    stack.enter_context(patch('pkgcheck.cli.ConfigArgumentParser.default_configs', ()))
+    stack.enter_context(patch('pkgcheck.cli.ConfigFileParser.default_configs', ()))
 
     def unpatch():
         stack.close()

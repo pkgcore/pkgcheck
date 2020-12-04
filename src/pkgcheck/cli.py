@@ -24,13 +24,14 @@ class Tool(commandline.Tool):
                 sys.exit(str(e))
 
 
-class ConfigArgumentParser(arghparse.ArgumentParser):
+class ConfigFileParser:
     """Argument parser that supports loading settings from specified config files."""
 
     default_configs = (const.SYSTEM_CONF_FILE, const.USER_CONF_FILE)
 
-    def __init__(self, configs=(), **kwargs):
+    def __init__(self, parser, configs=(), **kwargs):
         super().__init__(**kwargs)
+        self.parser = parser
         self.configs = OrderedSet(configs)
 
     @jit_attr_none
@@ -45,7 +46,7 @@ class ConfigArgumentParser(arghparse.ArgumentParser):
             for f in configs:
                 config.read(f)
         except configparser.ParsingError as e:
-            self.error(f'parsing config file failed: {e}')
+            self.parser.error(f'parsing config file failed: {e}')
         return config
 
     def parse_config_options(self, namespace=None, section='DEFAULT', configs=()):
@@ -58,11 +59,11 @@ class ConfigArgumentParser(arghparse.ArgumentParser):
         config_args = [f'--{k}={v}' if v else f'--{k}' for k, v in self.config.items(section)]
         if config_args:
             with patch('snakeoil.cli.arghparse.ArgumentParser.error', self._config_error):
-                namespace, args = self.parse_known_optionals(config_args, namespace)
+                namespace, args = self.parser.parse_known_optionals(config_args, namespace)
                 if args:
-                    self.error(f"unknown arguments: {'  '.join(args)}")
+                    self.parser.error(f"unknown arguments: {'  '.join(args)}")
         return namespace
 
     def _config_error(self, message, status=2):
         """Stub to replace error method that notes config failure."""
-        self.exit(status, f'{self.prog}: failed loading config: {message}\n')
+        self.parser.exit(status, f'{self.parser.prog}: failed loading config: {message}\n')
