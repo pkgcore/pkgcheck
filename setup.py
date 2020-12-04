@@ -111,15 +111,21 @@ class install_data(dst_install_data.install_data):
 
     def _generate_files(self):
         with pkgdist.syspath(pkgdist.PACKAGEDIR):
-            from pkgcheck import objects
+            from pkgcheck import base, objects
 
         os.makedirs(os.path.join(pkgdist.REPODIR, '.generated'), exist_ok=True)
         files = []
+        # generate available scopes
+        path = os.path.join(pkgdist.REPODIR, '.generated', 'scopes')
+        with open(path, 'w') as f:
+            f.write('\n'.join(base.scopes) + '\n')
+        files.append(os.path.join('.generated', 'scopes'))
+        # generate available object lists
         for obj in ('KEYWORDS', 'CHECKS', 'REPORTERS'):
             log.info(f'Generating {obj.lower()} list')
             path = os.path.join(pkgdist.REPODIR, '.generated', obj.lower())
             with open(path, 'w') as f:
-                f.write('\n'.join(getattr(objects, obj).keys()) + '\n')
+                f.write('\n'.join(getattr(objects, obj)) + '\n')
             files.append(os.path.join('.generated', obj.lower()))
         self.data_files.append(('share/pkgcheck', files))
 
