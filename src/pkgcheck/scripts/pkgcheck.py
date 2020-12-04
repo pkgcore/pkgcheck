@@ -526,12 +526,6 @@ def _selected_check(options, scan_scope, scope):
 
 @scan.bind_main_func
 def _scan(options, out, err):
-    if options.verbosity >= 1:
-        msg = f'target repo: {options.target_repo.repo_id!r}'
-        if options.target_repo.repo_id != options.target_repo.location:
-            msg += f' at {options.target_repo.location!r}'
-        err.write(msg)
-
     ret = []
     with ExitStack() as stack:
         reporter = options.reporter(out)
@@ -540,7 +534,6 @@ def _scan(options, out, err):
         for scan_scope, restrict in options.restrictions:
             pipe = Pipeline(options, scan_scope, restrict)
             ret.append(reporter(pipe))
-
     return int(any(ret))
 
 
