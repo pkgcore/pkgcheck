@@ -441,13 +441,12 @@ def _validate_scan_args(parser, namespace):
     if namespace.filter == 'repo':
         namespace.target_repo = namespace.domain.ebuild_repos[namespace.target_repo.repo_id]
 
-    repo = namespace.target_repo
     restrictions = namespace.restrictions
     if not restrictions:
         if namespace.targets:
             # Collapse restrictions for passed in targets while keeping the
             # generator intact for piped in targets.
-            restrictions = generate_restricts(repo, namespace.targets)
+            restrictions = generate_restricts(namespace.target_repo, namespace.targets)
             if isinstance(namespace.targets, list):
                 restrictions = list(restrictions)
 
@@ -462,8 +461,8 @@ def _validate_scan_args(parser, namespace):
                     combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
                     restrictions = [(scopes.pop(), combined_restrict)]
         else:
-            if namespace.cwd in repo:
-                scope, restrict = _path_restrict(namespace.cwd, repo)
+            if namespace.cwd in namespace.target_repo:
+                scope, restrict = _path_restrict(namespace.cwd, namespace.target_repo)
             else:
                 scope, restrict = base.repo_scope, packages.AlwaysTrue
             restrictions = [(scope, restrict)]
