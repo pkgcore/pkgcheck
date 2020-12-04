@@ -550,15 +550,13 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
         if len(commit.pkgs) == 1:
             # single cat/pn change
             pkg = commit.pkgs[0]
-            summary_prefix_re = rf'^({pkg.key}|{pkg.cpvstr}): '
-            if not re.match(summary_prefix_re, summary):
+            if not re.match(rf'^({pkg.key}|{pkg.cpvstr}): ', summary):
                 error = f'summary missing {pkg.key!r} package prefix'
                 yield BadCommitSummary(error, summary, commit=commit)
         elif len(commit.pkgs) > 1 and len({pkg.category for pkg in commit.pkgs}) == 1:
             # mutiple pkg changes in the same category
             pkg = commit.pkgs[0]
-            summary_prefix_re = rf'^{pkg.category}: '
-            if not re.match(summary_prefix_re, summary):
+            if not re.match(rf'^{pkg.category}: ', summary):
                 error = f'summary missing {pkg.category!r} category prefix'
                 yield BadCommitSummary(error, summary, commit=commit)
 
