@@ -1,0 +1,1 @@
+{"__class__": "DeadUrl", "category": "MetadataUrlCheck", "package": "DeadUrl", "version": "0", "attr": "metadata.xml: remote-id", "url": "https://github.com/pkgcore/pkgcheck", "message": "404 Client Error: Not Found for url: https://github.com/pkgcore/pkgcheck"}

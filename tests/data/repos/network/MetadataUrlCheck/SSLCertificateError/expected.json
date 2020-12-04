@@ -1,0 +1,1 @@
+{"__class__": "SSLCertificateError", "category": "MetadataUrlCheck", "package": "SSLCertificateError", "version": "0", "attr": "metadata.xml: doc", "url": "https://pkgcore.github.io/pkgcheck/", "message": "Certificate verification failed"}

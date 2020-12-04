@@ -1,0 +1,1 @@
+{"__class__": "HttpsUrlAvailable", "category": "MetadataUrlCheck", "package": "HttpsUrlAvailable", "version": "0", "attr": "metadata.xml: bugs-to", "url": "http://github.com/pkgcore/pkgcheck/issues/", "new_url": "https://github.com/pkgcore/pkgcheck/issues/"}
