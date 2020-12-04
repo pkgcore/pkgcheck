@@ -111,15 +111,24 @@ class install_data(dst_install_data.install_data):
 
     def _generate_files(self):
         with pkgdist.syspath(pkgdist.PACKAGEDIR):
-            from pkgcheck import base, objects
+            from pkgcheck import base, caches, objects
 
         os.makedirs(os.path.join(pkgdist.REPODIR, '.generated'), exist_ok=True)
         files = []
+
         # generate available scopes
         path = os.path.join(pkgdist.REPODIR, '.generated', 'scopes')
         with open(path, 'w') as f:
             f.write('\n'.join(base.scopes) + '\n')
         files.append(os.path.join('.generated', 'scopes'))
+
+        # generate available cache types
+        path = os.path.join(pkgdist.REPODIR, '.generated', 'caches')
+        cache_objs = caches.CachedAddon.caches.values()
+        with open(path, 'w') as f:
+            f.write('\n'.join(x.type for x in cache_objs))
+        files.append(os.path.join('.generated', 'caches'))
+
         # generate available object lists
         for obj in ('KEYWORDS', 'CHECKS', 'REPORTERS'):
             log.info(f'Generating {obj.lower()} list')
