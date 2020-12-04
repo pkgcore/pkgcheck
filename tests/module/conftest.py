@@ -2,6 +2,8 @@ import os
 import subprocess
 import tempfile
 import textwrap
+from contextlib import ExitStack
+from unittest.mock import patch
 
 import pytest
 from pkgcheck.scripts import pkgcheck
@@ -27,6 +29,19 @@ def pytest_assertrepr_compare(op, left, right):
                 f.seek(0)
                 left_val, right_val = f.read().decode().splitlines()
         return ["Result instances !=:", left_val, right_val]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def default_session_fixture(request):
+    """Fixture run globally for the entire test session."""
+    stack = ExitStack()
+    # don't load the default system or user config files
+    stack.enter_context(patch('pkgcheck.cli.ConfigArgumentParser.default_configs', ()))
+
+    def unpatch():
+        stack.close()
+
+    request.addfinalizer(unpatch)
 
 
 @pytest.fixture(scope="session")
