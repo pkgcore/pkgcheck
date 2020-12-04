@@ -103,6 +103,12 @@ def tool(testconfig):
     return tool
 
 
+@pytest.fixture
+def parser():
+    """Return a shallow copy of the main pkgcheck argparser."""
+    return pkgcheck.argparser.copy()
+
+
 class GitRepo:
     """Class for creating/manipulating git repos.
 
