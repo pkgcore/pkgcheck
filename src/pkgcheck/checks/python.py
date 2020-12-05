@@ -1,3 +1,5 @@
+import itertools
+
 from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import JustOneRestriction, OrRestriction
@@ -336,11 +338,8 @@ class PythonCompatCheck(Check):
             return
 
         # determine python impls to target
-        targets = set()
-        for target in reversed(available_targets):
-            if target == latest_target:
-                break
-            targets.add(target)
+        targets = set(itertools.takewhile(
+            lambda x: x != latest_target, reversed(available_targets)))
 
         if targets:
             try:
