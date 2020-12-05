@@ -3,6 +3,12 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.7.9 (2020-12-05)
+---------------------------
+
+- GitCommitsCheck: Fix package vs category level summary checks.
+
+---------------------------
 pkgcheck 0.7.8 (2020-12-04)
 ---------------------------
 
