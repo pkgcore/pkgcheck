@@ -3,7 +3,7 @@ PYTHON_COMPAT=( python3_7 )
 
 inherit python-r1
 
-DESCRIPTION="Ebuild with potential PYTHON_COMPAT updates"
+DESCRIPTION="Stub ebuild with old PYTHON_COMPAT support"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 LICENSE="BSD"
 SLOT="0"
@@ -11,7 +11,5 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 RDEPEND="
 	${PYTHON_DEPS}
-	stub/python-dep1[${PYTHON_USEDEP}]
-	!stub/stub1
-	stub/stub2[-disabled,exists]
+	stub/python-dep-old2[${PYTHON_USEDEP}]
 "

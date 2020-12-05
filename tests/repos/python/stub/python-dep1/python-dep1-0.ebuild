@@ -1,9 +1,9 @@
 EAPI=7
-PYTHON_COMPAT=( python2_7 )
+PYTHON_COMPAT=( python2_7 python3_{7,8,9} )
 
 inherit python-r1
 
-DESCRIPTION="Ebuild locked on python2"
+DESCRIPTION="Stub ebuild with complete PYTHON_COMPAT support"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 LICENSE="BSD"
 SLOT="0"
@@ -11,5 +11,5 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 RDEPEND="
 	${PYTHON_DEPS}
-	stub/python-dep1[${PYTHON_USEDEP}]
+	stub/python-dep2[${PYTHON_USEDEP}]
 "
