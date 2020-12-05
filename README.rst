@@ -47,7 +47,7 @@ environments just execute **tox** in the root directory of a repo or unpacked
 tarball. Otherwise, for a specific python version execute something similar to
 the following::
 
-    tox -e py36
+    tox -e py39
 
 
 .. _`Installing python modules`: http://docs.python.org/inst/
