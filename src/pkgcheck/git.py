@@ -107,9 +107,8 @@ class ParsedGitRepo:
 
     def _pkgs(self, git_log):
         """Yield changed package atoms from git log file changes."""
-        while True:
-            line = git_log.stdout.readline().decode('utf-8', 'replace')
-            if line == '# BEGIN COMMIT\n' or not line:
+        while (line := git_log.stdout.readline().decode('utf-8', 'replace')):
+            if line == '# BEGIN COMMIT\n':
                 return
             line = line.strip()
             if line:
@@ -131,9 +130,8 @@ class ParsedGitRepo:
 
     def _pkg_changes(self, git_log, commit_hash, commit_date, local):
         """Yield package change objects from git log file changes."""
-        while True:
-            line = git_log.stdout.readline().decode('utf-8', 'replace')
-            if line == '# BEGIN COMMIT\n' or not line:
+        while (line := git_log.stdout.readline().decode('utf-8', 'replace')):
+            if line == '# BEGIN COMMIT\n':
                 return
             line = line.strip()
             if line:
@@ -189,10 +187,7 @@ class ParsedGitRepo:
             raise GitError(f'failed running git log: {error}')
 
         with base.ProgressManager(verbosity=verbosity) as progress:
-            while True:
-                commit_hash = git_log.stdout.readline().decode().strip()
-                if not commit_hash:
-                    break
+            while (commit_hash := git_log.stdout.readline().decode().strip()):
                 commit_date = git_log.stdout.readline().decode().strip()
                 author = git_log.stdout.readline().decode('utf-8', 'replace').strip()
                 committer = git_log.stdout.readline().decode('utf-8', 'replace').strip()
