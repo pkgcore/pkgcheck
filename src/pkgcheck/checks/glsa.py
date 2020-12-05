@@ -44,6 +44,7 @@ class GlsaCheck(GentooRepoCheck):
         super().__init__(*args)
         glsa_dir = self.options.glsa_dir
         if glsa_dir is None:
+            # search for glsa dir in target repo and then any masters
             for repo in reversed(self.options.target_repo.trees):
                 path = pjoin(repo.location, 'metadata', 'glsa')
                 if os.path.isdir(path):
