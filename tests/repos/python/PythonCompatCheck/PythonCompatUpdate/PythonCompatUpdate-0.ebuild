@@ -12,4 +12,6 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 RDEPEND="
 	${PYTHON_DEPS}
 	stub/python-dep[${PYTHON_USEDEP}]
+	!stub/stub1
+	stub/stub2[-disabled,exists]
 "
