@@ -103,10 +103,9 @@ class BadCommandsCheck(Check):
                 continue
             if line[0] != '#':
                 for regex, result_cls, kwargs in regexes:
-                    match = regex.match(line)
-                    if match is not None:
+                    if (mo := regex.match(line)):
                         yield result_cls(
-                            match.group('cmd'), line=line, lineno=lineno, pkg=pkg, **kwargs)
+                            mo.group('cmd'), line=line, lineno=lineno, pkg=pkg, **kwargs)
 
 
 class MissingSlash(results.VersionResult, results.Error):
@@ -238,24 +237,19 @@ class PathVariablesCheck(Check):
 
             # flag double path prefix usage on uncommented lines only
             if line[0] != '#':
-                match = self.double_prefix_regex.search(line)
-                if match is not None:
-                    double_prefix[match.group(1)].append(lineno)
-                match = self.double_prefix_func_regex.search(line)
-                if (match is not None and
-                        self.double_prefix_func_false_positive_regex.match(
-                            match.group(0)) is None):
-                    double_prefix[match.group(0)].append(lineno)
+                if (mo := self.double_prefix_regex.search(line)):
+                    double_prefix[mo.group(1)].append(lineno)
+                if (mo := self.double_prefix_func_regex.search(line)):
+                    if not self.double_prefix_func_false_positive_regex.match(mo.group(0)):
+                        double_prefix[mo.group(0)].append(lineno)
 
             # skip EAPIs that don't require trailing slashes
             if pkg.eapi.options.trailing_slash:
                 continue
-            match = self.missing_regex.search(line)
-            if match is not None:
-                missing[match.group(1)].append(lineno)
-            match = self.unnecessary_regex.search(line)
-            if match is not None:
-                unnecessary[match.group(1)].append(lineno)
+            if (mo := self.missing_regex.search(line)):
+                missing[mo.group(1)].append(lineno)
+            if (mo := self.unnecessary_regex.search(line)):
+                unnecessary[mo.group(1)].append(lineno)
 
         for match, lines in missing.items():
             yield MissingSlash(match, lines, pkg=pkg)
@@ -297,9 +291,8 @@ class AbsoluteSymlinkCheck(Check):
         for lineno, line in enumerate(pkg.lines, 1):
             if not line.strip():
                 continue
-            matches = self.regex.match(line)
-            if matches is not None:
-                yield AbsoluteSymlink(matches.group('cmd'), line=line, lineno=lineno, pkg=pkg)
+            if (mo := self.regex.match(line)):
+                yield AbsoluteSymlink(mo.group('cmd'), line=line, lineno=lineno, pkg=pkg)
 
 
 class DeprecatedInsinto(results.LineResult, results.Warning):
@@ -410,9 +403,8 @@ class ObsoleteUriCheck(Check):
                 continue
             # searching for multiple matches on a single line is too slow
             for regexp, repl in self.regexes:
-                matches = regexp.match(line)
-                if matches is not None:
-                    uri = matches.group('uri')
+                if (mo := regexp.match(line)):
+                    uri = mo.group('uri')
                     yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)
 
 
@@ -496,10 +488,10 @@ class RawEbuildCheck(Check):
             yield StaticSrcUri(static_str, pkg=pkg)
 
     def feed(self, pkg):
-        for match in self.attr_regex.finditer(''.join(pkg.lines)):
-            attr = match.lastgroup
+        for mo in self.attr_regex.finditer(''.join(pkg.lines)):
+            attr = mo.lastgroup
             func = getattr(self, f'check_{attr}')
-            yield from func(pkg, match.group(attr))
+            yield from func(pkg, mo.group(attr))
 
 
 class MissingInherits(results.VersionResult, results.Warning):
@@ -692,11 +684,10 @@ class RedundantDodirCheck(Check):
             line = line.strip()
             if not line or line[0] == '#':
                 continue
-            dodir = self.dodir_regex.match(line)
-            if dodir:
+            if (dodir := self.dodir_regex.match(line)):
                 lineno, line = next(lines)
-                cmd = self.cmds_regex.match(line)
-                if cmd and dodir.group('path') == cmd.group('path'):
-                    yield RedundantDodir(
-                        cmd.group('cmd'), line=dodir.group('call'),
-                        lineno=lineno - 1, pkg=pkg)
+                if (cmd := self.cmds_regex.match(line)):
+                    if dodir.group('path') == cmd.group('path'):
+                        yield RedundantDodir(
+                            cmd.group('cmd'), line=dodir.group('call'),
+                            lineno=lineno - 1, pkg=pkg)

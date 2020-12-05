@@ -113,9 +113,8 @@ class ParsedGitRepo:
                 return
             line = line.strip()
             if line:
-                match = self._git_log_regex.match(line)
-                if match is not None:
-                    data = match.groups()
+                if (mo := self._git_log_regex.match(line)):
+                    data = mo.groups()
                     try:
                         if data[0] is not None:
                             # matched ADM status change
@@ -138,9 +137,8 @@ class ParsedGitRepo:
                 return
             line = line.strip()
             if line:
-                match = self._git_log_regex.match(line)
-                if match is not None:
-                    data = match.groups()
+                if (mo := self._git_log_regex.match(line)):
+                    data = mo.groups()
                     try:
                         if data[0] is not None:
                             # matched ADM status change

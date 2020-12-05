@@ -111,17 +111,17 @@ class _HeaderCheck(GentooRepoCheck):
     def feed(self, item):
         if item.lines:
             line = item.lines[0].strip()
-            copyright = copyright_regex.match(line)
-            if copyright is None:
+            if (mo := copyright_regex.match(line)):
+                # Copyright policy is active since 2018-10-21, so it applies
+                # to all ebuilds committed in 2019 and later
+                if int(mo.group('end')) >= 2019:
+                    if mo.group('holder') == 'Gentoo Foundation':
+                        yield self._old_copyright(line, **self.args(item))
+                    # Gentoo policy requires 'Gentoo Authors'
+                    elif mo.group('holder') != 'Gentoo Authors':
+                        yield self._non_gentoo_authors(line, **self.args(item))
+            else:
                 yield self._invalid_copyright(line, **self.args(item))
-            # Copyright policy is active since 2018-10-21, so it applies
-            # to all ebuilds committed in 2019 and later
-            elif int(copyright.group('end')) >= 2019:
-                if copyright.group('holder') == 'Gentoo Foundation':
-                    yield self._old_copyright(line, **self.args(item))
-                # Gentoo policy requires 'Gentoo Authors'
-                elif copyright.group('holder') != 'Gentoo Authors':
-                    yield self._non_gentoo_authors(line, **self.args(item))
 
             try:
                 line = item.lines[1].strip('\n')
