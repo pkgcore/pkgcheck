@@ -67,15 +67,11 @@ class Result:
         return hash((self.name, tuple(sorted(self._attrs.items()))))
 
     def __lt__(self, other):
-        try:
-            if self.scope is other.scope:
-                if self.name == other.name:
-                    return self.desc < other.desc
-                return self.name < other.name
-            return self.scope < other.scope
-        except AttributeError:
-            pass
-        return False
+        if self.scope is other.scope:
+            if self.name == other.name:
+                return self.desc < other.desc
+            return self.name < other.name
+        return self.scope < other.scope
 
 
 class Error(Result):
