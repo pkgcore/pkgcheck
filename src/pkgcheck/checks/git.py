@@ -546,19 +546,25 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
         if len(summary.split(': ', 1)[-1]) > 69:
             yield InvalidCommitMessage('summary is too long', commit=commit)
 
+        # categorize package changes
+        pkg_changes = defaultdict(set)
+        for pkg in commit.pkgs:
+            pkg_changes[pkg.category].add(pkg.package)
+
         # check git commit summary formatting
-        if len(commit.pkgs) == 1:
-            # single cat/pn change
-            pkg = commit.pkgs[0]
-            if not re.match(rf'^({pkg.key}|{pkg.cpvstr}): ', summary):
-                error = f'summary missing {pkg.key!r} package prefix'
-                yield BadCommitSummary(error, summary, commit=commit)
-        elif len(commit.pkgs) > 1 and len({pkg.category for pkg in commit.pkgs}) == 1:
-            # mutiple pkg changes in the same category
-            pkg = commit.pkgs[0]
-            if not re.match(rf'^{pkg.category}: ', summary):
-                error = f'summary missing {pkg.category!r} category prefix'
-                yield BadCommitSummary(error, summary, commit=commit)
+        if len(pkg_changes) == 1:
+            category, pkgs = pkg_changes.popitem()
+            if len(pkgs) == 1:
+                # changes to a single cat/pn
+                pkg = commit.pkgs[0]
+                if not re.match(rf'^({pkg.key}|{pkg.cpvstr}): ', summary):
+                    error = f'summary missing {pkg.key!r} package prefix'
+                    yield BadCommitSummary(error, summary, commit=commit)
+            else:
+                # mutiple pkg changes in the same category
+                if not re.match(rf'^{category}: ', summary):
+                    error = f'summary missing {category!r} category prefix'
+                    yield BadCommitSummary(error, summary, commit=commit)
 
         # verify message body
         i = iter(commit.message[1:])

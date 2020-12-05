@@ -276,8 +276,15 @@ class TestGitCommitsCheck(ReportTestCase):
         self.init_check()
         self.assertNoReport(self.check, self.source)
 
-        # poorly prefixed commit summary
+        # properly prefixed multiple ebuild commit summary
         self.child_repo.create_ebuild('cat/pkg-2')
+        self.child_repo.create_ebuild('cat/pkg-3')
+        self.child_git_repo.add_all('cat/pkg: more version bumps', signoff=True)
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
+        # poorly prefixed commit summary
+        self.child_repo.create_ebuild('cat/pkg-4')
         self.child_git_repo.add_all('version bump', signoff=True)
         commit = self.child_git_repo.HEAD
         self.init_check()
@@ -295,7 +302,14 @@ class TestGitCommitsCheck(ReportTestCase):
         self.init_check()
         self.assertNoReport(self.check, self.source)
 
-        # poorly prefixed commit summary
+        # multiple category commits are ignored
+        self.child_repo.create_ebuild('newcat1/newcat1-1')
+        self.child_repo.create_ebuild('newcat2/newpkg2-1')
+        self.child_git_repo.add_all('various changes', signoff=True)
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
+        # poorly prefixed commit summary for single category changes
         self.child_repo.create_ebuild('cat/pkg3-1')
         self.child_repo.create_ebuild('cat/pkg4-1')
         self.child_git_repo.add_all('cat updates', signoff=True)
