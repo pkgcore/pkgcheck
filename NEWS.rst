@@ -3,6 +3,87 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.7.8 (2020-12-04)
+---------------------------
+
+- pkgcheck show: Add ``-C/--caches`` support.
+
+- BadCommitSummary: Support flagging bad category level commit
+  summaries (#250).
+
+- FormatReporter: Raise exception for unhandled integer key args.
+
+- Treat git rename operations as addition and removal for package
+  changes (#249).
+
+- PerlCheck is now an optional check that isn't run by default
+  since most users won't have the required dependency installed.
+
+- Allow additive -c/--checks args that add checks to the default
+  set to run. For example, use ``pkgcheck scan -c=+PerlCheck`` to
+  run PerlCheck in addition to the default checks.
+
+- InvalidManifest: Flag ebuilds with invalid Manifest files.
+
+- pkgcheck scan: Support eclass file target restrictions.
+
+- MissingMove: Flag packages on local commits that are renamed with
+  no corresponding move package update.
+
+- MissingSlotmove: Flag packages on local commits with changed SLOT
+  with no corresponding slotmove package update.
+
+- MaintainerNeeded: Flag packages with invalid maintainer-needed
+  comments (#239).
+
+- pkgcheck scan: Display cache update progress by default.
+
+- LiveOnlyPackage: Flag ebuilds that only have VCS-based versions.
+
+- pkgcheck scan: Support a configurable exit status via ``--exit``
+  (#28).
+
+- pkgcheck scan: Drop --sorted option that isn't useful enough to
+  keep around due to check parallelization.
+
+- MatchingChksums: Ignore go.mod related false positives (#228).
+
+- EclassDocMissingFunc: Flag eclasses missing docs for an exported
+  function. 
+
+- EclassDocMissingVar: Flag eclasses missing docs for an exported
+  variable. 
+
+- InternalEclassFunc: Flag ebuilds using internal functions from an
+  eclass.
+
+- IndirectInherits: Flag ebuilds using functions from an indirectly
+  inherited eclass.
+
+- MissingInherits: Flag ebuilds with missing eclass inherits.
+
+- UnusedInherits: Flag ebuilds with unused eclass inherits.
+
+- PythonCompatUpdate: Flag ebuilds with PYTHON_COMPAT that can be
+  updated to support newer python versions.
+
+- Dump all pickled caches atomically (#244).
+
+- UnsupportedEclassEapi: Flag ebuilds that inherit an eclass with
+  outdated @SUPPORTED_EAPIS.
+
+- EclassDocError: Flag eclasses that fail eclass doc tag parsing.
+
+- RedundantPackageUpdate: Flag package update entries that have the
+  same source and destination.
+
+- ProfileAddon: Only enable exp profiles for explicitly selected
+  keywords and not when keywords are selected by default.
+
+- pkgcheck scan: Don't load system/user configs when explicitly
+  disabled via ``--config no``.
+
+---------------------------
 pkgcheck 0.7.7 (2020-07-05)
 ---------------------------
 
