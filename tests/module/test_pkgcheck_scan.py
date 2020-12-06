@@ -90,14 +90,6 @@ class TestPkgcheckScanParseArgs:
         assert err[-1].startswith(
             "pkgcheck scan: error: 'standalone' repo doesn't contain: '/foo/bar'")
 
-    def test_no_default_repo(self, tool, stubconfig, capsys):
-        with pytest.raises(SystemExit) as excinfo:
-            tool.parse_args(['--config', stubconfig, 'scan'])
-        assert excinfo.value.code == 2
-        out, err = capsys.readouterr()
-        assert not out
-        assert err.strip() == "pkgcheck scan: error: no default repo found"
-
     def test_target_repo_id(self, tool):
         options, _ = tool.parse_args(['scan', 'standalone'])
         assert options.target_repo.repo_id == 'standalone'
@@ -292,6 +284,14 @@ class TestPkgcheckScanParseArgs:
             check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
             with pytest.raises(argparse.ArgumentError):
                 tool.parse_args(['scan', '--debug', 'cat/pkg'])
+
+    def test_no_default_repo(self, tool, stubconfig, capsys):
+        with pytest.raises(SystemExit) as excinfo:
+            tool.parse_args(['--config', stubconfig, 'scan'])
+        assert excinfo.value.code == 2
+        out, err = capsys.readouterr()
+        assert not out
+        assert err.strip() == "pkgcheck scan: error: no default repo found"
 
 
 class TestPkgcheckScanParseConfigArgs:
