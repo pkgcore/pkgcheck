@@ -5,7 +5,7 @@ use strict;
 
 use Gentoo::PerlMod::Version "gentooize_version";
 
-# force stdout to be flushed after every print
+# forcibly flush stdout after every line
 STDOUT->autoflush(1);
 
 # When running non-interactively assume we're running under
