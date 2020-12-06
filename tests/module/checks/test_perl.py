@@ -1,5 +1,3 @@
-import errno
-import socket
 from unittest.mock import patch
 
 import pytest
@@ -70,16 +68,9 @@ class TestPerlCheck(misc.ReportTestCase):
 
     def test_no_perl_deps(self):
         """Check initialization fails if perl deps aren't installed."""
-        with patch('socket.socket') as mock_socket:
-            mock_socket.return_value.accept.side_effect = socket.timeout
+        with patch('pkgcheck.checks.perl.subprocess.Popen') as popen:
+            popen.return_value.stdout.readline.return_value = 'perl error'
+            popen.return_value.poll.return_value = 2
             for verbosity in (0, 1):
-                with pytest.raises(SkipCheck, match='failed to connect to perl client'):
+                with pytest.raises(SkipCheck, match='failed to run perl script'):
                     self.mk_check(verbosity=verbosity)
-
-    def test_socket_bind_error(self):
-        """Raise socket binding exceptions that aren't due to rebinding."""
-        with patch('socket.socket') as mock_socket:
-            exc = OSError(errno.ENOTSOCK, 'failed socket bind')
-            mock_socket.return_value.bind.side_effect = exc
-            with pytest.raises(OSError, match='failed socket bind'):
-                self.mk_check()

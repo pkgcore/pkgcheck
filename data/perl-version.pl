@@ -1,28 +1,20 @@
 #!/usr/bin/perl -w
+use 5.010;
 
 use strict;
 
 use Gentoo::PerlMod::Version "gentooize_version";
-use IO::Socket::UNIX;
 
-my $SOCK_PATH = $ARGV[0];
-if (not defined $SOCK_PATH) {
-	die "missing UNIX domain socket path\n";
+# force stdout to be flushed after every print
+STDOUT->autoflush(1);
+
+# When running non-interactively assume we're running under
+# pkgcheck and tell the python-side we're up.
+unless (-t STDOUT) {
+	say "ready";
 }
 
-my $client = IO::Socket::UNIX->new(
-	Type => SOCK_STREAM(),
-	Peer => $SOCK_PATH,
-)
-	or die("can't connect to python server: $!\n");
-
-$client->autoflush(1);
-
-while (my $line = <$client>) {
-	if (defined $line) {
-		chomp($line);
-		my $version = gentooize_version($line);
-		$client->send(sprintf("%02d", length $version));
-		$client->send($version);
-	}
+while (my $line = <STDIN>) {
+	chomp($line);
+	say gentooize_version($line);
 }

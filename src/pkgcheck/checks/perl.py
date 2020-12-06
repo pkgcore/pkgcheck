@@ -1,9 +1,6 @@
 import multiprocessing
-import os
 import re
-import socket
 import subprocess
-import tempfile
 
 from pkgcore.restrictions import packages, values
 from snakeoil.osutils import pjoin
@@ -33,51 +30,35 @@ class _PerlConnection:
     """Connection to perl script the check is going to communicate with."""
 
     def __init__(self, options):
-        self.connection = None
         self.perl_client = None
         self.process_lock = multiprocessing.Lock()
-        self.socket_dir = tempfile.TemporaryDirectory(prefix='pkgcheck-')
-
-        # set up Unix domain socket to communicate with perl client
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        socket_path = os.path.join(self.socket_dir.name, 'perl.socket')
-        sock.bind(socket_path)
-        sock.listen()
 
         # start perl client for normalizing perl module versions into package versions
-        perl_script = pjoin(const.DATA_PATH, 'perl-version.pl')
         try:
             self.perl_client = subprocess.Popen(
-                ['perl', perl_script, socket_path], stderr=subprocess.PIPE)
+                ['perl', pjoin(const.DATA_PATH, 'perl-version.pl')],
+                text=True, bufsize=1,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except FileNotFoundError:
             raise _PerlException('perl not installed on system')
 
-        sock.settimeout(1)
-        try:
-            self.connection, _address = sock.accept()
-        except socket.timeout:
-            err_msg = 'failed to connect to perl client'
+        # check if the script is running
+        ready = self.perl_client.stdout.readline().strip()
+        if ready != 'ready' or self.perl_client.poll():
+            err_msg = 'failed to run perl script'
             if options.verbosity > 0:
-                stderr = self.perl_client.stderr.read().decode().strip()
+                stderr = self.perl_client.stderr.read().strip()
                 err_msg += f': {stderr}'
             raise _PerlException(err_msg)
 
     def normalize(self, version):
         """Normalize a given version number to its perl equivalent."""
         with self.process_lock:
-            self.connection.send(version.encode() + b'\n')
-            size = int(self.connection.recv(2))
-            return self.connection.recv(size).decode('utf-8', 'replace')
+            self.perl_client.stdin.write(version + '\n')
+            return self.perl_client.stdout.readline().strip()
 
     def __del__(self):
-        # Clean up perl cruft if it exists, we don't care about being nice to
-        # the perl side at this point.
-        if self.connection is not None:
-            self.connection.close()
-        try:
-            self.socket_dir.cleanup()
-        except FileNotFoundError:
-            pass
+        # kill perl process if it still exists
         if self.perl_client is not None:
             self.perl_client.kill()
 
