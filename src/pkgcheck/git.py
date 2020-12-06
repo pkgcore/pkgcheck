@@ -110,54 +110,52 @@ class ParsedGitRepo:
         while line := git_log.stdout.readline().decode('utf-8', 'replace'):
             if line == '# BEGIN COMMIT\n':
                 return
-            if line := line.strip():
-                if mo := self._git_log_regex.match(line):
-                    data = mo.groups()
-                    try:
-                        if data[0] is not None:
-                            # matched ADM status change
-                            status, category, pn = data[0:3]
-                            yield atom_cls(f'={category}/{pn}')
-                        else:
-                            # matched R status change
-                            status, category, pn = data[3:6]
-                            yield atom_cls(f'={category}/{pn}')
-                            category, pn = data[6:]
-                            yield atom_cls(f'={category}/{pn}')
-                    except MalformedAtom:
-                        pass
+            if (line := line.strip()) and (mo := self._git_log_regex.match(line)):
+                data = mo.groups()
+                try:
+                    if data[0] is not None:
+                        # matched ADM status change
+                        status, category, pn = data[0:3]
+                        yield atom_cls(f'={category}/{pn}')
+                    else:
+                        # matched R status change
+                        status, category, pn = data[3:6]
+                        yield atom_cls(f'={category}/{pn}')
+                        category, pn = data[6:]
+                        yield atom_cls(f'={category}/{pn}')
+                except MalformedAtom:
+                    pass
 
     def _pkg_changes(self, git_log, commit_hash, commit_date, local):
         """Yield package change objects from git log file changes."""
         while line := git_log.stdout.readline().decode('utf-8', 'replace'):
             if line == '# BEGIN COMMIT\n':
                 return
-            if line := line.strip():
-                if mo := self._git_log_regex.match(line):
-                    data = mo.groups()
-                    try:
-                        if data[0] is not None:
-                            # matched ADM status change
-                            status, category, pn = data[0:3]
-                            pkg = atom_cls(f'={category}/{pn}')
-                            yield GitPkgChange(pkg, status, commit_hash, commit_date)
+            if (line := line.strip()) and (mo := self._git_log_regex.match(line)):
+                data = mo.groups()
+                try:
+                    if data[0] is not None:
+                        # matched ADM status change
+                        status, category, pn = data[0:3]
+                        pkg = atom_cls(f'={category}/{pn}')
+                        yield GitPkgChange(pkg, status, commit_hash, commit_date)
+                    else:
+                        # matched R status change
+                        status, category, pn = data[3:6]
+                        old_pkg = atom_cls(f'={category}/{pn}')
+                        category, pn = data[6:]
+                        new_pkg = atom_cls(f'={category}/{pn}')
+                        if not local:
+                            # treat rename as addition and removal
+                            yield GitPkgChange(new_pkg, 'A', commit_hash, commit_date)
+                            yield GitPkgChange(old_pkg, 'D', commit_hash, commit_date)
                         else:
-                            # matched R status change
-                            status, category, pn = data[3:6]
-                            old_pkg = atom_cls(f'={category}/{pn}')
-                            category, pn = data[6:]
-                            new_pkg = atom_cls(f'={category}/{pn}')
-                            if not local:
-                                # treat rename as addition and removal
-                                yield GitPkgChange(new_pkg, 'A', commit_hash, commit_date)
-                                yield GitPkgChange(old_pkg, 'D', commit_hash, commit_date)
-                            else:
-                                # renames are split into add/remove ops at
-                                # the check level for the local commits repo
-                                yield GitPkgChange(
-                                    new_pkg, 'R', commit_hash, commit_date, old_pkg=old_pkg)
-                    except MalformedAtom:
-                        pass
+                            # renames are split into add/remove ops at
+                            # the check level for the local commits repo
+                            yield GitPkgChange(
+                                new_pkg, 'R', commit_hash, commit_date, old_pkg=old_pkg)
+                except MalformedAtom:
+                    pass
 
     def parse_git_log(self, commit_range, commits=False, local=False, verbosity=-1):
         """Parse git log output."""
