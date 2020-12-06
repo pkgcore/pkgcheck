@@ -84,9 +84,8 @@ class PerlCheck(OptionalCheck):
             raise SkipCheck(self, str(e))
 
     def feed(self, pkg):
-        match = self.dist_version_re.search(''.join(pkg.lines))
-        if match is not None:
-            dist_version = match.group('dist_version')
+        if mo := self.dist_version_re.search(''.join(pkg.lines)):
+            dist_version = mo.group('dist_version')
             normalized = self.perl.normalize(dist_version)
             if normalized != pkg.version:
                 yield MismatchedPerlVersion(dist_version, normalized, pkg=pkg)

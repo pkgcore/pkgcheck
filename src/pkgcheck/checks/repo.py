@@ -90,6 +90,5 @@ class EmptyDirsCheck(GentooRepoCheck):
                 yield EmptyCategoryDir(pkg=RawCPV(cat, None, None))
                 continue
             for pkg in sorted(pkgs):
-                versions = self.repo.versions[(cat, pkg)]
-                if not versions:
+                if not self.repo.versions[(cat, pkg)]:
                     yield EmptyPackageDir(pkg=RawCPV(cat, pkg, None))

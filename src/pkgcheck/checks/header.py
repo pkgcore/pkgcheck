@@ -111,7 +111,7 @@ class _HeaderCheck(GentooRepoCheck):
     def feed(self, item):
         if item.lines:
             line = item.lines[0].strip()
-            if (mo := copyright_regex.match(line)):
+            if mo := copyright_regex.match(line):
                 # Copyright policy is active since 2018-10-21, so it applies
                 # to all ebuilds committed in 2019 and later
                 if int(mo.group('end')) >= 2019:

@@ -111,27 +111,23 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
         # report licenses used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_licenses:
             pkg_licenses = set(iflatten_instance(pkg.license))
-            licenses = self.unused_master_licenses & pkg_licenses
-            if licenses:
+            if licenses := self.unused_master_licenses & pkg_licenses:
                 yield UnusedInMastersLicenses(sorted(licenses), pkg=pkg)
 
         # report mirrors used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_mirrors:
             pkg_mirrors = self._get_mirrors(pkg)
-            mirrors = self.unused_master_mirrors & pkg_mirrors
-            if mirrors:
+            if mirrors := self.unused_master_mirrors & pkg_mirrors:
                 yield UnusedInMastersMirrors(sorted(mirrors), pkg=pkg)
 
         # report eclasses used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_eclasses:
             pkg_eclasses = set(pkg.inherited)
-            eclasses = self.unused_master_eclasses & pkg_eclasses
-            if eclasses:
+            if eclasses := self.unused_master_eclasses & pkg_eclasses:
                 yield UnusedInMastersEclasses(sorted(eclasses), pkg=pkg)
 
         # report global USE flags used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_flags:
             non_local_use = pkg.iuse_stripped.difference(pkg.local_use.keys())
-            flags = self.unused_master_flags.intersection(non_local_use)
-            if flags:
+            if flags := self.unused_master_flags.intersection(non_local_use):
                 yield UnusedInMastersGlobalUse(sorted(flags), pkg=pkg)

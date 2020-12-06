@@ -424,8 +424,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
                 yield MaintainerNeeded(os.path.basename(loc), maintainer_needed, pkg=pkg)
 
             # check maintainer validity
-            projects = frozenset(pkg.repo.projects_xml.projects)
-            if projects:
+            if projects := set(pkg.repo.projects_xml.projects):
                 nonexistent = []
                 wrong_maintainers = []
                 for m in pkg.maintainers:

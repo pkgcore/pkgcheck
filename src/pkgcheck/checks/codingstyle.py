@@ -103,7 +103,7 @@ class BadCommandsCheck(Check):
                 continue
             if line[0] != '#':
                 for regex, result_cls, kwargs in regexes:
-                    if (mo := regex.match(line)):
+                    if mo := regex.match(line):
                         yield result_cls(
                             mo.group('cmd'), line=line, lineno=lineno, pkg=pkg, **kwargs)
 
@@ -237,18 +237,18 @@ class PathVariablesCheck(Check):
 
             # flag double path prefix usage on uncommented lines only
             if line[0] != '#':
-                if (mo := self.double_prefix_regex.search(line)):
+                if mo := self.double_prefix_regex.search(line):
                     double_prefix[mo.group(1)].append(lineno)
-                if (mo := self.double_prefix_func_regex.search(line)):
+                if mo := self.double_prefix_func_regex.search(line):
                     if not self.double_prefix_func_false_positive_regex.match(mo.group(0)):
                         double_prefix[mo.group(0)].append(lineno)
 
             # skip EAPIs that don't require trailing slashes
             if pkg.eapi.options.trailing_slash:
                 continue
-            if (mo := self.missing_regex.search(line)):
+            if mo := self.missing_regex.search(line):
                 missing[mo.group(1)].append(lineno)
-            if (mo := self.unnecessary_regex.search(line)):
+            if mo := self.unnecessary_regex.search(line):
                 unnecessary[mo.group(1)].append(lineno)
 
         for match, lines in missing.items():
@@ -291,7 +291,7 @@ class AbsoluteSymlinkCheck(Check):
         for lineno, line in enumerate(pkg.lines, 1):
             if not line.strip():
                 continue
-            if (mo := self.regex.match(line)):
+            if mo := self.regex.match(line):
                 yield AbsoluteSymlink(mo.group('cmd'), line=line, lineno=lineno, pkg=pkg)
 
 
@@ -403,7 +403,7 @@ class ObsoleteUriCheck(Check):
                 continue
             # searching for multiple matches on a single line is too slow
             for regexp, repl in self.regexes:
-                if (mo := regexp.match(line)):
+                if mo := regexp.match(line):
                     uri = mo.group('uri')
                     yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)
 
@@ -684,9 +684,9 @@ class RedundantDodirCheck(Check):
             line = line.strip()
             if not line or line[0] == '#':
                 continue
-            if (dodir := self.dodir_regex.match(line)):
+            if dodir := self.dodir_regex.match(line):
                 lineno, line = next(lines)
-                if (cmd := self.cmds_regex.match(line)):
+                if cmd := self.cmds_regex.match(line):
                     if dodir.group('path') == cmd.group('path'):
                         yield RedundantDodir(
                             cmd.group('cmd'), line=dodir.group('call'),

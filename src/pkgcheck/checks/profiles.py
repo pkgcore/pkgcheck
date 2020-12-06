@@ -140,8 +140,7 @@ class ProfilesCheck(Check):
 
         def _pkg_keywords(filename, profile, vals):
             for atom, keywords in vals:
-                invalid = set(keywords) - self.valid_keywords
-                if invalid:
+                if invalid := set(keywords) - self.valid_keywords:
                     unknown_keywords[profile.path][filename].append((atom, invalid))
 
         def _pkg_use(filename, profile, vals):
@@ -152,10 +151,7 @@ class ProfilesCheck(Check):
 
             for _pkg, entries in d.items():
                 for a, disabled, enabled in entries:
-                    pkgs = self.search_repo.match(a)
-                    if not pkgs:
-                        unknown_pkgs[profile.path][filename].append(a)
-                    else:
+                    if pkgs := self.search_repo.match(a):
                         available = {u for pkg in pkgs for u in pkg.iuse_stripped}
                         unknown_disabled = set(disabled) - available
                         unknown_enabled = set(enabled) - available
@@ -165,18 +161,18 @@ class ProfilesCheck(Check):
                         if unknown_enabled:
                             unknown_pkg_use[profile.path][filename].append(
                                 (a, unknown_enabled))
+                    else:
+                        unknown_pkgs[profile.path][filename].append(a)
 
         def _use(filename, profile, vals):
             # TODO: give ChunkedDataDict some dict view methods
             d = vals.render_to_dict()
             for _, entries in d.items():
                 for _, disabled, enabled in entries:
-                    unknown_disabled = set(disabled) - self.available_iuse
-                    unknown_enabled = set(enabled) - self.available_iuse
-                    if unknown_disabled:
+                    if unknown_disabled := set(disabled) - self.available_iuse:
                         unknown_use[profile.path][filename].extend(
                             ('-' + u for u in unknown_disabled))
-                    if unknown_enabled:
+                    if unknown_enabled := set(enabled) - self.available_iuse:
                         unknown_use[profile.path][filename].extend(
                             unknown_enabled)
 
@@ -226,8 +222,7 @@ class ProfilesCheck(Check):
                     with patch('pkgcore.log.logger.error', report_profile_errors), \
                             patch('pkgcore.log.logger.warning', report_profile_warnings):
                         vals = getattr(profile, attr)
-                    results = func(f, profile, vals)
-                    if results is not None:
+                    if results := func(f, profile, vals):
                         yield from results
 
         yield from profile_reports
@@ -389,22 +384,18 @@ class RepoProfilesCheck(Check):
         self.non_profile_dirs = profile_addon.non_profile_dirs
 
     def finish(self):
-        unknown_category_dirs = set(self.repo.category_dirs).difference(self.repo.categories)
-        if unknown_category_dirs:
+        if unknown_category_dirs := set(self.repo.category_dirs).difference(self.repo.categories):
             yield UnknownCategoryDirs(sorted(unknown_category_dirs))
-        nonexistent_categories = set(self.repo.config.categories).difference(self.repo.category_dirs)
-        if nonexistent_categories:
+        if nonexistent_categories := set(self.repo.config.categories).difference(self.repo.category_dirs):
             yield NonexistentCategories(sorted(nonexistent_categories))
 
-        arches_without_profiles = set(self.arches) - set(self.repo.profiles.arches())
-        if arches_without_profiles:
+        if arches_without_profiles := set(self.arches) - set(self.repo.profiles.arches()):
             yield ArchesWithoutProfiles(sorted(arches_without_profiles))
 
         root_profile_dirs = {'embedded'}
         available_profile_dirs = set()
         for root, _dirs, _files in os.walk(self.profiles_dir):
-            d = root[len(self.profiles_dir):].lstrip('/')
-            if d:
+            if d := root[len(self.profiles_dir):].lstrip('/'):
                 available_profile_dirs.add(d)
         available_profile_dirs -= self.non_profile_dirs | root_profile_dirs
 
@@ -448,6 +439,5 @@ class RepoProfilesCheck(Check):
             yield LaggingProfileEapi(
                 profile.name, str(profile.eapi), parent.name, str(parent.eapi))
 
-        unused_profile_dirs = available_profile_dirs - seen_profile_dirs
-        if unused_profile_dirs:
+        if unused_profile_dirs := available_profile_dirs - seen_profile_dirs:
             yield UnusedProfileDirs(sorted(unused_profile_dirs))

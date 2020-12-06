@@ -54,8 +54,7 @@ class StableRequestCheck(GentooRepoCheck, GitCacheCheck):
             pkg_slotted[pkg.slot].append(pkg)
             pkg_keywords.update(pkg.keywords)
 
-        stable_pkg_keywords = {x for x in pkg_keywords if x[0] not in {'-', '~'}}
-        if stable_pkg_keywords:
+        if stable_pkg_keywords := {x for x in pkg_keywords if x[0] not in {'-', '~'}}:
             for slot, pkgs in sorted(pkg_slotted.items()):
                 slot_keywords = set().union(*(pkg.keywords for pkg in pkgs))
                 stable_slot_keywords = slot_keywords.intersection(stable_pkg_keywords)

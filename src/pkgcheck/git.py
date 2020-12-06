@@ -107,12 +107,11 @@ class ParsedGitRepo:
 
     def _pkgs(self, git_log):
         """Yield changed package atoms from git log file changes."""
-        while (line := git_log.stdout.readline().decode('utf-8', 'replace')):
+        while line := git_log.stdout.readline().decode('utf-8', 'replace'):
             if line == '# BEGIN COMMIT\n':
                 return
-            line = line.strip()
-            if line:
-                if (mo := self._git_log_regex.match(line)):
+            if line := line.strip():
+                if mo := self._git_log_regex.match(line):
                     data = mo.groups()
                     try:
                         if data[0] is not None:
@@ -130,12 +129,11 @@ class ParsedGitRepo:
 
     def _pkg_changes(self, git_log, commit_hash, commit_date, local):
         """Yield package change objects from git log file changes."""
-        while (line := git_log.stdout.readline().decode('utf-8', 'replace')):
+        while line := git_log.stdout.readline().decode('utf-8', 'replace'):
             if line == '# BEGIN COMMIT\n':
                 return
-            line = line.strip()
-            if line:
-                if (mo := self._git_log_regex.match(line)):
+            if line := line.strip():
+                if mo := self._git_log_regex.match(line):
                     data = mo.groups()
                     try:
                         if data[0] is not None:
@@ -187,7 +185,7 @@ class ParsedGitRepo:
             raise GitError(f'failed running git log: {error}')
 
         with base.ProgressManager(verbosity=verbosity) as progress:
-            while (commit_hash := git_log.stdout.readline().decode().strip()):
+            while commit_hash := git_log.stdout.readline().decode().strip():
                 commit_date = git_log.stdout.readline().decode().strip()
                 author = git_log.stdout.readline().decode('utf-8', 'replace').strip()
                 committer = git_log.stdout.readline().decode('utf-8', 'replace').strip()
@@ -539,10 +537,9 @@ class GitAddon(caches.CachedAddon):
         if self.options.cache['git']:
             git_repos = []
             for repo in target_repo.trees:
-                git_cache = self._cached_repos.get(repo.location, None)
                 # only enable repo queries if history was found, e.g. a
                 # shallow clone with a depth of 1 won't have any history
-                if git_cache:
+                if git_cache := self._cached_repos.get(repo.location, None):
                     git_repos.append(repo_cls(git_cache, repo_id=f'{repo.repo_id}-history'))
                 else:
                     # skip git checks

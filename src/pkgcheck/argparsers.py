@@ -54,8 +54,7 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
             disabled, enabled = super().parse_values(values)
         disabled = set(disabled)
         enabled = set(enabled) if enabled else all_cache_types
-        unknown = (disabled | enabled) - all_cache_types
-        if unknown:
+        if unknown := (disabled | enabled) - all_cache_types:
             unknowns = ', '.join(map(repr, unknown))
             choices = ', '.join(map(repr, sorted(self.caches)))
             s = pluralism(unknown)
@@ -79,8 +78,7 @@ class ScopeArgs(arghparse.CommaSeparatedNegations):
         disabled, enabled = self.parse_values(values)
 
         # validate selected scopes
-        unknown_scopes = set(disabled + enabled) - set(base.scopes)
-        if unknown_scopes:
+        if unknown_scopes := set(disabled + enabled) - set(base.scopes):
             unknown = ', '.join(map(repr, unknown_scopes))
             available = ', '.join(base.scopes)
             s = pluralism(unknown_scopes)
@@ -129,8 +127,7 @@ class CheckArgs(arghparse.CommaSeparatedNegations):
         additive = list(chain.from_iterable(map(replace_aliases, additive)))
 
         # validate selected checks
-        unknown_checks = set(disabled + enabled + additive) - set(objects.CHECKS)
-        if unknown_checks:
+        if unknown_checks := set(disabled + enabled + additive) - set(objects.CHECKS):
             unknown = ', '.join(map(repr, unknown_checks))
             s = pluralism(unknown_checks)
             raise argparse.ArgumentError(self, f'unknown check{s}: {unknown}')
@@ -167,8 +164,7 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
         enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
 
         # validate selected keywords
-        unknown_keywords = set(disabled + enabled) - set(objects.KEYWORDS)
-        if unknown_keywords:
+        if unknown_keywords := set(disabled + enabled) - set(objects.KEYWORDS):
             unknown = ', '.join(map(repr, unknown_keywords))
             s = pluralism(unknown_keywords)
             raise argparse.ArgumentError(self, f'unknown keyword{s}: {unknown}')
@@ -227,8 +223,7 @@ class ExitArgs(arghparse.CommaSeparatedNegations):
         enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
 
         # validate selected keywords
-        unknown_keywords = set(disabled + enabled) - set(objects.KEYWORDS)
-        if unknown_keywords:
+        if unknown_keywords := set(disabled + enabled) - set(objects.KEYWORDS):
             unknown = ', '.join(map(repr, unknown_keywords))
             s = pluralism(unknown_keywords)
             raise argparse.ArgumentError(self, f'unknown keyword{s}: {unknown}')

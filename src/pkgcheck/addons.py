@@ -58,13 +58,11 @@ class ArchesAddon(base.Addon):
             enabled = set(arch for arch in all_arches if '-' not in arch)
 
         arches = set(enabled).difference(set(disabled))
-        if all_arches:
-            unknown_arches = arches.difference(all_arches)
-            if unknown_arches:
-                es = pluralism(unknown_arches, plural='es')
-                unknown = ', '.join(unknown_arches)
-                valid = ', '.join(sorted(all_arches))
-                parser.error(f'unknown arch{es}: {unknown} (valid arches: {valid})')
+        if all_arches and (unknown_arches := arches.difference(all_arches)):
+            es = pluralism(unknown_arches, plural='es')
+            unknown = ', '.join(unknown_arches)
+            valid = ', '.join(sorted(all_arches))
+            parser.error(f'unknown arch{es}: {unknown} (valid arches: {valid})')
 
         namespace.arches = tuple(sorted(arches))
 
@@ -96,8 +94,7 @@ class ProfileData:
         enabled = known_flags.intersection(self.forced_use.pull_data(pkg))
         immutable = enabled.union(
             filter(known_flags.__contains__, self.masked_use.pull_data(pkg)))
-        force_disabled = self.masked_use.pull_data(pkg)
-        if force_disabled:
+        if force_disabled := self.masked_use.pull_data(pkg):
             enabled = enabled.difference(force_disabled)
         return immutable, enabled
 
@@ -449,14 +446,10 @@ class ProfileAddon(caches.CachedAddon):
         keywords = pkg.keywords
         unstable_keywords = tuple(f'~{x}' for x in keywords if x[0] != '~')
         for key in keywords + unstable_keywords:
-            profile_grps = self.profile_evaluate_dict.get(key)
-            if profile_grps is None:
-                continue
-            for profiles in profile_grps:
-                group = [x for x in profiles if x.visible(pkg)]
-                if not group:
-                    continue
-                groups.append(group)
+            if profile_grps := self.profile_evaluate_dict.get(key):
+                for profiles in profile_grps:
+                    if group := [x for x in profiles if x.visible(pkg)]:
+                        groups.append(group)
         return groups
 
     def __getitem__(self, key):
@@ -597,8 +590,7 @@ class UseAddon(base.Addon):
             profiles_unstated = defaultdict(set)
             if attr is not None:
                 for p in self.profiles:
-                    profile_unstated = unstated_iuse - p.iuse_effective
-                    if profile_unstated:
+                    if profile_unstated := unstated_iuse - p.iuse_effective:
                         profiles_unstated[tuple(sorted(profile_unstated))].add(p.name)
 
             for unstated, profiles in profiles_unstated.items():

@@ -806,8 +806,7 @@ class DependencyCheck(Check):
                                 atom_str = atom.op + atom.cpvstr
                             unblocked = atom_cls(atom_str)
                             if not self.options.search_repo.match(unblocked):
-                                matches = self.existence_repo.match(unblocked)
-                                if matches:
+                                if matches := self.existence_repo.match(unblocked):
                                     removal = max(x.date for x in matches)
                                     removal = datetime.strptime(removal, '%Y-%m-%d')
                                     years = (self.today - removal).days / 365
@@ -941,8 +940,7 @@ class KeywordsCheck(Check):
             # check for overlapping keywords
             unstable = {x[1:] for x in pkg.keywords if x[0] == '~'}
             stable = {x for x in pkg.keywords if x[0] != '~'}
-            overlapping = unstable & stable
-            if overlapping:
+            if overlapping := unstable & stable:
                 keywords = ', '.join(map(
                     str, sorted(zip(overlapping, ('~' + x for x in overlapping)))))
                 yield OverlappingKeywords(keywords, pkg=pkg)
@@ -975,8 +973,7 @@ class KeywordsCheck(Check):
                             x for x in p.keywords if x.lstrip('~') in self.valid_arches)
                 pkg_keywords = set(pkg.keywords)
                 pkg_keywords.update(f'~{x}' for x in pkg.keywords if x[0] != '~')
-                missing_keywords = keywords - pkg_keywords
-                if missing_keywords:
+                if missing_keywords := keywords - pkg_keywords:
                     yield MissingVirtualKeywords(sort_keywords(missing_keywords), pkg=pkg)
 
 
@@ -1318,8 +1315,7 @@ class _RestrictPropertiesCheck(Check):
 
         # skip if target repo or its masters don't define allowed values
         if self.allowed and values:
-            unknown = set(values).difference(self.allowed)
-            if unknown:
+            if unknown := set(values).difference(self.allowed):
                 yield self._unknown_result_cls(sorted(unknown), pkg=pkg)
 
 

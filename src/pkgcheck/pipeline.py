@@ -213,14 +213,12 @@ class Pipeline:
 
             # schedule asynchronous checks in a separate process
             async_proc = None
-            async_pipes = self._pipes['async'].values()
-            if async_pipes:
+            if async_pipes := self._pipes['async'].values():
                 async_proc = Process(target=self._schedule_async, args=(async_pipes,))
                 async_proc.start()
 
             # run synchronous checks using a process pool
-            sync_pipes = self._pipes['sync']
-            if sync_pipes:
+            if sync_pipes := self._pipes['sync']:
                 work_q = SimpleQueue()
                 pool = Pool(self.options.jobs, self._run_checks, (sync_pipes, work_q))
                 pool.close()

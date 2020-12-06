@@ -57,8 +57,7 @@ class UnstableOnlyCheck(GentooRepoCheck):
                     break
             if stable is not None:
                 continue
-            unstable = tuple(x for x in pkgset if v[1].match(x))
-            if unstable:
+            if unstable := tuple(x for x in pkgset if v[1].match(x)):
                 unstable_arches[unstable].append(k)
 
         # collapse reports by available versions

@@ -361,7 +361,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             line = next(pkg.ebuild.text_fileobj())
 
             # check copyright on new/modified ebuilds
-            if (mo := copyright_regex.match(line)):
+            if mo := copyright_regex.match(line):
                 year = mo.group('end')
                 if int(year) != self.today.year:
                     yield EbuildIncorrectCopyright(year, line.strip('\n'), pkg=pkg)
@@ -527,7 +527,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
         if self.git_cat_file.poll() is None:
             for _ in range(len(values)):
                 line = self.git_cat_file.stdout.readline().strip()
-                if (mo := self._git_cat_file_regex.match(line)):
+                if mo := self._git_cat_file_regex.match(line):
                     value = mo.group('object')
                     status = mo.group('status')
                     if not status.startswith('commit '):
@@ -603,7 +603,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
                     yield InvalidCommitMessage(
                         f'empty line {lineno} in footer', commit=commit)
                 continue
-            if (mo := self._commit_footer_regex.match(line)):
+            if mo := self._commit_footer_regex.match(line):
                 # register known tags for verification
                 tag = mo.group('tag')
                 try:
@@ -642,7 +642,7 @@ class GitEclassCommitsCheck(GentooRepoCheck, GitCheck):
     def feed(self, eclass):
         # check copyright on new/modified eclasses
         line = next(iter(eclass.lines))
-        if (mo := copyright_regex.match(line)):
+        if mo := copyright_regex.match(line):
             year = mo.group('end')
             if int(year) != self.today.year:
                 yield EclassIncorrectCopyright(year, line.strip('\n'), eclass=eclass)

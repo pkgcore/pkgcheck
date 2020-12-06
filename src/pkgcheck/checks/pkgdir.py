@@ -206,8 +206,7 @@ class PkgDirCheck(Check):
             # While this may seem odd, written this way such that the filtering
             # happens all in the genexp. If the result was being handed to any,
             # it's a frame switch each char, which adds up.
-            banned_chars = set(filename) - allowed_filename_chars_set
-            if banned_chars:
+            if banned_chars := set(filename) - allowed_filename_chars_set:
                 yield BannedCharacter(filename, sorted(banned_chars), pkg=pkg)
 
             if filename.endswith(ebuild_ext):
@@ -257,8 +256,7 @@ class PkgDirCheck(Check):
                         if file_stat.st_size > 20480:
                             yield SizeViolation(
                                 pjoin(base_dir, filename), file_stat.st_size, pkg=pkg)
-                    banned_chars = set(filename) - allowed_filename_chars_set
-                    if banned_chars:
+                    if banned_chars := set(filename) - allowed_filename_chars_set:
                         yield BannedCharacter(
                             pjoin(base_dir, filename), sorted(banned_chars), pkg=pkg)
 

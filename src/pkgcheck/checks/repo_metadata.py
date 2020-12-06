@@ -318,8 +318,7 @@ class LicenseGroupsCheck(Check):
 
     def finish(self):
         for group, licenses in self.repo.licenses.groups.items():
-            unknown_licenses = set(licenses).difference(self.repo.licenses)
-            if unknown_licenses:
+            if unknown_licenses := set(licenses).difference(self.repo.licenses):
                 yield UnknownLicenses(group, sorted(unknown_licenses))
 
 
