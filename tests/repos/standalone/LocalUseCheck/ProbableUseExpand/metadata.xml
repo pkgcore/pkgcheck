@@ -3,6 +3,6 @@
 <pkgmetadata>
 	<use>
 		<flag name="local">local USE flag stub</flag>
-		<flag name="use_flag_probable">probable USE_EXPAND flag</flag>
+		<flag name="use_expand_probable">probable USE_EXPAND flag</flag>
 	</use>
 </pkgmetadata>

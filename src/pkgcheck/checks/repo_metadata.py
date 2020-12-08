@@ -354,6 +354,20 @@ class UnusedGlobalUse(results.Warning):
         return f'use.desc unused flag{s}: {flags}'
 
 
+class UnusedGlobalUseExpand(results.Warning):
+    """Unused global USE_EXPAND flag(s)."""
+
+    def __init__(self, flags):
+        super().__init__()
+        self.flags = tuple(flags)
+
+    @property
+    def desc(self):
+        s = pluralism(self.flags)
+        flags = ', '.join(self.flags)
+        return f'unused flag{s}: {flags}'
+
+
 class PotentialGlobalUse(results.Info):
     """Local USE flag is a potential global USE flag."""
 
@@ -384,7 +398,9 @@ class GlobalUseCheck(Check):
     scope = base.repo_scope
     _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
     required_addons = (addons.UseAddon,)
-    known_results = frozenset([PotentialLocalUse, PotentialGlobalUse, UnusedGlobalUse])
+    known_results = frozenset([
+        PotentialLocalUse, PotentialGlobalUse, UnusedGlobalUse, UnusedGlobalUseExpand,
+    ])
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
@@ -437,19 +453,29 @@ class GlobalUseCheck(Check):
     def finish(self):
         repo_global_use = {
             flag for matcher, (flag, desc) in self.repo.config.use_desc}
+        repo_global_use_expand = {
+            flag for use_expand in self.repo.config.use_expand_desc.values()
+            for flag, desc in use_expand}
         repo_local_use = self.repo.config.use_local_desc
-        unused_global_flags = []
+        unused_global_use = []
+        unused_global_use_expand = []
         potential_locals = []
 
         for flag in repo_global_use:
             pkgs = self.global_flag_usage[flag]
             if not pkgs:
-                unused_global_flags.append(flag)
+                unused_global_use.append(flag)
             elif len(pkgs) < 5:
                 potential_locals.append((flag, pkgs))
 
-        if unused_global_flags:
-            yield UnusedGlobalUse(sorted(unused_global_flags))
+        for flag in repo_global_use_expand:
+            if not self.global_flag_usage[flag]:
+                unused_global_use_expand.append(flag)
+
+        if unused_global_use:
+            yield UnusedGlobalUse(sorted(unused_global_use))
+        if unused_global_use_expand:
+            yield UnusedGlobalUseExpand(sorted(unused_global_use_expand))
         for flag, pkgs in sorted(potential_locals, key=lambda x: len(x[1])):
             pkgs = sorted(map(str, pkgs))
             yield PotentialLocalUse(flag, pkgs)

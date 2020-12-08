@@ -1,0 +1,6 @@
+diff -Naur standalone/profiles/desc/use_expand.desc fixed/profiles/desc/use_expand.desc
+--- standalone/profiles/desc/use_expand.desc	2020-12-08 12:17:09.314128729 -0700
++++ fixed/profiles/desc/use_expand.desc	2020-12-08 12:19:33.243272770 -0700
+@@ -1,2 +1 @@
+-unused - unused USE_EXPAND stub flag
+ used - used USE_EXPAND stub flag
