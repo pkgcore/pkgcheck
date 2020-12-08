@@ -395,8 +395,7 @@ class GlobalUseCheck(Check):
         # ignore bad XML, it will be caught by metadata.xml checks
         local_use = set(pkgs[0].local_use.keys())
         for pkg in pkgs:
-            pkg_global_use = pkg.iuse_stripped.difference(local_use)
-            for flag in pkg_global_use:
+            for flag in pkg.iuse_stripped.difference(local_use):
                 self.global_flag_usage[flag].add(pkg.unversioned_atom)
         yield from ()
 
@@ -437,12 +436,12 @@ class GlobalUseCheck(Check):
 
     def finish(self):
         repo_global_use = {
-            flag: desc for matcher, (flag, desc) in self.repo.config.use_desc}
+            flag for matcher, (flag, desc) in self.repo.config.use_desc}
         repo_local_use = self.repo.config.use_local_desc
         unused_global_flags = []
         potential_locals = []
 
-        for flag in repo_global_use.keys():
+        for flag in repo_global_use:
             pkgs = self.global_flag_usage[flag]
             if not pkgs:
                 unused_global_flags.append(flag)
