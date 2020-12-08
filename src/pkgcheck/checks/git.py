@@ -355,10 +355,10 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             # pull actual package object from repo
             try:
                 pkg = next(self.repo.itermatch(git_pkg.versioned_atom))
+                line = next(pkg.ebuild.text_fileobj())
             except StopIteration:
                 # ignore probable broken ebuild
                 continue
-            line = next(pkg.ebuild.text_fileobj())
 
             # check copyright on new/modified ebuilds
             if mo := copyright_regex.match(line):
