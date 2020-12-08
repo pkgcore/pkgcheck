@@ -391,11 +391,6 @@ class GlobalUseCheck(Check):
         self.global_flag_usage = defaultdict(set)
         self.repo = self.options.target_repo
 
-    def start(self):
-        master_flags = set()
-        for repo in self.options.target_repo.masters:
-            master_flags.update(flag for matcher, (flag, desc) in repo.config.use_desc)
-
     def feed(self, pkgs):
         # ignore bad XML, it will be caught by metadata.xml checks
         local_use = set(pkgs[0].local_use.keys())
