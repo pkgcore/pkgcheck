@@ -1,5 +1,6 @@
 import os
 import subprocess
+from functools import partial
 from unittest.mock import Mock, patch
 
 import pytest
@@ -146,37 +147,35 @@ class TestGitStash:
                 touch(path)
 
 
-class TestParsedGitRepo:
+class TestGitRepoCommits:
 
     def test_non_git(self, tmp_path):
-        p = git.ParsedGitRepo(str(tmp_path))
         with pytest.raises(git.GitError, match='failed running git log'):
-            list(p.parse_git_log('HEAD', commits=True))
+            git.GitRepoCommits(str(tmp_path), 'HEAD')
 
     def test_empty_repo(self, make_git_repo):
         git_repo = make_git_repo()
-        p = git.ParsedGitRepo(git_repo.path)
         with pytest.raises(git.GitError, match='failed running git log'):
-            list(p.parse_git_log('HEAD', commits=True))
+            git.GitRepoCommits(git_repo.path, 'HEAD')
 
-    def test_commits_parsing(self, make_repo, make_git_repo):
+    def test_parsing(self, make_repo, make_git_repo):
         git_repo = make_git_repo()
         repo = make_repo(git_repo.path)
+        path = git_repo.path
 
         # make an initial commit
         git_repo.add('foo', msg='foo', create=True)
-        p = git.ParsedGitRepo(git_repo.path)
-        commits = list(p.parse_git_log('HEAD', commits=True))
+        commits = list(git.GitRepoCommits(path, 'HEAD'))
         assert len(commits) == 1
-        assert commits[0].message == ['foo']
+        assert commits[0].message == ['foo', '']
         assert commits[0].pkgs == ()
         orig_commit = commits[0]
 
         # make another commit
         git_repo.add('bar', msg='bar', create=True)
-        commits = list(p.parse_git_log('HEAD', commits=True))
+        commits = list(git.GitRepoCommits(path, 'HEAD'))
         assert len(commits) == 2
-        assert commits[0].message == ['bar']
+        assert commits[0].message == ['bar', '']
         assert commits[0].pkgs == ()
         assert commits[1] == orig_commit
         assert len(set(commits)) == 2
@@ -184,26 +183,85 @@ class TestParsedGitRepo:
         # make a pkg commit
         repo.create_ebuild('cat/pkg-0')
         git_repo.add_all('cat/pkg-0')
-        commits = list(p.parse_git_log('HEAD', commits=True))
+        commits = list(git.GitRepoCommits(path, 'HEAD'))
         assert len(commits) == 3
-        assert commits[0].message == ['cat/pkg-0']
+        assert commits[0].message == ['cat/pkg-0', '']
         assert commits[0].pkgs == (atom_cls('=cat/pkg-0'),)
 
         # make a multiple pkg commit
         repo.create_ebuild('cat/new1-0')
         repo.create_ebuild('cat/new2-0')
         git_repo.add_all('cat: various updates')
-        commits = list(p.parse_git_log('HEAD', commits=True))
+        commits = list(git.GitRepoCommits(path, 'HEAD'))
         assert len(commits) == 4
-        assert commits[0].message == ['cat: various updates']
+        assert commits[0].message == ['cat: various updates', '']
         assert commits[0].pkgs == (atom_cls('=cat/new1-0'), atom_cls('=cat/new2-0'))
 
-    def test_pkgs_parsing(self, repo, make_git_repo):
+
+class TestGitRepoPkgs:
+
+    def test_non_git(self, tmp_path):
+        with pytest.raises(git.GitError, match='failed running git log'):
+            git.GitRepoPkgs(str(tmp_path), 'HEAD')
+
+    def test_empty_repo(self, make_git_repo):
+        git_repo = make_git_repo()
+        with pytest.raises(git.GitError, match='failed running git log'):
+            git.GitRepoPkgs(git_repo.path, 'HEAD')
+
+    def test_parsing(self, repo, make_git_repo):
         git_repo = make_git_repo(repo.location, commit=True)
-        p = git.ParsedGitRepo(git_repo.path)
+        path = git_repo.path
+
+        # empty repo contains no packages
+        pkgs = list(git.GitRepoPkgs(path, 'HEAD'))
+        assert len(pkgs) == 0
+
+        # create a pkg and commit it
+        repo.create_ebuild('cat/pkg-0')
+        git_repo.add_all('cat/pkg-0')
+        pkgs = list(git.GitRepoPkgs(path, 'HEAD'))
+        assert len(pkgs) == 1
+        pkg = pkgs[0]
+        assert pkg.atom == atom_cls('=cat/pkg-0')
+        assert pkg.status == 'A'
+
+        # add a new version and commit it
+        repo.create_ebuild('cat/pkg-1')
+        git_repo.add_all('cat/pkg-1')
+        pkgs = list(git.GitRepoPkgs(path, 'HEAD'))
+        assert len(pkgs) == 2
+        pkg = pkgs[0]
+        assert pkg.atom == atom_cls('=cat/pkg-1')
+        assert pkg.status == 'A'
+
+        # remove the old version
+        git_repo.remove('cat/pkg/pkg-0.ebuild')
+        pkgs = list(git.GitRepoPkgs(path, 'HEAD'))
+        assert len(pkgs) == 3
+        pkg = pkgs[0]
+        assert pkg.atom == atom_cls('=cat/pkg-0')
+        assert pkg.status == 'D'
+
+        # rename the pkg
+        git_repo.move('cat', 'cat2')
+        pkgs = list(git.GitRepoPkgs(path, 'HEAD'))
+        assert len(pkgs) == 5
+        new_pkg, old_pkg = pkgs[:2]
+        assert old_pkg.atom == atom_cls('=cat/pkg-1')
+        assert old_pkg.status == 'D'
+        assert new_pkg.atom == atom_cls('=cat2/pkg-1')
+        assert new_pkg.status == 'A'
+
+
+class TestGitChangedRepo:
+
+    def test_pkg_history(self, repo, make_git_repo):
+        git_repo = make_git_repo(repo.location, commit=True)
+        pkg_history = partial(git.GitAddon.pkg_history, git_repo.path)
 
         # initialize the dict cache
-        data = p.update('HEAD')
+        data = pkg_history('HEAD')
         assert data == {}
 
         # overlay repo objects on top of the dict cache
@@ -219,14 +277,8 @@ class TestParsedGitRepo:
         # create a pkg and commit it
         repo.create_ebuild('cat/pkg-0')
         git_repo.add_all('cat/pkg-0')
-        pkgs = list(p.parse_git_log('HEAD'))
-        assert len(pkgs) == 1
-        pkg = pkgs[0]
-        assert pkg.atom == atom_cls('=cat/pkg-0')
-        assert pkg.status == 'A'
-
         # update the dict cache
-        p.update('HEAD', data=data)
+        data = pkg_history('HEAD', data=data)
         commit = git_repo.HEAD
 
         # overlay repo objects on top of the dict cache
@@ -242,14 +294,8 @@ class TestParsedGitRepo:
         # add a new version and commit it
         repo.create_ebuild('cat/pkg-1')
         git_repo.add_all('cat/pkg-1')
-        pkgs = list(p.parse_git_log('HEAD'))
-        assert len(pkgs) == 2
-        pkg = pkgs[0]
-        assert pkg.atom == atom_cls('=cat/pkg-1')
-        assert pkg.status == 'A'
-
         # update the dict cache
-        p.update(f'{commit}..HEAD', data=data)
+        data = pkg_history(f'{commit}..HEAD', data=data)
         commit = git_repo.HEAD
 
         # overlay repo objects on top of the dict cache
@@ -264,14 +310,8 @@ class TestParsedGitRepo:
 
         # remove the old version
         git_repo.remove('cat/pkg/pkg-0.ebuild')
-        pkgs = list(p.parse_git_log('HEAD'))
-        assert len(pkgs) == 3
-        pkg = pkgs[0]
-        assert pkg.atom == atom_cls('=cat/pkg-0')
-        assert pkg.status == 'D'
-
         # update the dict cache
-        p.update(f'{commit}..HEAD', data=data)
+        data = pkg_history(f'{commit}..HEAD', data=data)
         commit = git_repo.HEAD
 
         # overlay repo objects on top of the dict cache
@@ -286,16 +326,8 @@ class TestParsedGitRepo:
 
         # rename the pkg
         git_repo.move('cat', 'cat2')
-        pkgs = list(p.parse_git_log('HEAD'))
-        assert len(pkgs) == 5
-        new_pkg, old_pkg = pkgs[:2]
-        assert old_pkg.atom == atom_cls('=cat/pkg-1')
-        assert old_pkg.status == 'D'
-        assert new_pkg.atom == atom_cls('=cat2/pkg-1')
-        assert new_pkg.status == 'A'
-
         # update the dict cache
-        p.update(f'{commit}..HEAD', data=data)
+        data = pkg_history(f'{commit}..HEAD', data=data)
         commit = git_repo.HEAD
 
         # overlay repo objects on top of the dict cache
@@ -445,8 +477,8 @@ class TestGitAddon:
         child_repo.run(['git', 'pull', 'origin', 'master'])
         child_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
 
-        with patch('pkgcheck.git.ParsedGitRepo.parse_git_log') as parse_git_log:
-            parse_git_log.side_effect = git.GitError('git parsing failed')
+        with patch('pkgcheck.git.GitLog') as git_log:
+            git_log.side_effect = git.GitError('git parsing failed')
             with pytest.raises(UserException, match='git parsing failed'):
                 self.addon.update_cache()
 
@@ -519,16 +551,23 @@ class TestGitAddon:
         assert len(commits_repo) == 1
         assert atom_cls('=cat/pkg-1') in commits_repo
 
-        # failing to parse git log yields an empty repo
-        with patch('pkgcheck.git.ParsedGitRepo.parse_git_log') as parse_git_log:
-            parse_git_log.side_effect = git.GitError('git parsing failed')
-            commits_repo = self.addon.commits_repo(git.GitChangedRepo)
-            assert len(commits_repo) == 0
+        # failing to parse git log returns error with git cache enabled
+        with patch('pkgcheck.git.GitLog') as git_log:
+            git_log.side_effect = git.GitError('git parsing failed')
+            with pytest.raises(UserException, match='git parsing failed'):
+                self.addon.commits_repo(git.GitChangedRepo)
 
-        # disabled git cache support also yields an empty repo
+        # disable git cache
         self.addon.options.cache['git'] = False
+        # disabled git cache support yields an empty repo
         commits_repo = self.addon.commits_repo(git.GitChangedRepo)
         assert len(commits_repo) == 0
+
+        # failing to parse git log yields an empty repo with git cache disabled
+        with patch('pkgcheck.git.GitLog') as git_log:
+            git_log.side_effect = git.GitError('git parsing failed')
+            commits_repo = self.addon.commits_repo(git.GitChangedRepo)
+            assert len(commits_repo) == 0
 
     def test_commits(self, repo, make_repo, make_git_repo):
         parent_repo = repo
@@ -554,13 +593,20 @@ class TestGitAddon:
         # commits now exist locally in the child repo
         commits = list(self.addon.commits())
         assert len(commits) == 1
-        assert commits[0].message == ['cat/pkg-1']
+        assert commits[0].message == ['cat/pkg-1', '']
 
-        # failing to parse git log yields no commits
-        with patch('pkgcheck.git.ParsedGitRepo.parse_git_log') as parse_git_log:
-            parse_git_log.side_effect = git.GitError('git parsing failed')
-            assert len(list(self.addon.commits())) == 0
+        # failing to parse git log returns error with git cache enabled
+        with patch('pkgcheck.git.GitLog') as git_log:
+            git_log.side_effect = git.GitError('git parsing failed')
+            with pytest.raises(UserException, match='git parsing failed'):
+                list(self.addon.commits())
 
-        # disabled git cache support also yields no commits
+        # disable git cache
         self.addon.options.cache['git'] = False
+        # disabled git cache support yields no commits
         assert len(list(self.addon.commits())) == 0
+
+        # failing to parse git log yields no commits with git cache disabled
+        with patch('pkgcheck.git.GitLog') as git_log:
+            git_log.side_effect = git.GitError('git parsing failed')
+            assert len(list(self.addon.commits())) == 0
