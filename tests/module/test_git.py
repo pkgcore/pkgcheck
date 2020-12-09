@@ -189,13 +189,25 @@ class TestGitRepoCommits:
         assert commits[0].pkgs == (atom_cls('=cat/pkg-0'),)
 
         # make a multiple pkg commit
-        repo.create_ebuild('cat/new1-0')
-        repo.create_ebuild('cat/new2-0')
-        git_repo.add_all('cat: various updates')
+        repo.create_ebuild('newcat/newpkg-0')
+        repo.create_ebuild('newcat/newpkg-1')
+        git_repo.add_all('newcat: various updates')
         commits = list(git.GitRepoCommits(path, 'HEAD'))
         assert len(commits) == 4
-        assert commits[0].message == ['cat: various updates', '']
-        assert commits[0].pkgs == (atom_cls('=cat/new1-0'), atom_cls('=cat/new2-0'))
+        assert commits[0].message == ['newcat: various updates', '']
+        assert commits[0].pkgs == (atom_cls('=newcat/newpkg-0'), atom_cls('=newcat/newpkg-1'))
+
+        # remove the old version
+        git_repo.remove('newcat/newpkg/newpkg-0.ebuild')
+        commits = list(git.GitRepoCommits(path, 'HEAD'))
+        assert len(commits) == 5
+        assert commits[0].pkgs == (atom_cls('=newcat/newpkg-0'),)
+
+        # rename the pkg
+        git_repo.move('newcat', 'newcat2')
+        commits = list(git.GitRepoCommits(path, 'HEAD'))
+        assert len(commits) == 6
+        assert commits[0].pkgs == (atom_cls('=newcat/newpkg-1'), atom_cls('=newcat2/newpkg-1'))
 
 
 class TestGitRepoPkgs:
