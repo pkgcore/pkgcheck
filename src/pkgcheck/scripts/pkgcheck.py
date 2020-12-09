@@ -22,7 +22,7 @@ from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
 from snakeoil.formatters import decorate_forced_wrapping
-from snakeoil.osutils import abspath, pjoin
+from snakeoil.osutils import pjoin
 
 from .. import argparsers, base, const, objects, reporters
 from ..addons import init_addon
@@ -364,7 +364,7 @@ def _setup_scan(parser, namespace, args):
     # Get the current working directory for repo detection and restriction
     # creation, fallback to the root dir if it's be removed out from under us.
     try:
-        namespace.cwd = abspath(os.getcwd())
+        namespace.cwd = os.path.abspath(os.getcwd())
     except FileNotFoundError:
         namespace.cwd = '/'
 
