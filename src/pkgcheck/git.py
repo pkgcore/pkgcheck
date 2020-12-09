@@ -123,9 +123,7 @@ class _ParseGitRepo:
     def __init__(self, path, commit_range):
         self.path = os.path.realpath(path)
         cmd = shlex.split(self._git_cmd)
-        if self._format:
-            format_str = '%n'.join(self._format)
-            cmd.append(f'--pretty=tformat:{format_str}')
+        cmd.append(f"--pretty=tformat:{'%n'.join(self._format)}")
         cmd.append(commit_range)
 
         self.git_log = GitLog(cmd, self.path)
