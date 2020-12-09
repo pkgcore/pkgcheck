@@ -187,7 +187,7 @@ class Pipeline:
 
                 if results:
                     self._results_q.put(results)
-        except Exception:
+        except Exception:  # pragma: no cover
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
             self._results_q.put(tb)
@@ -200,7 +200,7 @@ class Pipeline:
                 futures = {}
                 for runner in chain.from_iterable(pipes):
                     runner.schedule(executor, futures, self.restriction)
-        except Exception:
+        except Exception:  # pragma: no cover
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
             self._results_q.put(tb)
@@ -229,7 +229,7 @@ class Pipeline:
                 async_proc.join()
             # notify iterator that no more results exist
             self._results_q.put(None)
-        except Exception:
+        except Exception:  # pragma: no cover
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
             self._results_q.put(tb)
