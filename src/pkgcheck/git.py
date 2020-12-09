@@ -372,12 +372,10 @@ class _ScanCommits(argparse.Action):
         if not restrictions:
             parser.exit()
 
-        # make sure git checks and keywords are properly enabled
+        # make sure git checks are properly enabled
         git_checks = [
             cls for cls in objects.CHECKS.values() if issubclass(cls, GitCheck)]
         namespace.enabled_checks.update(git_checks)
-        if namespace.filtered_keywords is not None:
-            namespace.filtered_keywords.update(*(c.known_results for c in git_checks))
 
         namespace.contexts.append(GitStash(repo.location))
         namespace.restrictions = restrictions
