@@ -408,25 +408,30 @@ def generate_restricts(repo, targets):
     """Generate scanning restrictions from given targets."""
     eclasses = set()
     for target in targets:
-        # assume package restriction by default
-        try:
-            restrict = parserestrict.parse_match(target)
-            scope = _restrict_to_scope(restrict)
-            yield scope, restrict
-        except parserestrict.ParseError as exc:
-            # fallback to trying to create a path restrict
-            path = os.path.realpath(target)
-            try:
-                yield _path_restrict(path, repo)
+        path = os.path.realpath(target)
+        # prefer path restrictions if it's in the target repo
+        if os.path.exists(path) and path in repo:
+            # support direct eclass path targets
+            if target.endswith('.eclass') and path in repo:
+                eclasses.add(os.path.basename(target)[:-7])
                 continue
-            except ValueError as e:
-                # support direct eclass path targets
-                if target.endswith('.eclass') and path in repo:
-                    eclasses.add(os.path.basename(target)[:-7])
+            else:
+                yield _path_restrict(path, repo)
+        else:
+            try:
+                # assume it's a package restriction
+                restrict = parserestrict.parse_match(target)
+                scope = _restrict_to_scope(restrict)
+                yield scope, restrict
+            except parserestrict.ParseError as exc:
+                try:
+                    # fallback to trying to create a path restrict
+                    yield _path_restrict(path, repo)
                     continue
-                if os.path.exists(path) or os.path.isabs(target):
-                    raise UserException(str(e))
-            raise UserException(str(exc))
+                except ValueError as e:
+                    if os.path.exists(path) or os.path.isabs(target):
+                        raise UserException(str(e))
+                raise UserException(str(exc))
 
     # support eclass target restrictions
     if eclasses:
