@@ -226,13 +226,13 @@ class TestPkgcheckScanParseArgs:
 
     def test_cwd(self, capsys, tool):
         # regularly working
-        options, _ = tool.parse_args(['scan', 'cat/pkg'])
+        options, _ = tool.parse_args(['scan'])
         assert options.cwd == os.getcwd()
 
         # pretend the CWD was removed out from under us
         with patch('os.getcwd') as getcwd:
             getcwd.side_effect = FileNotFoundError('CWD is gone')
-            options, _ = tool.parse_args(['scan', 'cat/pkg'])
+            options, _ = tool.parse_args(['scan'])
             assert options.cwd == '/'
 
     def test_conflicting_scan_scopes(self, capsys, fakerepo, tool):
