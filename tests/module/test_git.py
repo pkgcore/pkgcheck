@@ -4,6 +4,7 @@ from functools import partial
 from unittest.mock import Mock, patch
 
 import pytest
+from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.restrictions import packages
 from pkgcheck import base, git
@@ -209,6 +210,15 @@ class TestGitRepoCommits:
         assert len(commits) == 6
         assert commits[0].pkgs == (atom_cls('=newcat/newpkg-1'), atom_cls('=newcat2/newpkg-1'))
 
+        # malformed atoms don't show up as pkgs
+        repo.create_ebuild('cat/pkg-3')
+        git_repo.add_all('cat/pkg-3')
+        with patch('pkgcheck.git.atom_cls') as fake_atom:
+            fake_atom.side_effect = MalformedAtom('bad atom')
+            commits = list(git.GitRepoCommits(path, 'HEAD'))
+            assert len(commits) == 7
+            assert commits[0].pkgs == ()
+
 
 class TestGitRepoPkgs:
 
@@ -264,6 +274,12 @@ class TestGitRepoPkgs:
         assert old_pkg.status == 'D'
         assert new_pkg.atom == atom_cls('=cat2/pkg-1')
         assert new_pkg.status == 'A'
+
+        # malformed atoms don't show up as pkgs
+        with patch('pkgcheck.git.atom_cls') as fake_atom:
+            fake_atom.side_effect = MalformedAtom('bad atom')
+            pkgs = list(git.GitRepoPkgs(path, 'HEAD'))
+            assert len(pkgs) == 0
 
 
 class TestGitChangedRepo:
