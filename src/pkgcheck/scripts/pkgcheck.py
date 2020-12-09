@@ -423,15 +423,12 @@ def generate_restricts(repo, targets):
                 restrict = parserestrict.parse_match(target)
                 scope = _restrict_to_scope(restrict)
                 yield scope, restrict
-            except parserestrict.ParseError as exc:
-                try:
-                    # fallback to trying to create a path restrict
-                    yield _path_restrict(path, repo)
-                    continue
-                except ValueError as e:
-                    if os.path.exists(path) or os.path.isabs(target):
-                        raise UserException(str(e))
-                raise UserException(str(exc))
+            except parserestrict.ParseError as e:
+                # use path-based error for path-based targets
+                if os.path.exists(path) or os.path.isabs(target):
+                    raise UserException(
+                        f"{repo.repo_id!r} repo doesn't contain: {target!r}")
+                raise UserException(str(e))
 
     # support eclass target restrictions
     if eclasses:
