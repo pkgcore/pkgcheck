@@ -251,7 +251,7 @@ class _LogResult(Result):
 
     def __init__(self, msg):
         super().__init__()
-        self.msg = msg
+        self.msg = str(msg)
 
     @property
     def desc(self):
