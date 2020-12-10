@@ -3,20 +3,12 @@
 import os
 from functools import total_ordering
 
-from pkgcore.ebuild.eclass import EclassDoc, EclassDocParsingError
+from pkgcore.ebuild.eclass import EclassDoc
 from snakeoil.klass import jit_attr_none
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
 from . import base, caches
-
-
-def matching_eclass(eclasses_set, eclass):
-    """Stub method for matching eclasses against a given set.
-
-    Used to create pickleable eclass scanning restrictions.
-    """
-    return eclass in eclasses_set
 
 
 @total_ordering

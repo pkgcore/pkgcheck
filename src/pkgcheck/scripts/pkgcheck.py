@@ -16,7 +16,7 @@ from operator import attrgetter
 from pkgcore import const as pkgcore_const
 from pkgcore.repository import errors as repo_errors
 from pkgcore.repository import multiplex
-from pkgcore.restrictions import boolean, packages, values
+from pkgcore.restrictions import boolean, packages
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
@@ -28,7 +28,6 @@ from ..addons import init_addon
 from ..base import PkgcheckUserException
 from ..caches import CachedAddon
 from ..cli import ConfigFileParser
-from ..eclass import matching_eclass
 from ..pipeline import Pipeline
 
 argparser = commandline.ArgumentParser(
@@ -422,9 +421,7 @@ def generate_restricts(repo, targets):
 
     # support eclass target restrictions
     if eclasses:
-        func = partial(matching_eclass, frozenset(eclasses))
-        restrict = values.AnyMatch(values.FunctionRestriction(func))
-        yield base.eclass_scope, restrict
+        yield base.eclass_scope, base.contains_restriction(eclasses)
 
 
 @scan.bind_delayed_default(1000, 'filter')

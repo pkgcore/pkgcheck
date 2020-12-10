@@ -8,7 +8,6 @@ import subprocess
 from collections import deque
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
-from functools import partial
 from itertools import chain, takewhile
 
 from pathspec import PathSpec
@@ -17,7 +16,7 @@ from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
-from pkgcore.restrictions import packages, values
+from pkgcore.restrictions import packages
 from snakeoil.cli import arghparse
 from snakeoil.iterables import partition
 from snakeoil.klass import jit_attr
@@ -28,7 +27,6 @@ from snakeoil.strings import pluralism
 from . import base, caches
 from .base import PkgcheckUserException
 from .checks import GitCheck
-from .eclass import matching_eclass
 from .log import logger
 
 
@@ -323,8 +321,9 @@ class _ScanCommits(argparse.Action):
         # generate restrictions based on git commit changes
         repo = namespace.target_repo
         targets = sorted(repo.category_dirs)
-        if os.path.isdir(pjoin(repo.location, 'eclass')):
-            targets.append('eclass')
+        for d in ('eclass', 'profiles'):
+            if os.path.isdir(pjoin(repo.location, d)):
+                targets.append(d)
         git_diff_cmd = ['git', 'diff', '--name-only', '-z', ref]
         try:
             p = subprocess.run(
@@ -341,22 +340,25 @@ class _ScanCommits(argparse.Action):
             # no changes exist, exit early
             parser.exit()
 
-        pkgs, eclasses = partition(
-            p.stdout.strip('\x00').split('\x00'), predicate=lambda x: x.startswith('eclass/'))
-        pkgs = sorted(self._pkg_atoms(pkgs))
+        changes = p.stdout.strip('\x00').split('\x00')
+        changes, eclasses = partition(changes, predicate=lambda x: x.startswith('eclass/'))
+        changes, profiles = partition(changes, predicate=lambda x: x.startswith('profiles/'))
+        pkgs = sorted(self._pkg_atoms(changes))
 
-        eclass_regex = re.compile(r'^eclass/(?P<eclass>\S+)\.eclass$')
-        eclasses = filter(None, (eclass_regex.match(x) for x in eclasses))
-        eclasses = sorted(x.group('eclass') for x in eclasses)
+        eclass_re = re.compile(r'^eclass/(?P<eclass>\S+)\.eclass$')
+        eclasses = sorted(mo.group('eclass') for x in eclasses if (mo := eclass_re.match(x)))
+        profiles = sorted(profiles)
 
         restrictions = []
         if pkgs:
             restrict = packages.OrRestriction(*pkgs)
             restrictions.append((base.package_scope, restrict))
         if eclasses:
-            func = partial(matching_eclass, frozenset(eclasses))
-            restrict = values.AnyMatch(values.FunctionRestriction(func))
-            restrictions.append((base.eclass_scope, restrict))
+            restrictions.append((base.eclass_scope, base.contains_restriction(eclasses)))
+        if profiles:
+            # TODO: Support incremental profile scanning (#200) currently this
+            # enables all profiles scope checks.
+            restrictions.append((base.profiles_scope, base.contains_restriction(profiles)))
 
         # no pkgs or eclasses to check, exit early
         if not restrictions:
