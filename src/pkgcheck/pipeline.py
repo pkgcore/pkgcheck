@@ -6,11 +6,11 @@ import signal
 import traceback
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from itertools import chain
 
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import boolean, packages
-from snakeoil.currying import post_curry
 
 from . import base
 from .checks import init_checks
@@ -264,7 +264,7 @@ class SyncCheckRunner(CheckRunner):
 
         # only report metadata errors when running at version level
         if self.source.scope is base.version_scope:
-            self._source_itermatch = post_curry(
+            self._source_itermatch = partial(
                 self.source.itermatch, error_callback=self._metadata_error_cb)
         else:
             self._source_itermatch = self.source.itermatch
