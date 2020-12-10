@@ -210,8 +210,8 @@ class ProfilesCheck(Check):
         }
 
         profile_reports = []
-        report_profile_warnings = lambda x: profile_reports.append(ProfileWarning(x))
-        report_profile_errors = lambda x: profile_reports.append(ProfileError(x))
+        report_profile_warnings = lambda x: profile_reports.append(ProfileWarning(str(x)))
+        report_profile_errors = lambda x: profile_reports.append(ProfileError(str(x)))
 
         for root, _dirs, files in os.walk(self.profiles_dir):
             if root not in self.non_profile_dirs:
@@ -400,8 +400,8 @@ class RepoProfilesCheck(Check):
         available_profile_dirs -= self.non_profile_dirs | root_profile_dirs
 
         profile_reports = []
-        report_profile_warnings = lambda x: profile_reports.append(ProfileWarning(x))
-        report_profile_errors = lambda x: profile_reports.append(ProfileError(x))
+        report_profile_warnings = lambda x: profile_reports.append(ProfileWarning(str(x)))
+        report_profile_errors = lambda x: profile_reports.append(ProfileError(str(x)))
 
         # don't check for acceptable profile statuses on overlays
         if self.options.gentoo_repo:

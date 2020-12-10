@@ -93,8 +93,8 @@ class PackageUpdatesCheck(Check):
 
     def finish(self):
         update_reports = []
-        report_bad_updates = lambda x: update_reports.append(BadPackageUpdate(x))
-        report_old_updates = lambda x: update_reports.append(MovedPackageUpdate(x))
+        report_bad_updates = lambda x: update_reports.append(BadPackageUpdate(str(x)))
+        report_old_updates = lambda x: update_reports.append(MovedPackageUpdate(str(x)))
 
         # convert log warnings/errors into reports
         with patch('pkgcore.log.logger.error', report_bad_updates), \
