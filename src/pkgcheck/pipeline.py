@@ -59,7 +59,7 @@ class Pipeline:
     def _create_runners(self):
         """Initialize and categorize checkrunners for results pipeline."""
         # initialize enabled checks
-        enabled_checks = init_checks(self.options.pop('addons'), self.options)
+        enabled_checks = init_checks(self.options.addons, self.options)
 
         # initialize checkrunners per source type, using separate runner for async checks
         checkrunners = defaultdict(list)
