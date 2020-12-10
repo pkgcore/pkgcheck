@@ -1,12 +1,12 @@
 """Pipeline building support for connecting sources and checks."""
 
+import multiprocessing
 import os
 import signal
 import traceback
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
-from multiprocessing import Pool, Process, SimpleQueue
 
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import boolean, packages
@@ -38,8 +38,10 @@ class Pipeline:
             scan_scope in (base.version_scope, base.package_scope) and
             isinstance(restriction, boolean.AndRestriction))
 
+        # pkgcheck currently requires the fork start method (#254)
+        self._mp_ctx = multiprocessing.get_context('fork')
         # create checkrunner pipelines
-        self._results_q = SimpleQueue()
+        self._results_q = self._mp_ctx.SimpleQueue()
         self.options._results_q = self._results_q
         self._pipes = self._create_runners()
 
@@ -93,7 +95,7 @@ class Pipeline:
 
     def __iter__(self):
         # start running the check pipeline
-        p = Process(target=self._run)
+        p = self._mp_ctx.Process(target=self._run)
         p.start()
         self._pid = p.pid
         return self
@@ -214,13 +216,15 @@ class Pipeline:
             # schedule asynchronous checks in a separate process
             async_proc = None
             if async_pipes := self._pipes['async'].values():
-                async_proc = Process(target=self._schedule_async, args=(async_pipes,))
+                async_proc = self._mp_ctx.Process(
+                    target=self._schedule_async, args=(async_pipes,))
                 async_proc.start()
 
             # run synchronous checks using a process pool
             if sync_pipes := self._pipes['sync']:
-                work_q = SimpleQueue()
-                pool = Pool(self.options.jobs, self._run_checks, (sync_pipes, work_q))
+                work_q = self._mp_ctx.SimpleQueue()
+                pool = self._mp_ctx.Pool(
+                    self.options.jobs, self._run_checks, (sync_pipes, work_q))
                 pool.close()
                 self._queue_work(sync_pipes, work_q)
                 pool.join()
