@@ -323,6 +323,7 @@ class _ScanCommits(argparse.Action):
 
     @property
     def git_checks(self):
+        # avoid circular import issues
         from . import objects
         return [cls for cls in objects.CHECKS.values() if issubclass(cls, GitCheck)]
 
