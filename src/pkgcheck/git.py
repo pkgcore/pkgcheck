@@ -25,7 +25,7 @@ from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.strings import pluralism
 
-from . import base, caches, objects
+from . import base, caches
 from .checks import GitCheck
 from .eclass import matching_eclass
 from .log import logger
@@ -321,6 +321,11 @@ class _ScanCommits(argparse.Action):
             except MalformedAtom:
                 continue
 
+    @property
+    def git_checks(self):
+        from . import objects
+        return [cls for cls in objects.CHECKS.values() if issubclass(cls, GitCheck)]
+
     def __call__(self, parser, namespace, value, option_string=None):
         if namespace.targets:
             targets = ' '.join(namespace.targets)
@@ -373,9 +378,7 @@ class _ScanCommits(argparse.Action):
             parser.exit()
 
         # make sure git checks are properly enabled
-        git_checks = [
-            cls for cls in objects.CHECKS.values() if issubclass(cls, GitCheck)]
-        namespace.enabled_checks.update(git_checks)
+        namespace.enabled_checks.update(self.git_checks)
 
         namespace.contexts.append(GitStash(repo.location))
         namespace.restrictions = restrictions
