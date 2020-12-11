@@ -9,8 +9,8 @@ from snakeoil.sequences import stable_unique
 from snakeoil.strings import pluralism
 
 from .. import eclass as eclass_mod
-from .. import results, sources
-from . import Check, OptionalCheck
+from .. import addons, results, sources
+from . import Check
 
 PREFIX_VARIABLES = ('EROOT', 'ED', 'EPREFIX')
 PATH_VARIABLES = ('BROOT', 'ROOT', 'D') + PREFIX_VARIABLES
@@ -505,7 +505,7 @@ class MissingInherits(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.eclass}: missing inherit usage: ({repr(self.usage)}, line {self.lineno})'
+        return f'{self.eclass}: missing inherit usage: {repr(self.usage)}, line {self.lineno}'
 
 
 class IndirectInherits(results.VersionResult, results.Warning):
@@ -523,7 +523,7 @@ class IndirectInherits(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.eclass}: indirect inherit usage: ({repr(self.usage)}, line {self.lineno})'
+        return f'{self.eclass}: indirect inherit usage: {repr(self.usage)}, line {self.lineno}'
 
 
 class UnusedInherits(results.VersionResult, results.Warning):
@@ -554,58 +554,65 @@ class InternalEclassFunc(results.VersionResult, results.Warning):
         return f'{self.eclass}: internal function usage: {repr(self.usage)}, line {self.lineno}'
 
 
-class InheritsCheck(OptionalCheck):
+class InheritsCheck(Check):
     """Scan for ebuilds with missing or unused eclass inherits.
 
     Note that this check won't be run by default until proper bash parsing is
     supported since the naive regex implementation has too many issues.
     """
 
-    _source = sources.EbuildFileRepoSource
+    _source = sources.EbuildParseRepoSource
     known_results = frozenset([
         MissingInherits, IndirectInherits, UnusedInherits, InternalEclassFunc])
-    required_addons = (eclass_mod.EclassAddon,)
+    required_addons = (addons.BashAddon, eclass_mod.EclassAddon)
 
-    def __init__(self, *args, eclass_addon):
+    def __init__(self, *args, bash_addon, eclass_addon):
         super().__init__(*args)
         self.eclass_cache = eclass_addon.eclasses
-        self.eclasses = []
-        self.internals = {}
-        self.exports = defaultdict(set)
+        self.internal_funcs = {}
+        self.exported_funcs = defaultdict(set)
 
-        exported_regexes = []
+        # register internal and exported funcs for all eclasses
         for name, eclass_obj in self.eclass_cache.items():
-            exported = eclass_obj.functions
-            self.internals[name] = eclass_obj.internal_functions
-            if exported:
-                exported_regexes.append(rf'({"|".join(re.escape(f) for f in exported)})')
-                for export in exported:
-                    self.exports[export].add(name)
-                self.eclasses.append(name)
-        # without a global group the regex seems roughly 2-3x slower
-        self._eclass_re = re.compile(rf'\b({"|".join(exported_regexes)})\b')
+            self.internal_funcs[name] = eclass_obj.internal_functions
+            for func in eclass_obj.functions:
+                self.exported_funcs[func].add(name)
+
+        # register EAPI-related funcs/cmds to ignore
+        self.eapi_funcs = defaultdict(set)
+        for eapi in EAPI.known_eapis.values():
+            self.eapi_funcs[eapi].update(
+                x for x in eapi.bash_funcs if not x.startswith('_'))
+            self.eapi_funcs[eapi].update(
+                x for x in eapi.bash_funcs_global if not x.startswith('_'))
+            self.eapi_funcs[eapi].update(eapi.bash_cmds_internal)
+            self.eapi_funcs[eapi].update(eapi.bash_cmds_deprecated)
+
+        # query bash parse tree for command calls
+        self.cmd_query = bash_addon.query("""(command) @call""")
 
     def feed(self, pkg):
         full_inherit = set(pkg.inherited)
         used = defaultdict(list)
-        lines = enumerate(pkg.lines, 1)
-        for lineno, line in lines:
-            line = line.strip()
-            if not line or line[0] == '#':
-                continue
-            for m in self._eclass_re.finditer(line):
-                # iterate over all pattern groups, skipping the initial, global one
-                for i, usage in enumerate(m.groups()[1:]):
-                    if usage is not None and usage not in pkg.eapi.bash_funcs:
-                        if len(self.exports[usage]) > 1:
-                            # function exported by multiple eclasses
-                            inherited = full_inherit.intersection(self.exports[usage])
-                            if len(inherited) != 1:
-                                continue
-                            eclass = inherited.pop()
-                        else:
-                            eclass = self.eclasses[i]
-                        used[eclass].append((lineno, usage))
+
+        # iterate over parse tree captures, matching commands with eclasses
+        for call_node, _name in self.cmd_query.captures(pkg.tree.root_node):
+            name_node = call_node.child_by_field_name('name')
+            call = pkg.data[call_node.start_byte:call_node.end_byte].decode('utf8')
+            name = pkg.data[name_node.start_byte:name_node.end_byte].decode('utf8')
+            if name not in self.eapi_funcs[pkg.eapi]:
+                lineno, colno = name_node.start_point
+                eclass = self.exported_funcs[name]
+                if not eclass:
+                    # probably an external command
+                    continue
+                elif len(eclass) > 1:
+                    inherited = full_inherit.intersection(eclass)
+                    if len(inherited) != 1:
+                        # TODO: yield multiple inheritance result
+                        continue
+                    eclass = inherited
+                used[next(iter(eclass))].append((lineno + 1, call))
 
         direct_inherit = set(pkg.inherit)
         # allowed indirect inherits
@@ -642,7 +649,7 @@ class InheritsCheck(OptionalCheck):
 
         for eclass in full_inherit.intersection(used):
             for lineno, usage in used[eclass]:
-                if usage in self.internals[eclass]:
+                if usage in self.internal_funcs[eclass]:
                     yield InternalEclassFunc(eclass, lineno, usage, pkg=pkg)
         for eclass in missing:
             lineno, usage = used[eclass][0]

@@ -230,6 +230,33 @@ class EbuildFileRepoSource(RepoSource):
             yield _SourcePkg(pkg)
 
 
+class _ParsedPkg(WrappedPkg):
+    """Package object with parse tree and raw bytes data injected as attributes."""
+
+    __slots__ = ('data', 'tree')
+
+    def __init__(self, pkg, data, tree):
+        super().__init__(pkg)
+        self.data = data
+        self.tree = tree
+
+
+class EbuildParseRepoSource(RepoSource):
+    """Ebuild repository source yielding package objects and their file contents."""
+
+    required_addons = (addons.BashAddon,)
+
+    def __init__(self, *args, bash_addon):
+        super().__init__(*args)
+        self.parser = bash_addon.parser
+
+    def itermatch(self, restrict, **kwargs):
+        for pkg in super().itermatch(restrict, **kwargs):
+            data = pkg.ebuild.bytes_fileobj().read()
+            tree = self.parser.parse(data)
+            yield _ParsedPkg(pkg, data, tree)
+
+
 class _CombinedSource(RepoSource):
     """Generic source combining packages into similar chunks."""
 
