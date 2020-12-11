@@ -546,7 +546,7 @@ class GitAddon(caches.CachedAddon):
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         if self.options.cache['git']:
-            for repo in self.repos:
+            for repo in self.options.target_repo.trees:
                 try:
                     commit = self._get_commit_hash(repo.location)
                 except GitError:

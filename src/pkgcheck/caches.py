@@ -56,7 +56,7 @@ class CachedAddon(base.Addon):
             raise ValueError(f'invalid cache registry: {cls!r}')
         cls.caches[cls] = cls.cache
 
-    def update_cache(self, force=False):
+    def update_cache(self, repo=None, force=False):
         """Update related cache and push updates to disk."""
         raise NotImplementedError(self.update_cache)
 
@@ -94,16 +94,6 @@ class CachedAddon(base.Addon):
         except IOError as e:
             msg = f'failed dumping {self.cache.type} cache: {path!r}: {e.strerror}'
             raise UserException(msg)
-
-    @property
-    def repos(self):
-        """Relevant repositories to target for cache operations."""
-        try:
-            # running from scan subcommand
-            return self.options.target_repo.trees
-        except AttributeError:
-            # running from cache subcommand
-            return self.options.domain.ebuild_repos
 
     @klass.jit_attr
     def existing_caches(self):

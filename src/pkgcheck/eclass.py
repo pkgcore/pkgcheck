@@ -87,7 +87,7 @@ class EclassAddon(caches.CachedAddon):
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         if self.options.cache['eclass']:
-            for repo in self.repos:
+            for repo in self.options.target_repo.trees:
                 cache_file = self.cache_file(repo)
                 cache_eclasses = False
                 eclasses = {}

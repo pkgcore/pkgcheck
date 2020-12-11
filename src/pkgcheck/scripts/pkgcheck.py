@@ -567,6 +567,10 @@ cache.add_argument(
 cache.add_argument(
     '-t', '--type', dest='cache', action=argparsers.CacheNegations,
     help='target cache types')
+cache.add_argument(
+    '--repo', metavar='REPO', dest='target_repo',
+    action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
+    help='repo to target for cache operations')
 
 
 @cache.bind_pre_parse
@@ -585,7 +589,9 @@ def _validate_cache_args(parser, namespace):
     # sort caches by type
     namespace.cache_addons = sorted(cache_addons, key=lambda x: x.cache.type)
 
-    namespace.target_repo = namespace.config.get_default('repo')
+    if namespace.target_repo is None:
+        namespace.target_repo = namespace.config.get_default('repo')
+
     try:
         for addon in namespace.cache_addons:
             addon.check_args(parser, namespace)
@@ -603,8 +609,8 @@ def _cache(options, out, err):
         cache_obj = CachedAddon(options)
         cache_obj.remove_caches()
     elif options.update_cache:
-        for addon in options.pop('cache_addons'):
-            init_addon(addon, options)
+        for addon_cls in options.pop('cache_addons'):
+            init_addon(addon_cls, options)
     else:
         # list existing caches
         cache_obj = CachedAddon(options)

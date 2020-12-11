@@ -279,7 +279,7 @@ class ProfileAddon(caches.CachedAddon):
             desired_arches = set(official_arches)
 
         with base.ProgressManager(verbosity=self.options.verbosity) as progress:
-            for repo in self.repos:
+            for repo in self.options.target_repo.trees:
                 if self.options.cache['profiles']:
                     cache_file = self.cache_file(repo)
                     # add profiles-base -> repo mapping to ease storage procedure
