@@ -2,6 +2,7 @@ src/pkgcheck/plugins/plugincache
 _trial_temp
 *.pyc
 *.pyo
+*.so
 .tox
 /cache
 /build

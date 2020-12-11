@@ -1,5 +1,6 @@
 chardet
 lxml
 pathspec
+tree-sitter
 snakeoil~=0.9.0
 pkgcore~=0.11.0

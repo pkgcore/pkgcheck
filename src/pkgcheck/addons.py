@@ -17,8 +17,9 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
+from tree_sitter import Language, Parser
 
-from . import base, caches, results
+from . import base, caches, const, results
 from .log import logger
 
 
@@ -641,6 +642,23 @@ class NetAddon(base.Addon):
             if e.name == 'requests':
                 raise UserException('network checks require requests to be installed')
             raise
+
+
+class BashAddon(base.Addon):
+    """Addon supporting parsing bash code."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        lib_path = pjoin(os.path.dirname(__file__), '_bash-lang.so')
+        if not os.path.exists(lib_path):
+            # dynamically build lib when running in git repo
+            bash_lib = pjoin(const.REPO_PATH, 'tree-sitter-bash')
+            Language.build_library(lib_path, [bash_lib])
+
+        self.bash = Language(lib_path, 'bash')
+        self.query = partial(self.bash.query)
+        self.parser = Parser()
+        self.parser.set_language(self.bash)
 
 
 def init_addon(cls, options, addons_map=None):

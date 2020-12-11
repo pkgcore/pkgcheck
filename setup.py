@@ -17,6 +17,17 @@ pkgdist_setup, pkgdist_cmds = pkgdist.setup()
 DATA_INSTALL_OFFSET = 'share/pkgcheck'
 
 
+class build_py(pkgdist.build_py):
+    """Build wrapper to generate pkgcheck-related files."""
+
+    def run(self):
+        super().run()
+        # create tree-sitter bash-parsing library
+        from tree_sitter import Language
+        lib_path = os.path.join(self.build_lib, pkgdist.MODULE_NAME, '_bash-lang.so')
+        Language.build_library(lib_path, ['tree-sitter-bash'])
+
+
 class install(pkgdist.install):
     """Install wrapper to generate and install pkgcheck-related files."""
 
@@ -171,6 +182,7 @@ setup(**dict(
     cmdclass=dict(
         pkgdist_cmds,
         test=test,
+        build_py=build_py,
         install_data=install_data,
         install=install,
     ),
