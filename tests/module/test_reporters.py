@@ -18,8 +18,8 @@ class BaseReporter:
 
     @pytest.fixture(autouse=True)
     def _setup(self):
-        self.log_warning = profiles.ProfileWarning('profile warning')
-        self.log_error = profiles.ProfileError('profile error')
+        self.log_warning = profiles.ProfileWarning(Exception('profile warning'))
+        self.log_error = profiles.ProfileError(Exception('profile error'))
         pkg = FakePkg('dev-libs/foo-0')
         self.commit_result = git.InvalidCommitMessage('no commit message', commit='8d86269bb4c7')
         self.category_result = metadata_xml.CatMissingMetadataXml('metadata.xml', pkg=pkg)
