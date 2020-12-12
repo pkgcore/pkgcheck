@@ -279,6 +279,10 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
         pkg = pkgs[0]
         old_key, new_key = pkg.old_pkg.key, pkg.key
 
+        # same package, probably version bump and remove old
+        if old_key == new_key:
+            return
+
         pkgmoves = (
             x[1:] for x in self.repo.config.updates.get(old_key, ())
             if x[0] == 'move')

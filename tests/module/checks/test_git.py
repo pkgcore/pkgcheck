@@ -499,6 +499,13 @@ class TestGitPkgCommitsCheck(ReportTestCase):
                 self.assertNoReport(self.check, self.source)
 
     def test_missing_move(self):
+        # verify ebuild renames at the git level don't trigger
+        self.child_repo.create_ebuild('cat/pkg-1')
+        self.child_git_repo.run(['git', 'rm', 'cat/pkg/pkg-0.ebuild'])
+        self.child_git_repo.add_all('cat/pkg: version bump and remove old')
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
         self.child_git_repo.move('cat', 'newcat', msg='newcat/pkg: moved pkg')
         self.init_check()
         r = self.assertReport(self.check, self.source)
