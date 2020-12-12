@@ -21,6 +21,7 @@ from tree_sitter import Language, Parser
 
 from . import base, caches, const, results
 from .log import logger
+from .utils import build_library
 
 
 class ArchesAddon(base.Addon):
@@ -653,7 +654,7 @@ class BashAddon(base.Addon):
         if not os.path.exists(lib_path):
             # dynamically build lib when running in git repo
             bash_lib = pjoin(const.REPO_PATH, 'tree-sitter-bash')
-            Language.build_library(lib_path, [bash_lib])
+            build_library(lib_path, [bash_lib])
 
         self.bash = Language(lib_path, 'bash')
         self.query = partial(self.bash.query)

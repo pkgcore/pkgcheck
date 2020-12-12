@@ -48,7 +48,7 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         check = self.mk_check()
         with open(pjoin(self.repo.location, 'foo'), 'w') as f:
             f.write('bar')
-        with mock.patch('pkgcheck.utils.open') as mocked_open:
+        with mock.patch('pkgcheck.open') as mocked_open:
             mocked_open.side_effect = IOError('fake exception')
             self.assertNoReport(check, [])
 
