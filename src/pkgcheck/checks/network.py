@@ -106,23 +106,22 @@ class _UrlCheck(NetworkCheck):
         """Verify http:// and https:// URLs."""
         result = None
         try:
-            r = self.session.head(url, allow_redirects=True)
+            with self.session.get(url, allow_redirects=True, stream=True) as r:
+                redirected_url = None
+                for response in r.history:
+                    if not response.is_permanent_redirect:
+                        break
+                    redirected_url = response.headers['location']
+                    hsts = 'strict-transport-security' in response.headers
 
-            redirected_url = None
-            for response in r.history:
-                if not response.is_permanent_redirect:
-                    break
-                redirected_url = response.headers['location']
-                hsts = 'strict-transport-security' in response.headers
-
-            if redirected_url:
-                if redirected_url.startswith('https://') and url.startswith('http://'):
-                    result = HttpsUrlAvailable(attr, url, redirected_url, pkg=pkg)
-                elif redirected_url.startswith('http://') and hsts:
-                    redirected_url = f'https://{redirected_url[7:]}'
-                    result = RedirectedUrl(attr, url, redirected_url, pkg=pkg)
-                else:
-                    result = RedirectedUrl(attr, url, redirected_url, pkg=pkg)
+                if redirected_url:
+                    if redirected_url.startswith('https://') and url.startswith('http://'):
+                        result = HttpsUrlAvailable(attr, url, redirected_url, pkg=pkg)
+                    elif redirected_url.startswith('http://') and hsts:
+                        redirected_url = f'https://{redirected_url[7:]}'
+                        result = RedirectedUrl(attr, url, redirected_url, pkg=pkg)
+                    else:
+                        result = RedirectedUrl(attr, url, redirected_url, pkg=pkg)
         except SSLError as e:
             result = SSLCertificateError(attr, url, str(e), pkg=pkg)
         except RequestError as e:
@@ -133,25 +132,24 @@ class _UrlCheck(NetworkCheck):
         """Check if https:// alternatives exist for http:// URLs."""
         result = None
         try:
-            r = self.session.head(url, allow_redirects=True)
+            with self.session.get(url, allow_redirects=True, stream=True) as r:
+                redirected_url = None
+                for response in r.history:
+                    if not response.is_permanent_redirect:
+                        break
+                    redirected_url = response.headers['location']
+                    hsts = 'strict-transport-security' in response.headers
 
-            redirected_url = None
-            for response in r.history:
-                if not response.is_permanent_redirect:
-                    break
-                redirected_url = response.headers['location']
-                hsts = 'strict-transport-security' in response.headers
-
-            # skip result if http:// URL check was redirected to https://
-            if not isinstance(future.result(), HttpsUrlAvailable):
-                if redirected_url:
-                    if redirected_url.startswith('https://'):
-                        result = HttpsUrlAvailable(attr, orig_url, redirected_url, pkg=pkg)
-                    elif redirected_url.startswith('http://') and hsts:
-                        redirected_url = f'https://{redirected_url[7:]}'
-                        result = HttpsUrlAvailable(attr, orig_url, redirected_url, pkg=pkg)
-                else:
-                    result = HttpsUrlAvailable(attr, orig_url, url, pkg=pkg)
+                # skip result if http:// URL check was redirected to https://
+                if not isinstance(future.result(), HttpsUrlAvailable):
+                    if redirected_url:
+                        if redirected_url.startswith('https://'):
+                            result = HttpsUrlAvailable(attr, orig_url, redirected_url, pkg=pkg)
+                        elif redirected_url.startswith('http://') and hsts:
+                            redirected_url = f'https://{redirected_url[7:]}'
+                            result = HttpsUrlAvailable(attr, orig_url, redirected_url, pkg=pkg)
+                    else:
+                        result = HttpsUrlAvailable(attr, orig_url, url, pkg=pkg)
         except (RequestError, SSLError):
             pass
         return result
