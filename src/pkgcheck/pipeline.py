@@ -50,11 +50,19 @@ class Pipeline:
         signal.signal(signal.SIGINT, self._kill_pipe)
         self._results_iter = iter(self._results_q.get, None)
         self._results = deque()
+
         # scoped mapping for caching repo and location specific results
-        self._repo_results = {
+        self._sorted_results = {
             scope: [] for scope in reversed(list(base.scopes.values()))
             if scope.level <= base.repo_scope
         }
+
+        # package level scans sort all returned results
+        if self._pkg_scan:
+            self._sorted_results.update({
+                scope: [] for scope in base.scopes.values()
+                if scope.level >= base.package_scope
+            })
 
     def _create_runners(self):
         """Initialize and categorize checkrunners for results pipeline."""
@@ -116,13 +124,13 @@ class Pipeline:
                 try:
                     results = next(self._results_iter)
                 except StopIteration:
-                    if self._repo_results is None:
+                    if self._sorted_results is None:
                         raise
                     self._pid = None
                     # return cached repo and location specific results
-                    results = chain.from_iterable(map(sorted, self._repo_results.values()))
+                    results = chain.from_iterable(map(sorted, self._sorted_results.values()))
                     self._results.extend(results)
-                    self._repo_results = None
+                    self._sorted_results = None
                     continue
 
                 # Catch propagated exceptions, output their traceback, and
@@ -131,10 +139,11 @@ class Pipeline:
                     self._kill_pipe(error=results.strip())
 
                 if self._pkg_scan:
-                    # Running on a package scope level, i.e. running within a package
-                    # directory in an ebuild repo. This sorts all generated results,
-                    # removing duplicate MetadataError results.
-                    self._results.extend(sorted(set(results)))
+                    # Sort all generated results when running at package scope
+                    # level, i.e. running within a package directory in an
+                    # ebuild repo.
+                    for result in results:
+                        self._sorted_results[result.scope].append(result)
                 else:
                     # Running at a category scope level or higher. This outputs
                     # version/package/category results in a stream sorted per package
@@ -145,7 +154,7 @@ class Pipeline:
                     # version/package/category results have been output.
                     for result in sorted(results):
                         try:
-                            self._repo_results[result.scope].append(result)
+                            self._sorted_results[result.scope].append(result)
                         except KeyError:
                             self._results.append(result)
 
