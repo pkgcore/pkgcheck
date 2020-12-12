@@ -601,7 +601,7 @@ class InheritsCheck(Check):
                         # TODO: yield multiple inheritance result
                         continue
                     eclass = inherited
-                used[next(iter(eclass))].append((lineno + 1, call.split('\n', 1)[0]))
+                used[next(iter(eclass))].append((lineno + 1, name, call.split('\n', 1)[0]))
 
         # ignore variables assigned in ebuilds or related to EAPI metadata
         ignored_vars = set(self.eapi_vars[pkg.eapi])
@@ -612,10 +612,10 @@ class InheritsCheck(Check):
 
         # match captured variables with eclasses
         for node, _ in self.var_query.captures(pkg.tree.root_node):
-            var = pkg.data[node.start_byte:node.end_byte].decode('utf8')
-            if var not in ignored_vars:
+            name = pkg.data[node.start_byte:node.end_byte].decode('utf8')
+            if name not in ignored_vars:
                 lineno, colno = node.start_point
-                eclass = self.exported[var]
+                eclass = self.exported[name]
                 if not eclass:
                     # non-eclass variable
                     continue
@@ -625,7 +625,7 @@ class InheritsCheck(Check):
                         # TODO: yield multiple inheritance result
                         continue
                     eclass = inherited
-                used[next(iter(eclass))].append((lineno + 1, var))
+                used[next(iter(eclass))].append((lineno + 1, name, name))
 
         direct_inherit = set(pkg.inherit)
         # allowed indirect inherits
@@ -656,12 +656,12 @@ class InheritsCheck(Check):
                     unused.discard(eclass)
 
         for eclass in full_inherit.intersection(used):
-            for lineno, usage in used[eclass]:
-                if usage in self.internals[eclass]:
+            for lineno, name, usage in used[eclass]:
+                if name in self.internals[eclass]:
                     yield InternalEclassUsage(eclass, lineno, usage, pkg=pkg)
 
         for eclass in missing:
-            lineno, usage = used[eclass][0]
+            lineno, name, usage = used[eclass][0]
             if eclass in full_inherit:
                 yield IndirectInherits(eclass, lineno, usage, pkg=pkg)
             else:
