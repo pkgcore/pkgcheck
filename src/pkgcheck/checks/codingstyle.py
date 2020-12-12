@@ -550,7 +550,10 @@ class InheritsCheck(Check):
                 eclass_obj.internal_functions | eclass_obj.internal_variables)
             for func in eclass_obj.exported_functions:
                 self.exported[func].add(name)
-            for var in eclass_obj.exported_variables:
+            # Don't use all exported vars in order to avoid
+            # erroneously exported temporary loop variables that
+            # should be flagged via EclassDocMissingVar.
+            for var in eclass_obj.variables:
                 self.exported[var].add(name)
 
         # register EAPI-related funcs/cmds to ignore
