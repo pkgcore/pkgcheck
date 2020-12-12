@@ -628,7 +628,7 @@ class TestPkgcheckScan:
             pytest.fail('\n'.join(error))
 
     @pytest.mark.parametrize('check, result', _all_results)
-    def test_scan_fix(self, check, result, capsys, tmp_path):
+    def test_fix(self, check, result, capsys, tmp_path):
         """Apply fixes to pkgs, verifying the related results are fixed."""
         check_name = check.__name__
         keyword = result.__name__
