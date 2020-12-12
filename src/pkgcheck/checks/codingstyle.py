@@ -595,7 +595,7 @@ class InheritsCheck(Check):
                         # TODO: yield multiple inheritance result
                         continue
                     eclass = inherited
-                used[next(iter(eclass))].append((lineno + 1, call))
+                used[next(iter(eclass))].append((lineno + 1, call.split('\n', 1)[0]))
 
         # ignore variables assigned in ebuilds or related to EAPI metadata
         ignored_vars = set(self.eapi_vars[pkg.eapi])
