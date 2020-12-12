@@ -548,9 +548,9 @@ class InheritsCheck(Check):
         for name, eclass_obj in self.eclass_cache.items():
             self.internals[name] = (
                 eclass_obj.internal_functions | eclass_obj.internal_variables)
-            for func in eclass_obj.functions:
+            for func in eclass_obj.exported_functions:
                 self.exported[func].add(name)
-            for var in eclass_obj.variables:
+            for var in eclass_obj.exported_variables:
                 self.exported[var].add(name)
 
         # register EAPI-related funcs/cmds to ignore
