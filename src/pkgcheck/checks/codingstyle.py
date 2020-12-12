@@ -73,7 +73,6 @@ class BadCommandsCheck(Check):
         self.cmd_query = bash_addon.query('(command) @call')
 
     def feed(self, pkg):
-        # match captured commands with eclasses
         for call_node, _ in self.cmd_query.captures(pkg.tree.root_node):
             name_node = call_node.child_by_field_name('name')
             call = pkg.data[call_node.start_byte:call_node.end_byte].decode('utf8')
