@@ -42,7 +42,7 @@ class _EapiCommandResult(_CommandResult):
 
     def __init__(self, *args, eapi, **kwargs):
         super().__init__(*args, **kwargs)
-        self.eapi = eapi
+        self.eapi = str(eapi)
 
     @property
     def usage_desc(self):
@@ -64,48 +64,25 @@ class BannedEapiCommand(_EapiCommandResult, results.Error):
 class BadCommandsCheck(Check):
     """Scan ebuild for various deprecated and banned command usage."""
 
-    _source = sources.EbuildFileRepoSource
+    _source = sources.EbuildParseRepoSource
     known_results = frozenset([DeprecatedEapiCommand, BannedEapiCommand])
+    required_addons = (addons.BashAddon,)
 
-    CMD_USAGE_REGEX = r'^(\s*|.*[|&{{(]+\s*)\b(?P<cmd>{})(?!\.)\b'
-
-    def __init__(self, *args):
+    def __init__(self, *args, bash_addon):
         super().__init__(*args)
-        self.regexes = self._create_regexes()
-
-    def _cmds_regex(self, cmds):
-        return re.compile(self.CMD_USAGE_REGEX.format(r'|'.join(cmds)))
-
-    def _create_regexes(self):
-        d = {}
-        for eapi_str, eapi in EAPI.known_eapis.items():
-            regexes = []
-            if eapi.bash_cmds_banned:
-                regexes.append((
-                    self._cmds_regex(eapi.bash_cmds_banned),
-                    BannedEapiCommand,
-                    {'eapi': eapi_str},
-                ))
-            if eapi.bash_cmds_deprecated:
-                regexes.append((
-                    self._cmds_regex(eapi.bash_cmds_deprecated),
-                    DeprecatedEapiCommand,
-                    {'eapi': eapi_str},
-                ))
-            d[eapi_str] = tuple(regexes)
-        return ImmutableDict(d)
+        self.cmd_query = bash_addon.query("""(command) @call""")
 
     def feed(self, pkg):
-        regexes = self.regexes[str(pkg.eapi)]
-        for lineno, line in enumerate(pkg.lines, 1):
-            line = line.strip()
-            if not line:
-                continue
-            if line[0] != '#':
-                for regex, result_cls, kwargs in regexes:
-                    if mo := regex.match(line):
-                        yield result_cls(
-                            mo.group('cmd'), line=line, lineno=lineno, pkg=pkg, **kwargs)
+        # match captured commands with eclasses
+        for call_node, _ in self.cmd_query.captures(pkg.tree.root_node):
+            name_node = call_node.child_by_field_name('name')
+            call = pkg.data[call_node.start_byte:call_node.end_byte].decode('utf8')
+            name = pkg.data[name_node.start_byte:name_node.end_byte].decode('utf8')
+            lineno, colno = name_node.start_point
+            if name in pkg.eapi.bash_cmds_banned:
+                yield BannedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
+            elif name in pkg.eapi.bash_cmds_deprecated:
+                yield DeprecatedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
 
 
 class MissingSlash(results.VersionResult, results.Error):

@@ -2,60 +2,8 @@ from itertools import chain
 
 from pkgcheck.checks import codingstyle
 from pkgcore.ebuild.eapi import EAPI
-from pkgcore.test.misc import FakeRepo
 
 from .. import misc
-
-
-class TestBadCommandsCheck(misc.ReportTestCase):
-
-    check_kls = codingstyle.BadCommandsCheck
-    check = codingstyle.BadCommandsCheck(None)
-
-    def mk_pkg(self, eapi='0', lines=()):
-        return misc.FakePkg("dev-util/diff-0.5", data={'EAPI': eapi}, lines=lines)
-
-    def test_no_matches(self):
-        fake_src = [
-            'insinto /usr/share/${PN}\n',
-            '\n',
-            'doins -r foobar\n',
-        ]
-        self.assertNoReport(self.check, self.mk_pkg(lines=fake_src))
-
-    def test_deprecated_cmds(self):
-        for eapi_str, eapi in EAPI.known_eapis.items():
-            for command in eapi.bash_cmds_deprecated:
-                # commented lines are skipped
-                line = f'{command} foo bar'
-                pkg = self.mk_pkg(eapi_str, lines=[f'#{line}'])
-                self.assertNoReport(self.check, pkg)
-
-                pkg = self.mk_pkg(eapi_str, lines=[line])
-                r = self.assertReport(self.check, pkg)
-                assert isinstance(r, codingstyle.DeprecatedEapiCommand)
-                assert r.command == command
-                assert r.eapi == eapi_str
-                assert r.line == line
-                assert r.lineno == 1
-                assert f"'{command}' deprecated in EAPI {eapi_str}" in str(r)
-
-    def test_banned_cmds(self):
-        for eapi_str, eapi in EAPI.known_eapis.items():
-            for command in eapi.bash_cmds_banned:
-                # commented lines are skipped
-                line = f'{command} foo bar'
-                pkg = self.mk_pkg(eapi_str, lines=[f'#{line}'])
-                self.assertNoReport(self.check, pkg)
-
-                pkg = self.mk_pkg(eapi_str, lines=[line])
-                r = self.assertReport(self.check, pkg)
-                assert isinstance(r, codingstyle.BannedEapiCommand)
-                assert r.command == command
-                assert r.eapi == eapi_str
-                assert r.line == line
-                assert r.lineno == 1
-                assert f"'{command}' banned in EAPI {eapi_str}" in str(r)
 
 
 class TestInsintoCheck(misc.ReportTestCase):
