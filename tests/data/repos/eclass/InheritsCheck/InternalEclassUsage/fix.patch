@@ -1,0 +1,9 @@
+diff -Naur eclass/InheritsCheck/InternalEclassUsage/InternalEclassUsage-0.ebuild fixed/InheritsCheck/InternalEclassUsage/InternalEclassUsage-0.ebuild
+--- eclass/InheritsCheck/InternalEclassUsage/InternalEclassUsage-0.ebuild	2020-11-23 19:13:14.699563473 -0700
++++ fixed/InheritsCheck/InternalEclassUsage/InternalEclassUsage-0.ebuild	2020-11-23 19:13:52.534388878 -0700
+@@ -9,5 +9,4 @@
+ 
+ src_prepare() {
+ 	inherit_public_func
+-	_inherit_internal_func
+ }

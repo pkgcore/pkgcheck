@@ -540,8 +540,8 @@ class UnusedInherits(results.VersionResult, results.Warning):
         return f'unused eclass{es}: {eclasses}'
 
 
-class InternalEclassFunc(results.VersionResult, results.Warning):
-    """Ebuild uses internal functions from eclass."""
+class InternalEclassUsage(results.VersionResult, results.Warning):
+    """Ebuild uses internal functions or variables from eclass."""
 
     def __init__(self, eclass, lineno, usage, **kwargs):
         super().__init__(**kwargs)
@@ -551,7 +551,7 @@ class InternalEclassFunc(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.eclass}: internal function usage: {repr(self.usage)}, line {self.lineno}'
+        return f'{self.eclass}: internal usage: {repr(self.usage)}, line {self.lineno}'
 
 
 class InheritsCheck(Check):
@@ -563,20 +563,23 @@ class InheritsCheck(Check):
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([
-        MissingInherits, IndirectInherits, UnusedInherits, InternalEclassFunc])
+        MissingInherits, IndirectInherits, UnusedInherits, InternalEclassUsage])
     required_addons = (addons.BashAddon, eclass_mod.EclassAddon)
 
     def __init__(self, *args, bash_addon, eclass_addon):
         super().__init__(*args)
         self.eclass_cache = eclass_addon.eclasses
-        self.internal_funcs = {}
-        self.exported_funcs = defaultdict(set)
+        self.internals = {}
+        self.exported = defaultdict(set)
 
-        # register internal and exported funcs for all eclasses
+        # register internal and exported funcs/vars for all eclasses
         for name, eclass_obj in self.eclass_cache.items():
-            self.internal_funcs[name] = eclass_obj.internal_functions
+            self.internals[name] = (
+                eclass_obj.internal_functions | eclass_obj.internal_variables)
             for func in eclass_obj.functions:
-                self.exported_funcs[func].add(name)
+                self.exported[func].add(name)
+            for var in eclass_obj.variables:
+                self.exported[var].add(name)
 
         # register EAPI-related funcs/cmds to ignore
         self.eapi_funcs = defaultdict(set)
@@ -590,19 +593,20 @@ class InheritsCheck(Check):
 
         # query bash parse tree for command calls
         self.cmd_query = bash_addon.query("""(command) @call""")
+        self.var_query = bash_addon.query("""(variable_name) @var""")
 
     def feed(self, pkg):
         full_inherit = set(pkg.inherited)
-        used = defaultdict(list)
 
-        # iterate over parse tree captures, matching commands with eclasses
-        for call_node, _name in self.cmd_query.captures(pkg.tree.root_node):
+        # match captured commands with eclasses
+        used = defaultdict(list)
+        for call_node, _ in self.cmd_query.captures(pkg.tree.root_node):
             name_node = call_node.child_by_field_name('name')
             call = pkg.data[call_node.start_byte:call_node.end_byte].decode('utf8')
             name = pkg.data[name_node.start_byte:name_node.end_byte].decode('utf8')
             if name not in self.eapi_funcs[pkg.eapi]:
                 lineno, colno = name_node.start_point
-                eclass = self.exported_funcs[name]
+                eclass = self.exported[name]
                 if not eclass:
                     # probably an external command
                     continue
@@ -613,6 +617,24 @@ class InheritsCheck(Check):
                         continue
                     eclass = inherited
                 used[next(iter(eclass))].append((lineno + 1, call))
+
+        # match captured variables with eclasses
+        var_used = defaultdict(list)
+        for var_node, _ in self.var_query.captures(pkg.tree.root_node):
+            var = pkg.data[var_node.start_byte:var_node.end_byte].decode('utf8')
+            if var not in pkg.eapi.eclass_keys:
+                lineno, colno = var_node.start_point
+                eclass = self.exported[var]
+                if not eclass:
+                    # non-eclass variable
+                    continue
+                elif len(eclass) > 1:
+                    inherited = full_inherit.intersection(eclass)
+                    if len(inherited) != 1:
+                        # TODO: yield multiple inheritance result
+                        continue
+                    eclass = inherited
+                var_used[next(iter(eclass))].append((lineno + 1, var))
 
         direct_inherit = set(pkg.inherit)
         # allowed indirect inherits
@@ -647,16 +669,20 @@ class InheritsCheck(Check):
                 # ignore probable conditional VCS eclass inherits
                 missing.discard(eclass)
 
-        for eclass in full_inherit.intersection(used):
-            for lineno, usage in used[eclass]:
-                if usage in self.internal_funcs[eclass]:
-                    yield InternalEclassFunc(eclass, lineno, usage, pkg=pkg)
+        # TODO: use dict union when >=py3.9
+        full_used = {**used, **var_used}
+        for eclass in full_inherit.intersection(full_used):
+            for lineno, usage in full_used[eclass]:
+                if usage in self.internals[eclass]:
+                    yield InternalEclassUsage(eclass, lineno, usage, pkg=pkg)
+
         for eclass in missing:
             lineno, usage = used[eclass][0]
             if eclass in full_inherit:
                 yield IndirectInherits(eclass, lineno, usage, pkg=pkg)
             else:
                 yield MissingInherits(eclass, lineno, usage, pkg=pkg)
+
         if unused:
             yield UnusedInherits(sorted(unused), pkg=pkg)
 
