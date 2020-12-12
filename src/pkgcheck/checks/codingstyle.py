@@ -70,7 +70,7 @@ class BadCommandsCheck(Check):
 
     def __init__(self, *args, bash_addon):
         super().__init__(*args)
-        self.cmd_query = bash_addon.query("""(command) @call""")
+        self.cmd_query = bash_addon.query('(command) @call')
 
     def feed(self, pkg):
         # match captured commands with eclasses
@@ -571,9 +571,9 @@ class InheritsCheck(Check):
             self.eapi_vars[eapi] = frozenset(s)
 
         # various bash parse tree queries
-        self.cmd_query = bash_addon.query("""(command) @call""")
-        self.var_query = bash_addon.query("""(variable_name) @var""")
-        self.var_assign_query = bash_addon.query("""(variable_assignment) @assign""")
+        self.cmd_query = bash_addon.query('(command) @call')
+        self.var_query = bash_addon.query('(variable_name) @var')
+        self.var_assign_query = bash_addon.query('(variable_assignment) @assign')
 
     def feed(self, pkg):
         full_inherit = set(pkg.inherited)
