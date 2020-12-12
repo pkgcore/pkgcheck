@@ -555,11 +555,7 @@ class InternalEclassUsage(results.VersionResult, results.Warning):
 
 
 class InheritsCheck(Check):
-    """Scan for ebuilds with missing or unused eclass inherits.
-
-    Note that this check won't be run by default until proper bash parsing is
-    supported since the naive regex implementation has too many issues.
-    """
+    """Scan for ebuilds with missing or unused eclass inherits."""
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([
@@ -582,18 +578,25 @@ class InheritsCheck(Check):
                 self.exported[var].add(name)
 
         # register EAPI-related funcs/cmds to ignore
-        self.eapi_funcs = defaultdict(set)
+        self.eapi_funcs = {}
         for eapi in EAPI.known_eapis.values():
-            self.eapi_funcs[eapi].update(
-                x for x in eapi.bash_funcs if not x.startswith('_'))
-            self.eapi_funcs[eapi].update(
-                x for x in eapi.bash_funcs_global if not x.startswith('_'))
-            self.eapi_funcs[eapi].update(eapi.bash_cmds_internal)
-            self.eapi_funcs[eapi].update(eapi.bash_cmds_deprecated)
+            s = set(eapi.bash_cmds_internal | eapi.bash_cmds_deprecated)
+            s.update(
+                x for x in (eapi.bash_funcs | eapi.bash_funcs_global)
+                if not x.startswith('_'))
+            self.eapi_funcs[eapi] = frozenset(s)
 
-        # query bash parse tree for command calls
+        # register EAPI-related vars to ignore
+        # TODO: add ebuild env vars via pkgcore setting, e.g. PN, PV, P, FILESDIR, etc
+        self.eapi_vars = {}
+        for eapi in EAPI.known_eapis.values():
+            s = set(eapi.eclass_keys)
+            self.eapi_vars[eapi] = frozenset(s)
+
+        # various bash parse tree queries
         self.cmd_query = bash_addon.query("""(command) @call""")
         self.var_query = bash_addon.query("""(variable_name) @var""")
+        self.var_assign_query = bash_addon.query("""(variable_assignment) @assign""")
 
     def feed(self, pkg):
         full_inherit = set(pkg.inherited)
@@ -618,12 +621,18 @@ class InheritsCheck(Check):
                     eclass = inherited
                 used[next(iter(eclass))].append((lineno + 1, call))
 
+        # ignore variables assigned in ebuilds or related to EAPI metadata
+        ignored_vars = set(self.eapi_vars[pkg.eapi])
+        for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
+            name_node = node.child_by_field_name('name')
+            name = pkg.data[name_node.start_byte:name_node.end_byte].decode('utf8')
+            ignored_vars.add(name)
+
         # match captured variables with eclasses
-        var_used = defaultdict(list)
-        for var_node, _ in self.var_query.captures(pkg.tree.root_node):
-            var = pkg.data[var_node.start_byte:var_node.end_byte].decode('utf8')
-            if var not in pkg.eapi.eclass_keys:
-                lineno, colno = var_node.start_point
+        for node, _ in self.var_query.captures(pkg.tree.root_node):
+            var = pkg.data[node.start_byte:node.end_byte].decode('utf8')
+            if var not in ignored_vars:
+                lineno, colno = node.start_point
                 eclass = self.exported[var]
                 if not eclass:
                     # non-eclass variable
@@ -634,7 +643,7 @@ class InheritsCheck(Check):
                         # TODO: yield multiple inheritance result
                         continue
                     eclass = inherited
-                var_used[next(iter(eclass))].append((lineno + 1, var))
+                used[next(iter(eclass))].append((lineno + 1, var))
 
         direct_inherit = set(pkg.inherit)
         # allowed indirect inherits
@@ -669,10 +678,8 @@ class InheritsCheck(Check):
                 # ignore probable conditional VCS eclass inherits
                 missing.discard(eclass)
 
-        # TODO: use dict union when >=py3.9
-        full_used = {**used, **var_used}
-        for eclass in full_inherit.intersection(full_used):
-            for lineno, usage in full_used[eclass]:
+        for eclass in full_inherit.intersection(used):
+            for lineno, usage in used[eclass]:
                 if usage in self.internals[eclass]:
                     yield InternalEclassUsage(eclass, lineno, usage, pkg=pkg)
 
