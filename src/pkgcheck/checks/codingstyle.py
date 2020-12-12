@@ -576,6 +576,7 @@ class InheritsCheck(Check):
 
     def feed(self, pkg):
         full_inherit = set(pkg.inherited)
+        conditional = set()
 
         # match captured commands with eclasses
         used = defaultdict(list)
@@ -583,7 +584,12 @@ class InheritsCheck(Check):
             name_node = call_node.child_by_field_name('name')
             call = pkg.data[call_node.start_byte:call_node.end_byte].decode('utf8')
             name = pkg.data[name_node.start_byte:name_node.end_byte].decode('utf8')
-            if name not in self.eapi_funcs[pkg.eapi]:
+            if name == 'inherit':
+                # register conditional eclasses
+                eclasses = call.split()[1:]
+                if not full_inherit.intersection(eclasses):
+                    conditional.update(eclasses)
+            elif name not in self.eapi_funcs[pkg.eapi]:
                 lineno, colno = name_node.start_point
                 eclass = self.exported[name]
                 if not eclass:
@@ -626,7 +632,7 @@ class InheritsCheck(Check):
         indirect_allowed = set().union(*(
             self.eclass_cache[x].indirect_eclasses for x in direct_inherit))
         # missing inherits
-        missing = used.keys() - direct_inherit - indirect_allowed
+        missing = used.keys() - direct_inherit - indirect_allowed - conditional
 
         unused = direct_inherit - used.keys()
         # remove eclasses that use implicit phase functions
@@ -648,11 +654,6 @@ class InheritsCheck(Check):
                     # ignore eclasses that export ebuild metadata (e.g.
                     # SRC_URI, S, ...) and no functions
                     unused.discard(eclass)
-
-        for eclass in list(missing):
-            if self.eclass_cache[eclass].live:
-                # ignore probable conditional VCS eclass inherits
-                missing.discard(eclass)
 
         for eclass in full_inherit.intersection(used):
             for lineno, usage in used[eclass]:
