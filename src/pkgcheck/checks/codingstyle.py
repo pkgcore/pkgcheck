@@ -581,6 +581,13 @@ class InheritsCheck(Check):
         full_inherit = set(pkg.inherited)
         conditional = set()
 
+        # register variables assigned in ebuilds
+        assigned_vars = set()
+        for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
+            name_node = node.child_by_field_name('name')
+            name = pkg.data[name_node.start_byte:name_node.end_byte].decode('utf8')
+            assigned_vars.add(name)
+
         # match captured commands with eclasses
         used = defaultdict(list)
         for call_node, _ in self.cmd_query.captures(pkg.tree.root_node):
@@ -592,7 +599,9 @@ class InheritsCheck(Check):
                 eclasses = call.split()[1:]
                 if not full_inherit.intersection(eclasses):
                     conditional.update(eclasses)
-            elif name not in self.eapi_funcs[pkg.eapi]:
+            # Also ignore vars since any used in arithmetic expansions, i.e.
+            # $((...)), are currently captured as commands.
+            elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars:
                 lineno, colno = name_node.start_point
                 eclass = self.exported[name]
                 if not eclass:
@@ -606,17 +615,10 @@ class InheritsCheck(Check):
                     eclass = inherited
                 used[next(iter(eclass))].append((lineno + 1, name, call.split('\n', 1)[0]))
 
-        # ignore variables assigned in ebuilds or related to EAPI metadata
-        ignored_vars = set(self.eapi_vars[pkg.eapi])
-        for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
-            name_node = node.child_by_field_name('name')
-            name = pkg.data[name_node.start_byte:name_node.end_byte].decode('utf8')
-            ignored_vars.add(name)
-
         # match captured variables with eclasses
         for node, _ in self.var_query.captures(pkg.tree.root_node):
             name = pkg.data[node.start_byte:node.end_byte].decode('utf8')
-            if name not in ignored_vars:
+            if name not in self.eapi_vars[pkg.eapi] | assigned_vars:
                 lineno, colno = node.start_point
                 eclass = self.exported[name]
                 if not eclass:
