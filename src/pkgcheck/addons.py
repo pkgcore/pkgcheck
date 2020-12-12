@@ -651,7 +651,7 @@ class BashAddon(base.Addon):
     def __init__(self, *args):
         super().__init__(*args)
         lib_path = pjoin(os.path.dirname(__file__), '_bash-lang.so')
-        if not os.path.exists(lib_path):
+        if not os.path.exists(lib_path):  # pragma: no cover
             # dynamically build lib when running in git repo
             bash_lib = pjoin(const.REPO_PATH, 'tree-sitter-bash')
             build_library(lib_path, [bash_lib])
