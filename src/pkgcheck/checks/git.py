@@ -277,7 +277,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     def rename_checks(self, pkgs):
         """Check for issues due to package modifications."""
         pkg = pkgs[0]
-        old_key, new_key = pkg.old_pkg.key, pkg.key
+        old_key, new_key = pkg.old.key, pkg.key
 
         # same package, probably version bump and remove old
         if old_key == new_key:
@@ -336,7 +336,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
             elif pkg.status == 'R':
                 # create pkg add/removal for rename operation
                 pkg_map['A'].add(pkg)
-                pkg_map['D'].add(pkg._old_pkg())
+                pkg_map['D'].add(pkg.old_pkg())
 
         # modified packages in current repo
         modified = [pkg for pkg in pkg_map['M'] if pkg not in pkg_map['D']]

@@ -8,6 +8,7 @@ import shlex
 import subprocess
 from collections import deque
 from contextlib import AbstractContextManager
+from dataclasses import dataclass
 from functools import partial
 
 from pathspec import PathSpec
@@ -31,16 +32,15 @@ from .eclass import matching_eclass
 from .log import logger
 
 
+@dataclass(frozen=True)
 class GitCommit:
     """Git commit objects."""
-
-    def __init__(self, hash, commit_date, author, committer, message, pkgs=()):
-        self.hash = hash
-        self.commit_date = commit_date
-        self.author = author
-        self.committer = committer
-        self.message = message
-        self.pkgs = pkgs
+    hash: str
+    commit_date: str
+    author: str
+    committer: str
+    message: tuple
+    pkgs: tuple = ()
 
     def __str__(self):
         return self.hash
@@ -52,15 +52,14 @@ class GitCommit:
         return self.hash == other.hash
 
 
+@dataclass(frozen=True)
 class GitPkgChange:
     """Git package change objects."""
-
-    def __init__(self, atom, status, commit, commit_date, **kwargs):
-        self.atom = atom
-        self.status = status
-        self.commit = commit
-        self.commit_date = commit_date
-        self.data = kwargs
+    atom: atom_cls
+    status: str
+    commit: str
+    commit_date: str
+    old: atom_cls = None
 
 
 class GitError(Exception):
@@ -155,7 +154,7 @@ class GitRepoCommits(_ParseGitRepo):
         commit_date = next(self.git_log)
         author = next(self.git_log)
         committer = next(self.git_log)
-        message = list(itertools.takewhile(
+        message = tuple(itertools.takewhile(
             lambda x: x != '# END MESSAGE BODY', self.git_log))
         pkgs = tuple(self._pkgs())
         return GitCommit(commit_hash, commit_date, author, committer, message, pkgs)
@@ -234,7 +233,7 @@ class GitRepoPkgs(_ParseGitRepo):
                                 # renames are split into add/remove ops at
                                 # the check level for the local commits repo
                                 self._pkgs.append(GitPkgChange(
-                                    new_pkg, 'R', commit_hash, commit_date, old_pkg=old_pkg))
+                                    new_pkg, 'R', commit_hash, commit_date, old_pkg))
                     except MalformedAtom:
                         pass
         except StopIteration:
@@ -244,7 +243,7 @@ class GitRepoPkgs(_ParseGitRepo):
 class _GitCommitPkg(cpv.VersionedCPV):
     """Fake packages encapsulating commits parsed from git log."""
 
-    def __init__(self, category, package, status, version, date, commit, data=None):
+    def __init__(self, category, package, status, version, date, commit, old=None):
         super().__init__(category, package, version)
 
         # add additional attrs
@@ -252,15 +251,13 @@ class _GitCommitPkg(cpv.VersionedCPV):
         sf(self, 'date', date)
         sf(self, 'status', status)
         sf(self, 'commit', commit)
-        if data is not None:
-            for k, v in data.items():
-                sf(self, k, v)
+        sf(self, 'old', old)
 
-    def _old_pkg(self):
+    def old_pkg(self):
         """Create a new object from a rename commit's old atom."""
-        old = self.old_pkg
         return self.__class__(
-            old.category, old.package, self.status, old.version, self.date, self.commit)
+            self.old.category, self.old.package, self.status, self.old.version,
+            self.date, self.commit)
 
 
 class GitChangedRepo(SimpleTree):
@@ -538,7 +535,7 @@ class GitAddon(caches.CachedAddon):
                 if key not in seen:
                     seen.add(key)
                     if local:
-                        commit = (atom.fullver, pkg.commit_date, pkg.commit, pkg.data)
+                        commit = (atom.fullver, pkg.commit_date, pkg.commit, pkg.old)
                     else:
                         progress(f'updating git cache: commit date: {pkg.commit_date}')
                         commit = (atom.fullver, pkg.commit_date, pkg.commit)
