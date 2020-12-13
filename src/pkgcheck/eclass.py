@@ -56,7 +56,7 @@ class EclassAddon(caches.CachedAddon):
     """Eclass support for various checks."""
 
     # cache registry
-    cache = caches.CacheData(type='eclass', file='eclass.pickle', version=1)
+    cache = caches.CacheData(type='eclass', file='eclass.pickle', version=2)
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -77,9 +77,9 @@ class EclassAddon(caches.CachedAddon):
         d = {}
         for r in self.options.target_repo.trees:
             try:
-                for k, v in self._eclass_repos[r.location].items():
-                    if 'deprecated' in v:
-                        d[k] = v['deprecated']
+                for name, eclass in self._eclass_repos[r.location].items():
+                    if eclass.deprecated:
+                        d[name] = eclass.deprecated
             except KeyError:
                 continue
         return ImmutableDict(d)
@@ -88,6 +88,7 @@ class EclassAddon(caches.CachedAddon):
         """Update related cache and push updates to disk."""
         if self.options.cache['eclass']:
             for repo in self.options.target_repo.trees:
+                eclass_dir = pjoin(repo.location, 'eclass')
                 cache_file = self.cache_file(repo)
                 cache_eclasses = False
                 eclasses = {}
@@ -96,13 +97,12 @@ class EclassAddon(caches.CachedAddon):
                     eclasses = self.load_cache(cache_file, fallback={})
 
                 # check for eclass removals
-                for name, eclass in list(eclasses.items()):
-                    if not os.path.exists(eclass.path):
+                for name in list(eclasses):
+                    if not os.path.exists(pjoin(eclass_dir, f'{name}.eclass')):
                         del eclasses[name]
                         cache_eclasses = True
 
                 # verify the repo has eclasses
-                eclass_dir = pjoin(repo.location, 'eclass')
                 try:
                     repo_eclasses = sorted(
                         (x[:-7], pjoin(eclass_dir, x)) for x in os.listdir(eclass_dir)

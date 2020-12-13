@@ -73,6 +73,8 @@ class EclassUsageCheck(Check):
 
         for eclass in inherited.intersection(self.deprecated_eclasses):
             replacement = self.deprecated_eclasses[eclass]
+            if not isinstance(replacement, str):
+                replacement = None
             yield DeprecatedEclass(eclass, replacement, pkg=pkg)
 
 
@@ -177,14 +179,15 @@ class EclassCheck(EclassCacheCheck):
         phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
         # TODO: ignore overridden funcs from other eclasses?
         # ignore phase funcs
-        funcs_missing_docs = eclass_obj.exported_functions - phase_funcs - eclass_obj.functions
+        funcs_missing_docs = (
+            eclass_obj.exported_function_names - phase_funcs - eclass_obj.function_names)
         if funcs_missing_docs:
             missing = tuple(sorted(funcs_missing_docs))
             yield EclassDocMissingFunc(missing, eclass=eclass)
         # TODO: ignore overridden vars from other eclasses?
         # ignore exported metadata variables, e.g. SRC_URI
         vars_missing_docs = (
-            eclass_obj.exported_variables - eclass_obj.variables - self.eclass_keys)
+            eclass_obj.exported_variable_names - eclass_obj.variable_names - self.eclass_keys)
         if vars_missing_docs:
             missing = tuple(sorted(vars_missing_docs))
             yield EclassDocMissingVar(missing, eclass=eclass)

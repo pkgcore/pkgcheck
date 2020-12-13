@@ -128,11 +128,12 @@ class EclassRepoSource(RepoSource):
         super().__init__(*args)
         repo = self.options.target_repo
         self.eclasses = eclass_addon._eclass_repos[repo.location]
+        self.eclass_dir = pjoin(repo.location, 'eclass')
 
     def itermatch(self, restrict, **kwargs):
         for name in self.eclasses:
             if restrict.match([name]):
-                yield Eclass(name, self.eclasses[name].path)
+                yield Eclass(name, pjoin(self.eclass_dir, f'{name}.eclass'))
 
 
 class FilteredRepoSource(RepoSource):

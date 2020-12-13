@@ -545,16 +545,16 @@ class InheritsCheck(Check):
         self.exported = defaultdict(set)
 
         # register internal and exported funcs/vars for all eclasses
-        for name, eclass_obj in self.eclass_cache.items():
-            self.internals[name] = (
-                eclass_obj.internal_functions | eclass_obj.internal_variables)
-            for func in eclass_obj.exported_functions:
-                self.exported[func].add(name)
+        for eclass, eclass_obj in self.eclass_cache.items():
+            self.internals[eclass] = (
+                eclass_obj.internal_function_names | eclass_obj.internal_variable_names)
+            for name in eclass_obj.exported_function_names:
+                self.exported[name].add(eclass)
             # Don't use all exported vars in order to avoid
             # erroneously exported temporary loop variables that
             # should be flagged via EclassDocMissingVar.
-            for var in eclass_obj.variables:
-                self.exported[var].add(name)
+            for name in eclass_obj.variable_names:
+                self.exported[name].add(eclass)
 
         # register EAPI-related funcs/cmds to ignore
         self.eapi_funcs = {}
@@ -644,18 +644,18 @@ class InheritsCheck(Check):
         if unused and pkg.defined_phases:
             phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
             for eclass in list(unused):
-                if self.eclass_cache[eclass].exported_functions.intersection(
+                if self.eclass_cache[eclass].exported_function_names.intersection(
                         f'{eclass}_{phase}' for phase in phases):
                     unused.discard(eclass)
 
         for eclass in list(unused):
-            if self.eclass_cache[eclass].get('_parse_failed', False):
+            if self.eclass_cache[eclass].name is None:
                 # ignore eclasses with parsing failures
                 unused.discard(eclass)
             else:
                 exported_eclass_keys = pkg.eapi.eclass_keys.intersection(
-                    self.eclass_cache[eclass].exported_variables)
-                if not self.eclass_cache[eclass].exported_functions and exported_eclass_keys:
+                    self.eclass_cache[eclass].exported_variable_names)
+                if not self.eclass_cache[eclass].exported_function_names and exported_eclass_keys:
                     # ignore eclasses that export ebuild metadata (e.g.
                     # SRC_URI, S, ...) and no functions
                     unused.discard(eclass)

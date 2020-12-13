@@ -255,12 +255,11 @@ class EapiCheck(Check):
         elif eapi_str in self.options.target_repo.config.eapis_deprecated:
             yield DeprecatedEapi(pkg.eapi, pkg=pkg)
 
-        for eclass_name in pkg.inherit:
+        for eclass in pkg.inherit:
             try:
-                eclass = self.eclass_cache[eclass_name]
-                supported_eapis = eclass.get('supported_eapis', ())
+                supported_eapis = self.eclass_cache[eclass].supported_eapis
                 if supported_eapis and eapi_str not in supported_eapis:
-                    yield UnsupportedEclassEapi(eapi_str, eclass_name, pkg=pkg)
+                    yield UnsupportedEclassEapi(eapi_str, eclass, pkg=pkg)
             except KeyError:
                 continue
 
