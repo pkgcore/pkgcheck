@@ -581,10 +581,20 @@ class InheritsCheck(Check):
         conditional = set()
 
         # register variables assigned in ebuilds
-        assigned_vars = set()
+        assigned_vars = dict()
         for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node.child_by_field_name('name'))
-            assigned_vars.add(name)
+            eclass = self.exported[name]
+            if not eclass:
+                # non-eclass variable
+                continue
+            elif len(eclass) > 1:
+                inherited = full_inherit.intersection(eclass)
+                if len(inherited) != 1:
+                    # TODO: yield multiple inheritance result
+                    continue
+                eclass = inherited
+            assigned_vars[name] = next(iter(eclass))
 
         # match captured commands with eclasses
         used = defaultdict(list)
@@ -598,7 +608,7 @@ class InheritsCheck(Check):
                     conditional.update(eclasses)
             # Also ignore vars since any used in arithmetic expansions, i.e.
             # $((...)), are currently captured as commands.
-            elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars:
+            elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
                 eclass = self.exported[name]
                 if not eclass:
@@ -615,7 +625,7 @@ class InheritsCheck(Check):
         # match captured variables with eclasses
         for node, _ in self.var_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node)
-            if name not in self.eapi_vars[pkg.eapi] | assigned_vars:
+            if name not in self.eapi_vars[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
                 eclass = self.exported[name]
                 if not eclass:
@@ -636,7 +646,7 @@ class InheritsCheck(Check):
         # missing inherits
         missing = used.keys() - direct_inherit - indirect_allowed - conditional
 
-        unused = direct_inherit - used.keys()
+        unused = direct_inherit - used.keys() - set(assigned_vars.values())
         # remove eclasses that use implicit phase functions
         if unused and pkg.defined_phases:
             phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
