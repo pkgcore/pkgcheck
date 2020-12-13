@@ -6,7 +6,7 @@ from pkgcore.ebuild.eclass import EclassDoc
 from snakeoil.contexts import patch
 from snakeoil.strings import pluralism
 
-from .. import base, results, sources
+from .. import addons, base, results, sources
 from ..eclass import EclassAddon
 from . import Check, EclassCacheCheck
 
@@ -48,20 +48,63 @@ class DuplicateEclassInherits(results.VersionResult, results.Warning):
         return f'duplicate inherits for eclass{es}: {eclasses}'
 
 
+class MisplacedEclassVar(results.LineResult, results.Error):
+    """Invalid placement of pre-inherit eclass variable in an ebuild.
+
+    All eclass variables tagged with @PRE_INHERIT must be set
+    before the first inherit call in an ebuild.
+    """
+
+    def __init__(self, variable, **kwargs):
+        super().__init__(**kwargs)
+        self.variable = variable
+
+    @property
+    def desc(self):
+        return f'invalid pre-inherit placement, line {self.lineno}: {self.line!r}'
+
+
 class EclassUsageCheck(Check):
     """Scan packages for various eclass-related issues."""
 
-    known_results = frozenset([DeprecatedEclass, DuplicateEclassInherits])
-    required_addons = (EclassAddon,)
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset([
+        DeprecatedEclass, DuplicateEclassInherits, MisplacedEclassVar,
+    ])
+    required_addons = (addons.BashAddon, EclassAddon)
 
-    def __init__(self, *args, eclass_addon):
+    def __init__(self, *args, bash_addon, eclass_addon):
         super().__init__(*args)
         self.deprecated_eclasses = eclass_addon.deprecated
+        self.eclass_cache = eclass_addon.eclasses
+        self.cmd_query = bash_addon.query('(command_name) @command')
+        self.var_assign_query = bash_addon.query('(variable_assignment) @assign')
 
     def feed(self, pkg):
+        pre_inherits = set()
+        for eclass in pkg.inherited:
+            pre_inherits.update(
+                var.name for var in self.eclass_cache[eclass].variables
+                if var.pre_inherit
+            )
+
+        # check for invalid @PRE_INHERIT variable placement
+        if pre_inherits:
+            for cmd_node, _ in self.cmd_query.captures(pkg.tree.root_node):
+                cmd_name = pkg.node_str(cmd_node)
+                if cmd_name == 'inherit':
+                    inherit_line = cmd_node.start_point[0]
+                    for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
+                        var_name = pkg.node_str(node.child_by_field_name('name'))
+                        lineno = node.start_point[0]
+                        if var_name in pre_inherits and lineno > inherit_line:
+                            line = pkg.node_str(node)
+                            yield MisplacedEclassVar(
+                                var_name, line=line, lineno=lineno+1, pkg=pkg)
+                    break
+
         duplicates = set()
         inherited = set()
-
         for eclass in pkg.inherit:
             if eclass not in inherited:
                 inherited.add(eclass)

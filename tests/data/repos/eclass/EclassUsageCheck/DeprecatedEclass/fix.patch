@@ -1,0 +1,30 @@
+diff -Naur eclass/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild fixed/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild
+--- eclass/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild	2020-12-13 14:24:10.527824478 -0700
++++ fixed/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-0.ebuild	2020-12-13 14:26:04.809323123 -0700
+@@ -1,10 +1,5 @@
+ EAPI=7
+-inherit deprecated
+ DESCRIPTION="Ebuild with deprecated eclass usage"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-
+-src_prepare() {
+-	deprecated_public_func
+-}
+diff -Naur eclass/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-1.ebuild fixed/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-1.ebuild
+--- eclass/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-1.ebuild	2020-12-13 14:24:10.527824478 -0700
++++ fixed/EclassUsageCheck/DeprecatedEclass/DeprecatedEclass-1.ebuild	2020-12-13 14:26:18.767628307 -0700
+@@ -1,10 +1,10 @@
+ EAPI=7
+-inherit deprecated2
++inherit replacement
+ DESCRIPTION="Ebuild with deprecated eclass usage"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+ 
+ src_prepare() {
+-	deprecated2_public_func
++	replacement_public_func
+ }

@@ -1,0 +1,1 @@
+{"__class__": "MisplacedEclassVar", "category": "EclassUsageCheck", "package": "MisplacedEclassVar", "version": "0", "line": "PRE_INHERIT_VAR=\"foo\"", "lineno": 10, "variable": "PRE_INHERIT_VAR"}

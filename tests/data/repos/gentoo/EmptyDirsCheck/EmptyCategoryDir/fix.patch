@@ -9,10 +9,9 @@ diff -Naur gentoo/EmptyCategoryDir/metadata.xml fixed/EmptyCategoryDir/metadata.
 diff -Naur gentoo/profiles/categories fixed/profiles/categories
 --- gentoo/profiles/categories	2019-09-28 17:33:51.571072362 -0600
 +++ fixed/profiles/categories	2019-09-28 17:51:54.423489257 -0600
-@@ -1,7 +1,6 @@
+@@ -1,6 +1,5 @@
  CatMissingMetadataXml
  EbuildHeaderCheck
- EclassUsageCheck
 -EmptyCategoryDir
  EmptyDirsCheck
  PackageMetadataXmlCheck

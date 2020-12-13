@@ -1,6 +1,3 @@
-# Copyright 1999-2020 Gentoo Authors
-# Distributed under the terms of the GNU General Public License v2
-
 # @ECLASS: deprecated2.eclass
 # @MAINTAINER:
 # Random Dev <random.dev@gentoo.org>
@@ -8,3 +5,9 @@
 # Random Dev <random.dev@gentoo.org>
 # @BLURB: Example deprecated eclass with replacement.
 # @DEPRECATED: replacement
+
+# @FUNCTION: deprecated2_public_func
+# @USAGE:
+# @DESCRIPTION:
+# Public stub function.
+deprecated2_public_func() { :; }
