@@ -241,6 +241,10 @@ class _ParsedPkg(WrappedPkg):
         self.data = data
         self.tree = tree
 
+    def node_str(self, node):
+        """Return the ebuild string associated with a given parse tree node."""
+        return self.data[node.start_byte:node.end_byte].decode('utf8')
+
 
 class EbuildParseRepoSource(RepoSource):
     """Ebuild repository source yielding package objects and their file contents."""

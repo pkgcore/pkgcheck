@@ -73,11 +73,10 @@ class BadCommandsCheck(Check):
         self.cmd_query = bash_addon.query('(command) @call')
 
     def feed(self, pkg):
-        for call_node, _ in self.cmd_query.captures(pkg.tree.root_node):
-            name_node = call_node.child_by_field_name('name')
-            call = pkg.data[call_node.start_byte:call_node.end_byte].decode('utf8')
-            name = pkg.data[name_node.start_byte:name_node.end_byte].decode('utf8')
-            lineno, colno = name_node.start_point
+        for node, _ in self.cmd_query.captures(pkg.tree.root_node):
+            call = pkg.node_str(node)
+            name = pkg.node_str(node.child_by_field_name('name'))
+            lineno, colno = node.start_point
             if name in pkg.eapi.bash_cmds_banned:
                 yield BannedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
             elif name in pkg.eapi.bash_cmds_deprecated:
@@ -584,16 +583,14 @@ class InheritsCheck(Check):
         # register variables assigned in ebuilds
         assigned_vars = set()
         for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
-            name_node = node.child_by_field_name('name')
-            name = pkg.data[name_node.start_byte:name_node.end_byte].decode('utf8')
+            name = pkg.node_str(node.child_by_field_name('name'))
             assigned_vars.add(name)
 
         # match captured commands with eclasses
         used = defaultdict(list)
-        for call_node, _ in self.cmd_query.captures(pkg.tree.root_node):
-            name_node = call_node.child_by_field_name('name')
-            call = pkg.data[call_node.start_byte:call_node.end_byte].decode('utf8')
-            name = pkg.data[name_node.start_byte:name_node.end_byte].decode('utf8')
+        for node, _ in self.cmd_query.captures(pkg.tree.root_node):
+            call = pkg.node_str(node)
+            name = pkg.node_str(node.child_by_field_name('name'))
             if name == 'inherit':
                 # register conditional eclasses
                 eclasses = call.split()[1:]
@@ -602,7 +599,7 @@ class InheritsCheck(Check):
             # Also ignore vars since any used in arithmetic expansions, i.e.
             # $((...)), are currently captured as commands.
             elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars:
-                lineno, colno = name_node.start_point
+                lineno, colno = node.start_point
                 eclass = self.exported[name]
                 if not eclass:
                     # probably an external command
@@ -617,7 +614,7 @@ class InheritsCheck(Check):
 
         # match captured variables with eclasses
         for node, _ in self.var_query.captures(pkg.tree.root_node):
-            name = pkg.data[node.start_byte:node.end_byte].decode('utf8')
+            name = pkg.node_str(node)
             if name not in self.eapi_vars[pkg.eapi] | assigned_vars:
                 lineno, colno = node.start_point
                 eclass = self.exported[name]
