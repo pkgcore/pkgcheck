@@ -6,8 +6,8 @@ import pathlib
 import pickle
 import shutil
 from collections import UserDict
+from dataclasses import dataclass
 from operator import attrgetter
-from typing import NamedTuple
 
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
@@ -20,7 +20,8 @@ from . import base
 from .log import logger
 
 
-class CacheData(NamedTuple):
+@dataclass(frozen=True)
+class CacheData:
     """Cache registry data."""
     type: str
     file: str

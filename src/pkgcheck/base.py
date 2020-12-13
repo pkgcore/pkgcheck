@@ -13,6 +13,7 @@ minimally accepted scope.
 import re
 import sys
 from contextlib import AbstractContextManager
+from dataclasses import dataclass
 from functools import total_ordering
 
 from snakeoil.cli.exceptions import UserException
@@ -20,13 +21,12 @@ from snakeoil.mappings import ImmutableDict
 
 
 @total_ordering
+@dataclass(frozen=True)
 class Scope:
     """Generic scope for scans, checks, and results."""
-
-    def __init__(self, desc, level, attrs=()):
-        self.desc = desc
-        self.level = level
-        self.attrs = attrs
+    desc: str
+    level: int
+    attrs: tuple = ()
 
     def __str__(self):
         return self.desc
