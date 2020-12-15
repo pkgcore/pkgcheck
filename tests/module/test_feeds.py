@@ -1,67 +1,67 @@
+import pytest
 from pkgcheck import addons, feeds
 from snakeoil.osutils import pjoin
 
-from .misc import FakePkg
-from .test_addons import ArgparseCheck, ProfilesMixin
+from .misc import FakePkg, Profile
 
 
-class TestQueryCacheAddon(ArgparseCheck):
+class TestQueryCacheAddon:
 
-    addon_kls = feeds.QueryCache
-    default_reset = 'package'
+    @pytest.fixture(autouse=True)
+    def _setup(self, tool):
+        self.tool = tool
+        self.args = ['scan']
 
     def test_opts(self):
         for val in ('version', 'package', 'category'):
-            self.process_check(['--reset-caching-per', val], query_caching_freq=val)
+            options, _ = self.tool.parse_args(self.args + ['--reset-caching-per', val])
+            assert options.query_caching_freq == val
 
     def test_default(self):
-        self.process_check([], query_caching_freq=self.default_reset)
+        options, _ = self.tool.parse_args(self.args)
+        assert options.query_caching_freq == 'package'
 
     def test_feed(self):
-        options = self.process_check([])
-        check = self.addon_kls(options)
-        assert check.options.query_caching_freq == self.default_reset
-        check.query_cache['foo'] = 'bar'
+        options, _ = self.tool.parse_args(self.args)
+        addon = feeds.QueryCache(options)
+        assert addon.options.query_caching_freq == 'package'
+        addon.query_cache['foo'] = 'bar'
         pkg = FakePkg('dev-util/diffball-0.5')
-        check.feed(pkg)
-        assert not check.query_cache
+        addon.feed(pkg)
+        assert not addon.query_cache
 
 
-class TestEvaluateDepSet(ProfilesMixin):
+class TestEvaluateDepSet:
 
-    addon_kls = feeds.EvaluateDepSet
+    @pytest.fixture(autouse=True)
+    def _setup(self, tool, repo):
+        self.tool = tool
+        self.repo = repo
+        self.args = ['scan', '--cache', 'no', '--repo', repo.location]
+        profiles = [
+            Profile('1', 'x86'),
+            Profile('2', 'x86'),
+            Profile('3', 'ppc'),
+        ]
+        self.repo.create_profiles(profiles)
+        self.repo.add_arches(['amd64', 'ppc', 'x86'])
 
-    def get_check(self, *profiles):
-        # Carefully tweak profile addon to get an instance since evaluate
-        # relies on it.
-        profile_options = self.process_check(
-            [f"--profiles={','.join(profiles)}"], addon_kls=addons.ProfileAddon)
-        profile_addon = addons.init_addon(addons.ProfileAddon, profile_options)
-        return self.addon_kls(profile_options, profile_addon=profile_addon)
-
-    def test_it(self):
-        with open(pjoin(self.dir, "arch.list"), "w") as f:
-            f.write("\n".join(('amd64', 'ppc', 'x86')))
-
-        self.mk_profiles({
-            "1": ["x86"],
-            "2": ["x86"],
-            "3": ["ppc"],
-        })
-
-        with open(pjoin(self.dir, 'profiles', '1', 'package.use.stable.mask'), 'w') as f:
+        with open(pjoin(self.repo.path, 'profiles', '1', 'package.use.stable.mask'), 'w') as f:
             f.write('dev-util/diffball foo')
-        with open(pjoin(self.dir, 'profiles', '2', 'package.use.stable.force'), 'w') as f:
+        with open(pjoin(self.repo.path, 'profiles', '2', 'package.use.stable.force'), 'w') as f:
             f.write('=dev-util/diffball-0.1 bar foo')
-        with open(pjoin(self.dir, 'profiles', '3', 'package.use.stable.force'), 'w') as f:
+        with open(pjoin(self.repo.path, 'profiles', '3', 'package.use.stable.force'), 'w') as f:
             f.write('dev-util/diffball bar foo')
 
-        check = self.get_check('1', '2', '3')
+        options, _ = self.tool.parse_args(self.args + ['--profiles=1,2,3'])
+        profile_addon = addons.init_addon(addons.ProfileAddon, options)
+        self.addon = feeds.EvaluateDepSet(options, profile_addon=profile_addon)
 
+    def test_it(self):
         def get_rets(ver, attr, KEYWORDS="x86", **data):
             data["KEYWORDS"] = KEYWORDS
             pkg = FakePkg(f"dev-util/diffball-{ver}", data=data)
-            return check.collapse_evaluate_depset(pkg, attr, getattr(pkg, attr))
+            return self.addon.collapse_evaluate_depset(pkg, attr, getattr(pkg, attr))
 
         # few notes... for ensuring proper profiles came through, use
         # sorted(x.name for x in blah); reasoning is that it will catch
@@ -101,11 +101,11 @@ class TestEvaluateDepSet(ProfilesMixin):
         # results from a pkg/attr tuple from above would come through rather
         # then an empty.
         pkg = FakePkg('dev-util/diffball-0.5')
-        check.feed(pkg)
+        self.addon.feed(pkg)
         l = get_rets("0.1", "rdepend")
         assert len(l) == 1, f"feed didn't clear the cache- should be len 1: {l!r}"
 
-        check.feed(pkg)
+        self.addon.feed(pkg)
 
         # ensure it handles arch right.
         l = get_rets("0", "depend", KEYWORDS="ppc x86")
