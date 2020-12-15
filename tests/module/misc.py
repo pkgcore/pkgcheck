@@ -1,5 +1,7 @@
 import random
 import string
+from dataclasses import dataclass
+from typing import List
 
 import pytest
 from pkgcheck import addons, base, sources
@@ -18,6 +20,17 @@ from snakeoil.cli import arghparse
 from snakeoil.data_source import text_data_source
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
+
+
+@dataclass
+class Profile:
+    """Profile record used to create profiles in a repository."""
+    path: str
+    arch: str
+    status: str = 'stable'
+    deprecated: bool = False
+    defaults: List[str] = None
+    eapi: str = '5'
 
 
 # TODO: merge this with the pkgcore-provided equivalent

@@ -3,34 +3,11 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck import addons
-from pkgcore.ebuild import repo_objs, repository
 from pkgcore.restrictions import packages
-from pkgcore.util import commandline
-from snakeoil.cli import arghparse
 from snakeoil.cli.exceptions import UserException
-from snakeoil.fileutils import write_file
-from snakeoil.osutils import ensure_dirs, pjoin
+from snakeoil.osutils import pjoin
 
-from .misc import FakePkg, FakeProfile, Tmpdir
-
-
-class ArgparseCheck:
-
-    def process_check(self, args, preset_values={},
-                      namespace=None, addon_kls=None, **settings):
-        addon_kls = addon_kls if addon_kls is not None else self.addon_kls
-        p = commandline.ArgumentParser(domain=False, color=False)
-        p.plugin = p.add_argument_group('plugin options')
-        addon_kls.mangle_argparser(p)
-        args, unknown_args = p.parse_known_args(args, namespace)
-        assert unknown_args == []
-        for attr, val in preset_values.items():
-            setattr(args, attr, val)
-        addon_kls.check_args(p, args)
-        for attr, val in settings.items():
-            assert getattr(args, attr) == val, (
-                f"for args {args!r}, {attr} must be {val!r}, got {getattr(args, attr)!r}")
-        return args
+from .misc import FakePkg, FakeProfile, Profile
 
 
 class TestArchesAddon:
@@ -177,218 +154,146 @@ class Test_profile_data:
         self.assertResults(profile, ["lib", "bar"], ["lib"], [])
 
 
-class ProfilesMixin(ArgparseCheck, Tmpdir):
+class TestProfileAddon:
 
     addon_kls = addons.ProfileAddon
 
-    def mk_profiles(self, profiles, arches=None, make_defaults=None):
-        os.mkdir(pjoin(self.dir, 'metadata'))
-        # write empty masters to suppress warnings
-        write_file(pjoin(self.dir, 'metadata', 'layout.conf'), 'w', 'masters=')
-
-        loc = pjoin(self.dir, 'profiles')
-        os.mkdir(loc)
-        for profile in profiles:
-            assert ensure_dirs(pjoin(loc, profile)), f"failed creating profile {profile!r}"
-        if arches is None:
-            arches = {val[0] for val in profiles.values()}
-        write_file(pjoin(loc, 'arch.list'), 'w', "\n".join(arches))
-        write_file(pjoin(loc, 'repo_name'), 'w', 'testing')
-        write_file(pjoin(loc, 'eapi'), 'w', '5')
-        with open(pjoin(loc, 'profiles.desc'), 'w') as fd:
-            for profile, vals in profiles.items():
-                l = len(vals)
-                if l == 1 or not vals[1]:
-                    fd.write(f"{vals[0]}\t{profile}\tstable\n")
-                else:
-                    fd.write(f"{vals[0]}\t{profile}\t{vals[1]}\n")
-                if l == 3 and vals[2]:
-                    with open(pjoin(loc, profile, 'deprecated'), 'w') as f:
-                        f.write("foon\n#dar\n")
-                with open(pjoin(loc, profile, 'make.defaults'), 'w') as f:
-                    if make_defaults is not None:
-                        f.write('\n'.join(make_defaults))
-                    else:
-                        f.write(f'ARCH={vals[0]}\n')
-                with open(pjoin(loc, profile, 'eapi'), 'w') as f:
-                    f.write('5')
-
-    def process_check(self, *args, **kwds):
-        namespace = arghparse.Namespace()
-        repo_config = repo_objs.RepoConfig(location=self.dir)
-        namespace.target_repo = repository.UnconfiguredTree(
-            repo_config.location, repo_config=repo_config)
-        namespace.search_repo = arghparse.Namespace()
-        namespace.cache = {'profiles': False}
-        options = ArgparseCheck.process_check(self, namespace=namespace, *args, **kwds)
-        return options
-
-
-class TestProfileAddon(ProfilesMixin):
+    @pytest.fixture(autouse=True)
+    def _setup(self, tool, repo):
+        self.tool = tool
+        self.repo = repo
+        self.args = ['scan', '--cache', 'no', '--repo', repo.location]
 
     def assertProfiles(self, check, key, *profile_names):
-        assert (
-            sorted(x.name for y in check.profile_evaluate_dict[key] for x in y) ==
-            sorted(profile_names))
+        actual = sorted(x.name for y in check.profile_evaluate_dict[key] for x in y)
+        expected = sorted(profile_names)
+        assert actual == expected
 
     def test_defaults(self):
-        self.mk_profiles({
-            "profile1": ["x86"],
-            "profile1/2": ["x86"],
-        })
-        options = self.process_check([], selected_profiles=None)
-        # override the default
+        profiles = [
+            Profile('profile1', 'x86'),
+            Profile('profile1/2', 'x86'),
+        ]
+        self.repo.create_profiles(profiles)
+        self.repo.add_arches(['x86'])
+        options, _ = self.tool.parse_args(self.args)
         addon = addons.init_addon(self.addon_kls, options)
         assert sorted(addon.profile_evaluate_dict) == ['x86', '~x86']
         self.assertProfiles(addon, 'x86', 'profile1', 'profile1/2')
 
     def test_profiles_base(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux": ["x86", "dev"],
-            "default-linux/x86": ["x86"],
-        })
-        options = self.process_check([])
+        profiles = [
+            Profile('default-linux/dep', 'x86', deprecated=True),
+            Profile('default-linux', 'x86', 'dev'),
+            Profile('default-linux/x86', 'x86'),
+        ]
+        self.repo.create_profiles(profiles)
+        self.repo.add_arches(['x86'])
+        options, _ = self.tool.parse_args(self.args)
         addon = addons.init_addon(self.addon_kls, options)
         self.assertProfiles(addon, 'x86', 'default-linux', 'default-linux/x86')
 
     def test_nonexistent(self, capsys):
-        self.mk_profiles({"x86": ["x86"]})
+        profile = Profile('x86', 'x86')
+        self.repo.create_profiles([profile])
         for profiles in ('bar', '-bar', 'x86,bar', 'bar,x86', 'x86,-bar'):
             with pytest.raises(SystemExit) as excinfo:
-                self.process_check([f'--profiles={profiles}'])
+                self.tool.parse_args(self.args + [f'--profiles={profiles}'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             assert not out
             assert "nonexistent profile: 'bar'" in err
 
     def test_make_defaults(self):
-        self.mk_profiles({
-            "amd64": ["amd64"],
-            "prefix/amd64": ["amd64-linux"]},
-            make_defaults=['ARCH="amd64"'])
-        options = self.process_check(['--profiles=prefix/amd64'])
+        profiles = [
+            Profile('amd64', 'amd64'),
+            Profile('prefix/amd64', 'amd64-linux', defaults=['ARCH=amd64']),
+        ]
+        self.repo.create_profiles(profiles)
+        self.repo.add_arches(['amd64'])
+        options, _ = self.tool.parse_args(self.args + ['--profiles=prefix/amd64'])
         addon = addons.init_addon(self.addon_kls, options)
         self.assertProfiles(addon, 'amd64', 'prefix/amd64')
 
     def test_make_defaults_missing_arch(self, capsys):
-        self.mk_profiles({
-            "arch/amd64": ["amd64"]},
-            make_defaults=[])
+        profile = Profile('arch/amd64', 'amd64', defaults=[])
+        self.repo.create_profiles([profile])
         with pytest.raises(SystemExit) as excinfo:
-            self.process_check(['--profiles=arch/amd64'])
+            self.tool.parse_args(self.args + ['--profiles=arch/amd64'])
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
         assert not out
         assert "profile make.defaults lacks ARCH setting: 'arch/amd64'" in err
 
-    def test_enable_stable(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux/dev": ["x86", "dev"],
-            "default-linux/exp": ["x86", "exp"],
-            "default-linux": ["x86"],
-        })
-        options = self.process_check(['--profiles=stable'])
+    def test_profiles_args(self):
+        profiles = [
+            Profile('default-linux/dep', 'x86', deprecated=True),
+            Profile('default-linux/dev', 'x86', 'dev'),
+            Profile('default-linux/exp', 'x86', 'exp'),
+            Profile('default-linux', 'x86'),
+        ]
+        self.repo.create_profiles(profiles)
+        self.repo.add_arches(['x86'])
+
+        # enable stable
+        options, _ = self.tool.parse_args(self.args + ['--profiles=stable'])
         addon = addons.init_addon(self.addon_kls, options)
         self.assertProfiles(addon, 'x86', 'default-linux')
 
-    def test_disable_stable(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux/dev": ["x86", "dev"],
-            "default-linux/exp": ["x86", "exp"],
-            "default-linux": ["x86"],
-        })
-        options = self.process_check(['--profiles=-stable'])
+        # disable stable
+        options, _ = self.tool.parse_args(self.args + ['--profiles=-stable'])
         addon = addons.init_addon(self.addon_kls, options)
         self.assertProfiles(addon, 'x86', 'default-linux/dev', 'default-linux/exp')
 
-    def test_enable_dev(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux/dev": ["x86", "dev"],
-            "default-linux/x86": ["x86"],
-        })
-        options = self.process_check(['--profiles=dev'])
+        # enable dev
+        options, _ = self.tool.parse_args(self.args + ['--profiles=dev'])
         addon = addons.init_addon(self.addon_kls, options)
         self.assertProfiles(addon, 'x86', 'default-linux/dev')
 
-    def test_disable_dev(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux/dev": ["x86", "dev"],
-            "default-linux/x86": ["x86"],
-        })
-        options = self.process_check(['--profiles=-dev'])
+        # disable dev
+        options, _ = self.tool.parse_args(self.args + ['--profiles=-dev'])
         addon = addons.init_addon(self.addon_kls, options)
-        self.assertProfiles(addon, 'x86', 'default-linux/x86')
+        self.assertProfiles(addon, 'x86', 'default-linux', 'default-linux/exp')
 
-    def test_enable_exp(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux/exp": ["x86", "exp"],
-            "default-linux/x86": ["x86"],
-        })
-        options = self.process_check(['--profiles=exp'])
+        # enable exp
+        options, _ = self.tool.parse_args(self.args + ['--profiles=exp'])
         addon = addons.init_addon(self.addon_kls, options)
         self.assertProfiles(addon, 'x86', 'default-linux/exp')
 
-    def test_disable_exp(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux/exp": ["x86", "exp"],
-            "default-linux/x86": ["x86"],
-        })
-        options = self.process_check(['--profiles=-exp'])
+        # disable exp
+        options, _ = self.tool.parse_args(self.args + ['--profiles=-exp'])
         addon = addons.init_addon(self.addon_kls, options)
-        self.assertProfiles(addon, 'x86', 'default-linux/x86')
+        self.assertProfiles(addon, 'x86', 'default-linux', 'default-linux/dev')
 
-    def test_enable_deprecated(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux/x86": ["x86"],
-        })
-        options = self.process_check(['--profiles=deprecated'])
+        # enable deprecated
+        options, _ = self.tool.parse_args(self.args + ['--profiles=deprecated'])
         addon = addons.init_addon(self.addon_kls, options)
         self.assertProfiles(addon, 'x86', 'default-linux/dep')
 
-    def test_disable_deprecated(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux/x86": ["x86"],
-        })
-        options = self.process_check(['--profiles=-deprecated'])
+        # disable deprecated
+        options, _ = self.tool.parse_args(self.args + ['--profiles=-deprecated'])
         addon = addons.init_addon(self.addon_kls, options)
-        self.assertProfiles(addon, 'x86', 'default-linux/x86')
+        self.assertProfiles(addon, 'x86', 'default-linux', 'default-linux/dev', 'default-linux/exp')
 
-    def test_profile_enable(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux": ["x86"],
-            "default-linux/x86": ["x86"],
-        })
-        options = self.process_check(['--profiles', 'default-linux/x86'])
+        # enable specific profile
+        options, _ = self.tool.parse_args(self.args + ['--profiles', 'default-linux/exp'])
         addon = addons.init_addon(self.addon_kls, options)
-        self.assertProfiles(addon, 'x86', 'default-linux/x86')
+        self.assertProfiles(addon, 'x86', 'default-linux/exp')
 
-    def test_profile_disable(self):
-        self.mk_profiles({
-            "default-linux/dep": ["x86", False, True],
-            "default-linux": ["x86"],
-            "default-linux/x86": ["x86"],
-        })
-        options = self.process_check(['--profiles=-default-linux/x86'])
+        # disable specific profile
+        options, _ = self.tool.parse_args(self.args + ['--profiles=-default-linux'])
         addon = addons.init_addon(self.addon_kls, options)
-        self.assertProfiles(addon, 'x86', 'default-linux')
+        self.assertProfiles(addon, 'x86', 'default-linux/dev', 'default-linux/exp')
 
     def test_profile_collapsing(self):
-        self.mk_profiles({
-            'default-linux': ['x86'],
-            'default-linux/x86': ["x86"],
-            'default-linux/ppc': ['ppc'],
-        })
-        options = self.process_check([])
+        profiles = [
+            Profile('default-linux', 'x86'),
+            Profile('default-linux/x86', 'x86'),
+            Profile('default-linux/ppc', 'ppc'),
+        ]
+        self.repo.create_profiles(profiles)
+        self.repo.add_arches(['x86', 'ppc'])
+        options, _ = self.tool.parse_args(self.args)
         addon = addons.init_addon(self.addon_kls, options)
 
         # assert they're collapsed properly.
