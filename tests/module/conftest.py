@@ -222,14 +222,34 @@ class EbuildRepo:
                     thin-manifests = true
                 """))
             if arches:
-                with open(pjoin(path, 'profiles', 'arch.list'), 'w') as f:
-                    f.write('\n'.join(arches) + '\n')
+                self.add_arches(arches)
             os.makedirs(pjoin(path, 'eclass'))
         except FileExistsError:
             pass
         # forcibly create repo_config object, otherwise cached version might be used
         repo_config = repo_objs.RepoConfig(location=path, disable_inst_caching=True)
         self._repo = repository.UnconfiguredTree(path, repo_config=repo_config)
+
+    def add_arches(self, arches):
+        with open(pjoin(self.path, 'profiles', 'arch.list'), 'a+') as f:
+            f.write('\n'.join(arches) + '\n')
+
+    def create_profiles(self, profiles):
+        for p in profiles:
+            os.makedirs(pjoin(self.path, 'profiles', p.path), exist_ok=True)
+            with open(pjoin(self.path, 'profiles', 'profiles.desc'), 'a+') as f:
+                f.write(f'{p.arch} {p.path} {p.status}\n')
+            if p.deprecated:
+                with open(pjoin(self.path, 'profiles', p.path, 'deprecated'), 'w') as f:
+                    f.write("# deprecated\ndeprecation reason\n")
+            with open(pjoin(self.path, 'profiles', p.path, 'make.defaults'), 'w') as f:
+                if p.defaults is not None:
+                    f.write('\n'.join(p.defaults))
+                else:
+                    f.write(f'ARCH={p.arch}\n')
+            if p.eapi:
+                with open(pjoin(self.path, 'profiles', p.path, 'eapi'), 'w') as f:
+                    f.write(f'{p.eapi}\n')
 
     def create_ebuild(self, cpvstr, data=None, **kwargs):
         cpv = cpv_mod.VersionedCPV(cpvstr)
