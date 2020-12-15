@@ -1,6 +1,6 @@
-diff -Naur eclass/eclass/missing.eclass fixed/eclass/missing.eclass
---- eclass/eclass/missing.eclass	2020-11-24 02:09:50.259835420 -0700
-+++ fixed/eclass/missing.eclass	2020-11-24 02:12:01.756701701 -0700
+diff -Naur eclass/eclass/missing-docs.eclass fixed/eclass/missing-docs.eclass
+--- eclass/eclass/missing-docs.eclass	2020-11-24 02:09:50.259835420 -0700
++++ fixed/eclass/missing-docs.eclass	2020-11-24 02:12:01.756701701 -0700
 @@ -10,6 +10,10 @@
  # Public documented stub function.
  missing-docs_documented_func() { :; }

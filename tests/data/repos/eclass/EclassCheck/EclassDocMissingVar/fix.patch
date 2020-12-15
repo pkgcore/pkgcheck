@@ -1,6 +1,6 @@
-diff -Naur eclass/eclass/missing.eclass fixed/eclass/missing.eclass
---- eclass/eclass/missing.eclass	2020-11-24 02:09:50.259835420 -0700
-+++ fixed/eclass/missing.eclass	2020-11-24 02:13:08.172149921 -0700
+diff -Naur eclass/eclass/missing-docs.eclass fixed/eclass/missing-docs.eclass
+--- eclass/eclass/missing-docs.eclass	2020-11-24 02:09:50.259835420 -0700
++++ fixed/eclass/missing-docs.eclass	2020-11-24 02:13:08.172149921 -0700
 @@ -12,4 +12,7 @@
  
  missing-docs_public_func() { :; }
@@ -9,9 +9,9 @@ diff -Naur eclass/eclass/missing.eclass fixed/eclass/missing.eclass
 +# @DESCRIPTION:
 +# Public stub variable.
  MISSING_DOCS_PUBLIC_VAR=""
-diff -Naur eclass/eclass/missing.eclass.orig fixed/eclass/missing.eclass.orig
---- eclass/eclass/missing.eclass.orig	1969-12-31 17:00:00.000000000 -0700
-+++ fixed/eclass/missing.eclass.orig	2020-11-24 02:09:50.259835420 -0700
+diff -Naur eclass/eclass/missing-docs.eclass.orig fixed/eclass/missing-docs.eclass.orig
+--- eclass/eclass/missing-docs.eclass.orig	1969-12-31 17:00:00.000000000 -0700
++++ fixed/eclass/missing-docs.eclass.orig	2020-11-24 02:09:50.259835420 -0700
 @@ -0,0 +1,15 @@
 +# @ECLASS: missing-docs.eclass
 +# @MAINTAINER:
