@@ -206,12 +206,14 @@ def make_git_repo(tmp_path_factory):
 class EbuildRepo:
     """Class for creating/manipulating ebuild repos."""
 
-    def __init__(self, path, repo_id='fake', masters=(), arches=()):
+    def __init__(self, path, repo_id='fake', eapi='5', masters=(), arches=()):
         self.path = path
         try:
             os.makedirs(pjoin(path, 'profiles'))
             with open(pjoin(path, 'profiles', 'repo_name'), 'w') as f:
                 f.write(f'{repo_id}\n')
+            with open(pjoin(path, 'profiles', 'eapi'), 'w') as f:
+                f.write(f'{eapi}\n')
             os.makedirs(pjoin(path, 'metadata'))
             with open(pjoin(path, 'metadata', 'layout.conf'), 'w') as f:
                 f.write(textwrap.dedent(f"""\
