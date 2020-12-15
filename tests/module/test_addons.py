@@ -418,15 +418,6 @@ class TestProfileAddon(ProfilesMixin):
         assert len(l) == 0, f"checking for profile collapsing: {l!r}"
 
 
-class TestUseAddon(ArgparseCheck, Tmpdir):
-
-    addon_kls = addons.UseAddon
-
-    def test_it(self):
-        pass
-    test_it.skip = "todo"
-
-
 try:
     import requests
     net_skip = False
