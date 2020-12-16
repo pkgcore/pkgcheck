@@ -230,7 +230,8 @@ class EclassCheck(EclassCacheCheck):
         # TODO: ignore overridden vars from other eclasses?
         # ignore exported metadata variables, e.g. SRC_URI
         vars_missing_docs = (
-            eclass_obj.exported_variable_names - eclass_obj.variable_names - self.eclass_keys)
+            eclass_obj.exported_variable_names - self.eclass_keys
+            - eclass_obj.variable_names - eclass_obj.function_variable_names)
         if vars_missing_docs:
             missing = tuple(sorted(vars_missing_docs))
             yield EclassDocMissingVar(missing, eclass=eclass)
