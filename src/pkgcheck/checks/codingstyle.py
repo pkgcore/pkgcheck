@@ -576,6 +576,20 @@ class InheritsCheck(Check):
         self.var_query = bash_addon.query('(variable_name) @var')
         self.var_assign_query = bash_addon.query('(variable_assignment) @assign')
 
+    def get_eclass(self, export, inherits):
+        """Return the eclass related to a given exported variable or function name."""
+        eclass = self.exported[export]
+        if not eclass:
+            # non-eclass variable
+            return
+        elif len(eclass) > 1:
+            inherited = inherits.intersection(eclass)
+            if len(inherited) != 1:
+                # TODO: return multiple inheritance result?
+                return
+            eclass = inherited
+        return next(iter(eclass))
+
     def feed(self, pkg):
         full_inherit = set(pkg.inherited)
         conditional = set()
@@ -584,17 +598,8 @@ class InheritsCheck(Check):
         assigned_vars = dict()
         for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node.child_by_field_name('name'))
-            eclass = self.exported[name]
-            if not eclass:
-                # non-eclass variable
-                continue
-            elif len(eclass) > 1:
-                inherited = full_inherit.intersection(eclass)
-                if len(inherited) != 1:
-                    # TODO: yield multiple inheritance result
-                    continue
-                eclass = inherited
-            assigned_vars[name] = next(iter(eclass))
+            if eclass := self.get_eclass(name, full_inherit):
+                assigned_vars[name] = eclass
 
         # match captured commands with eclasses
         used = defaultdict(list)
@@ -610,34 +615,16 @@ class InheritsCheck(Check):
             # $((...)), are currently captured as commands.
             elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
-                eclass = self.exported[name]
-                if not eclass:
-                    # probably an external command
-                    continue
-                elif len(eclass) > 1:
-                    inherited = full_inherit.intersection(eclass)
-                    if len(inherited) != 1:
-                        # TODO: yield multiple inheritance result
-                        continue
-                    eclass = inherited
-                used[next(iter(eclass))].append((lineno + 1, name, call.split('\n', 1)[0]))
+                if eclass := self.get_eclass(name, full_inherit):
+                    used[eclass].append((lineno + 1, name, call.split('\n', 1)[0]))
 
         # match captured variables with eclasses
         for node, _ in self.var_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node)
             if name not in self.eapi_vars[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
-                eclass = self.exported[name]
-                if not eclass:
-                    # non-eclass variable
-                    continue
-                elif len(eclass) > 1:
-                    inherited = full_inherit.intersection(eclass)
-                    if len(inherited) != 1:
-                        # TODO: yield multiple inheritance result
-                        continue
-                    eclass = inherited
-                used[next(iter(eclass))].append((lineno + 1, name, name))
+                if eclass := self.get_eclass(name, full_inherit):
+                    used[eclass].append((lineno + 1, name, name))
 
         direct_inherit = set(pkg.inherit)
         # allowed indirect inherits
