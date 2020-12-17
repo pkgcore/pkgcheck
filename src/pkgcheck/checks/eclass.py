@@ -195,7 +195,9 @@ class EclassCheck(EclassCacheCheck):
     def __init__(self, *args):
         super().__init__(*args)
         latest_eapi = EAPI.known_eapis[sorted(EAPI.known_eapis)[-1]]
-        self.known_phases = set(latest_eapi.phases_rev)
+        # all known build phases, e.g. src_configure
+        self.known_phases = list(latest_eapi.phases_rev)
+        # metadata variables allowed to be set in eclasses, e.g. SRC_URI
         self.eclass_keys = latest_eapi.eclass_keys
 
     def feed(self, eclass):
@@ -221,17 +223,13 @@ class EclassCheck(EclassCacheCheck):
 
         phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
         # TODO: ignore overridden funcs from other eclasses?
-        # ignore phase funcs
         funcs_missing_docs = (
             eclass_obj.exported_function_names - phase_funcs - eclass_obj.function_names)
         if funcs_missing_docs:
-            missing = tuple(sorted(funcs_missing_docs))
-            yield EclassDocMissingFunc(missing, eclass=eclass)
+            yield EclassDocMissingFunc(sorted(funcs_missing_docs), eclass=eclass)
         # TODO: ignore overridden vars from other eclasses?
-        # ignore exported metadata variables, e.g. SRC_URI
         vars_missing_docs = (
             eclass_obj.exported_variable_names - self.eclass_keys
             - eclass_obj.variable_names - eclass_obj.function_variable_names)
         if vars_missing_docs:
-            missing = tuple(sorted(vars_missing_docs))
-            yield EclassDocMissingVar(missing, eclass=eclass)
+            yield EclassDocMissingVar(sorted(vars_missing_docs), eclass=eclass)
