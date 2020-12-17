@@ -111,7 +111,7 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
         # report licenses used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_licenses:
             pkg_licenses = set(iflatten_instance(pkg.license))
-            if licenses := self.unused_master_licenses & pkg_licenses:
+            if licenses := self.unused_master_licenses.intersection(pkg_licenses):
                 yield UnusedInMastersLicenses(sorted(licenses), pkg=pkg)
 
         # report mirrors used in the pkg but not in any pkg from the master repo(s)
@@ -122,8 +122,7 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
 
         # report eclasses used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_eclasses:
-            pkg_eclasses = set(pkg.inherited)
-            if eclasses := self.unused_master_eclasses & pkg_eclasses:
+            if eclasses := self.unused_master_eclasses.intersection(pkg.inherited):
                 yield UnusedInMastersEclasses(sorted(eclasses), pkg=pkg)
 
         # report global USE flags used in the pkg but not in any pkg from the master repo(s)
