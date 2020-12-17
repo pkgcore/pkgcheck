@@ -3,7 +3,6 @@ import subprocess
 
 from pkgcore.ebuild.eapi import EAPI
 from pkgcore.ebuild.eclass import EclassDoc
-from snakeoil.contexts import patch
 from snakeoil.strings import pluralism
 
 from .. import addons, base, results, sources
@@ -217,8 +216,7 @@ class EclassCheck(EclassCacheCheck):
 
         doc_errors = []
         parsing_error = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
-        with patch('pkgcore.ebuild.eclass._parsing_error', parsing_error):
-            eclass_obj = EclassDoc(eclass.path, sourced=True)
+        eclass_obj = EclassDoc(eclass.path, sourced=True, error_callback=parsing_error)
         yield from doc_errors
 
         phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}

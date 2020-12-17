@@ -125,7 +125,7 @@ class EclassAddon(caches.CachedAddon):
                                     progress(f'updating eclass cache: {name:<{padding}}')
                                     eclasses[name] = EclassDoc(path, sourced=True)
                                     cache_eclasses = True
-                                except (IOError, EclassDocParsingError):
+                                except IOError:
                                     continue
 
                 if cache_eclasses:
