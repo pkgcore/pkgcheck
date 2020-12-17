@@ -541,19 +541,19 @@ class InheritsCheck(Check):
         super().__init__(*args)
         self.eclass_cache = eclass_addon.eclasses
         self.internals = {}
-        self.exported = defaultdict(set)
+        self.exported = {}
 
         # register internal and exported funcs/vars for all eclasses
         for eclass, eclass_obj in self.eclass_cache.items():
             self.internals[eclass] = (
                 eclass_obj.internal_function_names | eclass_obj.internal_variable_names)
             for name in eclass_obj.exported_function_names:
-                self.exported[name].add(eclass)
+                self.exported.setdefault(name, set()).add(eclass)
             # Don't use all exported vars in order to avoid
             # erroneously exported temporary loop variables that
             # should be flagged via EclassDocMissingVar.
             for name in eclass_obj.variable_names:
-                self.exported[name].add(eclass)
+                self.exported.setdefault(name, set()).add(eclass)
 
         # register EAPI-related funcs/cmds to ignore
         self.eapi_funcs = {}
@@ -578,9 +578,10 @@ class InheritsCheck(Check):
 
     def get_eclass(self, export, inherits):
         """Return the eclass related to a given exported variable or function name."""
-        eclass = self.exported[export]
-        if not eclass:
-            # non-eclass variable
+        try:
+            eclass = self.exported[export]
+        except KeyError:
+            # function or variable not exported by any eclass
             return
         elif len(eclass) > 1:
             inherited = inherits.intersection(eclass)
