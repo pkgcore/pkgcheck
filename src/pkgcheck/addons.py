@@ -359,9 +359,8 @@ class ProfileAddon(caches.CachedAddon):
                                 provides_repo = profile_obj.provides_repo
 
                                 # finalize enabled USE flags
-                                use = set()
-                                misc.incremental_expansion(use, profile_obj.use, 'while expanding USE')
-                                use = frozenset(use)
+                                use = frozenset(misc.incremental_expansion(
+                                    profile_obj.use, msg_prefix='while expanding USE'))
                             except profiles_mod.ProfileError:
                                 # unsupported EAPI or other issue, profile checks will catch this
                                 continue
