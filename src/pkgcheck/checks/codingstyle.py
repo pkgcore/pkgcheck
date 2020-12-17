@@ -576,30 +576,31 @@ class InheritsCheck(Check):
         self.var_query = bash_addon.query('(variable_name) @var')
         self.var_assign_query = bash_addon.query('(variable_assignment) @assign')
 
-    def get_eclass(self, export, inherits):
+    def get_eclass(self, export, pkg):
         """Return the eclass related to a given exported variable or function name."""
         try:
             eclass = self.exported[export]
         except KeyError:
             # function or variable not exported by any eclass
             return
-        elif len(eclass) > 1:
-            inherited = inherits.intersection(eclass)
-            if len(inherited) != 1:
-                # TODO: return multiple inheritance result?
+
+        # last exporting eclass takes precedence for multiple inheritance
+        if len(eclass) > 1:
+            if inherited := pkg.inherited.intersection(eclass):
+                eclass = (x for x in reversed(pkg.inherited) if x in inherited)
+            else:
                 return
-            eclass = inherited
+
         return next(iter(eclass))
 
     def feed(self, pkg):
-        full_inherit = set(pkg.inherited)
         conditional = set()
 
         # register variables assigned in ebuilds
         assigned_vars = dict()
         for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node.child_by_field_name('name'))
-            if eclass := self.get_eclass(name, full_inherit):
+            if eclass := self.get_eclass(name, pkg):
                 assigned_vars[name] = eclass
 
         # match captured commands with eclasses
@@ -610,13 +611,13 @@ class InheritsCheck(Check):
             if name == 'inherit':
                 # register conditional eclasses
                 eclasses = call.split()[1:]
-                if not full_inherit.intersection(eclasses):
+                if not pkg.inherited.intersection(eclasses):
                     conditional.update(eclasses)
             # Also ignore vars since any used in arithmetic expansions, i.e.
             # $((...)), are currently captured as commands.
             elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
-                if eclass := self.get_eclass(name, full_inherit):
+                if eclass := self.get_eclass(name, pkg):
                     used[eclass].append((lineno + 1, name, call.split('\n', 1)[0]))
 
         # match captured variables with eclasses
@@ -624,7 +625,7 @@ class InheritsCheck(Check):
             name = pkg.node_str(node)
             if name not in self.eapi_vars[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
-                if eclass := self.get_eclass(name, full_inherit):
+                if eclass := self.get_eclass(name, pkg):
                     used[eclass].append((lineno + 1, name, name))
 
         direct_inherit = set(pkg.inherit)
@@ -634,7 +635,7 @@ class InheritsCheck(Check):
         # missing inherits
         missing = used.keys() - direct_inherit - indirect_allowed - conditional
 
-        unused = direct_inherit - used.keys() - set(assigned_vars.values())
+        unused = set(direct_inherit) - used.keys() - set(assigned_vars.values())
         # remove eclasses that use implicit phase functions
         if unused and pkg.defined_phases:
             phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
@@ -655,14 +656,14 @@ class InheritsCheck(Check):
                     # SRC_URI, S, ...) and no functions
                     unused.discard(eclass)
 
-        for eclass in full_inherit.intersection(used):
+        for eclass in pkg.inherited.intersection(used):
             for lineno, name, usage in used[eclass]:
                 if name in self.internals[eclass]:
                     yield InternalEclassUsage(eclass, lineno, usage, pkg=pkg)
 
         for eclass in missing:
             lineno, name, usage = used[eclass][0]
-            if eclass in full_inherit:
+            if eclass in pkg.inherited:
                 yield IndirectInherits(eclass, lineno, usage, pkg=pkg)
             else:
                 yield MissingInherits(eclass, lineno, usage, pkg=pkg)
