@@ -3,6 +3,7 @@
 from collections import defaultdict
 from functools import total_ordering
 
+from pkgcore import fetch
 from snakeoil import klass
 from snakeoil.cli.exceptions import UserException
 
@@ -131,6 +132,26 @@ class NetworkCheck(AsyncCheck, OptionalCheck):
             raise SkipCheck(self, 'network checks not enabled')
         self.timeout = self.options.timeout
         self.session = net_addon.session
+
+
+class MirrorsCheck(Check):
+    """Check that requires determining mirrors used by a given package."""
+
+    required_addons = (addons.UseAddon,)
+
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.iuse_filter = use_addon.get_filter('fetchables')
+
+    def get_mirrors(self, pkg):
+        mirrors = []
+        fetchables, _ = self.iuse_filter(
+            (fetch.fetchable,), pkg,
+            pkg.generate_fetchables(allow_missing_checksums=True, ignore_unknown_mirrors=True))
+        for f in fetchables:
+            for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
+                mirrors.append(m[0].mirror_name)
+        return set(mirrors)
 
 
 class SkipCheck(UserException):

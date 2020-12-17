@@ -2,7 +2,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import base, results, sources
-from . import OptionalCheck, OverlayRepoCheck, repo_metadata
+from . import MirrorsCheck, OptionalCheck, OverlayRepoCheck
 
 
 class UnusedInMastersLicenses(results.VersionResult, results.Warning):
@@ -73,8 +73,7 @@ class UnusedInMastersGlobalUse(results.VersionResult, results.Warning):
         return f'use.desc unused flag{s} in master repo(s): {flags}'
 
 
-class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
-                           OverlayRepoCheck, OptionalCheck):
+class UnusedInMastersCheck(MirrorsCheck, OverlayRepoCheck, OptionalCheck):
     """Check for various metadata that may be removed from master repos."""
 
     scope = base.repo_scope
@@ -102,7 +101,7 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
         for repo in self.options.target_repo.masters:
             for pkg in repo:
                 self.unused_master_licenses.difference_update(iflatten_instance(pkg.license))
-                self.unused_master_mirrors.difference_update(self._get_mirrors(pkg))
+                self.unused_master_mirrors.difference_update(self.get_mirrors(pkg))
                 self.unused_master_eclasses.difference_update(pkg.inherited)
                 self.unused_master_flags.difference_update(
                     pkg.iuse_stripped.difference(pkg.local_use.keys()))
@@ -116,8 +115,8 @@ class UnusedInMastersCheck(repo_metadata._MirrorsCheck,
 
         # report mirrors used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_mirrors:
-            pkg_mirrors = self._get_mirrors(pkg)
-            if mirrors := self.unused_master_mirrors & pkg_mirrors:
+            pkg_mirrors = self.get_mirrors(pkg)
+            if mirrors := self.unused_master_mirrors.intersection(pkg_mirrors):
                 yield UnusedInMastersMirrors(sorted(mirrors), pkg=pkg)
 
         # report eclasses used in the pkg but not in any pkg from the master repo(s)

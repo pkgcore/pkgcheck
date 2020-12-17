@@ -9,7 +9,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import addons, base, results, sources
-from . import Check
+from . import Check, MirrorsCheck
 
 
 class MultiMovePackageUpdate(results.ProfilesResult, results.Warning):
@@ -206,27 +206,7 @@ class UnusedMirrors(results.Warning):
         return f'unused mirror{s}: {mirrors}'
 
 
-class _MirrorsCheck(Check):
-    """Check for unused mirrors."""
-
-    required_addons = (addons.UseAddon,)
-
-    def __init__(self, *args, use_addon):
-        super().__init__(*args)
-        self.iuse_filter = use_addon.get_filter('fetchables')
-
-    def _get_mirrors(self, pkg):
-        mirrors = []
-        fetchables, _ = self.iuse_filter(
-            (fetch.fetchable,), pkg,
-            pkg.generate_fetchables(allow_missing_checksums=True, ignore_unknown_mirrors=True))
-        for f in fetchables:
-            for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
-                mirrors.append(m[0].mirror_name)
-        return set(mirrors)
-
-
-class UnusedMirrorsCheck(_MirrorsCheck):
+class UnusedMirrorsCheck(MirrorsCheck):
     """Check for unused mirrors."""
 
     scope = base.repo_scope
@@ -241,7 +221,7 @@ class UnusedMirrorsCheck(_MirrorsCheck):
 
     def feed(self, pkg):
         if self.unused_mirrors:
-            self.unused_mirrors.difference_update(self._get_mirrors(pkg))
+            self.unused_mirrors.difference_update(self.get_mirrors(pkg))
         yield from ()
 
     def finish(self):
