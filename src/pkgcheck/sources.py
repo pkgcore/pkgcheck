@@ -43,9 +43,9 @@ class RepoSource(Source):
 
     scope = base.version_scope
 
-    def __init__(self, options, source=None):
+    def __init__(self, options, repo=None, source=None):
         self.options = options
-        self._repo = options.target_repo
+        self.repo = repo if repo is not None else options.target_repo
         self._source = source
 
     @property
@@ -53,7 +53,7 @@ class RepoSource(Source):
         """Source that packages are pulled from."""
         if self._source is not None:
             return self._source
-        return self._repo
+        return self.repo
 
     def itermatch(self, restrict, sorter=sorted, **kwargs):
         """Yield packages matching the given restriction from the selected source."""
@@ -168,11 +168,10 @@ class EclassRepoSource(RepoSource):
     scope = base.eclass_scope
     required_addons = (EclassAddon,)
 
-    def __init__(self, *args, eclass_addon):
-        super().__init__(*args)
-        repo = self.options.target_repo
-        self.eclasses = eclass_addon._eclass_repos[repo.location]
-        self.eclass_dir = pjoin(repo.location, 'eclass')
+    def __init__(self, *args, eclass_addon, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.eclasses = eclass_addon._eclass_repos[self.repo.location]
+        self.eclass_dir = pjoin(self.repo.location, 'eclass')
 
     def itermatch(self, restrict, **kwargs):
         for name in self.eclasses:
@@ -208,19 +207,16 @@ class _RawRepo(UnconfiguredTree):
 class RawRepoSource(RepoSource):
     """Ebuild repository source returning raw CPV objects."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
-
     def itermatch(self, restrict, **kwargs):
-        self._repo = _RawRepo(self._repo)
+        self.repo = _RawRepo(self.repo)
         yield from super().itermatch(restrict, raw_pkg_cls=RawCPV, **kwargs)
 
 
 class RestrictionRepoSource(RepoSource):
     """Ebuild repository source supporting custom restrictions."""
 
-    def __init__(self, restriction, *args):
-        super().__init__(*args)
+    def __init__(self, restriction, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.restriction = restriction
 
     def itermatch(self, restrict, **kwargs):
@@ -231,10 +227,10 @@ class RestrictionRepoSource(RepoSource):
 class UnmaskedRepoSource(RepoSource):
     """Repository source that uses profiles/package.mask to filter packages."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._filtered_repo = self.options.domain.filter_repo(
-            self._repo, pkg_masks=(), pkg_unmasks=(), pkg_filters=(),
+            self.repo, pkg_masks=(), pkg_unmasks=(), pkg_filters=(),
             pkg_accept_keywords=(), pkg_keywords=(), profile=False)
 
     def itermatch(self, restrict, **kwargs):
@@ -279,8 +275,8 @@ class EbuildParseRepoSource(RepoSource):
 
     required_addons = (addons.BashAddon,)
 
-    def __init__(self, *args, bash_addon):
-        super().__init__(*args)
+    def __init__(self, *args, bash_addon, **kwargs):
+        super().__init__(*args, **kwargs)
         self.parser = bash_addon.parser
 
     def itermatch(self, restrict, **kwargs):
@@ -367,17 +363,20 @@ def init_source(source, options, addons_map=None):
     """Initialize a given source."""
     if isinstance(source, tuple):
         if len(source) == 3:
-            source, args, kwargs = source
+            source_cls, args, kwargs = source
             kwargs = dict(kwargs)
             # initialize wrapped source
             if 'source' in kwargs:
                 kwargs['source'] = init_source(kwargs['source'], options, addons_map)
         else:
-            source, args = source
+            source_cls, args = source
             kwargs = {}
     else:
+        source_cls = source
         args = ()
         kwargs = {}
-    for addon in source.required_addons:
+    for addon in source_cls.required_addons:
         kwargs[base.param_name(addon)] = addons.init_addon(addon, options, addons_map)
-    return source(*args, options, **kwargs)
+    if issubclass(source_cls, RepoSource):
+        kwargs.setdefault('repo', options.target_repo)
+    return source_cls(*args, options, **kwargs)

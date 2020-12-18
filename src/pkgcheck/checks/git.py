@@ -31,9 +31,9 @@ class GitCommitsRepoSource(sources.RepoSource):
 
     required_addons = (git.GitAddon,)
 
-    def __init__(self, *args, git_addon):
-        super().__init__(*args)
-        self._repo = git_addon.commits_repo(git.GitChangedRepo)
+    def __init__(self, *args, git_addon, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.repo = git_addon.commits_repo(git.GitChangedRepo)
 
 
 class GitCommitsSource(sources.Source):
