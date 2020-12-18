@@ -24,7 +24,7 @@ class ConfigArg(argparse._StoreAction):
 class FilterArgs(arghparse.CommaSeparatedValues):
     """Apply filters to an entire scan or specific checks/keywords."""
 
-    known_filters = frozenset(['latest', 'repo'])
+    known_filters = frozenset(['latest'])
 
     def __call__(self, parser, namespace, values, option_string=None):
         values = self.parse_values(values)

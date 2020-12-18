@@ -429,30 +429,6 @@ class TestPkgcheckScan:
                 self.script()
             assert excinfo.value.code == 1
 
-    def test_filter_repo(self, make_repo):
-        repo = make_repo(arches=['amd64'])
-        # create good ebuild
-        repo.create_ebuild('cat/pkg-0', keywords=['amd64'])
-        # and one with unknown keywords
-        repo.create_ebuild('cat/pkg2-1', keywords=['unknown'])
-        # and mask it
-        with open(pjoin(repo.location, 'profiles', 'package.mask'), 'w') as f:
-            f.write('cat/pkg2\n')
-
-        # bad ebuild will be flagged by default
-        args = ['-r', repo.location, '--exit', 'UnknownKeywords']
-        with patch('sys.argv', self.args + args):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            assert excinfo.value.code == 1
-
-        # but will be ignored when running against a filtered repo since it's masked
-        for opt in ('-f', '--filter'):
-            with patch('sys.argv', self.args + args + [opt, 'repo']):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                assert excinfo.value.code == 0
-
     def test_filter_latest(self, make_repo):
         repo = make_repo(arches=['amd64'])
         # create ebuilds with unknown keywords

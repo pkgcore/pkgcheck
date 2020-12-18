@@ -122,10 +122,6 @@ main_options.add_argument(
     docs="""
         Support limiting targeted packages for scanning using a chosen filter.
 
-        If the 'repo' argument is used, all package visibility mechanisms used
-        by the package manager when resolving package dependencies such as
-        ACCEPT_KEYWORDS, ACCEPT_LICENSE, and package.mask will be enabled.
-
         If the 'latest' argument is used, only the latest package per slot of
         both VCS and non-VCS types will be scanned.
     """)
