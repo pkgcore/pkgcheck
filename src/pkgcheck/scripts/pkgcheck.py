@@ -188,6 +188,9 @@ check_options.add_argument(
     action=arghparse.Delayed, target=argparsers.EnableNet, priority=-1,
     help='enable checks that require network access')
 check_options.add_argument(
+    '-C', '--checkset', metavar='CHECKSET', action=argparsers.ChecksetArgs,
+    help='scan using a configured set of check/keyword args')
+check_options.add_argument(
     '-s', '--scopes', metavar='SCOPE', dest='selected_scopes', default=(),
     action=arghparse.Delayed, target=argparsers.ScopeArgs, priority=1,
     help='limit checks to run by scope (comma-separated list)',
@@ -331,6 +334,7 @@ def _restrict_to_scope(restrict):
 @scan.bind_reset_defaults
 def _setup_scan_defaults(parser, namespace):
     """Re-initialize default namespace settings per arg parsing run."""
+    namespace.checksets = {}
     namespace.contexts = []
     namespace.restrictions = []
     namespace.filtered_keywords = None

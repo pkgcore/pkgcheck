@@ -71,6 +71,55 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
         setattr(namespace, self.dest, caches)
 
 
+class ChecksetArgs(arghparse.CommaSeparatedNegations):
+    """Filter enabled checks/keywords by selected checksets."""
+
+    def checksets_to_keywords(self, checksets, args):
+        """Expand checkset args into list of related keywords."""
+        disabled, enabled = [], []
+        for arg in args:
+            for x in checksets[arg]:
+                # determine if checkset item is disabled or enabled
+                if x[0] == '-':
+                    x = x[1:]
+                    keywords = disabled
+                else:
+                    keywords = enabled
+                # determine if checkset item is check or keyword
+                if x in objects.CHECKS:
+                    keywords.extend(x.__name__ for x in objects.CHECKS[x].known_results)
+                elif x in objects.KEYWORDS:
+                    keywords.append(x)
+                else:
+                    raise argparse.ArgumentError(self, f'{arg!r} checkset, unknown check or keyword: {x!r}')
+        return disabled, enabled
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if not namespace.checksets:
+            raise argparse.ArgumentError(self, 'no checksets defined in configs')
+
+        disabled, enabled = self.parse_values(values)
+
+        # validate selected checksets
+        if unknown_checksets := set(disabled + enabled) - set(namespace.checksets):
+            unknown = ', '.join(map(repr, unknown_checksets))
+            available = ', '.join(namespace.checksets)
+            s = pluralism(unknown_checksets)
+            raise argparse.ArgumentError(
+                self, f'unknown checkset{s}: {unknown} (available: {available})')
+
+        # expand checksets into keywords
+        disabled = self.checksets_to_keywords(namespace.checksets, disabled)
+        enabled = self.checksets_to_keywords(namespace.checksets, enabled)
+        # Convert double negatives into positives, e.g. disabling a checkset
+        # containing a disabled keyword enables the keyword.
+        disabled_keywords = disabled[1] + enabled[0]
+        enabled_keywords = disabled[0] + enabled[1]
+        # parse check/keywords args related to checksets
+        keywords = ','.join(enabled_keywords + [f'-{x}' for x in disabled_keywords])
+        parser._parse_known_args([f'--keywords={keywords}'], namespace)
+
+
 class ScopeArgs(arghparse.CommaSeparatedNegations):
     """Filter enabled checks by selected scopes."""
 
@@ -83,7 +132,7 @@ class ScopeArgs(arghparse.CommaSeparatedNegations):
             available = ', '.join(base.scopes)
             s = pluralism(unknown_scopes)
             raise argparse.ArgumentError(
-                self, f'unknown scope{s}: {unknown} (available scopes: {available})')
+                self, f'unknown scope{s}: {unknown} (available: {available})')
 
         disabled = {base.scopes[x] for x in disabled}
         enabled = {base.scopes[x] for x in enabled}

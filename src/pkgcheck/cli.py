@@ -70,6 +70,11 @@ class ConfigFileParser:
         namespace = arghparse.Namespace() if namespace is None else namespace
         namespace = self.parse_config_sections(namespace, ['DEFAULT'])
 
+        # load any defined checksets
+        if 'CHECKSETS' in self.config:
+            for k, v in self.config.items('CHECKSETS'):
+                namespace.checksets[k] = v.split(',')
+
         return namespace
 
     def _config_error(self, message, status=2):
