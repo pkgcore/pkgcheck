@@ -115,7 +115,7 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
         # containing a disabled keyword enables the keyword.
         disabled_keywords = disabled[1] + enabled[0]
         enabled_keywords = disabled[0] + enabled[1]
-        # parse check/keywords args related to checksets
+        # parse keyword args related to checksets
         keywords = ','.join(enabled_keywords + [f'-{x}' for x in disabled_keywords])
         parser._parse_known_args([f'--keywords={keywords}'], namespace)
 
