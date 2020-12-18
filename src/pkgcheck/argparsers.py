@@ -28,50 +28,45 @@ class FilterArgs(arghparse.CommaSeparatedValues):
 
     def __call__(self, parser, namespace, values, option_string=None):
         values = self.parse_values(values)
-        filters = []
-        keywords = []
+        filter_map = {}
         for val in values:
             try:
                 filter_type, target = val.split(':')
-                filters.append(filter_type)
                 if target in objects.CHECKS:
-                    keywords.extend(x.__name__ for x in objects.CHECKS[target].known_results)
+                    filter_map.update({
+                        x.__name__: filter_type for x in objects.CHECKS[target].known_results})
                 elif target in objects.KEYWORDS:
-                    keywords.append(target)
+                    filter_map[target] = filter_type
                 elif target in namespace.checksets:
                     # expand checksets into keywords
                     try:
                         disabled, enabled = ChecksetArgs.checksets_to_keywords(
                             namespace.checksets, [target])
-                        keywords.extend(disabled + enabled)
+                        filter_map.update({x: filter_type for x in disabled + enabled})
                     except ValueError as e:
                         raise argparse.ArgumentError(self, str(e))
                 else:
                     raise argparse.ArgumentError(self, f'invalid target: {target!r}')
             except ValueError:
                 # globally enabling filter
-                filters.append(val)
-                if val == 'repo':
-                    # use filtered repo if requested
-                    namespace.target_repo = namespace.domain.ebuild_repos[namespace.target_repo.repo_id]
-                else:
-                    # enable latest filter for all results
-                    keywords = objects.KEYWORDS
+                filter_map.update((x, val) for x in objects.KEYWORDS)
 
         # validate selected filters
-        if unknown := set(filters) - self.known_filters:
+        if unknown := set(filter_map.values()) - self.known_filters:
             s = pluralism(unknown)
             unknown = ', '.join(map(repr, unknown))
             available = ', '.join(sorted(self.known_filters))
             raise argparse.ArgumentError(
                 self, f'unknown filter{s}: {unknown} (available: {available})')
 
-        # ignore invalid keywords -- filters only affect keywords of version scope and higher
-        keywords = (
-            objects.KEYWORDS[x] for x in keywords
-            if objects.KEYWORDS[x].scope >= base.version_scope)
+        # pull default filters
+        filters = dict(objects.KEYWORDS.filter)
+        # ignore invalid keywords -- only keywords version scope and higher are affected
+        filters.update({
+            objects.KEYWORDS[k]: v for k, v in filter_map.items()
+            if objects.KEYWORDS[k].scope >= base.version_scope})
 
-        setattr(namespace, self.dest, frozenset(keywords))
+        setattr(namespace, self.dest, ImmutableDict(filters))
 
 
 class EnableNet(argparse.Action):

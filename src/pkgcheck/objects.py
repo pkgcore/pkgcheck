@@ -132,6 +132,14 @@ class _KeywordsLazyDict(_LazyDict):
             k: v for k, v in self._dict.items()
             if issubclass(v, results.Info)})
 
+    @klass.jit_attr
+    def filter(self):
+        """Mapping of default result filters."""
+        from . import results
+        return ImmutableDict({
+            v: 'latest' for v in self._dict.values()
+            if issubclass(v, results.FilteredVersionResult)})
+
 
 class _ChecksLazyDict(_LazyDict):
     """Lazy dictionary of keyword mappings with added filtered attributes."""

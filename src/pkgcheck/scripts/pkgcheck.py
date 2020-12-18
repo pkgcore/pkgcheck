@@ -24,7 +24,7 @@ from snakeoil.cli.exceptions import UserException
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import pjoin
 
-from .. import argparsers, base, const, objects, reporters, results
+from .. import argparsers, base, const, objects, reporters
 from ..addons import init_addon
 from ..caches import CachedAddon
 from ..cli import ConfigFileParser
@@ -338,9 +338,7 @@ def _setup_scan_defaults(parser, namespace):
     namespace.checksets = {}
     namespace.contexts = []
     namespace.restrictions = []
-    namespace.filter = {
-        x for x in objects.KEYWORDS.values()
-        if isinstance(x, results.FilteredVersionResult)}
+    namespace.filter = objects.KEYWORDS.filter
     namespace.filtered_keywords = None
     # all non-optional checks are run by default
     namespace.enabled_checks = set(objects.CHECKS.default.values())
