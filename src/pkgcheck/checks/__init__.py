@@ -9,7 +9,7 @@ from snakeoil.cli.exceptions import UserException
 
 from .. import addons, base, feeds, sources
 from ..caches import CachedAddon
-from ..results import FilteredVersionResult, MetadataError
+from ..results import MetadataError
 
 
 @total_ordering
@@ -38,16 +38,21 @@ class Check(feeds.Feed):
     @property
     def source(self):
         # replace versioned pkg feeds with filtered ones as required
-        if self._filtering and self.options.verbosity < 1 and self.scope is base.version_scope:
-            filtered_results = [
-                x for x in self.known_results if issubclass(x, FilteredVersionResult)]
-            if filtered_results:
-                partial_filtered = len(filtered_results) != len(self.known_results)
-                return (
-                    sources.FilteredRepoSource,
-                    (sources.LatestPkgsFilter, partial_filtered),
-                    (('source', self._source),)
-                )
+        if self._filtering and self.options.verbosity < 1:
+            if filtered_results := [x for x in self.known_results if x in self.options.filter]:
+                if self.scope >= base.version_scope:
+                    partial_filtered = len(filtered_results) != len(self.known_results)
+                    return (
+                        sources.FilteredRepoSource,
+                        (sources.LatestVersionsFilter, partial_filtered),
+                        (('source', self._source),)
+                    )
+                elif max(x.scope for x in self.known_results) >= base.version_scope:
+                    return (
+                        sources.FilteredPackageRepoSource,
+                        (sources.LatestPkgsFilter,),
+                        (('source', self._source),)
+                    )
         return self._source
 
     def start(self):

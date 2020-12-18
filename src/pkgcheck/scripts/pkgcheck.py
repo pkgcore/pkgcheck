@@ -24,7 +24,7 @@ from snakeoil.cli.exceptions import UserException
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import pjoin
 
-from .. import argparsers, base, const, objects, reporters
+from .. import argparsers, base, const, objects, reporters, results
 from ..addons import init_addon
 from ..caches import CachedAddon
 from ..cli import ConfigFileParser
@@ -116,7 +116,8 @@ main_options.add_argument(
     action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
     help='repo to pull packages from')
 main_options.add_argument(
-    '-f', '--filter', choices=('latest', 'repo'),
+    '-f', '--filter',
+    action=arghparse.Delayed, target=argparsers.FilterArgs, priority=99,
     help='limit targeted packages for scanning',
     docs="""
         Support limiting targeted packages for scanning using a chosen filter.
@@ -337,6 +338,9 @@ def _setup_scan_defaults(parser, namespace):
     namespace.checksets = {}
     namespace.contexts = []
     namespace.restrictions = []
+    namespace.filter = {
+        x for x in objects.KEYWORDS.values()
+        if isinstance(x, results.FilteredVersionResult)}
     namespace.filtered_keywords = None
     # all non-optional checks are run by default
     namespace.enabled_checks = set(objects.CHECKS.default.values())
@@ -440,10 +444,6 @@ def generate_restricts(repo, targets):
 
 @scan.bind_final_check
 def _validate_scan_args(parser, namespace):
-    # use filtered repo if requested
-    if namespace.filter == 'repo':
-        namespace.target_repo = namespace.domain.ebuild_repos[namespace.target_repo.repo_id]
-
     restrictions = namespace.restrictions
     if not restrictions:
         if namespace.targets:
@@ -469,11 +469,6 @@ def _validate_scan_args(parser, namespace):
             else:
                 scope, restrict = base.repo_scope, packages.AlwaysTrue
             restrictions = [(scope, restrict)]
-
-    # only run version scope checks when using a package filter
-    if namespace.filter is not None:
-        namespace.enabled_checks = (
-            c for c in namespace.enabled_checks if c.scope is base.version_scope)
 
     # pull scan scope from the given restriction targets
     restrictions = iter(restrictions)

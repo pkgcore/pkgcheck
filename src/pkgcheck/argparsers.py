@@ -21,6 +21,59 @@ class ConfigArg(argparse._StoreAction):
         setattr(namespace, self.dest, values)
 
 
+class FilterArgs(arghparse.CommaSeparatedValues):
+    """Apply filters to an entire scan or specific checks/keywords."""
+
+    known_filters = frozenset(['latest', 'repo'])
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        values = self.parse_values(values)
+        filters = []
+        keywords = []
+        for val in values:
+            try:
+                filter_type, target = val.split(':')
+                filters.append(filter_type)
+                if target in objects.CHECKS:
+                    keywords.extend(x.__name__ for x in objects.CHECKS[target].known_results)
+                elif target in objects.KEYWORDS:
+                    keywords.append(target)
+                elif target in namespace.checksets:
+                    # expand checksets into keywords
+                    try:
+                        disabled, enabled = ChecksetArgs.checksets_to_keywords(
+                            namespace.checksets, [target])
+                        keywords.extend(disabled + enabled)
+                    except ValueError as e:
+                        raise argparse.ArgumentError(self, str(e))
+                else:
+                    raise argparse.ArgumentError(self, f'invalid target: {target!r}')
+            except ValueError:
+                # globally enabling filter
+                filters.append(val)
+                if val == 'repo':
+                    # use filtered repo if requested
+                    namespace.target_repo = namespace.domain.ebuild_repos[namespace.target_repo.repo_id]
+                else:
+                    # enable latest filter for all results
+                    keywords = objects.KEYWORDS
+
+        # validate selected filters
+        if unknown := set(filters) - self.known_filters:
+            s = pluralism(unknown)
+            unknown = ', '.join(map(repr, unknown))
+            available = ', '.join(sorted(self.known_filters))
+            raise argparse.ArgumentError(
+                self, f'unknown filter{s}: {unknown} (available: {available})')
+
+        # ignore invalid keywords -- filters only affect keywords of version scope and higher
+        keywords = (
+            objects.KEYWORDS[x] for x in keywords
+            if objects.KEYWORDS[x].scope >= base.version_scope)
+
+        setattr(namespace, self.dest, frozenset(keywords))
+
+
 class EnableNet(argparse.Action):
     """Enable checks that require network access."""
 
@@ -74,8 +127,9 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
 class ChecksetArgs(arghparse.CommaSeparatedNegations):
     """Filter enabled checks/keywords by selected checksets."""
 
-    def checksets_to_keywords(self, checksets, args):
-        """Expand checkset args into list of related keywords."""
+    @staticmethod
+    def checksets_to_keywords(checksets, args):
+        """Expand checksets into lists of disabled and enabled keywords."""
         disabled, enabled = [], []
         for arg in args:
             for x in checksets[arg]:
@@ -91,7 +145,7 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
                 elif x in objects.KEYWORDS:
                     keywords.append(x)
                 else:
-                    raise argparse.ArgumentError(self, f'{arg!r} checkset, unknown check or keyword: {x!r}')
+                    raise ValueError(f'{arg!r} checkset, unknown check or keyword: {x!r}')
         return disabled, enabled
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -109,8 +163,11 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
                 self, f'unknown checkset{s}: {unknown} (available: {available})')
 
         # expand checksets into keywords
-        disabled = self.checksets_to_keywords(namespace.checksets, disabled)
-        enabled = self.checksets_to_keywords(namespace.checksets, enabled)
+        try:
+            disabled = self.checksets_to_keywords(namespace.checksets, disabled)
+            enabled = self.checksets_to_keywords(namespace.checksets, enabled)
+        except ValueError as e:
+            raise argparse.ArgumentError(self, str(e))
         # Convert double negatives into positives, e.g. disabling a checkset
         # containing a disabled keyword enables the keyword.
         disabled_keywords = disabled[1] + enabled[0]

@@ -47,7 +47,6 @@ class RepoSource(Source):
         self.options = options
         self._repo = options.target_repo
         self._source = source
-        self._filter = getattr(options, 'filter', None)
 
     @property
     def source(self):
@@ -56,17 +55,12 @@ class RepoSource(Source):
             return self._source
         return self._repo
 
-    def itermatch(self, restrict, **kwargs):
+    def itermatch(self, restrict, sorter=sorted, **kwargs):
         """Yield packages matching the given restriction from the selected source."""
-        kwargs.setdefault('sorter', sorted)
-        unfiltered_iter = self.source.itermatch(restrict, **kwargs)
-        if self._filter == 'latest':
-            yield from LatestPkgsFilter(unfiltered_iter)
-        else:
-            yield from unfiltered_iter
+        return self.source.itermatch(restrict, sorter=sorter, **kwargs)
 
 
-class LatestPkgsFilter:
+class LatestVersionsFilter:
     """Filter source packages, yielding those from the latest non-VCS and VCS slots."""
 
     def __init__(self, source_iter, partial_filtered=False):
@@ -118,6 +112,56 @@ class LatestPkgsFilter:
         return self._pkg_cache.popleft()
 
 
+class FilteredRepoSource(RepoSource):
+    """Ebuild repository source supporting custom package filtering."""
+
+    def __init__(self, pkg_filter, partial_filtered, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._pkg_filter = pkg_filter
+        self._partial_filtered = partial_filtered
+
+    def itermatch(self, restrict, **kwargs):
+        yield from self._pkg_filter(
+            super().itermatch(restrict, **kwargs), partial_filtered=self._partial_filtered)
+
+
+class LatestPkgsFilter:
+    """Flag the latest non-VCS and VCS slots for filtering package sets."""
+
+    def __init__(self, source_iter):
+        self._source_iter = source_iter
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        pkgs = next(self._source_iter)
+        selected_pkgs = {}
+
+        # determine the latest non-VCS and VCS pkgs for each slot
+        for pkg in pkgs:
+            if pkg.live:
+                selected_pkgs[f'vcs-{pkg.slot}'] = pkg
+            else:
+                selected_pkgs[pkg.slot] = pkg
+
+        selected_pkgs = set(selected_pkgs.values())
+        return [FilteredPkg(pkg=pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs]
+
+
+class FilteredPackageRepoSource(RepoSource):
+    """Ebuild repository source supporting custom package filtering."""
+
+    scope = base.package_scope
+
+    def __init__(self, pkgs_filter, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._pkgs_filter = pkgs_filter
+
+    def itermatch(self, restrict, **kwargs):
+        yield from self._pkgs_filter(super().itermatch(restrict, **kwargs))
+
+
 class EclassRepoSource(RepoSource):
     """Repository eclass source."""
 
@@ -134,19 +178,6 @@ class EclassRepoSource(RepoSource):
         for name in self.eclasses:
             if restrict.match([name]):
                 yield Eclass(name, pjoin(self.eclass_dir, f'{name}.eclass'))
-
-
-class FilteredRepoSource(RepoSource):
-    """Ebuild repository source supporting custom package filtering."""
-
-    def __init__(self, pkg_filter, partial_filtered, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._pkg_filter = pkg_filter
-        self._partial_filtered = partial_filtered
-
-    def itermatch(self, restrict, **kwargs):
-        yield from self._pkg_filter(
-            super().itermatch(restrict, **kwargs), partial_filtered=self._partial_filtered)
 
 
 class _RawRepo(UnconfiguredTree):
@@ -181,11 +212,8 @@ class RawRepoSource(RepoSource):
         super().__init__(*args)
 
     def itermatch(self, restrict, **kwargs):
-        if self._filter == 'latest':
-            yield from LatestPkgsFilter(super().itermatch(restrict, **kwargs))
-        else:
-            self._repo = _RawRepo(self._repo)
-            yield from super().itermatch(restrict, raw_pkg_cls=RawCPV, **kwargs)
+        self._repo = _RawRepo(self._repo)
+        yield from super().itermatch(restrict, raw_pkg_cls=RawCPV, **kwargs)
 
 
 class RestrictionRepoSource(RepoSource):

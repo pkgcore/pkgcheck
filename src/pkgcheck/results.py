@@ -190,6 +190,9 @@ class VersionResult(PackageResult):
     scope = base.version_scope
 
     def __init__(self, pkg, **kwargs):
+        if isinstance(pkg, FilteredPkg):
+            self.filtered = True
+            pkg = pkg._pkg
         super().__init__(pkg, **kwargs)
         self.version = pkg.fullver
         self._attr = 'version'
@@ -238,12 +241,6 @@ class LineResult(VersionResult):
 
 class FilteredVersionResult(VersionResult):
     """Result that will be optionally filtered for old packages by default."""
-
-    def __init__(self, pkg, **kwargs):
-        if isinstance(pkg, FilteredPkg):
-            self.filtered = True
-            pkg = pkg._pkg
-        super().__init__(pkg, **kwargs)
 
 
 class _LogResult(Result):
