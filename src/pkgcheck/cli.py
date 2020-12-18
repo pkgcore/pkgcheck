@@ -41,7 +41,7 @@ class ConfigFileParser:
     def parse_config(self, configs=()):
         """Parse given config files."""
         configs = configs if configs else self.configs
-        config = configparser.ConfigParser()
+        config = configparser.ConfigParser(default_section=None)
         try:
             for f in configs:
                 config.read(f)
@@ -49,19 +49,27 @@ class ConfigFileParser:
             self.parser.error(f'parsing config file failed: {e}')
         return config
 
-    def parse_config_options(self, namespace=None, section='DEFAULT', configs=()):
+    def parse_config_sections(self, namespace, sections):
+        """Parse options from a given iterable of config section names."""
+        with patch('snakeoil.cli.arghparse.ArgumentParser.error', self._config_error):
+            for section in (x for x in sections if x in self.config):
+                config_args = [f'--{k}={v}' if v else f'--{k}' for k, v in self.config.items(section)]
+                namespace, args = self.parser.parse_known_optionals(config_args, namespace)
+                if args:
+                    self.parser.error(f"unknown arguments: {'  '.join(args)}")
+        return namespace
+
+    def parse_config_options(self, namespace=None, configs=()):
         """Parse options from config if they exist."""
         if configs:
             self.configs.update(configs)
             # reset jit attr to force reparse
             self._config = None
+
+        # load default options
         namespace = arghparse.Namespace() if namespace is None else namespace
-        config_args = [f'--{k}={v}' if v else f'--{k}' for k, v in self.config.items(section)]
-        if config_args:
-            with patch('snakeoil.cli.arghparse.ArgumentParser.error', self._config_error):
-                namespace, args = self.parser.parse_known_optionals(config_args, namespace)
-                if args:
-                    self.parser.error(f"unknown arguments: {'  '.join(args)}")
+        namespace = self.parse_config_sections(namespace, ['DEFAULT'])
+
         return namespace
 
     def _config_error(self, message, status=2):

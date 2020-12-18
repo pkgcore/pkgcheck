@@ -396,10 +396,7 @@ def _setup_scan(parser, namespace, args):
         namespace = config_parser.parse_config_options(namespace, configs=configs)
 
     # load repo-specific args from config if they exist, command line args override these
-    for section in namespace.target_repo.aliases:
-        if section in config_parser.config:
-            namespace = config_parser.parse_config_options(namespace, section)
-            break
+    namespace = config_parser.parse_config_sections(namespace, namespace.target_repo.aliases)
 
     return namespace, args
 
