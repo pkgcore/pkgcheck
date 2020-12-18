@@ -114,7 +114,7 @@ class FancyReporter(Reporter):
             if key != self.key:
                 if self.key is not None:
                     self.out.write()
-                self.out.write(self.out.bold, key)
+                self.out.write(self.out.bold, self.out.fg('blue'), key, self.out.reset)
                 self.key = key
             self.out.first_prefix.append('  ')
             self.out.later_prefix.append('    ')
