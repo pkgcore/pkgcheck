@@ -65,20 +65,18 @@ class StrReporter(Reporter):
 
     priority = 0
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    @coroutine
+    def _process_report(self):
         # scope to result prefix mapping
-        self._scope_prefix_map = {
+        scope_prefix_map = {
             base.version_scope: '{category}/{package}-{version}: ',
             base.package_scope: '{category}/{package}: ',
             base.category_scope: '{category}: ',
         }
 
-    @coroutine
-    def _process_report(self):
         while True:
             result = (yield)
-            prefix = self._scope_prefix_map.get(result.scope, '').format(**vars(result))
+            prefix = scope_prefix_map.get(result.scope, '').format(**vars(result))
             self.out.write(f'{prefix}{result.desc}')
             self.out.stream.flush()
 
@@ -96,12 +94,10 @@ class FancyReporter(Reporter):
 
     priority = 1
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.key = None
-
     @coroutine
     def _process_report(self):
+        prev_key = None
+
         while True:
             result = (yield)
             if result.scope in (base.version_scope, base.package_scope):
@@ -111,11 +107,11 @@ class FancyReporter(Reporter):
             else:
                 key = str(result.scope)
 
-            if key != self.key:
-                if self.key is not None:
+            if key != prev_key:
+                if prev_key is not None:
                     self.out.write()
                 self.out.write(self.out.bold, self.out.fg('blue'), key, self.out.reset)
-                self.key = key
+                prev_key = key
             self.out.first_prefix.append('  ')
             self.out.later_prefix.append('    ')
             s = ''
@@ -155,23 +151,21 @@ class JsonReporter(Reporter):
 
     priority = -1000
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    @coroutine
+    def _process_report(self):
         # arbitrarily nested defaultdicts
-        self._json_dict = lambda: defaultdict(self._json_dict)
+        json_dict = lambda: defaultdict(json_dict)
         # scope to data conversion mapping
-        self._scope_map = {
+        scope_map = {
             base.version_scope: lambda data, r: data[r.category][r.package][r.version],
             base.package_scope: lambda data, r: data[r.category][r.package],
             base.category_scope: lambda data, r: data[r.category],
         }
 
-    @coroutine
-    def _process_report(self):
         while True:
             result = (yield)
-            data = self._json_dict()
-            d = self._scope_map.get(result.scope, lambda x, y: x)(data, result)
+            data = json_dict()
+            d = scope_map.get(result.scope, lambda x, y: x)(data, result)
             d['_' + result.level][result.name] = result.desc
             self.out.write(json.dumps(data))
             # flush output so partial objects aren't written
@@ -183,27 +177,6 @@ class XmlReporter(Reporter):
 
     priority = -1000
 
-    result_template = (
-        "<result><class>%(class)s</class>"
-        "<msg>%(msg)s</msg></result>")
-    cat_template = (
-        "<result><category>%(category)s</category>"
-        "<class>%(class)s</class><msg>%(msg)s</msg></result>")
-    pkg_template = (
-        "<result><category>%(category)s</category>"
-        "<package>%(package)s</package><class>%(class)s</class>"
-        "<msg>%(msg)s</msg></result>")
-    ver_template = (
-        "<result><category>%(category)s</category>"
-        "<package>%(package)s</package><version>%(version)s</version>"
-        "<class>%(class)s</class><msg>%(msg)s</msg></result>")
-
-    scope_map = {
-        base.category_scope: cat_template,
-        base.package_scope: pkg_template,
-        base.version_scope: ver_template,
-    }
-
     def _start(self):
         self.out.write('<checks>')
 
@@ -212,12 +185,33 @@ class XmlReporter(Reporter):
 
     @coroutine
     def _process_report(self):
+        result_template = (
+            "<result><class>%(class)s</class>"
+            "<msg>%(msg)s</msg></result>")
+        cat_template = (
+            "<result><category>%(category)s</category>"
+            "<class>%(class)s</class><msg>%(msg)s</msg></result>")
+        pkg_template = (
+            "<result><category>%(category)s</category>"
+            "<package>%(package)s</package><class>%(class)s</class>"
+            "<msg>%(msg)s</msg></result>")
+        ver_template = (
+            "<result><category>%(category)s</category>"
+            "<package>%(package)s</package><version>%(version)s</version>"
+            "<class>%(class)s</class><msg>%(msg)s</msg></result>")
+
+        scope_map = {
+            base.category_scope: cat_template,
+            base.package_scope: pkg_template,
+            base.version_scope: ver_template,
+        }
+
         while True:
             result = (yield)
             d = {k: getattr(result, k, '') for k in ('category', 'package', 'version')}
             d['class'] = xml_escape(result.name)
             d['msg'] = xml_escape(result.desc)
-            self.out.write(self.scope_map.get(result.scope, self.result_template) % d)
+            self.out.write(scope_map.get(result.scope, result_template) % d)
 
 
 class CsvReporter(Reporter):
@@ -233,19 +227,17 @@ class CsvReporter(Reporter):
 
     priority = -1001
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._writer = csv.writer(
+    @coroutine
+    def _process_report(self):
+        writer = csv.writer(
             self.out,
             doublequote=False,
             escapechar='\\',
             lineterminator='')
 
-    @coroutine
-    def _process_report(self):
         while True:
             result = (yield)
-            self._writer.writerow((
+            writer.writerow((
                 getattr(result, 'category', ''),
                 getattr(result, 'package', ''),
                 getattr(result, 'version', ''),
@@ -274,17 +266,18 @@ class FormatReporter(Reporter):
     def __init__(self, format_str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.format_str = format_str
-        self._formatter = _ResultFormatter()
-        # provide expansions for result desc, level, and output name properties
-        self._properties = ('desc', 'level', 'name')
 
     @coroutine
     def _process_report(self):
+        formatter = _ResultFormatter()
+        # provide expansions for result desc, level, and output name properties
+        properties = ('desc', 'level', 'name')
+
         while True:
             result = (yield)
             attrs = vars(result)
-            attrs.update((k, getattr(result, k)) for k in self._properties)
-            s = self._formatter.format(self.format_str, **attrs)
+            attrs.update((k, getattr(result, k)) for k in properties)
+            s = formatter.format(self.format_str, **attrs)
             # output strings with at least one valid expansion or non-whitespace character
             if s.strip():
                 self.out.write(s)
