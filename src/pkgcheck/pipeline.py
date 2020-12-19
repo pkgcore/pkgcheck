@@ -7,10 +7,10 @@ import traceback
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from itertools import chain
+from itertools import chain, tee
 
 from pkgcore.package.errors import MetadataException
-from pkgcore.restrictions import boolean, packages
+from pkgcore.restrictions import packages
 
 from . import base
 from .checks import init_checks
@@ -27,16 +27,11 @@ class Pipeline:
     end when an exception object is found.
     """
 
-    def __init__(self, options, scan_scope, restriction):
+    def __init__(self, options, restrictions):
         self.options = options
-        self.restriction = restriction
-
+        self.restrictions = (x for _scope, x in restrictions)
         # number of error results encountered (used with --exit option)
-        self.exit_status = 0
-        # determine if scan is being run at a package level
-        self._pkg_scan = (
-            scan_scope in (base.version_scope, base.package_scope) and
-            isinstance(restriction, boolean.AndRestriction))
+        self.errors = 0
 
         # pkgcheck currently requires the fork start method (#254)
         self._mp_ctx = multiprocessing.get_context('fork')
@@ -58,7 +53,7 @@ class Pipeline:
         }
 
         # package level scans sort all returned results
-        if self._pkg_scan:
+        if self.options.pkg_scan:
             self._sorted_results.update({
                 scope: [] for scope in base.scopes.values()
                 if scope.level >= base.package_scope
@@ -78,7 +73,7 @@ class Pipeline:
 
         # categorize checkrunners for parallelization based on the scan and source scope
         pipes = defaultdict(lambda: defaultdict(list))
-        if self._pkg_scan:
+        if self.options.pkg_scan:
             for (scope, exec_type), runners in checkrunners.items():
                 if scope is base.version_scope:
                     pipes[exec_type][base.version_scope].extend(runners)
@@ -118,7 +113,7 @@ class Pipeline:
                     if self.options.verbosity < 1 and result.filtered:
                         continue
                     if result.__class__ in self.options.exit_keywords:
-                        self.exit_status += 1
+                        self.errors += 1
                     return result
             except IndexError:
                 try:
@@ -138,7 +133,7 @@ class Pipeline:
                 if isinstance(results, str):
                     self._kill_pipe(error=results.strip())
 
-                if self._pkg_scan:
+                if self.options.pkg_scan:
                     # Sort all generated results when running at package scope
                     # level, i.e. running within a package directory in an
                     # ebuild repo.
@@ -158,22 +153,23 @@ class Pipeline:
                         except KeyError:
                             self._results.append(result)
 
-    def _queue_work(self, sync_pipes, work_q):
+    def _queue_work(self, sync_pipes, work_q, restrictions):
         """Producer that queues scanning tasks against granular scope restrictions."""
-        for scope in sorted(sync_pipes, reverse=True):
-            pipes = sync_pipes[scope]
-            if scope is base.version_scope:
-                versioned_source = VersionedSource(self.options)
-                for restrict in versioned_source.itermatch(self.restriction):
+        for restriction in restrictions:
+            for scope in sorted(sync_pipes, reverse=True):
+                pipes = sync_pipes[scope]
+                if scope is base.version_scope:
+                    versioned_source = VersionedSource(self.options)
+                    for restrict in versioned_source.itermatch(restriction):
+                        for i in range(len(pipes)):
+                            work_q.put((scope, restrict, i))
+                elif scope is base.package_scope:
+                    unversioned_source = UnversionedSource(self.options)
+                    for restrict in unversioned_source.itermatch(restriction):
+                        work_q.put((scope, restrict, 0))
+                else:
                     for i in range(len(pipes)):
-                        work_q.put((scope, restrict, i))
-            elif scope is base.package_scope:
-                unversioned_source = UnversionedSource(self.options)
-                for restrict in unversioned_source.itermatch(self.restriction):
-                    work_q.put((scope, restrict, 0))
-            else:
-                for i in range(len(pipes)):
-                    work_q.put((scope, self.restriction, i))
+                        work_q.put((scope, restriction, i))
 
         # notify consumers that no more work exists
         for i in range(self.options.jobs):
@@ -203,14 +199,15 @@ class Pipeline:
             tb = traceback.format_exc()
             self._results_q.put(tb)
 
-    def _schedule_async(self, pipes):
+    def _schedule_async(self, pipes, restrictions):
         """Schedule asynchronous checks."""
         try:
             with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
                 # schedule any existing async checks
                 futures = {}
-                for runner in chain.from_iterable(pipes):
-                    runner.schedule(executor, futures, self.restriction)
+                for restrict in restrictions:
+                    for runner in chain.from_iterable(pipes):
+                        runner.schedule(executor, futures, restrict)
         except Exception:  # pragma: no cover
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
@@ -221,12 +218,13 @@ class Pipeline:
         try:
             signal.signal(signal.SIGINT, signal.SIG_DFL)
             os.setpgrp()
+            async_restricts, sync_restricts = tee(self.restrictions)
 
             # schedule asynchronous checks in a separate process
             async_proc = None
             if async_pipes := self._pipes['async'].values():
                 async_proc = self._mp_ctx.Process(
-                    target=self._schedule_async, args=(async_pipes,))
+                    target=self._schedule_async, args=(async_pipes, async_restricts))
                 async_proc.start()
 
             # run synchronous checks using a process pool
@@ -235,7 +233,7 @@ class Pipeline:
                 pool = self._mp_ctx.Pool(
                     self.options.jobs, self._run_checks, (sync_pipes, work_q))
                 pool.close()
-                self._queue_work(sync_pipes, work_q)
+                self._queue_work(sync_pipes, work_q, sync_restricts)
                 pool.join()
 
             if async_proc is not None:

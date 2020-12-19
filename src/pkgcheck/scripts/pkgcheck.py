@@ -463,10 +463,15 @@ def _validate_scan_args(parser, namespace):
     # pull scan scope from the given restriction targets
     restrictions = iter(restrictions)
     try:
-        scan_scope, restrict = next(restrictions)
+        scan_scope, restriction = next(restrictions)
     except StopIteration:
         parser.error('no targets piped in')
-    namespace.restrictions = chain([(scan_scope, restrict)], restrictions)
+
+    # determine if scan is being run at a package level
+    namespace.pkg_scan = (
+        scan_scope in (base.version_scope, base.package_scope) and
+        isinstance(restriction, boolean.AndRestriction))
+    namespace.restrictions = chain([(scan_scope, restriction)], restrictions)
 
     # filter enabled checks based on the scanning scope
     namespace.enabled_checks = [
@@ -514,15 +519,14 @@ def _selected_check(options, scan_scope, scope):
 
 @scan.bind_main_func
 def _scan(options, out, err):
-    ret = []
     with ExitStack() as stack:
         reporter = options.reporter(out)
         for c in options.pop('contexts') + [reporter]:
             stack.enter_context(c)
-        for scan_scope, restrict in options.restrictions:
-            pipe = Pipeline(options, scan_scope, restrict)
-            ret.append(reporter(pipe))
-    return int(any(ret))
+        pipe = Pipeline(options, options.restrictions)
+        for result in pipe:
+            reporter.report(result)
+    return int(bool(pipe.errors))
 
 
 cache = subparsers.add_parser(

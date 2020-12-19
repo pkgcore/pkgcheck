@@ -27,11 +27,6 @@ class Reporter:
         # initialize result processing coroutines
         self.report = self._process_report().send
 
-    def __call__(self, pipe):
-        for result in pipe:
-            self.report(result)
-        return pipe.exit_status
-
     def __enter__(self):
         self._start()
         return self
