@@ -372,7 +372,7 @@ def _setup_scan(parser, namespace, args):
     try:
         namespace.cwd = os.path.abspath(os.getcwd())
     except FileNotFoundError:
-        namespace.cwd = '/'
+        namespace.cwd = const.DATA_PATH
 
     # if we have no target repo figure out what to use
     if namespace.target_repo is None:

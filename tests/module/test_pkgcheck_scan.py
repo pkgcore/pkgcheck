@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck import __title__ as project
-from pkgcheck import base, objects, reporters
+from pkgcheck import base, const, objects, reporters
 from pkgcheck import checks as checks_mod
 from pkgcheck.scripts import run
 from pkgcore.ebuild import atom, restricts
@@ -233,7 +233,7 @@ class TestPkgcheckScanParseArgs:
         with patch('os.getcwd') as getcwd:
             getcwd.side_effect = FileNotFoundError('CWD is gone')
             options, _ = tool.parse_args(['scan'])
-            assert options.cwd == '/'
+            assert options.cwd == const.DATA_PATH
 
     def test_conflicting_scan_scopes(self, capsys, fakerepo, tool):
         """Multiple targets can't specify different scopes."""
