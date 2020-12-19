@@ -453,7 +453,7 @@ class TestPkgcheckScan:
 
     def test_explict_skip_check(self, capsys):
         """SkipCheck exceptions are raised when triggered for explicitly enabled checks."""
-        with patch('sys.argv', self.args + ['-c', 'net']):
+        with patch('sys.argv', self.args + ['-C', 'net']):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             assert excinfo.value.code == 2

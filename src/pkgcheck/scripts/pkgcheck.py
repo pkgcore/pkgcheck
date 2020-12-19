@@ -185,8 +185,19 @@ check_options.add_argument(
     action=arghparse.Delayed, target=argparsers.EnableNet, priority=-1,
     help='enable checks that require network access')
 check_options.add_argument(
-    '-C', '--checkset', metavar='CHECKSET', action=argparsers.ChecksetArgs,
-    help='scan using a configured set of check/keyword args')
+    '-C', '--checksets', metavar='CHECKSET', action=argparsers.ChecksetArgs,
+    help='scan using a configured set of check/keyword args',
+    docs="""
+        Comma separated list of checksets to enable and disable for
+        scanning.
+
+        The special argument of ``all`` corresponds to the list of all checks.
+        Therefore, to forcibly enable all checks use ``-C all``.
+
+        In addition, all network-related checks (which are disabled by default)
+        can be enabled using ``-C net``. This allows for easily running only
+        network checks without having to explicitly list them.
+    """)
 check_options.add_argument(
     '-s', '--scopes', metavar='SCOPE', dest='selected_scopes', default=(),
     action=arghparse.Delayed, target=argparsers.ScopeArgs, priority=1,
@@ -212,13 +223,6 @@ check_options.add_argument(
         starting the argument list with a disabled check an equals sign must
         be used, e.g. ``-c=-check``, otherwise the disabled check argument is
         treated as an option.
-
-        The special argument of ``all`` corresponds to the list of all checks.
-        Therefore, to forcibly enable all checks use ``-c all``.
-
-        In addition, all network-related checks (which are disabled by default)
-        can be enabled using ``-c net``. This allows for easily running only
-        network checks without having to explicitly list them.
 
         Use ``pkgcheck show --checks`` see available options.
     """)

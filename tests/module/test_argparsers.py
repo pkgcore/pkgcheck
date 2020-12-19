@@ -80,6 +80,27 @@ class TestCacheNegations:
                 assert v is True
 
 
+class TestChecksetArgs:
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tool, tmp_path):
+        self.tool = tool
+        self.cache_dir = str(tmp_path)
+        self.args = ['scan', '--cache-dir', self.cache_dir]
+
+    def test_aliases(self):
+        for opt in ('-C', '--checksets'):
+            # net
+            options, _ = self.tool.parse_args(self.args + [opt, 'net'])
+            network_checks = [
+                c for c, v in objects.CHECKS.items() if issubclass(v, checks.NetworkCheck)]
+            assert options.selected_checks == set(network_checks)
+
+            # all
+            options, _ = self.tool.parse_args(self.args + [opt, 'all'])
+            assert options.selected_checks == set(objects.CHECKS)
+
+
 class TestScopeArgs:
 
     @pytest.fixture(autouse=True)
@@ -169,18 +190,6 @@ class TestCheckArgs:
             options, _ = self.tool.parse_args(self.args + [f'{opt}=+PerlCheck'])
             assert checks.perl.PerlCheck in set(options.enabled_checks)
             assert options.selected_checks == frozenset(['PerlCheck'])
-
-    def test_aliases(self):
-        for opt in ('-c', '--checks'):
-            # net
-            options, _ = self.tool.parse_args(self.args + [opt, 'net'])
-            network_checks = [
-                c for c, v in objects.CHECKS.items() if issubclass(v, checks.NetworkCheck)]
-            assert options.selected_checks == frozenset(network_checks)
-
-            # all
-            options, _ = self.tool.parse_args(self.args + [opt, 'all'])
-            assert options.selected_checks == frozenset(objects.CHECKS)
 
 
 class TestKeywordArgs:

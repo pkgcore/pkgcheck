@@ -122,40 +122,51 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
 class ChecksetArgs(arghparse.CommaSeparatedNegations):
     """Filter enabled checks/keywords by selected checksets."""
 
+    known_aliases = frozenset(['all', 'net'])
+
     @staticmethod
-    def checksets_to_keywords(checksets, args):
+    def alias_to_keywords(alias):
+        """Expand internal checkset aliases into keyword generators."""
+        network = (x for x in objects.CHECKS.values() if issubclass(x, NetworkCheck))
+        alias_map = {'all': objects.CHECKS.values(), 'net': network}
+        for check in alias_map[alias]:
+            for result in check.known_results:
+                yield result.__name__
+
+    @classmethod
+    def checksets_to_keywords(cls, checksets, args):
         """Expand checksets into lists of disabled and enabled keywords."""
         disabled, enabled = [], []
         for arg in args:
-            for x in checksets[arg]:
-                # determine if checkset item is disabled or enabled
-                if x[0] == '-':
-                    x = x[1:]
-                    keywords = disabled
-                else:
-                    keywords = enabled
-                # determine if checkset item is check or keyword
-                if x in objects.CHECKS:
-                    keywords.extend(x.__name__ for x in objects.CHECKS[x].known_results)
-                elif x in objects.KEYWORDS:
-                    keywords.append(x)
-                else:
-                    raise ValueError(f'{arg!r} checkset, unknown check or keyword: {x!r}')
+            if arg in cls.known_aliases:
+                enabled.extend(cls.alias_to_keywords(arg))
+            else:
+                for x in checksets[arg]:
+                    # determine if checkset item is disabled or enabled
+                    if x[0] == '-':
+                        x = x[1:]
+                        keywords = disabled
+                    else:
+                        keywords = enabled
+                    # determine if checkset item is check or keyword
+                    if x in objects.CHECKS:
+                        keywords.extend(x.__name__ for x in objects.CHECKS[x].known_results)
+                    elif x in objects.KEYWORDS:
+                        keywords.append(x)
+                    else:
+                        raise ValueError(f'{arg!r} checkset, unknown check or keyword: {x!r}')
         return disabled, enabled
 
     def __call__(self, parser, namespace, values, option_string=None):
-        if not namespace.checksets:
-            raise argparse.ArgumentError(self, 'no checksets defined in configs')
-
         disabled, enabled = self.parse_values(values)
 
         # validate selected checksets
-        if unknown_checksets := set(disabled + enabled) - set(namespace.checksets):
-            unknown = ', '.join(map(repr, unknown_checksets))
+        if unknown := set(disabled + enabled) - self.known_aliases - set(namespace.checksets):
+            unknown_str = ', '.join(map(repr, unknown))
             available = ', '.join(namespace.checksets)
-            s = pluralism(unknown_checksets)
+            s = pluralism(unknown)
             raise argparse.ArgumentError(
-                self, f'unknown checkset{s}: {unknown} (available: {available})')
+                self, f'unknown checkset{s}: {unknown_str} (available: {available})')
 
         # expand checksets into keywords
         try:
@@ -217,15 +228,6 @@ class CheckArgs(arghparse.CommaSeparatedNegations):
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
         enabled, additive = self.split_enabled(enabled)
-
-        network = (c for c, v in objects.CHECKS.items() if issubclass(v, NetworkCheck))
-        alias_map = {'all': objects.CHECKS, 'net': network}
-        replace_aliases = lambda x: alias_map.get(x, [x])
-
-        # expand check aliases to check lists
-        disabled = list(chain.from_iterable(map(replace_aliases, disabled)))
-        enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
-        additive = list(chain.from_iterable(map(replace_aliases, additive)))
 
         # validate selected checks
         if unknown_checks := set(disabled + enabled + additive) - set(objects.CHECKS):
