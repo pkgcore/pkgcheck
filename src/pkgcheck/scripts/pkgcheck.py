@@ -361,8 +361,8 @@ def _setup_scan(parser, namespace, args):
 
     # load default args from system/user configs if config-loading is allowed
     if namespace.config_file is None:
-        configs = ConfigFileParser.default_configs
-        namespace = config_parser.parse_config_options(namespace, configs=configs)
+        namespace = config_parser.parse_config_options(
+            namespace, configs=ConfigFileParser.default_configs)
 
     # re-parse command line args to override config defaults
     namespace, _ = parser._parse_known_args(args, namespace)
@@ -387,21 +387,18 @@ def _setup_scan(parser, namespace, args):
     # support loading repo-specific config settings from metadata/pkgcheck.conf
     repo_config_file = os.path.join(namespace.target_repo.location, 'metadata', 'pkgcheck.conf')
 
-    configs = ()
-    if os.path.isfile(repo_config_file):
+    if namespace.config_file is not False:
+        configs = []
         # repo settings take precedence over system/user settings
-        configs += (repo_config_file,)
-    if namespace.config_file is not None:
+        if os.path.isfile(repo_config_file):
+            configs.append(repo_config_file)
         # and custom user settings take precedence over everything
-        if not namespace.config_file:
-            configs = ()
-        else:
-            configs += (namespace.config_file,)
+        if namespace.config_file:
+            configs.append(namespace.config_file)
+        if configs:
+            namespace = config_parser.parse_config_options(namespace, configs=configs)
 
-    if configs:
-        namespace = config_parser.parse_config_options(namespace, configs=configs)
-
-    # load repo-specific args from config if they exist, command line args override these
+    # load repo-specific args from config if they exist
     namespace = config_parser.parse_config_sections(namespace, namespace.target_repo.aliases)
 
     return namespace, args
