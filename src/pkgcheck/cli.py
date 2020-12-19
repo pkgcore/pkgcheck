@@ -1,5 +1,6 @@
 """Various command-line specific support."""
 
+import os
 import configparser
 import sys
 
@@ -59,15 +60,17 @@ class ConfigFileParser:
                     self.parser.error(f"unknown arguments: {'  '.join(args)}")
         return namespace
 
-    def parse_config_options(self, namespace=None, configs=()):
+    def parse_config_options(self, namespace, configs=()):
         """Parse options from config if they exist."""
-        if configs:
-            self.configs.update(configs)
-            # reset jit attr to force reparse
-            self._config = None
+        configs = [x for x in configs if os.path.isfile(x)]
+        if not configs:
+            return namespace
+
+        self.configs.update(configs)
+        # reset jit attr to force reparse
+        self._config = None
 
         # load default options
-        namespace = arghparse.Namespace() if namespace is None else namespace
         namespace = self.parse_config_sections(namespace, ['DEFAULT'])
 
         # load any defined checksets

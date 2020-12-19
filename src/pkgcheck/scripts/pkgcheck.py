@@ -384,19 +384,14 @@ def _setup_scan(parser, namespace, args):
     # multiplex of target repo and its masters used for package existence queries
     namespace.search_repo = multiplex.tree(*namespace.target_repo.trees)
 
-    # support loading repo-specific config settings from metadata/pkgcheck.conf
-    repo_config_file = os.path.join(namespace.target_repo.location, 'metadata', 'pkgcheck.conf')
-
     if namespace.config_file is not False:
-        configs = []
-        # repo settings take precedence over system/user settings
-        if os.path.isfile(repo_config_file):
-            configs.append(repo_config_file)
-        # and custom user settings take precedence over everything
+        # support loading repo-specific config settings from metadata/pkgcheck.conf
+        repo_config_file = os.path.join(namespace.target_repo.location, 'metadata', 'pkgcheck.conf')
+        configs = [repo_config_file]
+        # custom user settings take precedence over previous configs
         if namespace.config_file:
             configs.append(namespace.config_file)
-        if configs:
-            namespace = config_parser.parse_config_options(namespace, configs=configs)
+        namespace = config_parser.parse_config_options(namespace, configs=configs)
 
     # load repo-specific args from config if they exist
     namespace = config_parser.parse_config_sections(namespace, namespace.target_repo.aliases)

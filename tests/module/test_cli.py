@@ -11,12 +11,13 @@ class TestConfigFileParser:
     def _create_argparser(self, tmp_path):
         self.config_file = str(tmp_path / 'config')
         self.parser = arghparse.ArgumentParser()
+        self.namespace = arghparse.Namespace()
         self.config_parser = cli.ConfigFileParser(self.parser)
 
     def test_no_configs(self):
         config = self.config_parser.parse_config(())
         assert config.sections() == []
-        namespace = self.config_parser.parse_config_options()
+        namespace = self.config_parser.parse_config_options(self.namespace)
         assert vars(namespace) == {}
 
     def test_ignored_configs(self):
@@ -42,7 +43,7 @@ class TestConfigFileParser:
                 foo=bar
             """))
         with pytest.raises(SystemExit) as excinfo:
-            self.config_parser.parse_config_options(configs=[self.config_file])
+            self.config_parser.parse_config_options(self.namespace, configs=[self.config_file])
         out, err = capsys.readouterr()
         assert not out
         assert 'failed loading config: unknown arguments: --foo=bar' in err
