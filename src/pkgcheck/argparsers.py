@@ -163,7 +163,7 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
         # validate selected checksets
         if unknown := set(disabled + enabled) - self.known_aliases - set(namespace.checksets):
             unknown_str = ', '.join(map(repr, unknown))
-            available = ', '.join(namespace.checksets)
+            available = ', '.join(sorted(chain(namespace.checksets, self.known_aliases)))
             s = pluralism(unknown)
             raise argparse.ArgumentError(
                 self, f'unknown checkset{s}: {unknown_str} (available: {available})')
