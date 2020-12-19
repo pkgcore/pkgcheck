@@ -174,10 +174,12 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
             enabled = self.checksets_to_keywords(namespace.checksets, enabled)
         except ValueError as e:
             raise argparse.ArgumentError(self, str(e))
+
         # Convert double negatives into positives, e.g. disabling a checkset
         # containing a disabled keyword enables the keyword.
         disabled_keywords = disabled[1] + enabled[0]
         enabled_keywords = disabled[0] + enabled[1]
+
         # parse keyword args related to checksets
         keywords = ','.join(enabled_keywords + [f'-{x}' for x in disabled_keywords])
         parser._parse_known_args([f'--keywords={keywords}'], namespace)
@@ -293,9 +295,11 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
         # restrict enabled checks if none have been selected
         if not namespace.selected_checks:
             namespace.enabled_checks = set()
+            namespace.selected_checks = set()
             for check in objects.CHECKS.values():
                 if namespace.filtered_keywords.intersection(check.known_results):
                     namespace.enabled_checks.add(check)
+                    namespace.selected_checks.add(check.__name__)
 
         setattr(namespace, self.dest, frozenset(enabled))
 
