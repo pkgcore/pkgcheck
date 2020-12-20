@@ -1,7 +1,5 @@
 """Implements pkgcheck API to be exported."""
 
-import shlex
-
 from snakeoil.contexts import patch
 
 from .base import PkgcheckException
@@ -11,7 +9,7 @@ def scan(args=None):
     """Run ``pkgcheck scan`` using given arguments.
 
     Args:
-        args (str): command-line args for ``pkgcheck scan``
+        args (list): command-line args for ``pkgcheck scan``
 
     Returns:
         iterator of scan results
@@ -24,7 +22,8 @@ def scan(args=None):
         """Stub function to handle argparse errors."""
         raise PkgcheckException(message)
 
-    args = [] if args is None else shlex.split(args)
+    if args is None:
+        args = []
 
     with patch('argparse.ArgumentParser.exit', parser_exit):
         options = pkgcheck.argparser.parse_args(['scan'] + args)
