@@ -14,8 +14,9 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck import __title__ as project
-from pkgcheck import base, const, objects, reporters
+from pkgcheck import base
 from pkgcheck import checks as checks_mod
+from pkgcheck import const, objects, reporters, scan
 from pkgcheck.scripts import run
 from pkgcore.ebuild import atom, restricts
 from pkgcore.restrictions import packages
@@ -376,10 +377,12 @@ class TestPkgcheckScan:
     @pytest.fixture(autouse=True)
     def _setup(self, testconfig, tmp_path):
         self.cache_dir = str(tmp_path)
-        self.args = [
-            project, '--config', testconfig,
-            'scan', '--config', 'no', '--cache-dir', self.cache_dir,
-        ]
+        base_args = ['--config', testconfig]
+        self.scan = partial(scan, base_args=base_args)
+        # args for running `pkgcheck scan` via API call
+        self.scan_args = ['--config', 'no', '--cache-dir', self.cache_dir]
+        # args for running pkgcheck like a script
+        self.args = [project] + base_args + ['scan'] + self.scan_args
 
     @staticmethod
     def _patch(fix, repo_path):
@@ -490,7 +493,7 @@ class TestPkgcheckScan:
     _verbose_results = {}
 
     @pytest.mark.parametrize('repo', repos)
-    def test_scan_repo(self, repo, capsysbinary, tmp_path, verbosity=0):
+    def test_scan_repo(self, repo, tmp_path, verbosity=0):
         """Scan a target repo, saving results for verfication."""
         repo_dir = pjoin(self.repos_dir, repo)
 
@@ -517,21 +520,15 @@ class TestPkgcheckScan:
 
         results = []
         verbose_results = []
-        with patch('sys.argv', self.args + ['-R', 'BinaryPickleStream'] + args):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            out, err = capsysbinary.readouterr()
-            assert out, f'{repo} repo failed, no results'
-            assert excinfo.value.code == 0
-            for result in reporters.BinaryPickleStream.from_file(io.BytesIO(out)):
-                # ignore results generated from stubs
-                stubs = (getattr(result, x, '') for x in ('category', 'package'))
-                if any(x.startswith('stub') for x in stubs):
-                    continue
-                if verbosity:
-                    verbose_results.append(result)
-                else:
-                    results.append(result)
+        for result in self.scan(self.scan_args + args):
+            # ignore results generated from stubs
+            stubs = (getattr(result, x, '') for x in ('category', 'package'))
+            if any(x.startswith('stub') for x in stubs):
+                continue
+            if verbosity:
+                verbose_results.append(result)
+            else:
+                results.append(result)
 
         if verbosity:
             self._verbose_results[repo] = set(verbose_results)
@@ -541,9 +538,9 @@ class TestPkgcheckScan:
             assert len(results) == len(self._results[repo])
 
     @pytest.mark.parametrize('repo', repos)
-    def test_scan_repo_verbose(self, repo, capsysbinary, tmp_path):
+    def test_scan_repo_verbose(self, repo, tmp_path):
         """Scan a target repo in verbose mode, saving results for verfication."""
-        return self.test_scan_repo(repo, capsysbinary, tmp_path, verbosity=1)
+        return self.test_scan_repo(repo, tmp_path, verbosity=1)
 
     def _get_results(self, path):
         """Return the set of result objects from a given json stream file."""
@@ -564,7 +561,7 @@ class TestPkgcheckScan:
             return output
 
     @pytest.mark.parametrize('repo', repos)
-    def test_scan_verify(self, repo, capsys, tmp_path):
+    def test_scan_verify(self, repo, tmp_path):
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
         results = set()
         verbose_results = set()
@@ -604,7 +601,7 @@ class TestPkgcheckScan:
             pytest.fail('\n'.join(error))
 
     @pytest.mark.parametrize('check, result', _all_results)
-    def test_fix(self, check, result, capsys, tmp_path):
+    def test_fix(self, check, result, tmp_path):
         """Apply fixes to pkgs, verifying the related results are fixed."""
         check_name = check.__name__
         keyword = result.__name__
@@ -635,14 +632,12 @@ class TestPkgcheckScan:
             except FileNotFoundError:
                 pass
 
-            cmd = self.args + args
-            with patch('sys.argv', cmd):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                out, err = capsys.readouterr()
-                assert not err, f"failed fixing error, command: {' '.join(cmd)}"
-                assert not out, f"failed fixing error, command: {' '.join(cmd)}"
-                assert excinfo.value.code == 0
+            results = list(self.scan(self.scan_args + args))
+            if results:
+                error = ['unexpected repo scan results:']
+                error.append(self._render_results(results))
+                pytest.fail('\n'.join(error))
+
             shutil.rmtree(fixed_repo)
             tested = True
 
