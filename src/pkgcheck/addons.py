@@ -661,7 +661,7 @@ class BashAddon(base.Addon):
         self.parser.set_language(self.bash)
 
 
-def init_addon(cls, options, addons_map=None):
+def init_addon(cls, options, addons_map=None, **kwargs):
     """Initialize a given addon."""
     if addons_map is None:
         addons_map = {}
@@ -673,9 +673,9 @@ def init_addon(cls, options, addons_map=None):
         # tree as kwargs
         required_addons = chain.from_iterable(
             x.required_addons for x in cls.__mro__ if issubclass(x, base.Addon))
-        kwargs = {
+        kwargs.update({
             base.param_name(addon): init_addon(addon, options, addons_map)
-            for addon in required_addons}
+            for addon in required_addons})
         addon = addons_map[cls] = cls(options, **kwargs)
 
         # force cache updates

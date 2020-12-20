@@ -1,10 +1,11 @@
+import multiprocessing
 import random
 import string
 from dataclasses import dataclass
 from typing import List
 
 import pytest
-from pkgcheck import addons, base, sources
+from pkgcheck import addons, base, checks, sources
 from pkgcheck.caches import CachedAddon
 from pkgcheck.pipeline import SyncCheckRunner
 from pkgcore.ebuild import domain, repo_objs
@@ -209,13 +210,17 @@ def init_check(check_cls, options):
     """Initialize an individual check."""
     addons_map = {}
     enabled_addons = base.get_addons([check_cls])
+    results_q = multiprocessing.SimpleQueue()
 
     # initialize required caches before other addons
     enabled_addons = sorted(enabled_addons, key=lambda x: not issubclass(x, CachedAddon))
 
     # check class is guaranteed to be last in the list
     for cls in enabled_addons:
-        addon = addons.init_addon(cls, options, addons_map)
+        if issubclass(cls, checks.AsyncCheck):
+            addon = addons.init_addon(cls, options, addons_map, results_q=results_q)
+        else:
+            addon = addons.init_addon(cls, options, addons_map)
 
     source = sources.init_source(addon.source, options, addons_map)
     required_addons = {

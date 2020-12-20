@@ -120,10 +120,9 @@ class EclassCacheCheck(Check):
 class AsyncCheck(Check):
     """Check that schedules tasks to be run asynchronously."""
 
-    def __init__(self, *args):
+    def __init__(self, *args, results_q):
         super().__init__(*args)
-        # TODO: raise SkipCheck here when results_q is missing
-        self._results_q = getattr(self.options, '_results_q', None)
+        self.results_q = results_q
 
 
 class NetworkCheck(AsyncCheck, OptionalCheck):
@@ -131,8 +130,8 @@ class NetworkCheck(AsyncCheck, OptionalCheck):
 
     required_addons = (addons.NetAddon,)
 
-    def __init__(self, *args, net_addon):
-        super().__init__(*args)
+    def __init__(self, *args, net_addon, **kwargs):
+        super().__init__(*args, **kwargs)
         if not self.options.net:
             raise SkipCheck(self, 'network checks not enabled')
         self.timeout = self.options.timeout
@@ -171,7 +170,7 @@ class SkipCheck(UserException):
         super().__init__(f'{check_name}: {msg}')
 
 
-def init_checks(enabled_addons, options):
+def init_checks(enabled_addons, options, results_q):
     """Initialize selected checks."""
     enabled = defaultdict(list)
     addons_map = {}
@@ -182,7 +181,10 @@ def init_checks(enabled_addons, options):
 
     for cls in enabled_addons:
         try:
-            addon = addons.init_addon(cls, options, addons_map)
+            if issubclass(cls, AsyncCheck):
+                addon = addons.init_addon(cls, options, addons_map, results_q=results_q)
+            else:
+                addon = addons.init_addon(cls, options, addons_map)
         except SkipCheck:
             if cls.__name__ in options.selected_checks:
                 raise

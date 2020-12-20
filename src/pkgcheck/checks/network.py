@@ -172,7 +172,7 @@ class _UrlCheck(NetworkCheck):
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
             # return exceptions that occurred in threads
-            self._results_q.put(tb)
+            self.results_q.put(tb)
             return
 
         result = future.result()
@@ -180,7 +180,7 @@ class _UrlCheck(NetworkCheck):
             if pkg is not None:
                 # recreate result object with different pkg target
                 result = result._create(**result._attrs, pkg=pkg)
-            self._results_q.put([result])
+            self.results_q.put([result])
 
     def _get_urls(self, pkg):
         """Get URLs to verify for a given package."""

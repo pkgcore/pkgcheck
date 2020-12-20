@@ -37,7 +37,6 @@ class Pipeline:
         self._mp_ctx = multiprocessing.get_context('fork')
         # create checkrunner pipelines
         self._results_q = self._mp_ctx.SimpleQueue()
-        self.options._results_q = self._results_q
         self._pipes = self._create_runners()
 
         # initialize settings used by iterator support
@@ -62,7 +61,7 @@ class Pipeline:
     def _create_runners(self):
         """Initialize and categorize checkrunners for results pipeline."""
         # initialize enabled checks
-        enabled_checks = init_checks(self.options.addons, self.options)
+        enabled_checks = init_checks(self.options.addons, self.options, self._results_q)
 
         # initialize checkrunners per source type, using separate runner for async checks
         checkrunners = defaultdict(list)
