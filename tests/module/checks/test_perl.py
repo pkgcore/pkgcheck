@@ -48,12 +48,12 @@ class TestPerlCheck(misc.ReportTestCase):
             assert isinstance(r, perl.MismatchedPerlVersion)
             assert r.dist_version == '1.07'
             assert r.normalized == '1.70.0'
-            assert 'DIST_VERSION=1.07 normalizes to 1.70.0' == str(r)
+            assert 'DIST_VERSION=1.07 normalizes to 1.70.0' in str(r)
             r = self.assertReport(self.mk_check(), self.mk_pkg(PVR, '1.7'))
             assert isinstance(r, perl.MismatchedPerlVersion)
             assert r.dist_version == '1.7'
             assert r.normalized == '1.700.0'
-            assert 'DIST_VERSION=1.7 normalizes to 1.700.0' == str(r)
+            assert 'DIST_VERSION=1.7 normalizes to 1.700.0' in str(r)
 
     def test_no_dist_version(self):
         """Ebuilds without DIST_VERSION defined are skipped."""
