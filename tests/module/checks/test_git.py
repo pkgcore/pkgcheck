@@ -4,12 +4,12 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
+from pkgcheck.base import PkgcheckUserException
 from pkgcheck.checks import git as git_mod
 from pkgcheck.git import GitCommit
 from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
-from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
@@ -428,7 +428,7 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         # git archive failures error out
         with patch('pkgcheck.checks.git.subprocess.Popen') as git_archive:
             git_archive.return_value.poll.return_value = -1
-            with pytest.raises(UserException, match='failed populating archive repo'):
+            with pytest.raises(PkgcheckUserException, match='failed populating archive repo'):
                 self.assertNoReport(self.check, self.source)
 
     def test_dropped_unstable_keywords(self):
@@ -495,7 +495,7 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         # git archive failures error out
         with patch('pkgcheck.checks.git.subprocess.Popen') as git_archive:
             git_archive.return_value.poll.return_value = -1
-            with pytest.raises(UserException, match='failed populating archive repo'):
+            with pytest.raises(PkgcheckUserException, match='failed populating archive repo'):
                 self.assertNoReport(self.check, self.source)
 
     def test_missing_move(self):

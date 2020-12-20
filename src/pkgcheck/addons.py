@@ -9,7 +9,6 @@ from itertools import chain, filterfalse
 from pkgcore.ebuild import domain, misc
 from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.restrictions import packages, values
-from snakeoil.cli.exceptions import UserException
 from snakeoil.containers import ProtectedSet
 from snakeoil.decorators import coroutine
 from snakeoil.klass import jit_attr
@@ -20,6 +19,7 @@ from snakeoil.strings import pluralism
 from tree_sitter import Language, Parser
 
 from . import base, caches, const, results
+from .base import PkgcheckUserException
 from .log import logger
 from .utils import build_library
 
@@ -640,7 +640,7 @@ class NetAddon(base.Addon):
                 user_agent=self.options.user_agent)
         except ImportError as e:
             if e.name == 'requests':
-                raise UserException('network checks require requests to be installed')
+                raise PkgcheckUserException('network checks require requests to be installed')
             raise
 
 

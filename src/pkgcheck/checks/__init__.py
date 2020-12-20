@@ -5,7 +5,6 @@ from functools import total_ordering
 
 from pkgcore import fetch
 from snakeoil import klass
-from snakeoil.cli.exceptions import UserException
 
 from .. import addons, base, feeds, sources
 from ..caches import CachedAddon
@@ -158,7 +157,7 @@ class MirrorsCheck(Check):
         return set(mirrors)
 
 
-class SkipCheck(UserException):
+class SkipCheck(base.PkgcheckUserException):
     """Check failed to initialize due to missing dependencies or other situation.
 
     Checks not explicitly selected will be skipped if they raise this during

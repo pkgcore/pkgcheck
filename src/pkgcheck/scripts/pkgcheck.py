@@ -20,12 +20,12 @@ from pkgcore.restrictions import boolean, packages, values
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
-from snakeoil.cli.exceptions import UserException
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import pjoin
 
 from .. import argparsers, base, const, objects, reporters
 from ..addons import init_addon
+from ..base import PkgcheckUserException
 from ..caches import CachedAddon
 from ..cli import ConfigFileParser
 from ..eclass import matching_eclass
@@ -421,9 +421,9 @@ def generate_restricts(repo, targets):
             except parserestrict.ParseError as e:
                 # use path-based error for path-based targets
                 if os.path.exists(path) or os.path.isabs(target):
-                    raise UserException(
+                    raise PkgcheckUserException(
                         f"{repo.repo_id!r} repo doesn't contain: {target!r}")
-                raise UserException(str(e))
+                raise PkgcheckUserException(str(e))
 
     # support eclass target restrictions
     if eclasses:
@@ -660,8 +660,8 @@ def _replay(options, out, err):
 
     if exc:
         if not processed:
-            raise UserException('invalid or unsupported replay file')
-        raise UserException(
+            raise PkgcheckUserException('invalid or unsupported replay file')
+        raise PkgcheckUserException(
             f'corrupted results file {options.results.name!r}: {exc}')
 
     return 0

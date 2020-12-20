@@ -19,7 +19,6 @@ from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values
 from snakeoil.cli import arghparse
-from snakeoil.cli.exceptions import UserException
 from snakeoil.iterables import partition
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
@@ -27,6 +26,7 @@ from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.strings import pluralism
 
 from . import base, caches
+from .base import PkgcheckUserException
 from .checks import GitCheck
 from .eclass import matching_eclass
 from .log import logger
@@ -418,7 +418,7 @@ class GitStash(AbstractContextManager):
                 cwd=self.path, check=True, encoding='utf8')
         except subprocess.CalledProcessError as e:
             error = e.stderr.splitlines()[0]
-            raise UserException(f'git failed stashing files: {error}')
+            raise PkgcheckUserException(f'git failed stashing files: {error}')
         self._stashed = True
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
@@ -431,7 +431,7 @@ class GitStash(AbstractContextManager):
                     cwd=self.path, check=True, encoding='utf8')
             except subprocess.CalledProcessError as e:
                 error = e.stderr.splitlines()[0]
-                raise UserException(f'git failed applying stash: {error}')
+                raise PkgcheckUserException(f'git failed applying stash: {error}')
 
 
 class GitAddon(caches.CachedAddon):
@@ -573,7 +573,7 @@ class GitAddon(caches.CachedAddon):
                             repo.location, commit_range, data=data,
                             verbosity=self.options.verbosity)
                     except GitError as e:
-                        raise UserException(str(e))
+                        raise PkgcheckUserException(str(e))
                     git_cache = GitCache(data, self.cache, commit=commit)
                 else:
                     cache_repo = False
@@ -618,7 +618,7 @@ class GitAddon(caches.CachedAddon):
                 if origin != master:
                     data = self.pkg_history(repo.location, 'origin/HEAD..master', local=True)
             except GitError as e:
-                raise UserException(str(e))
+                raise PkgcheckUserException(str(e))
 
         repo_id = f'{repo.repo_id}-commits'
         return repo_cls(data, repo_id=repo_id)
@@ -634,6 +634,6 @@ class GitAddon(caches.CachedAddon):
                 if origin != master:
                     commits = GitRepoCommits(repo.location, 'origin/HEAD..master')
             except GitError as e:
-                raise UserException(str(e))
+                raise PkgcheckUserException(str(e))
 
         return iter(commits)

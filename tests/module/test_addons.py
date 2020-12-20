@@ -3,8 +3,8 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck import addons
+from pkgcheck.base import PkgcheckUserException
 from pkgcore.restrictions import packages
-from snakeoil.cli.exceptions import UserException
 from snakeoil.osutils import pjoin
 
 from .misc import FakePkg, FakeProfile, Profile
@@ -342,7 +342,7 @@ class TestNetAddon:
                 addon.session
             # failing to import requests specifically returns a nicer user exception
             net.side_effect = ImportError('import failed', name='requests')
-            with pytest.raises(UserException, match='network checks require requests'):
+            with pytest.raises(PkgcheckUserException, match='network checks require requests'):
                 addon.session
 
     def test_custom_timeout(self, tool):

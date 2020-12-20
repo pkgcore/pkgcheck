@@ -13,11 +13,11 @@ from urllib.parse import urlparse
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.ebuild.repository import UnconfiguredTree
 from snakeoil import klass
-from snakeoil.cli.exceptions import UserException
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
+from ..base import PkgcheckUserException
 from . import GentooRepoCheck, GitCheck
 from .header import copyright_regex
 
@@ -211,7 +211,7 @@ class _RemovalRepo(UnconfiguredTree):
             cwd=self.__parent_repo.location)
         if old_files.poll():
             error = old_files.stderr.read().decode().strip()
-            raise UserException(f'failed populating archive repo: {error}')
+            raise PkgcheckUserException(f'failed populating archive repo: {error}')
         with tarfile.open(mode='r|', fileobj=old_files.stdout) as tar:
             tar.extractall(path=self.location)
 

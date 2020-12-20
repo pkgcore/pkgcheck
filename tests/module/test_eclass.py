@@ -3,9 +3,8 @@ import textwrap
 from unittest.mock import patch
 
 import pytest
+from pkgcheck.base import PkgcheckUserException
 from pkgcheck.eclass import Eclass, EclassAddon
-from pkgcore.ebuild.eclass import EclassDocParsingError
-from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
@@ -143,7 +142,7 @@ class TestEclassAddon:
         # verify IO related dump failures are raised
         with patch('pkgcheck.caches.pickle.dump') as pickle_dump:
             pickle_dump.side_effect = IOError('unpickling failed')
-            with pytest.raises(UserException, match='failed dumping eclass cache'):
+            with pytest.raises(PkgcheckUserException, match='failed dumping eclass cache'):
                 self.addon.update_cache()
 
     def test_eclass_removal(self):

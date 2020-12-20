@@ -8,7 +8,7 @@ from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.restrictions import packages
 from pkgcheck import base, git
-from snakeoil.cli.exceptions import UserException
+from pkgcheck.base import PkgcheckUserException
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
@@ -134,7 +134,7 @@ class TestGitStash:
             err = subprocess.CalledProcessError(1, 'git stash')
             err.stderr = 'git stash failed'
             run.side_effect = [Mock(stdout='foo'), err]
-            with pytest.raises(UserException, match='git failed stashing files'):
+            with pytest.raises(PkgcheckUserException, match='git failed stashing files'):
                 with git.GitStash(git_repo.path):
                     pass
 
@@ -142,7 +142,7 @@ class TestGitStash:
         path = pjoin(git_repo.path, 'foo')
         touch(path)
         assert os.path.exists(path)
-        with pytest.raises(UserException, match='git failed applying stash'):
+        with pytest.raises(PkgcheckUserException, match='git failed applying stash'):
             with git.GitStash(git_repo.path):
                 assert not os.path.exists(path)
                 touch(path)
@@ -507,7 +507,7 @@ class TestGitAddon:
 
         with patch('pkgcheck.git.GitLog') as git_log:
             git_log.side_effect = git.GitError('git parsing failed')
-            with pytest.raises(UserException, match='git parsing failed'):
+            with pytest.raises(PkgcheckUserException, match='git parsing failed'):
                 self.addon.update_cache()
 
     def test_error_loading_cache(self, repo, make_git_repo):
@@ -549,7 +549,7 @@ class TestGitAddon:
         # verify IO related dump failures are raised
         with patch('pkgcheck.caches.pickle.dump') as pickle_dump:
             pickle_dump.side_effect = IOError('unpickling failed')
-            with pytest.raises(UserException, match='failed dumping git cache'):
+            with pytest.raises(PkgcheckUserException, match='failed dumping git cache'):
                 self.addon.update_cache()
 
     def test_commits_repo(self, repo, make_repo, make_git_repo):
@@ -582,7 +582,7 @@ class TestGitAddon:
         # failing to parse git log returns error with git cache enabled
         with patch('pkgcheck.git.GitLog') as git_log:
             git_log.side_effect = git.GitError('git parsing failed')
-            with pytest.raises(UserException, match='git parsing failed'):
+            with pytest.raises(PkgcheckUserException, match='git parsing failed'):
                 self.addon.commits_repo(git.GitChangedRepo)
 
         # disable git cache
@@ -626,7 +626,7 @@ class TestGitAddon:
         # failing to parse git log returns error with git cache enabled
         with patch('pkgcheck.git.GitLog') as git_log:
             git_log.side_effect = git.GitError('git parsing failed')
-            with pytest.raises(UserException, match='git parsing failed'):
+            with pytest.raises(PkgcheckUserException, match='git parsing failed'):
                 list(self.addon.commits())
 
         # disable git cache

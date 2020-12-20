@@ -10,13 +10,12 @@ from dataclasses import dataclass
 from operator import attrgetter
 
 from snakeoil import klass
-from snakeoil.cli.exceptions import UserException
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
-from . import base
+from .base import Addon, PkgcheckUserException
 from .log import logger
 
 
@@ -42,7 +41,7 @@ class DictCache(UserDict, Cache):
         self._cache = cache
 
 
-class CachedAddon(base.Addon):
+class CachedAddon(Addon):
     """Mixin for addon classes that create/use data caches."""
 
     # attributes for cache registry
@@ -94,7 +93,7 @@ class CachedAddon(base.Addon):
                 pickle.dump(data, f, protocol=-1)
         except IOError as e:
             msg = f'failed dumping {self.cache.type} cache: {path!r}: {e.strerror}'
-            raise UserException(msg)
+            raise PkgcheckUserException(msg)
 
     @klass.jit_attr
     def existing_caches(self):
@@ -114,7 +113,7 @@ class CachedAddon(base.Addon):
             except FileNotFoundError:
                 pass
             except IOError as e:
-                raise UserException(f'failed removing cache dir: {e}')
+                raise PkgcheckUserException(f'failed removing cache dir: {e}')
         else:
             try:
                 for cache_type, paths in self.existing_caches.items():
@@ -134,4 +133,4 @@ class CachedAddon(base.Addon):
                                         continue
                                     raise
             except IOError as e:
-                raise UserException(f'failed removing {cache_type} cache: {path!r}: {e}')
+                raise PkgcheckUserException(f'failed removing {cache_type} cache: {path!r}: {e}')
