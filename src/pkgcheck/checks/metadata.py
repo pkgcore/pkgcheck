@@ -888,8 +888,8 @@ class UnsortedKeywords(results.VersionResult, results.Warning):
         return f"unsorted KEYWORDS: {', '.join(self.keywords)}"
 
 
-class MissingVirtualKeywords(results.VersionResult, results.Warning):
-    """Virtual packages with keywords missing from their dependencies."""
+class VirtualKeywordsUpdate(results.VersionResult, results.Info):
+    """Virtual packages with keywords that can be updated to match dependencies."""
 
     def __init__(self, keywords, **kwargs):
         super().__init__(**kwargs)
@@ -897,7 +897,9 @@ class MissingVirtualKeywords(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f"missing KEYWORDS: {', '.join(self.keywords)}"
+        s = pluralism(self.keywords)
+        keywords = ', '.join(self.keywords)
+        return f"KEYWORDS update{s} available: {keywords}"
 
 
 class KeywordsCheck(Check):
@@ -906,7 +908,7 @@ class KeywordsCheck(Check):
     required_addons = (addons.UseAddon,)
     known_results = frozenset([
         BadKeywords, UnknownKeywords, OverlappingKeywords, DuplicateKeywords,
-        UnsortedKeywords, MissingVirtualKeywords,
+        UnsortedKeywords, VirtualKeywordsUpdate,
     ])
 
     def __init__(self, *args, use_addon):
@@ -964,16 +966,18 @@ class KeywordsCheck(Check):
                         pkg.keywords, sorted_keywords=pkg.sorted_keywords, pkg=pkg)
 
             if pkg.category == 'virtual':
-                keywords = set()
+                dep_keywords = defaultdict(set)
                 rdepend, _ = self.iuse_filter((atom_cls,), pkg, pkg.rdepend)
-                for x in set(rdepend):
-                    for p in self.options.search_repo.match(x.no_usedeps):
-                        keywords.update(
+                for dep in set(rdepend):
+                    for p in self.options.search_repo.match(dep.no_usedeps):
+                        dep_keywords[dep].update(
                             x for x in p.keywords if x.lstrip('~') in self.valid_arches)
-                pkg_keywords = set(pkg.keywords)
-                pkg_keywords.update(f'~{x}' for x in pkg.keywords if x[0] != '~')
-                if missing_keywords := keywords - pkg_keywords:
-                    yield MissingVirtualKeywords(sort_keywords(missing_keywords), pkg=pkg)
+                if dep_keywords:
+                    dep_keywords = set.intersection(*dep_keywords.values())
+                    pkg_keywords = set(pkg.keywords)
+                    pkg_keywords.update(f'~{x}' for x in pkg.keywords if x[0] != '~')
+                    if keywords := dep_keywords - pkg_keywords:
+                        yield VirtualKeywordsUpdate(sort_keywords(keywords), pkg=pkg)
 
 
 class MissingUri(results.VersionResult, results.Warning):

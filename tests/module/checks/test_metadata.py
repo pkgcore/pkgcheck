@@ -270,16 +270,16 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         # single pkg match
         pkg = self.mk_pkg(cpv='virtual/foo-0', rdepend='=dev-libs/foo-0')
         r = self.assertReport(check, pkg)
-        assert isinstance(r, metadata.MissingVirtualKeywords)
+        assert isinstance(r, metadata.VirtualKeywordsUpdate)
         assert r.keywords == ('amd64', '~x86')
-        assert 'missing KEYWORDS: amd64, ~x86' in str(r)
+        assert 'KEYWORDS updates available: amd64, ~x86' in str(r)
 
         # multiple pkg match
         pkg = self.mk_pkg(cpv='virtual/foo-0', rdepend='dev-libs/foo')
         r = self.assertReport(check, pkg)
-        assert isinstance(r, metadata.MissingVirtualKeywords)
+        assert isinstance(r, metadata.VirtualKeywordsUpdate)
         assert r.keywords == ('amd64', 'ppc', '~x86')
-        assert 'missing KEYWORDS: amd64, ppc, ~x86' in str(r)
+        assert 'KEYWORDS updates available: amd64, ppc, ~x86' in str(r)
 
 
 class TestIuseCheck(IUSE_Options, misc.ReportTestCase):
