@@ -52,24 +52,24 @@ class TestPackageUpdatesCheck(misc.Tmpdir, misc.ReportTestCase):
         updates = {'foobar': ['blah']}
         r = self.assertReport(self.mk_check(**updates), [])
         assert isinstance(r, repo_metadata.BadPackageUpdate)
-        assert "incorrectly named update file: 'foobar'" == str(r)
+        assert "incorrectly named update file: 'foobar'" in str(r)
 
         updates = {'5Q-2020': ['blah']}
         r = self.assertReport(self.mk_check(**updates), [])
         assert isinstance(r, repo_metadata.BadPackageUpdate)
-        assert "incorrectly named update file: '5Q-2020'" == str(r)
+        assert "incorrectly named update file: '5Q-2020'" in str(r)
 
         # hidden files will be flagged
         updates = {'.1Q-2020.swp': ['blah']}
         r = self.assertReport(self.mk_check(**updates), [])
         assert isinstance(r, repo_metadata.BadPackageUpdate)
-        assert "incorrectly named update file: '.1Q-2020.swp'" == str(r)
+        assert "incorrectly named update file: '.1Q-2020.swp'" in str(r)
 
     def test_empty_line(self):
         updates = {'1Q-2020': ['  ']}
         r = self.assertReport(self.mk_check(**updates), [])
         assert isinstance(r, repo_metadata.BadPackageUpdate)
-        assert "file '1Q-2020': empty line 1" == str(r)
+        assert "file '1Q-2020': empty line 1" in str(r)
 
     def test_extra_whitespace(self):
         pkgs = ('dev-util/foo-0', 'dev-util/bar-1')

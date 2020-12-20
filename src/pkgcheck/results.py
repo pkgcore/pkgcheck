@@ -32,7 +32,7 @@ class Result:
         return self._name if self._name is not None else self.__class__.__name__
 
     def __str__(self):
-        return self.desc
+        return f'{self.name}: {self.desc}'
 
     @property
     def desc(self):

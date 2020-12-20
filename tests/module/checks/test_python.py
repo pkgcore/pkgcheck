@@ -27,7 +27,7 @@ class TestPythonCheck(misc.ReportTestCase):
 
         r = self.assertReport(self.check, self.mk_pkg(DEPEND='dev-lang/python'))
         assert isinstance(r, python.MissingPythonEclass)
-        assert 'missing python-any-r1 eclass usage for DEPEND="dev-lang/python"' == str(r)
+        assert 'missing python-any-r1 eclass usage for DEPEND="dev-lang/python"' in str(r)
 
         assert isinstance(
             self.assertReport(self.check, self.mk_pkg(DEPEND='dev-lang/python:2.7')),
@@ -210,7 +210,7 @@ class TestPythonCheck(misc.ReportTestCase):
                         'python_targets_python3_6? ( '
                         '  dev-lang/python:3.6 )'))
         assert isinstance(r, python.PythonMissingRequiredUse)
-        assert 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"' == str(r)
+        assert 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"' in str(r)
 
         # incomplete REQUIRED_USE (e.g. use of python_gen_useflags)
         assert isinstance(
@@ -305,7 +305,7 @@ class TestPythonCheck(misc.ReportTestCase):
                 REQUIRED_USE='|| ( python_targets_python2_7 '
                              '     python_targets_python3_6 )'))
         assert isinstance(r, python.PythonMissingDeps)
-        assert 'missing RDEPEND="${PYTHON_DEPS}"' == str(r)
+        assert 'missing RDEPEND="${PYTHON_DEPS}"' in str(r)
 
         # incomplete deps
         r = self.assertReport(
@@ -319,7 +319,7 @@ class TestPythonCheck(misc.ReportTestCase):
                 REQUIRED_USE='|| ( python_targets_python2_7 '
                              '     python_targets_python3_6 )'))
         assert isinstance(r, python.PythonMissingDeps)
-        assert 'missing RDEPEND="${PYTHON_DEPS}"' == str(r)
+        assert 'missing RDEPEND="${PYTHON_DEPS}"' in str(r)
 
         # check that irrelevant dep with same USE conditional does not wrongly
         # satisfy the check

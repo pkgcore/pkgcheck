@@ -174,7 +174,7 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         r = self.assertReport(check, self.mk_pkg("foo"))
         assert isinstance(r, metadata.UnknownKeywords)
         assert r.keywords == ('foo',)
-        assert "unknown KEYWORDS: 'foo'" == str(r)
+        assert "unknown KEYWORDS: 'foo'" in str(r)
 
         # check that * and ~* are flagged in gentoo repo
         options = self.get_options(repo_name='gentoo', gentoo_repo=True)
@@ -183,11 +183,11 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         r = self.assertReport(check, self.mk_pkg("*"))
         assert isinstance(r, metadata.UnknownKeywords)
         assert r.keywords == ('*',)
-        assert "unknown KEYWORDS: '*'" == str(r)
+        assert "unknown KEYWORDS: '*'" in str(r)
         r = self.assertReport(check, self.mk_pkg("~*"))
         assert isinstance(r, metadata.UnknownKeywords)
         assert r.keywords == ('~*',)
-        assert "unknown KEYWORDS: '~*'" == str(r)
+        assert "unknown KEYWORDS: '~*'" in str(r)
 
     def test_overlapping_keywords(self, check):
         # regular keywords
@@ -197,7 +197,7 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         r = self.assertReport(check, self.mk_pkg("amd64 ~amd64"))
         assert isinstance(r, metadata.OverlappingKeywords)
         assert r.keywords == "('amd64', '~amd64')"
-        assert "overlapping KEYWORDS: ('amd64', '~amd64')" == str(r)
+        assert "overlapping KEYWORDS: ('amd64', '~amd64')" in str(r)
 
         # multiple overlapping sets
         r = self.assertReport(check, self.mk_pkg("amd64 ~amd64 ~x86 x86"))
@@ -212,7 +212,7 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         r = self.assertReport(check, self.mk_pkg("amd64 amd64"))
         assert isinstance(r, metadata.DuplicateKeywords)
         assert r.keywords == ('amd64',)
-        assert 'duplicate KEYWORDS: amd64' == str(r)
+        assert 'duplicate KEYWORDS: amd64' in str(r)
 
         # multiple duplicates
         r = self.assertReport(check, self.mk_pkg("-* -* amd64 amd64 ~x86 ~x86"))
@@ -231,7 +231,7 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         assert isinstance(r, metadata.UnsortedKeywords)
         assert r.keywords == ('~amd64', '-*')
         assert r.sorted_keywords == ()
-        assert 'unsorted KEYWORDS: ~amd64, -*' == str(r)
+        assert 'unsorted KEYWORDS: ~amd64, -*' in str(r)
 
         # create a check instance with verbose mode enabled
         options = self.get_options(gentoo_repo=False, verbosity=1)
@@ -243,14 +243,14 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         assert isinstance(r, metadata.UnsortedKeywords)
         assert r.keywords == ('~amd64', '-*')
         assert r.sorted_keywords == ('-*', '~amd64')
-        assert '\n\tunsorted KEYWORDS: ~amd64, -*\n\tsorted KEYWORDS: -*, ~amd64' == str(r)
+        assert '\n\tunsorted KEYWORDS: ~amd64, -*\n\tsorted KEYWORDS: -*, ~amd64' in str(r)
 
         # keywords should be sorted alphabetically by arch
         r = self.assertReport(check, self.mk_pkg('ppc ~amd64'))
         assert isinstance(r, metadata.UnsortedKeywords)
         assert r.keywords == ('ppc', '~amd64')
         assert r.sorted_keywords == ('~amd64', 'ppc')
-        assert '\n\tunsorted KEYWORDS: ppc, ~amd64\n\tsorted KEYWORDS: ~amd64, ppc' == str(r)
+        assert '\n\tunsorted KEYWORDS: ppc, ~amd64\n\tsorted KEYWORDS: ~amd64, ppc' in str(r)
 
         # prefix keywords should come after regular keywords
         r = self.assertReport(check, self.mk_pkg('~amd64 ~amd64-fbsd ppc ~x86'))
@@ -272,14 +272,14 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         r = self.assertReport(check, pkg)
         assert isinstance(r, metadata.MissingVirtualKeywords)
         assert r.keywords == ('amd64', '~x86')
-        assert 'missing KEYWORDS: amd64, ~x86' == str(r)
+        assert 'missing KEYWORDS: amd64, ~x86' in str(r)
 
         # multiple pkg match
         pkg = self.mk_pkg(cpv='virtual/foo-0', rdepend='dev-libs/foo')
         r = self.assertReport(check, pkg)
         assert isinstance(r, metadata.MissingVirtualKeywords)
         assert r.keywords == ('amd64', 'ppc', '~x86')
-        assert 'missing KEYWORDS: amd64, ppc, ~x86' == str(r)
+        assert 'missing KEYWORDS: amd64, ppc, ~x86' in str(r)
 
 
 class TestIuseCheck(IUSE_Options, misc.ReportTestCase):
@@ -360,7 +360,7 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
             r = self.assertReport(check, self.mk_pkg(eapi=eapi_str))
             assert isinstance(r, metadata.DeprecatedEapi)
             assert r.eapi == eapi_str
-            assert f'uses deprecated EAPI {eapi_str}' == str(r)
+            assert f'uses deprecated EAPI {eapi_str}' in str(r)
 
     def test_banned_eapi(self):
         deprecated = ('0', '2', '4', '5')
@@ -370,7 +370,7 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
             r = self.assertReport(check, self.mk_pkg(eapi=eapi_str))
             assert isinstance(r, metadata.BannedEapi)
             assert r.eapi == eapi_str
-            assert f'uses banned EAPI {eapi_str}' == str(r)
+            assert f'uses banned EAPI {eapi_str}' in str(r)
 
 
 class TestSourcingCheck(misc.ReportTestCase, misc.Tmpdir):
@@ -412,7 +412,7 @@ class TestSourcingCheck(misc.ReportTestCase, misc.Tmpdir):
                 """))
             r = self.assertReport(check, self.repo)
             assert isinstance(r, metadata.InvalidEapi)
-            assert f"EAPI '{eapi}' is not supported" == str(r)
+            assert f"EAPI '{eapi}' is not supported" in str(r)
 
     def test_invalid_eapis(self):
         for eapi in ('invalid!', '${EAPI}'):
@@ -425,7 +425,7 @@ class TestSourcingCheck(misc.ReportTestCase, misc.Tmpdir):
                 """))
             r = self.assertReport(check, self.repo)
             assert isinstance(r, metadata.InvalidEapi)
-            assert f"invalid EAPI: '{eapi}'" == str(r)
+            assert f"invalid EAPI: '{eapi}'" in str(r)
 
     def test_sourcing_error(self):
         check = self.mk_check()
@@ -449,7 +449,7 @@ class TestSourcingCheck(misc.ReportTestCase, misc.Tmpdir):
                 """))
             r = self.assertReport(check, self.repo)
             assert isinstance(r, metadata.InvalidSlot)
-            assert f"invalid SLOT: '{slot}'" == str(r)
+            assert f"invalid SLOT: '{slot}'" in str(r)
 
 
 class TestRequiredUseCheck(IUSE_Options, misc.ReportTestCase):
@@ -491,7 +491,7 @@ class TestRequiredUseCheck(IUSE_Options, misc.ReportTestCase):
         # non-verbose mode should only one failure per node
         check = self.mk_check(verbosity=0, profiles=profiles)
         r = self.assertReport(check, self.mk_pkg(iuse="+foo bar", required_use="bar"))
-        assert "profile: 'default/linux/x86' (2 total) failed REQUIRED_USE: bar" == str(r)
+        assert "profile: 'default/linux/x86' (2 total) failed REQUIRED_USE: bar" in str(r)
         # while verbose mode should report both
         check = self.mk_check(verbosity=1, profiles=profiles)
         r = self.assertReports(check, self.mk_pkg(iuse="+foo bar", required_use="bar"))
@@ -619,13 +619,13 @@ class _TestRestrictPropertiesCheck(use_based(), misc.ReportTestCase):
         # unknown
         r = self.assertReport(check, self.mk_pkg(**{self.check_kls._attr: 'bar'}))
         assert isinstance(r, self.check_kls._unknown_result_cls)
-        assert f'unknown {self.check_kls._attr.upper()}="bar"' == str(r)
+        assert f'unknown {self.check_kls._attr.upper()}="bar"' in str(r)
 
         # unknown multiple, conditional
         pkg = self.mk_pkg(**{self.check_kls._attr: 'baz? ( foo bar boo )', 'iuse': 'baz'})
         r = self.assertReport(check, pkg)
         assert isinstance(r, self.check_kls._unknown_result_cls)
-        assert f'unknown {self.check_kls._attr.upper()}="bar boo"' == str(r)
+        assert f'unknown {self.check_kls._attr.upper()}="bar boo"' in str(r)
 
     def test_unstated_iuse(self):
         check = self.mk_check()
@@ -742,7 +742,7 @@ class TestLicenseCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(self.mk_check(), self.mk_pkg("foo"))
         assert isinstance(r, metadata.MissingLicenseFile)
         assert r.licenses == ('foo',)
-        assert 'no matching license file: foo' == str(r)
+        assert 'no matching license file: foo' in str(r)
 
     def test_multiple_existing(self):
         chk = self.mk_check(['foo', 'foo2'])
@@ -754,7 +754,7 @@ class TestLicenseCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, self.mk_pkg('|| ( foo foo3 foo4 )'))
         assert isinstance(r, metadata.MissingLicenseFile)
         assert r.licenses == ('foo3', 'foo4')
-        assert 'no matching license files: foo3, foo4' == str(r)
+        assert 'no matching license files: foo3, foo4' in str(r)
 
     def test_unlicensed_categories(self):
         check = self.mk_check(['foo'])
@@ -1117,19 +1117,19 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, self.mk_pkg("https://foon.com/diffball.tar.gz"))
         assert isinstance(r, metadata.BadFilename)
         assert r.filenames == ('diffball.tar.gz',)
-        assert 'bad filename: [ diffball.tar.gz ]' == str(r)
+        assert 'bad filename: [ diffball.tar.gz ]' in str(r)
 
         # PV filename
         r = self.assertReport(chk, self.mk_pkg("https://foon.com/2.7.1.tar.gz"))
         assert isinstance(r, metadata.BadFilename)
         assert r.filenames == ('2.7.1.tar.gz',)
-        assert 'bad filename: [ 2.7.1.tar.gz ]' == str(r)
+        assert 'bad filename: [ 2.7.1.tar.gz ]' in str(r)
 
         # github-style PV filename
         r = self.assertReport(chk, self.mk_pkg("https://foon.com/v2.7.1.zip"))
         assert isinstance(r, metadata.BadFilename)
         assert r.filenames == ('v2.7.1.zip',)
-        assert 'bad filename: [ v2.7.1.zip ]' == str(r)
+        assert 'bad filename: [ v2.7.1.zip ]' in str(r)
 
         # github-style commit snapshot filename
         r = self.assertReport(chk, self.mk_pkg("https://foon.com/cb230f01fb288a0b9f0fc437545b97d06c846bd3.tar.gz"))
@@ -1139,7 +1139,7 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, self.mk_pkg("https://foon.com/2.7.1.tar.gz https://foon.com/diffball.zip"))
         assert isinstance(r, metadata.BadFilename)
         assert r.filenames == ('2.7.1.tar.gz', 'diffball.zip')
-        assert 'bad filenames: [ 2.7.1.tar.gz, diffball.zip ]' == str(r)
+        assert 'bad filenames: [ 2.7.1.tar.gz, diffball.zip ]' in str(r)
 
     def test_missing_uri(self):
         chk = self.mk_check()
@@ -1148,13 +1148,13 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
         r = self.assertReport(chk, self.mk_pkg('http:/foo/foo-0.tar.gz'))
         assert isinstance(r, metadata.MissingUri)
         assert r.filenames == ('http:/foo/foo-0.tar.gz',)
-        assert "unfetchable file: 'http:/foo/foo-0.tar.gz'" == str(r)
+        assert "unfetchable file: 'http:/foo/foo-0.tar.gz'" in str(r)
 
         # no URI and RESTRICT doesn't contain 'fetch'
         r = self.assertReport(chk, self.mk_pkg('foon'))
         assert isinstance(r, metadata.MissingUri)
         assert r.filenames == ('foon',)
-        assert "unfetchable file: 'foon'" == str(r)
+        assert "unfetchable file: 'foon'" in str(r)
 
         # no URI and RESTRICT contains 'fetch'
         self.assertNoReport(chk, self.mk_pkg('foon', restrict='fetch'))

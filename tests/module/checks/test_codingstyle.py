@@ -326,7 +326,7 @@ class TestRawEbuildCheck(misc.ReportTestCase):
         fake_pkg = self.mk_pkg(lines=fake_src)
         r = self.assertReport(self.check_kls(None), fake_pkg)
         assert isinstance(r, codingstyle.HomepageInSrcUri)
-        assert str(r) == '${HOMEPAGE} in SRC_URI'
+        assert '${HOMEPAGE} in SRC_URI' in str(r)
 
     def test_multi_line(self):
         fake_src = ['HOMEPAGE="https://example.com/"\n',

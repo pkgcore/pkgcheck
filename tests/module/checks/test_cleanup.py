@@ -31,11 +31,11 @@ class TestRedundantVersion(misc.ReportTestCase):
             self.check, [self.mk_pkg('0.7'), self.mk_pkg('0.9', keywords=('-x86', '-amd64'))])
 
     def test_single_redundant(self):
-        report = self.assertReport(
+        r = self.assertReport(
             self.check, [self.mk_pkg(x) for x in ("0.7", "0.8")])
-        assert isinstance(report, cleanup.RedundantVersion)
-        assert report.later_versions == ("0.8",)
-        assert 'slot(0) keywords are overshadowed by version: 0.8' == str(report)
+        assert isinstance(r, cleanup.RedundantVersion)
+        assert r.later_versions == ("0.8",)
+        assert 'slot(0) keywords are overshadowed by version: 0.8' in str(r)
 
     def test_multiple_redundants(self):
         reports = self.assertReports(
@@ -49,10 +49,10 @@ class TestRedundantVersion(misc.ReportTestCase):
     def test_multiple_slots(self):
         l = [self.mk_pkg("0.7", slot="1"), self.mk_pkg("0.8"),
              self.mk_pkg("0.9", slot="1")]
-        report = self.assertReport(self.check, l)
-        assert report.later_versions == ("0.9",)
-        assert isinstance(report, cleanup.RedundantVersion)
-        assert 'slot(1) keywords are overshadowed by version: 0.9' == str(report)
+        r = self.assertReport(self.check, l)
+        assert r.later_versions == ("0.9",)
+        assert isinstance(r, cleanup.RedundantVersion)
+        assert 'slot(1) keywords are overshadowed by version: 0.9' in str(r)
 
         l.append(self.mk_pkg("0.10", keywords=("x86", "amd64", "~sparc")))
         reports = self.assertReports(self.check, l)
@@ -61,5 +61,5 @@ class TestRedundantVersion(misc.ReportTestCase):
     def test_multiple_keywords(self):
         l = [self.mk_pkg("0.1", keywords=("~x86", "~amd64")),
              self.mk_pkg("0.2", keywords=("x86", "~amd64", "~sparc"))]
-        report = self.assertReport(self.check, l)
-        assert report.later_versions == ("0.2",)
+        r = self.assertReport(self.check, l)
+        assert r.later_versions == ("0.2",)
