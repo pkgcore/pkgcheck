@@ -10,9 +10,10 @@ def scan(args=None):
 
     Args:
         args (list): command-line args for ``pkgcheck scan``
-
+    Raises:
+        PkgcheckException on failure
     Returns:
-        iterator of scan results
+        iterator of Result objects
     """
     # avoid circular imports
     from .pipeline import Pipeline
