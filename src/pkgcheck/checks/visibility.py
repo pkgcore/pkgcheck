@@ -174,7 +174,7 @@ class NonsolvableDepsInDev(_NonsolvableDeps, results.Error):
     """No potential solution for dependency on dev profile."""
 
 
-class NonsolvableDepsInExp(_NonsolvableDeps, results.Warning):
+class NonsolvableDepsInExp(_NonsolvableDeps, results.Error):
     """No potential solution for dependency on exp profile."""
 
     # results require experimental profiles to be enabled
