@@ -5,11 +5,12 @@ from snakeoil.contexts import patch
 from .base import PkgcheckException
 
 
-def scan(args=None):
+def scan(args=None, /, *, base_args=None):
     """Run ``pkgcheck scan`` using given arguments.
 
     Args:
-        args (list): command-line args for ``pkgcheck scan``
+        args (:obj:`list`, optional): command-line args for ``pkgcheck scan``
+        base_args (:obj:`list`, optional): pkgcore-specific command-line args for ``pkgcheck``
     Raises:
         PkgcheckException on failure
     Returns:
@@ -25,7 +26,9 @@ def scan(args=None):
 
     if args is None:
         args = []
+    if base_args is None:
+        base_args = []
 
     with patch('argparse.ArgumentParser.exit', parser_exit):
-        options = pkgcheck.argparser.parse_args(['scan'] + args)
+        options = pkgcheck.argparser.parse_args(base_args + ['scan'] + args)
     return Pipeline(options, options.restrictions)
