@@ -92,7 +92,7 @@ class GitLog:
 
         # verify git log is running as expected after pulling the first line
         if not self._running:
-            if self.proc.poll():
+            if self.proc.poll() or not line:
                 error = self.proc.stderr.read().decode().strip()
                 raise GitError(f'failed running git log: {error}')
             self._running = True
