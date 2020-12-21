@@ -22,7 +22,7 @@ def scan(args=None, /, *, base_args=None):
 
     def parser_exit(parser, status, message):
         """Stub function to handle argparse errors."""
-        raise PkgcheckException(message)
+        raise PkgcheckException(message.strip())
 
     if args is None:
         args = []
