@@ -22,9 +22,9 @@ class Pipeline:
     """Check-running pipeline leveraging scope-based parallelism.
 
     All results are pushed into the results queue as lists of result objects or
-    exception tuples. This iterator forces exceptions to be handled explicitly,
-    by outputting the serialized traceback and signaling scanning processes to
-    end when an exception object is found.
+    exception traceback strings. This iterator forces exceptions to be handled
+    explicitly by outputting the serialized traceback and signaling the process
+    group to end when an exception is raised.
     """
 
     def __init__(self, options, restrictions):
