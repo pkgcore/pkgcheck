@@ -1,7 +1,6 @@
 """Git specific support and addon."""
 
 import argparse
-import itertools
 import os
 import re
 import shlex
@@ -10,6 +9,7 @@ from collections import deque
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from functools import partial
+from itertools import chain, takewhile
 
 from pathspec import PathSpec
 from pkgcore.ebuild import cpv
@@ -108,25 +108,23 @@ class _ParseGitRepo:
     """Generic iterator for custom git log output parsing support."""
 
     # git command to run on the targeted repo
-    _git_cmd = 'git log --name-status --date=short --diff-filter=ARMD'
+    _git_cmd = 'git log --name-status --date=short --diff-filter=ARMD -z'
 
     # custom git log format lines, see the "PRETTY FORMATS" section of
     # the git log man page for details
-    _format = ('# BEGIN COMMIT',)
+    _format = ()
 
-    # hacky path regexes for git log parsing, proper validation is handled later
-    _ebuild_regex = '([^/]+)/[^/]+/([^/]+)\\.ebuild'
-    _git_log_regex = re.compile(
-        fr'^([ADM])\t{_ebuild_regex}|(R)\d+\t{_ebuild_regex}\t{_ebuild_regex}$')
+    # path regexes for git log parsing, validation is handled on instantiation
+    _ebuild_re = re.compile(r'^(?P<category>[^/]+)/[^/]+/(?P<package>[^/]+)\.ebuild$')
 
     def __init__(self, path, commit_range):
         self.path = os.path.realpath(path)
         cmd = shlex.split(self._git_cmd)
-        cmd.append(f"--pretty=tformat:{'%n'.join(self._format)}")
+        cmd.append(f"--pretty=tformat:%n{'%n'.join(self._format)}")
         cmd.append(commit_range)
 
         self.git_log = GitLog(cmd, self.path)
-        # discard the initial '# BEGIN COMMIT' line
+        # discard the initial newline
         next(self.git_log)
 
     def __iter__(self):
@@ -135,18 +133,46 @@ class _ParseGitRepo:
     def __next__(self):
         raise NotImplementedError(self.__next__)
 
+    def changes(self):
+        """Generator of file change status with changed packages."""
+        changes = next(self.git_log).strip('\x00').split('\x00')
+        ind = 0
+        while ind < len(changes):
+            status = changes[ind]
+            if status.startswith('R'):
+                # matched R status change
+                status = 'R'
+                old = changes[ind + 1]
+                new = changes[ind + 2]
+                ind += 3
+                if (mo := self._ebuild_re.match(old)) and (mn := self._ebuild_re.match(new)):
+                    try:
+                        old_pkg = atom_cls(f"={mo.group('category')}/{mo.group('package')}")
+                        new_pkg = atom_cls(f"={mn.group('category')}/{mn.group('package')}")
+                        yield status, [old_pkg, new_pkg]
+                    except MalformedAtom:
+                        continue
+            else:
+                # matched ADM status change
+                path = changes[ind + 1]
+                ind += 2
+                if mo := self._ebuild_re.match(path):
+                    try:
+                        pkg = atom_cls(f"={mo.group('category')}/{mo.group('package')}")
+                        yield status, [pkg]
+                    except MalformedAtom:
+                        continue
+
 
 class GitRepoCommits(_ParseGitRepo):
     """Parse git log output into an iterator of commit objects."""
 
     _format = (
-        '# BEGIN COMMIT',
         '%h',  # abbreviated commit hash
         '%cd',  # commit date
         '%an <%ae>',  # Author Name <author@email.com>
         '%cn <%ce>',  # Committer Name <committer@email.com>
         '%B',  # commit message
-        '# END MESSAGE BODY',
     )
 
     def __next__(self):
@@ -154,39 +180,15 @@ class GitRepoCommits(_ParseGitRepo):
         commit_date = next(self.git_log)
         author = next(self.git_log)
         committer = next(self.git_log)
-        message = tuple(itertools.takewhile(
-            lambda x: x != '# END MESSAGE BODY', self.git_log))
-        pkgs = tuple(self._pkgs())
+        message = list(takewhile(lambda x: x != '\x00', self.git_log))
+        pkgs = list(chain.from_iterable(pkgs for _, pkgs in self.changes()))
         return GitCommit(commit_hash, commit_date, author, committer, message, pkgs)
-
-    def _pkgs(self):
-        """Yield changed package atoms from git log file changes."""
-        try:
-            while (line := next(self.git_log)) != '# BEGIN COMMIT':
-                if mo := self._git_log_regex.match(line):
-                    data = mo.groups()
-                    try:
-                        if data[0] is not None:
-                            # matched ADM status change
-                            status, category, pn = data[0:3]
-                            yield atom_cls(f'={category}/{pn}')
-                        else:
-                            # matched R status change
-                            status, category, pn = data[3:6]
-                            yield atom_cls(f'={category}/{pn}')
-                            category, pn = data[6:]
-                            yield atom_cls(f'={category}/{pn}')
-                    except MalformedAtom:
-                        pass
-        except StopIteration:
-            return
 
 
 class GitRepoPkgs(_ParseGitRepo):
     """Parse git log output into an iterator of package change objects."""
 
     _format = (
-        '# BEGIN COMMIT',
         '%h',  # abbreviated commit hash
         '%cd',  # commit date
     )
@@ -202,42 +204,26 @@ class GitRepoPkgs(_ParseGitRepo):
                 return self._pkgs.popleft()
             except IndexError:
                 commit_hash = next(self.git_log)
-                commit_date = next(self.git_log)
+                commit_date = next(self.git_log).rstrip('\x00')
                 self._pkg_changes(commit_hash, commit_date)
 
     def _pkg_changes(self, commit_hash, commit_date):
         """Queue package change objects from git log file changes."""
-        try:
-            while (line := next(self.git_log)) != '# BEGIN COMMIT':
-                if mo := self._git_log_regex.match(line):
-                    data = mo.groups()
-                    try:
-                        if data[0] is not None:
-                            # matched ADM status change
-                            status, category, pn = data[0:3]
-                            pkg = atom_cls(f'={category}/{pn}')
-                            self._pkgs.append(
-                                GitPkgChange(pkg, status, commit_hash, commit_date))
-                        else:
-                            # matched R status change
-                            status, category, pn = data[3:6]
-                            old_pkg = atom_cls(f'={category}/{pn}')
-                            category, pn = data[6:]
-                            new_pkg = atom_cls(f'={category}/{pn}')
-                            if not self.local:  # treat rename as addition and removal
-                                self._pkgs.append(
-                                    GitPkgChange(new_pkg, 'A', commit_hash, commit_date))
-                                self._pkgs.append(
-                                    GitPkgChange(old_pkg, 'D', commit_hash, commit_date))
-                            else:
-                                # renames are split into add/remove ops at
-                                # the check level for the local commits repo
-                                self._pkgs.append(GitPkgChange(
-                                    new_pkg, 'R', commit_hash, commit_date, old_pkg))
-                    except MalformedAtom:
-                        pass
-        except StopIteration:
-            return
+        for status, pkgs in self.changes():
+            if status == 'R':
+                old, new = pkgs
+                if not self.local:  # treat rename as addition and removal
+                    self._pkgs.append(
+                        GitPkgChange(new, 'A', commit_hash, commit_date))
+                    self._pkgs.append(
+                        GitPkgChange(old, 'D', commit_hash, commit_date))
+                else:
+                    # renames are split into add/remove ops at
+                    # the check level for the local commits repo
+                    self._pkgs.append(GitPkgChange(
+                        new, 'R', commit_hash, commit_date, old))
+            else:
+                self._pkgs.append(GitPkgChange(pkgs[0], status, commit_hash, commit_date))
 
 
 class _GitCommitPkg(cpv.VersionedCPV):

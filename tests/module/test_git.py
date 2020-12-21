@@ -161,16 +161,16 @@ class TestGitRepoCommits:
         git_repo.add('foo', msg='foo', create=True)
         commits = list(git.GitRepoCommits(path, 'HEAD'))
         assert len(commits) == 1
-        assert commits[0].message == ('foo', '')
-        assert commits[0].pkgs == ()
+        assert commits[0].message == ['foo']
+        assert commits[0].pkgs == []
         orig_commit = commits[0]
 
         # make another commit
         git_repo.add('bar', msg='bar', create=True)
         commits = list(git.GitRepoCommits(path, 'HEAD'))
         assert len(commits) == 2
-        assert commits[0].message == ('bar', '')
-        assert commits[0].pkgs == ()
+        assert commits[0].message == ['bar']
+        assert commits[0].pkgs == []
         assert commits[1] == orig_commit
         assert len(set(commits)) == 2
 
@@ -179,8 +179,8 @@ class TestGitRepoCommits:
         git_repo.add_all('cat/pkg-0')
         commits = list(git.GitRepoCommits(path, 'HEAD'))
         assert len(commits) == 3
-        assert commits[0].message == ('cat/pkg-0', '')
-        assert commits[0].pkgs == (atom_cls('=cat/pkg-0'),)
+        assert commits[0].message == ['cat/pkg-0']
+        assert commits[0].pkgs == [atom_cls('=cat/pkg-0')]
 
         # make a multiple pkg commit
         repo.create_ebuild('newcat/newpkg-0')
@@ -188,20 +188,20 @@ class TestGitRepoCommits:
         git_repo.add_all('newcat: various updates')
         commits = list(git.GitRepoCommits(path, 'HEAD'))
         assert len(commits) == 4
-        assert commits[0].message == ('newcat: various updates', '')
-        assert commits[0].pkgs == (atom_cls('=newcat/newpkg-0'), atom_cls('=newcat/newpkg-1'))
+        assert commits[0].message == ['newcat: various updates']
+        assert commits[0].pkgs == [atom_cls('=newcat/newpkg-0'), atom_cls('=newcat/newpkg-1')]
 
         # remove the old version
         git_repo.remove('newcat/newpkg/newpkg-0.ebuild')
         commits = list(git.GitRepoCommits(path, 'HEAD'))
         assert len(commits) == 5
-        assert commits[0].pkgs == (atom_cls('=newcat/newpkg-0'),)
+        assert commits[0].pkgs == [atom_cls('=newcat/newpkg-0')]
 
         # rename the pkg
         git_repo.move('newcat', 'newcat2')
         commits = list(git.GitRepoCommits(path, 'HEAD'))
         assert len(commits) == 6
-        assert commits[0].pkgs == (atom_cls('=newcat/newpkg-1'), atom_cls('=newcat2/newpkg-1'))
+        assert commits[0].pkgs == [atom_cls('=newcat/newpkg-1'), atom_cls('=newcat2/newpkg-1')]
 
         # malformed atoms don't show up as pkgs
         repo.create_ebuild('cat/pkg-3')
@@ -210,7 +210,7 @@ class TestGitRepoCommits:
             fake_atom.side_effect = MalformedAtom('bad atom')
             commits = list(git.GitRepoCommits(path, 'HEAD'))
             assert len(commits) == 7
-            assert commits[0].pkgs == ()
+            assert commits[0].pkgs == []
 
 
 class TestGitRepoPkgs:
@@ -614,7 +614,7 @@ class TestGitAddon:
         # commits now exist locally in the child repo
         commits = list(self.addon.commits())
         assert len(commits) == 1
-        assert commits[0].message == ('cat/pkg-1', '')
+        assert commits[0].message == ['cat/pkg-1']
 
         # failing to parse git log returns error with git cache enabled
         with patch('pkgcheck.git.GitLog') as git_log:
