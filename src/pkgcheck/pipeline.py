@@ -29,7 +29,7 @@ class Pipeline:
 
     def __init__(self, options, restrictions):
         self.options = options
-        self.restrictions = (x for _scope, x in restrictions)
+        self._restrictions = (x for _scope, x in restrictions)
         # number of error results encountered (used with --exit option)
         self.errors = 0
 
@@ -217,7 +217,7 @@ class Pipeline:
         try:
             signal.signal(signal.SIGINT, signal.SIG_DFL)
             os.setpgrp()
-            async_restricts, sync_restricts = tee(self.restrictions)
+            async_restricts, sync_restricts = tee(self._restrictions)
 
             # schedule asynchronous checks in a separate process
             async_proc = None
