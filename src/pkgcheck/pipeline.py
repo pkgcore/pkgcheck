@@ -267,13 +267,13 @@ class SyncCheckRunner(CheckRunner):
         super().__init__(*args)
         # set of known results for all checks run by the checkrunner
         self._known_results = set().union(*(x.known_results for x in self.checks))
+        # used to store MetadataError results for processing
+        self._metadata_errors = deque()
 
         # only report metadata errors for version-scoped sources
         if self.source.scope is base.version_scope:
             self.source.itermatch = partial(
                 self.source.itermatch, error_callback=self._metadata_error_cb)
-
-        self._metadata_errors = deque()
 
     def _metadata_error_cb(self, e, check=None):
         """Callback handling MetadataError results."""
@@ -306,10 +306,9 @@ class SyncCheckRunner(CheckRunner):
                 except MetadataException as e:
                     self._metadata_error_cb(e, check=check)
 
+        # yield all relevant MetadataError results that occurred
         while self._metadata_errors:
             pkg, result = self._metadata_errors.popleft()
-            # Only show metadata errors for packages matching the current
-            # restriction to avoid duplicate reports.
             if restrict.match(pkg):
                 yield result
 
