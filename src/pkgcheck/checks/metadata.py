@@ -50,7 +50,7 @@ class InvalidLicense(results.MetadataError, results.VersionResult):
     attr = 'license'
 
 
-class MissingLicenseRestricts(results.VersionResult, results.Error):
+class MissingLicenseRestricts(results.VersionResult, results.Warning):
     """Restrictive license used without matching RESTRICT."""
 
     def __init__(self, license_group, license, restrictions, **kwargs):
