@@ -133,6 +133,7 @@ class _ParseGitRepo:
     def __next__(self):
         raise NotImplementedError(self.__next__)
 
+    @property
     def changes(self):
         """Generator of file change status with changed packages."""
         changes = next(self.git_log).strip('\x00').split('\x00')
@@ -181,7 +182,7 @@ class GitRepoCommits(_ParseGitRepo):
         author = next(self.git_log)
         committer = next(self.git_log)
         message = list(takewhile(lambda x: x != '\x00', self.git_log))
-        pkgs = list(chain.from_iterable(pkgs for _, pkgs in self.changes()))
+        pkgs = list(chain.from_iterable(pkgs for _, pkgs in self.changes))
         return GitCommit(commit_hash, commit_date, author, committer, message, pkgs)
 
 
@@ -209,7 +210,7 @@ class GitRepoPkgs(_ParseGitRepo):
 
     def _pkg_changes(self, commit_hash, commit_date):
         """Queue package change objects from git log file changes."""
-        for status, pkgs in self.changes():
+        for status, pkgs in self.changes:
             if status == 'R':
                 old, new = pkgs
                 if not self.local:  # treat rename as addition and removal
