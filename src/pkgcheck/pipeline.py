@@ -23,7 +23,7 @@ class Pipeline:
 
     All results are pushed into the results queue as lists of result objects or
     exception tuples. This iterator forces exceptions to be handled explicitly,
-    by outputing the serialized traceback and signaling scanning processes to
+    by outputting the serialized traceback and signaling scanning processes to
     end when an exception object is found.
     """
 
@@ -88,10 +88,11 @@ class Pipeline:
         return pipes
 
     def _kill_pipe(self, *args, error=None):
-        """Handle terminating the pipeline progress group."""
+        """Handle terminating the pipeline process group."""
         if self._pid is not None:
             os.killpg(self._pid, signal.SIGKILL)
         if error is not None:
+            # propagate exception raised during parallel scan
             raise base.PkgcheckException(error)
         raise KeyboardInterrupt
 
