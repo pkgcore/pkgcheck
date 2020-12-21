@@ -338,7 +338,7 @@ def _setup_scan_defaults(parser, namespace):
     namespace.checksets = {}
     namespace.contexts = []
     namespace.filter = objects.KEYWORDS.filter
-    namespace.filtered_keywords = None
+    namespace.filtered_keywords = set(objects.KEYWORDS.values())
     # all non-optional checks are run by default
     namespace.enabled_checks = set(objects.CHECKS.default.values())
 

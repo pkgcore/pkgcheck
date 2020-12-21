@@ -363,10 +363,7 @@ class _ScanCommits(argparse.Action):
 
         # make sure git checks are properly enabled
         namespace.enabled_checks.update(self.git_checks)
-        # TODO: respect disabled git keywords
-        if namespace.filtered_keywords is not None:
-            namespace.filtered_keywords.update(*(c.known_results for c in self.git_checks))
-
+        # ignore uncommitted changes during scan
         namespace.contexts.append(GitStash(repo.location))
         namespace.restrictions = restrictions
 

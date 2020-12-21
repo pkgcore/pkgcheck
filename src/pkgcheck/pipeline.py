@@ -107,10 +107,7 @@ class Pipeline:
         while True:
             try:
                 result = self._results.popleft()
-                if (self.options.filtered_keywords is None
-                        or result.__class__ in self.options.filtered_keywords):
-                    if result.filtered:
-                        continue
+                if not result.filtered and result.__class__ in self.options.filtered_keywords:
                     if result.__class__ in self.options.exit_keywords:
                         self.errors += 1
                     return result
