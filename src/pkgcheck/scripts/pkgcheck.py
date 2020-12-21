@@ -337,7 +337,6 @@ def _setup_scan_defaults(parser, namespace):
     """Re-initialize default namespace settings per arg parsing run."""
     namespace.config_checksets = {}
     namespace.contexts = []
-    namespace.filter = objects.KEYWORDS.filter
 
 
 @scan.bind_pre_parse
@@ -428,14 +427,19 @@ def generate_restricts(repo, targets):
         yield base.eclass_scope, restrict
 
 
+@scan.bind_delayed_default(1000, 'filter')
+def _default_filter(namespace, attr):
+    setattr(namespace, attr, objects.KEYWORDS.filter)
+
+
 @scan.bind_delayed_default(1000, 'enabled_checks')
-def _enabled_checks(namespace, attr):
+def _default_enabled_checks(namespace, attr):
     # all non-optional checks are run by default
     setattr(namespace, attr, set(objects.CHECKS.default.values()))
 
 
 @scan.bind_delayed_default(1000, 'filtered_keywords')
-def _filtered_keywords(namespace, attr):
+def _default_filtered_keywords(namespace, attr):
     setattr(namespace, attr, set(objects.KEYWORDS.values()))
 
 
