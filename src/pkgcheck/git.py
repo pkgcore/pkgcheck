@@ -401,7 +401,7 @@ class GitStash(AbstractContextManager):
         # check for untracked or modified/uncommitted files
         try:
             p = subprocess.run(
-                ['git', 'ls-files', '-mo', '--exclude-standard'],
+                ['git', 'status', '--porcelain', '-u'],
                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                 cwd=self.path, encoding='utf8', check=True)
         except subprocess.CalledProcessError:
