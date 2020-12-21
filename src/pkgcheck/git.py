@@ -330,7 +330,7 @@ class _ScanCommits(argparse.Action):
             s = pluralism(namespace.targets)
             parser.error(f'--commits is mutually exclusive with target{s}: {targets}')
 
-        ref = value if value is not None else 'origin'
+        ref = value if value is not None else 'origin..HEAD'
         setattr(namespace, self.dest, ref)
 
         # generate restrictions based on git commit changes
@@ -338,7 +338,7 @@ class _ScanCommits(argparse.Action):
         targets = sorted(repo.category_dirs)
         if os.path.isdir(pjoin(repo.location, 'eclass')):
             targets.append('eclass')
-        git_diff_cmd = ['git', 'diff', '--cached', ref, '--name-only']
+        git_diff_cmd = ['git', 'diff', '--name-only', ref]
         try:
             p = subprocess.run(
                 git_diff_cmd + targets,
