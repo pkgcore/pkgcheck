@@ -152,16 +152,15 @@ class ProfileAddon(caches.CachedAddon):
             exp_required = False
 
             # check if any selected arch only has experimental profiles
-            if getattr(namespace, 'selected_arches', None) is not None:
-                for arch in namespace.selected_arches:
+            if selected_arches := getattr(namespace, 'selected_arches', ()):
+                for arch in selected_arches:
                     if all(p.status == 'exp' for p in target_repo.profiles if p.arch == arch):
                         exp_required = True
                         break
 
             # check if experimental profiles are required for explicitly selected keywords
             if not exp_required:
-                selected_keywords = getattr(namespace, 'selected_keywords', ())
-                if selected_keywords:
+                if selected_keywords := getattr(namespace, 'selected_keywords', ()):
                     for r in getattr(namespace, 'filtered_keywords', ()):
                         if r.name in selected_keywords and r._profile == 'exp':
                             exp_required = True
