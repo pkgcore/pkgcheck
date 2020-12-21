@@ -37,11 +37,11 @@ class FilterArgs(arghparse.CommaSeparatedValues):
                         x.__name__: filter_type for x in objects.CHECKS[target].known_results})
                 elif target in objects.KEYWORDS:
                     filter_map[target] = filter_type
-                elif target in namespace.checksets:
+                elif target in namespace.config_checksets:
                     # expand checksets into keywords
                     try:
                         disabled, enabled = ChecksetArgs.checksets_to_keywords(
-                            namespace.checksets, [target])
+                            namespace.config_checksets, [target])
                         filter_map.update({x: filter_type for x in disabled + enabled})
                     except ValueError as e:
                         raise argparse.ArgumentError(self, str(e))
@@ -159,19 +159,20 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
 
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
+        checksets = namespace.config_checksets
 
         # validate selected checksets
-        if unknown := set(disabled + enabled) - self.known_aliases - set(namespace.checksets):
+        if unknown := set(disabled + enabled) - self.known_aliases - set(checksets):
             unknown_str = ', '.join(map(repr, unknown))
-            available = ', '.join(sorted(chain(namespace.checksets, self.known_aliases)))
+            available = ', '.join(sorted(chain(checksets, self.known_aliases)))
             s = pluralism(unknown)
             raise argparse.ArgumentError(
                 self, f'unknown checkset{s}: {unknown_str} (available: {available})')
 
         # expand checksets into keywords
         try:
-            disabled = self.checksets_to_keywords(namespace.checksets, disabled)
-            enabled = self.checksets_to_keywords(namespace.checksets, enabled)
+            disabled = self.checksets_to_keywords(checksets, disabled)
+            enabled = self.checksets_to_keywords(checksets, enabled)
         except ValueError as e:
             raise argparse.ArgumentError(self, str(e))
 

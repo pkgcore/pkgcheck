@@ -442,7 +442,7 @@ class GitAddon(caches.CachedAddon):
         group = parser.add_argument_group('git', docs=cls.__doc__)
         group.add_argument(
             '--commits', nargs='?', metavar='COMMIT',
-            action=arghparse.Delayed, target=_ScanCommits, priority=100,
+            action=arghparse.Delayed, target=_ScanCommits, priority=10,
             help="determine scan targets from local git repo commits",
             docs="""
                 For a local git repo, pkgcheck will determine targets to scan

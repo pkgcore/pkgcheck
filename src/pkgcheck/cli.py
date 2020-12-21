@@ -76,7 +76,7 @@ class ConfigFileParser:
         # load any defined checksets
         if 'CHECKSETS' in self.config:
             for k, v in self.config.items('CHECKSETS'):
-                namespace.checksets[k] = v.split(',')
+                namespace.config_checksets[k] = v.split(',')
 
         return namespace
 

@@ -200,7 +200,7 @@ check_options.add_argument(
     """)
 check_options.add_argument(
     '-s', '--scopes', metavar='SCOPE', dest='selected_scopes', default=(),
-    action=arghparse.Delayed, target=argparsers.ScopeArgs, priority=1,
+    action=arghparse.Delayed, target=argparsers.ScopeArgs, priority=51,
     help='limit checks to run by scope (comma-separated list)',
     docs="""
         Comma separated list of scopes to enable and disable for scanning. Any
@@ -212,7 +212,7 @@ check_options.add_argument(
     """ % (', '.join(base.scopes)))
 check_options.add_argument(
     '-c', '--checks', metavar='CHECK', dest='selected_checks', default=(),
-    action=arghparse.Delayed, target=argparsers.CheckArgs, priority=2,
+    action=arghparse.Delayed, target=argparsers.CheckArgs, priority=52,
     help='limit checks to run (comma-separated list)',
     docs="""
         Comma separated list of checks to enable and disable for
@@ -228,7 +228,7 @@ check_options.add_argument(
     """)
 check_options.add_argument(
     '-k', '--keywords', metavar='KEYWORD', dest='selected_keywords', default=(),
-    action=arghparse.Delayed, target=argparsers.KeywordArgs, priority=3,
+    action=arghparse.Delayed, target=argparsers.KeywordArgs, priority=53,
     help='limit keywords to scan for (comma-separated list)',
     docs="""
         Comma separated list of keywords to enable and disable for
@@ -335,7 +335,7 @@ def _restrict_to_scope(restrict):
 @scan.bind_reset_defaults
 def _setup_scan_defaults(parser, namespace):
     """Re-initialize default namespace settings per arg parsing run."""
-    namespace.checksets = {}
+    namespace.config_checksets = {}
     namespace.contexts = []
     namespace.filter = objects.KEYWORDS.filter
     namespace.filtered_keywords = set(objects.KEYWORDS.values())
