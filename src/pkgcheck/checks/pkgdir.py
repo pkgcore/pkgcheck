@@ -10,7 +10,7 @@ from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
-from . import Check, GentooRepoCheck, GitCacheCheck
+from . import Check, GentooRepoCheck
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
 allowed_filename_chars_set = set()
@@ -308,7 +308,7 @@ class LiveOnlyPackage(results.PackageResult, results.Warning):
         return f'all versions are VCS-based added over {years} years ago'
 
 
-class LiveOnlyCheck(GentooRepoCheck, GitCacheCheck):
+class LiveOnlyCheck(GentooRepoCheck):
     """Scan for packages with only live versions."""
 
     scope = base.package_scope

@@ -30,7 +30,7 @@ class TestNetworkChecks:
         base_args = ['--config', testconfig]
         self.scan = partial(scan, base_args=base_args)
         self.scan_args = [
-            '--config', 'no', '--cache', 'no', '--net',
+            '--config', 'no', '--cache-dir', str(tmp_path), '--net',
             '-r', pjoin(self.repos_dir, 'network'),
         ]
 

@@ -19,7 +19,7 @@ from snakeoil.strings import pluralism
 from tree_sitter import Language, Parser
 
 from . import base, caches, const, results
-from .base import PkgcheckUserException
+from .base import PkgcheckException, PkgcheckUserException
 from .log import logger
 from .utils import build_library
 
@@ -675,6 +675,11 @@ def init_addon(cls, options, addons_map=None, **kwargs):
         kwargs.update({
             base.param_name(addon): init_addon(addon, options, addons_map)
             for addon in required_addons})
+
+        # verify the cache type is enabled
+        if issubclass(cls, caches.CachedAddon) and not options.cache[cls.cache.type]:
+            raise caches.CacheDisabled(cls.cache)
+
         addon = addons_map[cls] = cls(options, **kwargs)
 
         # force cache updates

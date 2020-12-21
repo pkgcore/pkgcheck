@@ -119,30 +119,6 @@ class TestGitCheck:
         assert excinfo.value.code == 0
 
 
-class TestGitCacheCheck:
-
-    def test_no_cache(self, tool):
-        options, _ = tool.parse_args(['scan', '--cache', 'no'])
-        with pytest.raises(checks_mod.SkipCheck, match='git cache support required'):
-            init_check(checks_mod.GitCacheCheck, options)
-
-    def test_cache(self, tool):
-        options, _ = tool.parse_args(['scan'])
-        assert init_check(checks_mod.GitCacheCheck, options)
-
-
-class TestEclassCacheCheck:
-
-    def test_no_cache(self, tool):
-        options, _ = tool.parse_args(['scan', '--cache', 'no'])
-        with pytest.raises(checks_mod.SkipCheck, match='eclass cache support required'):
-            init_check(checks_mod.EclassCacheCheck, options)
-
-    def test_cache(self, tool):
-        options, _ = tool.parse_args(['scan'])
-        assert init_check(checks_mod.EclassCacheCheck, options)
-
-
 class TestNetworkCheck:
 
     def test_network_disabled(self, tool):

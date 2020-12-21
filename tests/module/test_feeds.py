@@ -34,10 +34,10 @@ class TestQueryCacheAddon:
 class TestEvaluateDepSet:
 
     @pytest.fixture(autouse=True)
-    def _setup(self, tool, repo):
+    def _setup(self, tool, repo, tmp_path):
         self.tool = tool
         self.repo = repo
-        self.args = ['scan', '--cache', 'no', '--repo', repo.location]
+        self.args = ['scan', '--cache-dir', str(tmp_path), '--repo', repo.location]
         profiles = [
             Profile('1', 'x86'),
             Profile('2', 'x86'),

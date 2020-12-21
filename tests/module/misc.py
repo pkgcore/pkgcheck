@@ -5,8 +5,9 @@ from dataclasses import dataclass
 from typing import List
 
 import pytest
-from pkgcheck import addons, base, checks, sources
-from pkgcheck.caches import CachedAddon
+from pkgcheck import addons, base, sources
+from pkgcheck.caches import CachedAddon, CacheDisabled
+from pkgcheck.checks import AsyncCheck, SkipCheck
 from pkgcheck.pipeline import SyncCheckRunner
 from pkgcore.ebuild import domain, repo_objs
 from pkgcore.ebuild.atom import atom
@@ -206,6 +207,7 @@ def random_str(length=10):
     return ''.join(random.choice(string.ascii_letters) for _ in range(length))
 
 
+# TODO: combine this with pkgcheck.checks.init_checks()
 def init_check(check_cls, options):
     """Initialize an individual check."""
     addons_map = {}
@@ -216,13 +218,17 @@ def init_check(check_cls, options):
     enabled_addons = sorted(enabled_addons, key=lambda x: not issubclass(x, CachedAddon))
 
     # check class is guaranteed to be last in the list
-    for cls in enabled_addons:
-        if issubclass(cls, checks.AsyncCheck):
-            addon = addons.init_addon(cls, options, addons_map, results_q=results_q)
-        else:
-            addon = addons.init_addon(cls, options, addons_map)
+    try:
+        for cls in enabled_addons:
+            if issubclass(cls, AsyncCheck):
+                addon = addons.init_addon(cls, options, addons_map, results_q=results_q)
+            else:
+                addon = addons.init_addon(cls, options, addons_map)
 
-    source = sources.init_source(addon.source, options, addons_map)
+        source = sources.init_source(addon.source, options, addons_map)
+    except CacheDisabled as e:
+        raise SkipCheck(cls, e)
+
     required_addons = {
         base.param_name(x): addons_map[x] for x in addon.required_addons}
     return addon, required_addons, source

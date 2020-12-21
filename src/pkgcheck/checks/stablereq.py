@@ -4,7 +4,7 @@ from datetime import datetime
 from snakeoil.strings import pluralism
 
 from .. import base, git, results, sources
-from . import GentooRepoCheck, GitCacheCheck
+from . import GentooRepoCheck
 
 
 class StableRequest(results.VersionResult, results.Info):
@@ -26,7 +26,7 @@ class StableRequest(results.VersionResult, results.Info):
         )
 
 
-class StableRequestCheck(GentooRepoCheck, GitCacheCheck):
+class StableRequestCheck(GentooRepoCheck):
     """Scan for unstable ebuilds with no changes for over 30 days.
 
     By default, only triggered for arches with stable profiles. To check

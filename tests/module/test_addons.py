@@ -159,10 +159,10 @@ class TestProfileAddon:
     addon_kls = addons.ProfileAddon
 
     @pytest.fixture(autouse=True)
-    def _setup(self, tool, repo):
+    def _setup(self, tool, repo, tmp_path):
         self.tool = tool
         self.repo = repo
-        self.args = ['scan', '--cache', 'no', '--repo', repo.location]
+        self.args = ['scan', '--cache-dir', str(tmp_path), '--repo', repo.location]
 
     def assertProfiles(self, check, key, *profile_names):
         actual = sorted(x.name for y in check.profile_evaluate_dict[key] for x in y)

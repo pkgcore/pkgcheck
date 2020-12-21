@@ -15,7 +15,7 @@ from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
-from .base import Addon, PkgcheckUserException
+from .base import Addon, PkgcheckException, PkgcheckUserException
 from .log import logger
 
 
@@ -39,6 +39,13 @@ class DictCache(UserDict, Cache):
     def __init__(self, data, cache):
         super().__init__(data)
         self._cache = cache
+
+
+class CacheDisabled(PkgcheckException):
+    """Exception flagging that a requested cache type is disabled."""
+
+    def __init__(self, cache):
+        super().__init__(f'{cache.type} cache support required')
 
 
 class CachedAddon(Addon):

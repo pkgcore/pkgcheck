@@ -7,7 +7,8 @@ from pkgcore import fetch
 from snakeoil import klass
 
 from .. import addons, base, feeds, sources
-from ..caches import CachedAddon
+from ..base import PkgcheckException
+from ..caches import CachedAddon, CacheDisabled
 from ..results import MetadataError
 
 
@@ -98,24 +99,6 @@ class GitCheck(OptionalCheck):
             raise SkipCheck(self, 'not scanning against git commits')
 
 
-class GitCacheCheck(Check):
-    """Check that requires the git cache."""
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        if not self.options.cache['git']:
-            raise SkipCheck(self, 'git cache support required')
-
-
-class EclassCacheCheck(Check):
-    """Check that requires the eclass cache."""
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        if not self.options.cache['eclass']:
-            raise SkipCheck(self, 'eclass cache support required')
-
-
 class AsyncCheck(Check):
     """Check that schedules tasks to be run asynchronously."""
 
@@ -165,7 +148,11 @@ class SkipCheck(base.PkgcheckUserException):
     """
 
     def __init__(self, check, msg):
-        check_name = check.__class__.__name__
+        if isinstance(check, Check):
+            check_name = check.__class__.__name__
+        else:
+            # assume the check param is a raw class object
+            check_name = check.__name__
         super().__init__(f'{check_name}: {msg}')
 
 
@@ -184,16 +171,19 @@ def init_checks(enabled_addons, options, results_q):
                 addon = addons.init_addon(cls, options, addons_map, results_q=results_q)
             else:
                 addon = addons.init_addon(cls, options, addons_map)
-        except SkipCheck:
+
+            if isinstance(addon, Check):
+                source = source_map.get(addon.source)
+                if source is None:
+                    source = sources.init_source(addon.source, options, addons_map)
+                    source_map[addon.source] = source
+                exec_type = 'async' if isinstance(addon, AsyncCheck) else 'sync'
+                enabled[(source, exec_type)].append(addon)
+        except (CacheDisabled, SkipCheck) as e:
+            # raise exception if the related check was explicitly selected
             if cls.__name__ in options.selected_checks:
-                raise
-            continue
-        if isinstance(addon, Check):
-            source = source_map.get(addon.source)
-            if source is None:
-                source = sources.init_source(addon.source, options, addons_map)
-                source_map[addon.source] = source
-            exec_type = 'async' if isinstance(addon, AsyncCheck) else 'sync'
-            enabled[(source, exec_type)].append(addon)
+                if isinstance(e, SkipCheck):
+                    raise
+                raise SkipCheck(cls, e)
 
     return enabled
