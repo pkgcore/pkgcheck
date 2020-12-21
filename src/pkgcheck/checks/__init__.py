@@ -36,8 +36,8 @@ class Check(feeds.Feed):
 
     @property
     def source(self):
-        # replace versioned pkg feeds with filtered ones as required
-        if self._filtering and self.options.verbosity < 1:
+        # filter pkg feeds as required
+        if self._filtering:
             if filtered_results := [x for x in self.known_results if x in self.options.filter]:
                 if self.scope >= base.version_scope:
                     partial_filtered = len(filtered_results) != len(self.known_results)

@@ -109,8 +109,7 @@ class Pipeline:
                 result = self._results.popleft()
                 if (self.options.filtered_keywords is None
                         or result.__class__ in self.options.filtered_keywords):
-                    # skip filtered results by default
-                    if self.options.verbosity < 1 and result.filtered:
+                    if result.filtered:
                         continue
                     if result.__class__ in self.options.exit_keywords:
                         self.errors += 1
