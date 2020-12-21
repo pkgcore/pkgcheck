@@ -268,12 +268,10 @@ class SyncCheckRunner(CheckRunner):
         self._running_check = None
         self._known_results = set().union(*(x.known_results for x in self.checks))
 
-        # only report metadata errors when running at version level
+        # only report metadata errors for version-scoped sources
         if self.source.scope is base.version_scope:
-            self._source_itermatch = partial(
+            self.source.itermatch = partial(
                 self.source.itermatch, error_callback=self._metadata_error_cb)
-        else:
-            self._source_itermatch = self.source.itermatch
 
         self._metadata_errors = deque()
 
@@ -294,7 +292,7 @@ class SyncCheckRunner(CheckRunner):
 
     def run(self, restrict=packages.AlwaysTrue):
         """Run registered checks against all matching source items."""
-        for item in self._source_itermatch(restrict):
+        for item in self.source.itermatch(restrict):
             for check in self.checks:
                 self._running_check = check
                 try:
