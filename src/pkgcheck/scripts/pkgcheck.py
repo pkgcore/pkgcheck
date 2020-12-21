@@ -338,9 +338,6 @@ def _setup_scan_defaults(parser, namespace):
     namespace.config_checksets = {}
     namespace.contexts = []
     namespace.filter = objects.KEYWORDS.filter
-    namespace.filtered_keywords = set(objects.KEYWORDS.values())
-    # all non-optional checks are run by default
-    namespace.enabled_checks = set(objects.CHECKS.default.values())
 
 
 @scan.bind_pre_parse
@@ -429,6 +426,17 @@ def generate_restricts(repo, targets):
         func = partial(matching_eclass, frozenset(eclasses))
         restrict = values.AnyMatch(values.FunctionRestriction(func))
         yield base.eclass_scope, restrict
+
+
+@scan.bind_delayed_default(1000, 'enabled_checks')
+def _enabled_checks(namespace, attr):
+    # all non-optional checks are run by default
+    setattr(namespace, attr, set(objects.CHECKS.default.values()))
+
+
+@scan.bind_delayed_default(1000, 'filtered_keywords')
+def _filtered_keywords(namespace, attr):
+    setattr(namespace, attr, set(objects.KEYWORDS.values()))
 
 
 @scan.bind_delayed_default(1000, 'restrictions')
