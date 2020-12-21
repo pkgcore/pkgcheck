@@ -265,7 +265,7 @@ class SyncCheckRunner(CheckRunner):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self._running_check = None
+        # set of known results for all checks run by the checkrunner
         self._known_results = set().union(*(x.known_results for x in self.checks))
 
         # only report metadata errors for version-scoped sources
@@ -275,14 +275,21 @@ class SyncCheckRunner(CheckRunner):
 
         self._metadata_errors = deque()
 
-    def _metadata_error_cb(self, e):
-        """Callback handling MetadataError related results."""
+    def _metadata_error_cb(self, e, check=None):
+        """Callback handling MetadataError results."""
+        # Errors thrown by pkgcore during itermatch() aren't in check running
+        # context so use all known results for the checkrunner in that case.
+        if check is None:
+            known_results = self._known_results
+        else:
+            known_results = check.known_results
+
         # Unregistered metadata attrs will raise KeyError here which is wanted
         # so they can be noticed and fixed.
-        cls = MetadataError.result_mapping[e.attr]
-        if cls in getattr(self._running_check, 'known_results', self._known_results):
+        result_cls = MetadataError.result_mapping[e.attr]
+        if result_cls in known_results:
             error_str = ': '.join(e.msg().split('\n'))
-            result = cls(e.attr, error_str, pkg=e.pkg)
+            result = result_cls(e.attr, error_str, pkg=e.pkg)
             self._metadata_errors.append((e.pkg, result))
 
     def start(self):
@@ -294,12 +301,10 @@ class SyncCheckRunner(CheckRunner):
         """Run registered checks against all matching source items."""
         for item in self.source.itermatch(restrict):
             for check in self.checks:
-                self._running_check = check
                 try:
                     yield from check.feed(item)
                 except MetadataException as e:
-                    self._metadata_error_cb(e)
-            self._running_check = None
+                    self._metadata_error_cb(e, check=check)
 
         while self._metadata_errors:
             pkg, result = self._metadata_errors.popleft()
