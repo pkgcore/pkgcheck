@@ -337,7 +337,6 @@ def _setup_scan_defaults(parser, namespace):
     """Re-initialize default namespace settings per arg parsing run."""
     namespace.checksets = {}
     namespace.contexts = []
-    namespace.restrictions = []
     namespace.filter = objects.KEYWORDS.filter
     namespace.filtered_keywords = None
     # all non-optional checks are run by default
@@ -432,36 +431,41 @@ def generate_restricts(repo, targets):
         yield base.eclass_scope, restrict
 
 
+@scan.bind_delayed_default(1000, 'restrictions')
+def _determine_restrictions(namespace, attr):
+    """Determine restrictions for untargeted scans and generate collapsed restriction for targeted scans."""
+    if namespace.targets:
+        # Collapse restrictions for passed in targets while keeping the
+        # generator intact for piped in targets.
+        restrictions = generate_restricts(namespace.target_repo, namespace.targets)
+        if isinstance(namespace.targets, list):
+            restrictions = list(restrictions)
+
+            # collapse restrictions in order to run them in parallel
+            if len(restrictions) > 1:
+                # multiple targets are restricted to a single scanning scope
+                scopes = {scope for scope, restrict in restrictions}
+                if len(scopes) > 1:
+                    scan_scopes = ', '.join(sorted(map(str, scopes)))
+                    raise PkgcheckUserException(
+                        f'targets specify multiple scan scope levels: {scan_scopes}')
+
+                combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
+                restrictions = [(scopes.pop(), combined_restrict)]
+    else:
+        if namespace.cwd in namespace.target_repo:
+            scope, restrict = _path_restrict(namespace.cwd, namespace.target_repo)
+        else:
+            scope, restrict = base.repo_scope, packages.AlwaysTrue
+        restrictions = [(scope, restrict)]
+
+    setattr(namespace, attr, restrictions)
+
+
 @scan.bind_final_check
 def _validate_scan_args(parser, namespace):
-    restrictions = namespace.restrictions
-    if not restrictions:
-        if namespace.targets:
-            # Collapse restrictions for passed in targets while keeping the
-            # generator intact for piped in targets.
-            restrictions = generate_restricts(namespace.target_repo, namespace.targets)
-            if isinstance(namespace.targets, list):
-                restrictions = list(restrictions)
-
-                # collapse restrictions in order to run them in parallel
-                if len(restrictions) > 1:
-                    # multiple targets are restricted to a single scanning scope
-                    scopes = {scope for scope, restrict in restrictions}
-                    if len(scopes) > 1:
-                        scan_scopes = ', '.join(sorted(map(str, scopes)))
-                        parser.error(f'targets specify multiple scan scope levels: {scan_scopes}')
-
-                    combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
-                    restrictions = [(scopes.pop(), combined_restrict)]
-        else:
-            if namespace.cwd in namespace.target_repo:
-                scope, restrict = _path_restrict(namespace.cwd, namespace.target_repo)
-            else:
-                scope, restrict = base.repo_scope, packages.AlwaysTrue
-            restrictions = [(scope, restrict)]
-
     # pull scan scope from the given restriction targets
-    restrictions = iter(restrictions)
+    restrictions = iter(namespace.restrictions)
     try:
         scan_scope, restriction = next(restrictions)
     except StopIteration:
