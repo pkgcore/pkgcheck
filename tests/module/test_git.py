@@ -67,10 +67,7 @@ class TestPkgcheckScanCommitsParseArgs:
             assert excinfo.value.code == 0
 
     def test_commits_existing(self):
-        output = [
-            'dev-libs/foo/metadata.xml\n',
-            'media-libs/bar/bar-0.ebuild\n',
-        ]
+        output = 'dev-libs/foo/metadata.xml\x00media-libs/bar/bar-0.ebuild\x00'
         with patch('subprocess.run') as git_diff:
             git_diff.return_value.stdout = ''.join(output)
             options, _func = self.tool.parse_args(self.args + ['--commits'])
@@ -79,15 +76,11 @@ class TestPkgcheckScanCommitsParseArgs:
                 [(base.package_scope, packages.OrRestriction(*atom_restricts))]
 
     def test_commits_eclasses(self):
-        output = [
-            'dev-libs/foo/metadata.xml\n',
-            'media-libs/bar/bar-0.ebuild\n',
-            'eclass/foo.eclass\n',
-        ]
+        output = 'dev-libs/foo/metadata.xml\x00virtual/bar/bar-0.ebuild\x00eclass/foo.eclass\x00'
         with patch('subprocess.run') as git_diff:
             git_diff.return_value.stdout = ''.join(output)
             options, _func = self.tool.parse_args(self.args + ['--commits'])
-            atom_restricts = [atom_cls('dev-libs/foo'), atom_cls('media-libs/bar')]
+            atom_restricts = [atom_cls('dev-libs/foo'), atom_cls('virtual/bar')]
             restrictions = list(options.restrictions)
             assert len(restrictions) == 2
             assert restrictions[0] == \

@@ -338,7 +338,7 @@ class _ScanCommits(argparse.Action):
         targets = sorted(repo.category_dirs)
         if os.path.isdir(pjoin(repo.location, 'eclass')):
             targets.append('eclass')
-        git_diff_cmd = ['git', 'diff', '--name-only', ref]
+        git_diff_cmd = ['git', 'diff', '--name-only', '-z', ref]
         try:
             p = subprocess.run(
                 git_diff_cmd + targets,
@@ -355,7 +355,7 @@ class _ScanCommits(argparse.Action):
             parser.exit()
 
         pkgs, eclasses = partition(
-            p.stdout.splitlines(), predicate=lambda x: x.startswith('eclass/'))
+            p.stdout.strip('\x00').split('\x00'), predicate=lambda x: x.startswith('eclass/'))
         pkgs = sorted(self._pkg_atoms(pkgs))
 
         eclass_regex = re.compile(r'^eclass/(?P<eclass>\S+)\.eclass$')
