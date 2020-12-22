@@ -20,8 +20,6 @@ Please submit an issue via github:
 
 https://github.com/pkgcore/pkgcheck/issues
 
-You can also stop by #pkgcore on freenode.
-
 See Also
 ========
 
