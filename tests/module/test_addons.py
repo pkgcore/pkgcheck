@@ -164,8 +164,8 @@ class TestProfileAddon:
         self.repo = repo
         self.args = ['scan', '--cache-dir', str(tmp_path), '--repo', repo.location]
 
-    def assertProfiles(self, check, key, *profile_names):
-        actual = sorted(x.name for y in check.profile_evaluate_dict[key] for x in y)
+    def assertProfiles(self, addon, key, *profile_names):
+        actual = sorted(x.name for y in addon.profile_evaluate_dict[key] for x in y)
         expected = sorted(profile_names)
         assert actual == expected
 
@@ -327,25 +327,25 @@ class TestProfileAddon:
         assert len(addon.profile_evaluate_dict['x86'][0]) == 2
         self.assertProfiles(addon, 'ppc', 'default-linux/ppc')
 
-        l = addon.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': 'x86'}))
-        assert len(l) == 2, f"checking for profile collapsing: {l!r}"
-        assert len(l[0]) == 2, f"checking for proper # of profiles: {l[0]!r}"
-        assert sorted(x.name for x in l[0]) == sorted(['default-linux', 'default-linux/x86'])
+        groups = addon.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': 'x86'}))
+        assert len(groups) == 2, f"checking for profile collapsing: {groups!r}"
+        assert len(groups[0]) == 2, f"checking for proper # of profiles: {groups[0]!r}"
+        assert sorted(x.name for x in groups[0]) == sorted(['default-linux', 'default-linux/x86'])
 
         # check arch vs ~arch runs (i.e. arch KEYWORDS should also trigger ~arch runs)
-        l = addon.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': '~x86'}))
-        assert len(l) == 1, f"checking for profile collapsing: {l!r}"
-        assert len(l[0]) == 2, f"checking for proper # of profiles: {l[0]!r}"
-        assert sorted(x.name for x in l[0]) == sorted(['default-linux', 'default-linux/x86'])
+        groups = addon.identify_profiles(FakePkg("d-b/ab-1", data={'KEYWORDS': '~x86'}))
+        assert len(groups) == 1, f"checking for profile collapsing: {groups!r}"
+        assert len(groups[0]) == 2, f"checking for proper # of profiles: {groups[0]!r}"
+        assert sorted(x.name for x in groups[0]) == sorted(['default-linux', 'default-linux/x86'])
 
         # check keyword collapsing
-        l = addon.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'ppc'}))
-        assert len(l) == 2, f"checking for profile collapsing: {l!r}"
-        assert len(l[0]) == 1, f"checking for proper # of profiles: {l[0]!r}"
-        assert l[0][0].name == 'default-linux/ppc'
+        groups = addon.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'ppc'}))
+        assert len(groups) == 2, f"checking for profile collapsing: {groups!r}"
+        assert len(groups[0]) == 1, f"checking for proper # of profiles: {groups[0]!r}"
+        assert groups[0][0].name == 'default-linux/ppc'
 
-        l = addon.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'foon'}))
-        assert len(l) == 0, f"checking for profile collapsing: {l!r}"
+        groups = addon.identify_profiles(FakePkg("d-b/ab-2", data={'KEYWORDS': 'foon'}))
+        assert len(groups) == 0, f"checking for profile collapsing: {groups!r}"
 
 
 try:
