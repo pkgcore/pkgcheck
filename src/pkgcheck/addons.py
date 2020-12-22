@@ -279,13 +279,12 @@ class ProfileAddon(caches.CachedAddon):
     def profile_data(self):
         """Mapping of profile age and file sets used to check cache viability."""
         data = {}
-        if self.options.cache['profiles']:
-            gen_profile_data = self._profile_files()
-            for profile_obj, profile in chain.from_iterable(
-                    self.arch_profiles.values()):
-                mtime, files = gen_profile_data.send(profile_obj)
-                data[profile] = (mtime, files)
-                next(gen_profile_data)
+        gen_profile_data = self._profile_files()
+        for profile_obj, profile in chain.from_iterable(
+                self.arch_profiles.values()):
+            mtime, files = gen_profile_data.send(profile_obj)
+            data[profile] = (mtime, files)
+            next(gen_profile_data)
         return ImmutableDict(data)
 
     def update_cache(self, force=False):
@@ -296,13 +295,12 @@ class ProfileAddon(caches.CachedAddon):
 
         with base.ProgressManager(verbosity=self.options.verbosity) as progress:
             for repo in self.options.target_repo.trees:
-                if self.options.cache['profiles']:
-                    cache_file = self.cache_file(repo)
-                    # add profiles-base -> repo mapping to ease storage procedure
-                    cached_profiles[repo.config.profiles_base]['repo'] = repo
-                    if not force:
-                        cache = self.load_cache(cache_file, fallback={})
-                        cached_profiles[repo.config.profiles_base].update(cache)
+                cache_file = self.cache_file(repo)
+                # add profiles-base -> repo mapping to ease storage procedure
+                cached_profiles[repo.config.profiles_base]['repo'] = repo
+                if not force:
+                    cache = self.load_cache(cache_file, fallback={})
+                    cached_profiles[repo.config.profiles_base].update(cache)
 
                 chunked_data_cache = {}
 
@@ -342,8 +340,7 @@ class ProfileAddon(caches.CachedAddon):
                             provides_repo = cached_profile['provides_repo']
                         except KeyError:
                             try:
-                                if self.options.cache['profiles']:
-                                    progress(f'updating {repo} profiles cache: {profile.arch:<{padding}}')
+                                progress(f'updating {repo} profiles cache: {profile.arch:<{padding}}')
 
                                 masks = profile_obj.masks
                                 unmasks = profile_obj.unmasks
@@ -379,21 +376,20 @@ class ProfileAddon(caches.CachedAddon):
                                 # unsupported EAPI or other issue, profile checks will catch this
                                 continue
 
-                            if self.options.cache['profiles']:
-                                cached_profiles[profile.base]['update'] = True
-                                cached_profiles[profile.base][profile.path] = {
-                                    'files': files,
-                                    'masks': masks,
-                                    'unmasks': unmasks,
-                                    'immutable_flags': immutable_flags,
-                                    'stable_immutable_flags': stable_immutable_flags,
-                                    'enabled_flags': enabled_flags,
-                                    'stable_enabled_flags': stable_enabled_flags,
-                                    'pkg_use': pkg_use,
-                                    'iuse_effective': iuse_effective,
-                                    'use': use,
-                                    'provides_repo': provides_repo,
-                                }
+                            cached_profiles[profile.base]['update'] = True
+                            cached_profiles[profile.base][profile.path] = {
+                                'files': files,
+                                'masks': masks,
+                                'unmasks': unmasks,
+                                'immutable_flags': immutable_flags,
+                                'stable_immutable_flags': stable_immutable_flags,
+                                'enabled_flags': enabled_flags,
+                                'stable_enabled_flags': stable_enabled_flags,
+                                'pkg_use': pkg_use,
+                                'iuse_effective': iuse_effective,
+                                'use': use,
+                                'provides_repo': provides_repo,
+                            }
 
                         # used to interlink stable/unstable lookups so that if
                         # unstable says it's not visible, stable doesn't try
