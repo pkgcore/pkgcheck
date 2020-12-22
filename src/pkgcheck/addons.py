@@ -36,14 +36,12 @@ class ArchesArgs(arghparse.CommaSeparatedNegations):
             # enable all non-prefix arches
             enabled = set(arch for arch in all_arches if '-' not in arch)
 
-        arches = set(enabled).difference(set(disabled))
+        arches = set(enabled).difference(disabled)
         if all_arches and (unknown_arches := arches.difference(all_arches)):
             es = pluralism(unknown_arches, plural='es')
             unknown = ', '.join(unknown_arches)
             valid = ', '.join(sorted(all_arches))
             parser.error(f'unknown arch{es}: {unknown} (valid arches: {valid})')
-
-        arches = tuple(sorted(arches))
 
         # check if any selected arch only has experimental profiles
         for arch in arches:
@@ -51,6 +49,7 @@ class ArchesArgs(arghparse.CommaSeparatedNegations):
                 namespace.exp_profiles_required = True
                 break
 
+        arches = frozenset(arches)
         setattr(namespace, self.dest, arches)
         namespace.arches = arches
 
@@ -503,7 +502,7 @@ class StableArchesAddon(base.Addon):
                 stable_arches = set().union(*(
                     repo.profiles.arches('stable') for repo in target_repo.trees))
         else:
-            stable_arches = set(namespace.arches)
+            stable_arches = namespace.arches
 
         setattr(namespace, attr, stable_arches)
 

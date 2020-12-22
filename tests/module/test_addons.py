@@ -30,14 +30,14 @@ class TestArchesAddon:
 
     def test_enabled(self):
         data = (
-            ('x86', ('x86',)),
-            ('ppc', ('ppc',)),
-            ('x86,ppc', ('ppc', 'x86')),
+            ('x86', ['x86']),
+            ('ppc', ['ppc']),
+            ('x86,ppc', ['ppc', 'x86']),
         )
         for arg, expected in data:
             for opt in ('-a', '--arches'):
                 options, _ = self.tool.parse_args(self.args + [f'{opt}={arg}'])
-                assert options.arches == expected
+                assert options.arches == frozenset(expected)
 
     def test_disabled(self):
         # set repo defaults
@@ -45,13 +45,13 @@ class TestArchesAddon:
             f.write("arm64\namd64\narm64-linux\n")
 
         data = (
-            ('-x86', ('amd64', 'arm64',)),
-            ('-x86,-amd64', ('arm64',)),
+            ('-x86', ['amd64', 'arm64']),
+            ('-x86,-amd64', ['arm64']),
         )
         for arg, expected in data:
             for opt in ('-a', '--arches'):
                 options, _ = self.tool.parse_args(self.args + [f'{opt}={arg}'])
-                assert options.arches == expected
+                assert options.arches == frozenset(expected)
 
     def test_unknown(self, capsys):
         # unknown arch checking requires repo defaults

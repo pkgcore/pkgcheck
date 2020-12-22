@@ -24,10 +24,6 @@ class DroppedKeywordsCheck(Check):
     required_addons = (addons.ArchesAddon,)
     known_results = frozenset([DroppedKeywords])
 
-    def __init__(self, *args, arches_addon):
-        super().__init__(*args)
-        self.arches = frozenset(self.options.arches)
-
     def feed(self, pkgset):
         # only consider non-live pkgs with KEYWORDS
         pkgset = [pkg for pkg in pkgset if pkg.keywords and not pkg.live]
@@ -46,7 +42,7 @@ class DroppedKeywordsCheck(Check):
             else:
                 drops = previous_arches.difference(pkg_arches) | seen_arches.difference(pkg_arches)
             for key in drops:
-                if key in self.arches:
+                if key in self.options.arches:
                     changes[key].append(pkg)
             if changes:
                 # ignore missing arches on previous versions that were re-enabled
