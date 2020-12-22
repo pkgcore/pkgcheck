@@ -570,10 +570,10 @@ class GitAddon(caches.CachedAddon):
 
     def cached_repo(self, repo_cls, target_repo=None):
         cached_repo = None
-        if target_repo is None:
-            target_repo = self.options.target_repo
 
         if self.options.cache['git']:
+            if target_repo is None:
+                target_repo = self.options.target_repo
             git_repos = []
             for repo in target_repo.trees:
                 # only enable repo queries if history was found, e.g. a

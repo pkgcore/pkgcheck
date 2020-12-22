@@ -96,7 +96,7 @@ class Addon:
     This interface is not finished. Expect it to grow more methods
     (but if not overridden they will be no-ops).
 
-    :cvar required_addons: sequence of addons this one depends on.
+    :cvar required_addons: sequence of addon dependencies
     """
 
     required_addons = ()
@@ -138,18 +138,19 @@ class Addon:
 
 
 def get_addons(objects):
-    """Return tuple of required addons for a given sequence of objects."""
-    required = {}
+    """Return tuple of addons for a given sequence of objects."""
+    addons = {}
 
-    def _required_addons(objs):
+    def _addons(objs):
+        """Recursively determine addons that are requested."""
         for addon in objs:
-            if addon not in required:
+            if addon not in addons:
                 if addon.required_addons:
-                    _required_addons(addon.required_addons)
-                required[addon] = None
+                    _addons(addon.required_addons)
+                addons[addon] = None
 
-    _required_addons(objects)
-    return tuple(required)
+    _addons(objects)
+    return tuple(addons)
 
 
 def param_name(cls):

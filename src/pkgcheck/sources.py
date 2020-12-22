@@ -363,20 +363,20 @@ def init_source(source, options, addons_map=None):
     """Initialize a given source."""
     if isinstance(source, tuple):
         if len(source) == 3:
-            source_cls, args, kwargs = source
+            cls, args, kwargs = source
             kwargs = dict(kwargs)
             # initialize wrapped source
             if 'source' in kwargs:
                 kwargs['source'] = init_source(kwargs['source'], options, addons_map)
         else:
-            source_cls, args = source
+            cls, args = source
             kwargs = {}
     else:
-        source_cls = source
+        cls = source
         args = ()
         kwargs = {}
-    for addon in source_cls.required_addons:
+    for addon in cls.required_addons:
         kwargs[base.param_name(addon)] = addons.init_addon(addon, options, addons_map)
-    if issubclass(source_cls, RepoSource):
+    if issubclass(cls, RepoSource):
         kwargs.setdefault('repo', options.target_repo)
-    return source_cls(*args, options, **kwargs)
+    return cls(*args, options, **kwargs)
