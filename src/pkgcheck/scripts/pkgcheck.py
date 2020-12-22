@@ -429,17 +429,19 @@ def generate_restricts(repo, targets):
 
 @scan.bind_delayed_default(1000, 'filter')
 def _default_filter(namespace, attr):
+    """Use source filtering for keywords requesting it by default."""
     setattr(namespace, attr, objects.KEYWORDS.filter)
 
 
 @scan.bind_delayed_default(1000, 'enabled_checks')
 def _default_enabled_checks(namespace, attr):
-    # all non-optional checks are run by default
+    """All non-optional checks are run by default."""
     setattr(namespace, attr, set(objects.CHECKS.default.values()))
 
 
 @scan.bind_delayed_default(1000, 'filtered_keywords')
 def _default_filtered_keywords(namespace, attr):
+    """Enable all keywords to be shown by default."""
     setattr(namespace, attr, set(objects.KEYWORDS.values()))
 
 
