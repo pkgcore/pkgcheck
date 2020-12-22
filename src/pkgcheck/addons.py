@@ -55,7 +55,7 @@ class ArchesAddon(base.Addon):
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('arches')
         group.add_argument(
-            '-a', '--arches', dest='selected_arches', metavar='ARCH',
+            '-a', '--arches', dest='selected_arches', metavar='ARCH', default=(),
             action=arghparse.Delayed, target=ArchesArgs, priority=100,
             help='comma separated list of arches to enable/disable',
             docs="""
@@ -207,11 +207,10 @@ class ProfileAddon(caches.CachedAddon):
         target_repo = namespace.target_repo
 
         # check if any selected arch only has experimental profiles
-        if namespace.selected_arches is not None:
-            for arch in namespace.selected_arches:
-                if all(p.status == 'exp' for p in target_repo.profiles if p.arch == arch):
-                    exp_required = True
-                    break
+        for arch in namespace.selected_arches:
+            if all(p.status == 'exp' for p in target_repo.profiles if p.arch == arch):
+                exp_required = True
+                break
 
         # check if experimental profiles are required for explicitly selected keywords
         if not exp_required:
@@ -303,10 +302,7 @@ class ProfileAddon(caches.CachedAddon):
         """Update related cache and push updates to disk."""
         cached_profiles = defaultdict(dict)
         official_arches = self.options.target_repo.known_arches
-        desired_arches = getattr(self.options, 'arches', None)
-        if desired_arches is None or self.options.selected_arches is None:
-            # copy it to be safe
-            desired_arches = set(official_arches)
+        desired_arches = self.options.arches
 
         with base.ProgressManager(verbosity=self.options.verbosity) as progress:
             for repo in self.options.target_repo.trees:
@@ -513,7 +509,7 @@ class StableArchesAddon(base.Addon):
     def _default_stable_arches(namespace, attr):
         """Determine set of stable arches to use."""
         target_repo = namespace.target_repo
-        if namespace.selected_arches is None:
+        if not namespace.selected_arches:
             # use known stable arches (GLEP 72) if arches aren't specified
             stable_arches = target_repo.config.arches_desc['stable']
             # fallback to determining stable arches from profiles.desc if arches.desc doesn't exist
