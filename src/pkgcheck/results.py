@@ -27,9 +27,10 @@ class Result:
     _name = None
     _profile = None
 
-    @property
-    def name(self):
-        return self._name if self._name is not None else self.__class__.__name__
+    def __init_subclass__(cls, **kwargs):
+        """Initialize result subclasses and set 'name' class attribute."""
+        super().__init_subclass__(**kwargs)
+        cls.name = cls._name if cls._name is not None else cls.__name__
 
     def __str__(self):
         return f'{self.name}: {self.desc}'
