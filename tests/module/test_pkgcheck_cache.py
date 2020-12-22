@@ -1,4 +1,3 @@
-import argparse
 import os
 from functools import partial
 from unittest.mock import patch
@@ -6,35 +5,6 @@ from unittest.mock import patch
 import pytest
 from pkgcheck import __title__ as project
 from pkgcheck.scripts import run
-
-
-class TestPkgcheckCacheParseArgs:
-
-    @pytest.fixture(autouse=True)
-    def _setup(self, tool, tmp_path):
-        self.tool = tool
-        self.cache_dir = str(tmp_path)
-        self.args = ['cache', '--cache-dir', self.cache_dir]
-
-    def test_argparse_error(self, capsys):
-        """Argparse errors are used for error mesages under normal operation."""
-        action = argparse.Action(['--foo'], 'foo')
-        with patch('pkgcheck.addons.ProfileAddon.check_args') as check_args:
-            check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
-            with pytest.raises(SystemExit) as excinfo:
-                self.tool.parse_args(self.args)
-            assert excinfo.value.code == 2
-            out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert err[-1].startswith('pkgcheck cache: error: argument --foo: invalid arg')
-
-    def test_argparse_error_debug(self, capsys):
-        """Argparse errors are raised when parsing args under debug mode."""
-        action = argparse.Action(['--foo'], 'foo')
-        with patch('pkgcheck.addons.ProfileAddon.check_args') as check_args:
-            check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
-            with pytest.raises(argparse.ArgumentError):
-                self.tool.parse_args(self.args + ['--debug'])
 
 
 class TestPkgcheckCache:

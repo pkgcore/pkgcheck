@@ -266,26 +266,6 @@ class TestPkgcheckScanParseArgs:
         options, _ = tool.parse_args(['scan', profiles_path])
         assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
 
-    def test_argparse_error(self, capsys, tool):
-        """Argparse errors are used for error mesages under normal operation."""
-        action = argparse.Action(['--foo'], 'foo')
-        with patch('pkgcheck.addons.ProfileAddon.check_args') as check_args:
-            check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
-            with pytest.raises(SystemExit) as excinfo:
-                tool.parse_args(['scan', 'cat/pkg'])
-            assert excinfo.value.code == 2
-            out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert err[-1].startswith('pkgcheck scan: error: argument --foo: invalid arg')
-
-    def test_argparse_error_debug(self, capsys, tool):
-        """Argparse errors are raised when parsing args under debug mode."""
-        action = argparse.Action(['--foo'], 'foo')
-        with patch('pkgcheck.addons.ProfileAddon.check_args') as check_args:
-            check_args.side_effect = argparse.ArgumentError(action, 'invalid arg')
-            with pytest.raises(argparse.ArgumentError):
-                tool.parse_args(['scan', '--debug', 'cat/pkg'])
-
     def test_no_default_repo(self, tool, stubconfig, capsys):
         with pytest.raises(SystemExit) as excinfo:
             tool.parse_args(['--config', stubconfig, 'scan'])

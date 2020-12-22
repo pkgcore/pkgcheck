@@ -498,17 +498,7 @@ def _validate_scan_args(parser, namespace):
     if not namespace.enabled_checks:
         parser.error(f'no matching checks available for {scan_scope} scope')
 
-    addons = base.get_addons(namespace.enabled_checks)
-
-    try:
-        for addon in addons:
-            addon.check_args(parser, namespace)
-    except argparse.ArgumentError as e:
-        if namespace.debug:
-            raise
-        parser.error(str(e))
-
-    namespace.addons = addons
+    namespace.addons = base.get_addons(namespace.enabled_checks)
 
 
 def _selected_check(options, scan_scope, scope):
@@ -586,6 +576,13 @@ def _setup_cache_addons(parser, namespace):
         addon.mangle_argparser(parser)
 
 
+@cache.bind_early_parse
+def _setup_cache(parser, namespace, args):
+    if namespace.target_repo is None:
+        namespace.target_repo = namespace.config.get_default('repo')
+    return namespace, args
+
+
 @cache.bind_final_check
 def _validate_cache_args(parser, namespace):
     enabled_caches = {k for k, v in namespace.cache.items() if v}
@@ -594,17 +591,6 @@ def _validate_cache_args(parser, namespace):
         if addon.cache.type in enabled_caches)
     # sort caches by type
     namespace.cache_addons = sorted(cache_addons, key=lambda x: x.cache.type)
-
-    if namespace.target_repo is None:
-        namespace.target_repo = namespace.config.get_default('repo')
-
-    try:
-        for addon in namespace.cache_addons:
-            addon.check_args(parser, namespace)
-    except argparse.ArgumentError as e:
-        if namespace.debug:
-            raise
-        parser.error(str(e))
 
     namespace.enabled_caches = enabled_caches
 

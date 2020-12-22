@@ -120,16 +120,6 @@ class Addon:
         :param parser: an C{argparse.ArgumentParser} instance.
         """
 
-    @staticmethod
-    def check_args(parser, namespace):
-        """Postprocess the argparse values.
-
-        Should raise C{argparse.ArgumentError} on failure.
-
-        This is only called for addons that are enabled, but before
-        they are instantiated.
-        """
-
     def __hash__(self):
         return hash(self.__class__)
 

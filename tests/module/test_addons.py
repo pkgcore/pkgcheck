@@ -20,13 +20,13 @@ class TestArchesAddon:
 
     def test_empty_default(self):
         options, _ = self.tool.parse_args(self.args)
-        assert options.arches == ()
+        assert options.arches == frozenset()
 
     def test_repo_default(self):
         with open(pjoin(self.repo.location, 'profiles', 'arch.list'), 'w') as f:
             f.write("arm64\namd64\n")
         options, _ = self.tool.parse_args(self.args)
-        assert options.arches == ('amd64', 'arm64')
+        assert options.arches == frozenset(['amd64', 'arm64'])
 
     def test_enabled(self):
         data = (
@@ -215,15 +215,13 @@ class TestProfileAddon:
         addon = addons.init_addon(self.addon_kls, options)
         self.assertProfiles(addon, 'amd64', 'prefix/amd64')
 
-    def test_make_defaults_missing_arch(self, capsys):
+    def test_make_defaults_missing_arch(self):
         profile = Profile('arch/amd64', 'amd64', defaults=[])
         self.repo.create_profiles([profile])
-        with pytest.raises(SystemExit) as excinfo:
-            self.tool.parse_args(self.args + ['--profiles=arch/amd64'])
-        assert excinfo.value.code == 2
-        out, err = capsys.readouterr()
-        assert not out
-        assert "profile make.defaults lacks ARCH setting: 'arch/amd64'" in err
+        options, _ = self.tool.parse_args(self.args + ['--profiles=arch/amd64'])
+        error = "profile make.defaults lacks ARCH setting: 'arch/amd64'"
+        with pytest.raises(PkgcheckUserException, match=error):
+            addons.init_addon(self.addon_kls, options)
 
     def test_profiles_args(self):
         profiles = [

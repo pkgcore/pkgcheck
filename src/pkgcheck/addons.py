@@ -9,6 +9,7 @@ from itertools import chain, filterfalse
 from pkgcore.ebuild import domain, misc
 from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.restrictions import packages, values
+from snakeoil.cli import arghparse
 from snakeoil.containers import ProtectedSet
 from snakeoil.decorators import coroutine
 from snakeoil.klass import jit_attr
@@ -19,9 +20,32 @@ from snakeoil.strings import pluralism
 from tree_sitter import Language, Parser
 
 from . import base, caches, const, results
-from .base import PkgcheckException, PkgcheckUserException
+from .base import PkgcheckUserException
 from .log import logger
 from .utils import build_library
+
+
+class ArchesArgs(arghparse.CommaSeparatedNegations):
+    """Parse arches args for the ArchesAddon."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        disabled, enabled = self.parse_values(values)
+        all_arches = namespace.target_repo.known_arches
+
+        if not enabled:
+            # enable all non-prefix arches
+            enabled = set(arch for arch in all_arches if '-' not in arch)
+
+        arches = set(enabled).difference(set(disabled))
+        if all_arches and (unknown_arches := arches.difference(all_arches)):
+            es = pluralism(unknown_arches, plural='es')
+            unknown = ', '.join(unknown_arches)
+            valid = ', '.join(sorted(all_arches))
+            parser.error(f'unknown arch{es}: {unknown} (valid arches: {valid})')
+
+        arches = tuple(sorted(arches))
+        setattr(namespace, self.dest, arches)
+        namespace.arches = arches
 
 
 class ArchesAddon(base.Addon):
@@ -32,7 +56,7 @@ class ArchesAddon(base.Addon):
         group = parser.add_argument_group('arches')
         group.add_argument(
             '-a', '--arches', dest='selected_arches', metavar='ARCH',
-            action='csv_negations',
+            action=arghparse.Delayed, target=ArchesArgs, priority=100,
             help='comma separated list of arches to enable/disable',
             docs="""
                 Comma separated list of arches to enable and disable.
@@ -46,27 +70,12 @@ class ArchesAddon(base.Addon):
                 stable-related checks (e.g. UnstableOnly) default to the set of
                 arches having stable profiles in the target repo.
             """)
+        parser.bind_delayed_default(1000, 'arches')(cls._default_arches)
 
     @staticmethod
-    def check_args(parser, namespace):
-        all_arches = namespace.target_repo.known_arches
-        if namespace.selected_arches is None:
-            arches = (set(), all_arches)
-        else:
-            arches = namespace.selected_arches
-        disabled, enabled = arches
-        if not enabled:
-            # enable all non-prefix arches
-            enabled = set(arch for arch in all_arches if '-' not in arch)
-
-        arches = set(enabled).difference(set(disabled))
-        if all_arches and (unknown_arches := arches.difference(all_arches)):
-            es = pluralism(unknown_arches, plural='es')
-            unknown = ', '.join(unknown_arches)
-            valid = ', '.join(sorted(all_arches))
-            parser.error(f'unknown arch{es}: {unknown} (valid arches: {valid})')
-
-        namespace.arches = tuple(sorted(arches))
+    def _default_arches(namespace, attr):
+        """Use all known arches by default."""
+        setattr(namespace, attr, namespace.target_repo.known_arches)
 
 
 class ProfileData:
@@ -101,6 +110,53 @@ class ProfileData:
         return immutable, enabled
 
 
+class ProfilesArgs(arghparse.CommaSeparatedNegations):
+    """Parse profiles args for the ProfileAddon."""
+
+    @staticmethod
+    def norm_name(repo, s):
+        """Expand status keywords and format paths."""
+        if s in ('dev', 'exp', 'stable', 'deprecated'):
+            yield from repo.profiles.get_profiles(status=s)
+        elif s == 'all':
+            yield from repo.profiles
+        else:
+            try:
+                yield repo.profiles[os.path.normpath(s)]
+            except KeyError:
+                raise ValueError(f'nonexistent profile: {s!r}')
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        disabled, enabled = self.parse_values(values)
+        disabled = set(disabled)
+        enabled = set(enabled)
+
+        # remove profiles that are both enabled and disabled
+        toggled = enabled.intersection(disabled)
+        enabled = enabled.difference(toggled)
+        disabled = disabled.difference(toggled)
+        namespace.ignore_deprecated_profiles = 'deprecated' not in enabled
+
+        # Expand status keywords, e.g. 'stable' -> set of stable profiles, and
+        # translate selections into profile objs.
+        target_repo = namespace.target_repo
+        norm_name = partial(self.norm_name, target_repo)
+        try:
+            disabled = set().union(*map(norm_name, disabled))
+            enabled = set().union(*map(norm_name, enabled))
+        except ValueError as e:
+            parser.error(str(e))
+
+        # If no profiles are enabled, then all that are defined in
+        # profiles.desc are scanned except ones that are explicitly disabled.
+        if not enabled:
+            enabled = set(target_repo.profiles)
+
+        profiles = enabled.difference(disabled)
+        setattr(namespace, self.dest, profiles)
+        namespace.profiles = profiles
+
+
 class ProfileAddon(caches.CachedAddon):
     """Addon supporting ebuild repository profiles."""
 
@@ -113,12 +169,12 @@ class ProfileAddon(caches.CachedAddon):
     # cache registry
     cache = caches.CacheData(type='profiles', file='profiles.pickle', version=2)
 
-    @staticmethod
-    def mangle_argparser(parser):
+    @classmethod
+    def mangle_argparser(cls, parser):
         group = parser.add_argument_group('profiles')
         group.add_argument(
-            '-p', '--profiles', metavar='PROFILE', action='csv_negations',
-            dest='selected_profiles',
+            '-p', '--profiles', metavar='PROFILE', dest='selected_profiles',
+            action=arghparse.Delayed, target=ProfilesArgs, priority=101,
             help='comma separated list of profiles to enable/disable',
             docs="""
                 Comma separated list of profiles to enable and disable for
@@ -142,71 +198,49 @@ class ProfileAddon(caches.CachedAddon):
                 to --profiles. Additionally the keyword ``all`` can be used to
                 scan all defined profiles in the target repo.
             """)
+        parser.bind_delayed_default(1001, 'profiles')(cls._default_profiles)
 
     @staticmethod
-    def check_args(parser, namespace):
+    def _default_profiles(namespace, attr):
+        """Determine set of profiles to enable by default."""
+        exp_required = False
         target_repo = namespace.target_repo
-        selected_profiles = namespace.selected_profiles
 
-        if selected_profiles is None:
-            exp_required = False
+        # check if any selected arch only has experimental profiles
+        if namespace.selected_arches is not None:
+            for arch in namespace.selected_arches:
+                if all(p.status == 'exp' for p in target_repo.profiles if p.arch == arch):
+                    exp_required = True
+                    break
 
-            # check if any selected arch only has experimental profiles
-            if selected_arches := getattr(namespace, 'selected_arches', ()):
-                for arch in selected_arches:
-                    if all(p.status == 'exp' for p in target_repo.profiles if p.arch == arch):
+        # check if experimental profiles are required for explicitly selected keywords
+        if not exp_required:
+            if selected_keywords := getattr(namespace, 'selected_keywords', ()):
+                for r in getattr(namespace, 'filtered_keywords', ()):
+                    if r.name in selected_keywords and r._profile == 'exp':
                         exp_required = True
                         break
 
-            # check if experimental profiles are required for explicitly selected keywords
-            if not exp_required:
-                if selected_keywords := getattr(namespace, 'selected_keywords', ()):
-                    for r in getattr(namespace, 'filtered_keywords', ()):
-                        if r.name in selected_keywords and r._profile == 'exp':
-                            exp_required = True
-                            break
+        # Disable experimental profiles by default if no profiles are
+        # selected and no keywords or arches have been explicitly selected
+        # that require them to operate properly.
+        profiles = set(target_repo.profiles)
+        if not exp_required:
+            profiles -= set(ProfilesArgs.norm_name(target_repo, 'exp'))
 
-            # Disable experimental profiles by default if no profiles are
-            # selected and no keywords or arches have been explicitly selected
-            # that require them to operate properly.
-            selected_profiles = (() if exp_required else ('exp',), ())
+        setattr(namespace, attr, profiles)
 
-        def norm_name(s):
-            """Expand status keywords and format paths."""
-            if s in ('dev', 'exp', 'stable', 'deprecated'):
-                yield from target_repo.profiles.get_profiles(status=s)
-            elif s == 'all':
-                yield from target_repo.profiles
-            else:
-                try:
-                    yield target_repo.profiles[os.path.normpath(s)]
-                except KeyError:
-                    parser.error(f'nonexistent profile: {s!r}')
+    def __init__(self, *args, arches_addon):
+        super().__init__(*args)
+        self.global_insoluble = set()
+        self.profile_filters = defaultdict(list)
+        self.profile_evaluate_dict = {}
 
-        disabled, enabled = selected_profiles
-        disabled = set(disabled)
-        enabled = set(enabled)
+        self.arch_profiles = defaultdict(list)
+        target_repo = self.options.target_repo
+        ignore_deprecated = getattr(self.options, 'ignore_deprecated_profiles', True)
 
-        # remove profiles that are both enabled and disabled
-        toggled = enabled.intersection(disabled)
-        enabled = enabled.difference(toggled)
-        disabled = disabled.difference(toggled)
-        ignore_deprecated = 'deprecated' not in enabled
-
-        # Expand status keywords, e.g. 'stable' -> set of stable profiles, and
-        # translate selections into profile objs.
-        disabled = set().union(*map(norm_name, disabled))
-        enabled = set().union(*map(norm_name, enabled))
-
-        # If no profiles are enabled, then all that are defined in
-        # profiles.desc are scanned except ones that are explicitly disabled.
-        if not enabled:
-            enabled = set(target_repo.profiles)
-
-        profiles = enabled.difference(disabled)
-
-        namespace.arch_profiles = defaultdict(list)
-        for p in sorted(profiles):
+        for p in sorted(self.options.profiles):
             if ignore_deprecated and p.deprecated:
                 continue
 
@@ -215,17 +249,18 @@ class ProfileAddon(caches.CachedAddon):
             except profiles_mod.ProfileError as e:
                 # Only throw errors if the profile was selected by the user, bad
                 # repo profiles will be caught during repo metadata scans.
-                if namespace.selected_profiles is not None:
-                    parser.error(f'invalid profile: {e.path!r}: {e.error}')
+                if self.options.selected_profiles is not None:
+                    raise PkgcheckUserException(f'invalid profile: {e.path!r}: {e.error}')
                 continue
 
             if profile.arch is None:
                 # throw error if profiles have been explicitly selected, otherwise skip it
-                if namespace.selected_profiles is not None:
-                    parser.error(f'profile make.defaults lacks ARCH setting: {p.path!r}')
+                if self.options.selected_profiles is not None:
+                    raise PkgcheckUserException(
+                        f'profile make.defaults lacks ARCH setting: {p.path!r}')
                 continue
 
-            namespace.arch_profiles[profile.arch].append((profile, p))
+            self.arch_profiles[profile.arch].append((profile, p))
 
     @coroutine
     def _profile_files(self):
@@ -258,17 +293,11 @@ class ProfileAddon(caches.CachedAddon):
         if self.options.cache['profiles']:
             gen_profile_data = self._profile_files()
             for profile_obj, profile in chain.from_iterable(
-                    self.options.arch_profiles.values()):
+                    self.arch_profiles.values()):
                 mtime, files = gen_profile_data.send(profile_obj)
                 data[profile] = (mtime, files)
                 next(gen_profile_data)
         return ImmutableDict(data)
-
-    def __init__(self, *args, arches_addon=None, **kwargs):
-        self.global_insoluble = set()
-        self.profile_filters = defaultdict(list)
-        self.profile_evaluate_dict = {}
-        super().__init__(*args, **kwargs)
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
@@ -307,7 +336,7 @@ class ProfileAddon(caches.CachedAddon):
                     # padding for progress output
                     padding = max(len(x) for x in desired_arches)
 
-                    for profile_obj, profile in self.options.arch_profiles.get(k, []):
+                    for profile_obj, profile in self.arch_profiles.get(k, []):
                         files = self.profile_data.get(profile, None)
                         try:
                             cached_profile = cached_profiles[profile.base][profile.path]
@@ -476,8 +505,13 @@ class StableArchesAddon(base.Addon):
 
     required_addons = (ArchesAddon,)
 
+    @classmethod
+    def mangle_argparser(cls, parser):
+        parser.bind_delayed_default(1001, 'stable_arches')(cls._default_stable_arches)
+
     @staticmethod
-    def check_args(parser, namespace):
+    def _default_stable_arches(namespace, attr):
+        """Determine set of stable arches to use."""
         target_repo = namespace.target_repo
         if namespace.selected_arches is None:
             # use known stable arches (GLEP 72) if arches aren't specified
@@ -489,7 +523,7 @@ class StableArchesAddon(base.Addon):
         else:
             stable_arches = set(namespace.arches)
 
-        namespace.stable_arches = stable_arches
+        setattr(namespace, attr, stable_arches)
 
 
 class UnstatedIuse(results.VersionResult, results.Error):
