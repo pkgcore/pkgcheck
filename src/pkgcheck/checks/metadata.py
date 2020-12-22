@@ -617,48 +617,6 @@ class MissingUseDepDefault(results.VersionResult, results.Warning):
         )
 
 
-class OutdatedBlocker(results.VersionResult, results.Info):
-    """Blocker dependency removed at least two years ago from the tree.
-
-    Note that this ignores slot/subslot deps and USE deps in blocker atoms.
-    """
-
-    def __init__(self, attr, atom, age, **kwargs):
-        super().__init__(**kwargs)
-        self.attr = attr
-        self.atom = atom
-        self.age = float(age)
-
-    @property
-    def desc(self):
-        return (
-            f'outdated blocker {self.attr}="{self.atom}": '
-            f'last match removed {self.age} years ago'
-        )
-
-
-class NonexistentBlocker(results.VersionResult, results.Warning):
-    """No matches for blocker dependency in repo history.
-
-    For the gentoo repo this means it was either removed before the CVS -> git
-    transition (which occurred around 2015-08-08) or it never existed at all.
-
-    Note that this ignores slot/subslot deps and USE deps in blocker atoms.
-    """
-
-    def __init__(self, attr, atom, **kwargs):
-        super().__init__(**kwargs)
-        self.attr = attr
-        self.atom = atom
-
-    @property
-    def desc(self):
-        return (
-            f'nonexistent blocker {self.attr}="{self.atom}": '
-            'no matches in repo history'
-        )
-
-
 class DeprecatedDep(results.VersionResult, results.Warning):
     """Package dependencies matching deprecated packages flagged in profiles/package.deprecated."""
 
@@ -714,21 +672,19 @@ class InvalidBdepend(results.MetadataError, results.VersionResult):
 class DependencyCheck(Check):
     """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
 
-    required_addons = (addons.UseAddon, git.GitAddon)
+    required_addons = (addons.UseAddon,)
     known_results = frozenset([
         BadDependency, MissingPackageRevision, MissingUseDepDefault,
-        OutdatedBlocker, NonexistentBlocker, UnstatedIuse, DeprecatedDep,
-        InvalidDepend, InvalidRdepend, InvalidPdepend, InvalidBdepend,
+        UnstatedIuse, DeprecatedDep, InvalidDepend, InvalidRdepend,
+        InvalidPdepend, InvalidBdepend,
     ])
 
-    def __init__(self, *args, use_addon, git_addon):
+    def __init__(self, *args, use_addon):
         super().__init__(*args)
         self.deprecated = self.options.target_repo.deprecated.match
         self.iuse_filter = use_addon.get_filter()
         self.conditional_ops = {'?', '='}
         self.use_defaults = {'(+)', '(-)'}
-        self.today = datetime.today()
-        self.existence_repo = git_addon.cached_repo(git.GitRemovedRepo)
 
     def _check_use_deps(self, attr, atom):
         """Check dependencies for missing USE dep defaults."""
@@ -749,6 +705,8 @@ class DependencyCheck(Check):
         return {}
 
     def feed(self, pkg):
+        deprecated = defaultdict(set)
+
         for attr in sorted(x.lower() for x in pkg.eapi.dep_keys):
             try:
                 deps = getattr(pkg, attr)
@@ -761,10 +719,6 @@ class DependencyCheck(Check):
                 (atom_cls, boolean.OrRestriction), pkg, deps, attr=attr)
             yield from unstated
 
-            outdated_blockers = set()
-            nonexistent_blockers = set()
-            deprecated = set()
-
             for node in nodes:
                 if isinstance(node, boolean.OrRestriction):
                     in_or_restriction = True
@@ -776,7 +730,7 @@ class DependencyCheck(Check):
                     # purpose of deprecations is to get rid of dependencies
                     # holding them in the repo.
                     if not atom.blocks and self.deprecated(atom):
-                        deprecated.add(atom)
+                        deprecated[attr].add(atom)
 
                     if in_or_restriction and atom.slot_operator == '=':
                         yield BadDependency(
@@ -797,29 +751,92 @@ class DependencyCheck(Check):
                         elif atom.slot_operator == '=':
                             yield BadDependency(
                                 attr, atom, '= slot operator used in blocker', pkg=pkg)
-                        elif self.existence_repo is not None:
-                            # check for nonexistent and outdated blockers (2+ years old)
-                            if atom.op == '=*':
-                                atom_str = f"={atom.cpvstr}*"
-                            else:
-                                atom_str = atom.op + atom.cpvstr
-                            unblocked = atom_cls(atom_str)
-                            if not self.options.search_repo.match(unblocked):
-                                if matches := self.existence_repo.match(unblocked):
-                                    removal = max(x.date for x in matches)
-                                    removal = datetime.strptime(removal, '%Y-%m-%d')
-                                    years = (self.today - removal).days / 365
-                                    if years >= 2:
-                                        outdated_blockers.add((atom, round(years, 2)))
-                                else:
-                                    nonexistent_blockers.add(atom)
 
-            for atom, years in sorted(outdated_blockers):
+        for attr, atoms in deprecated.items():
+            yield DeprecatedDep(attr.upper(), map(str, sorted(atoms)), pkg=pkg)
+
+
+class OutdatedBlocker(results.VersionResult, results.Info):
+    """Blocker dependency removed at least two years ago from the tree.
+
+    Note that this ignores slot/subslot deps and USE deps in blocker atoms.
+    """
+
+    def __init__(self, attr, atom, age, **kwargs):
+        super().__init__(**kwargs)
+        self.attr = attr
+        self.atom = atom
+        self.age = float(age)
+
+    @property
+    def desc(self):
+        return (
+            f'outdated blocker {self.attr}="{self.atom}": '
+            f'last match removed {self.age} years ago'
+        )
+
+
+class NonexistentBlocker(results.VersionResult, results.Warning):
+    """No matches for blocker dependency in repo history.
+
+    For the gentoo repo this means it was either removed before the CVS -> git
+    transition (which occurred around 2015-08-08) or it never existed at all.
+
+    Note that this ignores slot/subslot deps and USE deps in blocker atoms.
+    """
+
+    def __init__(self, attr, atom, **kwargs):
+        super().__init__(**kwargs)
+        self.attr = attr
+        self.atom = atom
+
+    @property
+    def desc(self):
+        return (
+            f'nonexistent blocker {self.attr}="{self.atom}": '
+            'no matches in repo history'
+        )
+
+
+class OutdatedBlockersCheck(Check):
+    """Check for outdated and nonexistent blocker dependencies."""
+
+    required_addons = (git.GitAddon,)
+    known_results = frozenset([OutdatedBlocker, NonexistentBlocker])
+
+    def __init__(self, *args, git_addon):
+        super().__init__(*args)
+        self.today = datetime.today()
+        self.existence_repo = git_addon.cached_repo(git.GitRemovedRepo)
+
+    def feed(self, pkg):
+        outdated_blockers = defaultdict(set)
+        nonexistent_blockers = defaultdict(set)
+
+        for attr in sorted(x.lower() for x in pkg.eapi.dep_keys):
+            blockers = (x for x in iflatten_instance(getattr(pkg, attr), atom_cls) if x.blocks)
+            for atom in blockers:
+                if atom.op == '=*':
+                    atom_str = f"={atom.cpvstr}*"
+                else:
+                    atom_str = atom.op + atom.cpvstr
+                unblocked = atom_cls(atom_str)
+                if not self.options.search_repo.match(unblocked):
+                    if matches := self.existence_repo.match(unblocked):
+                        removal = max(x.date for x in matches)
+                        removal = datetime.strptime(removal, '%Y-%m-%d')
+                        years = (self.today - removal).days / 365
+                        if years >= 2:
+                            outdated_blockers[attr].add((atom, round(years, 2)))
+                    else:
+                        nonexistent_blockers[attr].add(atom)
+
+        for attr, data in outdated_blockers.items():
+            for atom, years in sorted(data):
                 yield OutdatedBlocker(attr.upper(), str(atom), years, pkg=pkg)
-            for atom in sorted(nonexistent_blockers):
+        for attr, atoms in nonexistent_blockers.items():
+            for atom in sorted(atoms):
                 yield NonexistentBlocker(attr.upper(), str(atom), pkg=pkg)
-            if deprecated:
-                yield DeprecatedDep(attr.upper(), tuple(map(str, sorted(deprecated))), pkg=pkg)
 
 
 class BadKeywords(results.VersionResult, results.Warning):

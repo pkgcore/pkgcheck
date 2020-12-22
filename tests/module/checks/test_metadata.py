@@ -845,8 +845,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
                 FakePkg('dev-libs/bar-2', slot='2'),
             )
         kwargs['search_repo'] = FakeRepo(pkgs=pkgs, repo_id='test')
-        git_addon = git.GitAddon(self.get_options(**kwargs))
-        return super().mk_check(options=kwargs, git_addon=git_addon)
+        return super().mk_check(options=kwargs)
 
     # pull the set of dependency attrs from the most recent EAPI
     dep_attrs = list(eapi.EAPI.known_eapis.values())[-1].dep_keys
@@ -965,10 +964,9 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         assert "USE flag 'blah' missing" in str(r)
 
 
-class TestDependencyCheckBlockers(misc.ReportTestCase):
-    """Test DependencyCheck results that require git cache support."""
+class TestOutdatedBlockersCheck(misc.ReportTestCase):
 
-    check_kls = metadata.DependencyCheck
+    check_kls = metadata.OutdatedBlockersCheck
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path, tool, make_repo, make_git_repo):
