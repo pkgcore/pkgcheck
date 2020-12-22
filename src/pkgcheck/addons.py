@@ -222,7 +222,7 @@ class ProfileAddon(caches.CachedAddon):
     def __init__(self, *args, arches_addon):
         super().__init__(*args)
         self.global_insoluble = set()
-        self.profile_filters = defaultdict(list)
+        self.profile_filters = {}
         self.profile_evaluate_dict = {}
 
         self.arch_profiles = defaultdict(list)
@@ -408,7 +408,7 @@ class ProfileAddon(caches.CachedAddon):
                         # stable cache is usable for unstable, but not vice versa.
                         # unstable insoluble is usable for stable, but not vice versa
                         vfilter = domain.generate_filter(repo.pkg_masks | masks, unmasks)
-                        self.profile_filters[stable_key].append(ProfileData(
+                        self.profile_filters.setdefault(stable_key, []).append(ProfileData(
                             profile.path, stable_key,
                             provides_repo,
                             packages.AndRestriction(vfilter, stable_r),
@@ -421,7 +421,7 @@ class ProfileAddon(caches.CachedAddon):
                             profile.status,
                             profile.deprecated))
 
-                        self.profile_filters[unstable_key].append(ProfileData(
+                        self.profile_filters.setdefault(unstable_key, []).append(ProfileData(
                             profile.path, unstable_key,
                             provides_repo,
                             packages.AndRestriction(vfilter, unstable_r),

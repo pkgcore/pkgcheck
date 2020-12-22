@@ -310,6 +310,24 @@ class TestProfileAddon:
         self.assertProfiles(addon, 'amd64', 'default-linux/amd64')
         self.assertProfiles(addon, 'x86', 'default-linux', 'default-linux/dev', 'default-linux/exp')
 
+    def test_addon_dict(self):
+        """ProfileAddon has methods that allow it to act like a dict of profile filters."""
+        profiles = [
+            Profile('linux/x86', 'x86'),
+            Profile('linux/ppc', 'ppc'),
+        ]
+        self.repo.create_profiles(profiles)
+        self.repo.add_arches(['x86', 'ppc'])
+        options, _ = self.tool.parse_args(self.args)
+        addon = addons.init_addon(self.addon_kls, options)
+
+        assert len(addon) == 4
+        assert set(x.name for x in addon) == {'linux/x86', 'linux/ppc'}
+        assert len(addon['x86']) == 1
+        assert [x.name for x in addon['~x86']] == ['linux/x86']
+        assert addon.get('foo', ['foo']) == ['foo']
+        assert addon.get('foo') is None
+
     def test_profile_collapsing(self):
         profiles = [
             Profile('default-linux', 'x86'),
