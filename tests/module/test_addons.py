@@ -283,6 +283,33 @@ class TestProfileAddon:
         addon = addons.init_addon(self.addon_kls, options)
         self.assertProfiles(addon, 'x86', 'default-linux/dev', 'default-linux/exp')
 
+    def test_auto_enable_exp_profiles(self):
+        profiles = [
+            Profile('default-linux/dep', 'x86', deprecated=True),
+            Profile('default-linux/dev', 'x86', 'dev'),
+            Profile('default-linux/exp', 'x86', 'exp'),
+            Profile('default-linux/amd64', 'amd64', 'exp'),
+            Profile('default-linux', 'x86'),
+        ]
+        self.repo.create_profiles(profiles)
+        self.repo.add_arches(['amd64', 'x86'])
+
+        # experimental profiles aren't enabled by default
+        options, _ = self.tool.parse_args(self.args)
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'x86', 'default-linux', 'default-linux/dev')
+
+        # but are auto-enabled when an arch with only exp profiles is selected
+        options, _ = self.tool.parse_args(self.args + ['-a', 'amd64'])
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'amd64', 'default-linux/amd64')
+
+        # or a result keyword is selected that requires them
+        options, _ = self.tool.parse_args(self.args + ['-k', 'NonsolvableDepsInExp'])
+        addon = addons.init_addon(self.addon_kls, options)
+        self.assertProfiles(addon, 'amd64', 'default-linux/amd64')
+        self.assertProfiles(addon, 'x86', 'default-linux', 'default-linux/dev', 'default-linux/exp')
+
     def test_profile_collapsing(self):
         profiles = [
             Profile('default-linux', 'x86'),
