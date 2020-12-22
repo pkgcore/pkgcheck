@@ -134,19 +134,11 @@ class ProfilesArgs(arghparse.CommaSeparatedNegations):
 
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
-        disabled = set(disabled)
-        enabled = set(enabled)
-
-        # remove profiles that are both enabled and disabled
-        toggled = enabled.intersection(disabled)
-        enabled = enabled.difference(toggled)
-        disabled = disabled.difference(toggled)
         namespace.ignore_deprecated_profiles = 'deprecated' not in enabled
 
         # Expand status keywords, e.g. 'stable' -> set of stable profiles, and
         # translate selections into profile objs.
-        target_repo = namespace.target_repo
-        norm_name = partial(self.norm_name, target_repo)
+        norm_name = partial(self.norm_name, namespace.target_repo)
         try:
             disabled = set().union(*map(norm_name, disabled))
             enabled = set().union(*map(norm_name, enabled))
@@ -156,7 +148,7 @@ class ProfilesArgs(arghparse.CommaSeparatedNegations):
         # If no profiles are enabled, then all that are defined in
         # profiles.desc are scanned except ones that are explicitly disabled.
         if not enabled:
-            enabled = set(target_repo.profiles)
+            enabled = set(namespace.target_repo.profiles)
 
         profiles = enabled.difference(disabled)
         setattr(namespace, self.dest, profiles)
