@@ -290,7 +290,6 @@ class ProfileAddon(caches.CachedAddon):
         """Update related cache and push updates to disk."""
         cached_profiles = defaultdict(dict)
         official_arches = self.options.target_repo.known_arches
-        desired_arches = self.options.arches
 
         with base.ProgressManager(verbosity=self.options.verbosity) as progress:
             for repo in self.options.target_repo.trees:
@@ -303,11 +302,8 @@ class ProfileAddon(caches.CachedAddon):
 
                 chunked_data_cache = {}
 
-                for k in sorted(desired_arches):
-                    if k.lstrip("~") not in desired_arches:
-                        continue
-                    stable_key = k.lstrip("~")
-                    unstable_key = "~" + stable_key
+                for arch in sorted(self.options.arches):
+                    stable_key, unstable_key = arch, f'~{arch}'
                     stable_r = packages.PackageRestriction(
                         "keywords", values.ContainmentMatch2((stable_key,)))
                     unstable_r = packages.PackageRestriction(
@@ -317,9 +313,9 @@ class ProfileAddon(caches.CachedAddon):
                         x for x in official_arches if x != stable_key))
 
                     # padding for progress output
-                    padding = max(len(x) for x in desired_arches)
+                    padding = max(len(x) for x in self.options.arches)
 
-                    for profile_obj, profile in self.arch_profiles.get(k, []):
+                    for profile_obj, profile in self.arch_profiles.get(arch, []):
                         files = self.profile_data.get(profile, None)
                         try:
                             cached_profile = cached_profiles[profile.base][profile.path]
