@@ -308,6 +308,12 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
                 if namespace.filtered_keywords.intersection(check.known_results):
                     namespace.enabled_checks.add(check)
 
+        # check if experimental profiles are required for explicitly selected keywords
+        for r in namespace.filtered_keywords:
+            if r.name in enabled and r._profile == 'exp':
+                namespace.exp_profiles_required = True
+                break
+
         setattr(namespace, self.dest, frozenset(enabled))
 
 

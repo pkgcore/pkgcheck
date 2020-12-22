@@ -44,6 +44,13 @@ class ArchesArgs(arghparse.CommaSeparatedNegations):
             parser.error(f'unknown arch{es}: {unknown} (valid arches: {valid})')
 
         arches = tuple(sorted(arches))
+
+        # check if any selected arch only has experimental profiles
+        for arch in arches:
+            if all(p.status == 'exp' for p in namespace.target_repo.profiles if p.arch == arch):
+                namespace.exp_profiles_required = True
+                break
+
         setattr(namespace, self.dest, arches)
         namespace.arches = arches
 
@@ -203,30 +210,13 @@ class ProfileAddon(caches.CachedAddon):
     @staticmethod
     def _default_profiles(namespace, attr):
         """Determine set of profiles to enable by default."""
-        exp_required = False
-        target_repo = namespace.target_repo
-
-        # check if any selected arch only has experimental profiles
-        for arch in namespace.selected_arches:
-            if all(p.status == 'exp' for p in target_repo.profiles if p.arch == arch):
-                exp_required = True
-                break
-
-        # check if experimental profiles are required for explicitly selected keywords
-        if not exp_required:
-            if selected_keywords := getattr(namespace, 'selected_keywords', ()):
-                for r in getattr(namespace, 'filtered_keywords', ()):
-                    if r.name in selected_keywords and r._profile == 'exp':
-                        exp_required = True
-                        break
-
         # Disable experimental profiles by default if no profiles are
         # selected and no keywords or arches have been explicitly selected
         # that require them to operate properly.
+        target_repo = namespace.target_repo
         profiles = set(target_repo.profiles)
-        if not exp_required:
+        if not getattr(namespace, 'exp_profiles_required', False):
             profiles -= set(ProfilesArgs.norm_name(target_repo, 'exp'))
-
         setattr(namespace, attr, profiles)
 
     def __init__(self, *args, arches_addon):
