@@ -221,9 +221,8 @@ class ProfileAddon(caches.CachedAddon):
         ignore_deprecated = getattr(self.options, 'ignore_deprecated_profiles', True)
 
         for p in sorted(self.options.profiles):
-            if ignore_deprecated and p.deprecated:
+            if p.deprecated and ignore_deprecated:
                 continue
-
             try:
                 profile = target_repo.profiles.create_profile(p, load_profile_base=False)
             except profiles_mod.ProfileError as e:
@@ -232,15 +231,7 @@ class ProfileAddon(caches.CachedAddon):
                 if self.options.selected_profiles is not None:
                     raise PkgcheckUserException(f'invalid profile: {e.path!r}: {e.error}')
                 continue
-
-            if profile.arch is None:
-                # throw error if profiles have been explicitly selected, otherwise skip it
-                if self.options.selected_profiles is not None:
-                    raise PkgcheckUserException(
-                        f'profile make.defaults lacks ARCH setting: {p.path!r}')
-                continue
-
-            self.arch_profiles[profile.arch].append((profile, p))
+            self.arch_profiles[p.arch].append((profile, p))
 
     @coroutine
     def _profile_files(self):

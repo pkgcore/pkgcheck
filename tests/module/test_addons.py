@@ -204,25 +204,6 @@ class TestProfileAddon:
             assert not out
             assert "nonexistent profile: 'bar'" in err
 
-    def test_make_defaults(self):
-        profiles = [
-            Profile('amd64', 'amd64'),
-            Profile('prefix/amd64', 'amd64-linux', defaults=['ARCH=amd64']),
-        ]
-        self.repo.create_profiles(profiles)
-        self.repo.add_arches(['amd64'])
-        options, _ = self.tool.parse_args(self.args + ['--profiles=prefix/amd64'])
-        addon = addons.init_addon(self.addon_kls, options)
-        self.assertProfiles(addon, 'amd64', 'prefix/amd64')
-
-    def test_make_defaults_missing_arch(self):
-        profile = Profile('arch/amd64', 'amd64', defaults=[])
-        self.repo.create_profiles([profile])
-        options, _ = self.tool.parse_args(self.args + ['--profiles=arch/amd64'])
-        error = "profile make.defaults lacks ARCH setting: 'arch/amd64'"
-        with pytest.raises(PkgcheckUserException, match=error):
-            addons.init_addon(self.addon_kls, options)
-
     def test_profiles_args(self):
         profiles = [
             Profile('default-linux/dep', 'x86', deprecated=True),
