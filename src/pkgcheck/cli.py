@@ -73,10 +73,11 @@ class ConfigFileParser:
         # load default options
         namespace = self.parse_config_sections(namespace, ['DEFAULT'])
 
-        # load any defined checksets
+        # load any defined checksets -- empty checksets are ignored
         if 'CHECKSETS' in self.config:
             for k, v in self.config.items('CHECKSETS'):
-                namespace.config_checksets[k] = v.split(',')
+                if v:
+                    namespace.config_checksets[k] = v.split(',')
 
         return namespace
 

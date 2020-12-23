@@ -49,7 +49,7 @@ class TestConfigFileParser:
         assert 'failed loading config: unknown arguments: --foo=bar' in err
         assert excinfo.value.code == 2
 
-    def test_config_options(self, capsys):
+    def test_config_options(self):
         self.parser.add_argument('--foo')
         with open(self.config_file, 'w') as f:
             f.write(textwrap.dedent("""
@@ -61,3 +61,16 @@ class TestConfigFileParser:
         # config args override matching namespace attrs
         namespace = self.config_parser.parse_config_options(namespace, configs=[self.config_file])
         assert namespace.foo == 'bar'
+
+    def test_config_checksets(self):
+        with open(self.config_file, 'w') as f:
+            f.write(textwrap.dedent("""
+                [CHECKSETS]
+                set1=keyword
+                set2=check,-keyword
+                set3=
+            """))
+        namespace = self.parser.parse_args([])
+        namespace.config_checksets = {}
+        namespace = self.config_parser.parse_config_options(namespace, configs=[self.config_file])
+        assert namespace.config_checksets == {'set1': ['keyword'], 'set2': ['check', '-keyword']}
