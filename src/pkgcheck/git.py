@@ -18,7 +18,6 @@ from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages
 from snakeoil.cli import arghparse
-from snakeoil.iterables import partition
 from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
@@ -288,15 +287,6 @@ class GitRemovedRepo(GitChangedRepo):
 class _ScanCommits(argparse.Action):
     """Argparse action that enables git commit checks."""
 
-    @staticmethod
-    def _pkg_atoms(paths):
-        """Filter package atoms from commit paths."""
-        for x in paths:
-            try:
-                yield atom_cls(os.sep.join(x.split(os.sep, 2)[:2]))
-            except MalformedAtom:
-                continue
-
     @property
     def git_checks(self):
         # avoid circular import issues
@@ -334,18 +324,23 @@ class _ScanCommits(argparse.Action):
             # no changes exist, exit early
             parser.exit()
 
-        changes = p.stdout.strip('\x00').split('\x00')
-        changes, eclasses = partition(changes, predicate=lambda x: x.startswith('eclass/'))
-        changes, profiles = partition(changes, predicate=lambda x: x.startswith('profiles/'))
-        pkgs = sorted(self._pkg_atoms(changes))
-
         eclass_re = re.compile(r'^eclass/(?P<eclass>\S+)\.eclass$')
-        eclasses = sorted(mo.group('eclass') for x in eclasses if (mo := eclass_re.match(x)))
-        profiles = sorted(profiles)
+        eclasses, profiles, pkgs = [], [], []
+
+        for path in p.stdout.strip('\x00').split('\x00'):
+            if mo := eclass_re.match(path):
+                eclasses.append(mo.group('eclass'))
+            elif path.startswith('profiles/'):
+                profiles.append(path)
+            else:
+                try:
+                    pkgs.append(atom_cls(os.sep.join(path.split(os.sep, 2)[:2])))
+                except MalformedAtom:
+                    continue
 
         restrictions = []
         if pkgs:
-            restrict = packages.OrRestriction(*pkgs)
+            restrict = packages.OrRestriction(*sorted(pkgs))
             restrictions.append((base.package_scope, restrict))
         if eclasses:
             restrictions.append((base.eclass_scope, base.contains_restriction(eclasses)))
