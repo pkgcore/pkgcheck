@@ -163,14 +163,16 @@ main_options.add_argument(
     '--cache-dir', type=arghparse.create_dir, default=const.USER_CACHE_DIR,
     help='directory to use for storing cache files')
 main_options.add_argument(
-    '--exit', metavar='KEYWORD', dest='exit_keywords',
+    '--exit', metavar='ITEM', dest='exit_keywords',
     action=argparsers.ExitArgs, nargs='?', default=(),
-    help='keywords that trigger an error exit status (comma-separated list)',
+    help='checksets, checks, or keywords that trigger an error exit status (comma-separated list)',
     docs="""
-        Comma separated list of keywords to enable and disable that
-        trigger a failed exit status. If no arguments or only disabled
-        arguments are passed, the set of error level results are used
-        as enabled arguments.
+        Comma separated list of checksets, checks, or keywords to enable and
+        disable that trigger an exit status failure. Checkset and check
+        arguments expand into their respective keyword sets.
+
+        If no arguments or only disabled arguments are passed, enabled
+        arguments are the set of error level keywords.
 
         To specify disabled keywords prefix them with ``-``. Also, the special
         arguments of ``error``, ``warning``, and ``info`` correspond to all

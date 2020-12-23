@@ -21,6 +21,21 @@ class ConfigArg(argparse._StoreAction):
         setattr(namespace, self.dest, values)
 
 
+def object_to_keywords(namespace, obj):
+    """Convert a given object into a generator of its respective keyword names."""
+    if obj in objects.KEYWORDS:
+        yield obj
+    elif obj in objects.CHECKS:
+        yield from (x.__name__ for x in objects.CHECKS[obj].known_results)
+    elif obj in namespace.config_checksets:
+        # expand checksets into keywords
+        disabled, enabled = ChecksetArgs.checksets_to_keywords(
+            namespace.config_checksets, [obj])
+        yield from disabled + enabled
+    else:
+        raise ValueError(f'unknown checkset, check, or keyword: {obj!r}')
+
+
 class FilterArgs(arghparse.CommaSeparatedValues):
     """Apply filters to an entire scan or specific checks/keywords."""
 
@@ -30,24 +45,14 @@ class FilterArgs(arghparse.CommaSeparatedValues):
         values = self.parse_values(values)
         filter_map = {}
         for val in values:
-            try:
+            if ':' in val:
                 filter_type, target = val.split(':')
-                if target in objects.CHECKS:
-                    filter_map.update({
-                        x.__name__: filter_type for x in objects.CHECKS[target].known_results})
-                elif target in objects.KEYWORDS:
-                    filter_map[target] = filter_type
-                elif target in namespace.config_checksets:
-                    # expand checksets into keywords
-                    try:
-                        disabled, enabled = ChecksetArgs.checksets_to_keywords(
-                            namespace.config_checksets, [target])
-                        filter_map.update({x: filter_type for x in disabled + enabled})
-                    except ValueError as e:
-                        raise argparse.ArgumentError(self, str(e))
-                else:
-                    raise argparse.ArgumentError(self, f'invalid target: {target!r}')
-            except ValueError:
+                try:
+                    keywords = object_to_keywords(namespace, target)
+                except ValueError as e:
+                    raise argparse.ArgumentError(self, str(e))
+                filter_map.update({x: filter_type for x in keywords})
+            else:
                 # globally enabling filter
                 filter_map.update((x, val) for x in objects.KEYWORDS)
 
@@ -321,6 +326,27 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
 class ExitArgs(arghparse.CommaSeparatedNegations):
     """Filter enabled keywords by selected keywords."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.aliases = {
+            'error': objects.KEYWORDS.error,
+            'warning': objects.KEYWORDS.warning,
+            'info': objects.KEYWORDS.info,
+        }
+
+    def args_to_keywords(self, namespace, args):
+        """Expand arguments to keyword names."""
+        keywords = []
+        for val in args:
+            try:
+                keywords.extend(self.aliases[val])
+            except KeyError:
+                try:
+                    keywords.extend(object_to_keywords(namespace, val))
+                except ValueError as e:
+                    raise argparse.ArgumentError(self, str(e))
+        return keywords
+
     def __call__(self, parser, namespace, values, option_string=None):
         # default to using error results if no keywords are selected
         if values is None:
@@ -332,16 +358,9 @@ class ExitArgs(arghparse.CommaSeparatedNegations):
         if not enabled:
             enabled.append('error')
 
-        alias_map = {
-            'error': objects.KEYWORDS.error,
-            'warning': objects.KEYWORDS.warning,
-            'info': objects.KEYWORDS.info,
-        }
-        replace_aliases = lambda x: alias_map.get(x, [x])
-
-        # expand keyword aliases to keyword lists
-        disabled = list(chain.from_iterable(map(replace_aliases, disabled)))
-        enabled = list(chain.from_iterable(map(replace_aliases, enabled)))
+        # expand args to keyword lists
+        disabled = self.args_to_keywords(namespace, disabled)
+        enabled = self.args_to_keywords(namespace, enabled)
 
         # validate selected keywords
         if unknown_keywords := set(disabled + enabled) - set(objects.KEYWORDS):

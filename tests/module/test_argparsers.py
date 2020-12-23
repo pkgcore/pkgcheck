@@ -271,7 +271,7 @@ class TestExitArgs:
             self.tool.parse_args(self.args + ['--exit', 'foo'])
         out, err = capsys.readouterr()
         assert not out
-        assert "unknown keyword: 'foo'" in err
+        assert "unknown checkset, check, or keyword: 'foo'" in err
         assert excinfo.value.code == 2
 
     def test_none(self):
