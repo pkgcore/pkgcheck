@@ -134,16 +134,14 @@ class _ParseGitRepo:
     @property
     def changes(self):
         """Generator of file change status with changed packages."""
-        changes = next(self.git_log).strip('\x00').split('\x00')
-        ind = 0
-        while ind < len(changes):
-            status = changes[ind]
+        changes = deque(next(self.git_log).strip('\x00').split('\x00'))
+        while changes:
+            status = changes.popleft()
             if status.startswith('R'):
                 # matched R status change
                 status = 'R'
-                old = changes[ind + 1]
-                new = changes[ind + 2]
-                ind += 3
+                old = changes.popleft()
+                new = changes.popleft()
                 if (mo := self._ebuild_re.match(old)) and (mn := self._ebuild_re.match(new)):
                     try:
                         old_pkg = atom_cls(f"={mo.group('category')}/{mo.group('package')}")
@@ -153,8 +151,7 @@ class _ParseGitRepo:
                         continue
             else:
                 # matched ADM status change
-                path = changes[ind + 1]
-                ind += 2
+                path = changes.popleft()
                 if mo := self._ebuild_re.match(path):
                     try:
                         pkg = atom_cls(f"={mo.group('category')}/{mo.group('package')}")
