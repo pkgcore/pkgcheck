@@ -349,7 +349,7 @@ class _ScanCommits(argparse.Action):
             # enables all profiles scope checks.
             restrictions.append((base.profiles_scope, base.contains_restriction(profiles)))
 
-        # no pkgs or eclasses to check, exit early
+        # no relevant targets, exit early
         if not restrictions:
             parser.exit()
 
