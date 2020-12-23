@@ -28,10 +28,7 @@ def object_to_keywords(namespace, obj):
     elif obj in objects.CHECKS:
         yield from (x.__name__ for x in objects.CHECKS[obj].known_results)
     elif obj in namespace.config_checksets:
-        # expand checksets into keywords
-        disabled, enabled = ChecksetArgs.checksets_to_keywords(
-            namespace.config_checksets, [obj])
-        yield from disabled + enabled
+        yield from chain(*ChecksetArgs.checksets_to_keywords(namespace.config_checksets, [obj]))
     else:
         raise ValueError(f'unknown checkset, check, or keyword: {obj!r}')
 
