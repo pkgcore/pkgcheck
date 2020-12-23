@@ -463,12 +463,10 @@ class GitAddon(caches.CachedAddon):
 
     def __init__(self, *args):
         super().__init__(*args)
-        # disable git support if git isn't installed
-        if self.options.cache['git']:
-            try:
-                find_binary('git')
-            except CommandNotFound:
-                self.options.cache['git'] = False
+        try:
+            find_binary('git')
+        except CommandNotFound:
+            raise caches.CacheDisabled(self.cache)
 
         # mapping of repo locations to their corresponding git repo caches
         self._cached_repos = {}
@@ -531,65 +529,63 @@ class GitAddon(caches.CachedAddon):
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
-        if self.options.cache['git']:
-            for repo in self.options.target_repo.trees:
-                try:
-                    commit = self._get_commit_hash(repo.location)
-                except GitError:
-                    continue
+        for repo in self.options.target_repo.trees:
+            try:
+                commit = self._get_commit_hash(repo.location)
+            except GitError:
+                continue
 
-                # initialize cache file location
-                cache_file = self.cache_file(repo)
-                git_cache = None
-                cache_repo = True
+            # initialize cache file location
+            cache_file = self.cache_file(repo)
+            git_cache = None
+            cache_repo = True
 
-                if not force:
-                    git_cache = self.load_cache(cache_file)
+            if not force:
+                git_cache = self.load_cache(cache_file)
 
-                if git_cache is None or commit != git_cache.commit:
-                    logger.debug('updating %s git repo cache to %s', repo, commit[:13])
-                    if git_cache is None:
-                        data = {}
-                        commit_range = 'origin/HEAD'
-                    else:
-                        data = git_cache.data
-                        commit_range = f'{git_cache.commit}..origin/HEAD'
-                    try:
-                        self.pkg_history(
-                            repo.location, commit_range, data=data,
-                            verbosity=self.options.verbosity)
-                    except GitError as e:
-                        raise PkgcheckUserException(str(e))
-                    git_cache = GitCache(data, self.cache, commit=commit)
+            if git_cache is None or commit != git_cache.commit:
+                logger.debug('updating %s git repo cache to %s', repo, commit[:13])
+                if git_cache is None:
+                    data = {}
+                    commit_range = 'origin/HEAD'
                 else:
-                    cache_repo = False
+                    data = git_cache.data
+                    commit_range = f'{git_cache.commit}..origin/HEAD'
+                try:
+                    self.pkg_history(
+                        repo.location, commit_range, data=data,
+                        verbosity=self.options.verbosity)
+                except GitError as e:
+                    raise PkgcheckUserException(str(e))
+                git_cache = GitCache(data, self.cache, commit=commit)
+            else:
+                cache_repo = False
 
-                if git_cache:
-                    self._cached_repos[repo.location] = git_cache
-                    # push repo to disk if it was created or updated
-                    if cache_repo:
-                        self.save_cache(git_cache, cache_file)
+            if git_cache:
+                self._cached_repos[repo.location] = git_cache
+                # push repo to disk if it was created or updated
+                if cache_repo:
+                    self.save_cache(git_cache, cache_file)
 
     def cached_repo(self, repo_cls, target_repo=None):
         cached_repo = None
 
-        if self.options.cache['git']:
-            if target_repo is None:
-                target_repo = self.options.target_repo
-            git_repos = []
-            for repo in target_repo.trees:
-                # only enable repo queries if history was found, e.g. a
-                # shallow clone with a depth of 1 won't have any history
-                if git_cache := self._cached_repos.get(repo.location, None):
-                    git_repos.append(repo_cls(git_cache, repo_id=f'{repo.repo_id}-history'))
-                else:
-                    # skip git checks
-                    break
+        if target_repo is None:
+            target_repo = self.options.target_repo
+        git_repos = []
+        for repo in target_repo.trees:
+            # only enable repo queries if history was found, e.g. a
+            # shallow clone with a depth of 1 won't have any history
+            if git_cache := self._cached_repos.get(repo.location, None):
+                git_repos.append(repo_cls(git_cache, repo_id=f'{repo.repo_id}-history'))
             else:
-                if len(git_repos) > 1:
-                    cached_repo = multiplex.tree(*git_repos)
-                elif len(git_repos) == 1:
-                    cached_repo = git_repos[0]
+                # skip git checks
+                break
+        else:
+            if len(git_repos) > 1:
+                cached_repo = multiplex.tree(*git_repos)
+            elif len(git_repos) == 1:
+                cached_repo = git_repos[0]
 
         return cached_repo
 
@@ -597,14 +593,13 @@ class GitAddon(caches.CachedAddon):
         repo = self.options.target_repo if repo is None else repo
         data = {}
 
-        if self.options.cache['git']:
-            try:
-                origin = self._get_commit_hash(repo.location)
-                master = self._get_commit_hash(repo.location, commit='master')
-                if origin != master:
-                    data = self.pkg_history(repo.location, 'origin/HEAD..master', local=True)
-            except GitError as e:
-                raise PkgcheckUserException(str(e))
+        try:
+            origin = self._get_commit_hash(repo.location)
+            master = self._get_commit_hash(repo.location, commit='master')
+            if origin != master:
+                data = self.pkg_history(repo.location, 'origin/HEAD..master', local=True)
+        except GitError as e:
+            raise PkgcheckUserException(str(e))
 
         repo_id = f'{repo.repo_id}-commits'
         return repo_cls(data, repo_id=repo_id)
@@ -613,13 +608,12 @@ class GitAddon(caches.CachedAddon):
         repo = self.options.target_repo if repo is None else repo
         commits = ()
 
-        if self.options.cache['git']:
-            try:
-                origin = self._get_commit_hash(repo.location)
-                master = self._get_commit_hash(repo.location, commit='master')
-                if origin != master:
-                    commits = GitRepoCommits(repo.location, 'origin/HEAD..master')
-            except GitError as e:
-                raise PkgcheckUserException(str(e))
+        try:
+            origin = self._get_commit_hash(repo.location)
+            master = self._get_commit_hash(repo.location, commit='master')
+            if origin != master:
+                commits = GitRepoCommits(repo.location, 'origin/HEAD..master')
+        except GitError as e:
+            raise PkgcheckUserException(str(e))
 
         return iter(commits)

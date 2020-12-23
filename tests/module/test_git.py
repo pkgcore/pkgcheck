@@ -8,7 +8,9 @@ from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.restrictions import packages
 from pkgcheck import base, git
+from pkgcheck.addons import init_addon
 from pkgcheck.base import PkgcheckUserException
+from pkgcheck.caches import CacheDisabled
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
@@ -390,11 +392,10 @@ class TestGitAddon:
     def test_git_unavailable(self, tool):
         args = ['scan', '--cache-dir', self.cache_dir, '--repo', self.repo.location]
         options, _ = tool.parse_args(args)
-        assert options.cache['git']
         with patch('pkgcheck.git.find_binary') as find_binary:
             find_binary.side_effect = CommandNotFound('git not found')
-            addon = git.GitAddon(options)
-            assert not addon.options.cache['git']
+            with pytest.raises(CacheDisabled, match='git cache support required'):
+                git.GitAddon(options)
 
     def test_no_gitignore(self):
         assert self.addon._gitignore is None
@@ -421,9 +422,8 @@ class TestGitAddon:
     def test_cache_disabled(self, tool):
         args = ['scan', '--cache', 'no', '--repo', self.repo.location]
         options, _ = tool.parse_args(args)
-        addon = git.GitAddon(options)
-        addon.update_cache()
-        assert not os.path.exists(self.cache_file)
+        with pytest.raises(CacheDisabled, match='git cache support required'):
+            init_addon(git.GitAddon, options)
 
     def test_non_git_repo(self):
         self.addon.update_cache()
@@ -591,17 +591,11 @@ class TestGitAddon:
             with pytest.raises(PkgcheckUserException, match='git parsing failed'):
                 self.addon.commits_repo(git.GitChangedRepo)
 
-        # disable git cache
-        self.addon.options.cache['git'] = False
-        # disabled git cache support yields an empty repo
-        commits_repo = self.addon.commits_repo(git.GitChangedRepo)
-        assert len(commits_repo) == 0
-
         # failing to parse git log yields an empty repo with git cache disabled
         with patch('pkgcheck.git.GitLog') as git_log:
             git_log.side_effect = git.GitError('git parsing failed')
-            commits_repo = self.addon.commits_repo(git.GitChangedRepo)
-            assert len(commits_repo) == 0
+            with pytest.raises(PkgcheckUserException, match='git parsing failed'):
+                self.addon.commits_repo(git.GitChangedRepo)
 
     def test_commits(self, repo, make_repo, make_git_repo):
         parent_repo = repo
@@ -635,12 +629,8 @@ class TestGitAddon:
             with pytest.raises(PkgcheckUserException, match='git parsing failed'):
                 list(self.addon.commits())
 
-        # disable git cache
-        self.addon.options.cache['git'] = False
-        # disabled git cache support yields no commits
-        assert len(list(self.addon.commits())) == 0
-
-        # failing to parse git log yields no commits with git cache disabled
+        # failing to parse git log raises exception
         with patch('pkgcheck.git.GitLog') as git_log:
             git_log.side_effect = git.GitError('git parsing failed')
-            assert len(list(self.addon.commits())) == 0
+            with pytest.raises(PkgcheckUserException, match='git parsing failed'):
+                self.addon.commits()
