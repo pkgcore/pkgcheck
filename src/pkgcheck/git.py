@@ -287,12 +287,6 @@ class GitRemovedRepo(GitChangedRepo):
 class _ScanCommits(argparse.Action):
     """Argparse action that enables git commit checks."""
 
-    @property
-    def git_checks(self):
-        # avoid circular import issues
-        from . import objects
-        return [cls for cls in objects.CHECKS.values() if issubclass(cls, GitCheck)]
-
     def __call__(self, parser, namespace, value, option_string=None):
         if namespace.targets:
             targets = ' '.join(namespace.targets)
@@ -353,8 +347,11 @@ class _ScanCommits(argparse.Action):
         if not restrictions:
             parser.exit()
 
-        # make sure git checks are properly enabled
-        namespace.enabled_checks.update(self.git_checks)
+        # avoid circular import issues
+        from . import objects
+        # enable git checks
+        namespace.enabled_checks.update(objects.CHECKS.select(GitCheck).values())
+
         # ignore uncommitted changes during scan
         namespace.contexts.append(GitStash(repo.location))
         namespace.restrictions = restrictions

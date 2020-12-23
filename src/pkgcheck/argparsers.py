@@ -73,8 +73,7 @@ class EnableNet(argparse.Action):
     """Enable checks that require network access."""
 
     def __call__(self, parser, namespace, values, option_string=None):
-        namespace.enabled_checks.update(
-            v for v in objects.CHECKS.values() if issubclass(v, NetworkCheck))
+        namespace.enabled_checks.update(objects.CHECKS.select(NetworkCheck).values())
         setattr(namespace, self.dest, True)
 
 
@@ -127,8 +126,10 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
     @staticmethod
     def alias_to_keywords(alias):
         """Expand internal checkset aliases into keyword generators."""
-        network = (x for x in objects.CHECKS.values() if issubclass(x, NetworkCheck))
-        alias_map = {'all': objects.CHECKS.values(), 'net': network}
+        alias_map = {
+            'all': objects.CHECKS.values(),
+            'net': objects.CHECKS.select(NetworkCheck).values()
+        }
         for check in alias_map[alias]:
             for result in check.known_results:
                 yield result.__name__

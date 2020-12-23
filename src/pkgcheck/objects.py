@@ -104,6 +104,10 @@ class _LazyDict(Mapping):
     def items(self):
         return iter(self._dict.items())
 
+    def select(self, cls):
+        """Return mapping of object classes inheriting a given class."""
+        return {k: v for k, v in self._dict.items() if issubclass(v, cls)}
+
 
 class _KeywordsLazyDict(_LazyDict):
     """Lazy dictionary of keyword mappings with added filtered attributes."""
@@ -112,33 +116,26 @@ class _KeywordsLazyDict(_LazyDict):
     def error(self):
         """Mapping of all error level keywords."""
         from . import results
-        return ImmutableDict({
-            k: v for k, v in self._dict.items()
-            if issubclass(v, results.Error)})
+        return ImmutableDict(self.select(results.Error))
 
     @klass.jit_attr
     def warning(self):
         """Mapping of all warning level keywords."""
         from . import results
-        return ImmutableDict({
-            k: v for k, v in self._dict.items()
-            if issubclass(v, results.Warning)})
+        return ImmutableDict(self.select(results.Warning))
 
     @klass.jit_attr
     def info(self):
         """Mapping of all info level keywords."""
         from . import results
-        return ImmutableDict({
-            k: v for k, v in self._dict.items()
-            if issubclass(v, results.Info)})
+        return ImmutableDict(self.select(results.Info))
 
     @klass.jit_attr
     def filter(self):
         """Mapping of default result filters."""
         from . import results
         return ImmutableDict({
-            v: 'latest' for v in self._dict.values()
-            if issubclass(v, results.FilteredVersionResult)})
+            v: 'latest' for v in self.select(results.FilteredVersionResult).values()})
 
 
 class _ChecksLazyDict(_LazyDict):
