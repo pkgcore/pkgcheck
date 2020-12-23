@@ -291,9 +291,6 @@ class GitRemovedRepo(GitChangedRepo):
 class _ScanCommits(argparse.Action):
     """Argparse action that enables git commit checks."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @staticmethod
     def _pkg_atoms(paths):
         """Filter package atoms from commit paths."""
