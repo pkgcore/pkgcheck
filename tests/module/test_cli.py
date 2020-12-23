@@ -63,6 +63,18 @@ class TestConfigFileParser:
         assert namespace.foo == 'bar'
 
     def test_config_checksets(self):
+        namespace = self.parser.parse_args([])
+        namespace.config_checksets = {}
+
+        # checksets section exists with no entries
+        with open(self.config_file, 'w') as f:
+            f.write(textwrap.dedent("""
+                [CHECKSETS]
+            """))
+        namespace = self.config_parser.parse_config_options(namespace, configs=[self.config_file])
+        assert namespace.config_checksets == {}
+
+        # checksets section with entries including empty set
         with open(self.config_file, 'w') as f:
             f.write(textwrap.dedent("""
                 [CHECKSETS]
@@ -70,7 +82,5 @@ class TestConfigFileParser:
                 set2=check,-keyword
                 set3=
             """))
-        namespace = self.parser.parse_args([])
-        namespace.config_checksets = {}
         namespace = self.config_parser.parse_config_options(namespace, configs=[self.config_file])
         assert namespace.config_checksets == {'set1': ['keyword'], 'set2': ['check', '-keyword']}
