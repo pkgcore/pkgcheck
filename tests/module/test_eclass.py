@@ -3,7 +3,9 @@ import textwrap
 from unittest.mock import patch
 
 import pytest
+from pkgcheck.addons import init_addon
 from pkgcheck.base import PkgcheckUserException
+from pkgcheck.caches import CacheDisabled
 from pkgcheck.eclass import Eclass, EclassAddon
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
@@ -59,12 +61,8 @@ class TestEclassAddon:
     def test_cache_disabled(self, tool):
         args = ['scan', '--cache', 'no', '--repo', self.repo.location]
         options, _ = tool.parse_args(args)
-        self.addon = EclassAddon(options)
-        touch(pjoin(self.eclass_dir, 'foo.eclass'))
-        self.addon.update_cache()
-        assert not os.path.exists(self.cache_file)
-        assert not self.addon.eclasses
-        assert not self.addon.deprecated
+        with pytest.raises(CacheDisabled, match='eclass cache support required'):
+            init_addon(EclassAddon, options)
 
     def test_no_eclasses(self):
         self.addon.update_cache()

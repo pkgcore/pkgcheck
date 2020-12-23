@@ -78,54 +78,53 @@ class EclassAddon(caches.CachedAddon):
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
-        if self.options.cache['eclass']:
-            for repo in self.options.target_repo.trees:
-                eclass_dir = pjoin(repo.location, 'eclass')
-                cache_file = self.cache_file(repo)
-                cache_eclasses = False
-                eclasses = {}
+        for repo in self.options.target_repo.trees:
+            eclass_dir = pjoin(repo.location, 'eclass')
+            cache_file = self.cache_file(repo)
+            cache_eclasses = False
+            eclasses = {}
 
-                if not force:
-                    eclasses = self.load_cache(cache_file, fallback={})
+            if not force:
+                eclasses = self.load_cache(cache_file, fallback={})
 
-                # check for eclass removals
-                for name in list(eclasses):
-                    if not os.path.exists(pjoin(eclass_dir, f'{name}.eclass')):
-                        del eclasses[name]
-                        cache_eclasses = True
+            # check for eclass removals
+            for name in list(eclasses):
+                if not os.path.exists(pjoin(eclass_dir, f'{name}.eclass')):
+                    del eclasses[name]
+                    cache_eclasses = True
 
-                # verify the repo has eclasses
-                try:
-                    repo_eclasses = sorted(
-                        (x[:-7], pjoin(eclass_dir, x)) for x in os.listdir(eclass_dir)
-                        if x.endswith('.eclass'))
-                except FileNotFoundError:
-                    repo_eclasses = []
+            # verify the repo has eclasses
+            try:
+                repo_eclasses = sorted(
+                    (x[:-7], pjoin(eclass_dir, x)) for x in os.listdir(eclass_dir)
+                    if x.endswith('.eclass'))
+            except FileNotFoundError:
+                repo_eclasses = []
 
-                if repo_eclasses:
-                    # padding for progress output
-                    padding = max(len(x[0]) for x in repo_eclasses)
+            if repo_eclasses:
+                # padding for progress output
+                padding = max(len(x[0]) for x in repo_eclasses)
 
-                    # check for eclass additions and updates
-                    with base.ProgressManager(verbosity=self.options.verbosity) as progress:
-                        for name, path in repo_eclasses:
+                # check for eclass additions and updates
+                with base.ProgressManager(verbosity=self.options.verbosity) as progress:
+                    for name, path in repo_eclasses:
+                        try:
+                            if os.path.getmtime(path) != eclasses[name].mtime:
+                                raise KeyError
+                        except (KeyError, AttributeError):
                             try:
-                                if os.path.getmtime(path) != eclasses[name].mtime:
-                                    raise KeyError
-                            except (KeyError, AttributeError):
-                                try:
-                                    progress(f'updating eclass cache: {name:<{padding}}')
-                                    eclasses[name] = EclassDoc(path, sourced=True)
-                                    cache_eclasses = True
-                                except IOError:
-                                    continue
+                                progress(f'updating eclass cache: {name:<{padding}}')
+                                eclasses[name] = EclassDoc(path, sourced=True)
+                                cache_eclasses = True
+                            except IOError:
+                                continue
 
-                if cache_eclasses:
-                    # reset jit attrs
-                    self._eclasses = None
-                    self._deprecated = None
-                    # push cache updates to disk
-                    data = caches.DictCache(eclasses, self.cache)
-                    self.save_cache(data, cache_file)
+            if cache_eclasses:
+                # reset jit attrs
+                self._eclasses = None
+                self._deprecated = None
+                # push cache updates to disk
+                data = caches.DictCache(eclasses, self.cache)
+                self.save_cache(data, cache_file)
 
-                self._eclass_repos[repo.location] = eclasses
+            self._eclass_repos[repo.location] = eclasses
