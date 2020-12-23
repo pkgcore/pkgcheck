@@ -1,5 +1,3 @@
-import argparse
-import io
 import os
 import shlex
 import shutil
@@ -24,6 +22,8 @@ from snakeoil.contexts import chdir
 from snakeoil.fileutils import touch
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
+
+from .misc import Profile
 
 
 class TestPkgcheckScanParseArgs:
@@ -414,25 +414,23 @@ class TestPkgcheckScan:
 
     def test_filter_latest(self, make_repo):
         repo = make_repo(arches=['amd64'])
-        # create ebuilds with unknown keywords
+        # create stub profile to suppress ArchesWithoutProfiles result
+        repo.create_profiles([Profile('stub', 'amd64')])
+        # create ebuild with unknown keywords
         repo.create_ebuild('cat/pkg-0', keywords=['unknown'])
-        repo.create_ebuild('cat/pkg-1', keywords=['unknown'])
         # and a good ebuild for the latest version
-        repo.create_ebuild('cat/pkg-2', keywords=['amd64'])
+        repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
 
-        # bad ebuilds will be flagged by default
-        args = ['-r', repo.location, '--exit', 'UnknownKeywords']
+        # results for old pkgs will be shown by default
+        args = ['-r', repo.location]
         with patch('sys.argv', self.args + args):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            assert excinfo.value.code == 1
+            results = list(self.scan(self.scan_args + args))
+            assert len(results) == 1
 
         # but are ignored when running using the 'latest' filter
         for opt in ('-f', '--filter'):
-            with patch('sys.argv', self.args + args + [opt, 'latest']):
-                with pytest.raises(SystemExit) as excinfo:
-                    self.script()
-                assert excinfo.value.code == 0
+            for arg in ('latest', 'latest:KeywordsCheck', 'latest:UnknownKeywords'):
+                assert not list(self.scan(self.scan_args + args + [opt, arg]))
 
     def test_explict_skip_check(self, capsys):
         """SkipCheck exceptions are raised when triggered for explicitly enabled checks."""
