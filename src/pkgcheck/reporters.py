@@ -121,17 +121,6 @@ class FancyReporter(Reporter):
             self.out.stream.flush()
 
 
-class NullReporter(Reporter):
-    """Reporter used for timing tests; no output."""
-
-    priority = -10000000
-
-    @coroutine
-    def _process_report(self):
-        while True:
-            _ = (yield)
-
-
 class JsonReporter(Reporter):
     """Feed of newline-delimited JSON records.
 

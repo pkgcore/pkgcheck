@@ -75,12 +75,6 @@ class TestFancyReporter(BaseReporter):
     """)
 
 
-class TestNullReporter(BaseReporter):
-
-    reporter_cls = reporters.NullReporter
-    add_report_output = ""
-
-
 class TestJsonReporter(BaseReporter):
 
     reporter_cls = reporters.JsonReporter
