@@ -95,7 +95,7 @@ class _ProfileNode(profiles_mod.ProfileNode):
 class ProfilesCheck(Check):
     """Scan repo profiles for unknown flags/packages."""
 
-    required_addons = (addons.UseAddon,)
+    required_addons = (addons.UseAddon, addons.KeywordsAddon)
     scope = base.profiles_scope
     _source = (sources.EmptySource, (), (('scope', base.profiles_scope),))
     known_results = frozenset([
@@ -103,22 +103,15 @@ class ProfilesCheck(Check):
         UnknownProfilePackageKeywords, ProfileWarning, ProfileError,
     ])
 
-    def __init__(self, *args, use_addon):
+    def __init__(self, *args, use_addon, keywords_addon):
         super().__init__(*args)
+        self.keywords = keywords_addon
         self.repo = self.options.target_repo
         self.search_repo = self.options.search_repo
         self.iuse_handler = use_addon
         self.profiles_dir = self.repo.config.profiles_base
         self.non_profile_dirs = frozenset(
             pjoin(self.profiles_dir, x) for x in addons.ProfileAddon.non_profile_dirs)
-
-        # TODO: move this and the same support in metadata.KeywordsCheck to a shared addon
-        special_keywords = {'-*'}
-        stable_keywords = self.options.target_repo.known_arches
-        unstable_keywords = {'~' + x for x in stable_keywords}
-        disabled_keywords = {'-' + x for x in chain(stable_keywords, unstable_keywords)}
-        self.valid_keywords = (
-            special_keywords | stable_keywords | unstable_keywords | disabled_keywords)
 
     @jit_attr
     def available_iuse(self):
@@ -140,7 +133,7 @@ class ProfilesCheck(Check):
 
         def _pkg_keywords(filename, profile, vals):
             for atom, keywords in vals:
-                if invalid := set(keywords) - self.valid_keywords:
+                if invalid := set(keywords) - self.keywords.valid:
                     unknown_keywords[profile.path][filename].append((atom, invalid))
 
         def _pkg_use(filename, profile, vals):

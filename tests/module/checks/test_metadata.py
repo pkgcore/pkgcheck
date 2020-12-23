@@ -145,8 +145,12 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         )
         search_repo = FakeRepo(pkgs=pkgs)
         options = self.get_options(search_repo=search_repo, gentoo_repo=False)
-        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
-        return metadata.KeywordsCheck(options, use_addon=use_addon)
+
+        kwargs = {
+            'use_addon': addons.UseAddon(options, profile_addon=[misc.FakeProfile()]),
+            'keywords_addon': addons.KeywordsAddon(options),
+        }
+        return metadata.KeywordsCheck(options, **kwargs)
 
     def mk_pkg(self, keywords='', cpv='dev-util/diffball-0.7.1', rdepend=''):
         return misc.FakePkg(cpv, data={'KEYWORDS': keywords, 'RDEPEND': rdepend})
@@ -178,8 +182,11 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
 
         # check that * and ~* are flagged in gentoo repo
         options = self.get_options(repo_name='gentoo', gentoo_repo=True)
-        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
-        check = metadata.KeywordsCheck(options, use_addon=use_addon)
+        kwargs = {
+            'use_addon': addons.UseAddon(options, profile_addon=[misc.FakeProfile()]),
+            'keywords_addon': addons.KeywordsAddon(options),
+        }
+        check = metadata.KeywordsCheck(options, **kwargs)
         r = self.assertReport(check, self.mk_pkg("*"))
         assert isinstance(r, metadata.UnknownKeywords)
         assert r.keywords == ('*',)
@@ -235,8 +242,11 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
 
         # create a check instance with verbose mode enabled
         options = self.get_options(gentoo_repo=False, verbosity=1)
-        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
-        check = metadata.KeywordsCheck(options, use_addon=use_addon)
+        kwargs = {
+            'use_addon': addons.UseAddon(options, profile_addon=[misc.FakeProfile()]),
+            'keywords_addon': addons.KeywordsAddon(options),
+        }
+        check = metadata.KeywordsCheck(options, **kwargs)
 
         # masks should come before regular keywords
         r = self.assertReport(check, self.mk_pkg('~amd64 -*'))

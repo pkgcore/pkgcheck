@@ -922,36 +922,26 @@ class VirtualKeywordsUpdate(results.VersionResult, results.Info):
 class KeywordsCheck(Check):
     """Check package keywords for sanity; empty keywords, and -* are flagged."""
 
-    required_addons = (addons.UseAddon,)
+    required_addons = (addons.UseAddon, addons.KeywordsAddon)
     known_results = frozenset([
         BadKeywords, UnknownKeywords, OverlappingKeywords, DuplicateKeywords,
         UnsortedKeywords, VirtualKeywordsUpdate,
     ])
 
-    def __init__(self, *args, use_addon):
+    def __init__(self, *args, use_addon, keywords_addon):
         super().__init__(*args)
         self.iuse_filter = use_addon.get_filter()
-        self.valid_arches = self.options.target_repo.known_arches
-        special_keywords = {'-*'}
-        stable_keywords = self.valid_arches
-        unstable_keywords = {'~' + x for x in self.valid_arches}
-        disabled_keywords = {'-' + x for x in self.valid_arches}
-        self.valid_keywords = (
-            special_keywords | stable_keywords | unstable_keywords | disabled_keywords)
-
-        # Note: '*' and '~*' are portage-only special KEYWORDS atm, i.e. not
-        # specified in PMS, so they don't belong in the main tree.
-        self.portage_keywords = {'*', '~*'}
+        self.keywords = keywords_addon
 
     def feed(self, pkg):
         if pkg.keywords == ('-*',):
             yield BadKeywords(pkg)
         else:
             # check for unknown keywords
-            unknown = set(pkg.keywords) - self.valid_keywords
+            unknown = set(pkg.keywords) - self.keywords.valid
             # portage-only KEYWORDS are allowed in overlays
             if not self.options.gentoo_repo:
-                unknown -= self.portage_keywords
+                unknown -= self.keywords.portage
             if unknown:
                 yield UnknownKeywords(sorted(unknown), pkg=pkg)
 
@@ -988,7 +978,7 @@ class KeywordsCheck(Check):
                 for dep in set(rdepend):
                     for p in self.options.search_repo.match(dep.no_usedeps):
                         dep_keywords[dep].update(
-                            x for x in p.keywords if x.lstrip('~') in self.valid_arches)
+                            x for x in p.keywords if x.lstrip('~') in self.keywords.arches)
                 if dep_keywords:
                     dep_keywords = set.intersection(*dep_keywords.values())
                     pkg_keywords = set(pkg.keywords)

@@ -84,6 +84,21 @@ class ArchesAddon(base.Addon):
         setattr(namespace, attr, namespace.target_repo.known_arches)
 
 
+class KeywordsAddon(base.Addon):
+    """Addon supporting various keywords sets."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        special = {'-*'}
+        self.arches = self.options.target_repo.known_arches
+        unstable = {'~' + x for x in self.arches}
+        disabled = {'-' + x for x in chain(self.arches, unstable)}
+        self.valid = special | self.arches | unstable | disabled
+        # Note: '*' and '~*' are portage-only, i.e. not in the spec, so they
+        # don't belong in the main tree.
+        self.portage = {'*', '~*'}
+
+
 class ProfileData:
 
     def __init__(self, profile_name, key, provides, vfilter,
