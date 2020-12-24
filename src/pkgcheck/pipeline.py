@@ -77,7 +77,7 @@ class Pipeline:
                 pipes[exec_type][scope].extend(runners)
         else:
             for (scope, exec_type), runners in checkrunners.items():
-                if scope in (base.version_scope, base.package_scope):
+                if scope >= base.package_scope:
                     pipes[exec_type][base.package_scope].extend(runners)
                 else:
                     pipes[exec_type][scope].extend(runners)
