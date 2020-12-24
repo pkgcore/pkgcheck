@@ -125,7 +125,17 @@ main_options.add_argument(
         Support limiting targeted packages for scanning using a chosen filter.
 
         If the 'latest' argument is used, only the latest package per slot of
-        both VCS and non-VCS types will be scanned.
+        both VCS and non-VCS types will be scanned.  This can either be
+        specified individually in which case the filter will be applied
+        globally to all checks or it can be applied to specific checksets,
+        checks, or keywords using the syntax 'latest:ObjName' which would apply
+        the filter to the keyword, check, or checkset named ObjName (in that
+        order of precedence).
+
+        By default, some checks have filtering enabled, e.g.
+        various network-related checks to avoid redundant or
+        unnecessary server requests. In order to forcibly disable
+        all filtering use the 'no' argument.
     """)
 main_options.add_argument(
     '-j', '--jobs', type=arghparse.positive_int, default=os.cpu_count(),
