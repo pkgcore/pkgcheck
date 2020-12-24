@@ -41,6 +41,8 @@ class FilterArgs(arghparse.CommaSeparatedValues):
     def __call__(self, parser, namespace, values, option_string=None):
         values = self.parse_values(values)
         filter_map = {}
+        disabled = False
+
         for val in values:
             if ':' in val:
                 filter_type, target = val.split(':')
@@ -49,6 +51,10 @@ class FilterArgs(arghparse.CommaSeparatedValues):
                 except ValueError as e:
                     raise argparse.ArgumentError(self, str(e))
                 filter_map.update({x: filter_type for x in keywords})
+            elif val.lower() in ('false', 'no', 'n'):
+                # disable all filters
+                disabled = True
+                break
             else:
                 # globally enabling filter
                 filter_map.update((x, val) for x in objects.KEYWORDS)
@@ -61,12 +67,14 @@ class FilterArgs(arghparse.CommaSeparatedValues):
             raise argparse.ArgumentError(
                 self, f'unknown filter{s}: {unknown} (available: {available})')
 
-        # pull default filters
-        filters = dict(objects.KEYWORDS.filter)
-        # ignore invalid keywords -- only keywords version scope and higher are affected
-        filters.update({
-            objects.KEYWORDS[k]: v for k, v in filter_map.items()
-            if objects.KEYWORDS[k].scope >= base.version_scope})
+        filters = {}
+        if not disabled:
+            # pull default filters
+            filters.update(objects.KEYWORDS.filter)
+            # ignore invalid keywords -- only keywords version scope and higher are affected
+            filters.update({
+                objects.KEYWORDS[k]: v for k, v in filter_map.items()
+                if objects.KEYWORDS[k].scope >= base.version_scope})
 
         setattr(namespace, self.dest, ImmutableDict(filters))
 
