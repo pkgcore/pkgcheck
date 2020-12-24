@@ -171,12 +171,12 @@ class TestCheckArgs:
             assert err[0] == (
                 'pkgcheck scan: error: argument -c/--checks: expected one argument')
 
-    def test_enabled(self):
+    def test_neutral(self):
         for opt in ('-c', '--checks'):
             options, _ = self.tool.parse_args(self.args + [opt, 'UnusedLicensesCheck'])
             assert options.selected_checks == frozenset(['UnusedLicensesCheck'])
 
-    def test_disabled(self):
+    def test_subtractive(self):
         for opt in ('-c', '--checks'):
             check = list(objects.CHECKS)[random.randrange(len(objects.CHECKS))]
             options, _ = self.tool.parse_args(self.args + [f'{opt}=-{check}'])
