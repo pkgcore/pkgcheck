@@ -355,18 +355,8 @@ class ExitArgs(arghparse.CommaSeparatedNegations):
         if not enabled:
             enabled.append('error')
 
-        # expand args to keyword lists
-        disabled = self.args_to_keywords(namespace, disabled)
-        enabled = self.args_to_keywords(namespace, enabled)
+        # expand args to keyword objects
+        disabled = {objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, disabled)}
+        enabled = {objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, enabled)}
 
-        # validate selected keywords
-        if unknown_keywords := set(disabled + enabled) - set(objects.KEYWORDS):
-            unknown = ', '.join(map(repr, unknown_keywords))
-            s = pluralism(unknown_keywords)
-            raise argparse.ArgumentError(self, f'unknown keyword{s}: {unknown}')
-
-        disabled = {objects.KEYWORDS[k] for k in disabled}
-        enabled = {objects.KEYWORDS[k] for k in enabled}
-        exit_keywords = frozenset(enabled - disabled)
-
-        setattr(namespace, self.dest, exit_keywords)
+        setattr(namespace, self.dest, frozenset(enabled - disabled))
