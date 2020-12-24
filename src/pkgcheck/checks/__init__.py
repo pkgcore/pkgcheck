@@ -23,8 +23,6 @@ class Check(feeds.Feed):
 
     # check priority that affects runtime ordering
     _priority = 0
-    # flag to allow package feed filtering
-    _filtering = True
     known_results = frozenset()
 
     @klass.jit_attr
@@ -38,21 +36,20 @@ class Check(feeds.Feed):
     @property
     def source(self):
         # filter pkg feeds as required
-        if self._filtering:
-            if filtered_results := [x for x in self.known_results if x in self.options.filter]:
-                if self.scope >= base.version_scope:
-                    partial_filtered = len(filtered_results) != len(self.known_results)
-                    return (
-                        sources.FilteredRepoSource,
-                        (sources.LatestVersionsFilter, partial_filtered),
-                        (('source', self._source),)
-                    )
-                elif max(x.scope for x in self.known_results) >= base.version_scope:
-                    return (
-                        sources.FilteredPackageRepoSource,
-                        (sources.LatestPkgsFilter,),
-                        (('source', self._source),)
-                    )
+        if filtered_results := [x for x in self.known_results if x in self.options.filter]:
+            if self.scope >= base.version_scope:
+                partial_filtered = len(filtered_results) != len(self.known_results)
+                return (
+                    sources.FilteredRepoSource,
+                    (sources.LatestVersionsFilter, partial_filtered),
+                    (('source', self._source),)
+                )
+            elif max(x.scope for x in self.known_results) >= base.version_scope:
+                return (
+                    sources.FilteredPackageRepoSource,
+                    (sources.LatestPkgsFilter,),
+                    (('source', self._source),)
+                )
         return self._source
 
     def start(self):
