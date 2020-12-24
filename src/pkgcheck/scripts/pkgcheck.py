@@ -195,7 +195,7 @@ check_options.add_argument(
         The special argument of ``all`` corresponds to the list of all checks.
         Therefore, to forcibly enable all checks use ``-C all``.
 
-        In addition, all network-related checks (which are disabled by default)
+        All network-related checks (which are disabled by default)
         can be enabled using ``-C net``. This allows for easily running only
         network checks without having to explicitly list them.
     """)
@@ -220,12 +220,16 @@ check_options.add_argument(
         scanning. Any checks specified in this fashion will be the
         only checks that get run, skipping any disabled checks.
 
-        To specify disabled checks prefix them with ``-``. Note that when
-        starting the argument list with a disabled check an equals sign must
-        be used, e.g. ``-c=-check``, otherwise the disabled check argument is
-        treated as an option.
+        To disable checks prefix them with ``-``. Note that when starting the
+        argument list with a disabled check an equals sign must be used, e.g.
+        ``-c=-check``, otherwise the disabled check argument is treated as an
+        option.
 
-        Use ``pkgcheck show --checks`` see available options.
+        Additive arguments are also supported using the prefix ``+`` that adds
+        to the default set of enabled checks. This is useful in order to enable
+        optional checks in addition to the default set.
+
+        Use ``pkgcheck show --checks`` see all available checks.
     """)
 check_options.add_argument(
     '-k', '--keywords', metavar='KEYWORD', dest='selected_keywords', default=(),
