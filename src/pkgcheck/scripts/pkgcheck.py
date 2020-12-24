@@ -102,18 +102,21 @@ config_options.add_argument(
         specifying an argument of 'false' or 'no'.
     """)
 
+repo_argparser = commandline.ArgumentParser(suppress=True)
+repo_options = repo_argparser.add_argument_group('repo options')
+repo_options.add_argument(
+    '-r', '--repo', metavar='REPO', dest='target_repo',
+    action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
+    help='target repo')
+
 scan = subparsers.add_parser(
-    'scan', parents=(config_argparser, reporter_argparser,),
+    'scan', parents=(config_argparser, repo_argparser, reporter_argparser,),
     description='scan targets for QA issues')
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', action=arghparse.ParseNonblockingStdin,
     help='optional targets')
 
 main_options = scan.add_argument_group('main options')
-main_options.add_argument(
-    '-r', '--repo', metavar='REPO', dest='target_repo',
-    action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
-    help='repo to pull packages from')
 main_options.add_argument(
     '-f', '--filter',
     action=arghparse.Delayed, target=argparsers.FilterArgs, priority=99,
@@ -541,7 +544,7 @@ def _scan(options, out, err):
 
 
 cache = subparsers.add_parser(
-    'cache', description='perform cache operations',
+    'cache', parents=(repo_argparser,), description='perform cache operations',
     docs="""
         Various types of caches are used by pkgcheck. This command supports
         running operations on them including updates and removals.
@@ -557,7 +560,7 @@ cache_actions.add_argument(
     '-u', '--update', dest='update_cache', action='store_true',
     help='update caches')
 cache_actions.add_argument(
-    '-r', '--remove', dest='remove_cache', action='store_true',
+    '-R', '--remove', dest='remove_cache', action='store_true',
     help='forcibly remove caches')
 cache.add_argument(
     '-f', '--force', dest='force_cache', action='store_true',
@@ -568,10 +571,6 @@ cache.add_argument(
 cache.add_argument(
     '-t', '--type', dest='cache', action=argparsers.CacheNegations,
     help='target cache types')
-cache.add_argument(
-    '--repo', metavar='REPO', dest='target_repo',
-    action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
-    help='repo to target for cache operations')
 
 
 @cache.bind_pre_parse

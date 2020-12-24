@@ -212,7 +212,7 @@ case $state in
           $common_output_args \
           {'(--update)-u','(-u)--update'}'[update caches]' \
           {'(--force)-f','(-f)--force'}'[forcibly update caches]' \
-          {'(--remove)-r','(-r)--remove'}'[forcibly remove caches]' \
+          {'(--remove)-R','(-R)--remove'}'[forcibly remove caches]' \
           {'(--type)-t','(-t)--type'}'[target cache types]:caches:{_values -s , caches $(_caches -p)}' \
           && ret=0
         ;;

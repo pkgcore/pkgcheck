@@ -37,7 +37,7 @@ class TestPkgcheckCache:
 
         # pretend to remove it
         for arg in ('-n', '--dry-run'):
-            with patch('sys.argv', self.args + [arg] + ['-rt', 'profiles']):
+            with patch('sys.argv', self.args + [arg] + ['-Rt', 'profiles']):
                 with pytest.raises(SystemExit):
                     self.script()
                 out, err = capsys.readouterr()
@@ -45,7 +45,7 @@ class TestPkgcheckCache:
                 assert out.startswith(f'Would remove {self.cache_dir}')
 
         # fail to remove it
-        for arg in ('-r', '--remove'):
+        for arg in ('-R', '--remove'):
             with patch('pkgcheck.caches.os.unlink') as unlink, \
                     patch('sys.argv', self.args + [arg] + ['-t', 'profiles']):
                 unlink.side_effect = IOError('bad perms')
@@ -58,7 +58,7 @@ class TestPkgcheckCache:
                 assert excinfo.value.code == 2
 
         # actually remove it
-        for arg in ('-r', '--remove'):
+        for arg in ('-R', '--remove'):
             with patch('sys.argv', self.args + [arg] + ['-t', 'profiles']):
                 with pytest.raises(SystemExit):
                     self.script()
@@ -79,7 +79,7 @@ class TestPkgcheckCache:
 
         # fail to forcibly remove all
         with patch('pkgcheck.caches.shutil.rmtree') as rmtree, \
-                patch('sys.argv', self.args + ['-rf']):
+                patch('sys.argv', self.args + ['-Rf']):
             rmtree.side_effect = IOError('bad perms')
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
@@ -89,7 +89,7 @@ class TestPkgcheckCache:
             assert excinfo.value.code == 2
 
         # actually forcibly remove all
-        with patch('sys.argv', self.args + ['-rf']):
+        with patch('sys.argv', self.args + ['-Rf']):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
@@ -100,7 +100,7 @@ class TestPkgcheckCache:
         assert not os.path.exists(self.cache_dir)
 
         # forcing removal again does nothing
-        with patch('sys.argv', self.args + ['-rf']):
+        with patch('sys.argv', self.args + ['-Rf']):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()
