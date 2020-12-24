@@ -3,6 +3,64 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.8.0 (2021-??-??)
+---------------------------
+
+- pkgcheck scan: Support checkset and check args for the --exit option.
+
+- Use arches from profiles.desc instead of pulling them from make.defaults
+  (#237).
+
+- pkgcheck scan: Enable profile checks when using ``pkgcheck scan --commits``
+  if profile changes are detected.
+
+- DependencyCheck: Split outdated blocker checks into OutdatedBlockersCheck
+  since required addons are now strictly enforced for cache addons.
+
+- pkgcheck scan: Staged changes are now ignored when using ``pkgcheck scan
+  --commits``. Note that due to how ``git stash`` works, they'll be unstaged
+  on scan completion.
+
+- NonsolvableDepsInExp: Switch from warning level to error level to match other
+  visibility results.
+
+- VirtualKeywordsUpdate: Replace MissingVirtualKeywords with result that flags
+  virtuals with keywords that could be added.
+
+- Add basic API for running package scans (#52).
+
+- pkgcheck scan: Drop 'repo' -f/--filter filter type since it's underused and
+  doesn't mesh well with the new, granular filtering support.
+
+- BadCommitSummary: Escape regex strings in package names (#256).
+
+- pkgcheck scan: Add support for targeted --filter options that can be enabled
+  per keyword, check, or checkset.
+
+- pkgcheck scan: Re-add support for -C/--checksets option that must be defined
+  in the CHECKSETS config section. Also, move 'all' and 'net' aliases from
+  -c/--checks to virtual checksets. 
+
+- MisplacedEclassVar: Add support for flagging misplaced @PRE_INHERIT eclass
+  variables in ebuilds.
+
+- Network requests now use streamed GET requests instead of HEAD with fallback
+  to avoid various webservers not supporting HEAD requests.
+
+- MissingMove: Properly ignore git ebuild file renames.
+
+- pkgcheck cache: Add initial -r/--repo option support (#251).
+
+- Force using the fork start method for multiprocessing (#254).
+
+- pkgcheck scan: Prefer path restrictions during restriction generation if the
+  targets are in the target repo.
+
+- UnusedGlobalUseExpand: Check for unused global USE_EXPAND variables.
+
+- Drop support for python-3.6 and python-3.7.
+
+---------------------------
 pkgcheck 0.7.9 (2020-12-05)
 ---------------------------
 
@@ -55,10 +113,10 @@ pkgcheck 0.7.8 (2020-12-04)
 - MatchingChksums: Ignore go.mod related false positives (#228).
 
 - EclassDocMissingFunc: Flag eclasses missing docs for an exported
-  function. 
+  function.
 
 - EclassDocMissingVar: Flag eclasses missing docs for an exported
-  variable. 
+  variable.
 
 - InternalEclassFunc: Flag ebuilds using internal functions from an
   eclass.
@@ -105,7 +163,7 @@ pkgcheck 0.7.7 (2020-07-05)
 
 - Ignore license and keyword settings from system config for StableRequest results (#229).
 
-- pkgcheck scan: Support output name arguments for -k/--keywords (#221). 
+- pkgcheck scan: Support output name arguments for -k/--keywords (#221).
 
 - StableArchesAddon: Use known stable arches from arches.desc (GLEP 72) if available (#230).
 
