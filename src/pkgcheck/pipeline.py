@@ -74,7 +74,7 @@ class Pipeline:
         pipes = defaultdict(lambda: defaultdict(list))
         if self.options.pkg_scan:
             for (scope, exec_type), runners in checkrunners.items():
-                if scope is base.version_scope:
+                if scope == base.version_scope:
                     pipes[exec_type][base.version_scope].extend(runners)
                 else:
                     pipes[exec_type][base.package_scope].extend(runners)
@@ -154,12 +154,12 @@ class Pipeline:
         for restriction in restrictions:
             for scope in sorted(sync_pipes, reverse=True):
                 pipes = sync_pipes[scope]
-                if scope is base.version_scope:
+                if scope == base.version_scope:
                     versioned_source = VersionedSource(self.options)
                     for restrict in versioned_source.itermatch(restriction):
                         for i in range(len(pipes)):
                             work_q.put((scope, restrict, i))
-                elif scope is base.package_scope:
+                elif scope == base.package_scope:
                     unversioned_source = UnversionedSource(self.options)
                     for restrict in unversioned_source.itermatch(restriction):
                         work_q.put((scope, restrict, 0))
@@ -177,7 +177,7 @@ class Pipeline:
             for scope, restrict, pipe_idx in iter(work_q.get, None):
                 results = []
 
-                if scope is base.version_scope:
+                if scope == base.version_scope:
                     results.extend(pipes[scope][pipe_idx].run(restrict))
                 elif scope in (base.package_scope, base.category_scope):
                     for pipe in pipes[scope]:
@@ -268,7 +268,7 @@ class SyncCheckRunner(CheckRunner):
         self._metadata_errors = deque()
 
         # only report metadata errors for version-scoped sources
-        if self.source.scope is base.version_scope:
+        if self.source.scope == base.version_scope:
             self.source.itermatch = partial(
                 self.source.itermatch, error_callback=self._metadata_error_cb)
 

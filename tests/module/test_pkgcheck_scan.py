@@ -250,7 +250,7 @@ class TestPkgcheckScanParseArgs:
         """Multiple targets get collapsed into one restriction to run in parallel."""
         options, _ = tool.parse_args(['scan', 'cat/pkg1', 'cat/pkg2'])
         scope, restrict = list(options.restrictions)[0]
-        assert scope is base.package_scope
+        assert scope == base.package_scope
         assert restrict.restrictions == (atom.atom('cat/pkg1'), atom.atom('cat/pkg2'))
 
     def test_eclass_target(self, fakerepo, tool):

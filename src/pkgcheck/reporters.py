@@ -97,7 +97,7 @@ class FancyReporter(Reporter):
             result = (yield)
             if result.scope in (base.version_scope, base.package_scope):
                 key = f'{result.category}/{result.package}'
-            elif result.scope is base.category_scope:
+            elif result.scope == base.category_scope:
                 key = result.category
             else:
                 key = str(result.scope)
@@ -110,7 +110,7 @@ class FancyReporter(Reporter):
             self.out.first_prefix.append('  ')
             self.out.later_prefix.append('    ')
             s = ''
-            if result.scope is base.version_scope:
+            if result.scope == base.version_scope:
                 s = f"version {result.version}: "
             self.out.write(
                 self.out.fg(result.color),

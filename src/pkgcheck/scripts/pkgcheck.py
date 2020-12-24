@@ -526,7 +526,7 @@ def _selected_check(options, scan_scope, scope):
     """Verify check scope against current scan scope to determine check activation."""
     if scope == 0:
         if not options.selected_scopes:
-            if scan_scope is base.repo_scope or scope is scan_scope:
+            if scan_scope == base.repo_scope or scope == scan_scope:
                 # Allow repo scans or cwd scope to trigger location specific checks.
                 return True
         elif scope in options.selected_scopes:
@@ -538,7 +538,7 @@ def _selected_check(options, scan_scope, scope):
         # pkg scanning is requested, e.g. skip repo level checks when scanning at
         # package level.
         return True
-    elif options.commits and scan_scope != 0 and scope is base.commit_scope:
+    elif options.commits and scan_scope != 0 and scope == base.commit_scope:
         # Only enable commit-related checks when --commits is specified.
         return True
     return False
