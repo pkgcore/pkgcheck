@@ -74,10 +74,7 @@ class Pipeline:
         pipes = {'sync': defaultdict(list), 'async': defaultdict(list)}
         if self.options.pkg_scan:
             for (scope, exec_type), runners in checkrunners.items():
-                if scope == base.version_scope:
-                    pipes[exec_type][base.version_scope].extend(runners)
-                else:
-                    pipes[exec_type][base.package_scope].extend(runners)
+                pipes[exec_type][scope].extend(runners)
         else:
             for (scope, exec_type), runners in checkrunners.items():
                 if scope in (base.version_scope, base.package_scope):
