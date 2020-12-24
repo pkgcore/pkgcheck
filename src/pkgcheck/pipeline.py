@@ -71,7 +71,7 @@ class Pipeline:
             checkrunners[(source.scope, exec_type)].append(runner)
 
         # categorize checkrunners for parallelization based on the scan and source scope
-        pipes = defaultdict(lambda: defaultdict(list))
+        pipes = {'sync': defaultdict(list), 'async': defaultdict(list)}
         if self.options.pkg_scan:
             for (scope, exec_type), runners in checkrunners.items():
                 if scope == base.version_scope:
