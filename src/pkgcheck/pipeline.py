@@ -161,7 +161,7 @@ class Pipeline:
                     if self._ordered_results is None:
                         raise
                     self._pid = None
-                    # return cached repo and location specific results
+                    # output cached results in registered order
                     results = chain.from_iterable(map(sorted, self._ordered_results.values()))
                     self._results.extend(results)
                     self._ordered_results = None
@@ -172,7 +172,7 @@ class Pipeline:
                 if isinstance(results, str):
                     self._kill_pipe(error=results.strip())
 
-                # Cache registered result scopes to forcibly order output.
+                # cache registered result scopes to forcibly order output
                 try:
                     self._ordered_results[results[0].scope].extend(results)
                 except KeyError:
