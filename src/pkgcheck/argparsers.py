@@ -28,7 +28,7 @@ def object_to_keywords(namespace, obj):
     elif obj in objects.CHECKS:
         yield from (x.__name__ for x in objects.CHECKS[obj].known_results)
     elif obj in namespace.config_checksets:
-        yield from chain(*ChecksetArgs.checksets_to_keywords(namespace.config_checksets, [obj]))
+        yield from chain(*ChecksetArgs.checksets_to_keywords(namespace, [obj]))
     else:
         raise ValueError(f'unknown checkset, check, or keyword: {obj!r}')
 
@@ -123,41 +123,43 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
 class ChecksetArgs(arghparse.CommaSeparatedNegations):
     """Filter enabled checks/keywords by selected checksets."""
 
-    known_aliases = frozenset(['all', 'net'])
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.aliases = {
+            'all': list(objects.CHECKS.values()),
+            'net': list(objects.CHECKS.select(NetworkCheck).values()),
+        }
+
+    def expand_aliases(self, args):
+        """Expand internal checkset aliases into keyword generators."""
+        checksets, keywords = [], []
+        for arg in args:
+            try:
+                for check in self.aliases[arg]:
+                    keywords.extend(x.__name__ for x in check.known_results)
+            except KeyError:
+                checksets.append(arg)
+        return checksets, keywords
 
     @staticmethod
-    def alias_to_keywords(alias):
-        """Expand internal checkset aliases into keyword generators."""
-        alias_map = {
-            'all': objects.CHECKS.values(),
-            'net': objects.CHECKS.select(NetworkCheck).values()
-        }
-        for check in alias_map[alias]:
-            for result in check.known_results:
-                yield result.__name__
-
-    @classmethod
-    def checksets_to_keywords(cls, checksets, args):
+    def checksets_to_keywords(namespace, args):
         """Expand checksets into lists of disabled and enabled keywords."""
         disabled, enabled = [], []
         for arg in args:
-            if arg in cls.known_aliases:
-                enabled.extend(cls.alias_to_keywords(arg))
-            else:
-                for x in checksets[arg]:
-                    # determine if checkset item is disabled or enabled
-                    if x[0] == '-':
-                        x = x[1:]
-                        keywords = disabled
-                    else:
-                        keywords = enabled
-                    # determine if checkset item is check or keyword
-                    if x in objects.CHECKS:
-                        keywords.extend(x.__name__ for x in objects.CHECKS[x].known_results)
-                    elif x in objects.KEYWORDS:
-                        keywords.append(x)
-                    else:
-                        raise ValueError(f'{arg!r} checkset, unknown check or keyword: {x!r}')
+            for x in namespace.config_checksets[arg]:
+                # determine if checkset item is disabled or enabled
+                if x[0] == '-':
+                    x = x[1:]
+                    keywords = disabled
+                else:
+                    keywords = enabled
+                # determine if checkset item is check or keyword
+                if x in objects.CHECKS:
+                    keywords.extend(x.__name__ for x in objects.CHECKS[x].known_results)
+                elif x in objects.KEYWORDS:
+                    keywords.append(x)
+                else:
+                    raise ValueError(f'{arg!r} checkset, unknown check or keyword: {x!r}')
         return disabled, enabled
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -165,24 +167,28 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
         checksets = namespace.config_checksets
 
         # validate selected checksets
-        if unknown := set(disabled + enabled) - self.known_aliases - set(checksets):
+        if unknown := set(disabled + enabled) - set(self.aliases) - set(checksets):
             unknown_str = ', '.join(map(repr, unknown))
-            available = ', '.join(sorted(chain(checksets, self.known_aliases)))
+            available = ', '.join(sorted(chain(checksets, self.aliases)))
             s = pluralism(unknown)
             raise argparse.ArgumentError(
                 self, f'unknown checkset{s}: {unknown_str} (available: {available})')
 
+        # expand aliases into keywords
+        disabled, disabled_aliases = self.expand_aliases(disabled)
+        enabled, enabled_aliases = self.expand_aliases(enabled)
+
         # expand checksets into keywords
         try:
-            disabled = self.checksets_to_keywords(checksets, disabled)
-            enabled = self.checksets_to_keywords(checksets, enabled)
+            disabled = self.checksets_to_keywords(namespace, disabled)
+            enabled = self.checksets_to_keywords(namespace, enabled)
         except ValueError as e:
             raise argparse.ArgumentError(self, str(e))
 
         # Convert double negatives into positives, e.g. disabling a checkset
         # containing a disabled keyword enables the keyword.
-        disabled_keywords = disabled[1] + enabled[0]
-        enabled_keywords = disabled[0] + enabled[1]
+        disabled_keywords = disabled_aliases + disabled[1] + enabled[0]
+        enabled_keywords = enabled_aliases + disabled[0] + enabled[1]
 
         # parse check/keyword args related to checksets
         args = []
