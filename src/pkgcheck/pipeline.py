@@ -60,14 +60,14 @@ class Pipeline:
         self._results = deque()
 
         # scoped mapping for caching repo and location specific results
-        self._sorted_results = {
+        self._ordered_results = {
             scope: [] for scope in reversed(list(base.scopes.values()))
             if scope.level <= base.repo_scope
         }
 
         # package level scans sort all returned results
         if self._pkg_scan:
-            self._sorted_results.update({
+            self._ordered_results.update({
                 scope: [] for scope in base.scopes.values()
                 if scope.level >= base.package_scope
             })
@@ -158,13 +158,13 @@ class Pipeline:
                 try:
                     results = next(self._results_iter)
                 except StopIteration:
-                    if self._sorted_results is None:
+                    if self._ordered_results is None:
                         raise
                     self._pid = None
                     # return cached repo and location specific results
-                    results = chain.from_iterable(map(sorted, self._sorted_results.values()))
+                    results = chain.from_iterable(map(sorted, self._ordered_results.values()))
                     self._results.extend(results)
-                    self._sorted_results = None
+                    self._ordered_results = None
                     continue
 
                 # Catch propagated exceptions, output their traceback, and
@@ -172,25 +172,11 @@ class Pipeline:
                 if isinstance(results, str):
                     self._kill_pipe(error=results.strip())
 
-                if self._pkg_scan:
-                    # Sort all generated results when running at package scope
-                    # level, i.e. running within a package directory in an
-                    # ebuild repo.
-                    for result in results:
-                        self._sorted_results[result.scope].append(result)
-                else:
-                    # Running at a category scope level or higher. This outputs
-                    # version/package/category results in a stream sorted per package
-                    # while caching any repo, commit, and specific location (e.g.
-                    # profiles or eclass) results. Those are then outputted in sorted
-                    # fashion in order of their scope level from greatest to least
-                    # (displaying repo results first) after all
-                    # version/package/category results have been output.
-                    for result in sorted(results):
-                        try:
-                            self._sorted_results[result.scope].append(result)
-                        except KeyError:
-                            self._results.append(result)
+                # Cache registered result scopes to forcibly order output.
+                try:
+                    self._ordered_results[results[0].scope].extend(results)
+                except KeyError:
+                    self._results.extend(results)
 
     def _queue_work(self, sync_pipes, work_q, restrictions):
         """Producer that queues scanning tasks against granular scope restrictions."""
@@ -232,7 +218,7 @@ class Pipeline:
                     results.extend(pipe.finish())
 
                 if results:
-                    self._results_q.put(results)
+                    self._results_q.put(sorted(results))
         except Exception:  # pragma: no cover
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
