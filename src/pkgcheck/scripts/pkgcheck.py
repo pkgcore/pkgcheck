@@ -367,7 +367,10 @@ def _setup_scan(parser, namespace, args):
         namespace = config_parser.parse_config_options(
             namespace, configs=ConfigFileParser.default_configs)
 
-    # re-parse command line args to override config defaults
+    # TODO: Limit to parsing repo and targets options here so all args don't
+    # have to be parsed twice, will probably require a custom snakeoil
+    # arghparse method.
+    # parse command line args to override config defaults
     namespace, _ = parser._parse_known_args(args, namespace)
 
     # Get the current working directory for repo detection and restriction
