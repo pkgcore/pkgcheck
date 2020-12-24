@@ -495,55 +495,6 @@ def _determine_restrictions(namespace, attr):
     setattr(namespace, attr, restrictions)
 
 
-@scan.bind_final_check
-def _validate_scan_args(parser, namespace):
-    # pull scan scope from the given restriction targets
-    restrictions = iter(namespace.restrictions)
-    try:
-        scan_scope, restriction = next(restrictions)
-    except StopIteration:
-        parser.error('no targets piped in')
-
-    # determine if scan is being run at a package level
-    namespace.pkg_scan = (
-        scan_scope in (base.version_scope, base.package_scope) and
-        isinstance(restriction, boolean.AndRestriction))
-    namespace.restrictions = chain([(scan_scope, restriction)], restrictions)
-
-    # filter enabled checks based on the scanning scope
-    namespace.enabled_checks = [
-        check for check in namespace.enabled_checks
-        if _selected_check(namespace, scan_scope, check.scope)
-    ]
-
-    if not namespace.enabled_checks:
-        parser.error(f'no matching checks available for {scan_scope} scope')
-
-    namespace.addons = base.get_addons(namespace.enabled_checks)
-
-
-def _selected_check(options, scan_scope, scope):
-    """Verify check scope against current scan scope to determine check activation."""
-    if scope == 0:
-        if not options.selected_scopes:
-            if scan_scope == base.repo_scope or scope == scan_scope:
-                # Allow repo scans or cwd scope to trigger location specific checks.
-                return True
-        elif scope in options.selected_scopes:
-            # Allow checks with special scopes to be run when specifically
-            # requested, e.g. eclass-only scanning.
-            return True
-    elif scan_scope > 0 and scope >= scan_scope:
-        # Only run pkg-related checks at or below the current scan scope level, if
-        # pkg scanning is requested, e.g. skip repo level checks when scanning at
-        # package level.
-        return True
-    elif options.commits and scan_scope != 0 and scope == base.commit_scope:
-        # Only enable commit-related checks when --commits is specified.
-        return True
-    return False
-
-
 @scan.bind_main_func
 def _scan(options, out, err):
     with ExitStack() as stack:

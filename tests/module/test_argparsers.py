@@ -224,7 +224,7 @@ class TestKeywordArgs:
             options, _ = self.tool.parse_args(self.args + [opt, 'UnusedLicenses'])
             assert options.selected_keywords == frozenset(['UnusedLicenses'])
             assert options.filtered_keywords == frozenset([objects.KEYWORDS['UnusedLicenses']])
-            assert options.enabled_checks == [checks.repo_metadata.UnusedLicensesCheck]
+            assert options.enabled_checks == {checks.repo_metadata.UnusedLicensesCheck}
 
     def test_disabled_check(self):
         """Disabling all keywords for a given check also disables the check."""

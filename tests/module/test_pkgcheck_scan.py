@@ -36,7 +36,7 @@ class TestPkgcheckScanParseArgs:
 
     def test_enabled_check(self, tool):
         options, _ = tool.parse_args(['scan', '-c', 'PkgDirCheck'])
-        assert options.enabled_checks == [checks_mod.pkgdir.PkgDirCheck]
+        assert options.enabled_checks == {checks_mod.pkgdir.PkgDirCheck}
 
     def test_disabled_check(self, tool):
         options, _ = tool.parse_args(['scan'])
@@ -44,17 +44,6 @@ class TestPkgcheckScanParseArgs:
         options, _ = tool.parse_args(['scan', '-c=-PkgDirCheck'])
         assert options.enabled_checks
         assert checks_mod.pkgdir.PkgDirCheck not in options.enabled_checks
-
-    def test_no_matching_checks_scope(self, tool, capsys):
-        options, _ = tool.parse_args(['scan', 'standalone'])
-        path = pjoin(options.target_repo.location, 'profiles')
-        with pytest.raises(SystemExit) as excinfo:
-            tool.parse_args(['scan', '-c', 'PkgDirCheck', path])
-        assert excinfo.value.code == 2
-        out, err = capsys.readouterr()
-        assert not out
-        err = err.strip()
-        assert 'no matching checks available for profiles scope' in err
 
     def test_targets(self, tool):
         options, _ = tool.parse_args(['scan', 'dev-util/foo'])
@@ -64,15 +53,6 @@ class TestPkgcheckScanParseArgs:
         with patch('sys.stdin', StringIO('dev-util/foo')):
             options, _ = tool.parse_args(['scan', '-'])
             assert list(options.restrictions) == [(base.package_scope, atom.atom('dev-util/foo'))]
-
-    def test_stdin_targets_with_no_args(self, tool, capsys):
-        with patch('sys.stdin', StringIO()):
-            with pytest.raises(SystemExit) as excinfo:
-                tool.parse_args(['scan', '-'])
-                assert excinfo.value.code == 2
-                out, err = capsys.readouterr()
-                err = err.strip().split('\n')
-                assert err[-1] == 'no targets piped in'
 
     def test_invalid_targets(self, tool, capsys):
         with pytest.raises(SystemExit) as excinfo:
@@ -384,6 +364,18 @@ class TestPkgcheckScan:
             assert excinfo.value.code == 0
             out, err = capsys.readouterr()
             assert out == err == ''
+
+    def test_no_matching_checks_scope(self, tool):
+        options, _ = tool.parse_args(['scan', 'standalone'])
+        path = pjoin(options.target_repo.location, 'profiles')
+        error = 'no matching checks available for profiles scope'
+        with pytest.raises(base.PkgcheckUserException, match=error):
+            self.scan(self.scan_args + ['-c', 'PkgDirCheck', path])
+
+    def test_stdin_targets_with_no_args(self):
+        with patch('sys.stdin', StringIO()):
+            with pytest.raises(base.PkgcheckUserException, match='no targets piped in'):
+                self.scan(self.scan_args + ['-'])
 
     def test_exit_status(self, repo):
         # create good ebuild and another with an invalid EAPI

@@ -10,7 +10,7 @@ from functools import partial
 from itertools import chain, tee
 
 from pkgcore.package.errors import MetadataException
-from pkgcore.restrictions import packages
+from pkgcore.restrictions import boolean, packages
 
 from . import base
 from .checks import init_checks
@@ -29,7 +29,6 @@ class Pipeline:
 
     def __init__(self, options, restrictions):
         self.options = options
-        self._restrictions = (x for _scope, x in restrictions)
         # number of error results encountered (used with --exit option)
         self.errors = 0
 
@@ -37,7 +36,22 @@ class Pipeline:
         self._mp_ctx = multiprocessing.get_context('fork')
         # create checkrunner pipelines
         self._results_q = self._mp_ctx.SimpleQueue()
-        self._pipes = self._create_runners()
+
+        # pull scan scope from the given restriction targets
+        restrictions = iter(restrictions)
+        try:
+            scan_scope, restriction = next(restrictions)
+        except StopIteration:
+            raise base.PkgcheckUserException('no targets piped in')
+
+        # determine if scan is being run at a package level
+        self._pkg_scan = (
+            scan_scope in (base.version_scope, base.package_scope) and
+            isinstance(restriction, boolean.AndRestriction))
+        self._restrictions = chain([restriction], (x for _scope, x in restrictions))
+
+        # create checkrunners
+        self._pipes = self._create_runners(scan_scope)
 
         # initialize settings used by iterator support
         self._pid = None
@@ -52,16 +66,48 @@ class Pipeline:
         }
 
         # package level scans sort all returned results
-        if self.options.pkg_scan:
+        if self._pkg_scan:
             self._sorted_results.update({
                 scope: [] for scope in base.scopes.values()
                 if scope.level >= base.package_scope
             })
 
-    def _create_runners(self):
+    def _selected_check(self, scan_scope, scope):
+        """Verify check scope against current scan scope to determine check activation."""
+        if scope == 0:
+            if not self.options.selected_scopes:
+                if scan_scope == base.repo_scope or scope == scan_scope:
+                    # Allow repo scans or cwd scope to trigger location specific checks.
+                    return True
+            elif scope in self.options.selected_scopes:
+                # Allow checks with special scopes to be run when specifically
+                # requested, e.g. eclass-only scanning.
+                return True
+        elif scan_scope > 0 and scope >= scan_scope:
+            # Only run pkg-related checks at or below the current scan scope level, if
+            # pkg scanning is requested, e.g. skip repo level checks when scanning at
+            # package level.
+            return True
+        elif self.options.commits and scan_scope != 0 and scope == base.commit_scope:
+            # Only enable commit-related checks when --commits is specified.
+            return True
+        return False
+
+    def _create_runners(self, scan_scope):
         """Initialize and categorize checkrunners for results pipeline."""
+        # filter enabled checks based on the scanning scope
+        enabled_checks = [
+            check for check in self.options.enabled_checks
+            if self._selected_check(scan_scope, check.scope)
+        ]
+
+        if not enabled_checks:
+            raise base.PkgcheckUserException(
+                f'no matching checks available for {scan_scope} scope')
+
         # initialize enabled checks
-        enabled_checks = init_checks(self.options.addons, self.options, self._results_q)
+        addons = base.get_addons(enabled_checks)
+        enabled_checks = init_checks(addons, self.options, self._results_q)
 
         # initialize checkrunners per source type, using separate runner for async checks
         checkrunners = defaultdict(list)
@@ -72,7 +118,7 @@ class Pipeline:
 
         # categorize checkrunners for parallelization based on the scan and source scope
         pipes = {'sync': defaultdict(list), 'async': defaultdict(list)}
-        if self.options.pkg_scan:
+        if self._pkg_scan:
             for (scope, exec_type), runners in checkrunners.items():
                 pipes[exec_type][scope].extend(runners)
         else:
@@ -126,7 +172,7 @@ class Pipeline:
                 if isinstance(results, str):
                     self._kill_pipe(error=results.strip())
 
-                if self.options.pkg_scan:
+                if self._pkg_scan:
                     # Sort all generated results when running at package scope
                     # level, i.e. running within a package directory in an
                     # ebuild repo.
