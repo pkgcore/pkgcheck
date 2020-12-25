@@ -270,15 +270,13 @@ class MetadataError(Error):
     # specific metadata attributes handled by the result class
     attr = None
     # mapping from data attributes to result classes
-    result_mapping = {}
-    # set of registered result classes
-    results = set()
+    results = {}
 
     def __init_subclass__(cls, **kwargs):
         """Register metadata attribute error results."""
         super().__init_subclass__(**kwargs)
         if cls.attr is not None:
-            setting = cls.result_mapping.setdefault(cls.attr, cls)
+            setting = cls.results.setdefault(cls.attr, cls)
             if setting != cls:
                 raise ValueError(
                     f'metadata attribute {cls.attr!r} already registered: {setting!r}')

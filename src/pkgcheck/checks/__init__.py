@@ -7,7 +7,6 @@ from pkgcore import fetch
 from snakeoil import klass
 
 from .. import addons, base, feeds, sources
-from ..base import PkgcheckException
 from ..caches import CachedAddon, CacheDisabled
 from ..results import MetadataError
 
@@ -21,17 +20,15 @@ class Check(feeds.Feed):
     :cvar known_results: result keywords the check can possibly yield
     """
 
-    # check priority that affects runtime ordering
-    _priority = 0
     known_results = frozenset()
 
     @klass.jit_attr
     def priority(self):
         """Priority that affects order in which checks are run."""
         # raise priority for checks that scan for metadata errors
-        if self._priority == 0 and self.known_results & MetadataError.results:
+        if self.known_results.intersection(MetadataError.results.values()):
             return -1
-        return self._priority
+        return 0
 
     @property
     def source(self):

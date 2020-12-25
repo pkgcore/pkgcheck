@@ -297,7 +297,7 @@ class SyncCheckRunner(CheckRunner):
 
         # Unregistered metadata attrs will raise KeyError here which is wanted
         # so they can be noticed and fixed.
-        result_cls = MetadataError.result_mapping[e.attr]
+        result_cls = MetadataError.results[e.attr]
         if result_cls in known_results:
             error_str = ': '.join(e.msg().split('\n'))
             result = result_cls(e.attr, error_str, pkg=e.pkg)
