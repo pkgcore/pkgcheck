@@ -48,9 +48,9 @@ class FilterArgs(arghparse.CommaSeparatedValues):
                 filter_type, target = val.split(':')
                 try:
                     keywords = object_to_keywords(namespace, target)
+                    filter_map.update({x: filter_type for x in keywords})
                 except ValueError as e:
                     raise argparse.ArgumentError(self, str(e))
-                filter_map.update({x: filter_type for x in keywords})
             elif val.lower() in ('false', 'no', 'n'):
                 # disable all filters
                 disabled = True
@@ -58,6 +58,7 @@ class FilterArgs(arghparse.CommaSeparatedValues):
             else:
                 # globally enabling filter
                 filter_map.update((x, val) for x in objects.KEYWORDS)
+                break
 
         # validate selected filters
         if unknown := set(filter_map.values()) - self.known_filters:

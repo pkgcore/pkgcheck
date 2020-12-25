@@ -29,6 +29,46 @@ class TestConfigArg:
             assert options.config is False
 
 
+class TestFilterArgs:
+
+    @pytest.fixture(autouse=True)
+    def _create_argparser(self):
+        self.parser = arghparse.ArgumentParser()
+        self.parser.set_defaults(config_checksets={'cset': ['StableRequestCheck']})
+        self.parser.add_argument('--filter', action=argparsers.FilterArgs)
+
+    def test_none(self):
+        options = self.parser.parse_args([])
+        assert options.filter is None
+
+    def test_unknown_filter(self, capsys):
+        for arg in ('foo', 'foo:PkgDirCheck'):
+            with pytest.raises(SystemExit) as excinfo:
+                self.parser.parse_args(['--filter', arg])
+            out, err = capsys.readouterr()
+            assert not out
+            assert "unknown filter: 'foo'" in err
+            assert excinfo.value.code == 2
+
+    def test_disabled(self):
+        for arg in ('False', 'false', 'No', 'no', 'N', 'n'):
+            options = self.parser.parse_args(['--filter', arg])
+            assert options.filter == {}
+
+    def test_enabled(self):
+        for arg in ('latest', 'latest:StableRequest', 'latest:StableRequestCheck', 'latest:cset'):
+            options = self.parser.parse_args(['--filter', arg])
+            assert objects.KEYWORDS['StableRequest'] in options.filter
+
+    def test_unknown_value(self, capsys):
+        with pytest.raises(SystemExit) as excinfo:
+            self.parser.parse_args(['--filter', 'latest:foo'])
+        out, err = capsys.readouterr()
+        assert not out
+        assert "unknown checkset, check, or keyword: 'foo'" in err
+        assert excinfo.value.code == 2
+
+
 class TestCacheNegations:
 
     @pytest.fixture(autouse=True)
