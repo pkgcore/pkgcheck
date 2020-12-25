@@ -474,7 +474,6 @@ class UnderscoreInUseFlag(results.PackageResult, results.Warning):
 class LocalUseCheck(Check):
     """Check local USE flags in metadata.xml for various issues."""
 
-    scope = base.package_scope
     _source = sources.PackageRepoSource
     required_addons = (addons.UseAddon,)
     known_results = frozenset([

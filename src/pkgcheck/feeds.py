@@ -10,8 +10,20 @@ class Feed(base.Addon):
     :cvar source: source of feed items
     """
 
-    scope = base.version_scope
     _source = sources.RepoSource
+
+    def __init_subclass__(cls, **kwargs):
+        """Initialize feed subclasses and set 'scope' class attribute."""
+        super().__init_subclass__(**kwargs)
+        # determine feed scope by its registered source
+        if isinstance(cls._source, tuple):
+            if issubclass(cls._source[0], sources.EmptySource):
+                scope = cls._source[1][0]
+            else:
+                scope = cls._source[0].scope
+        else:
+            scope = cls._source.scope
+        cls.scope = scope
 
     @property
     def source(self):

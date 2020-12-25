@@ -23,8 +23,7 @@ class BinaryFile(results.Error):
 class RepoDirCheck(GentooRepoCheck):
     """Scan all files in the repository for issues."""
 
-    scope = base.repo_scope
-    _source = sources.EmptySource
+    _source = (sources.EmptySource, (base.repo_scope,))
     required_addons = (git.GitAddon,)
     known_results = frozenset([BinaryFile])
 
@@ -75,8 +74,7 @@ class EmptyPackageDir(results.PackageResult, results.Warning):
 class EmptyDirsCheck(GentooRepoCheck):
     """Scan for empty category or package directories."""
 
-    scope = base.repo_scope
-    _source = sources.EmptySource
+    _source = (sources.EmptySource, (base.repo_scope,))
     known_results = frozenset([EmptyCategoryDir, EmptyPackageDir])
 
     def __init__(self, *args):

@@ -169,7 +169,6 @@ class InvalidUTF8(results.PackageResult, results.Error):
 class PkgDirCheck(Check):
     """Scan ebuild directory for various file-related issues."""
 
-    scope = base.package_scope
     _source = (sources.PackageRepoSource, (), (('source', sources.RawRepoSource),))
 
     ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
@@ -275,7 +274,6 @@ class PkgDirCheck(Check):
 class EqualVersionsCheck(Check):
     """Scan package ebuilds for semantically equal versions."""
 
-    scope = base.package_scope
     _source = sources.PackageRepoSource
     known_results = frozenset([EqualVersions])
 
@@ -311,7 +309,6 @@ class LiveOnlyPackage(results.PackageResult, results.Warning):
 class LiveOnlyCheck(GentooRepoCheck):
     """Scan for packages with only live versions."""
 
-    scope = base.package_scope
     _source = sources.PackageRepoSource
     required_addons = (git.GitAddon,)
     known_results = frozenset([LiveOnlyPackage])

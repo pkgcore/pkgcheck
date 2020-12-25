@@ -256,7 +256,6 @@ class FetchablesUrlCheck(_UrlCheck):
 class MetadataUrlCheck(_UrlCheck):
     """Verify metadata.xml URLs."""
 
-    scope = base.package_scope
     _source = sources.PackageRepoSource
 
     def __init__(self, *args, **kwargs):

@@ -219,7 +219,6 @@ class _RemovalRepo(UnconfiguredTree):
 class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
     """Check unpushed git package commits for various issues."""
 
-    scope = base.package_scope
     _source = (sources.PackageRepoSource, (), (('source', GitCommitsRepoSource),))
     required_addons = (git.GitAddon,)
     known_results = frozenset([
@@ -477,7 +476,6 @@ def verify_tags(*tags, required=False):
 class GitCommitsCheck(GentooRepoCheck, GitCheck):
     """Check unpushed git commits for various issues."""
 
-    scope = base.commit_scope
     _source = GitCommitsSource
     known_results = frozenset([
         MissingSignOff, InvalidCommitTag, InvalidCommitMessage, BadCommitSummary,
@@ -635,7 +633,6 @@ class EclassIncorrectCopyright(IncorrectCopyright, results.EclassResult):
 class GitEclassCommitsCheck(GentooRepoCheck, GitCheck):
     """Check unpushed git eclass commits for various issues."""
 
-    scope = base.eclass_scope
     _source = sources.EclassRepoSource
     known_results = frozenset([EclassIncorrectCopyright])
 

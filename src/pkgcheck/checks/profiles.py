@@ -95,9 +95,8 @@ class _ProfileNode(profiles_mod.ProfileNode):
 class ProfilesCheck(Check):
     """Scan repo profiles for unknown flags/packages."""
 
+    _source = (sources.EmptySource, (base.profiles_scope,))
     required_addons = (addons.UseAddon, addons.KeywordsAddon)
-    scope = base.profiles_scope
-    _source = (sources.EmptySource, (), (('scope', base.profiles_scope),))
     known_results = frozenset([
         UnknownProfilePackages, UnknownProfilePackageUse, UnknownProfileUse,
         UnknownProfilePackageKeywords, ProfileWarning, ProfileError,
@@ -357,9 +356,8 @@ class RepoProfilesCheck(Check):
     categories.
     """
 
+    _source = (sources.EmptySource, (base.profiles_scope,))
     required_addons = (addons.ProfileAddon,)
-    scope = base.profiles_scope
-    _source = (sources.EmptySource, (), (('scope', base.profiles_scope),))
     known_results = frozenset([
         ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,
         UnknownCategoryDirs, NonexistentCategories, LaggingProfileEapi,

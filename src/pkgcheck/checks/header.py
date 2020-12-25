@@ -197,7 +197,6 @@ class EclassInvalidLicenseHeader(InvalidLicenseHeader, results.EclassResult):
 class EclassHeaderCheck(_HeaderCheck):
     """Scan eclasses for incorrect copyright/license headers."""
 
-    scope = base.eclass_scope
     _source = sources.EclassRepoSource
 
     _invalid_copyright = EclassInvalidCopyright

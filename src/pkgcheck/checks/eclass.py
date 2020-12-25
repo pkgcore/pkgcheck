@@ -186,7 +186,6 @@ class EclassDocMissingVar(results.EclassResult, results.Warning):
 class EclassCheck(Check):
     """Scan eclasses for various issues."""
 
-    scope = base.eclass_scope
     _source = sources.EclassRepoSource
     known_results = frozenset([
         EclassBashSyntaxError, EclassDocError, EclassDocMissingFunc, EclassDocMissingVar])

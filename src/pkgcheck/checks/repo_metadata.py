@@ -79,8 +79,7 @@ class BadPackageUpdate(results.ProfilesResult, results.LogError):
 class PackageUpdatesCheck(Check):
     """Scan profiles/updates/* for outdated entries and other issues."""
 
-    scope = base.profiles_scope
-    _source = (sources.EmptySource, (), (('scope', base.profiles_scope),))
+    _source = (sources.EmptySource, (base.profiles_scope,))
     known_results = frozenset([
         MultiMovePackageUpdate, OldMultiMovePackageUpdate,
         OldPackageUpdate, MovedPackageUpdate, BadPackageUpdate,
@@ -169,7 +168,6 @@ class UnusedLicenses(results.Warning):
 class UnusedLicensesCheck(Check):
     """Check for unused license files."""
 
-    scope = base.repo_scope
     _source = sources.RepositoryRepoSource
     known_results = frozenset([UnusedLicenses])
 
@@ -209,7 +207,6 @@ class UnusedMirrors(results.Warning):
 class UnusedMirrorsCheck(MirrorsCheck):
     """Check for unused mirrors."""
 
-    scope = base.repo_scope
     _source = sources.RepositoryRepoSource
     known_results = frozenset([UnusedMirrors])
 
@@ -246,7 +243,6 @@ class UnusedEclasses(results.Warning):
 class UnusedEclassesCheck(Check):
     """Check for unused eclasses."""
 
-    scope = base.repo_scope
     _source = sources.RepositoryRepoSource
     known_results = frozenset([UnusedEclasses])
 
@@ -288,8 +284,7 @@ class UnknownLicenses(results.Warning):
 class LicenseGroupsCheck(Check):
     """Scan license groups for unknown licenses."""
 
-    scope = base.repo_scope
-    _source = sources.EmptySource
+    _source = (sources.EmptySource, (base.repo_scope,))
     known_results = frozenset([UnknownLicenses])
 
     def __init__(self, *args):
@@ -375,7 +370,6 @@ def _dfs(graph, start, visited=None):
 class GlobalUseCheck(Check):
     """Check global USE and USE_EXPAND flags for various issues."""
 
-    scope = base.repo_scope
     _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
     required_addons = (addons.UseAddon,)
     known_results = frozenset([
@@ -562,7 +556,6 @@ class ManifestCheck(Check):
     """
 
     required_addons = (addons.UseAddon,)
-    scope = base.package_scope
     _source = sources.PackageRepoSource
     known_results = frozenset([
         MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
@@ -665,7 +658,6 @@ class ManifestCollisionCheck(Check):
     different filenames with matching checksums.
     """
 
-    scope = base.repo_scope
     _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
     known_results = frozenset([ConflictingChksums, MatchingChksums])
 
@@ -731,8 +723,7 @@ class EmptyProject(results.Warning):
 class ProjectMetadataCheck(Check):
     """Check projects.xml for issues."""
 
-    scope = base.repo_scope
-    _source = sources.EmptySource
+    _source = (sources.EmptySource, (base.repo_scope,))
     known_results = frozenset([EmptyProject])
 
     def __init__(self, *args):

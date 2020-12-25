@@ -30,7 +30,6 @@ class RedundantVersionCheck(Check):
     pkga-1 can potentially be removed.
     """
 
-    scope = base.package_scope
     _source = sources.PackageRepoSource
     known_results = frozenset([RedundantVersion])
 
