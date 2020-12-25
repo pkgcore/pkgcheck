@@ -63,8 +63,7 @@ class RepoSource(Source):
 class LatestVersionsFilter:
     """Filter source packages, yielding those from the latest non-VCS and VCS slots."""
 
-    def __init__(self, source_iter, partial_filtered=False):
-        self._partial_filtered = partial_filtered
+    def __init__(self, source_iter):
         self._source_iter = source_iter
         self._pkg_cache = deque()
         self._pkg_marker = None
@@ -80,8 +79,7 @@ class LatestVersionsFilter:
             pkg = self._pkg_marker
             key = pkg.key
             selected_pkgs = {}
-            if self._partial_filtered:
-                pkgs = []
+            pkgs = []
 
             # determine the latest non-VCS and VCS pkgs for each slot
             while key == pkg.key:
@@ -90,8 +88,7 @@ class LatestVersionsFilter:
                 else:
                     selected_pkgs[pkg.slot] = pkg
 
-                if self._partial_filtered:
-                    pkgs.append(pkg)
+                pkgs.append(pkg)
 
                 try:
                     pkg = next(self._source_iter)
@@ -102,27 +99,11 @@ class LatestVersionsFilter:
             if self._pkg_marker is not None:
                 self._pkg_marker = pkg
 
-            if self._partial_filtered:
-                selected_pkgs = set(selected_pkgs.values())
-                self._pkg_cache.extend(
-                    FilteredPkg(pkg=pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs)
-            else:
-                self._pkg_cache.extend(selected_pkgs.values())
+            selected_pkgs = set(selected_pkgs.values())
+            self._pkg_cache.extend(
+                FilteredPkg(pkg=pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs)
 
         return self._pkg_cache.popleft()
-
-
-class FilteredRepoSource(RepoSource):
-    """Ebuild repository source supporting custom package filtering."""
-
-    def __init__(self, pkg_filter, partial_filtered, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._pkg_filter = pkg_filter
-        self._partial_filtered = partial_filtered
-
-    def itermatch(self, restrict, **kwargs):
-        yield from self._pkg_filter(
-            super().itermatch(restrict, **kwargs), partial_filtered=self._partial_filtered)
 
 
 class LatestPkgsFilter:
@@ -149,17 +130,21 @@ class LatestPkgsFilter:
         return [FilteredPkg(pkg=pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs]
 
 
-class FilteredPackageRepoSource(RepoSource):
+class FilteredRepoSource(RepoSource):
+    """Ebuild repository source supporting custom package filtering."""
+
+    def __init__(self, pkg_filter, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._pkg_filter = pkg_filter
+
+    def itermatch(self, restrict, **kwargs):
+        yield from self._pkg_filter(super().itermatch(restrict, **kwargs))
+
+
+class FilteredPackageRepoSource(FilteredRepoSource):
     """Ebuild repository source supporting custom package filtering."""
 
     scope = base.package_scope
-
-    def __init__(self, pkgs_filter, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._pkgs_filter = pkgs_filter
-
-    def itermatch(self, restrict, **kwargs):
-        yield from self._pkgs_filter(super().itermatch(restrict, **kwargs))
 
 
 class EclassRepoSource(RepoSource):

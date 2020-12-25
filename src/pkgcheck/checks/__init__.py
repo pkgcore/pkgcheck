@@ -36,12 +36,11 @@ class Check(feeds.Feed):
     @property
     def source(self):
         # filter pkg feeds as required
-        if filtered_results := [x for x in self.known_results if x in self.options.filter]:
+        if self.known_results.intersection(self.options.filter):
             if self.scope >= base.version_scope:
-                partial_filtered = len(filtered_results) != len(self.known_results)
                 return (
                     sources.FilteredRepoSource,
-                    (sources.LatestVersionsFilter, partial_filtered),
+                    (sources.LatestVersionsFilter,),
                     (('source', self._source),)
                 )
             elif max(x.scope for x in self.known_results) >= base.version_scope:
