@@ -1,3 +1,7 @@
+import multiprocessing
+import os
+import signal
+
 import pytest
 from pkgcheck import PkgcheckException, scan
 
@@ -19,3 +23,40 @@ class TestScanApi:
 
     def test_no_base_args(self, repo):
         assert [] == list(scan(self.scan_args + ['-r', repo.location]))
+
+    def test_sigint_handling(self):
+        """Verify SIGINT is properly handled by the parallelized pipeline."""
+
+        def run(queue):
+            """Pipeline test run in a separate process that gets interrupted."""
+            import sys
+            import time
+            from functools import partial
+            from unittest.mock import patch
+
+            from pkgcheck import scan
+
+            def sleep():
+                """Notify testing process then sleep."""
+                queue.put('ready')
+                time.sleep(100)
+
+            with patch('pkgcheck.pipeline.Pipeline.__iter__') as fake_iter:
+                fake_iter.side_effect = partial(sleep)
+                try:
+                    iter(scan())
+                except KeyboardInterrupt:
+                    queue.put(None)
+                    sys.exit(0)
+                queue.put(None)
+                sys.exit(1)
+
+        mp_ctx = multiprocessing.get_context('fork')
+        queue = mp_ctx.SimpleQueue()
+        p = mp_ctx.Process(target=run, args=(queue,))
+        p.start()
+        # wait for pipeline object to be fully initialized then send SIGINT
+        for _ in iter(queue.get, None):
+            os.kill(p.pid, signal.SIGINT)
+            p.join()
+            assert p.exitcode == 0
