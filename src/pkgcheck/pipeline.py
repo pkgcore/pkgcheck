@@ -32,23 +32,22 @@ class Pipeline:
         # number of error results encountered (used with --exit option)
         self.errors = 0
 
-        # pkgcheck currently requires the fork start method (#254)
-        self._mp_ctx = multiprocessing.get_context('fork')
-        # create checkrunner pipelines
-        self._results_q = self._mp_ctx.SimpleQueue()
-
         # pull scan scope from the given restriction targets
         restrictions = iter(restrictions)
         try:
             scan_scope, restriction = next(restrictions)
         except StopIteration:
             raise base.PkgcheckUserException('no targets piped in')
+        self._restrictions = chain([restriction], (x for _scope, x in restrictions))
 
         # determine if scan is being run at a package level
         pkg_scan = (
             scan_scope in (base.version_scope, base.package_scope) and
             isinstance(restriction, boolean.AndRestriction))
-        self._restrictions = chain([restriction], (x for _scope, x in restrictions))
+
+        # pkgcheck currently requires the fork start method (#254)
+        self._mp_ctx = multiprocessing.get_context('fork')
+        self._results_q = self._mp_ctx.SimpleQueue()
 
         # create checkrunners
         self._pipes = self._create_runners(scan_scope, pkg_scan)
@@ -153,8 +152,8 @@ class Pipeline:
                     self._ordered_results = None
                     continue
 
-                # Catch propagated exceptions, output their traceback, and
-                # signal the scanning process to end.
+                # Catch propagated, serialized exceptions, output their
+                # traceback, and signal the scanning process to end.
                 if isinstance(results, str):
                     self._kill_pipe(error=results.strip())
 
