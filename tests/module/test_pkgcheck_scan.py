@@ -344,18 +344,6 @@ class TestPkgcheckScan:
         # args for running pkgcheck like a script
         self.args = [project] + base_args + ['scan'] + self.scan_args
 
-    @staticmethod
-    def _patch(fix, repo_path):
-        with open(fix) as f:
-            p = subprocess.run(
-                ['patch', '-p1'], cwd=repo_path, stdout=subprocess.DEVNULL, stdin=f)
-            p.check_returncode()
-
-    @staticmethod
-    def _script(fix, repo_path):
-        p = subprocess.run([fix], cwd=repo_path)
-        p.check_returncode()
-
     def test_empty_repo(self, capsys, repo):
         # no reports should be generated since the stub repo is empty
         with patch('sys.argv', self.args + ['stubrepo']):
@@ -426,13 +414,16 @@ class TestPkgcheckScan:
 
     def test_explict_skip_check(self, capsys):
         """SkipCheck exceptions are raised when triggered for explicitly enabled checks."""
-        with patch('sys.argv', self.args + ['-C', 'net']):
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            assert excinfo.value.code == 2
-            out, err = capsys.readouterr()
-            assert not out
-            assert 'network checks not enabled' in err
+        error = 'network checks not enabled'
+        with pytest.raises(base.PkgcheckException, match=error):
+            self.scan(self.scan_args + ['-C', 'net'])
+
+    def test_cache_disabled_skip_check(self):
+        """SkipCheck exceptions are raised when enabled checks require disabled cache types."""
+        args = ['--cache=-git', '-c', 'StableRequestCheck']
+        error = 'StableRequestCheck: git cache support required'
+        with pytest.raises(base.PkgcheckException, match=error):
+            self.scan(self.scan_args + args)
 
     @pytest.mark.parametrize(
         'action, module',
@@ -455,6 +446,11 @@ class TestPkgcheckScan:
             for keyword in os.listdir(pjoin(self.repos_data, repo, check)):
                 assert keyword in objects.KEYWORDS
                 self._checks[repo][check].add(keyword)
+
+    @staticmethod
+    def _script(fix, repo_path):
+        p = subprocess.run([fix], cwd=repo_path)
+        p.check_returncode()
 
     # mapping of repos to scanned results
     _results = {}
@@ -567,6 +563,13 @@ class TestPkgcheckScan:
             if unknown:
                 error.append(f'{repo} repo unknown results:\n{unknown}')
             pytest.fail('\n'.join(error))
+
+    @staticmethod
+    def _patch(fix, repo_path):
+        with open(fix) as f:
+            p = subprocess.run(
+                ['patch', '-p1'], cwd=repo_path, stdout=subprocess.DEVNULL, stdin=f)
+            p.check_returncode()
 
     @pytest.mark.parametrize('check, result', _all_results)
     def test_fix(self, check, result, tmp_path):
