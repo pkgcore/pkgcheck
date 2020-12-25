@@ -201,7 +201,7 @@ class VersionResult(PackageResult):
     @klass.jit_attr
     def ver_rev(self):
         version, _, revision = self.version.partition('-r')
-        revision = cpv._Revision(revision)
+        revision = cpv.Revision(revision)
         return version, revision
 
     def __lt__(self, other, cmp=None):

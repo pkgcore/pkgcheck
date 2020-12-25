@@ -15,13 +15,13 @@ class RawCPV:
     package: str
     fullver: str
     version: str = field(init=False, default=None)
-    revision: str = field(init=False, default=None)
+    revision: cpv.Revision = field(init=False, default=None)
 
     def __post_init__(self):
         if self.fullver is not None:
             version, _, revision = self.fullver.partition('-r')
             object.__setattr__(self, 'version', version)
-            object.__setattr__(self, 'revision', cpv._Revision(revision))
+            object.__setattr__(self, 'revision', cpv.Revision(revision))
 
     @property
     def key(self):
