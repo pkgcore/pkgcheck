@@ -439,12 +439,10 @@ class TestPkgcheckScan:
         (('run', 'tee'), ('producer', 'UnversionedSource'), ('consumer', 'SyncCheckRunner.run')))
     def test_pipeline_exceptions(self, action, module):
         """Test checkrunner pipeline against unhandled exceptions."""
-        with patch('sys.argv', self.args), \
-                patch(f'pkgcheck.pipeline.{module}') as faked:
-            faked.side_effect = Exception('foobar')
-            with pytest.raises(SystemExit) as excinfo:
-                self.script()
-            assert 'Exception: foobar' in str(excinfo.value)
+        with patch(f'pkgcheck.pipeline.{module}') as faked:
+            faked.side_effect = Exception('pipeline failed')
+            with pytest.raises(base.PkgcheckException, match='Exception: pipeline failed'):
+                list(self.scan(self.scan_args))
 
     # nested mapping of repos to checks/keywords they cover
     _checks = defaultdict(lambda: defaultdict(set))
