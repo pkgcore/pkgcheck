@@ -296,12 +296,13 @@ class _XmlBaseCheck(Check):
         # back to the file installed with pkgcore.
         for repo in reversed(self.options.target_repo.trees):
             metadata_xsd = pjoin(repo.location, 'metadata', 'xml-schema', 'metadata.xsd')
-            try:
-                self.schema = etree.XMLSchema(etree.parse(metadata_xsd))
-                break
-            except (OSError, etree.XMLSchemaParseError):
-                # ignore missing or invalid xsd files
-                pass
+            if os.path.isfile(metadata_xsd):
+                try:
+                    self.schema = etree.XMLSchema(etree.parse(metadata_xsd))
+                    break
+                except etree.XMLSchemaParseError:
+                    # ignore invalid xsd files
+                    pass
         else:
             metadata_xsd = pjoin(pkgcore_const.DATA_PATH, 'xml-schema', 'metadata.xsd')
             self.schema = etree.XMLSchema(etree.parse(metadata_xsd))
