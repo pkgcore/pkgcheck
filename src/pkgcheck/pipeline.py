@@ -72,35 +72,28 @@ class Pipeline:
                 if scope.level <= base.repo_scope
             }
 
-    def _selected_check(self, scan_scope, scope):
+    def _filter_checks(self, scan_scope, checks):
         """Verify check scope against current scan scope to determine check activation."""
-        if scope == 0:
-            if not self.options.selected_scopes:
-                if scan_scope == base.repo_scope or scope == scan_scope:
-                    # Allow repo scans or cwd scope to trigger location specific checks.
-                    return True
-            elif scope in self.options.selected_scopes:
-                # Allow checks with special scopes to be run when specifically
-                # requested, e.g. eclass-only scanning.
-                return True
-        elif scan_scope > 0 and scope >= scan_scope:
-            # Only run pkg-related checks at or below the current scan scope level, if
-            # pkg scanning is requested, e.g. skip repo level checks when scanning at
-            # package level.
-            return True
-        elif self.options.commits and scan_scope != 0 and scope == base.commit_scope:
-            # Only enable commit-related checks when --commits is specified.
-            return True
-        return False
+        for check in checks:
+            if check.scope == 0:
+                if not self.options.selected_scopes:
+                    if scan_scope in (check.scope, base.repo_scope):
+                        # Allow repo scans or cwd scope to trigger location specific checks.
+                        yield check
+                elif check.scope in self.options.selected_scopes:
+                    # Allow checks with special scopes to be run when specifically
+                    # requested, e.g. eclass-only scanning.
+                    yield check
+            elif scan_scope > 0 and check.scope >= scan_scope:
+                # Only run pkg-related checks at or below the current scan scope level, if
+                # pkg scanning is requested, e.g. skip repo level checks when scanning at
+                # package level.
+                yield check
 
     def _create_runners(self, scan_scope, pkg_scan):
         """Initialize and categorize checkrunners for results pipeline."""
         # filter enabled checks based on the scanning scope
-        enabled_checks = [
-            check for check in self.options.enabled_checks
-            if self._selected_check(scan_scope, check.scope)
-        ]
-
+        enabled_checks = list(self._filter_checks(scan_scope, self.options.enabled_checks))
         if not enabled_checks:
             raise base.PkgcheckUserException(
                 f'no matching checks available for {scan_scope} scope')
