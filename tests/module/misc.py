@@ -99,9 +99,6 @@ class ReportTestCase:
     def _assertReportSanity(self, *reports):
         for report in reports:
             assert report.__class__ in self.check_kls.known_results
-            for attr in report.scope.attrs:
-                assert hasattr(report, attr), (
-                    f"missing attr {attr}: {report.__class__!r} {report}")
             # pull desc to force a render for basic sanity checks
             assert report.desc
 

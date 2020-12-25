@@ -27,7 +27,6 @@ class Scope:
     """Generic scope for scans, checks, and results."""
     desc: str
     level: int
-    attrs: tuple = ()
 
     def __str__(self):
         return self.desc
@@ -52,15 +51,15 @@ class Scope:
 
 # pkg-related scope levels
 repo_scope = Scope('repo', 1)
-category_scope = Scope('category', 2, ('category',))
-package_scope = Scope('package', 3, ('category', 'package'))
-version_scope = Scope('version', 4, ('category', 'package', 'version'))
+category_scope = Scope('category', 2)
+package_scope = Scope('package', 3)
+version_scope = Scope('version', 4)
 
 # Special scope levels, scopes with negative levels are only enabled under
 # certain circumstances while location specific scopes have a level of 0.
-commit_scope = Scope('commit', -1, ('commit',))
+commit_scope = Scope('commit', -1)
 profiles_scope = Scope('profiles', 0)
-eclass_scope = Scope('eclass', 0, ('eclass',))
+eclass_scope = Scope('eclass', 0)
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
 scopes = ImmutableDict({
