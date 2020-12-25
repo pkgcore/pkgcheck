@@ -1,5 +1,7 @@
 import argparse
 import random
+import textwrap
+from unittest.mock import patch
 
 import pytest
 from pkgcheck import argparsers, base, checks, objects
@@ -125,8 +127,18 @@ class TestChecksetArgs:
     @pytest.fixture(autouse=True)
     def _setup(self, tool, tmp_path):
         self.tool = tool
-        self.cache_dir = str(tmp_path)
+        self.cache_dir = str(tmp_path / '.cache')
+        self.config = str(tmp_path / 'config')
         self.args = ['scan', '--cache-dir', self.cache_dir]
+
+    def test_unknown(self, capsys):
+        for opt in ('-C', '--checksets'):
+            with pytest.raises(SystemExit) as excinfo:
+                self.tool.parse_args(self.args + [opt, 'foo'])
+            out, err = capsys.readouterr()
+            assert not out
+            assert "unknown checkset: 'foo'" in err
+            assert excinfo.value.code == 2
 
     def test_aliases(self):
         for opt in ('-C', '--checksets'):
@@ -139,6 +151,42 @@ class TestChecksetArgs:
             # all
             options, _ = self.tool.parse_args(self.args + [opt, 'all'])
             assert options.selected_checks == set(objects.CHECKS)
+
+    def test_sets(self, capsys):
+        with open(self.config, 'w') as f:
+            f.write(textwrap.dedent("""\
+                [CHECKSETS]
+                set1=StableRequest
+                set2=-StableRequest
+                set3=SourcingCheck,-InvalidEapi,-InvalidSlot
+                bad=foo
+            """))
+        configs = [self.config]
+        with patch('pkgcheck.cli.ConfigFileParser.default_configs', configs):
+            for opt in ('-C', '--checksets'):
+                # enabled keyword
+                for arg in ('set1', '-set2'):
+                    options, _ = self.tool.parse_args(self.args + [f'{opt}={arg}'])
+                    assert options.filtered_keywords == {objects.KEYWORDS['StableRequest']}
+                    assert options.enabled_checks == {objects.CHECKS['StableRequestCheck']}
+
+                # disabled keyword
+                for arg in ('-set1', 'set2'):
+                    options, _ = self.tool.parse_args(self.args + [f'{opt}={arg}'])
+                    assert objects.KEYWORDS['StableRequest'] not in options.filtered_keywords
+
+                # check/keywords mixture
+                options, _ = self.tool.parse_args(self.args + [f'{opt}=set3'])
+                assert options.filtered_keywords == {objects.KEYWORDS['SourcingError']}
+                assert options.enabled_checks == {objects.CHECKS['SourcingCheck']}
+
+                # unknown value
+                with pytest.raises(SystemExit) as excinfo:
+                    self.tool.parse_args(self.args + [f'{opt}=bad'])
+                out, err = capsys.readouterr()
+                assert not out
+                assert "'bad' checkset, unknown check or keyword: 'foo'" in err
+                assert excinfo.value.code == 2
 
 
 class TestScopeArgs:
