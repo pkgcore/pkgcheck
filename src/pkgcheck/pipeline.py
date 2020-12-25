@@ -102,24 +102,17 @@ class Pipeline:
         addons = base.get_addons(enabled_checks)
         enabled_checks = init_checks(addons, self.options, self._results_q)
 
-        # initialize checkrunners per source type, using separate runner for async checks
-        checkrunners = defaultdict(list)
-        runner_cls_map = {'async': AsyncCheckRunner, 'sync': SyncCheckRunner}
-        for (source, exec_type), checks in enabled_checks.items():
-            runner = runner_cls_map[exec_type](self.options, source, checks)
-            checkrunners[(source.scope, exec_type)].append(runner)
-
-        # categorize checkrunners for parallelization based on the scan and source scope
+        # Initialize checkrunners per source type using separate runner for
+        # async checks and categorize them for parallelization based on the
+        # scan and source scope.
+        runner_cls = {'async': AsyncCheckRunner, 'sync': SyncCheckRunner}
         pipes = {'sync': defaultdict(list), 'async': defaultdict(list)}
-        if pkg_scan:
-            for (scope, exec_type), runners in checkrunners.items():
-                pipes[exec_type][scope].extend(runners)
-        else:
-            for (scope, exec_type), runners in checkrunners.items():
-                if scope >= base.package_scope:
-                    pipes[exec_type][base.package_scope].extend(runners)
-                else:
-                    pipes[exec_type][scope].extend(runners)
+        for (source, exec_type), checks in enabled_checks.items():
+            runner = runner_cls[exec_type](self.options, source, checks)
+            if not pkg_scan and source.scope >= base.package_scope:
+                pipes[exec_type][base.package_scope].append(runner)
+            else:
+                pipes[exec_type][source.scope].append(runner)
 
         return pipes
 
