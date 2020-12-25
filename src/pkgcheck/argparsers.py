@@ -196,8 +196,8 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
 
         # Convert double negatives into positives, e.g. disabling a checkset
         # containing a disabled keyword enables the keyword.
-        disabled_keywords = disabled_aliases + disabled[1] + enabled[0]
-        enabled_keywords = enabled_aliases + disabled[0] + enabled[1]
+        disabled_keywords = set(disabled_aliases + disabled[1] + enabled[0])
+        enabled_keywords = set(enabled_aliases + disabled[0] + enabled[1]) - disabled_keywords
 
         # parse check/keyword args related to checksets
         args = []
@@ -207,7 +207,7 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
                 k for k, v in objects.CHECKS.items()
                 if v.known_results.intersection(keywords_set))
             args.append(f'--checks={checks}')
-        keywords = ','.join(enabled_keywords + [f'-{x}' for x in disabled_keywords])
+        keywords = ','.join(enabled_keywords | {f'-{x}' for x in disabled_keywords})
         args.append(f'--keywords={keywords}')
         parser._parse_known_args(args, namespace)
 
