@@ -1,5 +1,6 @@
 """Various custom package objects."""
 
+from dataclasses import dataclass, field
 from functools import total_ordering
 
 from pkgcore.ebuild import atom, cpv
@@ -7,21 +8,20 @@ from snakeoil import klass
 
 
 @total_ordering
+@dataclass(frozen=True)
 class RawCPV:
     """Raw CPV objects supporting basic restrictions/sorting."""
+    category: str
+    package: str
+    fullver: str
+    version: str = field(init=False, default=None)
+    revision: str = field(init=False, default=None)
 
-    __slots__ = ('category', 'package', 'fullver', 'version', 'revision')
-
-    def __init__(self, category, package, fullver):
-        self.category = category
-        self.package = package
-        self.fullver = fullver
+    def __post_init__(self):
         if self.fullver is not None:
-            self.version, _, revision = self.fullver.partition('-r')
-            self.revision = cpv._Revision(revision)
-        else:
-            self.revision = None
-            self.version = None
+            version, _, revision = self.fullver.partition('-r')
+            object.__setattr__(self, 'version', version)
+            object.__setattr__(self, 'revision', cpv._Revision(revision))
 
     @property
     def key(self):
