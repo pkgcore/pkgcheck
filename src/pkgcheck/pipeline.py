@@ -45,13 +45,13 @@ class Pipeline:
             raise base.PkgcheckUserException('no targets piped in')
 
         # determine if scan is being run at a package level
-        self._pkg_scan = (
+        pkg_scan = (
             scan_scope in (base.version_scope, base.package_scope) and
             isinstance(restriction, boolean.AndRestriction))
         self._restrictions = chain([restriction], (x for _scope, x in restrictions))
 
         # create checkrunners
-        self._pipes = self._create_runners(scan_scope)
+        self._pipes = self._create_runners(scan_scope, pkg_scan)
 
         # initialize settings used by iterator support
         self._pid = None
@@ -66,7 +66,7 @@ class Pipeline:
         }
 
         # package level scans sort all returned results
-        if self._pkg_scan:
+        if pkg_scan:
             self._ordered_results.update({
                 scope: [] for scope in base.scopes.values()
                 if scope.level >= base.package_scope
@@ -93,7 +93,7 @@ class Pipeline:
             return True
         return False
 
-    def _create_runners(self, scan_scope):
+    def _create_runners(self, scan_scope, pkg_scan):
         """Initialize and categorize checkrunners for results pipeline."""
         # filter enabled checks based on the scanning scope
         enabled_checks = [
@@ -118,7 +118,7 @@ class Pipeline:
 
         # categorize checkrunners for parallelization based on the scan and source scope
         pipes = {'sync': defaultdict(list), 'async': defaultdict(list)}
-        if self._pkg_scan:
+        if pkg_scan:
             for (scope, exec_type), runners in checkrunners.items():
                 pipes[exec_type][scope].extend(runners)
         else:
