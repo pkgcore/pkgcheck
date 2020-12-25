@@ -59,18 +59,18 @@ class Pipeline:
         self._results_iter = iter(self._results_q.get, None)
         self._results = deque()
 
-        # scoped mapping for caching repo and location specific results
-        self._ordered_results = {
-            scope: [] for scope in reversed(list(base.scopes.values()))
-            if scope.level <= base.repo_scope
-        }
-
-        # package level scans sort all returned results
         if pkg_scan:
-            self._ordered_results.update({
+            # package level scans sort all returned results
+            self._ordered_results = {
                 scope: [] for scope in base.scopes.values()
                 if scope.level >= base.package_scope
-            })
+            }
+        else:
+            # scoped mapping for caching repo and location specific results
+            self._ordered_results = {
+                scope: [] for scope in reversed(list(base.scopes.values()))
+                if scope.level <= base.repo_scope
+            }
 
     def _selected_check(self, scan_scope, scope):
         """Verify check scope against current scan scope to determine check activation."""
