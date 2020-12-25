@@ -553,12 +553,11 @@ class GitAddon(caches.CachedAddon):
                 if cache_repo:
                     self.save_cache(git_cache, cache_file)
 
-    def cached_repo(self, repo_cls, target_repo=None):
+    def cached_repo(self, repo_cls):
+        target_repo = self.options.target_repo
         cached_repo = None
-
-        if target_repo is None:
-            target_repo = self.options.target_repo
         git_repos = []
+
         for repo in target_repo.trees:
             # only enable repo queries if history was found, e.g. a
             # shallow clone with a depth of 1 won't have any history
@@ -575,30 +574,30 @@ class GitAddon(caches.CachedAddon):
 
         return cached_repo
 
-    def commits_repo(self, repo_cls, repo=None):
-        repo = self.options.target_repo if repo is None else repo
+    def commits_repo(self, repo_cls):
+        target_repo = self.options.target_repo
         data = {}
 
         try:
-            origin = self._get_commit_hash(repo.location)
-            master = self._get_commit_hash(repo.location, commit='master')
+            origin = self._get_commit_hash(target_repo.location)
+            master = self._get_commit_hash(target_repo.location, commit='master')
             if origin != master:
-                data = self.pkg_history(repo.location, 'origin/HEAD..master', local=True)
+                data = self.pkg_history(target_repo.location, 'origin/HEAD..master', local=True)
         except GitError as e:
             raise PkgcheckUserException(str(e))
 
-        repo_id = f'{repo.repo_id}-commits'
+        repo_id = f'{target_repo.repo_id}-commits'
         return repo_cls(data, repo_id=repo_id)
 
-    def commits(self, repo=None):
-        repo = self.options.target_repo if repo is None else repo
+    def commits(self):
+        target_repo = self.options.target_repo
         commits = ()
 
         try:
-            origin = self._get_commit_hash(repo.location)
-            master = self._get_commit_hash(repo.location, commit='master')
+            origin = self._get_commit_hash(target_repo.location)
+            master = self._get_commit_hash(target_repo.location, commit='master')
             if origin != master:
-                commits = GitRepoCommits(repo.location, 'origin/HEAD..master')
+                commits = GitRepoCommits(target_repo.location, 'origin/HEAD..master')
         except GitError as e:
             raise PkgcheckUserException(str(e))
 
