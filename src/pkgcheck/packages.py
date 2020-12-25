@@ -74,6 +74,9 @@ class WrappedPkg:
     def __eq__(self, other):
         return self.versioned_atom == other.versioned_atom
 
+    def __hash__(self):
+        return hash(self._pkg)
+
     __getattr__ = klass.GetAttrProxy('_pkg')
     __dir__ = klass.DirProxy('_pkg')
 
