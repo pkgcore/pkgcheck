@@ -106,7 +106,11 @@ class VisibleVcsPkg(results.VersionResult, results.Error):
 
     @property
     def desc(self):
-        num_profiles = f' ({self.num_profiles} total)' if self.num_profiles is not None else ''
+        if self.num_profiles is not None and self.num_profiles > 1:
+            num_profiles = f' ({self.num_profiles} total)'
+        else:
+            num_profiles = ''
+
         return (
             f'VCS version visible for KEYWORDS="{self.arch}", '
             f'profile {self.profile}{num_profiles}'
@@ -158,7 +162,11 @@ class _NonsolvableDeps(results.VersionResult, results.Error):
     def desc(self):
         profile_status = 'deprecated ' if self.profile_deprecated else ''
         profile_status += self.profile_status or 'custom'
-        num_profiles = f' ({self.num_profiles} total)' if self.num_profiles is not None else ''
+        if self.num_profiles is not None and self.num_profiles > 1:
+            num_profiles = f' ({self.num_profiles} total)'
+        else:
+            num_profiles = ''
+
         return (
             f"nonsolvable depset({self.attr}) keyword({self.keyword}) "
             f"{profile_status} profile ({self.profile}){num_profiles}: "
