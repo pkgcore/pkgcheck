@@ -256,12 +256,9 @@ class EapiCheck(Check):
             yield DeprecatedEapi(pkg.eapi, pkg=pkg)
 
         for eclass in pkg.inherit:
-            try:
-                supported_eapis = self.eclass_cache[eclass].supported_eapis
-                if supported_eapis and eapi_str not in supported_eapis:
+            if eclass_obj := self.eclass_cache.get(eclass):
+                if eclass_obj.supported_eapis and eapi_str not in eclass_obj.supported_eapis:
                     yield UnsupportedEclassEapi(eapi_str, eclass, pkg=pkg)
-            except KeyError:
-                continue
 
 
 class InvalidEapi(results.MetadataError, results.VersionResult):
