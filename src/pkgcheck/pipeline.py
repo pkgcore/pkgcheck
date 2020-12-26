@@ -271,7 +271,7 @@ class CheckRunner:
     def __init__(self, options, source, checks):
         self.options = options
         self.source = source
-        self.checks = tuple(sorted(checks))
+        self.checks = sorted(checks)
 
 
 class SyncCheckRunner(CheckRunner):
