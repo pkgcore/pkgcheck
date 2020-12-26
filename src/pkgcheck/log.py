@@ -12,6 +12,3 @@ from . import __title__
 logging.basicConfig()
 
 logger = logging.getLogger(__title__)
-logger.addHandler(logging.StreamHandler())
-# don't propagate events back to the root logger
-logger.propagate = False
