@@ -416,17 +416,23 @@ def _setup_scan(parser, namespace, args):
 
 def generate_restricts(repo, targets):
     """Generate scanning restrictions from given targets."""
-    eclasses = set()
+    eclasses = []
+    profiles = []
+    profiles_base = os.path.realpath(repo.config.profiles_base)
+
     for target in targets:
         path = os.path.realpath(target)
         # prefer path restrictions if it's in the target repo
         if os.path.exists(path) and path in repo:
-            # support direct eclass path targets
-            if target.endswith('.eclass') and path in repo:
-                eclasses.add(os.path.basename(target)[:-7])
-                continue
-            else:
-                yield _path_restrict(path, repo)
+            # support direct eclass and profiles file targets
+            if os.path.isfile(path):
+                if target.endswith('.eclass'):
+                    eclasses.append(os.path.basename(target)[:-7])
+                    continue
+                elif path.startswith(profiles_base):
+                    profiles.append(target)
+                    continue
+            yield _path_restrict(path, repo)
         else:
             try:
                 # assume it's a package restriction
@@ -440,9 +446,10 @@ def generate_restricts(repo, targets):
                         f"{repo.repo_id!r} repo doesn't contain: {target!r}")
                 raise PkgcheckUserException(str(e))
 
-    # support eclass target restrictions
     if eclasses:
         yield base.eclass_scope, frozenset(eclasses)
+    if profiles:
+        yield base.profiles_scope, frozenset(profiles)
 
 
 @scan.bind_delayed_default(1000, 'filter')
