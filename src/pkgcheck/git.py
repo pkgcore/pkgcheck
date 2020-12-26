@@ -337,11 +337,11 @@ class _ScanCommits(argparse.Action):
             restrict = packages.OrRestriction(*sorted(pkgs))
             restrictions.append((base.package_scope, restrict))
         if eclasses:
-            restrictions.append((base.eclass_scope, base.contains_restriction(eclasses)))
+            restrictions.append((base.eclass_scope, frozenset(eclasses)))
         if profiles:
             # TODO: Support incremental profile scanning (#200) currently this
             # enables all profiles scope checks.
-            restrictions.append((base.profiles_scope, base.contains_restriction(profiles)))
+            restrictions.append((base.profiles_scope, frozenset(profiles)))
 
         # no relevant targets, exit early
         if not restrictions:

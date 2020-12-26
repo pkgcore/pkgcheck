@@ -131,6 +131,10 @@ class ProfileData:
         return immutable, enabled
 
 
+class ProfileNode(profiles_mod.ProfileNode):
+    """Re-inherited to disable instance caching."""
+
+
 class ProfilesArgs(arghparse.CommaSeparatedNegations):
     """Parse profiles args for the ProfileAddon."""
 

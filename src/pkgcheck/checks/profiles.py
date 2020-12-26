@@ -88,14 +88,10 @@ class ProfileError(results.ProfilesResult, results.LogError):
     """Erroneously formatted data in various profile files."""
 
 
-class _ProfileNode(profiles_mod.ProfileNode):
-    """Re-inherited to disable instance caching."""
-
-
 class ProfilesCheck(Check):
     """Scan repo profiles for unknown flags/packages."""
 
-    _source = (sources.EmptySource, (base.profiles_scope,))
+    _source = sources.ProfilesRepoSource
     required_addons = (addons.UseAddon, addons.KeywordsAddon)
     known_results = frozenset([
         UnknownProfilePackages, UnknownProfilePackageUse, UnknownProfileUse,
@@ -119,23 +115,23 @@ class ProfilesCheck(Check):
             local_iuse | self.iuse_handler.global_iuse |
             self.iuse_handler.global_iuse_expand | self.iuse_handler.global_iuse_implicit)
 
-    def finish(self):
+    def feed(self, profile):
         unknown_pkgs = defaultdict(lambda: defaultdict(list))
         unknown_pkg_use = defaultdict(lambda: defaultdict(list))
         unknown_use = defaultdict(lambda: defaultdict(list))
         unknown_keywords = defaultdict(lambda: defaultdict(list))
 
-        def _pkg_atoms(filename, profile, vals):
+        def _pkg_atoms(filename, node, vals):
             for x in iflatten_instance(vals, atom_cls):
                 if not self.search_repo.match(x):
-                    unknown_pkgs[profile.path][filename].append(x)
+                    unknown_pkgs[node.path][filename].append(x)
 
-        def _pkg_keywords(filename, profile, vals):
+        def _pkg_keywords(filename, node, vals):
             for atom, keywords in vals:
                 if invalid := set(keywords) - self.keywords.valid:
-                    unknown_keywords[profile.path][filename].append((atom, invalid))
+                    unknown_keywords[node.path][filename].append((atom, invalid))
 
-        def _pkg_use(filename, profile, vals):
+        def _pkg_use(filename, node, vals):
             # TODO: give ChunkedDataDict some dict view methods
             d = vals
             if isinstance(d, misc.ChunkedDataDict):
@@ -148,36 +144,36 @@ class ProfilesCheck(Check):
                         unknown_disabled = set(disabled) - available
                         unknown_enabled = set(enabled) - available
                         if unknown_disabled:
-                            unknown_pkg_use[profile.path][filename].append(
+                            unknown_pkg_use[node.path][filename].append(
                                 (a, ('-' + u for u in unknown_disabled)))
                         if unknown_enabled:
-                            unknown_pkg_use[profile.path][filename].append(
+                            unknown_pkg_use[node.path][filename].append(
                                 (a, unknown_enabled))
                     else:
-                        unknown_pkgs[profile.path][filename].append(a)
+                        unknown_pkgs[node.path][filename].append(a)
 
-        def _use(filename, profile, vals):
+        def _use(filename, node, vals):
             # TODO: give ChunkedDataDict some dict view methods
             d = vals.render_to_dict()
             for _, entries in d.items():
                 for _, disabled, enabled in entries:
                     if unknown_disabled := set(disabled) - self.available_iuse:
-                        unknown_use[profile.path][filename].extend(
+                        unknown_use[node.path][filename].extend(
                             ('-' + u for u in unknown_disabled))
                     if unknown_enabled := set(enabled) - self.available_iuse:
-                        unknown_use[profile.path][filename].extend(
+                        unknown_use[node.path][filename].extend(
                             unknown_enabled)
 
-        def _deprecated(filename, profile, vals):
+        def _deprecated(filename, node, vals):
             # make sure replacement profile exists
             if vals is not None:
                 replacement, msg = vals
                 try:
-                    _ProfileNode(pjoin(self.profiles_dir, replacement))
+                    addons.ProfileNode(pjoin(self.profiles_dir, replacement))
                 except profiles_mod.ProfileError:
                     yield ProfileError(
                         f'nonexistent replacement {replacement!r} '
-                        f'for deprecated profile: {profile.name!r}')
+                        f'for deprecated profile: {node.name!r}')
 
         file_parse_map = {
             'packages': ('packages', _pkg_atoms),
@@ -205,17 +201,14 @@ class ProfilesCheck(Check):
         report_profile_warnings = lambda x: profile_reports.append(ProfileWarning(x))
         report_profile_errors = lambda x: profile_reports.append(ProfileError(x))
 
-        for root, _dirs, files in os.walk(self.profiles_dir):
-            if root not in self.non_profile_dirs:
-                profile = _ProfileNode(root)
-                for f in set(files).intersection(file_parse_map.keys()):
-                    attr, func = file_parse_map[f]
-                    # convert log warnings/errors into reports
-                    with patch('pkgcore.log.logger.error', report_profile_errors), \
-                            patch('pkgcore.log.logger.warning', report_profile_warnings):
-                        vals = getattr(profile, attr)
-                    if results := func(f, profile, vals):
-                        yield from results
+        for f in profile.files.intersection(file_parse_map.keys()):
+            attr, func = file_parse_map[f]
+            # convert log warnings/errors into reports
+            with patch('pkgcore.log.logger.error', report_profile_errors), \
+                    patch('pkgcore.log.logger.warning', report_profile_warnings):
+                vals = getattr(profile.node, attr)
+            if results := func(f, profile.node, vals):
+                yield from results
 
         yield from profile_reports
 

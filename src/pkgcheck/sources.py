@@ -1,11 +1,13 @@
 """Custom package sources used for feeding checks."""
 
 import os
-from collections import deque
+from collections import defaultdict, deque
+from collections.abc import Set
+from dataclasses import dataclass
 from operator import attrgetter
 
 from pkgcore.ebuild.repository import UnconfiguredTree
-from pkgcore.restrictions import packages
+from pkgcore.restrictions import packages, restriction
 from snakeoil.osutils import listdir_files, pjoin
 
 from . import addons, base
@@ -159,9 +161,49 @@ class EclassRepoSource(RepoSource):
         self.eclass_dir = pjoin(self.repo.location, 'eclass')
 
     def itermatch(self, restrict, **kwargs):
-        for name in self.eclasses:
-            if restrict.match([name]):
-                yield Eclass(name, pjoin(self.eclass_dir, f'{name}.eclass'))
+        if isinstance(restrict, Set):
+            # --commits or path restriction
+            eclasses = sorted(restrict.intersection(self.eclasses))
+        else:
+            # matching all eclasses
+            eclasses = self.eclasses
+
+        for name in eclasses:
+            yield Eclass(name, pjoin(self.eclass_dir, f'{name}.eclass'))
+
+
+@dataclass
+class Profile:
+    """Generic profile object."""
+    node: addons.ProfileNode
+    files: set
+
+
+class ProfilesRepoSource(RepoSource):
+    """Repository profiles file source."""
+
+    scope = base.profiles_scope
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.profiles_dir = self.repo.config.profiles_base
+        self.non_profile_dirs = {
+            f'profiles/{x}' for x in addons.ProfileAddon.non_profile_dirs}
+        self._prefix_len = len(self.repo.location.rstrip(os.sep)) + 1
+
+    def itermatch(self, restrict, **kwargs):
+        if isinstance(restrict, Set):
+            # --commits or path restriction
+            paths = defaultdict(list)
+            for x in restrict:
+                paths[pjoin(self.repo.location, os.path.dirname(x))].append(os.path.basename(x))
+            for root, files in sorted(paths.items()):
+                yield Profile(addons.ProfileNode(root), set(files))
+        else:
+            # matching all profiles
+            for root, _dirs, files in os.walk(self.profiles_dir):
+                if root[self._prefix_len:] not in self.non_profile_dirs:
+                    yield Profile(addons.ProfileNode(root), set(files))
 
 
 class _RawRepo(UnconfiguredTree):

@@ -442,7 +442,7 @@ def generate_restricts(repo, targets):
 
     # support eclass target restrictions
     if eclasses:
-        yield base.eclass_scope, base.contains_restriction(eclasses)
+        yield base.eclass_scope, frozenset(eclasses)
 
 
 @scan.bind_delayed_default(1000, 'filter')
