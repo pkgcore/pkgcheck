@@ -189,10 +189,9 @@ def init_checks(enabled_addons, options, results_q):
                 raise SkipCheck(cls, e)
 
     # report which check skips were overridden
-    if options.verbosity >= 0:
-        for skip_type, checks in sorted(options.override_skip.items()):
-            s = pluralism(checks)
-            checks_str = ', '.join(sorted(checks))
-            logger.warning(f"running {skip_type} specific check{s}: {checks_str}")
+    for skip_type, checks in sorted(options.override_skip.items()):
+        s = pluralism(checks)
+        checks_str = ', '.join(sorted(checks))
+        logger.warning(f"running {skip_type} specific check{s}: {checks_str}")
 
     return enabled
