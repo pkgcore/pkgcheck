@@ -3,14 +3,13 @@
 import logging
 import os
 import configparser
-import sys
 
 from pkgcore.util import commandline
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr_none
 from snakeoil.mappings import OrderedSet
 
-from . import base, const
+from . import const
 
 
 class Tool(commandline.Tool):
@@ -18,10 +17,7 @@ class Tool(commandline.Tool):
     def main(self):
         # suppress all pkgcore log messages
         logging.getLogger('pkgcore').setLevel(100)
-        try:
-            return super().main()
-        except base.PkgcheckException as e:
-            sys.exit(str(e))
+        return super().main()
 
 
 class ConfigFileParser:

@@ -124,7 +124,7 @@ class Pipeline:
             os.killpg(self._pid, signal.SIGKILL)
         if error is not None:
             # propagate exception raised during parallel scan
-            raise base.PkgcheckException(error)
+            raise base.PkgcheckUserException(error)
         raise KeyboardInterrupt
 
     def __iter__(self):
