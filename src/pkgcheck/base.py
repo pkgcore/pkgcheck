@@ -38,7 +38,7 @@ class Scope:
 
     def __eq__(self, other):
         if isinstance(other, Scope):
-            return self.level == other.level
+            return self.desc == other.desc
         return self.level == other
 
     def __hash__(self):
