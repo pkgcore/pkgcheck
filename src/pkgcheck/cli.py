@@ -1,28 +1,27 @@
 """Various command-line specific support."""
 
+import logging
 import os
 import configparser
 import sys
 
 from pkgcore.util import commandline
-from snakeoil.cli import arghparse
 from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr_none
 from snakeoil.mappings import OrderedSet
-from snakeoil.log import suppress_logging
 
 from . import base, const
 
 
 class Tool(commandline.Tool):
-    """Suppress log messages globally."""
 
     def main(self):
-        with suppress_logging():
-            try:
-                return super().main()
-            except base.PkgcheckException as e:
-                sys.exit(str(e))
+        # suppress all pkgcore log messages
+        logging.getLogger('pkgcore').setLevel(100)
+        try:
+            return super().main()
+        except base.PkgcheckException as e:
+            sys.exit(str(e))
 
 
 class ConfigFileParser:
