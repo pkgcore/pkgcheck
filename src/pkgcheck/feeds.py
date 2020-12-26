@@ -86,7 +86,7 @@ class EvaluateDepSet(Feed):
         self.pkg_profiles_cache.clear()
 
     def _identify_common_depsets(self, pkg, depset):
-        profile_grps = self.pkg_profiles_cache.get(pkg, None)
+        profile_grps = self.pkg_profiles_cache.get(pkg)
         if profile_grps is None:
             profile_grps = self.profiles.identify_profiles(pkg)
             self.pkg_profiles_cache[pkg] = profile_grps

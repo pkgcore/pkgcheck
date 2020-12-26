@@ -314,7 +314,7 @@ class ProfileAddon(caches.CachedAddon):
                     padding = max(len(x) for x in self.options.arches)
 
                     for profile_obj, profile in self.arch_profiles.get(arch, []):
-                        files = self.profile_data.get(profile, None)
+                        files = self.profile_data.get(profile)
                         try:
                             cached_profile = cached_profiles[profile.base][profile.path]
                             if files != cached_profile['files']:
