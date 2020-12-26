@@ -5,10 +5,12 @@ from functools import total_ordering
 
 from pkgcore import fetch
 from snakeoil import klass
+from snakeoil.strings import pluralism
 
 from .. import addons, base, feeds, sources
 from ..caches import CachedAddon, CacheDisabled
 from ..results import MetadataError
+from ..log import logger
 
 
 @total_ordering
@@ -62,12 +64,16 @@ class Check(feeds.Feed):
 
 
 class GentooRepoCheck(Check):
-    """Check that is only run against the gentoo repo."""
+    """Check that is only run against the gentoo repo by default."""
 
     def __init__(self, *args):
         super().__init__(*args)
         if not self.options.gentoo_repo:
-            raise SkipCheck(self, 'not running against gentoo repo')
+            check = self.__class__.__name__
+            if check in self.options.selected_checks:
+                self.options.override_skip['gentoo'].append(check)
+            else:
+                raise SkipCheck(self, 'not running against gentoo repo')
 
 
 class OverlayRepoCheck(Check):
@@ -152,6 +158,8 @@ class SkipCheck(base.PkgcheckUserException):
 def init_checks(enabled_addons, options, results_q):
     """Initialize selected checks."""
     enabled = defaultdict(list)
+    # mapping of check skip overrides
+    options.override_skip = defaultdict(list)
     addons_map = {}
     source_map = {}
 
@@ -173,10 +181,18 @@ def init_checks(enabled_addons, options, results_q):
                 exec_type = 'async' if isinstance(addon, AsyncCheck) else 'sync'
                 enabled[(source, exec_type)].append(addon)
         except (CacheDisabled, SkipCheck) as e:
-            # raise exception if the related check was explicitly selected
+            # Raise exception if the related check was explicitly selected,
+            # otherwise it gets transparently skipped.
             if cls.__name__ in options.selected_checks:
                 if isinstance(e, SkipCheck):
                     raise
                 raise SkipCheck(cls, e)
+
+    # report which check skips were overridden
+    if options.verbosity >= 0:
+        for skip_type, checks in sorted(options.pop('override_skip').items()):
+            s = pluralism(checks)
+            checks_str = ', '.join(sorted(checks))
+            logger.warning(f"running {skip_type} specific check{s}: {checks_str}")
 
     return enabled
