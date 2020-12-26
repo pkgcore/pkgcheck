@@ -74,10 +74,13 @@ class Pipeline:
     def _filter_checks(self, scan_scope, checks):
         """Verify check scope against current scan scope to determine check activation."""
         for check in checks:
-            if check.scope == 0:
+            if check.scope < 0:
+                # negative scope checks are conditionally added when relevant
+                yield check
+            elif check.scope == 0:
                 if not self.options.selected_scopes:
                     if scan_scope in (check.scope, base.repo_scope):
-                        # Allow repo scans or cwd scope to trigger location specific checks.
+                        # allow repo scans or cwd scope to trigger location specific checks
                         yield check
                 elif check.scope in self.options.selected_scopes:
                     # Allow checks with special scopes to be run when specifically
