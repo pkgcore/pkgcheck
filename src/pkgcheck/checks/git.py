@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.ebuild.repository import UnconfiguredTree
 from snakeoil import klass
+from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism
 
@@ -486,6 +487,13 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
     _commit_footer_regex = re.compile(r'^(?P<tag>[a-zA-Z0-9_-]+): (?P<value>.*)$')
     _git_cat_file_regex = re.compile(r'^(?P<object>.+?) (?P<status>.+)$')
 
+    def __init__(self, *args):
+        super().__init__(*args)
+        # mapping of required tags to forcibly run verifications methods
+        self._required_tags = ImmutableDict(
+            ((tag, verify), [])
+            for tag, (verify, required) in self.known_tags.items() if required)
+
     @verify_tags('Signed-off-by', required=True)
     def _signed_off_by_tag(self, tag, values, commit):
         """Verify commit contains all required sign offs in accordance with GLEP 76."""
@@ -591,11 +599,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
                 break
 
         # mapping of defined tags to any existing verification methods
-        tag_mapping = defaultdict(list)
-        # forcibly run verifications methods for required tags
-        tag_mapping.update(
-            ((tag, verify), [])
-            for tag, (verify, required) in self.known_tags.items() if required)
+        tags = dict(self._required_tags)
 
         # verify footer
         for lineno, line in enumerate(i, lineno + 1):
@@ -610,7 +614,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
                 tag = mo.group('tag')
                 try:
                     func, required = self.known_tags[tag]
-                    tag_mapping[(tag, func)].append(mo.group('value'))
+                    tags.setdefault((tag, func), []).append(mo.group('value'))
                 except KeyError:
                     continue
             else:
@@ -618,7 +622,7 @@ class GitCommitsCheck(GentooRepoCheck, GitCheck):
                     f'non-tag in footer, line {lineno}: {line!r}', commit=commit)
 
         # run tag verification methods
-        for (tag, func), values in tag_mapping.items():
+        for (tag, func), values in tags.items():
             yield from func(self, tag, values, commit)
 
 
