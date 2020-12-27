@@ -128,7 +128,8 @@ class ProfilesCheck(Check):
             local_iuse | use_addon.global_iuse |
             use_addon.global_iuse_expand | use_addon.global_iuse_implicit)
 
-    @verify_files(('parent', 'parents'))
+    @verify_files(('parent', 'parents'),
+                  ('eapi', 'eapi'))
     def _pull_attr(self, *args):
         """Verification only needs to pull the profile attr."""
         yield from ()
