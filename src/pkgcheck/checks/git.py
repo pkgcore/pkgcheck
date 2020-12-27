@@ -460,7 +460,7 @@ class BadCommitSummary(results.CommitResult, results.Warning):
 def verify_tags(*tags, required=False):
     """Decorator to register commit tag verification methods."""
 
-    class class_decorator:
+    class decorator:
         """Decorator with access to the class of a decorated function."""
 
         def __init__(self, func):
@@ -471,7 +471,7 @@ def verify_tags(*tags, required=False):
                 owner.known_tags[tag] = (self.func, required)
             setattr(owner, name, self.func)
 
-    return class_decorator
+    return decorator
 
 
 class GitCommitsCheck(GentooRepoCheck, GitCheck):

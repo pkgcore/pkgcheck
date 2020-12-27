@@ -1,0 +1,5 @@
+{"__class__": "UnknownProfilePackage", "path": "unknown_pkgs/package.mask", "atom": "unknown/pkg_mask"}
+{"__class__": "UnknownProfilePackage", "path": "unknown_pkgs/package.unmask", "atom": "unknown/pkg_unmask"}
+{"__class__": "UnknownProfilePackage", "path": "unknown_pkgs/package.use", "atom": "unknown/pkg_use"}
+{"__class__": "UnknownProfilePackage", "path": "unknown_pkgs/packages", "atom": "unknown/disabled_pkg"}
+{"__class__": "UnknownProfilePackage", "path": "unknown_pkgs/packages", "atom": "unknown/pkg"}
