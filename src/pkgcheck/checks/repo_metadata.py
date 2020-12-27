@@ -4,7 +4,6 @@ from difflib import SequenceMatcher
 from itertools import chain
 
 from pkgcore import fetch
-from snakeoil.contexts import patch
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
@@ -91,16 +90,15 @@ class PackageUpdatesCheck(Check):
         self.repo = self.options.target_repo
 
     def finish(self):
-        update_reports = []
-        report_bad_updates = lambda x: update_reports.append(BadPackageUpdate(x))
-        report_old_updates = lambda x: update_reports.append(MovedPackageUpdate(x))
+        log_map = {
+            'pkgcore.log.logger.warning': MovedPackageUpdate,
+            'pkgcore.log.logger.error': BadPackageUpdate,
+        }
 
         # convert log warnings/errors into reports
-        with patch('pkgcore.log.logger.error', report_bad_updates), \
-                patch('pkgcore.log.logger.warning', report_old_updates):
+        with base.LogReports(log_map) as log_reports:
             repo_updates = self.repo.config.updates
-
-        yield from update_reports
+        yield from log_reports
 
         multi_move_updates = {}
         old_move_updates = {}

@@ -7,7 +7,7 @@ from pkgcore.ebuild import misc
 from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.repo_objs import Profiles
-from snakeoil.contexts import patch
+from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
@@ -84,6 +84,13 @@ class ProfileWarning(results.ProfilesResult, results.LogWarning):
 
 class ProfileError(results.ProfilesResult, results.LogError):
     """Erroneously formatted data in various profile files."""
+
+
+# mapping of profile log levels to result classes
+_logs_to_results = ImmutableDict({
+    'pkgcore.log.logger.warning': ProfileWarning,
+    'pkgcore.log.logger.error': ProfileError,
+})
 
 
 def verify_files(*files):
@@ -208,18 +215,12 @@ class ProfilesCheck(Check):
                         pjoin(node.name, filename), a)
 
     def feed(self, profile):
-        profile_reports = []
-        report_profile_warnings = lambda x: profile_reports.append(ProfileWarning(x))
-        report_profile_errors = lambda x: profile_reports.append(ProfileError(x))
-
         for f in profile.files.intersection(self.known_files):
             attr, func = self.known_files[f]
-            # convert log warnings/errors into reports
-            with patch('pkgcore.log.logger.error', report_profile_errors), \
-                    patch('pkgcore.log.logger.warning', report_profile_warnings):
-                vals = getattr(profile.node, attr)
-            yield from func(self, f, profile.node, vals)
-        yield from profile_reports
+            with base.LogReports(_logs_to_results) as log_reports:
+                data = getattr(profile.node, attr)
+            yield from func(self, f, profile.node, data)
+            yield from log_reports
 
 
 class UnusedProfileDirs(results.ProfilesResult, results.Warning):
@@ -366,10 +367,6 @@ class RepoProfilesCheck(Check):
                 available_profile_dirs.add(d)
         available_profile_dirs -= self.non_profile_dirs | root_profile_dirs
 
-        profile_reports = []
-        report_profile_warnings = lambda x: profile_reports.append(ProfileWarning(x))
-        report_profile_errors = lambda x: profile_reports.append(ProfileError(x))
-
         # don't check for acceptable profile statuses on overlays
         if self.options.gentoo_repo:
             known_profile_statuses = self.known_profile_statuses
@@ -377,13 +374,11 @@ class RepoProfilesCheck(Check):
             known_profile_statuses = None
 
         # forcibly parse profiles.desc and convert log warnings/errors into reports
-        with patch('pkgcore.log.logger.error', report_profile_errors), \
-                patch('pkgcore.log.logger.warning', report_profile_warnings):
+        with base.LogReports(_logs_to_results) as log_reports:
             profiles = Profiles.parse(
                 self.profiles_dir, self.repo.repo_id,
                 known_status=known_profile_statuses, known_arch=self.arches)
-
-        yield from profile_reports
+        yield from log_reports
 
         seen_profile_dirs = set()
         lagging_profile_eapi = defaultdict(list)

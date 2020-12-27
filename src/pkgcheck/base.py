@@ -12,13 +12,14 @@ minimally accepted scope.
 
 import re
 import sys
-from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass
 from functools import partial
 from itertools import chain
 
 from pkgcore.restrictions import values
 from snakeoil.cli.exceptions import UserException
+from snakeoil.contexts import patch
 from snakeoil.mappings import ImmutableDict
 
 
@@ -186,6 +187,23 @@ def contains_restriction(objs):
     """Generate a restriction for a given iterable of hashable objects."""
     func = partial(contains, frozenset(objs))
     return values.AnyMatch(values.FunctionRestriction(func))
+
+
+@contextmanager
+def LogReports(log_map):
+    """Context manager for turning log messages into results."""
+    reports = []
+
+    def report(cls, x):
+        reports.append(cls(x))
+
+    try:
+        with ExitStack() as stack:
+            for func, cls in log_map.items():
+                stack.enter_context(patch(func, partial(report, cls)))
+            yield reports
+    finally:
+        pass
 
 
 class ProgressManager(AbstractContextManager):
