@@ -62,13 +62,13 @@ class Pipeline:
             # package level scans sort all returned results
             self._ordered_results = {
                 scope: [] for scope in base.scopes.values()
-                if scope.level >= base.package_scope
+                if scope >= base.package_scope
             }
         else:
             # scoped mapping for caching repo and location specific results
             self._ordered_results = {
                 scope: [] for scope in reversed(list(base.scopes.values()))
-                if scope.level <= base.repo_scope
+                if scope <= base.repo_scope
             }
 
     def _filter_checks(self, scan_scope, checks):
