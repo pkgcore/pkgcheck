@@ -152,7 +152,7 @@ class ProfilesCheck(Check):
         for atom, keywords in vals:
             if invalid := sorted(set(keywords) - self.keywords.valid):
                 yield UnknownProfilePackageKeywords(
-                    pjoin(profiles_mod.rel(node.path), filename), atom, invalid)
+                    pjoin(node.name, filename), atom, invalid)
 
     @verify_files(('use.force', 'use_force'),
                   ('use.stable.force', 'use_stable_force'),
@@ -166,10 +166,10 @@ class ProfilesCheck(Check):
                 if unknown_disabled := set(disabled) - self.available_iuse:
                     flags = ('-' + u for u in unknown_disabled)
                     yield UnknownProfileUse(
-                        pjoin(profiles_mod.rel(node.path), filename), flags)
+                        pjoin(node.name, filename), flags)
                 if unknown_enabled := set(enabled) - self.available_iuse:
                     yield UnknownProfileUse(
-                        pjoin(profiles_mod.rel(node.path), filename), unknown_enabled)
+                        pjoin(node.name, filename), unknown_enabled)
 
     @verify_files(('packages', 'packages'),
                   ('package.mask', 'masks'),
@@ -178,8 +178,7 @@ class ProfilesCheck(Check):
     def _pkg_atoms(self, filename, node, vals):
         for x in iflatten_instance(vals, atom_cls):
             if not self.search_repo.match(x):
-                yield UnknownProfilePackage(
-                    pjoin(profiles_mod.rel(node.path), filename), x)
+                yield UnknownProfilePackage(pjoin(node.name, filename), x)
 
     @verify_files(('package.use', 'pkg_use'),
                   ('package.use.force', 'pkg_use_force'),
@@ -199,13 +198,13 @@ class ProfilesCheck(Check):
                     if unknown_disabled := set(disabled) - available:
                         flags = ('-' + u for u in unknown_disabled)
                         yield UnknownProfilePackageUse(
-                            pjoin(profiles_mod.rel(node.path), filename), a, flags)
+                            pjoin(node.name, filename), a, flags)
                     if unknown_enabled := set(enabled) - available:
                         yield UnknownProfilePackageUse(
-                            pjoin(profiles_mod.rel(node.path), filename), a, unknown_enabled)
+                            pjoin(node.name, filename), a, unknown_enabled)
                 else:
                     yield UnknownProfilePackage(
-                        pjoin(profiles_mod.rel(node.path), filename), a)
+                        pjoin(node.name, filename), a)
 
     def feed(self, profile):
         profile_reports = []
@@ -394,7 +393,7 @@ class RepoProfilesCheck(Check):
                 yield NonexistentProfilePath(p.path)
                 continue
             for parent in profile.stack:
-                seen_profile_dirs.update(dir_parents(profiles_mod.rel(parent.path)))
+                seen_profile_dirs.update(dir_parents(parent.name))
                 # flag lagging profile EAPIs -- assumes EAPIs are sequentially
                 # numbered which should be the case for the gentoo repo
                 if (self.options.gentoo_repo and str(profile.eapi) < str(parent.eapi)):
