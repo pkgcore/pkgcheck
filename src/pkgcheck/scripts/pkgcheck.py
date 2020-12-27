@@ -470,7 +470,7 @@ def _default_filtered_keywords(namespace, attr):
     setattr(namespace, attr, set(objects.KEYWORDS.values()))
 
 
-@scan.bind_delayed_default(1000, 'restrictions')
+@scan.bind_delayed_default(9999, 'restrictions')
 def _determine_restrictions(namespace, attr):
     """Determine restrictions for untargeted scans and generate collapsed restriction for targeted scans."""
     if namespace.targets:
