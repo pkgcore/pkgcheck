@@ -626,7 +626,7 @@ class UseAddon(base.Addon):
             # repos without profiles will currently lack any implicit IUSE.
             unstated_iuse -= self.global_iuse_implicit
             if unstated_iuse:
-                yield UnstatedIuse(attr, unstated_iuse, pkg=pkg)
+                yield UnstatedIuse(attr, sorted(unstated_iuse), pkg=pkg)
 
     def use_validate(self, klasses, pkg, seq, attr=None):
         skip_filter = (packages.Conditional,) + klasses
