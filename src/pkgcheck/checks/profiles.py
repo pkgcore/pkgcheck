@@ -8,7 +8,6 @@ from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.repo_objs import Profiles
 from snakeoil.contexts import patch
-from snakeoil.klass import jit_attr
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
@@ -99,18 +98,15 @@ class ProfilesCheck(Check):
 
     def __init__(self, *args, use_addon, keywords_addon):
         super().__init__(*args)
+        target_repo = self.options.target_repo
         self.keywords = keywords_addon
-        self.repo = self.options.target_repo
         self.search_repo = self.options.search_repo
-        self.iuse_handler = use_addon
-        self.profiles_dir = self.repo.config.profiles_base
+        self.profiles_dir = target_repo.config.profiles_base
 
-    @jit_attr
-    def available_iuse(self):
-        local_iuse = {use for pkg, (use, desc) in self.repo.config.use_local_desc}
-        return frozenset(
-            local_iuse | self.iuse_handler.global_iuse |
-            self.iuse_handler.global_iuse_expand | self.iuse_handler.global_iuse_implicit)
+        local_iuse = {use for pkg, (use, desc) in target_repo.config.use_local_desc}
+        self.available_iuse = frozenset(
+            local_iuse | use_addon.global_iuse |
+            use_addon.global_iuse_expand | use_addon.global_iuse_implicit)
 
     def feed(self, profile):
         unknown_pkgs = defaultdict(lambda: defaultdict(list))
