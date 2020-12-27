@@ -105,8 +105,6 @@ class ProfilesCheck(Check):
         self.search_repo = self.options.search_repo
         self.iuse_handler = use_addon
         self.profiles_dir = self.repo.config.profiles_base
-        self.non_profile_dirs = frozenset(
-            pjoin(self.profiles_dir, x) for x in addons.ProfileAddon.non_profile_dirs)
 
     @jit_attr
     def available_iuse(self):
