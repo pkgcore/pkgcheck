@@ -37,7 +37,7 @@ class Scope:
             return self.level < other.level
         return self.level < other
 
-    def __le(self, other):
+    def __le__(self, other):
         if isinstance(other, Scope):
             return self.level <= other.level
         return self.level <= other
