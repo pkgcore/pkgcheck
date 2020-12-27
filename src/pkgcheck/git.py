@@ -302,10 +302,10 @@ class _ScanCommits(argparse.Action):
         for d in ('eclass', 'profiles'):
             if os.path.isdir(pjoin(repo.location, d)):
                 targets.append(d)
-        git_diff_cmd = ['git', 'diff', '--name-only', '-z', ref]
+        diff_cmd = ['git', 'diff-tree', '-r', '--name-only', '-z', ref]
         try:
             p = subprocess.run(
-                git_diff_cmd + targets,
+                diff_cmd + targets,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 cwd=repo.location, check=True, encoding='utf8')
         except FileNotFoundError:
