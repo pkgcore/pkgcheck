@@ -2,7 +2,6 @@
 
 import os
 from collections import defaultdict
-from itertools import chain
 
 from pkgcore.ebuild import misc
 from pkgcore.ebuild import profiles as profiles_mod
@@ -214,26 +213,26 @@ class ProfilesCheck(Check):
             for filename, vals in filenames.items():
                 pkgs = map(str, vals)
                 yield UnknownProfilePackages(
-                    pjoin(path[len(self.profiles_dir):].lstrip('/'), filename), pkgs)
+                    pjoin(profiles_mod.rel(path), filename), pkgs)
 
         for path, filenames in sorted(unknown_pkg_use.items()):
             for filename, vals in filenames.items():
                 for pkg, flags in vals:
                     yield UnknownProfilePackageUse(
-                        pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
+                        pjoin(profiles_mod.rel(path), filename),
                         pkg, flags)
 
         for path, filenames in sorted(unknown_use.items()):
             for filename, vals in filenames.items():
                 yield UnknownProfileUse(
-                    pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
+                    pjoin(profiles_mod.rel(path), filename),
                     vals)
 
         for path, filenames in sorted(unknown_keywords.items()):
             for filename, vals in filenames.items():
                 for pkg, keywords in vals:
                     yield UnknownProfilePackageKeywords(
-                        pjoin(path[len(self.profiles_dir):].lstrip('/'), filename),
+                        pjoin(profiles_mod.rel(path), filename),
                         pkg, keywords)
 
 
@@ -409,8 +408,7 @@ class RepoProfilesCheck(Check):
                 yield NonexistentProfilePath(p.path)
                 continue
             for parent in profile.stack:
-                seen_profile_dirs.update(
-                    dir_parents(parent.path[len(self.profiles_dir):]))
+                seen_profile_dirs.update(dir_parents(profiles_mod.rel(parent.path)))
                 # flag lagging profile EAPIs -- assumes EAPIs are sequentially
                 # numbered which should be the case for the gentoo repo
                 if (self.options.gentoo_repo and str(profile.eapi) < str(parent.eapi)):
