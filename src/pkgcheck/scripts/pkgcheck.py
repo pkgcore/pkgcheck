@@ -424,15 +424,19 @@ def generate_restricts(repo, targets):
         path = os.path.realpath(target)
         # prefer path restrictions if it's in the target repo
         if os.path.exists(path) and path in repo:
-            # support direct eclass and profiles file targets
-            if os.path.isfile(path):
-                if target.endswith('.eclass'):
-                    eclasses.append(os.path.basename(target)[:-7])
-                    continue
-                elif path.startswith(profiles_base):
+            if target.endswith('.eclass'):
+                # direct eclass file targets
+                eclasses.append(os.path.basename(target)[:-7])
+            elif path.startswith(profiles_base) and path[len(profiles_base):]:
+                if os.path.isdir(path):
+                    # profile dir targets -- currently doesn't descend into subdirs
+                    profiles.extend(pjoin(path, x) for x in os.listdir(path))
+                else:
+                    # direct profiles file targets
                     profiles.append(target)
-                    continue
-            yield _path_restrict(path, repo)
+            else:
+                # generic repo path target
+                yield _path_restrict(path, repo)
         else:
             try:
                 # assume it's a package restriction
