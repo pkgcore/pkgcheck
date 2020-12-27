@@ -449,7 +449,7 @@ def generate_restricts(repo, targets):
     if eclasses:
         yield base.eclass_scope, frozenset(eclasses)
     if profiles:
-        yield base.profiles_scope, frozenset(profiles)
+        yield base.profile_node_scope, frozenset(profiles)
 
 
 @scan.bind_delayed_default(1000, 'filter')

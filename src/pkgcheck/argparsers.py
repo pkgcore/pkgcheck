@@ -226,8 +226,8 @@ class ScopeArgs(arghparse.CommaSeparatedNegations):
             raise argparse.ArgumentError(
                 self, f'unknown scope{s}: {unknown} (available: {available})')
 
-        disabled = {base.scopes[x] for x in disabled}
-        enabled = {base.scopes[x] for x in enabled}
+        disabled = set(chain.from_iterable(base.scopes[x] for x in disabled))
+        enabled = set(chain.from_iterable(base.scopes[x] for x in enabled))
 
         if enabled:
             namespace.enabled_checks = {

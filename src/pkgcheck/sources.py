@@ -182,7 +182,7 @@ class Profile:
 class ProfilesRepoSource(RepoSource):
     """Repository profiles file source."""
 
-    scope = base.profiles_scope
+    scope = base.profile_node_scope
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

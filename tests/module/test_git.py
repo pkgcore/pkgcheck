@@ -100,7 +100,7 @@ class TestPkgcheckScanCommitsParseArgs:
             assert len(restrictions) == 2
             assert restrictions[0] == \
                 (base.package_scope, packages.OrRestriction(*atom_restricts))
-            assert restrictions[1][0] == base.profiles_scope
+            assert restrictions[1][0] == base.profile_node_scope
             assert restrictions[1][1] == frozenset(['profiles/package.mask'])
 
     def test_commits_ignored_changes(self):

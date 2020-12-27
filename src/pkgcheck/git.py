@@ -339,9 +339,7 @@ class _ScanCommits(argparse.Action):
         if eclasses:
             restrictions.append((base.eclass_scope, frozenset(eclasses)))
         if profiles:
-            # TODO: Support incremental profile scanning (#200) currently this
-            # enables all profiles scope checks.
-            restrictions.append((base.profiles_scope, frozenset(profiles)))
+            restrictions.append((base.profile_node_scope, frozenset(profiles)))
 
         # no relevant targets, exit early
         if not restrictions:

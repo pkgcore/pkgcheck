@@ -15,6 +15,7 @@ import sys
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from functools import partial
+from itertools import chain
 
 from pkgcore.restrictions import values
 from snakeoil.cli.exceptions import UserException
@@ -26,6 +27,7 @@ class Scope:
     """Generic scope for scans, checks, and results."""
     desc: str
     level: int
+    _children: tuple = ()
 
     def __str__(self):
         return self.desc
@@ -62,6 +64,12 @@ class Scope:
         address = '@%#8x' % (id(self),)
         return f'<{self.__class__.__name__} desc={self.desc!r} {address}>'
 
+    def __contains__(self, key):
+        return self == key or key in self._children
+
+    def __iter__(self):
+        return chain([self], self._children)
+
 
 # pkg-related scope levels
 repo_scope = Scope('repo', 1)
@@ -72,7 +80,8 @@ version_scope = Scope('version', 4)
 # Special scope levels, scopes with negative levels are only enabled under
 # certain circumstances while location specific scopes have a level of 0.
 commit_scope = Scope('commit', -1)
-profiles_scope = Scope('profiles', 0)
+profile_node_scope = Scope('profile_node', 0)
+profiles_scope = Scope('profiles', 0, (profile_node_scope,))
 eclass_scope = Scope('eclass', 0)
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes

@@ -79,7 +79,7 @@ class Pipeline:
                 yield check
             elif check.scope == 0:
                 if not self.options.selected_scopes:
-                    if scan_scope in (check.scope, base.repo_scope):
+                    if scan_scope == base.repo_scope or check.scope in scan_scope:
                         # allow repo scans or cwd scope to trigger location specific checks
                         yield check
                 elif check.scope in self.options.selected_scopes:
