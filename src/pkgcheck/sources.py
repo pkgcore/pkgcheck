@@ -7,12 +7,13 @@ from dataclasses import dataclass
 from operator import attrgetter
 
 from pkgcore.ebuild.repository import UnconfiguredTree
-from pkgcore.restrictions import packages, restriction
+from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files, pjoin
 
 from . import addons, base
 from .eclass import Eclass, EclassAddon
 from .packages import FilteredPkg, RawCPV, WrappedPkg
+from .profiles import ProfileAddon, ProfileNode
 
 
 class Source:
@@ -175,7 +176,7 @@ class EclassRepoSource(RepoSource):
 @dataclass
 class Profile:
     """Generic profile object."""
-    node: addons.ProfileNode
+    node: ProfileNode
     files: set
 
 
@@ -188,7 +189,7 @@ class ProfilesRepoSource(RepoSource):
         super().__init__(*args, **kwargs)
         self.profiles_dir = self.repo.config.profiles_base
         self.non_profile_dirs = {
-            f'profiles/{x}' for x in addons.ProfileAddon.non_profile_dirs}
+            f'profiles/{x}' for x in ProfileAddon.non_profile_dirs}
         self._prefix_len = len(self.repo.location.rstrip(os.sep)) + 1
 
     def itermatch(self, restrict, **kwargs):
@@ -198,12 +199,12 @@ class ProfilesRepoSource(RepoSource):
             for x in restrict:
                 paths[pjoin(self.repo.location, os.path.dirname(x))].append(os.path.basename(x))
             for root, files in sorted(paths.items()):
-                yield Profile(addons.ProfileNode(root), set(files))
+                yield Profile(profiles.ProfileNode(root), set(files))
         else:
             # matching all profiles
             for root, _dirs, files in os.walk(self.profiles_dir):
                 if root[self._prefix_len:] not in self.non_profile_dirs:
-                    yield Profile(addons.ProfileNode(root), set(files))
+                    yield Profile(ProfileNode(root), set(files))
 
 
 class _RawRepo(UnconfiguredTree):

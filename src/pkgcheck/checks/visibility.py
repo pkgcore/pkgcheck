@@ -7,7 +7,8 @@ from snakeoil.iterables import caching_iter
 from snakeoil.sequences import iflatten_func, iflatten_instance, stable_unique
 from snakeoil.strings import pluralism
 
-from .. import addons, feeds, results
+from .. import feeds, results
+from ..profiles import ProfileAddon
 from . import Check
 
 
@@ -197,7 +198,7 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
     keyword.
     """
 
-    required_addons = (addons.ProfileAddon,)
+    required_addons = (ProfileAddon,)
     known_results = frozenset([
         VisibleVcsPkg, NonexistentDeps, UncheckableDep,
         NonsolvableDepsInStable, NonsolvableDepsInDev, NonsolvableDepsInExp,

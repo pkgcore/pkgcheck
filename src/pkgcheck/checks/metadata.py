@@ -17,9 +17,10 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
-from .. import addons, base, git, results, sources
+from .. import addons, git, results, sources
 from ..addons import UnstatedIuse
 from ..eclass import EclassAddon
+from ..profiles import ProfileAddon
 from . import Check
 from .visibility import FakeConfigurable
 
@@ -341,7 +342,7 @@ class RequiredUseCheck(Check):
     _source = (sources.RestrictionRepoSource, (
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
             'options.has_required_use', values.FunctionRestriction(bool))),))
-    required_addons = (addons.UseAddon, addons.ProfileAddon)
+    required_addons = (addons.UseAddon, ProfileAddon)
     known_results = frozenset([InvalidRequiredUse, RequiredUseDefaults, UnstatedIuse])
 
     def __init__(self, *args, use_addon, profile_addon):

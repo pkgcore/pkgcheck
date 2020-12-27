@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 from pkgcheck import addons
 from pkgcheck.base import PkgcheckUserException
+from pkgcheck.profiles import ProfileAddon, ProfileData
 from pkgcore.restrictions import packages
 from snakeoil.osutils import pjoin
 
@@ -110,7 +111,7 @@ class Test_profile_data:
     def assertResults(self, profile, known_flags, required_immutable,
                       required_forced, cpv="dev-util/diffball-0.1",
                       key_override=None, data_override=None):
-        profile_data = addons.ProfileData(
+        profile_data = ProfileData(
             "test-profile", key_override,
             profile.provides_repo,
             packages.AlwaysFalse, profile.iuse_effective,
@@ -156,7 +157,7 @@ class Test_profile_data:
 
 class TestProfileAddon:
 
-    addon_kls = addons.ProfileAddon
+    addon_kls = ProfileAddon
 
     @pytest.fixture(autouse=True)
     def _setup(self, tool, repo, tmp_path):

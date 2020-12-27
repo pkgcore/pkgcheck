@@ -13,6 +13,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import addons, base, results, sources
+from ..profiles import ProfileAddon, ProfileNode
 from . import Check
 
 
@@ -138,7 +139,7 @@ class ProfilesCheck(Check):
         if vals is not None:
             replacement, msg = vals
             try:
-                addons.ProfileNode(pjoin(self.profiles_dir, replacement))
+                ProfileNode(pjoin(self.profiles_dir, replacement))
             except profiles_mod.ProfileError:
                 yield ProfileError(
                     f'nonexistent replacement {replacement!r} '
@@ -332,7 +333,7 @@ class RepoProfilesCheck(Check):
     """
 
     _source = (sources.EmptySource, (base.profiles_scope,))
-    required_addons = (addons.ProfileAddon,)
+    required_addons = (ProfileAddon,)
     known_results = frozenset([
         ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,
         UnknownCategoryDirs, NonexistentCategories, LaggingProfileEapi,
