@@ -14,14 +14,13 @@ import re
 import sys
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
-from functools import partial, total_ordering
+from functools import partial
 
 from pkgcore.restrictions import values
 from snakeoil.cli.exceptions import UserException
 from snakeoil.mappings import ImmutableDict
 
 
-@total_ordering
 @dataclass(frozen=True)
 class Scope:
     """Generic scope for scans, checks, and results."""
@@ -35,6 +34,21 @@ class Scope:
         if isinstance(other, Scope):
             return self.level < other.level
         return self.level < other
+
+    def __le(self, other):
+        if isinstance(other, Scope):
+            return self.level <= other.level
+        return self.level <= other
+
+    def __gt__(self, other):
+        if isinstance(other, Scope):
+            return self.level > other.level
+        return self.level > other
+
+    def __ge__(self, other):
+        if isinstance(other, Scope):
+            return self.level >= other.level
+        return self.level >= other
 
     def __eq__(self, other):
         if isinstance(other, Scope):
