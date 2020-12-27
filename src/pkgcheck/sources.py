@@ -199,7 +199,7 @@ class ProfilesRepoSource(RepoSource):
             for x in restrict:
                 paths[pjoin(self.repo.location, os.path.dirname(x))].append(os.path.basename(x))
             for root, files in sorted(paths.items()):
-                yield Profile(profiles.ProfileNode(root), set(files))
+                yield Profile(ProfileNode(root), set(files))
         else:
             # matching all profiles
             for root, _dirs, files in os.walk(self.profiles_dir):
