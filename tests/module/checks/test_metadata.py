@@ -147,7 +147,7 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         options = self.get_options(search_repo=search_repo, gentoo_repo=False)
 
         kwargs = {
-            'use_addon': addons.UseAddon(options, profile_addon=[misc.FakeProfile()]),
+            'use_addon': addons.UseAddon(options),
             'keywords_addon': addons.KeywordsAddon(options),
         }
         return metadata.KeywordsCheck(options, **kwargs)
@@ -183,7 +183,7 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         # check that * and ~* are flagged in gentoo repo
         options = self.get_options(repo_name='gentoo', gentoo_repo=True)
         kwargs = {
-            'use_addon': addons.UseAddon(options, profile_addon=[misc.FakeProfile()]),
+            'use_addon': addons.UseAddon(options),
             'keywords_addon': addons.KeywordsAddon(options),
         }
         check = metadata.KeywordsCheck(options, **kwargs)
@@ -243,7 +243,7 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
         # create a check instance with verbose mode enabled
         options = self.get_options(gentoo_repo=False, verbosity=1)
         kwargs = {
-            'use_addon': addons.UseAddon(options, profile_addon=[misc.FakeProfile()]),
+            'use_addon': addons.UseAddon(options),
             'keywords_addon': addons.KeywordsAddon(options),
         }
         check = metadata.KeywordsCheck(options, **kwargs)
@@ -299,7 +299,7 @@ class TestIuseCheck(IUSE_Options, misc.ReportTestCase):
     @pytest.fixture
     def check(self):
         options = self.get_options()
-        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
+        use_addon = addons.UseAddon(options)
         return self.check_kls(options, use_addon=use_addon)
 
     def mk_pkg(self, iuse=""):
@@ -474,7 +474,7 @@ class TestRequiredUseCheck(IUSE_Options, misc.ReportTestCase):
         if profiles is None:
             profiles = {'x86': [misc.FakeProfile(name='default/linux/x86', masks=masks)]}
         options = self.get_options(verbosity=verbosity)
-        use_addon = addons.UseAddon(options, profile_addon=profiles['x86'])
+        use_addon = addons.UseAddon(options)
         check = self.check_kls(options, use_addon=use_addon, profile_addon=profiles)
         return check
 
@@ -601,7 +601,7 @@ def use_based():
             options = options if options is not None else {}
             options = self.get_options(**options)
             profiles = [misc.FakeProfile(iuse_effective=["x86"])]
-            use_addon = addons.UseAddon(options, profile_addon=profiles)
+            use_addon = addons.UseAddon(options)
             check = self.check_kls(options, *args, use_addon=use_addon, **kwargs)
             return check
 
@@ -713,7 +713,7 @@ class TestLicenseCheck(use_based(), misc.ReportTestCase):
     def mk_check(self, licenses=(), **kwargs):
         self.repo = FakeRepo(repo_id='test', licenses=licenses)
         options = self.get_options(**kwargs)
-        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
+        use_addon = addons.UseAddon(options)
         check = self.check_kls(options, use_addon=use_addon)
         return check
 
@@ -795,7 +795,7 @@ class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
             )
         self.repo = FakeRepo(pkgs=pkgs, repo_id='test')
         options = self.get_options(**kwargs)
-        use_addon = addons.UseAddon(options, profile_addon=[misc.FakeProfile()])
+        use_addon = addons.UseAddon(options)
         check = self.check_kls(options, use_addon=use_addon)
         return check
 

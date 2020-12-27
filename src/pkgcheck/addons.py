@@ -533,20 +533,28 @@ class UnstatedIuse(results.VersionResult, results.Error):
 class UseAddon(base.Addon):
     """Addon supporting USE flag functionality."""
 
-    required_addons = (ProfileAddon,)
-
-    def __init__(self, *args, profile_addon):
+    def __init__(self, *args):
         super().__init__(*args)
+        target_repo = self.options.target_repo
+
+        self.profiles = []
+        for p in target_repo.profiles:
+            try:
+                self.profiles.append(
+                    target_repo.profiles.create_profile(p, load_profile_base=False))
+            except profiles_mod.ProfileError:
+                continue
 
         # common profile elements
-        c_implicit_iuse = set()
-        if profile_addon:
-            c_implicit_iuse = set.intersection(*(set(p.iuse_effective) for p in profile_addon))
+        if self.profiles:
+            c_implicit_iuse = set.intersection(*(set(p.iuse_effective) for p in self.profiles))
+        else:
+            c_implicit_iuse = set()
 
         known_iuse = set()
         known_iuse_expand = set()
 
-        for repo in self.options.target_repo.trees:
+        for repo in target_repo.trees:
             known_iuse.update(flag for matcher, (flag, desc) in repo.config.use_desc)
             known_iuse_expand.update(
                 flag for flags in repo.config.use_expand_desc.values()
@@ -556,7 +564,6 @@ class UseAddon(base.Addon):
             ((packages.AlwaysTrue, known_iuse),),
             ((packages.AlwaysTrue, known_iuse_expand),),
         )
-        self.profiles = profile_addon
         self.global_iuse = frozenset(known_iuse)
         self.global_iuse_expand = frozenset(known_iuse_expand)
         self.global_iuse_implicit = frozenset(c_implicit_iuse)
