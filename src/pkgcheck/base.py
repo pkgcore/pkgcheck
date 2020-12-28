@@ -12,6 +12,7 @@ minimally accepted scope.
 
 import re
 import sys
+import typing
 from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass
 from functools import partial
@@ -189,18 +190,25 @@ def contains_restriction(objs):
     return values.AnyMatch(values.FunctionRestriction(func))
 
 
+@dataclass(frozen=True)
+class LogMap:
+    """Log function to callable mapping."""
+    func: str
+    call: typing.Callable
+
+
 @contextmanager
-def LogReports(log_map):
+def LogReports(*logmaps):
     """Context manager for turning log messages into results."""
     reports = []
 
-    def report(cls, x):
-        reports.append(cls(x))
+    def report(call, x):
+        reports.append(call(x))
 
     try:
         with ExitStack() as stack:
-            for func, cls in log_map.items():
-                stack.enter_context(patch(func, partial(report, cls)))
+            for x in logmaps:
+                stack.enter_context(patch(x.func, partial(report, x.call)))
             yield reports
     finally:
         pass

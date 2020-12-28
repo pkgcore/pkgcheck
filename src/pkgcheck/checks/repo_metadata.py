@@ -90,13 +90,13 @@ class PackageUpdatesCheck(Check):
         self.repo = self.options.target_repo
 
     def finish(self):
-        log_map = {
-            'pkgcore.log.logger.warning': MovedPackageUpdate,
-            'pkgcore.log.logger.error': BadPackageUpdate,
-        }
+        logmap = (
+            base.LogMap('pkgcore.log.logger.warning', MovedPackageUpdate),
+            base.LogMap('pkgcore.log.logger.error', BadPackageUpdate),
+        )
 
         # convert log warnings/errors into reports
-        with base.LogReports(log_map) as log_reports:
+        with base.LogReports(*logmap) as log_reports:
             repo_updates = self.repo.config.updates
         yield from log_reports
 

@@ -7,7 +7,6 @@ from pkgcore.ebuild import misc
 from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.repo_objs import Profiles
-from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
@@ -87,10 +86,10 @@ class ProfileError(results.ProfilesResult, results.LogError):
 
 
 # mapping of profile log levels to result classes
-_logs_to_results = ImmutableDict({
-    'pkgcore.log.logger.warning': ProfileWarning,
-    'pkgcore.log.logger.error': ProfileError,
-})
+_logmap = (
+    base.LogMap('pkgcore.log.logger.warning', ProfileWarning),
+    base.LogMap('pkgcore.log.logger.error', ProfileError),
+)
 
 
 def verify_files(*files):
@@ -217,7 +216,7 @@ class ProfilesCheck(Check):
     def feed(self, profile):
         for f in profile.files.intersection(self.known_files):
             attr, func = self.known_files[f]
-            with base.LogReports(_logs_to_results) as log_reports:
+            with base.LogReports(*_logmap) as log_reports:
                 data = getattr(profile.node, attr)
             yield from func(self, f, profile.node, data)
             yield from log_reports
@@ -374,7 +373,7 @@ class RepoProfilesCheck(Check):
             known_profile_statuses = None
 
         # forcibly parse profiles.desc and convert log warnings/errors into reports
-        with base.LogReports(_logs_to_results) as log_reports:
+        with base.LogReports(*_logmap) as log_reports:
             profiles = Profiles.parse(
                 self.profiles_dir, self.repo.repo_id,
                 known_status=known_profile_statuses, known_arch=self.arches)

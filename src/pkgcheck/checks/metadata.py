@@ -3,6 +3,7 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from difflib import SequenceMatcher
+from functools import partial
 from operator import attrgetter
 
 from pkgcore.ebuild import atom as atom_mod
@@ -19,6 +20,7 @@ from snakeoil.strings import pluralism
 
 from .. import addons, git, results, sources
 from ..addons import UnstatedIuse
+from ..base import LogMap, LogReports
 from ..eclass import EclassAddon
 from ..profiles import ProfileAddon
 from . import Check
@@ -1113,17 +1115,14 @@ class SrcUriCheck(Check):
         bad_filenames = set()
         tarball_available = set()
 
-        uri_reports = []
-        report_uri_logs = lambda x: uri_reports.append(RedundantUriRename(pkg, x))
-
-        with patch('pkgcore.log.logger.info', report_uri_logs):
+        report_uris = LogMap('pkgcore.log.logger.info', partial(RedundantUriRename, pkg))
+        with LogReports(report_uris) as log_reports:
             fetchables, unstated = self.iuse_filter(
                 (fetchable,), pkg,
                 pkg.generate_fetchables(
                     allow_missing_checksums=True, ignore_unknown_mirrors=True,
                     skip_default_mirrors=True))
-
-        yield from uri_reports
+        yield from log_reports
 
         yield from unstated
         for f_inst, restrictions in fetchables.items():
