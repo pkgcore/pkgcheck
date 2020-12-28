@@ -429,8 +429,9 @@ def generate_restricts(repo, targets):
                 eclasses.append(os.path.basename(path)[:-7])
             elif path.startswith(profiles_base) and path[len(profiles_base):]:
                 if os.path.isdir(path):
-                    # profile dir targets -- currently doesn't descend into subdirs
-                    profiles.extend(pjoin(path, x) for x in os.listdir(path))
+                    # descend into profiles dir targets
+                    for root, _dirs, files in os.walk(path):
+                        profiles.extend(pjoin(root, x) for x in files)
                 else:
                     # direct profiles file targets
                     profiles.append(path)
