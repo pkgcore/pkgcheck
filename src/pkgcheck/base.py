@@ -73,18 +73,34 @@ class Scope:
         return chain([self], self._children)
 
 
-# pkg-related scope levels
-repo_scope = Scope('repo', 1)
-category_scope = Scope('category', 2)
-package_scope = Scope('package', 3)
-version_scope = Scope('version', 4)
+@dataclass(frozen=True)
+class PackageScope(Scope):
+    """Scope for package-specific checks."""
 
-# Special scope levels, scopes with negative levels are only enabled under
-# certain circumstances while location specific scopes have a level of 0.
-commit_scope = Scope('commit', -1)
-profile_node_scope = Scope('profile_node', 0)
-profiles_scope = Scope('profiles', 0, (profile_node_scope,))
-eclass_scope = Scope('eclass', 0)
+
+@dataclass(frozen=True)
+class ConditionalScope(Scope):
+    """Scope for checks run only in certain circumstances."""
+    level: int = -99
+
+
+@dataclass(frozen=True)
+class LocationScope(Scope):
+    """Scope for location-specific checks."""
+    level: int = 0
+
+
+# pkg-related scopes (level increasing by granularity)
+repo_scope = PackageScope('repo', 1)
+category_scope = PackageScope('category', 2)
+package_scope = PackageScope('package', 3)
+version_scope = PackageScope('version', 4)
+
+# conditional (negative level) and location-specific scopes (zero level)
+commit_scope = ConditionalScope('commit')
+profile_node_scope = LocationScope('profile_node')
+profiles_scope = LocationScope('profiles', 0, (profile_node_scope,))
+eclass_scope = LocationScope('eclass')
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
 scopes = ImmutableDict({

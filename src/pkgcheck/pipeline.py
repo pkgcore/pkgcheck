@@ -74,10 +74,10 @@ class Pipeline:
     def _filter_checks(self, scan_scope, checks):
         """Verify check scope against current scan scope to determine check activation."""
         for check in checks:
-            if check.scope < 0:
-                # negative scope checks are conditionally added when relevant
+            if isinstance(check.scope, base.ConditionalScope):
+                # conditionally enabled check
                 yield check
-            elif check.scope == 0:
+            elif isinstance(check.scope, base.LocationScope):
                 if not self.options.selected_scopes:
                     if scan_scope == base.repo_scope or check.scope in scan_scope:
                         # allow repo scans or cwd scope to trigger location specific checks
@@ -86,7 +86,7 @@ class Pipeline:
                     # Allow checks with special scopes to be run when specifically
                     # requested, e.g. eclass-only scanning.
                     yield check
-            elif scan_scope > 0 and check.scope >= scan_scope:
+            elif isinstance(scan_scope, base.PackageScope) and check.scope >= scan_scope:
                 # Only run pkg-related checks at or below the current scan scope level, if
                 # pkg scanning is requested, e.g. skip repo level checks when scanning at
                 # package level.
