@@ -73,18 +73,18 @@ class Scope:
         return chain([self], self._children)
 
 
-@dataclass(frozen=True)
+@dataclass(repr=False, frozen=True)
 class PackageScope(Scope):
     """Scope for package-specific checks."""
 
 
-@dataclass(frozen=True)
+@dataclass(repr=False, frozen=True)
 class ConditionalScope(Scope):
     """Scope for checks run only in certain circumstances."""
     level: int = -99
 
 
-@dataclass(frozen=True)
+@dataclass(repr=False, frozen=True)
 class LocationScope(Scope):
     """Scope for location-specific checks."""
     level: int = 0
