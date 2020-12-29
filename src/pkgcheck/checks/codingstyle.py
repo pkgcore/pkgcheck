@@ -628,14 +628,13 @@ class InheritsCheck(Check):
                 if eclass := self.get_eclass(name, pkg):
                     used[eclass].append((lineno + 1, name, name))
 
-        direct_inherit = set(pkg.inherit)
         # allowed indirect inherits
         indirect_allowed = set().union(*(
-            self.eclass_cache[x].indirect_eclasses for x in direct_inherit))
+            self.eclass_cache[x].indirect_eclasses for x in pkg.inherit))
         # missing inherits
-        missing = used.keys() - direct_inherit - indirect_allowed - conditional
+        missing = used.keys() - pkg.inherit - indirect_allowed - conditional
 
-        unused = set(direct_inherit) - used.keys() - set(assigned_vars.values())
+        unused = set(pkg.inherit) - used.keys() - set(assigned_vars.values())
         # remove eclasses that use implicit phase functions
         if unused and pkg.defined_phases:
             phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
