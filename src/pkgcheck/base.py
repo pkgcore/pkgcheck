@@ -32,7 +32,7 @@ class Scope:
     _children: tuple = ()
 
     def __str__(self):
-        return self.desc
+        return f'{self.__class__.__name__}({self.desc!r})'
 
     def __lt__(self, other):
         if isinstance(other, Scope):

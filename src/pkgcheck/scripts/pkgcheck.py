@@ -490,7 +490,7 @@ def _determine_restrictions(namespace, attr):
                 # multiple targets are restricted to a single scanning scope
                 scopes = {scope for scope, restrict in restrictions}
                 if len(scopes) > 1:
-                    scan_scopes = ', '.join(sorted(map(str, scopes)))
+                    scan_scopes = ', '.join(sorted(s.desc for s in scopes))
                     raise PkgcheckUserException(
                         f'targets specify multiple scan scope levels: {scan_scopes}')
 
@@ -684,7 +684,7 @@ def display_keywords(out, options):
             scopes[keyword.scope].add(keyword)
 
         for scope in reversed(sorted(scopes)):
-            out.write(out.bold, f"{str(scope).capitalize()} scope:")
+            out.write(out.bold, f'{scope.desc.capitalize()} scope:')
             out.write()
             keywords = sorted(scopes[scope], key=attrgetter('__name__'))
 

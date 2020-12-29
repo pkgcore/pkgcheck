@@ -100,7 +100,7 @@ class FancyReporter(Reporter):
             elif result.scope == base.category_scope:
                 key = result.category
             else:
-                key = str(result.scope)
+                key = result.scope.desc
 
             if key != prev_key:
                 if prev_key is not None:

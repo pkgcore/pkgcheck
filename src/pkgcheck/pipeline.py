@@ -98,7 +98,7 @@ class Pipeline:
         enabled_checks = list(self._filter_checks(scan_scope, self.options.enabled_checks))
         if not enabled_checks:
             raise base.PkgcheckUserException(
-                f'no matching checks available for {scan_scope} scope')
+                f'no matching checks available for {scan_scope.desc} scope')
 
         # initialize enabled checks
         addons = base.get_addons(enabled_checks)
