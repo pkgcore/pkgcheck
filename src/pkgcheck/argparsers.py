@@ -270,13 +270,7 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
 
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = self.parse_values(values)
-
-        alias_map = {
-            'error': objects.KEYWORDS.error,
-            'warning': objects.KEYWORDS.warning,
-            'info': objects.KEYWORDS.info,
-        }
-        replace_aliases = lambda x: alias_map.get(x, [x])
+        replace_aliases = lambda x: objects.KEYWORDS.aliases.get(x, [x])
 
         # expand keyword aliases to keyword lists
         disabled = list(chain.from_iterable(map(replace_aliases, disabled)))
@@ -325,20 +319,12 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
 class ExitArgs(arghparse.CommaSeparatedNegations):
     """Filter enabled keywords by selected keywords."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.aliases = {
-            'error': objects.KEYWORDS.error,
-            'warning': objects.KEYWORDS.warning,
-            'info': objects.KEYWORDS.info,
-        }
-
     def args_to_keywords(self, namespace, args):
         """Expand arguments to keyword names."""
         keywords = []
         for val in args:
             try:
-                keywords.extend(self.aliases[val])
+                keywords.extend(objects.KEYWORDS.aliases[val])
             except KeyError:
                 try:
                     keywords.extend(object_to_keywords(namespace, val))
