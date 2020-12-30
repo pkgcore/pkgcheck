@@ -27,7 +27,7 @@ class DeprecatedEclass(results.VersionResult, results.Warning):
         return f'uses deprecated eclass: {self.eclass} ({replacement})'
 
 
-class DuplicateEclassInherits(results.VersionResult, results.Warning):
+class DuplicateEclassInherit(results.LineResult, results.Warning):
     """An ebuild directly inherits the same eclass multiple times.
 
     Note that this will flag ebuilds that conditionalize global metadata by
@@ -36,15 +36,13 @@ class DuplicateEclassInherits(results.VersionResult, results.Warning):
     eclasses should be loaded in a separate, unconditional inherit call.
     """
 
-    def __init__(self, eclasses, **kwargs):
+    def __init__(self, eclass, **kwargs):
         super().__init__(**kwargs)
-        self.eclasses = tuple(eclasses)
+        self.eclass = eclass
 
     @property
     def desc(self):
-        eclasses = ', '.join(self.eclasses)
-        es = pluralism(self.eclasses, plural='es')
-        return f'duplicate inherits for eclass{es}: {eclasses}'
+        return f'duplicate inherit {self.eclass!r}, line {self.lineno}: {self.line!r}'
 
 
 class MisplacedEclassVar(results.LineResult, results.Error):
@@ -68,7 +66,7 @@ class EclassUsageCheck(Check):
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([
-        DeprecatedEclass, DuplicateEclassInherits, MisplacedEclassVar,
+        DeprecatedEclass, DuplicateEclassInherit, MisplacedEclassVar,
     ])
     required_addons = (addons.BashAddon, EclassAddon)
 
@@ -76,48 +74,55 @@ class EclassUsageCheck(Check):
         super().__init__(*args)
         self.deprecated_eclasses = eclass_addon.deprecated
         self.eclass_cache = eclass_addon.eclasses
-        self.cmd_query = bash_addon.query('(command_name) @command')
+        self.cmd_query = bash_addon.query('(command) @call')
         self.var_assign_query = bash_addon.query('(variable_assignment) @assign')
 
-    def feed(self, pkg):
+    def check_pre_inherits(self, pkg, inherit_lineno):
+        """Check for invalid @PRE_INHERIT variable placement."""
         pre_inherits = set()
+
+        # determine if any inherited eclasses have @PRE_INHERIT variables
         for eclass in pkg.inherited:
             pre_inherits.update(
                 var.name for var in self.eclass_cache[eclass].variables
                 if var.pre_inherit
             )
 
-        # check for invalid @PRE_INHERIT variable placement
+        # scan for any misplaced @PRE_INHERIT variables
         if pre_inherits:
-            for cmd_node, _ in self.cmd_query.captures(pkg.tree.root_node):
-                cmd_name = pkg.node_str(cmd_node)
-                if cmd_name == 'inherit':
-                    inherit_line = cmd_node.start_point[0]
-                    for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
-                        var_name = pkg.node_str(node.child_by_field_name('name'))
-                        lineno = node.start_point[0]
-                        if var_name in pre_inherits and lineno > inherit_line:
-                            line = pkg.node_str(node)
-                            yield MisplacedEclassVar(
-                                var_name, line=line, lineno=lineno+1, pkg=pkg)
-                    break
+            for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
+                var_name = pkg.node_str(node.child_by_field_name('name'))
+                lineno, _colno = node.start_point
+                if var_name in pre_inherits and lineno > inherit_lineno:
+                    line = pkg.node_str(node)
+                    yield MisplacedEclassVar(
+                        var_name, line=line, lineno=lineno+1, pkg=pkg)
 
-        duplicates = set()
-        inherited = set()
-        for eclass in pkg.inherit:
-            if eclass not in inherited:
-                inherited.add(eclass)
-            else:
-                duplicates.add(eclass)
+    def feed(self, pkg):
+        if pkg.inherit:
+            inherited = set()
+            for node, _ in self.cmd_query.captures(pkg.tree.root_node):
+                call = pkg.node_str(node)
+                name = pkg.node_str(node.child_by_field_name('name'))
+                if name == 'inherit':
+                    inherits = call.split()[1:]
+                    lineno, _colno = node.start_point
 
-        if duplicates:
-            yield DuplicateEclassInherits(sorted(duplicates), pkg=pkg)
+                    if not inherited and inherits[0] == pkg.inherit[0]:
+                        yield from self.check_pre_inherits(pkg, lineno)
 
-        for eclass in inherited.intersection(self.deprecated_eclasses):
-            replacement = self.deprecated_eclasses[eclass]
-            if not isinstance(replacement, str):
-                replacement = None
-            yield DeprecatedEclass(eclass, replacement, pkg=pkg)
+                    for eclass in inherits:
+                        if eclass not in inherited:
+                            inherited.add(eclass)
+                        else:
+                            yield DuplicateEclassInherit(
+                                eclass, line=call, lineno=lineno+1, pkg=pkg)
+
+            for eclass in pkg.inherit.intersection(self.deprecated_eclasses):
+                replacement = self.deprecated_eclasses[eclass]
+                if not isinstance(replacement, str):
+                    replacement = None
+                yield DeprecatedEclass(eclass, replacement, pkg=pkg)
 
 
 class EclassBashSyntaxError(results.EclassResult, results.Error):

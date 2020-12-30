@@ -8,7 +8,7 @@ else
 	KEYWORDS="~amd64 ~x86"
 fi
 
-DESCRIPTION="Ebuild with deprecated insinto usage"
+DESCRIPTION="Ebuild with conditional, duplicate eclass inherit"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 SLOT="0"
 LICENSE="BSD"

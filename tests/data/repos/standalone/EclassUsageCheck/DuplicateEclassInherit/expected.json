@@ -1,0 +1,2 @@
+{"__class__": "DuplicateEclassInherit", "category": "EclassUsageCheck", "package": "DuplicateEclassInherit", "version": "0", "line": "inherit stub vcs stub", "lineno": 1, "eclass": "stub"}
+{"__class__": "DuplicateEclassInherit", "category": "EclassUsageCheck", "package": "DuplicateEclassInherit", "version": "1", "line": "inherit stub", "lineno": 7, "eclass": "stub"}

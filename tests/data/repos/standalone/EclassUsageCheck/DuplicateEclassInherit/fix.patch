@@ -1,0 +1,26 @@
+diff -Naur standalone/EclassUsageCheck/DuplicateEclassInherit/DuplicateEclassInherit-0.ebuild fixed/EclassUsageCheck/DuplicateEclassInherit/DuplicateEclassInherit-0.ebuild
+--- standalone/EclassUsageCheck/DuplicateEclassInherit/DuplicateEclassInherit-0.ebuild	2020-12-29 17:38:21.221884222 -0700
++++ fixed/EclassUsageCheck/DuplicateEclassInherit/DuplicateEclassInherit-0.ebuild	2020-12-29 17:46:06.059025276 -0700
+@@ -1,4 +1,4 @@
+-inherit stub vcs stub
++inherit stub vcs
+ 
+ DESCRIPTION="Ebuild with duplicate eclass inherit"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+diff -Naur standalone/EclassUsageCheck/DuplicateEclassInherit/DuplicateEclassInherit-1.ebuild fixed/EclassUsageCheck/DuplicateEclassInherit/DuplicateEclassInherit-1.ebuild
+--- standalone/EclassUsageCheck/DuplicateEclassInherit/DuplicateEclassInherit-1.ebuild	2020-12-29 17:38:53.542587976 -0700
++++ fixed/EclassUsageCheck/DuplicateEclassInherit/DuplicateEclassInherit-1.ebuild	2020-12-29 17:46:21.103353534 -0700
+@@ -1,10 +1,11 @@
+ EAPI=7
+ 
++inherit stub
++
+ if [[ ${PV} == "9999" ]] ; then
+ 	EVCS_REPO_URI="https://github.com/pkgcore/pkgcheck.git"
+-	inherit stub vcs
++	inherit vcs
+ else
+-	inherit stub
+ 	KEYWORDS="~amd64 ~x86"
+ fi
+ 
