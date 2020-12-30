@@ -89,6 +89,13 @@ class Warning(Result):
     color = 'yellow'
 
 
+class Style(Result):
+    """Result with a coding style priority level."""
+
+    level = 'style'
+    color = 'cyan'
+
+
 class Info(Result):
     """Result with an info priority level."""
 
