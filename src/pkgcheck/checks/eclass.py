@@ -42,7 +42,7 @@ class DuplicateEclassInherit(results.LineResult, results.Style):
 
     @property
     def desc(self):
-        return f'duplicate inherit {self.eclass!r}, line {self.lineno}: {self.line!r}'
+        return f'duplicate eclass inherit {self.eclass!r}, line {self.lineno}'
 
 
 class MisplacedEclassVar(results.LineResult, results.Error):
