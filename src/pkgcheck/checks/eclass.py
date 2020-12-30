@@ -5,7 +5,7 @@ from pkgcore.ebuild.eapi import EAPI
 from pkgcore.ebuild.eclass import EclassDoc
 from snakeoil.strings import pluralism
 
-from .. import addons, base, results, sources
+from .. import addons, results, sources
 from ..eclass import EclassAddon
 from . import Check
 
@@ -102,21 +102,22 @@ class EclassUsageCheck(Check):
         if pkg.inherit:
             inherited = set()
             for node, _ in self.cmd_query.captures(pkg.tree.root_node):
-                call = pkg.node_str(node)
                 name = pkg.node_str(node.child_by_field_name('name'))
                 if name == 'inherit':
-                    inherits = call.split()[1:]
-                    lineno, _colno = node.start_point
+                    call = pkg.node_str(node)
+                    # filter out line continuations and conditional inherits
+                    if inherits := [x for x in call.split()[1:] if x in pkg.inherit]:
+                        lineno, _colno = node.start_point
+                        # verify any existing @PRE_INHERIT variable placement
+                        if not inherited and inherits[0] == pkg.inherit[0]:
+                            yield from self.check_pre_inherits(pkg, lineno)
 
-                    if not inherited and inherits[0] == pkg.inherit[0]:
-                        yield from self.check_pre_inherits(pkg, lineno)
-
-                    for eclass in inherits:
-                        if eclass not in inherited:
-                            inherited.add(eclass)
-                        else:
-                            yield DuplicateEclassInherit(
-                                eclass, line=call, lineno=lineno+1, pkg=pkg)
+                        for eclass in inherits:
+                            if eclass not in inherited:
+                                inherited.add(eclass)
+                            else:
+                                yield DuplicateEclassInherit(
+                                    eclass, line=call, lineno=lineno+1, pkg=pkg)
 
             for eclass in pkg.inherit.intersection(self.deprecated_eclasses):
                 replacement = self.deprecated_eclasses[eclass]
