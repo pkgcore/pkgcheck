@@ -160,7 +160,11 @@ class UseAddon(base.Addon):
             except profiles_mod.ProfileError:
                 continue
 
-        # common profile elements
+        # TODO: Figure out if there is a more efficient method to determine a
+        # repo's global implicit iuse while avoiding profiles cache usage. The
+        # cache shouldn't be used in order to avoid cache regens when
+        # performing scanning actions on specific profile files since the
+        # current ProfilesCheck uses this addon.
         if self.profiles:
             c_implicit_iuse = set.intersection(*(set(p.iuse_effective) for p in self.profiles))
         else:
