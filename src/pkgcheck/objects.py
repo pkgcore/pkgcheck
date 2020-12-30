@@ -4,6 +4,7 @@ import inspect
 import os
 import pkgutil
 from collections.abc import Mapping
+from functools import partial
 from importlib import import_module
 
 from snakeoil import klass
@@ -109,22 +110,54 @@ class _LazyDict(Mapping):
         return {k: v for k, v in self._dict.items() if issubclass(v, cls)}
 
 
+def _keyword_alias(alias=None):
+    """Decorator to register keyword aliases."""
+
+    class decorator:
+        """Decorator with access to the class of a decorated function."""
+
+        def __init__(self, func):
+            self.func = func
+
+        def __set_name__(self, cls, name):
+            key = alias if alias is not None else name
+            cls._aliases.add(key)
+            jit_attr = klass.jit_attr_named(f'_{self.func.__name__}')
+            func = jit_attr(partial(self.func))
+            setattr(cls, name, func)
+
+    return decorator
+
+
 class _KeywordsLazyDict(_LazyDict):
     """Lazy dictionary of keyword mappings with added filtered attributes."""
 
-    @klass.jit_attr
+    _aliases = set()
+
+    @property
+    def aliases(self):
+        """Mapping of aliases to their respective mappings."""
+        return {x: getattr(self, x) for x in self._aliases}
+
+    @_keyword_alias()
     def error(self):
         """Mapping of all error level keywords."""
         from . import results
         return ImmutableDict(self.select(results.Error))
 
-    @klass.jit_attr
+    @_keyword_alias()
     def warning(self):
         """Mapping of all warning level keywords."""
         from . import results
         return ImmutableDict(self.select(results.Warning))
 
-    @klass.jit_attr
+    @_keyword_alias()
+    def style(self):
+        """Mapping of all style level keywords."""
+        from . import results
+        return ImmutableDict(self.select(results.Style))
+
+    @_keyword_alias()
     def info(self):
         """Mapping of all info level keywords."""
         from . import results
