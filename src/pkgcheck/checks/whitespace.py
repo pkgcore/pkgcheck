@@ -9,7 +9,7 @@ from .. import results, sources
 from . import Check
 
 
-class _Whitespace(results.VersionResult, results.Warning):
+class _Whitespace(results.VersionResult, results.Style):
 
     def __init__(self, lines, **kwargs):
         super().__init__(**kwargs)
@@ -50,13 +50,13 @@ class DoubleEmptyLine(_Whitespace):
         return f"ebuild has unneeded empty {self.lines_str}"
 
 
-class TrailingEmptyLine(results.VersionResult, results.Warning):
+class TrailingEmptyLine(results.VersionResult, results.Style):
     """Unneeded trailing blank lines found."""
 
     desc = "ebuild has trailing blank line(s)"
 
 
-class NoFinalNewline(results.VersionResult, results.Warning):
+class NoFinalNewline(results.VersionResult, results.Style):
     """Ebuild's last line does not have a final newline."""
 
     desc = "ebuild lacks an ending newline"

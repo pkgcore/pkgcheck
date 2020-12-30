@@ -27,7 +27,7 @@ class DeprecatedEclass(results.VersionResult, results.Warning):
         return f'uses deprecated eclass: {self.eclass} ({replacement})'
 
 
-class DuplicateEclassInherit(results.LineResult, results.Warning):
+class DuplicateEclassInherit(results.LineResult, results.Style):
     """An ebuild directly inherits the same eclass multiple times.
 
     Note that this will flag ebuilds that conditionalize global metadata by

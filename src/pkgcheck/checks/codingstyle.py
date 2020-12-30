@@ -98,7 +98,7 @@ class MissingSlash(results.VersionResult, results.Error):
         return f'{self.match} missing trailing slash on line{s}: {lines}'
 
 
-class UnnecessarySlashStrip(results.VersionResult, results.Warning):
+class UnnecessarySlashStrip(results.VersionResult, results.Style):
     """Ebuild uses a path variable that strips a nonexistent slash."""
 
     def __init__(self, match, lines, **kwargs):
@@ -328,7 +328,7 @@ class InsintoCheck(Check):
                         lineno=lineno, pkg=pkg)
 
 
-class ObsoleteUri(results.VersionResult, results.Warning):
+class ObsoleteUri(results.VersionResult, results.Style):
     """URI used is obsolete.
 
     The URI used to fetch distfile is obsolete and can be replaced
@@ -383,7 +383,7 @@ class ObsoleteUriCheck(Check):
                     yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)
 
 
-class HomepageInSrcUri(results.VersionResult, results.Warning):
+class HomepageInSrcUri(results.VersionResult, results.Style):
     """${HOMEPAGE} is referenced in SRC_URI.
 
     SRC_URI is built on top of ${HOMEPAGE}. This is discouraged since HOMEPAGE
@@ -396,7 +396,7 @@ class HomepageInSrcUri(results.VersionResult, results.Warning):
         return '${HOMEPAGE} in SRC_URI'
 
 
-class StaticSrcUri(results.VersionResult, results.Warning):
+class StaticSrcUri(results.VersionResult, results.Style):
     """SRC_URI contains static value instead of the dynamic equivalent.
 
     For example, using static text to relate to the package version in SRC_URI
@@ -412,7 +412,7 @@ class StaticSrcUri(results.VersionResult, results.Warning):
         return f'{self.static_str!r} in SRC_URI'
 
 
-class VariableInHomepage(results.VersionResult, results.Warning):
+class VariableInHomepage(results.VersionResult, results.Style):
     """HOMEPAGE includes a variable.
 
     The HOMEPAGE ebuild variable entry in the devmanual [#]_ states only raw
@@ -671,7 +671,7 @@ class InheritsCheck(Check):
             yield UnusedInherits(sorted(unused), pkg=pkg)
 
 
-class RedundantDodir(results.LineResult, results.Warning):
+class RedundantDodir(results.LineResult, results.Style):
     """Ebuild using a redundant dodir call."""
 
     def __init__(self, cmd, **kwargs):

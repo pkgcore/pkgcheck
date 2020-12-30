@@ -405,7 +405,7 @@ class UnusedLocalUse(results.PackageResult, results.Warning):
         return f'metadata.xml unused local USE flag{s}: [ {flags} ]'
 
 
-class MatchingGlobalUse(results.PackageResult, results.Error):
+class MatchingGlobalUse(results.PackageResult, results.Warning):
     """Local USE flag description matches a global USE flag."""
 
     def __init__(self, flag, **kwargs):
@@ -417,7 +417,7 @@ class MatchingGlobalUse(results.PackageResult, results.Error):
         return f"local USE flag matches a global: {self.flag!r}"
 
 
-class ProbableGlobalUse(results.PackageResult, results.Warning):
+class ProbableGlobalUse(results.PackageResult, results.Style):
     """Local USE flag description closely matches a global USE flag."""
 
     def __init__(self, flag, **kwargs):
@@ -453,7 +453,7 @@ class ProbableUseExpand(results.PackageResult, results.Warning):
         return f"USE_EXPAND group {self.group!r} matches local USE flag: {self.flag!r}"
 
 
-class UnderscoreInUseFlag(results.PackageResult, results.Warning):
+class UnderscoreInUseFlag(results.PackageResult, results.Style):
     """USE flag uses underscore that is reserved for USE_EXPAND.
 
     The USE flag name uses underscore. However, according to PMS
@@ -857,7 +857,7 @@ class UnknownKeywords(results.VersionResult, results.Error):
         return f"unknown KEYWORDS: {', '.join(map(repr, self.keywords))}"
 
 
-class OverlappingKeywords(results.VersionResult, results.Warning):
+class OverlappingKeywords(results.VersionResult, results.Style):
     """Packages having overlapping arch and ~arch KEYWORDS."""
 
     def __init__(self, keywords, **kwargs):
@@ -869,7 +869,7 @@ class OverlappingKeywords(results.VersionResult, results.Warning):
         return f"overlapping KEYWORDS: {self.keywords}"
 
 
-class DuplicateKeywords(results.VersionResult, results.Warning):
+class DuplicateKeywords(results.VersionResult, results.Style):
     """Packages having duplicate KEYWORDS."""
 
     def __init__(self, keywords, **kwargs):
@@ -881,7 +881,7 @@ class DuplicateKeywords(results.VersionResult, results.Warning):
         return f"duplicate KEYWORDS: {', '.join(self.keywords)}"
 
 
-class UnsortedKeywords(results.VersionResult, results.Warning):
+class UnsortedKeywords(results.VersionResult, results.Style):
     """Packages with unsorted KEYWORDS.
 
     KEYWORDS should be sorted in alphabetical order with prefix keywords (those
@@ -1032,7 +1032,7 @@ class BadProtocol(results.VersionResult, results.Error):
         return f'bad protocol {self.protocol!r} in URI{s}: {uris}'
 
 
-class RedundantUriRename(results.VersionResult, results.Warning):
+class RedundantUriRename(results.VersionResult, results.Style):
     """URI uses a redundant rename that doesn't change the filename."""
 
     def __init__(self, pkg, message):
@@ -1061,7 +1061,7 @@ class BadFilename(results.VersionResult, results.Warning):
         return f'bad filename{s}: [ {filenames} ]'
 
 
-class TarballAvailable(results.VersionResult, results.Warning):
+class TarballAvailable(results.VersionResult, results.Style):
     """URI uses .zip archive when .tar* is available.
 
     Tarballs should be preferred over zip archives due to better compression
