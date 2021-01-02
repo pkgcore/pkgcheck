@@ -664,7 +664,8 @@ class InheritsCheck(Check):
             lineno, name, usage = used[eclass][0]
             if eclass in pkg.inherited:
                 yield IndirectInherits(eclass, lineno, usage, pkg=pkg)
-            else:
+            elif not self.eclass_cache[eclass].live:
+                # try to ignore probable, conditional vcs eclasses
                 yield MissingInherits(eclass, lineno, usage, pkg=pkg)
 
         if unused:
