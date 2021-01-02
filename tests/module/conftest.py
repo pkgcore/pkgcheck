@@ -3,6 +3,7 @@ import subprocess
 import tempfile
 import textwrap
 from contextlib import ExitStack
+from datetime import datetime
 from unittest.mock import patch
 
 import pytest
@@ -265,8 +266,8 @@ class EbuildRepo:
 
         with open(pjoin(ebuild_dir, f'{cpv.package}-{cpv.version}.ebuild'), 'w') as f:
             if self.repo_id == 'gentoo':
-                f.write(textwrap.dedent("""\
-                    # Copyright 1999-2020 Gentoo Authors
+                f.write(textwrap.dedent(f"""\
+                    # Copyright 1999-{datetime.now().year} Gentoo Authors
                     # Distributed under the terms of the GNU General Public License v2
                 """))
             f.write(f'EAPI="{eapi}"\n')
