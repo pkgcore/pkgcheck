@@ -10,7 +10,7 @@ from snakeoil.strings import pluralism
 
 from .. import eclass as eclass_mod
 from .. import addons, results, sources
-from . import Check
+from . import Check, OptionalCheck
 
 PREFIX_VARIABLES = ('EROOT', 'ED', 'EPREFIX')
 PATH_VARIABLES = ('BROOT', 'ROOT', 'D') + PREFIX_VARIABLES
@@ -529,7 +529,7 @@ class InternalEclassUsage(results.VersionResult, results.Warning):
         return f'{self.eclass}: internal usage: {repr(self.usage)}, line {self.lineno}'
 
 
-class InheritsCheck(Check):
+class InheritsCheck(OptionalCheck):
     """Scan for ebuilds with missing or unused eclass inherits."""
 
     _source = sources.EbuildParseRepoSource
