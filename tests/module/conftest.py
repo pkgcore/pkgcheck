@@ -209,6 +209,7 @@ class EbuildRepo:
 
     def __init__(self, path, repo_id='fake', eapi='5', masters=(), arches=()):
         self.path = path
+        self._today = datetime.today()
         try:
             os.makedirs(pjoin(path, 'profiles'))
             with open(pjoin(path, 'profiles', 'repo_name'), 'w') as f:
@@ -267,7 +268,7 @@ class EbuildRepo:
         with open(pjoin(ebuild_dir, f'{cpv.package}-{cpv.version}.ebuild'), 'w') as f:
             if self.repo_id == 'gentoo':
                 f.write(textwrap.dedent(f"""\
-                    # Copyright 1999-{datetime.now().year} Gentoo Authors
+                    # Copyright 1999-{self._today.year} Gentoo Authors
                     # Distributed under the terms of the GNU General Public License v2
                 """))
             f.write(f'EAPI="{eapi}"\n')
