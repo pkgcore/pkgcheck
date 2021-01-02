@@ -46,9 +46,9 @@ class RepoSource(Source):
 
     scope = base.version_scope
 
-    def __init__(self, options, repo=None, source=None):
+    def __init__(self, options, source=None):
         self.options = options
-        self.repo = repo if repo is not None else options.target_repo
+        self.repo = options.target_repo
         self._source = source
 
     @property
@@ -405,6 +405,4 @@ def init_source(source, options, addons_map=None):
         kwargs = {}
     for addon in cls.required_addons:
         kwargs[base.param_name(addon)] = addons.init_addon(addon, options, addons_map)
-    if issubclass(cls, RepoSource):
-        kwargs.setdefault('repo', options.target_repo)
     return cls(*args, options, **kwargs)
