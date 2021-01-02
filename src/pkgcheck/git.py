@@ -516,7 +516,10 @@ class GitAddon(caches.CachedAddon):
         for repo in self.options.target_repo.trees:
             try:
                 commit = self._get_commit_hash(repo.location)
-            except GitError:
+            except GitError as e:
+                # ignore non-git/unsupported repos unless forced
+                if force:
+                    raise PkgcheckUserException(str(e))
                 continue
 
             # initialize cache file location
