@@ -552,25 +552,14 @@ class GitAddon(caches.CachedAddon):
                     self.save_cache(git_cache, cache_file)
 
     def cached_repo(self, repo_cls):
-        target_repo = self.options.target_repo
-        cached_repo = None
         git_repos = []
+        for repo in self.options.target_repo.trees:
+            git_cache = self._cached_repos.get(repo.location, {})
+            git_repos.append(repo_cls(git_cache, repo_id=f'{repo.repo_id}-history'))
 
-        for repo in target_repo.trees:
-            # only enable repo queries if history was found, e.g. a
-            # shallow clone with a depth of 1 won't have any history
-            if git_cache := self._cached_repos.get(repo.location):
-                git_repos.append(repo_cls(git_cache, repo_id=f'{repo.repo_id}-history'))
-            else:
-                # skip git checks
-                break
-        else:
-            if len(git_repos) > 1:
-                cached_repo = multiplex.tree(*git_repos)
-            elif len(git_repos) == 1:
-                cached_repo = git_repos[0]
-
-        return cached_repo
+        if len(git_repos) > 1:
+            return multiplex.tree(*git_repos)
+        return git_repos[0]
 
     def commits_repo(self, repo_cls):
         target_repo = self.options.target_repo
