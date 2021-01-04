@@ -1,11 +1,13 @@
 import shlex
 import subprocess
+from functools import partial
 
 from pkgcore.ebuild.eapi import EAPI
 from pkgcore.ebuild.eclass import EclassDoc
 from snakeoil.strings import pluralism
 
 from .. import addons, results, sources
+from ..base import LogMap, LogReports
 from ..eclass import EclassAddon
 from . import Check
 
@@ -219,10 +221,14 @@ class EclassCheck(Check):
             error = ': '.join(error)
             yield EclassBashSyntaxError(lineno, error, eclass=eclass)
 
-        doc_errors = []
-        parsing_error = lambda exc: doc_errors.append(EclassDocError(str(exc), eclass=eclass))
-        eclass_obj = EclassDoc(eclass.path, sourced=True, error_callback=parsing_error)
-        yield from doc_errors
+        report_logs = (
+            LogMap('pkgcore.log.logger.error', partial(EclassDocError, eclass=eclass)),
+            LogMap('pkgcore.log.logger.warning', partial(EclassDocError, eclass=eclass)),
+        )
+
+        with LogReports(*report_logs) as log_reports:
+            eclass_obj = EclassDoc(eclass.path, sourced=True)
+        yield from log_reports
 
         phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
         # TODO: ignore overridden funcs from other eclasses?
