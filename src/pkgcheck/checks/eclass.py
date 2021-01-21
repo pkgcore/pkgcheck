@@ -231,14 +231,14 @@ class EclassCheck(Check):
         yield from log_reports
 
         phase_funcs = {f'{eclass}_{phase}' for phase in self.known_phases}
-        # TODO: ignore overridden funcs from other eclasses?
         funcs_missing_docs = (
             eclass_obj.exported_function_names - phase_funcs - eclass_obj.function_names)
         if funcs_missing_docs:
             yield EclassDocMissingFunc(sorted(funcs_missing_docs), eclass=eclass)
-        # TODO: ignore overridden vars from other eclasses?
+        # ignore underscore-prefixed vars (mostly used for avoiding multiple inherits)
+        exported_vars = {x for x in eclass_obj.exported_variable_names if not x.startswith('_')}
         vars_missing_docs = (
-            eclass_obj.exported_variable_names - self.eclass_keys
+            exported_vars - self.eclass_keys
             - eclass_obj.variable_names - eclass_obj.function_variable_names)
         if vars_missing_docs:
             yield EclassDocMissingVar(sorted(vars_missing_docs), eclass=eclass)
