@@ -2,3 +2,5 @@
 {"__class__": "InvalidSlot", "category": "SourcingCheck", "package": "InvalidSlot", "version": "1", "attr": "slot", "msg": "invalid SLOT: '0/1'"}
 {"__class__": "InvalidSlot", "category": "SourcingCheck", "package": "InvalidSlot", "version": "2", "attr": "slot", "msg": "invalid SLOT: '0/-1'"}
 {"__class__": "InvalidSlot", "category": "SourcingCheck", "package": "InvalidSlot", "version": "3", "attr": "slot", "msg": "invalid SLOT: '0/foo?'"}
+{"__class__": "InvalidSlot", "category": "SourcingCheck", "package": "InvalidSlot", "version": "4", "attr": "slot", "msg": "SLOT cannot be unset or empty"}
+{"__class__": "InvalidSlot", "category": "SourcingCheck", "package": "InvalidSlot", "version": "5", "attr": "slot", "msg": "SLOT cannot be unset or empty"}
