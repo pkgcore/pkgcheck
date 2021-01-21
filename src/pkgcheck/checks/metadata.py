@@ -284,7 +284,6 @@ class SourcingError(results.MetadataError, results.VersionResult):
 class SourcingCheck(Check):
     """Scan for packages with sourcing errors or invalid, sourced metadata variables."""
 
-    _source = sources.UncachedRepoSource
     known_results = frozenset([SourcingError, InvalidEapi, InvalidSlot])
     # force this check to run first in its checkrunner
     priority = -100
