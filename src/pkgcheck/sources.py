@@ -63,6 +63,14 @@ class RepoSource(Source):
         return self.source.itermatch(restrict, sorter=sorter, **kwargs)
 
 
+class UncachedRepoSource(RepoSource):
+    """Repository source that disables package caching."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.repo = self.repo.rebind(package_cache=False)
+
+
 class LatestVersionsFilter:
     """Filter source packages, yielding those from the latest non-VCS and VCS slots."""
 
