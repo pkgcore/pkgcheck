@@ -46,6 +46,9 @@ jobs:
         sudo cpanm --quiet --notest Gentoo::PerlMod::Version
 
     - name: Test with pytest
+      # forcibly enable pytest colors
+      env:
+        PY_COLORS: 1
       run: |
         coverage run -p setup.py test
 
