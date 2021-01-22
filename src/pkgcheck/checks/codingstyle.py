@@ -530,7 +530,11 @@ class InternalEclassUsage(results.VersionResult, results.Warning):
 
 
 class InheritsCheck(OptionalCheck):
-    """Scan for ebuilds with missing or unused eclass inherits."""
+    """Scan for ebuilds with missing or unused eclass inherits.
+
+    Note that this requires using ``pmaint regen`` to generate repo metadata in
+    order for direct inherits to be correct.
+    """
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([
@@ -614,7 +618,7 @@ class InheritsCheck(OptionalCheck):
                 if not pkg.inherited.intersection(eclasses):
                     conditional.update(eclasses)
             # Also ignore vars since any used in arithmetic expansions, i.e.
-            # $((...)), are currently captured as commands.
+            # $((...)), are captured as commands.
             elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
                 if eclass := self.get_eclass(name, pkg):
