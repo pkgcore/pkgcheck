@@ -445,22 +445,30 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         assert r == expected
 
     def test_rdepend_change(self):
-        # add new pkg to parent repo
+        # add pkgs to parent repo
+        self.parent_repo.create_ebuild('cat/dep1-0')
+        self.parent_git_repo.add_all('cat/dep1: initial import')
+        self.parent_repo.create_ebuild('cat/dep2-0')
+        self.parent_git_repo.add_all('cat/dep2: initial import')
         self.parent_repo.create_ebuild('newcat/newpkg-1')
         self.parent_git_repo.add_all('newcat/newpkg: initial import')
-        self.parent_repo.create_ebuild('newcat/newpkg-2')
+        self.parent_repo.create_ebuild('newcat/newpkg-2', rdepend="cat/dep1 cat/dep2")
         self.parent_git_repo.add_all('newcat/newpkg: version bump')
         # pull changes to child repo
         self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
         # change pkg RDEPEND and commit
         with open(pjoin(self.child_git_repo.path, 'cat/pkg/pkg-0.ebuild'), 'a') as f:
-            f.write('RDEPEND="newcat/newpkg"\n')
+            f.write('RDEPEND="cat/dep1"\n')
         self.child_git_repo.add_all('cat/pkg: update deps')
-        # change another pkg's RDEPEND and commit
-        with open(pjoin(self.child_git_repo.path, 'newcat/newpkg/newpkg-2.ebuild'), 'a') as f:
-            f.write('RDEPEND="cat/pkg"\n')
+        # change live pkg RDEPEND and commit
+        with open(pjoin(self.child_git_repo.path, 'newcat/newpkg/newpkg-1.ebuild'), 'a') as f:
+            f.write('RDEPEND="cat/dep1"\n')
             f.write('PROPERTIES="live"\n')
         self.child_git_repo.add_all('newcat/newpkg: update deps')
+        # reorder pkg RDEPEND and commit
+        with open(pjoin(self.child_git_repo.path, 'newcat/newpkg/newpkg-2.ebuild'), 'a') as f:
+            f.write('RDEPEND="cat/dep2 cat/dep1"\n')
+        self.child_git_repo.add_all('newcat/newpkg: reorder deps')
         self.init_check()
         r = self.assertReport(self.check, self.source)
         # only one result is expected since live ebuilds are ignored
