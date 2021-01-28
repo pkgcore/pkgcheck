@@ -3,8 +3,28 @@ Release Notes
 =============
 
 ---------------------------
-pkgcheck 0.8.0 (2021-??-??)
+pkgcheck 0.8.0 (2021-01-27)
 ---------------------------
+
+- Add Style priority level for keywords that's between Warning and Info levels.
+
+- EclassDocMissingVar: Ignore underscore-prefixed vars as it's assumed these are
+  internal only.
+
+- pkgcheck scan: Add support for profiles path target restrictions.  Now
+  ``pkgcheck scan`` can be pointed at dir and file targets inside the profiles
+  directory and relevant checks will be run against them. Note that dir targets
+  will run checks against all path descendents.
+
+- pkgcheck scan: Add support for incremental profile scanning. This means all
+  profile changes will get run against relevant checks when using ``pkgcheck
+  scan --commits``.
+
+- GentooRepoCheck: Allow specifically selected checks to override skip (#261).
+
+- pkgcheck scan: Add support to forcibly disable all pkg filters via passing
+  'false', 'no', or 'n'. This provides the ability to disable any filters that
+  would otherwise be enabled by default.
 
 - pkgcheck scan: Support checkset and check args for the --exit option.
 
@@ -39,7 +59,7 @@ pkgcheck 0.8.0 (2021-??-??)
 
 - pkgcheck scan: Re-add support for -C/--checksets option that must be defined
   in the CHECKSETS config section. Also, move 'all' and 'net' aliases from
-  -c/--checks to virtual checksets. 
+  -c/--checks to virtual checksets.
 
 - MisplacedEclassVar: Add support for flagging misplaced @PRE_INHERIT eclass
   variables in ebuilds.
