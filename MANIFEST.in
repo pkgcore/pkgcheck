@@ -7,4 +7,5 @@ recursive-include doc *
 recursive-include requirements *
 recursive-include src *
 recursive-include tests *
+recursive-include tree-sitter-bash *
 global-exclude *.pyc *.pyo __pycache__
