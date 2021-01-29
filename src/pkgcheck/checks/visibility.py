@@ -96,7 +96,7 @@ def visit_atoms(pkg, stream):
     return iflatten_func(stream, _eapi2_flatten)
 
 
-class VisibleVcsPkg(results.VersionResult, results.Error):
+class VisibleVcsPkg(results.VersionResult, results.Warning):
     """Package is VCS-based, but visible."""
 
     def __init__(self, arch, profile, num_profiles=None, **kwargs):
